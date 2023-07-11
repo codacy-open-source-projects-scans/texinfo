@@ -1,0 +1,165 @@
+#!/usr/bin/env perl
+# Copyright 2012, 2013, 2016 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License,
+# or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Original author: Karl Berry.
+#
+# Kludge of a script to check customization variables in refman vs. tp
+# for consistency.  Although this has nothing to do with the reference
+# card, since it's similar to the txicmdcheck script, keep them
+# together.  And maybe we'll add the cust.vars to the refcard.
+
+use strict;
+
+exit (&main ());
+
+sub main {
+  my $no_common = $ARGV[0] eq "--no-common";
+
+  my ($man_customization_vars, $man_cmds_customization_vars)
+                             = &read_refman ("../texinfo.texi");
+  my @man_vars = @$man_customization_vars;
+  my @man_cmds_vars = @$man_cmds_customization_vars;
+  my @tp_vars = &read_tp ("../../util/txicustomvars");
+  my @tp_cmds_vars = &read_tp ("../../util/txicustomvars --commands");
+
+  my (%man_vars, %tp_vars, %man_cmds_vars, %tp_cmds_vars);  # list to hash
+  @man_vars{@man_vars} = ();
+  @tp_vars{@tp_vars} = ();
+  @man_cmds_vars{@man_cmds_vars} = ();
+  @tp_cmds_vars{@tp_cmds_vars} = ();
+
+  my @found_vars = ();
+  for my $name (@tp_vars) {
+    if (exists $man_vars{$name}) {
+      push (@found_vars, $name);
+      delete $man_vars{$name};
+      delete $tp_vars{$name};
+    }
+  }
+
+  printf ("common %3s: @{[sort @found_vars]}\n", scalar(@found_vars))
+    unless $no_common;
+
+  # we can't reasonably reduce the list of variable names only in the
+  # manual to null, since the manual necessarily includes many non-variables.
+  #
+  my @man_vars_only = sort(keys(%man_vars));
+  printf "man only %3s: @man_vars_only\n", scalar(@man_vars_only);
+
+  my @tp_vars_only = sort(keys(%tp_vars));
+  printf "tp only %3s: @tp_vars_only\n", scalar(@tp_vars_only);
+
+  my @found_cmds_vars = ();
+  for my $name (@tp_cmds_vars) {
+    if (exists $man_cmds_vars{$name}) {
+      push (@found_cmds_vars, $name);
+      delete $man_cmds_vars{$name};
+      delete $tp_cmds_vars{$name};
+    }
+  }
+
+  print "\n";
+  printf ("common cmds %3s: @{[sort @found_cmds_vars]}\n", scalar(@found_cmds_vars))
+    unless $no_common;
+
+  my @man_cmds_vars_only = sort(keys(%man_cmds_vars));
+  printf "man only cmds %3s: @man_cmds_vars_only\n", scalar(@man_cmds_vars_only);
+
+  my @tp_cmds_vars_only = sort(keys(%tp_cmds_vars));
+  printf "tp only cmds %3s: @tp_cmds_vars_only\n", scalar(@tp_cmds_vars_only);
+
+
+  return scalar(@tp_vars_only) + scalar(@tp_cmds_vars_only);
+}
+
+
+
+# Return customization variable names from the section in the reference
+# manual.  We assume their names are all uppercase, to avoid returning
+# numerous non-variables.
+#
+sub read_refman {
+  my ($fname) = @_;
+  my @commands_customization_variables = ();
+  my @other_customization_variables = ();
+
+  local *FILE;
+  my $FILE = $fname;
+  open (FILE, $FILE) || die "open($FILE) failed: $!";
+
+  # since we have to look at generic commands like @item, at least
+  # ignore until right section to reduce chance of false matches.
+  while (<FILE>) {
+    last if /^\@section Customization Variables$/;
+  }
+
+  while (<FILE>) {
+    if (/^\@node Customization Variables for \@\@/) {
+      # in this node we have a bare of bare @-commands which have cust.vars.
+      while (<FILE>) {
+        last if /^\@example/;
+      }
+      my $atcmds = "";
+      while (<FILE>) {
+        last if /^\@end example/;
+        s/\@\@//g;  # the variable names don't start with @
+        $atcmds .= $_;
+      }
+      # done with special node.
+      my @atcmds = split (" ", $atcmds);
+      push (@commands_customization_variables, @atcmds);
+      next;
+    }
+
+    # Stop looking for cust.var names after those nodes are done.
+    last if /^\@node Internationalization of Document Strings/;
+
+    # Otherwise, we're looking at a line in one of the cust.var
+    # documentation nodes.
+    next unless s/^\@(itemx?|vindex) *//;  # look for item[x]s and vindex
+    next unless /^[A-Z0-9_]+$/;            # uppercase only
+
+    chomp;
+    push (@other_customization_variables, $_);
+  }
+
+  close (FILE) || warn "close($FILE) failed: $!";
+  return \@other_customization_variables, \@commands_customization_variables;
+}
+
+
+# Return customization variable names implemented in the general parser.
+# The argument is the command to run which returns the list.
+#
+sub read_tp {
+  my ($prog) = @_;
+  my @ret = ();
+
+  local *FILE;
+  my $FILE = "$prog |";
+  open (FILE, $FILE) || die "open($FILE) failed: $!";
+  while (<FILE>) {
+    chomp;
+
+    my $var = $_;
+    next if $var eq "OUTPUT_PERL_ENCODING";  # not for users
+
+    push (@ret, $var);
+  }
+  close (FILE) || warn "close($FILE) failed: $!";
+
+  return @ret;
+}

@@ -1,0 +1,56 @@
+#!/usr/bin/env perl
+# Copyright 2012-2021 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License,
+# or (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Original author: Patrice Dumas.
+#
+# Output Texinfo customization variables
+
+use strict;
+
+BEGIN {
+  (my $mydir = $0) =~ s,/[^/]+$,,;
+  chomp (my $tpdir = `cd $mydir/../tp && pwd`);
+  unshift (@INC, $tpdir);
+
+  $ENV{top_srcdir} = "$tpdir/..";
+  require Texinfo::ModulePath;
+  Texinfo::ModulePath::init(undef, undef, undef);
+}
+
+use Texinfo::Common;
+
+my $do_customization_variable_commands = $ARGV[0] eq "--commands";
+
+if ($do_customization_variable_commands) {
+  print join("\n",
+          sort(keys(%Texinfo::Common::document_settable_multiple_at_commands),
+               keys(%Texinfo::Common::document_settable_unique_at_commands)));
+  exit 0;
+}
+
+my %parser_customization
+  = %Texinfo::Common::default_parser_customization_values;
+
+# avoid commands by selecting only upper cased customization variables
+my @parser_string_non_command_customization
+    = grep {ref($parser_customization{$_}) eq '' and $_ =~ /^[A-Z0-9_]+$/ }
+              keys(%parser_customization);
+
+print join("\n",
+     sort(@parser_string_non_command_customization,
+          keys(%Texinfo::Common::default_main_program_customization),
+          keys(%Texinfo::Common::default_converter_customization),
+          @Texinfo::Common::variable_string_settables));
