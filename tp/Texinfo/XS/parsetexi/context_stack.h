@@ -27,7 +27,6 @@ enum context {
     ct_math,
     ct_brace_command,
     ct_inlineraw,
-    ct_linecommand
 };
 
 /* Contexts where an empty line doesn't start a new paragraph. */
@@ -36,14 +35,14 @@ enum context {
    || (c) == ct_def \
    || (c) == ct_preformatted \
    || (c) == ct_rawpreformatted \
-   || (c) == ct_inlineraw \
-   || (c) == ct_linecommand)
+   || (c) == ct_inlineraw)
 
 void push_context (enum context c, enum command_id cmd);
 enum context pop_context (void);
 enum context current_context (void);
 void reset_context_stack (void);
 int in_context (enum context context);
+char *context_name (enum context c);
 
 
 

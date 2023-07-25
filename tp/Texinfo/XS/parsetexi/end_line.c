@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #include "parser.h"
 #include "debug.h"
@@ -29,6 +30,12 @@
 #include "def.h"
 #include "source_marks.h"
 #include "handle_commands.h"
+
+static int
+isascii_alpha (int c)
+{
+  return (((c & ~0x7f) == 0) && isalpha(c));
+}
 
 static int
 is_decimal_number (char *string)
@@ -123,7 +130,7 @@ parse_line_command_args (ELEMENT *line_command)
         line++;
         line += strspn (line, whitespace_chars);
 
-        if (!isalnum (*line))
+        if (!isascii_alnum (*line))
           goto alias_invalid;
         existing = read_command_name (&line);
         if (!existing)
@@ -219,6 +226,7 @@ parse_line_command_args (ELEMENT *line_command)
         /* Remember it. */
         new_cmd = add_texinfo_command (new_command);
         add_infoenclose (new_cmd, start, end);
+        debug ("DEFINFOENCLOSE @%s: %s, %s", new_command, start, end);
         new_cmd &= ~USER_COMMAND_BIT;
 
         user_defined_command_data[new_cmd].flags
@@ -339,7 +347,7 @@ parse_line_command_args (ELEMENT *line_command)
         INDEX *from_index, *to_index;
         char *p = line;
 
-        if (!isalnum (*p))
+        if (!isascii_alnum (*p))
           goto synindex_invalid;
         from = read_command_name (&p);
         if (!from)
@@ -347,7 +355,7 @@ parse_line_command_args (ELEMENT *line_command)
 
         p += strspn (p, whitespace_chars);
 
-        if (!isalnum (*p))
+        if (!isascii_alnum (*p))
           goto synindex_invalid;
         to = read_command_name (&p);
         if (!to)
@@ -648,159 +656,20 @@ end_line_def_line (ELEMENT *current)
   enum command_id top_cmd = current_context_command ();
   enum context top_context = pop_context ();
 
-  if (top_context != ct_def && top_context != ct_linecommand)
-    fatal ("def or linecommand context expected");
+  if (top_context != ct_def)
+    fatal ("def context expected");
 
-  if (top_context == ct_def)
-    {
-      k = lookup_extra (current->parent, "def_command");
-      def_command = lookup_command ((char *) k->value);
-    }
-  else
-    {
-      /* The following also works
-      k = lookup_extra (current->parent, "name");
-      def_command = lookup_command ((char *) k->value);
-      */
-      def_command = top_cmd;
-    }
+  k = lookup_extra (current->parent, "def_command");
+  def_command = lookup_command ((char *) k->value);
 
-  debug ("END DEF LINE %s %s; current %s",
-     top_context == ct_def ? "ct_def"
-     : top_context == ct_linecommand ? "ct_linecommand" : "",
-     command_name(def_command), print_element_debug (current, 1));
+  debug_nonl ("END DEF LINE %s; current ",
+               command_name(def_command));
+  debug_print_element (current, 1); debug ("");
 
   def_info = parse_def (def_command, current);
 
-  /* def_line or linemacro_call */
+  /* def_line */
   current = current->parent;
-
-  if (top_context != ct_def)
-    {
-      /* convert arguments tree elements back to Texinfo text and substitute */
-      int args_number;
-      MACRO *macro_record = lookup_macro (def_command);
-      ELEMENT *macro;
-      ELEMENT *macro_args = 0;
-      ELEMENT *popped;
-      TEXT expanded;
-      SOURCE_MARK *macro_source_mark;
-      char *expanded_macro_text;
-
-      if (!macro_record)
-        fatal ("no linemacro record for expansion");
-
-      text_init (&expanded);
-
-      macro = macro_record->element;
-      args_number = macro->args.number - 1;
-
-      if (args_number > 0)
-        {
-          int def_info_index;
-          macro_args = new_element (ET_NONE);
-          for (def_info_index = 0; def_info_index < args_number; def_info_index++)
-            {
-              char *argument_text;
-              ELEMENT *macro_arg_text;
-              ELEMENT *macro_arg_element;
-
-              if (!def_info[def_info_index])
-                break;
-              /* convert the argument to a Texinfo string */
-              if (def_info[def_info_index]->element)
-                {
-                  ELEMENT *arg = def_info[def_info_index]->element;
-                  if (arg->type == ET_bracketed_arg)
-                    {
-                      /* duplicate leading and trailing spaces info */
-                      ELEMENT *spaces_before
-                        = lookup_info_element (arg, "spaces_before_argument");
-                      ELEMENT *spaces_after
-                        = lookup_info_element (arg, "spaces_after_argument");
-
-                      if (arg->contents.number > 0
-                          || spaces_before || spaces_after)
-                        {
-                          ELEMENT *tmp_element = new_element (ET_NONE);
-                          tmp_element->contents = arg->contents;
-                          if (spaces_before)
-                            {
-                              ELEMENT *spaces_element = new_element (ET_NONE);
-                              text_append (&spaces_element->text,
-                                           (char *)spaces_before->text.text);
-                              add_info_element_oot (tmp_element,
-                                                    "spaces_before_argument",
-                                                    spaces_element);
-                            }
-                          if (spaces_after)
-                            {
-                              ELEMENT *spaces_element = new_element (ET_NONE);
-                              text_append (&spaces_element->text,
-                                           (char *)spaces_after->text.text);
-                              add_info_element_oot (tmp_element,
-                                                    "spaces_after_argument",
-                                                    spaces_element);
-                            }
-                          argument_text = convert_to_texinfo (tmp_element);
-                          tmp_element->contents.list = 0;
-                          destroy_element (tmp_element);
-                        }
-                      else
-                        argument_text = strdup("");
-                    }
-                  else
-                    argument_text = convert_to_texinfo (arg);
-                }
-              else
-                argument_text = strdup("");
-
-              free (def_info[def_info_index]->arg_type);
-              free (def_info[def_info_index]);
-
-              /* setup an argument suitable for expand_macro_body and
-                 add it to macro_args */
-              macro_arg_text = new_element (ET_NONE);
-              text_append (&macro_arg_text->text, argument_text);
-              free (argument_text);
-              macro_arg_element = new_element (ET_NONE);
-              add_to_element_contents (macro_arg_element, macro_arg_text);
-              add_to_element_args (macro_args, macro_arg_element);
-            }
-        }
-      free (def_info);
-
-      expand_macro_body (macro_record, macro_args, &expanded);
-      debug ("LINEMACROBODY: %s||||||", expanded.text);
-
-      if (expanded.text)
-        expanded_macro_text = expanded.text;
-      else
-        /* we want to always have a text for the source mark */
-        expanded_macro_text = strdup ("");
-      input_push_text (expanded_macro_text, current_source_info.line_nr,
-                       command_name(def_command), 0);
-
-      macro_source_mark = new_source_mark (SM_type_linemacro_expansion);
-      macro_source_mark->status = SM_status_start;
-      /* at this point current is the linemacro_call container,
-         associate it to the source mark */
-      macro_source_mark->element = current;
-
-      current = current->parent;
-      /* remove the linemacro_call container from the main tree.
-         The container holds the arguments Texinfo elements tree */
-      popped = pop_element_from_contents (current);
-      popped->parent = 0;
-
-      register_source_mark (current, macro_source_mark);
-      set_input_source_mark (macro_source_mark);
-
-      if (macro_args)
-        destroy_element_and_children (macro_args);
-
-      return current;
-    }
 
   /* Record the index entry if def_info is not empty. */
 
@@ -904,7 +773,8 @@ end_line_starting_block (ELEMENT *current)
   if (pop_context () != ct_line)
     fatal ("line context expected");
 
-  debug ("END BLOCK LINE: %s", print_element_debug (current, 1));
+  debug_nonl ("END BLOCK LINE: ");
+  debug_print_element (current, 1); debug ("");
 
   /* @multitable args */
   if (command == CM_multitable
@@ -1017,10 +887,10 @@ end_line_starting_block (ELEMENT *current)
               /* Check if @enumerate specification is either a single
                  letter or a string of digits. */
               if (g->text.end == 1
-                    && isalpha ((unsigned char) g->text.text[0])
+                    && isascii_alpha (g->text.text[0])
                   || (g->text.end > 0
                       && !*(g->text.text
-                            + strspn (g->text.text, "0123456789"))))
+                            + strspn (g->text.text, digit_chars))))
                 {
                   spec = g->text.text;
                 }
@@ -1223,6 +1093,8 @@ end_line_starting_block (ELEMENT *current)
                               if (command == CM_ifcommandnotdefined)
                                 iftrue = !iftrue;
                             }
+                          debug ("CONDITIONAL @%s %s: %d",
+                                 command_name(command), flag, iftrue);
                         }
                       free (flag);
                     }
@@ -1255,11 +1127,12 @@ end_line_starting_block (ELEMENT *current)
             }
           if (!memcmp (command_name(command), "ifnot", 5))
             iftrue = !iftrue;
+          debug ("CONDITIONAL @%s format %s: %d", command_name(command),
+                 p, iftrue);
         }
       else
         bug_message ("unknown conditional command @%s", command_name(command));
 
-      debug ("CONDITIONAL %s %d", command_name(command), iftrue);
       if (iftrue)
         {
           ELEMENT *e;
@@ -1270,8 +1143,9 @@ end_line_starting_block (ELEMENT *current)
           source_mark = new_source_mark (SM_type_expanded_conditional_command);
           source_mark->status = SM_status_start;
           source_mark->element = e;
-          push_conditional_stack (command, source_mark);
           register_source_mark (current, source_mark);
+          debug ("PUSH BEGIN COND %s", command_name(command));
+          push_conditional_stack (command, source_mark);
         }
     }
 
@@ -1319,16 +1193,11 @@ end_line_misc_line (ELEMENT *current)
   if (cmd == CM_item)
     data_cmd = CM_item_LINE;
 
-  if (!cmd && !current->parent->type == ET_linemacro_call)
-    fatal ("command name unknown for line command end");
-
-  /* FIXME add a condition to avoid linecommands? */
   if (command_data(data_cmd).flags & CF_contain_basic_inline)
     (void) pop_command (&nesting_context.basic_inline_stack_on_line);
   isolate_last_space (current);
 
-  if (current->parent->type == ET_def_line
-      || current->parent->type == ET_linemacro_call)
+  if (current->parent->type == ET_def_line)
     return end_line_def_line (current);
 
   current = current->parent;
@@ -1409,8 +1278,6 @@ end_line_misc_line (ELEMENT *current)
               int status;
               char *fullpath, *sys_filename;
 
-              debug ("Include %s", text);
-
               sys_filename = encode_file_name (text);
               fullpath = locate_include_file (sys_filename);
 
@@ -1435,6 +1302,8 @@ end_line_misc_line (ELEMENT *current)
                   else
                     {
                       included_file = 1;
+                      debug ("Included %s", fullpath);
+
                       include_source_mark = new_source_mark (SM_type_include);
                       include_source_mark->status = SM_status_start;
                       set_input_source_mark (include_source_mark);
@@ -1443,159 +1312,131 @@ end_line_misc_line (ELEMENT *current)
             }
           else if (current->cmd == CM_verbatiminclude)
             {
-              if (global_info.input_perl_encoding)
-                add_extra_string_dup (current, "input_perl_encoding",
-                                      global_info.input_perl_encoding);
+              if (global_input_encoding_name)
+                add_extra_string_dup (current, "input_encoding_name",
+                                      global_input_encoding_name);
             }
           else if (current->cmd == CM_documentencoding)
             {
-              int i; char *p, *text2;
-              char *texinfo_encoding, *perl_encoding, *input_encoding;
-              /* See tp/Texinfo/Encoding.pm (whole file) */
+              int i; char *p, *normalized_text, *q;
+              int encoding_set;
+              char *input_encoding = 0;
+              int possible_encoding = 0;
 
-              /* Three concepts of encoding:
-                 texinfo_encoding -- one of the encodings supported as an
-                                     argument to @documentencoding, documented 
-                                     in Texinfo manual
-                 perl_encoding -- used for charset conversion within Perl
-                 input_encoding -- for output within an HTML file */
-
-              text2 = strdup (text);
-              for (p = text2; *p; p++)
-                *p = tolower (*p);
-
-              /* Get texinfo_encoding from what was in the document */
-              {
-              static char *canonical_encodings[] = {
-                "us-ascii", "utf-8", "iso-8859-1",
-                "iso-8859-15","iso-8859-2","koi8-r", "koi8-u",
-                0
-              };
-
-              texinfo_encoding = 0;
-              for (i = 0; (canonical_encodings[i]); i++)
+              normalized_text = strdup (text);
+              q = normalized_text;
+              /* lower case, trim non-ascii characters and keep only alphanumeric
+                 characters, - and _.  iconv also seems to trim non alphanumeric
+                 non - _ characters */
+              for (p = text; *p; p++)
                 {
-                  if (!strcmp (text2, canonical_encodings[i]))
+                  /* check if ascii and alphanumeric */
+                  if (isascii_alnum(*p))
                     {
-                      texinfo_encoding = canonical_encodings[i];
-                      break;
+                      possible_encoding = 1;
+                      *q = tolower (*p);
+                      q++;
+                    }
+                  else if (*p == '_' || *p == '-')
+                    {
+                      *q = *p;
+                      q++;
                     }
                 }
-              if (!texinfo_encoding)
-                {
-                  command_warn (current, "encoding `%s' is not a "
-                                "canonical texinfo encoding", text);
-                }
-              }
+              *q = '\0';
 
-              /* Get perl_encoding. */
-              perl_encoding = 0;
-              if (texinfo_encoding)
-                perl_encoding = texinfo_encoding;
+              if (! possible_encoding)
+                command_warn (current, "bad encoding name `%s'",
+                              text);
               else
                 {
-                  int i;
-                  static char *known_encodings[] = {
-                      "shift_jis",
-                      "latin1",
-                      "latin-1",
-                      "utf8",
+
+            /* Warn if the encoding is not one of the encodings supported as an
+               argument to @documentencoding, documented in Texinfo manual */
+                  {
+                    char *texinfo_encoding = 0;
+                    static char *canonical_encodings[] = {
+                      "us-ascii", "utf-8", "iso-8859-1",
+                      "iso-8859-15","iso-8859-2","koi8-r", "koi8-u",
                       0
-                  };
-                  for (i = 0; (known_encodings[i]); i++)
-                    {
-                      if (!strcmp (text2, known_encodings[i]))
-                        {
-                          perl_encoding = known_encodings[i];
-                          break;
-                        }
-                    }
-                }
-              free (text2);
+                    };
+                    char *text_lc;
 
-              if (perl_encoding)
-                {
-                  struct encoding_map {
-                      char *from; char *to;
-                  };
-                  /* The map mimics Encode::find_encoding()->name() result.
-                     Even when the alias is not good, such as 'utf-8-strict'
-                     for 'utf-8', use the same mapping for consistency with the
-                     perl Parser */
-                  static struct encoding_map map[] = {
-                      "utf-8", "utf-8-strict",
-                      "us-ascii", "ascii",
-                      "shift_jis", "shiftjis",
-                      "latin1", "iso-8859-1",
-                      "latin-1", "iso-8859-1"
-                  };
-                  for (i = 0; i < sizeof map / sizeof *map; i++)
-                    {
-                      if (!strcmp (perl_encoding, map[i].from))
-                        {
-                          perl_encoding = map[i].to;
-                          break;
-                        }
-                    }
-                  add_extra_string_dup (current, "input_perl_encoding",
-                                        perl_encoding);
-                  free (global_info.input_perl_encoding);
-                  global_info.input_perl_encoding = strdup (perl_encoding);
-                }
-              else
-                {
-                  command_warn (current, "unrecognized encoding name `%s'",
-                                text);
+                    text_lc = strdup (text);
+                    for (p = text_lc; *p; p++)
+                      if (isascii_alpha (*p))
+                        *p = tolower (*p);
+
+                    for (i = 0; (canonical_encodings[i]); i++)
+                      {
+                        if (!strcmp (text_lc, canonical_encodings[i]))
+                          {
+                            texinfo_encoding = canonical_encodings[i];
+                            break;
+                          }
+                      }
+                    free (text_lc);
+                    if (!texinfo_encoding)
+                      {
+                        command_warn (current, "encoding `%s' is not a "
+                                    "canonical texinfo encoding", text);
+                      }
+                  }
+
+              /* Set input_encoding -- for output within an HTML file, used
+                                       in most output formats */
+                  {
+                    struct encoding_map {
+                        char *from; char *to;
+                    };
+
+                  /* In the perl parser,
+                     lc(Encode::find_encoding()->mime_name()) is used */
                   /* the Perl Parser calls Encode::find_encoding, so knows
                      about more encodings than what we know about here.
-                     TODO: Check when perl_encoding could be defined when 
-                     texinfo_encoding isn't.
-                     Maybe we should check if an iconv conversion is possible
-                     from this encoding to UTF-8. */
-
-                }
-
-              /* Set input_encoding from perl_encoding.  In the perl parser,
-                 lc(Encode::find_encoding()->mime_name()) is used */
-              input_encoding = 0;
-              if (perl_encoding)
-                {
-                  struct encoding_map {
-                      char *from; char *to;
-                  };
-                  static struct encoding_map map[] = {
-                      "utf8",        "utf-8",
-                      "utf-8-strict","utf-8",
-                      "ascii",       "us-ascii",
-                      "shiftjis",    "shift_jis",
-                      "iso-8859-1",  "iso-8859-1",
-                      "iso-8859-2",  "iso-8859-2",
-                      "iso-8859-15", "iso-8859-15",
-                      "koi8-r",      "koi8-r",
-                      "koi8-u",      "koi8-u",
-                  };
-                  input_encoding = perl_encoding;
-                  for (i = 0; i < sizeof map / sizeof *map; i++)
+                   */
+                    static struct encoding_map map[] = {
+                          "utf-8", "utf-8",
+                          "ascii",  "us-ascii",
+                          "shiftjis", "shift_jis",
+                          "latin1", "iso-8859-1",
+                          "latin-1", "iso-8859-1",
+                          "iso-8859-1",  "iso-8859-1",
+                          "iso-8859-2",  "iso-8859-2",
+                          "iso-8859-15", "iso-8859-15",
+                          "koi8-r",      "koi8-r",
+                          "koi8-u",      "koi8-u",
+                    };
+                    for (i = 0; i < sizeof map / sizeof *map; i++)
+                      {
+                       /* Elements in first column map to elements in
+                          second column.  Elements in second column map
+                          to themselves. */
+                        if (!strcasecmp (normalized_text, map[i].from)
+                             || !strcasecmp (normalized_text, map[i].to))
+                          {
+                            input_encoding = map[i].to;
+                            break;
+                          }
+                      }
+                  }
+                  if (!input_encoding)
                     {
-                      /* Elements in first column map to elements in
-                         second column.  Elements in second column map
-                         to themselves. */
-                      if (!strcasecmp (input_encoding, map[i].from)
-                          || !strcasecmp (input_encoding, map[i].to))
-                        {
-                          input_encoding = map[i].to;
-                          break;
-                        }
+                      input_encoding = normalized_text;
                     }
-                }
-              if (input_encoding)
-                {
-                  add_extra_string_dup (current, "input_encoding_name",
-                                        input_encoding);
 
-                  global_info.input_encoding_name = strdup (input_encoding);
-                  set_input_encoding (input_encoding);
+                  /* set_input_encoding also sets global_input_encoding_name */
+                  encoding_set = set_input_encoding (input_encoding);
+                  if (encoding_set)
+                    {
+                      add_extra_string_dup (current, "input_encoding_name",
+                                            input_encoding);
+                    }
+                  else
+                    command_warn (current, "unhandled encoding name `%s'",
+                                  text);
                 }
+              free (normalized_text);
             }
           else if (current->cmd == CM_documentlanguage)
             {
@@ -1607,7 +1448,7 @@ end_line_misc_line (ELEMENT *current)
                  just check if the language code looks right. */
 
               p = text;
-              while (isalpha ((unsigned char) *p))
+              while (isascii_alpha (*p))
                 p++;
               if (*p && *p != '_')
                 {
@@ -1620,11 +1461,11 @@ end_line_misc_line (ELEMENT *current)
                   if (p - text > 4)
                     {
                       /* looks too long */
-                      char c = *p;
+                      char saved = *p;
                       *p = 0;
                       command_warn (current, "%s is not a valid language code",
                                     text);
-                      *p = c;
+                      *p = saved;
                     }
                   if (*p == '_')
                     {
@@ -1632,7 +1473,7 @@ end_line_misc_line (ELEMENT *current)
                       p = q;
                       /* Language code should be of the form LL_CC,
                          language code followed by country code. */
-                      while (isalpha ((unsigned char) *p))
+                      while (isascii_alpha (*p))
                         p++;
                       if (*p || p - q > 4)
                         {
@@ -1652,14 +1493,14 @@ end_line_misc_line (ELEMENT *current)
           p = convert_to_texinfo (args_child_by_index(current, 0));
 
           texi_line = p;
-          while (isspace ((unsigned char) *texi_line))
-            texi_line++;
+
+          texi_line += strspn (texi_line, whitespace_chars);
 
           /* Trim leading and trailing whitespace. */
           p1 = strchr (texi_line, '\0');
           if (p1 > texi_line)
             {
-              while (p1 > texi_line && isspace ((unsigned char) p1[-1]))
+              while (p1 > texi_line && strchr (whitespace_chars, p1[-1]))
                 p1--;
               *p1 = '\0';
             }
@@ -1805,6 +1646,10 @@ end_line_misc_line (ELEMENT *current)
           CONDITIONAL_STACK_ITEM *cond_info = pop_conditional_stack ();
           SOURCE_MARK *end_source_mark;
           SOURCE_MARK *cond_source_mark = cond_info->source_mark;
+
+          debug ("POP END COND %s %s", command_name(end_id),
+                 command_name(cond_info->command));
+
           end_source_mark = new_source_mark (cond_source_mark->type);
           end_source_mark->counter = cond_source_mark->counter;
           end_source_mark->status = SM_status_end;
@@ -1906,13 +1751,13 @@ ELEMENT *
 end_line (ELEMENT *current)
 {
   ELEMENT *current_old = current; /* Used at very end of function */
-  char *in_macro_expansion = 0;
 
   /* If empty line, start a new paragraph. */
   if (last_contents_child (current)
       && last_contents_child (current)->type == ET_empty_line)
     {
-      debug ("END EMPTY LINE in %s", print_element_debug (current, 0));
+      debug_nonl ("END EMPTY LINE in ");
+      debug_print_element (current, 0); debug ("");
       if (current->type == ET_paragraph)
         {
           ELEMENT *e;
@@ -1976,42 +1821,20 @@ end_line (ELEMENT *current)
 
   else if (current->type == ET_line_arg)
     {
-      if (current->parent->type == ET_linemacro_call)
-        {
-          KEY_PAIR *k = lookup_extra (current->parent, "name");
-          in_macro_expansion = (char *)k->value;
-        }
       current = end_line_misc_line (current);
     }
 
   /* 'line' or 'def' at top of "context stack" - this happens when
      line commands are nested (always incorrectly?) */
-  if (current_context () == ct_line || current_context () == ct_def
-       || current_context () == ct_linecommand)
+  if (current_context () == ct_line || current_context () == ct_def)
     {
-      if (in_macro_expansion)
-        /* if in a linemacro command call nested on a line, we do not close
-           the preceding commands yet, as they might use the expansion */
-        {
-          debug ("Expanded @%s still line/block %d:", in_macro_expansion,
-                 current_context ());
-          debug_print_element (current, 1); debug("");
-          return current;
-        }
-      debug_nonl ("Still opened line command %d:", current_context ());
+      debug_nonl ("Still opened line/block command %s: ",
+                  context_name (current_context ()));
       debug_print_element (current, 1); debug("");
       if (current_context () == ct_def)
         {
           while (current->parent
                  && current->parent->type != ET_def_line)
-            {
-              current = close_current (current, 0, 0);
-            }
-        }
-      else if (current_context () == ct_linecommand)
-        {
-          while (current->parent
-                 && current->parent->type != ET_linemacro_call)
             {
               current = close_current (current, 0, 0);
             }

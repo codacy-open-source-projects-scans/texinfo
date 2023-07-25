@@ -358,6 +358,10 @@ foreach my $command ('var', 'cite', 'dmn', keys(%brace_code_commands)) {
 }
 
 my %defaults = (
+  # Not a customization option variable
+  'converted_format'     => '',
+
+  # Customization options
   'ENABLE_ENCODING'      => 1,
   'ASCII_DASHES_AND_QUOTES' => 1,
   'ASCII_GLYPH'          => 0,
@@ -369,8 +373,6 @@ my %defaults = (
   # different from the default, which is undef
   'OUTFILE'              => '-',
   'documentlanguage'     => undef,
-
-  'converted_format'     => '',
   'USE_NODES'            => 1,
 );
 
@@ -515,7 +517,7 @@ sub converter_initialize($)
   # This needs to be here to take into account $self->{'fillcolumn'}.
   $self->push_top_formatter('_Root_context');
   # some caching to avoid calling get_conf
-  if ($self->get_conf('OUTPUT_PERL_ENCODING')) {
+  if (defined($self->get_conf('OUTPUT_PERL_ENCODING'))) {
     $self->{'output_perl_encoding'} = $self->get_conf('OUTPUT_PERL_ENCODING');
   } else {
     $self->{'output_perl_encoding'} = '';
@@ -737,7 +739,8 @@ sub new_formatter($$;$)
     set_space_protection($container, undef, 1, 1);
   }
 
-  my $formatter = {'container' => $container, 'upper_case_stack' => [{}],
+  my $formatter = {'container' => $container,
+                   'upper_case_stack' => [{}],
                    'font_type_stack' => [{}],
                    'w' => 0, 'type' => $type,
               'frenchspacing_stack' => [$self->{'conf'}->{'frenchspacing'}],
@@ -1138,8 +1141,8 @@ sub _align_lines($$$$$$)
       } else {
         my $spaces_prepended
          = _compute_spaces_align_line($line_width, $max_column, $direction);
-        $result .= ' ' x$spaces_prepended . $line ."\n";
-        $line_bytes_begin += count_bytes($self, ' ' x$spaces_prepended);
+        $result .= ' ' x $spaces_prepended . $line ."\n";
+        $line_bytes_begin += count_bytes($self, ' ' x $spaces_prepended);
         $line_bytes_end += count_bytes($self, "\n");
         $bytes_count += $line_bytes_begin + $line_bytes_end
                         + count_bytes($self, $line);
@@ -1157,8 +1160,8 @@ sub _align_lines($$$$$$)
             - $image->{'image_width'};
         $prepended_spaces = 0 if ($prepended_spaces < 0);
       }
-      $result .= ' ' x$prepended_spaces . $line;
-      $line_bytes_begin += count_bytes($self, ' ' x$prepended_spaces);
+      $result .= ' ' x $prepended_spaces . $line;
+      $line_bytes_begin += count_bytes($self, ' ' x $prepended_spaces);
       $bytes_count += $line_bytes_begin + count_bytes($self, $line);
       if ($new_image) {
         $image = $new_image;
@@ -1686,6 +1689,8 @@ sub format_image($$)
      {'contents' => $element->{'args'}->[0]->{'contents'}},
      {'code' => 1, %{$self->{'convert_text_options'}}});
     my ($text, $width) = $self->txt_image_text($element, $basefile);
+    # remove last end of line
+    chomp($text) if (defined($text));
     my $result = $self->image_formatted_text($element, $basefile, $text);
     my $lines_count = ($result =~ tr/\n/\n/);
     if (!defined($width)) {
@@ -1707,6 +1712,8 @@ sub _get_form_feeds($)
   $form_feeds =~ s/[^\f]$//;
   return $form_feeds;
 }
+
+my $description_indent_length = 31;
 
 sub _convert($$);
 
@@ -1923,7 +1930,7 @@ sub _convert($$)
         if ($accented_text ne '');
       return $result;
     } elsif (exists($brace_commands{$command})
-         or ($type and $type eq 'definfoenclose_command')) {
+             or ($type and $type eq 'definfoenclose_command')) {
       if ($self->{'style_map'}->{$command}
            or ($type and $type eq 'definfoenclose_command')) {
         if ($brace_code_commands{$command}) {
@@ -1932,7 +1939,8 @@ sub _convert($$)
           } else {
             $formatter->{'font_type_stack'}->[-1]->{'monospace'}++;
           }
-        } elsif ($brace_commands{$command} eq 'style_no_code') {
+        } elsif (exists($brace_commands{$command})
+                 and $brace_commands{$command} eq 'style_no_code') {
           if ($formatter->{'font_type_stack'}->[-1]->{'monospace'}) {
             push @{$formatter->{'font_type_stack'}}, {'monospace' => 0,
                                                       'normal' => 1};
@@ -1943,7 +1951,7 @@ sub _convert($$)
         if ($no_punctation_munging_commands{$command}) {
           push @{$formatter->{'frenchspacing_stack'}}, 'on';
           set_space_protection($formatter->{'container'}, undef,
-            undef,undef,1);
+                               undef, undef, 1);
         }
         if ($upper_case_commands{$command}) {
           $formatter->{'upper_case_stack'}->[-1]->{'upper_case'}++;
@@ -1952,12 +1960,12 @@ sub _convert($$)
         }
         if ($command eq 'w') {
           $formatter->{'w'}++;
-          set_space_protection($formatter->{'container'}, 1,undef)
+          set_space_protection($formatter->{'container'}, 1, undef)
             if ($formatter->{'w'} == 1);
         }
         my ($text_before, $text_after);
         if ($element->{'type'}
-              and $element->{'type'} eq 'definfoenclose_command') {
+            and $element->{'type'} eq 'definfoenclose_command') {
           $text_before = $element->{'extra'}->{'begin'};
           $text_after = $element->{'extra'}->{'end'};
         } elsif ($non_quoted_commands_when_nested{$command}
@@ -1978,7 +1986,7 @@ sub _convert($$)
           $formatter->{'font_type_stack'}->[-1]->{'code_command'}++;
         }
         $result .= _count_added($self, $formatter->{'container'},
-                 add_next($formatter->{'container'}, $text_before, 1))
+                       add_next($formatter->{'container'}, $text_before, 1))
            if ($text_before ne '');
         if ($element->{'args'}) {
           $result .= _convert($self, $element->{'args'}->[0]);
@@ -1996,11 +2004,11 @@ sub _convert($$)
           }
         }
         $result .= _count_added($self, $formatter->{'container'},
-                 add_next($formatter->{'container'}, $text_after, 1))
+                       add_next($formatter->{'container'}, $text_after, 1))
            if ($text_after ne '');
         if ($command eq 'w') {
           $formatter->{'w'}--;
-          set_space_protection($formatter->{'container'},0,undef)
+          set_space_protection($formatter->{'container'}, 0, undef)
             if ($formatter->{'w'} == 0);
         }
         if ($brace_code_commands{$command}) {
@@ -2008,7 +2016,8 @@ sub _convert($$)
           allow_end_sentence($formatter->{'container'});
           pop @{$formatter->{'font_type_stack'}}
             if !$formatter->{'font_type_stack'}->[-1]->{'monospace'};
-        } elsif ($brace_commands{$command} eq 'style_no_code') {
+        } elsif (exists($brace_commands{$command})
+                 and $brace_commands{$command} eq 'style_no_code') {
           if ($formatter->{'font_type_stack'}->[-1]->{'normal'}) {
             $formatter->{'font_type_stack'}->[-1]->{'normal'}--;
             pop @{$formatter->{'font_type_stack'}}
@@ -2016,7 +2025,6 @@ sub _convert($$)
           }
         }
         if ($non_quoted_commands_when_nested{$command}) {
-          #$formatter->{'code_command'}--;
           $formatter->{'font_type_stack'}->[-1]->{'code_command'}--;
         }
         if ($no_punctation_munging_commands{$command}) {
@@ -2025,7 +2033,7 @@ sub _convert($$)
           $frenchspacing = 1 if ($formatter->{'frenchspacing_stack'}->[-1]
                                  eq 'on');
           set_space_protection($formatter->{'container'}, undef,
-            undef, undef, $frenchspacing);
+                               undef, undef, $frenchspacing);
         }
         if ($upper_case_commands{$command}) {
           $formatter->{'upper_case_stack'}->[-1]->{'upper_case'}--;
@@ -2167,7 +2175,7 @@ sub _convert($$)
                   {'text' => "$post_quote: "}]});
             $name_text =~ s/^(\s*)/$1$pre_quote/ if $pre_quote;
             $result .= $name_text;
-            _count_added($self,$self->{'formatters'}[-1]{'container'},
+            _count_added($self, $self->{'formatters'}[-1]{'container'},
                          $pre_quote)
               if $pre_quote;
           }
@@ -3366,8 +3374,10 @@ sub _convert($$)
       }
     } elsif ($type eq 'menu_entry') {
       my $entry_name_seen = 0;
+      my $menu_entry_node;
       foreach my $content (@{$element->{'contents'}}) {
         if ($content->{'type'} eq 'menu_entry_node') {
+          $menu_entry_node = $content;
           my ($pre_quote, $post_quote);
           $self->{'formatters'}->[-1]->{'suppress_styles'} = 1;
           $self->{'formatters'}->[-1]->{'no_added_eol'} = 1;
@@ -3433,6 +3443,50 @@ sub _convert($$)
             }
           }
           $result .= $pre_quote . $entry_name . $post_quote;
+
+        # empty description
+        } elsif ($content->{'type'} eq 'menu_entry_description'
+                 and $content->{'contents'}
+                 and scalar(@{$content->{'contents'}}) == 1
+                 # preformatted inside menu_entry_description
+                 and $content->{'contents'}->[0]->{'contents'}
+                 and scalar(@{$content->{'contents'}->[0]->{'contents'}}) == 1
+                 and defined($content->{'contents'}->[0]->{'contents'}->[0]->{'text'})
+                 and $content->{'contents'}->[0]->{'contents'}->[0]->{'text'} !~ /\S/) {
+          if ($menu_entry_node and $menu_entry_node->{'extra'}
+              and defined($menu_entry_node->{'extra'}->{'normalized'})
+              and $self->{'labels'}
+                ->{$menu_entry_node->{'extra'}->{'normalized'}}
+              and $self->{'labels'}
+                ->{$menu_entry_node->{'extra'}->{'normalized'}}->{'extra'}
+              and $self->{'labels'}
+                ->{$menu_entry_node->{'extra'}->{'normalized'}}->{'extra'}
+                                                       ->{'node_description'}) {
+            my $description_element = $self->{'labels'}
+                 ->{$menu_entry_node->{'extra'}->{'normalized'}}->{'extra'}
+                                                       ->{'node_description'};
+            # flush the current unfilled container
+            $result .= _count_added($self,
+                         $formatter->{'container'},
+                         add_pending_word($formatter->{'container'}, 1));
+            # push a paragraph container to format the description.
+            my $description_para = $self->new_formatter('paragraph',
+                { 'indent_length' => $description_indent_length,
+                  'counter'
+             => Texinfo::Convert::Paragraph::counter($formatter->{'container'}),
+                });
+            if ($result !~ /\s$/) {
+              $result .= _count_added($self, $description_para->{'container'},
+                               add_text($description_para->{'container'}, ' '));
+            }
+            push @{$self->{'formatters'}}, $description_para;
+            $result .= _convert($self, $description_element->{'args'}->[0]);
+            $result .= _count_added($self, $description_para->{'container'},
+               Texinfo::Convert::Paragraph::end($description_para->{'container'}));
+            pop @{$self->{'formatters'}};
+          } else {
+            $result .= _convert($self, $content);
+          }
         } else {
           $result .= _convert($self, $content);
         }
@@ -3451,7 +3505,7 @@ sub _convert($$)
                          $formatter->{'container'},
                          add_pending_word($formatter->{'container'}));
         end_line($formatter->{'container'});
-        $result = $self->ensure_end_of_line($result) ;
+        $result = $self->ensure_end_of_line($result);
       }
 
       return $result;
@@ -3590,7 +3644,7 @@ sub _convert($$)
       if ($self->{'format_context'}->[-1]->{'item_command'} eq 'headitem') {
         # at this point cell_beginning is at the beginning of
         # the cell following the end of the table -> full width
-        my $line = ' ' x $indent_len . '-' x $cell_beginning . "\n";
+        my $line = (' ' x $indent_len) . ('-' x $cell_beginning) . "\n";
         $bytes_count += count_bytes($self, $line);
         $result .= $line;
         $self->{'empty_lines_count'} = 0;

@@ -31,16 +31,6 @@
 
 enum input_type { IN_file, IN_text };
 
-enum character_encoding {
-    ce_latin1,
-    ce_latin2,
-    ce_latin15,
-    ce_utf8,
-    ce_shiftjis,
-    ce_koi8r,
-    ce_koi8u
-};
-
 typedef struct {
     enum input_type type;
 
@@ -53,43 +43,98 @@ typedef struct {
                     into lines. */
     char *value_flag; /* value flag if the input text is a @value
                          expansion */
+    char *macro_name; /* macro name if the input text is a user-defined
+                        macro expansion */
     SOURCE_MARK *input_source_mark;
 } INPUT;
 
 static char *input_pushback_string;
 
-enum character_encoding input_encoding;
-
-static char *input_encoding_name;
 static iconv_t reverse_iconv; /* used in encode_file_name */
 
-void
+typedef struct {
+  char *encoding_name;
+  iconv_t iconv;
+} ENCODING_CONVERSION;
+
+static ENCODING_CONVERSION *encodings_list = 0;
+int encoding_number = 0;
+int encoding_space = 0;
+char *global_input_encoding_name = 0;
+
+static ENCODING_CONVERSION *current_encoding_conversion = 0;
+
+/* ENCODING should always be lower cased */
+/* WARNING: it is very important for the first call to
+   set_input_encoding to be for "utf-8" as the codes assume
+   a conversion to UTF-8 in encodings_list[0]. */
+int
 set_input_encoding (char *encoding)
 {
-  free (input_encoding_name); input_encoding_name = strdup (encoding);
+  int encoding_index = -1;
+  int encoding_set = 0;
+  char *conversion_encoding = encoding;
+
+  /* should correspond to
+     Texinfo::Common::encoding_name_conversion_map.
+     Thoughts on this mapping are available near
+     Texinfo::Common::encoding_name_conversion_map definition
+  */
+  if (!strcmp (encoding, "us-ascii"))
+    conversion_encoding = "iso-8859-1";
+
   if (reverse_iconv)
     {
       iconv_close (reverse_iconv);
       reverse_iconv = (iconv_t) 0;
     }
 
-  if (!strcasecmp (encoding, "utf-8"))
-    input_encoding = ce_utf8;
-  else if (!strcmp (encoding, "iso-8859-1")
-          || !strcmp (encoding, "us-ascii"))
-    input_encoding = ce_latin1;
-  else if (!strcmp (encoding, "iso-8859-2"))
-    input_encoding = ce_latin2;
-  else if (!strcmp (encoding, "iso-8859-15"))
-    input_encoding = ce_latin15;
-  else if (!strcmp (encoding, "shift_jis"))
-    input_encoding = ce_shiftjis;
-  else if (!strcmp (encoding, "koi8-r"))
-    input_encoding = ce_koi8r;
-  else if (!strcmp (encoding, "koi8-u"))
-    input_encoding = ce_koi8u;
+  if (!strcmp (encoding, "utf-8"))
+    {
+      if (encoding_number > 0)
+        encoding_index = 0;
+    }
+  else if (encoding_number > 1)
+    {
+      int i;
+      for (i = 1; i < encoding_number; i++)
+        {
+          if (!strcmp (encoding, encodings_list[i].encoding_name))
+            {
+              encoding_index = i;
+              break;
+            }
+        }
+    }
+
+  if (encoding_index == -1)
+    {
+      if (encoding_number >= encoding_space)
+        {
+          encodings_list = realloc (encodings_list,
+                   (encoding_space += 3) * sizeof (ENCODING_CONVERSION));
+        }
+      encodings_list[encoding_number].encoding_name
+           = strdup (conversion_encoding);
+      /* Initialize conversions for the first time.  iconv_open returns
+         (iconv_t) -1 on failure so these should only be called once. */
+      encodings_list[encoding_number].iconv
+           = iconv_open ("UTF-8", conversion_encoding);
+      encoding_index = encoding_number;
+      encoding_number++;
+    }
+
+  if (encodings_list[encoding_index].iconv == (iconv_t) -1)
+    current_encoding_conversion = 0;
   else
-    fprintf (stderr, "warning: unhandled encoding %s\n", encoding);
+    {
+      current_encoding_conversion = &encodings_list[encoding_index];
+      encoding_set = 1;
+      free (global_input_encoding_name);
+      global_input_encoding_name = strdup (encoding);
+    }
+
+  return encoding_set;
 }
 
 
@@ -136,14 +181,6 @@ new_line (ELEMENT *current)
     return 0;
 }
 
-
-static iconv_t iconv_from_latin1;
-static iconv_t iconv_from_latin2;
-static iconv_t iconv_from_latin15;
-static iconv_t iconv_from_shiftjis;
-static iconv_t iconv_from_koi8u;
-static iconv_t iconv_from_koi8r;
-static iconv_t iconv_validate_utf8;
 
 /* Run iconv using text buffer as output buffer. */
 size_t
@@ -233,49 +270,7 @@ convert_to_utf8 (char *s)
      file, then we'd have to keep track of which strings needed the UTF-8 flag
      and which didn't. */
 
-  /* Initialize conversions for the first time.  iconv_open returns
-     (iconv_t) -1 on failure so these should only be called once. */
-  if (iconv_validate_utf8 == (iconv_t) 0)
-    iconv_validate_utf8 = iconv_open ("UTF-8", "UTF-8");
-  if (iconv_from_latin1 == (iconv_t) 0)
-    iconv_from_latin1 = iconv_open ("UTF-8", "ISO-8859-1");
-  if (iconv_from_latin2 == (iconv_t) 0)
-    iconv_from_latin2 = iconv_open ("UTF-8", "ISO-8859-2");
-  if (iconv_from_latin15 == (iconv_t) 0)
-    iconv_from_latin15 = iconv_open ("UTF-8", "ISO-8859-15");
-  if (iconv_from_shiftjis == (iconv_t) 0)
-    iconv_from_shiftjis = iconv_open ("UTF-8", "SHIFT-JIS");
-  if (iconv_from_koi8r == (iconv_t) 0)
-    iconv_from_koi8r = iconv_open ("UTF-8", "KOI8-R");
-  if (iconv_from_koi8u == (iconv_t) 0)
-    iconv_from_koi8u = iconv_open ("UTF-8", "KOI8-U");
-
-  switch (input_encoding)
-    {
-    case ce_utf8:
-      our_iconv = iconv_validate_utf8;
-      break;
-    case ce_latin1:
-      our_iconv = iconv_from_latin1;
-      break;
-    case ce_latin2:
-      our_iconv = iconv_from_latin2;
-      break;
-    case ce_latin15:
-      our_iconv = iconv_from_latin15;
-      break;
-    case ce_shiftjis:
-      our_iconv = iconv_from_shiftjis;
-      break;
-    case ce_koi8r:
-      our_iconv = iconv_from_koi8r;
-      break;
-    case ce_koi8u:
-      our_iconv = iconv_from_koi8u;
-      break;
-    }
-
-  if (our_iconv == (iconv_t) -1)
+  if (current_encoding_conversion == 0)
     {
       /* In case the converter couldn't be initialised.
          Danger: this will cause problems if the input is not in UTF-8 as
@@ -283,7 +278,7 @@ convert_to_utf8 (char *s)
       return s;
     }
 
-  ret = encode_with_iconv (our_iconv, s);
+  ret = encode_with_iconv (current_encoding_conversion->iconv, s);
   free (s);
   return ret;
 }
@@ -321,9 +316,12 @@ encode_file_name (char *filename)
         }
       else if (doc_encoding_for_input_file_name)
         {
-          if (input_encoding != ce_utf8 && input_encoding_name)
+          if (current_encoding_conversion
+              && strcmp (global_input_encoding_name, "utf-8"))
             {
-              reverse_iconv = iconv_open (input_encoding_name, "UTF-8");
+              char *conversion_encoding
+                = current_encoding_conversion->encoding_name;
+              reverse_iconv = iconv_open (conversion_encoding, "UTF-8");
             }
         }
       else if (locale_encoding)
@@ -418,6 +416,10 @@ next_text (ELEMENT *current)
         {
           char *p, *new;
         case IN_text:
+          /*
+          debug_nonl ("IN_TEXT '"); debug_print_protected_string (input->ptext);
+          debug ("'");
+          */
           if (!*input->ptext)
             break;
           /* Split off a line of input. */
@@ -427,7 +429,11 @@ next_text (ELEMENT *current)
             input->ptext = p + 1;
           else
             input->ptext = p; /* The next time, we will pop the input source. */
-
+          /*
+          debug_nonl ("NEW IN_TEXT '"); debug_print_protected_string (new);
+          debug_nonl ("' next: '");
+          debug_print_protected_string (input->ptext); debug ("'");
+          */
           if (!input->source_info.macro && !input->value_flag)
             input->source_info.line_nr++;
 
@@ -517,8 +523,10 @@ next_text (ELEMENT *current)
               value_expansion_nr--;
               free (input->value_flag);
             }
-          else if (input->source_info.macro)
-            macro_expansion_nr--;
+          else if (input->macro_name)
+            {
+              macro_expansion_nr--;
+            }
         }
 
       if (input->input_source_mark)
@@ -545,16 +553,26 @@ next_text (ELEMENT *current)
         }
       input_number--;
     }
+  debug ("INPUT FINISHED");
   return 0;
 }
 
 /* Store TEXT as a source for Texinfo content.  TEXT should be a UTF-8
    string.  TEXT will be later free'd and must be allocated on the heap.
-   MACRO is the name of a macro that the text came from. */
+   MACRO_NAME is the name of the macro expanded as text.  It should only be
+   given if this is the text corresponds to a new macro expansion.
+   If already within a macro expansion, but not from a macro expansion
+   (from a value expansion, for instance), the macro name will be taken
+   from the input stack.
+   VALUE_FLAG is the name of the value flag expanded as text.
+   VALUE_FLAG will be later free'd, but not MACRO_NAME.
+ */
 void
-input_push_text (char *text, int line_number, char *macro, char *value_flag)
+input_push_text (char *text, int line_number, char *macro_name,
+                 char *value_flag)
 {
   char *filename = 0;
+  char *in_macro = 0;
 
   if (!text)
     return;
@@ -573,17 +591,24 @@ input_push_text (char *text, int line_number, char *macro, char *value_flag)
   input_stack[input_number].text = text;
   input_stack[input_number].ptext = text;
 
-  if (!macro && !value_flag)
-    line_number--;
-  input_stack[input_number].source_info.line_nr = line_number;
   if (input_number > 0)
     {
       filename = input_stack[input_number - 1].source_info.file_name;
+      /* context macro expansion */
+      in_macro = input_stack[input_number - 1].source_info.macro;
     }
+  if (macro_name) {
+    /* new macro expansion */
+    in_macro = macro_name;
+  }
+  if (!in_macro && !value_flag)
+    line_number--;
+  input_stack[input_number].source_info.line_nr = line_number;
   input_stack[input_number].source_info.file_name = save_string (filename);
-  input_stack[input_number].source_info.macro = save_string (macro);
-  input_stack[input_number].input_source_mark = 0;
+  input_stack[input_number].source_info.macro = save_string (in_macro);
+  input_stack[input_number].macro_name = save_string (macro_name);
   input_stack[input_number].value_flag = value_flag;
+  input_stack[input_number].input_source_mark = 0;
   input_number++;
 }
 
@@ -652,6 +677,27 @@ input_reset_input_stack (void)
   input_number = 0;
   macro_expansion_nr = 0;
   value_expansion_nr = 0;
+}
+
+void
+reset_encoding_list (void)
+{
+  int i;
+  /* never reset the utf-8 encoding in position 0 */
+  if (encoding_number > 1)
+    {
+      for (i = 1; i < encoding_number; i++)
+        {
+          free (encodings_list[i].encoding_name);
+          if (encodings_list[i].iconv != (iconv_t) -1)
+            iconv_close (encodings_list[i].iconv);
+        }
+      encoding_number = 1;
+    }
+  /* could be named global_encoding_conversion and reset in wipe_global_info,
+     but we prefer to keep it static as long as it is only used in one
+     file */
+  current_encoding_conversion = 0;
 }
 
 int

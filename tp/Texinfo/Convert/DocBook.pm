@@ -50,10 +50,13 @@ my %brace_commands = %Texinfo::Commands::brace_commands;
 my $nbsp = '&#'.hex('00A0').';';
 
 my %defaults = (
+  # Not a customization option variable
+  'converted_format'     => 'docbook',
+
+  # Customization option variables
   'FORMAT_MENU'          => 'nomenu',
   'EXTENSION'            => 'xml', # dbk?
   'OUTPUT_ENCODING_NAME' => 'utf-8',
-  'converted_format'     => 'docbook',
   'SPLIT'                => 0,
   'documentlanguage'     => undef,
   'OPEN_QUOTE_SYMBOL'    => '&#'.hex('2018').';',
@@ -1278,8 +1281,11 @@ sub _convert($$;$)
                .$self->xml_protect_text($file->[0])
                ."\" format=\"$file->[1]\"></imagedata></imageobject>";
           }
-          my ($image_text, $image_width) = $self->txt_image_text($element, $basefile);
+          my ($image_text, $image_width)
+                = $self->txt_image_text($element, $basefile);
           if (defined($image_text)) {
+            # remove last end of line
+            chomp($image_text);
             $result .= "<textobject><literallayout>"
                .$self->_protect_text($image_text)
                .'</literallayout></textobject>';

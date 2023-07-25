@@ -42,6 +42,7 @@ $VERSION = '7.0dev';
 my $STDIN_DOCU_NAME = 'stdin';
 
 my %defaults = Texinfo::Convert::Plaintext::converter_defaults(undef, undef);
+# Customization option variables
 $defaults{'FORMAT_MENU'} = 'menu';
 $defaults{'EXTENSION'} = 'info';
 $defaults{'USE_SETFILENAME_EXTENSION'} = 1;
@@ -574,6 +575,8 @@ sub format_image($$)
       }
     }
     my ($text, $width) = $self->txt_image_text($element, $basefile);
+    # remove last end of line
+    chomp($text) if (defined($text));
     my $alt;
     if (defined($element->{'args'}->[3])
         and $element->{'args'}->[3]->{'contents'}

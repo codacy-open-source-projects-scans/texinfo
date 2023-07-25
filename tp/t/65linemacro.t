@@ -21,6 +21,46 @@ my @test_cases = (
 @mycommand @code{in code
 
 '],
+['arobase_brace_in_linemacro_call',
+'@linemacro simplemac { arg1 , arg2 }
+first: \arg1\|
+second: \arg2\|
+@end linemacro
+
+@simplemac{ @{ } { @} }
+
+@simplemac{ @} } { @{ }
+'],
+['verb_in_linemacro_call',
+'@linemacro mycommand {a, b, c, d}
+first \a\
+second \b\
+third \c\
+@defline \a\ \d\
+@end linemacro
+
+@defblock
+@mycommand {Name} @verb{: in verb :} {A @verb{| in bracketed |} } other {j}
+@end defblock
+'],
+# @ protects the closing brace, so there is an error of missing closing brace
+['verb_with_arobase_in_linemacro_call',
+'@linemacro mycommand {a, b, c}
+\a\, \b\ \c\
+@end linemacro
+
+@mycommand @verb{@ in verb @} and next
+'],
+# the first argument is '@verb{: in }'.  The lone } is not flagged as an error,
+# so in teh end there is no error for this dubious construct
+['verb_with_brace_in_linemacro_call',
+'@linemacro mycommand {a, b, c}
+\a\, \b\ \c\
+@end linemacro
+
+@mycommand @verb{: in } verb :} other last
+
+'],
 ['verb_not_closed',
 '@linemacro mycommand {a, b, c}
 \a\, \b\ \c\
@@ -41,8 +81,14 @@ Some text @mycommand {a
  call}
 and after.
 '],
-# FIXME currently incorrect output, probably because @end is handled
-# when the linemacro is processed.
+['protection_of_end_of_line_by_command',
+'@linemacro lm {one}
+\one\bullet{}
+@end linemacro
+
+@lm @
+
+'],
 ['blockitem_no_item',
 '@linemacro mycommand {a, b, c}
 \a\, \b\ \c\
@@ -143,7 +189,7 @@ something
    last} line
 @end defblock
 '],
-# arguments should be '@abc {d}' '@ringaccent b'
+# arguments should be '@code {d}' '@ringaccent b'
 ['spaces_after_command_in_call',
 '@linemacro mylinecommand {first, second, rest}
 @defblock
@@ -151,7 +197,36 @@ something
 @end defblock
 @end linemacro
 
+@mylinecommand @code {d} @ringaccent b rest
+'],
+['spaces_after_unknown_command_in_call',
+'@linemacro mylinecommand {first, second, rest}
+@defblock
+@defline category \first\ A \second\ B \rest\
+@end defblock
+@end linemacro
+
 @mylinecommand @abc {d} @ringaccent b rest
+'],
+['spaces_after_macro_linemacro_commands_in_call',
+'@linemacro mylinecommand {first, second, rest}
+@defblock
+@defline category {\first\} A \second\ B \rest\
+@end defblock
+@end linemacro
+
+@macro mymac {arg1}
+@samp{arg1}
+@end macro
+
+@linemacro mylinemac {name, rest}
+{\name\} \rest\
+@end linemacro
+
+@mylinecommand @mymac {aa} @mymac {bb}
+
+@mylinecommand @mylinemac {Fun} {other} and remaining
+
 '],
 # first argument should be {a b}{c d}{rest}
 ['spaces_in_call',
@@ -227,9 +302,8 @@ inside {\a\ operator \b\} \rest\
 @outside {type} {a function} @inside {X} {Y} ( remaining, type typed )
 @end defblock
 '],
-# following example has incorrect braces in many places and
-# in particular the bracketed opened with @inside in it is
-# not closed, this makes it an interesting case.
+# note that the bracketed in @inside ends up on the @cindex line where
+# it is not valid
 ['nested_linemacro_calls',
 '@linemacro inside {a, b}
 inside {\a\ operator \b\}
@@ -244,13 +318,159 @@ inside {\a\ operator \b\}
 @outside {type} {@inside {X} {Y}} ( remaining, type typed )
 @end defblock
 '],
-# TODO
-# add recursive linemacro call
-# add macro call in linemacro
-# test cases of line commands, including linemacros on the same
-# line to check commands closing in that context.
-# test @c in line macro command invokation, including in
-# braces
+['end_conditional_in_linemacro',
+'@linemacro lm {a}
+\a\
+@end linemacro
+
+@ifclear aa
+@lm {text
+  @end ifclear}
+
+@ifset b
+@lm {text
+@end ifset}
+
+'],
+['begin_conditional_in_linemacro',
+'@linemacro lm {a}
+b \a\ a
+@end linemacro
+
+@lm {
+@ifset}
+in ifset
+@end ifset
+
+@lm {
+@ifclear}
+in ifclear
+@end ifclear
+'],
+['block_begin_end_in_linemacro_call',
+'@linemacro lm {a}
+b \a\ a
+@end linemacro
+
+@lm {
+@quotation aa
+in quotation
+}
+@end quotation
+
+@quotation hh
+@lm {
+@end quotation
+
+}
+
+@lm {
+@quotation}
+in quotation
+
+aa.
+@end quotation
+
+@lm {
+@ignore
+ignored }
+still ignored
+@end ignore
+
+@lm {
+@macro mymac {e, f}
+args \e\|\f\|
+@defline @lm {\e\} {\f\}
+}
+@end macro
+
+@defblock
+@mymac{arg1, arg2}
+@end defblock
+
+'],
+['call_macro_in_linemacro_body',
+'@linemacro lm {a, b}
+@mymacro{@code{}
+@var{\a\}
+now second arg: \b\}
+@end linemacro
+
+@macro mymacro {c, d}
+@table \c\
+@item \d\
+@end table
+@end macro
+
+@lm {something} {gg , yy 
+  zz}
+'],
+['call_macro_in_linemacro_call',
+'@linemacro lm {a, b}
+@quotation \a\
+now second arg: \b\
+@end linemacro
+
+@macro mymacro {c, d}
+@table \c\
+@item \d\
+@end table
+@end macro
+
+@lm {aa
+  @mymacro{@emph ,
+   ggg} } jj @var{T}
+ 
+
+@end quotation
+'],
+['recursive_linemacro_in_body',
+'@linemacro anorecurse {arg, other}
+@anorecurse {\arg\} d \other\
+@end linemacro
+
+@anorecurse {aa} b c
+', {'MAX_MACRO_CALL_NESTING' => 100}],
+['recursive_linemacro_in_call',
+'@linemacro anorecurse {arg, other}
+\arg\ d \other\
+@end linemacro
+
+@anorecurse {@anorecurse a b} c
+'],
+['comment_in_linemacro_call',
+'@linemacro lm {a, b}
+c \a\ d
+\b\
+@end linemacro
+
+@lm @code{
+something @comment in} out
+}
+next
+'],
+['comment_in_one_argument_linemacro_call',
+'@linemacro lm {a}
+c \a\ d
+@end linemacro
+
+@lm @code{something @comment in} out
+}
+
+next
+'],
+['comment_at_end_of_linemacro_call',
+'@linemacro lm {a, b}
+c \a\ d
+\b\
+@end linemacro
+
+@math{
+@lm {something protected} something @c comment }
+}
+after
+
+']
 );
 
 

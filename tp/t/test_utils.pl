@@ -441,7 +441,8 @@ sub new_test($;$$$)
 
 # keys under 'info' are not needed here.
 my @contents_keys = ('contents', 'args', 'parent', 'source_info',
-  'node_content', 'invalid_nesting', 'info', 'text_arg');
+  'node_content', 'invalid_nesting', 'info', 'text_arg',
+  'node_description');
 my @menus_keys = ('menu_next', 'menu_up', 'menu_prev', 'menu_up_hash');
 # 'section_number' is kept in other results as it may be the only clue
 # to know which section element it is.
@@ -1259,22 +1260,16 @@ sub test($$)
           if (!open (OUTFILE, ">$outfile")) {
             warn "ERROR: open $outfile: $!\n";
           } else {
-            my $output_file_encoding;
-            # FIXME do all the converters implement get_conf?  Otherwise
-            # the OUTPUT_PERL_ENCODING could ve determined from
-            # $format_converter_options->{'OUTPUT_ENCODING_NAME'} using the
-            # same code as in Texinfo/Common.pm set_output_encodings
-            my $output_perl_encoding = $converter->get_conf('OUTPUT_PERL_ENCODING');
-            if (defined($output_perl_encoding)) {
-              $output_file_encoding = $output_perl_encoding;
-            } else {
-              my $info = $parser->global_information();
-              $output_file_encoding = $info->{'input_perl_encoding'}
-                if ($info and $info->{'input_perl_encoding'});
-            }
+            # Texinfo::Convert::Converter::converter() calls
+            # Texinfo::Common::set_output_encodings, so OUTPUT_PERL_ENCODING
+            # should be set if possible in all the formats converters.
+            my $output_file_encoding
+                      = $converter->get_conf('OUTPUT_PERL_ENCODING');
             if (defined($output_file_encoding)
                    and $output_file_encoding ne '') {
               binmode(OUTFILE, ":encoding($output_file_encoding)");
+            } else {
+              warn "WARNING: $self->{'name'}: $test_name: $format: no encoding\n";
             }
             if ($outfile_preamble{$format}) {
               if (ref($outfile_preamble{$format}) eq 'CODE') {

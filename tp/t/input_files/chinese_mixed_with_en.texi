@@ -3,7 +3,7 @@
 @settitle chinese mixed with english
 
 @node Top
-@top Mixed in UTF-8
+@top Mixed chinese and english
 
 Example of english and chinese, chinese aligned or not.
 

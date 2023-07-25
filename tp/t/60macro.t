@@ -14,6 +14,14 @@ in foo
 @macro abar
 in bar
 @end macro'],
+['zero_argument_comment',
+'@macro foo {}@c foo c
+in foo
+@end macro
+
+@macro abar@comment bar comment
+in bar
+@end macro'],
 ['text_before_after',
 'before @macro mymacro
 in macro
@@ -65,7 +73,7 @@ in macro
 in
 @end rmacro
 
-@macro aftername {ggg} more
+@macro aftername {ggg} more  
 in macro
 @end macro
 
@@ -156,6 +164,15 @@ second arg: \second\
 
 @twoargs{one, two, three}.
 '],
+['non_ascii_in_macro_name',
+'@macro parenbr'."\x{00e8}".'ve {a}
+(@`{\a\})
+@end macro
+
+@parenbr'."\x{00e8}".'ve{e}
+',
+{'skip' => ($] < 5.014) ? 'Perl too old: /a regex flag needed' : undef, },
+],
 ['macro_expansion','
 @macro macroone {arg1, arg2 }
 result of a macro with \arg1\ and 
@@ -268,6 +285,16 @@ second \bb\,
 
 @twoa{ ,l}
 
+'],
+['arobase_brace_in_macro_call',
+'@macro simplemac { arg1 , arg2 }
+first: \arg1\|
+second: \arg2\|
+@end macro
+
+@simplemac{ @{ , @} }
+
+@simplemac{ @} , @{ }
 '],
 ['protect_in_body',
 '@macro macroone { arg1 , arg2 }
@@ -535,6 +562,33 @@ a
 @multitable @columnfractions 0.4 .6 5.
 @emptymacro{}@item fc @tab sc
 @end multitable
+'],
+['macro_for_verb',
+'@macro verbopen {}
+@verb{
+@end macro
+
+@verbopen{}@ some text
+
+@code
+@}
+'],
+['verb_with_arobase_in_macro_call',
+'@macro showarg {a, b}
+first: \a\
+second: \b\
+@end macro
+
+@showarg{@verb{, commas ,}, @verb{@ arobase @}}
+'],
+['verb_with_brace_in_macro_call',
+'
+@macro mycommand {a, b, c}
+\a\|\b\|\c\
+@end macro
+
+@mycommand {@verb{: in }, verb :}, other, last}
+
 '],
 # tests a source mark on empty line after paragraph transfer in a focused way
 ['macro_after_paragraph',

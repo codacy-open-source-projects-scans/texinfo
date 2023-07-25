@@ -340,7 +340,7 @@ sub html_image_file_location_name($$$$)
         $image_extension = $extension;
       } else {
         $image_file = "$image_basefile.jpg";
-        $image_extension = 'jpg';
+        $image_extension = '.jpg';
       }
     }
   }
@@ -1860,6 +1860,10 @@ sub convert_tree_new_formatting_context($$;$$$)
 }
 
 my %defaults = (
+  # Not a customization option variable
+  'converted_format'   => 'html',
+
+  # Customization option variables
   'AVOID_MENU_REDUNDANCY' => 0,
   'BIG_RULE'              => '<hr>',
   'BODYTEXT'              => undef,
@@ -1943,8 +1947,6 @@ my %defaults = (
                               'Toc_Frame' => '_toc_frame',
                               },
 
-  # non-customization variable converter defaults
-  'converted_format'   => 'html',
 );
 
 foreach my $buttons ('CHAPTER_BUTTONS', 'MISC_BUTTONS', 'TOP_BUTTONS') {
@@ -8220,29 +8222,26 @@ sub _process_css_file($$$)
   my $rules = [];
   my $imports = [];
   my $line_nr = 0;
-  while (my $line = <$fh>) {
+  # the rule is to assume utf-8.  There could also be a BOM, and
+  # the Content-Type: HTTP header but it is not relevant here.
+  # https://developer.mozilla.org/en-US/docs/Web/CSS/@charset
+  my $input_perl_encoding = 'utf-8';
+  while (my $input_line = <$fh>) {
+    my $line = Encode::decode($input_perl_encoding, $input_line);
     $line_nr++;
     if ($line_nr == 1) {
-      # the rule is to assume utf-8.  There could also be a BOM, and
-      # the Content-Type: HTTP header but it is not relevant here.
-      # https://developer.mozilla.org/en-US/docs/Web/CSS/@charset
-      my $charset = 'utf-8';
-      my $charset_line;
       # should always be the first line
       if ($line =~ /^\@charset  *"([^"]+)" *; *$/) {
-        $charset = $1;
-        $charset_line = 1;
-      }
-      my $Encode_encoding_object = find_encoding($charset);
-      if (defined($Encode_encoding_object)) {
-        my $input_perl_encoding = $Encode_encoding_object->name();
-        if ($input_perl_encoding eq 'utf-8') {
-          binmode($fh, ":utf8");
-        } else {
-          binmode($fh, ":encoding($input_perl_encoding)");
+        my $charset = $1;
+        my $Encode_encoding_object = find_encoding($charset);
+        if (defined($Encode_encoding_object)) {
+          my $perl_encoding = $Encode_encoding_object->name();
+          if (defined($perl_encoding) and $perl_encoding ne '') {
+            $input_perl_encoding = $perl_encoding;
+          }
         }
+        next;
       }
-      next if ($charset_line);
     }
     #print STDERR "Line: $line";
     if ($in_rules) {
@@ -8354,6 +8353,9 @@ sub _prepare_css($)
       }
       $css_file_fh = \*CSSFILE;
     }
+    # FIXME set binary mode?  Or set explicitly text mode?
+    # Would need some testing on windows
+    # binmode($css_file_fh)
     my ($import_lines, $rules_lines);
     ($import_lines, $rules_lines)
       = $self->_process_css_file($css_file_fh, $css_file);
@@ -8689,6 +8691,7 @@ sub _html_set_pages_files($$$$$$$$)
                 and $self->get_conf('EXTENSION') ne '');
 
   my %filenames_paths;
+  my @filenames_order;
   my %unit_file_name_paths;
   # associate a file to the source information leading to set the file
   # name.  Use the first element source information associated to a file
@@ -8702,6 +8705,7 @@ sub _html_set_pages_files($$$$$$$$)
   my %files_source_info = ();
   if (!$self->get_conf('SPLIT')) {
     $filenames_paths{$output_filename} = $output_file;
+    push @filenames_order, $output_filename;
     foreach my $tree_unit (@$tree_units) {
       $unit_file_name_paths{$tree_unit} = $output_filename;
     }
@@ -8719,6 +8723,7 @@ sub _html_set_pages_files($$$$$$$$)
       my ($node_top_tree_unit) = $self->_html_get_tree_root_element($node_top);
       die "BUG: No element for top node" if (!defined($node_top_tree_unit));
       $filenames_paths{$top_node_filename} = undef;
+      push @filenames_order, $top_node_filename;
       $unit_file_name_paths{$node_top_tree_unit} = $top_node_filename;
       $files_source_info{$top_node_filename}
          = {'file_info_type' => 'special_file',
@@ -8760,6 +8765,8 @@ sub _html_set_pages_files($$$$$$$$)
                         and $files_source_info{$node_filename}
                               ->{'file_info_type'} ne 'stand_in_file');
             }
+            push @filenames_order, $node_filename
+               unless exists($filenames_paths{$node_filename});
             $filenames_paths{$node_filename} = undef;
             $unit_file_name_paths{$file_tree_unit} = $node_filename;
             last;
@@ -8771,6 +8778,8 @@ sub _html_set_pages_files($$$$$$$$)
           if ($command) {
             if ($command->{'cmdname'} eq 'top' and !$node_top
                 and defined($top_node_filename)) {
+              push @filenames_order, $top_node_filename
+                unless exists($filenames_paths{$top_node_filename});
               $filenames_paths{$top_node_filename} = undef;
               $unit_file_name_paths{$file_tree_unit} = $top_node_filename;
               $files_source_info{$top_node_filename}
@@ -8779,6 +8788,8 @@ sub _html_set_pages_files($$$$$$$$)
             } else {
               my $section_filename
                    = $self->{'targets'}->{$command}->{'section_filename'};
+              push @filenames_order, $section_filename
+                unless exists($filenames_paths{$section_filename});
               $filenames_paths{$section_filename} = undef;
               $unit_file_name_paths{$file_tree_unit} = $section_filename;
               $files_source_info{$section_filename}
@@ -8792,6 +8803,8 @@ sub _html_set_pages_files($$$$$$$$)
             # when everything else has failed
             if ($file_nr == 0 and !$node_top
                 and defined($top_node_filename)) {
+              push @filenames_order, $top_node_filename
+                unless exists($filenames_paths{$top_node_filename});
               $filenames_paths{$top_node_filename} = undef;
               $unit_file_name_paths{$file_tree_unit} = $top_node_filename;
               $files_source_info{$top_node_filename}
@@ -8801,6 +8814,8 @@ sub _html_set_pages_files($$$$$$$$)
             } else {
               my $filename = $document_name . "_$file_nr";
               $filename .= $extension;
+              push @filenames_order, $filename
+                unless exists($filenames_paths{$filename});
               $filenames_paths{$filename} = undef;
               $unit_file_name_paths{$file_tree_unit} = $filename;
               $files_source_info{$filename}
@@ -8834,6 +8849,14 @@ sub _html_set_pages_files($$$$$$$$)
                $self, $tree_unit, $filename, $filepath);
       if (defined($user_filename)) {
         $filename = $user_filename;
+        if (defined($user_filepath) and defined($filenames_paths{$filename})
+            and $user_filepath ne $filenames_paths{$filename}) {
+          $self->document_warn($self,
+           sprintf(__("resetting %s file path %s to %s"),
+              $filename, $filenames_paths{$filename}, $user_filepath));
+        }
+        push @filenames_order, $filename
+          unless exists($filenames_paths{$filename});
         $filenames_paths{$filename} = $user_filepath;
         $files_source_info{$filename} = {'file_info_type' => 'special_file',
                                          'file_info_name' => 'user_defined'};
@@ -8856,6 +8879,8 @@ sub _html_set_pages_files($$$$$$$$)
       my $filename
        = $self->{'targets'}->{$special_element}->{'special_element_filename'};
       if (defined($filename)) {
+        push @filenames_order, $filename
+          unless exists($filenames_paths{$filename});
         $filenames_paths{$filename} = undef;
         $self->set_tree_unit_file($special_element, $filename);
         $self->{'file_counters'}->{$filename} = 0
@@ -8875,7 +8900,7 @@ sub _html_set_pages_files($$$$$$$$)
       }
     }
   }
-  foreach my $filename (keys(%filenames_paths)) {
+  foreach my $filename (@filenames_order) {
     $self->set_file_path($filename, $destination_directory,
                          $filenames_paths{$filename});
   }
@@ -10617,25 +10642,28 @@ sub run_stage_handlers($$$)
 
   my @sorted_priorities = sort keys(%{$stage_handlers->{$stage}});
   foreach my $priority (@sorted_priorities) {
+    my $handler_idx = 1;
     foreach my $handler (@{$stage_handlers->{$stage}->{$priority}}) {
       if ($converter->get_conf('DEBUG')) {
-        print STDERR "HANDLER($stage) , priority $priority: $handler\n";
+        print STDERR "RUN handler $handler_idx: stage $stage, priority $priority\n";
       }
       my $status = &{$handler}($converter, $root, $stage);
       if ($status != 0) {
         if ($status < 0) {
           $converter->document_error($converter,
-             sprintf(__("handler %s of stage %s priority %s failed"),
-                        $handler, $stage, $priority));
+             sprintf(__("handler %d of stage %s priority %s failed"),
+                        $handler_idx, $stage, $priority));
         } else {
           # the handler is supposed to have output an error message
           # already if $status > 0
           if ($converter->get_conf('VERBOSE') or $converter->get_conf('DEBUG')) {
-            print STDERR "Handler $handler of $stage($priority) failed\n";
+            print STDERR "FAIL handler $handler_idx: stage $stage, "
+                                       ."priority $priority\n";
           }
         }
         return $status;
       }
+      $handler_idx++;
     }
   }
   return 0;

@@ -1,3 +1,839 @@
+2023-07-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	No casts in isascii_* calls
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (isascii_alpha),
+	* tp/Texinfo/XS/parsetexi/parser.c (isascii_alnum):
+	Remove casts to 'unsigned char' from call sites.  These should
+	not be necessary as we check in the functions that the argument
+	is in the ASCII range.
+
+2023-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): add a space after
+	a menu entry before the added menu entry description if there is none.
+
+	* tp/Texinfo/Convert/Plaintext.pm: change in spacing.
+
+	* tp/t/10menu.t (nodedescription_descriptions): more tests with
+	long node and name entries.
+
+2023-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/ParagraphNonXS.pm (_add_pending_word, _add_next):
+	rearrange code to be more similar to XS Paragraph.
+
+2023-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/xspara.c (xspara__print_escaped_spaces): really
+	add this function (rename from print_escaped_spaces).
+
+2023-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/xspara.c (xspara__add_pending_word): reset
+	state.space_counter too when indent and !state.unfilled.
+
+	* tp/Texinfo/XS/xspara.c (xspara__print_escaped_spaces)
+	(xspara__add_pending_word, xspara_end, xspara__add_next)
+	(xspara_add_text): add debug similar to the perl Paragraph module.
+	Enabled by changing a variable in the source file and recompiling.
+
+2023-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	Complete Plaintext/Info menus with nodedescription
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): use nodedescription
+	if a menu_entry_description is empty, using a new paragraph container.
+
+	* tp/Texinfo/Convert/ParagraphNonXS.pm (counter),
+	tp/Texinfo/XS/XSParagraph.xs (xspara_counter), tp/Texinfo/XS/xspara.c
+	(xspara_counter): add counter() to get the current column counter value.
+
+	* tp/Makefile.tres, tp/t/10menu.t (nodedescription_descriptions): new
+	test to test @nodedescription added descriptions.
+
+2023-07-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix parsetexi compilation errors
+
+	* tp/Texinfo/XS/parsetexi/macro.c (expand_linemacro_arguments):
+	Place case label after block variable declarations to prevent
+	gcc error 'a label can only be part of a statement and a
+	declaration is not a statement'.
+
+2023-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	@nodedescription parsing in texi2any
+
+	* tp/Texinfo/ParserNonXS.pm (%contain_full_text_commands)
+	(_handle_line_command), tp/Texinfo/XS/parsetexi/handle_commands.c
+	(handle_line_command), tp/Texinfo/XS/parsetexi/parser.c
+	(check_valid_nesting), tp/Texinfo/command_data.txt: parse
+	@nodedescription, adding extra information about the current node in
+	and in the current node too in extra node_description.
+
+	* tp/t/test_utils.pl (@contents_keys): add node_description.
+
+	* tp/Makefile.tres, tp/t/08misc_commands.t (nodedescription): test
+	parsing of @nodedescription.
+
+2023-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/tp_api/Makefile.am (AM_MAKEINFOFLAGS): add the
+	TREE_TRANSFORMATIONS complete_tree_nodes_menus, otherwise the Index
+	appendix node in texi2any_internals_indices.texi concatenated file
+	is not in any menu.
+
+2023-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_macro_arguments, _handle_macro),
+	tp/Texinfo/XS/parsetexi/macro.c (expand_macro_arguments)
+	(handle_macro): pass the leading brace and possible spaces following
+	the leading brace to expand_macro_arguments instead of handling them
+	in handle_macro.  Add space before brace to
+	"spaces_after_cmd_before_arg" info key as an element for macros call
+	elements.
+
+2023-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_new_value_element)
+	(_process_remaining_on_line), tp/Texinfo/XS/parsetexi/parser.c
+	(new_value_element, process_remaining_on_line) <value>: add space
+	before brace to "spaces_after_cmd_before_arg" info key as an element,
+	similar to other brace commands.
+
+2023-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/65linemacro.t
+	(protection_of_end_of_line_by_command): add specific test of
+	protection of end of line by @ in linemacro call.  From Gavin.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/60macro.t (non_ascii_in_macro_name): skip test if /a regex flag
+	is not available.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	autoconf test for conversion from EUC-CN to UTF-8 by iconv
+
+	* configure.ac, tp/Makefile.am, tp/Texinfo/ModulePath.pm.in,
+	tp/t/formats_encodings.t (multiple_include_encodings),
+	tp/t/info_tests.t (chinese_mixed_with_en_EUC_CN): add a runtime check
+	whether iconv converts EUC-CN to UTF-8.  Pass the result through
+	Makefile.am and Texinfo::ModulePath.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/api.c (parse_file),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/macro.c (parse_macro_command_line),
+	tp/Texinfo/XS/parsetexi/parser.c (check_line_directive): rename
+	char variables used as a temporary placeholder for a character
+	replaced by an end of string as saved to be more explicit and
+	consistent.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm, tp/Texinfo/XS/parsetexi/input.c: explain
+	the mapping of US-ASCII encoding to ISO-8859-1 for compatibility
+	with old manuals in which US-ASCII could have been considered to
+	be an alias for ISO-8859-1.  Based on Gavin input and looking at
+	old Texinfo releases code and manuals.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (isascii_alpha)
+	(parse_line_command_args, end_line_starting_block)
+	(end_line_misc_line), tp/Texinfo/XS/parsetexi/handle_commands.c
+	(parse_rawline_command), tp/Texinfo/XS/parsetexi/macro.c
+	(parse_macro_command_line), tp/Texinfo/XS/parsetexi/parser.c
+	(isascii_alnum, read_command_name, read_flag_name): add isascii_alpha
+	to replace isalpha and isascii_alnum to replace isalnum to make sure
+	that the character is also ascii, both because we want to select ascii
+	characters only, and because we do not want to depend on the locale.
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): replace
+	uses of isspace by other str* functions applied on whitespace_chars
+	to avoid being dependent on the locale as isspace is.
+
+	* tp/Texinfo/ParserNonXS.pm, tp/Texinfo/XS/parsetexi/end_line.c,
+	tp/Texinfo/XS/parsetexi/parser.c: use more consistently \d instead
+	of [0-9] or [[:digit:]] in the perl parser, and use consistently
+	digit_chars in the XS parser for a more consistent code and easier
+	comparison between the two codes.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	Same parsing of @macro line for both parsers
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_macro_command_line),
+	tp/Texinfo/XS/parsetexi/macro.c (parse_macro_command_line): use
+	the same code to parse @macro line for both parsers to get the
+	same parsing and same errors message.
+
+	* tp/Makefile.tres, tp/t/60macro.t (zero_argument_comment)
+	(non_ascii_in_macro_name): new tests, with comment on zero arguments
+	@macro line and non ascii character in macro name.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (element_extra_encoding_for_perl)
+	(set_output_encodings), tp/Texinfo/Convert/Converter.pm
+	(txt_image_text), tp/Texinfo/Convert/IXIN.pm (output_ixin),
+	tp/Texinfo/Convert/Plaintext.pm (converter_initialize),
+	tp/Texinfo/Translations.pm (gdt): check if encoding name
+	is not defined, or not empty, but not that it is not '0'.
+
+	* tp/Texinfo/Convert/Converter.pm (txt_image_text),
+	tp/Texinfo/Convert/DocBook.pm (_convert), tp/Texinfo/Convert/Info.pm
+	(format_image), tp/Texinfo/Convert/Plaintext.pm (format_image): do not
+	remove last end of line in txt_image_text, but in callers.
+
+	* tp/ext/highlight_syntax.pm (highlight_process): check close()
+	errors.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (txt_image_text): decode file name
+	for error messages.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/tests/encoded/osé_utf8_no_setfilename.texi: synchronize with
+	tp/tests/encoded/osé_utf8.texi.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (html_image_file_location_name): add
+	leading dot to extension used in case of error.
+
+2023-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_input_push_file, _next_text)
+	(_end_line_misc_line), tp/Texinfo/Convert/HTML.pm (_process_css_file):
+	do not use binmode to reset input encoding, as with buffering in
+	input the file content is read ahead with the previous encoding.
+	Instead set binary mode and decode upon getting the line.
+
+	* tp/Makefile.am (test_files), t/include/chapter_*.texi,
+	t/include/documentdescription_EUC_CN.texi,
+	t/input_files/multiple_include_encodings.texi, tp/Makefile.tres,
+	tp/t/formats_encodings.t (multiple_include_encodings): new test
+	to test multiple encodings in a Texinfo manual with included files
+	using different encodings.
+
+	* tp/tests/encoded/Makefile.am (EXTRA_DIST), tp/tests/Makefile.onetst,
+	tp/tests/encoded/list-of-tests (non_ascii_test_info),
+	tp/tests/encoded/osé_utf8.texi, tp/tests/encoded/txt_çimage.txt:
+	add image text file to osé_utf8.texi.  Add an info output test
+	for osé_utf8.texi.
+
+2023-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (%encoding_name_conversion_map)
+	(element_extra_encoding_for_perl, set_output_encodings),
+	tp/Texinfo/ParserNonXS.pm (_end_line_misc_line): add mapping of
+	encodings to encodings that extend them to use the extending encoding
+	for conversion, as is done for us-ascii to ISO-8859-1 in XS parser.
+
+	* tp/t/formats_encodings.t (char_us_ascii_latin1_in_refs),
+	tp/Makefile.tres: add test with @documentencoding us-ascii and
+	non-ascii ISO-8859-1 encoded characters.
+
+2023-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%parser_state_initialization)
+	(get_parser_info, _end_line_misc_line, _handle_close_brace):
+	set info information in get_parser_info, set input_encoding_name
+	as a parser state.  This allows not to set global parser information
+	in parse_texi_line, as is done in the XS parser.
+
+	* tp/Texinfo/XS/parsetexi/api.c (reset_parser_except_conf)
+	(build_global_info), tp/Texinfo/XS/parsetexi/end_line.c
+	(end_line_misc_line), tp/Texinfo/XS/parsetexi/input.c
+	(set_input_encoding, reset_encoding_list),
+	tp/Texinfo/XS/parsetexi/parser.c (wipe_global_info, wipe_global_info),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace):
+	remove global_info.input_encoding_name, and rename input_encoding_name
+	as global_input_encoding_name to be used instead, to have only one
+	variable used.  Set global_input_encoding_name only if the iconv
+	conversion could be initialized.  Set input encoding to utf8 after
+	resetting the variables, not before.  Rename current_encoding as
+	current_encoding_conversion. rename struct ENCODING as
+	ENCODING_CONVERSION.
+
+	* tp/Texinfo/XS/parsetexi/input.c (set_input_encoding)
+	(encode_file_name): distinguish encoding name used in conversion and
+	input encoding name.
+
+	* tp/Makefile.am (test_files), tp/Makefile.tres,
+	tp/maintain/regenerate_latin1_tests.sh, tp/t/formats_encodings.t
+	(char_utf8_latin1_in_refs),
+	tp/t/input_files/char_latin1_latin1_in_refs.texi,
+	tp/t/input_files/char_us_ascii_latin1_in_refs.texi,
+	tp/t/input_files/char_utf8_latin1_in_refs.texi: change file name,
+	minor changes in files and generated files, generate a file with
+	US-ASCII documentencoding containing latin1 encoded characters, not
+	ussed for now.
+
+2023-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	Use any input encoding known by iconv in the XS parser 
+
+	* doc/texinfo.texi (@code{@@documentencoding}),
+	tp/Texinfo/XS/parsetexi/api.c (reset_parser_except_conf),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/input.c (set_input_encoding)
+	(convert_to_utf8, encode_file_name, reset_encoding_list):
+	use a list of encodings and iconv handlers based on the
+	@documentencoding found in the manual.  Always set utf-8 at
+	the first position in the list.  Use any encoding known by iconv
+	instead of a fixed list of known encodings.  Remove enum
+	character_encoding.
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line)
+	<documentencoding>: trim non-ascii characters and keep only
+	alphanumeric characters, - and _ in encoding names. iconv also seems
+	to trim non alphanumeric non - _ characters.  Consider an encoding not
+	handled by iconv or not found in perl parser during parsing to be
+	unhandled.
+
+	* tp/Texinfo/Common.pm (get_perl_encoding)
+	(element_extra_encoding_for_perl), tp/Texinfo/ParserNonXS.pm
+	(%parser_state_initialization, parse_texi_text, _input_push_file)
+	(get_parser_info, parse_texi_file, _encode_file_name),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (get_parser_info): add
+	get_perl_encoding function in Texinfo::Common to set
+	{'info'}->{'input_perl_encoding'} based on XS parser code.  Use this
+	function in both parsers.  In the perl parser, add get_parser_info
+	function to call get_perl_encoding instead of doing it while parsing,
+	and call get_parser_info in parse_* functions as required, similar to
+	code in the XS parser.  Consider an encoding not found by perl to
+	be unrecognized.
+
+	* tp/Makefile.am (test_files), tp/Makefile.tres,
+	tp/t/08misc_commands.t (documentencoding_zero), tp/t/info_tests.t
+	(chinese_mixed_with_en_EUC_CN),
+	tp/t/input_files/chinese_mixed_with_en_EUC_CN.texi: two new tests
+	related to encodings, one using EUC-CN an ascii compatible encodding
+	that was not available before in the XS parser.
+
+2023-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/65linemacro.t (end_conditional_in_linemacro)
+	(begin_conditional_in_linemacro, block_begin_end_in_linemacro_call):
+	add another conditional test in end_conditional_in_linemacro, add
+	begin_conditional_in_linemacro and block_begin_end_in_linemacro_call
+	similar tests.
+
+2023-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/65linemacro.t (recursive_linemacro_in_call): new test.
+
+2023-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/60macro.t (arobase_brace_in_macro_call), tp/t/65linemacro.t
+	(arobase_brace_in_linemacro_call): add tests with @{ and @} in macro
+	and linemacro calls.
+
+	* tp/t/65linemacro.t (spaces_after_command_in_call)
+	(spaces_after_unknown_command_in_call): rename
+	spaces_after_command_in_call as spaces_after_unknown_command_in_call
+	and use a known brace command in the new version of
+	spaces_after_command_in_call.
+
+	* tp/t/65linemacro.t (spaces_after_macro_linemacro_commands_in_call):
+	add test.
+
+2023-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/60macro.t (verb_with_arobase_in_macro_call)
+	(verb_with_brace_in_macro_call, tp/t/65linemacro.t
+	(verb_in_linemacro_call, verb_with_arobase_in_linemacro_call)
+	(verb_with_brace_in_linemacro_call), tp/Makefile.tres: more tests for
+	@verb in macro and linemacro calls.
+
+2023-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/65linemacro.t (comment_in_linemacro_call)
+	(comment_in_one_argument_linemacro_call)
+	(comment_at_end_of_linemacro_call): new tests with comments and
+	linemacro.
+
+2023-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_macro),
+	tp/Texinfo/XS/parsetexi/macro.c (handle_macro): put checks related to
+	expansion before the expansion, as during the expansion, the text may
+	go past the call.  In particular for user defined linemacro which
+	generally get the final new line from following text.
+
+	* tp/t/65linemacro.t (call_macro_in_linemacro_body)
+	(call_macro_in_linemacro_call, recursive_linemacro_in_body),
+	tp/Makefile.tres: new @linemacro tests.
+
+	* tp/Texinfo/XS/parsetexi/macro.c (expand_linemacro_arguments):
+	change code to be more readable and compact.
+
+	* tp/Texinfo/XS/parsetexi/debug.c (debug_print_protected_string):
+	special message if input_string is 0.
+
+2023-07-19  Patrice Dumas  <pertusus@free.fr>
+
+	Reimplement linemacro arguments expansion in a separate function
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_linemacro_arguments)
+	(_end_line_misc_line, _end_line_def_line, _end_line, _handle_macro)
+	(_handle_open_brace, _process_remaining_on_line, _parse_texi),
+	tp/Texinfo/XS/parsetexi/context_stack.c (context_name),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_def_line)
+	(end_line_misc_line, end_line), tp/Texinfo/XS/parsetexi/macro.c
+	(count_toplevel_braces, set_toplevel_braces_nr)
+	(expand_linemacro_arguments, handle_macro),
+	tp/Texinfo/XS/parsetexi/parser.c (linecommand_expansion_delimiters)
+	(process_remaining_on_line, parse_texi),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace):
+	use the expand_linemacro_arguments function directly in handle_macro
+	to parse the linemacro defined user commands arguments, such that they
+	are expanded in a second step only.  @-command are taken into account
+	to protect spaces or braces, braces are matched, spaces separate
+	arguments and what remains on the line is the last argument.  In the
+	XS parser, use a specific counter count_toplevel_braces, and use
+	set_toplevel_braces_nr to count closed braces.
+	Remove code related to the previous implementation.
+
+	* tp/Texinfo/ParserNonXS.pm (%parser_state_initialization)
+	(_end_line_def_line, _process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/api.c (reset_parser_except_conf),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_def_line),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line):
+	remove global state in_parsing_only, which is not relevant with
+	the new implementation.
+
+2023-07-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_command_name)
+	(_process_remaining_on_line), tp/Texinfo/XS/MiscXS.xs
+	(xs_parse_command_name), tp/Texinfo/XS/misc.c (xs_parse_command_name):
+	use more similar interface for parse_command_name in the perl parser
+	than in the XS parser.
+
+2023-07-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_command_name, _parse_texi_regex)
+	(_process_remaining_on_line), tp/Texinfo/XS/MiscXS.xs
+	(xs_parse_command_name, xs_parse_texi_regex), tp/Texinfo/XS/misc.c
+	(xs_parse_command_name, xs_parse_texi_regex),
+	tp/Texinfo/XS/parsetexi/parser.c (parse_command_name)
+	(process_remaining_on_line): process text starting with @ in one
+	place.  Determine first if starting by @ (in _parse_texi_regex in the
+	perl parser) and afterwards determine the command name, with a new
+	function parse_command_name.
+
+2023-07-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Multi-line TOC entry alignment
+
+	* doc/texinfo.tex (\entrycontskip): new dimen.
+	(\entry): Use \entrycontskip for indentation of continuation lines.
+	When splitting across several lines, cancel adjustments
+	made to allow a slightly longer, single line.  When entry text could
+	cross over more than two lines, use the same line length for all
+	lines.
+
+	(\tocentry): New macro.  Handle concatenation of section
+	number, space and section title, before calling \entry.
+	When a TOC entry has a section number, set \entrycontskip
+	to the width of the number and a following space so that any
+	continuation lines in the entry will be aligned.
+
+	(\partentry, \numchapentry, \shortchaptentry, \appentry)
+	(\unnchapentry, \shortunnchapentry, \numsecentry, \unsecentry)
+	(\numsubsecentry, \unnsubsecentry, \numsubsubsecentry)
+	(\unnsubsubsecentry, \dochapentry, \dosecentry, \dosubsecentry)
+	(\dosubsubsecentry):
+	Calls to \tocentry (previously alias for \entry) updated.
+
+	Report from Karl.
+
+2023-07-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line): inline and remove
+	_encoding_alias, for simpler code more similar to XS parser.
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): update
+	comments and move a variable declaration.
+
+2023-07-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/IXIN.pm (output_ixin): take encoding information
+	from image element.
+
+2023-07-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (encoded_input_file_name),
+	tp/Texinfo/Convert/Utils.pm (expand_verbatiminclude)
+	(encoded_input_file_name): put encoded_input_file_name in
+	Texinfo::Convert::Utils, and make encoded_input_file_name in
+	Texinfo::Convert::Converter a wrapper around it.  Add an optional
+	argument to encoded_input_file_name to specify the input file
+	encoding.  Use encoded_input_file_name in expand_verbatiminclude
+	with the optional argument.
+
+	* tp/texi2any.pl: initialize correctly the converter used when
+	SORT_ELEMENT_COUNT is set.  Use the converter more consistently to
+	find customization variables and methods.
+
+2023-07-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): OUTPUT_PERL_ENCODING should always be set
+	in converters, so use nly that variables to set output encoding.
+
+2023-07-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/08misc_commands.t (comment_space_command_on_line): remove
+	redundant xml test.
+
+2023-07-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (get_parser_info),
+	tp/Texinfo/XS/parsetexi/api.c (build_global_info),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line)
+	<documentencoding>, tp/Texinfo/XS/parsetexi/parser.c
+	(wipe_global_info): do not set input_perl_encoding in the XS parser,
+	set in perl code in Parsetexi.pm get_parser_info.
+
+2023-07-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): remove
+	input_perl_encoding from documentencoding extra hash.
+
+2023-07-15  Patrice Dumas  <pertusus@free.fr>
+
+	Replace extra input_perl_encoding by input_encoding_name in elements
+
+	* tp/Texinfo/Common.pm (element_extra_encoding_for_perl),
+	tp/Texinfo/Convert/Converter.pm (txt_image_text),
+	tp/Texinfo/Convert/Text.pm (converter), tp/Texinfo/Convert/Utils.pm
+	(expand_verbatiminclude), tp/Texinfo/ParserNonXS.pm
+	(_end_line_misc_line, _handle_close_brace),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace): use
+	input_encoding_name instead of input_perl_encoding in tree extra
+	elements.  Add element_extra_encoding_for_perl to Texinfo::Common
+	to find perl encoding based on element extra input_encoding_name.
+
+2023-07-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace) <verb>:
+	handle a non-ascii verb delimiter.
+
+	* tp/Makefile.tres, tp/t/formats_encodings.t
+	(verb_delimiter_not_ascii): new test to test non ascii @verb
+	delimiters.
+
+2023-07-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/formats_encodings.t (dotless_argument_non_ascii): add the
+	test of braced non-ascii argument of @dotless.
+
+2023-07-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line)
+	<accent commands>: use an element string to get a whole UTF-8
+	character in error message on dotless argument.
+
+	* tp/Makefile.tres, tp/t/formats_encodings.t
+	(dotless_argument_non_ascii): new test to test the dotless incorrect
+	argument error message with a non-ascii character.
+
+2023-07-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/t/formats_encodings.t (accent_argument_non_ascii): Enable.
+
+2023-07-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line)
+	<accent commands>: Count UTF-8 continuation bytes for character
+	following accent command.  Report from Patrice.
+
+2023-07-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/formats_encodings.t: add
+	accent_argument_non_ascii test.  Set it to be skipped as the result is
+	incorrect with the XS parser for now.
+
+2023-07-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): avoid undef warning
+	with definfoenclose by checking that $brace_commands{} exists.
+	Change in spaces.
+
+2023-07-15  Patrice Dumas  <pertusus@free.fr>
+
+	Distinguish input text macro context and input text macro expansion
+
+	* tp/Texinfo/ParserNonXS.pm (_input_push_text, _next_text)
+	(_process_remaining_on_line), tp/Texinfo/XS/parsetexi/input.c
+	(next_text, input_push_text), tp/Texinfo/XS/parsetexi/parser.c
+	(process_remaining_on_line): the macro name passed to
+	input_push_text means that the text comes from macro expansion.
+	The input stack is used to determine if alreay in macro context.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_macro_command_line)
+	(_expand_macro_arguments, _end_line, _handle_macro)
+	(_process_remaining_on_line), tp/Texinfo/XS/parsetexi/end_line.c
+	(end_line_misc_line), tp/Texinfo/XS/parsetexi/macro.c
+	(parse_macro_command_line, expand_macro_arguments, handle_macro),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line):
+	synchronize debug messages, move code around to be more consistent
+	across parsers, 
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_comma): remove retval return
+	value, it is only set to the same value as the default in the caller.
+
+	* tp/Texinfo/ParserNonXS.pm (_new_macro, _process_remaining_on_line):
+	add _new_macro function to be more in line with XS parser.
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_macro_body, _handle_macro): allow
+	macrobody to be undef if there is no content, similar to XS parser.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/60macro.t: add spaces after bad macro specification argument.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (run_stage_handlers): do not output the
+	code handler reference, instead use an index to determine the handler.
+
+2023-07-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: mention @linemacro
+
+2023-07-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Generic Definition Commands), NEWS:
+	Document @deftypeline.
+
+2023-07-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: remove reverted change about index commands ending
+	paragraphs.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line)
+	(_handle_menu_entry_separators, _handle_line_command)
+	(_handle_open_brace, _handle_comma),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (parse_rawline_command)
+	(handle_line_command), tp/Texinfo/XS/parsetexi/menus.c
+	(handle_menu_entry_separators), tp/Texinfo/XS/parsetexi/parser.c
+	(process_remaining_on_line), tp/Texinfo/XS/parsetexi/separator.c
+	(handle_comma): synchronize debug messages across parsers.
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_open_brace),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_comma): rearrange code
+	related to inline type.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_html_set_pages_files): set up a
+	reproducible order following the tree units order for the call
+	of set_file_path.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/debug.c (debug_print_element)
+	(debug_print_protected_string): use fputs instead of debug_nonl to
+	output a string when there is no need for formats.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_open_brace)
+	(_process_remaining_on_line): handle @verb delimiter determination
+	in handle_open_brace to do the same as in the XS parser.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace): call
+	new_line after verb opening brace if the line is an empty string
+	in case the delimiter is in macro expansion.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/60macro.t: add macro_for_verb test.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/65linemacro.t: add
+	end_conditional_in_linemacro test.
+
+2023-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line, _handle_macro)
+	(_handle_menu_entry_separators, _handle_open_brace)
+	(_process_remaining_on_line, _parse_texi): use exactly the
+	whitespace_chars_except_newline chracters from the XS parser
+	in matching.
+
+	* tp/Texinfo/ParserNonXS.pm (_debug_protect_eol)
+	(_process_remaining_on_line): use a function to protect eol in debug
+	messages.
+
+	* tp/Texinfo/ParserNonXS.pm (_process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): add
+	debug message for form feeds.
+
+2023-07-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_macro_arguments),
+	tp/Texinfo/XS/parsetexi/macro.c (expand_macro_arguments): simplify XS
+	parser code.  More consistent code.
+
+2023-07-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_close_current, _expand_macro_arguments)
+	(_handle_menu_entry_separators, _handle_close_brace)
+	(_process_remaining_on_line, _parse_line_command_args),
+	tp/Texinfo/XS/parsetexi/close.c (close_all_style_commands)
+	(close_commands), tp/Texinfo/XS/parsetexi/context_stack.c
+	(context_name), p/Texinfo/XS/parsetexi/macro.c
+	(expand_macro_arguments), tp/Texinfo/XS/parsetexi/menus.c
+	(handle_menu_entry_separators), tp/Texinfo/XS/parsetexi/parser.c
+	(abort_empty_line, process_remaining_on_line, parse_texi), 
+	tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace): synchronize
+	debug messages.
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_macro_arguments),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line):
+	more similar codes for both parsers.
+
+
+2023-07-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (reset_parser),
+	tp/Texinfo/XS/parsetexi/api.c (reset_parser): pass directly DEBUG
+	configuration value to reset_parser() to override previous parser
+	configuration, as the configuration isn't already reset and the new
+	configuration is set afterwards.  Do not call debug() in reset_parser()
+	but use directly the debugging configuration input value.
+
+2023-07-13  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Error Reporting in User Defined Functions),
+	tp/Texinfo/Report.pm (line_warn, line_error),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (_get_errors), 
+	tp/Texinfo/XS/parsetexi/errors.c (debug_error_warning_message)
+	(line_error_internal): output directly some messages for
+	warning/errors in XS parser as is done in perl parser, using
+	the debug_error_warning_message function.  To avoid a redundant
+	message being output when calling Texinfo::Report::line_warn or
+	line_error from Parsetexi.pm _get_errors, add an argument to
+	line_warn/line_error to silence the messages output normally when
+	DEBUG is set.
+
+	* tp/Texinfo/ParserNonXS.pm (parser, simple_parser)
+	(_process_remaining_on_line), tp/Texinfo/XS/parsetexi/close.c
+	(close_container), tp/Texinfo/XS/parsetexi/debug.c (debug_protect_eol)
+	(debug_print_protected_string), tp/Texinfo/XS/parsetexi/input.c
+	(next_text), tp/Texinfo/XS/parsetexi/parser.c
+	(process_remaining_on_line, parse_texi): synchronize debug messages.
+
+2023-07-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo-tex-test.texi (Definitions): Add a needed
+	"@clear txidefnamenospace" before examples.
+
+2023-07-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	No custom gendocs template any more
+
+	* doc/gendocs.chapter/gendocs_template: Remove.  Not needed
+	any more following gnulib update.
+	* doc/Makefile.am (wwwdoc-build): Update.
+	* README-hacking: mention necessity of installing texinfo.tex to
+	run "make wwwdoc-build".
+
+2023-07-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	No space for @ def line continuation
+
+	* doc/texinfo.texi (\argremovespace): Remove macro handling
+	@(newline).  This should only occur in line arguments on @def*
+	lines and we do not need the complicated handling of it generally.
+	Handling @(newline) in here makes it very hard to make any changes
+	that just affect @def*.
+	(\argremovespace): Reinstate definition from 2003-11-22 to handle
+	stripping a space token from the end of an argument, which is
+	simpler and all that is needed for most calls.
+	(\printname, \defunargs): Make @<newline> sequence expand to
+	nothing.  This matches the behaviour of texi2any.
+
+	bug-texinfo discussion, 7 Apr 2023.
+
+2023-07-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	XS file copyright notices
+
+	* tp/Texinfo/XS/MiscXS.xs
+	* tp/Texinfo/XS/XSParagraph.xs,
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs:
+	Move or add copyright notice further up in files.
+
+2023-07-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%parser_state_initialization)
+	(_end_line_def_line, _process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/api.c (reset_parser_except_conf),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_def_line),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line):
+	add in_parsing_only state set when only parsing should process,
+	not any processing (error message, rearranging of the tree...).
+
+	* tp/Texinfo/ParserNonXS.pm (%parser_state_initialization, _next_text)
+	(_process_remaining_on_line): remove value_stack, use a simpler
+	integer as indicator of the number of values expansion,
+	value_expansion_nr, as in the XS parser.
+
+	* tp/Texinfo/XS/parsetexi/close.c (close_commands): no debug message
+	if stopping closing at ET_root_line.
+
+	* tp/Texinfo/ParserNonXS.pm (_close_all_style_commands, _next_text)
+	(_end_line_misc_line, _end_line_starting_block, _end_line)
+	(_handle_other_command, _handle_open_brace, _parse_line_command_args),
+	tp/Texinfo/XS/parsetexi/close.c (close_current),
+	tp/Texinfo/XS/parsetexi/context_stack.c (context_name),
+	tp/Texinfo/XS/parsetexi/end_line.c (parse_line_command_args)
+	(end_line_starting_block, end_line_misc_line, end_line),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_brace_command),
+	tp/Texinfo/XS/parsetexi/parser.c (parent_of_command_as_argument)
+	(process_remaining_on_line), tp/Texinfo/XS/parsetexi/separator.c
+	(handle_open_brace, handle_close_brace),
+	tp/Texinfo/XS/parsetexi/source_marks.c (place_source_mark):
+	add context_name function in XS parser. Modify debug messages,
+	synchronize debug messages across both parsers.
+
+
+2023-07-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/close.c (remove_empty_content)
+	(close_container, close_commands), tp/Texinfo/XS/parsetexi/end_line.c
+	(end_line_def_line, end_line_starting_block, end_line),
+	tp/Texinfo/XS/parsetexi/parser.c (merge_text, abort_empty_line)
+	(isolate_last_space), tp/Texinfo/XS/parsetexi/source_marks.c
+	(place_source_mark): do not use print_element_debug without free'ing
+	the result string, instead use debug_print_element more to avoid
+	memory leaks.  Report and idea of fix from Gavin.
+
 2023-07-11  Gavin Smith <gavinsmith0123@gmail.com>
 
 	NEWS: Mention CHECK_NORMAL_MENU_STRUCTURE change.
@@ -4319,7 +5155,7 @@
 	* tp/Texinfo/ParserNonXS.pm (_register_source_mark),
 	tp/Texinfo/XS/parsetexi/api.c (store_source_mark_list),
 	tp/Texinfo/XS/parsetexi/source_marks. (register_source_mark):
-	remove the source mark location informatio, it is not useful.
+	remove the source mark location information, it is not useful.
 	Do not set the position if the element text is the empty string.
 
 2023-01-31  Patrice Dumas  <pertusus@free.fr>
@@ -4343,6 +5179,10 @@
 	* tp/Texinfo/XS/parsetexi/source_marks.c (count_convert_u8)
 	(register_source_mark): set the mark source position in text
 	as an index in characters, not bytes.
+
+2023-01-30  Patrice Dumas  <pertusus@free.fr>
+
+	in tp/Texinfo/XS gnulib-tool --add-import uniconv/u8-strconv-from-enc unistr/u8-mbsnlen.
 
 2023-01-29  Patrice Dumas  <pertusus@free.fr>
 

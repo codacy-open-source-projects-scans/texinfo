@@ -89,11 +89,6 @@ $result_trees{'spaces_after_command_in_call'} = {
           }
         },
         {
-          'text' => '
-',
-          'type' => 'empty_line'
-        },
-        {
           'source_marks' => [
             {
               'counter' => 1,
@@ -102,78 +97,52 @@ $result_trees{'spaces_after_command_in_call'} = {
                   {
                     'contents' => [
                       {
-                        'contents' => [
-                          {
-                            'text' => 'd'
-                          }
-                        ],
-                        'type' => 'bracketed_arg'
-                      },
+                        'text' => '@code {d}'
+                      }
+                    ],
+                    'info' => {
+                      'spaces_before_argument' => {
+                        'text' => ' '
+                      }
+                    }
+                  },
+                  {
+                    'contents' => [
                       {
-                        'extra' => {
-                          'def_role' => 'spaces'
-                        },
-                        'text' => ' ',
-                        'type' => 'spaces'
-                      },
-                      {
-                        'args' => [
-                          {
-                            'contents' => [
-                              {
-                                'text' => 'b'
-                              }
-                            ],
-                            'type' => 'following_arg'
-                          }
-                        ],
-                        'cmdname' => 'ringaccent',
-                        'info' => {
-                          'spaces_after_cmd_before_arg' => {
-                            'text' => ' '
-                          }
-                        },
-                        'source_info' => {
-                          'file_name' => '',
-                          'line_nr' => 7,
-                          'macro' => ''
-                        }
-                      },
-                      {
-                        'extra' => {
-                          'def_role' => 'spaces'
-                        },
-                        'text' => ' ',
-                        'type' => 'spaces'
-                      },
+                        'text' => '@ringaccent b'
+                      }
+                    ],
+                    'info' => {
+                      'spaces_before_argument' => {
+                        'text' => ' '
+                      }
+                    }
+                  },
+                  {
+                    'contents' => [
                       {
                         'text' => 'rest'
                       }
                     ],
                     'info' => {
-                      'spaces_after_argument' => {
-                        'text' => '
-'
+                      'spaces_before_argument' => {
+                        'text' => ' '
                       }
-                    },
-                    'type' => 'line_arg'
+                    }
                   }
                 ],
                 'extra' => {
                   'name' => 'mylinecommand'
                 },
-                'info' => {
-                  'spaces_before_argument' => {
-                    'text' => '  '
-                  }
-                },
                 'type' => 'linemacro_call'
               },
+              'position' => 1,
               'sourcemark_type' => 'linemacro_expansion',
               'status' => 'start'
             }
           ],
-          'text' => '',
+          'text' => '
+',
           'type' => 'empty_line'
         },
         {
@@ -208,10 +177,30 @@ $result_trees{'spaces_after_command_in_call'} = {
                       'type' => 'spaces'
                     },
                     {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd'
+                            }
+                          ],
+                          'type' => 'brace_command_arg'
+                        }
+                      ],
+                      'cmdname' => 'code',
                       'extra' => {
                         'def_role' => 'name'
                       },
-                      'text' => 'd'
+                      'info' => {
+                        'spaces_after_cmd_before_arg' => {
+                          'text' => ' '
+                        }
+                      },
+                      'source_info' => {
+                        'file_name' => '',
+                        'line_nr' => 7,
+                        'macro' => 'mylinecommand'
+                      }
                     },
                     {
                       'extra' => {
@@ -318,6 +307,14 @@ $result_trees{'spaces_after_command_in_call'} = {
                 {
                   'contents' => [
                     {
+                      'source_marks' => [
+                        {
+                          'counter' => 1,
+                          'position' => 8,
+                          'sourcemark_type' => 'linemacro_expansion',
+                          'status' => 'end'
+                        }
+                      ],
                       'text' => 'defblock'
                     }
                   ],
@@ -350,14 +347,7 @@ $result_trees{'spaces_after_command_in_call'} = {
             'file_name' => '',
             'line_nr' => 7,
             'macro' => 'mylinecommand'
-          },
-          'source_marks' => [
-            {
-              'counter' => 1,
-              'sourcemark_type' => 'linemacro_expansion',
-              'status' => 'end'
-            }
-          ]
+          }
         }
       ],
       'type' => 'before_node_section'
@@ -365,7 +355,7 @@ $result_trees{'spaces_after_command_in_call'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'spaces_after_command_in_call'}{'contents'}[0]{'contents'}[3]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'spaces_after_command_in_call'}{'contents'}[0]{'contents'}[3]{'contents'}[0]{'args'}[0]{'contents'}[2];
+$result_trees{'spaces_after_command_in_call'}{'contents'}[0]{'contents'}[2]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'spaces_after_command_in_call'}{'contents'}[0]{'contents'}[2]{'contents'}[0]{'args'}[0]{'contents'}[2];
 
 $result_texis{'spaces_after_command_in_call'} = '@linemacro mylinecommand {first, second, rest}
 @defblock
@@ -374,7 +364,7 @@ $result_texis{'spaces_after_command_in_call'} = '@linemacro mylinecommand {first
 @end linemacro
 
 @defblock
-@defline category d A @ringaccent b B rest
+@defline category @code {d} A @ringaccent b B rest
 @end defblock
 ';
 
@@ -383,17 +373,7 @@ $result_texts{'spaces_after_command_in_call'} = '
 category: d A b* B rest
 ';
 
-$result_errors{'spaces_after_command_in_call'} = [
-  {
-    'error_line' => 'unknown command `abc\'
-',
-    'file_name' => '',
-    'line_nr' => 7,
-    'macro' => '',
-    'text' => 'unknown command `abc\'',
-    'type' => 'error'
-  }
-];
+$result_errors{'spaces_after_command_in_call'} = [];
 
 
 $result_floats{'spaces_after_command_in_call'} = {};

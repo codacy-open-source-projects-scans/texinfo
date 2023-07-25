@@ -1,9 +1,11 @@
 \input texinfo
 
-@documentencoding iso-8859-1
+@documentencoding ISO-8859-1
 
 @node Top
-@top char latin1 latin1 in refs
+@top accented char in latin1 in refs
+
+@printindex cp
 
 @menu
 * ä ë ï ö ü ÿ Ä Ë Ï Ö Ü::
@@ -15,8 +17,6 @@
 
 @node ä ë ï ö ü ÿ Ä Ë Ï Ö Ü
 @chapter ä ë ï ö ü ÿ Ä Ë Ï Ö Ü
-
-@printindex cp
 
 @node é
 @chapter é

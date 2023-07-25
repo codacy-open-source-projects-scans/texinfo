@@ -210,6 +210,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/converters_tests/inlineifsetifclearspaces.pl \
   t/results/converters_tests/inlinerawspaces.pl \
   t/results/converters_tests/line_breaks.pl \
+  t/results/converters_tests/link.pl \
   t/results/converters_tests/minimal_empty_empty.pl \
   t/results/converters_tests/minimal_empty_empty/res_docbook \
   t/results/converters_tests/minimal_empty_empty/res_html \
@@ -483,6 +484,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/float/simple.pl \
   t/results/float/special_characters_in_float_type.pl \
   t/results/formats_encodings/accent.pl \
+  t/results/formats_encodings/accent_argument_non_ascii.pl \
   t/results/formats_encodings/accent_enable_encoding.pl \
   t/results/formats_encodings/accentenc.pl \
   t/results/formats_encodings/accentenc_enable_encoding.pl \
@@ -499,13 +501,17 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/formats_encodings/char_latin1_latin1_in_refs/res_info \
   t/results/formats_encodings/char_latin1_latin1_in_refs/res_latex \
   t/results/formats_encodings/char_latin1_latin1_in_refs/res_xml \
-  t/results/formats_encodings/char_latin1_utf8_in_refs.pl \
-  t/results/formats_encodings/char_latin1_utf8_in_refs/res_html \
-  t/results/formats_encodings/char_latin1_utf8_in_refs/res_info \
   t/results/formats_encodings/char_latin2_latin2_in_refs.pl \
   t/results/formats_encodings/char_latin2_latin2_in_refs/res_html \
   t/results/formats_encodings/char_latin2_latin2_in_refs/res_info \
+  t/results/formats_encodings/char_us_ascii_latin1_in_refs.pl \
+  t/results/formats_encodings/char_us_ascii_latin1_in_refs/res_html \
+  t/results/formats_encodings/char_us_ascii_latin1_in_refs/res_info \
+  t/results/formats_encodings/char_utf8_latin1_in_refs.pl \
+  t/results/formats_encodings/char_utf8_latin1_in_refs/res_html \
+  t/results/formats_encodings/char_utf8_latin1_in_refs/res_info \
   t/results/formats_encodings/documentencoding_utf8_and_insertions.pl \
+  t/results/formats_encodings/dotless_argument_non_ascii.pl \
   t/results/formats_encodings/japanese_shift_jis.pl \
   t/results/formats_encodings/japanese_shift_jis/res_html \
   t/results/formats_encodings/japanese_shift_jis/res_info \
@@ -515,10 +521,14 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/formats_encodings/manual_simple_utf8_with_error.pl \
   t/results/formats_encodings/manual_simple_utf8_with_error/res_html \
   t/results/formats_encodings/manual_simple_utf8_with_error/res_info \
+  t/results/formats_encodings/multiple_include_encodings.pl \
+  t/results/formats_encodings/multiple_include_encodings/res_html \
+  t/results/formats_encodings/multiple_include_encodings/res_info \
   t/results/formats_encodings/no_documentencoding_and_insertions.pl \
   t/results/formats_encodings/sample_utf8.pl \
   t/results/formats_encodings/sample_utf8/res_html \
   t/results/formats_encodings/sample_utf8/res_info \
+  t/results/formats_encodings/verb_delimiter_not_ascii.pl \
   t/results/formats_encodings/weird_accents.pl \
   t/results/formats_encodings/weird_accents_disable_encoding.pl \
   t/results/heading/heading_in_copying.pl \
@@ -880,6 +890,8 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/info_tests/anchor_in_command.pl \
   t/results/info_tests/before_node_and_section.pl \
   t/results/info_tests/center_flush.pl \
+  t/results/info_tests/chinese_mixed_with_en_EUC_CN.pl \
+  t/results/info_tests/chinese_mixed_with_en_EUC_CN/res_info \
   t/results/info_tests/colon_in_index_entry.pl \
   t/results/info_tests/colons_in_index_entries_and_node.pl \
   t/results/info_tests/colons_in_index_entries_and_node/res_info \
@@ -1207,10 +1219,19 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/layout/no_monolithic_only_toc_out.pl \
   t/results/layout/no_monolithic_only_toc_out/res_html \
   t/results/linemacro/api_doc_with_linemacro.pl \
+  t/results/linemacro/arobase_brace_in_linemacro_call.pl \
+  t/results/linemacro/begin_conditional_in_linemacro.pl \
+  t/results/linemacro/block_begin_end_in_linemacro_call.pl \
   t/results/linemacro/blockitem_no_item.pl \
   t/results/linemacro/brace_command_not_closed.pl \
   t/results/linemacro/braces_after_text.pl \
+  t/results/linemacro/call_macro_in_linemacro_body.pl \
+  t/results/linemacro/call_macro_in_linemacro_call.pl \
+  t/results/linemacro/comment_at_end_of_linemacro_call.pl \
+  t/results/linemacro/comment_in_linemacro_call.pl \
+  t/results/linemacro/comment_in_one_argument_linemacro_call.pl \
   t/results/linemacro/empty_last_argument.pl \
+  t/results/linemacro/end_conditional_in_linemacro.pl \
   t/results/linemacro/last_argument_with_braces.pl \
   t/results/linemacro/missing_formal_arg.pl \
   t/results/linemacro/nested_linemacro_calls.pl \
@@ -1218,14 +1239,23 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/linemacro/no_arguments.pl \
   t/results/linemacro/paragraph_no_paragraph.pl \
   t/results/linemacro/protected_spaces_on_line.pl \
+  t/results/linemacro/protection_of_end_of_line_by_command.pl \
+  t/results/linemacro/recursive_linemacro_in_body.pl \
+  t/results/linemacro/recursive_linemacro_in_call.pl \
   t/results/linemacro/simple_nested_linemacro_calls.pl \
   t/results/linemacro/spaces_after_command_in_call.pl \
+  t/results/linemacro/spaces_after_macro_linemacro_commands_in_call.pl \
+  t/results/linemacro/spaces_after_unknown_command_in_call.pl \
   t/results/linemacro/spaces_in_args.pl \
   t/results/linemacro/spaces_in_call.pl \
   t/results/linemacro/text_arguments.pl \
+  t/results/linemacro/verb_in_linemacro_call.pl \
   t/results/linemacro/verb_not_closed.pl \
+  t/results/linemacro/verb_with_arobase_in_linemacro_call.pl \
+  t/results/linemacro/verb_with_brace_in_linemacro_call.pl \
   t/results/macro/arg_body_expansion_order.pl \
   t/results/macro/arg_not_closed.pl \
+  t/results/macro/arobase_brace_in_macro_call.pl \
   t/results/macro/backslash_in_arg.pl \
   t/results/macro/bad_argument.pl \
   t/results/macro/bad_formal_arg.pl \
@@ -1281,6 +1311,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/macro/macro_for_dot_in_menu_not_separator.pl \
   t/results/macro/macro_for_end.pl \
   t/results/macro/macro_for_ignored_line_command.pl \
+  t/results/macro/macro_for_verb.pl \
   t/results/macro/macro_imbricated_with_beginning_command_name.pl \
   t/results/macro/macro_in_accent.pl \
   t/results/macro/macro_in_brace_command.pl \
@@ -1317,6 +1348,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/macro/macro_zero.pl \
   t/results/macro/nested_macro_call.pl \
   t/results/macro/no_macrobody.pl \
+  t/results/macro/non_ascii_in_macro_name.pl \
   t/results/macro/paragraph_and_macro.pl \
   t/results/macro/protect_comma_macro_line.pl \
   t/results/macro/protect_in_body.pl \
@@ -1335,7 +1367,10 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/macro/two_macros_on_a_line.pl \
   t/results/macro/unknown_macro_on_line_command.pl \
   t/results/macro/unpaired_backslash_in_macro_body.pl \
+  t/results/macro/verb_with_arobase_in_macro_call.pl \
+  t/results/macro/verb_with_brace_in_macro_call.pl \
   t/results/macro/zero_argument.pl \
+  t/results/macro/zero_argument_comment.pl \
   t/results/menu/bad_beginning.pl \
   t/results/menu/block_commands_in_menu_description.pl \
   t/results/menu/comment_on_menu_line.pl \
@@ -1373,6 +1408,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/menu/missing_detailmenu_on_subnodes.pl \
   t/results/menu/multiple_menus.pl \
   t/results/menu/no_colon_in_menu.pl \
+  t/results/menu/nodedescription_descriptions.pl \
   t/results/menu/reference_to_external_manual.pl \
   t/results/menu/sc_in_menu.pl \
   t/results/menu/simple.pl \
@@ -1398,6 +1434,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/misc_commands/definfoenclose.pl \
   t/results/misc_commands/definfoenclose_nestings.pl \
   t/results/misc_commands/definfoenclose_with_empty_arg.pl \
+  t/results/misc_commands/documentencoding_zero.pl \
   t/results/misc_commands/double_exdent.pl \
   t/results/misc_commands/empty_center.pl \
   t/results/misc_commands/empty_center_with_arg.pl \
@@ -1415,6 +1452,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/misc_commands/kbdinputstyle_in_table.pl \
   t/results/misc_commands/many_lines.pl \
   t/results/misc_commands/no_empty_line_between_headings.pl \
+  t/results/misc_commands/nodedescription.pl \
   t/results/misc_commands/noindent_after_smallexample.pl \
   t/results/misc_commands/noindent_empty_para.pl \
   t/results/misc_commands/noindent_in_paragraph.pl \

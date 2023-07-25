@@ -139,6 +139,10 @@ reset_parser_except_conf (void)
   memset (&nesting_context, 0, sizeof (nesting_context));
   reset_floats ();
   wipe_global_info ();
+  /* it is not totally obvious that is it better to reset the
+     list to avoid memory leaks rather than reuse the iconv
+     opened handlers */
+  reset_encoding_list ();
   set_input_encoding ("utf-8");
   reset_internal_xrefs ();
   reset_labels ();
@@ -152,14 +156,23 @@ reset_parser_except_conf (void)
 }
 
 void
-reset_parser (void)
+reset_parser (int debug_output)
 {
   /* NOTE: Do not call 'malloc' or 'free' in this function or in any function
      called in this file.  Since this file (api.c) includes the Perl headers,
      we get the Perl redefinitions, which we do not want, as we don't use
      them throughout the rest of the program. */
 
+  /* We cannot call debug() here, because the configuration of the previous
+     parser invokation has not been reset already, and new configuration has
+     not been read, so we need to pass the configuration information
+     directly */
+  /*
   debug ("!!!!!!!!!!!!!!!! RESETTING THE PARSER !!!!!!!!!!!!!!!!!!!!!");
+  */
+  if (debug_output)
+    fprintf (stderr,
+          "!!!!!!!!!!!!!!!! RESETTING THE PARSER !!!!!!!!!!!!!!!!!!!!!\n");
 
   reset_parser_except_conf ();
   wipe_values ();
@@ -187,7 +200,6 @@ parse_file (char *filename)
   debug_output = 0;
   */
   char *p, *q;
-  char c;
 
   int status;
   
@@ -207,10 +219,10 @@ parse_file (char *filename)
 
   if (p)
     {
-      c = *p;
+      char saved = *p;
       *p = '\0';
       add_include_directory (filename);
-      *p = c;
+      *p = saved;
     }
 
   Root = parse_texi_document ();
@@ -879,12 +891,9 @@ build_global_info (void)
   dTHX;
 
   hv = newHV ();
-  if (global_info.input_encoding_name)
+  if (global_input_encoding_name)
     hv_store (hv, "input_encoding_name", strlen ("input_encoding_name"),
-              newSVpv (global_info.input_encoding_name, 0), 0);
-  if (global_info.input_perl_encoding)
-    hv_store (hv, "input_perl_encoding", strlen ("input_perl_encoding"),
-              newSVpv (global_info.input_perl_encoding, 0), 0);
+              newSVpv (global_input_encoding_name, 0), 0);
 
   if (global_info.dircategory_direntry.contents.number > 0)
     {

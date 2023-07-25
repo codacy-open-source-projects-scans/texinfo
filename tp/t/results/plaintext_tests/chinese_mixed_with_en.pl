@@ -41,7 +41,6 @@ $result_trees{'chinese_mixed_with_en'} = {
               'cmdname' => 'documentencoding',
               'extra' => {
                 'input_encoding_name' => 'utf-8',
-                'input_perl_encoding' => 'utf-8-strict',
                 'text_arg' => 'utf-8'
               },
               'info' => {
@@ -132,7 +131,7 @@ $result_trees{'chinese_mixed_with_en'} = {
         {
           'contents' => [
             {
-              'text' => 'Mixed in UTF-8'
+              'text' => 'Mixed chinese and english'
             }
           ],
           'info' => {
@@ -419,7 +418,7 @@ $result_texis{'chinese_mixed_with_en'} = '\\input texinfo
 @settitle chinese mixed with english
 
 @node Top
-@top Mixed in UTF-8
+@top Mixed chinese and english
 
 Example of english and chinese, chinese aligned or not.
 
@@ -457,8 +456,8 @@ overlap。
 
 
 $result_texts{'chinese_mixed_with_en'} = '
-Mixed in UTF-8
-**************
+Mixed chinese and english
+*************************
 
 Example of english and chinese, chinese aligned or not.
 

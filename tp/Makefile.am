@@ -130,10 +130,14 @@ test_files = \
  t/README \
  t/include/a.txt \
  t/include/aa.txt \
- t/include/my-bib-macros.texi \
+ t/include/chapter_char_latin2_latin2_in_refs.texi \
+ t/include/chapter_chinese_mixed_with_en.texi \
+ t/include/chapter_chinese_mixed_with_en_EUC_CN.texi \
+ t/include/chapter_japanese_shift_jis.texi \
  t/include/count_image.png \
  t/include/count_image.txt \
  t/include/count_image_text.txt \
+ t/include/documentdescription_EUC_CN.texi \
  t/include/f.txt \
  t/include/fdotext.ext \
  t/include/fdotext.png \
@@ -149,6 +153,7 @@ test_files = \
  t/include/image_encoded.txt \
  t/include/inc_@f--ile.texi \
  t/include/included_file_with_setfilename.texi \
+ t/include/my-bib-macros.texi \
  t/include/text_only_image.txt \
  t/include/this_is_a_long_unknown_file.png \
  t/include/verbatim_encoded.texi \
@@ -186,11 +191,13 @@ test_files = \
  t/test_utils.pl \
  t/input_files/all_spaces.texi \
  t/input_files/bib-example.texi \
- t/input_files/char_latin1_utf8_in_refs.texi \
+ t/input_files/char_utf8_latin1_in_refs.texi \
  t/input_files/char_latin1_latin1_in_refs.texi \
+ t/input_files/char_us_ascii_latin1_in_refs.texi \
  t/input_files/char_latin2_latin2_in_refs.texi \
  t/input_files/character_and_spaces_in_refs_text.texi \
  t/input_files/chinese_mixed_with_en.texi \
+ t/input_files/chinese_mixed_with_en_EUC_CN.texi \
  t/input_files/complex_sectioning_case.texi \
  t/input_files/cond.texi \
  t/input_files/contents_at_document_begin.texi \
@@ -232,6 +239,7 @@ test_files = \
  t/input_files/minimal_empty_empty.texi \
  t/input_files/minimal_empty_with_bye.texi \
  t/input_files/minimal_empty_with_input.texi \
+ t/input_files/multiple_include_encodings.texi \
  t/input_files/navigation.texi \
  t/input_files/nodequote.texi \
  t/input_files/nodes_before_top.texi \
@@ -325,6 +333,7 @@ Texinfo/ModulePath.pm: Texinfo/ModulePath.pm.in Makefile
 	sed -e 's|[@]USE_EXTERNAL_LIBINTL[@]|$(USE_EXTERNAL_LIBINTL)|' \
 	    -e 's|[@]USE_EXTERNAL_EASTASIANWIDTH[@]|$(USE_EXTERNAL_EASTASIANWIDTH)|' \
 	    -e 's|[@]USE_EXTERNAL_UNIDECODE[@]|$(USE_EXTERNAL_UNIDECODE)|' \
+	    -e 's|[@]ICONV_CONVERTS_EUC_CN[@]|$(ICONV_CONVERTS_EUC_CN)|' \
 	  $(srcdir)/Texinfo/ModulePath.pm.in >$@
 
 Texinfo/Commands.pm: Texinfo/command_data.txt

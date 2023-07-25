@@ -1,3 +1,18 @@
+/* Copyright 2016-2023 Free Software Foundation, Inc.
+
+   This program is free software: you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation, either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
 #ifdef HAVE_CONFIG_H
   #include <config.h>
 #endif
@@ -15,21 +30,6 @@
 #include "miscxs.h"
 
 MODULE = Texinfo::MiscXS  PACKAGE = Texinfo::MiscXS  PREFIX = xs_
-
-#  Copyright 2016-2023 Free Software Foundation, Inc.
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <http://www.gnu.org/licenses/>.  
 
 PROTOTYPES: DISABLE
 
@@ -103,27 +103,42 @@ xs_entity_text (text_in)
      RETVAL
 
 void
+xs_parse_command_name (text)
+     SV *text
+  PREINIT:
+     char *command;
+     int is_single_letter;
+  PPCODE:
+     xs_parse_command_name(text, &command, &is_single_letter);
+     EXTEND(SP,2);
+     PUSHs(sv_newmortal());
+     sv_setpv((SV*)ST(0), command);
+     SvUTF8_on(ST(0));
+     PUSHs(sv_newmortal());
+     sv_setiv((SV*)ST(1), (IV)is_single_letter);
+     SvUTF8_on(ST(1));
+
+
+void
 xs_parse_texi_regex (text)
      SV *text
   PREINIT:
-     char *at_command;
+     char *arobase;
      char *open_brace;
      char *close_brace;
      char *comma;
      char *asterisk;
-     char *single_letter_command;
      char *separator_match;
-     char *arobase;
      char *form_feed;
      char *menu_only_separator;
      char *new_text;
   PPCODE:
-     xs_parse_texi_regex(text, &at_command, &open_brace, &close_brace,
-                         &comma, &asterisk, &single_letter_command,
-                         &arobase, &form_feed, &menu_only_separator, &new_text);
-     EXTEND(SP,9);
+     xs_parse_texi_regex(text, &arobase, &open_brace, &close_brace,
+                         &comma, &asterisk, &form_feed,
+                         &menu_only_separator, &new_text);
+     EXTEND(SP,7);
      PUSHs(sv_newmortal());
-     sv_setpv((SV*)ST(0), at_command);
+     sv_setpv((SV*)ST(0), arobase);
      SvUTF8_on(ST(0));
      PUSHs(sv_newmortal());
      sv_setpv((SV*)ST(1), open_brace);
@@ -138,20 +153,14 @@ xs_parse_texi_regex (text)
      sv_setpv((SV*)ST(4), asterisk);
      SvUTF8_on(ST(4));
      PUSHs(sv_newmortal());
-     sv_setpv((SV*)ST(5), single_letter_command);
+     sv_setpv((SV*)ST(5), form_feed);
      SvUTF8_on(ST(5));
      PUSHs(sv_newmortal());
-     sv_setpv((SV*)ST(6), arobase);
+     sv_setpv((SV*)ST(6), menu_only_separator);
      SvUTF8_on(ST(6));
      PUSHs(sv_newmortal());
-     sv_setpv((SV*)ST(7), form_feed);
+     sv_setpv((SV*)ST(7), new_text);
      SvUTF8_on(ST(7));
-     PUSHs(sv_newmortal());
-     sv_setpv((SV*)ST(8), menu_only_separator);
-     SvUTF8_on(ST(8));
-     PUSHs(sv_newmortal());
-     sv_setpv((SV*)ST(9), new_text);
-     SvUTF8_on(ST(9));
 
 SV *
 xs_default_format_protect_text (self, text_in)

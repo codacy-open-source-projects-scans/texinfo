@@ -54,6 +54,9 @@ Test text after finalout
 @finalout a word after finalout
 Line after finalout
 '],
+['documentencoding_zero',
+'@documentencoding 0
+'],
 ['also_not_line',
 '
 
@@ -339,6 +342,20 @@ aaa
 @center @ref{Top, ,title
 very long}
 ', {'full_document' => 1}],
+['nodedescription',
+'@nodedescription out of any node
+
+@node Top
+@top top
+
+@node chap
+@chapter Chapter
+
+@nodedescription @emph{first description} of chapter
+
+@nodedescription second description @
+  of chapter
+'],
 ['footnote_in_center',
 '@center Centered text with a footnote@footnote{This footnote
 shows an important feature of the centered text.
@@ -576,6 +593,7 @@ in example
 '],
 );
 
+# info and xml
 my %info_tests = (
   'comment_space_command_on_line' => 1,
   'setfilename' => 1,
@@ -583,7 +601,6 @@ my %info_tests = (
 
 my %xml_tests = (
   'codequoteundirected_codequotebacktick' => 1,
-  'comment_space_command_on_line' => 1,
   'definfoenclose_with_empty_arg' => 1,
   'vskip' => 1,
 );

@@ -545,6 +545,32 @@ sub valid_tree_transformation ($)
 }
 
 
+# information on encodings
+
+# in Texinfo up to 5.2, we presume that ISO-8859-1 was considered as
+# the default encoding (although it had never been said explicitly in
+# the manual, it is consistent with HTML output without encoding
+# being the default for makeinfo output in earlier versions and being,
+# at that time, considered as ISO-8859-1).  The wording in the Texinfo
+# manual implied that setting US-ASCII had no effect, a possible
+# interpretation being that it was an alias for ISO-8859-1.  Since
+# ISO-8859-1 extends US-ASCII in a compatible way, this interpretation
+# is valid.  Also, as long as the same 8bit encoding is used for input and
+# output, the precise 8bit encoding used to extend US-ASCII has no
+# practical consequence, something consistent with past makeinfo supporting
+# any 8bit encoding without documentencoding and also when US-ASCII was
+# specified as encoding.
+#
+# To support old manuals in which US-ASCII can be specified although
+# the encoding corresponds to any 8bit encoding compatible with ISO-8859-1,
+# we convert US-ASCII as ISO-8859-1 to avoid errors for characters in
+# ISO-8859-1 but not in US-ASCII.
+our %encoding_name_conversion_map;
+%encoding_name_conversion_map = (
+  'us-ascii' => 'iso-8859-1',
+);
+
+
 # information on @-commands
 
 our %nobrace_symbol_text;
@@ -923,6 +949,32 @@ sub _add_preamble_before_content($)
   unshift (@{$before_node_section->{'contents'}}, @first_types);
 }
 
+sub get_perl_encoding($$$)
+{
+  my $commands_info = shift;
+  my $registrar = shift;
+  my $configuration_information = shift;
+
+  my $result;
+  if (defined($commands_info->{'documentencoding'})) {
+    foreach my $element (@{$commands_info->{'documentencoding'}}) {
+      my $perl_encoding = element_extra_encoding_for_perl($element);
+      if (!defined($perl_encoding)) {
+        my $encoding = $element->{'extra'}->{'input_encoding_name'}
+          if ($element->{'extra'});
+        if (defined($encoding)) {
+          $registrar->line_warn($configuration_information,
+                     sprintf(__("unrecognized encoding name `%s'"), $encoding),
+                                          $element->{'source_info'});
+        }
+      } else {
+        $result = $perl_encoding;
+      }
+    }
+  }
+  return $result;
+}
+
 # for Parser and main program
 sub warn_unknown_language($) {
   my $lang = shift;
@@ -1222,6 +1274,30 @@ sub parse_node_manual($;$)
 
 # misc functions used in diverse contexts and useful in converters
 
+# FIXME document
+sub element_extra_encoding_for_perl($)
+{
+  my $element = shift;
+
+  my $perl_encoding;
+
+  my $encoding = $element->{'extra'}->{'input_encoding_name'}
+    if ($element->{'extra'});
+
+  if (defined($encoding) and $encoding ne '') {
+    $encoding = $encoding_name_conversion_map{$encoding}
+      if (defined($encoding_name_conversion_map{$encoding}));
+    my $Encode_encoding_object = Encode::find_encoding($encoding);
+    if (defined($Encode_encoding_object)) {
+      $perl_encoding = $Encode_encoding_object->name();
+      $perl_encoding = undef if (defined($perl_encoding)
+                                 and $perl_encoding eq '');
+    }
+  }
+
+  return $perl_encoding;
+}
+
 # Reverse the decoding of the file name from the input encoding.  When
 # dealing with file names, we want Perl strings representing sequences of
 # bytes, not Unicode codepoints.
@@ -1453,11 +1529,16 @@ sub set_output_encodings($$)
                $parser_information->{'input_encoding_name'})
      if ($parser_information
          and $parser_information->{'input_encoding_name'});
-  if (!$customization_information->get_conf('OUTPUT_PERL_ENCODING')
-       and $customization_information->get_conf('OUTPUT_ENCODING_NAME')) {
-    my $perl_encoding
-      = Encode::resolve_alias($customization_information->get_conf('OUTPUT_ENCODING_NAME'));
-    if ($perl_encoding) {
+  if (not defined($customization_information->get_conf('OUTPUT_PERL_ENCODING'))
+      and defined($customization_information->get_conf('OUTPUT_ENCODING_NAME'))) {
+    my $conversion_encoding
+       = $customization_information->get_conf('OUTPUT_ENCODING_NAME');
+    if (defined($encoding_name_conversion_map{$conversion_encoding})) {
+      $conversion_encoding
+         = $encoding_name_conversion_map{$conversion_encoding};
+    }
+    my $perl_encoding = Encode::resolve_alias($conversion_encoding);
+    if (defined($perl_encoding) and $perl_encoding ne '') {
       $customization_information->set_conf('OUTPUT_PERL_ENCODING', $perl_encoding);
     }
   }
@@ -2640,7 +2721,7 @@ Hashes are defined as C<our> variables, and are therefore available
 outside of the module.
 
 TODO: undocumented
-%null_device_file %default_parser_customization_values %document_settable_multiple_at_commands %document_settable_unique_at_commands %default_converter_command_line_options %default_main_program_customization_options %default_converter_customization @variable_string_settables %document_settable_at_commands %def_map %command_structuring_level %level_to_structuring_command
+%null_device_file %default_parser_customization_values %document_settable_multiple_at_commands %document_settable_unique_at_commands %default_converter_command_line_options %default_main_program_customization_options %default_converter_customization @variable_string_settables %document_settable_at_commands %def_map %command_structuring_level %level_to_structuring_command %encoding_name_conversion_map
 
 =over
 

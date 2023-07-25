@@ -45,7 +45,7 @@
 
 package Texinfo::Parser;
 
-use 5.00405;
+use 5.008;
 use strict;
 use warnings;
 
@@ -54,6 +54,7 @@ use warnings;
 
 use Storable qw(dclone); # standard in 5.007003
 use Encode qw(decode);
+use File::Basename; # for fileparse
 
 use Texinfo::Common;
 use Texinfo::Report;
@@ -94,7 +95,6 @@ sub parser (;$$)
 
   my $parser = dclone(\%parser_default_configuration);
 
-  reset_parser ();
   if (defined($conf)) {
     foreach my $key (keys (%$conf)) {
       # Copy conf to parser object.
@@ -104,7 +104,18 @@ sub parser (;$$)
       } else {
         $parser->{$key} = $conf->{$key};
       }
+    }
+  }
 
+  # pass directly DEBUG configuration to reset_parser to override previous
+  # parser configuration, as the configuration isn't already reset and the new
+  # configuration is set afterwards.
+  my $debug = 0;
+  $debug = $parser->{'DEBUG'} if ($parser->{'DEBUG'});
+  reset_parser ($debug);
+
+  if (defined($conf)) {
+    foreach my $key (keys (%$conf)) {
       if ($key eq 'INCLUDE_DIRECTORIES') {
         foreach my $d (@{$conf->{'INCLUDE_DIRECTORIES'}}) {
           add_include_directory ($d);
@@ -177,18 +188,18 @@ sub _find_menus_of_node {
   }
 }
 
-# Set 'menus' array for each node.  This accounts for malformed input where
-# the number of sectioning commands between @node and @menu is not exactly 1.
+# Set 'menus' array for each node.  This accounts for input where
+# the number of sectioning commands between @node and @menu is not 1.
 sub _associate_node_menus {
   my $self = shift;
   my $root = shift;
 
-  my $node;
+  my $current_node;
   foreach my $child (@{$root->{'contents'}}) {
     if ($child->{'cmdname'} and $child->{'cmdname'} eq 'node') {
-      $node = $child;
+      $current_node = $child;
     }
-    _find_menus_of_node ($node, $child) unless !defined $node;
+    _find_menus_of_node ($current_node, $child) if (defined($current_node));
   }
 }
 
@@ -241,9 +252,17 @@ sub get_parser_info {
   $self->{'commands_info'} = $GLOBAL_INFO2;
 
   _set_errors_node_lists_labels_indices($self);
-}
 
-use File::Basename; # for fileparse
+  my ($registrar, $configuration_information)
+     = _get_error_registrar($self);
+
+  $self->{'info'}->{'input_perl_encoding'} = 'utf-8';
+  my $perl_encoding
+    = Texinfo::Common::get_perl_encoding($self->{'commands_info'},
+                              $registrar, $configuration_information);
+  $self->{'info'}->{'input_perl_encoding'} = $perl_encoding
+     if (defined($perl_encoding));
+}
 
 sub parse_texi_file ($$)
 {
@@ -291,12 +310,17 @@ sub _get_errors($)
   my $ERRORS = get_errors ();
 
   for my $error (@{$ERRORS}) {
+    # The message output in case of debugging set is already issued by
+    # the parser, therefore we set the optional argument to silence
+    # the same message that could be output here.
     if ($error->{'type'} eq 'error') {
       $registrar->line_error ($configuration_information,
-                              $error->{'message'}, $error->{'source_info'});
+                              $error->{'message'}, $error->{'source_info'},
+                              undef, 1);
     } else {
       $registrar->line_warn ($configuration_information,
-                             $error->{'message'}, $error->{'source_info'});
+                             $error->{'message'}, $error->{'source_info'},
+                             undef, 1);
     }
   }
 }

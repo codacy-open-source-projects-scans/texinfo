@@ -29,7 +29,6 @@ $result_trees{'image_text_encoded'} = {
           'cmdname' => 'documentencoding',
           'extra' => {
             'input_encoding_name' => 'utf-8',
-            'input_perl_encoding' => 'utf-8-strict',
             'text_arg' => 'utf-8'
           },
           'info' => {
@@ -61,7 +60,7 @@ $result_trees{'image_text_encoded'} = {
           ],
           'cmdname' => 'image',
           'extra' => {
-            'input_perl_encoding' => 'utf-8-strict'
+            'input_encoding_name' => 'utf-8'
           },
           'source_info' => {
             'file_name' => '',

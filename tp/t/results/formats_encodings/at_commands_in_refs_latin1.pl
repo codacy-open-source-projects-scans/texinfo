@@ -63,7 +63,6 @@ $result_trees{'at_commands_in_refs_latin1'} = {
               'cmdname' => 'documentencoding',
               'extra' => {
                 'input_encoding_name' => 'iso-8859-15',
-                'input_perl_encoding' => 'iso-8859-15',
                 'text_arg' => 'ISO-8859-15'
               },
               'info' => {
@@ -2792,7 +2791,7 @@ $result_trees{'at_commands_in_refs_latin1'} = {
                       ],
                       'cmdname' => 'image',
                       'extra' => {
-                        'input_perl_encoding' => 'iso-8859-15'
+                        'input_encoding_name' => 'iso-8859-15'
                       },
                       'source_info' => {
                         'file_name' => '',
@@ -2848,7 +2847,7 @@ $result_trees{'at_commands_in_refs_latin1'} = {
                       ],
                       'cmdname' => 'image',
                       'extra' => {
-                        'input_perl_encoding' => 'iso-8859-15'
+                        'input_encoding_name' => 'iso-8859-15'
                       },
                       'source_info' => {
                         'file_name' => '',
@@ -8514,7 +8513,7 @@ $result_trees{'at_commands_in_refs_latin1'} = {
               ],
               'cmdname' => 'image',
               'extra' => {
-                'input_perl_encoding' => 'iso-8859-15'
+                'input_encoding_name' => 'iso-8859-15'
               },
               'source_info' => {
                 'file_name' => '',
@@ -8570,7 +8569,7 @@ $result_trees{'at_commands_in_refs_latin1'} = {
               ],
               'cmdname' => 'image',
               'extra' => {
-                'input_perl_encoding' => 'iso-8859-15'
+                'input_encoding_name' => 'iso-8859-15'
               },
               'source_info' => {
                 'file_name' => '',
@@ -8651,7 +8650,7 @@ $result_trees{'at_commands_in_refs_latin1'} = {
               ],
               'cmdname' => 'image',
               'extra' => {
-                'input_perl_encoding' => 'iso-8859-15'
+                'input_encoding_name' => 'iso-8859-15'
               },
               'source_info' => {
                 'file_name' => '',
@@ -8707,7 +8706,7 @@ $result_trees{'at_commands_in_refs_latin1'} = {
               ],
               'cmdname' => 'image',
               'extra' => {
-                'input_perl_encoding' => 'iso-8859-15'
+                'input_encoding_name' => 'iso-8859-15'
               },
               'source_info' => {
                 'file_name' => '',
@@ -13159,7 +13158,7 @@ $result_trees{'at_commands_in_refs_latin1'} = {
                       ],
                       'cmdname' => 'image',
                       'extra' => {
-                        'input_perl_encoding' => 'iso-8859-15'
+                        'input_encoding_name' => 'iso-8859-15'
                       },
                       'source_info' => {
                         'file_name' => '',
@@ -13215,7 +13214,7 @@ $result_trees{'at_commands_in_refs_latin1'} = {
                       ],
                       'cmdname' => 'image',
                       'extra' => {
-                        'input_perl_encoding' => 'iso-8859-15'
+                        'input_encoding_name' => 'iso-8859-15'
                       },
                       'source_info' => {
                         'file_name' => '',

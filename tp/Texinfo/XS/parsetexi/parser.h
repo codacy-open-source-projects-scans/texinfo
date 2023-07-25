@@ -31,8 +31,6 @@
 
 typedef struct GLOBAL_INFO {
     char *input_file_name;
-    char *input_encoding_name;
-    char *input_perl_encoding;
     int sections_level;
     ELEMENT dircategory_direntry; /* an array of elements */
 
@@ -152,6 +150,7 @@ typedef struct {
 } CONDITIONAL_STACK_ITEM;
 
 size_t count_convert_u8 (char *text);
+int isascii_alnum (int c);
 ELEMENT *parse_texi (ELEMENT *root_elt, ELEMENT *current_elt);
 void push_conditional_stack (enum command_id cond, SOURCE_MARK *source_mark);
 CONDITIONAL_STACK_ITEM *pop_conditional_stack (void);
@@ -187,6 +186,7 @@ void set_accept_internalvalue (void);
 char *element_type_name (ELEMENT *e);
 int check_space_element (ELEMENT *e);
 void gather_spaces_after_cmd_before_arg (ELEMENT *current);
+char *parse_command_name (char **ptr, int *single_char);
 
 /* Return values */
 #define GET_A_NEW_LINE 0
@@ -194,6 +194,7 @@ void gather_spaces_after_cmd_before_arg (ELEMENT *current);
 #define FINISHED_TOTALLY 2
 
 extern const char *whitespace_chars, *whitespace_chars_except_newline;
+extern const char *linecommand_expansion_delimiters;
 extern const char *digit_chars;
 
 extern ELEMENT *current_node;

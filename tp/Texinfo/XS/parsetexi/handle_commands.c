@@ -177,7 +177,7 @@ parse_rawline_command (char *line, enum command_id cmd,
       p += strspn (p, whitespace_chars);
       if (!*p)
         goto set_no_name;
-      if (!isalnum (*p) && *p != '-' && *p != '_')
+      if (!isascii_alnum (*p) && *p != '-' && *p != '_')
         goto set_invalid;
       q = strpbrk (p,
                    " \t\f\r\n"       /* whitespace */
@@ -285,9 +285,17 @@ parse_rawline_command (char *line, enum command_id cmd,
       r = skip_to_comment_if_comment_or_spaces (q, has_comment);
       if (!r || r != q)
         {
+          char *end_line;
+          char *line_nonl;
           q += strspn (q, whitespace_chars);
+          /* remove new line for the message */
+          line_nonl = strdup (q);
+          end_line = strchr (line_nonl, '\n');
+          if (end_line)
+            *end_line = '\0';
           line_warn ("remaining argument on @%s line: %s",
-                     command_name(cmd), q);
+                     command_name(cmd), line_nonl);
+          free (line_nonl);
         }
       break;
     clickstyle_invalid:
@@ -713,7 +721,7 @@ handle_line_command (ELEMENT *current, char **line_inout,
           ELEMENT *parent;
           if ((parent = item_line_parent (current)))
             {
-              debug ("ITEM_LINE");
+              debug ("ITEM LINE %s", command_name(cmd));
               current = parent;
               gather_previous_item (current, cmd);
             }
@@ -735,7 +743,22 @@ handle_line_command (ELEMENT *current, char **line_inout,
           command_e->cmd = cmd;
           command_e->source_info = current_source_info;
 
-          if (cmd == CM_subentry)
+          if (cmd == CM_nodedescription)
+            {
+              if (current_node)
+                {
+                  KEY_PAIR *k = lookup_extra (current_node, "node_description");
+                  if (k && k->value)
+                    line_warn ("multiple node descriptions");
+                  else
+                    add_extra_element (current_node, "node_description",
+                                       command_e);
+                  add_extra_element (command_e, "element_node", current_node);
+                }
+              else
+                line_warn ("@nodedescription outside of any node");
+            }
+          else if (cmd == CM_subentry)
             {
               long level = 1;
               ELEMENT *parent = current->parent;
@@ -1142,6 +1165,8 @@ handle_brace_command (ELEMENT *current, char **line_inout, enum command_id cmd,
 {
   char *line = *line_inout;
   ELEMENT *command_e;
+
+  debug ("OPEN BRACE @%s", command_name(cmd));
 
   command_e = new_element (ET_NONE);
   command_e->cmd = cmd;

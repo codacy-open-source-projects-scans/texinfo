@@ -54,6 +54,9 @@ handle_open_brace (ELEMENT *current, char **line_inout)
       if (command == CM_verb)
         {
           current->type = ET_brace_command_arg;
+          /* the delimiter may be in macro expansion */
+          if (!*line)
+            line = new_line (current);
           /* Save the deliminating character in 'type'. */
           if (!*line || *line == '\n')
             {
@@ -63,9 +66,15 @@ handle_open_brace (ELEMENT *current, char **line_inout)
             }
           else
             {
-              static char c[2];
-              c[0] = *line++;
-              add_info_string_dup (current->parent, "delimiter", c);
+              /* Count any UTF-8 continuation bytes. */
+              int char_len = 1;
+              char *delimiter_character;
+              while ((line[char_len] & 0xC0) == 0x80)
+                char_len++;
+              delimiter_character = strndup (line, char_len);
+              add_info_string (current->parent, "delimiter",
+                               delimiter_character);
+              line += char_len;
             }
         }
       else if (command_data(command).data == BRACE_context)
@@ -163,7 +172,11 @@ handle_open_brace (ELEMENT *current, char **line_inout)
                 push_context (ct_inlineraw, command);
             }
         }
-      debug ("OPENED");
+      debug_nonl ("OPENED @%s, remaining: %d ",
+                  command_name (current->parent->cmd),
+                  counter_value (&count_remaining_args, current->parent) > 0 ?
+                   counter_value (&count_remaining_args, current->parent) : 0);
+      debug_print_element (current, 0); debug ("");
     }
   else if (current->parent && (current->parent->cmd == CM_multitable
                                || current->parent->type == ET_def_line
@@ -188,6 +201,7 @@ handle_open_brace (ELEMENT *current, char **line_inout)
     }
   else if (current->type == ET_rawpreformatted)
     {
+      debug ("LONE OPEN BRACE in rawpreformatted");
       current = merge_text (current, "{", 0);
     }
   /* matching braces accepted in a rawpreformatted, inline raw or
@@ -196,8 +210,7 @@ handle_open_brace (ELEMENT *current, char **line_inout)
    */
   else if (current_context() == ct_math
            || current_context() == ct_rawpreformatted
-           || current_context() == ct_inlineraw
-           || current_context() == ct_linecommand)
+           || current_context() == ct_inlineraw)
     {
       ELEMENT *b = new_element (ET_balanced_braces);
       ELEMENT *open_brace = new_element (ET_NONE);
@@ -250,6 +263,7 @@ handle_close_brace (ELEMENT *current, char **line_inout)
       && current->type == ET_paragraph)
     {
       abort_empty_line (&current, NULL);
+      debug ("IN BRACE_COMMAND_CONTEXT end paragraph");
       current = end_paragraph (current, 0, 0);
     }
 
@@ -274,7 +288,7 @@ handle_close_brace (ELEMENT *current, char **line_inout)
         isolate_last_space (current);
 
       closed_command = current->parent->cmd;
-      debug ("CLOSING(brace) %s", command_data(closed_command).cmdname);
+      debug ("CLOSING(brace) @%s", command_data(closed_command).cmdname);
       counter_pop (&count_remaining_args);
 
       if (current->contents.number > 0
@@ -405,9 +419,9 @@ handle_close_brace (ELEMENT *current, char **line_inout)
             {
               line_error ("@image missing filename argument");
             }
-          if (global_info.input_perl_encoding)
-            add_extra_string_dup (image, "input_perl_encoding",
-                                  global_info.input_perl_encoding);
+          if (global_input_encoding_name)
+            add_extra_string_dup (image, "input_encoding_name",
+                                  global_input_encoding_name);
         }
       else if (closed_command == CM_dotless)
         {
@@ -573,7 +587,6 @@ handle_comma (ELEMENT *current, char **line_inout)
     {
       KEY_PAIR *k;
       int expandp = 0;
-      debug ("THE INLINE PART");
       k = lookup_extra (current, "format");
       if (!k)
         {
@@ -587,42 +600,43 @@ handle_comma (ELEMENT *current, char **line_inout)
                 inline_type = arg->text.text;
             }
 
-          debug ("INLINE <%s>", inline_type);
           if (!inline_type)
             {
               /* Condition is missing */
               debug ("INLINE COND MISSING");
+              add_extra_string (current, "format", 0);
             }
-          else if (current->cmd == CM_inlineraw
-              || current->cmd == CM_inlinefmt
-              || current->cmd == CM_inlinefmtifelse)
+          else
             {
-              if (format_expanded_p (inline_type))
+              debug ("INLINE: %s", inline_type);
+              if (current->cmd == CM_inlineraw
+                  || current->cmd == CM_inlinefmt
+                  || current->cmd == CM_inlinefmtifelse)
                 {
-                  expandp = 1;
-                  add_extra_integer (current, "expand_index", 1);
+                  if (format_expanded_p (inline_type))
+                    {
+                      expandp = 1;
+                      add_extra_integer (current, "expand_index", 1);
+                    }
+                  else
+                    expandp = 0;
+                }
+              else if (current->cmd == CM_inlineifset
+                       || current->cmd == CM_inlineifclear)
+                {
+                  expandp = 0;
+                  if (fetch_value (inline_type))
+                    expandp = 1;
+                  if (current->cmd == CM_inlineifclear)
+                    expandp = !expandp;
+                  if (expandp)
+                    add_extra_integer (current, "expand_index", 1);
                 }
               else
                 expandp = 0;
-            }
-          else if (current->cmd == CM_inlineifset
-                   || current->cmd == CM_inlineifclear)
-            {
-              expandp = 0;
-              if (fetch_value (inline_type))
-                expandp = 1;
-              if (current->cmd == CM_inlineifclear)
-                expandp = !expandp;
-              if (expandp)
-                add_extra_integer (current, "expand_index", 1);
-            }
-          else
-            expandp = 0;
 
-          if (inline_type)
-            add_extra_string_dup (current, "format", inline_type);
-          else
-            add_extra_string (current, "format", 0);
+              add_extra_string_dup (current, "format", inline_type);
+            }
 
           /* Skip first argument for a false @inlinefmtifelse */
           if (!expandp && current->cmd == CM_inlinefmtifelse)
@@ -689,7 +703,7 @@ handle_comma (ELEMENT *current, char **line_inout)
         }
       else if (current->cmd == CM_inlinefmtifelse)
         {
-          /* Second art of @inlinefmtifelse when condition is true.  Discard
+          /* Second part of @inlinefmtifelse when condition is true.  Discard
              second argument. */
           expandp = 0;
         }

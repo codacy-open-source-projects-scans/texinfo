@@ -233,28 +233,16 @@ sub expand_verbatiminclude($$$)
   my $customization_information = shift;
   my $current = shift;
 
-  my $input_encoding;
-
   return unless ($current->{'extra'}
                  and defined($current->{'extra'}->{'text_arg'}));
   my $file_name_text = $current->{'extra'}->{'text_arg'};
-  $input_encoding = $current->{'extra'}->{'input_perl_encoding'}
-        if ($current->{'extra'}
-            and defined($current->{'extra'}->{'input_perl_encoding'}));
 
-  my $encoding;
-  my $input_file_name_encoding
-     = $customization_information->get_conf('INPUT_FILE_NAME_ENCODING');
-  if ($input_file_name_encoding) {
-    $encoding = $input_file_name_encoding;
-  } elsif ($customization_information->get_conf('DOC_ENCODING_FOR_INPUT_FILE_NAME')) {
-    $encoding = $input_encoding;
-  } else {
-    $encoding = $customization_information->get_conf('LOCALE_ENCODING');
-  }
+  my $input_encoding
+         = Texinfo::Common::element_extra_encoding_for_perl($current);
 
   my ($file_name, $file_name_encoding)
-      = Texinfo::Common::encode_file_name($file_name_text, $encoding);
+      = encoded_input_file_name($customization_information,
+                                $file_name_text, $input_encoding);
 
   my $file = Texinfo::Common::locate_include_file($customization_information,
                                                   $file_name);
@@ -369,6 +357,33 @@ sub encoded_output_file_name($$)
   return Texinfo::Common::encode_file_name($file_name, $encoding);
 }
 
+# this requires a converter argument
+# Reverse the decoding of the file name from the input encoding.
+sub encoded_input_file_name($$;$)
+{
+  my $self = shift;
+  my $file_name = shift;
+  my $input_file_encoding = shift;
+
+  my $encoding;
+  my $input_file_name_encoding = $self->get_conf('INPUT_FILE_NAME_ENCODING');
+  if ($input_file_name_encoding) {
+    $encoding = $input_file_name_encoding;
+  } elsif ($self->get_conf('DOC_ENCODING_FOR_INPUT_FILE_NAME')) {
+    if (defined($input_file_encoding)) {
+      $encoding = $input_file_encoding;
+    } else {
+      $encoding = $self->{'parser_info'}->{'input_perl_encoding'}
+        if ($self->{'parser_info'}
+          and defined($self->{'parser_info'}->{'input_perl_encoding'}));
+    }
+  } else {
+    $encoding = $self->get_conf('LOCALE_ENCODING');
+  }
+
+  return Texinfo::Common::encode_file_name($file_name, $encoding);
+}
+
 # this requires a converter argument.  It is defined here, in order
 # to hide from the caller the 'translated_commands' converter key
 # that is set by Texinfo::Convert::Converter.  This is especially
@@ -411,16 +426,22 @@ Texinfo to other formats.  There is no promise of API stability.
 
 miscellaneous methods that may be useful for backends converting texinfo
 trees.  This module contains the methods that can be used in converters
-that do not inherit L<Texinfo::Convert::Converter>.
+which do not inherit from L<Texinfo::Convert::Converter>.
 
 =head1 METHODS
 
 No method is exported in the default case.
 
-Most methods takes a I<$converter> as argument, in general optionally,
-to get some information and use methods for error reporting,
-see L<Texinfo::Convert::Converter> and L<Texinfo::Report>.
-On strings translations, see L<Texinfo::Translations>.
+Most methods takes a I<$converter> as argument, in some cases optionally,
+to get some information, see
+L<Texinfo::Convert::Converter/Getting and setting customization variables>
+and use methods for error reporting, see L<Texinfo::Convert::Converter>
+and L<Texinfo::Report>, and for
+strings translations, see L<Texinfo::Translations>.
+
+Even when the caller does not inherit from L<Texinfo::Convert::Converter>, it
+could implement the required interfaces and could also have a converter
+available in some cases, to call the functions which require a converter.
 
 =over
 
@@ -429,7 +450,7 @@ X<C<definition_arguments_content>>
 
 I<$element> should be a C<@def*> Texinfo tree element.  The
 I<$category>, I<$class>, I<$type>, I<$name> are elements corresponding
-to the definition command line.  Texinfo elements
+to the definition @-command line.  Texinfo elements
 on the @-command line corresponding to arguments in the function
 definition are returned in the I<$arguments> array reference.
 Arguments correspond to text following the other elements
@@ -446,35 +467,47 @@ I<$def_line> taking the class into account, if there is one.
 If I<$converter> is not defined, the resulting string won't be
 translated.
 
-=item ($encoded_name, $encoding) = $converter->encoded_output_file_name($converter, $character_string_name)
-X<C<encoded_output_file_name>>
+=item ($encoded_name, $encoding) = $converter->encoded_input_file_name($converter, $character_string_name, $input_file_encoding)
 
-Encode I<$character_string_name> in the same way as other file name are
+=item ($encoded_name, $encoding) = $converter->encoded_output_file_name($converter, $character_string_name)
+X<C<encoded_input_file_name>> X<C<encoded_output_file_name>>
+
+Encode I<$character_string_name> in the same way as other file names are
 encoded in converters, based on customization variables, and possibly
 on the input file encoding.  Return the encoded name and the encoding
-used to encode the name.  The I<$converter> argument is not optional
+used to encode the name.  The C<encoded_input_file_name> and
+C<encoded_output_file_name> functions use different customization variables to
+determine the encoding.  The I<$converter> argument is not optional
 and is used both to access to customization variables and to access to parser
 information.
+
+The <$input_file_encoding> argument is optional.  If set, it is used for
+the input file encoding.  It is useful if there is more precise information
+on the input file encoding where the file name appeared.
 
 =item $tree = expand_today($converter)
 X<C<expand_today>>
 
-Expand today's date, as a texinfo tree with translations.
+Expand today's date, as a texinfo tree with translations.  The I<$converter>
+argument is not optional and is used both to retrieve customization information
+and to translate strings.
 
 =item $tree = expand_verbatiminclude($registrar, $customization_information, $verbatiminclude)
 X<C<expand_verbatiminclude>>
 
-The I<$registrar> argument may be undef.  I<$verbatiminclude> is a
-C<@verbatiminclude> tree element.  This function returns a
-C<@verbatim> tree elements after finding the included file and
-reading it.  If I<$registrar> is not defined, errors messages are
-not registered.
+The I<$registrar> argument may be undef.  The I<$customization_information>
+argument is required and is used to retrieve customization information
+L<Texinfo::Convert::Converter/Getting and setting customization variables>.
+I<$verbatiminclude> is a C<@verbatiminclude> tree element.  This function
+returns a C<@verbatim> tree elements after finding the included file and
+reading it.  If I<$registrar> is not defined, error messages are not
+registered.
 
 =item (\@contents, \@accent_commands) = find_innermost_accent_contents($element)
 X<C<find_innermost_accent_contents>>
 
 I<$element> should be an accent command Texinfo tree element.  Returns
-an array reference containing the innermost accent command contents,
+an array reference containing the innermost accent @-command contents,
 normally a text element with one or two letter, and an array reference
 containing the accent commands nested in I<$element> (including
 I<$element>).

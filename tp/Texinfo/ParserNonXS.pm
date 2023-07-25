@@ -98,6 +98,8 @@ sub import {
   if (!$module_loaded) {
     Texinfo::XSLoader::override ("Texinfo::Parser::_parse_texi_regex",
       "Texinfo::MiscXS::parse_texi_regex");
+    Texinfo::XSLoader::override ("Texinfo::Parser::_parse_command_name",
+      "Texinfo::MiscXS::parse_command_name");
     $module_loaded = 1;
   }
   # The usual import method
@@ -141,16 +143,16 @@ my %parser_state_initialization = (
                               # value is the reference on a macro element
                               # as obtained by parsing the @macro
   'macro_expansion_nr' => 0,  # number of macros being expanded
-  'value_stack' => [],        # stack of values being expanded (more recent
-                              # first)
+  'value_expansion_nr' => 0,  # number of values being expanded
   'merged_indices' => {},     # the key is merged in the value
   'sections_level' => 0,      # modified by raise/lowersections
   'targets' => [],            # array of elements used to build 'labels'
+  'input_file_encoding' => 'utf-8', # perl encoding name used for the input
+                                    # file
+  'input_encoding_name' => 'utf-8', # current input encoding name, based on
+                                    # mime type encoding names
   # initialization of information returned by global_information()
-  'info' => {
-    'input_encoding_name' => 'utf-8',
-    'input_perl_encoding' => 'utf-8'
-  },
+  'info' => {},
 );
 
 # configurable parser state
@@ -293,6 +295,8 @@ my %def_map                   = %Texinfo::Common::def_map;
 my %def_aliases               = %Texinfo::Common::def_aliases;
 my %all_commands              = %Texinfo::Common::all_commands;
 
+my %encoding_name_conversion_map
+                              = %Texinfo::Common::encoding_name_conversion_map;
 
 # Keys are commmands, values are names of indices.  User-defined
 # index commands are added dynamically.
@@ -451,7 +455,8 @@ foreach my $brace_command (keys (%brace_commands)) {
     $contain_full_text_commands{$brace_command} = 1;
   }
 }
-foreach my $line_command ('center', 'exdent', 'item', 'itemx') {
+foreach my $line_command ('center', 'exdent', 'item', 'itemx',
+                          'nodedescription') {
   $contain_full_text_commands{$line_command} = 1;
 }
 
@@ -563,6 +568,9 @@ sub parser(;$$)
   bless $parser;
 
   _setup_conf($parser, $conf);
+  # This is not very useful in perl, but mimics the XS parser
+  print STDERR "!!!!!!!!!!!!!!!! RESETTING THE PARSER !!!!!!!!!!!!!!!!!!!!!\n"
+    if ($parser->{'DEBUG'});
 
   # Initialize command hash that are dynamically modified, notably
   # those for index commands, and definoenclose, based on defaults
@@ -623,6 +631,9 @@ sub simple_parser(;$)
   bless $parser;
 
   _setup_conf($parser, $conf);
+  # This is not very useful in perl, but mimics the XS parser
+  print STDERR "!!!!!!!!!!!!!!!! RESETTING THE PARSER !!!!!!!!!!!!!!!!!!!!!\n"
+    if ($parser->{'DEBUG'});
 
   $parser->{'line_commands'} = $simple_parser_line_commands;
   $parser->{'brace_commands'} = $simple_parser_brace_commands;
@@ -679,6 +690,13 @@ sub _new_text_input($$)
           'input_source_info' => $input_source_info};
 }
 
+# Store $TEXT as a source for Texinfo content.
+# $MACRO_name is the name of the macro expanded as text.  It should only
+# be given if this is the text corresponds to a new macro expansion.
+# If already within a macro expansion, but not from a macro expansion
+# (from a value expansion, for instance), the macro name will be taken
+# from the input stack.
+# $VALUE_FLAG is the name of the value flag expanded as text.
 sub _input_push_text($$$;$$)
 {
   my ($self, $text, $line_nr, $macro_name, $value_name) = @_;
@@ -691,16 +709,23 @@ sub _input_push_text($$$;$$)
   if (scalar(@{$self->{'input'}})) {
     $input_source_info->{'file_name'}
       = $self->{'input'}->[0]->{'input_source_info'}->{'file_name'};
+    # context macro expansion
+    $input_source_info->{'macro'}
+      = $self->{'input'}->[0]->{'input_source_info'}->{'macro'};
   }
   if (defined($macro_name) and $macro_name ne '') {
+    # new macro expansion
     $input_source_info->{'macro'} = $macro_name;
-  } elsif (not defined($value_name)) {
+  }
+  if (not defined($value_name) and $input_source_info->{'macro'} eq '') {
     # this counteracts the increment that would follow from the next
     # call to _next_text.
     $input_source_info->{'line_nr'} -= 1;
   }
   my $text_input = _new_text_input($text, $input_source_info);
   $text_input->{'value_flag'} = $value_name if (defined($value_name));
+  # only set for new macro expansion
+  $text_input->{'macro_name'} = $macro_name if (defined($macro_name));
   unshift @{$self->{'input'}}, $text_input;
 }
 
@@ -736,6 +761,8 @@ sub parse_texi_piece($$;$)
      = _setup_document_root_and_before_node_section();
   my $tree = $self->_parse_texi($document_root, $before_node_section);
 
+  get_parser_info($self);
+
   return $tree;
 }
 
@@ -768,7 +795,11 @@ sub parse_texi_text($$;$)
 
   _input_push_text($self, $text, $line_nr);
 
-  return $self->_parse_texi_document();
+  my $tree = $self->_parse_texi_document();
+
+  get_parser_info($self);
+
+  return $tree;
 }
 
 # $INPUT_FILE_PATH the name of the opened file should be a binary string.
@@ -782,19 +813,21 @@ sub _input_push_file
     return 0, undef, undef, $!;
   }
 
-  if (defined($self->{'info'}->{'input_perl_encoding'})) {
-    if ($self->{'info'}->{'input_perl_encoding'} eq 'utf-8') {
-      binmode($filehandle, ":utf8");
-      # Use :utf8 instead of :encoding(utf-8), as the latter does
-      # error checking and has (unreliably) led to fatal errors
-      # when reading the first few lines of e.g. Latin-1 or Shift-JIS
-      # files, even though @documentencoding is given early on in the file.
-      # Evidently Perl is checking ahead in the file.
-    } else {
-      binmode($filehandle,
-              ":encoding($self->{'info'}->{'input_perl_encoding'})");
-    }
-  }
+  # to be able to change the encoding in the midst of reading a file,
+  # the file is opened in binary mode, no decoding is done on the file
+  # descriptor, but decoding is done after reading.
+  #
+  # The reason why it must be done so is that there is no possibility
+  # to avoid buffering for the input.  Therefore some of the input file
+  # is always read in advance.  Decoding using layers on the input file
+  # descriptor by setting, each time @documentencoding is seen
+  #   binmode($filehandle, ":encoding($encoding)")
+  # will fail, as the input file has already been read and the previous
+  # layer has already been used to decode when the encoding is changed.
+  # This is tested in the formats_encodings multiple_include_encodings
+  # test.
+  binmode($filehandle);
+
   my ($file_name, $directories, $suffix) = fileparse($input_file_path);
 
   my $file_input = {
@@ -807,6 +840,8 @@ sub _input_push_file
        'fh' => $filehandle,
        'input_file_path' => $input_file_path,
     };
+  $file_input->{'file_input_encoding'} = $self->{'input_file_encoding'}
+    if (defined($self->{'input_file_encoding'}));
 
   $file_input->{'file_name_encoding'} = $file_name_encoding
        if (defined($file_name_encoding));
@@ -814,6 +849,25 @@ sub _input_push_file
   unshift @{$self->{'input'}}, $file_input;
 
   return 1, $file_name, $directories, undef;
+}
+
+sub get_parser_info($)
+{
+  my $self = shift;
+
+  my $perl_encoding
+    = Texinfo::Common::get_perl_encoding($self->{'commands_info'},
+                                         $self->{'registrar'}, $self);
+  if (defined($perl_encoding)) {
+    $self->{'info'}->{'input_perl_encoding'} = $perl_encoding
+  } else {
+    $self->{'info'}->{'input_perl_encoding'} = 'utf-8';
+  }
+  if (defined($self->{'input_encoding_name'})) {
+    $self->{'info'}->{'input_encoding_name'} = $self->{'input_encoding_name'};
+  } else {
+    $self->{'info'}->{'input_encoding_name'} = 'utf-8';
+  }
 }
 
 # parse a texi file
@@ -841,7 +895,10 @@ sub parse_texi_file($$)
   $self->{'info'}->{'input_file_name'} = $file_name;
   $self->{'info'}->{'input_directory'} = $directories;
 
-  return $self->_parse_texi_document();
+  my $tree = $self->_parse_texi_document();
+  get_parser_info($self);
+
+  return $tree;
 }
 
 sub _parse_texi_document($)
@@ -965,34 +1022,6 @@ sub _setup_conf($$)
 #                             @include lines is done here.
 # _next_text:                 present the next text fragment, from
 #                             pending text or line.
-
-# Taking an encoding name $ENCODING as argument, the function returns
-# $canonical_texinfo_encoding: the corresponding canonical Texinfo encoding,
-#                              as described in the Texinfo manual (or undef);
-# $perl_encoding:              an encoding name suitable for perl;
-# $canonical_output_encoding:  an encoding name suitable for most
-#                              output formats, especially HTML.
-sub _encoding_alias($)
-{
-  my $encoding = shift;
-  my $Encode_encoding_object = find_encoding($encoding);
-  my ($perl_encoding, $canonical_output_encoding);
-  if (defined($Encode_encoding_object)) {
-    $perl_encoding = $Encode_encoding_object->name();
-    # mime_name() is upper-case, our keys are lower case, set to lower case
-    $canonical_output_encoding = lc($Encode_encoding_object->mime_name());
-  }
-  my $canonical_texinfo_encoding;
-  foreach my $possible_encoding ($encoding, $canonical_output_encoding,
-                                            $perl_encoding) {
-    if (defined($possible_encoding)
-        and $canonical_texinfo_encodings{lc($possible_encoding)}) {
-      $canonical_texinfo_encoding = $possible_encoding;
-    }
-  }
-  return ($canonical_texinfo_encoding, $perl_encoding,
-          $canonical_output_encoding);
-}
 
 # context stack functions
 sub _init_context_stack($)
@@ -1188,6 +1217,8 @@ sub _place_source_mark
   if ($element->{'contents'} and scalar(@{$element->{'contents'}}) > 0) {
     my $current = $element->{'contents'}->[-1];
     $mark_element = $current;
+    # if there is no text, the source mark is supposed to be
+    # at the end of/after the element
     if (defined($current->{'text'}) and $current->{'text'} ne '') {
       $source_mark->{'position'} = length($current->{'text'});
     }
@@ -1231,6 +1262,13 @@ sub _transfer_source_marks($$)
   }
 }
 
+sub _debug_protect_eol($)
+{
+  my $line = shift;
+  $line =~ s/\n/\\n/g;
+  return $line;
+}
+
 # parse a @macro line
 sub _parse_macro_command_line($$$$$;$)
 {
@@ -1239,20 +1277,35 @@ sub _parse_macro_command_line($$$$$;$)
   my $macro = { 'cmdname' => $command, 'parent' => $parent,
                'info' => {'arg_line' => $line}, 'source_info' => $source_info };
   # REMACRO
-  if ($line =~ /^\s+([[:alnum:]][[:alnum:]_-]*)\s*(.*)/) {
-    my $macro_name = $1;
-    my $args_def = $2;
-    my @args;
+  my $macro_name;
+  if ($line =~ s/^\s+([[:alnum:]][[:alnum:]_-]*)//) {
+    $macro_name = $1;
+  } else {
+    $self->_line_error(sprintf(
+               __("\@%s requires a name"), $command), $source_info);
+    $macro->{'extra'} = {'invalid_syntax' => 1};
+    return $macro;
+  }
 
-    if ($args_def =~ s/^\s*{\s*(.*?)\s*}\s*//) {
-      @args = split(/\s*,\s*/, $1);
-    }
-
+  if ($line ne '' and $line !~ /^([{@]|\s)/) {
+    $self->_line_error(sprintf(
+                    __("bad name for \@%s"), $command), $source_info);
+    $macro->{'extra'} = {'invalid_syntax' => 1};
+  } else {
     print STDERR "MACRO \@$command $macro_name\n" if ($self->{'DEBUG'});
 
     $macro->{'args'} = [
       { 'type' => 'macro_name', 'text' => $macro_name,
           'parent' => $macro } ];
+
+    my $args_def = $line;
+    $args_def =~ s/^\s*//;
+
+    my @args;
+    if ($args_def =~ s/^{\s*(.*?)\s*}\s*//) {
+      @args = split(/\s*,\s*/, $1);
+    }
+
     foreach my $formal_arg (@args) {
       push @{$macro->{'args'}},
         { 'type' => 'macro_arg', 'text' => $formal_arg,
@@ -1271,14 +1324,6 @@ sub _parse_macro_command_line($$$$$;$)
                          $source_info);
       $macro->{'extra'} = {'invalid_syntax' => 1};
     }
-  } elsif ($line !~ /\S/) {
-    $self->_line_error(sprintf(
-               __("\@%s requires a name"), $command), $source_info);
-    $macro->{'extra'} = {'invalid_syntax' => 1};
-  } else {
-    $self->_line_error(sprintf(
-                    __("bad name for \@%s"), $command), $source_info);
-    $macro->{'extra'} = {'invalid_syntax' => 1};
   }
   return $macro;
 }
@@ -1497,7 +1542,7 @@ sub _close_all_style_commands($$$;$$)
                                       ->{$current->{'parent'}->{'cmdname'}})
           and $self->{'brace_commands'}
                            ->{$current->{'parent'}->{'cmdname'}} ne 'context') {
-    print STDERR "CLOSING(_close_all_style_commands) "
+    print STDERR "CLOSING(all_style_commands) "
       ."\@$current->{'parent'}->{'cmdname'}\n"
          if ($self->{'DEBUG'});
     $current = _close_brace_command($self, $current->{'parent'}, $source_info,
@@ -2082,7 +2127,6 @@ sub _close_current($$$;$$)
       $current = _end_line_starting_block($self, $current, $source_info);
     } else {
       $current = _close_container($self, $current);
-      print STDERR "No need of type closing function\n" if ($self->{'DEBUG'});
     }
   } else { # Should never go here.
     $current = $current->{'parent'} if ($current->{'parent'});
@@ -2283,7 +2327,7 @@ sub _encode_file_name($$)
   if ($input_file_name_encoding) {
     $encoding = $input_file_name_encoding;
   } elsif ($self->get_conf('DOC_ENCODING_FOR_INPUT_FILE_NAME')) {
-    $encoding = $self->{'info'}->{'input_perl_encoding'};
+    $encoding = $self->{'input_file_encoding'};
   } else {
     $encoding = $self->get_conf('LOCALE_ENCODING');
   }
@@ -2336,7 +2380,8 @@ sub _next_text($;$)
         $input_error = 1;
       };
       my $fh = $input->{'fh'};
-      my $line = <$fh>;
+      my $input_line = <$fh>;
+      my $line = Encode::decode($input->{'file_input_encoding'}, $input_line);
       if (defined($line)) {
         if ($input_error) {
           # possible encoding error.  attempt to recover by stripping out
@@ -2383,13 +2428,10 @@ sub _next_text($;$)
         warn "BUG? close text reference failed: $error_message\n";
       }
       delete $input->{'th'};
-      if ($input->{'input_source_info'}->{'macro'} ne '') {
+      if (defined($input->{'value_flag'})) {
+        $self->{'value_expansion_nr'}--;
+      } elsif (defined($input->{'macro_name'})) {
         $self->{'macro_expansion_nr'}--;
-      } elsif (defined($input->{'value_flag'})) {
-        my $top_value = shift @{$self->{'value_stack'}};
-        print STDERR "SHIFT VALUE_STACK(@{$self->{'value_stack'}}):"
-          . "$top_value\n"
-            if ($self->{'DEBUG'});
       }
     } elsif ($input->{'fh'}) {
       # Don't close STDIN
@@ -2506,6 +2548,7 @@ sub _expand_macro_arguments($$$$$)
   my ($self, $macro, $line, $source_info, $current) = @_;
 
   my $braces_level = 1;
+
   my $argument = {'type' => 'brace_command_arg',
                   'contents' => [],
                   'parent' => $current};
@@ -2513,11 +2556,17 @@ sub _expand_macro_arguments($$$$$)
   my $argument_content = {'text' => '',
                           'parent' => $argument};
   push @{$argument->{'contents'}}, $argument_content;
-  my $arg_nr = 0;
+
   my $args_total = scalar(@{$macro->{'args'}}) -1;
   my $name = $macro->{'args'}->[0]->{'text'};
 
   my $source_info_orig = $source_info;
+
+  $line =~ s/^{(\s*)//;
+  if ($1 ne '') {
+    $current->{'info'} = {} if (!$current->{'info'});
+    $current->{'info'}->{'spaces_before_argument'} = {'text' => $1};
+  }
 
   while (1) {
     if ($line =~ s/([^\\{},]*)([\\{},])//) {
@@ -2535,14 +2584,13 @@ sub _expand_macro_arguments($$$$$)
                 __("use %s instead of %s in macro arg"), '@comma{}', '\\,'),
               $source_info);
           }
-          print STDERR "MACRO ARG: $separator: $protected_char\n"
-            if ($self->{'DEBUG'});
         } else {
           $argument_content->{'text'} .= '\\';
-          print STDERR "MACRO ARG: $separator\n" if ($self->{'DEBUG'});
         }
       } elsif ($separator eq ',') {
-        if ($braces_level == 1) {
+        if ($braces_level > 1) {
+          $argument_content->{'text'} .= $separator;
+        } else {
           if (scalar(@{$current->{'args'}}) < $args_total) {
             _remove_empty_content($self, $argument);
 
@@ -2566,10 +2614,8 @@ sub _expand_macro_arguments($$$$$)
                                      "macro `%s' called with too many args"),
                                         $name), $source_info);
             }
-            $argument_content->{'text'} .= ',';
+            $argument_content->{'text'} .= $separator;
           }
-        } else {
-          $argument_content->{'text'} .= ',';
         }
       } elsif ($separator eq '}') {
         $braces_level--;
@@ -2602,8 +2648,130 @@ sub _expand_macro_arguments($$$$$)
                "macro `%s' declared without argument called with an argument"),
                                 $name), $source_info);
   }
-  print STDERR "END MACRO ARGS EXPANSION(".scalar(@{$current->{'args'}}).") "
-                 ."line: '$line'\n" if ($self->{'DEBUG'});
+  print STDERR "END MACRO ARGS EXPANSION\n" if ($self->{'DEBUG'});
+  return ($line, $source_info);
+}
+
+sub _expand_linemacro_arguments($$$$$)
+{
+  my ($self, $macro, $line, $source_info, $current) = @_;
+
+  my $braces_level = 0;
+  my $argument = {'contents' => [],
+                  'parent' => $current};
+  push @{$current->{'args'}}, $argument;
+  my $argument_content = {'text' => '',
+                          'parent' => $argument};
+  push @{$argument->{'contents'}}, $argument_content;
+  # based on whitespace_chars_except_newline in XS parser
+  if ($line =~ s/^([ \t\cK\f]+)//) {
+    $argument->{'info'}
+      = {'spaces_before_argument' => {'text' => $1}};
+  }
+  my $args_total = scalar(@{$macro->{'args'}}) -1;
+  my $name = $macro->{'args'}->[0]->{'text'};
+
+  while (1) {
+    # spaces based on whitespace_chars_except_newline in XS parser
+    if ($line =~ s/([^{}\@ \t\cK\f]*)([{}\@]|[ \t\cK\f]+)//) {
+      my $separator = $2;
+      $argument_content->{'text'} .= $1;
+      if ($separator eq '@') {
+        $argument_content->{'text'} .= '@';
+        my ($cmdname, $is_single_letter) = _parse_command_name($line);
+        if (defined($cmdname)) {
+          $argument_content->{'text'} .= $cmdname;
+          substr($line, 0, length($cmdname)) = '';
+          if ((defined($self->{'brace_commands'}->{$cmdname})
+               and $self->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'})
+              or $accent_commands{$cmdname}) {
+            $line =~ s/^(\s*)//;
+            $argument_content->{'text'} .= $1;
+          }
+        }
+      } elsif ($separator eq '}') {
+        $braces_level--;
+        $argument_content->{'text'} .= $separator;
+        if ($braces_level == 0) {
+          if (! $argument_content->{'extra'}) {
+            $argument_content->{'extra'} = {'toplevel_braces_nr' => 0};
+          }
+          $argument_content->{'extra'}->{'toplevel_braces_nr'}++;
+        }
+      } elsif ($separator eq '{') {
+        $braces_level++;
+        $argument_content->{'text'} .= $separator;
+      # spaces
+      } else {
+        if ($braces_level > 0
+            or scalar(@{$current->{'args'}}) >= $args_total) {
+          $argument_content->{'text'} .= $separator;
+        } else {
+          $argument = {'contents' => [],
+                       'parent' => $current};
+          push @{$current->{'args'}}, $argument;
+          $argument_content = {'text' => '',
+                               'parent' => $argument};
+          push @{$argument->{'contents'}}, $argument_content;
+          $argument->{'info'}
+            = {'spaces_before_argument' => {'text' => $separator}};
+          print STDERR "LINEMACRO NEW ARG\n" if ($self->{'DEBUG'});
+        }
+      }
+    } else {
+      print STDERR "LINEMACRO ARGS no separator $braces_level '"
+                ._debug_protect_eol($line)."'\n" if ($self->{'DEBUG'});
+      if ($braces_level > 0) {
+        $argument_content->{'text'} .= $line;
+
+        ($line, $source_info) = _new_line($self, $argument);
+        if (!defined($line)) {
+          $self->_line_error(sprintf(__("\@%s missing closing brace"),
+             $name), $source_info);
+          $line = '';
+          last;
+        }
+      } else {
+        $line =~ s/(.*)//;
+        $argument_content->{'text'} .= $1;
+        if ($line =~ /\n/) {
+          # end of macro call with an end of line
+          last;
+        } else {
+          # happens when @ protects the end of line, at the very end
+          # of a text fragment and probably with macro expansion
+          ($line, $source_info) = _new_line($self, $argument);
+          if (!defined($line)) {
+            print STDERR "LINEMACRO ARGS end no EOL\n"
+               if ($self->{'DEBUG'});
+            $line = '';
+            last;
+          }
+        }
+      }
+    }
+  }
+  my $arg_idx = 0;
+  foreach my $argument (@{$current->{'args'}}) {
+    my $argument_content = $argument->{'contents'}->[0];
+    if ($argument_content->{'extra'}
+        and defined($argument_content->{'extra'}->{'toplevel_braces_nr'})) {
+      my $toplevel_braces_nr = $argument_content->{'extra'}->{'toplevel_braces_nr'};
+      delete $argument_content->{'extra'};
+      # FIXME relocate source marks
+      if ($toplevel_braces_nr == 1 and $argument_content->{'text'} =~ /^\{(.*)\}$/s) {
+        print STDERR "TURN to bracketed $arg_idx "
+          .Texinfo::Common::debug_print_element($argument_content)."\n"
+            if ($self->{'DEBUG'});
+        $argument_content->{'text'} = $1;
+        $argument_content->{'type'} = 'bracketed_arg';
+      }
+    }
+    # do that?
+    #_remove_empty_content($self, $argument);
+    $arg_idx++;
+  }
+  print STDERR "END LINEMACRO ARGS EXPANSION\n" if ($self->{'DEBUG'});
   return ($line, $source_info);
 }
 
@@ -2630,6 +2798,8 @@ sub _expand_macro_body($$$$) {
   my ($self, $macro, $args, $source_info) = @_;
 
   my $macrobody = $macro->{'macrobody'};
+
+  return undef if (!defined($macrobody));
 
   my $result = '';
   while ($macrobody ne '') {
@@ -3241,12 +3411,14 @@ sub _in_include($)
   return 0;
 }
 
-# Used for file names and index sort strings to allow including the special
-# Texinfo characters but not other command nor element type.
+# Convert the contents of $E to plain text.  Suitable for specifying a file
+# name containing an at sign or braces, but no other commands nor element
+# types.  Returns $SUPERFLUOUS_ARG if the $E contains other commands or element
+# types.
 sub _convert_to_text {
   my $e = shift;
 
-  my ($text,  $superfluous_arg) = ('', 0);
+  my ($text, $superfluous_arg) = ('', 0);
 
   return ($text, $superfluous_arg)
     unless($e->{'contents'});
@@ -3283,12 +3455,6 @@ sub _end_line_misc_line($$$)
   my $source_info = shift;
 
   my $command = $current->{'parent'}->{'cmdname'};
-  if (!defined($command)) {
-    if (!defined($current->{'parent'}->{'extra'}->{'name'})) {
-      confess("No command and not linecommand");
-    }
-    $command = $current->{'parent'}->{'extra'}->{'name'};
-  }
   my $data_cmdname = $command;
 
   # we are in a command line context, so the @item command information is
@@ -3304,8 +3470,7 @@ sub _end_line_misc_line($$$)
   _isolate_last_space($self, $current);
 
   if ($current->{'parent'}->{'type'}
-      and ($current->{'parent'}->{'type'} eq 'def_line'
-           or $current->{'parent'}->{'type'} eq 'linemacro_call')) {
+      and $current->{'parent'}->{'type'} eq 'def_line') {
     $current = _end_line_def_line($self, $current, $source_info);
     return $current;
   }
@@ -3401,33 +3566,62 @@ sub _end_line_misc_line($$$)
                            $command, $text);
         }
       } elsif ($command eq 'verbatiminclude') {
-        $current->{'extra'}->{'input_perl_encoding'}
-                        = $self->{'info'}->{'input_perl_encoding'}
-          if defined $self->{'info'}->{'input_perl_encoding'};
+        $current->{'extra'}->{'input_encoding_name'}
+                        = $self->{'input_encoding_name'}
+          if (defined($self->{'input_encoding_name'}));
       } elsif ($command eq 'documentencoding') {
-        my ($texinfo_encoding, $perl_encoding, $input_encoding)
-           = _encoding_alias($text);
-        $self->_command_warn($current, $source_info,
-               __("encoding `%s' is not a canonical texinfo encoding"),
-                             $text)
-          if (!$texinfo_encoding or $texinfo_encoding ne lc($text));
-        if ($input_encoding) {
-          $current->{'extra'}->{'input_encoding_name'} = $input_encoding;
-        }
-        if (!$perl_encoding) {
-          $self->_command_warn($current, $source_info,
-               __("unrecognized encoding name `%s'"), $text);
-        } else {
-          $current->{'extra'}->{'input_perl_encoding'} = $perl_encoding;
+        # lower case, trim non-ascii characters and keep only alphanumeric
+        # characters, - and _.  iconv also seems to trim non alphanumeric
+        # non - _ characters
+        my $normalized_text = lc($text);
+        $normalized_text =~ s/[^[:alnum:]_\-]//;
 
-          if ($input_encoding) {
-            $self->{'info'}->{'input_encoding_name'} = $input_encoding;
+        if ($normalized_text !~ /[[:alnum:]]/) {
+          $self->_command_warn($current, $source_info,
+                               __("bad encoding name `%s'"), $text);
+        } else {
+          # Warn if the encoding is not one of the encodings supported as an
+          # argument to @documentencoding, documented in Texinfo manual
+          unless ($canonical_texinfo_encodings{lc($text)}) {
+            $self->_command_warn($current, $source_info,
+                     __("encoding `%s' is not a canonical texinfo encoding"),
+                                 $text)
           }
 
-          $self->{'info'}->{'input_perl_encoding'} = $perl_encoding;
-          foreach my $input (@{$self->{'input'}}) {
-            binmode($input->{'fh'}, ":encoding($perl_encoding)")
-              if ($input->{'fh'});
+          # Set $perl_encoding  -- an encoding name suitable for perl;
+          #     $input_encoding -- for output within an HTML file, used
+          #                        in most output formats
+          my ($perl_encoding, $input_encoding);
+          my $conversion_encoding = $normalized_text;
+          if (defined($encoding_name_conversion_map{$normalized_text})) {
+            $conversion_encoding
+                = $encoding_name_conversion_map{$normalized_text};
+          }
+          my $Encode_encoding_object = find_encoding($conversion_encoding);
+          if (defined($Encode_encoding_object)) {
+            $perl_encoding = $Encode_encoding_object->name();
+            if ($normalized_text ne $conversion_encoding) {
+              $Encode_encoding_object = find_encoding($normalized_text);
+            }
+            # mime_name() is upper-case, our keys are lower case, set to lower case
+            $input_encoding = lc($Encode_encoding_object->mime_name());
+          }
+
+          if (!$perl_encoding) {
+            $self->_command_warn($current, $source_info,
+                 __("unhandled encoding name `%s'"), $text);
+          } else {
+            if ($input_encoding) {
+              $current->{'extra'}->{'input_encoding_name'} = $input_encoding;
+              $self->{'input_encoding_name'} = $input_encoding;
+            }
+
+            $self->{'input_file_encoding'} = $perl_encoding;
+            foreach my $input (@{$self->{'input'}}) {
+              if ($input->{'fh'}) {
+                $input->{'file_input_encoding'} = $perl_encoding;
+              }
+            }
           }
         }
       } elsif ($command eq 'documentlanguage') {
@@ -3543,7 +3737,7 @@ sub _end_line_misc_line($$$)
           and $block_commands{$closed_command->{'cmdname'}} eq 'menu'
           and defined($self->_top_context_command())
           and $block_commands{$self->_top_context_command()} eq 'menu') {
-        print STDERR "CLOSE MENU but still in menu context\n"
+        print STDERR "CLOSE menu but still in menu context\n"
           if ($self->{'DEBUG'});
         push @{$current->{'contents'}}, {'type' => 'menu_comment',
                                          'parent' => $current,
@@ -3557,8 +3751,7 @@ sub _end_line_misc_line($$$)
       # case of a conditional not ignored
       my $cond_info = pop @{$self->{'conditional_stack'}};
       my ($cond_command, $cond_source_mark) = @$cond_info;
-      print STDERR "POP END COND $end_command $cond_command "
-           ._debug_show_source_mark($cond_source_mark)." $cond_source_mark\n"
+      print STDERR "POP END COND $end_command $cond_command\n"
         if ($self->{'DEBUG'});
       my $end_source_mark = {'sourcemark_type' =>
                                  $cond_source_mark->{'sourcemark_type'},
@@ -3662,16 +3855,10 @@ sub _end_line_def_line($$$)
   my $top_context = $self->_top_context();
 
   my $context_command
-   = $self->_pop_context(['ct_def', 'ct_linecommand'], $source_info, $current);
-  if ($top_context eq 'ct_def') {
-    $def_command = $current->{'parent'}->{'extra'}->{'def_command'};
-  } else {
-    $def_command = $context_command;
-    # or
-    # $def_command = $current->{'parent'}->{'extra'}->{'name'};
-  }
+   = $self->_pop_context(['ct_def'], $source_info, $current);
+  $def_command = $current->{'parent'}->{'extra'}->{'def_command'};
 
-  print STDERR "END DEF LINE $top_context $def_command; current "
+  print STDERR "END DEF LINE $def_command; current "
     .Texinfo::Common::debug_print_element($current, 1)."\n"
       if ($self->{'DEBUG'});
 
@@ -3679,73 +3866,6 @@ sub _end_line_def_line($$$)
 
   # now $current is the arguments container in case of linemacro
   $current = $current->{'parent'};
-
-  if ($top_context ne 'ct_def') {
-    # convert arguments back to Texinfo and substitute
-    my $macro_args = [];
-    my $macro = $self->{'macros'}->{$def_command}->{'element'};
-    my $args_total = scalar(@{$macro->{'args'}}) -1;
-    if ($args_total > 0) {
-      my $arg_index;
-      # the first argument is the macro name
-      for ($arg_index=1; $arg_index<=$args_total; $arg_index++) {
-        if (defined($macro->{'args'}->[$arg_index])) {
-          my $arg_name = $macro->{'args'}->[$arg_index]->{'text'};
-          if (exists($arguments->{$arg_name})) {
-            my $arg = $arguments->{$arg_name};
-            my $argument_text = '';
-            if ($arg->{'type'} and $arg->{'type'} eq 'bracketed_arg') {
-              if ($arg->{'contents'} or $arg->{'info'}) {
-                my $arg_element = {};
-                $arg_element->{'contents'}
-                  = $arg->{'contents'} if ($arg->{'contents'});
-                $arg_element->{'info'} = $arg->{'info'} if ($arg->{'info'});
-                $argument_text
-                 = Texinfo::Convert::Texinfo::convert_to_texinfo($arg_element);
-                #print STDERR "BBB '$argument_text' ".join('|', keys(%{$arg->{'info'}}))."\n";
-              }
-            } else {
-              $argument_text = Texinfo::Convert::Texinfo::convert_to_texinfo($arg);
-            }
-            push @$macro_args, {'contents' => [{'text' => $argument_text}]};
-          }
-        }
-      }
-    }
-    my $expanded = _expand_macro_body($self,
-                            $self->{'macros'}->{$def_command},
-                            $macro_args, $source_info);
-    print STDERR "LINEMACROBODY: $expanded".'||||||'."\n"
-      if ($self->{'DEBUG'});
-
-    # macro expansion lines with information on the
-    # pending text
-    _input_push_text($self, $expanded, $source_info->{'line_nr'},
-                     $def_command);
-    my $macro_source_mark = {'sourcemark_type' => 'linemacro_expansion',
-                             'status' => 'start'};
-    delete $current->{'args'}
-       if (scalar(@{$current->{'args'}}) == 0);
-    $macro_source_mark->{'element'} = $current;
-    $current = $current->{'parent'};
-    # remove linemacro call from the tree, it remains associated
-    # to the source mark
-    my $popped = _pop_element_from_contents($self, $current);
-    #if ($popped ne $macro_source_mark->{'element'}) {
-    #  $self->_bug_message("popped $popped ne $macro_source_mark->{'element'}"
-    #            ." in linemacro command call\n", $source_info, $current);
-    #}
-    #if (!$popped->{'type'} or $popped->{'type'} ne 'linemacro_call') {
-    #  $self->_bug_message("unexpected linemacro popped in parse_def "
-    #         .Texinfo::Common::debug_print_element($popped, 1),
-    #            $source_info, $current);
-    #}
-    delete $popped->{'parent'};
-    _register_source_mark($self, $current, $macro_source_mark);
-    $self->{'input'}->[0]->{'input_source_mark'} = $macro_source_mark;
-    return $current;
-  }
-
 
   if (scalar(keys(%$arguments)) == 0) {
     $self->_command_warn($current, $source_info,
@@ -3919,7 +4039,7 @@ sub _end_line_starting_block($$$)
         }
         my $arg = $current->{'args'}->[0]->{'contents'}->[0];
         if (!defined($arg->{'text'})
-            or $arg->{'text'} !~ /^(([[:digit:]]+)|([[:alpha:]]))$/) {
+            or $arg->{'text'} !~ /^((\d+)|([[:alpha:]]))$/) {
           $self->_command_error($current, $source_info,
                       __("bad argument to \@%s"), $command);
         } else {
@@ -4129,8 +4249,7 @@ sub _end_line_starting_block($$$)
                          'status' => 'start',
                          'element' => $conditional_command};
       _register_source_mark($self, $current, $source_mark);
-      print STDERR "PUSH BEGIN COND $command, "
-        ._debug_show_source_mark($source_mark)." $source_mark\n"
+      print STDERR "PUSH BEGIN COND $command\n"
           if ($self->{'DEBUG'});
       push @{$self->{'conditional_stack'}}, [$command, $source_mark];
     }
@@ -4280,8 +4399,6 @@ sub _end_line($$$)
 
   my $current_old = $current;
 
-  my $in_macro_expansion;
-
   # a line consisting only of spaces.
   if ($current->{'contents'} and @{$current->{'contents'}}
       and $current->{'contents'}->[-1]->{'type'}
@@ -4351,39 +4468,19 @@ sub _end_line($$$)
   # misc command line arguments
   # Never go here if lineraw/noarg/...
   } elsif ($current->{'type'} and $current->{'type'} eq 'line_arg') {
-    if ($current->{'parent'}->{'type'}
-        and $current->{'parent'}->{'type'} eq 'linemacro_call') {
-      # we could have checked the context too
-      $in_macro_expansion = $current->{'parent'}->{'extra'}->{'name'};
-    }
     $current = _end_line_misc_line($self, $current, $source_info);
   }
 
   # this happens if there is a nesting of line @-commands on a line.
   # they are reprocessed here.
   my $top_context = $self->_top_context();
-  if ($top_context eq 'ct_line' or $top_context eq 'ct_def'
-      or $top_context eq 'ct_linecommand') {
-    if (defined($in_macro_expansion)) {
-      # if in a linemacro command call nested on a line, we do not close
-      # the preceding commands yet, as they might use the expansion
-      print STDERR "Expanded \@$in_macro_expansion still line/block"
-       ." command $top_context:"
-       .Texinfo::Common::debug_print_element($current)."\n"
-        if ($self->{'DEBUG'});
-      return $current;
-    }
-    print STDERR "Still opened line/block command $top_context:"
-      .Texinfo::Common::debug_print_element($current)."\n"
+  if ($top_context eq 'ct_line' or $top_context eq 'ct_def') {
+    print STDERR "Still opened line/block command $top_context: "
+      .Texinfo::Common::debug_print_element($current, 1)."\n"
         if ($self->{'DEBUG'});
     if ($top_context eq 'ct_def') {
       while ($current->{'parent'} and !($current->{'parent'}->{'type'}
             and $current->{'parent'}->{'type'} eq 'def_line')) {
-        $current = _close_current($self, $current, $source_info);
-      }
-    } elsif ($top_context eq 'ct_linecommand') {
-      while ($current->{'parent'} and !($current->{'parent'}->{'type'}
-              and $current->{'parent'}->{'type'} eq 'linemacro_call')) {
         $current = _close_current($self, $current, $source_info);
       }
     } else {
@@ -4421,7 +4518,8 @@ sub _end_line($$$)
 sub _start_empty_line_after_command($$$) {
   my ($line, $current, $command) = @_;
 
-  $line =~ s/^([^\S\r\n]*)//;
+  # based on whitespace_chars_except_newline in XS parser
+  $line =~ s/^([ \t\cK\f]*)//;
   my $spaces_after_command = { 'type' => 'ignorable_spaces_after_command',
                                'text' => $1,
                                'parent' => $current,
@@ -4580,6 +4678,26 @@ sub _is_index_element {
   return 1;
 }
 
+# NOTE - this sub has an XS override
+sub _parse_command_name {
+  my ($line) = @_;
+  # REMACRO
+  my ($at_command, $single_letter_command)
+   = ($line =~ /^([[:alnum:]][[:alnum:]-]*)
+                |^(["'~\@&\}\{,\.!\? \t\n\*\-\^`=:\|\/\\])
+                /x);
+
+  my $command;
+  my $is_single_letter = 0;
+  if ($single_letter_command) {
+    $command = $single_letter_command;
+    $is_single_letter = 1;
+  } elsif (defined($at_command) and $at_command ne '') {
+    $command = $at_command;
+  }
+  return ($command, $is_single_letter);
+}
+
 # This combines several regular expressions used in '_parse_texi' to
 # look at what is next on the remaining part of the line.
 # NOTE - this sub has an XS override
@@ -4587,16 +4705,13 @@ sub _parse_texi_regex {
   my ($line) = @_;
 
   # REMACRO
-  my ($at_command, $open_brace, $close_brace, $comma,
-      $asterisk, $single_letter_command, $arobase,
-      $form_feed, $menu_only_separator, $misc_text)
-    = ($line =~ /^\@([[:alnum:]][[:alnum:]-]*)
+  my ($arobase, $open_brace, $close_brace, $comma,
+      $asterisk, $form_feed, $menu_only_separator, $misc_text)
+    = ($line =~ /^(@)
                 |^(\{)
                 |^(\})
                 |^(,)
                 |^(\*)
-                |^\@(["'~\@&\}\{,\.!\? \t\n\*\-\^`=:\|\/\\])
-                |^(@)
                 |^(\f)
                 |^([:\t.])
                 |^([^{}@,:\t.\n\f]+)
@@ -4606,9 +4721,8 @@ sub _parse_texi_regex {
     ($misc_text) = ($line =~ /^([^{}@,:\t.\n\f]+)/);
   }
 
-  return ($at_command, $open_brace, $close_brace, $comma,
-    $asterisk, $single_letter_command, $arobase,
-    $form_feed, $menu_only_separator, $misc_text);
+  return ($arobase, $open_brace, $close_brace, $comma,
+    $asterisk, $form_feed, $menu_only_separator, $misc_text);
 }
 
 sub _check_line_directive {
@@ -4744,11 +4858,12 @@ sub _setup_document_root_and_before_node_section()
   return ($document_root, $before_node_section);
 }
 
-sub _new_value_element($$;$)
+sub _new_value_element($$;$$)
 {
   my $command = shift;
   my $flag = shift;
   my $current = shift;
+  my $spaces_element = shift;
 
   my $value_elt = { 'cmdname' => $command,
                       'args' => [] };
@@ -4760,6 +4875,10 @@ sub _new_value_element($$;$)
   # now requires that structure, but it could easily be changed too.
   push @{$value_elt->{'args'}}, {'text' => $flag,
                                  'parent' => $value_elt};
+  if ($spaces_element) {
+    $value_elt->{'info'} = {} if (!$value_elt->{'info'});
+    $value_elt->{'info'}->{'spaces_after_cmd_before_arg'} = $spaces_element;
+  }
   return $value_elt;
 }
 
@@ -4784,15 +4903,55 @@ sub _handle_macro($$$$$)
   my $command = shift;
 
   my $expanded_macro = $self->{'macros'}->{$command}->{'element'};
-  my $args_number = scalar(@{$expanded_macro->{'args'}}) -1;
+
   my $macro_call_element = {'type' => $expanded_macro->{'cmdname'}.'_call',
                             'extra' => {'name' => $command},
                             'args' => []};
-  if ($expanded_macro->{'cmdname'} ne 'linemacro') {
-    if ($line =~ s/^\s*{(\s*)//) { # } macro with args
-      if ($1 ne '') {
-        $macro_call_element->{'info'}
-            = {'spaces_before_argument' => {'text' => $1}};
+
+  # It is important to check for expansion before the expansion and
+  # not after, as during the expansion, the text may go past the
+  # call.  In particular for user defined linemacro which generally
+  # get the final new line from following text.
+  $self->{'macro_expansion_nr'}++;
+  print STDERR "MACRO EXPANSION NUMBER $self->{'macro_expansion_nr'} $command\n"
+    if ($self->{'DEBUG'});
+
+  my $error;
+  # FIXME same stack for linemacro?
+  if ($self->{'MAX_MACRO_CALL_NESTING'}
+      and $self->{'macro_expansion_nr'} > $self->{'MAX_MACRO_CALL_NESTING'}) {
+    $self->_line_warn(sprintf(__(
+  "macro call nested too deeply (set MAX_MACRO_CALL_NESTING to override; current value %d)"),
+                          $self->{'MAX_MACRO_CALL_NESTING'}), $source_info);
+    $error = 1;
+  }
+
+  if ($expanded_macro->{'cmdname'} ne 'rmacro') {
+    foreach my $input (@{$self->{'input'}}[0..$#{$self->{'input'}}-1]) {
+      if (defined($input->{'input_source_info'}->{'macro'})
+          and $input->{'input_source_info'}->{'macro'} eq $command) {
+        # FIXME different message for linemacro?
+        $self->_line_error(sprintf(__(
+       "recursive call of macro %s is not allowed; use \@rmacro if needed"),
+                                   $command), $source_info);
+        $error = 1;
+        last;
+      }
+    }
+  }
+
+  if ($expanded_macro->{'cmdname'} eq 'linemacro') {
+    ($line, $source_info)
+     = _expand_linemacro_arguments($self, $expanded_macro, $line, $source_info,
+                                   $macro_call_element);
+  } else {
+    my $args_number = scalar(@{$expanded_macro->{'args'}}) -1;
+    if ($line =~ /^\s*{/) { # } macro with args
+      if ($line =~ s/^(\s+)//) {
+        my $spaces_element = {'text' => $1};
+        $macro_call_element->{'info'} = {} if (!$macro_call_element->{'info'});
+        $macro_call_element->{'info'}->{'spaces_after_cmd_before_arg'}
+          = $spaces_element;
       }
       ($line, $source_info)
        = _expand_macro_arguments($self, $expanded_macro, $line, $source_info,
@@ -4816,7 +4975,8 @@ sub _handle_macro($$$$$)
             last;
           }
         } else {
-          if (not $arg_elt->{'contents'} and $line =~ s/^([^\S\r\n]+)//) {
+          # based on whitespace_chars_except_newline in XS parser
+          if (not $arg_elt->{'contents'} and $line =~ s/^([ \t\cK\f]+)//) {
             my $internal_space = {'type' => 'internal_spaces_before_argument',
                                   'text' => $1,
                                   'parent' => $arg_elt,
@@ -4839,63 +4999,57 @@ sub _handle_macro($$$$$)
     }
   }
 
-  # FIXME same stack for linemacro?
-  if ($self->{'MAX_MACRO_CALL_NESTING'}
-      and $self->{'macro_expansion_nr'} >= $self->{'MAX_MACRO_CALL_NESTING'}) {
-    $self->_line_warn(sprintf(__(
-  "macro call nested too deeply (set MAX_MACRO_CALL_NESTING to override; current value %d)"),
-                          $self->{'MAX_MACRO_CALL_NESTING'}), $source_info);
+  if ($error) {
+    $self->{'macro_expansion_nr'}--;
     # goto funexit in XS parser
     return (undef, $line, $source_info);
   }
 
-  if ($expanded_macro->{'cmdname'} ne 'rmacro') {
-    foreach my $input (@{$self->{'input'}}[0..$#{$self->{'input'}}-1]) {
-      if (defined($input->{'input_source_info'}->{'macro'})
-          and $input->{'input_source_info'}->{'macro'} eq $command) {
-        # FIXME different message for linemacro?
-        $self->_line_error(sprintf(__(
-       "recursive call of macro %s is not allowed; use \@rmacro if needed"),
-                                   $command), $source_info);
-        # goto funexit in XS parser
-        return (undef, $line, $source_info);
-      }
-    }
-  }
-
-  $self->{'macro_expansion_nr'}++;
-  print STDERR "MACRO NUMBER $self->{'macro_expansion_nr'} $command\n"
-    if ($self->{'DEBUG'});
-
-  if ($expanded_macro->{'cmdname'} eq 'linemacro') {
-    return ($macro_call_element, $line, $source_info);
-  }
 
   my $expanded = _expand_macro_body($self,
                             $self->{'macros'}->{$command},
                             $macro_call_element->{'args'}, $source_info);
-  print STDERR "MACROBODY: $expanded".'||||||'."\n"
-    if ($self->{'DEBUG'});
 
-  chomp($expanded);
-
-  # first put the line that was interrupted by the macro call
-  # on the input pending text with information stack
-  _input_push_text($self, $line, $source_info->{'line_nr'});
-  # then put the following macro expansion lines with information on the
-  # pending text
-  _input_push_text($self, $expanded, $source_info->{'line_nr'},
-                   $expanded_macro->{'args'}->[0]->{'text'});
-  my $macro_source_mark = {'sourcemark_type' => 'macro_expansion',
-                           'status' => 'start'};
   delete $macro_call_element->{'args'}
      if (scalar(@{$macro_call_element->{'args'}}) == 0);
+
+  my $expanded_macro_text;
+  if (defined($expanded)) {
+    chomp($expanded);
+    $expanded_macro_text = $expanded;
+  } else {
+    # we want to always have a text for the source mark
+    $expanded_macro_text = "";
+  }
+
+  print STDERR "MACROBODY: $expanded_macro_text".'||||||'."\n"
+    if ($self->{'DEBUG'});
+
+  my $sourcemark_type;
+  if ($expanded_macro->{'cmdname'} eq 'linemacro') {
+    $sourcemark_type = 'linemacro_expansion';
+  } else {
+    $sourcemark_type = 'macro_expansion';
+  }
+  my $macro_source_mark = {'sourcemark_type' => $sourcemark_type,
+                           'status' => 'start'};
   $macro_source_mark->{'element'} = $macro_call_element;
   _register_source_mark($self, $current, $macro_source_mark);
+
+  # first put the line that was interrupted by the macro call
+  # on the input pending text stack
+  _input_push_text($self, $line, $source_info->{'line_nr'});
+
+  # Put expansion in front of the current line.
+  _input_push_text($self, $expanded_macro_text, $source_info->{'line_nr'},
+                   $expanded_macro->{'args'}->[0]->{'text'});
+
   $self->{'input'}->[0]->{'input_source_mark'} = $macro_source_mark;
+
   # not really important as line is ignored by the caller if there
   # was no macro expansion error
   $line = '';
+
  #funexit:
   return ($macro_call_element, $line, $source_info);
 }
@@ -4939,7 +5093,8 @@ sub _handle_menu_entry_separators($$$$$$)
            and $current->{'contents'}->[-1]->{'type'}
            and $current->{'contents'}->[-1]->{'type'} eq 'internal_menu_star') {
     if ($$line_ref !~ /^\s+/) {
-      print STDERR "ABORT MENU STAR ($$line_ref)\n" if ($self->{'DEBUG'});
+      print STDERR "ABORT MENU STAR before: "
+          ._debug_protect_eol($$line_ref)."\n" if ($self->{'DEBUG'});
       delete $current->{'contents'}->[-1]->{'type'};
     } else {
       print STDERR "MENU ENTRY (certainly)\n" if ($self->{'DEBUG'});
@@ -5006,8 +5161,9 @@ sub _handle_menu_entry_separators($$$$$$)
   } elsif ($current->{'contents'} and @{$current->{'contents'}}
            and $current->{'contents'}->[-1]->{'type'}
            and $current->{'contents'}->[-1]->{'type'} eq 'menu_entry_separator') {
-    print STDERR "AFTER menu_entry_separator\n" if ($self->{'DEBUG'});
     my $separator = $current->{'contents'}->[-1]->{'text'};
+    print STDERR "AFTER menu_entry_separator $separator\n"
+       if ($self->{'DEBUG'});
     # Separator is ::.
     if ($separator eq ':' and $$line_ref =~ s/^(:)//) {
       $current->{'contents'}->[-1]->{'text'} .= $1;
@@ -5019,7 +5175,8 @@ sub _handle_menu_entry_separators($$$$$$)
       $current = $current->{'contents'}->[-1];
       $current = _merge_text($self, $current, $separator, $popped_element);
     # here we collect spaces following separators.
-    } elsif ($$line_ref =~ s/^([^\S\r\n]+)//) {
+    # based on whitespace_chars_except_newline in XS parser
+    } elsif ($$line_ref =~ s/^([ \t\cK\f]+)//) {
       # NOTE a trailing end of line could be considered to be part
       # of the separator. Right now it is part of the description,
       # since it is catched (in the next while) as one of the case below
@@ -5041,6 +5198,7 @@ sub _handle_menu_entry_separators($$$$$$)
     # anything else corresponds to a separator that does not contain
     # : and is after a menu node (itself following a menu_entry_name)
     } else {
+      # NOTE $$line_ref can start with an @-command in that case
       print STDERR "MENU NODE done $separator\n" if ($self->{'DEBUG'});
       $current = _enter_menu_entry_node($self, $current, $source_info);
     }
@@ -5114,7 +5272,7 @@ sub _handle_other_command($$$$$)
       # @itemize or @enumerate
       if ($parent = _item_container_parent($current)) {
         if ($command eq 'item') {
-          print STDERR "ITEM_CONTAINER\n" if ($self->{'DEBUG'});
+          print STDERR "ITEM CONTAINER\n" if ($self->{'DEBUG'});
           $parent->{'items_count'}++;
           $command_e = { 'cmdname' => $command, 'parent' => $parent,
                          'extra' =>
@@ -5366,8 +5524,8 @@ sub _handle_line_command($$$$$$)
     # @item or @itemx in @table
     if ($command eq 'item' or $command eq 'itemx') {
       my $parent;
-      print STDERR "ITEM_LINE\n" if ($self->{'DEBUG'});
       if ($parent = _item_line_parent($current)) {
+        print STDERR "ITEM LINE $command\n" if ($self->{'DEBUG'});
         $current = $parent;
         _gather_previous_item($self, $current, $command, $source_info);
       } else {
@@ -5380,7 +5538,24 @@ sub _handle_line_command($$$$$$)
       $command_e->{'source_info'} = $source_info;
     } else {
       $command_e = { 'cmdname' => $command, 'source_info' => $source_info };
-      if ($command eq 'subentry') {
+      if ($command eq 'nodedescription') {
+        if ($self->{'current_node'}) {
+          $command_e->{'extra'} = {} if (!defined($command_e->{'extra'}));
+          $command_e->{'extra'}->{'element_node'} = $self->{'current_node'};
+          if ($self->{'current_node'}->{'extra'}
+              and $self->{'current_node'}->{'extra'}->{'node_description'}) {
+            $self->_line_warn(__("multiple node descriptions"), $source_info);
+          } else {
+            $self->{'current_node'}->{'extra'} = {}
+              if (!$self->{'current_node'}->{'extra'});
+            $self->{'current_node'}->{'extra'}->{'node_description'}
+              = $command_e;
+          }
+        } else {
+          $self->_line_warn(__("\@nodedescription outside of any node"),
+                            $source_info);
+        }
+      } elsif ($command eq 'subentry') {
         my $parent = $current->{'parent'};
         if (!_is_index_element($self, $parent)) {
           $self->_line_warn(
@@ -5727,7 +5902,22 @@ sub _handle_open_brace($$$$)
     push @{$self->{'nesting_context'}->{'basic_inline_stack'}}, $command
       if ($self->{'basic_inline_commands'}
           and $self->{'basic_inline_commands'}->{$command});
-    if ($self->{'brace_commands'}->{$command} eq 'context') {
+    if ($command eq 'verb') {
+      $current->{'type'} = 'brace_command_arg';
+      $current->{'parent'}->{'info'} = {} if (!$current->{'parent'}->{'info'});
+      if ($line eq '') {
+        # the delimiter may be in macro expansion
+        ($line, $source_info) = _new_line($self, $current);
+      }
+      if ($line =~ /^$/) {
+        $current->{'parent'}->{'info'}->{'delimiter'} = '';
+        $self->_line_error(
+            __("\@verb without associated character"), $source_info);
+      } else {
+        $line =~ s/^(.)//;
+        $current->{'parent'}->{'info'}->{'delimiter'} = $1;
+      }
+    } elsif ($self->{'brace_commands'}->{$command} eq 'context') {
       if ($command eq 'caption' or $command eq 'shortcaption') {
         my $float;
         $self->{'nesting_context'}->{'caption'} += 1;
@@ -5772,7 +5962,8 @@ sub _handle_open_brace($$$$)
       } else {
         $self->_push_context('ct_brace_command', $command);
       }
-      $line =~ s/([^\S\f\n]*)//;
+      # based on whitespace_chars_except_newline in XS parser
+      $line =~ s/([ \t\cK\f]*)//;
       $current->{'type'} = 'brace_command_context';
       # internal_spaces_before_argument is a transient internal type,
       # which should end up in info spaces_before_argument.
@@ -5802,16 +5993,14 @@ sub _handle_open_brace($$$$)
     }
     print STDERR "OPENED \@$current->{'parent'}->{'cmdname'}, remaining: "
       .(defined($current->{'parent'}->{'remaining_args'})
-          ? "remaining: $current->{'parent'}->{'remaining_args'}, " : '')
-      .($current->{'type'} ? "type: $current->{'type'}" : '')."\n"
+          ? $current->{'parent'}->{'remaining_args'} : '0')
+      .' '.Texinfo::Common::debug_print_element($current)."\n"
        if ($self->{'DEBUG'});
   } elsif ($current->{'parent'}
             and (($current->{'parent'}->{'cmdname'}
                   and $current->{'parent'}->{'cmdname'} eq 'multitable')
                  or ($current->{'parent'}->{'type'}
-                     and ($current->{'parent'}->{'type'} eq 'def_line'
-                          or $current->{'parent'}->{'type'}
-                               eq 'linemacro_call')))) {
+                     and $current->{'parent'}->{'type'} eq 'def_line'))) {
     _abort_empty_line($self, $current);
     push @{$current->{'contents'}},
          { 'type' => 'bracketed_arg',
@@ -5833,17 +6022,16 @@ sub _handle_open_brace($$$$)
   # lone braces accepted right in a rawpreformatted
   } elsif ($current->{'type'}
            and $current->{'type'} eq 'rawpreformatted') {
-    # this can happen in an expanded rawpreformatted
-    $current = _merge_text($self, $current, '{');
     print STDERR "LONE OPEN BRACE in rawpreformatted\n"
        if ($self->{'DEBUG'});
+    # this can happen in an expanded rawpreformatted
+    $current = _merge_text($self, $current, '{');
   # matching braces accepted in a rawpreformatted, inline raw or
   # math.  Note that for rawpreformatted, it can only happen
   # within an @-command as { is simply added as seen just above.
   } elsif ($self->_top_context() eq 'ct_math'
            or $self->_top_context() eq 'ct_rawpreformatted'
-           or $self->_top_context() eq 'ct_inlineraw'
-           or $self->_top_context() eq 'ct_linecommand') {
+           or $self->_top_context() eq 'ct_inlineraw') {
     _abort_empty_line($self, $current);
     my $balanced_braces = {'type' => 'balanced_braces',
                            'contents' => [],
@@ -5875,9 +6063,8 @@ sub _handle_close_brace($$$)
       and $current->{'parent'}->{'type'} eq 'brace_command_context'
       and $current->{'type'} eq 'paragraph') {
     _abort_empty_line($self, $current);
-    print STDERR "IN BRACE_COMMAND_CONTEXT "
-       .Texinfo::Common::debug_print_element($current, 1)."\n"
-          if ($self->{'DEBUG'});
+    print STDERR "IN BRACE_COMMAND_CONTEXT end paragraph\n"
+      if ($self->{'DEBUG'});
     $current = _end_paragraph($self, $current, $source_info);
   }
 
@@ -6001,10 +6188,10 @@ sub _handle_close_brace($$$)
         $self->_line_error(
            __("\@image missing filename argument"), $source_info);
       }
-      if (defined $self->{'info'}->{'input_perl_encoding'}) {
+      if (defined($self->{'input_encoding_name'})) {
         $image->{'extra'} = {} if (!$image->{'extra'});
-        $image->{'extra'}->{'input_perl_encoding'}
-           = $self->{'info'}->{'input_perl_encoding'};
+        $image->{'extra'}->{'input_encoding_name'}
+           = $self->{'input_encoding_name'};
       }
     } elsif($current->{'parent'}->{'cmdname'} eq 'dotless') {
       my $dotless = $current->{'parent'};
@@ -6132,8 +6319,6 @@ sub _handle_comma($$$$)
   my $line = shift;
   my $source_info = shift;
 
-  my $retval = $STILL_MORE_TO_PROCESS;
-
   _abort_empty_line($self, $current);
   _isolate_last_space($self, $current);
   # type corresponds to three possible containers: in brace commands,
@@ -6159,21 +6344,24 @@ sub _handle_comma($$$$)
         # condition is missing for some reason
         print STDERR "INLINE COND MISSING\n"
           if ($self->{'DEBUG'});
-      } elsif ($inline_format_commands{$current->{'cmdname'}}) {
-        if ($self->{'expanded_formats_hash'}->{$inline_type}) {
+      } else {
+        print STDERR "INLINE: $inline_type\n" if ($self->{'DEBUG'});
+        if ($inline_format_commands{$current->{'cmdname'}}) {
+          if ($self->{'expanded_formats_hash'}->{$inline_type}) {
+            $expandp = 1;
+            $current->{'extra'}->{'expand_index'} = 1;
+          } else {
+            $expandp = 0;
+          }
+        } elsif (($current->{'cmdname'} eq 'inlineifset'
+                  and exists($self->{'values'}->{$inline_type}))
+                 or ($current->{'cmdname'} eq 'inlineifclear'
+                     and ! exists($self->{'values'}->{$inline_type}))) {
           $expandp = 1;
           $current->{'extra'}->{'expand_index'} = 1;
         } else {
           $expandp = 0;
         }
-      } elsif (($current->{'cmdname'} eq 'inlineifset'
-                and exists($self->{'values'}->{$inline_type}))
-               or ($current->{'cmdname'} eq 'inlineifclear'
-                   and ! exists($self->{'values'}->{$inline_type}))) {
-        $expandp = 1;
-        $current->{'extra'}->{'expand_index'} = 1;
-      } else {
-        $expandp = 0;
       }
       $current->{'extra'}->{'format'} = $inline_type;
 
@@ -6225,7 +6413,7 @@ sub _handle_comma($$$$)
           # Second argument is missing.
           $current = $current->{'args'}->[-1];
           $line = '}' . $line;
-          return ($current, $line, $source_info, $retval);
+          return ($current, $line, $source_info);
           # goto funexit;  # used in XS code
         } else {
           $current->{'remaining_args'}--;
@@ -6278,7 +6466,7 @@ sub _handle_comma($$$$)
       $current->{'remaining_args'}--;
       $current = $current->{'args'}->[-1];
       $line = '}' . $line;
-      return ($current, $line, $source_info, $retval);
+      return ($current, $line, $source_info);
       # goto funexit;  # used in XS code
     }
   }
@@ -6294,7 +6482,29 @@ sub _handle_comma($$$$)
                      };
   push @{$current->{'contents'}}, $space_before;
 
-  return ($current, $line, $source_info, $retval);
+  return ($current, $line, $source_info);
+}
+
+sub _new_macro($$$)
+{
+  my $self = shift;
+  my $name = shift;
+  my $current = shift;
+
+  my $macrobody;
+  if (defined($current->{'contents'})) {
+    $macrobody =
+       Texinfo::Convert::Texinfo::convert_to_texinfo(
+                    { 'contents' => $current->{'contents'} });
+  }
+  $self->{'macros'}->{$name} = {
+    'element' => $current,
+    'macrobody' => $macrobody
+  };
+  delete $self->{'aliases'}->{$name};
+  # FIXME check that this is still true with linemacro
+  # could be cleaner to delete definfoenclose'd too, but macros
+  # are expanded earlier
 }
 
 sub _process_remaining_on_line($$$$)
@@ -6305,6 +6515,8 @@ sub _process_remaining_on_line($$$$)
   my $source_info = shift;
 
   my $retval = $STILL_MORE_TO_PROCESS;
+
+  #print STDERR "PROCESS "._debug_protect_eol($line)."\n" if ($self->{'DEBUG'});
 
   # in a 'raw' (verbatim, ignore, (r)macro)
   if ($current->{'cmdname'}
@@ -6338,10 +6550,6 @@ sub _process_remaining_on_line($$$$)
         if ($current->{'cmdname'} eq 'macro'
             or $current->{'cmdname'} eq 'rmacro'
             or $current->{'cmdname'} eq 'linemacro') {
-          # store toplevel macro specification
-          my $macrobody =
-             Texinfo::Convert::Texinfo::convert_to_texinfo(
-                                 { 'contents' => $current->{'contents'} });
           if ($current->{'args'} and $current->{'args'}->[0]) {
             my $name = $current->{'args'}->[0]->{'text'};
             if (exists($self->{'macros'}->{$name})) {
@@ -6360,14 +6568,7 @@ sub _process_remaining_on_line($$$$)
             }
             if (!($current->{'extra'}
                   and $current->{'extra'}->{'invalid_syntax'})) {
-              $self->{'macros'}->{$name} = {
-                'element' => $current,
-                'macrobody' => $macrobody
-              };
-              delete $self->{'aliases'}->{$name};
-              # FIXME check that this is still true with linemacro
-              # could be cleaner to delete definfoenclose'd too, but macros
-              # are expanded earlier
+              _new_macro($self, $name, $current);
             }
           }
         }
@@ -6439,18 +6640,6 @@ sub _process_remaining_on_line($$$$)
   # in @verb. type should be 'brace_command_arg'
   } elsif ($current->{'parent'} and $current->{'parent'}->{'cmdname'}
          and $current->{'parent'}->{'cmdname'} eq 'verb') {
-    $current->{'parent'}->{'info'} = {} if (!$current->{'parent'}->{'info'});
-    # collect the first character if not already done
-    if (!defined($current->{'parent'}->{'info'}->{'delimiter'})) {
-      if ($line =~ /^$/) {
-        $current->{'parent'}->{'info'}->{'delimiter'} = '';
-        $self->_line_error(
-            __("\@verb without associated character"), $source_info);
-      } else {
-        $line =~ s/^(.)//;
-        $current->{'parent'}->{'info'}->{'delimiter'} = $1;
-      }
-    }
     my $char = quotemeta($current->{'parent'}->{'info'}->{'delimiter'});
     if ($line =~ s/^(.*?)$char\}/\}/) {
       push @{$current->{'contents'}},
@@ -6468,31 +6657,31 @@ sub _process_remaining_on_line($$$$)
            and $block_commands{$current->{'cmdname'}}
            and $block_commands{$current->{'cmdname'}} eq 'format_raw'
            and not $self->{'expanded_formats_hash'}->{$current->{'cmdname'}}) {
-    my $elided_rawpreformatted = { 'type' => 'elided_rawpreformatted',
+    my $e_elided_rawpreformatted = { 'type' => 'elided_rawpreformatted',
                                    'parent' => $current };
-    push @{$current->{'contents'}}, $elided_rawpreformatted;
+    push @{$current->{'contents'}}, $e_elided_rawpreformatted;
     while (1) {
     # A source mark here is tested in t/*macro.t macro_end_call_in_ignored_raw
-      print STDERR "IGNORED RAW_PREFORMATTED $current->{'cmdname'}"
-        .(defined($line) ? ": $line" : "\n")
-          if ($self->{'DEBUG'});
       if (!defined($line)) {
         # unclosed block
         return ($current, $line, $source_info, $retval);
         # goto funexit;  # used in XS code
       } elsif ($line =~ /^\s*\@end\s+$current->{'cmdname'}/) {
+        print STDERR "CLOSED ignored raw preformated $current->{'cmdname'}\n"
+          if ($self->{'DEBUG'});
         last;
       } else {
         my $raw_text = {'type' => 'raw', 'text' => $line,
-                        'parent' => $elided_rawpreformatted};
-        push @{$elided_rawpreformatted->{'contents'}}, $raw_text;
+                        'parent' => $e_elided_rawpreformatted};
+        push @{$e_elided_rawpreformatted->{'contents'}}, $raw_text;
       }
-      ($line, $source_info) = _new_line($self, $elided_rawpreformatted);
+      ($line, $source_info) = _new_line($self, $e_elided_rawpreformatted);
     }
     # start a new line for the @end line, this is normally done
     # at the beginning of a line, but not here, as we directly
     # got the lines.
-    $line =~ s/^([^\S\r\n]*)//;
+    # based on whitespace_chars_except_newline in XS parser
+    $line =~ s/^([ \t\cK\f]*)//;
     push @{$current->{'contents'}}, { 'type' => 'empty_line',
                                       'text' => $1,
                                       'parent' => $current };
@@ -6526,11 +6715,11 @@ sub _process_remaining_on_line($$$$)
     #}
   }
 
-  my $at_command_length;
+  my $command_length;
   my @line_parsing = _parse_texi_regex($line);
-  my ($at_command, $open_brace, $close_brace, $comma, $asterisk,
-      $single_letter_command, $arobase, $form_feed, $menu_only_separator,
-      $misc_text) = @line_parsing;
+  my ($arobase, $open_brace, $close_brace, $comma,
+      $asterisk, $form_feed, $menu_only_separator, $misc_text)
+        = @line_parsing;
   my $menu_separator = $comma;
   $menu_separator = $menu_only_separator if (!$comma);
   print STDERR "PARSED: "
@@ -6539,38 +6728,47 @@ sub _process_remaining_on_line($$$$)
 
   my $macro_call_element;
   my $command;
+  my $at_command;
   my $from_alias;
-  if ($single_letter_command) {
-    $command = $single_letter_command;
-  } elsif ($at_command) {
-    $at_command_length = length($at_command) + 1;
-    $command = $at_command;
+  if ($arobase) {
 
-    if (exists($self->{'aliases'}->{$command})) {
-      $from_alias = $command;
-      $command = $self->{'aliases'}->{$from_alias};
+    my $is_single_letter;
+    my $command_string = $line;
+    substr($command_string, 0, 1) = '';
+    ($command, $is_single_letter) = _parse_command_name($command_string);
+
+    if (defined($command)) {
+      $command_length = length($command) +1;
+    } else {
+      substr($line, 0, 1) = '';
+      # @ was followed by gibberish or by nothing, for instance at the
+      # very end of a string/file.
+      $self->_line_error(__("unexpected \@"), $source_info);
+      return ($current, $line, $source_info, $retval);
+      # goto funexit;  # used in XS code
     }
 
-    # handle user defined macros before anything else since
-    # their expansion may lead to changes in the line
-    if ($self->{'macros'}->{$command}) {
-      my $arg_line = $line;
-      substr($arg_line, 0, $at_command_length) = '';
-
-      ($macro_call_element, $arg_line, $source_info)
-        = _handle_macro($self, $current, $arg_line, $source_info, $command);
-      if ($macro_call_element) {
-        if ($from_alias) {
-          $macro_call_element->{'info'} = {}
-             if (!$macro_call_element->{'info'});
-          $macro_call_element->{'info'}->{'alias_of'} = $from_alias;
-        }
+    if (! $is_single_letter) {
+      if (exists($self->{'aliases'}->{$command})) {
+        $from_alias = $command;
+        $command = $self->{'aliases'}->{$from_alias};
       }
-      if ($macro_call_element
-          and $macro_call_element->{'type'} eq 'linemacro_call') {
-        # do nothing, the linemacro defined command call is done at the
-        # end of the line after parsing the line similarly as for @def*
-      } else {
+
+      # handle user defined macros before anything else since
+      # their expansion may lead to changes in the line
+      if ($self->{'macros'}->{$command}) {
+        my $arg_line = $line;
+        substr($arg_line, 0, $command_length) = '';
+
+        ($macro_call_element, $arg_line, $source_info)
+          = _handle_macro($self, $current, $arg_line, $source_info, $command);
+        if ($macro_call_element) {
+          if ($from_alias) {
+            $macro_call_element->{'info'} = {}
+               if (!$macro_call_element->{'info'});
+            $macro_call_element->{'info'}->{'alias_of'} = $from_alias;
+          }
+        }
         $line = $arg_line;
         if ($macro_call_element) {
           # directly get the following input (macro expansion text) instead
@@ -6584,45 +6782,48 @@ sub _process_remaining_on_line($$$$)
         return ($current, $line, $source_info, $retval);
         # goto funexit;  # used in XS code
       }
-    }
-    # expand value if it can change the line.  It considered again
-    # together with other commands below for all the other cases
-    # which may need a well formed tree, which is not needed here, and
-    # early value expansion may be needed to provide with an argument.
-    if ($command eq 'value') {
-      my $remaining_line = $line;
-      substr($remaining_line, 0, $at_command_length) = '';
-      $remaining_line =~ s/^\s*//
-         if ($self->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'});
-      # REVALUE
-      if ($remaining_line =~ s/^{([\w\-][^\s{\\}~`\^+"<>|@]*)}//) {
-        my $value = $1;
-        if (exists($self->{'values'}->{$value})) {
-          if ($self->{'MAX_MACRO_CALL_NESTING'}
-             and scalar(@{$self->{'value_stack'}}) >= $self->{'MAX_MACRO_CALL_NESTING'}) {
-            $self->_line_warn(sprintf(__(
-  "value call nested too deeply (set MAX_MACRO_CALL_NESTING to override; current value %d)"),
-                              $self->{'MAX_MACRO_CALL_NESTING'}), $source_info);
-            $line = $remaining_line;
+      # expand value if it can change the line.  It considered again
+      # together with other commands below for all the other cases
+      # which may need a well formed tree, which is not needed here, and
+      # early value expansion may be needed to provide with an argument.
+      if ($command eq 'value') {
+        my $remaining_line = $line;
+        substr($remaining_line, 0, $command_length) = '';
+        my $spaces_element;
+        if ($self->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'}
+            and $remaining_line =~ s/^(\s+)//) {
+          $spaces_element = {'text' => $1};
+        }
+        # REVALUE
+        if ($remaining_line =~ s/^{([\w\-][^\s{\\}~`\^+"<>|@]*)}//) {
+          my $value = $1;
+          if (exists($self->{'values'}->{$value})) {
+            if ($self->{'MAX_MACRO_CALL_NESTING'}
+                and $self->{'value_expansion_nr'}
+                         >= $self->{'MAX_MACRO_CALL_NESTING'}) {
+              $self->_line_warn(sprintf(__(
+ "value call nested too deeply (set MAX_MACRO_CALL_NESTING to override; current value %d)"),
+                                $self->{'MAX_MACRO_CALL_NESTING'}), $source_info);
+              $line = $remaining_line;
+              return ($current, $line, $source_info, $retval);
+              # goto funexit;  # used in XS code
+            }
+            $self->{'value_expansion_nr'}++;
+            _input_push_text($self, $remaining_line, $source_info->{'line_nr'});
+            _input_push_text($self, $self->{'values'}->{$value},
+                             $source_info->{'line_nr'}, undef, $value);
+            my $sm_value_element = _new_value_element($command, $value, undef,
+                                                      $spaces_element);
+            my $value_source_mark = {'sourcemark_type' => 'value_expansion',
+                                     'status' => 'start',
+                                     'line' => $self->{'values'}->{$value},
+                                     'element' => $sm_value_element};
+            _register_source_mark($self, $current, $value_source_mark);
+            $self->{'input'}->[0]->{'input_source_mark'} = $value_source_mark;
+            $line = '';
             return ($current, $line, $source_info, $retval);
             # goto funexit;  # used in XS code
           }
-          unshift @{$self->{'value_stack'}}, $value;
-          _input_push_text($self, $remaining_line, $source_info->{'line_nr'},
-                           $source_info->{'macro'});
-          _input_push_text($self, $self->{'values'}->{$value},
-                           $source_info->{'line_nr'},
-                           $source_info->{'macro'}, $value);
-          my $sm_value_element = _new_value_element($command, $value);
-          my $value_source_mark = {'sourcemark_type' => 'value_expansion',
-                                   'status' => 'start',
-                                   'line' => $self->{'values'}->{$value},
-                                   'element' => $sm_value_element};
-          _register_source_mark($self, $current, $value_source_mark);
-          $self->{'input'}->[0]->{'input_source_mark'} = $value_source_mark;
-          $line = '';
-          return ($current, $line, $source_info, $retval);
-          # goto funexit;  # used in XS code
         }
       }
     }
@@ -6678,7 +6879,7 @@ sub _process_remaining_on_line($$$$)
       and !$macro_call_element) {
     $self->_line_error(sprintf(__("unknown command `%s'"),
                                   $command), $source_info);
-    substr($line, 0, $at_command_length) = '';
+    substr($line, 0, $command_length) = '';
     return ($current, $line, $source_info, $retval);
     # goto funexit;  # used in XS code
   }
@@ -6687,7 +6888,6 @@ sub _process_remaining_on_line($$$$)
   # it by replacing the array content.
   my @current_array_for_ref = ($current);
 
-  # this situation arises when after the $current->{'cmdname'}
   # Brace commands not followed immediately by a brace
   # opening.  In particular cases that may lead to "command closing"
   # or following character association with an @-command, for accent
@@ -6699,9 +6899,11 @@ sub _process_remaining_on_line($$$$)
   if ($current->{'cmdname'}
         and defined($self->{'brace_commands'}->{$current->{'cmdname'}})
         and !$open_brace) {
-    print STDERR "BRACE CMD: no brace after \@$current->{'cmdname'}: '$line'"
-     . ($line =~ /\n/ ? '' : "\n")
-      if $self->{'DEBUG'};
+
+    print STDERR "BRACE CMD: no brace after \@$current->{'cmdname'}"
+       ."||| "._debug_protect_eol($line)."\n"
+           if ($self->{'DEBUG'});
+
     # Note that non ascii spaces do not count as spaces
     if ($line =~ /^(\s+)/
         and ($accent_commands{$current->{'cmdname'}}
@@ -6713,9 +6915,7 @@ sub _process_remaining_on_line($$$$)
            __("command `\@%s' must not be followed by new line"),
            $current->{'cmdname'}), $source_info);
         my $top_context = $self->_top_context();
-        if ($top_context eq 'ct_line' or $top_context eq 'ct_def'
-            # FIXME check that it is correct and add a test case
-            or $top_context eq 'ct_linecommand') {
+        if ($top_context eq 'ct_line' or $top_context eq 'ct_def') {
           # do not consider the end of line to be possibly between
           # the @-command and the argument if at the end of a
           # line or block @-command.
@@ -6734,6 +6934,7 @@ sub _process_remaining_on_line($$$$)
       }
       if (!$current->{'contents'}) {
         $line =~ s/^(\s+)//;
+        my $spaces_after_command = $1;
         # The added element is only transiently present, it is removed
         # by calls of gather_spaces_after_cmd_before_arg, which transfer
         # the element to the info hash.  The contents allow to have source
@@ -6743,12 +6944,16 @@ sub _process_remaining_on_line($$$$)
         # appear anywhere in the tree.
         # Note that contents is transiently set for brace commands, which in
         # general only have args.
-        my $spaces_after_cmd_before_arg
+        my $e_spaces_after_cmd_before_arg
            = {'type' => 'internal_spaces_after_cmd_before_arg',
-              'text' => $1, 'parent' => $current};
-        $current->{'contents'} = [$spaces_after_cmd_before_arg];
-        print STDERR "BRACE CMD before brace init spaces '$added_space'\n"
-          if $self->{'DEBUG'};
+              'text' => $spaces_after_command, 'parent' => $current};
+        $current->{'contents'} = [$e_spaces_after_cmd_before_arg];
+        if ($self->{'DEBUG'}) {
+          my $spaces_after_command_str = $spaces_after_command;
+          $spaces_after_command_str =~ s/\n/\\n/g;
+          print STDERR "BRACE CMD before brace init spaces ".
+                 "'$spaces_after_command_str'\n";
+        }
       } else {
         # contents, at this point can only be for spaces_after_cmd_before_arg
         if ($additional_newline
@@ -6775,7 +6980,7 @@ sub _process_remaining_on_line($$$$)
     } elsif ($accent_commands{$current->{'cmdname'}}
              and $line =~ s/^([^@])//) {
       my $arg_char = $1;
-      print STDERR "ACCENT following_arg $arg_char \@$current->{'cmdname'}\n"
+      print STDERR "ACCENT \@$current->{'cmdname'} following_arg: $arg_char\n"
         if ($self->{'DEBUG'});
       if ($current->{'contents'}) {
         _gather_spaces_after_cmd_before_arg($self, $current);
@@ -6808,59 +7013,47 @@ sub _process_remaining_on_line($$$$)
     $current = $current_array_for_ref[0];
   # Any other @-command.
   } elsif ($command) {
-    if (!$at_command) {
-      substr($line, 0, 2) = '';
-    } else {
-      substr($line, 0, $at_command_length) = '';
-    }
+    substr($line, 0, $command_length) = '';
 
     print STDERR "COMMAND \@".Texinfo::Common::debug_command_name($command)
                   ."\n" if ($self->{'DEBUG'});
 
     # @value not expanded (expansion is done above), and @txiinternalvalue
     if ($command eq 'value' or $command eq 'txiinternalvalue') {
-      $line =~ s/^\s*//
-         if ($self->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'});
+      my $spaces_element;
+      if ($self->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'}
+          and $line =~ s/^(\s+)//) {
+        $spaces_element = {'text' => $1};
+      }
       # REVALUE
       if ($line =~ s/^{([\w\-][^\s{\\}~`\^+"<>|@]*)}//) {
         my $value = $1;
         if ($command eq 'value') {
           if (not exists($self->{'values'}->{$value})) {
             _abort_empty_line($self, $current);
-            # caller should expand something along
-            # gdt($self, '@{No value for `{value}\'@}', {'value' => $value});
-            my $new_element = _new_value_element($command, $value, $current);
-            push @{$current->{'contents'}}, $new_element;
+
             $self->_line_warn(
                sprintf(__("undefined flag: %s"), $value), $source_info);
+
+            # caller should expand something along
+            # gdt($self, '@{No value for `{value}\'@}', {'value' => $value});
+            my $new_element = _new_value_element($command, $value, $current,
+                                                 $spaces_element);
+            push @{$current->{'contents'}}, $new_element;
           # expansion of value already done above
           #} else {
           }
         } else {
           # txiinternalvalue
           _abort_empty_line($self, $current);
-          my $new_element = _new_value_element($command, $value, $current);
+          my $new_element = _new_value_element($command, $value, $current,
+                                               $spaces_element);
           push @{$current->{'contents'}}, $new_element;
         }
       } else {
         $self->_line_error(sprintf(__("bad syntax for \@%s"),
                              $command), $source_info);
       }
-      return ($current, $line, $source_info, $retval);
-      # goto funexit;  # used in XS code
-    } elsif ($macro_call_element) {
-      # linemacro defined command call
-      push @{$current->{'contents'}}, $macro_call_element;
-      $macro_call_element->{'parent'} = $current;
-      $self->_push_context('ct_linecommand', $command);
-      $current = $macro_call_element;
-      $current->{'args'} = [];
-      my $line_arg = { 'type' => 'line_arg',
-                        'parent' => $current };
-      push @{$current->{'args'}}, $line_arg;
-      $current = $line_arg;
-      $line = _start_empty_line_after_command($line, $current,
-                                              $macro_call_element);
       return ($current, $line, $source_info, $retval);
       # goto funexit;  # used in XS code
     }
@@ -6871,13 +7064,7 @@ sub _process_remaining_on_line($$$$)
     }
 
     # special case with @ followed by a newline protecting end of lines
-    # in linemacro invokations and @def*
-    if ($self->_top_context() eq 'ct_linecommand' and $command eq "\n") {
-      my $command_e = {'cmdname' => $command, 'parent' => $current};
-      push @{$current->{'contents'}}, $command_e;
-      $retval = $GET_A_NEW_LINE;
-      return ($current, $line, $source_info, $retval);
-    }
+    # in @def*
     my $def_line_continuation
       = ($self->_top_context() eq 'ct_def' and $command eq "\n");
 
@@ -6980,7 +7167,7 @@ sub _process_remaining_on_line($$$$)
     substr ($line, 0, 1) = '';
     if ($current->{'parent'}
         and $current->{'parent'}->{'remaining_args'}) {
-      ($current, $line, $source_info, $retval)
+      ($current, $line, $source_info)
          = _handle_comma($self, $current, $line, $source_info);
     } elsif ($current->{'type'}
              and $current->{'type'} eq 'line_arg'
@@ -6992,6 +7179,10 @@ sub _process_remaining_on_line($$$$)
     }
   } elsif ($form_feed) {
     substr ($line, 0, 1) = '';
+    print STDERR "FORM FEED in "
+          .Texinfo::Common::debug_print_element($current, 1).": "
+           ._debug_protect_eol($line)."\n"
+      if ($self->{'DEBUG'});
     if ($current->{'type'}
         and $current->{'type'} eq 'paragraph') {
       # A form feed stops and restart a paragraph.
@@ -7005,11 +7196,6 @@ sub _process_remaining_on_line($$$$)
     } else {
       $current = _merge_text($self, $current, $form_feed);
     }
-  } elsif ($arobase) {
-    substr ($line, 0, 1) = '';
-    # this may happen with a @ at the very end of a file, therefore
-    # not followed by anything.
-    $self->_line_error(__("unexpected \@"), $source_info);
   } elsif ($menu_only_separator) {
     substr ($line, 0, 1) = '';
     $current = _merge_text($self, $current, $menu_only_separator);
@@ -7053,16 +7239,6 @@ sub _parse_texi($$$)
     ($line, $source_info) = _next_text($self, $current);
     if (!defined($line)) {
       print STDERR "NEXT_LINE NO MORE\n" if ($self->{'DEBUG'});
-      # if we are in a linemacro command expansion and at the end
-      # of input, there may actually be more input after the expansion.
-      # So we call _end_line to trigger the expansion.
-      my @context_stack = $self->_get_context_stack;
-      foreach my $context (@context_stack) {
-        if ($context eq 'ct_linecommand') {
-          $current = _end_line($self, $current, $source_info);
-          next NEXT_LINE;
-        }
-      }
       last;
     }
     #print STDERR "@{$self->{'nesting_context'}->{'basic_inline_stack_on_line'}}|$line"
@@ -7105,8 +7281,7 @@ sub _parse_texi($$$)
             and $current->{'parent'}->{'cmdname'} eq 'verb')
           )
         # not def line
-        and $self->_top_context() ne 'ct_def'
-        and $self->_top_context() ne 'ct_linecommand') {
+        and $self->_top_context() ne 'ct_def') {
       next NEXT_LINE if _check_line_directive ($self, $line, $source_info);
       print STDERR "BEGIN LINE\n" if ($self->{'DEBUG'});
 
@@ -7118,7 +7293,8 @@ sub _parse_texi($$$)
         # Remove this element and update 'extra' values.
         _abort_empty_line($self, $current);
       }
-      $line =~ s/^([^\S\r\n]*)//;
+      # based on whitespace_chars_except_newline in XS parser
+      $line =~ s/^([ \t\cK\f]*)//;
       push @{$current->{'contents'}}, { 'type' => 'empty_line',
                                         'text' => $1,
                                         'parent' => $current };
@@ -7310,22 +7486,19 @@ sub _parse_line_command_args($$$)
   my $command = $line_command->{'cmdname'};
   my $arg = $line_command->{'args'}->[0];
 
-  if ($self->{'DEBUG'}) {
-    print STDERR "MISC ARGS \@$command\n";
-    if ($arg->{'contents'} and @{$arg->{'contents'}}) {
-      my $idx = 0;
-      foreach my $content (@{$arg->{'contents'}}) {
-        my $name = '';
-        $name = '@' . $content->{'cmdname'} if ($content->{'cmdname'});
-        my $type = ', t: ';
-        $type .= $content->{'type'} if ($content->{'type'});
-        my $text = ', ';
-        $type .= $content->{'text'} if ($content->{'text'});
-        print STDERR "   -> $idx $name $type $text\n";
-        $idx++;
-      }
-    }
-  }
+  # Not in XS parser.  Could be added if deemded interesting, but
+  # arguments are already checked below.
+  #if ($self->{'DEBUG'}) {
+  #  print STDERR "MISC ARGS \@$command\n";
+  #  if ($arg->{'contents'}) {
+  #    my $idx = 0;
+  #    foreach my $content (@{$arg->{'contents'}}) {
+  #      print STDERR "   -> $idx "
+  #         .Texinfo::Common::debug_print_element($content, 0)."\n";
+  #      $idx++;
+  #    }
+  #  }
+  #}
 
   if (!$arg->{'contents'}) {
     $self->_command_error($line_command, $source_info,
@@ -7418,7 +7591,7 @@ sub _parse_line_command_args($$$)
       }
     }
   } elsif ($command eq 'sp') {
-    if ($line =~ /^([0-9]+)$/) {
+    if ($line =~ /^(\d+)$/) {
       $args = [$1];
     } else {
       $self->_line_error(sprintf(__("\@sp arg must be numeric, not `%s'"),
@@ -7563,8 +7736,8 @@ sub _parse_line_command_args($$$)
                                  $line), $source_info);
     }
   } elsif ($command eq 'need') { # only a warning
-    if (($line =~ /^([0-9]+(\.[0-9]*)?)$/) or
-             ($line =~ /^(\.[0-9]+)$/)) {
+    if (($line =~ /^(\d+(\.\d*)?)$/) or
+             ($line =~ /^(\.\d+)$/)) {
       $args = [$1];
     } else {
       $self->_line_error(sprintf(__("bad argument to \@need: %s"),
@@ -7573,7 +7746,7 @@ sub _parse_line_command_args($$$)
   } elsif ($command eq 'paragraphindent') {
     if ($line =~ /^([\w\-]+)$/) {
       my $value = $1;
-      if ($value =~ /^([0-9]+)$/ or $value eq 'none' or $value eq 'asis') {
+      if ($value =~ /^(\d+)$/ or $value eq 'none' or $value eq 'asis') {
         $args = [$1];
       } else {
         $self->_line_error(sprintf(__(
@@ -7594,7 +7767,7 @@ sub _parse_line_command_args($$$)
                                            $line), $source_info);
     }
   } elsif ($command eq 'exampleindent') {
-    if ($line =~ /^([0-9]+)$/) {
+    if ($line =~ /^(\d+)$/) {
       $args = [$1];
     } elsif ($line =~ /^(asis)$/) {
       $args = [$1];
@@ -8658,7 +8831,7 @@ X<Texinfo tree element extra key>
 
 The node element in the parsed tree containing the element.
 Set for @-commands elements that have an associated
-index entry.
+index entry and for C<@nodedescription>.
 
 =item element_region
 
@@ -8771,8 +8944,7 @@ I<end> holds the string ending the C<@definfoenclose>.
 
 =item C<@documentencoding>
 
-The argument, normalized is in I<input_encoding_name> if it is recognized.
-The corresponding Perl encoding name is in I<input_perl_encoding>.
+The argument, normalized is in I<input_encoding_name>.
 
 =item C<@enumerate>
 
@@ -8878,6 +9050,8 @@ An I<associated_section> key holds the tree element of the
 sectioning command that follows the node.  An I<node_preceding_part>
 key holds the tree element of the C<@part> that precedes the node,
 if there is no sectioning command between the C<@part> and the node.
+A I<node_description> key holds the first C<@nodedescription> associated
+to the node.
 
 A node containing a menu have a I<menus> key which refers to an array of
 references to menu elements occuring in the node.
