@@ -563,6 +563,19 @@ a
 @emptymacro{}@item fc @tab sc
 @end multitable
 '],
+['macro_expansion_in_multitable_prototype',
+'@macro simple
+ab
+@end macro
+
+@macro endbrace {arg}
+c\arg\d}
+@end macro
+
+@multitable {h @simple{} i} {j @simple{}} {k @emph{s}n@simple{}} {g @endbrace{@code{l}} {h @endbrace{T}
+@item l1 @tab t1 @tab t2 @tab t3 @tab t4
+@end multitable
+'],
 ['macro_for_verb',
 '@macro verbopen {}
 @verb{
@@ -588,6 +601,22 @@ second: \b\
 @end macro
 
 @mycommand {@verb{: in }, verb :}, other, last}
+
+'],
+['line_end_accent_command_macro_call',
+'@macro expand {}
+@center A @ringaccent 
+@end macro
+
+@expand{}
+ a
+
+@macro nospace {}
+@center B @ringaccent
+@end macro
+
+@nospace{}
+ A
 
 '],
 # tests a source mark on empty line after paragraph transfer in a focused way

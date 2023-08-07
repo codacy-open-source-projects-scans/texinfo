@@ -358,14 +358,14 @@ $result_trees{'nodedescription_descriptions'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'a very long node without description with little space left for'
+                      'text' => 'a very long node without description with very little space left for'
                     }
                   ],
                   'extra' => {
                     'node_content' => [
                       {}
                     ],
-                    'normalized' => 'a-very-long-node-without-description-with-little-space-left-for'
+                    'normalized' => 'a-very-long-node-without-description-with-very-little-space-left-for'
                   },
                   'type' => 'menu_entry_node'
                 },
@@ -561,7 +561,32 @@ $result_trees{'nodedescription_descriptions'} = {
                   }
                 },
                 {
-                  'text' => ' and :vv somewhat: '
+                  'text' => ' and '
+                },
+                {
+                  'args' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'vv somewhat',
+                          'type' => 'raw'
+                        }
+                      ],
+                      'type' => 'brace_command_arg'
+                    }
+                  ],
+                  'cmdname' => 'verb',
+                  'info' => {
+                    'delimiter' => ':'
+                  },
+                  'source_info' => {
+                    'file_name' => '',
+                    'line_nr' => 18,
+                    'macro' => ''
+                  }
+                },
+                {
+                  'text' => ' '
                 },
                 {
                   'args' => [
@@ -1103,7 +1128,7 @@ $result_trees{'nodedescription_descriptions'} = {
         {
           'contents' => [
             {
-              'text' => 'a very long node without description with little space left for'
+              'text' => 'a very long node without description with very little space left for'
             }
           ],
           'info' => {
@@ -1149,7 +1174,7 @@ $result_trees{'nodedescription_descriptions'} = {
             'macro' => ''
           }
         },
-        'normalized' => 'a-very-long-node-without-description-with-little-space-left-for'
+        'normalized' => 'a-very-long-node-without-description-with-very-little-space-left-for'
       },
       'info' => {
         'spaces_before_argument' => {
@@ -1342,14 +1367,14 @@ $result_texis{'nodedescription_descriptions'} = '@node Top
 
 * name of last: last. desc of last
 * a somewhat long node without description nor following space::
-* a very long node without description with little space left for::
+* a very long node without description with very little space left for::
 * very very long node extending past the max columns and without description::
 @end menu
 
 @node toto
 @chapter Toto
 
-@nodedescription toto is there:: and the @emph{is a description}@w{slightly long} and :vv somewhat: @ringaccent anexpected
+@nodedescription toto is there:: and the @emph{is a description}@w{slightly long} and @verb{:vv somewhat:} @ringaccent anexpected
 
 @node titi
 @chapter Titi
@@ -1371,7 +1396,7 @@ $result_texis{'nodedescription_descriptions'} = '@node Top
 
 @nodedescription not as long as the node
 
-@node a very long node without description with little space left for
+@node a very long node without description with very little space left for
 @chapter Very long
 
 @nodedescription starting the desciption with a somewhat long word
@@ -1392,7 +1417,7 @@ $result_texts{'nodedescription_descriptions'} = 'test of nodedescription used in
 
 * name of last: last. desc of last
 * a somewhat long node without description nor following space::
-* a very long node without description with little space left for::
+* a very long node without description with very little space left for::
 * very very long node extending past the max columns and without description::
 
 1 Toto
@@ -1545,7 +1570,7 @@ $result_sectioning{'nodedescription_descriptions'} = {
                 'associated_node' => {
                   'cmdname' => 'node',
                   'extra' => {
-                    'normalized' => 'a-very-long-node-without-description-with-little-space-left-for'
+                    'normalized' => 'a-very-long-node-without-description-with-very-little-space-left-for'
                   },
                   'structure' => {}
                 }
@@ -1708,7 +1733,7 @@ $result_nodes{'nodedescription_descriptions'} = {
                                 'section_number' => 6
                               }
                             },
-                            'normalized' => 'a-very-long-node-without-description-with-little-space-left-for'
+                            'normalized' => 'a-very-long-node-without-description-with-very-little-space-left-for'
                           },
                           'structure' => {
                             'node_next' => {
@@ -1810,7 +1835,7 @@ $result_menus{'nodedescription_descriptions'} = {
                         'menu_next' => {
                           'cmdname' => 'node',
                           'extra' => {
-                            'normalized' => 'a-very-long-node-without-description-with-little-space-left-for'
+                            'normalized' => 'a-very-long-node-without-description-with-very-little-space-left-for'
                           },
                           'structure' => {
                             'menu_next' => {
@@ -1883,35 +1908,7 @@ $result_menus{'nodedescription_descriptions'}{'structure'}{'menu_child'}{'struct
 $result_menus{'nodedescription_descriptions'}{'structure'}{'menu_child'}{'structure'}{'menu_next'}{'structure'}{'menu_up'} = $result_menus{'nodedescription_descriptions'};
 $result_menus{'nodedescription_descriptions'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'nodedescription_descriptions'};
 
-$result_errors{'nodedescription_descriptions'} = [
-  {
-    'error_line' => 'unknown command `ver\'
-',
-    'file_name' => '',
-    'line_nr' => 18,
-    'macro' => '',
-    'text' => 'unknown command `ver\'',
-    'type' => 'error'
-  },
-  {
-    'error_line' => 'misplaced {
-',
-    'file_name' => '',
-    'line_nr' => 18,
-    'macro' => '',
-    'text' => 'misplaced {',
-    'type' => 'error'
-  },
-  {
-    'error_line' => 'misplaced }
-',
-    'file_name' => '',
-    'line_nr' => 18,
-    'macro' => '',
-    'text' => 'misplaced }',
-    'type' => 'error'
-  }
-];
+$result_errors{'nodedescription_descriptions'} = [];
 
 
 $result_floats{'nodedescription_descriptions'} = {};
@@ -1924,18 +1921,18 @@ $result_converted{'plaintext'}->{'nodedescription_descriptions'} = 'test of node
 * Menu:
 
 * toto::                       toto is there:: and the _is a
-                               description_slightly long and :vv
-                               somewhat: ånexpected
+                               description_slightly long and vv somewhat
+                               ånexpected
 * titi::  desc of titi
 * name of other: other.        other comes here
 
 * name of last: last. desc of last
-* a somewhat long node without description nor following space:: not as
-                               long as the node
-* a very long node without description with little space left for::
-                               starting the desciption with a somewhat
-                               long word
-* very very long node extending past the max columns and without description::
+* a somewhat long node without description nor following space::  not as long
+                               as the node
+* a very long node without description with very little space left for::  
+                               starting the desciption with a somewhat long
+                               word
+* very very long node extending past the max columns and without description::  
                                Not long
 
 1 Toto
@@ -1999,22 +1996,17 @@ Next: <a href="#toto" accesskey="n" rel="next">Toto</a> &nbsp; </p>
 <h1 class="top" id="test-of-nodedescription-used-in-menu"><span>test of nodedescription used in menu<a class="copiable-link" href="#test-of-nodedescription-used-in-menu"> &para;</a></span></h1>
 
 <table class="menu" border="0" cellspacing="0">
-<tr><td class="menu-entry-destination">&bull; <a href="#toto" accesskey="1">toto</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">
-</td></tr>
+<tr><td class="menu-entry-destination">&bull; <a href="#toto" accesskey="1">toto</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">toto is there:: and the <em class="emph">is a description</em>slightly&nbsp;long<!-- /@w --> and <code class="verb">vv&nbsp;somewhat</code> &aring;nexpected</td></tr>
 <tr><td class="menu-entry-destination">&bull; <a href="#titi" accesskey="2">titi</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">desc of titi
 </td></tr>
-<tr><td class="menu-entry-destination">&bull; <a href="#other" accesskey="3">name of other</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">
-</td></tr>
+<tr><td class="menu-entry-destination">&bull; <a href="#other" accesskey="3">name of other</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">other comes here</td></tr>
 <tr><th class="menu-comment" colspan="3"><pre class="menu-comment-preformatted">
 
 </pre></th></tr><tr><td class="menu-entry-destination">&bull; <a href="#last" accesskey="4">name of last</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">desc of last
 </td></tr>
-<tr><td class="menu-entry-destination">&bull; <a href="#a-somewhat-long-node-without-description-nor-following-space" accesskey="5">a somewhat long node without description nor following space</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">
-</td></tr>
-<tr><td class="menu-entry-destination">&bull; <a href="#a-very-long-node-without-description-with-little-space-left-for" accesskey="6">a very long node without description with little space left for</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">
-</td></tr>
-<tr><td class="menu-entry-destination">&bull; <a href="#very-very-long-node-extending-past-the-max-columns-and-without-description" accesskey="7">very very long node extending past the max columns and without description</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">
-</td></tr>
+<tr><td class="menu-entry-destination">&bull; <a href="#a-somewhat-long-node-without-description-nor-following-space" accesskey="5">a somewhat long node without description nor following space</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">not as long as the node</td></tr>
+<tr><td class="menu-entry-destination">&bull; <a href="#a-very-long-node-without-description-with-very-little-space-left-for" accesskey="6">a very long node without description with very little space left for</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">starting the desciption with a somewhat long word</td></tr>
+<tr><td class="menu-entry-destination">&bull; <a href="#very-very-long-node-extending-past-the-max-columns-and-without-description" accesskey="7">very very long node extending past the max columns and without description</a>:</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">Not long</td></tr>
 </table>
 
 <hr>
@@ -2061,14 +2053,14 @@ Next: <a href="#a-somewhat-long-node-without-description-nor-following-space" ac
 <div class="chapter-level-extent" id="a-somewhat-long-node-without-description-nor-following-space">
 <div class="nav-panel">
 <p>
-Next: <a href="#a-very-long-node-without-description-with-little-space-left-for" accesskey="n" rel="next">Very long</a>, Previous: <a href="#last" accesskey="p" rel="prev">Last</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescription used in menu</a> &nbsp; </p>
+Next: <a href="#a-very-long-node-without-description-with-very-little-space-left-for" accesskey="n" rel="next">Very long</a>, Previous: <a href="#last" accesskey="p" rel="prev">Last</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescription used in menu</a> &nbsp; </p>
 </div>
 <h2 class="chapter" id="Somewhat-long"><span>5 Somewhat long<a class="copiable-link" href="#Somewhat-long"> &para;</a></span></h2>
 
 
 <hr>
 </div>
-<div class="chapter-level-extent" id="a-very-long-node-without-description-with-little-space-left-for">
+<div class="chapter-level-extent" id="a-very-long-node-without-description-with-very-little-space-left-for">
 <div class="nav-panel">
 <p>
 Next: <a href="#very-very-long-node-extending-past-the-max-columns-and-without-description" accesskey="n" rel="next">Past max columns</a>, Previous: <a href="#a-somewhat-long-node-without-description-nor-following-space" accesskey="p" rel="prev">Somewhat long</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescription used in menu</a> &nbsp; </p>
@@ -2081,7 +2073,7 @@ Next: <a href="#very-very-long-node-extending-past-the-max-columns-and-without-d
 <div class="chapter-level-extent" id="very-very-long-node-extending-past-the-max-columns-and-without-description">
 <div class="nav-panel">
 <p>
-Previous: <a href="#a-very-long-node-without-description-with-little-space-left-for" accesskey="p" rel="prev">Very long</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescription used in menu</a> &nbsp; </p>
+Previous: <a href="#a-very-long-node-without-description-with-very-little-space-left-for" accesskey="p" rel="prev">Very long</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescription used in menu</a> &nbsp; </p>
 </div>
 <h2 class="chapter" id="Past-max-columns"><span>7 Past max columns<a class="copiable-link" href="#Past-max-columns"> &para;</a></span></h2>
 
@@ -2105,7 +2097,7 @@ $result_converted{'xml'}->{'nodedescription_descriptions'} = '<node name="Top" s
 </pre></menudescription></menuentry><menucomment><pre xml:space="preserve">
 </pre></menucomment><menuentry><menuleadingtext>* </menuleadingtext><menutitle>name of last</menutitle><menuseparator>: </menuseparator><menunode>last</menunode><menuseparator>. </menuseparator><menudescription><pre xml:space="preserve">desc of last
 </pre></menudescription></menuentry><menuentry><menuleadingtext>* </menuleadingtext><menunode>a somewhat long node without description nor following space</menunode><menuseparator>::</menuseparator><menudescription><pre xml:space="preserve">
-</pre></menudescription></menuentry><menuentry><menuleadingtext>* </menuleadingtext><menunode>a very long node without description with little space left for</menunode><menuseparator>::</menuseparator><menudescription><pre xml:space="preserve">
+</pre></menudescription></menuentry><menuentry><menuleadingtext>* </menuleadingtext><menunode>a very long node without description with very little space left for</menunode><menuseparator>::</menuseparator><menudescription><pre xml:space="preserve">
 </pre></menudescription></menuentry><menuentry><menuleadingtext>* </menuleadingtext><menunode>very very long node extending past the max columns and without description</menunode><menuseparator>::</menuseparator><menudescription><pre xml:space="preserve">
 </pre></menudescription></menuentry></menu>
 
@@ -2113,7 +2105,7 @@ $result_converted{'xml'}->{'nodedescription_descriptions'} = '<node name="Top" s
 <node name="toto" spaces=" "><nodename>toto</nodename><nodenext automatic="on">titi</nodenext><nodeprev automatic="on">Top</nodeprev><nodeup automatic="on">Top</nodeup></node>
 <chapter spaces=" "><sectiontitle>Toto</sectiontitle>
 
-<nodedescription spaces=" ">toto is there:: and the <emph>is a description</emph><w>slightly long</w> and :vv somewhat: <accent type="ring" spacesaftercmd=" " bracketed="off">a</accent>nexpected</nodedescription>
+<nodedescription spaces=" ">toto is there:: and the <emph>is a description</emph><w>slightly long</w> and <verb delimiter=":">vv somewhat</verb> <accent type="ring" spacesaftercmd=" " bracketed="off">a</accent>nexpected</nodedescription>
 
 </chapter>
 <node name="titi" spaces=" "><nodename>titi</nodename><nodenext automatic="on">other</nodenext><nodeprev automatic="on">toto</nodeprev><nodeup automatic="on">Top</nodeup></node>
@@ -2134,19 +2126,19 @@ $result_converted{'xml'}->{'nodedescription_descriptions'} = '<node name="Top" s
 <nodedescription spaces=" ">we are last</nodedescription>
 
 </chapter>
-<node name="a-somewhat-long-node-without-description-nor-following-space" spaces=" "><nodename>a somewhat long node without description nor following space</nodename><nodenext automatic="on">a very long node without description with little space left for</nodenext><nodeprev automatic="on">last</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<node name="a-somewhat-long-node-without-description-nor-following-space" spaces=" "><nodename>a somewhat long node without description nor following space</nodename><nodenext automatic="on">a very long node without description with very little space left for</nodenext><nodeprev automatic="on">last</nodeprev><nodeup automatic="on">Top</nodeup></node>
 <chapter spaces=" "><sectiontitle>Somewhat long</sectiontitle>
 
 <nodedescription spaces=" ">not as long as the node</nodedescription>
 
 </chapter>
-<node name="a-very-long-node-without-description-with-little-space-left-for" spaces=" "><nodename>a very long node without description with little space left for</nodename><nodenext automatic="on">very very long node extending past the max columns and without description</nodenext><nodeprev automatic="on">a somewhat long node without description nor following space</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<node name="a-very-long-node-without-description-with-very-little-space-left-for" spaces=" "><nodename>a very long node without description with very little space left for</nodename><nodenext automatic="on">very very long node extending past the max columns and without description</nodenext><nodeprev automatic="on">a somewhat long node without description nor following space</nodeprev><nodeup automatic="on">Top</nodeup></node>
 <chapter spaces=" "><sectiontitle>Very long</sectiontitle>
 
 <nodedescription spaces=" ">starting the desciption with a somewhat long word</nodedescription>
 
 </chapter>
-<node name="very-very-long-node-extending-past-the-max-columns-and-without-description" spaces=" "><nodename>very very long node extending past the max columns and without description</nodename><nodeprev automatic="on">a very long node without description with little space left for</nodeprev><nodeup automatic="on">Top</nodeup></node>
+<node name="very-very-long-node-extending-past-the-max-columns-and-without-description" spaces=" "><nodename>very very long node extending past the max columns and without description</nodename><nodeprev automatic="on">a very long node without description with very little space left for</nodeprev><nodeup automatic="on">Top</nodeup></node>
 <chapter spaces=" "><sectiontitle>Past max columns</sectiontitle>
 
 <nodedescription spaces=" ">Not long</nodedescription>

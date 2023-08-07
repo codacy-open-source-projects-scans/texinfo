@@ -11,23 +11,26 @@ See the manual for detailed information.
 
 * Language
  . new generic definition commands, @defblock, @defline and @deftypeline,
-   that do not automatically create index entries
- . new @linemacro facility to ease use of generic definition commands
- . new command @link to create plain links in output formats which support
-   this
+   for definitions without automatic index entries
+ . new @linemacro facility eases use of generic definition commands
+ . new command @link creates plain links (supported output formats only)
  . @cartouche takes an argument to specify the cartouche title
+ . you can use the new commands @nodedescription and @nodedescriptionblock
+   to give text to be used in menu descriptions in Info and HTML output
 
 * texi2any
  . @itemx at the beginning of a @table is now an error, not a warning
  . better validity checking of deeply nested commands
  . warn about missing menu entries even if CHECK_NORMAL_MENU_STRUCTURE is
-   not set
+   not set.  you can turn this off by setting CHECK_MISSING_MENU_ENTRY to 0.
  . @set and @clear should only appear at the start of a line
  . --enable-encoding and --disable-encoding no longer determine whether
    encoded characters are output instead of entities or commands for
    HTML, XML, DocBook and LaTeX; instead, the value of the OUTPUT_CHARACTERS
    customization variable is used.
  . use any input encoding known by iconv and Perl in the XS (default) parser.
+ . stricter checks on input encoding, in particular more warnings and
+   errors with malformed UTF-8.
  . An alias referring to another alias at definition time is resolved.
  . Add source marks in the tree for all Texinfo source information that
    is not in the final tree (location of macro, values and included files
@@ -41,6 +44,11 @@ See the manual for detailed information.
     . Change @point expansion to U+22C6 in HTML Cross-references.
     . omit colons after index entries by default.  this can still be
       configured with INDEX_ENTRY_COLON.
+    . if a @node is not associated to a sectioning command but is
+      followed by a heading command not usually associated to nodes
+      such as @heading and this command appears before other formatted
+      content, the heading command is assumed to supply the node heading.
+      This can be customized with USE_NEXT_HEADING_FOR_LONE_NODE.
     . add @example syntax highlighting as a texi2any extension.
  . Info output:
     . new variable ASCII_DASHES_AND_QUOTES, on by default,
@@ -65,6 +73,7 @@ See the manual for detailed information.
  . microtype is off by default, for speed
 
 * info
+ . when going Up, position cursor on menu entry for current node
  . do not use "/index" as a possible file extension for Info files
 
 

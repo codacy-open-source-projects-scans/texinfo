@@ -524,14 +524,14 @@ Text
 
 * name of last: last. desc of last
 * a somewhat long node without description nor following space::
-* a very long node without description with little space left for::
+* a very long node without description with very little space left for::
 * very very long node extending past the max columns and without description::
 @end menu
 
 @node toto
 @chapter Toto
 
-@nodedescription toto is there:: and the @emph{is a description}@w{slightly long} and @ver{:vv somewhat:} @ringaccent anexpected
+@nodedescription toto is there:: and the @emph{is a description}@w{slightly long} and @verb{:vv somewhat:} @ringaccent anexpected
 
 @node titi
 @chapter Titi
@@ -553,7 +553,7 @@ Text
 
 @nodedescription not as long as the node
 
-@node a very long node without description with little space left for
+@node a very long node without description with very little space left for
 @chapter Very long
 
 @nodedescription starting the desciption with a somewhat long word
@@ -563,6 +563,113 @@ Text
 
 @nodedescription Not long
 '],
+['nodedescriptionblock_descriptions',
+'@node Top
+@top test of nodedescriptionblock used in menu
+
+@menu
+* toto::
+* titi::  desc of titi
+* name of other: other.
+
+* a somewhat long node without description nor following space::
+* node double nodedescriptionblock::
+@end menu
+
+@node toto
+@chapter Toto
+
+@nodedescription toto is there:: and the @emph{is a description}@w{slightly long} and @verb{:vv somewhat:} @ringaccent anexpected
+
+@nodedescriptionblock
+Block along line node description for toto
+@end nodedescriptionblock
+
+@node titi
+@chapter Titi
+
+@nodedescriptionblock
+description of titi in block
+@end nodedescriptionblock
+
+@node other
+@chapter Other
+
+@nodedescriptionblock
+Long description of other
+
+Para2
+
+@quotation
+a quotation in description
+@end quotation
+@end nodedescriptionblock
+
+@node a somewhat long node without description nor following space
+@chapter Somewhat long
+
+@nodedescriptionblock
+Block description before, not as long as the node
+@end nodedescriptionblock
+
+@nodedescription not as long as the node
+
+@node node double nodedescriptionblock
+@chapter test double
+
+@nodedescriptionblock
+block desc 1
+@end nodedescriptionblock
+
+@nodedescriptionblock
+block desc 2
+@end nodedescriptionblock
+
+'],
+['commands_in_nodedescriptionblock',
+'@node Top
+@top test commands in nodedescriptionblock
+
+@menu
+* node1::
+* node2::
+@end menu
+
+@ref{in nodescription}, @ref{f1}.
+
+@node node1
+@chapter chap1
+
+@nodedescriptionblock
+@anchor{in nodescription}
+
+@ref{node2}. Footnote@footnote{in footnote}. Some text to see
+where the max column could be. @w{in w}.
+@cindex in nodedescriptionblock
+
+@float tfloat, f1
+@image{float_image}
+@caption{Cap1}
+@end float
+
+
+@end nodedescriptionblock
+
+@node node2
+@chapter chap2
+
+@ref{in nodescription}, @ref{f1}.
+
+@menu
+* node1::
+@end menu
+
+@printindex cp
+
+@listoffloats tfloat
+
+',{},{'AUTO_MENU_DESCRIPTION_INDENT_LENGTH' => 15,
+       'AUTO_MENU_DESCRIPTION_FILLCOLUMN' => 90}],
 );
 
 my @test_invalid = (

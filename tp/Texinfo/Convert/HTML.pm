@@ -31,7 +31,8 @@
 
 package Texinfo::Convert::HTML;
 
-use 5.00405;
+# charnames::vianame is not documented in 5.6.0.
+use 5.008;
 
 # See 'The "Unicode Bug"' under 'perlunicode' man page.  This means
 # that regular expressions will treat characters 128-255 in a Perl string
@@ -54,6 +55,7 @@ use File::Copy qw(copy);
 use Storable;
 
 use Encode qw(find_encoding decode encode);
+use charnames ();
 
 use Texinfo::Commands;
 use Texinfo::Common;
@@ -1050,8 +1052,8 @@ sub command_text($$;$)
                  'contents' => [$tree]};
       }
       my $result = $self->convert_tree_new_formatting_context(
-        # FIXME check if $document_global_context argument is really needed
-            $tree, $command->{'cmdname'}, 'command_text manual_content');
+        # FIXME check if $document_global_context argument would be needed?
+            $tree, $command->{'cmdname'}, 'command_text-manual_content');
       return $result;
     }
   }
@@ -1827,17 +1829,19 @@ sub get_info($$)
 
 # This function should be used in formatting functions when some
 # Texinfo tree need to be converted.
-sub convert_tree_new_formatting_context($$;$$$)
+sub convert_tree_new_formatting_context($$;$$$$)
 {
   my $self = shift;
   my $tree = shift;
   my $context_string = shift;
   my $multiple_pass = shift;
   my $document_global_context = shift;
+  my $block_command = shift;
 
   my $context_string_str = '';
   if (defined($context_string)) {
-    $self->_new_document_context($context_string, $document_global_context);
+    $self->_new_document_context($context_string, $document_global_context,
+                                 $block_command);
     $context_string_str = "C($context_string)";
   }
   my $multiple_pass_str = '';
@@ -1908,6 +1912,7 @@ my %defaults = (
   'TOP_FILE'              => 'index.html', # ignores EXTENSION
   'TOP_NODE_FILE_TARGET'  => 'index.html', # ignores EXTENSION
   'USE_ACCESSKEY'         => 1,
+  'USE_NEXT_HEADING_FOR_LONE_NODE' => 1,
   'USE_ISO'               => 1,
   'USE_LINKS'             => 1,
   'USE_NODES'             => 1,
@@ -2543,7 +2548,8 @@ foreach my $ignored_brace_commands ('caption', 'shortcaption',
 }
 
 foreach my $ignored_block_commands ('ignore', 'macro', 'rmacro', 'linemacro',
-  'copying', 'documentdescription', 'titlepage', 'direntry') {
+   'copying', 'documentdescription', 'titlepage', 'direntry',
+   'nodedescriptionblock') {
   $default_commands_conversion{$ignored_block_commands} = undef;
 };
 
@@ -3879,31 +3885,20 @@ sub _default_format_navigation_panel($$$$;$)
   my $source_command = shift;
   my $vertical = shift;
 
-  # if VERTICAL_HEAD_NAVIGATION, the buttons are in a vertical table which
-  # is itself in the first column of a table opened in header_navigation
-  #my $vertical = $self->get_conf('VERTICAL_HEAD_NAVIGATION');
-
-  my $result = '';
-  if ($self->get_conf('HEADER_IN_TABLE')) {
-    $result .= $self->html_attribute_class('table', ['nav-panel'])
-        .' cellpadding="1" cellspacing="1" border="0">'."\n";
-    $result .= "<tr>" unless $vertical;
-  } else {
-    $result .= $self->html_attribute_class('div', ['nav-panel']).">\n<p>\n";
-  }
-
-  my $first_button = 1;
+  # do the buttons first in case they are formatteed as an empty string
+  my $nr_of_buttons_shown = 0;
+  my $result_buttons = '';
   foreach my $button (@$buttons) {
-    if ($self->get_conf('HEADER_IN_TABLE')) {
-      $result .= '<tr>'."\n" if $vertical;
-      $result .=  '<td>';
-    }
     my $direction;
     if (ref($button) eq 'ARRAY'
         and defined($button->[0]) and ref($button->[0]) eq '') {
       $direction = $button->[0];
     } elsif (defined($button) and ref($button) eq '') {
       $direction = $button;
+      # if the first button is an empty button, pass
+      if ($direction eq ' ' and $nr_of_buttons_shown == 0) {
+        next;
+      }
     }
 
     my ($active, $passive, $need_delimiter)
@@ -3913,28 +3908,56 @@ sub _default_format_navigation_panel($$$$;$)
        = &{$self->{'formatting_function'}->{'format_button'}}($self, $button,
                                                               $source_command);
     if ($self->get_conf('HEADER_IN_TABLE')) {
+      $result_buttons .= '<tr>'."\n" if $vertical;
+      $result_buttons .=  '<td>';
+
       if (defined($active)) {
-        $result .= $active;
+        $result_buttons .= $active;
       } elsif (defined($passive)) {
-        $result .= $passive;
+        $result_buttons .= $passive;
       }
-      $result .= "</td>\n";
-      $result .= "</tr>\n" if $vertical;
-      $first_button = 0 if ($first_button);
+
+      $result_buttons .= "</td>\n";
+      $result_buttons .= "</tr>\n" if $vertical;
+
+      $nr_of_buttons_shown++;
     } elsif (defined($active)) {
       # only active buttons are print out when not in table
-      if ($need_delimiter and !$first_button) {
-        $active = ', ' .$active;
+      if ($need_delimiter and $nr_of_buttons_shown > 0) {
+        $result_buttons .= ', ';
       }
-      $result .= $active;
-      $first_button = 0 if ($first_button);
+      $result_buttons .= $active;
+      $nr_of_buttons_shown++;
     }
   }
+
+  my $result = '';
+
+  # if VERTICAL_HEAD_NAVIGATION, the buttons are in a vertical table which
+  # is itself in the first column of a table opened in header_navigation
+  #my $vertical = $self->get_conf('VERTICAL_HEAD_NAVIGATION');
+
+  if ($self->get_conf('HEADER_IN_TABLE')) {
+    $result .= $self->html_attribute_class('table', ['nav-panel'])
+        .' cellpadding="1" cellspacing="1" border="0">'."\n";
+    $result .= "<tr>" unless $vertical;
+  } else {
+    $result .= $self->html_attribute_class('div', ['nav-panel']).">\n";
+    if ($result_buttons ne '') {
+      $result .= "<p>\n";
+    }
+  }
+
+  $result .= $result_buttons;
+
   if ($self->get_conf('HEADER_IN_TABLE')) {
     $result .= "</tr>" unless $vertical;
     $result .= "</table>\n";
   } else {
-     $result .= "</p>\n</div>\n";
+    if ($result_buttons ne '') {
+      $result .= "</p>\n";
+    }
+    $result .= "</div>\n";
   }
   return $result;
 }
@@ -4219,7 +4242,32 @@ sub _convert_heading_command($$$$$)
       if ($element->{'extra'}->{'normalized'} eq 'Top') {
         $heading_level = 0;
       } else {
-        $heading_level = 3;
+        my $use_next_heading = 0;
+        if ($self->get_conf('USE_NEXT_HEADING_FOR_LONE_NODE')) {
+          my $expanded_format_raw
+             = $self->shared_conversion_state('expanded_format_raw', {});
+          # if no format is expanded, the formats will be checked each time
+          # but this is very unlikely, as html is always expanded.
+          if (length(keys(%$expanded_format_raw)) == 0) {
+            foreach my $output_format_command
+                (keys(%Texinfo::Comon::texinfo_output_formats)) {
+              if ($self->is_format_expanded($output_format_command)) {
+                $expanded_format_raw->{$output_format_command} = 1;
+              }
+            }
+          }
+          my $next_heading
+            = Texinfo::Convert::Utils::find_root_command_next_heading_command(
+                     $element, $expanded_format_raw,
+                     ($self->get_conf('CONTENTS_OUTPUT_LOCATION') eq 'inline'));
+          if ($next_heading) {
+            $use_next_heading = 1;
+          }
+        }
+        if (!$use_next_heading) {
+          # use node
+          $heading_level = 3;
+        }
       }
     }
   } elsif ($element->{'structure'}
@@ -5611,7 +5659,7 @@ sub _convert_printindex_command($$$$)
             # call with multiple_pass argument
             $entry = $self->convert_tree_new_formatting_context($result_tree,
                  "index $index_name l $letter index entry $entry_nr seenentry",
-                 "index formatted $formatted_index_entries->{$index_entry_ref}")
+                 "index-formatted-$formatted_index_entries->{$index_entry_ref}")
           } else {
             $entry = $self->convert_tree($result_tree,
                   "index $index_name l $letter index entry $entry_nr seenentry");
@@ -5626,11 +5674,11 @@ sub _convert_printindex_command($$$$)
             # call with multiple_pass argument
             $entry = $self->convert_tree_new_formatting_context($entry_ref_tree,
                "index $index_name l $letter index entry $entry_nr (with seealso)",
-               "index formatted $formatted_index_entries->{$index_entry_ref}");
+               "index-formatted-$formatted_index_entries->{$index_entry_ref}");
             $reference
                = $self->convert_tree_new_formatting_context($reference_tree,
                 "index $index_name l $letter index entry $entry_nr seealso",
-                 "index formatted $formatted_index_entries->{$index_entry_ref}");
+                 "index-formatted-$formatted_index_entries->{$index_entry_ref}");
           } else {
             $entry = $self->convert_tree($entry_ref_tree,
              "index $index_name l $letter index entry $entry_nr (with seealso)");
@@ -5640,7 +5688,7 @@ sub _convert_printindex_command($$$$)
           }
           $entry = '<code>' .$entry .'</code>' if ($in_code);
           $delimiter = $self->get_conf('INDEX_ENTRY_COLON');
-          # TODO add the information that it is associated with see also?
+          # TODO add the information that the entry is associated with see also?
           $entry_class = "$cmdname-index-entry";
           $section_class = "$cmdname-index-see-also";
         }
@@ -5722,7 +5770,7 @@ sub _convert_printindex_command($$$$)
             # call with multiple_pass argument
             $entry = $self->convert_tree_new_formatting_context($entry_trees[$level],
                    "index $index_name l $letter index entry $entry_nr subentry $level",
-                   "index formatted $formatted_index_entries->{$index_entry_ref}")
+                   "index-formatted-$formatted_index_entries->{$index_entry_ref}")
           } else {
             $entry = $self->convert_tree($entry_trees[$level],
                   "index $index_name l $letter index entry $entry_nr subentry $level");
@@ -5750,7 +5798,7 @@ sub _convert_printindex_command($$$$)
         # call with multiple_pass argument
         $entry = $self->convert_tree_new_formatting_context($entry_tree,
                        "index $index_name l $letter index entry $entry_nr",
-                   "index formatted $formatted_index_entries->{$index_entry_ref}")
+                   "index-formatted-$formatted_index_entries->{$index_entry_ref}")
       } else {
         $entry = $self->convert_tree($entry_tree,
                             "index $index_name l $letter index entry $entry_nr");
@@ -6115,7 +6163,10 @@ sub _convert_paragraph_type($$$$)
       # no first paragraph in those environment to avoid extra spacing
       if ($in_format eq 'itemize'
           or $in_format eq 'enumerate'
-          or $in_format eq 'multitable') {
+          or $in_format eq 'multitable'
+          # this should only happen if in @nodedescriptionblock, otherwise
+          # there are no paragraphs, but preformatted
+          or $in_format eq 'menu') {
         return $content;
       }
     }
@@ -6508,6 +6559,9 @@ sub _convert_menu_entry_type($$$)
   my $section;
   my $label_info = $menu_entry_node->{'extra'};
 
+  my $formatted_nodedescriptions
+    = $self->shared_conversion_state('formatted_nodedescriptions', {});
+  my $use_nodedescription;
   # external node
   my $external_node;
   if ($label_info and $label_info->{'manual_content'}) {
@@ -6532,6 +6586,36 @@ sub _convert_menu_entry_type($$$)
         # Mark the target as an index.  See
         # http://microformats.org/wiki/existing-rel-values#HTML5_link_type_extensions
         $rel = ' rel="index"';
+      }
+      if ($node->{'extra'} and $node->{'extra'}->{'node_description'}) {
+        # not menu_description probably cannot happen
+        if (not $menu_description
+            # empty description
+            or (not $menu_description->{'contents'}
+                or (scalar(@{$menu_description->{'contents'}}) == 1
+                    # preformatted inside menu_entry_description
+                    and (not ($menu_description->{'contents'}->[0]->{'contents'})
+                         or (scalar(@{$menu_description->{'contents'}->[0]
+                                                         ->{'contents'}}) == 1)
+                             and defined($menu_description->{'contents'}->[0]
+                                                 ->{'contents'}->[0]->{'text'})
+                             and $menu_description->{'contents'}->[0]
+                                  ->{'contents'}->[0]->{'text'} !~ /\S/)))) {
+          my $node_description = $node->{'extra'}->{'node_description'};
+          if ($node->{'extra'}->{'node_description'}->{'cmdname'}
+                eq 'nodedescription') {
+            $menu_description = $node_description->{'args'}->[0];
+          } else {
+            $menu_description = {'contents' => $node_description->{'contents'}};
+          }
+          # update the number of time the node description was formatted
+          if (!$formatted_nodedescriptions->{$node_description}) {
+            $formatted_nodedescriptions->{$node_description} = 1;
+          } else {
+            $formatted_nodedescriptions->{$node_description}++;
+          }
+          $use_nodedescription = $formatted_nodedescriptions->{$node_description};
+        }
       }
     }
   }
@@ -6591,8 +6675,21 @@ sub _convert_menu_entry_type($$$)
 
     my $description = '';
     if ($menu_description) {
-      $description .= $self->convert_tree($menu_description,
-                                          "menu_arg description preformatted");
+      if ($use_nodedescription) {
+        my $multiple_formatted;
+        if ($use_nodedescription > 1) {
+          $multiple_formatted
+            = 'preformatted-node-description-'.$use_nodedescription;
+        }
+        $description .= $self->convert_tree_new_formatting_context(
+                                  $menu_description,
+                                  'menu_arg node description preformatted',
+                                  $multiple_formatted, undef,
+                                  'menu');
+      } else {
+        $description .= $self->convert_tree($menu_description,
+                                          'menu_arg description preformatted');
+      }
     }
 
     return $result_name_node . $description;
@@ -6631,8 +6728,19 @@ sub _convert_menu_entry_type($$$)
   }
   my $description = '';
   if ($menu_description) {
-    $description = $self->convert_tree($menu_description,
-                                       'menu_arg description');
+    if ($use_nodedescription) {
+      my $multiple_formatted;
+      if ($use_nodedescription > 1) {
+        $multiple_formatted
+          = 'node-description-'.$use_nodedescription;
+      }
+      $description = $self->convert_tree_new_formatting_context(
+                              $menu_description, 'menu_arg node description',
+                              $multiple_formatted, undef, 'menu');
+    } else {
+      $description = $self->convert_tree($menu_description,
+                                         'menu_arg description');
+    }
     if ($self->get_conf('AVOID_MENU_REDUNDANCY')) {
       $description = '' if (_simplify_text_for_comparison($name_no_number)
                            eq _simplify_text_for_comparison($description));
@@ -7259,6 +7367,7 @@ sub _new_document_context($;$$)
   my $self = shift;
   my $context = shift;
   my $document_global_context = shift;
+  my $block_command = shift;
 
   push @{$self->{'document_context'}},
           {'context' => $context,
@@ -7271,6 +7380,10 @@ sub _new_document_context($;$$)
           };
   if (defined($document_global_context)) {
     $self->{'document_global_context'}++;
+  }
+  if (defined($block_command)) {
+    push @{$self->{'document_context'}->[-1]->{'block_commands'}},
+            $block_command;
   }
 }
 
@@ -7703,7 +7816,8 @@ sub converter_initialize($)
     if ($self->get_conf('OUTPUT_CHARACTERS')
         and Texinfo::Convert::Unicode::unicode_point_decoded_in_encoding(
                                          $output_encoding, $unicode_point)) {
-      $special_characters_set{$special_character} = chr(hex($unicode_point));
+      $special_characters_set{$special_character}
+                                    = charnames::vianame("U+$unicode_point");
     } elsif ($self->get_conf('USE_NUMERIC_ENTITY')) {
       $special_characters_set{$special_character} = '&#'.hex($unicode_point).';';
     } else {

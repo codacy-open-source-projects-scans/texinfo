@@ -483,6 +483,9 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/float/ref_to_float.pl \
   t/results/float/simple.pl \
   t/results/float/special_characters_in_float_type.pl \
+  t/results/formats_encodings/8bit_document_translations.pl \
+  t/results/formats_encodings/8bit_document_translations/res_html \
+  t/results/formats_encodings/8bit_document_translations/res_info \
   t/results/formats_encodings/accent.pl \
   t/results/formats_encodings/accent_argument_non_ascii.pl \
   t/results/formats_encodings/accent_enable_encoding.pl \
@@ -622,6 +625,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/footnotestyle_separate_html_text_no_monolithic.pl \
   t/results/html_tests/footnotestyle_separate_late.pl \
   t/results/html_tests/footnotestyle_separate_late/res_html \
+  t/results/html_tests/headings_after_lone_nodes.pl \
   t/results/html_tests/html_in_copying.pl \
   t/results/html_tests/image_link_prefix.pl \
   t/results/html_tests/index_and_node_same_name.pl \
@@ -1230,6 +1234,8 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/linemacro/comment_at_end_of_linemacro_call.pl \
   t/results/linemacro/comment_in_linemacro_call.pl \
   t/results/linemacro/comment_in_one_argument_linemacro_call.pl \
+  t/results/linemacro/comment_on_linemacro_call_macro_expansion.pl \
+  t/results/linemacro/comment_on_linemacro_call_out_of_braces.pl \
   t/results/linemacro/empty_last_argument.pl \
   t/results/linemacro/end_conditional_in_linemacro.pl \
   t/results/linemacro/last_argument_with_braces.pl \
@@ -1288,6 +1294,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/macro/include_after_empty_line_arg.pl \
   t/results/macro/leading_spaces_no_ignore.pl \
   t/results/macro/line_after_recursive_call.pl \
+  t/results/macro/line_end_accent_command_macro_call.pl \
   t/results/macro/macro_after_paragraph.pl \
   t/results/macro/macro_alias_definfoenclose_defindex.pl \
   t/results/macro/macro_before_specific_line_command_args.pl \
@@ -1308,6 +1315,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/macro/macro_expansion_end_in_ignored_ifset_content.pl \
   t/results/macro/macro_expansion_end_in_ignored_nested_conditional.pl \
   t/results/macro/macro_expansion_end_in_ignored_nested_different_conditional.pl \
+  t/results/macro/macro_expansion_in_multitable_prototype.pl \
   t/results/macro/macro_for_dot_in_menu_not_separator.pl \
   t/results/macro/macro_for_end.pl \
   t/results/macro/macro_for_ignored_line_command.pl \
@@ -1373,6 +1381,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/macro/zero_argument_comment.pl \
   t/results/menu/bad_beginning.pl \
   t/results/menu/block_commands_in_menu_description.pl \
+  t/results/menu/commands_in_nodedescriptionblock.pl \
   t/results/menu/comment_on_menu_line.pl \
   t/results/menu/dash_in_menu.pl \
   t/results/menu/detailmenu.pl \
@@ -1409,6 +1418,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/menu/multiple_menus.pl \
   t/results/menu/no_colon_in_menu.pl \
   t/results/menu/nodedescription_descriptions.pl \
+  t/results/menu/nodedescriptionblock_descriptions.pl \
   t/results/menu/reference_to_external_manual.pl \
   t/results/menu/sc_in_menu.pl \
   t/results/menu/simple.pl \
@@ -1434,6 +1444,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/misc_commands/definfoenclose.pl \
   t/results/misc_commands/definfoenclose_nestings.pl \
   t/results/misc_commands/definfoenclose_with_empty_arg.pl \
+  t/results/misc_commands/documentencoding_utf8.pl \
   t/results/misc_commands/documentencoding_zero.pl \
   t/results/misc_commands/double_exdent.pl \
   t/results/misc_commands/empty_center.pl \
@@ -1664,6 +1675,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/plaintext_tests/sc_with_utf8_enable_encoding.pl \
   t/results/plaintext_tests/settitle_and_empty_top.pl \
   t/results/plaintext_tests/sp_with_text_before_in_example.pl \
+  t/results/plaintext_tests/split_punctuation_detection_in_commands.pl \
   t/results/plaintext_tests/star_at_command_formatting.pl \
   t/results/plaintext_tests/tab_in_table_in_example.pl \
   t/results/plaintext_tests/tab_item_in_example.pl \

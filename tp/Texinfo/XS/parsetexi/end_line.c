@@ -328,6 +328,7 @@ parse_line_command_args (ELEMENT *line_command)
         add_index (name, cmd == CM_defcodeindex ? 1 : 0);
         ADD_ARG(name);
 
+        free (name);
         break;
       defindex_invalid:
         line_error ("bad argument to @%s: %s",
@@ -1289,6 +1290,7 @@ end_line_misc_line (ELEMENT *current)
               else
                 {
                   status = input_push_file (fullpath);
+                  free (fullpath);
                   if (status)
                     {
                       char *decoded_file_path
@@ -1397,6 +1399,7 @@ end_line_misc_line (ELEMENT *current)
                    */
                     static struct encoding_map map[] = {
                           "utf-8", "utf-8",
+                          "utf8", "utf-8",
                           "ascii",  "us-ascii",
                           "shiftjis", "shift_jis",
                           "latin1", "iso-8859-1",

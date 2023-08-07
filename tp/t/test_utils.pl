@@ -442,7 +442,7 @@ sub new_test($;$$$)
 # keys under 'info' are not needed here.
 my @contents_keys = ('contents', 'args', 'parent', 'source_info',
   'node_content', 'invalid_nesting', 'info', 'text_arg',
-  'node_description');
+  'node_description', 'node_long_description');
 my @menus_keys = ('menu_next', 'menu_up', 'menu_prev', 'menu_up_hash');
 # 'section_number' is kept in other results as it may be the only clue
 # to know which section element it is.
@@ -901,8 +901,10 @@ sub test($$)
     delete $parser_options->{'TREE_TRANSFORMATIONS'};
   }
 
-  # set FORMAT_MENU default to menu, which is the default for parser
-  my $added_main_configurations = {'FORMAT_MENU' => 'menu'};
+  # set FORMAT_MENU default to menu, which is the default for the parser.
+  # get the same structuring warnings as texi2any.
+  my $added_main_configurations = {'FORMAT_MENU' => 'menu',
+                                   'CHECK_MISSING_MENU_ENTRY' => 1};
   
   # this is only used for index keys sorting in structuring
   foreach my $structuring_and_converter_option ('ENABLE_ENCODING') {

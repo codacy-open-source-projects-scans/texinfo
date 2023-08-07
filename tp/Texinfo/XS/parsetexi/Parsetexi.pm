@@ -117,26 +117,29 @@ sub parser (;$$)
   if (defined($conf)) {
     foreach my $key (keys (%$conf)) {
       if ($key eq 'INCLUDE_DIRECTORIES') {
+        # the directories from the command line or the input file name
+        # are already byte strings (or ascii).  The encoding was detected
+        # as COMMAND_LINE_ENCODING, but it is not useful for the XS parser.
         foreach my $d (@{$conf->{'INCLUDE_DIRECTORIES'}}) {
           add_include_directory ($d);
         }
       } elsif ($key eq 'values') {
-        for my $v (keys %{$conf->{'values'}}) {
-          if (ref($conf->{'values'}->{$v}) eq '') {
-            store_value ($v, $conf->{'values'}->{$v});
-          } else {
-            warn "bug: non-scalar \@value\n";
-          }
+        for my $flag (keys %{$conf->{'values'}}) {
+          my $bytes_flag = Encode::encode('utf-8', $flag);
+          my $bytes_value = Encode::encode('utf-8', $conf->{'values'}->{$flag});
+          store_value ($bytes_flag, $bytes_value);
         }
       } elsif ($key eq 'EXPANDED_FORMATS') {
         clear_expanded_formats ();
 
         for my $f (@{$conf->{$key}}) {
-          add_expanded_format ($f);
+          my $utf8_bytes = Encode::encode('utf-8', $f);
+          add_expanded_format ($utf8_bytes);
         }
       } elsif ($key eq 'documentlanguage') {
         if (defined ($conf->{$key})) {
-          conf_set_documentlanguage_override ($conf->{$key});
+          my $utf8_bytes = Encode::encode('utf-8', $conf->{$key});
+          conf_set_documentlanguage_override ($utf8_bytes);
         }
       } elsif ($key eq 'FORMAT_MENU') {
         if ($conf->{$key} eq 'menu') {
@@ -155,9 +158,11 @@ sub parser (;$$)
       } elsif ($key eq 'DOC_ENCODING_FOR_INPUT_FILE_NAME') {
         set_DOC_ENCODING_FOR_INPUT_FILE_NAME ($conf->{$key});
       } elsif ($key eq 'INPUT_FILE_NAME_ENCODING' and defined($conf->{$key})) {
-        conf_set_input_file_name_encoding ($conf->{$key});
+        my $utf8_bytes = Encode::encode('utf-8', $conf->{$key});
+        conf_set_input_file_name_encoding ($utf8_bytes);
       } elsif ($key eq 'LOCALE_ENCODING' and defined($conf->{$key})) {
-        conf_set_locale_encoding ($conf->{$key});
+        my $utf8_bytes = Encode::encode('utf-8', $conf->{$key});
+        conf_set_locale_encoding ($utf8_bytes);
       } elsif ($key eq 'accept_internalvalue') {
         set_accept_internalvalue();
       } elsif ($key eq 'registrar' or $key eq 'COMMAND_LINE_ENCODING') {
@@ -270,6 +275,9 @@ sub parse_texi_file ($$)
   my $input_file_path = shift;
   my $tree_stream;
 
+  # the file is already a byte string, taken as is from the command
+  # line.  The encoding was detected as COMMAND_LINE_ENCODING, but
+  # it is not useful for the XS parser.
   my $status = parse_file ($input_file_path);
   if ($status) {
     my ($registrar, $configuration_information) = _get_error_registrar($self);
@@ -337,11 +345,9 @@ sub parse_texi_piece($$;$)
 
   $self = parser() if (!defined($self));
 
-  # make sure that internal byte buffer is in UTF-8 before we pass
-  # it in to the XS code.
-  utf8::upgrade($text);
-
-  parse_piece($text, $line_nr);
+  # pass a binary UTF-8 encoded string to C code
+  my $utf8_bytes = Encode::encode('utf-8', $text);
+  parse_piece($utf8_bytes, $line_nr);
   my $tree = build_texinfo_tree ();
 
   get_parser_info($self);
@@ -361,11 +367,9 @@ sub parse_texi_text($$;$)
 
   $self = parser() if (!defined($self));
 
-  # make sure that internal byte buffer is in UTF-8 before we pass
-  # it in to the XS code.
-  utf8::upgrade($text);
-
-  parse_text($text, $line_nr);
+  # pass a binary UTF-8 encoded string to C code
+  my $utf8_bytes = Encode::encode('utf-8', $text);
+  parse_text($utf8_bytes, $line_nr);
   my $tree = build_texinfo_tree ();
 
   get_parser_info($self);
@@ -387,8 +391,10 @@ sub parse_texi_line($$;$)
   $line_nr = 1 if (not defined($line_nr));
 
   $self = parser() if (!defined($self));
-  utf8::upgrade($text);
-  parse_string($text, $line_nr);
+
+  # pass a binary UTF-8 encoded string to C code
+  my $utf8_bytes = Encode::encode('utf-8', $text);
+  parse_string($utf8_bytes, $line_nr);
   my $tree = build_texinfo_tree ();
 
   _set_errors_node_lists_labels_indices($self);

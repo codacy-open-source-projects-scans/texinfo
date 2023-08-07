@@ -407,14 +407,16 @@ sub output($$)
         $output .= $self->write_or_return($tree_unit_text, $fh);
       }
     } else {
-      # FIXME this is in general better to use convert() for instance
-      # to have the converter output footnotes as it cannot do is as
-      # part of tree units formatting.  However, this breaks the promise
-      # that only convert_tree is used in generic Converter code.
-      # REMARK that right now, this code is never called, as
+      # REMARK right now, this code is never called, as
       # Texinfo::Structuring::split_by_node or split_by_page always return
       # an array containing at least one unit.  But this was not the case
       # in the past and could change again in the future.
+      #
+      # FIXME this is in general better to use convert(), for instance
+      # to have the converter output footnotes when it is not done
+      # as part of tree units formatting (th case here).
+      # However, this breaks the promise that only convert_tree is used
+      # in generic Converter code.
       $output .= $self->write_or_return($self->convert($root), $fh);
     }
     # NOTE do not close STDOUT now to avoid a perl warning.
@@ -1210,10 +1212,10 @@ sub txt_image_text($$$)
   } else {
     my $filehandle = do { local *FH };
     if (open ($filehandle, $txt_file)) {
-      my $perl_encoding
-               = Texinfo::Common::element_extra_encoding_for_perl($element);
-      if (defined($perl_encoding)) {
-        binmode($filehandle, ":encoding($perl_encoding)");
+      my $encoding
+          = Texinfo::Common::element_associated_processing_encoding($element);
+      if (defined($encoding)) {
+        binmode($filehandle, ":encoding($encoding)");
       }
       my $result = '';
       my $max_width = 0;
@@ -1225,21 +1227,21 @@ sub txt_image_text($$$)
         $result .= $_;
       }
       if (!close ($filehandle)) {
-        my $decoded_file = $txt_file;
-        $decoded_file = Encode::decode($file_name_encoding, $txt_file)
+        my $decoded_file_name = $txt_file;
+        $decoded_file_name = Encode::decode($file_name_encoding, $txt_file)
           if (defined($file_name_encoding));
         $self->document_warn($self,
            sprintf(__("error on closing image text file %s: %s"),
-                                     $decoded_file, $!));
+                                     $decoded_file_name, $!));
       }
       return $result, $max_width;
     } else {
-      my $decoded_file = $txt_file;
-      $decoded_file = Encode::decode($file_name_encoding, $txt_file)
+      my $decoded_file_name = $txt_file;
+      $decoded_file_name = Encode::decode($file_name_encoding, $txt_file)
         if (defined($file_name_encoding));
       $self->line_warn($self,
-                  sprintf(__("\@image file `%s' unreadable: %s"),
-                             $decoded_file, $!), $element->{'source_info'});
+               sprintf(__("\@image file `%s' unreadable: %s"),
+                          $decoded_file_name, $!), $element->{'source_info'});
     }
   }
   return undef, undef;
@@ -1738,11 +1740,13 @@ sub xml_accent($$$;$$$)
     }
   }
 
-  # should never happen, there are diacritics for every accent command
-  return $text . '&lt;' if ($accent eq 'v');
-  # FIXME it is not possible to call xml_protect_text since what is in $text
+  # REMARK this code should never be run as there are diacritics for every
+  # accent command.
+  #
+  # TODO it is not possible to call xml_protect_text since what is in $text
   # may already be xml.  But this means that each time ascii_accent changes
-  # it should be changed here too.
+  # it should be changed here too ii ascii_accent returns invalid xml.
+  return $text . '&lt;' if ($accent eq 'v');
   return Texinfo::Convert::Text::ascii_accent($text, $command);
 }
 

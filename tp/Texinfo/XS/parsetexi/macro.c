@@ -133,6 +133,7 @@ parse_macro_command_line (enum command_id cmd, char **line_inout,
     {
       line_error ("bad name for @%s", command_name (cmd));
       add_extra_integer (macro, "invalid_syntax", 1);
+      free (name);
       return macro;
     }
 
@@ -541,12 +542,18 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
           enum command_id cmd;
           int whitespaces_len;
         case '@':
-          text_append_n (arg, sep, 1);
           pline = sep + 1;
           command = parse_command_name (&pline, &single_char);
           if (command)
             {
               enum command_id cmd = lookup_command (command);
+              if (braces_level <= 0 && cmd
+                  && (cmd == CM_comment || cmd == CM_c))
+                {
+                  line = sep;
+                  goto funexit;
+                }
+              text_append_n (arg, sep, 1);
               text_append (arg, command);
               if (cmd && (command_data(cmd).flags & CF_brace)
                   && strchr (whitespace_chars, *pline)
@@ -557,6 +564,11 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
                   text_append_n (arg, pline, whitespaces_len);
                   pline += whitespaces_len;
                 }
+              free (command);
+            }
+          else
+            {
+              text_append_n (arg, sep, 1);
             }
           break;
         case '{':
@@ -631,7 +643,7 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
                   text_append_n (&argument_content->text,
                                  braced_text+1, text_len -2);
                   free(braced_text);
-                  argument_content->type = ET_bracketed_arg;
+                  argument_content->type = ET_bracketed_linemacro_arg;
                 }
             }
 
@@ -741,7 +753,7 @@ unset_macro_record (MACRO *m)
 
   m->cmd = 0;
   free (m->macro_name);
-  m->macro_name = strdup ("");
+  m->macro_name = 0;
   free (m->macrobody);
   m->macrobody = 0;
   m->element = 0;
@@ -804,7 +816,7 @@ handle_macro (ELEMENT *current, char **line_inout, enum command_id cmd)
   else if (macro->cmd == CM_linemacro)
     macro_call_element->type = ET_linemacro_call;
 
-  add_extra_string_dup (macro_call_element, "name", command_name(cmd));
+  add_info_string_dup (macro_call_element, "command_name", command_name(cmd));
 
   /* It is important to check for expansion before the expansion and
      not after, as during the expansion, the text may go past the

@@ -32,7 +32,7 @@ use 5.008001;
 # to determine the null file
 use Config;
 use File::Spec;
-# for find_encoding, resolve_alias and maybe utf8 related functions
+# for find_encoding, resolve_alias
 use Encode;
 
 # debugging
@@ -292,6 +292,7 @@ our %default_main_program_customization = (
             # automatic direction and directions in menu are not consistent
             # with sectionning, and when node directions are not consistent
             # with menu directions.
+  'CHECK_MISSING_MENU_ENTRY'    => 1,
   'DUMP_TREE'                   => undef,
   'DUMP_TEXI'                   => undef,
   'SHOW_BUILTIN_CSS_RULES'      => 0,
@@ -342,6 +343,8 @@ our @variable_string_settables = (
 'ASCII_DASHES_AND_QUOTES',
 'ASCII_GLYPH',
 'ASCII_PUNCTUATION',
+'AUTO_MENU_DESCRIPTION_FILLCOLUMN',
+'AUTO_MENU_DESCRIPTION_INDENT_LENGTH',
 'AVOID_MENU_REDUNDANCY',
 'BEFORE_SHORT_TOC_LINES',
 'BEFORE_TOC_LINES',
@@ -449,6 +452,7 @@ our @variable_string_settables = (
 'USE_ACCESSKEY',
 'USE_ISO',
 'USE_LINKS',
+'USE_NEXT_HEADING_FOR_LONE_NODE',
 'USE_NODES',
 'USE_NODE_DIRECTIONS',
 'USE_NUMERIC_ENTITY',
@@ -531,7 +535,9 @@ foreach my $valid_transformation ('simple_menus',
     'fill_gaps_in_sectioning', 'move_index_entries_after_items',
     'relate_index_entries_to_items',
     'insert_nodes_for_sectioning_commands',
-    'complete_tree_nodes_menus', 'regenerate_master_menu',
+    'complete_tree_nodes_menus',
+    'complete_tree_nodes_missing_menu',
+    'regenerate_master_menu',
     'indent_menu_descriptions') {
   $valid_tree_transformations{$valid_transformation} = 1;
 }
@@ -568,6 +574,16 @@ sub valid_tree_transformation ($)
 our %encoding_name_conversion_map;
 %encoding_name_conversion_map = (
   'us-ascii' => 'iso-8859-1',
+  # The mapping to utf-8 is important for perl code, as it means using a strict
+  # conversion to utf-8 and not a lax conversion:
+  # https://perldoc.perl.org/perlunifaq#What's-the-difference-between-UTF-8-and-utf8?
+  # In more detail, we want to use utf-8 only for two different reasons
+  # 1) if input is malformed it is better to error out it as soon as possible
+  # 2) we do not want to have different behaviour and hard to find bugs
+  #    depending on whether the user used @documentencoding utf-8
+  #    or @documentencoding utf8.  There is a warning with utf8, but
+  #    we want to be clear in any case.
+  'utf8' => 'utf-8',
 );
 
 
@@ -734,11 +750,10 @@ foreach my $command (
 }
 
 
-# used only in this file in a function,
 # brace commands that are not replaced with text.
-my %non_formatted_brace_commands;
-foreach my $non_formatted_brace_command ('anchor', 'shortcaption',
-    'caption', 'hyphenation', 'errormsg') {
+our %non_formatted_brace_commands;
+foreach my $non_formatted_brace_command ('anchor', 'caption',
+               'errormsg', 'hyphenation', 'shortcaption', 'sortas') {
   $non_formatted_brace_commands{$non_formatted_brace_command} = 1;
 }
 
@@ -958,7 +973,7 @@ sub get_perl_encoding($$$)
   my $result;
   if (defined($commands_info->{'documentencoding'})) {
     foreach my $element (@{$commands_info->{'documentencoding'}}) {
-      my $perl_encoding = element_extra_encoding_for_perl($element);
+      my $perl_encoding = element_associated_processing_encoding($element);
       if (!defined($perl_encoding)) {
         my $encoding = $element->{'extra'}->{'input_encoding_name'}
           if ($element->{'extra'});
@@ -1274,8 +1289,7 @@ sub parse_node_manual($;$)
 
 # misc functions used in diverse contexts and useful in converters
 
-# FIXME document
-sub element_extra_encoding_for_perl($)
+sub element_associated_processing_encoding($)
 {
   my $element = shift;
 
@@ -1316,12 +1330,11 @@ sub encode_file_name($$)
     if (not defined($input_encoding));
 
   if ($input_encoding eq 'utf-8' or $input_encoding eq 'utf-8-strict') {
-    utf8::encode($file_name);
     $encoding = 'utf-8';
   } else {
-    $file_name = Encode::encode($input_encoding, $file_name);
     $encoding = $input_encoding;
   }
+  $file_name = Encode::encode($encoding, $file_name);
   return ($file_name, $encoding);
 }
 
@@ -1750,23 +1763,7 @@ sub count_bytes($$;$)
     $encoding = $self->get_conf('OUTPUT_PERL_ENCODING');
   }
 
-  if ($encoding eq 'utf-8'
-      or $encoding eq 'utf-8-strict') {
-    if (Encode::is_utf8($string)) {
-      # Get the number of bytes in the underlying storage.  This may
-      # be slightly faster than calling Encode::encode_utf8.
-      use bytes;
-      return length($string);
-
-      # Here's another way of doing it.
-      #Encode::_utf8_off($string);
-      #my $length = length($string);
-      #Encode::_utf8_on($string);
-      #return $length
-    } else {
-      return length(Encode::encode_utf8($string));
-    }
-  } elsif ($encoding and $encoding ne 'ascii') {
+  if ($encoding and $encoding ne 'ascii') {
     if (!defined($last_encoding) or $last_encoding ne $encoding) {
       # Look up and save encoding object for next time.  This is
       # slightly faster than calling Encode::encode.
@@ -1779,11 +1776,6 @@ sub count_bytes($$;$)
     return length($Encode_encoding_object->encode($string));
   } else {
     return length($string);
-    #my $length = length($string);
-    #$string =~ s/\n/\\n/g;
-    #$string =~ s/\f/\\f/g;
-    #print STDERR "Count($length): $string\n";
-    #return $length;
   }
 }
 
@@ -2159,8 +2151,10 @@ sub modify_tree($$;$)
   my $argument = shift;
   #print STDERR "modify_tree tree: $tree\n";
 
-  # TODO warn?
-  return undef if (!$tree or ref($tree) ne 'HASH');
+  if (!defined($tree) or ref($tree) ne 'HASH') {
+    cluck "tree ".(!defined($tree) ? 'UNDEF' : "not a hash: $tree");
+    return undef;
+  }
 
   if ($tree->{'args'}) {
     my @args = @{$tree->{'args'}};
@@ -2770,6 +2764,11 @@ X<C<%nobrace_symbol_text>>
 Values are ASCII representation of single character non-alphabetical commands
 without brace such as C<*> or C<:>.  The value may be an empty string.
 
+=item %non_formatted_brace_commands
+
+Brace commands that are not immediately replaced with text, such as
+C<anchor>, C<caption>, C<errormsg> and others.
+
 =item %small_block_associated_command
 X<C<%small_block_associated_command>>
 
@@ -2829,6 +2828,12 @@ Return a list reference containing the tree elements corresponding
 to the @-commands names specified in the I<$commands_list> found
 in I<$tree> by traversing the tree.  The order of the @-commands
 should be kept.
+
+=item $encoding_name = element_associated_processing_encoding($element)
+X<C<element_associated_processing_encoding>>
+
+Returns the encoding name that can be used for decoding derived
+from the encoding that was set where I<$element> appeared.
 
 =item $result = element_is_inline($element, $check_current)
 X<C<element_is_inline>>

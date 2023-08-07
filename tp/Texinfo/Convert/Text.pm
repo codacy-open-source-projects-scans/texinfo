@@ -66,7 +66,7 @@ foreach my $ignored_brace_command (#'xref','ref','pxref','inforef',
 my %ignored_block_commands;
 foreach my $ignored_command ('titlepage', 'copying', 'documentdescription',
   'html', 'tex', 'xml', 'docbook', 'latex', 'ignore', 'macro', 'rmacro',
-  'linemacro') {
+  'linemacro', 'nodedescriptionblock') {
   $ignored_block_commands{$ignored_command} = 1;
 }
 
@@ -734,7 +734,7 @@ sub converter($)
              = $element->{'extra'}->{'input_encoding_name'};
           # can be undef
           $converter->{'OUTPUT_PERL_ENCODING'}
-             = Texinfo::Common::element_extra_encoding_for_perl($element);
+             = Texinfo::Common::element_associated_processing_encoding($element);
         }
       }
     }

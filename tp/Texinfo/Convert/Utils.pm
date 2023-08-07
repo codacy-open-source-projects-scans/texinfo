@@ -47,8 +47,10 @@ require Exporter;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 @ISA = qw(Exporter);
 
+# There is no specific reason to export those functions and not
+# other functions of the module.  It could be possible not to
+# export any function.
 %EXPORT_TAGS = ( 'all' => [ qw(
-definition_category
 expand_today
 expand_verbatiminclude
 add_heading_number
@@ -238,11 +240,11 @@ sub expand_verbatiminclude($$$)
   my $file_name_text = $current->{'extra'}->{'text_arg'};
 
   my $input_encoding
-         = Texinfo::Common::element_extra_encoding_for_perl($current);
+    = Texinfo::Common::element_associated_processing_encoding($current);
 
   my ($file_name, $file_name_encoding)
-      = encoded_input_file_name($customization_information,
-                                $file_name_text, $input_encoding);
+    = encoded_input_file_name($customization_information,
+                              $file_name_text, $input_encoding);
 
   my $file = Texinfo::Common::locate_include_file($customization_information,
                                                   $file_name);
@@ -262,7 +264,7 @@ sub expand_verbatiminclude($$$)
       }
     } else {
       if (defined($input_encoding)) {
-        binmode(VERBINCLUDE, ":encoding(" . $input_encoding . ")");
+        binmode(VERBINCLUDE, ":encoding($input_encoding)");
       }
       $verbatiminclude = { 'cmdname' => 'verbatim',
                            'parent' => $current->{'parent'},
@@ -334,6 +336,84 @@ sub add_heading_number($$$;$)
     }
   }
   return $result;
+}
+
+# Similar to Texinfo::Common::is_content_empty
+sub find_root_command_next_heading_command($$;$$)
+{
+  my $root = shift;
+  my $expanded_format_raw = shift;
+  my $do_not_ignore_contents = shift;
+  my $do_not_ignore_index_entries = shift;
+
+  return undef if (!$root->{'contents'});
+
+  $expanded_format_raw = {} if (!defined($expanded_format_raw));
+
+  foreach my $content (@{$root->{'contents'}}) {
+    #print STDERR Texinfo::Common::debug_print_element($content)."\n";
+    if ($content->{'cmdname'}) {
+      if ($Texinfo::Commands::sectioning_heading_commands{$content->{'cmdname'}}) {
+        #print STDERR "HEADING FOUND ASSOCIATED $content->{'cmdname'}\n";
+        return $content;
+      }
+      if ($content->{'type'} and $content->{'type'} eq 'index_entry_command') {
+        if ($do_not_ignore_index_entries) {
+          return undef;
+        } else {
+          next;
+        }
+      }
+      if (exists($Texinfo::Commands::line_commands{$content->{'cmdname'}})) {
+        if ($Texinfo::Commands::formatted_line_commands{$content->{'cmdname'}}
+            or $Texinfo::Commands::formattable_line_commands{$content->{'cmdname'}}
+            or ($do_not_ignore_contents
+                and ($content->{'cmdname'} eq 'contents'
+                     or $content->{'cmdname'} eq 'shortcontents'
+                     or $content->{'cmdname'} eq 'summarycontents'))) {
+          return undef;
+        } else {
+          next;
+        }
+      } elsif (exists($Texinfo::Commands::nobrace_commands{$content->{'cmdname'}})) {
+        if ($Texinfo::Commands::formatted_nobrace_commands{$content->{'cmdname'}}) {
+          return undef;
+        } else {
+          next;
+        }
+      } elsif (exists($Texinfo::Commands::block_commands{$content->{'cmdname'}})) {
+        if ($Texinfo::Commands::non_formatted_block_commands{$content->{'cmdname'}}
+            or $Texinfo::Commands::block_commands{$content->{'cmdname'}} eq 'region'
+            # ignored conditional
+            or $Texinfo::Commands::block_commands{$content->{'cmdname'}} eq 'conditional'
+            or ($Texinfo::Commands::block_commands{$content->{'cmdname'}} eq 'format_raw'
+                and !$expanded_format_raw->{$content->{'cmdname'}})) {
+          next;
+        } else {
+          return undef;
+        }
+      # brace commands
+      } else {
+        if ($Texinfo::Common::non_formatted_brace_commands{$content->{'cmdname'}}) {
+          next;
+        } else {
+          return undef;
+        }
+      }
+    }
+    if ($content->{'type'}) {
+      if ($content->{'type'} eq 'paragraph') {
+        return undef;
+      }
+    }
+    # normally should not happen at the top level as text at top
+    # level should only contain spaces (empty lines, text before
+    # paragraphs).
+    if ($content->{'text'} and $content->{'text'} =~ /\S/) {
+      return undef;
+    }
+  }
+  return undef;
 }
 
 # this requires a converter argument
@@ -411,11 +491,12 @@ Texinfo::Convert::Utils - miscellaneous functions usable in all converters
 
 =head1 SYNOPSIS
 
-  use Texinfo::Convert::Utils qw(expand_today expand_verbatiminclude);
+  use Texinfo::Convert::Utils;
   
-  my $today_tree = expand_today($converter);
+  my $today_tree = Texinfo::Convert::Utils::expand_today($converter);
   my $verbatiminclude_tree
-     = expand_verbatiminclude(undef, $converter, $verbatiminclude);
+     = Texinfo::Convert::Utils::expand_verbatiminclude(undef, $converter,
+                                                       $verbatiminclude);
 
 =head1 NOTES
 
@@ -444,6 +525,17 @@ could implement the required interfaces and could also have a converter
 available in some cases, to call the functions which require a converter.
 
 =over
+
+=item $result = add_heading_number($converter, $heading_element, $heading_text, $do_number)
+X<C<add_heading_number>>
+
+The I<$converter> argument may be undef.  I<$heading_element> is
+a heading command tree element.  I<$heading_text> is the already
+formatted heading text.  if the I<$do_number> optional argument is
+defined and false, no number is used and the text is returned as is.
+This function returns the heading with a number and the appendix
+part if needed.  If I<$converter> is not defined, the resulting
+string won't be translated.
 
 =item ($category, $class, $type, $name, $arguments) = definition_arguments_content($element)
 X<C<definition_arguments_content>>
@@ -512,16 +604,20 @@ normally a text element with one or two letter, and an array reference
 containing the accent commands nested in I<$element> (including
 I<$element>).
 
-=item $result = add_heading_number($converter, $heading_element, $heading_text, $do_number)
-X<C<add_heading_number>>
+=item $heading_element = find_root_command_next_heading_command($element, $expanded_format_raw, $do_not_ignore_contents, $do_not_ignore_index_entries)
 
-The I<$converter> argument may be undef.  I<$heading_element> is
-a heading command tree element.  I<$heading_text> is the already
-formatted heading text.  if the I<$do_number> optional argument is
-defined and false, no number is used and the text is returned as is.
-This function returns the heading with a number and the appendix
-part if needed.  If I<$converter> is not defined, the resulting
-string won't be translated.
+Return an heading element found in the I<$element> contents if it
+appears before contents that could be formatted.  I<$expanded_format_raw>
+is a hash reference with raw output formats (html, docbook, xml...) as
+keys, associated value should be set for expanded raw output formats.
+I<$do_not_ignore_contents> is optional.  If set, C<@contents> and
+C<@shortcontents> are considered to be formatted.
+I<$do_not_ignore_index_entries> is optional.  If set, index entries
+are considered to be formatted.
+
+Only heading elements corresponding to C<@heading>, C<@subheading> and similar
+@-commands that are not associated to nodes in general are found, not
+sectioning commands.
 
 =back
 

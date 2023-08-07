@@ -63,33 +63,15 @@ rest of this manual by typing @key{SPC} and @key{DEL} (or @key{Space}
 and @key{Backspace}) to move forwards and backwards in it.
 
 
-@menu
-* Stand-alone Info::            What is Info?
-* Node Commands::               Commands for selecting a new node.
-* Cursor Commands::             Commands which move the cursor within a node.
-* Scrolling Commands::          Commands for reading the text within a node.
-* Searching Commands::          Commands for searching an Info file.
-* Index Commands::              Commands for looking up in indices.
-* Xref Commands::               Commands for selecting cross-references.
-* Window Commands::             Commands which manipulate multiple windows.
-* Printing Nodes::              How to print out the contents of a node.
-* Miscellaneous Commands::      A few commands that defy categorization.
-* Invoking Info::               Options you can pass on the command line.
-* Variables::                   How to change the default behavior of Info.
-* Colors and Styles::           Customize the colors used by Info.
-* Custom Key Bindings::         How to define your own key-to-command bindings.
-* MS-DOS/Windows keybindings::  Alternate DOS/Windows keybindings.
-* Index::                       Global index.
-@end menu
-
 
 @node Stand-alone Info
+@nodedescription What is Info?
 @chapter Stand-alone Info
 
 The @dfn{Info} program described here is a stand-alone program, part
 of the Texinfo distribution, which is used to view Info files on a
 text terminal.  @dfn{Info files} are typically the result of
-processing Texinfo files with the program @code{makeinfo} (also in the
+processing Texinfo files with the program @code{texi2any} (also in the
 Texinfo distribution).
 
 Texinfo itself (@pxref{Top,,, texinfo, Texinfo}) is a documentation
@@ -118,19 +100,12 @@ sent to @email{bug-gnu-emacs@@gnu.org}.
 
 
 @node Node Commands
+@nodedescription Commands for selecting a new node.
 @chapter Selecting a Node
 @cindex nodes, selection of
 
-This section details the Info commands which select a new node
-to view in the current window.
-
-The most basic node commands are @samp{n}, @samp{p}, @samp{u}, and
-@samp{l}.
-
-When you are viewing a node, the top line of the node contains some Info
-@dfn{pointers} which describe where the next, previous, and up nodes
-are.  Info uses this line to move about the node structure of the file
-when you use the following commands:
+The most basic node commands are @samp{n}, @samp{p}, and @samp{u}.
+These move you around the node structure of the file:
 
 @table @asis
 @item @kbd{n} (@code{next-node})
@@ -149,25 +124,29 @@ Select the `Prev' node.
 Select the `Up' node.
 @end table
 
-You can select a node that you have already viewed in this window
-by using the @samp{l} command---this stands for ``last'', and
-moves backwards through the history of visited nodes for this
-window.  This is useful when you follow a reference to another node
-to read about a related issue, and would like then to resume
-reading at the same place where you started.
+The top line of each Info node contains @dfn{pointers} which describe
+where the next, previous, and up nodes are.
+The nodes in an Info file are conventionally arranged in a hierarchical
+structure; for example, the `Next' pointer in a section of a chapter
+takes you to the next section in the same chapter, while the `Up' pointer
+takes you to the higher-level node for the chapter as a whole.
 
-Each node where you press @samp{l} is discarded from the history.  Thus,
-by the time you get to the first node you visited in a window, the
-entire history of that window is discarded.
+You can select a node that you have already viewed
+by using the @samp{l} command---this stands for ``last'':
 
 @table @asis
 @item @kbd{l} (@code{history-node})
 @kindex l
 @findex history-node
-Pop the most recently selected node in this window from the node
-history.
+Move backwards through the history of visited nodes for this
+window.  The current node is discarded from the history.
+
+This is useful when you follow a reference to another node
+to read about a related issue, and would like then to resume
+reading at the same place where you started.
 @end table
 
+@noindent
 Two additional commands, @samp{t} and @samp{d}, select special nodes:
 
 @table @asis
@@ -182,8 +161,33 @@ Select the node @samp{Top} in the current Info file.
 Select the directory node (i.e., the node @samp{(dir)}).
 @end table
 
-Here are some other commands which immediately result in the selection
-of a different node in the current window:
+@findex execute-command
+In the command descriptions in this manual,
+the @kbd{M-x} command names are displayed in parentheses.
+@kbd{M-x} is itself a command (@code{execute-command})
+letting you run a command by name. For example, you could
+select the next node with @kbd{M-x next-node}.
+
+@kbd{C-@var{x}} means press the @key{Ctrl} key and
+the key @var{x}.  @kbd{M-@var{x}} means press the @key{Meta} key
+and the key @var{x}.  (@key{Meta} is usually labeled as @key{Alt}).
+@key{SPC} is the space bar.  The other keys are usually called by
+the names printed on them.  This notation to describe keystrokes is
+the same as that used within the Emacs manual (@pxref{User Input,,,
+emacs, The GNU Emacs Manual}).
+
+Many Info commands can take a @dfn{numeric argument};
+see @ref{Miscellaneous Commands, @code{universal-argument}} to find
+out how to supply one.
+
+
+
+@node More Node Commands
+@nodedescription Further commands for changing the node.
+@chapter Further Commands for Selecting a Node
+
+This chapter describes some other commands which select a different node.
+
 
 @table @asis
 @item @kbd{<} (@code{first-node})
@@ -218,13 +222,11 @@ Move backward through the node structure.  If the node that you are
 currently viewing has a @samp{Prev} pointer, that node is selected.
 Otherwise, if the node has an @samp{Up} pointer, that node is selected,
 and if it has a menu, the last item in the menu is selected.
-@end table
 
 You can get the same behavior as @code{global-next-node} and
 @code{global-prev-node} while simply scrolling through the file with
 @key{SPC} and @key{DEL} (@pxref{scroll-behavior}).
 
-@table @asis
 @anchor{goto-node}
 @item @kbd{g} (@code{goto-node})
 @kindex g
@@ -260,8 +262,8 @@ manuals which describe several programs.
 If you need to find the Invocation node of a program that is documented
 in another Info file, you need to visit that file before invoking
 @samp{O}.  For example, if you are reading the Emacs manual and want to
-see the command-line options of the @code{makeinfo} program, type @kbd{g
-(texinfo) @key{RET}} and then @kbd{I makeinfo @key{RET}}.  If you don't
+see the command-line options of the @code{texi2any} program, type @kbd{g
+(texinfo) @key{RET}} and then @kbd{O texi2any @key{RET}}.  If you don't
 know what Info file documents the command, or if invoking @samp{O}
 doesn't display the right node, go to the @samp{(dir)} node (using the
 @samp{d} command) and invoke @samp{O} from there.
@@ -335,32 +337,15 @@ See also @ref{--raw-escapes}.
 
 
 @node Cursor Commands
+@nodedescription Commands which move the cursor within a node.
 @chapter Moving the Cursor
 @cindex cursor, moving
 @cindex moving the cursor
 
 GNU Info has several commands which allow you to move the cursor about
 the screen.
-The notation used in this manual to describe keystrokes
-is the same as the notation used within the Emacs manual
-(@pxref{User Input,,, emacs, The GNU Emacs Manual}).
-@kbd{C-@var{x}} means press the @key{CTRL} key and the
-key @var{x}.  @kbd{M-@var{x}} means press the @key{META} key and
-the key @var{x}.  On many terminals the @key{META} key is known as
-the @key{ALT} key.  @key{SPC} is the space bar.  The other keys are
-usually called by the names printed on them.
 
-The following table lists the basic cursor movement commands in Info.
-Each entry consists of the key sequence you should type to execute the
-cursor movement, the @kbd{M-x} command name (displayed
-in parentheses), and a short description of what the command
-does.@footnote{@kbd{M-x} is also a command;
-it invokes @code{execute-extended-command}, letting you run a command
-by name.  @xref{M-x, , Executing an extended command, emacs, The GNU
-Emacs Manual}, for more detailed information.}
-All of the cursor motion commands can take a @dfn{numeric} argument
-(see @ref{Miscellaneous Commands, @code{universal-argument}} to find
-out how to supply them).  With a numeric argument, the motion commands
+With a numeric argument, the motion commands
 are simply executed that many times; for example, a numeric argument
 of 4 given to @code{next-line} causes the cursor to move down 4 lines.
 With a negative numeric argument, the motion is reversed; an argument
@@ -441,6 +426,7 @@ moves the cursor to the start of the @var{n}th line in the window.
 
 
 @node Scrolling Commands
+@nodedescription Commands for reading the text within a node.
 @chapter Moving Text Within a Window
 @cindex scrolling
 
@@ -559,6 +545,7 @@ commands never scroll beyond the current node.
 
 
 @node Searching Commands
+@nodedescription Commands for searching an Info file.
 @chapter Searching an Info File
 @cindex searching
 
@@ -704,6 +691,7 @@ predefined limit.  By default, this limit is set to 1 character.
 
 
 @node Index Commands
+@nodedescription Commands for looking up in indices.
 @chapter Index Commands
 @cindex index
 @cindex indices
@@ -759,37 +747,37 @@ your system.  It can also be invoked from the command line; see
 
 
 @node Xref Commands
+@nodedescription Commands for selecting cross-references.
 @chapter Selecting Cross-references
 
 We have already discussed the @samp{Next}, @samp{Prev}, and @samp{Up}
-pointers which appear at the top of a node.  In addition to these
-pointers, a node may contain other pointers which refer you to a
-different node, perhaps in another Info file.  Such pointers are called
-@dfn{cross-references}, or @dfn{xrefs} for short.
+pointers which appear at the top of a node, referring you to a
+different node.
 
-@menu
-* Parts of an Xref::            What a cross-reference is made of.
-* Selecting Xrefs::             Commands for selecting menu or note items.
-@end menu
+In addition, a node may contain a @dfn{menu}, as well as
+@dfn{cross-references} (@dfn{xrefs} for short) interspersed through
+the text of the node.  Cross-references may possibly refer to a node in
+another Info file.
 
 @node Parts of an Xref
+@nodedescription What a cross-reference is made of.
 @section Parts of an Xref
 
-Cross-references have two major parts: the first part is called the
-@dfn{label}; it is the name that you can use to refer to the cross
-reference, and the second is the @dfn{target}; it is the full name of
-the node that the cross-reference points to.
-
-The target is separated from the label by a colon @samp{:}; first the
-label appears, and then the target.  For example, in the sample menu
-cross-reference below, the single colon separates the label from the
-target.
+Here is a sample menu entry showing the parts of a cross-reference:
 
 @example
 * Foo Label: Foo Target.        More information about Foo.
 @end example
 
-Note the @samp{.} which ends the name of the target.  The @samp{.} is
+@noindent
+The reference has two parts: the first part is called the
+@dfn{label}; it is the name that you can use to refer to the
+cross-reference, and the second is the @dfn{target}; it is the full
+name of the node that the cross-reference points to.  The target is
+separated from the label by a single colon @samp{:}; first the
+label appears, and then the target.
+
+The @samp{.} ends the name of the target.  The @samp{.} is
 not part of the target; it serves only to let Info know where the target
 name ends.
 
@@ -816,11 +804,12 @@ Like @samp{Next}, @samp{Prev}, and @samp{Up} pointers, cross-references
 can point to any valid node.  They are used to refer you to a place
 where more detailed information can be found on a particular subject.
 Here is a cross-reference which points to a node within the Texinfo
-documentation:  @xref{xref, , Writing an Xref, texinfo, the Texinfo
-Manual}, for more information on creating your own texinfo cross
-references.
+documentation:  @xref{Cross References,, Cross-refrences, texinfo, the Texinfo
+Manual}, for more information on creating your own Texinfo
+cross-references.
 
 @node Selecting Xrefs
+@nodedescription Commands for selecting menu or note items.
 @section Selecting Xrefs
 
 The following table lists the Info commands which operate on menu items.
@@ -905,6 +894,7 @@ Select the menu item or note reference appearing on this line.
 
 
 @node Window Commands
+@nodedescription Commands which manipulate multiple windows.
 @chapter Manipulating Multiple Windows
 @cindex windows, manipulating
 
@@ -919,13 +909,8 @@ appears.  There are commands available for creating windows, changing
 the size of windows, selecting which window is active, and for deleting
 windows.
 
-@menu
-* The Mode Line::               What appears in the mode line?
-* Basic Windows::               Manipulating windows in Info.
-* The Echo Area::               Used for displaying errors and reading input.
-@end menu
-
 @node The Mode Line
+@nodedescription What appears in the mode line?
 @section The Mode Line
 
 A @dfn{mode line} is a line of inverse video which appears at the bottom
@@ -964,6 +949,7 @@ showing possible completions:
 @end example
 
 @node Basic Windows
+@nodedescription Manipulating windows in Info.
 @section Window Commands
 
 It can be convenient to view more than one node at a time.  To allow
@@ -1039,6 +1025,7 @@ display its contents.  The variable @code{automatic-tiling} can cause
 @end table
 
 @node The Echo Area
+@nodedescription Used for displaying errors and reading input.
 @section The Echo Area
 @cindex echo area
 
@@ -1239,6 +1226,7 @@ window if not.
 
 
 @node Printing Nodes
+@nodedescription How to print out the contents of a node.
 @chapter Printing Nodes
 @cindex printing
 
@@ -1269,6 +1257,7 @@ the underlying OS.
 
 
 @node Miscellaneous Commands
+@nodedescription A few commands that defy categorization.
 @chapter Miscellaneous Commands
 
 GNU Info contains several commands which self-document GNU Info:
@@ -1311,7 +1300,7 @@ the most concise information about GNU Info available.
 Try hard to visit the node @code{(info)Help}.  The Info file
 @file{info.texi} distributed with GNU Emacs contains
 this node.  Of course, the file must first be processed with
-@code{makeinfo}, and then placed into the location of your Info directory.
+@code{texi2any}, and then placed into the location of your Info directory.
 
 @item @kbd{=} (@code{display-file-info})
 @cindex current file, information about
@@ -1465,6 +1454,7 @@ variable @code{automatic-footnotes}.  @xref{Variables,,
 
 
 @node Invoking Info
+@nodedescription Options you can pass on the command line.
 @chapter Invoking Info
 
 @cindex Info, invoking
@@ -1927,6 +1917,7 @@ settings.
 
 
 @node Variables
+@nodedescription How to change the default behavior of Info.
 @chapter Manipulating Variables
 
 GNU Info uses several internal @dfn{variables} whose values are looked
@@ -2195,6 +2186,7 @@ command to mute the bell, e.g., @code{xset b 0 0 0}.)
 
 
 @node Colors and Styles
+@nodedescription Customize the colors used by Info.
 @chapter Colors and Styles
 
 You can choose to highlight parts of Info's display, such as 
@@ -2292,6 +2284,7 @@ so search matches there will still be displayed in yellow.)
 
 
 @node Custom Key Bindings
+@nodedescription How to define your own key-to-command bindings.
 @chapter Customizing Key Bindings and Variables
 
 @cindex default key bindings, overriding
@@ -2319,10 +2312,6 @@ Variables may also be set on the command line with the
 @option{--variable} option (@pxref{variable-assignment}).  Variable
 settings on the command line override settings from the @file{.infokey}
 file.
-
-@menu
-* @t{infokey} format::
-@end menu
 
 @node @t{infokey} format
 @section @command{infokey} format
@@ -2515,6 +2504,7 @@ is bound to each command.
 
 
 @node MS-DOS/Windows keybindings
+@nodedescription Alternate DOS/Windows keybindings.
 @chapter Alternate MS-DOS/Windows keybindings
 
 Here are some keybindings that are only used in Info on MS-DOS/Windows.
@@ -2594,6 +2584,7 @@ On DOS/Windows only, the @kbd{Shift-@key{TAB}} key is an alias for
 
 
 @node Index
+@nodedescription Global index.
 @appendix Index
 
 @printindex cp

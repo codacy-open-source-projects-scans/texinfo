@@ -1,3 +1,813 @@
+2023-08-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Translations.pm (gdt): have the gettext framework convert
+	translated strings to UTF-8, and decode from UTF-8 to internal perl
+	encoding.
+
+2023-08-06  Patrice Dumas  <pertusus@free.fr>
+
+	* po_document/LINGUAS, po_document/pl.iso-8859-2.po, tp/Makefile.am
+	(test_files), t/input_files/pl_translated_inserted_strings_8bit.texi,
+	tp/Makefile.tres (test_files_generated_list), tp/t/formats_encodings.t
+	(8bit_document_translations): add 8bit encoded po_document po file for
+	testing purposes, using iconv and manual edition of charset for
+	polish.  Add a corresponding test, 8bit_document_translations, with
+	@documentencoding ISO-8859-2 which should use the pl.iso-8859-2.po
+	translations file.
+
+2023-08-06  Patrice Dumas  <pertusus@free.fr>
+
+	update po files
+
+2023-08-06  Patrice Dumas  <pertusus@free.fr>
+
+	* po_document/POTFILES.in: add tp/Texinfo/Structuring.pm.
+
+2023-08-06  Patrice Dumas  <pertusus@free.fr>
+
+	* TODO, tp/TODO: update.
+
+2023-08-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Common.pm,  tp/Texinfo/Structuring.pm
+	(_normalized_entry_associated_internal_node, new_master_menu):
+	Move to Structuring.pm as Common.pm should not depend on
+	Texinfo::Structuring or Texinfo::Translations.  Report from Patrice.
+
+2023-08-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	add CHECK_MISSING_MENU_ENTRY
+
+	* tp/Texinfo/Common.pm (%default_main_program_customization):
+	Add CHECK_MISSING_MENU_ENTRY, true by default.
+	* tp/Texinfo/Structuring.pm (complete_node_tree_with_menus):
+	Do not output warnings about missing menu entries if 
+	CHECK_MISSING_MENU_ENTRY is not set.  This was formerly controlled
+	by CHECK_NORMAL_MENU_STRUCTURE but was latterly on unconditionally.
+	* doc/texinfo.texi (Other Customization Variables): Document.
+	* tp/t/test_utils.pl: Set 'CHECK_NORMAL_MENU_STRUCTURE' in
+	configuration.
+	* NEWS: update
+
+2023-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Top): Remove @menu and @detailmenu, using
+	@nodedescription throughout.  Also remove joke after end of menu.
+
+2023-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Blank line before detailmenu
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <sectioning commands>:
+	Add a blank line before the inserted detailmenu block.
+
+2023-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Structuring.pm,
+	* tp/Texinfo/Common.pm (_normalized_entry_associated_internal_node):
+	Remove duplicate definition in Structuring.pm, using the definition
+	in Common.pm instead.
+
+2023-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Common.pm (new_master_menu): Always take an array
+	reference as an argument with a list of menus to operate on, so
+	that there is only one way of calling this function.  Callers updated.
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <sectioning commands>:
+	Check that node name is actually "Top".
+
+2023-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Generate master menu in plaintext output
+
+	* tp/Texinfo/Common.pm (new_master_menu): Take extra optional
+	argument which is the menu in the Top node.
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <sectioning commands>:
+	At the Top node, call new_master_menu after calling
+	Texinfo::Structuring::new_complete_node_menu, so to also generate
+	a detailed menu.
+
+2023-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Common.pm (_print_down_menus):
+	Call Texinfo::Structuring:::new_complete_node_menu in order to output
+	part of the master menu when a node is missing a @menu block.
+
+2023-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Common.pm (%valid_tree_transformations):
+	Add 'complete_tree_nodes_missing_menu', which should have been in
+	this list as it is documented and implemented.
+
+2023-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Move new_master_menu
+
+	* tp/Texinfo/Transformations.pm
+	* tp/Texinfo/Common.pm (new_master_menu): Move to Common.pm.
+	* tp/t/do_master_menu.t: Update.
+
+2023-08-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl (set_translations_encoding): really pass argument.
+	Report and investigation of faulty commit by Werner.
+
+2023-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/session.c (info_handle_pointer): When going Up, look
+	for the current node in the Up nodes menu and position the
+	cursor there.
+	* NEWS: mention this
+
+2023-08-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi: Use trailing comma before 'or' more
+	consistently.
+
+2023-08-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Menus): Advertise the benefits of not using
+	@menu in Texinfo sources.
+
+2023-08-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Node Descriptions): New node to document
+	@nodedescription and @nodedescriptionblock.
+	(Menus): Edit slightly.
+
+2023-08-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: reword slightly
+
+2023-08-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Writing a Node, Writing a Menu, Menu Parts)
+	(Raise/lower sections, Cross Reference Parts):
+	Refer to 'texi2any' rather than 'makeinfo'.
+
+2023-08-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi: Finish removing most @menu blocks, using
+	@nodedescription instead.
+
+2023-08-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <node description>:
+	If adding extra space before node description, count this space
+	in the line length.
+
+2023-08-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Hardcopy with TeX): Edit and condense.  Reference
+	another node for details of changing the paper size.
+	(@smallbook): Say that 8.5x11" paper is called letter size.
+
+2023-08-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Printing): Remove node, as it is duplicative
+	of "Texinfo Mode Printing".  Move a paragraph into "Hardcopy with TeX".
+
+2023-08-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Emacs Shell Printing): Remove node, moving
+	some material into "Hardcopy with TeX".
+
+2023-08-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Printing with Emacs): Move node and sub-nodes
+	to appendix.
+
+2023-08-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Edits to manual
+
+	* doc/texinfo.texi (Insertions): Remove @iftex block listing
+	contents of chapter.
+	(Requirements Summmary): Remove node as the content is covered
+	elsewhere.
+
+2023-08-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi: Continue removing @menu throughout.
+
+2023-08-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <node description>:
+	Use the same code for @nodedescription and @nodedescriptionblock
+	for adding extra spaces if needed to separate the description.
+	Use the previous converter for adding the spaces and add two
+	spaces rather than one.  Suggestion from Patrice.
+
+2023-08-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi: Start removing @menu throughout.
+
+2023-08-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove extra space for @nodedescriptionblock
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <@nodedescriptionblock>:
+	Check if space is needed before adding space with current paragraph
+	formatter, as the existing check would always be true and the space
+	would be added, leading @nodedescriptionblock descriptions to be
+	indented by an extra space compared with @nodedescription descriptions.
+
+2023-08-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/t/10menu.t (nodedescription_descriptions): Adjust test so
+	it tests what was tested before with a node description only fitting
+	on the next line in a menu.
+
+2023-08-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (PDF Colors): Move up a level as the section is not
+	just related to @link.
+
+2023-08-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Other Customization Variables)
+	<AUTO_MENU_DESCRIPTION_FILLCOLUMN>,
+	<AUTO_MENU_DESCRIPTION_INDENT_LENGTH>: Update.
+
+2023-08-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <menu entry description>:
+	Multiply by 0.44 instead of dividing by 2.32 as this is easier
+	to understand.
+
+2023-08-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi: Remove remaining @menu blocks and
+	use @nodedescription where needed.
+
+2023-08-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm <AUTO_MENU_DESCRIPTION_FILLCOLUMN>
+	If AUTO_MENU_DESCRIPTION_FILLCOLUMN not set, increase the text width
+	by 10% as existing Info menus often go beyond 72 columns in width.
+
+2023-08-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\nodedescription, \nodedescriptionblock):
+	Add stub implementations.
+	* NEWS: Mention these new commands.
+
+2023-07-31  Patrice Dumas  <pertusus@free.fr>
+
+	nodedescription customization
+
+	* doc/texinfo.texi (Other Customization Variables),
+	tp/Texinfo/Common.pm b/tp/Texinfo/Common.pm
+	(@variable_string_settables), tp/Texinfo/Convert/Plaintext.pm
+	(_convert): add AUTO_MENU_DESCRIPTION_INDENT_LENGTH and
+	AUTO_MENU_DESCRIPTION_FILLCOLUMN customization for @nodedescription*
+	formatting.
+
+	* tp/t/10menu.t (commands_in_nodedescriptionblock): set
+	AUTO_MENU_DESCRIPTION_INDENT_LENGTH and
+	AUTO_MENU_DESCRIPTION_FILLCOLUMN.
+
+2023-07-31  Patrice Dumas  <pertusus@free.fr>
+
+	@nodedescriptionblock output
+
+	* tp/Texinfo/Convert/HTML.pm (convert_tree_new_formatting_context)
+	(_convert_paragraph_type, _convert_menu_entry_type): add formatting
+	of @nodedescriptionblock. Check if node description was formatted more
+	than once, and use convert_tree_new_formatting_context in that case.
+	pass block_command to convert_tree_new_formatting_context to be able
+	tp avoid paragraph markup for the first nodedescriptionblock
+	paragraph.
+
+	* tp/Texinfo/Convert/Plaintext.pm (converter_initialize)
+	(new_formatter, _convert): formatting of @nodedescriptionblock. Add
+	'indent_length' to format_context considered variables for
+	new_formatter. Use text_element_context to set the counter for
+	nodedescription and nodedescriptionblock. Add seen_node_descriptions
+	to the converter state to be able to be silent if a node description
+	is formatted more than once. Determine $description_indent_length
+	by applying a factor on text_element_context max.
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_printindex_command): multiple
+	pass argument of convert_tree_new_formatting_context usable as
+	identifier.
+
+	* tp/Makefile.tres, tp/t/10menu.t (commands_in_nodedescriptionblock):
+	test multiple @nodedescriptionblock with commands in it.
+
+2023-07-31  Patrice Dumas  <pertusus@free.fr>
+
+	@nodedescriptionblock parsing
+
+	* tp/Texinfo/Convert/*.pm, tp/Texinfo/ParserNonXS.pm
+	(_handle_line_command, _handle_block_command),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command),
+	(handle_block_command), tp/Texinfo/command_data.txt: add
+	@nodedescriptionblock.  Set extra node key node_long_description.
+	Also associated with node_description unless there is also a
+	@nodedescription.
+
+	* tp/Makefile.tres, tp/t/10menu.t (nodedescriptionblock_descriptions):
+	new test.
+
+2023-07-30  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/separator.c (handle_comma):
+	Keep copy of return value of next_text so to avoid a memory
+	leak.
+
+2023-07-30  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (parse_line_command_args)
+	<@defindex>: Free index name when finished.
+	* tp/Texinfo/XS/parsetexi/indices.c (add_index): Call strdup on
+	argument to add_index_internal.
+
+2023-07-30  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/tree.c (destroy_node_spec):
+	Free 'out_of_tree_elements' array.
+
+2023-07-30  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/macro.c (parse_macro_command_line):
+	Free return value of read_command_name in the case that the name
+	is bad.
+
+2023-07-30  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/macro.c (unset_macro_record):
+	Set 'macro_name' field of MACRO to null rather than an empty
+	string.  This prevents a memory leak if the macro record is
+	reused and the pointer to the empty string is not freed.
+
+2023-07-30  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line)
+	<@value>: Free a string in one case where it was not freed.
+
+2023-07-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: hints on valgrind for tp/t tests
+
+2023-07-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/def.c (split_delimiters):
+	Free return value from u8_strconv_from_encoding.
+
+2023-07-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/macro.c (expandline_macro_arguments):
+	Free return value from parse_command_name.
+
+2023-07-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/source_marks.c (relocate_source_marks):
+	Free malloc-allocated int array at end of function.
+
+2023-07-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line) <@include>:
+	Call free on return value of locate_include_file once done with value.
+
+2023-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_linemacro_arguments),
+	tp/Texinfo/Convert/Texinfo.pm (convert_to_texinfo),
+	tp/Texinfo/XS/parsetexi/convert.c (convert_to_texinfo_internal),
+	tp/Texinfo/XS/parsetexi/element_types.txt,
+	tp/Texinfo/XS/parsetexi/macro.c (expand_linemacro_arguments):
+	use a new type, bracketed_linemacro_arg instead of bracketed_arg for
+	the linemacro call element holding text.  It is indeed different from
+	bracketed_arg, which contains other elements and not directly text.
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_macro),
+	tp/Texinfo/XS/parsetexi/macro.c (handle_macro): rename name extra macro
+	call key as command_name and put it in info instead of extra.
+
+	* tp/t/60macro.t (macro_expansion_in_multitable_prototype): add test
+	of macro expansion in bracketed_arg in multitable prototypes.
+
+2023-07-29  John Wheeler <wheelerwjx9@runbox.com>  (tiny change)
+
+	* install-info/install-info.c (output_dirfile):
+	Do not insert a blank line before a new section if one is there
+	already.  This prevents the number of blank lines continually
+	increasing if a section is repeatedly deleted and inserted.
+
+2023-07-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo-tex-test.texi (Index and paragraphs): Remove section
+	as change making index command end paragraph was reverted.
+
+2023-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_next_text): do not try to modify the
+	output when there was an encoding error.  Do not use Encode::decode
+	to emit a warning in case of decoding error, as it may not, and it
+	would not be the same message as the XS parser.
+	Instead call Encode::decode with check argument set to
+	Encode::FB_CROAK in an eval to get the perl message and the
+	information that there was an error.  Get the erroneous byte using
+	Encode::decode with Encode::FB_QUIET.  Then call Encode::decode
+	again with the default check argument to get the decoded string.
+	Based on Gavin input.
+
+	* tp/tests/encoded/Makefile.am (EXTRA_DIST),
+	tp/tests/encoded/list-of-tests (test_latin1_no_documentencoding):
+	prepare a test with a letter in latin1 but no documentencoding to
+	test for manuals that assumed latin1, especially for accented letters
+	in person names.  Do not set it because the XS and perl parsers lead
+	to different outputs.
+
+2023-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS: mention stricter checks of input encoding, with more errors
+	and warnings, especially for UTF-8.
+
+2023-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* texi2any.pl: if format and converted format differ, mention both in
+	messages including converted format (only one case).
+
+	* texi2any.pl: rename set_format_menu_from_cmdline_header as
+	set_format_menu_from_cmdline_header_option.
+
+2023-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm (check_unicode_point_conversion): in
+	case encoding is not attempted, still use an eval to catch invalid
+	argument to hex().
+
+2023-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm (check_unicode_point_conversion): with
+	strict encoding, there is a warning for nonchar with perl 5.10.1 on
+	solaris 11, though not on solaris 10.  So for a range of perl versions,
+	5.10.0 to 5.13.8 we do not attempt the eval and check for the
+	codepoints to be below 0x10FFFF early.
+
+2023-07-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\deftypeline): Read arguments correctly, in
+	the same way as \deftypefn.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/60macro.t
+	(line_end_accent_command_macro_call): add test for a command with
+	braces expanded in a macro followed by end of line one line command.
+
+	* tp/Texinfo/Common.pm (modify_tree): error out if argument not
+	defined or not a HASH.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (element_associated_processing_encoding):
+	rename element_extra_encoding_for_perl as
+	element_associated_processing_encoding.  Update callers.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (%non_formatted_brace_commands): add sortas.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl (set_translations_encoding): reset translations
+	encoding when COMMAND_LINE_ENCODING is reset.
+
+	* tp/texi2any.pl: move code around for a more logical organization.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm (check_unicode_point_conversion):
+	check that the codepoint expands to valid UTF-8, by using
+	:encoding(utf-8) instead of :utf8 on the stream, consistently with the
+	conversion used to output UTF-8.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm
+	(%unicode_character_brace_no_arg_commands): add a comment to described
+	the failure with charnames::vianame.
+
+	* tp/Texinfo/Convert/Unicode.pm (_eight_bit_and_unicode_point)
+	(unicode_point_decoded_in_encoding): exclude 127, \x{7F}, DEL from the
+	characters considered to be decoded.  It is probably actually decoded,
+	but should not represent an accented character or a specific character.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm
+	(%unicode_character_brace_no_arg_commands): revert use of
+	charnames::vianame as an attempt to fix tests of @sc{@aa{}} in
+	perl 5.10.1 (on solaris).
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs (init): use macro corresponding
+	to bytes to get file paths in the C parser.  The file path comes from
+	Texinfo::ModulePath through Texinfo::XSLoader and is a byte string.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs: use # comments, not C
+	comments.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	Set 'no utf8' in texi2any as we substitute file names in byte strings
+
+	* tp/texi2any.pl: set 'no utf8'.  Through rules in Makefile.am
+	directory paths set through configure are substituted directly in
+	strings in the code and we always use these strings as byte string,
+	therefore we explicitly set no utf8 to be sure that strings in code
+	will never be considered as character strings by Perl.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm,
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_file)
+	(add_include_directory): use macro corresponding to bytes to get
+	file paths in the C parser.  Add comments explaining that file paths
+	should be binary string, with any encoding, while other strings should
+	be UTF-8 encoded.
+
+2023-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl: use $curdir from File::Spec->curdir() instead of '.'.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\unnsecentry, \unnsubsecentry): Correct
+	spelling of command sequences.
+
+2023-07-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs: pass parser conf strings as
+	UTF-8 encoded bytes, and use the macro corresponding to bytes to get
+	the strings in the C parser.
+
+2023-07-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_piece)
+	(parse_texi_text, parse_texi_line),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_piece, parse_string)
+	(parse_text): encode strings passed to the C parser to UTF-8
+	explicitly to make those strings byte strings.  In the C parser, use
+	the macro corresponding to bytes to get the strings.
+
+2023-07-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/api.c (store_additional_info)
+	(store_source_mark_list, element_to_perl_hash): add fatal() calls for
+	impossible cases (info information element added twice, source mark
+	element registered twice, parent set after the children).
+	Add comments to explain that since args and contents are processed
+	before extra information, element associated to extra often have their
+	hv already set.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Top): Eliminate @menu and
+	use new @nodedescription command in sub-nodes.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Xref Commands): Eliminate @menu and
+	use new @nodedescription command in sub-nodes.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/xspara.c (xspara_add_text):
+	Re-order arguments to fprintf to match intended order.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Node Commands): Remove reference to "this
+	window".  Add index entry for 'execute-command'.
+	(More Node Commands): Subordinate comment about 'global-next-node'
+	and 'global-prev-node' to one of the items in the table.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Xref Commands): Mention menus in this node.
+	(Parts of an Xref): Change two cases of "cross reference" to
+	"cross-reference".   Place example earlier in node.
+	Refer to a menu entry as an "entry".  Link
+	to different node in Texinfo manual.  Fix capitalisation of
+	"Texinfo".
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Node Commands): Do not link to emacs manual
+	for explanation of M-x, as this contains much irrelevant material.
+	State that M-x is 'execute-command'.  Give example using previously
+	documented command.  Change ALT to Alt and CTRL to Ctrl, as well
+	as META to Meta.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Node Commands): Edit.  Do not talk about
+	'the current window' as this is an unnecessary complication.  Say
+	more about the hierarchical structure of an Info file.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Node Commands, More Node Commands):
+	Split off 'More Node Commands' node with the less important
+	commands in it.
+	(Cursor Commands, Node Commands): Move description of M-x, C-u
+	and keystroke notation earlier in manual.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Node Commands): Reduce duplication in
+	discussion of 'l' command and talk less about 'discarding nodes'.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Node Commands) <goto-invocation>:
+	Fix example to use the right key.
+	(Stand-alone Info, Miscellaneous Commands):
+	Change 'makeinfo' to 'texi2any'.
+
+2023-07-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (@verbatim): Change [tab] to <tab> as is
+	more usual in other parts of the manual.
+
+2023-07-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	TOC @subsubsection number alignment
+
+	* doc/texinfo.tex (\findsecnowidths): Also collect information
+	on the widths of subsubsection numbers.
+	(\numsubsecentry, \unsubsecentry): Call \retrievesecnowidth.
+	(\dosubsubsecentry): Assign \secnowidth based on result.
+
+2023-07-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	TOC @subsection number alignment
+
+	* doc/texinfo.tex (\findsecnowidths): Also collect information
+	on the widths of subsection numbers.
+	(\retrievesecnowidth): Take an argument, being the dimension
+	register to assign to.
+	(\numsecentry, \unsecentry): Call \retrievesecnowidth.
+	(\dosubsecentry): Assign \secnowidth based on result.
+
+2023-07-26  Patrice Dumas  <pertusus@free.fr>
+
+	Simpler more consistent UTF-8 and unicode handling, stricter UTF-8 conversion
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): map utf8 to
+	utf-8 for input_encoding, to get the same output as the perl parser
+	with mime_name and also because it is better.
+
+	* tp/Texinfo/Common.pm (%encoding_name_conversion_map): map utf8 to
+	utf-8 to always use the same conversion in perl, and prefer the strict
+	conversion.
+
+	* tp/Texinfo/Common.pm (encode_file_name, count_bytes): do not use
+	utf-8 specific conversion, always use Encode encode and also use the
+	strict conversion.
+
+	* tp/Texinfo/Convert/Unicode.pm (_format_eight_bit_accents_stack),
+	tp/Texinfo/ParserNonXS.pm (_new_text_input, _next_text): use the
+	utf-8 encoding not utf8 for Encode encode strict conversion.
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize),
+	tp/Texinfo/Convert/Unicode.pm: use charnames::vianame to obtain
+	characters based on a string representation of unicode codepoints, as
+	it is simple and this is what is described in the documentation.
+
+	* tp/Texinfo/Convert/Unicode.pm (unicode_point_decoded_in_encoding):
+	handle hex strings in the ascii range for 8bit encodings.
+
+	* tp/Makefile.tres, tp/t/08misc_commands.t (documentencoding_utf8):
+	new test with documentencoding utf8.
+
+2023-07-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\summarycontents): Set \extrasecnoskip to
+	restore extra space in the summary contents.
+
+2023-07-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	TOC section number spacing
+
+	* doc/texinfo.tex (\labelspace): Narrow from 1em to 0.6em.  This
+	is used after section numbers in the table of contents.
+	(\tocentry, \extrasecnoskip): Add an extra skip of \extrasecnoskip
+	after the section number.
+	(\dochapentry): Set \extrasecnoskip so to maintain the same space
+	after chapter numbers in the table of contents.
+
+2023-07-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\tocentry): Fix setting of \entrycontskip
+	to work with last change.
+
+2023-07-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	TOC section number alignment
+
+	* doc/texinfo.tex (\findsecnowidths): New macro, to get maximum
+	width of section numbers for each chapter.
+	(\contents): Call it.
+
+	(\retrievesecnowidth): New macro to get the maximum widths.
+	(\numchapentry, \appentry): Call it.
+
+	(\tocentry, \secnowidth): Use \secnowdith for alignment if set to
+	a non-zero value.
+	(\dosecentry): Set \secnowidth based on result of \retrievesecnowidth.
+
+	This aligns section titles in the table of contents if there are
+	10 or more sections in a chapter.  Report from Karl.
+
+2023-07-26  Patrice Dumas  <pertusus@free.fr>
+
+	in HTML associate node without section to following heading command
+
+	* tp/Texinfo/Convert/HTML.pm (%defaults, _convert_heading_command),
+	NEWS, doc/texinfo.texi (HTML Customization Variables),
+	tp/Texinfo/Common.pm (@variable_string_settables),
+	tp/Texinfo/Convert/Utils.pm (find_root_command_next_heading_command):
+	add find_root_command_next_heading_command() to return a heading
+	command found before contents that could be formatted.  Use that
+	in HTML heading formating such as not to output a heading if there
+	is a node not associated to sectioning command but followed by
+	a @*heading command.  Use USE_NEXT_HEADING_FOR_LONE_NODE to customize
+	that, set in the default case.
+
+	* tp/Makefile.tres, tp/t/html_tests.t (headings_after_lone_nodes):
+	new test to test association of lone node with next @*heading command.
+
+2023-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_navigation_panel): do
+	not output buttons corresponding to space separators if there is no
+	button before.  Do not output the paragraph in the navigation panel
+	div if there is no navigation panel buttons output.
+
+2023-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	Complete HTML menus with nodedescription
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_menu_entry_type): replace
+	empty description by node_description extra information.
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): more robust
+	determination of empty menu description.
+
+	* tp/t/results/menu/nodedescription_descriptions.pl
+	(nodedescription_descriptions): fix type in @verb name.
+
+2023-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_linemacro_arguments),
+	tp/Texinfo/XS/parsetexi/macro.c (expand_linemacro_arguments):
+	a comment on a linemacro defined command invokation (not in braces) is
+	not part of the arguments, and is left after the expansion as
+	agreed with Gavin.
+
+	* tp/Makefile.tres, tp/t/65linemacro.t
+	(comment_on_linemacro_call_out_of_braces)
+	(comment_on_linemacro_call_macro_expansion): more tests of comments on
+	linemacro call lines.
+
+2023-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/ParagraphNonXS.pm (new): rename 'last_char'
+	as 'last_letter'. a Always set 'last_letter', to an empty string
+	when it was previously undef.
+
+	* tp/Texinfo/Convert/ParagraphNonXS.pm (end, _add_next, add_text),
+	tp/Texinfo/XS/xspara.c (xspara__end_line, xspara_end)
+	(xspara_add_text): set last_letter to the last character when it is
+	space or end of line, or fullwidth character.  Do not unset
+	last_letter in _add_pending_word.  Unset last_letter in end.
+
+	* tp/Texinfo/Convert/ParagraphNonXS.pm ($end_sentence_characters):
+	rename $end_sentence_character as $end_sentence_characters.
+
+	* tp/Texinfo/XS/xspara.c (after_punctuation_characters)
+	(end_sentence_characters): use defin for the strings to be sure to
+	avoid errors in code (] was missing in one place).
+
+	* tp/Texinfo/Convert/ParagraphNonXS.pm: try to have all debug messages
+	as one string.
+
+	* tp/t/paragraph.t: more tests with fullwidth characters, including
+	latin fullwidth characters that can be upper case.
+
+	* tp/Makefile.tres, tp/t/plaintext_tests.t
+	(split_punctuation_detection_in_commands): new test with all the
+	puctuation related character tested and with @-commands.
+
 2023-07-24  Gavin Smith <gavinsmith0123@gmail.com>
 
 	No casts in isascii_* calls

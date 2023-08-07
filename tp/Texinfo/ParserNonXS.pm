@@ -371,7 +371,7 @@ foreach my $begin_line_command (keys(%line_commands)) {
 }
 
 foreach my $not_begin_line_command ('comment', 'c', 'columnfractions',
-                                 'item', 'subentry') {
+                                    'item', 'subentry') {
   delete $begin_line_commands{$not_begin_line_command};
 }
 
@@ -678,7 +678,7 @@ sub _new_text_input($$)
   my $texthandle = do { local *FH };
   # In-memory scalar strings are considered a stream of bytes, so need
   # to encode/decode.
-  $text = Encode::encode("utf8", $text);
+  $text = Encode::encode('utf-8', $text);
   # Could fail with error like
   # Strings with code points over 0xFF may not be mapped into in-memory file handles
   if (!open ($texthandle, '<', \$text)) {
@@ -2364,31 +2364,41 @@ sub _next_text($;$)
       my $next_line = <$texthandle>;
       if (defined($next_line)) {
         # need to decode to characters
-        $next_line = Encode::decode('utf8', $next_line);
+        $next_line = Encode::decode('utf-8', $next_line);
         $input->{'input_source_info'}->{'line_nr'} += 1
           unless ($input->{'input_source_info'}->{'macro'} ne ''
                   or defined($input->{'value_flag'}));
         return ($next_line, { %{$input->{'input_source_info'}} });
       }
     } elsif ($input->{'fh'}) {
-      my $input_error = 0;
-      local $SIG{__WARN__} = sub {
-        my $message = shift;
-        print STDERR "$input->{'input_source_info'}->{'file_name'}" . ":"
-               . ($input->{'input_source_info'}->{'line_nr'} + 1)
-               . ": input error: $message";
-        $input_error = 1;
-      };
       my $fh = $input->{'fh'};
       my $input_line = <$fh>;
+      # Encode::decode tends to consume the input line, so duplicate it
+      my $duplicate_input_line = $input_line;
+      # Encode::encode with default check argument does not give a
+      # warning on incorrect output, contrary to what the documentation says.
+      # This has been seen on perl 5.10.1 and 5.36.0.
+      # So we call it with FB_CROAK in an eval to get the message first
+      # before calling it again to get the result.
+      # This suits us as we try to output the same message as the XS parser
+      eval { Encode::decode($input->{'file_input_encoding'},
+                            $duplicate_input_line, Encode::FB_CROAK); };
+      if ($@) {
+        # determine the first problematic byte to show it in the error
+        # message, like the XS parser
+        $duplicate_input_line = $input_line;
+        my $partially_decoded = Encode::decode($input->{'file_input_encoding'},
+                                      $duplicate_input_line, Encode::FB_QUIET);
+        my $error_byte = substr($duplicate_input_line, 0, 1);
+        warn("$input->{'input_source_info'}->{'file_name'}:"
+            . ($input->{'input_source_info'}->{'line_nr'} + 1).
+               sprintf(": encoding error at byte 0x%2x\n", ord($error_byte)));
+        # show perl message but only with debugging
+        print STDERR "input error: $@\n" if ($self->{'DEBUG'});
+      }
+      # do the decoding
       my $line = Encode::decode($input->{'file_input_encoding'}, $input_line);
       if (defined($line)) {
-        if ($input_error) {
-          # possible encoding error.  attempt to recover by stripping out
-          # non-ASCII bytes.  there may not be that many in the file.
-          Encode::_utf8_off($line);
-          $line =~ s/[\x80-\xFF]//g;
-        }
         # add an end of line if there is none at the end of file
         if (eof($fh) and $line !~ /\n/) {
           $line .= "\n";
@@ -2677,9 +2687,15 @@ sub _expand_linemacro_arguments($$$$$)
       my $separator = $2;
       $argument_content->{'text'} .= $1;
       if ($separator eq '@') {
-        $argument_content->{'text'} .= '@';
         my ($cmdname, $is_single_letter) = _parse_command_name($line);
         if (defined($cmdname)) {
+          # a comment is not part of the arguments
+          if ($braces_level <= 0
+              and ($cmdname eq 'c' or $cmdname eq 'comment')) {
+            $line = $separator.$line;
+            last;
+          }
+          $argument_content->{'text'} .= '@';
           $argument_content->{'text'} .= $cmdname;
           substr($line, 0, length($cmdname)) = '';
           if ((defined($self->{'brace_commands'}->{$cmdname})
@@ -2688,6 +2704,8 @@ sub _expand_linemacro_arguments($$$$$)
             $line =~ s/^(\s*)//;
             $argument_content->{'text'} .= $1;
           }
+        } else {
+          $argument_content->{'text'} .= '@';
         }
       } elsif ($separator eq '}') {
         $braces_level--;
@@ -2758,17 +2776,29 @@ sub _expand_linemacro_arguments($$$$$)
         and defined($argument_content->{'extra'}->{'toplevel_braces_nr'})) {
       my $toplevel_braces_nr = $argument_content->{'extra'}->{'toplevel_braces_nr'};
       delete $argument_content->{'extra'};
-      # FIXME relocate source marks
+      # this is not the same as bracketed_arg type, as bracketed_arg type
+      # is a container that contains other elements.  The
+      # bracketed_linemacro_arg contains text directly.  In
+      # bracketed_linemacro_arg, source mark locations are relative to the
+      # beginning of the string with an opening brace prepended.
       if ($toplevel_braces_nr == 1 and $argument_content->{'text'} =~ /^\{(.*)\}$/s) {
         print STDERR "TURN to bracketed $arg_idx "
           .Texinfo::Common::debug_print_element($argument_content)."\n"
             if ($self->{'DEBUG'});
         $argument_content->{'text'} = $1;
-        $argument_content->{'type'} = 'bracketed_arg';
+        $argument_content->{'type'} = 'bracketed_linemacro_arg';
+      # this message could be added to see all the arguments
+      #} else {
+      #  print STDERR "NOT bracketed with bracket $arg_idx "
+      #    .Texinfo::Common::debug_print_element($argument_content)."\n"
+      #      if ($self->{'DEBUG'});
       }
+    # this message could be added to see all the arguments
+    #} else {
+    #  print STDERR "LVL0 no brace $arg_idx "
+    #     .Texinfo::Common::debug_print_element($argument_content)."\n"
+    #        if ($self->{'DEBUG'});
     }
-    # do that?
-    #_remove_empty_content($self, $argument);
     $arg_idx++;
   }
   print STDERR "END LINEMACRO ARGS EXPANSION\n" if ($self->{'DEBUG'});
@@ -3461,8 +3491,6 @@ sub _end_line_misc_line($$$)
   # associated to CM_item_LINE
   $data_cmdname = 'item_LINE' if ($command eq 'item');
 
-  # FIXME add a condition to avoid this check in linemacro defined
-  # commands calls?
   if ($self->{'basic_inline_commands'}
       and $self->{'basic_inline_commands'}->{$data_cmdname}) {
     pop @{$self->{'nesting_context'}->{'basic_inline_stack_on_line'}};
@@ -3864,7 +3892,6 @@ sub _end_line_def_line($$$)
 
   my $arguments = _parse_def($self, $def_command, $current, $source_info);
 
-  # now $current is the arguments container in case of linemacro
   $current = $current->{'parent'};
 
   if (scalar(keys(%$arguments)) == 0) {
@@ -4905,7 +4932,7 @@ sub _handle_macro($$$$$)
   my $expanded_macro = $self->{'macros'}->{$command}->{'element'};
 
   my $macro_call_element = {'type' => $expanded_macro->{'cmdname'}.'_call',
-                            'extra' => {'name' => $command},
+                            'info' => {'command_name' => $command},
                             'args' => []};
 
   # It is important to check for expansion before the expansion and
@@ -4917,7 +4944,7 @@ sub _handle_macro($$$$$)
     if ($self->{'DEBUG'});
 
   my $error;
-  # FIXME same stack for linemacro?
+  # FIXME use a different counter for linemacro?
   if ($self->{'MAX_MACRO_CALL_NESTING'}
       and $self->{'macro_expansion_nr'} > $self->{'MAX_MACRO_CALL_NESTING'}) {
     $self->_line_warn(sprintf(__(
@@ -5388,7 +5415,7 @@ sub _handle_line_command($$$$$$)
         die;
       } else {
         # TODO do we want to error out if there is a root command in
-        # Texinfo fragment processed with parse_texi_text (and therefore
+        # Texinfo fragment processed with parse_texi_line (and therefore
         # here in root_line)?
         # $self->_line_error(sprintf(__(
         #  "\@%s should not appear in Texinfo parsed as a short fragment"),
@@ -5544,7 +5571,16 @@ sub _handle_line_command($$$$$$)
           $command_e->{'extra'}->{'element_node'} = $self->{'current_node'};
           if ($self->{'current_node'}->{'extra'}
               and $self->{'current_node'}->{'extra'}->{'node_description'}) {
-            $self->_line_warn(__("multiple node descriptions"), $source_info);
+            my $set_description
+              = $self->{'current_node'}->{'extra'}->{'node_description'};
+            if ($set_description->{'cmdname'} eq $command) {
+              $self->_line_warn(__("multiple node \@nodedescription"),
+                                $source_info);
+            } else {
+              # silently replace nodedescriptionblock
+              $self->{'current_node'}->{'extra'}->{'node_description'}
+                = $command_e;
+            }
           } else {
             $self->{'current_node'}->{'extra'} = {}
               if (!$self->{'current_node'}->{'extra'});
@@ -5577,8 +5613,6 @@ sub _handle_line_command($$$$$$)
         # Do not make the @subentry element a child of the index
         # command.  This means that spaces are preserved properly
         # when converting back to Texinfo.
-        # FIXME check that it is correct to end the line if in a
-        # linemacro command invokation
         $current = _end_line($self, $current, $source_info);
       } elsif ($sectioning_heading_commands{$data_cmdname}) {
         if ($self->{'sections_level'}) {
@@ -5808,6 +5842,30 @@ sub _handle_block_command($$$$$)
     $current->{'items_count'} = 0
        if ($block_commands{$command}
            and $block_commands{$command} eq 'item_container');
+
+    if ($command eq 'nodedescriptionblock') {
+      if ($self->{'current_node'}) {
+        $block->{'extra'} = {} if (!defined($block->{'extra'}));
+        $block->{'extra'}->{'element_node'} = $self->{'current_node'};
+        if ($self->{'current_node'}->{'extra'}
+            and $self->{'current_node'}->{'extra'}->{'node_long_description'}) {
+          $self->_line_warn(__("multiple node \@nodedescriptionblock"),
+                            $source_info);
+        } else {
+          $self->{'current_node'}->{'extra'} = {}
+            if (!$self->{'current_node'}->{'extra'});
+          $self->{'current_node'}->{'extra'}->{'node_long_description'}
+            = $block;
+          if (!$self->{'current_node'}->{'extra'}->{'node_description'}) {
+            $self->{'current_node'}->{'extra'}->{'node_description'}
+              = $block;
+          }
+        }
+      } else {
+        $self->_line_warn(__("\@nodedescriptionblock outside of any node"),
+                          $source_info);
+      }
+    }
 
     $current->{'args'} = [ {
        'type' => 'block_line_arg',
@@ -6502,7 +6560,6 @@ sub _new_macro($$$)
     'macrobody' => $macrobody
   };
   delete $self->{'aliases'}->{$name};
-  # FIXME check that this is still true with linemacro
   # could be cleaner to delete definfoenclose'd too, but macros
   # are expanded earlier
 }
@@ -6920,7 +6977,11 @@ sub _process_remaining_on_line($$$$)
           # the @-command and the argument if at the end of a
           # line or block @-command.
           if ($current->{'contents'}) {
-            # TODO specific case not tested
+            # this can only happen if the spaces gathered after the command
+            # before the braces were interrupted before the end of line, which
+            # can happen if there is a macro expansion that ends before the end
+            # of line.
+            # Tested in macro line_end_accent_command_macro_call
             _gather_spaces_after_cmd_before_arg($self, $current);
           }
           $current = $current->{'parent'};
@@ -8645,6 +8706,13 @@ are present as elements in the tree.
 
 Bracketed argument.  On definition command and on C<@multitable> line.
 
+=item bracketed_linemacro_arg
+
+Argument of a user defined linemacro call in bracket.  It holds directly the
+argument text (which does not contain the braces) and does not contain other
+elements.  It should not appear directly in the tree as the user defined
+linemacro call is replaced by the linemacro body.
+
 =item def_aggregate
 
 Contains several elements that together are a single unit on a @def* line.
@@ -8661,6 +8729,17 @@ like C<@deffnx>, or C<@defline>.  It holds the definition line arguments.
 The container with type I<def_item> holds the definition text content.
 Content appearing before a definition command with a x form is in
 an I<inter_def_item> container.
+
+=item macro_call
+
+=item rmacro_call
+
+=item linemacro_call
+
+Container holding the arguments of a user defined macro, linemacro
+or rmacro.  It should not appear directly in the tree as the user defined
+call is expanded.  The name of the macro, rmacro or linemacro is the
+the info I<command_name> value.
 
 =item macro_name
 
@@ -8781,18 +8860,24 @@ The string correspond to the line after the @-command
 for @-commands that have special arguments on their line,
 and for C<@macro> line.
 
+=item command_name
+
+The name of the user defined macro, rmacro or linemacro called
+associated with the element holding the arguments of the user defined command
+call.
+
 =item delimiter
 
 C<@verb> delimiter is in I<delimiter>.
 
 =item spaces_after_argument
 
-A reference to spaces after @-command arguments before a comma, a closing
-brace or at end of line, for some @-commands and bracketed content type
-with opening brace, and line commands and block command lines taking Texinfo
-as argument and comma delimited arguments.  Depending on the @-command,
-the I<spaces_after_argument> is associated with the @-command element, or
-with each argument element.
+A reference to an element containing the spaces after @-command arguments
+before a comma, a closing brace or at end of line, for some @-commands and
+bracketed content type with opening brace, and line commands and block command
+lines taking Texinfo as argument and comma delimited arguments.  Depending on
+the @-command, the I<spaces_after_argument> is associated with the @-command
+element, or with each argument element.
 
 =item spaces_after_cmd_before_arg
 
@@ -8810,13 +8895,13 @@ to leave space between an @-command name and its opening brace.
 
 =item spaces_before_argument
 
-A reference to spaces following the opening brace of some @-commands with braces
-and bracketed content type, spaces following @-commands for line commands and
-block command taking Texinfo as argument, and spaces following comma delimited
-arguments.  For context brace commands, line commands and block commands,
-I<spaces_before_argument> is associated with the @-command element, for other
-brace commands and for spaces after comma, it is associated with each argument
-element.
+A reference to an element containing the spaces following the opening brace of
+some @-commands with braces and bracketed content type, spaces following
+@-commands for line commands and block command taking Texinfo as argument, and
+spaces following comma delimited arguments.  For context brace commands, line
+commands and block commands, I<spaces_before_argument> is associated with the
+@-command element, for other brace commands and for spaces after comma, it is
+associated with each argument element.
 
 =back
 

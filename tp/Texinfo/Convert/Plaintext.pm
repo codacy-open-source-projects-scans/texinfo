@@ -265,7 +265,8 @@ foreach my $advancing_para('center', 'verbatim', 'listoffloats') {
 }
 
 foreach my $ignored_block_commands ('ignore', 'macro', 'rmacro', 'linemacro',
-  'copying', 'documentdescription', 'titlepage', 'direntry') {
+   'copying', 'documentdescription', 'titlepage', 'direntry',
+   'nodedescriptionblock') {
   $ignored_commands{$ignored_block_commands} = 1;
 }
 
@@ -427,6 +428,7 @@ sub converter_initialize($)
   $self->{'pending_footnotes'} = [];
   $self->{'index_entry_node_colon'} = {};
   $self->{'index_entries_no_node'} = {};
+  $self->{'seen_node_descriptions'} = {};
 
   foreach my $format (keys(%format_raw_commands)) {
     $self->{'ignored_commands'}->{$format} = 1
@@ -621,6 +623,8 @@ sub _protect_sentence_ends ($) {
   my $text = shift;
   # Avoid suppressing end of sentence, by inserting a control character
   # in front of the full stop.  The choice of BS for this is arbitrary.
+  # Note that the use of ?: is not crucial but since we do not use the
+  # grouping value, setting no backtracking could be more efficient.
   $text =~ s/(?<=[^\p{Upper}])
              (?=[$end_sentence][$after_punctuation]*(?:\s|$))
              /\x08/xg;
@@ -688,6 +692,11 @@ sub new_formatter($$;$)
          'max'           => $self->{'text_element_context'}->[-1]->{'max'},
          'indent_level'  => $self->{'format_context'}->[-1]->{'indent_level'},
   };
+
+  $container_conf->{'indent_length'}
+    = $self->{'format_context'}->[-1]->{'indent_length'}
+      if (defined($self->{'format_context'}->[-1]->{'indent_length'}));
+
   $container_conf->{'frenchspacing'} = 1
     if ($self->{'conf'}->{'frenchspacing'} eq 'on');
     #if ($self->get_conf('frenchspacing') eq 'on');
@@ -697,11 +706,13 @@ sub new_formatter($$;$)
     = $self->{'text_element_context'}->[-1]->{'counter'}
       if (defined($self->{'text_element_context'}->[-1]->{'counter'}));
   $container_conf->{'DEBUG'} = 1 if ($self->{'debug'});
+
   if ($conf) {
     foreach my $key (keys(%$conf)) {
       $container_conf->{$key} = $conf->{$key};
     }
   }
+
   my $indent = $container_conf->{'indent_length'};
   $indent = $indent_length*$container_conf->{'indent_level'}
     if (!defined($indent));
@@ -1713,7 +1724,9 @@ sub _get_form_feeds($)
   return $form_feeds;
 }
 
-my $description_indent_length = 31;
+#my $description_indent_length = 31;
+# computed as 31/72
+my $description_indent_length_factor = 0.44;
 
 sub _convert($$);
 
@@ -3446,13 +3459,16 @@ sub _convert($$)
 
         # empty description
         } elsif ($content->{'type'} eq 'menu_entry_description'
-                 and $content->{'contents'}
-                 and scalar(@{$content->{'contents'}}) == 1
-                 # preformatted inside menu_entry_description
-                 and $content->{'contents'}->[0]->{'contents'}
-                 and scalar(@{$content->{'contents'}->[0]->{'contents'}}) == 1
-                 and defined($content->{'contents'}->[0]->{'contents'}->[0]->{'text'})
-                 and $content->{'contents'}->[0]->{'contents'}->[0]->{'text'} !~ /\S/) {
+                 and (not $content->{'contents'}
+                      or (scalar(@{$content->{'contents'}}) == 1
+                          # preformatted inside menu_entry_description
+                          and (not ($content->{'contents'}->[0]->{'contents'})
+                               or (scalar(@{$content->{'contents'}->[0]
+                                                         ->{'contents'}}) == 1)
+                                   and defined($content->{'contents'}->[0]
+                                                 ->{'contents'}->[0]->{'text'})
+                                   and $content->{'contents'}->[0]
+                                  ->{'contents'}->[0]->{'text'} !~ /\S/)))) {
           if ($menu_entry_node and $menu_entry_node->{'extra'}
               and defined($menu_entry_node->{'extra'}->{'normalized'})
               and $self->{'labels'}
@@ -3462,28 +3478,95 @@ sub _convert($$)
               and $self->{'labels'}
                 ->{$menu_entry_node->{'extra'}->{'normalized'}}->{'extra'}
                                                        ->{'node_description'}) {
+            my $description_indent_length;
+            if (defined($self->get_conf('AUTO_MENU_DESCRIPTION_INDENT_LENGTH'))) {
+              $description_indent_length
+                 = $self->get_conf('AUTO_MENU_DESCRIPTION_INDENT_LENGTH');
+            } else {
+              $description_indent_length
+               = int($self->{'text_element_context'}->[-1]->{'max'}
+                    * $description_indent_length_factor);
+            }
+
             my $description_element = $self->{'labels'}
                  ->{$menu_entry_node->{'extra'}->{'normalized'}}->{'extra'}
                                                        ->{'node_description'};
+            if (! exists($self->{'seen_node_descriptions'}
+                                            ->{$description_element})) {
+              $self->{'seen_node_descriptions'}->{$description_element} = 0;
+            }
+            $self->{'seen_node_descriptions'}->{$description_element}++;
+
             # flush the current unfilled container
             $result .= _count_added($self,
                          $formatter->{'container'},
                          add_pending_word($formatter->{'container'}, 1));
-            # push a paragraph container to format the description.
-            my $description_para = $self->new_formatter('paragraph',
-                { 'indent_length' => $description_indent_length,
-                  'counter'
-             => Texinfo::Convert::Paragraph::counter($formatter->{'container'}),
-                });
-            if ($result !~ /\s$/) {
-              $result .= _count_added($self, $description_para->{'container'},
-                               add_text($description_para->{'container'}, ' '));
+            my $formatted_elt;
+            my $description_para;
+            my $text_count = Texinfo::Convert::Paragraph::counter($formatter->{'container'});
+
+            if ($text_count >= $description_indent_length) {
+              my $inserted_space = '  ';
+              $result .= _count_added($self, $formatter->{'container'},
+                               add_text($formatter->{'container'},
+                                        $inserted_space));
+              $result .= _count_added($self,
+                             $formatter->{'container'},
+                             add_pending_word($formatter->{'container'}, 1));
+              $text_count += length($inserted_space);
             }
-            push @{$self->{'formatters'}}, $description_para;
-            $result .= _convert($self, $description_element->{'args'}->[0]);
-            $result .= _count_added($self, $description_para->{'container'},
-               Texinfo::Convert::Paragraph::end($description_para->{'container'}));
-            pop @{$self->{'formatters'}};
+
+            my $text_element_context = {
+                     'max' => $self->{'text_element_context'}->[-1]->{'max'},
+                     'counter' => $text_count
+            };
+
+            if (defined($self->get_conf('AUTO_MENU_DESCRIPTION_FILLCOLUMN'))) {
+              $text_element_context->{'max'}
+                 = $self->get_conf('AUTO_MENU_DESCRIPTION_FILLCOLUMN');
+            } else {
+              # e.g. 72 -> 79
+              $text_element_context->{'max'}
+                 = int($text_element_context->{'max'} * 1.1);
+            }
+
+            push @{$self->{'text_element_context'}}, $text_element_context;
+
+            # avoid messages if formatting the node description more than once
+            if ($self->{'seen_node_descriptions'}->{$description_element} > 1) {
+              $self->{'silent'} = 0 if (!defined($self->{'silent'}));
+              $self->{'silent'}++;
+            }
+
+            if ($description_element->{'cmdname'} eq 'nodedescription') {
+              # push a paragraph container to format the description.
+              $description_para = $self->new_formatter('paragraph',
+                  { 'indent_length' => $description_indent_length });
+              push @{$self->{'formatters'}}, $description_para;
+              $formatted_elt = $description_element->{'args'}->[0];
+            } else {
+              push @{$self->{'format_context'}},
+               { 'cmdname' => $description_element->{'cmdname'},
+                 'paragraph_count' => 0,
+                 'indent_length' => $description_indent_length,
+                 # for block commands.  Not an exact value
+                 'indent_level' => int($description_indent_length / $indent_length),
+               };
+
+              $formatted_elt = {'contents' => $description_element->{'contents'}};
+            }
+            $result .= _convert($self, $formatted_elt);
+            if ($description_element->{'cmdname'} eq 'nodedescription') {
+              $result .= _count_added($self, $description_para->{'container'},
+                 Texinfo::Convert::Paragraph::end($description_para->{'container'}));
+              pop @{$self->{'formatters'}};
+            } else {
+              pop @{$self->{'format_context'}};
+            }
+            pop @{$self->{'text_element_context'}};
+            if ($self->{'seen_node_descriptions'}->{$description_element} > 1) {
+              $self->{'silent'}--;
+            }
           } else {
             $result .= _convert($self, $content);
           }
@@ -3749,7 +3832,29 @@ sub _convert($$)
       if ($node and $automatic_directions
             and !$self->{'seenmenus'}->{$node}) {
         $self->{'seenmenus'}->{$node} = 1;
-        my $menu_node = Texinfo::Structuring::new_complete_node_menu($node);
+        my $menu_node;
+        $menu_node = Texinfo::Structuring::new_complete_node_menu($node);
+        if ($command eq 'top' and $menu_node
+             and $node->{'extra'}->{'normalized'} eq 'Top') {
+          my $detailmenu = Texinfo::Structuring::new_master_menu($self,
+                                                        $self->{'labels'},
+                                                        [ $menu_node ]);
+          if ($detailmenu) {
+            # add a blank line before the detailed node listing
+            my $menu_comment = {'type' => 'menu_comment',
+                                'parent' => $menu_node};
+            push @{$menu_node->{'contents'}}, $menu_comment;
+            my $preformatted = {'type' => 'preformatted',
+                                'parent' => $menu_comment};
+            push @{$menu_comment->{'contents'}}, $preformatted;
+            my $empty_line = {'type' => 'after_menu_description_line',
+                              'text' => "\n", 'parent' => $preformatted};
+            push @{$preformatted->{'contents'}}, $empty_line;
+
+            $detailmenu->{'parent'} = $menu_node;
+            push @{$menu_node->{'contents'}}, $detailmenu;
+          }
+        }
         if ($menu_node) {
           my $menu_text = $self->_convert($menu_node);
           if ($menu_text) {
