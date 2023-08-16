@@ -1,7 +1,6 @@
 # IXINSXML.pm: output IXIN with Texinfo tree content converted to SXML.
 #
-# Copyright 2013, 2014, 2015, 2016, 2017, 2018, 2022 Free Software
-# Foundation, Inc.
+# Copyright 2013-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +38,7 @@ use Carp qw(cluck);
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::TexinfoSXML Texinfo::Convert::IXIN);
 
-$VERSION = '7.0dev';
+$VERSION = '7.0.90';
 
 
 my %defaults = (

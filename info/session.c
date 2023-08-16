@@ -1,6 +1,6 @@
 /* session.c -- user windowing interface to Info.
 
-   Copyright 1993-2022 Free Software Foundation, Inc.
+   Copyright 1993-2023 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -2956,7 +2956,6 @@ info_handle_pointer (char *label, WINDOW *window)
   if (strcmp (label, "Up") == 0)
     {
       REFERENCE **r;
-      int i;
 
       for (r = node->references; (*r); r++)
         {

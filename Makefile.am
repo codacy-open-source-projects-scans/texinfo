@@ -1,7 +1,7 @@
 # Makefile.am for texinfo.
 # Process this file with automake to produce Makefile.in in all directories.
 #
-# Copyright 2002-2022 Free Software Foundation, Inc.
+# Copyright 2002-2023 Free Software Foundation, Inc.
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -95,16 +95,16 @@ po-check:
 	  grep -E -v '^(#|$$)' po/POTFILES.in				\
 	    | grep -v '^src/false\.c$$' | sort > $@-1;			\
 	  files=;							\
-	  for file in $$($(CVS_LIST_EXCEPT))				\
-	              `find [a-z]* -name '*.[ch]' 			\
-		                -o -name '*.p[lm]'			\
-				-o -name '*.notyettwjr'`; do		\
+	  for file in `find [a-zA-Z]* -name '*.[ch]' 			\
+		                   -o -name '*.p[lm]'			\
+			           -o -name '*.notyettwjr'`; do		\
 	    # don't look at sources from some subdirs.			\
 	    case $$file in						\
 	      contrib/* ) continue;;					\
 	      djgpp/* | man/* ) continue;;	\
 	      texinfo-*/*) continue;;					\
               tp/maintain/* ) continue;;				\
+              tp/t/results* ) continue;;				\
 	    esac;							\
 	    # if have lex/yacc sources, skip corresponding c/h files.	\
 	    case $$file in						\
@@ -128,8 +128,7 @@ po_document-check:
 	@if test -f po_document/POTFILES.in; then			\
 	  grep -E -v '^(#|$$)' po_document/POTFILES.in | sort > $@-1;	\
 	  files=;							\
-	  for file in $$($(CVS_LIST_EXCEPT))				\
-	              `find [a-z]* -name '*.p[lm]'`; do		\
+	  for file in `find [a-z]* -name '*.p[lm]'`; do 		\
 	    # don't look at sources from some subdirs.			\
 	    case $$file in						\
 	      contrib/* ) continue;;					\

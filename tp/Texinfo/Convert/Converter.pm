@@ -1,6 +1,6 @@
 # Converter.pm: Common code for Converters.
 #
-# Copyright 2011-2022 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ xml_accents
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0dev';
+$VERSION = '7.0.90';
 
 my %defaults = (
   'documentlanguage'     => undef,
@@ -109,26 +109,6 @@ if (0) {
   my $self;
   # TRANSLATORS: expansion of @error{} as Texinfo code
   $self->gdt('error@arrow{}');
-}
-
-# This is not used as code, but used to mark months as strings to be
-# translated
-if (0) {
-  my $self;
-  my @mark_month_for_translation = (
-   $self->gdt('January'),
-   $self->gdt('February'),
-   $self->gdt('March'),
-   $self->gdt('April'),
-   $self->gdt('May'),
-   $self->gdt('June'),
-   $self->gdt('July'),
-   $self->gdt('August'),
-   $self->gdt('September'),
-   $self->gdt('October'),
-   $self->gdt('November'),
-   $self->gdt('December')
-  );
 }
 
 our %default_args_code_style = (

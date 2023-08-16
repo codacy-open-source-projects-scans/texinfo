@@ -1,6 +1,6 @@
 # Common.pm: definition of commands. Common code of other Texinfo modules.
 #
-# Copyright 2010-2022 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -71,7 +71,7 @@ valid_tree_transformation
 __ __p
 );
 
-$VERSION = '7.0dev';
+$VERSION = '7.0.90';
 
 
 # i18n
@@ -343,8 +343,8 @@ our @variable_string_settables = (
 'ASCII_DASHES_AND_QUOTES',
 'ASCII_GLYPH',
 'ASCII_PUNCTUATION',
-'AUTO_MENU_DESCRIPTION_FILLCOLUMN',
-'AUTO_MENU_DESCRIPTION_INDENT_LENGTH',
+'AUTO_MENU_DESCRIPTION_ALIGN_COLUMN',
+'AUTO_MENU_MAX_WIDTH',
 'AVOID_MENU_REDUNDANCY',
 'BEFORE_SHORT_TOC_LINES',
 'BEFORE_TOC_LINES',
@@ -635,10 +635,10 @@ our %def_map = (
     'defspec',       {'deffn'     => gdt('Special Form')},
     'defvar',        {'defvr'     => pgdt('category of variables for @defvar',
                                           'Variable')},
-    # TRANSLATORS: category of users-modifiable options for @defopt
+    # TRANSLATORS: category of user-modifiable options for @defopt
     'defopt',        {'defvr'     => gdt('User Option')},
     'deftypefun',    {'deftypefn' => pgdt(
-     'category of general definition for functions for @deftypefun',
+                      'category of functions for @deftypefun',
                                          'Function')},
     'deftypevar',    {'deftypevr' => pgdt(
                      'category of variables in typed languages for @deftypevar',

@@ -1,6 +1,6 @@
 # HTML.pm: output tree as HTML.
 #
-# Copyright 2011-2022 Free Software Foundation, Inc.
+# Copyright 2011-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,7 +80,7 @@ require Exporter;
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.0dev';
+$VERSION = '7.0.90';
 
 our $module_loaded = 0;
 sub import {

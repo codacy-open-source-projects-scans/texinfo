@@ -1,4 +1,4 @@
-/* Copyright 2010-2019 Free Software Foundation, Inc.
+/* Copyright 2010-2023 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -147,8 +147,6 @@ handle_menu_entry_separators (ELEMENT **current_inout, char **line_inout)
       if (current->type == ET_preformatted
           && current->parent->type == ET_menu_comment)
         {
-          ELEMENT *menu = current->parent->parent;
-
           /* Close ET_preformatted, and ET_menu_comment. */
           current = close_container (current);
           current = close_container (current);

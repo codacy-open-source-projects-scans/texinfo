@@ -23,6 +23,7 @@ build
 **/*.o
 **/core
 **/tags
+**/tags.*
 **/*.swp
 
 **/test-suite.log
@@ -76,6 +77,10 @@ gnulib/lib/stddef.h
 gnulib/lib/limits.h
 gnulib/lib/malloc/dynarray.gl.h 
 gnulib/lib/malloc/dynarray-skeleton.gl.h
+gnulib/lib/uchar.h
+gnulib/lib/unicase.h
+gnulib/lib/unictype.h
+gnulib/lib/uninorm.h
 
 tp/Texinfo/XS/gnulib/lib/inttypes.h
 tp/Texinfo/XS/gnulib/lib/stdlib.h
@@ -128,7 +133,6 @@ doc/texi2any_api.??s
 doc/texi2any_api.aux
 doc/texi2any_api.log
 doc/texi2any_api.toc
-doc/texinfo
 doc/texinfo.??
 doc/texinfo.??s
 doc/texinfo.txicmd
@@ -147,6 +151,7 @@ doc/version-texi2any_api.texi
 doc/wwwtemp
 
 doc/refcard/*.dvi
+doc/refcard/*.pdf
 doc/refcard/*.log
 doc/refcard/*.ps
 
@@ -246,15 +251,11 @@ tp/t_texis
 tp/texi2any
 tp/texi_sort_elements_count
 tp/*.trs
-tp/*.log
-tp/*.html
-tp/test.*
+tp/t/*.log
+tp/tests/*.log
 
 tp/Texinfo/Commands.pm
 tp/Texinfo/ModulePath.pm
-tp/Texinfo/*.html
-
-tp/Texinfo/Convert/*.html
 
 tp/Texinfo/XS/*.lo
 tp/Texinfo/XS/*.la
@@ -327,7 +328,6 @@ texindex/ti.toc
 texindex/ti.pdf
 texindex/ti.t2p
 texindex/ti.texi
-texindex/texindex.html
 texindex/texindex.info
 texindex/texindex
 texindex/ti.t2d

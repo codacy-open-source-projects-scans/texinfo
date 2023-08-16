@@ -1,3 +1,369 @@
+2023-08-16  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/srclist.txt: Update source for INSTALL to doc/INSTALL.ISO
+	in gnulib sources to avoid non-ASCII sequences.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* INSTALL: integrate text from doc/README about *.tex installation.
+	use https: for ftp.gnu.org link.
+	* doc/README: eliminate file.
+	* doc/Makefile.am (install-data-local): update reference to INSTALL.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/session.c: removed unused variable.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: update suggested configure invocation to
+	disable some unneeded warnings
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	parsetexi compiler warnings
+
+	* tp/Texinfo/XS/parsetexi/parser.c (isolate_last_space):
+	Change a condition to make it easier to see that a variable is
+	not used uninitialised.
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line):
+	Restructure to make it clearer that a variable is not used
+	uninitialised, especially as this is quite a long function.
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block) <float>:
+	Comment out declaration of unused variable.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	parsetexi compiler warnings
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line):
+	Do not save separator characters into unused variables.
+	* tp/Texinfo/XS/parsetexi/separator.c: Removed unused "funexit:" label.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add pod2texi to list of programs with
+	copyright years in --version calls.  Adjust commands for
+	looking for copyright years to update.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Bump version to 7.0.90 for pretest
+
+	* configure.ac: version
+	* README-hacking: reorder some instructions
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/refcard/txirefcard.tex: 2023, 7.1
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* build-aux/pre-inst-env.in: set TEXINFO_DEV_SOURCE rather than
+	TEXINFO_UNINSTALLED as the latter is not used anywhere.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Translator comments and contexts
+
+	* tp/Texinfo/Common (%def_map):
+	Change "users-modifiable" to "user-modifiable" in a translator
+	comment, and shorten context for @deftypefn "Function" to be
+	similar to context for @deffn -- we don't need to describe
+	what the difference is in these contexts.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Move month names translation strings
+
+	* tp/Texinfo/Convert/Converter.pm,
+	* tp/Texinfo/Convert/Utils.pm: move appearance of month names
+	in gdt to Utils.pm, in order to be next to the @MONTH_NAMES
+	array that these strings are used with.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* ChangeLog, texindex/ChangeLog: Move texindex ChangeLog entries
+	into top-level file.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/maintain/regenerate_cmd_tests.sh,
+	* tp/maintain/regenerate_docstr.sh: do not place copyright year
+	in generated files as this complicates updating copyright years.
+	* tp/maintain/regenerate_docstr.sh: add a comment as to the
+	purpose of this file.
+
+2023-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: tweak advice on updating copyright years
+
+2023-08-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: start of advice on how to update copyright
+	years automatically
+
+2023-08-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/prove.sh: Add a comment stating the purpose of this file (mail
+	from Patrice, October 24th, 2022).
+
+2023-08-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: reorder to put longer, less predictable
+	tasks further away from the final release instructions.
+
+2023-08-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* INSTALL.generic, build-aux/compile, build-aux/config.guess,
+	build-aux/config.sub, build-aux/depcomp, build-aux/mdate-sh:
+	update from gnulib
+
+2023-08-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Menus): Be clearer about when menus are
+	output in HTML.
+
+2023-08-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/Makefile.am (MAKEINFO_ENVIRONMENT): Do not use shell
+	export statements as this may lead to the same problem experienced
+	with TEXI2DVI_ENVIRONMENT.
+
+2023-08-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Do not rely on texi2dvi internal directory layout
+
+	* doc/Makefile.am (TEXI2DVI_ENVIRONMENT),
+	* doc/tp_api/Makefile.am (TEXI2DVI_ENVIRONMENT):
+	Use $(abs_top_srcdir) and $(abs_top_builddir) to reference texindex
+	files, rather than $(top_srcdir) and $(top_builddir) concatenated
+	with a certain number of "../", as this is hard to understand and
+	depends on internal details of texi2dvi that we shouldn't have
+	to think about.
+
+2023-08-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix "make distcheck" without installed texinfo.tex
+
+	* doc/Makefile.am (TEXI2DVI_ENVIRONMENT),
+	* doc/tp_api/Makefile.am (TEXI2DVI_ENVIRONMENT):
+	Do not export TEXINDEX or TEXINDEX_SCRIPT shell variables in
+	separate shell statements.
+
+	As texi2dvi was run by Makefile rules like
+
+	  TEXINPUTS=... MAKEINFO=... \
+	  TEXINDEX=... ; export TEXINDEX ; \
+	  TEXINDEX_SCRIPT=... ; export TEXINDEX_SCRIPT ; ../util/texi2dvi ...
+
+	the first semicolon ended the shell statement where TEXINPUTS and
+	MAKEINFO were set, so they were not set correctly for texi2dvi.
+	This broke "make distcheck" under doc/tp_api, where texinfo.tex
+	was not found, if not installed on the user's system.
+
+2023-08-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS: Run "gnulib-tool --add-import"
+
+	* tp/Texinfo/XS/Makefile.am
+	(XSParagraph_la_LDFLAGS, Parsetexi_la_LDFLAGS):
+	Add $(LTLIBUNISTRING) as recommended by gnulib-tool --add-import.
+	* tp/Texinfo/XS/parsetexi/labels.c,
+	* tp/Texinfo/XS/parsetexi/source-marks.c:
+	include <config.h> before <string.h>.
+
+2023-08-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: advice on LDADD for new gnulib modules
+
+2023-08-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	gnulib LDADD
+
+	* info/Makefile.am (LDADD), install-info/Makefile.am (LDADD):
+	Revise and extend variable use from gnulib so that the correct
+	libraries will be linked on various platforms reliably.
+
+2023-08-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Run "gnulib-tool --add-import" (top level)
+
+2023-08-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: note that we can't use gettext 0.22.
+
+2023-08-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\entry): Reduce possible margin overhang from
+	2.1em to 1.5em.
+	(\indexdotfill): Reduce minumum length from 1em
+	to 0.5em.  This stops long section titles jutting out into the
+	margin too visibly.
+
+2023-08-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: texinfo.tex, info updates.
+
+2023-08-13  John Wheeler <wheelerwjx9@runbox.com>
+
+	* install-info/tests/ii-0058-test,
+	* install-info/tests/ii-0059-test: Add new tests to check
+	blank lines between sections on repeated addition and deletion of
+	sections.
+
+2023-08-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/terminal.c (term_Km): Remove.
+	(terminal_initialize_terminal): Do not load or set Km (kmous)
+	capability string.  As the termcap string for xterm can be
+	"\033[<" rather than the "\033[M" we expected, we cannot rely
+	on the contents of this.
+	(initialize_byte_map): Add KEY_MOUSE bindings unconditionally.  They
+	are harmless even if mouse support is off.
+	(terminal_begin_using_terminal): Do not use term_Km to decide
+	whether to try to turn on "normal tracking mode".  Instead, only
+	use the setting from the "mouse" variable.
+	(terminal_end_using_terminal): Likewise.
+
+2023-08-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/xspara.c (xspara_get_state): Remove
+	unused function (which currently does nothing).
+
+2023-08-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Command List): List new commands
+	@defblock, @defline, @deftypeline, @linemacro, @link,
+	@nodedescription, @nodedescriptionblock.
+	(Node Descriptions): Add index entries for new commands.
+
+2023-08-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: list updated automake version used for distribution
+
+2023-08-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): free
+	fullpath only after error messages have been output.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (check_valid_nesting, parse_texi):
+	add parentheses to avoid ambiguity and match better perl parser code.
+	(isolate_last_space): simplify debug output code.
+
+	* tp/Texinfo/XS/parsetexi/parser.c, tp/Texinfo/XS/parsetexi/input.c,
+	tp/Texinfo/XS/parsetexi/tree.c, tp/Texinfo/XS/parsetexi/close.c,
+	tp/Texinfo/XS/parsetexi/end_line.c, tp/Texinfo/XS/parsetexi/macro.c,
+	tp/Texinfo/XS/parsetexi/menus.c, tp/Texinfo/XS/parsetexi/indices.c:
+	remove unused variables.
+
+	* tp/Texinfo/XS/parsetexi/close.c (close_command_cleanup),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace):
+	add parentheses to avoid ambiguity and match better perl parser code.
+
+	* tp/Texinfo/XS/parsetexi/api.c (store_source_mark_list): explicit
+	default in switch for SM_status_none and SM_type_none.
+
+	* tp/Texinfo/XS/MiscXS.xs (xs_parse_texi_regex): remove left over
+	variable.
+
+	* tp/Texinfo/XS/xspara.c (xspara_init): group expressions to avoid
+	ambiguity.
+
+	* tp/Texinfo/XS/xspara.c (xspara_get_state): avoid mixing declarations
+	and code.
+
+2023-08-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/source_marks.c (source_marks_names): setup
+	the source_marks_names table in the file using it and not in the
+	header file defining the macro used to setup the table, to have the
+	table defined only where it is used.
+
+2023-08-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_block_command),
+	tp/Texinfo/XS/parsetexi/macro.c (expand_linemacro_arguments),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): avoid
+	mixing declarations and code.
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (parse_rawline_command):
+	remove unused variable.
+
+2023-08-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add note re "git stash list".
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/refcard/txirefcard.tex: Close TeX group as intended (broken
+	since 2022-10-21).
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/refcard/txirefcard.tex: Document new commands.
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/refcard/txicmdcheck: ignore @item_LINE as this is not
+	a real Texinfo command and is only used internally.
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* po/POTFILES.in, po_document/POTFILES.in: update so that
+	"make po-check" and "make po_document-check" work at the top level.
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* Makefile.am (po-check): look under directories beginning A-Z as
+	well as a-z to include Pod-Simple-Texinfo.  Eliminate use of
+	$(CVS_LIST_EXCEPT) which does not appear to be defined anywhere.
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* po/POTFILES.in: some updates
+	* Makefile.am (po-check): exclude tp/t/results directory.
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Other Customization Variables)
+	<CLOSE_QUOTE_SYMBOL>: Give @samp as an example use case, as
+	at OPEN_QUOTE_SYMBOL.
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi: Add line "@microtype on".
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: edit, clarify, reorder.
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Node Commands) <d>: Say a little about
+	what the dir node is.
+
+2023-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Common.pm (@variable_string_settables):
+	Change AUTO_MENU_DESCRIPTION_FILLCOLUMN to
+	AUTO_MENU_MAX_WIDTH and AUTO_MENU_DESCRIPTION_INDENT_LENGTH to
+	AUTO_MENU_DESCRIPTION_ALIGN_COLUMN.
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): Subtract one
+	from the value of AUTO_MENU_DESCRIPTION_ALIGN_COLUMN to get the
+	number of preceding columns in the line.
+
+2023-08-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: Mention AUTO_MENU_DESCRIPTION_FILLCOLUMN and
+	AUTO_MENU_DESCRIPTION_INDENT_LENGTH.
+
+2023-08-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* TODO: add outputting detailmenu comment lines
+
 2023-08-06  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/Translations.pm (gdt): have the gettext framework convert
@@ -9963,8 +10329,243 @@
 	* README-hacking: new ChangeLog file done
 
 
-Copyright 2022 Free Software Foundation, Inc.
+Copyright 2022-2023 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright
 notice and this notice are preserved.
+
+
+texindex originally had its own ChangeLog, the contents whereof are moved here:
+
+2019-05-19         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Prose updates.
+
+2019-05-14         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Typo fixes in main menu.
+
+2019-05-12         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Add escape function and call, fixes things when
+	backslash is the command character.  Remove @code around the
+	names of the nodes for the helper functions.
+	* jrweave: Merge with latest version in TexiWeb Jr. (This
+	version use @subentry.)
+
+2019-04-11         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Update about testing - works on 5 different awks!
+
+2019-04-10         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Simplify comparison algorithm.
+
+2019-04-09         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Final polish.
+
+2019-04-08         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Lots of polish.
+
+2019-04-07         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Improve commentary on sorting. Index TRUE and FALSE.
+	Make fatal() function more portable.
+
+2019-04-05         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* jrweave: Use @sortas for chunk index entries to avoid < and >.
+	Use @subentry also.
+	* ti.twjr: Print see also after page numbers. Adjust logic and
+	sorting.
+
+2019-04-03         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Revise sorting to use the subkeys.
+	Add `@set txiindexlessthanignore'.
+
+2019-04-01         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Finish adding indexing of program variables etc.
+	* jrweave: Fix 'do not edit' banner.
+	* ti.twjr: Bug fixes in page numbers, seealso mixed with multilevel
+	entries.
+
+2019-03-28         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Lots of polish to code and doc. Almost done.
+	* ti.twjr: Make sure all chunk names start with an upper case
+	letter.
+
+2019-03-27         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Finish up new code. Some initial testing.
+	* jrweave, jrtangle: Update to latest versions.
+
+2019-03-25         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Rearrange, start on line parsing.
+
+2019-03-18         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Finish up printing code.
+
+2019-03-17         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Reformat code.
+
+2019-03-15         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Outline algorithm for printing entries.
+
+2019-03-14         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Very initial start at printing entries.
+
+2019-03-13         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Pretty much finish off the requirements chapter.
+
+2019-03-12         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Started expansion of requirements chapter.
+
+2019-03-08         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Fix "the the", http --> https, remove unnecessary
+	semicolons, add History section. Remove references to unimplemented
+	-o option.
+
+2019-03-06         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Add Command_char to list of special characters.
+
+2015-02-27         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* jrweave, jrtangle: Updated to current version. In particular,
+	jrtangle should work out of the box on Windows, thanks to
+	Eli Zaretskii.
+
+2015-01-08  Karl Berry  <karl@gnu.org>
+
+	* version.texi: remove, no easy way to automatically update it.
+	* ti.twjr,
+	* Makefile.am (do_subst, texindex.awk, ti.texi): use substitutions
+	for @VERSION@ and @UPDATED@ instead.
+
+	* texindex.in: also look for ../share/texinfo/texindex.awk,
+	relative to dirname $0.
+
+	* ti.twjr (Invocation_name): new global, renamed from Prgname.
+	(usage): use it, a la coreutils.
+	* texindex.in: pass it (value $0), with -v.
+	
+	* Makefile.am (EXTRA_DIST): dek_idx.png rename.
+
+2015-01-06  Karl Berry  <karl@gnu.org>
+
+	first merge into automake:
+	* texindex/Makefile.am: new file.
+	* texindex/texindex.in: new file.
+	* texindex/README: update.
+	(see also ../ChangeLog.)
+
+2014-12-30         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Remove `@xrefautomaticsectiontitle on'. It's now
+	supplied by jrweave.
+	* jrweave: Updated.
+
+2014-12-26         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Restore use of `@xrefautomaticsectiontitle on'.
+	And restore support for vim editing.
+
+2014-12-15  Karl Berry  <karl@gnu.org>
+
+	* ti.twjr: convert to minimal Texinfo conventions
+	instead of Arnold's published-book conventions.
+
+2014-12-13         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* jrtangle, jrweave: Updated with versions that include
+	github location.
+
+2014-08-07         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Typo fix in an index entry. Change the update month
+	and increase version to 0.95.
+
+2014-05-30         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* README: New file.
+	* tests: New directory with some regression tests.
+	* jrtangle, jrweave: Copied from TexiWebJr to have standalone.
+
+	*****
+
+	* All: Pushed to https://github.com/arnoldrobbins/texindex.
+
+2014-04-26         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Remove summaries appendix. Not needed with better
+	formatting from jrweave.  Bump version to 0.94.
+
+2014-04-16         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Bug fix. Multiple files had junk in second and
+	subsequent output files. Needed to clear out more data between
+	files. Bump version to 0.93.
+
+2014-03-21         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: General cleanup and finalizatio of the text. Bump
+	version to 0.92.
+
+2014-03-17         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Fix case in chunk names.
+
+2014-03-14         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Add a few commands to make the PDF nicer.
+
+2014-03-04         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Polished up. Add an XKCD cartoon. Bump version to 0.9.
+	* donald_knuth.jpg: New file.
+
+2014-03-03         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Rework where initial extraction is done. Set up to
+	produce \{ and \}. Works when used with itself to sort the
+	index!  Woo hoo!
+
+2014-02-27         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Revise extraction of the initial as per Karl.
+	Still needs more documentation but I think we've hit
+	functionally complete.
+
+2014-02-26         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Sorting in and seems to work well. Still need to add
+	more descriptive prose.  Did some cleanup and added menus.
+
+2014-02-25         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr: Just about done, except for sorting.
+
+2014-02-24         Arnold D. Robbins     <arnold@skeeve.com>
+
+	* ti.twjr, texinfo.tex, Makefile: Initial check-in.
+
+Copyright 2014, 2015 Free Software Foundation, Inc.
+
+Copying and distribution of this file, with or without modification,
+are permitted in any medium without royalty provided the copyright
+notice and this notice are preserved.
+

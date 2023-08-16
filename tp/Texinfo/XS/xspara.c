@@ -1,4 +1,4 @@
-/* Copyright 2010-2022 Free Software Foundation, Inc.
+/* Copyright 2010-2023 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -286,10 +286,10 @@ xspara_init (int unused, char *unused2)
   if (!cur)
     goto failure;
   len = strlen (cur);
-  if (len >= 6 && !memcmp (".UTF-8", cur + len - 6, 6)
-      || len >= 5 && !memcmp (".utf8", cur + len - 5, 5)
-      || len >= 6 && !memcmp (".utf-8", cur + len - 6, 6)
-      || len >= 5 && !memcmp (".UTF8", cur + len - 5, 5))
+  if ((len >= 6 && !memcmp (".UTF-8", cur + len - 6, 6))
+      || (len >= 5 && !memcmp (".utf8", cur + len - 5, 5))
+      || (len >= 6 && !memcmp (".utf-8", cur + len - 6, 6))
+      || (len >= 5 && !memcmp (".UTF8", cur + len - 5, 5)))
     {
       setlocale (LC_CTYPE, ""); /* Use the locale from the environment. */
       goto success;
@@ -489,39 +489,6 @@ xspara_init_state (HV *hash)
 
 #undef FETCH
 #undef FETCH_INT
-}
-
-/* Move the state back into the Perl hash. */
-void
-xspara_get_state (HV *hash)
-{
-  /* TODO: The last argument of hv_store would be a precomputed hash, which
-     would save the time of calculating it. */
-#define STORE(key) hv_store (hash, key, strlen (key), val, 0)
-
-  SV *val;
-
-  /* Don't do anything. */
-  return;
-
-  dTHX; /* Perl boilerplate. */
-
-  val = newSViv (state.end_sentence);
-  STORE("end_sentence");
-
-  val = newSViv (state.counter);
-  STORE("counter");
-
-  val = newSViv (state.word_counter);
-  STORE("word_counter");
-
-  val = newSViv (state.lines_counter);
-  STORE("lines_counter");
-
-  return;
-
-
-#undef STORE
 }
 
 

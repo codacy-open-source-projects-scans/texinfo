@@ -1,6 +1,6 @@
 # Texinfo.pm: output a Texinfo tree as Texinfo.
 #
-# Copyright 2010-2022 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,7 +45,7 @@ use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0dev';
+$VERSION = '7.0.90';
 
 
 my %brace_commands           = %Texinfo::Commands::brace_commands;

@@ -1,6 +1,6 @@
 # Utils.pm: miscellaneous functions usable in simple converters
 #
-# Copyright 2010-2022 Free Software Foundation, Inc.
+# Copyright 2010-2023 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -58,7 +58,7 @@ add_heading_number
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0dev';
+$VERSION = '7.0.90';
 
 
 our @MONTH_NAMES =
@@ -67,6 +67,26 @@ our @MONTH_NAMES =
      'June', 'July', 'August', 'September', 'October',
      'November', 'December'
     );
+
+# This is not used as code, but used to mark months as strings to be
+# translated
+if (0) {
+  my $self;
+  my @mark_month_for_translation = (
+   $self->gdt('January'),
+   $self->gdt('February'),
+   $self->gdt('March'),
+   $self->gdt('April'),
+   $self->gdt('May'),
+   $self->gdt('June'),
+   $self->gdt('July'),
+   $self->gdt('August'),
+   $self->gdt('September'),
+   $self->gdt('October'),
+   $self->gdt('November'),
+   $self->gdt('December')
+  );
+}
 
 # this method requires a converter.
 sub expand_today($)

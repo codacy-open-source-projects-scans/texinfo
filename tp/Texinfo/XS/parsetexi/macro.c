@@ -60,7 +60,6 @@ new_macro (char *name, ELEMENT *macro)
   enum command_id new;
   MACRO *m = 0;
   size_t free_slot = 0;
-  ELEMENT *tmp;
 
   /* Check for an existing definition first for us to overwrite. */
   new = lookup_command (name);
@@ -539,7 +538,6 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
         {
           int single_char;
           char *command;
-          enum command_id cmd;
           int whitespaces_len;
         case '@':
           pline = sep + 1;
@@ -595,6 +593,7 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
             }
           else
             {
+              ELEMENT *spaces_element = new_element (ET_NONE);
 
               set_toplevel_braces_nr (&count_toplevel_braces,
                                       argument_content);
@@ -608,7 +607,6 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
               add_to_element_contents (argument, argument_content);
               arg = &(argument_content->text);
 
-              ELEMENT *spaces_element = new_element (ET_NONE);
               text_append_n (&spaces_element->text, pline,
                              whitespaces_len);
               add_info_element_oot (argument, "spaces_before_argument",

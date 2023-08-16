@@ -21,15 +21,13 @@ DISTCLEANFILES = texinfo.info* info-stnd.info* texi2any_api.info*
 
 TEXINFO_TEX = texinfo.tex
 
-MAKEINFO_ENVIRONMENT = TEXINFO_DEV_SOURCE=1 ; export TEXINFO_DEV_SOURCE ; \
-                       top_srcdir="$(top_srcdir)" ; export top_srcdir ; \
-                       top_builddir="$(top_builddir)" ; export top_builddir ;
+MAKEINFO_ENVIRONMENT = TEXINFO_DEV_SOURCE=1 \
+                       top_srcdir="$(top_srcdir)" \
+                       top_builddir="$(top_builddir)"
 MAKEINFO = $(MAKEINFO_ENVIRONMENT) $(PERL) $(top_builddir)/tp/texi2any
 
-# NOTE the four ../ are needed because texi2dvi runs texindex from the build dir
-# texi2any_internals.t2d/texi2any_internals.t2d/dvi/build/
-TEXI2DVI_ENVIRONMENT = TEXINDEX=${top_builddir}/../../../../texindex/texindex ; export TEXINDEX ; \
-                       TEXINDEX_SCRIPT=${top_srcdir}/../../../../texindex/texindex.awk ; export TEXINDEX_SCRIPT ;
+TEXI2DVI_ENVIRONMENT = TEXINDEX=${abs_top_builddir}/texindex/texindex \
+                       TEXINDEX_SCRIPT=${abs_top_srcdir}/texindex/texindex.awk
 TEXI2DVI = $(TEXI2DVI_ENVIRONMENT) $(top_srcdir)/util/texi2dvi
 
 # include pod2texi in the main manual
@@ -76,7 +74,7 @@ install-data-local:
 	@echo "             texinfo.tex and txi-??.tex manually,"
 	@echo "         perhaps in TEXMF/tex/texinfo/,"
 	@echo "         where TEXMF is a root of your TeX tree."
-	@echo "         See doc/README for some considerations."
+	@echo "         See INSTALL for some considerations."
 	@echo "         You can run make TEXMF=/your/texmf install-tex to do this."
 	@echo
 	@echo "         You may also need to install epsf.tex in"

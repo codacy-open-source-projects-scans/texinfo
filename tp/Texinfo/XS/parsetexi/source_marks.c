@@ -13,6 +13,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <config.h>
 #include <string.h>
 
 #include "parser.h"
@@ -30,6 +31,16 @@ int linemacro_expansion_counter = 0;
 int value_expansion_counter = 0;
 int ignored_conditional_block_counter = 0;
 int expanded_conditional_command_counter = 0;
+
+/* it isn't much readable to use here the SM_TYPES_LIST macro defined
+   in a header file, but the table should be allocated in files using
+   it only if static (or in only one file if extern) */
+static char *source_marks_names[SM_type_expanded_conditional_command + 1] =
+{
+  #define sm_type(name) [SM_type_ ## name] = #name,
+    SM_TYPES_LIST
+  #undef sm_type
+};
 
 char *
 source_mark_name(enum source_mark_type type)
