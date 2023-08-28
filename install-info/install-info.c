@@ -893,7 +893,7 @@ readfile (char *filename, int *sizep,
         break;
 
       filled += nread;
-      if (filled == data_size)
+      if (filled == data_size - 1)
         {
           data_size += 65536;
           data = xrealloc (data, data_size);
@@ -909,6 +909,8 @@ readfile (char *filename, int *sizep,
     fclose (f);
 
   *sizep = filled;
+  data[filled] = '\0';
+
   return data;
 }
 
@@ -925,19 +927,31 @@ output_dirfile (char *dirfile, int dir_nlines, struct line_data *dir_lines,
   int n_entries_added = 0;
   int i;
   FILE *output;
-  int tempfile; /* moved to dirfile when finished */
-  char tempname[] = "infodirXXXXXX";
+  int tempfile;
+  static char *tempname;
+  int dirfile_len;
+  mode_t um;
+
+  /* Create temporary file in the same directory as dirfile.  This ensures
+     it is on the same disk volume and can be renamed to dirfile when
+     finished. */
+  free (tempname);
+#define suffix "-XXXXXX"
+  dirfile_len = strlen (dirfile);
+  tempname = xmalloc (dirfile_len + strlen (suffix) + 1);
+  memcpy (tempname, dirfile, dirfile_len);
+  memcpy (tempname + dirfile_len, suffix, strlen (suffix) + 1);
+#undef suffix
 
   tempfile = mkstemp (tempname);
 
   /* Reset the mode that the file is set to.  */
-  mode_t um = umask (0022);
+  um = umask (0022);
   umask (um);
   if (chmod (tempname, 0666 & ~um) < 0)
     {
-      perror ("chmod");
       remove (tempname);
-      exit (EXIT_FAILURE);
+      pfatal_with_name (tempname);
     }
 
   if (compression_program)
@@ -951,10 +965,7 @@ output_dirfile (char *dirfile, int dir_nlines, struct line_data *dir_lines,
     output = fdopen (tempfile, "w");
 
   if (!output)
-    {
-      perror (dirfile);
-      exit (EXIT_FAILURE);
-    }
+    pfatal_with_name (dirfile);
 
   for (i = 0; i <= dir_nlines; i++)
     {
@@ -1072,15 +1083,10 @@ output_dirfile (char *dirfile, int dir_nlines, struct line_data *dir_lines,
     {
       /* Try to delete target file and try again.  On some platforms you
          may not rename to an existing file. */
-      if (remove (dirfile) == -1)
+      if (remove (dirfile) == -1 || rename (tempname, dirfile) == -1)
         {
-          perror (dirfile);
           remove (tempname);
-        }
-      else if (rename (tempname, dirfile) == -1)
-        {
-          perror (tempname);
-          remove (tempname);
+          pfatal_with_name (dirfile);
         }
     }
 }
@@ -1345,9 +1351,13 @@ mark_entry_for_deletion (struct line_data *lines, int nlines, char *name)
           /* Read menu item.  */
           while (*p != 0 && *p != ':')
             p++;
+          if (!*p)
+            continue;
           p++; /* skip : */
 
-          if (*p == ':')
+          if (!*p)
+            continue;
+          else if (*p == ':')
             { /* XEmacs-style entry, as in * Mew::Messaging.  */
               if (menu_item_equal (q, ':', name))
                 {
@@ -1361,7 +1371,7 @@ mark_entry_for_deletion (struct line_data *lines, int nlines, char *name)
               if (*p == '(')         /* if at parenthesized (FILENAME) */
                 {
                   p++;
-                  if (menu_item_equal (p, ')', name))
+                  if (*p && menu_item_equal (p, ')', name))
                     {
                       lines[i].delete = 1;
                       something_deleted = 1;

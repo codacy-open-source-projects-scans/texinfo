@@ -1,3 +1,101 @@
+2023-08-20  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/README: Add Unicode::Collate to list of modules.  Mention
+	possibility of not using internal versions of some modules.
+	* tp/t/README: Say to look at tp/README for the module requirements.
+
+2023-08-19  Bruno Haible  <bruno@clisp.org>
+
+	* doc/Makefile.am (wwwdoc-install):
+	Indent all lines in the rule with a tab.
+
+2023-08-19  Bruno Haible  <bruno@clisp.org>
+
+	* doc/Makefile.am (refcard/txirefcard.pdf, refcard/txirefcard-a4.pdf):
+	Combine Makefile rules in attempt to forestall two make processes
+	running at the same time in case of a parallel make.
+
+2023-08-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/Makefile.am (refcard/txirefcard.pdf, refcard/txirefcard-a4.pdf):
+	Add rules for these files, as they aren't tracked in git any more
+	and are needed for make dist.  From Bruno.
+
+2023-08-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* contrib/gen-dir-node,
+	* contrib/javaprop2texiflag.pl,
+	* doc/refcard/Makefile: Eliminate $Id keyword expansion.
+
+2023-08-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* configure.ac: Check for Unicode::Collate and issue a warning
+	if not found.  Report from Bruno Haible on CentOS 8-stream.
+
+2023-08-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Structuring.pm (sort_indices):
+	Put collator options in a hash variable to make code clearer.
+	Reorder code slightly.
+
+2023-08-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Structuring.pm (Texinfo::CollateStub):
+	Provide fall-back module in case Unicode::Collate can't be loaded.
+	(sort_indices): Use it if loading Unicode::Collate fails.
+
+2023-08-19  Patrice Dumas <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (complete_node_tree_with_menus): add
+	missing extra for menus key.
+
+2023-08-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/tests/ii-0059-test: Fix malformed menu entry.
+
+2023-08-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: remove recommendation to check with
+	-Wdeclaration-after-statement, as it may not be a relevant
+	warning any more.  From Bruno.
+
+2023-08-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (readfile): null-terminate file
+	data so to avoid reading off the end in mark_entry_for_deletion.
+	(mark_entry_for_deletion): Add checks for end of data.
+
+2023-08-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (output_dirfile): Avoid mixed
+	declaration and statements.
+
+2023-08-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	install-info atomic dir update
+
+	* install-info/install-info.c (output_dirfile):
+	Get name of temp file by appending to dir file name.  This
+	ensures that the temporary file is in the same directory and
+	thus on the same disk volume.  Report from Bruno Haible.
+
+2023-08-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (output_dirfile):
+	Change further uses of perror to pfatal_with_name for concision
+	and to print program name.
+
+2023-08-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (output_dirfile):
+	In case removing and renaming to target dirfile failed, print
+	error message and exit with pfatal_with_name function.  Lack
+	of exit reported by Bruno Haible.
+
+2023-08-16  Gavin Smith <gavinsmith0123@gmail.com>
+
+	pretest 7.0.90
+
 2023-08-16  Gavin Smith <gavinsmith0123@gmail.com>
 
 	* util/srclist.txt: Update source for INSTALL to doc/INSTALL.ISO
