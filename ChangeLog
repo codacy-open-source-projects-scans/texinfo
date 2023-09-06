@@ -1,3 +1,77 @@
+2023-09-06  Patrice Dumas <pertusus@free.fr>
+
+	Consider control characters to have a 0 width
+
+	* tp/Texinfo/Convert/Unicode.pm (string_width): do not consider space
+	control characters especially.  This is better for line feed, carriage
+	return and form feed, and vertical or horizontal tabs should not
+	happen in situations where we want to know the width of strings.
+
+2023-09-05  Patrice Dumas <pertusus@free.fr>
+
+	Add customization of external node reference names
+
+	* doc/texi2any_api.texi (Customizing Output Target Names)
+	(Customizing External Node Output Names), tp/Texinfo/Convert/HTML.pm
+	(%customizable_file_id_setting_references, _external_node_href):
+	add external_target_split_name and external_target_non_split_name
+	file id setting customization function reference.  Based on
+	Jonas Hahnfeld feedback.
+
+2023-09-04  Patrice Dumas <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_external_node_href): initialize
+	explicitly $target_split.  Use a different variable for the case of
+	$target_split ($file) and !$target_split ($directory).  Rearrange code
+	returning the final href to have less conditions.  If target is empty
+	and TOP_NODE_FILE_TARGET is not set use the directory and
+	target_filebase as in the other cases.  This case probably never
+	happens, though, as TOP_NODE_FILE_TARGET is always set.
+
+2023-09-04  Patrice Dumas <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_external_node_href): do not call
+	_normalized_to_id in $target, it is already done in
+	_normalized_label_id_file.
+
+2023-09-04  Patrice Dumas <pertusus@free.fr>
+
+	Add last element argument to format_end_file
+
+	* doc/texi2any_api.texi (Customizing HTML File End),
+	tp/Texinfo/Convert/HTML.pm (_default_format_end_file, output): add the
+	last element to the call of format_end_file in output.  Idea from
+	LilyPond init file commit from Jonas Hahnfeld where converter state
+	is used, to be able to get the output unit directly instead.
+
+2023-09-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Config.pm (GNUT_load_init_file): Check if
+	message is non-empty as well as defined before printing.
+	(_GNUT_document_fatal): Keep going if FORCE is set.
+
+2023-09-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fatal error for init file loading
+
+	* tp/Texinfo/Config.pm (_GNUT_document_fatal): copy
+	from _GNUT_document_warn and exit program.
+	(GNUT_load_init_file): Load init file with "do" rather than
+	"require".  As calling code has already located the file with
+	Texinfo::Common::locate_init_file, we do not need "require" to
+	locate the file in @INC.  Call _GNUT_document_fatal if "do"
+	could not load or parse the file.
+
+	Report from Jonas Hahnfeld who is working on an init file for
+	GNU Lilypond.  It was not helpful to continue on if there
+	was a syntax error in the init file.
+
+2023-09-01  Patrice Dumas <pertusus@free.fr>
+
+	Run 'gnulib-tool --add-import libunistring' under tp/Texinfo/XS.
+
+	Update gnulib.
+
 2023-08-20  Gavin Smith <gavinsmith0123@gmail.com>
 
 	* tp/README: Add Unicode::Collate to list of modules.  Mention

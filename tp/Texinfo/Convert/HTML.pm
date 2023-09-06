@@ -7399,7 +7399,9 @@ sub _pop_document_context($)
 
 # can be set through Texinfo::Config::texinfo_register_file_id_setting_function
 my %customizable_file_id_setting_references;
-foreach my $customized_reference ('label_target_name', 'node_file_name',
+foreach my $customized_reference ('external_target_split_name',
+                'external_target_non_split_name',
+                'label_target_name', 'node_file_name',
                 'sectioning_command_target_name', 'tree_unit_file_name',
                 'special_element_target_file_name') {
   $customizable_file_id_setting_references{$customized_reference} = 1;
@@ -9493,17 +9495,18 @@ sub _external_node_href($$$;$)
 {
   my $self = shift;
   my $external_node = shift;
-  my $filename = shift;
+  # unused
+  my $source_filename = shift;
   # for messages only
   my $source_command = shift;
 
+  my $normalized = $external_node->{'normalized'};
+  my $node_contents = $external_node->{'node_content'};
   #print STDERR "external_node: ".join('|', keys(%$external_node))."\n";
   my ($target_filebase, $target)
-      = $self->_normalized_label_id_file($external_node->{'normalized'},
-                                         $external_node->{'node_content'});
+      = $self->_normalized_label_id_file($normalized, $node_contents);
 
-  my $xml_target = _normalized_to_id($target);
-
+  # undef if conversion is called through convert()
   my $default_target_split = $self->get_conf('EXTERNAL_CROSSREF_SPLIT');
 
   my $external_file_extension = '';
@@ -9513,14 +9516,23 @@ sub _external_node_href($$$;$)
   $external_file_extension = '.' . $external_extension
     if (defined($external_extension) and $external_extension ne '');
 
+  # initialize to $default_target_split
   my $target_split;
-  my $file;
+  if (defined($default_target_split) and $default_target_split) {
+    $target_split = 1;
+  } else {
+    $target_split = 0;
+  }
+  # used if !$target_split
+  my $file = '';
+  # used if $target_split
+  my $directory = '';
   if ($external_node->{'manual_content'}) {
     my $manual_name = Texinfo::Convert::Text::convert_to_text(
        {'contents' => $external_node->{'manual_content'}},
        { 'code' => 1,
          Texinfo::Convert::Text::copy_options_for_convert_text($self)});
-    if ($self->get_conf('IGNORE_REF_TO_TOP_NODE_UP') and $xml_target eq '') {
+    if ($self->get_conf('IGNORE_REF_TO_TOP_NODE_UP') and $target eq '') {
       my $top_node_up = $self->get_conf('TOP_NODE_UP');
       if (defined($top_node_up) and "($manual_name)" eq $top_node_up) {
         return '';
@@ -9544,9 +9556,12 @@ sub _external_node_href($$$;$)
       }
     }
     if (defined($split_found)) {
-      $target_split = 1 unless ($split_found eq 'mono');
+      if ($split_found eq 'mono') {
+        $target_split = 0;
+      } else {
+        $target_split = 1;
+      }
     } else { # nothing specified for that manual, use default
-      $target_split = $default_target_split;
       if ($self->get_conf('CHECK_HTMLXREF')) {
         if (defined($source_command) and $source_command->{'source_info'}) {
           my $node_manual_key = $source_command.'-'.$manual_name;
@@ -9570,20 +9585,20 @@ sub _external_node_href($$$;$)
 
     if ($target_split) {
       if (defined($href)) {
-        $file = $href;
+        $directory = $href;
       } else {
         my $manual_dir = $manual_base;
         if (defined($self->{'output_format'}) and $self->{'output_format'} ne '') {
           $manual_dir .= '_'.$self->{'output_format'};
         }
         if (defined($self->get_conf('EXTERNAL_DIR'))) {
-          $file = $self->get_conf('EXTERNAL_DIR')."/$manual_dir";
+          $directory = $self->get_conf('EXTERNAL_DIR')."/$manual_dir";
         } elsif ($self->get_conf('SPLIT')) {
-          $file = "../$manual_dir";
+          $directory = "../$manual_dir";
         }
-        $file = $self->url_protect_file_text($file);
+        $directory = $self->url_protect_file_text($directory);
       }
-      $file .= "/";
+      $directory .= "/";
     } else {# target not split
       if (defined($href)) {
         $file = $href;
@@ -9599,33 +9614,47 @@ sub _external_node_href($$$;$)
         $file = $self->url_protect_file_text($file);
       }
     }
-  } else {
-    $file = '';
-    $target_split = $default_target_split;
   }
 
-  if ($target eq '') {
-    if ($target_split) {
-      if (defined($self->get_conf('TOP_NODE_FILE_TARGET'))) {
-        return $file . $self->get_conf('TOP_NODE_FILE_TARGET');
-      } else {
-        return $file;
-      }
-    } else {
-      return $file . '#Top';
-    }
-  }
-
-  if (! $target_split) {
-    return $file . '#' . $xml_target;
-  } else {
+  if ($target_split) {
     my $file_name;
-    if ($target eq 'Top' and defined($self->get_conf('TOP_NODE_FILE_TARGET'))) {
+    if (($target eq 'Top' or $target eq '')
+        and defined($self->get_conf('TOP_NODE_FILE_TARGET'))) {
       $file_name = $self->get_conf('TOP_NODE_FILE_TARGET');
     } else {
       $file_name = $target_filebase . $external_file_extension;
     }
-    return $file . $file_name . '#' . $xml_target;
+    if (defined($self->{'file_id_setting'}->{'external_target_split_name'})) {
+      ($target, $directory, $file_name)
+        = &{$self->{'file_id_setting'}->{'external_target_split_name'}}($self,
+                             $normalized, $node_contents, $target,
+                             $directory, $file_name);
+      $directory = '' if (!defined($directory));
+      $file_name = '' if (!defined($file_name));
+      $target = '' if (!defined($target));
+    }
+    my $result = $directory . $file_name;
+    if ($target ne '') {
+      $result .= '#' . $target;
+    }
+    return $result;
+  } else {
+    if ($target eq '') {
+      $target = 'Top';
+    }
+    if (defined($self->{'file_id_setting'}->{
+                          'external_target_non_split_name'})) {
+      ($target, $file)
+       = &{$self->{'file_id_setting'}->{'external_target_non_split_name'}}($self,
+                             $normalized, $node_contents, $target, $file);
+      $file = '' if (!defined($file));
+      $target = '' if (!defined($target));
+    }
+    my $result = $file;
+    if ($target ne '') {
+      $result .= '#' . $target;
+    }
+    return $result;
   }
 }
 
@@ -9837,10 +9866,11 @@ sub _default_format_program_string($)
   }
 }
 
-sub _default_format_end_file($$)
+sub _default_format_end_file($$$)
 {
   my $self = shift;
   my $filename = shift;
+  my $output_unit = shift;
 
   my $program_text = '';
   if ($self->get_conf('PROGRAM_NAME_IN_FOOTER')) {
@@ -11200,7 +11230,7 @@ sub output($$)
 
     # do end file first, in case it needs some CSS
     my $footer = &{$self->formatting_function('format_end_file')}($self,
-                                                       $output_filename);
+                                                  $output_filename, undef);
     my $header = &{$self->formatting_function('format_begin_file')}($self,
                                                   $output_filename, undef);
     $output .= $self->write_or_return($header, $fh);
@@ -11282,7 +11312,8 @@ sub output($$)
         }
         # do end file first in case it requires some CSS
         my $end_file = &{$self->formatting_function('format_end_file')}($self,
-                                                           $element_filename);
+                                                           $element_filename,
+                                                           $element);
         print $file_fh "".&{$self->formatting_function('format_begin_file')}(
                                        $self, $element_filename, $file_element);
         print $file_fh "".$files{$element_filename}->{'body'};
@@ -11988,8 +12019,6 @@ sub _set_variables_texi2html($)
                              'Top', 'Contents', 'Index', 'About' ]],
   );
   foreach my $option (@texi2html_options) {
-    #no warnings 'once';
-    #$defaults{$option->[0]} = $option->[1];
     $options->{$option->[0]} = $option->[1];
   }
 }
