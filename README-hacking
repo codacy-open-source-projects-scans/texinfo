@@ -346,18 +346,6 @@ check OpenCSW build reports at
   https://buildfarm.opencsw.org/buildbot/waterfall?category=texinfo
 (for master branch only)
 
-Check that translations have been updated, e.g.:
-  rsync  -Lrtzv  translationproject.org::tp/latest/texinfo/ po
-  rsync  -Lrtzv  translationproject.org::tp/latest/texinfo_document/ \
-                 po_document # note the trailing slashes in these commands
-  git status -u to check for new translations
-
-Ensure TXI_XLATE in doc/Makefile.am matches actual file list.
-Check that LINGUAS under po and po_document match actual file list.
-
-make
-make update-po            # both po and po_document needed, build a dist first
-
 Check that TEXINFO_DTD_VERSION has been updated to the next version in
   configure.ac if the DTD has been modified since the last release.
   See comments in configure.ac, and run (at the top level) make dtd-check.
@@ -366,7 +354,8 @@ Check "dist-xz" is in the option list in configure.ac (often removed
 for speed when testing).
 
 Update version number:
-  update version number in configure.ac, texi2dvi, texi2pdf, js/info.js
+  update version number in configure.ac, util/texi2dvi, util/texi2pdf,
+    js/info.js
   version number in txirefcard.tex (offical releases only)
   (cd texindex ; rm texindex.awk ; make)
   (cd tp && ./maintain/change_perl_modules_version.sh auto)
@@ -383,6 +372,19 @@ Upload texi2dvi, texi2pdf (official releases only)
 For release/7.0 series only - need to update result of
 test_scripts/layout_formatting_epub_nodes.sh test (delete this note
 once we are on release/7.1)
+
+Update translations:
+  rsync  -Lrtzv  translationproject.org::tp/latest/texinfo/ po
+  rsync  -Lrtzv  translationproject.org::tp/latest/texinfo_document/ \
+                 po_document # note the trailing slashes in these commands
+  git status -u to check for new translations
+
+Ensure TXI_XLATE in doc/Makefile.am matches actual file list.
+Check that LINGUAS under po and po_document match actual file list.
+
+make
+make update-po            # both po and po_document needed, build a dist first
+
 
 - Official releases only:
 version and date in NEWS.

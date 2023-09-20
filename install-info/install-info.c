@@ -839,6 +839,7 @@ determine_file_type:
           *opened_filename = command;
           return 0;
         }
+      free (command);
     }
   else
     {
@@ -874,7 +875,7 @@ readfile (char *filename, int *sizep,
   FILE *f;
   int filled = 0;
   int data_size = 8192;
-  char *data = xmalloc (data_size);
+  char *data = xmalloc (data_size + 1);
 
   /* If they passed the space for the file name to return, use it.  */
   f = open_possibly_compressed_file (filename, create_callback,
@@ -893,10 +894,10 @@ readfile (char *filename, int *sizep,
         break;
 
       filled += nread;
-      if (filled == data_size - 1)
+      if (filled == data_size)
         {
           data_size += 65536;
-          data = xrealloc (data, data_size);
+          data = xrealloc (data, data_size + 1);
         }
     }
 
@@ -960,6 +961,7 @@ output_dirfile (char *dirfile, int dir_nlines, struct line_data *dir_lines,
       close (tempfile);
       command = concat (compression_program, ">", tempname);
       output = popen (command, "w");
+      free (command);
     }
   else
     output = fdopen (tempfile, "w");
@@ -1711,6 +1713,7 @@ reformat_new_entries (struct spec_entry *entries, int calign_cli, int align_cli,
 
       format_entry (name, name_len, desc, desc_len, calign, align, 
                     maxwidth, &entry->text, &entry->text_len);
+      free (name); free (desc);
     }
 }
 
@@ -2022,6 +2025,7 @@ main (int argc, char *argv[])
           {
             struct spec_entry *next;
             size_t length = strlen (optarg);
+            char *old_text;
 
             if (!entries_to_add)
               {
@@ -2052,9 +2056,11 @@ main (int argc, char *argv[])
                newline if we need one.  Prepend a space if we have no
                previous text, since eventually we will be adding the
                "* foo ()." and we want to end up with a ". " for parsing.  */
-            next->text = concat (next->text ? next->text : " ",
+            old_text = next->text;
+            next->text = concat (old_text ? old_text : " ",
                                  optarg, 
                                  optarg[length - 1] == '\n' ? "" : "\n");
+            free (old_text);
             next->text_len = strlen (next->text);
           }
           break;

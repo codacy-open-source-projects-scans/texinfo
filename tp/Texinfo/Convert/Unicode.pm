@@ -66,7 +66,7 @@ use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0.90';
+$VERSION = '7.0.92';
 
 
 our %unicode_diacritics = (
@@ -1666,14 +1666,14 @@ sub string_width($)
   # Optimise for the common case where we can just return the length
   # of the string.  These regexes are faster than making the substitutions
   # below.
-  if ($string =~ /^[\p{IsPrint}]*$/
-      and $string !~ /[\p{InFullwidth}\pM]/) {
+  # IsPrint without \pM
+  if ($string =~ /^[\p{L}\p{N}\p{P}\p{S}\p{Zs}]*$/
+      and $string !~ /[\p{InFullwidth}]/) {
     return length($string);
   }
 
   $string =~ s/\p{InFullwidth}/\x{02}/g;
-  $string =~ s/\pM/\x{00}/g;
-  $string =~ s/\p{IsPrint}/\x{01}/g;
+  $string =~ s/[\p{L}\p{N}\p{P}\p{S}\p{Zs}]/\x{01}/g;
   $string =~ s/[^\x{01}\x{02}]/\x{00}/g;
 
   # This sums up the byte values of the bytes in $string, which now are
@@ -1688,14 +1688,10 @@ sub string_width($)
   foreach my $character(split '', $string) {
     if ($character =~ /\p{InFullwidth}/) {
       $width += 2;
-    } elsif ($character =~ /\pM/) {
-      # a mark set at length 0
-    } elsif ($character =~ /\p{IsPrint}/) {
+    } elsif ($character =~ /[\p{L}\p{N}\p{P}\p{S}\p{Zs}]/) {
       $width += 1;
-    } elsif ($character =~ /\p{IsControl}/) {
-      # Control chars may be added, for instance, as part of @image formatting
     } else {
-      #print STDERR "unknown char`$character'\n";
+      # zero width character: \pC (including controls), \pM, \p{Zl}, \p{Zp}
     }
   }
   return $width;

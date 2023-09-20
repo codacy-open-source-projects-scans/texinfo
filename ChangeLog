@@ -1,3 +1,130 @@
+2023-09-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo-tex-test.texi (TOC display): Add new example of
+	section name with @/ in it, from Karl Berry.  Before the last change, 
+	this led to an overfull hbox.
+
+2023-09-19  Patrice Dumas <pertusus@free.fr>
+
+	* configure.ac: require Unicode::Normalize.  Report from Bruno on
+	CentOS Stream 9 where this module may not be installed.
+
+2023-09-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Simplify toc/index entry formatting
+
+	* doc/texinfo.tex (\entry): Eliminate code allowing stretching
+	into the margins, as it complicates the code and was questionable
+	whether this was a good idea in the first place.  Do not hardcode
+	70:30 ratio for splitting text across multiple lines.
+
+2023-09-17  Patrice Dumas <pertusus@free.fr>
+
+	* tp/tests/many_input_files/different_encodings.sh: skip test if
+	$PERL_UNICODE_COLLATE_OK is no, as this test requires compatible
+	unicode collation.  Report from Gavin based on Nelson Beebe pretest
+	test results.
+
+2023-09-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	pretest 7.0.92
+
+2023-09-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (main) <--description>:
+	Free string when concatenating text.
+
+2023-09-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (output_dirfile):
+	Free string passed to popen.
+
+2023-09-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (open_possibly_compressed_file):
+	Free string passed to popen.
+
+2023-09-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (reformat_new_entries): Free
+	strings set by split_entry.
+
+2023-09-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (readfile): Do not truncate input
+	file at 8192 bytes.  Report from Andreas Schwab.
+
+2023-09-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\newlineloadsconf): Hook into definitions
+	made with \envdef as well as ends-of-lines and commands defined
+	with \parsearg.  Werner Lemberg reported an error when a @tex block
+	followed "\input texinfo" immediately.
+
+2023-09-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	pretest 7.0.91
+
+2023-09-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: adjust release instructions
+
+2023-09-09  Patrice Dumas <pertusus@free.fr>
+
+	* tp/t/html_tests.t (automatic_menus): test with FORMAT_MENU menu
+	and no explicit menus.
+
+2023-09-09  Patrice Dumas <pertusus@free.fr>
+
+	Automatic menu in HTML if missing and FORMAT_MENU is menu
+
+	* tp/Texinfo/Convert/HTML.pm (%available_converter_info)
+	(_convert_heading_command): add 'labels' to the
+	%available_converter_info.  Automatic menu setup and formatting if
+	FORMAT_MENU is menu, a sectioning command is being formatted,
+	associated node is with automatic directions and without menu
+	and there is no table of contents already formatted.
+
+2023-09-09  Patrice Dumas <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (new_complete_menu_master_menu),
+	tp/Texinfo/Convert/Plaintext.pm (_convert): move code setting up a
+	menu and detailed menu if node is Top to Texinfo::Structuring
+	as new_complete_menu_master_menu.
+
+2023-09-08  Patrice Dumas <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm (string_width): remove explicit
+	matching of 0-width characters, they correspond to the remaining
+	characters after matching printing characters except for Marks.
+
+2023-09-08  Patrice Dumas <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm (string_width): replace IsPrint
+	by more explicit character classes.
+
+2023-09-07  Patrice Dumas <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm (string_width): use
+	DefaultIgnorableCodePoint for better compatibility with old perls.
+
+2023-09-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add note re *.pot versions.
+
+2023-09-06  Patrice Dumas <pertusus@free.fr>
+
+	* tp/t/input_files/in_menu_only_special_spaces_node.texi,
+	tp/t/input_files/only_special_spaces_node.texi: separate node for
+	LINE SEPARATOR and PARAGRAPH SEPARATOR in test files.
+
+2023-09-06  Patrice Dumas <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm (string_width): consider
+	Default_Ignorable_Code_Point to be of zero width.  These codepoints
+	are described as having no visible glyph or advance width in and of
+	themselves.
+
 2023-09-06  Patrice Dumas <pertusus@free.fr>
 
 	Consider control characters to have a 0 width
