@@ -25,7 +25,6 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
           'type' => 'preamble_before_beginning'
         },
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -50,6 +49,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -119,6 +119,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chapter'
       },
       'info' => {
@@ -230,6 +231,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -338,7 +340,6 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
           'cmdname' => 'itemize',
           'contents' => [
             {
-              'contents' => [],
               'type' => 'before_item'
             },
             {
@@ -375,6 +376,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -444,6 +446,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -604,6 +607,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -835,6 +839,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -985,6 +990,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -1104,6 +1110,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -1258,6 +1265,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -1350,7 +1358,6 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
           'cmdname' => 'enumerate',
           'contents' => [
             {
-              'contents' => [],
               'type' => 'before_item'
             },
             {
@@ -1387,6 +1394,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -1434,6 +1442,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -1471,6 +1480,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -1976,6 +1986,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                             ]
                           },
                           'info' => {
+                            'command_name' => 'cindex',
                             'spaces_before_argument' => {
                               'text' => ' '
                             }
@@ -2300,6 +2311,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -2475,6 +2487,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -2644,6 +2657,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -2819,6 +2833,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -2991,6 +3006,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -3154,6 +3170,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -3329,6 +3346,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -3482,6 +3500,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -3529,6 +3548,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -3566,6 +3586,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -3665,7 +3686,9 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -3696,6 +3719,7 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'printindex'
       },
@@ -3852,7 +3876,9 @@ $result_trees{'indices_in_begin_tables_lists_entries_after_item'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '2'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -4170,7 +4196,7 @@ asamp-bb2
 ';
 
 $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -4179,11 +4205,8 @@ $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -4192,16 +4215,17 @@ $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'} = {
                   'cmdname' => 'node',
                   'extra' => {
                     'normalized' => 'chapter'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             },
             {
@@ -4212,97 +4236,112 @@ $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'} = {
                   'extra' => {
                     'isindex' => 1,
                     'normalized' => 'printindex'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 2,
-                'section_prev' => {},
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '2',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[1]{'structure'}{'section_prev'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0];
-$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[1]{'structure'}{'section_up'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[1]{'structure'}{'toplevel_prev'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0];
-$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[1]{'structure'}{'toplevel_up'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'};
+$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'section_directions'}{'prev'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0];
+$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0];
+$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'indices_in_begin_tables_lists_entries_after_item'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'indices_in_begin_tables_lists_entries_after_item'};
 
-$result_nodes{'indices_in_begin_tables_lists_entries_after_item'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'normalized' => 'chapter'
+$result_nodes{'indices_in_begin_tables_lists_entries_after_item'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_next' => {
+      'node_directions' => {
+        'next' => {
           'cmdname' => 'node',
           'extra' => {
             'associated_section' => {
               'cmdname' => 'chapter',
-              'extra' => {},
-              'structure' => {
-                'section_number' => 2
+              'extra' => {
+                'section_number' => '1'
               }
             },
-            'isindex' => 1,
-            'normalized' => 'printindex'
-          },
-          'structure' => {
-            'node_prev' => {},
-            'node_up' => {}
+            'node_directions' => {
+              'next' => {
+                'cmdname' => 'node',
+                'extra' => {
+                  'associated_section' => {
+                    'cmdname' => 'chapter',
+                    'extra' => {
+                      'section_number' => '2'
+                    }
+                  },
+                  'isindex' => 1,
+                  'node_directions' => {
+                    'prev' => {},
+                    'up' => {}
+                  },
+                  'normalized' => 'printindex'
+                }
+              },
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chapter'
           }
-        },
-        'node_prev' => {},
-        'node_up' => {}
-      }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {},
+  {}
+];
+$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0];
+$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0];
+$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0];
+$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[1] = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[2] = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'indices_in_begin_tables_lists_entries_after_item'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chapter'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'printindex'
     }
   }
-};
-$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'node_next'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'node_next'};
-$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'node_next'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'};
-$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'};
-$result_nodes{'indices_in_begin_tables_lists_entries_after_item'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'indices_in_begin_tables_lists_entries_after_item'};
-
-$result_menus{'indices_in_begin_tables_lists_entries_after_item'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'indices_in_begin_tables_lists_entries_after_item'} = [];
 

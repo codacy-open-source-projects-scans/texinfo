@@ -18,13 +18,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <stdio.h>
 
 #include "parser.h"
+#include "tree_types.h"
+#include "command_ids.h"
+#include "element_types.h"
+#include "text.h"
+/* for isascii_alnum whitespace_chars read_flag_name item_line_parent */
+#include "utils.h"
+#include "counter.h"
+#include "context_stack.h"
+/* for conf */
+#include "conf.h"
+/* lookup_infoenclose */
+#include "macro.h"
+#include "builtin_commands.h"
+#include "commands.h"
 #include "def.h"
 #include "debug.h"
+#include "errors.h"
 #include "tree.h"
 #include "input.h"
-#include "text.h"
+#include "extra.h"
 
 /* Return a containing @itemize or @enumerate if inside it. */
 ELEMENT *
@@ -184,7 +200,7 @@ parse_rawline_command (char *line, enum command_id cmd,
                    "{\\}~^+\"<>|@"); /* other bytes that aren't allowed */
       if (q)
         {
-        /* see also read_flag_name function in end_line.c */
+        /* see also read_flag_name function in utils.c */
           r = skip_to_comment_if_comment_or_spaces (q, has_comment);
           if (!r)
             goto set_invalid;
@@ -400,11 +416,11 @@ handle_other_command (ELEMENT *current, char **line_inout,
           else if ((parent = item_multitable_parent (current)))
             {
               long max_columns = 0;
-              KEY_PAIR *k;
+              KEY_PAIR *k_max_columns;
 
-              k = lookup_extra (parent, "max_columns");
-              if (k)
-                max_columns = (long) k->value;
+              k_max_columns = lookup_extra (parent, "max_columns");
+              if (k_max_columns)
+                max_columns = (long) k_max_columns->value;
 
               if (max_columns == 0)
                 {
@@ -680,11 +696,11 @@ handle_line_command (ELEMENT *current, char **line_inout,
 
       if (cmd == CM_raisesections)
         {
-          global_info.sections_level++;
+          global_info.sections_level_modifier++;
         }
       else if (cmd == CM_lowersections)
         {
-          global_info.sections_level--;
+          global_info.sections_level_modifier--;
         }
 
       if (command_e)
@@ -747,10 +763,10 @@ handle_line_command (ELEMENT *current, char **line_inout,
             {
               if (current_node)
                 {
-                  KEY_PAIR *k = lookup_extra (current_node, "node_description");
-                  if (k && k->value)
+                  ELEMENT *e_description
+                    = lookup_extra_element (current_node, "node_description");
+                  if (e_description)
                     {
-                      ELEMENT *e_description = (ELEMENT *) k->value;
                       if (e_description->cmd == cmd)
                         line_warn ("multiple node @nodedescription");
                       else
@@ -781,9 +797,11 @@ handle_line_command (ELEMENT *current, char **line_inout,
 
               if (parent->cmd == CM_subentry)
                 {
-                  KEY_PAIR *k = lookup_extra (parent, "level");
-                  if (k && k->value)
-                    level = (long) k->value + 1;
+                  KEY_PAIR *k_parent_level = lookup_extra (parent, "level");
+                  if (k_parent_level && k_parent_level->value)
+                    level = (long) k_parent_level->value + 1;
+                  else
+                    fatal ("No subentry parent level or level 0");
                 }
               add_extra_integer (command_e, "level", level);
               if (level > 2)
@@ -802,10 +820,10 @@ handle_line_command (ELEMENT *current, char **line_inout,
 
           if (command_data(data_cmd).flags & CF_sectioning_heading)
             {
-              if (global_info.sections_level)
+              if (global_info.sections_level_modifier)
                 {
-                  add_extra_integer (command_e, "sections_level",
-                                     global_info.sections_level);
+                  add_extra_integer (command_e, "level_modifier",
+                                     global_info.sections_level_modifier);
                 }
             }
 
@@ -920,15 +938,7 @@ handle_line_command (ELEMENT *current, char **line_inout,
               else if (parent->cmd == CM_quotation
                        || parent->cmd == CM_smallquotation)
                 {
-                  KEY_PAIR *k; ELEMENT *e;
-                  k = lookup_extra (parent, "authors");
-                  if (k)
-                    e = (ELEMENT *) k->value;
-                  else
-                    {
-                      e = new_element (ET_NONE);
-                      add_extra_contents (parent, "authors", e);
-                    }
+                  ELEMENT *e = lookup_extra_contents (parent, "authors", 1);
                   add_to_contents_as_array (e, current);
                   add_extra_element (current, "quotation", parent);
                   found = 1; break;
@@ -963,7 +973,7 @@ funexit:
   return current;
 }
 
-struct expanded_format expanded_formats[] = {
+struct expanded_format parser_expanded_formats[] = {
     "html", 0,
     "docbook", 0,
     "plaintext", 1,
@@ -974,44 +984,21 @@ struct expanded_format expanded_formats[] = {
 };
 
 void
-clear_expanded_formats (void)
+clear_parser_expanded_formats (void)
 {
-  int i;
-  for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
-       i++)
-    {
-      expanded_formats[i].expandedp = 0;
-    }
+  clear_expanded_formats (parser_expanded_formats);
 }
 
 void
-add_expanded_format (char *format)
+add_parser_expanded_format (char *format)
 {
-  int i;
-  for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
-       i++)
-    {
-      if (!strcmp (format, expanded_formats[i].format))
-        {
-          expanded_formats[i].expandedp = 1;
-          break;
-        }
-    }
-  if (!strcmp (format, "plaintext"))
-    add_expanded_format ("info");
+  add_expanded_format (parser_expanded_formats, format);
 }
 
 int
-format_expanded_p (char *format)
+parser_format_expanded_p (char *format)
 {
-  int i;
-  for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
-       i++)
-    {
-      if (!strcmp (format, expanded_formats[i].format))
-        return expanded_formats[i].expandedp;
-    }
-  return 0;
+  return format_expanded_p (parser_expanded_formats, format);
 }
 
 /* A command name has been read that starts a multiline block, which should
@@ -1126,8 +1113,12 @@ handle_block_command (ELEMENT *current, char **line_inout,
                 {
                   if (!(command_flags(current->parent) & CF_root))
                     line_warn ("@menu in invalid context");
-                  /* Add to array of menus for current node.  Currently
-                     done in Perl code. */
+                  else
+                    {
+                      ELEMENT *e
+                        = lookup_extra_contents (current_node, "menus", 1);
+                      add_to_contents_as_array (e, block);
+                    }
                 }
             }
         }
@@ -1136,14 +1127,16 @@ handle_block_command (ELEMENT *current, char **line_inout,
         {
           if (current_node)
             {
-              KEY_PAIR *k = lookup_extra (current_node, "node_long_description");
-              if (k && k->value)
+              ELEMENT *node_long_description
+                = lookup_extra_element (current_node, "node_long_description");
+              if (node_long_description)
                 line_warn ("multiple node @nodedescriptionblock");
                else
                 {
-                  KEY_PAIR *kn = lookup_extra (current_node, "node_description");
+                  ELEMENT *node_description
+                    = lookup_extra_element (current_node, "node_description");
 
-                  if (!kn || !kn->value)
+                  if (!node_description)
                     add_extra_element (current_node, "node_description",
                                        block);
 
@@ -1244,6 +1237,8 @@ handle_brace_command (ELEMENT *current, char **line_inout, enum command_id cmd,
           add_extra_string_dup (command_e, "end", ie->end);
         }
       command_e->type = ET_definfoenclose_command;
+      add_info_string_dup (current, "command_name",
+                           command_name(cmd));
     }
 
   *line_inout = line;

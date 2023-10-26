@@ -41,10 +41,28 @@
 #  iconv \
 #  libunistring \
 #  obstack \
+#  setenv \
 #  strchrnul \
 #  strndup \
+#  unicase/u8-tolower \
+#  unicase/u8-toupper \
+#  uniconv/u32-strconv-from-enc \
 #  uniconv/u8-strconv-from-enc \
+#  uniconv/u8-strconv-to-enc \
+#  unictype/category-L \
+#  unictype/category-Mn \
+#  unictype/category-test \
+#  uninorm/nfc \
+#  uninorm/nfkd \
+#  uninorm/u8-normalize \
+#  unistr/u32-next \
 #  unistr/u8-mbsnlen \
+#  unistr/u8-next \
+#  unistr/u8-strlen \
+#  unistr/u8-uctomb \
+#  uniwidth/u8-strwidth \
+#  uniwidth/u8-width \
+#  unsetenv \
 #  vasprintf \
 #  wcwidth
 
@@ -55,10 +73,28 @@ gl_MODULES([
   iconv
   libunistring
   obstack
+  setenv
   strchrnul
   strndup
+  unicase/u8-tolower
+  unicase/u8-toupper
+  uniconv/u32-strconv-from-enc
   uniconv/u8-strconv-from-enc
+  uniconv/u8-strconv-to-enc
+  unictype/category-L
+  unictype/category-Mn
+  unictype/category-test
+  uninorm/nfc
+  uninorm/nfkd
+  uninorm/u8-normalize
+  unistr/u32-next
   unistr/u8-mbsnlen
+  unistr/u8-next
+  unistr/u8-strlen
+  unistr/u8-uctomb
+  uniwidth/u8-strwidth
+  uniwidth/u8-width
+  unsetenv
   vasprintf
   wcwidth
 ])

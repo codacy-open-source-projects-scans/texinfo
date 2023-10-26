@@ -10,7 +10,6 @@ $result_trees{'seealso_duplicate'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'seealso_duplicate'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -144,6 +144,7 @@ $result_trees{'seealso_duplicate'} = {
             }
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -269,6 +270,7 @@ $result_trees{'seealso_duplicate'} = {
             }
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -322,6 +324,7 @@ $result_trees{'seealso_duplicate'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -359,33 +362,42 @@ $result_texts{'seealso_duplicate'} = '
 
 ';
 
-$result_nodes{'seealso_duplicate'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'seealso_duplicate'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'seealso_duplicate'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'seealso_duplicate'}[0];
+$result_nodes{'seealso_duplicate'}[1] = $result_nodes{'seealso_duplicate'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'seealso_duplicate'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'seealso_duplicate'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'seealso_duplicate'};
-
-$result_menus{'seealso_duplicate'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'seealso_duplicate'} = [];
 

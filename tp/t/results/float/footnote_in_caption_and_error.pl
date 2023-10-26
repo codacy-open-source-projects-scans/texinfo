@@ -10,7 +10,6 @@ $result_trees{'footnote_in_caption_and_error'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'footnote_in_caption_and_error'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -246,6 +246,7 @@ $result_trees{'footnote_in_caption_and_error'} = {
           'extra' => {
             'caption' => {},
             'float_type' => 'fl',
+            'is_target' => 1,
             'normalized' => 'label'
           },
           'info' => {
@@ -261,6 +262,7 @@ $result_trees{'footnote_in_caption_and_error'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -298,32 +300,41 @@ fl, label
 In float.
 ';
 
-$result_nodes{'footnote_in_caption_and_error'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'footnote_in_caption_and_error'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'footnote_in_caption_and_error'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'footnote_in_caption_and_error'}[0];
+$result_nodes{'footnote_in_caption_and_error'}[1] = $result_nodes{'footnote_in_caption_and_error'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'footnote_in_caption_and_error'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'footnote_in_caption_and_error'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'footnote_in_caption_and_error'};
-
-$result_menus{'footnote_in_caption_and_error'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'footnote_in_caption_and_error'} = [
   {
@@ -349,11 +360,9 @@ $result_floats{'footnote_in_caption_and_error'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'fl',
         'normalized' => 'label'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

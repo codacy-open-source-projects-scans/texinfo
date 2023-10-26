@@ -419,9 +419,10 @@ sub GNUT_get_stage_handlers()
 
 my $GNUT_file_id_setting_references = {};
 my $GNUT_formatting_references = {};
-my $GNUT_formatting_special_element_body = {};
+my $GNUT_formatting_special_unit_body = {};
 my $GNUT_commands_conversion = {};
 my $GNUT_commands_open = {};
+my $GNUT_output_units_conversion = {};
 my $GNUT_types_conversion = {};
 my $GNUT_types_open = {};
 my $GNUT_no_arg_commands_formatting_strings = {};
@@ -429,7 +430,7 @@ my $GNUT_style_commands_formatting_info = {};
 my $GNUT_accent_command_formatting_info = {};
 my $GNUT_types_formatting_info = {};
 my $GNUT_direction_string_info = {};
-my $GNUT_special_element_info = {};
+my $GNUT_special_unit_info = {};
 
 # called from init files
 sub texinfo_register_file_id_setting_function($$)
@@ -488,6 +489,20 @@ sub GNUT_get_commands_open()
 }
 
 # called from init files
+sub texinfo_register_output_unit_formatting($$)
+{
+  my $command = shift;
+  my $reference = shift;
+  $GNUT_output_units_conversion->{$command} = $reference;
+}
+
+# called from the Converter
+sub GNUT_get_output_units_conversion()
+{
+  return $GNUT_output_units_conversion;
+}
+
+# called from init files
 sub texinfo_register_type_formatting($$)
 {
   my $command = shift;
@@ -516,18 +531,18 @@ sub GNUT_get_types_open()
 }
 
 # called from init files
-sub texinfo_register_formatting_special_element_body($$)
+sub texinfo_register_formatting_special_unit_body($$)
 {
-  my $special_element_variety = shift;
+  my $special_unit_variety = shift;
   my $handler = shift;
 
-  $GNUT_formatting_special_element_body->{$special_element_variety} = $handler;
+  $GNUT_formatting_special_unit_body->{$special_unit_variety} = $handler;
 }
 
 # called from the Converter
-sub GNUT_get_formatting_special_element_body_references()
+sub GNUT_get_formatting_special_unit_body_references()
 {
-  return $GNUT_formatting_special_element_body;
+  return $GNUT_formatting_special_unit_body;
 }
 
 my $default_formatting_context = 'normal';
@@ -554,18 +569,18 @@ sub _GNUT_initialize_style_commands_formatting_info()
 
 _GNUT_initialize_style_commands_formatting_info();
 
-my @all_special_element_info_types = ('class', 'direction', 'heading', 'order',
+my @all_special_unit_info_types = ('class', 'direction', 'heading', 'order',
                              'file_string', 'target');
 
-sub _GNUT_initialize_special_element_info()
+sub _GNUT_initialize_special_unit_info()
 {
-  $GNUT_special_element_info = {};
-  foreach my $possible_type (@all_special_element_info_types) {
-    $GNUT_special_element_info->{$possible_type} = {};
+  $GNUT_special_unit_info = {};
+  foreach my $possible_type (@all_special_unit_info_types) {
+    $GNUT_special_unit_info->{$possible_type} = {};
   }
 }
 
-_GNUT_initialize_special_element_info();
+_GNUT_initialize_special_unit_info();
 
 # $translated_converted_string is supposed to be already formatted.
 # It may also be relevant to be able to pass a 'tree'
@@ -745,27 +760,27 @@ sub GNUT_get_direction_string_info()
   return { %$GNUT_direction_string_info };
 }
 
-sub texinfo_register_special_element_info($$$)
+sub texinfo_register_special_unit_info($$$)
 {
   my $type = shift;
   my $variety = shift;
   my $thing = shift;
 
-  if (not defined($GNUT_special_element_info->{$type})) {
+  if (not defined($GNUT_special_unit_info->{$type})) {
     _GNUT_document_warn(
          sprintf(__("%s: unknown special element information type %s\n"),
-                  'texinfo_register_special_element_info', $type));
+                  'texinfo_register_special_unit_info', $type));
     return 0;
   }
-  $GNUT_special_element_info->{$type}->{$variety} = {}
-    if (not exists($GNUT_special_element_info->{$type}->{$variety}));
-  $GNUT_special_element_info->{$type}->{$variety} = $thing;
+  $GNUT_special_unit_info->{$type}->{$variety} = {}
+    if (not exists($GNUT_special_unit_info->{$type}->{$variety}));
+  $GNUT_special_unit_info->{$type}->{$variety} = $thing;
   return 1;
 }
 
-sub GNUT_get_special_element_info()
+sub GNUT_get_special_unit_info()
 {
-  return { %$GNUT_special_element_info };
+  return { %$GNUT_special_unit_info };
 }
 
 
@@ -777,7 +792,7 @@ sub GNUT_reinitialize_init_files()
   @init_file_loading_messages = ();
   foreach my $reference ($init_files_options,
      $GNUT_file_id_setting_references,
-     $GNUT_formatting_references, $GNUT_formatting_special_element_body,
+     $GNUT_formatting_references, $GNUT_formatting_special_unit_body,
      $GNUT_commands_conversion, $GNUT_commands_open, $GNUT_types_conversion,
      $GNUT_types_open, $GNUT_accent_command_formatting_info,
      $GNUT_types_formatting_info, $GNUT_direction_string_info) {
@@ -786,7 +801,7 @@ sub GNUT_reinitialize_init_files()
   _GNUT_initialize_stage_handlers();
   _GNUT_initialize_no_arg_commands_formatting_strings();
   _GNUT_initialize_style_commands_formatting_info();
-  _GNUT_initialize_special_element_info();
+  _GNUT_initialize_special_unit_info();
 }
 
 
@@ -842,10 +857,9 @@ sub get_conf($$)
       return $self->{'config'}->{$var};
     } elsif (exists($main_program_default_options->{$var})) {
       return $main_program_default_options->{$var};
-    } else {
-      return undef;
     }
   }
+  return undef;
 }
 
 sub set_conf($$$)
@@ -858,5 +872,32 @@ sub set_conf($$$)
   return 1;
 }
 
+# for structuring and tree transformations XS code uses options registered
+# with the document by that function.  It is not needed in perl where
+# get_conf above is used.
+sub register_XS_document_main_configuration($$)
+{
+  my $self = shift;
+  my $document = shift;
+
+  return if (!$document->document_descriptor());
+
+  my $options;
+  if ($self->{'standalone'}) {
+    #print STDERR "STDALONE: ".join('|', sort(keys(%{$self->{'config'}})))."\n";
+    $options = $self->{'config'};
+  } else {
+    my %options = %{$main_program_default_options};
+    foreach my $config ($self->{'config'}, $init_files_options, $cmdline_options) {
+      foreach my $option (keys(%$config)) {
+        $options{$option} = $config->{$option};
+      }
+    }
+    #print STDERR "MAIN: ".join('|', sort(keys(%options)))."\n";
+    $options = \%options;
+  }
+  my $encoded_options = Texinfo::Common::encode_options($options);
+  Texinfo::Common::set_document_options($encoded_options, $document);
+}
 
 1;

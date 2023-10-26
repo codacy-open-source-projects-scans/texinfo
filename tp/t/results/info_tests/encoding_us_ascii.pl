@@ -81,6 +81,7 @@ $result_trees{'encoding_us_ascii'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -111,19 +112,22 @@ $result_texts{'encoding_us_ascii'} = '
 
 ';
 
-$result_nodes{'encoding_us_ascii'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'encoding_us_ascii'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'encoding_us_ascii'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'encoding_us_ascii'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'encoding_us_ascii'} = [];
 

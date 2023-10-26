@@ -73,6 +73,7 @@ $result_trees{'appendix_translated'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -163,6 +164,9 @@ $result_trees{'appendix_translated'} = {
           }
         }
       ],
+      'extra' => {
+        'section_number' => 'A'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -199,7 +203,7 @@ Appendix A dernier
 ';
 
 $result_sectioning{'appendix_translated'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -209,52 +213,57 @@ $result_sectioning{'appendix_translated'} = {
             'extra' => {
               'normalized' => 'Top'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_childs' => [
             {
               'cmdname' => 'appendix',
-              'structure' => {
+              'extra' => {
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
                 'section_number' => 'A',
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'appendix_translated'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'appendix_translated'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'appendix_translated'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'appendix_translated'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'appendix_translated'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'appendix_translated'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'appendix_translated'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'appendix_translated'};
+$result_sectioning{'appendix_translated'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'appendix_translated'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'appendix_translated'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'appendix_translated'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'appendix_translated'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'appendix_translated'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'appendix_translated'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'appendix_translated'};
 
-$result_nodes{'appendix_translated'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
+$result_nodes{'appendix_translated'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
+      },
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'appendix_translated'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'appendix_translated'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'appendix_translated'} = [];
 
@@ -313,7 +322,7 @@ $result_converted{'html'}->{'appendix_translated'} = '<!DOCTYPE html>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 
 <link href="#Top" rel="start" title="Top">
-<link href="#SEC_Contents" rel="contents" title="Table of Contents">
+<link href="#SEC_Contents" rel="contents" title="Table des mati&egrave;res">
 <style type="text/css">
 <!--
 a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
@@ -331,7 +340,7 @@ ul.toc-numbered-mark {list-style: none}
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
 <div class="element-contents" id="SEC_Contents">
-<h2 class="contents-heading">Table of Contents</h2>
+<h2 class="contents-heading">Table des mati&egrave;res</h2>
 
 <div class="contents">
 

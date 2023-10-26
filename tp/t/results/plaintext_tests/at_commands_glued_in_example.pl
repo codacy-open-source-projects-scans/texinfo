@@ -364,6 +364,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                   ],
                   'cmdname' => 'anchor',
                   'extra' => {
+                    'is_target' => 1,
                     'normalized' => 'anchor'
                   },
                   'source_info' => {
@@ -404,6 +405,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }

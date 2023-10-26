@@ -71,6 +71,7 @@ $result_trees{'empty_lines_at_beginning_no_setfilename'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -154,7 +155,7 @@ top
 ';
 
 $result_sectioning{'empty_lines_at_beginning_no_setfilename'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -164,37 +165,37 @@ $result_sectioning{'empty_lines_at_beginning_no_setfilename'} = {
             'extra' => {
               'normalized' => 'Top'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'empty_lines_at_beginning_no_setfilename'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'empty_lines_at_beginning_no_setfilename'};
+$result_sectioning{'empty_lines_at_beginning_no_setfilename'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'empty_lines_at_beginning_no_setfilename'};
 
-$result_nodes{'empty_lines_at_beginning_no_setfilename'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
+$result_nodes{'empty_lines_at_beginning_no_setfilename'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
+      },
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'empty_lines_at_beginning_no_setfilename'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'empty_lines_at_beginning_no_setfilename'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'empty_lines_at_beginning_no_setfilename'} = [];
 

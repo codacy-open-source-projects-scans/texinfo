@@ -20,12 +20,20 @@
 #include <stdio.h>
 
 #include "parser.h"
-#include "debug.h"
+/* for isascii_alnum and whitespace_chars */
+#include "utils.h"
 #include "tree.h"
+#include "tree_types.h"
+#include "debug.h"
+#include "debug_parser.h"
+#include "errors.h"
 #include "text.h"
+#include "counter.h"
 #include "input.h"
-#include "convert.h"
+#include "commands.h"
+#include "convert_to_texinfo.h"
 #include "source_marks.h"
+#include "extra.h"
 #include "macro.h"
 
 COUNTER count_toplevel_braces;
@@ -91,6 +99,7 @@ new_macro (char *name, ELEMENT *macro)
   else
     {
       free (m->macro_name);
+      free (m->macrobody);
     }
 
   m->macro_name = strdup (name);
@@ -549,6 +558,7 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
                   && (cmd == CM_comment || cmd == CM_c))
                 {
                   line = sep;
+                  free (command);
                   goto funexit;
                 }
               text_append_n (arg, sep, 1);
@@ -624,10 +634,11 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
   for (i = 0; i < current->args.number; i++)
     {
       ELEMENT *argument_content = current->args.list[i]->contents.list[0];
-      KEY_PAIR *k = lookup_extra (argument_content, "toplevel_braces_nr");
-      if (k)
+      KEY_PAIR *k_toplevel_braces_nr
+                   = lookup_extra (argument_content, "toplevel_braces_nr");
+      if (k_toplevel_braces_nr)
         {
-          if ((intptr_t) k->value == 1)
+          if ((intptr_t) k_toplevel_braces_nr->value == 1)
             {
               int text_len = strlen(argument_content->text.text);
               if (argument_content->text.text[0] == '{'
@@ -635,7 +646,7 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
                 {
                   char *braced_text = strdup (argument_content->text.text);
                   debug_nonl ("TURN to bracketed %d ", i);
-                  debug_print_element (argument_content, 0); debug ("");
+                  debug_parser_print_element (argument_content, 0); debug ("");
 
                   text_reset (&argument_content->text);
                   text_append_n (&argument_content->text,
@@ -645,8 +656,8 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
                 }
             }
 
-          k->key = "";
-          k->type = extra_deleted;
+          k_toplevel_braces_nr->key = "";
+          k_toplevel_braces_nr->type = extra_deleted;
         }
     }
   debug ("END LINEMACRO ARGS EXPANSION");
@@ -950,15 +961,18 @@ handle_macro (ELEMENT *current, char **line_inout, enum command_id cmd)
 
   expand_macro_body (macro_record, macro_call_element, &expanded);
 
-  if (expanded.text)
+  if (expanded.text && expanded.end > 0)
     {
       if (expanded.text[expanded.end - 1] == '\n')
         expanded.text[--expanded.end] = '\0';
       expanded_macro_text = expanded.text;
     }
   else
-    /* we want to always have a text for the source mark */
-    expanded_macro_text = strdup ("");
+    {
+      free (expanded.text);
+      /* we want to always have a text for the source mark */
+      expanded_macro_text = strdup ("");
+    }
 
   debug ("MACROBODY: %s||||||", expanded_macro_text);
 

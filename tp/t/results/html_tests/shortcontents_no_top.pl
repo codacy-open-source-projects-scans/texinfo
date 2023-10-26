@@ -35,6 +35,9 @@ $result_trees{'shortcontents_no_top'} = {
           'type' => 'empty_line'
         }
       ],
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -71,6 +74,9 @@ $result_trees{'shortcontents_no_top'} = {
           'type' => 'empty_line'
         }
       ],
+      'extra' => {
+        'section_number' => '2'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -122,6 +128,9 @@ $result_trees{'shortcontents_no_top'} = {
           }
         }
       ],
+      'extra' => {
+        'section_number' => '2.1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -159,45 +168,51 @@ $result_texts{'shortcontents_no_top'} = '1 chap
 ';
 
 $result_sectioning{'shortcontents_no_top'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'chapter',
-        'structure' => {
+        'extra' => {
+          'section_directions' => {},
           'section_level' => 1,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       },
       {
         'cmdname' => 'chapter',
-        'structure' => {
+        'extra' => {
           'section_childs' => [
             {
               'cmdname' => 'section',
-              'structure' => {
+              'extra' => {
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 2,
-                'section_number' => '2.1',
-                'section_up' => {}
+                'section_number' => '2.1'
               }
             }
           ],
+          'section_directions' => {
+            'prev' => {}
+          },
           'section_level' => 1,
-          'section_number' => 2,
-          'section_prev' => {},
-          'section_up' => {},
-          'toplevel_prev' => {}
+          'section_number' => '2',
+          'toplevel_directions' => {
+            'prev' => {}
+          }
         }
       }
     ],
     'section_level' => 0
   }
 };
-$result_sectioning{'shortcontents_no_top'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'shortcontents_no_top'};
-$result_sectioning{'shortcontents_no_top'}{'structure'}{'section_childs'}[1]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'shortcontents_no_top'}{'structure'}{'section_childs'}[1];
-$result_sectioning{'shortcontents_no_top'}{'structure'}{'section_childs'}[1]{'structure'}{'section_prev'} = $result_sectioning{'shortcontents_no_top'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'shortcontents_no_top'}{'structure'}{'section_childs'}[1]{'structure'}{'section_up'} = $result_sectioning{'shortcontents_no_top'};
-$result_sectioning{'shortcontents_no_top'}{'structure'}{'section_childs'}[1]{'structure'}{'toplevel_prev'} = $result_sectioning{'shortcontents_no_top'}{'structure'}{'section_childs'}[0];
+$result_sectioning{'shortcontents_no_top'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'shortcontents_no_top'};
+$result_sectioning{'shortcontents_no_top'}{'extra'}{'section_childs'}[1]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'shortcontents_no_top'}{'extra'}{'section_childs'}[1];
+$result_sectioning{'shortcontents_no_top'}{'extra'}{'section_childs'}[1]{'extra'}{'section_directions'}{'prev'} = $result_sectioning{'shortcontents_no_top'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'shortcontents_no_top'}{'extra'}{'section_childs'}[1]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'shortcontents_no_top'}{'extra'}{'section_childs'}[0];
 
 $result_errors{'shortcontents_no_top'} = [];
 
@@ -268,7 +283,6 @@ $result_converted_errors{'html'}->{'shortcontents_no_top'} = [
   {
     'error_line' => 'warning: must specify a title with a title command or @top
 ',
-    'file_name' => 'shortcontents_no_top.texi',
     'text' => 'must specify a title with a title command or @top',
     'type' => 'warning'
   }

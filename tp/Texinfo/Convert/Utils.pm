@@ -58,10 +58,10 @@ add_heading_number
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
-our @MONTH_NAMES =
+our @month_name =
     (
      'January', 'February', 'March', 'April', 'May',
      'June', 'July', 'August', 'September', 'October',
@@ -104,8 +104,8 @@ sub expand_today($)
 
   $year += ($year < 70) ? 2000 : 1900;
   return $self->gdt('{month} {day}, {year}',
-          { 'month' => $self->gdt($MONTH_NAMES[$mon]),
-            'day' => $mday, 'year' => $year });
+          { 'month' => $self->gdt($month_name[$mon]),
+            'day' => {'text' => $mday}, 'year' => {'text' => $year} });
 }
 
 sub definition_arguments_content($)
@@ -133,7 +133,7 @@ sub definition_arguments_content($)
     shift @args;
   }
   if (scalar(@args) > 0) {
-    $args = \@args;
+    $args = {'contents' => \@args};
   }
   return ($category, $class, $type, $name, $args);
 }
@@ -145,6 +145,9 @@ sub definition_category_tree($$)
   my $current = shift;
 
   return undef if (!$current->{'args'}->[0]->{'contents'});
+
+  # NOTE we take care of not changing the parent of the tree elements.
+  # We could also copy them and set the parent (as in the XS code).
 
   my $arg_category;
   my $arg_class;
@@ -165,8 +168,11 @@ sub definition_category_tree($$)
 
   my $arg_class_code;
   if (! $self) {
-    $arg_class_code = {'cmdname' => 'code',
-       'args' => [{'type' => 'brace_command_arg', 'contents' => [$arg_class]}]};
+    $arg_class_code = {'cmdname' => 'code'};
+    my $brace_arg
+      = {'type' => 'brace_command_arg', 'contents' => [$arg_class],
+         'parent' => $arg_class_code};
+    $arg_class_code->{'args'} = [$brace_arg];
   }
   
   my $def_command = $current->{'extra'}->{'def_command'};
@@ -177,10 +183,15 @@ sub definition_category_tree($$)
     if ($self) {
       # TRANSLATORS: association of a method or operation name with a class
       # in descriptions of object-oriented programming methods or operations.
-      return $self->gdt('{category} on @code{{class}}', { 'category' => $arg_category,
-                                          'class' => $arg_class });
+      return $self->gdt('{category} on @code{{class}}',
+                                         {'category' => $arg_category,
+                                          'class' => $arg_class});
     } else {
-      return {'contents' => [$arg_category, {'text' => ' on '}, $arg_class_code]};
+      my $result = {};
+      $result->{'contents'}
+        = [$arg_category, {'text' => ' on ', 'parent' => $result},
+           $arg_class_code];
+      return $result;
     }
   } elsif ($def_command eq 'defivar'
            or $def_command eq 'deftypeivar'
@@ -193,7 +204,11 @@ sub definition_category_tree($$)
       return $self->gdt('{category} of @code{{class}}', { 'category' => $arg_category,
                                           'class' => $arg_class });
     } else {
-      return {'contents' => [$arg_category, {'text' => ' of '}, $arg_class_code]};
+      my $result = {};
+      $result->{'contents'}
+        = [$arg_category, {'text' => ' of ', 'parent' => $result},
+           $arg_class_code];
+      return $result;
     }
   }
 }
@@ -214,16 +229,16 @@ sub find_innermost_accent_contents($)
       cluck "BUG: Not an accent command in accent\n";
       #print STDERR Texinfo::Convert::Texinfo::convert_to_texinfo($current)."\n";
       #print STDERR Data::Dumper->Dump([$current]);
-      last;
+      return ({}, \@accent_commands);
     }
     push @accent_commands, $current;
     # A bogus accent, that may happen
     if (!$current->{'args'}) {
-      return ([], \@accent_commands);
+      return ({}, \@accent_commands);
     }
     my $arg = $current->{'args'}->[0];
     if (!$arg->{'contents'}) {
-      return ([], \@accent_commands);
+      return ({}, \@accent_commands);
     }
     # inside the argument of an accent
     my $text_contents = [];
@@ -240,7 +255,7 @@ sub find_innermost_accent_contents($)
       }
     }
     # we go here if there was no nested accent
-    return ($text_contents, \@accent_commands);
+    return ({'contents' => $text_contents}, \@accent_commands);
   }
 }
 
@@ -255,8 +270,8 @@ sub expand_verbatiminclude($$$)
   my $customization_information = shift;
   my $current = shift;
 
-  return unless ($current->{'extra'}
-                 and defined($current->{'extra'}->{'text_arg'}));
+  return undef unless ($current->{'extra'}
+                       and defined($current->{'extra'}->{'text_arg'}));
   my $file_name_text = $current->{'extra'}->{'text_arg'};
 
   my $input_encoding
@@ -289,8 +304,7 @@ sub expand_verbatiminclude($$$)
       $verbatiminclude = { 'cmdname' => 'verbatim',
                            'parent' => $current->{'parent'},
                            'contents' => [],
-                           'extra' =>
-                        {'text_arg' => $current->{'extra'}->{'text_arg'}} };
+                         };
       while (<VERBINCLUDE>) {
         push @{$verbatiminclude->{'contents'}},
                   {'type' => 'raw', 'text' => $_ };
@@ -317,6 +331,9 @@ sub expand_verbatiminclude($$$)
   return $verbatiminclude;
 }
 
+# $TEXT can be indented, however this can only happen for
+# *heading headings, which are not numbered.  If it was not the case,
+# the code would need to be changed.
 sub add_heading_number($$$;$)
 {
   my $self = shift;
@@ -325,24 +342,22 @@ sub add_heading_number($$$;$)
   my $numbered = shift;
 
   my $number;
-  if ($current->{'structure'}
-      and defined($current->{'structure'}->{'section_number'})
+  if ($current->{'extra'}
+      and defined($current->{'extra'}->{'section_number'})
       and ($numbered or !defined($numbered))) {
-    $number = $current->{'structure'}->{'section_number'};
+    $number = $current->{'extra'}->{'section_number'};
   }
 
   my $result;
   if ($self) {
     if (defined($number)) {
       if ($current->{'cmdname'} eq 'appendix'
-          and $current->{'structure'}->{'section_level'} == 1) {
-        $result = $self->gdt('Appendix {number} {section_title}',
-                   {'number' => $number, 'section_title' => $text},
-                   undef, 'translated_text');
+          and $current->{'extra'}->{'section_level'} == 1) {
+        $result = $self->gdt_string('Appendix {number} {section_title}',
+                   {'number' => $number, 'section_title' => $text});
       } else {
-        $result = $self->gdt('{number} {section_title}',
-                   {'number' => $number, 'section_title' => $text},
-                   undef, 'translated_text');
+        $result = $self->gdt_string('{number} {section_title}',
+                   {'number' => $number, 'section_title' => $text});
       }
     } else {
       $result = $text;
@@ -351,7 +366,7 @@ sub add_heading_number($$$;$)
     $result = $text;
     $result = $number.' '.$result if (defined($number));
     if ($current->{'cmdname'} eq 'appendix'
-        and $current->{'structure'}->{'section_level'} == 1) {
+        and $current->{'extra'}->{'section_level'} == 1) {
       $result = 'Appendix '.$result;
     }
   }
@@ -414,7 +429,7 @@ sub find_root_command_next_heading_command($$;$$)
         }
       # brace commands
       } else {
-        if ($Texinfo::Common::non_formatted_brace_commands{$content->{'cmdname'}}) {
+        if ($Texinfo::Commands::non_formatted_brace_commands{$content->{'cmdname'}}) {
           next;
         } else {
           return undef;
@@ -447,9 +462,9 @@ sub encoded_output_file_name($$)
   if ($output_file_name_encoding) {
     $encoding = $output_file_name_encoding;
   } elsif ($self->get_conf('DOC_ENCODING_FOR_OUTPUT_FILE_NAME')) {
-    $encoding = $self->{'parser_info'}->{'input_perl_encoding'}
-      if ($self->{'parser_info'}
-        and defined($self->{'parser_info'}->{'input_perl_encoding'}));
+    $encoding = $self->{'document_info'}->{'input_perl_encoding'}
+      if ($self->{'document_info'}
+        and defined($self->{'document_info'}->{'input_perl_encoding'}));
   } else {
     $encoding = $self->get_conf('LOCALE_ENCODING');
   }
@@ -457,7 +472,10 @@ sub encoded_output_file_name($$)
   return Texinfo::Common::encode_file_name($file_name, $encoding);
 }
 
-# this requires a converter argument
+# this requires a converter argument as customization is read.
+# The input file encoding can be given as $INPUT_FILE_ENCODING optional
+# argument, it will be used if DOC_ENCODING_FOR_INPUT_FILE_NAME is
+# undef or set.
 # Reverse the decoding of the file name from the input encoding.
 sub encoded_input_file_name($$;$)
 {
@@ -467,15 +485,23 @@ sub encoded_input_file_name($$;$)
 
   my $encoding;
   my $input_file_name_encoding = $self->get_conf('INPUT_FILE_NAME_ENCODING');
+  my $doc_encoding_for_input_file_name
+    = $self->get_conf('DOC_ENCODING_FOR_INPUT_FILE_NAME');
+
   if ($input_file_name_encoding) {
     $encoding = $input_file_name_encoding;
-  } elsif ($self->get_conf('DOC_ENCODING_FOR_INPUT_FILE_NAME')) {
+
+  # not defined DOC_ENCODING_FOR_INPUT_FILE_NAME should not happen for
+  # converters inheriting from Converter, but can happen for the Text
+  # converter.
+  } elsif (!defined($doc_encoding_for_input_file_name)
+           or $doc_encoding_for_input_file_name) {
     if (defined($input_file_encoding)) {
       $encoding = $input_file_encoding;
     } else {
-      $encoding = $self->{'parser_info'}->{'input_perl_encoding'}
-        if ($self->{'parser_info'}
-          and defined($self->{'parser_info'}->{'input_perl_encoding'}));
+      $encoding = $self->{'document_info'}->{'input_perl_encoding'}
+        if ($self->{'document_info'}
+          and defined($self->{'document_info'}->{'input_perl_encoding'}));
     }
   } else {
     $encoding = $self->get_conf('LOCALE_ENCODING');
@@ -564,7 +590,7 @@ I<$element> should be a C<@def*> Texinfo tree element.  The
 I<$category>, I<$class>, I<$type>, I<$name> are elements corresponding
 to the definition @-command line.  Texinfo elements
 on the @-command line corresponding to arguments in the function
-definition are returned in the I<$arguments> array reference.
+definition are returned in the I<$arguments> element.
 Arguments correspond to text following the other elements
 on the @-command line.  If there is no argument, I<$arguments>
 will be C<undef>.
@@ -615,11 +641,11 @@ returns a C<@verbatim> tree elements after finding the included file and
 reading it.  If I<$registrar> is not defined, error messages are not
 registered.
 
-=item (\@contents, \@accent_commands) = find_innermost_accent_contents($element)
+=item ($contents_element, \@accent_commands) = find_innermost_accent_contents($element)
 X<C<find_innermost_accent_contents>>
 
 I<$element> should be an accent command Texinfo tree element.  Returns
-an array reference containing the innermost accent @-command contents,
+an element containing the innermost accent @-command contents,
 normally a text element with one or two letter, and an array reference
 containing the accent commands nested in I<$element> (including
 I<$element>).

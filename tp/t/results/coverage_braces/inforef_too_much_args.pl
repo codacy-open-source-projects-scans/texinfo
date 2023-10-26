@@ -94,6 +94,7 @@ $result_trees{'inforef_too_much_args'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chapter'
       },
       'info' => {
@@ -122,19 +123,22 @@ $result_texts{'inforef_too_much_args'} = '
 chapter
 ';
 
-$result_nodes{'inforef_too_much_args'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'chapter'
+$result_nodes{'inforef_too_much_args'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'chapter'
+    }
   }
-};
+];
 
-$result_menus{'inforef_too_much_args'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'chapter'
+$result_menus{'inforef_too_much_args'} = [
+  {
+    'extra' => {
+      'normalized' => 'chapter'
+    }
   }
-};
+];
 
 $result_errors{'inforef_too_much_args'} = [
   {

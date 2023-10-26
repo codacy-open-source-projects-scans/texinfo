@@ -76,6 +76,7 @@ $result_trees{'def_syn_indices'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -145,6 +146,7 @@ $result_trees{'def_syn_indices'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'Chapter-index'
       },
@@ -261,6 +263,7 @@ $result_trees{'def_syn_indices'} = {
             ]
           },
           'info' => {
+            'command_name' => 'trucindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -417,6 +420,7 @@ $result_trees{'def_syn_indices'} = {
             ]
           },
           'info' => {
+            'command_name' => 'codeidxindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -459,6 +463,7 @@ $result_trees{'def_syn_indices'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -541,6 +546,7 @@ $result_trees{'def_syn_indices'} = {
             ]
           },
           'info' => {
+            'command_name' => 'kindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -578,6 +584,7 @@ $result_trees{'def_syn_indices'} = {
             ]
           },
           'info' => {
+            'command_name' => 'pindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -808,6 +815,7 @@ $result_trees{'def_syn_indices'} = {
             ]
           },
           'info' => {
+            'command_name' => 'defgindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -850,6 +858,7 @@ $result_trees{'def_syn_indices'} = {
             ]
           },
           'info' => {
+            'command_name' => 'abcindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1294,7 +1303,9 @@ $result_trees{'def_syn_indices'} = {
           }
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -1424,7 +1435,7 @@ fn
 ';
 
 $result_sectioning{'def_syn_indices'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -1433,11 +1444,8 @@ $result_sectioning{'def_syn_indices'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -1447,73 +1455,82 @@ $result_sectioning{'def_syn_indices'} = {
                   'extra' => {
                     'isindex' => 1,
                     'normalized' => 'Chapter-index'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'def_syn_indices'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'def_syn_indices'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'def_syn_indices'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'def_syn_indices'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'def_syn_indices'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'def_syn_indices'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'def_syn_indices'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'def_syn_indices'};
+$result_sectioning{'def_syn_indices'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'def_syn_indices'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'def_syn_indices'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'def_syn_indices'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'def_syn_indices'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'def_syn_indices'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'def_syn_indices'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'def_syn_indices'};
 
-$result_nodes{'def_syn_indices'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'isindex' => 1,
-        'normalized' => 'Chapter-index'
+$result_nodes{'def_syn_indices'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'Chapter-index'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'def_syn_indices'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'def_syn_indices'}[0];
+$result_nodes{'def_syn_indices'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'def_syn_indices'}[0];
+$result_nodes{'def_syn_indices'}[1] = $result_nodes{'def_syn_indices'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'def_syn_indices'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'Chapter-index'
     }
   }
-};
-$result_nodes{'def_syn_indices'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'def_syn_indices'};
-$result_nodes{'def_syn_indices'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'def_syn_indices'};
-
-$result_menus{'def_syn_indices'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'def_syn_indices'} = [
   {
@@ -1590,9 +1607,6 @@ $result_indices{'def_syn_indices'} = {
       'name' => 'abc'
     },
     'codeidx' => {
-      'contained_indices' => {
-        'codeidx' => 1
-      },
       'in_code' => 1,
       'name' => 'codeidx'
     },
@@ -1607,11 +1621,6 @@ $result_indices{'def_syn_indices'} = {
       'name' => 'defg'
     },
     'fn' => {
-      'contained_indices' => {
-        'cp' => 1,
-        'fn' => 1,
-        'truc' => 1
-      },
       'in_code' => 1,
       'name' => 'fn'
     },
@@ -1621,19 +1630,10 @@ $result_indices{'def_syn_indices'} = {
       'name' => 'ky'
     },
     'pg' => {
-      'contained_indices' => {
-        'abc' => 1,
-        'defg' => 1,
-        'ky' => 1,
-        'pg' => 1
-      },
       'in_code' => 1,
       'name' => 'pg'
     },
     'tp' => {
-      'contained_indices' => {
-        'tp' => 1
-      },
       'in_code' => 1,
       'name' => 'tp'
     },
@@ -1643,9 +1643,6 @@ $result_indices{'def_syn_indices'} = {
       'name' => 'truc'
     },
     'vr' => {
-      'contained_indices' => {
-        'vr' => 1
-      },
       'in_code' => 1,
       'name' => 'vr'
     }

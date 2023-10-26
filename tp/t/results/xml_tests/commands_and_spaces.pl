@@ -741,6 +741,7 @@ $result_trees{'commands_and_spaces'} = {
           'extra' => {
             'caption' => {},
             'float_type' => 'ff',
+            'is_target' => 1,
             'normalized' => 'b',
             'shortcaption' => {}
           },
@@ -1667,6 +1668,7 @@ $result_trees{'commands_and_spaces'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'a'
       },
       'info' => {
@@ -1811,49 +1813,54 @@ T
 
 ';
 
-$result_nodes{'commands_and_spaces'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'a'
-  },
-  'structure' => {
-    'node_next' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'b'
-          }
-        ]
-      }
-    },
-    'node_prev' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'c'
-          }
-        ]
-      }
-    },
-    'node_up' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'd'
-          }
-        ]
-      }
+$result_nodes{'commands_and_spaces'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'b'
+              }
+            ]
+          },
+          'type' => 'line_arg'
+        },
+        'prev' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'c'
+              }
+            ]
+          },
+          'type' => 'line_arg'
+        },
+        'up' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'd'
+              }
+            ]
+          },
+          'type' => 'line_arg'
+        }
+      },
+      'normalized' => 'a'
     }
   }
-};
+];
 
-$result_menus{'commands_and_spaces'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'a'
-  },
-  'structure' => {}
-};
+$result_menus{'commands_and_spaces'} = [
+  {
+    'extra' => {
+      'normalized' => 'a'
+    }
+  }
+];
 
 $result_errors{'commands_and_spaces'} = [
   {
@@ -1879,6 +1886,7 @@ $result_floats{'commands_and_spaces'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'ff',
         'normalized' => 'b',
         'shortcaption' => {
@@ -1887,9 +1895,6 @@ $result_floats{'commands_and_spaces'} = {
             'float' => {}
           }
         }
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

@@ -65,28 +65,34 @@ makeinfo: texi2any
 modulesdir = $(pkgdatadir)/Texinfo
 dist_modules_DATA = \
  Texinfo/Config.pm \
+ Texinfo/Common.pm \
+ Texinfo/Commands.pod \
+ Texinfo/Commands.pm \
+ Texinfo/DebugTree.pm \
+ Texinfo/Document.pm \
+ Texinfo/Documentlanguages.pm \
+ Texinfo/MiscXS.pm \
+ Texinfo/Options.pm \
  Texinfo/Parser.pm \
  Texinfo/ParserNonXS.pm \
  Texinfo/Report.pm \
- Texinfo/Common.pm \
- Texinfo/Commands.pod \
+ Texinfo/StructTransf.pm \
  Texinfo/Structuring.pm \
  Texinfo/Transformations.pm \
  Texinfo/Translations.pm \
- Texinfo/MiscXS.pm \
- Texinfo/XSLoader.pm \
- Texinfo/Documentlanguages.pm
+ Texinfo/TranslationsNonXS.pm \
+ Texinfo/XSLoader.pm
 
 dist_noinst_DATA = \
  Texinfo/ModulePath.pm.in
 
 modules_DATA = \
- Texinfo/ModulePath.pm \
- Texinfo/Commands.pm
+ Texinfo/ModulePath.pm
 
 convertersdir = $(pkgdatadir)/Texinfo/Convert
 dist_converters_DATA = \
  Texinfo/Convert/Converter.pm \
+ Texinfo/Convert/ConvertXS.pm \
  Texinfo/Convert/DocBook.pm \
  Texinfo/Convert/HTML.pm \
  Texinfo/Convert/IXIN.pm \
@@ -106,10 +112,6 @@ dist_converters_DATA = \
  Texinfo/Convert/TextContent.pm \
  Texinfo/Convert/Unicode.pm \
  Texinfo/Convert/Utils.pm
-
-debugmodulesdir = $(pkgdatadir)/DebugTexinfo
-dist_debugmodules_DATA = \
- DebugTexinfo/DebugTree.pm
 
 # extensions used in main program
 extensionsdir = $(datadir)/texinfo/ext
@@ -186,6 +188,7 @@ test_files = \
  t/init/test_renamed_nodes.init \
  t/init/translate_txiinternalvalue_macro.init \
  t/init/translated_strings_customization.pm \
+ t/init/translation_in_parser_in_translation.pm \
  t/init/undef_node_file_name.init \
  t/init/spaces_in_line_breaks.init \
  t/test_utils.pl \
@@ -206,6 +209,7 @@ test_files = \
  t/input_files/contents_in_middle_section.texi \
  t/input_files/cpp_directives_after_macros.texi \
  t/input_files/cpp_directives_in_macro.texi \
+ t/input_files/cpp_directives_line_value_macro.texi \
  t/input_files/cpp_line_before_first_node.texi \
  t/input_files/cpp_lines.texi \
  t/input_files/cpp_line_latin1.texi \
@@ -303,6 +307,10 @@ maintenance_files = \
   maintain/regenerate_documentlanguages-loc.pl \
   maintain/regenerate_file_lists.pl \
   maintain/regenerate_commands_perl_info.pl \
+  maintain/regenerate_perl_options_info.pl \
+  maintain/regenerate_C_options_info.pl \
+  maintain/setup_accent_tables.pl \
+  maintain/setup_converters_code_tables.pl \
   maintain/template.pod \
   maintain/catalog.xml.in
 
@@ -313,7 +321,8 @@ EXTRA_DIST = \
   $(tp_tests) \
   $(maintenance_files) \
   maintain/lib \
-  Texinfo/command_data.txt
+  Texinfo/command_data.txt \
+  Texinfo/options_data.txt
 
 # template.pod is the basis for the .pm documentation, and the script
 # invoked here updates them; to be run when template.pod changes.
@@ -337,9 +346,12 @@ Texinfo/ModulePath.pm: Texinfo/ModulePath.pm.in Makefile
 	    -e 's|[@]ICONV_CONVERTS_EUC_CN[@]|$(ICONV_CONVERTS_EUC_CN)|' \
 	  $(srcdir)/Texinfo/ModulePath.pm.in >$@
 
-Texinfo/Commands.pm: Texinfo/command_data.txt
-	$(MKDIR_P) Texinfo
-	$(srcdir)/maintain/regenerate_commands_perl_info.pl < $(srcdir)/Texinfo/command_data.txt
+# FIXME duplicated in Texinfo/XS/Makefile.am. Remove from here?
+$(srcdir)/Texinfo/Commands.pm: Texinfo/command_data.txt
+	$(srcdir)/maintain/regenerate_commands_perl_info.pl $(srcdir)/Texinfo/Commands.pm < $(srcdir)/Texinfo/command_data.txt
+
+$(srcdir)/Texinfo/Options.pm: Texinfo/options_data.txt
+	$(srcdir)/maintain/regenerate_perl_options_info.pl $(srcdir)/Texinfo/Options.pm < $(srcdir)/Texinfo/options_data.txt
 
 libsrcdir = $(srcdir)/maintain/lib
 
@@ -385,4 +397,5 @@ distclean-local:
 	rm -rf po po_document
 
 CLEANFILES = texi2any makeinfo Texinfo/ModulePath.pm
-DISTCLEANFILES = maintain/catalog.xml Texinfo/Commands.pm
+DISTCLEANFILES = maintain/catalog.xml
+MAINTAINERCLEANFILES = Texinfo/Commands.pm Texinfo/Options.pm

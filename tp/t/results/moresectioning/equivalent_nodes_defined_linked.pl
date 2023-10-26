@@ -187,6 +187,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -312,7 +313,8 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
             }
           ],
           'extra' => {
-            'float_type' => 'Figure'
+            'float_type' => 'Figure',
+            'normalized' => 'chap'
           },
           'info' => {
             'spaces_before_argument' => {
@@ -479,6 +481,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -533,53 +536,48 @@ Ref to node chap.
 Ref to @samp{chap} chap.
 ';
 
-$result_nodes{'equivalent_nodes_defined_linked'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
-      },
-      'structure' => {
-        'node_up' => {}
-      }
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'equivalent_nodes_defined_linked'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'equivalent_nodes_defined_linked'};
-$result_nodes{'equivalent_nodes_defined_linked'}{'structure'}{'node_next'} = $result_nodes{'equivalent_nodes_defined_linked'}{'structure'}{'menu_child'};
-
-$result_menus{'equivalent_nodes_defined_linked'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
-      },
-      'structure' => {
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'Top' => 1
+$result_nodes{'equivalent_nodes_defined_linked'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'up' => {}
+            },
+            'normalized' => 'chap'
+          }
         }
-      }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'equivalent_nodes_defined_linked'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'equivalent_nodes_defined_linked'}[0];
+$result_nodes{'equivalent_nodes_defined_linked'}[1] = $result_nodes{'equivalent_nodes_defined_linked'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'equivalent_nodes_defined_linked'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'normalized' => 'chap'
     }
   }
-};
-$result_menus{'equivalent_nodes_defined_linked'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'equivalent_nodes_defined_linked'};
+];
+$result_menus{'equivalent_nodes_defined_linked'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'equivalent_nodes_defined_linked'}[0];
 
 $result_errors{'equivalent_nodes_defined_linked'} = [
   {
@@ -611,21 +609,21 @@ $result_errors{'equivalent_nodes_defined_linked'} = [
     'type' => 'warning'
   },
   {
-    'error_line' => 'warning: @menu entry node name `@strong{chap}\' different from node name `chap\'
-',
-    'file_name' => '',
-    'line_nr' => 4,
-    'macro' => '',
-    'text' => '@menu entry node name `@strong{chap}\' different from node name `chap\'',
-    'type' => 'warning'
-  },
-  {
     'error_line' => 'warning: Next pointer `@asis{chap}\' (for node `Top\') different from node name `chap\'
 ',
     'file_name' => '',
     'line_nr' => 1,
     'macro' => '',
     'text' => 'Next pointer `@asis{chap}\' (for node `Top\') different from node name `chap\'',
+    'type' => 'warning'
+  },
+  {
+    'error_line' => 'warning: @menu entry node name `@strong{chap}\' different from node name `chap\'
+',
+    'file_name' => '',
+    'line_nr' => 4,
+    'macro' => '',
+    'text' => '@menu entry node name `@strong{chap}\' different from node name `chap\'',
     'type' => 'warning'
   }
 ];
@@ -636,7 +634,9 @@ $result_floats{'equivalent_nodes_defined_linked'} = {
     {
       'cmdname' => 'float',
       'extra' => {
-        'float_type' => 'Figure'
+        'float_number' => '1',
+        'float_type' => 'Figure',
+        'normalized' => 'chap'
       }
     }
   ]
@@ -658,10 +658,10 @@ File: ,  Node: chap,  Up: Top
 
 A figure
 
-Figure
+Figure 1
 * Menu:
 
-* Figure: ‘chap’.                        
+* Figure 1: ‘chap’.                      
 
    Ref to node *note chap::.
 
@@ -728,7 +728,7 @@ Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
 
 <div class="float">
 <p>A figure
-</p><div class="type-number-float"><p><strong class="strong">Figure</strong></p></div></div>
+</p><div class="type-number-float"><p><strong class="strong">Figure 1</strong></p></div></div>
 <dl class="listoffloats">
 </dl>
 

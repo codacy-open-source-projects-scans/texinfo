@@ -36,6 +36,7 @@ $result_trees{'form_feeds'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -1144,6 +1145,7 @@ $result_trees{'form_feeds'} = {
           ],
           'extra' => {
             'float_type' => 'type',
+            'is_target' => 1,
             'normalized' => 'fl'
           },
           'info' => {
@@ -1201,6 +1203,7 @@ $result_trees{'form_feeds'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap-node'
       },
       'info' => {
@@ -1311,32 +1314,41 @@ in float
 
 ';
 
-$result_nodes{'form_feeds'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap-node'
+$result_nodes{'form_feeds'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap-node'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'form_feeds'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'form_feeds'}[0];
+$result_nodes{'form_feeds'}[1] = $result_nodes{'form_feeds'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'form_feeds'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap-node'
     }
   }
-};
-$result_nodes{'form_feeds'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'form_feeds'};
-
-$result_menus{'form_feeds'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'form_feeds'} = [];
 
@@ -1366,11 +1378,9 @@ $result_floats{'form_feeds'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => 'type',
         'normalized' => 'fl'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]
@@ -1396,13 +1406,13 @@ $result_converted{'plaintext'}->{'form_feeds'} = 'aa
 
    dd
 
-   ‘end in code’
+   ‘end in code ’
 
-   ‘begin in code’
+   ‘ begin in code’
 
-   ‘middlein code’
+   ‘middle in code’
 
-   *Note chapnode::
+   *Note chap node::
 
      in example
 

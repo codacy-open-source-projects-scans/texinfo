@@ -19,7 +19,7 @@
 
 use strict;
 use Getopt::Long qw(GetOptions);
-# for dirname.
+# for fileparse.
 use File::Basename;
 use File::Spec;
 
@@ -35,49 +35,62 @@ BEGIN
   $^W = 1;
   my ($real_command_name, $command_directory, $command_suffix)
      = fileparse($0, '.pl');
+  my $updir = File::Spec->updir();
 
   my $datadir = '@datadir@';
   my $package = '@PACKAGE@';
-  my $updir = File::Spec->updir();
+  my $xsdir = '@pkglibdir@';
 
   my $texinfolibdir;
   my $lib_dir;
 
   # in-source run
-  if (($command_suffix eq '.pl' and !(defined($ENV{'TEXINFO_DEV_SOURCE'})
-       and $ENV{'TEXINFO_DEV_SOURCE'} eq 0)) or $ENV{'TEXINFO_DEV_SOURCE'}) {
-    my $srcdir = defined $ENV{'srcdir'} ? $ENV{'srcdir'} : $command_directory;
-    $texinfolibdir = File::Spec->catdir($srcdir, $updir, 'tp');
-    $lib_dir = File::Spec->catdir($texinfolibdir, 'maintain');
-    unshift @INC, (File::Spec->catdir($srcdir, 'lib'), $texinfolibdir);
-  } elsif ($datadir ne '@' .'datadir@' and $package ne '@' . 'PACKAGE@'
-           and $datadir ne '') {
-    $texinfolibdir = File::Spec->catdir($datadir, $package);
-    # try to make package relocatable, will only work if standard relative paths
-    # are used
-    if (! -f File::Spec->catfile($texinfolibdir, 'Texinfo', 'Parser.pm')
-        and -f File::Spec->catfile($command_directory, $updir, 'share',
-                                   'texinfo', 'Texinfo', 'Parser.pm')) {
-      $texinfolibdir = File::Spec->catdir($command_directory, $updir,
-                                          'share', 'texinfo');
+  if ($datadir eq '@' .'datadir@'
+      or defined($ENV{'TEXINFO_DEV_SOURCE'})
+         and $ENV{'TEXINFO_DEV_SOURCE'} ne '0') {
+    # To find Texinfo::ModulePath
+    if (defined($ENV{'top_builddir'})) {
+      unshift @INC, File::Spec->catdir($ENV{'top_builddir'}, 'tp');
+    } else {
+      unshift @INC, File::Spec->catdir($command_directory, $updir, 'tp');
     }
-    $lib_dir = $texinfolibdir;
-    unshift @INC, (File::Spec->catdir($texinfolibdir, 'Pod-Simple-Texinfo'),
-                   $texinfolibdir);
-  }
 
-  # '@USE_EXTERNAL_LIBINTL @ and similar are substituted in the
-  # makefile using values from configure
-  if (defined($texinfolibdir)) {
-    if ('@USE_EXTERNAL_LIBINTL@' ne 'yes') {
-      unshift @INC, (File::Spec->catdir($lib_dir, 'lib', 'libintl-perl', 'lib'));
+    require Texinfo::ModulePath;
+    Texinfo::ModulePath::init(undef, undef, undef, 'updirs' => 1);
+
+    # To find Pod::Simple::Texinfo
+    if (defined($ENV{'top_builddir'})) {
+      unshift @INC, File::Spec->catdir($ENV{'top_builddir'},
+                                       'Pod-Simple-Texinfo', 'lib');
+    } else {
+      unshift @INC, File::Spec->catdir($command_directory, 'lib');
     }
-    if ('@USE_EXTERNAL_EASTASIANWIDTH@' ne 'yes') {
-      unshift @INC, (File::Spec->catdir($lib_dir, 'lib', 'Unicode-EastAsianWidth', 'lib'));
+  } else {
+    # Look for modules in their installed locations.
+    my $lib_dir = File::Spec->catdir($datadir, $package);
+    # look for package data in the installed location.
+    my $modules_pkgdatadir = $lib_dir;
+
+    # try to make package relocatable, will only work if
+    # standard relative paths are used
+    if (! -f File::Spec->catfile($lib_dir, 'Texinfo', 'Parser.pm')
+        and -f File::Spec->catfile($command_directory, $updir, 'share',
+                                   $package, 'Texinfo', 'Parser.pm')) {
+      $lib_dir = File::Spec->catdir($command_directory, $updir,
+                                          'share', $package);
+      $modules_pkgdatadir = File::Spec->catdir($command_directory, $updir,
+                                          'share', $package);
+      $xsdir = File::Spec->catdir($command_directory, $updir,
+                                          'lib', $package);
     }
-    if ('@USE_EXTERNAL_UNIDECODE@' ne 'yes') {
-      unshift @INC, (File::Spec->catdir($lib_dir, 'lib', 'Text-Unidecode', 'lib'));
-    }
+
+    unshift @INC, $lib_dir;
+    require Texinfo::ModulePath;
+    Texinfo::ModulePath::init($lib_dir, $xsdir, $modules_pkgdatadir,
+                              'installed' => 1);
+
+    # To find Pod::Simple::Texinfo
+    unshift @INC, File::Spec->catdir($modules_pkgdatadir, 'Pod-Simple-Texinfo');
   }
 }
 
@@ -200,7 +213,6 @@ if (defined($subdir)) {
 my $STDOUT_DOCU_NAME = 'stdout';
 
 my @manuals;
-my @all_manual_names;
 
 my @input_files = @ARGV;
 
@@ -210,32 +222,52 @@ die sprintf(__("%s: missing file argument\n"), $real_command_name)
    .sprintf(__("Try `%s --help' for more information.\n"), $real_command_name)
      unless (scalar(@input_files) >= 1);
 
+my %file_manual_title;
+my %manual_name_file;
+my %file_manual_name;
 # First gather all the manual names
 if ($base_level > 0) {
   foreach my $file (@input_files) {
+    my $manual_name;
     # we don't want to read from STDIN, as the input read would be lost
     # same with named pipe and socket...
     # FIXME are there other file types that have the same problem?
     if ($file eq '-' or -p $file or -S $file) {
-      push @all_manual_names, undef;
-      next;
-    }
-    # not really used, only the manual name is used.
-    my $parser = Pod::Simple::PullParserRun->new();
-    $parser->parse_file($file);
-    my $short_title = $parser->get_short_title();
-    if (defined($short_title) and $short_title =~ m/\S/) {
-      push @manuals, $short_title;
-      push @all_manual_names, $short_title;
-      #print STDERR "NEW MANUAL: $short_title\n";
+      # do not read file
     } else {
-      if (!$parser->content_seen) {
-        warn sprintf(__("%s: ignoring %s without content\n"),
-                     $real_command_name, $file);
-        next;
+      # not really used, only the manual name is used.
+      my $parser = Pod::Simple::PullParserRun->new();
+      $parser->parse_file($file);
+      my $short_title = $parser->get_short_title();
+      if (defined($short_title) and $short_title =~ m/\S/) {
+        $file_manual_title{$file} = $short_title;
+        push @manuals, $short_title;
+        $manual_name = $short_title;
+        #print STDERR "NEW MANUAL: $manual_name\n";
+      } else {
+        if (!$parser->content_seen) {
+          warn sprintf(__("%s: warning: %s without content\n"),
+                       $real_command_name, $file);
+        }
       }
-      push @all_manual_names, undef;
     }
+    if (!defined($manual_name)) {
+      if ($file eq '-') {
+        $manual_name = $STDOUT_DOCU_NAME;
+      } else {
+        my ($file_name, $dir, $suffix) = fileparse($file, ('.pm', '.pod'));
+        $manual_name = $file_name;
+      }
+    }
+    if (exists($manual_name_file{$manual_name})
+        and $manual_name_file{$manual_name} ne $file) {
+      warn sprintf(__("%s: same manual name `%s' for different files: %s and %s"),
+                  $real_command_name, $manual_name, $file,
+                  $manual_name_file{$manual_name})."\n";
+    } else {
+      $manual_name_file{$manual_name} = $file;
+    }
+    $file_manual_name{$file} = $manual_name;
   }
 }
 
@@ -249,26 +281,31 @@ sub _parsed_manual_tree($$$$$)
   my $do_node_menus = shift;
 
   my $texi_parser = Texinfo::Parser::parser();
-  my $tree = $texi_parser->parse_texi_text($manual_texi);
+  my $document = $texi_parser->parse_texi_text($manual_texi);
+  my $tree = $document->tree();
   my $registrar = $texi_parser->registered_errors();
   
-  my ($labels, $targets_list, $nodes_list) = $texi_parser->labels_information();
+  my $identifier_target = $document->labels_information();
 
   if ($fill_gaps_in_sectioning) {
-    my ($added_sections, $added_nodes);
-    ($tree->{'contents'}, $added_sections)
-      = Texinfo::Transformations::fill_gaps_in_sectioning($tree);
+    Texinfo::Transformations::fill_gaps_in_sectioning($tree);
     # there should already be nodes associated with other sections.  Therefore
-    # new nodes should only be created for the $added_sections.
+    # new nodes should only be created for the added sections.
     if ($section_nodes) {
-      ($tree->{'contents'}, $added_nodes)
-        = Texinfo::Transformations::insert_nodes_for_sectioning_commands($tree,
-                                         $nodes_list, $targets_list, $labels);
+      # FIXME the following code does not work when using XS code only
+      # as $added_nodes is undef.  There are other issues, the entries
+      # deleted in identifier_target are not deleted in XS, and more generally
+      # the code is done as if everything was done with pure perl code.
+      my $added_nodes
+        = Texinfo::Transformations::insert_nodes_for_sectioning_commands(
+                                           $document, $registrar, $texi_parser);
+      $document = Texinfo::Structuring::rebuild_document($document);
       if ($self and $self->texinfo_sectioning_base_level() > 0) {
         # prepend the manual name
         foreach my $node (@$added_nodes) {
           # First remove the old normalized entry
-          delete $texi_parser->{'labels'}->{$node->{'extra'}->{'normalized'}};
+          # FIXME should go through an API
+          delete $identifier_target->{$node->{'extra'}->{'normalized'}};
 
           # prepare the new node Texinfo name and parse it to a Texinfo tree
           my $node_texi = Texinfo::Convert::Texinfo::convert_to_texinfo(
@@ -276,6 +313,8 @@ sub _parsed_manual_tree($$$$$)
           # We could have kept the asis, too, it is kept when !section_nodes
           $node_texi =~ s/^\s*(\@asis\{\})?\s*//;
           # complete with manual name
+          # FIXME _node_name is an internal function of Pod::Simple::Texinfo
+          # used, it is wrong to use it here.
           my $complete_node_name = $self->_node_name($node_texi);
           my $completed_node_tree
             = Texinfo::Parser::parse_texi_line(undef, $complete_node_name);
@@ -288,28 +327,25 @@ sub _parsed_manual_tree($$$$$)
           }
 
           my $normalized_node_name
-             = Texinfo::Convert::NodeNameNormalization::normalize_node(
+             = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
                   { 'contents' => $node_arg->{'contents'} });
           $node->{'extra'}->{'normalized'} = $normalized_node_name;
-          Texinfo::Common::register_label($targets_list, $node);
-          # Nothing should link to the added node, but we setup the label
-          # informations nonetheless.
-          $labels->{$normalized_node_name} = $node;
+
+          Texinfo::Document::register_label_element($document, $node,
+                                                    $registrar, $texi_parser);
         }
       }
     }
   }
-  my ($sectioning_root, $sections_list)
-    = Texinfo::Structuring::sectioning_structure($registrar, $texi_parser, $tree);
-  my $refs = $texi_parser->internal_references_information();
-  my $parser_information = $texi_parser->global_information();
+  Texinfo::Structuring::sectioning_structure($tree, $registrar, $texi_parser);
+  my $refs = $document->internal_references_information();
   # this is needed to set 'normalized' for menu entries, they are
   # used in complete_tree_nodes_menus.
-  Texinfo::Structuring::associate_internal_references($registrar, $texi_parser,
-                                  $parser_information, $labels, $refs);
+  Texinfo::Structuring::associate_internal_references($document, $registrar,
+                                                      $texi_parser);
   Texinfo::Transformations::complete_tree_nodes_menus($tree)
     if ($section_nodes and $do_node_menus);
-  return ($texi_parser, $tree, $labels);
+  return ($texi_parser, $document, $identifier_target);
 }
 
 sub _fix_texinfo_tree($$$$;$$)
@@ -321,14 +357,14 @@ sub _fix_texinfo_tree($$$$;$$)
   my $do_node_menus = shift;
   my $do_master_menu = shift;
 
-  my ($texi_parser, $tree, $updated_labels)
+  my ($texi_parser, $document, $updated_labels)
     = _parsed_manual_tree($self, $manual_texi, $section_nodes,
                           $fill_gaps_in_sectioning,
                           $do_node_menus);
   if ($do_master_menu) {
     if ($do_node_menus) {
-      Texinfo::Transformations::regenerate_master_menu($texi_parser,
-                                                       $updated_labels);
+      Texinfo::Transformations::regenerate_master_menu($document,
+                                                       $texi_parser);
     } else {
       # note that that situation cannot happen with the code as it
       # is now.  When _fix_texinfo_tree is called from _do_top_node_menu
@@ -340,7 +376,7 @@ sub _fix_texinfo_tree($$$$;$$)
 
       # setup another tree with menus to do the master menu as menus are
       # not done for the main tree
-      my ($texi_parser_menus, $tree_menus, $updated_labels_menus)
+      my ($texi_parser_menus, $document_menus, $updated_labels_menus)
        = _parsed_manual_tree($self, $manual_texi, $section_nodes,
                              $fill_gaps_in_sectioning, 1);
       my $top_node_menus = $updated_labels_menus->{'Top'};
@@ -354,7 +390,8 @@ sub _fix_texinfo_tree($$$$;$$)
       }
     }
   }
-  return ($texi_parser, $tree);
+  $document = Texinfo::Structuring::rebuild_document($document);
+  return ($texi_parser, $document);
 }
 
 sub _fix_texinfo_manual($$$$;$$)
@@ -366,19 +403,21 @@ sub _fix_texinfo_manual($$$$;$$)
   my $do_node_menus = shift;
   my $do_master_menu = shift;
 
-  my ($texi_parser, $tree)
+  my ($texi_parser, $document)
       = _fix_texinfo_tree($self, $manual_texi, $section_nodes,
                           $fill_gaps_in_sectioning, $do_node_menus,
                           $do_master_menu);
+  my $tree = $document->tree();
   return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 }
 
 sub _do_top_node_menu($)
 {
   my $manual_texi = shift;
-  my ($texi_parser, $tree) = _fix_texinfo_tree(undef, $manual_texi, 1, 0, 1, 1);
-  my ($labels, $targets_list, $nodes_list) = $texi_parser->labels_information();
-  my $top_node_menu = $labels->{'Top'}->{'extra'}->{'menus'}->[0];
+  my ($texi_parser, $document)
+             = _fix_texinfo_tree(undef, $manual_texi, 1, 0, 1, 1);
+  my $identifier_target = $document->labels_information();
+  my $top_node_menu = $identifier_target->{'Top'}->{'extra'}->{'menus'}->[0];
   if ($top_node_menu) {
     return Texinfo::Convert::Texinfo::convert_to_texinfo($top_node_menu);
   } else {
@@ -386,33 +425,28 @@ sub _do_top_node_menu($)
   }
 }
 
-my $file_nr = 0;
+my $file_nr = -1;
 # Full manual is collected to generate the top node menu, if $section_nodes
 my $full_manual = '';
 my @included;
 foreach my $file (@input_files) {
+  $file_nr++;
   my $manual_texi = '';
   my $outfile;
   my $outfile_name;
-  my $name = shift @all_manual_names;
+  my $manual_name = $file_manual_name{$file};
+  my $manual_title;
+  $manual_title = $file_manual_title{$file}
+    if (defined($file_manual_title{$file}));
   if ($base_level == 0 and !$file_nr) {
     $outfile = $output;
   } else {
-    if (defined($name)) {
-      $outfile_name = Pod::Simple::Texinfo::_pod_title_to_file_name($name);
-      $outfile_name .= '.texi';
+    if (defined($manual_title)) {
+      $outfile_name = Pod::Simple::Texinfo::_pod_title_to_file_name($manual_title);
     } else {
-      if ($file eq '-') {
-        $outfile_name = $STDOUT_DOCU_NAME;
-      } else {
-        $outfile_name = $file;
-      }
-      if ($outfile_name =~ /\.(pm|pod)$/) {
-        $outfile_name =~ s/\.(pm|pod)$/.texi/i;
-      } else {
-        $outfile_name .= '.texi';
-      }
+      $outfile_name = $manual_name;
     }
+    $outfile_name .= '.texi';
     if (defined($subdir)) {
       $outfile = File::Spec->catfile($subdir, $outfile_name);
     } else {
@@ -425,7 +459,7 @@ foreach my $file (@input_files) {
 
   my $new = Pod::Simple::Texinfo->new();
 
-  push @included, [$name, $outfile, $file] if ($base_level > 0);
+  push @included, [$manual_name, $outfile, $file] if ($base_level > 0);
   my $fh;
   if ($outfile eq '-') {
     $fh = *STDOUT;
@@ -436,11 +470,11 @@ foreach my $file (@input_files) {
     $fh = *OUT;
   }
   # The Texinfo output from Pod::Simple::Texinfo does not contain
-  # @documentencoding.  We output utf8 as it is consistent with no
+  # @documentencoding.  We output UTF-8 as it is consistent with no
   # @documentencoding, and it also because is the best choice or encoding.
   # The =encoding information is not available anyway, but even if it
-  # was it would still be better to output utf8.
-  binmode($fh, ':encoding(utf8)');
+  # was it would still be better to output UTF-8.
+  binmode($fh, ':encoding(utf-8)');
 
   # this sets the string that $parser's output will be sent to
   $new->output_string(\$manual_texi);
@@ -461,7 +495,7 @@ foreach my $file (@input_files) {
     $new->texinfo_internal_pod_manuals(\@manuals);
   }
   
-  print STDERR "processing $file -> $outfile ($name)\n" if ($debug);
+  print STDERR "processing $file -> $outfile ($manual_name)\n" if ($debug);
   $new->parse_file($file);
 
   if ($section_nodes or $fill_sectioning_gaps) {
@@ -470,7 +504,7 @@ foreach my $file (@input_files) {
       open (DBGFILE, ">$outfile-dbg")
                              or die sprintf(__("%s: could not open %s: %s\n"),
                                       $real_command_name, "$outfile-dbg", $!);
-      binmode(DBGFILE, ':encoding(utf8)');
+      binmode(DBGFILE, ':encoding(utf-8)');
       print DBGFILE $manual_texi;
     }
     $manual_texi = _fix_texinfo_manual($new, $manual_texi, $section_nodes,
@@ -487,13 +521,12 @@ foreach my $file (@input_files) {
 
   if ($base_level > 0) {
     if (!$new->content_seen) {
-      # this should only happen for input coming from pipe or the like
       warn sprintf(__("%s: removing %s as input file %s has no content\n"),
                    $real_command_name, $outfile, $file);
       unlink ($outfile);
       pop @included;
     # if we didn't gather the short title, try now, and rename out file if found
-    } elsif (!defined($name)) {
+    } elsif (!defined($manual_title)) {
       my $short_title = $new->texinfo_short_title;
       if (defined($short_title) and $short_title =~ /\S/) {
         push @manuals, $short_title;
@@ -513,7 +546,6 @@ foreach my $file (@input_files) {
       }
     }
   }
-  $file_nr++;
 }
 
 if ($base_level > 0) {
@@ -527,9 +559,9 @@ if ($base_level > 0) {
     $fh = *STDOUT;
   }
 
-  # We output utf8 as it is default for Texinfo and is consistent with no
+  # We output UTF-8 as it is default for Texinfo and is consistent with no
   # @documentencoding, and it also because is the best choice for encoding.
-  binmode($fh, ':encoding(utf8)');
+  binmode($fh, ':encoding(utf-8)');
 
   my $setfilename_string = '';
   if (defined($setfilename)) {

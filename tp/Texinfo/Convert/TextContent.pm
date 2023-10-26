@@ -34,7 +34,7 @@ use Texinfo::Convert::Converter;
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 my %ignored_brace_commands;
@@ -93,7 +93,9 @@ sub convert_tree($$)
 sub convert($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
 
   return $self->_convert($root);
 }
@@ -135,7 +137,7 @@ sub _convert($$)
       my($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst)
         = localtime(time);
       $year += ($year < 70) ? 2000 : 1900;
-      return "$Texinfo::Convert::Utils::MONTH_NAMES[$mon] $mday, $year";
+      return "$Texinfo::Convert::Utils::month_name[$mon] $mday, $year";
     } elsif (defined($Texinfo::Convert::Text::text_brace_no_arg_commands{$element->{'cmdname'}})) {
       return Texinfo::Convert::Text::brace_no_arg_command($element, undef);
     } elsif ($Texinfo::Commands::accent_commands{$element->{'cmdname'}}) {

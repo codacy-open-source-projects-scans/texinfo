@@ -47,6 +47,7 @@ $result_trees{'anchor_zero'} = {
           ],
           'cmdname' => 'anchor',
           'extra' => {
+            'is_target' => 1,
             'normalized' => '0'
           },
           'source_info' => {
@@ -104,6 +105,7 @@ $result_trees{'anchor_zero'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -136,19 +138,22 @@ $result_texts{'anchor_zero'} = '
 0.
 ';
 
-$result_nodes{'anchor_zero'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'anchor_zero'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'anchor_zero'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'anchor_zero'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'anchor_zero'} = [];
 

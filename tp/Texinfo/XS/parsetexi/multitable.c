@@ -14,20 +14,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <config.h>
-#include "parser.h"
 
-/* Return the parent if in an item_line command, @*table */
-ELEMENT *
-item_line_parent (ELEMENT *current)
-{
-  if (current->type == ET_before_item && current->parent)
-    current = current->parent;
-
-  if (item_line_command (current->cmd))
-    return current;
-
-  return 0;
-}
+#include "tree_types.h"
+#include "tree.h"
+#include "errors.h"
+/* for item_line_parent */
+#include "utils.h"
+#include "builtin_commands.h"
+#include "commands.h"
+/* check_no_text */
+#include "handle_commands.h"
 
 /* Return the parent if in a multitable. */
 ELEMENT *

@@ -39,6 +39,7 @@ $result_trees{'section_on_float_line'} = {
           'cmdname' => 'float',
           'extra' => {
             'float_type' => 't',
+            'is_target' => 1,
             'normalized' => 'l'
           },
           'info' => {
@@ -73,6 +74,9 @@ $result_trees{'section_on_float_line'} = {
         }
       ],
       'cmdname' => 'section',
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -98,21 +102,21 @@ $result_texts{'section_on_float_line'} = 't, l
 ';
 
 $result_sectioning{'section_on_float_line'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'section',
-        'structure' => {
+        'extra' => {
           'section_level' => 2,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 1
   }
 };
-$result_sectioning{'section_on_float_line'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'section_on_float_line'};
+$result_sectioning{'section_on_float_line'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'section_on_float_line'};
 
 $result_errors{'section_on_float_line'} = [
   {
@@ -150,11 +154,9 @@ $result_floats{'section_on_float_line'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => 't',
         'normalized' => 'l'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

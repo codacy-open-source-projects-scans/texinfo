@@ -1,7 +1,7 @@
 #! /usr/bin/env perl
 
 # regenerate_perl_command_infos.pl: generate perl hashes based on
-# commands information setup for the XS parser.
+# commands information also used in the XS parser.
 #
 # Copyright 2022-2023 Free Software Foundation, Inc.
 #
@@ -42,7 +42,7 @@ my %command_args_nr;
 
 my %multi_category_commands;
 
-while (<>) {
+while (<STDIN>) {
   if (not (/^#/ or /^ *$/)) {
     my ($command, $flags, $data, $args_nr) = split;
     my @flags = split /,/, $flags;
@@ -101,7 +101,10 @@ while (<>) {
   }
 }
 
-open (OUT, ">Texinfo/Commands.pm") or die "Open Texinfo/Commands.pm: $!\n";
+my $out_file = $ARGV[0];
+die "Need an output file\n" if (!defined($out_file));
+
+open (OUT, ">$out_file") or die "Open $out_file: $!\n";
 
 print OUT "# Automatically generated from $0\n\n";
 
@@ -127,9 +130,6 @@ print OUT "# flag hashes\n";
 # for those flags, the information of multi category commands is
 # duplicated.  So, for example, item_LINE has the formatted_line flag
 # associated, it will be associated to item.
-#
-# In general, the hash here should be in the excluded flags in
-# Texinfo/XS/parsetexi/command_data.awk
 my %converter_flag = (
   'formatted_line' => 1,
   'formattable_line' => 1,
@@ -178,7 +178,6 @@ print OUT ");\n\n";
 # add code that sets %line_commands for index commands based on %index_names
 print OUT 'foreach my $index (keys(%index_names)) {
   $index_names{$index}->{"name"} = $index;
-  $index_names{$index}->{"contained_indices"} = {$index => 1};
 }
 
 our %default_index_commands;

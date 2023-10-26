@@ -3,7 +3,7 @@
   <!ENTITY tex "TeX">
   <!ENTITY latex "LaTeX">
 ]>
-<book id="formatting.xml" lang="">
+<book id="formatting.xml" lang="en">
 <title>title &#8211;a</title>
 <subtitle>formatting subtitle &#8211;a
 subtitle 2 &#8211;a</subtitle>
@@ -48,22 +48,28 @@ kbd: <userinput>``simple-double--three---four----''</userinput>
 @&quot;{U} &#220; (Ü) 
 @~n &#241; (ñ)
 @^a &#226; (â)
-@&#8217;e &#233; (é)
+</para>
+<para>@&#8217;e &#233; (é)
 @=o &#333; (ō)
 @&#8216;i &#236; (ì)
 @&#8217;{e} &#233; (é)
-@&#8217;{@dotless{i}} &#237; (í)
+</para>
+<para>@&#8217;{@dotless{i}} &#237; (í)
 @dotless{i} &#305; (ı)
 @dotless{j} &#567; (ȷ)
-<literal>@H{a}</literal> a&#779;
+</para>
+<para><literal>@H{a}</literal> a&#779;
 <literal>@dotaccent{a}</literal> &#551; (ȧ)
 <literal>@ringaccent{a}</literal> &#229; (å)
-<literal>@tieaccent{a}</literal> a&#865;
+</para>
+<para><literal>@tieaccent{a}</literal> a&#865;
 <literal>@u{a}</literal> &#259; (ă)
 <literal>@ubaraccent{a}</literal> a&#818;
-<literal>@udotaccent{a}</literal> &#7841; (ạ)
+</para>
+<para><literal>@udotaccent{a}</literal> &#7841; (ạ)
 <literal>@v{a}</literal> &#462; (ǎ)
-@,c &#231; (ç)
+</para>
+<para>@,c &#231; (ç)
 <literal>@,{c}</literal> &#231; (ç)
 <literal>@ogonek{a}</literal> &#261; (ą)
 </para>
@@ -76,10 +82,12 @@ kbd: <userinput>``simple-double--three---four----''</userinput>
 <para><literal>@H{--a}</literal> &#8211;a&#779;
 <literal>@dotaccent{--a}</literal> &#8211;a&#775;
 <literal>@ringaccent{--a}</literal> &#8211;a&#778;
-<literal>@tieaccent{--a}</literal> &#8211;a&#865;
+</para>
+<para><literal>@tieaccent{--a}</literal> &#8211;a&#865;
 <literal>@u{--a}</literal> &#8211;a&#774;
 <literal>@ubaraccent{--a}</literal> &#8211;a&#818;
-<literal>@udotaccent{--a}</literal> &#8211;a&#803;
+</para>
+<para><literal>@udotaccent{--a}</literal> &#8211;a&#803;
 <literal>@v{--a}</literal> &#8211;a&#780;
 <literal>@,{--c}</literal> &#8211;c&#807;
 <literal>@ogonek{--a}</literal> &#8211;a&#808;
@@ -122,13 +130,16 @@ but , ,
 @LaTeX &latex;
 @bullet &#8226; (•)
 @copyright &#169; (©)
-@dots &#8230; (…)
+</para>
+<para>@dots &#8230; (…)
 @enddots ...
 @equiv &#8801; (≡)
-@error error&#8594;
+</para>
+<para>@error error&#8594;
 @expansion &#8614; (↦)
 @minus &#8722; (−)
-@point &#8902; (⋆)
+</para>
+<para>@point &#8902; (⋆)
 @print &#8867; (⊣)
 @result &#8658; (⇒)
 @today a sunny day
@@ -172,7 +183,8 @@ but , ,
 <para>@textdegree &#176; (°)
 @euro &#8364; (€)
 @arrow &#8594; (→)
-@leq &#8804; (≤)
+</para>
+<para>@leq &#8804; (≤)
 @geq &#8805; (≥)
 @tie a&#160;b
 </para>
@@ -250,6 +262,7 @@ f(x) = {1 \over \sigma \sqrt{2\pi}}e<superscript>-{1 \over 2}\left({x-\mu \over 
 </mathphrase></informalequation>
 <informalequation><mathphrase>&#305; &#567;
 &#322; &#231;
+
 a&#818; &#7841; &#261; a<superscript>h</superscript><subscript>l</subscript>
 
  &#160;&#160; &#160;  ! @ } { 
@@ -977,22 +990,28 @@ kbd: <userinput>``simple-double--three---four----''</userinput>
 @&quot;{U} &#220; (Ü) 
 @~n &#241; (ñ)
 @^a &#226; (â)
-@&#8217;e &#233; (é)
+</para>
+<para>@&#8217;e &#233; (é)
 @=o &#333; (ō)
 @&#8216;i &#236; (ì)
 @&#8217;{e} &#233; (é)
-@&#8217;{@dotless{i}} &#237; (í)
+</para>
+<para>@&#8217;{@dotless{i}} &#237; (í)
 @dotless{i} &#305; (ı)
 @dotless{j} &#567; (ȷ)
-<literal>@H{a}</literal> a&#779;
+</para>
+<para><literal>@H{a}</literal> a&#779;
 <literal>@dotaccent{a}</literal> &#551; (ȧ)
 <literal>@ringaccent{a}</literal> &#229; (å)
-<literal>@tieaccent{a}</literal> a&#865;
+</para>
+<para><literal>@tieaccent{a}</literal> a&#865;
 <literal>@u{a}</literal> &#259; (ă)
 <literal>@ubaraccent{a}</literal> a&#818;
-<literal>@udotaccent{a}</literal> &#7841; (ạ)
+</para>
+<para><literal>@udotaccent{a}</literal> &#7841; (ạ)
 <literal>@v{a}</literal> &#462; (ǎ)
-@,c &#231; (ç)
+</para>
+<para>@,c &#231; (ç)
 <literal>@,{c}</literal> &#231; (ç)
 <literal>@ogonek{a}</literal> &#261; (ą)
 </para>
@@ -1005,10 +1024,12 @@ kbd: <userinput>``simple-double--three---four----''</userinput>
 <para><literal>@H{--a}</literal> &#8211;a&#779;
 <literal>@dotaccent{--a}</literal> &#8211;a&#775;
 <literal>@ringaccent{--a}</literal> &#8211;a&#778;
-<literal>@tieaccent{--a}</literal> &#8211;a&#865;
+</para>
+<para><literal>@tieaccent{--a}</literal> &#8211;a&#865;
 <literal>@u{--a}</literal> &#8211;a&#774;
 <literal>@ubaraccent{--a}</literal> &#8211;a&#818;
-<literal>@udotaccent{--a}</literal> &#8211;a&#803;
+</para>
+<para><literal>@udotaccent{--a}</literal> &#8211;a&#803;
 <literal>@v{--a}</literal> &#8211;a&#780;
 <literal>@,{--c}</literal> &#8211;c&#807;
 <literal>@ogonek{--a}</literal> &#8211;a&#808;
@@ -1051,13 +1072,16 @@ but , ,
 @LaTeX &latex;
 @bullet &#8226; (•)
 @copyright &#169; (©)
-@dots &#8230; (…)
+</para>
+<para>@dots &#8230; (…)
 @enddots ...
 @equiv &#8801; (≡)
-@error error&#8594;
+</para>
+<para>@error error&#8594;
 @expansion &#8614; (↦)
 @minus &#8722; (−)
-@point &#8902; (⋆)
+</para>
+<para>@point &#8902; (⋆)
 @print &#8867; (⊣)
 @result &#8658; (⇒)
 @today a sunny day
@@ -1101,7 +1125,8 @@ but , ,
 <para>@textdegree &#176; (°)
 @euro &#8364; (€)
 @arrow &#8594; (→)
-@leq &#8804; (≤)
+</para>
+<para>@leq &#8804; (≤)
 @geq &#8805; (≥)
 @tie a&#160;b
 </para>
@@ -1179,6 +1204,7 @@ f(x) = {1 \over \sigma \sqrt{2\pi}}e<superscript>-{1 \over 2}\left({x-\mu \over 
 </mathphrase></informalequation>
 <informalequation><mathphrase>&#305; &#567;
 &#322; &#231;
+
 a&#818; &#7841; &#261; a<superscript>h</superscript><subscript>l</subscript>
 
  &#160;&#160; &#160;  ! @ } { 
@@ -1893,22 +1919,28 @@ kbd: <userinput>``simple-double--three---four----''</userinput>
 @&quot;{U} &#220; (Ü) 
 @~n &#241; (ñ)
 @^a &#226; (â)
-@&#8217;e &#233; (é)
+</para>
+<para>@&#8217;e &#233; (é)
 @=o &#333; (ō)
 @&#8216;i &#236; (ì)
 @&#8217;{e} &#233; (é)
-@&#8217;{@dotless{i}} &#237; (í)
+</para>
+<para>@&#8217;{@dotless{i}} &#237; (í)
 @dotless{i} &#305; (ı)
 @dotless{j} &#567; (ȷ)
-<literal>@H{a}</literal> a&#779;
+</para>
+<para><literal>@H{a}</literal> a&#779;
 <literal>@dotaccent{a}</literal> &#551; (ȧ)
 <literal>@ringaccent{a}</literal> &#229; (å)
-<literal>@tieaccent{a}</literal> a&#865;
+</para>
+<para><literal>@tieaccent{a}</literal> a&#865;
 <literal>@u{a}</literal> &#259; (ă)
 <literal>@ubaraccent{a}</literal> a&#818;
-<literal>@udotaccent{a}</literal> &#7841; (ạ)
+</para>
+<para><literal>@udotaccent{a}</literal> &#7841; (ạ)
 <literal>@v{a}</literal> &#462; (ǎ)
-@,c &#231; (ç)
+</para>
+<para>@,c &#231; (ç)
 <literal>@,{c}</literal> &#231; (ç)
 <literal>@ogonek{a}</literal> &#261; (ą)
 </para>
@@ -1921,10 +1953,12 @@ kbd: <userinput>``simple-double--three---four----''</userinput>
 <para><literal>@H{--a}</literal> &#8211;a&#779;
 <literal>@dotaccent{--a}</literal> &#8211;a&#775;
 <literal>@ringaccent{--a}</literal> &#8211;a&#778;
-<literal>@tieaccent{--a}</literal> &#8211;a&#865;
+</para>
+<para><literal>@tieaccent{--a}</literal> &#8211;a&#865;
 <literal>@u{--a}</literal> &#8211;a&#774;
 <literal>@ubaraccent{--a}</literal> &#8211;a&#818;
-<literal>@udotaccent{--a}</literal> &#8211;a&#803;
+</para>
+<para><literal>@udotaccent{--a}</literal> &#8211;a&#803;
 <literal>@v{--a}</literal> &#8211;a&#780;
 <literal>@,{--c}</literal> &#8211;c&#807;
 <literal>@ogonek{--a}</literal> &#8211;a&#808;
@@ -1967,13 +2001,16 @@ but , ,
 @LaTeX &latex;
 @bullet &#8226; (•)
 @copyright &#169; (©)
-@dots &#8230; (…)
+</para>
+<para>@dots &#8230; (…)
 @enddots ...
 @equiv &#8801; (≡)
-@error error&#8594;
+</para>
+<para>@error error&#8594;
 @expansion &#8614; (↦)
 @minus &#8722; (−)
-@point &#8902; (⋆)
+</para>
+<para>@point &#8902; (⋆)
 @print &#8867; (⊣)
 @result &#8658; (⇒)
 @today a sunny day
@@ -2017,7 +2054,8 @@ but , ,
 <para>@textdegree &#176; (°)
 @euro &#8364; (€)
 @arrow &#8594; (→)
-@leq &#8804; (≤)
+</para>
+<para>@leq &#8804; (≤)
 @geq &#8805; (≥)
 @tie a&#160;b
 </para>
@@ -2095,6 +2133,7 @@ f(x) = {1 \over \sigma \sqrt{2\pi}}e<superscript>-{1 \over 2}\left({x-\mu \over 
 </mathphrase></informalequation>
 <informalequation><mathphrase>&#305; &#567;
 &#322; &#231;
+
 a&#818; &#7841; &#261; a<superscript>h</superscript><subscript>l</subscript>
 
  &#160;&#160; &#160;  ! @ } { 
@@ -2805,21 +2844,27 @@ kbd: <userinput>``simple-double--three---four----''</userinput>
 @&quot;{U} &#220; (Ü) 
 @~n &#241; (ñ)
 @^a &#226; (â)
+
 @'e &#233; (é)
 @=o &#333; (ō)
 @`i &#236; (ì)
 @'{e} &#233; (é)
+
 @'{@dotless{i}} &#237; (í)
 @dotless{i} &#305; (ı)
 @dotless{j} &#567; (ȷ)
+
 <literal>@H{a}</literal> a&#779;
 <literal>@dotaccent{a}</literal> &#551; (ȧ)
 <literal>@ringaccent{a}</literal> &#229; (å)
+
 <literal>@tieaccent{a}</literal> a&#865;
 <literal>@u{a}</literal> &#259; (ă)
 <literal>@ubaraccent{a}</literal> a&#818;
+
 <literal>@udotaccent{a}</literal> &#7841; (ạ)
 <literal>@v{a}</literal> &#462; (ǎ)
+
 @,c &#231; (ç)
 <literal>@,{c}</literal> &#231; (ç)
 <literal>@ogonek{a}</literal> &#261; (ą)
@@ -2833,9 +2878,11 @@ kbd: <userinput>``simple-double--three---four----''</userinput>
 <literal>@H{--a}</literal> --a&#779;
 <literal>@dotaccent{--a}</literal> --a&#775;
 <literal>@ringaccent{--a}</literal> --a&#778;
+
 <literal>@tieaccent{--a}</literal> --a&#865;
 <literal>@u{--a}</literal> --a&#774;
 <literal>@ubaraccent{--a}</literal> --a&#818;
+
 <literal>@udotaccent{--a}</literal> --a&#803;
 <literal>@v{--a}</literal> --a&#780;
 <literal>@,{--c}</literal> --c&#807;
@@ -2879,12 +2926,15 @@ but , ,
 @LaTeX &latex;
 @bullet &#8226; (•)
 @copyright &#169; (©)
+
 @dots &#8230; (…)
 @enddots ...
 @equiv &#8801; (≡)
+
 @error error&#8594;
 @expansion &#8614; (↦)
 @minus &#8722; (−)
+
 @point &#8902; (⋆)
 @print &#8867; (⊣)
 @result &#8658; (⇒)
@@ -2929,6 +2979,7 @@ but , ,
 @textdegree &#176; (°)
 @euro &#8364; (€)
 @arrow &#8594; (→)
+
 @leq &#8804; (≤)
 @geq &#8805; (≥)
 @tie a&#160;b
@@ -3007,6 +3058,7 @@ f(x) = {1 \over \sigma \sqrt{2\pi}}e<superscript>-{1 \over 2}\left({x-\mu \over 
 </mathphrase></informalequation><screen>
 </screen><informalequation><mathphrase>&#305; &#567;
 &#322; &#231;
+
 a&#818; &#7841; &#261; a<superscript>h</superscript><subscript>l</subscript>
 
  &#160;&#160; &#160;  ! @ } { 

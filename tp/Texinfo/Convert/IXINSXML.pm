@@ -38,7 +38,7 @@ use Carp qw(cluck);
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::TexinfoSXML Texinfo::Convert::IXIN);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 my %defaults = (
@@ -54,7 +54,7 @@ my %defaults = (
   'FORMAT_MENU'          => 'menu',
   'EXTENSION'            => 'ixin',
   'OUTPUT_ENCODING_NAME' => 'utf-8',
-  'SPLIT'                => 0,
+  'SPLIT'                => '',
   'documentlanguage'     => 'en',
   'USE_NODES'            => 1,
 );
@@ -84,10 +84,12 @@ sub converter_initialize($) { my $self = shift;
   $self->SUPER::converter_initialize(@_);
 }
 
-sub output($)
+sub output($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
 
   return $self->output_ixin($root);
 }

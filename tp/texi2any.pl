@@ -125,6 +125,7 @@ BEGIN {
 }
 
 use Locale::Messages;
+use Texinfo::Options;
 use Texinfo::Common;
 use Texinfo::Config;
 
@@ -202,19 +203,6 @@ $strings_textdomain = 'texinfo_document'
 # we want a reliable way to switch locale, so we don't use the system
 # gettext.
 Locale::Messages->select_package('gettext_pp');
-
-if ($Texinfo::ModulePath::texinfo_uninstalled) {
-  my $locales_dir = File::Spec->catdir($Texinfo::ModulePath::builddir,
-                                       'LocaleData');
-  if (-d $locales_dir) {
-    Locale::Messages::bindtextdomain($strings_textdomain, $locales_dir);
-  } else {
-    warn "Locales dir for document strings not found\n";
-  }
-} else {
-  Locale::Messages::bindtextdomain($strings_textdomain,
-                                    File::Spec->catdir($datadir, 'locale'));
-}
 
 # Note: this uses installed messages even when the program is uninstalled
 Locale::Messages::bindtextdomain($messages_textdomain,
@@ -335,11 +323,11 @@ $texinfo_dtd_version = $configured_version
 
 # options set in the main program.
 my $main_program_set_options = {
-    'PACKAGE_VERSION' => $configured_version,
-    'PACKAGE' => $configured_package,
-    'PACKAGE_NAME' => $configured_name,
-    'PACKAGE_AND_VERSION' => $configured_name_version,
-    'PACKAGE_URL' => $configured_url,
+    'PACKAGE_VERSION_OPTION' => $configured_version,
+    'PACKAGE_OPTION' => $configured_package,
+    'PACKAGE_NAME_OPTION' => $configured_name,
+    'PACKAGE_AND_VERSION_OPTION' => $configured_name_version,
+    'PACKAGE_URL_OPTION' => $configured_url,
     'PROGRAM' => $real_command_name,
     'TEXINFO_DTD_VERSION' => $texinfo_dtd_version,
     'COMMAND_LINE_ENCODING' => $locale_encoding,
@@ -624,7 +612,6 @@ my %formats_table = (
              'floats' => 1,
              'split' => 1,
              'internal_links' => 1,
-             'simple_menu' => 1,
              'move_index_entries_after_items' => 1,
              'relate_index_entries_to_table_items' => 1,
              'no_warn_non_empty_parts' => 1,
@@ -678,7 +665,7 @@ my %formats_table = (
            },
   'debugtree' => {
           'split' => 1,
-          'module' => 'DebugTexinfo::DebugTree'
+          'module' => 'Texinfo::DebugTree'
          },
   'textcontent' => {
             'module' => 'Texinfo::Convert::TextContent'
@@ -750,13 +737,11 @@ sub set_format($;$$)
 sub _get_converter_default($)
 {
   my $option = shift;
-  if (defined($Texinfo::Common::default_converter_command_line_options{$option})) {
-    return $Texinfo::Common::default_converter_command_line_options{$option};
-  } elsif (defined($Texinfo::Common::document_settable_multiple_at_commands{$option})) {
-    return $Texinfo::Common::document_settable_multiple_at_commands{$option};
-  } #elsif (defined(%Texinfo::Common::document_settable_unique_at_commands{$option})) {
-  #  return $Texinfo::Common::document_settable_unique_at_commands{$option};
-  #}
+  if (defined($Texinfo::Options::converter_cmdline_options{$option})) {
+    return $Texinfo::Options::converter_cmdline_options{$option};
+  } elsif (defined($Texinfo::Options::multiple_at_command_options{$option})) {
+    return $Texinfo::Options::multiple_at_command_options{$option};
+  }
   return undef;
 }
 
@@ -928,11 +913,6 @@ Texinfo home page: http://www.gnu.org/software/texinfo/") ."\n";
   return $makeinfo_help;
 }
 
-my %non_decoded_customization_variables;
-foreach my $variable_name ('MACRO_EXPAND', 'INTERNAL_LINKS') {
-  $non_decoded_customization_variables{$variable_name} = 1;
-}
-
 my $Xopt_arg_nr = 0;
 
 my $result_options = Getopt::Long::GetOptions (
@@ -1041,7 +1021,7 @@ There is NO WARRANTY, to the extent permitted by law.\n"), "2023");
  },
  'set-customization-variable|c=s' => sub {
    my $var_val;
-   if ($non_decoded_customization_variables{$_[1]}) {
+   if ($Texinfo::Common::non_decoded_customization_variables{$_[1]}) {
      $var_val = $_[1];
    } else {
      $var_val = _decode_input($_[1]);
@@ -1148,11 +1128,11 @@ if ($cmdline_options->{'HIGHLIGHT_SYNTAX'}) {
 
 # For tests, set some strings to values not changing with releases
 my %test_conf = (
-    'PACKAGE_VERSION' => '',
-    'PACKAGE' => 'texinfo',
-    'PACKAGE_NAME' => 'texinfo',
-    'PACKAGE_AND_VERSION' => 'texinfo',
-    'PACKAGE_URL' => 'http://www.gnu.org/software/texinfo/',
+    'PACKAGE_VERSION_OPTION' => '',
+    'PACKAGE_OPTION' => 'texinfo',
+    'PACKAGE_NAME_OPTION' => 'texinfo',
+    'PACKAGE_AND_VERSION_OPTION' => 'texinfo',
+    'PACKAGE_URL_OPTION' => 'http://www.gnu.org/software/texinfo/',
 # maybe don't set this?
     'PROGRAM' => 'texi2any',
 );
@@ -1263,10 +1243,29 @@ sub handle_errors($$$)
 }
 
 require Texinfo::Parser;
+require Texinfo::Translations;
+require Texinfo::Document;
+Texinfo::Document->import();
 require Texinfo::Structuring;
+Texinfo::Structuring->import();
 require Texinfo::Transformations;
+Texinfo::Transformations->import();
+
 # Avoid loading these modules until down here to speed up the case
 # when they are not needed.
+
+if ($Texinfo::ModulePath::texinfo_uninstalled) {
+  my $locales_dir = File::Spec->catdir($Texinfo::ModulePath::builddir,
+                                       'LocaleData');
+  if (-d $locales_dir) {
+    Texinfo::Translations::configure($locales_dir, $strings_textdomain);
+  } else {
+    warn "Locales dir for document strings not found\n";
+  }
+} else {
+  Texinfo::Translations::configure(File::Spec->catdir($datadir, 'locale'),
+                              $strings_textdomain);
+}
 
 my %tree_transformations;
 if (get_conf('TREE_TRANSFORMATIONS')) {
@@ -1306,7 +1305,6 @@ if (get_conf('SPLIT') and !$formats_table{$converted_format}->{'split'}) {
 
 add_to_option_list('EXPANDED_FORMATS', $default_expanded_format);
 
-my $converter_class;
 my %converter_defaults;
 
 if (defined($formats_table{$converted_format}->{'module'})) {
@@ -1335,12 +1333,11 @@ if (defined($formats_table{$converted_format}->{'module'})) {
 # command line is set_format_menu_from_cmdline_header_option.
 my $conversion_format_menu_default;
 if (defined($formats_table{$converted_format}->{'module'})) {
-  $converter_class = $formats_table{$converted_format}->{'module'};
+  my $converter_class = $formats_table{$converted_format}->{'module'};
   # $cmdline_options is passed to have command line settings, here
   # in practice TEXI2HTML set, for conversion to HTML to select
   # possibly different customization variable values.
   %converter_defaults = $converter_class->converter_defaults($cmdline_options);
-  $conversion_format_menu_default = undef;
   if (defined($converter_defaults{'FORMAT_MENU'})) {
     # could be done for other customization options
     set_main_program_default('FORMAT_MENU', $converter_defaults{'FORMAT_MENU'});
@@ -1396,6 +1393,11 @@ die _encode_message(
    .sprintf(__("Try `%s --help' for more information.\n"), $real_command_name))
      unless (scalar(@input_files) >= 1);
 
+my $with_XS = ((not defined($ENV{TEXINFO_XS})
+                or $ENV{TEXINFO_XS} ne 'omit')
+               and (!defined $ENV{TEXINFO_XS_PARSER}
+                    or $ENV{TEXINFO_XS_PARSER} eq '1'));
+
 my $file_number = -1;
 my @opened_files = ();
 my %unclosed_files;
@@ -1447,7 +1449,11 @@ while(@input_files) {
           @prepended_include_directories;
 
   my $parser = Texinfo::Parser::parser($parser_file_options);
-  my $tree = $parser->parse_texi_file($input_file_name);
+  my $document = $parser->parse_texi_file($input_file_name);
+  my $tree;
+  if (defined($document)) {
+    $tree = $document->tree();
+  }
 
   if (defined($tree)
       and (defined(get_conf('DUMP_TREE'))
@@ -1457,6 +1463,8 @@ while(@input_files) {
     local $Data::Dumper::Purity = 1;
     no warnings 'once';
     local $Data::Dumper::Indent = 1;
+    no warnings 'once';
+    local $Data::Dumper::Sortkeys = 1;
     print STDERR Data::Dumper->Dump([$tree]);
   }
   # object registering errors and warnings
@@ -1468,33 +1476,26 @@ while(@input_files) {
 
 
   if ($tree_transformations{'fill_gaps_in_sectioning'}) {
-    my ($filled_contents, $added_sections)
+    my $added_sections
       = Texinfo::Transformations::fill_gaps_in_sectioning($tree);
-    if (!defined($filled_contents)) {
+    if (!defined($added_sections)) {
       document_warn(__(
        "fill_gaps_in_sectioning transformation return no result. No section?"));
-    } else {
-      $tree->{'contents'} = $filled_contents;
     }
   }
 
-  my ($labels, $targets_list, $nodes_list) = $parser->labels_information();
-  if ((get_conf('SIMPLE_MENU')
-       and $formats_table{$converted_format}->{'simple_menu'})
-      or $tree_transformations{'simple_menus'}) {
-    Texinfo::Transformations::set_menus_to_simple_menu($nodes_list);
-  }
+  my $identifier_target = $document->labels_information();
 
   # setup a configuration object which defines get_conf and gives the same as
   # get_conf() in main program.  It is for Structuring/Transformations methods
   # needing access to the configuration information.
   my $main_configuration = Texinfo::MainConfig::new();
 
-  my $parser_information = $parser->global_information();
+  my $document_information = $document->global_information();
   # encoding is needed for output files
   # encoding and documentlanguage are needed for gdt() in regenerate_master_menu
-  Texinfo::Common::set_output_encodings($main_configuration, $parser_information);
-  my $global_commands = $parser->global_commands_information();
+  Texinfo::Common::set_output_encodings($main_configuration, $document_information);
+  my $global_commands = $document->global_commands_information();
   if (not defined($main_configuration->get_conf('documentlanguage'))) {
     my $element = Texinfo::Common::set_global_document_command($main_configuration,
        $global_commands, 'documentlanguage', 'preamble');
@@ -1503,6 +1504,10 @@ while(@input_files) {
   if ($global_commands->{'novalidate'}) {
     $main_configuration->set_conf('novalidate', 1);
   }
+
+  # Now that all the configuration has been set, associate it to the
+  # document XS
+  $main_configuration->register_XS_document_main_configuration($document);
 
   if (defined(get_conf('MACRO_EXPAND')) and $file_number == 0) {
     require Texinfo::Convert::Texinfo;
@@ -1550,7 +1555,7 @@ while(@input_files) {
 
   if ($formats_table{$converted_format}->{'relate_index_entries_to_table_items'}
       or $tree_transformations{'relate_index_entries_to_table_items'}) {
-    my $indices_information = $parser->indices_information();
+    my $indices_information = $document->indices_information();
     Texinfo::Common::relate_index_entries_to_table_items_in_tree($tree,
                                                           $indices_information);
   }
@@ -1561,38 +1566,27 @@ while(@input_files) {
   }
 
   if ($tree_transformations{'insert_nodes_for_sectioning_commands'}) {
-    my ($modified_contents, $added_nodes)
-     = Texinfo::Transformations::insert_nodes_for_sectioning_commands(
-                              $tree, $nodes_list, $targets_list, $labels);
-    if (!defined($modified_contents)) {
-      document_warn(__(
-   "insert_nodes_for_sectioning_commands transformation return no result. No section?"));
-    } else {
-      $tree->{'contents'} = $modified_contents;
-    }
+    my $added_nodes
+     = Texinfo::Transformations::insert_nodes_for_sectioning_commands($document,
+                                               $registrar, $main_configuration);
   }
 
-  my $refs = $parser->internal_references_information();
-  Texinfo::Structuring::associate_internal_references($registrar,
-                                                      $main_configuration,
-                                        $parser_information, $labels, $refs);
+  Texinfo::Structuring::associate_internal_references($document, $registrar,
+                                                      $main_configuration);
   # information obtained through Texinfo::Structuring
-  # and usefull in converters.
-  # FIXME the keys are not documented anywhere.  It is unclear where they
-  # should be documented.
-  my $structure_information = {};
+  # and useful in converters.
   # every format needs the sectioning structure
-  my ($sectioning_root, $sections_list)
-            = Texinfo::Structuring::sectioning_structure($registrar,
-                                               $main_configuration, $tree);
+  my $sections_list
+            = Texinfo::Structuring::sectioning_structure($tree, $registrar,
+                                                       $main_configuration);
+  if ($sections_list) {
+    Texinfo::Document::register_document_sections_list($document,
+                                                       $sections_list);
+  }
 
-  if ($sectioning_root) {
-    $structure_information->{'sectioning_root'} = $sectioning_root;
-    $structure_information->{'sections_list'} = $sections_list;
-    if (!$formats_table{$converted_format}->{'no_warn_non_empty_parts'}) {
-      Texinfo::Structuring::warn_non_empty_parts($registrar, $main_configuration,
-                                                 $global_commands);
-    }
+  if (!$formats_table{$converted_format}->{'no_warn_non_empty_parts'}) {
+    Texinfo::Structuring::warn_non_empty_parts($document, $registrar,
+                                               $main_configuration);
   }
 
   if ($tree_transformations{'complete_tree_nodes_menus'}) {
@@ -1602,15 +1596,16 @@ while(@input_files) {
   }
 
   if ($tree_transformations{'regenerate_master_menu'}) {
-    Texinfo::Transformations::regenerate_master_menu($main_configuration,
-                                                     $labels);
+    Texinfo::Transformations::regenerate_master_menu($document,
+                                                     $main_configuration);
   }
 
-  # this can be done for every format, since information is already gathered
-  my $floats = $parser->floats_information();
-
-  my $top_node;
   if ($formats_table{$converted_format}->{'nodes_tree'}) {
+    my $nodes_list
+        = Texinfo::Structuring::nodes_tree($document, $registrar,
+                                            $main_configuration);
+    Texinfo::Document::register_document_nodes_list($document,
+                                                    $nodes_list);
 
     # With this condition, menu is the default for 'FORMAT_MENU'.
     # However, this can only happen if
@@ -1622,29 +1617,29 @@ while(@input_files) {
     # is never used.
     if (not defined(get_conf('FORMAT_MENU'))
         or get_conf('FORMAT_MENU') eq 'menu') {
-      Texinfo::Structuring::set_menus_node_directions($registrar,
-               $main_configuration, $parser_information, $global_commands,
-               $nodes_list, $labels);
-    }
-    $top_node = Texinfo::Structuring::nodes_tree($registrar, $main_configuration,
-                                   $parser_information, $nodes_list, $labels);
-    if (defined($top_node)) {
-      $structure_information->{'top_node'} = $top_node;
-    }
-    if (not defined(get_conf('FORMAT_MENU'))
-        or get_conf('FORMAT_MENU') eq 'menu') {
-      if (defined($nodes_list)) {
+      Texinfo::Structuring::set_menus_node_directions($document, $registrar,
+                                                      $main_configuration);
 
-        Texinfo::Structuring::complete_node_tree_with_menus($registrar,
-                                 $main_configuration, $nodes_list, $top_node);
-        Texinfo::Structuring::check_nodes_are_referenced($registrar,
-                                    $main_configuration, $nodes_list, $top_node,
-                                                     $labels, $refs);
-      }
+      Texinfo::Structuring::complete_node_tree_with_menus($document,
+                                                          $registrar,
+                                                          $main_configuration);
+
+      Texinfo::Structuring::check_nodes_are_referenced($document, $registrar,
+                                                       $main_configuration);
     }
   }
   if ($formats_table{$converted_format}->{'floats'}) {
-    Texinfo::Structuring::number_floats($floats);
+    Texinfo::Structuring::number_floats($document);
+  }
+
+  $document = Texinfo::Structuring::rebuild_document($document);
+
+  if ($with_XS) {
+    foreach my $error (@{$document->{'errors'}}) {
+      $registrar->add_formatted_message($error);
+    }
+    Texinfo::Structuring::clear_document_errors(
+                                        $document->document_descriptor());
   }
 
   $error_count = handle_errors($registrar, $error_count, \@opened_files);
@@ -1672,14 +1667,14 @@ while(@input_files) {
                             %$file_cmdline_options,
                           };
 
+
   # NOTE nothing set in $main_configuration is passed directly, which is
   # clean, the Converters already have that information in $converter_options,
   # can determine it themselves or use their defaults.
   # It could be possible to pass some information if it allows
   # for instance to have some consistent information for Structuring
   # and Converters.
-  $converter_options->{'parser'} = $parser;
-  $converter_options->{'structuring'} = $structure_information;
+  $converter_options->{'document'} = $document;
   $converter_options->{'output_format'} = $format;
   $converter_options->{'converted_format'} = $converted_format;
   $converter_options->{'language_config_dirs'} = \@language_config_dirs;
@@ -1688,7 +1683,7 @@ while(@input_files) {
 
   my $converter = &{$formats_table{$converted_format}
         ->{'converter'}}($converter_options);
-  $converter->output($tree);
+  $converter->output($document);
   push @opened_files, Texinfo::Common::output_files_opened_files(
                               $converter->output_files_information());
   handle_errors($converter, $error_count, \@opened_files);
@@ -1755,6 +1750,7 @@ while(@input_files) {
       _exit($error_count, \@opened_files);
     }
   }
+
   if (defined(get_conf('SORT_ELEMENT_COUNT')) and $file_number == 0) {
     require Texinfo::Convert::TextContent;
     my $sort_element_converter_options = { %$main_program_default_options,
@@ -1762,8 +1758,7 @@ while(@input_files) {
                                            %$file_cmdline_options,
                                          };
 
-    $sort_element_converter_options->{'parser'} = $parser;
-    $sort_element_converter_options->{'structuring'} = $structure_information;
+    $sort_element_converter_options->{'document'} = $document;
     # This is not clear that this is correct.  On the one hand it could
     # be more consistent with the formatting to have nothing here or a
     # format corresponding to Texinfo::Convert::TextContent.  On the other
@@ -1784,8 +1779,8 @@ while(@input_files) {
            or (defined($converter_element_count->get_conf('USE_NODES'))
                        and !$converter_element_count->get_conf('USE_NODES')));
     my ($sorted_name_counts_array, $sort_element_count_text)
-        = $converter_element_count->sort_element_counts($tree, $use_sections,
-                                             get_conf('SORT_ELEMENT_COUNT_WORDS'));
+        = $converter_element_count->sort_element_counts($document,
+                          $use_sections, get_conf('SORT_ELEMENT_COUNT_WORDS'));
 
     my $sort_element_count_file_name = get_conf('SORT_ELEMENT_COUNT');
     my ($encoded_sort_element_count_file_name, $path_encoding)
@@ -1801,7 +1796,7 @@ while(@input_files) {
       print $sort_element_count_fh $sort_element_count_text;
 
       if (!close ($sort_element_count_fh)) {
-        warn(sprintf(__("%s: error on closing internal links file %s: %s\n"),
+        warn(sprintf(__("%s: error on closing elements size file %s: %s\n"),
                       $real_command_name, $sort_element_count_file_name, $!));
         $error_sort_element_count_file = 1;
       }
@@ -1824,6 +1819,8 @@ while(@input_files) {
       _exit($error_count, \@opened_files);
     }
   }
+
+  Texinfo::Document::remove_document($document);
 }
 
 foreach my $unclosed_file (keys(%unclosed_files)) {

@@ -16,13 +16,30 @@
 #include <config.h>
 #include <string.h>
 #include <stdbool.h>
+#include <iconv.h>
 #include "uniconv.h"
 #include "unistr.h"
 
+/* for isolate_last_space and global_documentlanguage */
 #include "parser.h"
+#include "command_ids.h"
+#include "tree_types.h"
 #include "text.h"
+#include "tree.h"
+#include "builtin_commands.h"
+#include "extra.h"
+/* for whitespace_chars and fatal */
+#include "utils.h"
+/* for relocate_source_marks */
+#include "manipulate_tree.h"
 #include "source_marks.h"
+/*
+#include "errors.h"
+*/
+#include "commands.h"
+/*
 #include "debug.h"
+*/
 
 void
 gather_def_item (ELEMENT *current, enum command_id next_command)
@@ -127,21 +144,22 @@ typedef struct {
     enum command_id alias;
     enum command_id command;
     char *category;
+    char *translation_context;
 } DEF_ALIAS;
 
 DEF_ALIAS def_aliases[] = {
-  CM_defun, CM_deffn, "Function",
-  CM_defmac, CM_deffn, "Macro",
-  CM_defspec, CM_deffn, "Special Form",
-  CM_defvar, CM_defvr, "Variable",
-  CM_defopt, CM_defvr, "User Option",
-  CM_deftypefun, CM_deftypefn, "Function",
-  CM_deftypevar, CM_deftypevr, "Variable",
-  CM_defivar, CM_defcv, "Instance Variable",
-  CM_deftypeivar, CM_deftypecv, "Instance Variable",
-  CM_defmethod, CM_defop, "Method",
-  CM_deftypemethod, CM_deftypeop, "Method",
-  0, 0, 0
+  CM_defun, CM_deffn, "Function", "category of functions for @defun",
+  CM_defmac, CM_deffn, "Macro", 0,
+  CM_defspec, CM_deffn, "Special Form", 0,
+  CM_defvar, CM_defvr, "Variable", "category of variables for @defvar",
+  CM_defopt, CM_defvr, "User Option", 0,
+  CM_deftypefun, CM_deftypefn, "Function", "category of functions for @deftypefun",
+  CM_deftypevar, CM_deftypevr, "Variable", "category of variables in typed languages for @deftypevar",
+  CM_defivar, CM_defcv, "Instance Variable", "category of instance variables in object-oriented programming for @defivar",
+  CM_deftypeivar, CM_deftypecv, "Instance Variable", "category of instance variables with data type in object-oriented programming for @deftypeivar",
+  CM_defmethod, CM_defop, "Method", "category of methods in object-oriented programming for @defmethod",
+  CM_deftypemethod, CM_deftypeop, "Method", "category of methods with data type in object-oriented programming for @deftypemethod",
+  0, 0, 0, 0
 };
 
 typedef struct {
@@ -308,9 +326,9 @@ split_def_args (ELEMENT *current, int starting_idx)
               u8_p += u8_len;
             }
 
+          text_append_n (&new->text, p, len);
           current_position = relocate_source_marks (&(e->source_mark_list), new,
                                 current_position, u8_len);
-          text_append_n (&new->text, p, len);
           insert_into_contents (current, new, i++);
           if (!*(p += len))
             break;
@@ -362,6 +380,9 @@ parse_def (enum command_id command, ELEMENT *current)
           e1->type = ET_untranslated;
           add_extra_string_dup (e1, "documentlanguage",
                                 global_documentlanguage);
+          if (def_aliases[i].translation_context)
+            add_extra_string_dup (e1, "translation_context",
+                                  def_aliases[i].translation_context);
         }
 
       e = new_element (ET_spaces_inserted);
@@ -370,62 +391,29 @@ parse_def (enum command_id command, ELEMENT *current)
       insert_into_contents (current, e, contents_idx + 1);
     }
 
-  /* prepare the arguments numbers and list */
-  if (command_data(command).flags & CF_MACRO)
+ /* Read arguments as CATEGORY [CLASS] [TYPE] NAME [ARGUMENTS]. */
+
+  for (i_def = 0; i_def < sizeof (def_maps) / sizeof (*def_maps); i_def++)
     {
-      int args_number;
-      MACRO *macro_record = lookup_macro (command);
-      ELEMENT *macro;
-      if (!macro_record)
-        fatal ("no linemacro record for arguments parsing");
-      macro = macro_record->element;
-      args_number = macro->args.number - 1;
-      arguments_list = malloc ((args_number + 1) * sizeof (char *));
-      arguments_list[args_number] = 0;
-      arg_types_nr = args_number;
-      if (args_number > 0)
-        {
-          int arg_index;
-          ELEMENT **args = macro->args.list;
-          for (arg_index = 1; arg_index <= args_number; arg_index++)
-            {
-              if (args[arg_index]->type == ET_macro_arg)
-                arguments_list[arg_index -1] = args[arg_index]->text.text;
-              else
-                arguments_list[arg_index -1] = 0;
-            }
-          /* remove one for the rest of the line argument */
-          arg_types_nr--;
-        }
-      result = malloc ((args_number+1) * sizeof (DEF_ARG *));
+      if (def_maps[i_def].command == command)
+        goto def_found;
     }
-  else
+  fatal ("no arguments for def command");
+ def_found:
+
+  /* determine non arg/argtype number of arguments */
+  arg_types_nr = 0;
+  arguments_list = def_maps[i_def].arguments;
+  while (arguments_list[arg_types_nr])
     {
-     /* Read arguments as CATEGORY [CLASS] [TYPE] NAME [ARGUMENTS]. */
+      char *arg_type_name = arguments_list[arg_types_nr];
 
-      for (i_def = 0; i_def < sizeof (def_maps) / sizeof (*def_maps); i_def++)
-        {
-          if (def_maps[i_def].command == command)
-            goto def_found;
-        }
-      fatal ("no arguments for def command");
-     def_found:
-
-      /* determine non arg/argtype number of arguments */
-      arg_types_nr = 0;
-      arguments_list = def_maps[i_def].arguments;
-      while (arguments_list[arg_types_nr])
-        {
-          char *arg_type_name = arguments_list[arg_types_nr];
-
-          /* FIXME keep information about arg/argtype? */
-          if (!strcmp (arg_type_name, "arg")
-              || !strcmp (arg_type_name, "argtype"))
-            break;
-          arg_types_nr++;
-        }
-      result = malloc ((arg_types_nr+1) * sizeof (DEF_ARG *));
+      if (!strcmp (arg_type_name, "arg")
+          || !strcmp (arg_type_name, "argtype"))
+        break;
+      arg_types_nr++;
     }
+  result = malloc ((arg_types_nr+1) * sizeof (DEF_ARG *));
 
   for (i = 0; i < arg_types_nr; i++)
     {
@@ -445,41 +433,6 @@ parse_def (enum command_id command, ELEMENT *current)
     }
 
   result[i] = 0;
-  if (command_data(command).flags & CF_MACRO)
-    {
-      while (contents_idx < current->contents.number
-             && current->contents.list[contents_idx]->type == ET_spaces)
-        contents_idx++;
-      /* note that element at contents_idx is not collected at that point */
-      /* arguments_list[i] NULL should only happen if there is no
-         argument at all for the linemacro */
-      if (contents_idx < current->contents.number && arguments_list[i])
-        {
-          DEF_ARG *def_arg = malloc (sizeof (DEF_ARG));
-          int contents_nr = current->contents.number - contents_idx;
-
-          result[i] = def_arg;
-          result[i+1] = 0;
-
-          def_arg->arg_type = strdup (arguments_list[i]);
-          if (contents_nr == 1)
-            def_arg->element = current->contents.list[contents_idx];
-          else
-            {
-              ELEMENT *new = new_element (ET_def_aggregate);
-              int j;
-              for (j = 0; j < contents_nr; j++)
-                {
-                  add_to_element_contents (new,
-                                           remove_from_contents (current,
-                                                                 contents_idx));
-                }
-              add_to_element_contents (current, new);
-              def_arg->element = new;
-            }
-        }
-      return result;
-    }
 
   for (i = 0; i < arg_types_nr; i++)
     {

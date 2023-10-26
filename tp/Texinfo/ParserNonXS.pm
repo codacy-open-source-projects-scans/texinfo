@@ -80,10 +80,14 @@ use Texinfo::Commands;
 # Error reporting and counting
 use Texinfo::Report;
 
+# To register the parsed manual and associated information
+# and also to call set_labels_identifiers_target.
+use Texinfo::Document;
+
 # in error messages, and for macro body expansion
 use Texinfo::Convert::Texinfo;
 
-# to call set_nodes_list_labels
+# to normalize names
 use Texinfo::Convert::NodeNameNormalization;
 
 # to complete indices translations.
@@ -117,7 +121,7 @@ sub import {
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 # these are the default values for the parser state
@@ -132,11 +136,13 @@ my %parser_state_initialization = (
                               # global @-commands.
   'conditional_stack' => [],  # a stack of conditional commands that are
                               # expanded.
+  'clickstyle' => 'arrow',       #
+  'kbdinputstyle' => 'distinct', #
   'raw_block_stack' => [],    # a stack of raw block commands that are nested.
   'floats' => {},             # key is the normalized float type, value is
                               # an array reference holding all the floats
                               # of that type.
-  'labels' => {},             # keys are normalized label names, as described
+  'identifiers_target' => {}, # keys are normalized label names, as described
                               # in the `HTML Xref' node.  Value should be
                               # a node/anchor or float in the tree.
   'macros' => {},             # the key is the user-defined macro name.  The
@@ -144,15 +150,18 @@ my %parser_state_initialization = (
                               # as obtained by parsing the @macro
   'macro_expansion_nr' => 0,  # number of macros being expanded
   'value_expansion_nr' => 0,  # number of values being expanded
-  'merged_indices' => {},     # the key is merged in the value
-  'sections_level' => 0,      # modified by raise/lowersections
-  'targets' => [],            # array of elements used to build 'labels'
+  'sections_level_modifier' => 0, # modified by raise/lowersections
+  'labels_list' => [],            # array of elements associated with labels
   'input_file_encoding' => 'utf-8', # perl encoding name used for the input
                                     # file
   'input_encoding_name' => 'utf-8', # current input encoding name, based on
                                     # mime type encoding names
   # initialization of information returned by global_information()
   'info' => {},
+  # for get_conf, set for all the configuration keys that are also in
+  # %Texinfo::Common::default_parser_customization_values to the
+  # values set at parser initialization
+  'conf' => {},
 );
 
 # configurable parser state
@@ -160,10 +169,6 @@ my %parser_state_configuration = (
   'accept_internalvalue' => 0, # whether @txiinternalvalue should be added
                                # to the tree or considered invalid.
                                # currently set if called by gdt.
-  'clickstyle' => 'arrow',       # duplicated in gdt but not set nor used by
-                                 # the XS parser
-  'kbdinputstyle' => 'distinct', # duplicated in gdt but not set nor used by
-                                 # the XS parser
   'registrar' => undef,        # Texinfo::Report object used for error
                                # reporting.
   'values' => {'txicommandconditionals' => 1},
@@ -567,8 +572,31 @@ sub parser(;$$)
   my $parser = dclone(\%parser_default_configuration);
   bless $parser;
 
-  _setup_conf($parser, $conf);
-  # This is not very useful in perl, but mimics the XS parser
+  $parser->{'set'} = {};
+  if (defined($conf)) {
+    foreach my $key (keys(%$conf)) {
+      if (exists($parser_settable_configuration{$key})) {
+        # we keep registrar instead of copying on purpose, to reuse the object
+        if ($key ne 'values' and $key ne 'registrar' and ref($conf->{$key})) {
+          $parser->{$key} = dclone($conf->{$key});
+        } else {
+          $parser->{$key} = $conf->{$key};
+        }
+        if ($initialization_overrides{$key}) {
+          $parser->{'set'}->{$key} = $parser->{$key};
+        }
+      } else {
+        warn "ignoring parser configuration value \"$key\"\n";
+      }
+    }
+  }
+  # restrict variables found by get_conf, and set the values to the
+  # parser initialization values only.  What is found in the document
+  # has no effect.
+  foreach my $key (keys(%Texinfo::Common::default_parser_customization_values)) {
+    $parser->{'conf'}->{$key} = $parser->{$key};
+  }
+
   print STDERR "!!!!!!!!!!!!!!!! RESETTING THE PARSER !!!!!!!!!!!!!!!!!!!!!\n"
     if ($parser->{'DEBUG'});
 
@@ -593,7 +621,6 @@ sub parser(;$$)
   $parser->{'nesting_context'}->{'regions_stack'} = [];
   $parser->{'basic_inline_commands'} = {%default_basic_inline_commands};
 
-  # following is common with simple_parser
   $parser->_init_context_stack();
 
   # turn the array to a hash for speed.  Not sure it really matters for such
@@ -610,64 +637,10 @@ sub parser(;$$)
   return $parser;
 }
 
-# simple parser initialization.  The only difference with a regular parser
-# is that the dynamical @-commands groups and indices information references
-# that are initialized in each regular parser are initialized once for all
-# and shared among simple parsers.  It is used in gdt() and this has a sizable
-# effect on performance.
-my $simple_parser_line_commands = dclone(\%line_commands);
-my $simple_parser_brace_commands = dclone(\%brace_commands);
-my $simple_parser_valid_nestings = dclone(\%default_valid_nestings);
-my $simple_parser_no_paragraph_commands = {%default_no_paragraph_commands};
-my $simple_parser_index_names = dclone(\%index_names);
-my $simple_parser_command_index = {%command_index};
-my $simple_parser_close_paragraph_commands = {%default_close_paragraph_commands};
-my $simple_parser_close_preformatted_commands = {%close_preformatted_commands};
-sub simple_parser(;$)
-{
-  my $conf = shift;
-
-  my $parser = dclone(\%parser_default_configuration);
-  bless $parser;
-
-  _setup_conf($parser, $conf);
-  # This is not very useful in perl, but mimics the XS parser
-  print STDERR "!!!!!!!!!!!!!!!! RESETTING THE PARSER !!!!!!!!!!!!!!!!!!!!!\n"
-    if ($parser->{'DEBUG'});
-
-  $parser->{'line_commands'} = $simple_parser_line_commands;
-  $parser->{'brace_commands'} = $simple_parser_brace_commands;
-  $parser->{'valid_nestings'} = $simple_parser_valid_nestings;
-  $parser->{'no_paragraph_commands'} = $simple_parser_no_paragraph_commands;
-  $parser->{'index_names'} = $simple_parser_index_names;
-  $parser->{'command_index'} = $simple_parser_command_index;
-  $parser->{'close_paragraph_commands'} = $simple_parser_close_paragraph_commands;
-  $parser->{'close_preformatted_commands'} = $simple_parser_close_preformatted_commands;
-
-  # other initializations
-  $parser->{'definfoenclose'} = {};
-  $parser->{'source_mark_counters'} = {};
-  $parser->{'nesting_context'} = {%nesting_context_init};
-
-  $parser->_init_context_stack();
-
-  # turn the array to a hash for speed.  Not sure it really matters for such
-  # a small array.
-  foreach my $expanded_format(@{$parser->{'EXPANDED_FORMATS'}}) {
-    $parser->{'expanded_formats_hash'}->{$expanded_format} = 1;
-  }
-
-  if (not defined($parser->{'registrar'})) {
-    $parser->{'registrar'} = Texinfo::Report::new();
-  }
-
-  return $parser;
-}
-
 sub get_conf($$)
 {
   my ($self, $var) = @_;
-  return $self->{$var};
+  return $self->{'conf'}->{$var};
 }
 
 sub _new_text_input($$)
@@ -759,11 +732,11 @@ sub parse_texi_piece($$;$)
 
   my ($document_root, $before_node_section)
      = _setup_document_root_and_before_node_section();
-  my $tree = $self->_parse_texi($document_root, $before_node_section);
+  my $document = $self->_parse_texi($document_root, $before_node_section);
 
   get_parser_info($self);
 
-  return $tree;
+  return $document;
 }
 
 sub parse_texi_line($$;$)
@@ -779,8 +752,9 @@ sub parse_texi_line($$;$)
   _input_push_text($self, $text, $line_nr);
 
   my $root = {'type' => 'root_line'};
-  my $tree = $self->_parse_texi($root, $root);
-  return $tree;
+  my $document = $self->_parse_texi($root, $root);
+  get_parser_info($self);
+  return $document->tree();
 }
 
 sub parse_texi_text($$;$)
@@ -795,12 +769,12 @@ sub parse_texi_text($$;$)
 
   _input_push_text($self, $text, $line_nr);
 
-  my $tree = $self->_parse_texi_document();
+  my $document = $self->_parse_texi_document();
 
   get_parser_info($self);
-
-  return $tree;
+  return $document;
 }
+
 
 # $INPUT_FILE_PATH the name of the opened file should be a binary string.
 # Returns binary strings too.
@@ -892,13 +866,12 @@ sub parse_texi_file($$)
 
   $self = parser() if (!defined($self));
 
+  my $document = $self->_parse_texi_document();
+  get_parser_info($self);
   $self->{'info'}->{'input_file_name'} = $file_name;
   $self->{'info'}->{'input_directory'} = $directories;
 
-  my $tree = $self->_parse_texi_document();
-  get_parser_info($self);
-
-  return $tree;
+  return $document;
 }
 
 sub _parse_texi_document($)
@@ -935,53 +908,11 @@ sub _parse_texi_document($)
     }
   }
 
-  my $tree = $self->_parse_texi($document_root, $before_node_section);
+  my $document = $self->_parse_texi($document_root, $before_node_section);
 
-  Texinfo::Common::rearrange_tree_beginning($self, $before_node_section);
+  Texinfo::Common::rearrange_tree_beginning($document, $before_node_section);
 
-  return $tree;
-}
-
-# return indices information
-sub indices_information($)
-{
-  my $self = shift;
-  return $self->{'index_names'};
-}
-
-sub floats_information($)
-{
-  my $self = shift;
-  return $self->{'floats'};
-}
-
-sub internal_references_information($)
-{
-  my $self = shift;
-  return $self->{'internal_references'};
-}
-
-sub global_commands_information($)
-{
-  my $self = shift;
-  return $self->{'commands_info'};
-}
-
-# @ dircategory_direntry
-# perl_encoding
-# input_encoding_name
-# input_file_name
-# input_directory
-sub global_information($)
-{
-  my $self = shift;
-  return $self->{'info'};
-}
-
-sub labels_information($)
-{
-  my $self = shift;
-  return $self->{'labels'}, $self->{'targets'}, $self->{'nodes'};
+  return $document;
 }
 
 sub registered_errors($)
@@ -992,26 +923,6 @@ sub registered_errors($)
 
 sub _setup_conf($$)
 {
-  my ($parser, $conf) = @_;
-
-  $parser->{'set'} = {};
-  if (defined($conf)) {
-    foreach my $key (keys(%$conf)) {
-      if (exists($parser_settable_configuration{$key})) {
-        # we keep registrar instead of copying on purpose, to reuse the object
-        if ($key ne 'values' and $key ne 'registrar' and ref($conf->{$key})) {
-          $parser->{$key} = dclone($conf->{$key});
-        } else {
-          $parser->{$key} = $conf->{$key};
-        }
-        if ($initialization_overrides{$key}) {
-          $parser->{'set'}->{$key} = $parser->{$key};
-        }
-      } else {
-        warn "ignoring parser configuration value \"$key\"\n";
-      }
-    }
-  }
 }
 
 # Following are the internal parsing subroutines.  The most important are
@@ -1177,8 +1088,6 @@ sub _register_global_command {
 }
 
 # $ELEMENT should be the parent container.
-# The source mark is put in the last content if it is text
-# or registered in the parent container.
 sub _register_source_mark
 {
   my ($self, $element, $source_mark) = @_;
@@ -1205,6 +1114,8 @@ sub _debug_show_source_mark
      .(defined($source_mark->{'status'}) ? $source_mark->{'status'}: 'UNDEF');
 }
 
+# $ELEMENT should be the parent container.
+# The source mark is put in the last content.
 sub _place_source_mark
 {
   my ($self, $element, $source_mark) = @_;
@@ -1319,8 +1230,10 @@ sub _parse_macro_command_line($$$$$;$)
     # accept an @-command after the arguments in case there is a @c or
     # @comment
     if ($args_def =~ /^\s*[^\@]/) {
+      my $no_eol_args = $args_def;
+      chomp ($no_eol_args);
       $self->_line_error(sprintf(__("bad syntax for \@%s argument: %s"),
-                                 $command, $args_def),
+                                 $command, $no_eol_args),
                          $source_info);
       $macro->{'extra'} = {'invalid_syntax' => 1};
     }
@@ -1429,6 +1342,8 @@ sub _close_brace_command($$$;$$$)
 {
   my ($self, $current, $source_info, $closed_block_command,
       $interrupting_command, $missing_brace) = @_;
+
+  delete $current->{'remaining_args'};
 
   if ($self->{'brace_commands'}->{$current->{'cmdname'}} eq 'context') {
     my $expected_context;
@@ -1813,6 +1728,7 @@ sub _gather_previous_item($$;$$)
                            eq 'comment')))) {
         my $element = _pop_element_from_contents($self, $before_item);
         unshift @{$table_term->{'contents'}}, $element;
+        $element->{'parent'} = $table_term;
       }
     }
     if ($table_after_terms) {
@@ -3231,53 +3147,48 @@ sub _parse_def($$$$)
   my $arg_type;
   my $arg_types_nr;
 
-  if ($self->{'macros'}->{$command}) {
-    my $macro = $self->{'macros'}->{$command}->{'element'};
-    my $args_total = scalar(@{$macro->{'args'}}) -1;
-    if ($args_total > 0) {
-      my $arg_index;
-      # the first argument is the macro name
-      for ($arg_index=1; $arg_index<=$args_total; $arg_index++) {
-        if (defined($macro->{'args'}->[$arg_index])) {
-          push @args, $macro->{'args'}->[$arg_index]->{'text'};
-        }
+  # could have used def_aliases, but use code more similar with the XS parser
+  if ($def_alias_commands{$command}) {
+    my $real_command = $def_aliases{$command};
+    my $category;
+    my $translation_context;
+    my $category_translation_context = $def_map{$command}->{$real_command};
+    # if the translation requires a context, $category_translation_context
+    # is an array reference, otherwise it is a string.
+    if (ref($category_translation_context) eq '') {
+      $category = $category_translation_context;
+    } else {
+      ($translation_context, $category) = @$category_translation_context;
+    }
+
+    my $bracketed = { 'type' => 'bracketed_inserted',
+                      'parent' => $current };
+    my $content = { 'text' => $category, 'parent' => $bracketed };
+    # the category string is an english string (such as Function).  If
+    # documentlanguage is set it needs to be translated during the conversion.
+    if (defined($self->{'documentlanguage'})) {
+      $content->{'type'} = 'untranslated';
+      $content->{'extra'} = {'documentlanguage' => $self->{'documentlanguage'}};
+      if (defined($translation_context)) {
+        $content->{'extra'}->{'translation_context'} = $translation_context;
       }
     }
-    $arg_types_nr = $args_total;
-    if ($arg_types_nr > 0) {
-      # remove one for the rest of the line argument
-      $arg_types_nr--;
-    }
-  } else{
-    # could have used def_aliases, but use code more similar with the XS parser
-    if ($def_alias_commands{$command}) {
-      my $real_command = $def_aliases{$command};
-      my $prepended = $def_map{$command}->{$real_command};
-      my $bracketed = { 'type' => 'bracketed_inserted',
-                        'parent' => $current };
-      my $content = { 'text' => $prepended, 'parent' => $bracketed };
-      # the prepended string is an english string (such as Function).  If
-      # documentlanguage is set it needs to be translated during the conversion.
-      if (defined($self->{'documentlanguage'})) {
-        $content->{'type'} = 'untranslated';
-        $content->{'extra'} = {'documentlanguage' => $self->{'documentlanguage'}};
-      }
-      @{$bracketed->{'contents'}} = ($content);
+    @{$bracketed->{'contents'}} = ($content);
 
-      unshift @contents, $bracketed,
-                         { 'text' => ' ', 'type' => 'spaces_inserted',
-                           'parent' => $current,
-                           'extra' => {'def_role' => 'spaces'},
-                         };
+    unshift @contents, $bracketed,
+                       { 'text' => ' ', 'type' => 'spaces_inserted',
+                         'parent' => $current,
+                         'extra' => {'def_role' => 'spaces'},
+                       };
 
-      $command = $def_aliases{$command};
-    }
-    @args = @{$def_map{$command}};
-    $arg_type = pop @args if ($args[-1] eq 'arg' or $args[-1] eq 'argtype');
-    # If $arg_type is not set (for @def* commands that are not documented
-    # to take args), everything happens as if arg_type was set to 'arg'.
-    $arg_types_nr = scalar(@args);
+    $command = $def_aliases{$command};
   }
+  @args = @{$def_map{$command}};
+  $arg_type = pop @args if ($args[-1] eq 'arg' or $args[-1] eq 'argtype');
+  # If $arg_type is not set (for @def* commands that are not documented
+  # to take args), everything happens as if arg_type was set to 'arg'.
+  $arg_types_nr = scalar(@args);
+
   @contents = map (_split_def_args($self, $_, $current, $source_info),
                    @contents );
   @new_contents = @contents;
@@ -3297,33 +3208,6 @@ sub _parse_def($$$$)
     } else {
       last;
     }
-  }
-  if ($self->{'macros'}->{$command}) {
-    while ($contents_idx < scalar(@{$current->{'contents'}})
-           and $current->{'contents'}->[$contents_idx]->{'type'}
-           and $current->{'contents'}->[$contents_idx]->{'type'} eq 'spaces') {
-      $contents_idx++;
-    }
-    if ($contents_idx < scalar(@{$current->{'contents'}})
-        # should only happen if there is no argument at all for the linemacro
-        and $i < scalar(@args)) {
-      my $contents_nr = scalar(@{$current->{'contents'}}) - $contents_idx;
-      if ($contents_nr == 1) {
-        $result{$args[$i]} = $current->{'contents'}->[$contents_idx];
-      } else {
-        my @gathered_contents
-          = splice(@{$current->{'contents'}}, $contents_idx,
-                   $contents_idx + $contents_nr);
-        my $new = {'type' => 'def_aggregate', 'parent' => $current,
-                   'contents' => \@gathered_contents};
-        foreach my $content (@gathered_contents) {
-          $content->{'parent'} = $new;
-        }
-        splice (@{$current->{'contents'}}, $contents_idx, 0, ($new));
-        $result{$args[$i]} = $new;
-      }
-    }
-    return \%result;
   }
 
   foreach my $type (keys(%result)) {
@@ -3370,8 +3254,11 @@ sub _parse_def($$$$)
 
 # store an index entry.
 # $COMMAND_CONTAINER is the name of the @-command the index entry
-#  is associated with, for instance 'cindex', 'defivar' or 'vtable'.
-# $CURRENT is the command element.
+# is associated with, for instance 'cindex', 'defivar' or 'vtable'.
+# $ELEMENT is the element holding more directly the index entry.
+# Can be the same as $COMMAND_CONTAINER, but also be different,
+# for instance it is @item or @itemx for @vtable and defline type
+# for @defivar.
 sub _enter_index_entry($$$$)
 {
   my ($self, $command_container, $element, $source_info) = @_;
@@ -3429,6 +3316,21 @@ sub _enter_index_entry($$$$)
   $element->{'extra'}->{'index_entry'} = [$index_name, $number];
 }
 
+sub _parse_float_type($)
+{
+  my $current = shift;
+
+  my $normalized = '';
+  if ($current->{'args'} and scalar(@{$current->{'args'}})) {
+    $normalized
+       = Texinfo::Convert::NodeNameNormalization::convert_to_normalized(
+                                                  $current->{'args'}->[0]);
+  }
+  $current->{'extra'} = {} if (!$current->{'extra'});
+  $current->{'extra'}->{'float_type'} = $normalized;
+  return $normalized;
+}
+
 sub _in_include($)
 {
   my $self = shift;
@@ -3445,7 +3347,7 @@ sub _in_include($)
 # name containing an at sign or braces, but no other commands nor element
 # types.  Returns $SUPERFLUOUS_ARG if the $E contains other commands or element
 # types.
-sub _convert_to_text {
+sub _text_contents_to_plain_text {
   my $e = shift;
 
   my ($text, $superfluous_arg) = ('', 0);
@@ -3524,17 +3426,16 @@ sub _end_line_misc_line($$$)
     }
   } elsif ($arg_spec eq 'text') {
     my ($text, $superfluous_arg)
-      = _convert_to_text($current->{'args'}->[0]);
+      = _text_contents_to_plain_text($current->{'args'}->[0]);
 
-    $current->{'extra'} = {} if (!$current->{'extra'});
     if ($text eq '') {
       if (not $superfluous_arg) {
         $self->_command_warn($current, $source_info,
                              __("\@%s missing argument"), $command);
       }
       # if there is superfluous arg, a more suitable error is issued below.
-      $current->{'extra'}->{'missing_argument'} = 1;
     } else {
+      $current->{'extra'} = {} if (!$current->{'extra'});
       $current->{'extra'}->{'text_arg'} = $text;
       if ($command eq 'end') {
         # REMACRO
@@ -3684,10 +3585,22 @@ sub _end_line_misc_line($$$)
           $arg->{'extra'}->{$label_info}
             = [@{$arg_label_manual_info->{$label_info}}];
         }
+        if ($arg->{'extra'}->{'node_content'}) {
+          my $normalized = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
+            {'contents' => $arg->{'extra'}->{'node_content'}});
+          $arg->{'extra'}->{'normalized'} = $normalized;
+        }
       }
     }
-    _check_register_target_element_label($self, $current->{'args'}->[0],
+    my $label_element = $current->{'args'}->[0];
+    if (not $label_element or not $label_element->{'contents'}) {
+      $self->_line_error(
+        sprintf(__("empty argument in \@%s"),
+          $current->{'cmdname'}), $current->{'source_info'});
+    }
+    _check_register_target_element_label($self, $label_element,
                                          $current, $source_info);
+
     if ($self->{'current_part'}) {
       my $part = $self->{'current_part'};
       if (not $part->{'extra'}
@@ -3704,17 +3617,18 @@ sub _end_line_misc_line($$$)
     }
     $self->{'current_node'} = $current;
   } elsif ($command eq 'listoffloats') {
-    # for now done in Texinfo::Convert::NodeNameNormalization, but could be
-    # good to do in Parser/XS
-    #_parse_float_type($current);
+    _parse_float_type($current);
   } else {
+    if ($self->{'command_index'}->{$current->{'cmdname'}}) {
+      $current->{'type'} = 'index_entry_command';
+      $current->{'info'} = {} if (!$current->{'info'});
+      $current->{'info'}->{'command_name'} = $current->{'cmdname'};
+    }
     # Handle all the other 'line' commands.  Here just check that they
     # have an argument.  Empty @top is allowed
     if (!$current->{'args'}->[0]->{'contents'} and $command ne 'top') {
       $self->_command_warn($current, $source_info,
              __("\@%s missing argument"), $command);
-      $current->{'extra'} = {} if (!$current->{'extra'});
-      $current->{'extra'}->{'missing_argument'} = 1;
     } else {
       if (($command eq 'item' or $command eq 'itemx')
           and $current->{'parent'}->{'cmdname'}
@@ -3724,7 +3638,6 @@ sub _end_line_misc_line($$$)
       } elsif ($self->{'command_index'}->{$current->{'cmdname'}}) {
         _enter_index_entry($self, $current->{'cmdname'},
                            $current, $source_info);
-        $current->{'type'} = 'index_entry_command';
       }
       # if there is a brace command interrupting an index or subentry
       # command, replace the internal internal_spaces_before_brace_in_index
@@ -4038,16 +3951,15 @@ sub _end_line_starting_block($$$)
 
   # @float args
   if ($command eq 'float') {
-    $current->{'source_info'} = $source_info;
     my $float_label_element;
     $float_label_element = $current->{'args'}->[1]
-      if ($current->{'args'} and scalar(@{$current->{'args'}}) > 2);
+      if ($current->{'args'} and scalar(@{$current->{'args'}}) >= 2);
     _check_register_target_element_label($self, $float_label_element,
                                          $current, $source_info);
-    # for now done in Texinfo::Convert::NodeNameNormalization, but could be
-    # good to do in Parser/XS
-    #my $float_type = _parse_float_type($current);
-    #push @{$self->{'floats'}->{$float_type}}, $current;
+
+    my $float_type = _parse_float_type($current);
+    push @{$self->{'floats'}->{$float_type}}, $current;
+
     if (defined($self->{'current_section'})) {
       $current->{'extra'} = {} if (!defined($current->{'extra'}));
       $current->{'extra'}->{'float_section'} = $self->{'current_section'};
@@ -4454,7 +4366,7 @@ sub _end_line($$$)
         # as the source marks are either associated to the menu description
         # or to the empty line after the menu description.  Leave a message
         # in case it happens in the future/some unexpected case.
-        if ($self->get_conf('TEST')
+        if ($self->{'TEST'}
             and $empty_preformatted->{'source_marks'}) {
           print STDERR "BUG: source_marks in menu description preformatted\n";
         }
@@ -4564,7 +4476,7 @@ sub _check_register_target_element_label($$$$)
 {
   my ($self, $label_element, $target_element, $source_info) = @_;
 
-  if ($label_element) {
+  if ($label_element and $label_element->{'contents'}) {
     my ($label_info, $modified_node_content)
       = Texinfo::Common::parse_node_manual($label_element);
     if ($label_info and $label_info->{'manual_content'}) {
@@ -4574,8 +4486,21 @@ sub _check_register_target_element_label($$$$)
                                     {'contents' => $label_element->{'contents'}})),
                          $source_info);
     }
+    my $normalized
+         = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
+             $label_element);
+    if ($normalized !~ /[^-]/) {
+      $self->_line_error(sprintf(__("empty node name after expansion `%s'"),
+                         # convert the contents only, to avoid spaces
+                              Texinfo::Convert::Texinfo::convert_to_texinfo(
+                               {'contents' => $label_element->{'contents'}})),
+                                 $target_element->{'source_info'});
+    } else {
+      $target_element->{'extra'} = {} if (!$target_element->{'extra'});
+      $target_element->{'extra'}->{'normalized'} = $normalized;
+    }
   }
-  Texinfo::Common::register_label($self->{'targets'}, $target_element);
+  push @{$self->{'labels_list'}}, $target_element;
 }
 
 # Return 1 if an element is all whitespace.
@@ -4642,7 +4567,7 @@ sub _enter_menu_entry_node($$$)
 {
   my ($self, $current, $source_info) = @_;
 
-  $current->{'source_info'} = $source_info;
+  $current->{'source_info'} = {%$source_info};
 
   my $menu_entry_node
     = _register_extra_menu_entry_information($self, $current, $source_info);
@@ -4896,7 +4821,7 @@ sub _new_value_element($$;$$)
                       'args' => [] };
   $value_elt->{'parent'} = $current if (defined($current));
   # Add a 'brace_command_arg' container?  On the one hand it is
-  # not usefull, as there is no contents, only a flag, on the
+  # not useful, as there is no contents, only a flag, on the
   # other end, it is different from other similar commands, like 'U'.
   # Beware that it is also used for txiinternalvalue, which for
   # now requires that structure, but it could easily be changed too.
@@ -5370,10 +5295,10 @@ sub _handle_other_command($$$$$)
            "\@%s outside of table or list"), $command), $source_info);
         $current = _begin_preformatted($self, $current);
       }
-      $command_e->{'source_info'} = $source_info if (defined($command_e));
+      $command_e->{'source_info'} = {%$source_info} if (defined($command_e));
     } else {
       $command_e = { 'cmdname' => $command, 'parent' => $current,
-                     'source_info' => $source_info };
+                     'source_info' => {%$source_info} };
       push @{$current->{'contents'}}, $command_e;
       if (($command eq 'indent' or $command eq 'noindent')
            and _in_paragraph($self, $current)) {
@@ -5522,9 +5447,9 @@ sub _handle_line_command($$$$$$)
       }
     }
     if ($command eq 'raisesections') {
-      $self->{'sections_level'}++;
+      $self->{'sections_level_modifier'}++;
     } elsif ($command eq 'lowersections') {
-      $self->{'sections_level'}--;
+      $self->{'sections_level_modifier'}--;
     }
     _register_global_command($self, $command_e, $source_info)
       if $command_e;
@@ -5562,9 +5487,9 @@ sub _handle_line_command($$$$$$)
       }
       $command_e = { 'cmdname' => $command, 'parent' => $current };
       push @{$current->{'contents'}}, $command_e;
-      $command_e->{'source_info'} = $source_info;
+      $command_e->{'source_info'} = {%$source_info};
     } else {
-      $command_e = { 'cmdname' => $command, 'source_info' => $source_info };
+      $command_e = { 'cmdname' => $command, 'source_info' => {%$source_info} };
       if ($command eq 'nodedescription') {
         if ($self->{'current_node'}) {
           $command_e->{'extra'} = {} if (!defined($command_e->{'extra'}));
@@ -5615,9 +5540,9 @@ sub _handle_line_command($$$$$$)
         # when converting back to Texinfo.
         $current = _end_line($self, $current, $source_info);
       } elsif ($sectioning_heading_commands{$data_cmdname}) {
-        if ($self->{'sections_level'}) {
+        if ($self->{'sections_level_modifier'}) {
           $command_e->{'extra'}
-            = {'sections_level' => $self->{'sections_level'}};
+            = {'level_modifier' => $self->{'sections_level_modifier'}};
         }
       }
       push @{$current->{'contents'}}, $command_e;
@@ -5785,7 +5710,7 @@ sub _handle_block_command($$$$$)
       push @{$current->{'contents'}}, {
                                         'type' => 'def_line',
                                         'parent' => $current,
-                                        'source_info' => $source_info,
+                                        'source_info' => {%$source_info},
                                         'extra' =>
                                          {'def_command' => $command,
                                           'original_def_cmdname' => $command}
@@ -5886,7 +5811,7 @@ sub _handle_block_command($$$$$)
       push @{$self->{'nesting_context'}->{'basic_inline_stack_block'}},
            $command;
     }
-    $block->{'source_info'} = $source_info;
+    $block->{'source_info'} = {%$source_info};
     _register_global_command($self, $block, $source_info);
     $line = _start_empty_line_after_command($line, $current, $block);
   }
@@ -5923,6 +5848,8 @@ sub _handle_brace_command($$$$)
   }
   if ($self->{'definfoenclose'}->{$command}) {
     $command_e->{'type'} = 'definfoenclose_command';
+    $command_e->{'info'} = {} if (!$command_e->{'info'});
+    $command_e->{'info'}->{'command_name'} = $command;
     $command_e->{'extra'} = {} if (!$command_e->{'extra'});
     $command_e->{'extra'}->{'begin'}
       = $self->{'definfoenclose'}->{$command}->[0];
@@ -6065,7 +5992,7 @@ sub _handle_open_brace($$$$)
            'parent' => $current };
     $current = $current->{'contents'}->[-1];
     # we need the line number here in case @ protects end of line
-    $current->{'source_info'} = $source_info
+    $current->{'source_info'} = {%$source_info}
       if ($current->{'parent'}->{'parent'}->{'type'}
           and $current->{'parent'}->{'parent'}->{'type'} eq 'def_line');
     # internal_spaces_before_argument is a transient internal type,
@@ -6156,7 +6083,7 @@ sub _handle_close_brace($$$)
                                $closed_command), $source_info);
     }
     if ($current->{'parent'}->{'cmdname'} eq 'anchor') {
-      $current->{'parent'}->{'source_info'} = $source_info;
+      $current->{'parent'}->{'source_info'} = {%$source_info};
       if (! $current->{'contents'}) {
         $self->_line_error(sprintf(__("empty argument in \@%s"),
                            $current->{'parent'}->{'cmdname'}),
@@ -6333,7 +6260,7 @@ sub _handle_close_brace($$$)
       if ($index_element
           and _is_index_element($self, $index_element)) {
         if ($command eq 'sortas') {
-          my ($arg, $superfluous_arg) = _convert_to_text($current);
+          my ($arg, $superfluous_arg) = _text_contents_to_plain_text($current);
           if (defined($arg)) {
             $index_element->{'extra'} = {}
               if (!defined($index_element->{'extra'}));
@@ -6431,7 +6358,7 @@ sub _handle_comma($$$$)
                               'contents' => [],
                               'parent' => $current,};
         push @{$current->{'args'}}, $elided_arg_elt;
-        my $raw = {'type' => 'raw', 'text' => ''};
+        my $raw = {'type' => 'raw', 'text' => '', 'parent' => $elided_arg_elt};
         push @{$elided_arg_elt->{'contents'}}, $raw;
 
         # Scan forward to get the next argument.
@@ -6490,7 +6417,7 @@ sub _handle_comma($$$$)
                             'contents' => [],
                             'parent' => $current,};
       push @{$current->{'args'}}, $elided_arg_elt;
-      my $raw = {'type' => 'raw', 'text' => ''};
+      my $raw = {'type' => 'raw', 'text' => '', 'parent' => $elided_arg_elt};
       push @{$elided_arg_elt->{'contents'}}, $raw;
 
       my $brace_count = 1;
@@ -7000,7 +6927,7 @@ sub _process_remaining_on_line($$$$)
         # by calls of gather_spaces_after_cmd_before_arg, which transfer
         # the element to the info hash.  The contents allow to have source
         # marks easily associated.
-        # The type name is not used anywhere but can be usefull for
+        # The type name is not used anywhere but can be useful for
         # debugging, in particular to check that the element does not
         # appear anywhere in the tree.
         # Note that contents is transiently set for brace commands, which in
@@ -7097,7 +7024,8 @@ sub _process_remaining_on_line($$$$)
                sprintf(__("undefined flag: %s"), $value), $source_info);
 
             # caller should expand something along
-            # gdt($self, '@{No value for `{value}\'@}', {'value' => $value});
+            # gdt($self, '@{No value for `{value}\'@}',
+            #                            {'value' => {'text' => $value}});
             my $new_element = _new_value_element($command, $value, $current,
                                                  $spaces_element);
             push @{$current->{'contents'}}, $new_element;
@@ -7445,12 +7373,27 @@ sub _parse_texi($$$)
     die;
   }
 
-  # Setup labels info and nodes list based on 'targets'
-  Texinfo::Convert::NodeNameNormalization::set_nodes_list_labels($self,
+  # update merged_in for merging hapening after first index merge
+  foreach my $index_name (keys (%{$self->{'index_names'}})) {
+    my $index_info = $self->{'index_names'}->{$index_name};
+    if ($index_info->{'merged_in'}) {
+      my $ultimate_idx = Texinfo::Common::ultimate_index($self->{'index_names'},
+                                                         $index_info);
+      $index_info->{'merged_in'} = $ultimate_idx->{'name'};
+    }
+  }
+
+  # Setup identifier target elements based on 'labels_list'
+  Texinfo::Document::set_labels_identifiers_target($self,
                                               $self->{'registrar'}, $self);
-  Texinfo::Convert::NodeNameNormalization::set_float_types($self);
-  Texinfo::Translations::complete_indices($self);
-  return $root;
+  Texinfo::Translations::complete_indices($self, $self->{'index_names'});
+
+  my $document = Texinfo::Document::register($root,
+     $self->{'info'}, $self->{'index_names'}, $self->{'floats'},
+     $self->{'internal_references'}, $self->{'commands_info'},
+     $self->{'identifiers_target'}, $self->{'labels_list'});
+
+  return $document;
 }
 
 # parse special rawline @-commands, unmacro, set, clear, clickstyle
@@ -7564,8 +7507,6 @@ sub _parse_line_command_args($$$)
   if (!$arg->{'contents'}) {
     $self->_command_error($line_command, $source_info,
                __("\@%s missing argument"), $command);
-    $line_command->{'extra'} = {} if (!$line_command->{'extra'});
-    $line_command->{'extra'}->{'missing_argument'} = 1;
     return undef;
   }
 
@@ -7675,9 +7616,6 @@ sub _parse_line_command_args($$$)
         if (!exists($self->{'index_names'}->{$name}->{'name'})) {
           $self->{'index_names'}->{$name}->{'name'} = $name;
         }
-        if (!exists($self->{'index_names'}->{$name}->{'contained_indices'})) {
-          $self->{'index_names'}->{$name}->{'contained_indices'} = {$name => 1};
-        }
         my $index_cmdname = $name.'index';
         delete $self->{'macros'}->{$index_cmdname};
         delete $self->{'aliases'}->{$index_cmdname};
@@ -7698,47 +7636,30 @@ sub _parse_line_command_args($$$)
   } elsif ($command eq 'synindex' || $command eq 'syncodeindex') {
     # REMACRO
     if ($line =~ /^([[:alnum:]][[:alnum:]\-]*)\s+([[:alnum:]][[:alnum:]\-]*)$/) {
-      my $index_from = $1;
-      my $index_to = $2;
+      my $index_name_from = $1;
+      my $index_name_to = $2;
+      my $index_from = $self->{'index_names'}->{$index_name_from};
+      my $index_to = $self->{'index_names'}->{$index_name_to};
       $self->_line_error(sprintf(__("unknown source index in \@%s: %s"),
-                                 $command, $index_from), $source_info)
-        unless $self->{'index_names'}->{$index_from};
+                                 $command, $index_name_from), $source_info)
+        unless $index_from;
       $self->_line_error(sprintf(__("unknown destination index in \@%s: %s"),
-                                 $command, $index_to), $source_info)
-        unless $self->{'index_names'}->{$index_to};
-      if ($self->{'index_names'}->{$index_from}
-           and $self->{'index_names'}->{$index_to}) {
-        my $current_to = $index_to;
+                                 $command, $index_name_to), $source_info)
+        unless $index_to;
+      if ($index_from and $index_to) {
+        my $current_to = Texinfo::Common::ultimate_index($self->{'index_names'},
+                                                         $index_to);
         # find the merged indices recursively avoiding loops
-        while ($current_to ne $index_from
-               and $self->{'merged_indices'}->{$current_to}) {
-          $current_to = $self->{'merged_indices'}->{$current_to};
-        }
-        if ($current_to ne $index_from) {
-          my $index_from_info = $self->{'index_names'}->{$index_from};
-          my $index_to_info = $self->{'index_names'}->{$current_to};
-
+        if ($current_to->{'name'} ne $index_name_from) {
           my $in_code = 0;
           $in_code = 1 if ($command eq 'syncodeindex');
-          $self->{'merged_indices'}->{$index_from} = $current_to;
-          $index_from_info->{'in_code'} = $in_code;
-          if ($index_from_info->{'contained_indices'}) {
-            foreach my $contained_index
-                             (keys %{$index_from_info->{'contained_indices'}}) {
-              $index_to_info->{'contained_indices'}->{$contained_index} = 1;
-              $self->{'index_names'}->{$contained_index}->{'merged_in'}
-                                                              = $current_to;
-              $self->{'merged_indices'}->{$contained_index} = $current_to;
-            }
-            delete $index_from_info->{'contained_indices'};
-          }
-          $index_from_info->{'merged_in'} = $current_to;
-          $index_to_info->{'contained_indices'}->{$index_from} = 1;
-          $args = [$index_from, $index_to];
+          $index_from->{'in_code'} = $in_code;
+          $index_from->{'merged_in'} = $current_to->{'name'};
+          $args = [$index_name_from, $index_name_to];
         } else {
           $self->_line_warn(sprintf(__(
                          "\@%s leads to a merging of %s in itself, ignoring"),
-                             $command, $index_from), $source_info);
+                             $command, $index_name_from), $source_info);
         }
       }
     } else {
@@ -7753,10 +7674,13 @@ sub _parse_line_command_args($$$)
         $self->_line_error(sprintf(__("unknown index `%s' in \@printindex"),
                                     $name), $source_info);
       } else {
-        if ($self->{'merged_indices'}->{$name}) {
+        my $idx = $self->{'index_names'}->{$name};
+        if ($idx->{'merged_in'}) {
+          my $ultimate_idx
+            = Texinfo::Common::ultimate_index($self->{'index_names'}, $idx);
           $self->_line_warn(sprintf(__(
                        "printing an index `%s' merged in another one, `%s'"),
-                                   $name, $self->{'merged_indices'}->{$name}),
+                                   $name, $ultimate_idx->{'name'}),
                            $source_info);
         }
         if (!defined($self->{'current_node'})
@@ -7906,7 +7830,7 @@ Texinfo::Parser - Parse Texinfo code into a Perl tree
 
   use Texinfo::Parser;
   my $parser = Texinfo::Parser::parser();
-  my $tree = $parser->parse_texi_file("somefile.texi");
+  my $document = $parser->parse_texi_file("somefile.texi");
   # a Texinfo::Report object in which the errors and warnings
   # encountered while parsing are registered.
   my $registrar = $parser->registered_errors();
@@ -7914,19 +7838,6 @@ Texinfo::Parser - Parse Texinfo code into a Perl tree
   foreach my $error_message (@$errors) {
     warn $error_message->{'error_line'};
   }
-
-  my $indices_information = $parser->indices_information();
-  my $float_types_arrays = $parser->floats_information();
-  my $internal_references_array
-    = $parser->internal_references_information();
-  # $labels_information is an hash reference on normalized node/float/anchor names.
-  my ($labels_information, $targets_list, $nodes_list) = $parser->labels_information();
-  # A hash reference, keys are @-command names, value is an
-  # array reference holding all the corresponding @-commands.
-  my $global_commands_information = $parser->global_commands_information();
-  # a hash reference on document information (encodings,
-  # input file name, dircategory and direntry list, for example).
-  my $global_information = $parser->global_information();
 
 =head1 NOTES
 
@@ -7992,21 +7903,6 @@ Default on.
 
 Maximal number of nested user-defined macro calls.  Default is 100000.
 
-=begin comment
-
-Duplicated in gdt() but not implemented in the XS Parser, so not
-documented.
-
-=item clickstyle
-
-A string, the command name associated with C<@clickstyle>.
-
-=item kbdinputstyle
-
-A string, the C<@kbdinputstyle> style.
-
-=end comment
-
 =item documentlanguage
 
 A string corresponding to a document language set by C<@documentlanguage>.
@@ -8050,7 +7946,7 @@ This function is used to parse a short fragment of Texinfo code.
 I<$text> is the string containing the texinfo line.  I<$first_line_number> is
 the line number of the line, if undef, it will be set to 1.
 
-=item $tree = parse_texi_piece($parser, $text, $first_line_number)
+=item $document = parse_texi_piece($parser, $text, $first_line_number)
 X<C<parse_texi_piece>>
 
 This function is used to parse Texinfo fragments.
@@ -8058,7 +7954,7 @@ This function is used to parse Texinfo fragments.
 I<$text> is the string containing the texinfo text.  I<$first_line_number> is
 the line number of the first text line, if undef, it will be set to 1.
 
-=item $tree = parse_texi_text($parser, $text, $first_line_number)
+=item $document = parse_texi_text($parser, $text, $first_line_number)
 X<C<parse_texi_text>>
 
 This function is used to parse a text as a whole document.
@@ -8066,7 +7962,7 @@ This function is used to parse a text as a whole document.
 I<$text> is the string containing the texinfo text.  I<$first_line_number> is
 the line number of the first text line, if undef, it will be set to 1.
 
-=item $tree = parse_texi_file($parser, $file_name)
+=item $document = parse_texi_file($parser, $file_name)
 X<C<parse_texi_file>>
 
 The file with name I<$file_name> is considered to be a Texinfo file and
@@ -8093,262 +7989,6 @@ is passed to the parser initialization options, it is reused, otherwise
 a new one is created.
 
 =back
-
-=head2 Getting information on the document
-
-After parsing some information about the Texinfo code that was processed
-is available from the parser.
-
-Some global information is available through C<global_information>:
-
-=over
-
-=item $info = global_information($parser)
-X<C<global_information>>
-
-The I<$info> returned is a hash reference.  The possible keys are
-
-=over
-
-=item dircategory_direntry
-
-An array of successive C<@dircategory> and C<@direntry> as they appear
-in the document.
-
-=item input_encoding_name
-
-=item input_perl_encoding
-
-C<input_encoding_name> string is the encoding name used for the
-Texinfo code.
-C<input_perl_encoding> string is a corresponding Perl encoding name.
-
-=item input_file_name
-
-=item input_directory
-
-The name of the main Texinfo input file and the associated directory.
-Binary strings.  In C<texi2any>, they should come from the command line
-(and can be decoded with the encoding in the customization variable
-C<COMMAND_LINE_ENCODING>).
-
-=back
-
-=back
-
-Some command lists are available, such that it is possible to go through
-the corresponding tree elements without walking the tree.  They are
-available through C<global_commands_information>:
-
-=over
-
-=item $commands = global_commands_information($parser)
-X<C<global_commands_information>>
-
-I<$commands> is an hash reference.  The keys are @-command names.  The
-associated values are array references containing all the corresponding
-tree elements.
-
-=back
-
-All the @-commands that have an associated label (so can be the
-target of cross references) -- C<@node>, C<@anchor> and C<@float> with
-label -- have a normalized name associated, constructed as described in the
-I<HTML Xref> node in the Texinfo documentation.  Those normalized labels and
-the association with @-commands is available through C<labels_information>:
-
-=over
-
-=item $labels_information, $targets_list, $nodes_list = labels_information($parser)
-X<C<labels_information>>
-
-I<$labels_information> is a hash reference whose keys are normalized
-labels, and the associated value is the corresponding @-command.
-I<$targets_list> is a list of labels @-command.  Using
-I<$labels_information> is preferred.  I<$nodes_list> is a list of all
-the nodes appearing in the document.
-
-=back
-
-Information on C<@float> is also available, grouped by type of
-floats, each type corresponding to potential C<@listoffloats>.
-This information is available through the method C<floats_information>.
-
-=over
-
-=item $float_types = floats_information($parser)
-X<C<floats_information>>
-
-I<$float_types> is a hash reference whose keys are normalized float
-types (the first float argument, or the C<@listoffloats> argument).
-The normalization is the same as for the first step of node names
-normalization. The value is the list of float tree elements appearing
-in the texinfo document.
-
-=back
-
-Internal references, that is, @-commands that refer to node, anchors
-or floats within the document are also available:
-
-=over
-
-=item $internal_references_array = internal_references_information($parser)
-X<C<internal_references_information>>
-
-The function returns a list of cross-reference commands referring to
-the same document.
-
-=back
-
-Information about defined indices, merged indices and index entries is
-also available through the C<indices_information> method.
-
-=over
-
-=item $indices_information = $parser->indices_information()
-X<C<indices_information>>
-
-I<$indices_information> is a hash reference.  The keys are
-
-=over
-
-=item in_code
-
-1 if the index entries should be formatted as code, 0 in the opposite case.
-
-=item name
-
-The index name.
-
-=item prefix
-
-An array reference of prefix associated to the index.
-
-=item merged_in
-
-In case the index is merged to another index, this key holds the name of
-the index the index is merged into.  It takes into account indirectly
-merged indices.
-
-=item contained_indices
-
-An hash reference holding names of indices that are merged into the index,
-including itself.  It also contains indirectly merged indices.  This key
-is removed if the index is itself later merged to another index.
-
-=item index_entries
-
-An array reference containing index entry structures for index entries
-associated with the index.  The index entry could be associated to
-@-commands like C<@cindex>, or C<@item> in C<@vtable>, or definition
-commands entries like C<@deffn>.
-
-The keys of the index entry structures are
-
-=over
-
-=item index_name
-
-The index name associated to the command.  Not modified if the corresponding
-index is merged in another index (with C<@synindex>, for example).
-
-=item entry_element
-
-The element in the parsed tree associated with the @-command holding the
-index entry.
-
-=item entry_number
-
-The number of the index entry.
-
-=back
-
-=back
-
-The following shows the references corresponding to the default indexes
-I<cp> and I<fn>, the I<fn> index having its entries formatted as code and
-the indices corresponding to the following texinfo
-
-  @defindex some
-  @defcodeindex code
-
-  $index_names = {'cp' => {'name' => 'cp', 'in_code' => 0, },
-                  'fn' => {'name' => 'fn', 'in_code' => 1, },
-                  'some' => {'in_code' => 0},
-                  'code' => {'in_code' => 1}};
-
-If C<name> is not set, it is set to the index name.
-
-=back
-
-=begin comment
-
-The following are not implemented in the XS parser, and we do not want them
-to be used for the NonXS parser.  They are not set to be configurable in the
-NonXS parser anyway (but could easily be).
-
-=head2 Texinfo Parser options
-
-Setting these options is the same as seeing some Texinfo constructs in the
-document.
-
-=over
-
-=item aliases
-
-A hash reference.  The key is a command name, the value is the alias, as
-could be set by C<@alias>.
-
-=item indices
-
-If it is a hash reference, the keys are index names, the values are
-index prefix hash references.  The index prefix hash reference values are
-prefix, the value is set if the corresponding index entries should be
-formatted as if in C<@code>.  An example is as L</indices_information>.
-
-If it is an array reference, it is a list of index names, as if they were
-entered as
-
-  @defindex name
-
-=item labels
-
-A hash reference.  Keys are normalized node names as described in the
-I<HTML Xref> node in the Texinfo manual.  Instead of a node, it may also
-be a float label or an anchor name.  The value is the corresponding
-@-command element in the tree.
-
-=item macros
-
-The associated hash reference has as keys user-defined macro names.  The
-value is the reference on a macro definition element as obtained by
-the Parser when parsing a C<@macro>.  For example
-
-  @macro mymacro{arg}
-  coucou \arg\ after arg
-  @end macro
-
-Is associated to a macro definition element
-
-  {'cmdname' => 'macro',
-   'args' => [{'text' => 'mymacro', 'type' => 'macro_name'},
-              {'text' => 'arg', 'type' => 'macro_arg}],
-   'contents' => [{'text' => "coucou \arg\ after arg\n", 'type' => 'raw'}],
-   'info' => {'arg_line' => " mymacro{arg}\n", }}
-
-=item merged_indices
-
-The associated hash reference holds merged indices information, each key
-is merged in the value.  Same as setting C<@synindex> or C<syncodeindex>.
-
-=item sections_level
-
-Modifier of the sections level.  Same as calling C<@lowersections> or
-C<@raisesections>.
-
-=back
-
-=end comment
 
 =head1 TEXINFO TREE
 
@@ -8507,6 +8147,8 @@ This type is set for an @-command that is redefined by C<@definfoenclose>.
 The beginning is in C<< {'extra'}->{'begin'} >> and the end in
 C<< {'extra'}->{'end'} >>.
 
+The command name is the info I<command_name> value.
+
 =item index_entry_command
 
 This is the type of index entry command like C<@cindex>, and, more
@@ -8520,6 +8162,8 @@ is:
 
 the C<@fooindex> @-command element will have the I<index_entry_command>
 type.
+
+The command name is the info I<command_name> value.
 
 =back
 
@@ -8544,7 +8188,7 @@ An empty line (possibly containing whitespace characters only).
 =item ignorable_spaces_after_command
 
 spaces appearing after an @-command without braces that does not
-take takes argument on the line, but which is followed by ignorable
+take argument on the line, but which is followed by ignorable
 spaces, such as C<@item> in C<@itemize> or C<@multitable>, or C<@noindent>.
 
 =item spaces_after_close_brace
@@ -8862,7 +8506,10 @@ and for C<@macro> line.
 
 =item command_name
 
-The name of the user defined macro, rmacro or linemacro called
+Name of commands that can be defined dynamically.
+The name of index command or definfoenclose defined command (also
+available in I<cmdname> for those commands).
+The name of user defined macro, rmacro or linemacro called
 associated with the element holding the arguments of the user defined command
 call.
 
@@ -8932,9 +8579,10 @@ instead L<C<Texinfo::Common::lookup_index_entry>|Texinfo::Common/($index_entry, 
 should be called on the C<extra> I<index_entry> value.  The
 I<$indices_information> is the information on a Texinfo manual indices obtained
 from
-L<< C<Texinfo::Parser::indices_information>|Texinfo::Parser/$indices_information = $parser->indices_information() >>.
+L<< C<Texinfo::Document::indices_information>|Texinfo::Document/$indices_information = $document->indices_information() >>.
 The index entry information hash returned by
-C<Texinfo::Common::lookup_index_entry> is described in L</index_entries>.
+C<Texinfo::Common::lookup_index_entry> is described in
+L<Texinfo::Document/index_entries>.
 
 Currently, the I<index_entry> value is an array reference
 with an index name as first element and the index entry number in that index
@@ -8951,10 +8599,6 @@ not empty, for @-commands elements that have an associated index entry.
 An array holding strings, the arguments of @-commands taking simple
 textual arguments as arguments, like C<@everyheadingmarks>,
 C<@frenchspacing>, C<@alias>, C<@synindex>, C<@columnfractions>.
-
-=item missing_argument
-
-Set for some @-commands with line arguments and a missing argument.
 
 =item text_arg
 
@@ -9015,6 +8659,8 @@ I<spaces> or I<delimiter>, depending on the definition.
 The I<def_index_element> is a Texinfo tree element corresponding to
 the index entry associated to the definition line, based on the
 name and class.  If needed this element is based on translated strings.
+In that case, if C<@documentlanguage> is defined where the C<def_line>
+is located, I<documentlanguage> holds the documentlanguage value.
 I<def_index_ref_element> is similar, but not translated, and only set if
 there could have been a translation.
 
@@ -9177,7 +8823,12 @@ the C<@multitable>.
 The node preceding the command is in I<associated_node>.
 The part preceding the command is in I<associated_part>.
 If the level of the document was modified by C<@raisections>
-or C<@lowersections>, the differential level is in I<sections_level>.
+or C<@lowersections>, the differential level is in I<level_modifier>.
+
+=item C<untranslated>
+
+I<documentlanguage> holds the C<@documentlanguage> value.
+If there is a translation context, it should be in I<translation_context>.
 
 =back
 

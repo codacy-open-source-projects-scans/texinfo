@@ -10,7 +10,6 @@ $result_trees{'accent_enable_encoding'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'accent_enable_encoding'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -2263,7 +2263,7 @@ should be dotless j": j"
 ';
 
 $result_sectioning{'accent_enable_encoding'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -2273,37 +2273,37 @@ $result_sectioning{'accent_enable_encoding'} = {
             'extra' => {
               'normalized' => 'first'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'accent_enable_encoding'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'accent_enable_encoding'};
+$result_sectioning{'accent_enable_encoding'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'accent_enable_encoding'};
 
-$result_nodes{'accent_enable_encoding'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'first'
+$result_nodes{'accent_enable_encoding'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
+      },
+      'normalized' => 'first'
+    }
   }
-};
+];
 
-$result_menus{'accent_enable_encoding'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
+$result_menus{'accent_enable_encoding'} = [
+  {
+    'extra' => {
+      'normalized' => 'first'
+    }
   }
-};
+];
 
 $result_errors{'accent_enable_encoding'} = [];
 

@@ -20,7 +20,6 @@ $result_trees{'ftable_vtable'} = {
           'type' => 'preamble_before_beginning'
         },
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -45,6 +44,7 @@ $result_trees{'ftable_vtable'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -559,6 +559,7 @@ $result_trees{'ftable_vtable'} = {
             ]
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -655,6 +656,7 @@ $result_trees{'ftable_vtable'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -725,33 +727,42 @@ var3
 
 ';
 
-$result_nodes{'ftable_vtable'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'ftable_vtable'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'ftable_vtable'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'ftable_vtable'}[0];
+$result_nodes{'ftable_vtable'}[1] = $result_nodes{'ftable_vtable'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'ftable_vtable'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'ftable_vtable'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'ftable_vtable'};
-
-$result_menus{'ftable_vtable'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'ftable_vtable'} = [];
 

@@ -460,6 +460,7 @@ $result_trees{'value_in_index_commands'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -540,6 +541,7 @@ $result_trees{'value_in_index_commands'} = {
             ]
           },
           'info' => {
+            'command_name' => 'trucindex',
             'spaces_before_argument' => {
               'source_marks' => [
                 {
@@ -671,6 +673,7 @@ $result_trees{'value_in_index_commands'} = {
             ]
           },
           'info' => {
+            'command_name' => 'codeidxindex',
             'spaces_before_argument' => {
               'source_marks' => [
                 {
@@ -738,6 +741,7 @@ $result_trees{'value_in_index_commands'} = {
             ]
           },
           'info' => {
+            'command_name' => 'kindex',
             'spaces_before_argument' => {
               'source_marks' => [
                 {
@@ -815,6 +819,7 @@ $result_trees{'value_in_index_commands'} = {
             ]
           },
           'info' => {
+            'command_name' => 'pindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -974,6 +979,7 @@ $result_trees{'value_in_index_commands'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -1054,33 +1060,42 @@ value truc
 value cp
 ';
 
-$result_nodes{'value_in_index_commands'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'value_in_index_commands'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'value_in_index_commands'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'value_in_index_commands'}[0];
+$result_nodes{'value_in_index_commands'}[1] = $result_nodes{'value_in_index_commands'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'value_in_index_commands'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'value_in_index_commands'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'value_in_index_commands'};
-
-$result_menus{'value_in_index_commands'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'value_in_index_commands'} = [
   {
@@ -1098,9 +1113,6 @@ $result_errors{'value_in_index_commands'} = [
 $result_indices{'value_in_index_commands'} = {
   'index_names' => {
     'codeidx' => {
-      'contained_indices' => {
-        'codeidx' => 1
-      },
       'in_code' => 1,
       'name' => 'codeidx'
     },
@@ -1110,45 +1122,26 @@ $result_indices{'value_in_index_commands'} = {
       'name' => 'cp'
     },
     'fn' => {
-      'contained_indices' => {
-        'cp' => 1,
-        'fn' => 1
-      },
       'in_code' => 1,
       'name' => 'fn'
     },
     'ky' => {
-      'contained_indices' => {
-        'ky' => 1
-      },
       'in_code' => 1,
       'name' => 'ky'
     },
     'pg' => {
-      'contained_indices' => {
-        'pg' => 1
-      },
       'in_code' => 1,
       'name' => 'pg'
     },
     'tp' => {
-      'contained_indices' => {
-        'tp' => 1
-      },
       'in_code' => 1,
       'name' => 'tp'
     },
     'truc' => {
-      'contained_indices' => {
-        'truc' => 1
-      },
       'in_code' => 0,
       'name' => 'truc'
     },
     'vr' => {
-      'contained_indices' => {
-        'vr' => 1
-      },
       'in_code' => 1,
       'name' => 'vr'
     }

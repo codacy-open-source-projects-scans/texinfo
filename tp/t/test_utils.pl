@@ -59,12 +59,15 @@ use Getopt::Long qw(GetOptions);
 use Locale::Messages ();
 
 use Texinfo::Commands;
+use Texinfo::Options;
 use Texinfo::Common;
 use Texinfo::Convert::Texinfo;
 use Texinfo::Config;
 use Texinfo::Parser;
 use Texinfo::Convert::Text;
 use Texinfo::Structuring;
+use Texinfo::Convert::PlainTexinfo;
+use Texinfo::Translations;
 use Texinfo::Convert::Plaintext;
 use Texinfo::Convert::Info;
 use Texinfo::Convert::LaTeX;
@@ -73,13 +76,12 @@ use Texinfo::Convert::TexinfoXML;
 use Texinfo::Convert::DocBook;
 
 # the tests reference perl results file is loaded through a require
-# with those variables.
+# of a file containing code setting those variables.
 use vars qw(%result_texis %result_texts %result_trees %result_errors
    %result_indices %result_sectioning %result_nodes %result_menus
    %result_floats %result_converted %result_converted_errors
    %result_elements %result_directions_text %result_indices_sort_strings);
 
-my $strings_textdomain = 'texinfo_document';
 Locale::Messages->select_package('gettext_pp');
 
 my $srcdir = $ENV{'srcdir'};
@@ -103,7 +105,8 @@ if (! defined($localesdir)) {
   warn "No locales directory found, some tests will fail\n";
 }
 
-Locale::Messages::bindtextdomain('texinfo_document', $localesdir);
+Texinfo::Translations::configure($localesdir);
+
 Locale::Messages::bindtextdomain('texinfo', $localesdir);
 
 my $generated_texis_dir = 't_texis';
@@ -169,7 +172,7 @@ my %extensions = (
 # is set in the texi2any main program.  This value should only be
 # used in t/*.t tests.
 my $XML_DTD_VERSION
-  = $Texinfo::Common::default_converter_customization{'TEXINFO_DTD_VERSION'};
+  = $Texinfo::Options::converter_customization_options{'TEXINFO_DTD_VERSION'};
 
 my %outfile_preamble = (
   'docbook' => ['<?xml version="1.0"?>
@@ -191,7 +194,7 @@ my $arg_generate;
 my $arg_debug;
 my $arg_complete;
 my $arg_output;
-my $nr_comparisons = 9;
+my $nr_comparisons = 10;
 
 Getopt::Long::Configure("gnu_getopt");
 # complete: output a complete texinfo file based on the test.  Does not
@@ -212,29 +215,6 @@ sub protect_perl_string($)
   # \r can be mangled upon reading if at end of line
   $string =~ s/\r/'."\\r".'/g;
   return $string;
-}
-
-# remove the association with document units
-sub unsplit($)
-{
-  my $root = shift;
-  if (!$root->{'type'} or $root->{'type'} ne 'document_root'
-      or !$root->{'contents'}) {
-    return;
-  }
-  my $unsplit_needed = 0;
-  foreach my $content (@{$root->{'contents'}}) {
-    if ($content->{'structure'}) {
-      if ($content->{'structure'}->{'associated_unit'}) {
-        delete $content->{'structure'}->{'associated_unit'};
-        $unsplit_needed = 1;
-      }
-      if (scalar(keys(%{$content->{'structure'}})) == 0) {
-        delete $content->{'structure'};
-      }
-    }
-  }
-  return $unsplit_needed;
 }
 
 sub compare_dirs_files($$;$)
@@ -370,48 +350,6 @@ sub remove_keys($$;$)
   return $root;
 }
 
-# currently unused, but could be used again.
-sub duplicate_key_array($$)
-{
-  my $element = shift;
-  my $key = shift;
-
-  if (defined($element) and exists($element->{$key})
-      and defined($element->{$key})) {
-    my $new_content = [];
-    foreach my $array_item (@{$element->{$key}}) {
-      push @$new_content, $array_item;
-    }
-    $element->{$key} = $new_content;
-  }
-}
-
-# used to have a similar output as the XS parser
-# when using the pure perl parser.
-sub _duplicate_element_keys($$)
-{
-  my $type = shift;
-  my $current = shift;
-
-  if (exists($current->{'source_info'})) {
-    # cannot use dclone as dclone changes integers to strings
-    #$current->{'source_info'} = dclone($current->{'source_info'});
-    my $new_source_info = {};
-    foreach my $key(keys(%{$current->{'source_info'}})) {
-      $new_source_info->{$key} = $current->{'source_info'}->{$key};
-    }
-    $current->{'source_info'} = $new_source_info;
-  }
-
-  return ($current);
-}
-
-sub duplicate_tree_element_keys($)
-{
-  my $tree = shift;
-  return Texinfo::Common::modify_tree($tree, \&_duplicate_element_keys);
-}
-
 sub cmp_trimmed($$$$)
 {
   my $compared = shift;
@@ -431,7 +369,7 @@ sub new_test($;$$$)
   my $test_formats = shift;
   my $test = {'name' => $name, 'generate' => $generate,
               'DEBUG' => $debug, 'test_formats' => $test_formats};
-  
+
   if ($generate) {
     mkdir $srcdir."t/results/$name" if (! -d $srcdir."t/results/$name");
   }
@@ -442,15 +380,16 @@ sub new_test($;$$$)
 # keys under 'info' are not needed here.
 my @contents_keys = ('contents', 'args', 'parent', 'source_info',
   'node_content', 'invalid_nesting', 'info', 'text_arg',
-  'node_description', 'node_long_description');
-my @menus_keys = ('menu_next', 'menu_up', 'menu_prev', 'menu_up_hash');
+  'node_description', 'node_long_description', 'is_target',
+  'tree_document_descriptor', 'unit_contents', 'output_units_descriptor');
+my @menus_keys = ('menu_directions', 'menus', 'menu_up_hash');
 # 'section_number' is kept in other results as it may be the only clue
 # to know which section element it is.
-my @sections_keys = ('section_next', 'section_prev', 'section_up',
+my @sections_keys = ('section_directions',
   'section_childs', 'associated_node', 'part_associated_section',
   'part_following_node', 'section_level',
-  'toplevel_prev', 'toplevel_next', 'toplevel_up');
-my @node_keys = ('node_next', 'node_prev', 'node_up', 'menus',
+  'toplevel_directions', 'sectioning_root');
+my @node_keys = ('node_directions',
   'associated_section', 'node_preceding_part');
 
 # in general, the 'parent' keys adds lot of non legible information,
@@ -458,18 +397,19 @@ my @node_keys = ('node_next', 'node_prev', 'node_up', 'menus',
 # best is to add it in tree tests by removing from @avoided_keys_tree.
 my %avoided_keys_tree;
 my @avoided_keys_tree = (@sections_keys, @menus_keys, @node_keys,
-  # FIXME remaining_args should not be present in the final tree, but they are
-    'remaining_args',
-    'structure', 'menu_child', 'unit_next', 'directions', 'page_next',
-    'parent');
+    'float_number', 'tree_unit_directions', 'directions',
+    'associated_unit',
+    'parent',
+    # only set with the XS parser
+    'tree_document_descriptor', 'output_units_descriptor');
 foreach my $avoided_key(@avoided_keys_tree) {
   $avoided_keys_tree{$avoided_key} = 1;
 }
 sub filter_tree_keys { [grep {!$avoided_keys_tree{$_}} ( sort keys %{$_[0]} )] }
 
 my %avoided_keys_sectioning;
-my @avoided_keys_sectioning = ('section_next', @contents_keys, @menus_keys,
-  @node_keys, 'menu_child', 'manual_content', 'toplevel_next');
+my @avoided_keys_sectioning = ('next', @contents_keys, @menus_keys,
+  @node_keys, 'manual_content');
 foreach my $avoided_key(@avoided_keys_sectioning) {
   $avoided_keys_sectioning{$avoided_key} = 1;
 }
@@ -485,7 +425,8 @@ sub filter_nodes_keys { [grep {!$avoided_keys_nodes{$_}}
    ( sort keys %{$_[0]} )] }
 
 my %avoided_keys_menus;
-my @avoided_keys_menus = (@sections_keys, @contents_keys, @node_keys);
+my @avoided_keys_menus = (@sections_keys, @contents_keys, @node_keys,
+    'cmdname', 'isindex');
 foreach my $avoided_key(@avoided_keys_menus) {
   $avoided_keys_menus{$avoided_key} = 1;
 }
@@ -503,7 +444,7 @@ sub filter_floats_keys { [grep {!$avoided_keys_floats{$_}}
 
 my %avoided_keys_elements;
 my @avoided_keys_elements = (@contents_keys, @sections_keys, @node_keys,
-  'unit_next', 'unit_prev');
+  'tree_unit_directions', 'menus');
 foreach my $avoided_key(@avoided_keys_elements) {
   $avoided_keys_elements{$avoided_key} = 1;
 }
@@ -547,8 +488,7 @@ sub convert_to_plaintext($$$$$$;$)
   my $self = shift;
   my $test_name = shift;
   my $format = shift;
-  my $tree = shift;
-  my $parser = shift;
+  my $document = shift;
   my $main_configuration = shift;
   my $converter_options = shift;
   $converter_options
@@ -565,18 +505,18 @@ sub convert_to_plaintext($$$$$$;$)
         = $converter_options->{'SUBDIR'}.$test_name.".txt";
     }
   }
-  
+
   my $converter =
      Texinfo::Convert::Plaintext->converter({'DEBUG' => $self->{'DEBUG'},
-                                             'parser' => $parser,
+                                             'document' => $document,
                                              'converted_format' => 'plaintext',
                                              %$converter_options });
   my $result;
   if (defined($converter_options->{'OUTFILE'})
       and $converter_options->{'OUTFILE'} eq '') {
-    $result = $converter->convert($tree);
+    $result = $converter->convert($document);
   } else {
-    $result = $converter->output($tree);
+    $result = $converter->output($document);
     close_files($converter);
     $result = undef if (defined($result) and ($result eq ''));
   }
@@ -589,21 +529,20 @@ sub convert_to_info($$$$$;$)
   my $self = shift;
   my $test_name = shift;
   my $format = shift;
-  my $tree = shift;
-  my $parser = shift;
+  my $document = shift;
   my $main_configuration = shift;
   my $converter_options = shift;
   # FIXME plaintext too?
   $converter_options
     = set_converter_option_defaults($converter_options,
                                     $main_configuration, $format);
-  
+
   my $converter =
      Texinfo::Convert::Info->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'parser' => $parser,
+                                         'document' => $document,
                                          'converted_format' => 'info',
                                           %$converter_options });
-  my $result = $converter->output($tree);
+  my $result = $converter->output($document);
   close_files($converter);
   die if (!defined($converter_options->{'SUBDIR'}) and !defined($result));
   my ($errors, $error_nrs) = $converter->errors();
@@ -615,27 +554,26 @@ sub convert_to_html($$$$$$;$)
   my $self = shift;
   my $test_name = shift;
   my $format = shift;
-  my $tree = shift;
-  my $parser = shift;
+  my $document = shift;
   my $main_configuration = shift;
   my $converter_options = shift;
   $converter_options
     = set_converter_option_defaults($converter_options,
                                     $main_configuration, 'html');
-  
-  $converter_options->{'SPLIT'} = 0
+
+  $converter_options->{'SPLIT'} = ''
     if ($format eq 'html_text'
         and !defined($converter_options->{'SPLIT'}));
   my $converter =
      Texinfo::Convert::HTML->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'parser' => $parser,
+                                         'document' => $document,
                                          'converted_format' => 'html',
                                           %$converter_options });
   my $result;
   if ($format eq 'html_text') {
-    $result = $converter->convert($tree);
+    $result = $converter->convert($document);
   } else {
-    $result = $converter->output($tree);
+    $result = $converter->output($document);
     close_files($converter);
   }
   die if (!defined($converter_options->{'SUBDIR'}) and !defined($result));
@@ -648,26 +586,25 @@ sub convert_to_xml($$$$$$;$)
   my $self = shift;
   my $test_name = shift;
   my $format = shift;
-  my $tree = shift;
-  my $parser = shift;
+  my $document = shift;
   my $main_configuration = shift;
   my $converter_options = shift;
   $converter_options
     = set_converter_option_defaults($converter_options,
                                     $main_configuration, 'xml');
-  
+
   my $converter =
      Texinfo::Convert::TexinfoXML->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'parser' => $parser,
+                                         'document' => $document,
                                          'converted_format' => 'texinfoxml',
                                           %$converter_options });
 
   my $result;
   if (defined($converter_options->{'OUTFILE'})
       and $converter_options->{'OUTFILE'} eq '') {
-    $result = $converter->convert($tree);
+    $result = $converter->convert($document);
   } else {
-    $result = $converter->output($tree);
+    $result = $converter->output($document);
     close_files($converter);
     $result = undef if (defined($result) and ($result eq ''));
   }
@@ -680,21 +617,21 @@ sub convert_to_docbook($$$$$$;$)
   my $self = shift;
   my $test_name = shift;
   my $format = shift;
-  my $tree = shift;
-  my $parser = shift;
+  my $document = shift;
   my $main_configuration = shift;
   my $converter_options = shift;
   $converter_options
     = set_converter_option_defaults($converter_options,
                                     $main_configuration, 'docbook');
-  
+
   my $converter =
      Texinfo::Convert::DocBook->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'parser' => $parser,
+                                         'document' => $document,
                                          'converted_format' => 'docbook',
                                           %$converter_options });
   my $result;
-  my $tree_for_conversion;
+  my $tree = $document->tree();
+  my $document_for_conversion;
   # 'before_node_section' is ignored in conversion to DocBook and it is
   # the type, in 'document_root' that holds content that appear out of any
   # @node and sectioning command.  To be able to have tests of simple
@@ -703,19 +640,21 @@ sub convert_to_docbook($$$$$$;$)
   # as a tree with an element without type replacing the 'before_node_section'
   # type element, with the same contents.
   if ($tree->{'contents'} and scalar(@{$tree->{'contents'}}) == 1) {
-    $tree_for_conversion = {
+    my $tree_for_conversion = {
       'type' => $tree->{'type'},
       'contents' => [{'contents' => $tree->{'contents'}->[0]->{'contents'}}]
-    }
+    };
+    $document_for_conversion = dclone($document);
+    $document_for_conversion->{'tree'} = $tree_for_conversion;
   } else {
-    $tree_for_conversion = $tree;
+    $document_for_conversion = $document;
   }
   if (defined($converter_options->{'OUTFILE'})
       and $converter_options->{'OUTFILE'} eq ''
       and $format ne 'docbook_doc') {
-    $result = $converter->convert($tree_for_conversion);
+    $result = $converter->convert($document_for_conversion);
   } else {
-    $result = $converter->output($tree_for_conversion);
+    $result = $converter->output($document_for_conversion);
     close_files($converter);
     $result = undef if (defined($result) and ($result eq ''));
   }
@@ -728,24 +667,23 @@ sub convert_to_latex($$$$$$;$)
   my $self = shift;
   my $test_name = shift;
   my $format = shift;
-  my $tree = shift;
-  my $parser = shift;
+  my $document = shift;
   my $main_configuration = shift;
   my $converter_options = shift;
   $converter_options
     = set_converter_option_defaults($converter_options,
                                     $main_configuration, 'latex');
-  
+
   my $converter =
      Texinfo::Convert::LaTeX->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'parser' => $parser,
+                                         'document' => $document,
                                          'converted_format' => 'latex',
                                           %$converter_options });
   my $result;
   if ($format eq 'latex_text') {
-    $result = $converter->convert($tree);
+    $result = $converter->convert($document);
   } else {
-    $result = $converter->output($tree);
+    $result = $converter->output($document);
     close_files($converter);
     $result = undef if (defined($result) and ($result eq ''));
   }
@@ -803,6 +741,13 @@ sub output_preamble_postamble_latex($$)
     return $converter->_latex_header() . $begin_document;
   }
 }
+
+my $with_XS = ((not defined($ENV{TEXINFO_XS})
+                or $ENV{TEXINFO_XS} ne 'omit')
+               and (!defined $ENV{TEXINFO_XS_PARSER}
+                    or $ENV{TEXINFO_XS_PARSER} eq '1'));
+
+my %tested_transformations;
 
 # Run a single test case.  Each test case is an array
 # [TEST_NAME, TEST_TEXT, PARSER_OPTIONS, CONVERTER_OPTIONS]
@@ -879,21 +824,34 @@ sub test($$)
     delete $parser_options->{'test_split'};
   }
 
-  # this is a Structuring phase option, but also needed
-  # by converter, so set to converter, and use converter option
-  # to check for the option
-  if ($parser_options->{'SIMPLE_MENU'}) {
-    $converter_options->{'SIMPLE_MENU'} = 1;
-    delete $parser_options->{'SIMPLE_MENU'};
-  }
-
+  my $additional_tree_transformations;
   my %tree_transformations;
   if ($parser_options->{'TREE_TRANSFORMATIONS'}) {
+    require Texinfo::Transformations;
+    Texinfo::Transformations->import();
+    # Not valid tree transformation, but we want to test them anyway.
+    # There are other specific tests for comparison to texinfo, but here
+    # we also get the tree.
+    %tested_transformations = (
+     'protect_comma' => \&Texinfo::Common::protect_comma_in_tree,
+     'protect_colon' => \&Texinfo::Common::protect_colon_in_tree,
+     'protect_node_after_label'
+        => \&Texinfo::Common::protect_node_after_label_in_tree,
+     'protect_first_parenthesis'
+      => \&Texinfo::Transformations::protect_first_parenthesis_in_targets,
+     'protect_hashchar_at_line_beginning'
+      => \&Texinfo::Transformations::protect_hashchar_at_line_beginning,
+    );
+
     my @option_transformations
         = split /,/, $parser_options->{'TREE_TRANSFORMATIONS'};
     foreach my $transformation (@option_transformations) {
       if (Texinfo::Common::valid_tree_transformation($transformation)) {
         $tree_transformations{$transformation} = 1;
+      } elsif ($tested_transformations{$transformation}) {
+        $additional_tree_transformations = []
+          if (!defined($additional_tree_transformations));
+        push @$additional_tree_transformations, $transformation;
       } else {
         warn "$test_name: unknown tree transformation $transformation\n";
       }
@@ -905,7 +863,7 @@ sub test($$)
   # get the same structuring warnings as texi2any.
   my $added_main_configurations = {'FORMAT_MENU' => 'menu',
                                    'CHECK_MISSING_MENU_ENTRY' => 1};
-  
+
   # this is only used for index keys sorting in structuring
   foreach my $structuring_and_converter_option ('ENABLE_ENCODING') {
     if (defined($parser_options->{$structuring_and_converter_option})) {
@@ -993,24 +951,30 @@ sub test($$)
   # take the initial values to record only if there is something new
   # do a copy to compare the values and not the references
   my $initial_index_names = dclone(\%Texinfo::Commands::index_names);
-  my $tree;
+  my $document;
   if (!$test_file) {
     if ($full_document) {
       print STDERR "  TEST FULL $test_name\n" if ($self->{'DEBUG'});
-      $tree = $parser->parse_texi_text($test_text);
+      $document = $parser->parse_texi_text($test_text);
     } else {
       print STDERR "  TEST $test_name\n" if ($self->{'DEBUG'});
-      $tree = $parser->parse_texi_piece($test_text);
+      $document = $parser->parse_texi_piece($test_text);
+      if (defined($test_input_file_name)) {
+        warn "ERROR: $self->{'name'}: $test_name: piece of texi with a file name\n";
+      }
     }
     if (defined($test_input_file_name)) {
       # FIXME should we need to encode or do we assume that
       # $test_input_file_name is already bytes?
-      $parser->{'info'}->{'input_file_name'} = $test_input_file_name;
+      # FIXME it is incorrect to do that outside of an API.  It is actually
+      # more to set the output file, so maybe it should be done differently.
+      $document->{'info'}->{'input_file_name'} = $test_input_file_name;
     }
   } else {
     print STDERR "  TEST $test_name ($test_file)\n" if ($self->{'DEBUG'});
-    $tree = $parser->parse_texi_file($test_file);
+    $document = $parser->parse_texi_file($test_file);
   }
+  my $tree = $document->tree();
   my $registrar = $parser->registered_errors();
 
   if (not defined($tree)) {
@@ -1022,37 +986,29 @@ sub test($$)
     }
   }
 
-  # require instead of use for speed when this module is not needed
-  require Texinfo::Transformations
-    if (scalar(keys(%tree_transformations))
-        or $converter_options->{'SIMPLE_MENU'});
-
   if ($tree_transformations{'fill_gaps_in_sectioning'}) {
-    my ($filled_contents, $added_sections)
+    my $added_sections
       = Texinfo::Transformations::fill_gaps_in_sectioning($tree);
-    if (!defined($filled_contents)) {
+    if (!defined($added_sections)) {
       warn "$test_name: fill_gaps_in_sectioning transformation return no result. No section?\n";
-    } else {
-      $tree->{'contents'} = $filled_contents;
     }
   }
 
-  my ($labels, $targets_list, $nodes_list) = $parser->labels_information();
-  if ($converter_options->{'SIMPLE_MENU'}) {
-    Texinfo::Transformations::set_menus_to_simple_menu($nodes_list);
-  }
-
-  my $parser_information = $parser->global_information();
+  my $document_information = $document->global_information();
 
   Texinfo::Common::set_output_encodings($main_configuration,
-                                        $parser_information);
+                                        $document_information);
 
-  my $global_commands = $parser->global_commands_information();
+  my $global_commands = $document->global_commands_information();
   if ($global_commands->{'novalidate'}) {
     $main_configuration->set_conf('novalidate', 1);
   }
 
-  my $indices_information = $parser->indices_information();
+  # Now that all the configuration has been set, associate it to the
+  # document XS
+  $main_configuration->register_XS_document_main_configuration($document);
+
+  my $indices_information = $document->indices_information();
   if ($tree_transformations{'relate_index_entries_to_items'}) {
     Texinfo::Common::relate_index_entries_to_table_items_in_tree($tree,
                                                      $indices_information);
@@ -1063,32 +1019,22 @@ sub test($$)
   }
 
   if ($tree_transformations{'insert_nodes_for_sectioning_commands'}) {
-    my ($modified_contents, $added_nodes)
+    my $added_nodes
      = Texinfo::Transformations::insert_nodes_for_sectioning_commands(
-                              $tree, $nodes_list, $targets_list, $labels);
-    if (!defined($modified_contents)) {
-      warn
-       "$test_name: insert_nodes_for_sectioning_commands transformation return no result. No section?\n";
-    } else {
-      $tree->{'contents'} = $modified_contents;
-    }
+                             $document, $registrar, $main_configuration);
   }
 
-  my $refs = $parser->internal_references_information();
-  Texinfo::Structuring::associate_internal_references($registrar,
-                                        $main_configuration,
-                                        $parser_information, $labels, $refs);
-  my $structure_information = {};
-  my ($sectioning_root, $sections_list)
-        = Texinfo::Structuring::sectioning_structure($registrar,
-                                      $main_configuration, $tree);
-  if ($sectioning_root) {
-    Texinfo::Structuring::warn_non_empty_parts($registrar,
-                                               $main_configuration,
-                                               $global_commands);
-    $structure_information->{'sectioning_root'} = $sectioning_root;
-    $structure_information->{'sections_list'} = $sections_list;
+  Texinfo::Structuring::associate_internal_references($document, $registrar,
+                                                      $main_configuration);
+  my $sections_list
+        = Texinfo::Structuring::sectioning_structure($tree, $registrar,
+                                                   $main_configuration);
+  if ($sections_list) {
+    Texinfo::Document::register_document_sections_list($document,
+                                                       $sections_list);
   }
+  Texinfo::Structuring::warn_non_empty_parts($document, $registrar,
+                                             $main_configuration);
 
   if ($tree_transformations{'complete_tree_nodes_menus'}) {
     Texinfo::Transformations::complete_tree_nodes_menus($tree);
@@ -1097,39 +1043,60 @@ sub test($$)
   }
 
   if ($tree_transformations{'regenerate_master_menu'}) {
-    Texinfo::Transformations::regenerate_master_menu($main_configuration,
-                                                     $labels);
+    Texinfo::Transformations::regenerate_master_menu($document,
+                                                     $main_configuration);
   }
 
-  my $floats = $parser->floats_information();
+  my $nodes_tree_nodes_list
+          = Texinfo::Structuring::nodes_tree($document, $registrar,
+                                             $main_configuration);
 
-  Texinfo::Structuring::set_menus_node_directions($registrar,
-                      $main_configuration, $parser_information,
-                      $global_commands, $nodes_list, $labels);
-  my $top_node = Texinfo::Structuring::nodes_tree($registrar,
-                         $main_configuration, $parser_information,
-                         $nodes_list, $labels);
-  if (defined($top_node)) {
-    $structure_information->{'top_node'} = $top_node;
+  Texinfo::Document::register_document_nodes_list($document,
+                                                  $nodes_tree_nodes_list);
+
+  Texinfo::Structuring::set_menus_node_directions($document, $registrar,
+                                                  $main_configuration);
+
+  if (not defined($main_configuration->get_conf('FORMAT_MENU'))
+      or $main_configuration->get_conf('FORMAT_MENU') eq 'menu') {
+    Texinfo::Structuring::complete_node_tree_with_menus($document, $registrar,
+                                                        $main_configuration);
+
+    Texinfo::Structuring::check_nodes_are_referenced($document, $registrar,
+                                                     $main_configuration);
   }
 
-  if (defined($nodes_list)
-      and (not defined($main_configuration->get_conf('FORMAT_MENU'))
-           or $main_configuration->get_conf('FORMAT_MENU') eq 'menu')) {
-    Texinfo::Structuring::complete_node_tree_with_menus($registrar,
-                                $main_configuration, $nodes_list, $top_node);
-    Texinfo::Structuring::check_nodes_are_referenced($registrar,
-                                          $main_configuration, $nodes_list,
-                                          $top_node, $labels, $refs);
+  Texinfo::Structuring::number_floats($document);
+
+  if ($additional_tree_transformations) {
+    foreach my $transformation (@$additional_tree_transformations) {
+      my $tree_transformation_sub = $tested_transformations{$transformation};
+      if ($transformation eq 'protect_hashchar_at_line_beginning') {
+        &$tree_transformation_sub($document->tree(), $registrar,
+                                         $main_configuration);
+      } else {
+        &$tree_transformation_sub($document->tree());
+      }
+    }
   }
 
-  Texinfo::Structuring::number_floats($floats);
+  $document = Texinfo::Structuring::rebuild_document($document);
+  # should not actually be useful, as the same element should be reused.
+  $tree = $document->tree();
+
+  if ($with_XS) {
+    foreach my $error (@{$document->{'errors'}}) {
+      $registrar->add_formatted_message($error);
+    }
+    Texinfo::Structuring::clear_document_errors(
+                                           $document->document_descriptor());
+  }
 
   my ($errors, $error_nrs) = $registrar->errors();
   # FIXME maybe it would be good to compare $merged_index_entries?
   my $merged_index_entries
      = Texinfo::Structuring::merge_indices($indices_information);
-  
+
   # only print indices information if it differs from the default
   # indices
   my $indices;
@@ -1141,7 +1108,7 @@ sub test($$)
   my $indices_sorted_sort_strings;
   if ($merged_index_entries) {
     ($sorted_index_entries, $index_entries_sort_strings)
-      = Texinfo::Structuring::sort_indices($registrar,
+      = Texinfo::Structuring::sort_indices_by_index($registrar,
                                    $main_configuration,
                                    $merged_index_entries,
                                    $indices_information);
@@ -1175,7 +1142,6 @@ sub test($$)
   my %converted;
   my %converted_errors;
   $converter_options = {} if (!defined($converter_options));
-  $converter_options->{'structuring'} = $structure_information;
   foreach my $format (@tested_formats) {
     if (defined($formats{$format})) {
       my $format_converter_options = {%$converter_options};
@@ -1214,7 +1180,7 @@ sub test($$)
       my $converter;
       ($converted_errors{$format}, $converted{$format}, $converter)
            = &{$formats{$format}}($self, $test_name, $format_type,
-                                  $tree, $parser, $main_configuration,
+                                  $document, $main_configuration,
                                   $format_converter_options);
       $converted_errors{$format} = undef if (!@{$converted_errors{$format}});
 
@@ -1331,39 +1297,51 @@ sub test($$)
   # on conversion should be fairly well tested.  See above the comment
   # near test_split with more explanation on why previous splitting should
   # not interfere with conversion.
-  my $unsplit_needed = unsplit($tree);
+  my $unsplit_needed = Texinfo::Structuring::unsplit($tree);
   print STDERR "  UNSPLIT: $test_name\n"
     if ($self->{'DEBUG'} and $unsplit_needed);
-  my $elements;
+
+  # There is no XS overriding for the following codes. rebuild_output_units
+  # returns the input output units if there is no XS structures, which allows
+  # to have tests passing when XS is used (in the default case).  If overriding
+  # of XS is setup, most likely all the functions should have an XS override
+  # (units_directions has not, though there is an implementation in C),
+  # otherwise some information will be missing in the rebuild_output_units
+  # output.
+  my $output_units;
   if ($test_split eq 'node') {
-    $elements = Texinfo::Structuring::split_by_node($tree);
+    $output_units = Texinfo::Structuring::split_by_node($tree);
   } elsif ($test_split eq 'section') {
-    $elements = Texinfo::Structuring::split_by_section($tree);
+    $output_units = Texinfo::Structuring::split_by_section($tree);
   }
   if ($test_split) {
-    Texinfo::Structuring::elements_directions($parser, $labels, $elements);
+    my $identifier_target = $document->labels_information();
+    Texinfo::Structuring::units_directions($main_configuration,
+                                           $identifier_target,
+                                           $output_units);
     $directions_text = '';
-    foreach my $element (@$elements) {
+    foreach my $output_unit (@$output_units) {
       $directions_text .=
-          Texinfo::Structuring::print_element_directions($element);
+          Texinfo::Structuring::print_output_unit_directions($output_unit);
     }
   }
   if ($split_pages) {
-    Texinfo::Structuring::split_pages($elements, $split_pages);
+    Texinfo::Structuring::split_pages($output_units, $split_pages);
+  }
+
+  if ($test_split or $split_pages) {
+    $output_units
+      = Texinfo::Structuring::rebuild_output_units($output_units);
   }
 
   my $file = "t/results/$self->{'name'}/$test_name.pl";
   my $new_file = $file.'.new';
 
   my $split_result;
-  if ($elements) {
-    $split_result = $elements;
-    foreach my $element (@$elements) {
-      duplicate_tree_element_keys($element);
-    }
+  if ($output_units) {
+    $split_result = $output_units;
   } else {
     $split_result = $tree;
-    duplicate_tree_element_keys($tree);
   }
 
   {
@@ -1404,27 +1382,33 @@ sub test($$)
                                          ['$result_trees{\''.$test_name.'\'}']);
       }
     }
-    my $texi_string_result
-        = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
+    my $converter_to_texinfo = Texinfo::Convert::PlainTexinfo->converter();
+    my $texi_string_result = $converter_to_texinfo->convert($document);
+    #my $texi_string_result
+    #    = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
     $out_result .= "\n".'$result_texis{\''.$test_name.'\'} = \''
           .protect_perl_string($texi_string_result)."';\n\n";
     $out_result .= "\n".'$result_texts{\''.$test_name.'\'} = \''
           .protect_perl_string($converted_text)."';\n\n";
-    {
+
+    my $sections_list = $document->sections_list();
+    if ($sections_list and scalar(@$sections_list)) {
       local $Data::Dumper::Sortkeys = \&filter_sectioning_keys;
+      my $sectioning_root
+           = $sections_list->[0]->{'extra'}->{'sectioning_root'};
       $out_result .=  Data::Dumper->Dump([$sectioning_root],
                            ['$result_sectioning{\''.$test_name.'\'}'])."\n"
-        if ($sectioning_root);
     }
-    if ($top_node) {
+    my $nodes_list = $document->nodes_list();
+    if ($nodes_list and scalar(@$nodes_list)) {
       {
         local $Data::Dumper::Sortkeys = \&filter_nodes_keys;
-        $out_result .= Data::Dumper->Dump([$top_node],
+        $out_result .= Data::Dumper->Dump([$nodes_list],
                                ['$result_nodes{\''.$test_name.'\'}'])."\n";
       }
       {
         local $Data::Dumper::Sortkeys = \&filter_menus_keys;
-        $out_result .= Data::Dumper->Dump([$top_node],
+        $out_result .= Data::Dumper->Dump([$nodes_list],
                              ['$result_menus{\''.$test_name.'\'}'])."\n";
       }
     }
@@ -1441,6 +1425,7 @@ sub test($$)
                             ['$result_indices{\''.$test_name.'\'}']) ."\n\n"
          if ($indices);
     }
+    my $floats = $document->floats_information();
     if ($floats) {
       local $Data::Dumper::Sortkeys = \&filter_floats_keys;
       $out_result .= Data::Dumper->Dump([$floats],
@@ -1452,9 +1437,9 @@ sub test($$)
                       ['$result_indices_sort_strings{\''.$test_name.'\'}'])
                      ."\n\n";
     }
-    if ($elements) {
+    if ($output_units) {
       local $Data::Dumper::Sortkeys = \&filter_elements_keys;
-      $out_result .= Data::Dumper->Dump([$elements],
+      $out_result .= Data::Dumper->Dump([$output_units],
                        ['$result_elements{\''.$test_name.'\'}'])
                      ."\n\n";
       $out_result .= "\n".'$result_directions_text{\''.$test_name.'\'} = \''
@@ -1477,7 +1462,7 @@ sub test($$)
     $out_result .= "1;\n";
     print OUT $out_result;
     close (OUT);
-    
+
     if ($self->{'generate'}) {
       print STDERR "--> $test_name\n";
     }
@@ -1488,12 +1473,27 @@ sub test($$)
 
     cmp_trimmed($split_result, $result_trees{$test_name}, \@avoided_keys_tree,
                 $test_name.' tree');
+
+    my $sections_list = $document->sections_list();
+    my $sectioning_root
+        = $sections_list->[0]->{'extra'}->{'sectioning_root'}
+      if ($sections_list and scalar(@$sections_list));
     cmp_trimmed($sectioning_root, $result_sectioning{$test_name},
                  \@avoided_keys_sectioning, $test_name.' sectioning' );
-    cmp_trimmed($top_node, $result_nodes{$test_name}, \@avoided_keys_nodes,
+
+    my $nodes_list = $document->nodes_list();
+    my $nodes_result;
+    $nodes_result = $nodes_list if ($nodes_list and scalar(@$nodes_list));
+    cmp_trimmed($nodes_result, $result_nodes{$test_name}, \@avoided_keys_nodes,
                 $test_name.' nodes');
-    cmp_trimmed($top_node, $result_menus{$test_name}, \@avoided_keys_menus,
+    my $menus_result;
+    $menus_result = $nodes_list if ($nodes_list and scalar(@$nodes_list));
+    cmp_trimmed($menus_result, $result_menus{$test_name}, \@avoided_keys_menus,
                 $test_name.' menus');
+
+    my $floats = $document->floats_information();
+    cmp_trimmed($floats, $result_floats{$test_name},
+                \@avoided_keys_floats, $test_name.' floats');
 
     ok (Data::Compare::Compare($errors, $result_errors{$test_name}),
         $test_name.' errors');
@@ -1502,7 +1502,11 @@ sub test($$)
     ok (Data::Compare::Compare($indices_sorted_sort_strings,
                                $result_indices_sort_strings{$test_name}),
         $test_name.' indices sort');
-    my $texi_result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
+    # FIXME use PlainTexinfo converter to test the XS converter until
+    # convert_to_texinfo goes through XS.
+    my $converter_to_texinfo = Texinfo::Convert::PlainTexinfo->converter();
+    my $texi_result = $converter_to_texinfo->convert($document);
+    #my $texi_result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
     is ($texi_result, $result_texis{$test_name}, $test_name.' texi');
     if ($todos{'text'}) {
       SKIP: {
@@ -1514,7 +1518,7 @@ sub test($$)
     }
     $tests_count = $nr_comparisons;
     if (defined($result_directions_text{$test_name})) {
-      cmp_trimmed($elements, $result_elements{$test_name},
+      cmp_trimmed($output_units, $result_elements{$test_name},
                   \@avoided_keys_elements, $test_name.' elements');
       $tests_count++;
       is ($directions_text, $result_directions_text{$test_name},
@@ -1582,6 +1586,9 @@ sub test($$)
       }
     }
   }
+
+  Texinfo::Document::remove_document($document);
+
   return $tests_count;
 }
 

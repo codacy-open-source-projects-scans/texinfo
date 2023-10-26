@@ -2208,6 +2208,7 @@ $result_trees{'line_passed_and_formats'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -2448,52 +2449,38 @@ menu
 end menu
 ';
 
-$result_nodes{'line_passed_and_formats'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'manual'
-          }
-        ],
-        'normalized' => 'node'
+$result_nodes{'line_passed_and_formats'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'manual'
+              }
+            ],
+            'normalized' => 'node'
+          },
+          'type' => 'menu_entry_node'
+        }
       },
-      'type' => 'menu_entry_node'
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'line_passed_and_formats'}{'structure'}{'node_next'} = $result_nodes{'line_passed_and_formats'}{'structure'}{'menu_child'};
-
-$result_menus{'line_passed_and_formats'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'manual'
-          }
-        ],
-        'normalized' => 'node'
-      },
-      'type' => 'menu_entry_node'
+      'normalized' => 'Top'
     }
   }
-};
+];
+
+$result_menus{'line_passed_and_formats'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  }
+];
 
 $result_errors{'line_passed_and_formats'} = [];
 

@@ -22,6 +22,7 @@ $result_trees{'placed_things_before_element'} = {
           ],
           'cmdname' => 'anchor',
           'extra' => {
+            'is_target' => 1,
             'normalized' => 'An-anchor'
           },
           'source_info' => {
@@ -157,6 +158,7 @@ $result_trees{'placed_things_before_element'} = {
                       ],
                       'cmdname' => 'anchor',
                       'extra' => {
+                        'is_target' => 1,
                         'normalized' => 'Anchor-in-footnote'
                       },
                       'source_info' => {
@@ -304,6 +306,7 @@ $result_trees{'placed_things_before_element'} = {
           ],
           'extra' => {
             'float_type' => '',
+            'is_target' => 1,
             'normalized' => 'float-anchor'
           },
           'info' => {
@@ -493,6 +496,7 @@ $result_trees{'placed_things_before_element'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -616,6 +620,9 @@ $result_trees{'placed_things_before_element'} = {
           'type' => 'paragraph'
         }
       ],
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -706,21 +713,21 @@ Anchor in footnote
 ';
 
 $result_sectioning{'placed_things_before_element'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'section',
-        'structure' => {
+        'extra' => {
           'section_level' => 2,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 1
   }
 };
-$result_sectioning{'placed_things_before_element'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'placed_things_before_element'};
+$result_sectioning{'placed_things_before_element'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'placed_things_before_element'};
 
 $result_errors{'placed_things_before_element'} = [
   {
@@ -740,11 +747,9 @@ $result_floats{'placed_things_before_element'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => '',
         'normalized' => 'float-anchor'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

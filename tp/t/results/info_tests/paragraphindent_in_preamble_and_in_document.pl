@@ -170,6 +170,7 @@ $result_trees{'paragraphindent_in_preamble_and_in_document'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -374,7 +375,7 @@ Third para after second paragraphindent.
 ';
 
 $result_sectioning{'paragraphindent_in_preamble_and_in_document'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -384,37 +385,37 @@ $result_sectioning{'paragraphindent_in_preamble_and_in_document'} = {
             'extra' => {
               'normalized' => 'Top'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'paragraphindent_in_preamble_and_in_document'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'paragraphindent_in_preamble_and_in_document'};
+$result_sectioning{'paragraphindent_in_preamble_and_in_document'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'paragraphindent_in_preamble_and_in_document'};
 
-$result_nodes{'paragraphindent_in_preamble_and_in_document'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
+$result_nodes{'paragraphindent_in_preamble_and_in_document'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
+      },
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'paragraphindent_in_preamble_and_in_document'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'paragraphindent_in_preamble_and_in_document'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'paragraphindent_in_preamble_and_in_document'} = [];
 

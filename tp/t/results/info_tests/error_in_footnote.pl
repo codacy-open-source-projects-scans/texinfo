@@ -253,6 +253,7 @@ $result_trees{'error_in_footnote'} = {
           'extra' => {
             'caption' => {},
             'float_type' => 'Text',
+            'is_target' => 1,
             'normalized' => 'label'
           },
           'info' => {
@@ -342,6 +343,7 @@ $result_trees{'error_in_footnote'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -390,19 +392,22 @@ Float text1
 
 ';
 
-$result_nodes{'error_in_footnote'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'error_in_footnote'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'error_in_footnote'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'error_in_footnote'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'error_in_footnote'} = [
   {
@@ -437,11 +442,9 @@ $result_floats{'error_in_footnote'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'Text',
         'normalized' => 'label'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

@@ -43,7 +43,7 @@ require Exporter;
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 my %brace_commands = %Texinfo::Commands::brace_commands;
 
@@ -57,7 +57,7 @@ my %defaults = (
   'FORMAT_MENU'          => 'nomenu',
   'EXTENSION'            => 'xml', # dbk?
   'OUTPUT_ENCODING_NAME' => 'utf-8',
-  'SPLIT'                => 0,
+  'SPLIT'                => '',
   'documentlanguage'     => undef,
   'OPEN_QUOTE_SYMBOL'    => '&#'.hex('2018').';',
   'CLOSE_QUOTE_SYMBOL'   => '&#'.hex('2019').';',
@@ -295,7 +295,9 @@ sub converter_initialize($)
 sub convert($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
 
   if (! defined($self->{'lang_stack'})) {
     $self->{'lang_stack'} = [''];
@@ -326,7 +328,9 @@ my $DEFAULT_LANG = 'en';
 sub output($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
 
   my ($output_file, $destination_directory, $output_filename)
     = $self->determine_files_and_directory();
@@ -400,9 +404,8 @@ sub output($$)
   foreach my $title_cmdname ('title', 'shorttitlepage', 'titlefont') {
     if ($self->{'global_commands'}->{$title_cmdname}) {
       my $command = $self->{'global_commands'}->{$title_cmdname};
-      next if (!$command->{'args'}
-               or !$command->{'args'}->[0]->{'contents'}
-               or $command->{'extra'}->{'missing_argument'});
+      next if (!$command->{'args'} or !$command->{'args'}->[0]
+               or !$command->{'args'}->[0]->{'contents'});
       $fulltitle_command = $command;
       last;
     }
@@ -455,10 +458,8 @@ sub output($$)
   if ($self->{'global_commands'}->{'settitle'}) {
     my $command = $self->{'global_commands'}->{'settitle'};
     $settitle_command = $command
-      unless (!$command->{'args'}
-               or !$command->{'args'}->[0]->{'contents'}
-               or $command->{'extra'}->{'missing_argument'});
-
+      unless (!$command->{'args'} or !$command->{'args'}->[0]
+              or !$command->{'args'}->[0]->{'contents'});
   }
 
   my $titleabbrev_command;
@@ -471,9 +472,8 @@ sub output($$)
     # preceding it, so we also use @top
     my $command = $self->{'global_commands'}->{'top'};
     $fulltitle_command = $command
-      unless (!$command->{'args'}
-               or !$command->{'args'}->[0]->{'contents'}
-               or $command->{'extra'}->{'missing_argument'});
+      unless (!$command->{'args'} or !$command->{'args'}->[0]
+              or !$command->{'args'}->[0]->{'contents'});
   }
 
   my $title_info = '';
@@ -559,7 +559,7 @@ sub _docbook_section_element($$)
   my $self = shift;
   my $element = shift;
 
-  my $heading_level = $element->{'structure'}->{'section_level'};
+  my $heading_level = $element->{'extra'}->{'section_level'};
   if (exists $docbook_sections{$heading_level}) {
     return $docbook_sections{$heading_level};
   }
@@ -656,6 +656,17 @@ sub _convert_argument_and_end_line($$)
   my $converted = $self->convert_tree($element->{'args'}->[-1]);
   my $end_line = $self->format_comment_or_return_end_line($element);
   return ($converted, $end_line);
+}
+
+sub _output_anchor($)
+{
+  my $element = shift;
+
+  if ($element->{'extra'} and $element->{'extra'}->{'is_target'}) {
+    return "<anchor id=\"$element->{'extra'}->{'normalized'}\"/>";
+  } else {
+    return '';
+  }
 }
 
 sub _new_document_context($)
@@ -798,13 +809,14 @@ sub _convert($$;$)
       }
     } elsif ($element->{'type'} and $element->{'type'} eq 'index_entry_command') {
       my $end_line;
-      if ($element->{'args'}->[0]) {
+      if ($element->{'extra'} and $element->{'extra'}->{'index_entry'}
+          # this condition is probably always true
+          and $element->{'args'}->[0]) {
         $end_line = $self->format_comment_or_return_end_line($element);
         if ($self->{'document_context'}->[-1]->{'in_preformatted'}) {
           chomp($end_line);
         }
       } else {
-        # May that happen?
         $end_line = '';
       }
       return $self->_index_entry($element).${end_line};
@@ -842,9 +854,8 @@ sub _convert($$;$)
         if ($element->{'cmdname'} eq 'node'
             and (not $element->{'extra'}
                  or not $element->{'extra'}->{'associated_section'})) {
-          if ($element->{'extra'} and defined($element->{'extra'}->{'normalized'})) {
-            $result .= "<anchor id=\"$element->{'extra'}->{'normalized'}\"/>\n";
-          }
+          my $anchor = _output_anchor($element);
+          $result .= $anchor . "\n" if ($anchor ne '');
         } else {
           # start the section at the associated node or part, or at the sectioning
           # command if there is no associated node nor part
@@ -886,12 +897,12 @@ sub _convert($$;$)
               # able to figure it out.  For @unnumbered or if ! NUMBER_SECTIONS
               # having a label (empty) is important.
               my $label = '';
-              if (defined($opened_element->{'structure'}->{'section_number'})
+              if (defined($opened_element->{'extra'}->{'section_number'})
                 and ($self->get_conf('NUMBER_SECTIONS')
                      or !defined($self->get_conf('NUMBER_SECTIONS')))) {
                 # Looking at docbook2html output, Appendix is appended in the
                 # section title, so only the letter is used.
-                $label = $opened_element->{'structure'}->{'section_number'};
+                $label = $opened_element->{'extra'}->{'section_number'};
               }
               my $docbook_sectioning_element
                  = $self->_docbook_section_element($opened_element);
@@ -1049,15 +1060,11 @@ sub _convert($$;$)
         }
         return $result;
       } elsif ($element->{'cmdname'} eq 'anchor') {
-        if ($element->{'extra'} and defined($element->{'extra'}->{'normalized'})) {
-          return "<anchor id=\"$element->{'extra'}->{'normalized'}\"/>";
-        } else {
-          return '';
-        }
+        return _output_anchor($element);
       } elsif ($Texinfo::Commands::ref_commands{$element->{'cmdname'}}) {
         if ($element->{'args'}) {
           my $cmdname;
-          my $book_contents;
+          my $book_element;
           my ($section_name, $node_name);
           my $manual_file_index = 3;
           if ($element->{'cmdname'} eq 'inforef') {
@@ -1071,7 +1078,7 @@ sub _convert($$;$)
                 and defined($element->{'args'}->[-1])
                 and $element->{'args'}->[-1]->{'contents'}
                 and @{$element->{'args'}->[-1]->{'contents'}}) {
-              $book_contents = $element->{'args'}->[-1]->{'contents'};
+              $book_element = $element->{'args'}->[-1];
             }
             if (defined($element->{'args'}->[2])
                 and $element->{'args'}->[2]->{'contents'}
@@ -1082,12 +1089,12 @@ sub _convert($$;$)
             }
             $cmdname = $element->{'cmdname'};
           }
-          my $manual_file_contents;
+          my $manual_file_element;
           if (scalar(@{$element->{'args'}}) >= $manual_file_index+1
               and defined($element->{'args'}->[$manual_file_index])
               and $element->{'args'}->[$manual_file_index]->{'contents'}
               and @{$element->{'args'}->[$manual_file_index]->{'contents'}}) {
-            $manual_file_contents = $element->{'args'}->[$manual_file_index]->{'contents'};
+            $manual_file_element = $element->{'args'}->[$manual_file_index];
           }
           if (! defined($section_name) and defined($element->{'args'}->[1])
               and $element->{'args'}->[1]->{'contents'}
@@ -1106,7 +1113,7 @@ sub _convert($$;$)
                    {'contents' => $node_contents});
             pop @{$self->{'document_context'}->[-1]->{'upper_case'}};
 
-            if (($book_contents or $manual_file_contents)
+            if (($book_element or $manual_file_element)
                 and $node_name eq 'Top') {
               $node_name = undef;
             }
@@ -1115,104 +1122,104 @@ sub _convert($$;$)
           my $result;
           push @{$self->{'document_context'}->[-1]->{'upper_case'}}, 0;
           # external book ref
-          if ($book_contents) {
+          if ($book_element) {
             if ($section_name) {
               if ($cmdname eq 'ref') {
                 $result = $self->_convert(
                   $self->gdt('section ``{section_name}\'\' in @cite{{book}}',
                     { 'section_name' => {'type' => '_converted', 'text' => $section_name},
-                      'book' => $book_contents }));
+                      'book' => $book_element }));
               } elsif ($cmdname eq 'xref') {
                 $result = $self->_convert(
                   $self->gdt('See section ``{section_name}\'\' in @cite{{book}}',
                     { 'section_name' => {'type' => '_converted', 'text' => $section_name},
-                      'book' => $book_contents }));
+                      'book' => $book_element }));
               } elsif ($cmdname eq 'pxref') {
                 $result = $self->_convert(
                   $self->gdt('see section ``{section_name}\'\' in @cite{{book}}',
                     { 'section_name' => {'type' => '_converted', 'text' => $section_name},
-                      'book' => $book_contents }));
+                      'book' => $book_element }));
               }
             } elsif ($node_name) {
               if ($cmdname eq 'ref') {
                 $result = $self->_convert(
                   $self->gdt('``{node_name}\'\' in @cite{{book}}',
                     { 'node_name' => {'type' => '_converted', 'text' => $node_name},
-                      'book' => $book_contents }));
+                      'book' => $book_element }));
               } elsif ($cmdname eq 'xref') {
                 $result = $self->_convert(
                   $self->gdt('See ``{node_name}\'\' in @cite{{book}}',
                     { 'node_name' => {'type' => '_converted', 'text' => $node_name},
-                      'book' => $book_contents }));
+                      'book' => $book_element }));
               } elsif ($cmdname eq 'pxref') {
                 $result = $self->_convert(
                   $self->gdt('see ``{node_name}\'\' in @cite{{book}}',
                     { 'node_name' => {'type' => '_converted', 'text' => $node_name},
-                      'book' => $book_contents }));
+                      'book' => $book_element }));
               }
             } else {
               if ($cmdname eq 'ref') {
                 $result = $self->_convert(
                   $self->gdt('@cite{{book}}',
-                    {'book' => $book_contents }));
+                    {'book' => $book_element }));
               } elsif ($cmdname eq 'xref') {
                 $result = $self->_convert(
                   $self->gdt('See @cite{{book}}',
-                    {'book' => $book_contents }));
+                    {'book' => $book_element }));
               } elsif ($cmdname eq 'pxref') {
                 $result = $self->_convert(
                   $self->gdt('see @cite{{book}}',
-                    {'book' => $book_contents }));
+                    {'book' => $book_element }));
               }
             }
-          } elsif ($manual_file_contents) {
+          } elsif ($manual_file_element) {
             if ($section_name) {
               if ($cmdname eq 'ref') {
                 $result = $self->_convert(
                   $self->gdt('section ``{section_name}\'\' in @file{{manual}}',
                     { 'section_name' => {'type' => '_converted', 'text' => $section_name},
-                      'manual' => $manual_file_contents }));
+                      'manual' => $manual_file_element }));
               } elsif ($cmdname eq 'xref') {
                 $result = $self->_convert(
                   $self->gdt('See section ``{section_name}\'\' in @file{{manual}}',
                     { 'section_name' => {'type' => '_converted', 'text' => $section_name},
-                      'manual' => $manual_file_contents }));
+                      'manual' => $manual_file_element }));
               } elsif ($cmdname eq 'pxref') {
                 $result = $self->_convert(
                   $self->gdt('see section ``{section_name}\'\' in @file{{manual}}',
                     { 'section_name' => {'type' => '_converted', 'text' => $section_name},
-                      'manual' => $manual_file_contents }));
+                      'manual' => $manual_file_element }));
               }
             } elsif ($node_name) {
               if ($cmdname eq 'ref') {
                 $result = $self->_convert(
                   $self->gdt('``{node_name}\'\' in @file{{manual}}',
                     { 'node_name' => {'type' => '_converted', 'text' => $node_name},
-                      'manual' => $manual_file_contents }));
+                      'manual' => $manual_file_element }));
               } elsif ($cmdname eq 'xref') {
                 $result = $self->_convert(
                   $self->gdt('See ``{node_name}\'\' in @file{{manual}}',
                     { 'node_name' => {'type' => '_converted', 'text' => $node_name},
-                      'manual' => $manual_file_contents }));
+                      'manual' => $manual_file_element }));
               } elsif ($cmdname eq 'pxref') {
                 $result = $self->_convert(
                   $self->gdt('see ``{node_name}\'\' in @file{{manual}}',
                     { 'node_name' => {'type' => '_converted', 'text' => $node_name},
-                      'manual' => $manual_file_contents }));
+                      'manual' => $manual_file_element }));
               }
             } else {
               if ($cmdname eq 'ref') {
                 $result = $self->_convert(
                   $self->gdt('@file{{manual}}',
-                    {'manual' => $manual_file_contents }));
+                    {'manual' => $manual_file_element }));
               } elsif ($cmdname eq 'xref') {
                 $result = $self->_convert(
                   $self->gdt('See @file{{manual}}',
-                    {'manual' => $manual_file_contents }));
+                    {'manual' => $manual_file_element }));
               } elsif ($cmdname eq 'pxref') {
                 $result = $self->_convert(
                   $self->gdt('see @file{{manual}}',
-                    {'manual' => $manual_file_contents }));
+                    {'manual' => $manual_file_element }));
               }
             }
           } elsif ($element->{'cmdname'} eq 'inforef') {
@@ -1404,11 +1411,10 @@ sub _convert($$;$)
                            {'abbr_or_acronym' => {'type' => '_converted',
                                                   'text' => $argument},
                             'explanation' =>
-                             $element->{'args'}->[-1]->{'contents'}});
+                                $element->{'args'}->[-1]});
             return $self->_convert($tree);
           } else {
-            return $self->_convert({'contents' 
-                    => $element->{'args'}->[-1]->{'contents'}});
+            return $self->_convert($element->{'args'}->[-1]);
           }
         } elsif (defined($argument)) {
           return $argument;
@@ -1551,10 +1557,8 @@ sub _convert($$;$)
           }
         }
       } elsif ($element->{'cmdname'} eq 'float') {
-        if ($element->{'extra'}
-            and defined($element->{'extra'}->{'normalized'})) {
-          $result .= "<anchor id=\"$element->{'extra'}->{'normalized'}\"/>\n";
-        }
+        my $anchor = _output_anchor($element);
+        $result .= $anchor . "\n" if ($anchor ne '');
       } elsif ($element->{'cmdname'} eq 'verbatim') {
         push @format_elements, 'screen';
       } elsif ($element->{'cmdname'} eq 'displaymath') {
@@ -1587,7 +1591,7 @@ sub _convert($$;$)
             $self->{'pending_prepend'}
               = $self->_convert($self->gdt('@b{{quotation_arg}:} ',
                             {'quotation_arg' =>
-                  $element->{'args'}->[0]->{'contents'}}));
+                                  $element->{'args'}->[0]}));
           }
         }
         $format_element = 'blockquote' if (!defined($format_element));
@@ -1761,19 +1765,21 @@ sub _convert($$;$)
     }
     my $level_adjusted_cmdname
         = Texinfo::Structuring::section_level_adjusted_command_name($element);
-    if (!($element->{'structure'}->{'section_childs'}
-          and scalar(@{$element->{'structure'}->{'section_childs'}}))
+    if (!($element->{'extra'}->{'section_childs'}
+          and scalar(@{$element->{'extra'}->{'section_childs'}}))
         or $level_adjusted_cmdname eq 'top') {
       $result .= "</$docbook_sectioning_element>\n";
       pop @{$self->{'lang_stack'}};
       my $current = $element;
-      while ($current->{'structure'}->{'section_up'}
+      while ($current->{'extra'}->{'section_directions'}
+             and $current->{'extra'}->{'section_directions'}->{'up'}
              # the most up element is a virtual sectioning root element, this
              # condition avoids getting into it
-             and $current->{'structure'}->{'section_up'}->{'cmdname'}
-             and !$current->{'structure'}->{'section_next'}
-             and Texinfo::Structuring::section_level_adjusted_command_name($current->{'structure'}->{'section_up'}) ne 'top') {
-        $current = $current->{'structure'}->{'section_up'};
+             and $current->{'extra'}->{'section_directions'}->{'up'}->{'cmdname'}
+             and !$current->{'extra'}->{'section_directions'}->{'next'}
+             and Texinfo::Structuring::section_level_adjusted_command_name(
+               $current->{'extra'}->{'section_directions'}->{'up'}) ne 'top') {
+        $current = $current->{'extra'}->{'section_directions'}->{'up'};
         $result .= '</'.$self->_docbook_section_element($current) .">\n";
         pop @{$self->{'lang_stack'}};
       }
@@ -1810,10 +1816,10 @@ Texinfo::Convert::DocBook - Convert Texinfo tree to DocBook
 =head1 SYNOPSIS
 
   my $converter
-    = Texinfo::Convert::DocBook->converter({'parser' => $parser});
+    = Texinfo::Convert::DocBook->converter({'document' => $document});
 
-  $converter->output($tree);
-  $converter->convert($tree);
+  $converter->output($document);
+  $converter->convert($document);
   $converter->convert_tree($tree);
 
 =head1 NOTES
@@ -1834,24 +1840,25 @@ Texinfo::Convert::DocBook converts a Texinfo tree to DocBook.
 Initialize converter from Texinfo to DocBook.
 
 The I<$options> hash reference holds options for the converter.  In
-this option hash reference a L<parser object|Texinfo::Parser>
-may be associated with the I<parser> key.  The other options
-are Texinfo customization options and a few other options that can
-be passed to the converter. Most of the customization options are described in
-the Texinfo manual.  Those customization options, when appropriate, override
-the document content.  The parser should not be available directly anymore
-after getting the associated information.
+this option hash reference a L<document|Texinfo::Document>
+may be associated with the I<document> key.  The document should not
+be available directly anymore after getting the associated information.
+
+The other options are Texinfo customization options and a few other options
+that can be passed to the converter. Most of the customization options are
+described in the Texinfo manual.  Those customization options, when
+appropriate, override the document content.
 
 See L<Texinfo::Convert::Converter> for more information.
 
-=item $converter->output($tree)
+=item $converter->output($document)
 
-Convert a Texinfo tree I<$tree> and output the result in files as
+Convert a Texinfo parsed document I<$document> and output the result in files as
 described in the Texinfo manual.
 
-=item $result = $converter->convert($tree)
+=item $result = $converter->convert($document)
 
-Convert a Texinfo tree I<$tree> and return the resulting output.
+Convert a Texinfo parsed document I<$document> and return the resulting output.
 
 =item $result = $converter->convert_tree($tree)
 

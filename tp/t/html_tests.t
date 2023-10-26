@@ -284,7 +284,7 @@ in @code{documentdescri---ption} --- @bullet{} @enddots{} @verb{:"verb:} @aa{} @
 @cindex entry
 @printindex cp
 ', {'test_split' => 'section'}, {'USE_NODES', 0}],
-['simple_menu',
+['menu',
 '
 @node Top
 @top
@@ -357,8 +357,9 @@ in detaildescription
 
 @end detailmenu
 @end menu
-', {'SIMPLE_MENU' => 1, 'test_formats' => ['info']}, {'FORMAT_MENU' => 'menu'}],
-['simple_menu_in_example',
+', {'FORMAT_MENU' => 'menu', 'test_formats' => ['info']},
+   {'FORMAT_MENU' => 'menu'}],
+['menu_in_example',
 '@node Top
 
 @example
@@ -376,7 +377,8 @@ in cartouche in menu comment in menu in example
 * a menu name:(other) node.
 @end menu
 @end example
-', {'SIMPLE_MENU' => 1, 'test_formats' => ['info']}, {'FORMAT_MENU' => 'menu'}],
+', {'FORMAT_MENU' => 'menu', 'test_formats' => ['info']},
+   {'FORMAT_MENU' => 'menu'}],
 # the following tests are somewhat redundant with tests in
 # XXsectioning.t, but here there is a clearer comparison with
 # and without 'USE_NODES' here.  There is no test of TOP_NODE_UP, here, however.
@@ -641,7 +643,8 @@ in html
 $mathjax_with_texinfo, {}, {'HTML_MATH' => 'mathjax'}],
 ['mathjax_with_texinfo_enable_encoding',
 $mathjax_with_texinfo, {'test_formats' => ['latex_text', 'file_latex'],
-                        'full_document' => 1},
+                        'full_document' => 1,
+       'test_input_file_name' => 'mathjax_with_texinfo_enable_encoding.texi'},
 {'HTML_MATH' => 'mathjax', 'ENABLE_ENCODING' => 1, 'OUTPUT_CHARACTERS' => 1}],
 ['mathjax_with_texinfo_no_convert_to_latex',
 $mathjax_with_texinfo, {}, {'HTML_MATH' => 'mathjax',
@@ -980,6 +983,16 @@ Need 2 elements for separate footnotes.
 ', {'init_files' => ['redirection_file_collision_with_special.init']},
    {'SPLIT' => 'node', 'footnotestyle' => 'separate'},
 ],
+['top_file_name_and_node_name_collision',
+'@node my node
+@chapter chap my node
+
+@node other node
+@chapter chapter
+
+@top top
+
+', {}, {'TOP_FILE' => 'my-node.html', 'USE_NODES', 0}],
 # NOTE the result is incorrect, the first footnote text is at the
 # end of the file but the link is towards the separate file.
 # The manual states that the footnotestyle should be in the preamble,
@@ -1049,13 +1062,29 @@ $check_htmlxref_text
   {'test_file' => 'float_copying.texi',},
   {'SPLIT' => 'chapter', 'footnotestyle' => 'separate'}
 ],
-['sectioning_frames',
+# FIXME which TEXI2HTML options are really interesting for the test?
+# The CHECK_NORMAL_MENU_STRUCTURE test is relevant and to keep
+['sectioning_check_menu_structure',
   undef,
   # tests for node with directions after section
   {'test_file' => '../../tests/customization/sectioning.texi',
    'CHECK_NORMAL_MENU_STRUCTURE' => 1},
-  {'TEXI2HTML' => 1, 'SPLIT' => 'chapter', 'FRAMES' => 1}
+  {'TEXI2HTML' => 1, 'SPLIT' => 'chapter'}
 ],
+['test_separated_contents_shortcontents',
+'@contents
+
+@node Top
+@top top
+
+@node chap
+@chapter chapter
+
+@node app
+@appendix appendix
+
+@shortcontents
+',{},{'SPLIT' => 'node', 'CONTENTS_OUTPUT_LOCATION' => 'inline',}],
 # There are some similar tests in *sectioning.t, but we use completly
 # different input as input files as we want, here, independently,
 # test all possibility regarding HTML output.
@@ -1175,7 +1204,8 @@ $check_htmlxref_text
 ['double_contents_after_title_show_title_nodes',
   undef, {'test_file' => 'double_contents.texi'},
   {'CONTENTS_OUTPUT_LOCATION' => 'after_title', 'SHOW_TITLE' => 1,
-   'SPLIT' => 'nodes', 'BIG_RULE' => '<hr style="height: 6px;">'}
+   'SPLIT' => 'not a reference split spec, use node',
+   'BIG_RULE' => '<hr style="height: 6px;">'}
 ],
 # there is also a test in tests/ as texinfo_set_from_init_file
 # has no effect in the test suite, such that the following does not
@@ -1221,7 +1251,6 @@ $check_htmlxref_text
 
 foreach my $test (@test_cases) {
   push @{$test->[2]->{'test_formats'}}, 'html';
-  $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
 }
 foreach my $test (@test_cases_text) {
   push @{$test->[2]->{'test_formats'}}, 'html_text';
@@ -1229,6 +1258,7 @@ foreach my $test (@test_cases_text) {
 foreach my $test (@file_tests) {
   push @{$test->[2]->{'test_formats'}}, 'file_html';
   $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
+  $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 foreach my $test (@test_cases_file_text) {
   push @{$test->[2]->{'test_formats'}}, ('html_text', 'file_html');

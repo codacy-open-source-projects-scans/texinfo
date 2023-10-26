@@ -70,6 +70,7 @@ $result_trees{'footnote_no_node'} = {
           'type' => 'paragraph'
         }
       ],
+      'extra' => {},
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -98,20 +99,20 @@ F.
 ';
 
 $result_sectioning{'footnote_no_node'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
-        'structure' => {
+        'extra' => {
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'footnote_no_node'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'footnote_no_node'};
+$result_sectioning{'footnote_no_node'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'footnote_no_node'};
 
 $result_errors{'footnote_no_node'} = [];
 

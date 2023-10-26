@@ -114,6 +114,7 @@ $result_trees{'anchor_in_command'} = {
                               ],
                               'cmdname' => 'anchor',
                               'extra' => {
+                                'is_target' => 1,
                                 'normalized' => 'anchor-in-emph'
                               },
                               'source_info' => {
@@ -153,6 +154,7 @@ $result_trees{'anchor_in_command'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -183,19 +185,22 @@ aaa TeX in emph after
 emph emph2 .
 ';
 
-$result_nodes{'anchor_in_command'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'anchor_in_command'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'anchor_in_command'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'anchor_in_command'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'anchor_in_command'} = [];
 

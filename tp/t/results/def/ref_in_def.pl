@@ -534,6 +534,7 @@ $result_trees{'ref_in_def'} = {
           ],
           'cmdname' => 'anchor',
           'extra' => {
+            'is_target' => 1,
             'normalized' => 'myanchor'
           },
           'source_info' => {
@@ -549,6 +550,7 @@ $result_trees{'ref_in_def'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -600,19 +602,22 @@ T
 
 ';
 
-$result_nodes{'ref_in_def'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
+$result_nodes{'ref_in_def'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'first'
+    }
   }
-};
+];
 
-$result_menus{'ref_in_def'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
+$result_menus{'ref_in_def'} = [
+  {
+    'extra' => {
+      'normalized' => 'first'
+    }
   }
-};
+];
 
 $result_errors{'ref_in_def'} = [];
 

@@ -47,7 +47,7 @@ use Carp qw(cluck);
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 # our because it is used in the xml to texi translator and subclasses.
@@ -283,7 +283,9 @@ sub converter_initialize($)
 sub output($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
 
   my ($output_file, $destination_directory, $output_filename)
        = $self->determine_files_and_directory();
@@ -430,7 +432,9 @@ sub _accent($$;$$$)
 sub convert($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
 
   return $self->convert_tree($root);
 }
@@ -751,7 +755,8 @@ sub _convert($$;$)
         unshift @close_format_elements, 'entry';
       } # otherwise we have an incorrect construct, for instance
         # out of block commands @item, @itemx in enumerate or multitable...
-    } elsif ($element->{'type'} and $element->{'type'} eq 'index_entry_command') {
+    } elsif ($element->{'type'} and $element->{'type'} eq 'index_entry_command'
+             and $element->{'extra'} and $element->{'extra'}->{'index_entry'}) {
       my ($index_entry, $index_info)
         = Texinfo::Common::lookup_index_entry($element->{'extra'}->{'index_entry'},
                                               $self->{'indices_information'});
@@ -797,7 +802,7 @@ sub _convert($$;$)
       } elsif ($type eq 'line') {
         if ($cmdname eq 'node') {
           my $nodename;
-          if (defined($element->{'extra'}->{'normalized'})) {
+          if ($element->{'extra'} and $element->{'extra'}->{'is_target'}) {
             $nodename = $element->{'extra'}->{'normalized'};
           } else {
             $nodename = '';
@@ -816,13 +821,13 @@ sub _convert($$;$)
           my $pending_empty_directions = '';
           foreach my $direction(@node_directions) {
             my $format_element = 'node'.lc($direction);
-            if ($element->{'structure'}
-                and $element->{'structure'}->{'node_'.lc($direction)}) {
+            if ($element->{'extra'} and $element->{'extra'}->{'node_directions'}
+                and $element->{'extra'}->{'node_directions'}->{lc($direction)}) {
               my $node_direction
-                     = $element->{'structure'}->{'node_'.lc($direction)};
+                  = $element->{'extra'}->{'node_directions'}->{lc($direction)};
               my $node_name = '';
               my $attributes = [];
-              if ($element->{'args'}->[$direction_index]) {
+              if ($element->{'args'} and $element->{'args'}->[$direction_index]) {
                 push @$attributes, _leading_trailing_spaces_arg(
                                  $element->{'args'}->[$direction_index]);
               }
@@ -1066,7 +1071,7 @@ sub _convert($$;$)
         push @$attribute, ['delimiter', $element->{'info'}->{'delimiter'}];
       } elsif ($element->{'cmdname'} eq 'anchor') {
         my $anchor_name;
-        if (defined($element->{'extra'}->{'normalized'})) {
+        if ($element->{'extra'} and $element->{'extra'}->{'is_target'}) {
           $anchor_name = $element->{'extra'}->{'normalized'};
         } else {
           $anchor_name = '';
@@ -1187,7 +1192,7 @@ sub _convert($$;$)
               $normalized = $node_arg->{'extra'}->{'normalized'};
             } else {
               $normalized
-               = Texinfo::Convert::NodeNameNormalization::normalize_node(
+               = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
                   {'contents' =>
                      $node_arg->{'extra'}->{'node_content'}});
             }
@@ -1256,15 +1261,15 @@ sub _convert($$;$)
         push @$attribute, ['first',
                            $element->{'extra'}->{'enumerate_specification'}];
       } elsif ($element->{'cmdname'} eq 'float' and $element->{'extra'}) {
-        if (defined($element->{'extra'}->{'normalized'})) {
+        if ($element->{'extra'}->{'is_target'}) {
           push @$attribute, ['name', $element->{'extra'}->{'normalized'}];
         }
         push @$attribute, ['type',
                            $element->{'extra'}->{'float_type'}];
-        if ($element->{'structure'}
-            and defined($element->{'structure'}->{'float_number'})) {
+        if ($element->{'extra'}
+            and defined($element->{'extra'}->{'float_number'})) {
           push @$attribute, ['number',
-                             $element->{'structure'}->{'float_number'}];
+                             $element->{'extra'}->{'float_number'}];
         }
       } elsif ($element->{'cmdname'} eq 'verbatim') {
         push @$attribute, ['space', 'preserve'];
@@ -1604,19 +1609,20 @@ sub _convert($$;$)
            and !$self->get_conf('USE_NODES')) {
     my $level_adjusted_cmdname
        = Texinfo::Structuring::section_level_adjusted_command_name($element);
-    if (!($element->{'structure'}->{'section_childs'}
-          and scalar(@{$element->{'structure'}->{'section_childs'}}))
+    if (!($element->{'extra'}->{'section_childs'}
+          and scalar(@{$element->{'extra'}->{'section_childs'}}))
         or $level_adjusted_cmdname eq 'top') {
       $result .= $self->txi_markup_close_element($level_adjusted_cmdname)."\n";
       my $current = $element;
-      while ($current->{'structure'}->{'section_up'}
+      while ($current->{'extra'}->{'section_directions'}
+             and $current->{'extra'}->{'section_directions'}->{'up'}
              # the most up element is a virtual sectioning root element, this
              # condition avoids getting into it
-             and $current->{'structure'}->{'section_up'}->{'cmdname'}
-             and !$current->{'structure'}->{'section_next'}
+             and $current->{'extra'}->{'section_directions'}->{'up'}->{'cmdname'}
+             and !$current->{'extra'}->{'section_directions'}->{'next'}
              and Texinfo::Structuring::section_level_adjusted_command_name(
-                            $current->{'structure'}->{'section_up'}) ne 'top') {
-        $current = $current->{'structure'}->{'section_up'};
+               $current->{'extra'}->{'section_directions'}->{'up'}) ne 'top') {
+        $current = $current->{'extra'}->{'section_directions'}->{'up'};
         my $level_adjusted_current_cmdname
           = Texinfo::Structuring::section_level_adjusted_command_name($current);
         $result

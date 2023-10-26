@@ -21,21 +21,36 @@
 #include <stdio.h>
 
 #include "parser.h"
-#include "debug.h"
+#include "tree_types.h"
 #include "text.h"
+#include "tree.h"
+#include "debug_parser.h"
+#include "debug.h"
+#include "errors.h"
+/* for isascii_alnum whitespace_chars read_flag_name
+   indices_info_index_by_name ultimate_index */
+#include "utils.h"
+/* for parse_node_manual */
+#include "manipulate_tree.h"
+/* for parse_float_type add_to_float_record_list */
+#include "floats.h"
 #include "input.h"
-#include "convert.h"
+#include "counter.h"
+/* check_register_target_element_label */
 #include "labels.h"
+/* add_infoenclose */
+#include "macro.h"
 #include "indices.h"
+#include "context_stack.h"
+#include "builtin_commands.h"
+#include "commands.h"
 #include "def.h"
 #include "source_marks.h"
 #include "handle_commands.h"
-
-static int
-isascii_alpha (int c)
-{
-  return (((c & ~0x7f) == 0) && isalpha(c));
-}
+#include "extra.h"
+#include "convert_to_texinfo.h"
+/* for convert_to_identifier */
+#include "node_name_normalization.h"
 
 static int
 is_decimal_number (char *string)
@@ -98,7 +113,6 @@ parse_line_command_args (ELEMENT *line_command)
   if (arg->contents.number == 0)
    {
      command_error (line_command, "@%s missing argument", command_name(cmd));
-     add_extra_integer (line_command, "missing_argument", 1);
      return 0;
    }
 
@@ -344,34 +358,34 @@ parse_line_command_args (ELEMENT *line_command)
     case CM_syncodeindex:
       {
         /* synindex FROM TO */
-        char *from = 0, *to = 0;
+        char *index_name_from = 0, *index_name_to = 0;
         INDEX *from_index, *to_index;
         char *p = line;
 
         if (!isascii_alnum (*p))
           goto synindex_invalid;
-        from = read_command_name (&p);
-        if (!from)
+        index_name_from = read_command_name (&p);
+        if (!index_name_from)
           goto synindex_invalid;
 
         p += strspn (p, whitespace_chars);
 
         if (!isascii_alnum (*p))
           goto synindex_invalid;
-        to = read_command_name (&p);
-        if (!to)
+        index_name_to = read_command_name (&p);
+        if (!index_name_to)
           goto synindex_invalid;
         if (*p)
           goto synindex_invalid; /* More at end of line. */
 
-        from_index = index_by_name (from);
-        to_index = index_by_name (to);
+        from_index = indices_info_index_by_name (index_names,index_name_from);
+        to_index = indices_info_index_by_name (index_names,index_name_to);
         if (!from_index)
           line_error ("unknown source index in @%s: %s",
-                      command_name(cmd), from);
+                      command_name(cmd), index_name_from);
         if (!to_index)
           line_error ("unknown destination index in @%s: %s",
-                      command_name(cmd), to);
+                      command_name(cmd), index_name_to);
 
         if (from_index && to_index)
           {
@@ -383,25 +397,25 @@ parse_line_command_args (ELEMENT *line_command)
               {
                 from_index->merged_in = current_to;
                 from_index->in_code = (cmd == CM_syncodeindex);
-                ADD_ARG(from);
-                ADD_ARG(to);
+                ADD_ARG(index_name_from);
+                ADD_ARG(index_name_to);
                 /* Note that 'current_to' may not end up as the index
                    'from_index' merges into if there are further @synindex 
                    commands. */
               }
             else
               line_warn ("@%s leads to a merging of %s in itself, ignoring",
-                          command_name(cmd), from);
+                          command_name(cmd), index_name_from);
           }
 
-        free (from);
-        free (to);
+        free (index_name_from);
+        free (index_name_to);
 
         break;
       synindex_invalid:
         line_error ("bad argument to @%s: %s",
                      command_name(cmd), line);
-        free (from); free (to);
+        free (index_name_from); free (index_name_to);
         break;
       }
     case CM_printindex:
@@ -413,16 +427,14 @@ parse_line_command_args (ELEMENT *line_command)
           line_error ("bad argument to @printindex: %s", line);
         else
           {
-            INDEX *idx = index_by_name (arg);
+            INDEX *idx = indices_info_index_by_name (index_names,arg);
             if (!idx)
               line_error ("unknown index `%s' in @printindex", arg);
             else
               {
                 if (idx->merged_in)
                   {
-                    INDEX *i2;
-                    for (i2 = idx; (i2->merged_in); i2 = i2->merged_in)
-                      ;
+                    INDEX *i2 = ultimate_index (idx);
                     line_warn
                       ("printing an index `%s' merged in another one, `%s'",
                        arg, i2->name);
@@ -618,37 +630,16 @@ parse_line_command_args (ELEMENT *line_command)
 #undef ADD_ARG
 }
 
-/* for now done in Texinfo::Convert::NodeNameNormalization, but could be
-   good to do in Parser/XS */
 /* Array of recorded @float's. */
+FLOAT_RECORD_LIST float_records = {0, 0, 0};
 
-FLOAT_RECORD *floats_list = 0;
-size_t floats_number = 0;
-size_t floats_space = 0;
-
-
-char *
-parse_float_type (ELEMENT *current)
-{
-  char *normalized;
-  if (current->args.number > 0)
-    {
-      /* TODO convert_to_texinfo is incorrect here, conversion should follow
-         code of Texinfo::Convert::NodeNameNormalization::convert_to_normalized */
-      normalized = convert_to_texinfo (current->args.list[0]);
-    }
-  else
-    normalized = strdup ("");
-  add_extra_string (current, "float_type", normalized);
-  return normalized;
-}
 
 ELEMENT *
 end_line_def_line (ELEMENT *current)
 {
   enum command_id def_command;
   DEF_ARG **def_info = 0;
-  KEY_PAIR *k;
+  KEY_PAIR *k_pair;
   ELEMENT *index_entry = 0; /* Index entry text. */
   ELEMENT *def_info_name = 0;
   ELEMENT *def_info_class = 0;
@@ -659,12 +650,12 @@ end_line_def_line (ELEMENT *current)
   if (top_context != ct_def)
     fatal ("def context expected");
 
-  k = lookup_extra (current->parent, "def_command");
-  def_command = lookup_command ((char *) k->value);
+  k_pair = lookup_extra (current->parent, "def_command");
+  def_command = lookup_command ((char *) k_pair->value);
 
   debug_nonl ("END DEF LINE %s; current ",
                command_name(def_command));
-  debug_print_element (current, 1); debug ("");
+  debug_parser_print_element (current, 1); debug ("");
 
   def_info = parse_def (def_command, current);
 
@@ -732,14 +723,14 @@ end_line_def_line (ELEMENT *current)
         }
       else
         {
-          k = lookup_extra (current, "original_def_cmdname");
-          command_warn (current, "missing name for @%s", (char *) k->value);
+          k_pair = lookup_extra (current, "original_def_cmdname");
+          command_warn (current, "missing name for @%s", (char *) k_pair->value);
         }
     }
   else
     {
-      k = lookup_extra (current, "original_def_cmdname");
-      command_warn (current, "missing category for @%s", (char *) k->value);
+      k_pair = lookup_extra (current, "original_def_cmdname");
+      command_warn (current, "missing category for @%s", (char *) k_pair->value);
     }
 
 
@@ -774,7 +765,7 @@ end_line_starting_block (ELEMENT *current)
     fatal ("line context expected");
 
   debug_nonl ("END BLOCK LINE: ");
-  debug_print_element (current, 1); debug ("");
+  debug_parser_print_element (current, 1); debug ("");
 
   /* @multitable args */
   if (command == CM_multitable
@@ -844,7 +835,7 @@ end_line_starting_block (ELEMENT *current)
 
   if (command == CM_float)
     {
-      /* char *float_type = ""; */
+      char *float_type = "";
       ELEMENT *float_label_element = 0;
       current->source_info = current_source_info;
       if (current->args.number >= 2)
@@ -852,21 +843,11 @@ end_line_starting_block (ELEMENT *current)
           float_label_element = args_child_by_index (current, 1);
         }
       check_register_target_element_label (float_label_element, current);
-      /* for now done in Texinfo::Convert::NodeNameNormalization, but could be
-         good to do in Parser/XS */
-      /*
       float_type = parse_float_type (current);
-      */
+
       /* add to global 'floats' array */
-      /*
-      if (floats_number == floats_space)
-        {
-          floats_list = realloc (floats_list,
-                                 (floats_space += 5) * sizeof (FLOAT_RECORD));
-        }
-      floats_list[floats_number].type = float_type;
-      floats_list[floats_number++].element = current;
-      */
+      add_to_float_record_list (&float_records, float_type, current);
+
       if (current_section)
         add_extra_element (current, "float_section", current_section);
     }
@@ -901,11 +882,11 @@ end_line_starting_block (ELEMENT *current)
             }
           add_extra_string_dup (current, "enumerate_specification", spec);
         }
-      else if (item_line_command (command))
+      else if (command_data(command).data == BLOCK_item_line)
         {
-          KEY_PAIR *k;
-          k = lookup_extra (current, "command_as_argument");
-          if (!k)
+          KEY_PAIR *k_command_as_argument;
+          k_command_as_argument = lookup_extra (current, "command_as_argument");
+          if (!k_command_as_argument)
             {
               if (current->args.number > 0
                   && current->args.list[0]->contents.number > 0)
@@ -926,7 +907,7 @@ end_line_starting_block (ELEMENT *current)
             }
           else
             {
-              ELEMENT *e = (ELEMENT *) k->value;
+              ELEMENT *e = (ELEMENT *) k_command_as_argument->value;
               if (!(command_flags(e) & CF_brace)
                   || (command_data(e->cmd).data == BRACE_noarg))
                 {
@@ -935,8 +916,8 @@ end_line_starting_block (ELEMENT *current)
                                  "should not be on @%s line",
                                  command_name(e->cmd),
                                  command_name(command));
-                  k->key = "";
-                  k->type = extra_deleted;
+                  k_command_as_argument->key = "";
+                  k_command_as_argument->type = extra_deleted;
                 }
             }
         }
@@ -945,16 +926,17 @@ end_line_starting_block (ELEMENT *current)
          otherwise it is not a command_as_argument */
       else if (command == CM_itemize)
         {
-          KEY_PAIR *k;
-          k = lookup_extra (current, "command_as_argument");
-          if (k)
+          KEY_PAIR *k_command_as_argument;
+          k_command_as_argument = lookup_extra (current, "command_as_argument");
+          if (k_command_as_argument)
             {
               int i;
               ELEMENT *e = args_child_by_index (current, 0);
 
               for (i = 0; i < e->contents.number; i++)
                 {
-                  if (contents_child_by_index (e, i) == (ELEMENT *) k->value)
+                  if (contents_child_by_index (e, i)
+                             == (ELEMENT *) k_command_as_argument->value)
                     {
                       i++;
                       break;
@@ -969,9 +951,9 @@ end_line_starting_block (ELEMENT *current)
                            && !*(f->text.text
                                  + strspn (f->text.text, whitespace_chars))))
                     {
-                      ((ELEMENT *) k->value)->type = ET_NONE;
-                      k->key = "";
-                      k->type = extra_deleted;
+                      ((ELEMENT *) k_command_as_argument->value)->type = ET_NONE;
+                      k_command_as_argument->key = "";
+                      k_command_as_argument->type = extra_deleted;
                       break;
                     }
                 }
@@ -982,12 +964,13 @@ end_line_starting_block (ELEMENT *current)
       k = lookup_extra (current, "command_as_argument");
       if (k && k->value)
         {
-          enum command_id cmd = ((ELEMENT *) k->value)->cmd;
-          if (cmd && (command_data(cmd).flags & CF_accent))
+          enum command_id as_argument_cmd = ((ELEMENT *) k->value)->cmd;
+          if (as_argument_cmd
+              && (command_data(as_argument_cmd).flags & CF_accent))
             {
               command_warn (current, "accent command `@%s' "
                             "not allowed as @%s argument",
-                            command_name(cmd),
+                            command_name(as_argument_cmd),
                             command_name(command));
               k->key = "";
               k->value = 0;
@@ -1018,7 +1001,7 @@ end_line_starting_block (ELEMENT *current)
           insert_into_contents (block_line_arg, e, 0);
           add_extra_element (current, "command_as_argument", e);
         }
-      else if (item_line_command (command)
+      else if (command_data(command).data == BLOCK_item_line
           && !lookup_extra (current, "command_as_argument"))
         {
           ELEMENT *e;
@@ -1111,23 +1094,19 @@ end_line_starting_block (ELEMENT *current)
         }
       else if (!memcmp (command_name(command), "if", 2)) /* e.g. @ifhtml */
         {
-          int i; char *p;
+          char *p;
           /* Handle @if* and @ifnot* */
 
           p = command_name(command) + 2; /* After "if". */
+          /* note that if a 2 letter format existed, like @ifme, the length of
+             p should be checked before the call to memcpm */
           if (!memcmp (p, "not", 3))
             p += 3; /* After "not". */
-          for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
-               i++)
-            {
-              if (!strcmp (p, expanded_formats[i].format))
-                {
-                  iftrue = expanded_formats[i].expandedp;
-                  break;
-                }
-            }
+
+          iftrue = parser_format_expanded_p (p);
           if (!memcmp (command_name(command), "ifnot", 5))
             iftrue = !iftrue;
+
           debug ("CONDITIONAL @%s format %s: %d", command_name(command),
                  p, iftrue);
         }
@@ -1161,7 +1140,7 @@ end_line_starting_block (ELEMENT *current)
       debug ("MENU_COMMENT OPEN");
     }
   if (command_data(command).data == BLOCK_format_raw
-      && format_expanded_p (command_name(command)))
+      && parser_format_expanded_p (command_name(command)))
     {
       ELEMENT *rawpreformatted = new_element (ET_rawpreformatted);
       add_to_element_contents (current, rawpreformatted);
@@ -1223,13 +1202,13 @@ end_line_misc_line (ELEMENT *current)
       int superfluous_arg = 0;
 
       if (current->args.number > 0)
-        text = convert_to_text (current->args.list[0], &superfluous_arg);
+        text = text_contents_to_plain_text (current->args.list[0],
+                                            &superfluous_arg);
 
       if (!text || !strcmp (text, ""))
         {
           if (!superfluous_arg)
             line_warn ("@%s missing argument", command_name(cmd));
-          add_extra_integer (current, "missing_argument", 1);
           free (text);
         }
       else
@@ -1280,7 +1259,7 @@ end_line_misc_line (ELEMENT *current)
               char *fullpath, *sys_filename;
 
               sys_filename = encode_file_name (text);
-              fullpath = locate_include_file (sys_filename);
+              fullpath = parser_locate_include_file (sys_filename);
 
               if (!fullpath)
                 {
@@ -1314,38 +1293,19 @@ end_line_misc_line (ELEMENT *current)
             }
           else if (current->cmd == CM_verbatiminclude)
             {
-              if (global_input_encoding_name)
+              if (global_info.input_encoding_name)
                 add_extra_string_dup (current, "input_encoding_name",
-                                      global_input_encoding_name);
+                                      global_info.input_encoding_name);
             }
           else if (current->cmd == CM_documentencoding)
             {
-              int i; char *p, *normalized_text, *q;
+              int i; char *p, *normalized_text;
               int encoding_set;
               char *input_encoding = 0;
               int possible_encoding = 0;
 
-              normalized_text = strdup (text);
-              q = normalized_text;
-              /* lower case, trim non-ascii characters and keep only alphanumeric
-                 characters, - and _.  iconv also seems to trim non alphanumeric
-                 non - _ characters */
-              for (p = text; *p; p++)
-                {
-                  /* check if ascii and alphanumeric */
-                  if (isascii_alnum(*p))
-                    {
-                      possible_encoding = 1;
-                      *q = tolower (*p);
-                      q++;
-                    }
-                  else if (*p == '_' || *p == '-')
-                    {
-                      *q = *p;
-                      q++;
-                    }
-                }
-              *q = '\0';
+              normalized_text = normalize_encoding_name (text,
+                                                         &possible_encoding);
 
               if (! possible_encoding)
                 command_warn (current, "bad encoding name `%s'",
@@ -1428,7 +1388,8 @@ end_line_misc_line (ELEMENT *current)
                       input_encoding = normalized_text;
                     }
 
-                  /* set_input_encoding also sets global_input_encoding_name */
+                  /* set_input_encoding also sets
+                     global_info.input_encoding_name */
                   encoding_set = set_input_encoding (input_encoding);
                   if (encoding_set)
                     {
@@ -1515,14 +1476,27 @@ end_line_misc_line (ELEMENT *current)
   else if (current->cmd == CM_node)
     {
       int i;
+      ELEMENT *label_element;
 
       for (i = 1; i < current->args.number && i < 4; i++)
         {
           ELEMENT * arg = current->args.list[i];
           NODE_SPEC_EXTRA *direction_label_info = parse_node_manual (arg, 1);
           if (direction_label_info->node_content)
-            add_extra_contents (arg, "node_content",
-                                direction_label_info->node_content);
+            {
+              ELEMENT *tmp = new_element (ET_NONE);
+              char *normalized;
+
+              add_extra_contents (arg, "node_content",
+                                  direction_label_info->node_content);
+
+              tmp->contents = direction_label_info->node_content->contents;
+              normalized = convert_to_identifier (tmp);
+              tmp->contents.list = 0;
+              destroy_element (tmp);
+
+              add_extra_string (arg, "normalized", normalized);
+            }
           if (direction_label_info->manual_content)
             add_extra_contents (arg, "manual_content",
                                 direction_label_info->manual_content);
@@ -1530,7 +1504,13 @@ end_line_misc_line (ELEMENT *current)
         }
 
       /* Now take care of the node itself */
-      check_register_target_element_label (current->args.list[0], current);
+      label_element = current->args.list[0];
+      if (label_element->contents.number == 0)
+        {
+          line_error_ext (MSG_error, 0, &current->source_info,
+                          "empty argument in @%s", command_name (cmd));
+        }
+      check_register_target_element_label (label_element, current);
 
       if (current_part
           && !lookup_extra (current_part, "part_associated_section"))
@@ -1547,12 +1527,16 @@ end_line_misc_line (ELEMENT *current)
     }
   else if (current->cmd == CM_listoffloats)
     {
-      /* for now done in Texinfo::Convert::NodeNameNormalization, but could be
-         good to do in Parser/XS */
-      /* parse_float_type (current); */
+      parse_float_type (current);
     }
   else
     {
+      if (command_flags(current) & CF_index_entry_command)
+        {
+          current->type = ET_index_entry_command;
+          add_info_string_dup (current, "command_name",
+                               command_name(current->cmd));
+        }
       /* All the other "line" commands. Check they have an argument. Empty 
          @top is allowed. */
       if (current->args.list[0]->contents.number == 0
@@ -1560,7 +1544,6 @@ end_line_misc_line (ELEMENT *current)
         {
           command_warn (current, "@%s missing argument", 
                         command_name(current->cmd));
-          add_extra_integer (current, "missing_argument", 1);
         }
       else
         {
@@ -1575,7 +1558,6 @@ end_line_misc_line (ELEMENT *current)
           /* Index commands */
             {
               enter_index_entry (current->cmd, current);
-              current->type = ET_index_entry_command;
             }
           /* if there is a brace command interrupting an index or subentry
              command, replace the internal internal_spaces_before_brace_in_index
@@ -1728,7 +1710,7 @@ end_line_misc_line (ELEMENT *current)
                                  current);
               if (current->cmd == CM_top)
                 {
-                  line_error_ext (1, &current_part->source_info,
+                  line_error_ext (MSG_warning, 0, &current_part->source_info,
                          "@part should not be associated with @top");
                 }
               current_part = 0;
@@ -1762,7 +1744,7 @@ end_line (ELEMENT *current)
       && last_contents_child (current)->type == ET_empty_line)
     {
       debug_nonl ("END EMPTY LINE in ");
-      debug_print_element (current, 0); debug ("");
+      debug_parser_print_element (current, 0); debug ("");
       if (current->type == ET_paragraph)
         {
           ELEMENT *e;
@@ -1835,7 +1817,7 @@ end_line (ELEMENT *current)
     {
       debug_nonl ("Still opened line/block command %s: ",
                   context_name (current_context ()));
-      debug_print_element (current, 1); debug("");
+      debug_parser_print_element (current, 1); debug("");
       if (current_context () == ct_def)
         {
           while (current->parent

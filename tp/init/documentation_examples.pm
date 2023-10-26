@@ -82,18 +82,23 @@ sub my_email_formatting_function {
   my $command = shift;
   my $args = shift;
 
-  my $mail_arg = shift @$args;
-  my $text_arg = shift @$args;
+  my $args_nr = scalar(@$args);
+
   my $mail = '';
-  my $mail_string;
-  if (defined($mail_arg)) {
+  my $mail_string = '';
+  if ($args_nr > 0 and defined($args->[0])) {
+    my $mail_arg = $args->[0];
     $mail = $mail_arg->{'url'};
     $mail_string = $mail_arg->{'monospacestring'};
   }
+
   my $text = '';
-  if (defined($text_arg)) {
+  if ($args_nr > 1 and defined($args->[1])
+      and defined($args->[1]->{'normal'})) {
+    my $text_arg = $args->[1];
     $text = $text_arg->{'normal'};
   }
+  $text = $mail_string unless ($text ne '');
 
   if ($converter->in_string()) {
     return "$mail_string ($text) $shown_styles, $footnotestyle";
@@ -136,7 +141,7 @@ texinfo_register_file_id_setting_function('node_file_name',
 
 
 sub my_label_target_name($$$$) {
-  my ($converter, $normalized, $node_contents, $default_target) = @_;
+  my ($converter, $normalized, $label_element, $default_target) = @_;
   if (defined($normalized)) {
     my $element = $converter->label_command($normalized);
     return 'prepended_to_labels-'.$element->{'extra'}->{'normalized'};
@@ -147,21 +152,39 @@ sub my_label_target_name($$$$) {
 texinfo_register_file_id_setting_function('label_target_name',
                                           \&my_label_target_name);
 
-sub my_format_translate_string($$$;$$$)
+sub my_format_translate_message_tree($$$;$$)
 {
   my ($self, $string, $lang, $replaced_substrings,
-                             $translation_context, $type) = @_;
+                             $translation_context) = @_;
   $translation_context = '' if (!defined($translation_context));
   if (exists($translations{$lang})
       and exists($translations{$lang}->{$string})
       and exists($translations{$lang}->{$string}->{$translation_context})) {
     my $translation = $translations{$lang}->{$string}->{$translation_context};
     return $self->replace_convert_substrings($translation,
-                                                 $replaced_substrings, $type);
+                                                 $replaced_substrings);
   }
   return undef;
 }
 
-texinfo_register_formatting_function('format_translate_string',
-                                          \&my_format_translate_string);
+texinfo_register_formatting_function('format_translate_message_tree',
+                                          \&my_format_translate_message_tree);
+
+sub my_format_translate_message_string($$$;$$)
+{
+  my ($self, $string, $lang, $replaced_substrings,
+                             $translation_context) = @_;
+  $translation_context = '' if (!defined($translation_context));
+  if (exists($translations{$lang})
+      and exists($translations{$lang}->{$string})
+      and exists($translations{$lang}->{$string}->{$translation_context})) {
+    my $translation = $translations{$lang}->{$string}->{$translation_context};
+    return $self->replace_substrings($translation,
+                                     $replaced_substrings);
+  }
+  return undef;
+}
+
+texinfo_register_formatting_function('format_translate_message_string',
+                                          \&my_format_translate_message_string);
 1;

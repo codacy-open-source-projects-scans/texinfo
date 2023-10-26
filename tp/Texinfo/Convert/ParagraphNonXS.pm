@@ -186,9 +186,8 @@ my $end_sentence_characters = quotemeta('.?!');
 my $after_punctuation_characters = quotemeta('"\')]');
 
 # Add $WORD to paragraph, returning the text to be added to the paragraph.
-# Any end of sentence punctuation in $WORD that should be allowed to end a
-# sentence but which would otherwise be preceded by an upper-case letter should
-# instead by preceded by a backspace character.
+# FIXME: remove handling of \x08 control characters from add_next, doing it
+# in add_text instead (as is done in the corresponding XS code).
 sub add_next($;$$)
 {
   my $paragraph = shift;
@@ -211,24 +210,14 @@ sub _add_next($;$$$)
     return '';
   }
 
-  my $disinhibit = 0;
-  # Reverse the insertion of any control characters in Plaintext.pm.
-  if ($word =~ /\x08$/) {
-    $disinhibit = 1;
-  }
-  $word =~ s/\x08//g;
-
   $paragraph->{'word'} .= $word;
 
-  if (!$transparent) {
-    if ($disinhibit) {
-      $paragraph->{'last_letter'} = 'a';
-    } elsif ($word =~
-         /([^$end_sentence_characters$after_punctuation_characters])
-          [$end_sentence_characters$after_punctuation_characters]*$/ox) {
-      # Save the last character in $word before punctuation
-      $paragraph->{'last_letter'} = $1;
-    }
+  if (!$transparent
+      and ($word =~
+           /([^$end_sentence_characters$after_punctuation_characters])
+            [$end_sentence_characters$after_punctuation_characters]*$/ox)) {
+    # Save the last character in $word before punctuation
+    $paragraph->{'last_letter'} = $1;
   }
 
   if (!$newlines_impossible and $word =~ /\n/) {
@@ -254,10 +243,17 @@ sub _add_next($;$$$)
   return $result;
 }
 
+# Values for 'end_sentence'.  'end_sentence' can also be undef.
+use constant {
+  eos_inhibited => 0,
+  eos_present => 1,
+  eos_present_frenchspacing => -1,
+};
+
 sub remove_end_sentence($)
 {
   my $paragraph = shift;
-  $paragraph->{'end_sentence'} = 0;
+  $paragraph->{'end_sentence'} = eos_inhibited;
 }
 
 sub add_end_sentence($;$) {
@@ -309,7 +305,7 @@ sub add_text($$)
   my $result = '';
 
   my @segments = split
-    /(\s+)|(\p{InFullwidth})|((?:[^\s\p{InFullwidth}])+)/,
+    /(\s+)|(\p{InFullwidth})|((?:[^\s\p{InFullwidth}\x08])+)|(\x08)/,
     $text;
 
   # Check now if a newline exists anywhere in the string to
@@ -321,8 +317,8 @@ sub add_text($$)
     # $empty_segment should be an empty string; the other variables
     # here were recognized as field separators by split, the separator
     # set to something else than undef for the separator matching.
-    my ($empty_segment, $spaces, $fullwidth_segment, $added_word)
-     = splice (@segments, 0, 4);
+    my ($empty_segment, $spaces, $fullwidth_segment, $added_word, $allow_eos)
+     = splice (@segments, 0, 5);
 
     if ($debug_flag) {
       print STDERR "p ($paragraph->{'counter'}+$paragraph->{'word_counter'}) "
@@ -343,9 +339,9 @@ sub add_text($$)
         }
       } else {
         my $at_end_sentence = 0;
-        $at_end_sentence = 1 if ($paragraph->{'end_sentence'} 
-                                   and $paragraph->{'end_sentence'} > 0
-                                   and !$paragraph->{'frenchspacing'});
+        $at_end_sentence = 1 if (defined($paragraph->{'end_sentence'})
+                               and  $paragraph->{'end_sentence'} == eos_present
+                               and !$paragraph->{'frenchspacing'});
         if ($paragraph->{'no_break'}) {
           if (substr($paragraph->{'word'}, -1) ne ' ') {
             my $new_spaces = $at_end_sentence ? '  ' : ' ';
@@ -370,11 +366,7 @@ sub add_text($$)
             } else {
               # Only save the first space
               if (length($paragraph->{'space'}) < 1) {
-                if ($spaces =~ /\n/) {
-                  $paragraph->{'space'} = ' ';
-                } else {
-                  $paragraph->{'space'} .= substr ($spaces, 0, 1);
-                }
+                $paragraph->{'space'} = ' ';
               }
             }
           }
@@ -389,6 +381,10 @@ sub add_text($$)
         $result .= _end_line($paragraph);
       }
       $paragraph->{'last_letter'} = ' ';
+    } elsif (defined $allow_eos) {
+      # Reset 'last_leter' to a lower-case letter to allow an end of
+      # sentence to occur.
+      $paragraph->{'last_letter'} = 'a';
     } elsif (defined $added_word) {
       my $tmp = $added_word;
       # Prepend 'last_letter' to add the information on the last
@@ -412,11 +408,11 @@ sub add_text($$)
           and $tmp =~
         /(^|[^\p{Upper}$after_punctuation_characters$end_sentence_characters])
          [$after_punctuation_characters]*[$end_sentence_characters]
-         [$end_sentence_characters\x08$after_punctuation_characters]*$/ox) {
+         [$end_sentence_characters$after_punctuation_characters]*$/ox) {
         if ($paragraph->{'frenchspacing'}) {
-          $paragraph->{'end_sentence'} = -1;
+          $paragraph->{'end_sentence'} = eos_present_frenchspacing;
         } else {
-          $paragraph->{'end_sentence'} = 1;
+          $paragraph->{'end_sentence'} = eos_present;
         }
         print STDERR "END_SENTENCE\n" if ($paragraph->{'DEBUG'});
       } else {

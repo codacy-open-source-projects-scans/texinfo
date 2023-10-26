@@ -16,8 +16,29 @@
 #include <config.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 #include "parser.h"
+#include "options_types.h"
+#include "tree_types.h"
+#include "tree.h"
+#include "command_ids.h"
+/* for xasprintf and other */
+#include "errors.h"
+#include "debug.h"
+#include "context_stack.h"
+#include "builtin_commands.h"
+#include "extra.h"
+/* for ultimate_index */
+#include "utils.h"
+/* for copy_tree */
+#include "manipulate_tree.h"
+#include "commands.h"
+#include "translations.h"
+#include "document.h"
+/*
+#include "convert_to_texinfo.h"
+*/
 #include "indices.h"
 
 INDEX **index_names = 0;
@@ -98,26 +119,12 @@ add_index_internal (char *name, int in_code)
   return idx;
 }
 
-/* NAME is the name of an index, e.g. "cp" */
-INDEX *
-index_by_name (char *name)
-{
-  int i;
-
-  for (i = 0; i < number_of_indices; i++)
-    {
-      if (!strcmp (index_names[i]->name, name))
-        return index_names[i];
-    }
-  return 0;
-}
-
 
 /* Add a user defined index with the name NAME */
 void
 add_index (char *name, int in_code)
 {
-  INDEX *idx = index_by_name (name);
+  INDEX *idx = indices_info_index_by_name (index_names, name);
   char *cmdname;
 
   if (!idx)
@@ -129,24 +136,13 @@ add_index (char *name, int in_code)
   free (cmdname);
 }
 
-static void
-wipe_index (INDEX *idx)
-{
-  free (idx->name);
-  free (idx->index_entries);
-}
-
+/* reset indices without unallocating them nor the list of indices */
 void
-wipe_indices (void)
+forget_indices (void)
 {
-  int i;
-  for (i = 0; i < number_of_indices; i++)
-    {
-      wipe_index (index_names[i]);
-      free (index_names[i]);
-    }
+  index_names = 0;
   number_of_indices = 0;
-  return;
+  space_for_indices = 0;
 }
 
 void
@@ -223,15 +219,18 @@ init_index_commands (void)
       add_index_command (name2, idx); /* @cpindex */
     }
 
-  associate_command_to_index (CM_vtable, index_by_name ("vr"));
-  associate_command_to_index (CM_ftable, index_by_name ("fn"));
+  associate_command_to_index (CM_vtable,
+    indices_info_index_by_name (index_names, "vr"));
+  associate_command_to_index (CM_ftable,
+    indices_info_index_by_name (index_names, "fn"));
 
   for (i = 0;
        i < sizeof (def_command_indices) / sizeof (def_command_indices[0]);
        i++)
     {
       enum command_id cmd;
-      idx = index_by_name (def_command_indices[i].name);
+      idx = indices_info_index_by_name (index_names,
+                                        def_command_indices[i].name);
       if (idx)
         {
           for (j = 0; j < MAX; j++)
@@ -244,16 +243,6 @@ init_index_commands (void)
     }
 #undef MAX
 }
-
-
-/* A reference to an index entry, in the "index_entry" extra key of
-   an element.  index->index_entries[entry] is the referred-to index
-   entry.  Not actually used in api.c (element_to_perl_hash). */
-typedef struct {
-    INDEX *index;
-    int entry;
-} INDEX_ENTRY_REF;
-
 
 /* INDEX_TYPE_CMD is used to determine which index to enter the entry in.
    index entry.  ELEMENT is the element in the main body of the manual that
@@ -282,7 +271,7 @@ enter_index_entry (enum command_id index_type_cmd,
   /* not needed, the position in the index is directly used
   entry->number = idx->index_number;
   */
-  entry->command = element;
+  entry->entry_element = element;
 
   /* Create ignored_chars string. */
   text_init (&ignored_chars);
@@ -361,10 +350,156 @@ set_non_ignored_space_in_index_before_command (ELEMENT *content)
 
 
 
-INDEX *
-ultimate_index (INDEX *index)
+void
+resolve_indices_merged_in (void)
 {
-  while (index->merged_in)
-    index = index->merged_in;
-  return index;
+  INDEX **i, *idx;
+
+  for (i = index_names; (idx = *i); i++)
+    {
+      if (idx->merged_in)
+        {
+          /* This index is merged in another one. */
+          INDEX *ultimate = ultimate_index (idx);
+          idx->merged_in = ultimate;
+        }
+    }
+}
+
+void
+complete_indices (int document_descriptor)
+{
+  INDEX **i, *idx;
+  DOCUMENT *document;
+  INDEX **index_names;
+  OPTIONS *options;
+
+  /* beware that document may have a change in adress if realloc on
+     the documents list is called in gdt.  So only use it here and
+     not after gdt call */
+  document = retrieve_document (document_descriptor);
+
+  index_names = document->index_names;
+  options = document->options;
+
+  for (i = index_names; (idx = *i); i++)
+    {
+      if (idx->index_number > 0)
+        {
+          int j;
+          for (j = 0; j < idx->index_number; j++)
+            {
+              INDEX_ENTRY *entry;
+              ELEMENT *main_entry_element;
+              KEY_PAIR *k_def_command;
+              KEY_PAIR *k_idx_element;
+
+              entry = &idx->index_entries[j];
+              main_entry_element = entry->entry_element;
+
+              k_def_command = lookup_extra (main_entry_element, "def_command");
+
+              k_idx_element = lookup_extra (main_entry_element,
+                                            "def_index_element");
+              if (k_def_command && k_def_command->value
+                  && !(k_idx_element && k_idx_element->value))
+                {
+                  ELEMENT *name = 0;
+                  ELEMENT *class = 0;
+                  ELEMENT *def_l_e = main_entry_element->args.list[0];
+                  if (def_l_e->contents.number > 0)
+                    {
+                      int ic;
+                      for (ic = 0; ic < def_l_e->contents.number; ic++)
+                        {
+                          ELEMENT *arg = def_l_e->contents.list[ic];
+                          KEY_PAIR *k_role = lookup_extra (arg, "def_role");
+                          char *role = (char *) k_role->value;
+                          if (!strcmp (role, "name"))
+                            name = arg;
+                          else if (!strcmp (role, "class"))
+                            class = arg;
+                          else if (!strcmp (role, "arg")
+                                   || !strcmp (role, "typearg")
+                                   || !strcmp (role, "delimiter"))
+                            break;
+                        }
+                    }
+                  /*
+                  fprintf (stderr, "DEF IDX NAME CLASS '%s' '%s' \n",
+                                              print_element_debug(name, 0),
+                                              print_element_debug(class, 0));
+                   */
+                  if (name && class)
+                    {
+                      char *lang = 0;
+                      ELEMENT *index_entry;
+                      ELEMENT *index_entry_normalized = new_element (ET_NONE);
+                      ELEMENT *text_element = new_element (ET_NONE);
+                      enum command_id def_command
+                        = lookup_command ((char *) k_def_command->value);
+                      KEY_PAIR *k_lang = lookup_extra (main_entry_element,
+                                                       "documentlanguage");
+                      NAMED_STRING_ELEMENT_LIST *substrings
+                                       = new_named_string_element_list ();
+                      ELEMENT *name_copy = copy_tree (name, 0);
+                      ELEMENT *class_copy = copy_tree (class, 0);
+                      ELEMENT *ref_name_copy = copy_tree (name, 0);
+                      ELEMENT *ref_class_copy = copy_tree (class, 0);
+
+                      add_element_to_named_string_element_list (substrings,
+                                                           "name", name_copy);
+                      add_element_to_named_string_element_list (substrings,
+                                                           "class", class_copy);
+                      if (k_lang && k_lang->value)
+                        {
+                          lang = (char *) k_lang->value;
+                        }
+                      if (def_command == CM_defop
+                          || def_command == CM_deftypeop
+                          || def_command == CM_defmethod
+                          || def_command == CM_deftypemethod)
+                        { /* note that at that point, options are unlikely
+                          to be set, but we use the language of the element */
+                          index_entry = gdt_tree ("{name} on {class}",
+                                                  document, options,
+                                                  substrings, 0, lang);
+
+                          text_append (&text_element->text, " on ");
+                        }
+                      else if (def_command == CM_defcv
+                               || def_command == CM_defivar
+                               || def_command == CM_deftypeivar
+                               || def_command == CM_deftypecv)
+                        {
+                          index_entry = gdt_tree ("{name} of {class}",
+                                                  document, options,
+                                                  substrings, 0, lang);
+
+                          text_append (&text_element->text, " of ");
+                        }
+                      destroy_named_string_element_list (substrings);
+
+                      add_to_element_contents
+                                   (index_entry_normalized, ref_name_copy);
+                      add_to_element_contents
+                                   (index_entry_normalized, text_element);
+                      add_to_element_contents
+                                   (index_entry_normalized, ref_class_copy);
+                      /*
+         prefer a type-less container rather than 'root_line' returned by gdt
+                       */
+                      index_entry->type = ET_NONE;
+
+                      add_extra_element_oot (main_entry_element,
+                                             "def_index_element",
+                                             index_entry);
+                      add_extra_element_oot (main_entry_element,
+                                             "def_index_ref_element",
+                                             index_entry_normalized);
+                    }
+                }
+            }
+        }
+    }
 }

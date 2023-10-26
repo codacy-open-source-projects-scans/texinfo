@@ -8,6 +8,11 @@ use utf8;
 $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
   'contents' => [
     {
+      'contents' => [
+        {
+          'type' => 'preamble_before_content'
+        }
+      ],
       'type' => 'before_node_section'
     },
     {
@@ -29,6 +34,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -189,6 +195,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
                       ],
                       'cmdname' => 'anchor',
                       'extra' => {
+                        'is_target' => 1,
                         'normalized' => 'foo'
                       },
                       'source_info' => {
@@ -294,6 +301,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
                       ],
                       'cmdname' => 'anchor',
                       'extra' => {
+                        'is_target' => 1,
                         'normalized' => 'Foo'
                       },
                       'source_info' => {
@@ -472,6 +480,9 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
           'type' => 'paragraph'
         }
       ],
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -533,7 +544,7 @@ Foo
 ';
 
 $result_sectioning{'file_name_case_insensitive_conflict_redirections'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -543,52 +554,57 @@ $result_sectioning{'file_name_case_insensitive_conflict_redirections'} = {
             'extra' => {
               'normalized' => 'Top'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
-              'structure' => {
+              'extra' => {
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'file_name_case_insensitive_conflict_redirections'};
+$result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'file_name_case_insensitive_conflict_redirections'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'file_name_case_insensitive_conflict_redirections'};
 
-$result_nodes{'file_name_case_insensitive_conflict_redirections'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
+$result_nodes{'file_name_case_insensitive_conflict_redirections'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
+      },
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'file_name_case_insensitive_conflict_redirections'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'file_name_case_insensitive_conflict_redirections'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'file_name_case_insensitive_conflict_redirections'} = [];
 

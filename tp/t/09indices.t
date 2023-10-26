@@ -337,6 +337,14 @@ Text.
 @node chap
 @cindex
 '],
+['empty_added_index_entry',
+'@defindex my
+
+@node Top
+@node chap
+
+@myindex
+'],
 ['empty_string_index_entry',
 '@node Top
 @node chap
@@ -720,6 +728,18 @@ in a reuglar para @sortas{foo}. @code{inside another @sortas{command}}.
 @cindex hhh @subentry jjj @subentry lll @sortas{A}
 @cindex hhh @subentry k @subentry nnn
 @cindex hhh @subentry l @subentry third
+
+@printindex cp
+'],
+['subentries_and_comments',
+'@node Top
+@top
+
+@node chapter one
+@chapter one
+
+@cindex aa @subentry bb@c comment
+@cindex ab @subentry cc @comment comment
 
 @printindex cp
 '],

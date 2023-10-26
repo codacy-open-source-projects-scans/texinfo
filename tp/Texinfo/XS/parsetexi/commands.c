@@ -18,36 +18,25 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "command_ids.h"
-#include "commands.h"
-#include "errors.h"
 /* for global_accept_internalvalue */
 #include "parser.h"
-
-#include "command_data.c"
+#include "command_ids.h"
+#include "builtin_commands.h"
+/* for lookup_macro and unset_macro_record */
+#include "macro.h"
+#include "utils.h"
+#include "commands.h"
 
 COMMAND *user_defined_command_data = 0;
 static size_t user_defined_number = 0;
 static size_t user_defined_space = 0;
 
-static int
-compare_command_fn (const void *a, const void *b)
-{
-  const COMMAND *ca = (COMMAND *) a;
-  const COMMAND *cb = (COMMAND *) b;
-
-  return strcmp (ca->cmdname, cb->cmdname);
-}
-
-/* Return element number in command_data array.  Return 0 if not found. */
+/* Return element number.  Return 0 if not found. */
 enum command_id
 lookup_command (char *cmdname)
 {
-  COMMAND *c;
-  COMMAND target;
+  enum command_id cmd;
   int i;
-
-  target.cmdname = cmdname;
 
   /* Check for user-defined commands: macros, indexes, etc. */
   /* Do this before looking in the built-in commands, in case the user uses 
@@ -62,28 +51,14 @@ lookup_command (char *cmdname)
         return ((enum command_id) i) | USER_COMMAND_BIT;
     }
 
-  c = (COMMAND *) bsearch (&target, builtin_command_data + 1,
-        /* number of elements */
-        sizeof (builtin_command_data) / sizeof (builtin_command_data[0]) - 1,
-        sizeof (builtin_command_data[0]),
-        compare_command_fn);
+  cmd = lookup_builtin_command (cmdname);
 
-  if (c)
-    {
-      enum command_id cmd;
-      cmd = c - &builtin_command_data[0];
+  /* txiinternalvalue is invalid if the corresponding parameter
+   * is not set */
+  if (cmd == CM_txiinternalvalue && !global_accept_internalvalue)
+    return 0;
 
-      /* txiinternalvalue is invalid if the corresponding configuration
-       * is not set */
-      if (cmd == CM_txiinternalvalue && !global_accept_internalvalue) {
-        return 0;
-      }
-
-      return cmd;
-    }
-
-
-  return 0;
+  return cmd;
 }
 
 /* Add a new user-defined Texinfo command, like an index or macro command.  No 
@@ -169,8 +144,3 @@ close_preformatted_command (enum command_id cmd_id)
           && !(command_data(cmd_id).flags & CF_index_entry_command);
 }
 
-int
-item_line_command (enum command_id cmd_id)
-{
-  return command_data(cmd_id).data == BLOCK_item_line;
-}

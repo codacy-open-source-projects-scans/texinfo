@@ -200,6 +200,19 @@ in float
 @listoffloats type '."\f".'
 
 '],
+# This tests a title in convert
+['commands_in_settitle_with_title',
+'@settitle @sc{sc @~n @aa{} @TeX{}} node @"i @"{@dotless{i}} @`{@=E} @l{} @,{@\'C} @exclamdown{}
+
+@node Top
+@top top
+
+@node chapter
+@chapter Chap
+
+Document.
+
+', {}, {'SHOW_TITLE' => 1}],
 ['some_at_commands_in_ref_nodes',
 '
 @node Top
@@ -1346,6 +1359,8 @@ foreach my $test (@test_cases) {
   if ($file_html_tests{$test->[0]}
       or $file_latex_tests{$test->[0]}) {
     $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
+    $test->[2]->{'full_document'} = 1
+        unless (exists($test->[2]->{'full_document'}));
   }
   if ($file_html_tests{$test->[0]}) {
     push @{$test->[2]->{'test_formats'}}, 'file_html';
@@ -1357,8 +1372,6 @@ foreach my $test (@test_cases) {
     push @{$test->[2]->{'test_formats'}}, 'docbook';
   }
   if ($file_latex_tests{$test->[0]}) {
-    $test->[2]->{'full_document'} = 1
-        unless (exists($test->[2]->{'full_document'}));
     push @{$test->[2]->{'test_formats'}}, 'file_latex';
   } else {
     push @{$test->[2]->{'test_formats'}}, 'latex_text';

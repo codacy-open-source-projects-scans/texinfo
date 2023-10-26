@@ -70,6 +70,9 @@ $result_trees{'section_in_copying'} = {
         }
       ],
       'cmdname' => 'section',
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -98,21 +101,21 @@ $result_texts{'section_in_copying'} = '1 section
 ';
 
 $result_sectioning{'section_in_copying'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'section',
-        'structure' => {
+        'extra' => {
           'section_level' => 2,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 1
   }
 };
-$result_sectioning{'section_in_copying'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'section_in_copying'};
+$result_sectioning{'section_in_copying'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'section_in_copying'};
 
 $result_errors{'section_in_copying'} = [
   {

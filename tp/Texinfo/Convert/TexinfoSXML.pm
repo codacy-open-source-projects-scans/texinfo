@@ -31,7 +31,7 @@ use Carp qw(cluck);
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::TexinfoMarkup);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 # SXML specific
@@ -43,7 +43,7 @@ my %defaults = (
   'FORMAT_MENU'          => 'menu',
   'EXTENSION'            => 'sxml',
   'OUTPUT_ENCODING_NAME' => 'utf-8',
-  'SPLIT'                => 0,
+  'SPLIT'                => '',
   'documentlanguage'     => 'en',
 );
 

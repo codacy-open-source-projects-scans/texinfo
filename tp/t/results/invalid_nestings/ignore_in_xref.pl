@@ -138,6 +138,7 @@ $result_trees{'ignore_in_xref'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -170,19 +171,22 @@ $result_texts{'ignore_in_xref'} = '
 first.
 ';
 
-$result_nodes{'ignore_in_xref'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
+$result_nodes{'ignore_in_xref'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'first'
+    }
   }
-};
+];
 
-$result_menus{'ignore_in_xref'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
+$result_menus{'ignore_in_xref'} = [
+  {
+    'extra' => {
+      'normalized' => 'first'
+    }
   }
-};
+];
 
 $result_errors{'ignore_in_xref'} = [
   {

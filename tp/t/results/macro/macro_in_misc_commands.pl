@@ -163,6 +163,7 @@ $result_trees{'macro_in_misc_commands'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -1366,6 +1367,9 @@ $result_trees{'macro_in_misc_commands'} = {
                 'begin' => '//',
                 'end' => '\\\\'
               },
+              'info' => {
+                'command_name' => 'phoo'
+              },
               'source_info' => {
                 'file_name' => '',
                 'line_nr' => 60,
@@ -1527,6 +1531,9 @@ $result_trees{'macro_in_misc_commands'} = {
               'extra' => {
                 'begin' => ':',
                 'end' => ':'
+              },
+              'info' => {
+                'command_name' => 'phi'
               },
               'source_info' => {
                 'file_name' => '',
@@ -1858,6 +1865,7 @@ $result_trees{'macro_in_misc_commands'} = {
                 'end' => ':)'
               },
               'info' => {
+                'command_name' => 'strong',
                 'spaces_after_cmd_before_arg' => {
                   'source_marks' => [
                     {
@@ -4998,6 +5006,7 @@ $result_trees{'macro_in_misc_commands'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'node-atext'
       },
       'info' => {
@@ -5262,7 +5271,9 @@ $result_trees{'macro_in_misc_commands'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -5594,7 +5605,7 @@ line after exdent
 ';
 
 $result_sectioning{'macro_in_misc_commands'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -5603,11 +5614,8 @@ $result_sectioning{'macro_in_misc_commands'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -5616,8 +5624,16 @@ $result_sectioning{'macro_in_misc_commands'} = {
                   'cmdname' => 'node',
                   'extra' => {
                     'normalized' => 'node-atext'
-                  },
-                  'structure' => {}
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
+                'section_level' => 1,
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
                 }
               },
               'source_marks' => [
@@ -5626,97 +5642,84 @@ $result_sectioning{'macro_in_misc_commands'} = {
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'end'
                 }
-              ],
-              'structure' => {
-                'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
-              }
+              ]
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'macro_in_misc_commands'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'macro_in_misc_commands'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'macro_in_misc_commands'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'macro_in_misc_commands'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'macro_in_misc_commands'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'macro_in_misc_commands'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'macro_in_misc_commands'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'macro_in_misc_commands'};
+$result_sectioning{'macro_in_misc_commands'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'macro_in_misc_commands'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'macro_in_misc_commands'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'macro_in_misc_commands'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'macro_in_misc_commands'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'macro_in_misc_commands'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'macro_in_misc_commands'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'macro_in_misc_commands'};
 
-$result_nodes{'macro_in_misc_commands'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'source_marks' => [
-            {
-              'counter' => 51,
-              'sourcemark_type' => 'macro_expansion',
-              'status' => 'end'
-            }
-          ],
-          'structure' => {
-            'section_number' => 1
+$result_nodes{'macro_in_misc_commands'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
+      },
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              },
+              'source_marks' => [
+                {
+                  'counter' => 51,
+                  'sourcemark_type' => 'macro_expansion',
+                  'status' => 'end'
+                }
+              ]
+            },
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'node-atext'
           }
-        },
-        'normalized' => 'node-atext'
-      },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'macro_in_misc_commands'}{'structure'}{'menu_child'}{'structure'}{'node_prev'} = $result_nodes{'macro_in_misc_commands'};
-$result_nodes{'macro_in_misc_commands'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'macro_in_misc_commands'};
-$result_nodes{'macro_in_misc_commands'}{'structure'}{'node_next'} = $result_nodes{'macro_in_misc_commands'}{'structure'}{'menu_child'};
-
-$result_menus{'macro_in_misc_commands'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'node-atext'
-      },
-      'structure' => {
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'Top' => 1
         }
-      }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'macro_in_misc_commands'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'macro_in_misc_commands'}[0];
+$result_nodes{'macro_in_misc_commands'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'macro_in_misc_commands'}[0];
+$result_nodes{'macro_in_misc_commands'}[1] = $result_nodes{'macro_in_misc_commands'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'macro_in_misc_commands'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'normalized' => 'node-atext'
     }
   }
-};
-$result_menus{'macro_in_misc_commands'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'macro_in_misc_commands'};
+];
+$result_menus{'macro_in_misc_commands'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'macro_in_misc_commands'}[0];
 
 $result_errors{'macro_in_misc_commands'} = [
   {

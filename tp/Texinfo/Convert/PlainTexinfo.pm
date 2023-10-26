@@ -25,13 +25,33 @@ package Texinfo::Convert::PlainTexinfo;
 use 5.00405;
 use strict;
 
-use Texinfo::Convert::Texinfo;
+use Texinfo::Convert::ConvertXS;
+
+use Texinfo::Convert::Texinfo qw(convert_to_texinfo);
 use Texinfo::Convert::Converter;
 
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
+
+our $module_loaded = 0;
+sub import {
+  if (!$module_loaded) {
+    if (defined $ENV{TEXINFO_XS_CONVERT}
+        and $ENV{TEXINFO_XS_CONVERT} eq '1') {
+      # We do not simply override, we must check at runtime
+      # that the document tree was stored by the XS parser.
+      Texinfo::XSLoader::override(
+        "Texinfo::Convert::PlainTexinfo::_convert_tree_with_XS",
+        "Texinfo::Convert::ConvertXS::plain_texinfo_convert_tree"
+      );
+    }
+    $module_loaded = 1;
+  }
+  # The usual import method
+  goto &Exporter::import;
+}
 
 
 my %defaults = (
@@ -46,30 +66,47 @@ sub converter_defaults($$)
   return %defaults;
 }
 
+# This is used if the document is available for XS, but XS is not
+# used (most likely $TEXINFO_XS_CONVERT is 0).
+sub _convert_tree_with_XS($)
+{
+  my $root = shift;
+
+  return convert_to_texinfo($root);
+}
+
 sub convert_tree($$)
 {
   my $self = shift;
   my $root = shift;
 
-  return $self->_convert($root);
+  if (defined($root->{'tree_document_descriptor'})) {
+    return _convert_tree_with_XS($root);
+  }
+
+  return convert_to_texinfo($root);
 }
+
+#sub output($$)
+#{
+#  my $self = shift;
+#  my $document = shift;
+#
+#  return Texinfo::Convert::Converter::output($self, $document);
+#}
 
 sub convert($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
 
-  return $self->_convert($root);
-}
+  my $root = $document->tree();
 
-sub _convert($$);
+  if (defined($document->document_descriptor())) {
+    return _convert_tree_with_XS($root);
+  }
 
-sub _convert($$)
-{
-  my $self = shift;
-  my $root = shift;
-  
-  return Texinfo::Convert::Texinfo::convert_to_texinfo($root);
+  return convert_to_texinfo($root);
 }
 
 1;

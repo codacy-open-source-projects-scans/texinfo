@@ -29,6 +29,7 @@ $result_trees{'backslash_in_arg'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -193,6 +194,7 @@ $result_trees{'backslash_in_arg'} = {
             ]
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -261,6 +263,7 @@ $result_trees{'backslash_in_arg'} = {
             ]
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -332,6 +335,7 @@ $result_trees{'backslash_in_arg'} = {
             ]
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -400,6 +404,7 @@ $result_trees{'backslash_in_arg'} = {
             ]
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -447,6 +452,7 @@ $result_trees{'backslash_in_arg'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -488,33 +494,42 @@ $result_texts{'backslash_in_arg'} = '
 
 ';
 
-$result_nodes{'backslash_in_arg'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'backslash_in_arg'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'backslash_in_arg'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'backslash_in_arg'}[0];
+$result_nodes{'backslash_in_arg'}[1] = $result_nodes{'backslash_in_arg'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'backslash_in_arg'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'backslash_in_arg'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'backslash_in_arg'};
-
-$result_menus{'backslash_in_arg'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'backslash_in_arg'} = [];
 

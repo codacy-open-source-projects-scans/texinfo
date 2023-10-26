@@ -46,12 +46,14 @@ AC_DEFUN([gl_EARLY],
   # Code from module alignasof:
   # Code from module alignof:
   # Code from module alloca-opt:
+  # Code from module array-mergesort:
   # Code from module assert-h:
   # Code from module attribute:
   # Code from module c-ctype:
   # Code from module c-strcase:
   # Code from module c-strcaseeq:
   # Code from module c99:
+  # Code from module environ:
   # Code from module errno:
   # Code from module exitfail:
   # Code from module extensions:
@@ -80,6 +82,7 @@ AC_DEFUN([gl_EARLY],
   # Code from module multiarch:
   # Code from module obstack:
   # Code from module rawmemchr:
+  # Code from module setenv:
   # Code from module size_max:
   # Code from module snippet/_Noreturn:
   # Code from module snippet/arg-nonnull:
@@ -102,23 +105,65 @@ AC_DEFUN([gl_EARLY],
   # Code from module strndup:
   # Code from module strnlen:
   # Code from module sys_types:
+  # Code from module unicase/base:
+  # Code from module unicase/cased:
+  # Code from module unicase/empty-prefix-context:
+  # Code from module unicase/empty-suffix-context:
+  # Code from module unicase/ignorable:
+  # Code from module unicase/special-casing:
+  # Code from module unicase/tolower:
+  # Code from module unicase/toupper:
+  # Code from module unicase/u8-casemap:
+  # Code from module unicase/u8-tolower:
+  # Code from module unicase/u8-toupper:
   # Code from module uniconv/base:
+  # Code from module uniconv/u32-conv-from-enc:
+  # Code from module uniconv/u32-strconv-from-enc:
   # Code from module uniconv/u8-conv-from-enc:
   # Code from module uniconv/u8-strconv-from-enc:
+  # Code from module uniconv/u8-strconv-to-enc:
+  # Code from module unictype/base:
+  # Code from module unictype/category-L:
+  # Code from module unictype/category-Mn:
+  # Code from module unictype/category-test:
+  # Code from module unictype/combining-class:
+  # Code from module unictype/property-soft-dotted:
+  # Code from module uninorm/base:
+  # Code from module uninorm/canonical-decomposition:
+  # Code from module uninorm/compat-decomposition:
+  # Code from module uninorm/composition:
+  # Code from module uninorm/decompose-internal:
+  # Code from module uninorm/decomposition:
+  # Code from module uninorm/decomposition-table:
+  # Code from module uninorm/nfc:
+  # Code from module uninorm/nfd:
+  # Code from module uninorm/nfkd:
+  # Code from module uninorm/u8-normalize:
   # Code from module unistd:
   # Code from module unistr/base:
+  # Code from module unistr/u32-mblen:
+  # Code from module unistr/u32-next:
+  # Code from module unistr/u32-strlen:
+  # Code from module unistr/u32-strmbtouc:
   # Code from module unistr/u8-check:
+  # Code from module unistr/u8-cpy:
   # Code from module unistr/u8-mblen:
   # Code from module unistr/u8-mbsnlen:
   # Code from module unistr/u8-mbtouc:
   # Code from module unistr/u8-mbtouc-unsafe:
   # Code from module unistr/u8-mbtoucr:
+  # Code from module unistr/u8-next:
   # Code from module unistr/u8-prev:
   # Code from module unistr/u8-strlen:
+  # Code from module unistr/u8-strmbtouc:
+  # Code from module unistr/u8-to-u32:
   # Code from module unistr/u8-uctomb:
   # Code from module unitypes:
   # Code from module uniwidth/base:
+  # Code from module uniwidth/u8-strwidth:
+  # Code from module uniwidth/u8-width:
   # Code from module uniwidth/width:
+  # Code from module unsetenv:
   # Code from module vararrays:
   # Code from module vasnprintf:
   # Code from module vasprintf:
@@ -153,6 +198,8 @@ AC_DEFUN([gl_INIT],
   gl_ASSERT_H
   gl_CONDITIONAL_HEADER([assert.h])
   AC_PROG_MKDIR_P
+  gl_ENVIRON
+  gl_UNISTD_MODULE_INDICATOR([environ])
   gl_HEADER_ERRNO_H
   gl_CONDITIONAL_HEADER([errno.h])
   AC_PROG_MKDIR_P
@@ -228,6 +275,10 @@ AC_DEFUN([gl_INIT],
     gl_PREREQ_RAWMEMCHR
   ])
   gl_STRING_MODULE_INDICATOR([rawmemchr])
+  gl_FUNC_SETENV
+  gl_CONDITIONAL([GL_COND_OBJ_SETENV],
+                 [test $HAVE_SETENV = 0 || test $REPLACE_SETENV = 1])
+  gl_STDLIB_MODULE_INDICATOR([setenv])
   gl_SIZE_MAX
   gt_TYPE_SSIZE_T
   gl_C_BOOL
@@ -307,16 +358,69 @@ AC_DEFUN([gl_INIT],
   gl_SYS_TYPES_H
   gl_SYS_TYPES_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
+  gl_LIBUNISTRING_LIBHEADER([1.2], [unicase.h])
+  gl_UNICASE_H
+  gl_UNICASE_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
+  AC_REQUIRE([AC_C_INLINE])
+  gl_UNICASE_H_REQUIRE_DEFAULTS
+  gl_LIBUNISTRING_MODULE_WITH_VARIABLE([0.9.11], [unicase/empty-prefix-context])
+  gl_UNICASE_H_REQUIRE_DEFAULTS
+  gl_LIBUNISTRING_MODULE_WITH_VARIABLE([0.9.11], [unicase/empty-suffix-context])
+  AC_REQUIRE([AC_C_INLINE])
+  AC_PROG_MKDIR_P
+  gl_LIBUNISTRING_MODULE([0.9.11], [unicase/tolower])
+  gl_LIBUNISTRING_MODULE([0.9.11], [unicase/toupper])
+  gl_LIBUNISTRING_MODULE([1.1], [unicase/u8-tolower])
+  gl_LIBUNISTRING_MODULE([1.1], [unicase/u8-toupper])
   gl_LIBUNISTRING_LIBHEADER([0.9.11], [uniconv.h])
   AC_PROG_MKDIR_P
+  gl_LIBUNISTRING_MODULE([0.9], [uniconv/u32-conv-from-enc])
+  gl_LIBUNISTRING_MODULE([0.9], [uniconv/u32-strconv-from-enc])
   gl_LIBUNISTRING_MODULE([0.9], [uniconv/u8-conv-from-enc])
   gl_LIBUNISTRING_MODULE([0.9], [uniconv/u8-strconv-from-enc])
+  gl_LIBUNISTRING_MODULE([0.9], [uniconv/u8-strconv-to-enc])
+  gl_LIBUNISTRING_LIBHEADER([1.2], [unictype.h])
+  gl_UNICTYPE_H
+  gl_UNICTYPE_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
+  gl_UNICTYPE_H_REQUIRE_DEFAULTS
+  gl_LIBUNISTRING_MODULE_WITH_VARIABLE([1.1], [unictype/category-L])
+  gl_UNICTYPE_H_REQUIRE_DEFAULTS
+  gl_LIBUNISTRING_MODULE_WITH_VARIABLE([1.1], [unictype/category-Mn])
+  AC_REQUIRE([AC_C_INLINE])
+  gl_LIBUNISTRING_MODULE([0.9.8], [unictype/category-test])
+  gl_LIBUNISTRING_MODULE([1.1], [unictype/combining-class])
+  AC_REQUIRE([AC_C_INLINE])
+  gl_UNICTYPE_H_REQUIRE_DEFAULTS
+  gl_LIBUNISTRING_MODULE_WITH_VARIABLE([1.1], [unictype/property-soft-dotted])
+  gl_LIBUNISTRING_LIBHEADER([1.2], [uninorm.h])
+  gl_UNINORM_H
+  gl_UNINORM_H_REQUIRE_DEFAULTS
+  AC_PROG_MKDIR_P
+  gl_LIBUNISTRING_MODULE([1.1], [uninorm/canonical-decomposition])
+  gl_LIBUNISTRING_MODULE([0.9.11], [uninorm/composition])
+  gl_LIBUNISTRING_MODULE([1.1], [uninorm/decomposition])
+  AC_REQUIRE([AC_C_INLINE])
+  gl_UNINORM_H_REQUIRE_DEFAULTS
+  gl_LIBUNISTRING_MODULE_WITH_VARIABLE([1.1], [uninorm/nfc])
+  gl_UNINORM_H_REQUIRE_DEFAULTS
+  gl_LIBUNISTRING_MODULE_WITH_VARIABLE([1.1], [uninorm/nfd])
+  gl_UNINORM_H_REQUIRE_DEFAULTS
+  gl_LIBUNISTRING_MODULE_WITH_VARIABLE([1.1], [uninorm/nfkd])
+  gl_MODULE_INDICATOR_FOR_TESTS([uninorm/u8-normalize])
+  gl_LIBUNISTRING_MODULE([1.1], [uninorm/u8-normalize])
   gl_UNISTD_H
   gl_UNISTD_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
   gl_LIBUNISTRING_LIBHEADER([1.2], [unistr.h])
   AC_PROG_MKDIR_P
+  gl_LIBUNISTRING_MODULE([0.9], [unistr/u32-mblen])
+  gl_LIBUNISTRING_MODULE([0.9], [unistr/u32-next])
+  gl_LIBUNISTRING_MODULE([0.9], [unistr/u32-strlen])
+  gl_LIBUNISTRING_MODULE([0.9], [unistr/u32-strmbtouc])
   gl_LIBUNISTRING_MODULE([0.9], [unistr/u8-check])
+  gl_LIBUNISTRING_MODULE([0.9], [unistr/u8-cpy])
   gl_LIBUNISTRING_MODULE([0.9], [unistr/u8-mblen])
   gl_LIBUNISTRING_MODULE([1.2], [unistr/u8-mbsnlen])
   gl_MODULE_INDICATOR([unistr/u8-mbtouc])
@@ -325,8 +429,11 @@ AC_DEFUN([gl_INIT],
   gl_LIBUNISTRING_MODULE([0.9.4], [unistr/u8-mbtouc-unsafe])
   gl_MODULE_INDICATOR([unistr/u8-mbtoucr])
   gl_LIBUNISTRING_MODULE([0.9], [unistr/u8-mbtoucr])
+  gl_LIBUNISTRING_MODULE([0.9], [unistr/u8-next])
   gl_LIBUNISTRING_MODULE([0.9], [unistr/u8-prev])
   gl_LIBUNISTRING_MODULE([0.9], [unistr/u8-strlen])
+  gl_LIBUNISTRING_MODULE([0.9], [unistr/u8-strmbtouc])
+  gl_LIBUNISTRING_MODULE([0.9.3], [unistr/u8-to-u32])
   gl_MODULE_INDICATOR([unistr/u8-uctomb])
   gl_LIBUNISTRING_MODULE([0.9], [unistr/u8-uctomb])
   gl_LIBUNISTRING_LIBHEADER([0.9.11], [unitypes.h])
@@ -348,7 +455,16 @@ AC_DEFUN([gl_INIT],
   ])
   gl_LIBUNISTRING_LIBHEADER([0.9.11], [uniwidth.h])
   AC_PROG_MKDIR_P
+  gl_LIBUNISTRING_MODULE([1.1], [uniwidth/u8-strwidth])
+  gl_LIBUNISTRING_MODULE([1.1], [uniwidth/u8-width])
   gl_LIBUNISTRING_MODULE([1.1], [uniwidth/width])
+  gl_FUNC_UNSETENV
+  gl_CONDITIONAL([GL_COND_OBJ_UNSETENV],
+                 [test $HAVE_UNSETENV = 0 || test $REPLACE_UNSETENV = 1])
+  AM_COND_IF([GL_COND_OBJ_UNSETENV], [
+    gl_PREREQ_UNSETENV
+  ])
+  gl_STDLIB_MODULE_INDICATOR([unsetenv])
   AC_C_VARARRAYS
   AC_REQUIRE([AC_C_RESTRICT])
   gl_FUNC_VASNPRINTF
@@ -544,6 +660,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/alignof.h
   lib/alloca.in.h
   lib/arg-nonnull.h
+  lib/array-mergesort.h
   lib/asnprintf.c
   lib/asprintf.c
   lib/assert.in.h
@@ -597,6 +714,7 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/printf-parse.h
   lib/rawmemchr.c
   lib/rawmemchr.valgrind
+  lib/setenv.c
   lib/size_max.h
   lib/stdckdint.in.h
   lib/stddef.in.h
@@ -616,15 +734,76 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/strndup.c
   lib/strnlen.c
   lib/sys_types.in.h
+  lib/unicase.in.h
+  lib/unicase/cased.c
+  lib/unicase/cased.h
+  lib/unicase/caseprop.h
+  lib/unicase/context.h
+  lib/unicase/empty-prefix-context.c
+  lib/unicase/empty-suffix-context.c
+  lib/unicase/ignorable.c
+  lib/unicase/ignorable.h
+  lib/unicase/simple-mapping.h
+  lib/unicase/special-casing-table.gperf
+  lib/unicase/special-casing.c
+  lib/unicase/special-casing.in.h
+  lib/unicase/tolower.c
+  lib/unicase/tolower.h
+  lib/unicase/toupper.c
+  lib/unicase/toupper.h
+  lib/unicase/u-casemap.h
+  lib/unicase/u8-casemap.c
+  lib/unicase/u8-tolower.c
+  lib/unicase/u8-toupper.c
+  lib/unicase/unicasemap.h
   lib/uniconv.in.h
+  lib/uniconv/u-conv-from-enc.h
   lib/uniconv/u-strconv-from-enc.h
+  lib/uniconv/u32-conv-from-enc.c
+  lib/uniconv/u32-strconv-from-enc.c
   lib/uniconv/u8-conv-from-enc.c
   lib/uniconv/u8-strconv-from-enc.c
+  lib/uniconv/u8-strconv-to-enc.c
+  lib/unictype.in.h
   lib/unictype/bitmap.h
+  lib/unictype/categ_L.c
+  lib/unictype/categ_L.h
+  lib/unictype/categ_Mn.c
+  lib/unictype/categ_Mn.h
+  lib/unictype/categ_test.c
+  lib/unictype/combiningclass.c
+  lib/unictype/combiningclass.h
+  lib/unictype/pr_soft_dotted.c
+  lib/unictype/pr_soft_dotted.h
+  lib/uninorm.in.h
+  lib/uninorm/canonical-decomposition.c
+  lib/uninorm/compat-decomposition.c
+  lib/uninorm/composition-table.gperf
+  lib/uninorm/composition.c
+  lib/uninorm/decompose-internal.c
+  lib/uninorm/decompose-internal.h
+  lib/uninorm/decomposition-table.c
+  lib/uninorm/decomposition-table.h
+  lib/uninorm/decomposition-table1.h
+  lib/uninorm/decomposition-table2.h
+  lib/uninorm/decomposition.c
+  lib/uninorm/nfc.c
+  lib/uninorm/nfd.c
+  lib/uninorm/nfkd.c
+  lib/uninorm/normalize-internal.h
+  lib/uninorm/u-normalize-internal.h
+  lib/uninorm/u8-normalize.c
   lib/unistd.c
   lib/unistd.in.h
   lib/unistr.in.h
+  lib/unistr/u-cpy.h
+  lib/unistr/u-strlen.h
+  lib/unistr/u32-mblen.c
+  lib/unistr/u32-next.c
+  lib/unistr/u32-strlen.c
+  lib/unistr/u32-strmbtouc.c
   lib/unistr/u8-check.c
+  lib/unistr/u8-cpy.c
   lib/unistr/u8-mblen.c
   lib/unistr/u8-mbsnlen.c
   lib/unistr/u8-mbtouc-aux.c
@@ -632,16 +811,22 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/unistr/u8-mbtouc-unsafe.c
   lib/unistr/u8-mbtouc.c
   lib/unistr/u8-mbtoucr.c
+  lib/unistr/u8-next.c
   lib/unistr/u8-prev.c
   lib/unistr/u8-strlen.c
+  lib/unistr/u8-strmbtouc.c
+  lib/unistr/u8-to-u32.c
   lib/unistr/u8-uctomb-aux.c
   lib/unistr/u8-uctomb.c
   lib/unitypes.in.h
   lib/uniwidth.in.h
   lib/uniwidth/cjk.h
+  lib/uniwidth/u8-strwidth.c
+  lib/uniwidth/u8-width.c
   lib/uniwidth/width.c
   lib/uniwidth/width0.h
   lib/uniwidth/width2.h
+  lib/unsetenv.c
   lib/vasnprintf.c
   lib/vasnprintf.h
   lib/vasprintf.c
@@ -661,6 +846,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/c-bool.m4
   m4/codeset.m4
   m4/eealloc.m4
+  m4/environ.m4
   m4/errno_h.m4
   m4/exponentd.m4
   m4/extensions.m4
@@ -702,6 +888,7 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/pid_t.m4
   m4/printf.m4
   m4/rawmemchr.m4
+  m4/setenv.m4
   m4/size_max.m4
   m4/ssize_t.m4
   m4/std-gnu11.m4
@@ -716,6 +903,9 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/strndup.m4
   m4/strnlen.m4
   m4/sys_types_h.m4
+  m4/unicase_h.m4
+  m4/unictype_h.m4
+  m4/uninorm_h.m4
   m4/unistd_h.m4
   m4/vararrays.m4
   m4/vasnprintf.m4

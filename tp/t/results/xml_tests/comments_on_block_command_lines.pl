@@ -1929,6 +1929,7 @@ $result_trees{'comments_on_block_command_lines'} = {
           ],
           'extra' => {
             'float_type' => 'f',
+            'is_target' => 1,
             'normalized' => 'g'
           },
           'info' => {
@@ -2250,11 +2251,9 @@ $result_floats{'comments_on_block_command_lines'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => 'f',
         'normalized' => 'g'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

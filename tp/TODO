@@ -10,6 +10,39 @@ This is the todo list for texi2any
 Before next release
 ===================
 
+check $(native_tools) variable in Makefile.am does not seems to be
+set and seems useless.
+
+Find a workaround to be able to change the locale for gettext in C for
+in-document strings, even if the locale is C/POSIX.
+
+Check format_translate_message_tree api after the changes in gdt api
+when the translation of HTML to C is advnaced enough that it becomes clear
+that the API won't change again.
+
+For unicode sorting in C for index sorting, strcoll_l or even better strxfrm_l
+could be used, it sorts according to a locale specified in argument.  However,
+it does not seems to be that portable, there is no associated gnulib
+module, and the _l variants seem to be in glibc but are are not in the glibc
+documentation.  According to Eli, if the locale's codeset is UTF-8, glibc
+uses the full Unicode CLDR, which is what we want.
+
+Document that Texinfo::Structuring::rebuild_document or
+Texinfo::Structuring::rebuild_tree should be called after tree modifications
+if the parser is XS but converters are perl.
+
+the code in _parsed_manual_tree in Pod-Simple-Texinfo/pod2texi.pl
+does not work perfectly with XS.  See FIXME in the code.  Tested in
+./manual_tests/manual_sectioning_gap_test.sh
+Not a priority.
+
+If needed, could change TEXINFO_XS_CONVERT to have 3 possibilities
+TEXINFO_XS_CONVERT=omit         => use perl as much as possible
+TEXINFO_XS_CONVERT=both         => try to run both perl and XS when possible
+TEXINFO_XS_CONVERT=only         => try to run only XS code
+It is not clear that it is useful, though, 0 and 1 corresponding to
+omit and only could be sufficient.
+
 Bugs
 ====
 
@@ -36,7 +69,11 @@ elided_rawpreformatted, elided_brace_command_arg types.
 
 'comment_at_end' in info hash
 
+alias_of in info hash
+
 source marks.
+
+special_unit_element type (only in HTML code)
 
 Other
 -----
@@ -47,20 +84,6 @@ For converter writers,
 
 Delayed bugs
 ============
-
-From https://www.gnu.org/software/libc/manual/html_node/Using-gettextized-software.html
-For locales, the encoding part is normalized in a specific way.  It
-seems that iconv in the C library follows the same convention at least to
-some extent, though it is not visibly documented.
-Should we use fully the normalization of documentencoding following in some
-context (gdt?):
-  The normalized codeset value is generated from the user-provided character set name by applying the following rules:
-
-    Remove all characters besides numbers and letters.
-    Fold letters to lowercase.
-    If the same only contains digits prepend the string "iso".
-
-  So all of the above names will be normalized to iso88591. This allows the program user much more freedom in choosing the locale name.
 
 
 hyphenation: should only appear in toplevel.
@@ -133,6 +156,25 @@ as CSS because it is not style, but table or even line specific formatting.
 Missing tests
 =============
 
+There is a test of translation in parser in a translation in converter, in
+
+  tp/t/init_files_tests.t translation_in_parser_in_translation
+
+It would be nice to also have a translation in parser in a translation
+in parser.  That would meen having a po/gmo file where the string
+translated in the parser for @def* indices, for instance "{name} of {class}"
+is translated to a string including @def* commands, like
+@deftypeop a b c d e f        
+AA
+@end deftypeop
+
+@documentlanguage fr
+
+@deftypemethod g h i j k l
+BB
+@end deftypemethod
+
+
 Unit test of end_line_count for Texinfo/Convert/Paragraph.pm .... containers.
 
 anchor in flushright, on an empty line, with a current byte offset.
@@ -140,6 +182,7 @@ anchor in flushright, on an empty line, with a current byte offset.
 
 Future features
 ===============
+
 
 For converters in C, agreed with Gavin that it is better not to
 translate a perl tree in input, but access directly the C tree that
@@ -157,6 +200,15 @@ information set by some calls to Structuring would also probably fit there
 naturally.  A member of the package/class would be initialized after the
 parsing, but not necessarily for all the function, maybe only parse_texi_text
 and parse_texi_file.
+
+For transliteration, use in iconv ascii//TRANSLIT?
+
+For nodenormalization
+Constant: uc_property_t UC_PROPERTY_DIACRITIC
+Function: bool uc_is_property (ucs4_t uc, uc_property_t property)
+
+Note that there is a function, not currently used, that could be reused in api.c:
+find_locales_dir
 
 
 For Paragraph, improvements and synchronizations of
@@ -667,7 +719,12 @@ From doc/
 texi2pdf -I ../tp/tests/layout/ ../tp/tests/formatting_valid.texi
 
 mkdir -p val_res
+PERL_DESTRUCT_LEVEL=2
+export PERL_DESTRUCT_LEVEL
 for file in t/*.t ; do bfile=`basename $file .t`; echo $bfile; valgrind -q perl -w $file > val_res/$bfile.out 2>&1 ; done
+
+With memory leaks
+for file in t/*.t ; do bfile=`basename $file .t`; echo $bfile; valgrind -q --leak-check=full perl -w $file > val_res/$bfile.out 2>&1 ; done
 
 For tests in tp/tests, a way to have valgrind -q prependend is to add, in tp/defs:
 prepended_command='valgrind -q'

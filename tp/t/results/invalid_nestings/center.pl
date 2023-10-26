@@ -59,6 +59,7 @@ $result_trees{'center'} = {
                   ],
                   'cmdname' => 'anchor',
                   'extra' => {
+                    'is_target' => 1,
                     'normalized' => 'in-anchor'
                   },
                   'source_info' => {
@@ -149,6 +150,7 @@ $result_trees{'center'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -780,9 +782,6 @@ $result_trees{'center'} = {
                     }
                   ],
                   'cmdname' => 'center',
-                  'extra' => {
-                    'missing_argument' => 1
-                  },
                   'source_info' => {
                     'file_name' => '',
                     'line_nr' => 31,

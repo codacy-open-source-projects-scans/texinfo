@@ -101,6 +101,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -542,6 +543,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -627,6 +629,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chapter'
       },
       'info' => {
@@ -658,7 +661,9 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
         }
       ],
       'cmdname' => 'chapter',
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -723,7 +728,7 @@ a
 ';
 
 $result_sectioning{'check_htmlxref_ignore_ref_top_up'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -732,11 +737,8 @@ $result_sectioning{'check_htmlxref_ignore_ref_top_up'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -745,101 +747,137 @@ $result_sectioning{'check_htmlxref_ignore_ref_top_up'} = {
                   'cmdname' => 'node',
                   'extra' => {
                     'normalized' => 'chapter'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'check_htmlxref_ignore_ref_top_up'};
+$result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'check_htmlxref_ignore_ref_top_up'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'check_htmlxref_ignore_ref_top_up'};
 
-$result_nodes{'check_htmlxref_ignore_ref_top_up'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'first'
+$result_nodes{'check_htmlxref_ignore_ref_top_up'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_next' => {
+      'node_directions' => {
+        'next' => {
           'extra' => {
             'manual_content' => [
               {
-                'text' => 'no_existing_no_manual.info'
+                'text' => '../there/no_existing_no_manual_direction'
               }
             ]
+          },
+          'type' => 'line_arg'
+        },
+        'prev' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'next' => {
+                'extra' => {
+                  'manual_content' => [
+                    {
+                      'text' => 'no_existing_no_manual.info'
+                    }
+                  ]
+                },
+                'type' => 'line_arg'
+              }
+            },
+            'normalized' => 'first'
           }
+        },
+        'up' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'dir'
+              }
+            ]
+          },
+          'type' => 'line_arg'
         }
-      }
-    },
-    'node_next' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => '../there/no_existing_no_manual_direction'
-          }
-        ]
-      }
-    },
-    'node_prev' => {},
-    'node_up' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'dir'
-          }
-        ]
-      }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {},
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'chapter',
+        'extra' => {
+          'section_number' => '1'
+        }
+      },
+      'node_directions' => {
+        'next' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'chap_not_existing'
+              }
+            ]
+          },
+          'type' => 'line_arg'
+        },
+        'prev' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'dir'
+              }
+            ],
+            'normalized' => 'node-in-dir'
+          },
+          'type' => 'line_arg'
+        }
+      },
+      'normalized' => 'chapter'
     }
   }
-};
-$result_nodes{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'node_prev'} = $result_nodes{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'menu_child'};
+];
+$result_nodes{'check_htmlxref_ignore_ref_top_up'}[1] = $result_nodes{'check_htmlxref_ignore_ref_top_up'}[0]{'extra'}{'node_directions'}{'prev'};
 
-$result_menus{'check_htmlxref_ignore_ref_top_up'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'check_htmlxref_ignore_ref_top_up'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
   },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'first'
-      },
-      'structure' => {
-        'menu_next' => {
+  {
+    'extra' => {
+      'menu_directions' => {
+        'next' => {
           'extra' => {
             'manual_content' => [
               {
@@ -849,15 +887,24 @@ $result_menus{'check_htmlxref_ignore_ref_top_up'} = {
           },
           'type' => 'menu_entry_node'
         },
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'Top' => 1
-        }
-      }
+        'up' => {}
+      },
+      'normalized' => 'first'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'prev' => {},
+        'up' => {}
+      },
+      'normalized' => 'chapter'
     }
   }
-};
-$result_menus{'check_htmlxref_ignore_ref_top_up'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'check_htmlxref_ignore_ref_top_up'};
+];
+$result_menus{'check_htmlxref_ignore_ref_top_up'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'check_htmlxref_ignore_ref_top_up'}[0];
+$result_menus{'check_htmlxref_ignore_ref_top_up'}[2]{'extra'}{'menu_directions'}{'prev'} = $result_menus{'check_htmlxref_ignore_ref_top_up'}[1]{'extra'}{'menu_directions'}{'next'};
+$result_menus{'check_htmlxref_ignore_ref_top_up'}[2]{'extra'}{'menu_directions'}{'up'} = $result_menus{'check_htmlxref_ignore_ref_top_up'}[0];
 
 $result_errors{'check_htmlxref_ignore_ref_top_up'} = [];
 

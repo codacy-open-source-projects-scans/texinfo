@@ -10,7 +10,6 @@ $result_trees{'empty_cindex_entry'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'empty_cindex_entry'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -80,17 +80,19 @@ $result_trees{'empty_cindex_entry'} = {
             }
           ],
           'cmdname' => 'cindex',
-          'extra' => {
-            'missing_argument' => 1
+          'info' => {
+            'command_name' => 'cindex'
           },
           'source_info' => {
             'file_name' => '',
             'line_nr' => 3,
             'macro' => ''
-          }
+          },
+          'type' => 'index_entry_command'
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -116,32 +118,41 @@ $result_texis{'empty_cindex_entry'} = '@node Top
 
 $result_texts{'empty_cindex_entry'} = '';
 
-$result_nodes{'empty_cindex_entry'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'empty_cindex_entry'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'empty_cindex_entry'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'empty_cindex_entry'}[0];
+$result_nodes{'empty_cindex_entry'}[1] = $result_nodes{'empty_cindex_entry'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'empty_cindex_entry'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'empty_cindex_entry'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'empty_cindex_entry'};
-
-$result_menus{'empty_cindex_entry'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'empty_cindex_entry'} = [
   {

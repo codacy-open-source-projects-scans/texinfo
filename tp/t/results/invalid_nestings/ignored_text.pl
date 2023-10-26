@@ -65,6 +65,7 @@ $result_trees{'ignored_text'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'before-ignore'
       },
       'info' => {
@@ -89,19 +90,22 @@ $result_texis{'ignored_text'} = '@node before ignore in ifinfo
 $result_texts{'ignored_text'} = 'in ifinfo
 ';
 
-$result_nodes{'ignored_text'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'before-ignore'
+$result_nodes{'ignored_text'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'before-ignore'
+    }
   }
-};
+];
 
-$result_menus{'ignored_text'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'before-ignore'
+$result_menus{'ignored_text'} = [
+  {
+    'extra' => {
+      'normalized' => 'before-ignore'
+    }
   }
-};
+];
 
 $result_errors{'ignored_text'} = [
   {

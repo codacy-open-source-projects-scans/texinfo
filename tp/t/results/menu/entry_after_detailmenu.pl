@@ -423,6 +423,7 @@ $result_trees{'entry_after_detailmenu'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -455,6 +456,7 @@ $result_trees{'entry_after_detailmenu'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap-first'
       },
       'info' => {
@@ -487,6 +489,7 @@ $result_trees{'entry_after_detailmenu'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'second'
       },
       'info' => {
@@ -542,82 +545,77 @@ Menu comment
 
 ';
 
-$result_nodes{'entry_after_detailmenu'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap-first'
-      },
-      'structure' => {
-        'node_next' => {
+$result_nodes{'entry_after_detailmenu'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
           'cmdname' => 'node',
           'extra' => {
-            'normalized' => 'second'
-          },
-          'structure' => {
-            'node_prev' => {},
-            'node_up' => {}
+            'node_directions' => {
+              'next' => {
+                'cmdname' => 'node',
+                'extra' => {
+                  'node_directions' => {
+                    'prev' => {},
+                    'up' => {}
+                  },
+                  'normalized' => 'second'
+                }
+              },
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chap-first'
           }
-        },
-        'node_prev' => {},
-        'node_up' => {}
-      }
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'entry_after_detailmenu'}{'structure'}{'menu_child'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'entry_after_detailmenu'}{'structure'}{'menu_child'};
-$result_nodes{'entry_after_detailmenu'}{'structure'}{'menu_child'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'entry_after_detailmenu'};
-$result_nodes{'entry_after_detailmenu'}{'structure'}{'menu_child'}{'structure'}{'node_prev'} = $result_nodes{'entry_after_detailmenu'};
-$result_nodes{'entry_after_detailmenu'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'entry_after_detailmenu'};
-$result_nodes{'entry_after_detailmenu'}{'structure'}{'node_next'} = $result_nodes{'entry_after_detailmenu'}{'structure'}{'menu_child'};
-
-$result_menus{'entry_after_detailmenu'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap-first'
-      },
-      'structure' => {
-        'menu_next' => {
-          'cmdname' => 'node',
-          'extra' => {
-            'normalized' => 'second'
-          },
-          'structure' => {
-            'menu_prev' => {},
-            'menu_up' => {},
-            'menu_up_hash' => {
-              'Top' => 1
-            }
-          }
-        },
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'Top' => 1
         }
-      }
+      },
+      'normalized' => 'Top'
     }
-  }
-};
-$result_menus{'entry_after_detailmenu'}{'structure'}{'menu_child'}{'structure'}{'menu_next'}{'structure'}{'menu_prev'} = $result_menus{'entry_after_detailmenu'}{'structure'}{'menu_child'};
-$result_menus{'entry_after_detailmenu'}{'structure'}{'menu_child'}{'structure'}{'menu_next'}{'structure'}{'menu_up'} = $result_menus{'entry_after_detailmenu'};
-$result_menus{'entry_after_detailmenu'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'entry_after_detailmenu'};
+  },
+  {},
+  {}
+];
+$result_nodes{'entry_after_detailmenu'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'entry_after_detailmenu'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'entry_after_detailmenu'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'entry_after_detailmenu'}[0];
+$result_nodes{'entry_after_detailmenu'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'entry_after_detailmenu'}[0];
+$result_nodes{'entry_after_detailmenu'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'entry_after_detailmenu'}[0];
+$result_nodes{'entry_after_detailmenu'}[1] = $result_nodes{'entry_after_detailmenu'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'entry_after_detailmenu'}[2] = $result_nodes{'entry_after_detailmenu'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'entry_after_detailmenu'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'next' => {
+          'extra' => {
+            'menu_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'second'
+          }
+        },
+        'up' => {}
+      },
+      'normalized' => 'chap-first'
+    }
+  },
+  {}
+];
+$result_menus{'entry_after_detailmenu'}[1]{'extra'}{'menu_directions'}{'next'}{'extra'}{'menu_directions'}{'prev'} = $result_menus{'entry_after_detailmenu'}[1];
+$result_menus{'entry_after_detailmenu'}[1]{'extra'}{'menu_directions'}{'next'}{'extra'}{'menu_directions'}{'up'} = $result_menus{'entry_after_detailmenu'}[0];
+$result_menus{'entry_after_detailmenu'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'entry_after_detailmenu'}[0];
+$result_menus{'entry_after_detailmenu'}[2] = $result_menus{'entry_after_detailmenu'}[1]{'extra'}{'menu_directions'}{'next'};
 
 $result_errors{'entry_after_detailmenu'} = [];
 

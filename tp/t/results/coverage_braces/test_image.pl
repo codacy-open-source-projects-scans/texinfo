@@ -622,6 +622,7 @@ $result_trees{'test_image'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -2658,6 +2659,7 @@ $result_trees{'test_image'} = {
           'extra' => {
             'caption' => {},
             'float_type' => 'Image',
+            'is_target' => 1,
             'normalized' => 'Image-with-commands'
           },
           'info' => {
@@ -2715,6 +2717,7 @@ $result_trees{'test_image'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chapter'
       },
       'info' => {
@@ -2800,32 +2803,41 @@ In text f@i--le..  a@<"%@  < & @ % " .
 
 ';
 
-$result_nodes{'test_image'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chapter'
+$result_nodes{'test_image'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chapter'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'test_image'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'test_image'}[0];
+$result_nodes{'test_image'}[1] = $result_nodes{'test_image'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'test_image'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chapter'
     }
   }
-};
-$result_nodes{'test_image'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'test_image'};
-
-$result_menus{'test_image'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'test_image'} = [
   {
@@ -3067,11 +3079,9 @@ $result_floats{'test_image'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'Image',
         'normalized' => 'Image-with-commands'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

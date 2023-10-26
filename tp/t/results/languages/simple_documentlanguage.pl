@@ -73,6 +73,7 @@ $result_trees{'simple_documentlanguage'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -121,7 +122,8 @@ $result_trees{'simple_documentlanguage'} = {
                       'contents' => [
                         {
                           'extra' => {
-                            'documentlanguage' => 'fr'
+                            'documentlanguage' => 'fr',
+                            'translation_context' => 'category of instance variables in object-oriented programming for @defivar'
                           },
                           'text' => 'Instance Variable',
                           'type' => 'untranslated'
@@ -185,20 +187,40 @@ $result_trees{'simple_documentlanguage'} = {
                 'def_command' => 'defivar',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'BBB'
+                    },
                     {
                       'text' => ' de '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'AAA'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'BBB'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'AAA'
+                    }
                   ]
                 },
                 'documentlanguage' => 'fr',
@@ -262,6 +284,7 @@ $result_trees{'simple_documentlanguage'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -278,10 +301,6 @@ $result_trees{'simple_documentlanguage'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'simple_documentlanguage'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'simple_documentlanguage'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'simple_documentlanguage'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'simple_documentlanguage'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'simple_documentlanguage'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'simple_documentlanguage'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'simple_documentlanguage'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'simple_documentlanguage'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'simple_documentlanguage'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'simple_documentlanguage'}{'contents'}[2];
 
 $result_texis{'simple_documentlanguage'} = '@documentlanguage fr
@@ -299,32 +318,41 @@ $result_texts{'simple_documentlanguage'} = '
 Instance Variable of AAA: BBB CCC
 ';
 
-$result_nodes{'simple_documentlanguage'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'simple_documentlanguage'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'simple_documentlanguage'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'simple_documentlanguage'}[0];
+$result_nodes{'simple_documentlanguage'}[1] = $result_nodes{'simple_documentlanguage'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'simple_documentlanguage'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'simple_documentlanguage'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'simple_documentlanguage'};
-
-$result_menus{'simple_documentlanguage'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'simple_documentlanguage'} = [];
 
@@ -340,7 +368,7 @@ $result_indices_sort_strings{'simple_documentlanguage'} = {
 
 
 
-$result_converted{'plaintext'}->{'simple_documentlanguage'} = ' -- Instance Variable de AAA : BBB CCC
+$result_converted{'plaintext'}->{'simple_documentlanguage'} = ' -- Variable d\'instance de AAA : BBB CCC
 ';
 
 1;

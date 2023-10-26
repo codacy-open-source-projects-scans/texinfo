@@ -107,6 +107,7 @@ $result_trees{'heading_in_copying'} = {
                 ]
               },
               'info' => {
+                'command_name' => 'cindex',
                 'spaces_before_argument' => {
                   'text' => ' '
                 }
@@ -242,6 +243,7 @@ $result_trees{'heading_in_copying'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -296,6 +298,7 @@ $result_trees{'heading_in_copying'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -332,32 +335,41 @@ $result_texts{'heading_in_copying'} = '
 
 ';
 
-$result_nodes{'heading_in_copying'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'heading_in_copying'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'heading_in_copying'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'heading_in_copying'}[0];
+$result_nodes{'heading_in_copying'}[1] = $result_nodes{'heading_in_copying'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'heading_in_copying'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'heading_in_copying'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'heading_in_copying'};
-
-$result_menus{'heading_in_copying'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'heading_in_copying'} = [];
 

@@ -15,6 +15,13 @@ use Data::Dumper;
 
 ok(1);
 
+my $with_XS = ((not defined($ENV{TEXINFO_XS})
+                or $ENV{TEXINFO_XS} ne 'omit')
+               and (!defined $ENV{TEXINFO_XS_PARSER}
+                    or $ENV{TEXINFO_XS_PARSER} eq '1'));
+
+# FIXME tests in test_new_node do not test the transformations XS codes,
+# see comment in the beginning of _new_node.
 sub test_new_node($$$$)
 {
   my $in = shift;
@@ -25,27 +32,24 @@ sub test_new_node($$$$)
   my $parser = Texinfo::Parser::parser();
   my $node_tree = $parser->parse_texi_line ($in);
   my $registrar = $parser->registered_errors();
-  my ($labels, $targets_list, $nodes_list) = $parser->labels_information();
-  my $parser_information = $parser->global_information();
-  my $refs = $parser->internal_references_information();
-  Texinfo::Structuring::associate_internal_references($registrar, $parser,
-                                        $parser_information, $labels, $refs);
-  # $labels, $nodes_list, $targets_list are modified
-  my $node = Texinfo::Transformations::_new_node($node_tree, $nodes_list,
-                                                 $targets_list, $labels);
+  my $document = $parser->parse_texi_text ('');
+  my $identifier_target = $document->labels_information();
+  Texinfo::Structuring::associate_internal_references($document, $registrar,
+                                                      $parser);
+  my $node = Texinfo::Transformations::_new_node($node_tree, $document);
 
   my ($texi_result, $normalized);
   if (defined($node)) {
     $texi_result = Texinfo::Convert::Texinfo::convert_to_texinfo($node);
-    my $refs = $parser->internal_references_information();
-    Texinfo::Structuring::associate_internal_references($registrar, $parser,
-                                        $parser_information, $labels, $refs);
+    Texinfo::Structuring::associate_internal_references($document, $registrar,
+                                                        $parser);
     $normalized = $node->{'extra'}->{'normalized'};
-    my @labels = sort(keys(%$labels));
-    if (scalar(@labels) != 1) {
-      print STDERR " $name labels: !! ".join("|", @labels)."\n";
+    my @identifiers = sort(keys(%$identifier_target));
+    if (scalar(@identifiers) != 1) {
+      print STDERR " $name identifiers: !! ".join("|", @identifiers)."\n";
     }
-    ok ((scalar(@labels) == 1 and $labels[0] eq $normalized), "$name label");
+    ok ((scalar(@identifiers) == 1 and $identifiers[0] eq $normalized),
+        "$name label");
   }
   if (!defined($normalized_ref) and defined($normalized)) {
     print STDERR " --> $name($normalized): $texi_result";
@@ -54,6 +58,9 @@ sub test_new_node($$$$)
     is ($texi_result, $out, $name);
   }
 }
+SKIP:
+{
+  skip "test perl not XS", 7 * 3 if ($with_XS);
 
 test_new_node ('a node', 'a-node', '@node a node
 ', 'simple');
@@ -76,21 +83,25 @@ test_new_node ('@asis{}', '-1', '@node @asis{} 1
 test_new_node ('a::b	 c', 'a_003a_003ab-c', '@node a@asis{::}b@asis{	} c
 ', 'with colon and tab');
 
+}
+
 my $parser = Texinfo::Parser::parser();
-my $tree = $parser->parse_texi_piece('@node a node
+my $document = $parser->parse_texi_text('@node a node
 ');
-my $line_tree = Texinfo::Parser::parse_texi_line (undef, 'a node');
+my $tree = $document->tree();
 my $registrar = $parser->registered_errors();
-my ($labels, $targets_list, $nodes_list) = $parser->labels_information();
-my $parser_information = $parser->global_information();
-my $refs = $parser->internal_references_information();
-Texinfo::Structuring::associate_internal_references($registrar, $parser,
-                                        $parser_information, $labels, $refs);
-my $node = Texinfo::Transformations::_new_node($line_tree, $nodes_list,
-                                               $targets_list, $labels);
+my $line_tree = Texinfo::Parser::parse_texi_line (undef, 'a node');
+
+SKIP:
+{
+  skip "test perl not XS", 1 if ($with_XS);
+
+my $new_node = Texinfo::Transformations::_new_node($line_tree, $document);
 is ('@node a node 1
-',  Texinfo::Convert::Texinfo::convert_to_texinfo($node), 'duplicate node added');
-#print STDERR Texinfo::Convert::Texinfo::convert_to_texinfo($node);
+',  Texinfo::Convert::Texinfo::convert_to_texinfo($new_node),
+    'duplicate node added');
+}
+#print STDERR Texinfo::Convert::Texinfo::convert_to_texinfo($new_node);
 
 my $sections_text =
 '@top top section
@@ -155,24 +166,21 @@ Text.
 
 @bye';
 
-  $parser = Texinfo::Parser::parser();
-  $tree = $parser->parse_texi_text($sections_text);
-  $registrar = $parser->registered_errors();
-  ($labels, $targets_list, $nodes_list) = $parser->labels_information();
-  $parser_information = $parser->global_information();
-  $refs = $parser->internal_references_information();
-  Texinfo::Structuring::associate_internal_references($registrar, $parser,
-                                        $parser_information, $labels, $refs);
-  my ($new_content, $added_nodes)
-   = Texinfo::Transformations::insert_nodes_for_sectioning_commands($tree,
-                                          $nodes_list, $targets_list, $labels);
-  $tree->{'contents'} = $new_content;
-  my $result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
-  is ($reference, $result, 'add nodes');
-  #print STDERR "$result";
+$parser = Texinfo::Parser::parser();
+$document = $parser->parse_texi_text($sections_text);
+$registrar = $parser->registered_errors();
+Texinfo::Structuring::associate_internal_references($document, $registrar,
+                                                    $parser);
+Texinfo::Transformations::insert_nodes_for_sectioning_commands($document,
+                                                          $registrar, $parser);
+$document = Texinfo::Structuring::rebuild_document($document);
+$tree = $document->tree();
+my $result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
+is ($result, $reference, 'add nodes');
+#print STDERR "$result";
 
 $parser = Texinfo::Parser::parser();
-$tree = $parser->parse_texi_text('@node Top
+$document = $parser->parse_texi_text('@node Top
 @top top
 
 @chapter chap
@@ -184,28 +192,31 @@ $tree = $parser->parse_texi_text('@node Top
 @end menu
 ');
 $registrar = $parser->registered_errors();
-($labels, $targets_list, $nodes_list) = $parser->labels_information();
-$parser_information = $parser->global_information();
-$refs = $parser->internal_references_information();
-Texinfo::Structuring::associate_internal_references($registrar, $parser,
-                                        $parser_information, $labels, $refs);
-($new_content, $added_nodes)
-   = Texinfo::Transformations::insert_nodes_for_sectioning_commands($tree,
-                                        $nodes_list, $targets_list, $labels);
-$tree->{'contents'} = $new_content;
-my ($indices_information, $merged_indices) = $parser->indices_information();
-ok (($labels->{'chap'}->{'extra'}->{'menus'} and @{$labels->{'chap'}->{'extra'}->{'menus'}}
-     and scalar(@{$labels->{'chap'}->{'extra'}->{'menus'}}) == 1
-     and !exists($labels->{'Top'}->{'extra'}->{'menus'})), 'new node has a menu');
-is (Texinfo::Convert::Texinfo::convert_to_texinfo($labels->{'chap'}->{'extra'}->{'menus'}->[0]),
+Texinfo::Structuring::associate_internal_references($document, $registrar,
+                                                    $parser);
+Texinfo::Transformations::insert_nodes_for_sectioning_commands($document,
+                                                          $registrar, $parser);
+
+$document = Texinfo::Structuring::rebuild_document($document);
+
+my $identifier_target = $document->labels_information();
+my $indices_information = $document->indices_information();
+ok (($identifier_target->{'chap'}->{'extra'}->{'menus'}
+     and scalar(@{$identifier_target->{'chap'}->{'extra'}->{'menus'}}) == 1
+     and !exists($identifier_target->{'Top'}->{'extra'}->{'menus'})),
+    'new node has a menu');
+is (Texinfo::Convert::Texinfo::convert_to_texinfo(
+  $identifier_target->{'chap'}->{'extra'}->{'menus'}->[0]),
 '@menu
 * (some_manual)::
 @end menu
 ', 'reassociated menu is correct');
 #print STDERR join('|',
 #               keys(%{$indices_information->{'cp'}->{'index_entries'}}))."\n";
-is ($labels->{'chap'}, $indices_information->{'cp'}->{'index_entries'}->[0]
+is ($identifier_target->{'chap'},
+      $indices_information->{'cp'}->{'index_entries'}->[0]
                               ->{'entry_element'}->{'extra'}->{'element_node'},
   'index entry reassociated');
+#$tree = $document->tree();
 #print STDERR Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 

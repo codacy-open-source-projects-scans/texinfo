@@ -284,6 +284,7 @@ $result_trees{'cond_ifhtml_ifinfo'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -740,6 +741,7 @@ $result_trees{'cond_ifhtml_ifinfo'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -821,7 +823,7 @@ This is ifnottex text.
 ';
 
 $result_sectioning{'cond_ifhtml_ifinfo'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -830,52 +832,57 @@ $result_sectioning{'cond_ifhtml_ifinfo'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'cond_ifhtml_ifinfo'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'cond_ifhtml_ifinfo'};
+$result_sectioning{'cond_ifhtml_ifinfo'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'cond_ifhtml_ifinfo'};
 
-$result_nodes{'cond_ifhtml_ifinfo'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'cond_ifhtml_ifinfo'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'cond_ifhtml_ifinfo'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'cond_ifhtml_ifinfo'}[0];
+$result_nodes{'cond_ifhtml_ifinfo'}[1] = $result_nodes{'cond_ifhtml_ifinfo'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'cond_ifhtml_ifinfo'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'cond_ifhtml_ifinfo'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'cond_ifhtml_ifinfo'};
-
-$result_menus{'cond_ifhtml_ifinfo'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'cond_ifhtml_ifinfo'} = [];
 

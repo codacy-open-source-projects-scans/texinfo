@@ -103,6 +103,7 @@ $result_trees{'leading_space_before_menu_star'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'a-node'
       },
       'info' => {
@@ -132,24 +133,25 @@ $result_texts{'leading_space_before_menu_star'} = '
  * a node::
 ';
 
-$result_nodes{'leading_space_before_menu_star'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'a-node'
+$result_nodes{'leading_space_before_menu_star'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'a-node'
+    }
   }
-};
+];
 
-$result_menus{'leading_space_before_menu_star'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'a-node'
+$result_menus{'leading_space_before_menu_star'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'a-node'
+    }
   }
-};
+];
 
 $result_errors{'leading_space_before_menu_star'} = [];
 

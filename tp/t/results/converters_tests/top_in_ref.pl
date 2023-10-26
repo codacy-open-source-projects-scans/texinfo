@@ -36,6 +36,7 @@ $result_trees{'top_in_ref'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -2849,6 +2850,7 @@ $result_trees{'top_in_ref'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap-refs-node'
       },
       'info' => {
@@ -2991,32 +2993,41 @@ $result_texts{'top_in_ref'} = '
 @inforef{Top,,file name} Top
 ';
 
-$result_nodes{'top_in_ref'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap-refs-node'
+$result_nodes{'top_in_ref'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap-refs-node'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'top_in_ref'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'top_in_ref'}[0];
+$result_nodes{'top_in_ref'}[1] = $result_nodes{'top_in_ref'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'top_in_ref'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap-refs-node'
     }
   }
-};
-$result_nodes{'top_in_ref'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'top_in_ref'};
-
-$result_menus{'top_in_ref'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'top_in_ref'} = [
   {

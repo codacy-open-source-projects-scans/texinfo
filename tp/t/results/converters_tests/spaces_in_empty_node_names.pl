@@ -255,6 +255,7 @@ $result_trees{'spaces_in_empty_node_names'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -296,7 +297,6 @@ $result_trees{'spaces_in_empty_node_names'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -352,7 +352,6 @@ $result_trees{'spaces_in_empty_node_names'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -551,7 +550,6 @@ $result_trees{'spaces_in_empty_node_names'} = {
           'type' => 'paragraph'
         }
       ],
-      'extra' => {},
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -612,44 +610,27 @@ $result_texts{'spaces_in_empty_node_names'} = '
   
 ';
 
-$result_nodes{'spaces_in_empty_node_names'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
+$result_nodes{'spaces_in_empty_node_names'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'spaces_in_empty_node_names'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'spaces_in_empty_node_names'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'spaces_in_empty_node_names'} = [
-  {
-    'error_line' => 'warning: @verb should not appear on @node line
-',
-    'file_name' => '',
-    'line_nr' => 11,
-    'macro' => '',
-    'text' => '@verb should not appear on @node line',
-    'type' => 'warning'
-  },
-  {
-    'error_line' => 'warning: @verb should not appear anywhere inside @ref
-',
-    'file_name' => '',
-    'line_nr' => 17,
-    'macro' => '',
-    'text' => '@verb should not appear anywhere inside @ref',
-    'type' => 'warning'
-  },
   {
     'error_line' => 'empty node name after expansion `@ @ \'
 ',
@@ -658,6 +639,15 @@ $result_errors{'spaces_in_empty_node_names'} = [
     'macro' => '',
     'text' => 'empty node name after expansion `@ @ \'',
     'type' => 'error'
+  },
+  {
+    'error_line' => 'warning: @verb should not appear on @node line
+',
+    'file_name' => '',
+    'line_nr' => 11,
+    'macro' => '',
+    'text' => '@verb should not appear on @node line',
+    'type' => 'warning'
   },
   {
     'error_line' => 'empty node name after expansion `@verb{:  :}\'
@@ -676,6 +666,15 @@ $result_errors{'spaces_in_empty_node_names'} = [
     'macro' => '',
     'text' => 'empty node name after expansion `@w{  }\'',
     'type' => 'error'
+  },
+  {
+    'error_line' => 'warning: @verb should not appear anywhere inside @ref
+',
+    'file_name' => '',
+    'line_nr' => 17,
+    'macro' => '',
+    'text' => '@verb should not appear anywhere inside @ref',
+    'type' => 'warning'
   },
   {
     'error_line' => '@ref reference to nonexistent node `@ @ \'

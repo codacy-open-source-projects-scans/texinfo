@@ -96,9 +96,9 @@ if test x$disable_xs != xyes; then
   # Override these variables set by configure at the top level, because 
   # the compiler used in this subdirectory might be different.
   # Change these now so they are used in the checks that follow.
-  CFLAGS="$PERL_EXT_CFLAGS $PERL_CONF_ccflags"
+  CFLAGS="$PERL_EXT_CFLAGS $PERL_CONF_ccflags $PERL_CONF_optimize $PERL_CONF_cccdlflags"
   CPPFLAGS=$PERL_EXT_CPPFLAGS
-  LDFLAGS="$PERL_EXT_LDFLAGS $PERL_CONF_ccdlflags $PERL_CONF_cccdlflags"
+  LDFLAGS="$PERL_EXT_LDFLAGS $PERL_CONF_ccdlflags"
   
   lookup_perl_conf([libperl])
   # Change libperl.so into -lperl to indicate a library dependency to 
@@ -147,9 +147,15 @@ AM_CONDITIONAL([HAVE_ICONV],
                [test "x$am_func_iconv" = "xyes"])
 
 
-# Do not include Perl configuration values when outputting these variables
+# Do not include Perl configuration values when outputting these variables,
+# as advised in the automake manual for CFLAGS and LDFLAGS, which could be
+# reset by the user.  Here PERL_EXT_CFLAGS and PERL_EXT_LDFLAGS play the
+# same role as CFLAGS and LDFLAGS.  The Perl configuration values are then
+# readded in Makefile.am.
+# For CPPFLAGS we do not follow the same rule because we want to keep the
+# flags added by gnulib macros, as for libunistring there is no separate
+# CPPFLAGS-like variable, the main CPPFLAGS is modified.
 CFLAGS=$PERL_EXT_CFLAGS
-CPPFLAGS=$PERL_EXT_CPPFLAGS
 LDFLAGS=$PERL_EXT_LDFLAGS
 
 AC_CONFIG_FILES([Makefile gnulib/lib/Makefile])

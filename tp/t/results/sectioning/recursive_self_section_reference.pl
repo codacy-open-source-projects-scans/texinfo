@@ -10,7 +10,6 @@ $result_trees{'recursive_self_section_reference'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'recursive_self_section_reference'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'sharp'
       },
       'info' => {
@@ -90,7 +90,9 @@ $result_trees{'recursive_self_section_reference'} = {
         }
       ],
       'cmdname' => 'chapter',
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -117,7 +119,7 @@ $result_texts{'recursive_self_section_reference'} = '1 sharp tuple
 ';
 
 $result_sectioning{'recursive_self_section_reference'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'chapter',
@@ -127,40 +129,40 @@ $result_sectioning{'recursive_self_section_reference'} = {
             'extra' => {
               'normalized' => 'sharp'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_level' => 1,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 0
   }
 };
-$result_sectioning{'recursive_self_section_reference'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'recursive_self_section_reference'};
+$result_sectioning{'recursive_self_section_reference'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'recursive_self_section_reference'};
 
-$result_nodes{'recursive_self_section_reference'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'chapter',
-      'extra' => {},
-      'structure' => {
-        'section_number' => 1
-      }
-    },
-    'normalized' => 'sharp'
+$result_nodes{'recursive_self_section_reference'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'chapter',
+        'extra' => {
+          'section_number' => '1'
+        }
+      },
+      'normalized' => 'sharp'
+    }
   }
-};
+];
 
-$result_menus{'recursive_self_section_reference'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'sharp'
+$result_menus{'recursive_self_section_reference'} = [
+  {
+    'extra' => {
+      'normalized' => 'sharp'
+    }
   }
-};
+];
 
 $result_errors{'recursive_self_section_reference'} = [];
 

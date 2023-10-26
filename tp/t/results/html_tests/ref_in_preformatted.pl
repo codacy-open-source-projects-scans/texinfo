@@ -239,6 +239,7 @@ $result_trees{'ref_in_preformatted'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -271,6 +272,7 @@ $result_trees{'ref_in_preformatted'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap-nnn-the-node-name'
       },
       'info' => {
@@ -314,55 +316,50 @@ node name
 
 ';
 
-$result_nodes{'ref_in_preformatted'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap-nnn-the-node-name'
-      },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'ref_in_preformatted'}{'structure'}{'menu_child'}{'structure'}{'node_prev'} = $result_nodes{'ref_in_preformatted'};
-$result_nodes{'ref_in_preformatted'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'ref_in_preformatted'};
-$result_nodes{'ref_in_preformatted'}{'structure'}{'node_next'} = $result_nodes{'ref_in_preformatted'}{'structure'}{'menu_child'};
-
-$result_menus{'ref_in_preformatted'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap-nnn-the-node-name'
-      },
-      'structure' => {
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'Top' => 1
+$result_nodes{'ref_in_preformatted'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chap-nnn-the-node-name'
+          }
         }
-      }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'ref_in_preformatted'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'ref_in_preformatted'}[0];
+$result_nodes{'ref_in_preformatted'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'ref_in_preformatted'}[0];
+$result_nodes{'ref_in_preformatted'}[1] = $result_nodes{'ref_in_preformatted'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'ref_in_preformatted'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'normalized' => 'chap-nnn-the-node-name'
     }
   }
-};
-$result_menus{'ref_in_preformatted'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'ref_in_preformatted'};
+];
+$result_menus{'ref_in_preformatted'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'ref_in_preformatted'}[0];
 
 $result_errors{'ref_in_preformatted'} = [];
 

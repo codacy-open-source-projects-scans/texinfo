@@ -84,6 +84,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -184,6 +185,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -293,6 +295,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -420,6 +423,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -457,6 +461,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -494,6 +499,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -531,6 +537,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -568,6 +575,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -605,6 +613,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -642,6 +651,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -679,6 +689,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -716,6 +727,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -753,6 +765,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -790,6 +803,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -827,6 +841,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -864,6 +879,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -901,6 +917,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -938,6 +955,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -975,6 +993,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1012,6 +1031,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1049,6 +1069,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1086,6 +1107,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1123,6 +1145,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1160,6 +1183,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1197,6 +1221,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1234,6 +1259,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1271,6 +1297,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1308,6 +1335,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1345,6 +1373,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1382,6 +1411,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1419,6 +1449,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1456,6 +1487,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1503,6 +1535,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1550,6 +1583,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1626,6 +1660,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1732,6 +1767,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1779,6 +1815,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1826,6 +1863,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1873,6 +1911,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1920,6 +1959,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1967,6 +2007,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2014,6 +2055,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2061,6 +2103,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2098,6 +2141,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2135,6 +2179,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2182,6 +2227,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2229,6 +2275,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2276,6 +2323,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2313,6 +2361,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2350,6 +2399,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2387,6 +2437,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2424,6 +2475,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2461,6 +2513,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2498,6 +2551,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2535,6 +2589,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2572,6 +2627,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2624,6 +2680,7 @@ $result_trees{'encoding_index_utf8_enable_encoding'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -2785,7 +2842,7 @@ encoding index utf8
 ';
 
 $result_sectioning{'encoding_index_utf8_enable_encoding'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -2794,53 +2851,58 @@ $result_sectioning{'encoding_index_utf8_enable_encoding'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'encoding_index_utf8_enable_encoding'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'encoding_index_utf8_enable_encoding'};
+$result_sectioning{'encoding_index_utf8_enable_encoding'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'encoding_index_utf8_enable_encoding'};
 
-$result_nodes{'encoding_index_utf8_enable_encoding'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'encoding_index_utf8_enable_encoding'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'encoding_index_utf8_enable_encoding'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'encoding_index_utf8_enable_encoding'}[0];
+$result_nodes{'encoding_index_utf8_enable_encoding'}[1] = $result_nodes{'encoding_index_utf8_enable_encoding'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'encoding_index_utf8_enable_encoding'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'encoding_index_utf8_enable_encoding'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'encoding_index_utf8_enable_encoding'};
-
-$result_menus{'encoding_index_utf8_enable_encoding'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'encoding_index_utf8_enable_encoding'} = [];
 

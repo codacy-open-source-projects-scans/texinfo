@@ -826,13 +826,15 @@ determine_file_type:
       /* Redirect stdin to the file and fork the decompression process
          reading from stdin.  This allows shell metacharacters in filenames. */
       char *command = concat (*compression_program, " -d", "");
+      FILE *f2;
 
       if (fclose (f) < 0)
         return 0;
-      f = freopen (*opened_filename, FOPEN_RBIN, stdin);
+      f2 = freopen (*opened_filename, FOPEN_RBIN, stdin);
       if (!f)
         return 0;
       f = popen (command, "r");
+      fclose (f2);
       if (!f)
         {
           /* Used for error message in calling code. */
@@ -904,7 +906,7 @@ readfile (char *filename, int *sizep,
   /* We need to close the stream, since on some systems the pipe created
      by popen is simulated by a temporary file which only gets removed
      inside pclose.  */
-  if (compression_program)
+  if (compression_program && *compression_program)
     pclose (f);
   else
     fclose (f);

@@ -52,9 +52,6 @@ $result_trees{'space_in_setfilename'} = {
             }
           ],
           'cmdname' => 'setfilename',
-          'extra' => {
-            'missing_argument' => 1
-          },
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -93,6 +90,7 @@ $result_trees{'space_in_setfilename'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -119,19 +117,22 @@ $result_texis{'space_in_setfilename'} = '@setfilename @ @verb{: name :}@
 $result_texts{'space_in_setfilename'} = '
 ';
 
-$result_nodes{'space_in_setfilename'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'space_in_setfilename'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'space_in_setfilename'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'space_in_setfilename'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'space_in_setfilename'} = [
   {

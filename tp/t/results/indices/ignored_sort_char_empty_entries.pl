@@ -58,6 +58,7 @@ $result_trees{'ignored_sort_char_empty_entries'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -149,6 +150,7 @@ $result_trees{'ignored_sort_char_empty_entries'} = {
             'index_ignore_chars' => '-'
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -187,6 +189,7 @@ $result_trees{'ignored_sort_char_empty_entries'} = {
             'index_ignore_chars' => '-'
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -225,6 +228,7 @@ $result_trees{'ignored_sort_char_empty_entries'} = {
             'index_ignore_chars' => '-'
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -286,6 +290,7 @@ $result_trees{'ignored_sort_char_empty_entries'} = {
             'sortas' => '--'
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -338,6 +343,7 @@ $result_trees{'ignored_sort_char_empty_entries'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -383,7 +389,7 @@ $result_texts{'ignored_sort_char_empty_entries'} = '
 ';
 
 $result_sectioning{'ignored_sort_char_empty_entries'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -392,53 +398,58 @@ $result_sectioning{'ignored_sort_char_empty_entries'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'ignored_sort_char_empty_entries'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'ignored_sort_char_empty_entries'};
+$result_sectioning{'ignored_sort_char_empty_entries'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'ignored_sort_char_empty_entries'};
 
-$result_nodes{'ignored_sort_char_empty_entries'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'ignored_sort_char_empty_entries'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'ignored_sort_char_empty_entries'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'ignored_sort_char_empty_entries'}[0];
+$result_nodes{'ignored_sort_char_empty_entries'}[1] = $result_nodes{'ignored_sort_char_empty_entries'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'ignored_sort_char_empty_entries'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'ignored_sort_char_empty_entries'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'ignored_sort_char_empty_entries'};
-
-$result_menus{'ignored_sort_char_empty_entries'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'ignored_sort_char_empty_entries'} = [
   {

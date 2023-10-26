@@ -29,6 +29,7 @@ $result_trees{'all_commands_printindex'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -777,20 +778,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'deftypeop',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypeop_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypeop_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -936,20 +957,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'deftypeop',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypeop_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypeop_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -1495,20 +1536,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'deftypecv',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypecv_name'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypecv_name'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -1667,20 +1728,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'deftypecv',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypecv_name'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypecv_name'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -1826,20 +1907,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'defop',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--efop_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--efop_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -1972,20 +2073,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'defop',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--efop_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--efop_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -3324,20 +3445,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'defivar',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--efivar_name'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--efivar_name'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -3488,20 +3629,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'deftypeivar',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypeivar_name'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypeivar_name'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -3652,20 +3813,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'defmethod',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--efmethod_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--efmethod_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -3829,20 +4010,40 @@ $result_trees{'all_commands_printindex'} = {
                 'def_command' => 'deftypemethod',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypemethod_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'd--eftypemethod_name'
+                    },
                     {
                       'text' => ' on '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'c--lass'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -4123,6 +4324,7 @@ $result_trees{'all_commands_printindex'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -4150,15 +4352,7 @@ $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[7]{'contents
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[7]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[9]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[9]{'contents'}[0]{'args'}[0]{'contents'}[4];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[9]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[11]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[11]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[11]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[11]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[11]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[11]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[11]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[11]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[11]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[13]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[13]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[13]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[13]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[13]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[13]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[13]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[13]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[13]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[15]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[15]{'contents'}[0]{'args'}[0]{'contents'}[4];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[15]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
@@ -4166,25 +4360,9 @@ $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[17]{'content
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[17]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[19]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[19]{'contents'}[0]{'args'}[0]{'contents'}[4];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[19]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[21]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[21]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[21]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[21]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[21]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[21]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[21]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[21]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[21]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[23]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[23]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[23]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[23]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[23]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[23]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[23]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[23]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[23]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[25]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[25]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[25]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[25]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[25]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[25]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[25]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[25]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[25]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[27]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[27]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[27]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[27]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[27]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[27]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[27]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[27]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[27]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[29]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[29]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[29]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
@@ -4204,25 +4382,9 @@ $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[43]{'content
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[43]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[45]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[45]{'contents'}[0]{'args'}[0]{'contents'}[4];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[45]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[47]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[47]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[47]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[47]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[47]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[47]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[47]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[47]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[47]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[49]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[49]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[49]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[49]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[49]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[49]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[49]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[49]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[49]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[51]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[51]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[51]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[51]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[51]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[51]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[51]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[51]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[51]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[53]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[53]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[53]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[53]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[53]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[53]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[53]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[53]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'all_commands_printindex'}{'contents'}[2]{'contents'}[53]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'all_commands_printindex'}{'contents'}[2];
 
 $result_texis{'all_commands_printindex'} = '@node Top
@@ -4439,33 +4601,42 @@ Variables
 =========
 ';
 
-$result_nodes{'all_commands_printindex'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'all_commands_printindex'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'all_commands_printindex'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'all_commands_printindex'}[0];
+$result_nodes{'all_commands_printindex'}[1] = $result_nodes{'all_commands_printindex'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'all_commands_printindex'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'all_commands_printindex'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'all_commands_printindex'};
-
-$result_menus{'all_commands_printindex'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'all_commands_printindex'} = [];
 

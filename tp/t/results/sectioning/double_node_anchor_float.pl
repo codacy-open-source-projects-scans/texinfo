@@ -36,6 +36,7 @@ $result_trees{'double_node_anchor_float'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'node1'
       },
       'info' => {
@@ -85,7 +86,9 @@ $result_trees{'double_node_anchor_float'} = {
             }
           ],
           'cmdname' => 'anchor',
-          'extra' => {},
+          'extra' => {
+            'normalized' => 'node1'
+          },
           'source_info' => {
             'file_name' => '',
             'line_nr' => 5,
@@ -115,6 +118,7 @@ $result_trees{'double_node_anchor_float'} = {
           ],
           'cmdname' => 'anchor',
           'extra' => {
+            'is_target' => 1,
             'normalized' => 'anchor1'
           },
           'source_info' => {
@@ -134,7 +138,9 @@ $result_trees{'double_node_anchor_float'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'normalized' => 'node1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -234,7 +240,8 @@ $result_trees{'double_node_anchor_float'} = {
             }
           ],
           'extra' => {
-            'float_type' => 'Text'
+            'float_type' => 'Text',
+            'normalized' => 'node1'
           },
           'info' => {
             'spaces_before_argument' => {
@@ -316,7 +323,8 @@ $result_trees{'double_node_anchor_float'} = {
             }
           ],
           'extra' => {
-            'float_type' => 'Text'
+            'float_type' => 'Text',
+            'normalized' => 'anchor1'
           },
           'info' => {
             'spaces_before_argument' => {
@@ -399,6 +407,7 @@ $result_trees{'double_node_anchor_float'} = {
           ],
           'extra' => {
             'float_type' => 'Text',
+            'is_target' => 1,
             'normalized' => 'float1'
           },
           'info' => {
@@ -418,7 +427,9 @@ $result_trees{'double_node_anchor_float'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'normalized' => 'anchor1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -448,7 +459,9 @@ $result_trees{'double_node_anchor_float'} = {
         }
       ],
       'cmdname' => 'node',
-      'extra' => {},
+      'extra' => {
+        'normalized' => 'float1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -500,59 +513,57 @@ Text, float1
 
 ';
 
-$result_nodes{'double_node_anchor_float'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'node1'
+$result_nodes{'double_node_anchor_float'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'node1'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'node1'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'anchor1'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'float1'
+    }
   }
-};
+];
 
-$result_menus{'double_node_anchor_float'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'node1'
+$result_menus{'double_node_anchor_float'} = [
+  {
+    'extra' => {
+      'normalized' => 'node1'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'node1'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'anchor1'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'float1'
+    }
   }
-};
+];
 
 $result_errors{'double_node_anchor_float'} = [
-  {
-    'error_line' => '@node `node1\' previously defined
-',
-    'file_name' => '',
-    'line_nr' => 3,
-    'macro' => '',
-    'text' => '@node `node1\' previously defined',
-    'type' => 'error'
-  },
-  {
-    'continuation' => 1,
-    'error_line' => 'here is the previous definition as @node
-',
-    'file_name' => '',
-    'line_nr' => 1,
-    'macro' => '',
-    'text' => 'here is the previous definition as @node',
-    'type' => 'error'
-  },
-  {
-    'error_line' => '@anchor `node1\' previously defined
-',
-    'file_name' => '',
-    'line_nr' => 5,
-    'macro' => '',
-    'text' => '@anchor `node1\' previously defined',
-    'type' => 'error'
-  },
-  {
-    'continuation' => 1,
-    'error_line' => 'here is the previous definition as @node
-',
-    'file_name' => '',
-    'line_nr' => 1,
-    'macro' => '',
-    'text' => 'here is the previous definition as @node',
-    'type' => 'error'
-  },
   {
     'error_line' => '@node `anchor1\' previously defined
 ',
@@ -570,25 +581,6 @@ $result_errors{'double_node_anchor_float'} = [
     'line_nr' => 7,
     'macro' => '',
     'text' => 'here is the previous definition as @anchor',
-    'type' => 'error'
-  },
-  {
-    'error_line' => '@float `node1\' previously defined
-',
-    'file_name' => '',
-    'line_nr' => 11,
-    'macro' => '',
-    'text' => '@float `node1\' previously defined',
-    'type' => 'error'
-  },
-  {
-    'continuation' => 1,
-    'error_line' => 'here is the previous definition as @node
-',
-    'file_name' => '',
-    'line_nr' => 1,
-    'macro' => '',
-    'text' => 'here is the previous definition as @node',
     'type' => 'error'
   },
   {
@@ -628,6 +620,63 @@ $result_errors{'double_node_anchor_float'} = [
     'macro' => '',
     'text' => 'here is the previous definition as @float',
     'type' => 'error'
+  },
+  {
+    'error_line' => '@node `node1\' previously defined
+',
+    'file_name' => '',
+    'line_nr' => 3,
+    'macro' => '',
+    'text' => '@node `node1\' previously defined',
+    'type' => 'error'
+  },
+  {
+    'continuation' => 1,
+    'error_line' => 'here is the previous definition as @node
+',
+    'file_name' => '',
+    'line_nr' => 1,
+    'macro' => '',
+    'text' => 'here is the previous definition as @node',
+    'type' => 'error'
+  },
+  {
+    'error_line' => '@anchor `node1\' previously defined
+',
+    'file_name' => '',
+    'line_nr' => 5,
+    'macro' => '',
+    'text' => '@anchor `node1\' previously defined',
+    'type' => 'error'
+  },
+  {
+    'continuation' => 1,
+    'error_line' => 'here is the previous definition as @node
+',
+    'file_name' => '',
+    'line_nr' => 1,
+    'macro' => '',
+    'text' => 'here is the previous definition as @node',
+    'type' => 'error'
+  },
+  {
+    'error_line' => '@float `node1\' previously defined
+',
+    'file_name' => '',
+    'line_nr' => 11,
+    'macro' => '',
+    'text' => '@float `node1\' previously defined',
+    'type' => 'error'
+  },
+  {
+    'continuation' => 1,
+    'error_line' => 'here is the previous definition as @node
+',
+    'file_name' => '',
+    'line_nr' => 1,
+    'macro' => '',
+    'text' => 'here is the previous definition as @node',
+    'type' => 'error'
   }
 ];
 
@@ -637,23 +686,25 @@ $result_floats{'double_node_anchor_float'} = {
     {
       'cmdname' => 'float',
       'extra' => {
-        'float_type' => 'Text'
+        'float_number' => '1',
+        'float_type' => 'Text',
+        'normalized' => 'node1'
       }
     },
     {
       'cmdname' => 'float',
       'extra' => {
-        'float_type' => 'Text'
+        'float_number' => '2',
+        'float_type' => 'Text',
+        'normalized' => 'anchor1'
       }
     },
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '3',
         'float_type' => 'Text',
         'normalized' => 'float1'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]
@@ -666,15 +717,15 @@ $result_converted{'info'}->{'double_node_anchor_float'} = 'This is , produced fr
 
 File: ,  Node: node1
 
-Text
-Text
 Text 1
+Text 2
+Text 3
 
 
 Tag Table:
 Node: node127
 Ref: anchor151
-Ref: float161
+Ref: float165
 
 End Tag Table
 
@@ -735,11 +786,11 @@ span:hover a.copiable-link {visibility: visible}
 </div>
 
 <div class="float">
-<div class="type-number-float"><p><strong class="strong">Text</strong></p></div></div>
-<div class="float">
-<div class="type-number-float"><p><strong class="strong">Text</strong></p></div></div>
-<div class="float" id="float1">
 <div class="type-number-float"><p><strong class="strong">Text 1</strong></p></div></div>
+<div class="float">
+<div class="type-number-float"><p><strong class="strong">Text 2</strong></p></div></div>
+<div class="float" id="float1">
+<div class="type-number-float"><p><strong class="strong">Text 3</strong></p></div></div>
 <hr>
 <div class="nav-panel">
 </div>
@@ -771,13 +822,13 @@ $result_converted{'xml'}->{'double_node_anchor_float'} = '<node name="node1" spa
 
 <node name="" spaces=" "><nodename></nodename></node>
 
-<float type="Text" spaces=" " endspaces=" "><floattype>Text</floattype><floatname spaces=" ">node1</floatname>
+<float type="Text" number="1" spaces=" " endspaces=" "><floattype>Text</floattype><floatname spaces=" ">node1</floatname>
 </float>
 
-<float type="Text" spaces=" " endspaces=" "><floattype>Text</floattype><floatname spaces=" ">anchor1</floatname>
+<float type="Text" number="2" spaces=" " endspaces=" "><floattype>Text</floattype><floatname spaces=" ">anchor1</floatname>
 </float>
 
-<float name="float1" type="Text" number="1" spaces=" " endspaces=" "><floattype>Text</floattype><floatname spaces=" ">float1</floatname>
+<float name="float1" type="Text" number="3" spaces=" " endspaces=" "><floattype>Text</floattype><floatname spaces=" ">float1</floatname>
 </float>
 
 <node name="" spaces=" "><nodename></nodename></node>

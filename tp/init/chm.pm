@@ -244,7 +244,7 @@ sub chm_init($)
   print $hhk_fh "</OBJECT>\n";
 
   my ($index_entries, $index_entries_sort_strings)
-       = Texinfo::Structuring::sort_indices($self, $self,
+       = Texinfo::Structuring::sort_indices_by_index($self, $self,
                              $self->get_info('index_entries'),
                              $self->get_info('indices_information'));
   if ($index_entries) {
@@ -311,27 +311,28 @@ sub chm_init($)
   }
   print $hhc_fh "</OBJECT>\n";
 
-  if ($self->{'structuring'} and $self->{'structuring'}->{'sectioning_root'}) {
-    my $section_root = $self->{'structuring'}->{'sectioning_root'};
-    my $upper_level = $section_root->{'structure'}->{'section_childs'}->[0]
-                                               ->{'structure'}->{'section_level'};
-    foreach my $top_section (@{$section_root->{'structure'}->{'section_childs'}}) {
-      $upper_level = $top_section->{'structure'}->{'section_level'}
-      if ($top_section->{'structure'}->{'section_level'} < $upper_level);
+  if ($self->{'sections_list'}) {
+    my $section_root = $self->{'sections_list'}->[0]
+                                         ->{'extra'}->{'sectioning_root'};
+    my $upper_level = $section_root->{'extra'}->{'section_childs'}->[0]
+                                               ->{'extra'}->{'section_level'};
+    foreach my $top_section (@{$section_root->{'extra'}->{'section_childs'}}) {
+      $upper_level = $top_section->{'extra'}->{'section_level'}
+      if ($top_section->{'extra'}->{'section_level'} < $upper_level);
     }
     $upper_level = 1 if ($upper_level <= 0);
     my $root_level = $upper_level - 1;
     my $level = $root_level;
-    foreach my $section (@{$self->{'structuring'}->{'sections_list'}}) {
+    foreach my $section (@{$self->{'sections_list'}}) {
       next if ($section->{'cmdname'} eq 'part');
-      my $section_level = $section->{'structure'}->{'section_level'};
+      my $section_level = $section->{'extra'}->{'section_level'};
       $section_level = 1 if ($section_level == 0);
       if ($level < $section_level) {
         while ($level < $section_level) {
           print $hhc_fh "<UL>\n";
           $level++;
         }
-      } elsif ($level > $section->{'structure'}->{'section_level'}) {
+      } elsif ($level > $section->{'extra'}->{'section_level'}) {
         while ($level > $section_level) {
           print $hhc_fh "</UL>\n";
           $level--;
@@ -387,9 +388,9 @@ sub chm_init($)
   }
   my $title = _chm_convert_tree_to_text($self, $self->get_info('title_tree'));
   my $top_file = '';
-  my $top_element = $self->global_direction_element('Top');
+  my $top_element = $self->global_direction_unit('Top');
   if ($top_element) {
-    $top_file = $top_element->{'structure'}->{'unit_filename'};
+    $top_file = $top_element->{'unit_filename'};
   }
 
   print $hhp_fh <<EOT;
@@ -412,11 +413,11 @@ Default=,"$hhc_filename","$hhk_filename","$top_file","$top_file",,,,,0x22520,,0x
 EOT
 
   my %chm_files;
-  if ($self->{'tree_units'}) {
-    foreach my $element (@{$self->{'tree_units'}}) {
-      if (!$chm_files{$element->{'structure'}->{'unit_filename'}}) {
-        print $hhp_fh "$element->{'structure'}->{'unit_filename'}\n";
-        $chm_files{$element->{'structure'}->{'unit_filename'}} = 1;
+  if ($self->{'document_units'}) {
+    foreach my $element (@{$self->{'document_units'}}) {
+      if (!$chm_files{$element->{'unit_filename'}}) {
+        print $hhp_fh "$element->{'unit_filename'}\n";
+        $chm_files{$element->{'unit_filename'}} = 1;
       }
     }
   }

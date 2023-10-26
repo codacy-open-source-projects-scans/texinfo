@@ -76,6 +76,7 @@ $result_trees{'syncode_index_print_both'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -145,6 +146,7 @@ $result_trees{'syncode_index_print_both'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chapter-index'
       },
@@ -209,6 +211,7 @@ $result_trees{'syncode_index_print_both'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -246,6 +249,7 @@ $result_trees{'syncode_index_print_both'} = {
             ]
           },
           'info' => {
+            'command_name' => 'findex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -374,7 +378,9 @@ $result_trees{'syncode_index_print_both'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -433,7 +439,7 @@ Print cp
 ';
 
 $result_sectioning{'syncode_index_print_both'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -442,11 +448,8 @@ $result_sectioning{'syncode_index_print_both'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -456,73 +459,82 @@ $result_sectioning{'syncode_index_print_both'} = {
                   'extra' => {
                     'isindex' => 1,
                     'normalized' => 'chapter-index'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'syncode_index_print_both'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'syncode_index_print_both'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'syncode_index_print_both'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'syncode_index_print_both'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'syncode_index_print_both'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'syncode_index_print_both'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'syncode_index_print_both'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'syncode_index_print_both'};
+$result_sectioning{'syncode_index_print_both'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'syncode_index_print_both'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'syncode_index_print_both'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'syncode_index_print_both'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'syncode_index_print_both'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'syncode_index_print_both'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'syncode_index_print_both'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'syncode_index_print_both'};
 
-$result_nodes{'syncode_index_print_both'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'isindex' => 1,
-        'normalized' => 'chapter-index'
+$result_nodes{'syncode_index_print_both'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chapter-index'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'syncode_index_print_both'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'syncode_index_print_both'}[0];
+$result_nodes{'syncode_index_print_both'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'syncode_index_print_both'}[0];
+$result_nodes{'syncode_index_print_both'}[1] = $result_nodes{'syncode_index_print_both'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'syncode_index_print_both'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chapter-index'
     }
   }
-};
-$result_nodes{'syncode_index_print_both'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'syncode_index_print_both'};
-$result_nodes{'syncode_index_print_both'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'syncode_index_print_both'};
-
-$result_menus{'syncode_index_print_both'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'syncode_index_print_both'} = [
   {
@@ -540,10 +552,6 @@ $result_errors{'syncode_index_print_both'} = [
 $result_indices{'syncode_index_print_both'} = {
   'index_names' => {
     'cp' => {
-      'contained_indices' => {
-        'cp' => 1,
-        'fn' => 1
-      },
       'in_code' => 0,
       'name' => 'cp'
     },
@@ -553,30 +561,18 @@ $result_indices{'syncode_index_print_both'} = {
       'name' => 'fn'
     },
     'ky' => {
-      'contained_indices' => {
-        'ky' => 1
-      },
       'in_code' => 1,
       'name' => 'ky'
     },
     'pg' => {
-      'contained_indices' => {
-        'pg' => 1
-      },
       'in_code' => 1,
       'name' => 'pg'
     },
     'tp' => {
-      'contained_indices' => {
-        'tp' => 1
-      },
       'in_code' => 1,
       'name' => 'tp'
     },
     'vr' => {
-      'contained_indices' => {
-        'vr' => 1
-      },
       'in_code' => 1,
       'name' => 'vr'
     }

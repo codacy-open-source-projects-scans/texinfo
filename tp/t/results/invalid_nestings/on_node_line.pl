@@ -138,6 +138,7 @@ $result_trees{'on_node_line'} = {
               ],
               'cmdname' => 'anchor',
               'extra' => {
+                'is_target' => 1,
                 'normalized' => 'in-anchor'
               },
               'source_info' => {
@@ -224,6 +225,7 @@ $result_trees{'on_node_line'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'a'
       },
       'info' => {
@@ -255,32 +257,35 @@ $result_texis{'on_node_line'} = '@node @ref{a, b, c, filename}, (@pxref{(someman
 
 $result_texts{'on_node_line'} = '';
 
-$result_nodes{'on_node_line'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'a'
-  },
-  'structure' => {
-    'node_next' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'cmdname' => 'pxref'
-          }
-        ],
-        'normalized' => '-'
-      }
+$result_nodes{'on_node_line'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'cmdname' => 'pxref'
+              }
+            ],
+            'normalized' => '-'
+          },
+          'type' => 'line_arg'
+        }
+      },
+      'normalized' => 'a'
     }
   }
-};
+];
 
-$result_menus{'on_node_line'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'a'
-  },
-  'structure' => {}
-};
+$result_menus{'on_node_line'} = [
+  {
+    'extra' => {
+      'normalized' => 'a'
+    }
+  }
+];
 
 $result_errors{'on_node_line'} = [
   {

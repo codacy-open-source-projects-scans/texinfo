@@ -30,15 +30,20 @@ use File::Basename;
 # for file names portability
 use File::Spec;
 use Encode qw(decode);
+# for dclone
+use Storable;
+#use Data::Dumper;
 
 use Carp qw(cluck confess);
 
+use Texinfo::Options;
 use Texinfo::Common;
 
 use Texinfo::Report;
 
 use Texinfo::Convert::Utils;
 use Texinfo::Convert::Unicode;
+use Texinfo::Convert::Texinfo;
 use Texinfo::Convert::Text;
 use Texinfo::Convert::NodeNameNormalization;
 use Texinfo::Structuring;
@@ -58,7 +63,7 @@ xml_accents
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 my %defaults = (
   'documentlanguage'     => undef,
@@ -66,7 +71,7 @@ my %defaults = (
 
 # defaults for all converters that are not defined elsewhere.
 # undef values in general marks information passed by the caller that
-# is valid in the parser initialization hash, but is not considered
+# is valid in the initialization hash, but is not considered
 # as "configuration/customization". It is not available through get_conf()
 # but is available directly in the converter as a hash key.
 # FIXME separate the two types of information and check that those
@@ -81,7 +86,6 @@ my %common_converters_defaults = (
   # can be different from the converted_format, for example, epub3
   # output format converted format is html.
   'output_format'        => undef,
-  'structuring'          => undef,
 
   # Not set in the main program
   'translated_commands'  => {'error' => 'error@arrow{}',},
@@ -90,17 +94,17 @@ my %common_converters_defaults = (
 # values are what is used in tests of the Converters.  These variables are
 # customization options, set in the main program when a converter is
 # called from the main program.
-  'PACKAGE_AND_VERSION'  => 'texinfo',
-  'PACKAGE_VERSION'      => '',
-  'PACKAGE_URL'          => 'http://www.gnu.org/software/texinfo/',
+  'PACKAGE_AND_VERSION_OPTION'  => 'texinfo',
+  'PACKAGE_VERSION_OPTION'      => '',
+  'PACKAGE_URL_OPTION'          => 'http://www.gnu.org/software/texinfo/',
   'PROGRAM'              => '',
 );
 
 my %all_converters_defaults
- = (%Texinfo::Common::default_converter_command_line_options,
-    %Texinfo::Common::default_converter_customization,
-    %Texinfo::Common::document_settable_unique_at_commands,
-    %Texinfo::Common::document_settable_multiple_at_commands,
+ = (%Texinfo::Options::converter_cmdline_options,
+    %Texinfo::Options::converter_customization_options,
+    %Texinfo::Options::unique_at_command_options,
+    %Texinfo::Options::multiple_at_command_options,
     %common_converters_defaults
 );
 
@@ -135,7 +139,9 @@ foreach my $ref_cmd ('pxref', 'xref', 'ref') {
 
 # convert_tree() and convert() should be implemented in converters.
 # There is an implementation of output() below but in general
-# output() should also be implemented by Converters.
+# output() should also be implemented by Converters.  The simple
+# implementation of convert_output_unit() below is likely to be
+# ok for most converters.
 
 # Functions that should be defined in specific converters
 sub converter_defaults($$)
@@ -154,26 +160,15 @@ sub output_internal_links($)
 }
 
 # this function is designed so as to be used in specific Converters
-sub converter(;$)
+sub converter($;$)
 {
   my $class = shift;
+  my $conf = shift;
+
   my $converter = { 'set' => {} };
 
-  my $conf;
-  my $name = 'converter';
+  bless $converter, $class;
 
-  if (ref($class) eq 'HASH') {
-    $conf = $class;
-    bless $converter;
-  } elsif (defined($class)) {
-    bless $converter, $class;
-    $name = ref($converter);
-    $conf = shift;
-  } else {
-    bless $converter;
-    $conf = shift;
-    $name = ref($converter);
-  }
   my %defaults = $converter->converter_defaults($conf);
   foreach my $key (keys(%all_converters_defaults)) {
     $defaults{$key} = $all_converters_defaults{$key}
@@ -189,26 +184,31 @@ sub converter(;$)
   }
   #$converter->{'converter_pre_conf'} = \%defaults;
   if (defined($conf)) {
-    if ($conf->{'parser'}) {
+    if ($conf->{'document'}) {
       $converter->{'global_commands'}
-         = $conf->{'parser'}->global_commands_information();
-      $converter->{'parser_info'} = $conf->{'parser'}->global_information();
-      my $floats = $conf->{'parser'}->floats_information();
-      my ($labels, $targets_list, $nodes_list)
-        = $conf->{'parser'}->labels_information();
+         = $conf->{'document'}->global_commands_information();
+      $converter->{'document_info'} = $conf->{'document'}->global_information();
+      my $floats = $conf->{'document'}->floats_information();
+      my $identifier_target = $conf->{'document'}->labels_information();
+      my $sections_list = $conf->{'document'}->sections_list();
 
       $converter->{'floats'} = $floats if ($floats);
-      $converter->{'labels'} = $labels if ($labels);
+      $converter->{'identifiers_target'} = $identifier_target
+                                             if ($identifier_target);
+      $converter->{'sections_list'} = $sections_list if ($sections_list);
       $converter->{'indices_information'}
-             = $conf->{'parser'}->indices_information();
-      $converter->{'values'} = $conf->{'parser'}->{'values'};
-      delete $conf->{'parser'};
+             = $conf->{'document'}->indices_information();
+      $converter->{'values'} = $conf->{'document'}->{'values'};
+      # From and for XS
+      $converter->{'document_descriptor'}
+        = $conf->{'document'}->document_descriptor();
+      delete $conf->{'document'};
     }
     foreach my $key (keys(%$conf)) {
       if (Texinfo::Common::valid_customization_option($key)) {
         $converter->{'conf'}->{$key} = $conf->{$key};
       } elsif (!exists($defaults{$key})) {
-        warn "$key not a possible configuration in $name\n";
+        warn "$key not a possible configuration in $class\n";
       } else {
         $converter->{$key} = $conf->{$key};
       }
@@ -227,7 +227,8 @@ sub converter(;$)
     }
   }
 
-  Texinfo::Common::set_output_encodings($converter, $converter->{'parser_info'});
+  Texinfo::Common::set_output_encodings($converter,
+                                        $converter->{'document_info'});
 
   # turn the array to a hash for speed.  Not sure it really matters for such
   # a small array.
@@ -250,44 +251,16 @@ sub converter(;$)
   return $converter;
 }
 
-sub _convert_document_tree_units($$;$$)
+sub convert_output_unit($$)
 {
   my $self = shift;
-  my $root = shift;
-  my $tree_units = shift;
-  my $fh = shift;
+  my $output_unit = shift;
 
-  if ($tree_units) {
-    my $result = '';
-    foreach my $tree_unit (@$tree_units) {
-      $result .= $self->write_or_return($self->convert_tree($tree_unit), $fh);
-    }
-    return $result;
-  } else {
-    return $self->write_or_return($self->convert_tree($root), $fh);
+  my $result = '';
+  foreach my $element (@{$output_unit->{'unit_contents'}}) {
+    $result .= $self->convert_tree($element);
   }
-}
-
-# the two following methods can be used to implement convert() in
-# Converters.
-sub convert_document_sections($$;$)
-{
-  my $self = shift;
-  my $root = shift;
-  my $fh = shift;
-
-  my $tree_units = Texinfo::Structuring::split_by_section($root);
-  return $self->_convert_document_tree_units($root, $tree_units, $fh);
-}
-
-sub convert_document_nodes($$;$)
-{
-  my $self = shift;
-  my $root = shift;
-  my $fh = shift;
-
-  my $tree_units = Texinfo::Structuring::split_by_node($root);
-  return $self->_convert_document_tree_units($root, $tree_units, $fh);
+  return $result;
 }
 
 # In general, converters override this method, but simple
@@ -297,9 +270,11 @@ sub convert_document_nodes($$;$)
 sub output($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
 
-  my $tree_units;
+  my $root = $document->tree();
+
+  my $output_units;
 
   if (defined($self->get_conf('OUTFILE'))
       and ($Texinfo::Common::null_device_file{$self->get_conf('OUTFILE')}
@@ -309,7 +284,7 @@ sub output($$)
       $self->document_warn($self,
                sprintf(__("%s: output incompatible with split"),
                                    $self->get_conf('OUTFILE')));
-      $self->force_conf('SPLIT', 0);
+      $self->force_conf('SPLIT', '');
     }
   }
   if ($self->get_conf('SPLIT')) {
@@ -326,27 +301,30 @@ sub output($$)
   return undef unless $succeeded;
 
   if ($self->get_conf('USE_NODES')) {
-    $tree_units = Texinfo::Structuring::split_by_node($root);
+    $output_units = Texinfo::Structuring::split_by_node($root);
   } else {
-    $tree_units = Texinfo::Structuring::split_by_section($root);
+    $output_units = Texinfo::Structuring::split_by_section($root);
   }
 
-  Texinfo::Structuring::split_pages($tree_units, $self->get_conf('SPLIT'));
+  Texinfo::Structuring::split_pages($output_units, $self->get_conf('SPLIT'));
+
+  $output_units = Texinfo::Structuring::rebuild_output_units($output_units);
 
   # determine file names associated with the different pages
   if ($output_file ne '') {
-    $self->_set_tree_units_files($tree_units, $output_file, $destination_directory,
-                                 $output_filename, $document_name);
+    $self->_set_output_units_files($output_units, $output_file,
+                                   $destination_directory,
+                                   $output_filename, $document_name);
   }
 
-  #print STDERR "$tree_units $tree_units->[0]->{'structure'}->{'unit_filename'}\n";
+  #print STDERR "$output_units $output_units->[0]->{'unit_filename'}\n";
 
   # Now do the output
   my $fh;
-  my $output = '';
-  if (!$tree_units or !$tree_units->[0]->{'structure'}
-      or !defined($tree_units->[0]->{'structure'}->{'unit_filename'})) {
+  if (!$output_units
+      or !defined($output_units->[0]->{'unit_filename'})) {
     # no page
+    my $output = '';
     my $outfile_name;
     my $encoded_outfile_name;
     if ($output_file ne '') {
@@ -381,23 +359,17 @@ sub output($$)
         if ($self->get_conf('DEBUG'));
     }
 
-    if ($tree_units and @$tree_units) {
-      foreach my $tree_unit (@$tree_units) {
-        my $tree_unit_text = $self->convert_tree($tree_unit);
-        $output .= $self->write_or_return($tree_unit_text, $fh);
+    if ($output_units and @$output_units) {
+      foreach my $output_unit (@$output_units) {
+        my $output_unit_text = $self->convert_output_unit($output_unit);
+        $output .= $self->write_or_return($output_unit_text, $fh);
       }
     } else {
       # REMARK right now, this code is never called, as
       # Texinfo::Structuring::split_by_node or split_by_page always return
       # an array containing at least one unit.  But this was not the case
       # in the past and could change again in the future.
-      #
-      # FIXME this is in general better to use convert(), for instance
-      # to have the converter output footnotes when it is not done
-      # as part of tree units formatting (th case here).
-      # However, this breaks the promise that only convert_tree is used
-      # in generic Converter code.
-      $output .= $self->write_or_return($self->convert($root), $fh);
+      $output .= $self->write_or_return($self->convert($document), $fh);
     }
     # NOTE do not close STDOUT now to avoid a perl warning.
     # FIXME is it still true that there is such a warning?
@@ -417,12 +389,12 @@ sub output($$)
       if ($self->get_conf('DEBUG'));
     my %files_filehandle;
     
-    foreach my $tree_unit (@$tree_units) {
-      my $tree_unit_filename = $tree_unit->{'structure'}->{'unit_filename'};
-      my $out_filepath = $self->{'out_filepaths'}->{$tree_unit_filename};
+    foreach my $output_unit (@$output_units) {
+      my $output_unit_filename = $output_unit->{'unit_filename'};
+      my $out_filepath = $self->{'out_filepaths'}->{$output_unit_filename};
       my $file_fh;
       # open the file and output the elements
-      if (!exists($files_filehandle{$tree_unit_filename})) {
+      if (!exists($files_filehandle{$output_unit_filename})) {
         my $error_message;
         ($file_fh, $error_message) = Texinfo::Common::output_files_open_out(
                              $self->output_files_information(), $self,
@@ -433,14 +405,14 @@ sub output($$)
                        $out_filepath, $error_message));
           return undef;
         }
-        $files_filehandle{$tree_unit_filename} = $file_fh;
+        $files_filehandle{$output_unit_filename} = $file_fh;
       } else {
-        $file_fh = $files_filehandle{$tree_unit_filename};
+        $file_fh = $files_filehandle{$output_unit_filename};
       }
-      my $tree_unit_text = $self->convert_tree($tree_unit);
-      print $file_fh $tree_unit_text;
-      $self->{'file_counters'}->{$tree_unit_filename}--;
-      if ($self->{'file_counters'}->{$tree_unit_filename} == 0) {
+      my $output_unit_text = $self->convert_output_unit($output_unit);
+      print $file_fh $output_unit_text;
+      $self->{'file_counters'}->{$output_unit_filename}--;
+      if ($self->{'file_counters'}->{$output_unit_filename} == 0) {
         # NOTE do not close STDOUT here to avoid a perl warning
         if ($out_filepath ne '-') {
           Texinfo::Common::output_files_register_closed(
@@ -455,6 +427,125 @@ sub output($$)
       }
     }
   }
+  return undef;
+}
+
+###############################################################
+# XS Interface for a document to be converted.
+# Select and encode to UTF-8 to pass to the XS code
+# TODO document?
+# To be called for initialization
+sub encode_converter_document($)
+{
+  my $self = shift;
+  my $result = {'converter' => $self, # pass full converter to be able to modify
+                                      # and set converter_descriptor
+                'document_descriptor' => $self->{'document_descriptor'}};
+
+  foreach my $variable ('style_commands_formatting', 'formatting_function',
+     'types_open', 'types_conversion', 'commands_open', 'commands_conversion') {
+    if ($self->{$variable}) {
+      $result->{$variable} = $self->{$variable};
+    }
+  }
+
+  if (defined($self->{'converter_init_conf'})) {
+    my $encoded_converter_init_conf
+      = Texinfo::Common::encode_options($self->{'converter_init_conf'});
+    $result->{'converter_init_conf'} = $encoded_converter_init_conf;
+  }
+
+  if ($self->{'translated_commands'}) {
+    my $encoded_translated_commands = {};
+    foreach my $cmdname (keys(%{$self->{'translated_commands'}})) {
+      $encoded_translated_commands->{$cmdname}
+        = Encode::encode('UTF-8', $self->{'translated_commands'}->{$cmdname});
+    }
+    $result->{'translated_commands'} = $encoded_translated_commands;
+  }
+
+  # HTML specific
+  if ($self->{'special_unit_info'}) {
+    # to help the XS code to set arrays of C structures, already prepare
+    # a list of special units varieties.
+    my %all_special_unit_varieties;
+    # only ascii, no need for encoding
+    $result->{'special_unit_info'} = Storable::dclone($self->{'special_unit_info'});
+    foreach my $type (keys(%{$result->{'special_unit_info'}})) {
+      foreach my $special_unit_variety
+            (keys (%{$result->{'special_unit_info'}->{$type}})) {
+        $all_special_unit_varieties{$special_unit_variety} = 1;
+      }
+    }
+
+    if ($self->{'translated_special_unit_info'}) {
+      # could have encoded characters from user init files
+      foreach my $tree_type (keys(%{$self->{'translated_special_unit_info'}})) {
+        my $type = $self->{'translated_special_unit_info'}->{$tree_type}->[0];
+        my $variety_strings
+          = $self->{'translated_special_unit_info'}->{$tree_type}->[1];
+        # simplify the structure, as we do not need both tree and
+        # string to pass to XS
+        $result->{'special_unit_info'}->{$type} = {};
+        foreach my $special_unit_variety (keys (%$variety_strings)) {
+          $all_special_unit_varieties{$special_unit_variety} = 1;
+          $result->{'special_unit_info'}->{$type}
+             ->{$special_unit_variety} = Encode::encode('UTF-8',
+                                   $variety_strings->{$special_unit_variety});
+        }
+      }
+    }
+    $result->{'sorted_special_unit_varieties'}
+      = [sort(keys(%all_special_unit_varieties))];
+  }
+  if ($self->{'no_arg_commands_formatting'}) {
+    my $encoded_no_arg_commands_formatting = {};
+    foreach my $cmdname (keys(%{$self->{'no_arg_commands_formatting'}})) {
+      $encoded_no_arg_commands_formatting->{$cmdname} = {};
+      my $format_contexts = $self->{'no_arg_commands_formatting'}->{$cmdname};
+      foreach my $context (keys(%$format_contexts)) {
+        my $spec = $format_contexts->{$context};
+        $encoded_no_arg_commands_formatting->{$cmdname}->{$context} = {};
+        my $encoded_spec
+            = $encoded_no_arg_commands_formatting->{$cmdname}->{$context};
+        foreach my $key ('element', 'unset') {
+          if (exists($spec->{$key})) {
+            $encoded_spec->{$key} = $spec->{$key};
+          }
+        }
+        foreach my $key ('text', 'translated_converted',
+                         'translated_to_convert') {
+          if (exists($spec->{$key})) {
+            $encoded_spec->{$key} = Encode::encode('UTF-8', $spec->{$key});
+          }
+        }
+      }
+    }
+    $result->{'no_arg_commands_formatting'}
+      = $encoded_no_arg_commands_formatting;
+  }
+
+  return $result;
+}
+
+# to be used before output
+# TODO document?
+sub encode_converter_for_output($)
+{
+  my $self = shift;
+  my $encoded_conf = Texinfo::Common::encode_options($self->{'conf'});
+
+  my $result = {'converter_descriptor' => $self->{'converter_descriptor'},
+                'conf' => $encoded_conf,
+               };
+
+  if (defined($self->{'output_init_conf'})) {
+    my $encoded_init_conf
+      = Texinfo::Common::encode_options($self->{'output_init_conf'});
+    $result->{'output_init_conf'} = $encoded_init_conf;
+  }
+
+  return $result;
 }
 
 
@@ -479,7 +570,7 @@ sub set_conf($$$)
   my $conf = shift;
   my $value = shift;
   if (!Texinfo::Common::valid_customization_option($conf)) {
-    die "BBUG: unknown option $conf\n";
+    die "BUG: set_conf: unknown option $conf\n";
     return undef;
   }
   if ($self->{'set'}->{$conf}) {
@@ -496,7 +587,7 @@ sub force_conf($$$)
   my $conf = shift;
   my $value = shift;
   if (!Texinfo::Common::valid_customization_option($conf)) {
-    die "ABUG: unknown option $conf\n";
+    die "BUG: force_conf: unknown option $conf\n";
     return undef;
   }
   $self->{'conf'}->{$conf} = $value;
@@ -541,12 +632,12 @@ sub determine_files_and_directory($;$)
 
   # determine input file base name
   my $input_basefile;
-  if (defined($self->{'parser_info'}->{'input_file_name'})) {
+  if (defined($self->{'document_info'}->{'input_file_name'})) {
     # 'input_file_name' is not decoded, as it is derived from input
     # file which is not decoded either.  We want to return only
     # decoded character strings such that they can easily be mixed
     # with other character strings, so we decode here.
-    my $input_file_name = $self->{'parser_info'}->{'input_file_name'};
+    my $input_file_name = $self->{'document_info'}->{'input_file_name'};
     my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
     if (defined($encoding)) {
       $input_file_name = decode($encoding, $input_file_name, sub { '?' });
@@ -707,7 +798,7 @@ sub node_information_filename($$$)
 {
   my $self = shift;
   my $normalized = shift;
-  my $node_contents = shift;
+  my $label_element = shift;
 
   my $no_unidecode;
   $no_unidecode = 1 if (defined($self->get_conf('USE_UNIDECODE'))
@@ -717,14 +808,14 @@ sub node_information_filename($$$)
   if (defined($normalized)) {
     if ($self->get_conf('TRANSLITERATE_FILE_NAMES')) {
       $filename = Texinfo::Convert::NodeNameNormalization::normalize_transliterate_texinfo(
-       {'contents' => $node_contents},
+       {'contents' => $label_element->{'contents'}},
             $no_unidecode);
     } else {
       $filename = $normalized;
     }
-  } elsif (defined($node_contents)) {
-    $filename = Texinfo::Convert::NodeNameNormalization::normalize_node(
-             { 'contents' => $node_contents });
+  } elsif (defined($label_element)) {
+    $filename = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
+             { 'contents' => $label_element->{'contents'} });
   } else {
     $filename = '';
   }
@@ -732,7 +823,7 @@ sub node_information_filename($$$)
   return $filename;
 }
 
-sub initialize_tree_units_files($)
+sub initialize_output_units_files($)
 {
   my $self = shift;
 
@@ -790,37 +881,35 @@ sub registered_filename($$)
   return undef;
 }
 
-# Sets $tree_unit->{'structure'}->{'unit_filename'}.
-sub set_tree_unit_file($$$)
+# Sets $output_unit->{'unit_filename'}.
+sub set_output_unit_file($$$)
 {
   my $self = shift;
-  my $tree_unit = shift;
+  my $output_unit = shift;
   my $filename = shift;
 
   if (!defined($filename)) {
-    cluck("set_tree_unit_file: filename not defined\n");
+    cluck("set_output_unit_file: filename not defined\n");
   }
-  if (!defined($tree_unit)) {
-    cluck("set_tree_unit_file: tree_unit not defined\n");
+  if (!defined($output_unit)) {
+    cluck("set_output_unit_file: output_unit not defined\n");
   }
 
   $filename = $self->register_normalize_case_filename($filename);
 
-  $tree_unit->{'structure'} = {} if (!$tree_unit->{'structure'});
-
-  # This should never happen, set_tree_unit_file is called once per
+  # This should never happen, set_output_unit_file is called once per
   # tree unit.
-  if (exists($tree_unit->{'structure'}->{'unit_filename'})) {
-    if ($tree_unit->{'structure'}->{'unit_filename'} eq $filename) {
-      print STDERR "set_tree_unit_file: already set: $filename\n"
+  if (exists($output_unit->{'unit_filename'})) {
+    if ($output_unit->{'unit_filename'} eq $filename) {
+      print STDERR "set_output_unit_file: already set: $filename\n"
          if ($self->get_conf('DEBUG'));
     } else {
-      print STDERR  "set_tree_unit_file: unit_filename reset: "
-        .$tree_unit->{'structure'}->{'unit_filename'}.", $filename\n"
+      print STDERR  "set_output_unit_file: unit_filename reset: "
+        .$output_unit->{'unit_filename'}.", $filename\n"
            if ($self->get_conf('DEBUG'));
     }
   }
-  $tree_unit->{'structure'}->{'unit_filename'} = $filename;
+  $output_unit->{'unit_filename'} = $filename;
 }
 
 # sets out_filepaths converter state, associating a file name
@@ -867,37 +956,30 @@ sub top_node_filename($$)
   my $self = shift;
   my $document_name = shift;
 
-  my $top_node_filename;
   if (defined($self->get_conf('TOP_FILE'))
       and $self->get_conf('TOP_FILE') ne '') {
-    $top_node_filename = $self->get_conf('TOP_FILE');
-  } else {
-    my $extension = '';
-    $extension = '.'.$self->get_conf('EXTENSION')
-      if (defined($self->get_conf('EXTENSION'))
-            and $self->get_conf('EXTENSION') ne '');
-
-    $top_node_filename = $document_name;
-    if (defined($top_node_filename)) {
-      $top_node_filename .= $extension;
+    return $self->get_conf('TOP_FILE');
+  } elsif (defined($document_name)) {
+    my $top_node_filename = $document_name;
+    if (defined($self->get_conf('EXTENSION'))
+        and $self->get_conf('EXTENSION') ne '') {
+      $top_node_filename .= '.'.$self->get_conf('EXTENSION')
     }
+    return $top_node_filename
   }
-  return $top_node_filename;
+  return undef;
 }
 
 sub _get_root_element($$)
 {
   my $self = shift;
   my $command = shift;
-  my $find_container = shift;
 
   my $current = $command;
 
   while (1) {
-    if ($current->{'type'}) {
-      if ($current->{'type'} eq 'unit') {
-        return $current;
-      }
+    if ($current->{'associated_unit'}) {
+      return $current->{'associated_unit'};
     }
     if ($current->{'parent'}) {
       $current = $current->{'parent'};
@@ -908,19 +990,19 @@ sub _get_root_element($$)
 }
 
 # set file_counters converter state
-sub _set_tree_units_files($$$$$$)
+sub _set_output_units_files($$$$$$)
 {
   my $self = shift;
-  my $tree_units = shift;
+  my $output_units = shift;
   my $output_file = shift;
   my $destination_directory = shift;
   my $output_filename = shift;
   my $document_name = shift;
 
   # Ensure that the document has pages
-  return undef if (!defined($tree_units) or !@$tree_units);
+  return undef if (!defined($output_units) or !@$output_units);
 
-  $self->initialize_tree_units_files();
+  $self->initialize_output_units_files();
 
   my $extension = '';
   $extension = '.'.$self->get_conf('EXTENSION')
@@ -929,101 +1011,101 @@ sub _set_tree_units_files($$$$$$)
 
   if (!$self->get_conf('SPLIT')) {
     $self->set_file_path($output_filename, undef, $output_file);
-    foreach my $tree_unit (@$tree_units) {
-      $self->set_tree_unit_file($tree_unit, $output_filename);
+    foreach my $output_unit (@$output_units) {
+      $self->set_output_unit_file($output_unit, $output_filename);
     }
   } else {
     my $node_top;
-    $node_top = $self->{'labels'}->{'Top'} if ($self->{'labels'});
-  
+    $node_top = $self->{'identifiers_target'}->{'Top'}
+                            if ($self->{'identifiers_target'});
+
     my $top_node_filename = $self->top_node_filename($document_name);
     # first determine the top node file name.
     if ($node_top and defined($top_node_filename)) {
       my ($node_top_unit) = $self->_get_root_element($node_top);
       if (!defined($node_top_unit)) {
-        print STDERR "No element for top node (".scalar(@$tree_units)." units)\n"
+        print STDERR "No element for top node (".scalar(@$output_units)." units)\n"
          if ($self->get_conf('DEBUG'));
       } else {
         $self->set_file_path($top_node_filename, $destination_directory);
-        $self->set_tree_unit_file($node_top_unit, $top_node_filename);
+        $self->set_output_unit_file($node_top_unit, $top_node_filename);
       }
     }
     my $file_nr = 0;
     my $previous_page;
-    foreach my $tree_unit (@$tree_units) {
+    foreach my $output_unit (@$output_units) {
       # For Top node.
-      next if ($tree_unit->{'structure'}
-               and defined($tree_unit->{'structure'}->{'unit_filename'}));
-      my $file_tree_unit = $tree_unit->{'extra'}->{'first_in_page'};
-      if (!$file_tree_unit) {
-        cluck ("No first_in_page for $tree_unit\n");
+      next if (defined($output_unit->{'unit_filename'}));
+      my $file_output_unit = $output_unit->{'first_in_page'};
+      if (!$file_output_unit) {
+        cluck ("No first_in_page for $output_unit\n");
       }
-      if (!defined($file_tree_unit->{'structure'}->{'unit_filename'})) {
-        foreach my $root_command (@{$file_tree_unit->{'contents'}}) {
+      if (!defined($file_output_unit->{'unit_filename'})) {
+        foreach my $root_command (@{$file_output_unit->{'unit_contents'}}) {
           if ($root_command->{'cmdname'}
               and $root_command->{'cmdname'} eq 'node') {
             my $node_filename;
             # double node are not normalized, they are handled here
             if (!defined($root_command->{'extra'}->{'normalized'})
-                or !defined($self->{'labels'}->{
+                or !defined($self->{'identifiers_target'}->{
                                $root_command->{'extra'}->{'normalized'}})) {
               $node_filename = 'unknown_node';
             } else {
               $node_filename
                = $self->node_information_filename(
                                $root_command->{'extra'}->{'normalized'},
-                               $root_command->{'args'}->[0]->{'contents'});
+                               $root_command->{'args'}->[0]);
             }
             $node_filename .= $extension;
             $self->set_file_path($node_filename,$destination_directory);
-            $self->set_tree_unit_file($file_tree_unit, $node_filename);
+            $self->set_output_unit_file($file_output_unit, $node_filename);
             last;
           }
         }
-        if (!defined($file_tree_unit->{'structure'}->{'unit_filename'})) {
+        if (!defined($file_output_unit->{'unit_filename'})) {
           # use section to do the file name if there is no node
-          my $command = $file_tree_unit->{'extra'}->{'unit_command'};
+          my $command = $file_output_unit->{'unit_command'};
           if ($command) {
             if ($command->{'cmdname'} eq 'top' and !$node_top
                 and defined($top_node_filename)) {
               $self->set_file_path($top_node_filename, $destination_directory);
-              $self->set_tree_unit_file($file_tree_unit, $top_node_filename);
+              $self->set_output_unit_file($file_output_unit, $top_node_filename);
             } else {
               my ($normalized_name, $filename)
                  = $self->normalized_sectioning_command_filename($command);
               $self->set_file_path($filename, $destination_directory);
-              $self->set_tree_unit_file($file_tree_unit, $filename);
+              $self->set_output_unit_file($file_output_unit, $filename);
             }
           } else {
             # when everything else has failed
             if ($file_nr == 0 and !$node_top and defined($top_node_filename)) {
               $self->set_file_path($top_node_filename, $destination_directory);
-              $self->set_tree_unit_file($file_tree_unit, $top_node_filename);
+              $self->set_output_unit_file($file_output_unit, $top_node_filename);
             } else {
               my $filename = $document_name . "_$file_nr";
               $filename .= $extension;
               $self->set_file_path($filename, $destination_directory);
-              $self->set_tree_unit_file($tree_unit, $filename);
+              $self->set_output_unit_file($output_unit, $filename);
             }
             $file_nr++;
           }
         }
       }
-      $self->set_tree_unit_file($tree_unit,
-                    $file_tree_unit->{'structure'}->{'unit_filename'});
+      $self->set_output_unit_file($output_unit,
+                    $file_output_unit->{'unit_filename'});
     }
   }
 
-  foreach my $tree_unit (@$tree_units) {
-    my $tree_unit_filename = $tree_unit->{'structure'}->{'unit_filename'};
-    $self->{'file_counters'}->{$tree_unit_filename} = 0
-       if (!exists($self->{'file_counters'}->{$tree_unit_filename}));
-    $self->{'file_counters'}->{$tree_unit_filename}++;
+  foreach my $output_unit (@$output_units) {
+    my $output_unit_filename = $output_unit->{'unit_filename'};
+    $self->{'file_counters'}->{$output_unit_filename} = 0
+       if (!exists($self->{'file_counters'}->{$output_unit_filename}));
+    $self->{'file_counters'}->{$output_unit_filename}++;
     print STDERR 'Page '
      # uncomment for perl object name
-     #."$tree_unit "
-     .Texinfo::Structuring::root_or_external_element_cmd_texi($tree_unit)
-     .": $tree_unit_filename($self->{'file_counters'}->{$tree_unit_filename})\n"
+     #."$output_unit "
+     .Texinfo::Structuring::output_unit_texi($output_unit)
+     .": $output_unit_filename($self->{'file_counters'}->{$output_unit_filename})\n"
               if ($self->get_conf('DEBUG'));
   }
 }
@@ -1063,6 +1145,7 @@ sub _command_init($$)
       return $Texinfo::Common::document_settable_at_commands{$global_command};
     }
   }
+  return undef;
 }
 
 # $COMMANDS_LOCATION is 'before', 'last', 'preamble' or 'preamble_or_first'
@@ -1077,7 +1160,7 @@ sub _command_init($$)
 # Notice that the only effect is to use set_conf (directly or through
 # set_global_document_command), no @-commands setting side effects are done
 # and associated customization variables are not set/reset either.
-sub set_global_document_commands($$;$)
+sub set_global_document_commands($$$)
 {
   my $self = shift;
   my $commands_location = shift;
@@ -1092,7 +1175,7 @@ sub set_global_document_commands($$;$)
   }
 
   if (not defined($selected_commands)) {
-    $selected_commands = [keys(%Texinfo::Common::document_settable_at_commands)];
+    die "set_global_document_commands: requires selected commands";
   }
   if ($commands_location eq 'before') {
     foreach my $global_command (@{$selected_commands}) {
@@ -1240,19 +1323,21 @@ sub float_type_number($$)
 
   my $tree;
   if ($type_element) {
-    if (defined($float->{'structure'})
-        and defined($float->{'structure'}->{'float_number'})) {
+    if (defined($float->{'extra'})
+        and defined($float->{'extra'}->{'float_number'})) {
       $tree = $self->gdt("{float_type} {float_number}",
           {'float_type' => $type_element,
-            'float_number' => $float->{'structure'}->{'float_number'}});
+            'float_number'
+                => {'text' => $float->{'extra'}->{'float_number'}}});
     } else {
       $tree = $self->gdt("{float_type}",
           {'float_type' => $type_element});
     }
-  } elsif (defined($float->{'structure'})
-           and defined($float->{'structure'}->{'float_number'})) {
+  } elsif (defined($float->{'extra'})
+           and defined($float->{'extra'}->{'float_number'})) {
     $tree = $self->gdt("{float_number}",
-       {'float_number' => $float->{'structure'}->{'float_number'}});
+       {'float_number'
+           => {'text' => $float->{'extra'}->{'float_number'}}});
   }
   return $tree;
 }
@@ -1281,37 +1366,41 @@ sub float_name_caption($$)
   my $prepended;
   if ($type_element) {
     if ($caption) {
-      if ($element->{'structure'}
-          and defined($element->{'structure'}->{'float_number'})) {
+      if ($element->{'extra'}
+          and defined($element->{'extra'}->{'float_number'})) {
         # TRANSLATORS: added before caption
         $prepended = $self->gdt('{float_type} {float_number}: ',
             {'float_type' => $type_element,
-             'float_number' => $element->{'structure'}->{'float_number'}});
+             'float_number'
+                => {'text' => $element->{'extra'}->{'float_number'}}});
       } else {
         # TRANSLATORS: added before caption, no float label
         $prepended = $self->gdt('{float_type}: ',
           {'float_type' => $type_element});
       }
     } else {
-      if ($element->{'structure'}
-          and defined($element->{'structure'}->{'float_number'})) {
+      if ($element->{'extra'}
+          and defined($element->{'extra'}->{'float_number'})) {
         $prepended = $self->gdt("{float_type} {float_number}",
             {'float_type' => $type_element,
-              'float_number' => $element->{'structure'}->{'float_number'}});
+              'float_number'
+                 => {'text' => $element->{'extra'}->{'float_number'}}});
       } else {
         $prepended = $self->gdt("{float_type}",
             {'float_type' => $type_element});
       }
     }
-  } elsif ($element->{'structure'}
-           and defined($element->{'structure'}->{'float_number'})) {
+  } elsif ($element->{'extra'}
+           and defined($element->{'extra'}->{'float_number'})) {
     if ($caption) {
       # TRANSLATORS: added before caption, no float type
       $prepended = $self->gdt('{float_number}: ',
-          {'float_number' => $element->{'structure'}->{'float_number'}});
+          {'float_number'
+                => {'text' => $element->{'extra'}->{'float_number'}}});
     } else {
       $prepended = $self->gdt("{float_number}",
-           {'float_number' => $element->{'structure'}->{'float_number'}});
+           {'float_number'
+                => {'text' => $element->{'extra'}->{'float_number'}}});
     }
   }
   return ($caption, $prepended);
@@ -1393,9 +1482,9 @@ sub convert_accents($$$;$$)
   my $output_encoded_characters = shift;
   my $in_upper_case = shift;
 
-  my ($contents, $stack)
+  my ($contents_element, $stack)
       = Texinfo::Convert::Utils::find_innermost_accent_contents($accent);
-  my $result = $self->convert_tree({'contents' => $contents});
+  my $result = $self->convert_tree($contents_element);
 
   my $encoded;
   if ($output_encoded_characters) {
@@ -1432,54 +1521,62 @@ sub comma_index_subentries_tree {
   return undef;
 }
 
+sub _count_converted_text($$)
+{
+  my $converted_text = shift;
+  my $count_words = shift;
+  if ($count_words) {
+    my @res = split /\W+/, $converted_text;
+    return scalar(@res);
+  } else {
+    my @res = split /^/, $converted_text;
+    return scalar(@res);
+  }
+}
+
 # This method allows to count words in elements and returns an array
 # and a text already formatted.
 sub sort_element_counts($$;$$)
 {
   my $converter =  shift;
-  my $tree = shift;
+  my $document = shift;
   my $use_sections = shift;
   my $count_words = shift;
 
-  my $elements;
+  my $tree = $document->tree();
+
+  my $output_units;
   if ($use_sections) {
-    $elements = Texinfo::Structuring::split_by_section($tree);
+    $output_units = Texinfo::Structuring::split_by_section($tree);
   } else {
-    $elements = Texinfo::Structuring::split_by_node($tree);
+    $output_units = Texinfo::Structuring::split_by_node($tree);
   }
 
-  if (!$elements) {
-    @$elements = ($tree);
-  } elsif (scalar(@$elements) >= 1
-           and (not $elements->[0]->{'extra'}
-                or not $elements->[0]->{'extra'}->{'unit_command'})) {
-    shift @$elements;
+  # cannot happen for now, but could in the past and could in the future.
+  if (!$output_units) {
+    my $name = 'NOT an output unit';
+    my $converted_text = $converter->convert($document);
+    my $count = _count_converted_text($converted_text, $count_words);
+    my $result = "$count  $name\n";
+    return ([[$count, $name]], $result);
   }
 
   my $max_count = 0;
   my @name_counts_array;
 
-  require Texinfo::Convert::Texinfo;
-  foreach my $element (@$elements) {
+  foreach my $output_unit (@$output_units) {
     my $name;
-    if ($element->{'extra'} and $element->{'extra'}->{'unit_command'}) {
-      my $command = $element->{'extra'}->{'unit_command'};
+    if ($output_unit->{'unit_command'}) {
+      my $command = $output_unit->{'unit_command'};
       if ($command->{'args'}->[0]->{'contents'}) {
         $name = "\@$command->{'cmdname'} "
           .Texinfo::Convert::Texinfo::convert_to_texinfo(
                        {'contents' => $command->{'args'}->[0]->{'contents'}});
       }
     }
-    $name = 'UNNAMED tree element' if (!defined($name));
-    my $count;
-    my $converted_element = $converter->convert_tree($element);
-    if ($count_words) {
-      my @res = split /\W+/, $converted_element;
-      $count = scalar(@res);
-    } else {
-      my @res = split /^/, $converted_element;
-      $count = scalar(@res);
-    }
+    $name = 'UNNAMED output unit' if (!defined($name));
+    my $converted_text = $converter->convert_output_unit($output_unit);
+    my $count = _count_converted_text($converted_text, $count_words);
     push @name_counts_array, [$count, $name];
     if ($count > $max_count) {
       $max_count = $count;
@@ -1514,7 +1611,7 @@ sub xml_format_text_with_numeric_entities($$)
 {
   my $self = shift;
   my $text = shift;
- 
+
   $text =~ s/``/$xml_numeric_entity_ldquo/g;
   $text =~ s/\'\'/$xml_numeric_entity_rdquo/g;
   $text =~ s/`/$xml_numeric_entity_lsquo/g;
@@ -1794,8 +1891,8 @@ Texinfo::Convert::Converter - Parent class for Texinfo tree converters
   # end of Texinfo::Convert::MyConverter
 
   my $converter = Texinfo::Convert::MyConverter->converter(
-                                               {'parser' => $parser});
-  $converter->output($texinfo_tree);
+                                               {'document' => $document});
+  $converter->output($texinfo_parsed_document);
 
 =head1 NOTES
 
@@ -1812,14 +1909,50 @@ In turn, the converter should define some methods.  Two are
 optional, C<converter_defaults>, C<converter_initialize> and
 used for initialization, to give information to C<Texinfo::Convert::Converter>.
 
-X<C<convert_tree>> X<C<output>> X<C<convert>>
+The following methods can be defined too:
+
+=over
+
+=item C<convert_tree>
+X<C<convert_tree>>
+
 The C<convert_tree> method is mandatory and should convert portions of Texinfo
-tree.  The C<output> method is used by converters as entry point for conversion
-to a file with headers and so on.  Although it is is not called from other
-modules, it should in general be implemented by converters. C<output> is called
-from C<texi2any>.  C<convert> is not required, but customarily used by
-converters as entry point for a conversion of a whole Texinfo tree without
-the headers done when outputting to a file.
+tree. Takes a Texinfo tree in argument.
+
+=item C<output>
+X<C<output>>
+
+The C<output> method is used by converters as entry point for conversion
+to a file with headers and so on.  Although not called from other
+modules, this method should in general be implemented by converters.
+C<Texinfo::Convert::Converter> implements a generic C<output> suitable
+for simple output formats.  C<output> is called from C<texi2any>.
+C<output> takes a Texinfo parsed document C<Texinfo::Document> in argument.
+
+=item C<convert>
+X<C<convert>>
+
+Optional entry point for the conversion of a Texinfo parsed document without
+the headers done when outputting to a file and can also be used to output
+simple documents.  It could be called from the C<Texinfo::Convert::Converter>
+C<output> implementation.  C<convert> takes a Texinfo parsed document
+C<Texinfo::Document> in argument.
+
+=item C<convert_output_unit>
+X<C<convert_output_unit>>
+
+Used as entry point for the conversion
+of output units by converters, for example by the
+C<Texinfo::Convert::Converter> C<output> implementation.
+C<convert_output_unit> takes an output unit as argument.  The implementation of
+C<convert_output_unit> of C<Texinfo::Convert::Converter> should be suitable for
+most cases.  Output units are typically returned by L<Texinfo::Structuring
+split_by_section|Texinfo::Structuring/$output_units = split_by_section($tree)>
+or L<Texinfo::Structuring split_by_node|Texinfo::Structuring/$output_units =
+split_by_node($tree)>.  Output units are not generated for all the formats, the
+Texinfo tree can also be converted directly.
+
+=back
 
 Existing backends may be used as examples that implement those
 methods.  C<Texinfo::Convert::Texinfo> together with
@@ -1851,22 +1984,22 @@ C<Texinfo::Convert::Converter>.
 =item $converter = MyConverter->converter($options)
 
 The I<$options> hash reference holds options for the converter.  In
-this option hash reference a L<parser object|Texinfo::Parser>
-may be associated with the I<parser> key.  The other options
+this option hash reference a L<document|Texinfo::Document>
+may be associated with the I<document> key.  The other options
 are Texinfo customization options and a few other options that can
 be passed to the converter. Most of the customization options
 are described in the Texinfo manual.
 Those customization options, when appropriate, override the document content.
-B<TODO what about the other options (all are used in converters;
-'structuring' is available in HTML $converter-E<gt>get_info()?>
-The parser should not be available directly anymore after getting the
-associated information. B<TODO document this associated information
-('parser_info', 'indices_information', 'floats'..., most available
+B<TODO what about the other options (all are used in converters>
+B<TODO change?
+The document should not be available directly anymore after getting the
+associated information.> B<TODO document this associated information
+('document_info', 'indices_information', 'floats'..., most available
 in HTML converter, either through $converter-E<gt>get_info() or label_command())>
 
 The C<converter> function returns a converter object (a blessed hash
 reference) after checking the options and performing some initializations,
-especially when a parser is given among the options.  The converter is
+especially when a document is given among the options.  The converter is
 also initialized as a L<Texinfo::Report>.
 
 =back
@@ -2005,14 +2138,6 @@ as encoded letters if I<$output_encoded_characters> is set, or formatted
 using I<\&format_accents>.  If I<$in_upper_case> is set, the result should be
 uppercased.
 
-=item $result = $converter->convert_document_sections($root, $file_handler)
-X<C<convert_document_sections>>
-
-This method splits the I<$root> Texinfo tree at sections and
-calls C<convert_tree> on the elements.  If the optional I<$file_handler>
-is given in argument, the result are output in I<$file_handler>, otherwise
-the resulting string is returned.
-
 =item $succeeded = $converter->create_destination_directory($destination_directory_path, $destination_directory_name)
 X<C<create_destination_directory>>
 
@@ -2091,11 +2216,11 @@ better formatted with new lines added independently of the presence
 of newline or comment in the initial Texinfo line, so most converters
 are better off not using this method.
 
-=item $filename = sub $converter->node_information_filename($normalized, $node_contents)
+=item $filename = sub $converter->node_information_filename($normalized, $label_element)
 X<C<node_information_filename>>
 
 Returns the normalized file name corresponding to the I<$normalized>
-node name and to the I<$node_contents> node name contents.
+node name and to the I<$label_element> node name element contents.
 
 =item ($normalized_name, $filename) = $converter->normalized_sectioning_command_filename($element)
 X<C<normalized_sectioning_command_filename>>
@@ -2116,9 +2241,9 @@ I<$element> tree element if given in argument.
 X<C<set_global_document_commands>>
 
 Set the Texinfo customization options for @-commands.  I<$selected_commands>
-is an optional array reference containing the @-commands set, if not given
-all the global informative @-commands are set.  I<$commands_location> specifies
-where in the document the value should be taken from. The possibilities are:
+is an array reference containing the @-commands set.  I<$commands_location>
+specifies where in the document the value should be taken from. The
+possibilities are:
 
 =over
 

@@ -94,6 +94,7 @@ $result_trees{'no_element'} = {
           ],
           'cmdname' => 'anchor',
           'extra' => {
+            'is_target' => 1,
             'normalized' => 'An-anchor'
           },
           'source_info' => {
@@ -229,6 +230,7 @@ $result_trees{'no_element'} = {
                       ],
                       'cmdname' => 'anchor',
                       'extra' => {
+                        'is_target' => 1,
                         'normalized' => 'Anchor-in-footnote'
                       },
                       'source_info' => {
@@ -376,6 +378,7 @@ $result_trees{'no_element'} = {
           ],
           'extra' => {
             'float_type' => '',
+            'is_target' => 1,
             'normalized' => 'float-anchor'
           },
           'info' => {
@@ -565,6 +568,7 @@ $result_trees{'no_element'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -662,11 +666,9 @@ $result_floats{'no_element'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => '',
         'normalized' => 'float-anchor'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

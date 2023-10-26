@@ -10,7 +10,6 @@ $result_trees{'float_with_at_commands'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         },
         {
@@ -276,6 +275,7 @@ $result_trees{'float_with_at_commands'} = {
           'extra' => {
             'caption' => {},
             'float_type' => "entr\x{e9}e",
+            'is_target' => 1,
             'normalized' => 'premi_00e8re-entr_00e9e'
           },
           'info' => {
@@ -395,11 +395,9 @@ $result_floats{'float_with_at_commands'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => "entr\x{e9}e",
         'normalized' => 'premi_00e8re-entr_00e9e'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

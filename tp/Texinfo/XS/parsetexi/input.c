@@ -20,8 +20,11 @@
 #include <string.h>
 #include <iconv.h>
 #include <errno.h>
-#include <sys/stat.h>
 
+/* for global_info */
+#include "parser.h"
+#include "utils.h"
+/* for xasprintf and other */
 #include "errors.h"
 #include "debug.h"
 #include "input.h"
@@ -52,15 +55,7 @@ static char *input_pushback_string;
 
 static iconv_t reverse_iconv; /* used in encode_file_name */
 
-typedef struct {
-  char *encoding_name;
-  iconv_t iconv;
-} ENCODING_CONVERSION;
-
-static ENCODING_CONVERSION *encodings_list = 0;
-int encoding_number = 0;
-int encoding_space = 0;
-char *global_input_encoding_name = 0;
+static ENCODING_CONVERSION_LIST parser_input_conversions = {0, 0, 0, 1};
 
 static ENCODING_CONVERSION *current_encoding_conversion = 0;
 
@@ -71,17 +66,7 @@ static ENCODING_CONVERSION *current_encoding_conversion = 0;
 int
 set_input_encoding (char *encoding)
 {
-  int encoding_index = -1;
   int encoding_set = 0;
-  char *conversion_encoding = encoding;
-
-  /* should correspond to
-     Texinfo::Common::encoding_name_conversion_map.
-     Thoughts on this mapping are available near
-     Texinfo::Common::encoding_name_conversion_map definition
-  */
-  if (!strcmp (encoding, "us-ascii"))
-    conversion_encoding = "iso-8859-1";
 
   if (reverse_iconv)
     {
@@ -89,49 +74,13 @@ set_input_encoding (char *encoding)
       reverse_iconv = (iconv_t) 0;
     }
 
-  if (!strcmp (encoding, "utf-8"))
+  current_encoding_conversion
+    = get_encoding_conversion (encoding, &parser_input_conversions);
+  if (current_encoding_conversion)
     {
-      if (encoding_number > 0)
-        encoding_index = 0;
-    }
-  else if (encoding_number > 1)
-    {
-      int i;
-      for (i = 1; i < encoding_number; i++)
-        {
-          if (!strcmp (encoding, encodings_list[i].encoding_name))
-            {
-              encoding_index = i;
-              break;
-            }
-        }
-    }
-
-  if (encoding_index == -1)
-    {
-      if (encoding_number >= encoding_space)
-        {
-          encodings_list = realloc (encodings_list,
-                   (encoding_space += 3) * sizeof (ENCODING_CONVERSION));
-        }
-      encodings_list[encoding_number].encoding_name
-           = strdup (conversion_encoding);
-      /* Initialize conversions for the first time.  iconv_open returns
-         (iconv_t) -1 on failure so these should only be called once. */
-      encodings_list[encoding_number].iconv
-           = iconv_open ("UTF-8", conversion_encoding);
-      encoding_index = encoding_number;
-      encoding_number++;
-    }
-
-  if (encodings_list[encoding_index].iconv == (iconv_t) -1)
-    current_encoding_conversion = 0;
-  else
-    {
-      current_encoding_conversion = &encodings_list[encoding_index];
       encoding_set = 1;
-      free (global_input_encoding_name);
-      global_input_encoding_name = strdup (encoding);
+      free (global_info.input_encoding_name);
+      global_info.input_encoding_name = strdup (encoding);
     }
 
   return encoding_set;
@@ -143,9 +92,6 @@ int input_number = 0;
 int input_space = 0;
 int macro_expansion_nr = 0;
 int value_expansion_nr = 0;
-
-/* Current filename and line number.  Used for reporting. */
-SOURCE_INFO current_source_info;
 
 /* Collect text from the input sources until a newline is found.  This is used 
    instead of next_text when we need to be sure we get an entire line of 
@@ -182,110 +128,46 @@ new_line (ELEMENT *current)
 }
 
 
-/* Run iconv using text buffer as output buffer. */
-size_t
-text_buffer_iconv (TEXT *buf, iconv_t iconv_state,
-                   ICONV_CONST char **inbuf, size_t *inbytesleft)
-{
-  size_t out_bytes_left;
-  char *outptr;
-  size_t iconv_ret;
-
-  outptr = buf->text + buf->end;
-  if (buf->end == buf->space - 1)
-    {
-      errno = E2BIG;
-      return (size_t) -1;
-    }
-  out_bytes_left = buf->space - buf->end - 1;
-  iconv_ret = iconv (iconv_state, inbuf, inbytesleft,
-                     &outptr, &out_bytes_left);
-
-  buf->end = outptr - buf->text;
-
-  return iconv_ret;
-}
-
-
-static char *
-encode_with_iconv (iconv_t our_iconv,  char *s)
-{
-  static TEXT t;
-  ICONV_CONST char *inptr; size_t bytes_left;
-  size_t iconv_ret;
-
-  t.end = 0; /* reset internal TEXT buffer */
-  inptr = s;
-  bytes_left = strlen (s);
-  text_alloc (&t, 10);
-
-  while (1)
-    {
-      iconv_ret = text_buffer_iconv (&t, our_iconv,
-                                     &inptr, &bytes_left);
-
-      /* Make sure libiconv flushes out the last converted character.
-         This is required when the conversion is stateful, in which
-         case libiconv might not output the last character, waiting to
-         see whether it should be combined with the next one.  */
-      if (iconv_ret != (size_t) -1
-          && text_buffer_iconv (&t, our_iconv, 0, 0) != (size_t) -1)
-        /* Success: all of input converted. */
-        break;
-
-      if (bytes_left == 0)
-        break;
-
-      switch (errno)
-        {
-        case E2BIG:
-          text_alloc (&t, t.space + 20);
-          break;
-        case EILSEQ:
-        default:
-          fprintf(stderr, "%s:%d: encoding error at byte 0x%2x\n",
-            current_source_info.file_name, current_source_info.line_nr,
-                                                 *(unsigned char *)inptr);
-          inptr++; bytes_left--;
-          break;
-        }
-    }
-
-  t.text[t.end] = '\0';
-  return strdup (t.text);
-}
-
 /* Return conversion of S according to input_encoding.  This function
-   frees S. */
+   frees S if S is converted. */
 char *
 convert_to_utf8 (char *s)
 {
   char *ret;
 
   /* Convert from @documentencoding to UTF-8.
-     It might be possible not to convert to UTF-8 and use an 8-bit encoding
-     throughout, but then we'd have to not set the UTF-8 flag on the Perl 
-     strings in api.c.  If multiple character encodings were used in a single 
-     file, then we'd have to keep track of which strings needed the UTF-8 flag
-     and which didn't. */
+     It could have been possible to use an 8-bit encoding throughout,
+     but if multiple character encodings were used in a single file it
+     is simpler to use UTF-8.  Another reason is that we need to
+     determine the unicode codepoints for conversion to identifiers, doing
+     that for UTF-8 only is more manageable.  For conversion
+     of strings it is also easier to request that callers give UTF-8
+     encoded strings instead of keeping track of the encodings.
+     It is also better to use only UTF-8 to pass strings to Perl.  Lastly,
+     we assume in places in the code that the encoding is UTF-8, for
+     instance to determine the number of bytes representing a character, but
+     these code would in general be easily modified for an 8-bit encoding.
+   */
 
   if (current_encoding_conversion == 0)
     {
       /* In case the converter couldn't be initialised.
          Danger: this will cause problems if the input is not in UTF-8 as
-         the Perl strings that are created are flagged as being UTF-8. */
+         UTF-8 is assumed when using libunistring and the Perl strings that
+         are created are flagged as being UTF-8. */
       return s;
     }
 
-  ret = encode_with_iconv (current_encoding_conversion->iconv, s);
+  ret = encode_with_iconv (current_encoding_conversion->iconv, s,
+                           &current_source_info);
   free (s);
   return ret;
 }
 
 
-int doc_encoding_for_input_file_name = 1;
-char *input_file_name_encoding = 0;
-char *locale_encoding = 0;
+static int doc_encoding_for_input_file_name = 1;
+static char *input_file_name_encoding = 0;
+static char *locale_encoding = 0;
 
 void
 set_input_file_name_encoding (char *value)
@@ -299,6 +181,12 @@ set_locale_encoding (char *value)
 {
   free (locale_encoding);
   locale_encoding =  value ? strdup (value) : 0;
+}
+
+void
+set_doc_encoding_for_input_file_name (int value)
+{
+  doc_encoding_for_input_file_name = value;
 }
 
 /* Reverse the decoding of the filename to the input encoding, to retrieve
@@ -316,7 +204,7 @@ encode_file_name (char *filename)
       else if (doc_encoding_for_input_file_name)
         {
           if (current_encoding_conversion
-              && strcmp (global_input_encoding_name, "utf-8"))
+              && strcmp (global_info.input_encoding_name, "utf-8"))
             {
               char *conversion_encoding
                 = current_encoding_conversion->encoding_name;
@@ -331,7 +219,7 @@ encode_file_name (char *filename)
   if (reverse_iconv && reverse_iconv != (iconv_t) -1)
     {
       char *s, *conv;
-      conv = encode_with_iconv (reverse_iconv, filename);
+      conv = encode_with_iconv (reverse_iconv, filename, &current_source_info);
       s = save_string (conv);
       free (conv);
       return s;
@@ -395,7 +283,9 @@ next_text (ELEMENT *current)
 {
   ssize_t status;
   char *line = 0;
-  size_t n;
+  size_t n = 1;
+  /* Note: n needs to be a positive value, rather than 0, to work around
+     a bug in getline on MinGW.   This appears to be allowed by POSIX. */
   FILE *input_file;
 
   if (input_pushback_string)
@@ -505,7 +395,7 @@ next_text (ELEMENT *current)
              messages.
           */
                   char *decoded_file_name
-                          = convert_to_utf8 (strdup(input->input_file_path));
+                    = convert_to_utf8 (strdup(input->input_file_path));
                   line_warn ("error on closing %s: %s",
                              decoded_file_name,
                              strerror (errno));
@@ -620,8 +510,8 @@ set_input_source_mark (SOURCE_MARK *source_mark)
 /* For filenames and macro names, it is possible that they won't be referenced 
    in the line number of any element.  It would be too much work to keep track, 
    so just keep them all here, and free them all together at the end. */
-static char **small_strings;
-static size_t small_strings_num;
+char **small_strings = 0;
+size_t small_strings_num = 0;
 static size_t small_strings_space;
 
 char *
@@ -644,7 +534,15 @@ save_string (char *string)
   return ret;
 }
 
-/* Called in reset_parser. */
+void
+forget_small_strings (void)
+{
+  small_strings = 0;
+  small_strings_num = 0;
+  small_strings_space = 0;
+}
+
+/* not used */
 void
 free_small_strings (void)
 {
@@ -679,20 +577,9 @@ input_reset_input_stack (void)
 }
 
 void
-reset_encoding_list (void)
+parser_reset_encoding_list (void)
 {
-  int i;
-  /* never reset the utf-8 encoding in position 0 */
-  if (encoding_number > 1)
-    {
-      for (i = 1; i < encoding_number; i++)
-        {
-          free (encodings_list[i].encoding_name);
-          if (encodings_list[i].iconv != (iconv_t) -1)
-            iconv_close (encodings_list[i].iconv);
-        }
-      encoding_number = 1;
-    }
+  reset_encoding_list (&parser_input_conversions);
   /* could be named global_encoding_conversion and reset in wipe_global_info,
      but we prefer to keep it static as long as it is only used in one
      file */
@@ -709,72 +596,27 @@ top_file_index (void)
 }
 
 
-static char **include_dirs;
-static size_t include_dirs_number;
-static size_t include_dirs_space;
+static STRING_LIST parser_include_dirs_list = {0, 0, 0};
 
 void
-add_include_directory (char *filename)
+parser_add_include_directory (char *filename)
 {
-  int len;
-  if (include_dirs_number == include_dirs_space)
-    {
-      include_dirs = realloc (include_dirs,
-                              sizeof (char *) * (include_dirs_space += 5));
-    }
-  filename = strdup (filename);
-  include_dirs[include_dirs_number++] = filename;
-  len = strlen (filename);
-  if (len > 0 && filename[len - 1] == '/')
-    filename[len - 1] = '\0';
+  add_include_directory (filename, &parser_include_dirs_list);
 }
 
 void
-clear_include_directories (void)
+parser_clear_include_directories (void)
 {
-  int i;
-  for (i = 0; i < include_dirs_number; i++)
-    {
-      free (include_dirs[i]);
-    }
-  include_dirs_number = 0;
+  clear_strings_list (&parser_include_dirs_list);
 }
 
-/* Return value to be freed by caller. */
 char *
-locate_include_file (char *filename)
+parser_locate_include_file (char *filename)
 {
-  char *fullpath;
-  struct stat dummy;
-  int i, status;
-
-  /* Checks if filename is absolute or relative to current directory. */
-  /* Note: the Perl code (in Common.pm, 'locate_include_file') handles 
-     a volume in a path (like "A:") using the File::Spec module. */
-  if (!memcmp (filename, "/", 1)
-      || !memcmp (filename, "../", 3)
-      || !memcmp (filename, "./", 2))
-    {
-      status = stat (filename, &dummy);
-      if (status == 0)
-        return strdup (filename);
-    }
-  else
-    {
-      for (i = 0; i < include_dirs_number; i++)
-        {
-          xasprintf (&fullpath, "%s/%s", include_dirs[i], filename);
-          status = stat (fullpath, &dummy);
-          if (status == 0)
-            return fullpath;
-          free (fullpath);
-        }
-    }
-  return 0;
+  return locate_include_file (filename, &parser_include_dirs_list);
 }
 
-/* Try to open a file called FILENAME, looking for it in the list of include
-   directories. */
+/* Try to open a file called FILENAME */
 int
 input_push_file (char *filename)
 {

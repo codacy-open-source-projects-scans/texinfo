@@ -29,6 +29,7 @@ $result_trees{'complex_recursive_synindex'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -406,6 +407,7 @@ $result_trees{'complex_recursive_synindex'} = {
             ]
           },
           'info' => {
+            'command_name' => 'eeeindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -517,6 +519,7 @@ $result_trees{'complex_recursive_synindex'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cccindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -554,6 +557,7 @@ $result_trees{'complex_recursive_synindex'} = {
             ]
           },
           'info' => {
+            'command_name' => 'bbbindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -591,6 +595,7 @@ $result_trees{'complex_recursive_synindex'} = {
             ]
           },
           'info' => {
+            'command_name' => 'aaaindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -628,6 +633,7 @@ $result_trees{'complex_recursive_synindex'} = {
             ]
           },
           'info' => {
+            'command_name' => 'dddindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -665,6 +671,7 @@ $result_trees{'complex_recursive_synindex'} = {
             ]
           },
           'info' => {
+            'command_name' => 'eeeindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -918,6 +925,7 @@ $result_trees{'complex_recursive_synindex'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -1001,33 +1009,42 @@ ddd
 eee
 ';
 
-$result_nodes{'complex_recursive_synindex'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'complex_recursive_synindex'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'complex_recursive_synindex'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'complex_recursive_synindex'}[0];
+$result_nodes{'complex_recursive_synindex'}[1] = $result_nodes{'complex_recursive_synindex'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'complex_recursive_synindex'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'complex_recursive_synindex'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'complex_recursive_synindex'};
-
-$result_menus{'complex_recursive_synindex'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'complex_recursive_synindex'} = [
   {
@@ -1095,13 +1112,6 @@ $result_indices{'complex_recursive_synindex'} = {
       'name' => 'aaa'
     },
     'bbb' => {
-      'contained_indices' => {
-        'aaa' => 1,
-        'bbb' => 1,
-        'ccc' => 1,
-        'ddd' => 1,
-        'eee' => 1
-      },
       'in_code' => 0,
       'name' => 'bbb'
     },
@@ -1111,9 +1121,6 @@ $result_indices{'complex_recursive_synindex'} = {
       'name' => 'ccc'
     },
     'cp' => {
-      'contained_indices' => {
-        'cp' => 1
-      },
       'in_code' => 0,
       'name' => 'cp'
     },
@@ -1128,37 +1135,22 @@ $result_indices{'complex_recursive_synindex'} = {
       'name' => 'eee'
     },
     'fn' => {
-      'contained_indices' => {
-        'fn' => 1
-      },
       'in_code' => 1,
       'name' => 'fn'
     },
     'ky' => {
-      'contained_indices' => {
-        'ky' => 1
-      },
       'in_code' => 1,
       'name' => 'ky'
     },
     'pg' => {
-      'contained_indices' => {
-        'pg' => 1
-      },
       'in_code' => 1,
       'name' => 'pg'
     },
     'tp' => {
-      'contained_indices' => {
-        'tp' => 1
-      },
       'in_code' => 1,
       'name' => 'tp'
     },
     'vr' => {
-      'contained_indices' => {
-        'vr' => 1
-      },
       'in_code' => 1,
       'name' => 'vr'
     }

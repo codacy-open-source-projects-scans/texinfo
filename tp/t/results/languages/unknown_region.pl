@@ -73,6 +73,7 @@ $result_trees{'unknown_region'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -121,7 +122,8 @@ $result_trees{'unknown_region'} = {
                       'contents' => [
                         {
                           'extra' => {
-                            'documentlanguage' => 'fr_NOWHERE'
+                            'documentlanguage' => 'fr_NOWHERE',
+                            'translation_context' => 'category of instance variables in object-oriented programming for @defivar'
                           },
                           'text' => 'Instance Variable',
                           'type' => 'untranslated'
@@ -185,20 +187,40 @@ $result_trees{'unknown_region'} = {
                 'def_command' => 'defivar',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'BBB'
+                    },
                     {
                       'text' => ' de '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'AAA'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'BBB'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'AAA'
+                    }
                   ]
                 },
                 'documentlanguage' => 'fr_NOWHERE',
@@ -262,6 +284,7 @@ $result_trees{'unknown_region'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -278,10 +301,6 @@ $result_trees{'unknown_region'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'unknown_region'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'unknown_region'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'unknown_region'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'unknown_region'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'unknown_region'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'unknown_region'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'unknown_region'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'unknown_region'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'unknown_region'}{'contents'}[2]{'contents'}[1]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'unknown_region'}{'contents'}[2];
 
 $result_texis{'unknown_region'} = '@documentlanguage fr_NOWHERE
@@ -299,32 +318,41 @@ $result_texts{'unknown_region'} = '
 Instance Variable of AAA: BBB CCC
 ';
 
-$result_nodes{'unknown_region'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'unknown_region'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'unknown_region'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'unknown_region'}[0];
+$result_nodes{'unknown_region'}[1] = $result_nodes{'unknown_region'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'unknown_region'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'unknown_region'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'unknown_region'};
-
-$result_menus{'unknown_region'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'unknown_region'} = [
   {
@@ -350,7 +378,7 @@ $result_indices_sort_strings{'unknown_region'} = {
 
 
 
-$result_converted{'plaintext'}->{'unknown_region'} = ' -- Instance Variable de AAA : BBB CCC
+$result_converted{'plaintext'}->{'unknown_region'} = ' -- Variable d\'instance de AAA : BBB CCC
 ';
 
 
@@ -362,7 +390,7 @@ File: ,  Node: Top,  Next: chap,  Up: (dir)
 
 File: ,  Node: chap,  Prev: Top
 
- -- Instance Variable de AAA : BBB CCC
+ -- Variable d\'instance de AAA : BBB CCC
 
 
 Tag Table:
@@ -407,18 +435,18 @@ strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
 
 <a class="node-id" id="Top"></a><div class="nav-panel">
 <p>
-Next: <a href="#chap" accesskey="n" rel="next">chap</a> &nbsp; </p>
+Suivant: <a href="#chap" accesskey="n" rel="next">chap</a> &nbsp; </p>
 </div>
 <h1 class="node"><span>Top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 <hr>
 <a class="node-id" id="chap"></a><div class="nav-panel">
 <p>
-Previous: <a href="#Top" accesskey="p" rel="prev">Top</a> &nbsp; </p>
+Pr&eacute;c&eacute;dent: <a href="#Top" accesskey="p" rel="prev">Top</a> &nbsp; </p>
 </div>
 <h4 class="node"><span>chap<a class="copiable-link" href="#chap"> &para;</a></span></h4>
 
 <dl class="first-defcv first-defivar-alias-first-defcv">
-<dt class="defcv defivar-alias-defcv" id="index-BBB-of-AAA"><span class="category-def">Instance Variable de <code class="code">AAA</code>&nbsp;: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-AAA"> &para;</a></span></dt>
+<dt class="defcv defivar-alias-defcv" id="index-BBB-of-AAA"><span class="category-def">Variable d&rsquo;instance de <code class="code">AAA</code>&nbsp;: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-AAA"> &para;</a></span></dt>
 </dl>
 
 

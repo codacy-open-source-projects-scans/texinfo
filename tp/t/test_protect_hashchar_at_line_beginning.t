@@ -5,10 +5,11 @@ use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
 use Test::More;
 
-BEGIN { plan tests => 7; }
+BEGIN { plan tests => 9; }
 
 use Texinfo::Parser;
 use Texinfo::Transformations;
+use Texinfo::Structuring;
 use Texinfo::Convert::Texinfo;
 
 use Data::Dumper;
@@ -20,6 +21,12 @@ $ENV{LANGUAGE} = 'C';
 
 ok(1);
 
+my $with_XS = ((not defined($ENV{TEXINFO_XS})
+                or $ENV{TEXINFO_XS} ne 'omit')
+               and (!defined $ENV{TEXINFO_XS_PARSER}
+                    or $ENV{TEXINFO_XS_PARSER} eq '1'));
+
+
 sub run_test($$$;$)
 {
   my $in = shift;
@@ -28,12 +35,23 @@ sub run_test($$$;$)
   my $error_message = shift;
 
   my $parser = Texinfo::Parser::parser();
-  my $tree = $parser->parse_texi_piece($in, 1);
+  my $document = $parser->parse_texi_piece($in, 1);
+  my $tree = $document->tree();
 
   my $registrar = $parser->registered_errors();
 
-  my $corrected_tree = 
-    Texinfo::Transformations::protect_hashchar_at_line_beginning($registrar, $parser, $tree);
+  my $corrected_tree =
+    Texinfo::Transformations::protect_hashchar_at_line_beginning($tree,
+                                                  $registrar, $parser);
+
+  $document = Texinfo::Structuring::rebuild_document($document);
+  $corrected_tree = $document->tree();
+
+  if ($with_XS) {
+    foreach my $error (@{$document->{'errors'}}) {
+      $registrar->add_formatted_message($error);
+    }
+  }
 
   if (defined($error_message)) {
     my ($errors, $errors_count) = $registrar->errors();
@@ -142,10 +160,51 @@ run_test('
 ', 'in raw command', [2, 'warning: could not protect hash character in @macro
 ']);
 
+run_test('
+@example
+in example
+@end example
+# line 100 "toto"
+
+Something.
+','
+@example
+in example
+@end example
+@hashchar{} line 100 "toto"
+
+Something.
+',
+'after block end');
+
+# shows that there is protection in contexts where hash character
+# is not first in line, as there is protection whenever first in
+# content.  There can therefore be too much protection, but it is
+# not an issue in general.
+run_test('@quotation # line 100 "toto"
+in quotation
+@end quotation
+
+@enumerate
+@item # line 1
+@end enumerate
+
+@code{# 3 "c"}
+', '@quotation @hashchar{} line 100 "toto"
+in quotation
+@end quotation
+
+@enumerate
+@item @hashchar{} line 1
+@end enumerate
+
+@code{@hashchar{} 3 "c"}
+', 'on quotation line');
+
 
 #{
 #  local $Data::Dumper::Purity = 1;
 #  local $Data::Dumper::Indent = 1;
-# 
+#
 #  print STDERR Data::Dumper->Dump([$tree]);
 #}

@@ -28,6 +28,7 @@ $result_trees{'index_and_node_same_name'} = {
         }
       ],
       'cmdname' => 'top',
+      'extra' => {},
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -89,6 +90,7 @@ $result_trees{'index_and_node_same_name'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -141,6 +143,7 @@ $result_trees{'index_and_node_same_name'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'index-node'
       },
@@ -176,36 +179,38 @@ $result_texts{'index_and_node_same_name'} = 'top
 ';
 
 $result_sectioning{'index_and_node_same_name'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
-        'structure' => {
+        'extra' => {
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'index_and_node_same_name'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'index_and_node_same_name'};
+$result_sectioning{'index_and_node_same_name'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'index_and_node_same_name'};
 
-$result_nodes{'index_and_node_same_name'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'isindex' => 1,
-    'normalized' => 'index-node'
+$result_nodes{'index_and_node_same_name'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'isindex' => 1,
+      'normalized' => 'index-node'
+    }
   }
-};
+];
 
-$result_menus{'index_and_node_same_name'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'isindex' => 1,
-    'normalized' => 'index-node'
+$result_menus{'index_and_node_same_name'} = [
+  {
+    'extra' => {
+      'normalized' => 'index-node'
+    }
   }
-};
+];
 
 $result_errors{'index_and_node_same_name'} = [];
 

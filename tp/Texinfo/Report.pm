@@ -69,6 +69,17 @@ sub errors($)
   return ($self->{'errors_warnings'}, $self->{'error_nrs'});
 }
 
+# add an already formatted/setup message
+sub add_formatted_message($$)
+{
+  my $self = shift;
+  my $message = shift;
+
+  $self->{'error_nrs'}++ if ($message->{'type'} eq 'error'
+                             and !$message->{'continuation'});
+  push @{$self->{'errors_warnings'}}, $message;
+}
+
 # format a line warning
 sub line_warn($$$$;$$)
 {
@@ -81,12 +92,12 @@ sub line_warn($$$$;$$)
 
   return if (!defined($error_location_info));
 
-  chomp ($text);
-
   my $warn_line;
 
   if (defined($error_location_info->{'macro'})
       and $error_location_info->{'macro'} ne '') {
+    # TODO change the context to "Texinfo source file warning in a macro"
+    # when nearing the release
     $warn_line = sprintf(__p("Texinfo source file warning",
                              "warning: %s (possibly involving \@%s)")."\n",
                          $text, $error_location_info->{'macro'});
@@ -118,13 +129,15 @@ sub line_error($$$$;$)
   my $continuation = shift;
   my $silent = shift;
 
-  chomp ($text);
-
   if (defined($error_location_info)) {
-    my $macro_text = '';
-    $macro_text = " (possibly involving \@$error_location_info->{'macro'})"
-       if ($error_location_info->{'macro'} ne '');
-    my $error_text = "$text$macro_text\n";
+    my $error_text;
+    if ($error_location_info->{'macro'} ne '') {
+      $error_text = sprintf(__p("Texinfo source file error in macro",
+                            "%s (possibly involving \@%s)")."\n",
+                         $text, $error_location_info->{'macro'});
+    } else {
+      $error_text = $text."\n";
+    }
     warn $error_text if (defined($configuration_information)
                          and $configuration_information->get_conf('DEBUG')
                          and not $silent);
@@ -146,8 +159,6 @@ sub document_warn($$$;$)
   my $configuration_information = shift;
   my $text = shift;
   my $continuation = shift;
-
-  chomp($text);
 
   my $warn_line;
   if (defined($configuration_information)
@@ -172,7 +183,6 @@ sub document_error($$$;$)
   my $text = shift;
   my $continuation = shift;
 
-  chomp($text);
   my $error_line;
   if (defined($configuration_information)
       and defined($configuration_information->get_conf('PROGRAM'))
@@ -202,12 +212,12 @@ Texinfo::Report - Error storing for Texinfo modules
   use Texinfo::Report;
 
   my $registrar = Texinfo::Report::new();
-  
+
   if ($warning_happened) {
     $registrar->line_warn($converter, sprintf(__("\@%s is wrongly used"),
                        $current->{'cmdname'}), $current->{'source_info'});
   }
-  
+
   my ($errors, $errors_count) = $registrar->errors();
   foreach my $error_message (@$errors) {
     warn $error_message->{'error_line'};
@@ -290,6 +300,13 @@ The user macro name that is expanded at the location of
 the error or warning.
 
 =back
+
+=item $registrar->add_formatted_message ($msg)
+X<C<add_formatted_message>>
+
+Register the I<$msg> hash reference corresponding to an error, warning or error line
+continuation.  The I<$msg> hash reference should correspond to the structure returned
+by C<errors>.
 
 =item $registrar->line_warn($text, $configuration_information, $error_location_info, $continuation, $silent)
 

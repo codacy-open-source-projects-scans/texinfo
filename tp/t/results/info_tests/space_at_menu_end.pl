@@ -169,6 +169,7 @@ $result_trees{'space_at_menu_end'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -205,50 +206,37 @@ $result_texts{'space_at_menu_end'} = '
 A para.
 ';
 
-$result_nodes{'space_at_menu_end'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'out'
-          }
-        ]
+$result_nodes{'space_at_menu_end'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'out'
+              }
+            ]
+          },
+          'type' => 'menu_entry_node'
+        }
       },
-      'type' => 'menu_entry_node'
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'space_at_menu_end'}{'structure'}{'node_next'} = $result_nodes{'space_at_menu_end'}{'structure'}{'menu_child'};
-
-$result_menus{'space_at_menu_end'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'out'
-          }
-        ]
-      },
-      'type' => 'menu_entry_node'
+      'normalized' => 'Top'
     }
   }
-};
+];
+
+$result_menus{'space_at_menu_end'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  }
+];
 
 $result_errors{'space_at_menu_end'} = [];
 

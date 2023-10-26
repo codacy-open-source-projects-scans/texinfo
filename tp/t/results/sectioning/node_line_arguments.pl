@@ -36,6 +36,7 @@ $result_trees{'node_line_arguments'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'one-arg1'
       },
       'info' => {
@@ -85,6 +86,7 @@ $result_trees{'node_line_arguments'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'one-arg2'
       },
       'info' => {
@@ -153,6 +155,7 @@ $result_trees{'node_line_arguments'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'one-arg3'
       },
       'info' => {
@@ -240,6 +243,7 @@ $result_trees{'node_line_arguments'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'one-arg4'
       },
       'info' => {
@@ -334,6 +338,7 @@ $result_trees{'node_line_arguments'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'one-arg5'
       },
       'info' => {
@@ -382,6 +387,7 @@ $result_trees{'node_line_arguments'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'comment'
       },
       'info' => {
@@ -509,6 +515,7 @@ $result_trees{'node_line_arguments'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'arg1-_002c-arg2'
       },
       'info' => {
@@ -556,19 +563,88 @@ $result_texts{'node_line_arguments'} = '
 
 ';
 
-$result_nodes{'node_line_arguments'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'one-arg1'
+$result_nodes{'node_line_arguments'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'one-arg1'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'one-arg2'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'one-arg3'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'one-arg4'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'one-arg5'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'comment'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'arg1-_002c-arg2'
+    }
   }
-};
+];
 
-$result_menus{'node_line_arguments'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'one-arg1'
+$result_menus{'node_line_arguments'} = [
+  {
+    'extra' => {
+      'normalized' => 'one-arg1'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'one-arg2'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'one-arg3'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'one-arg4'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'one-arg5'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'comment'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'arg1-_002c-arg2'
+    }
   }
-};
+];
 
 $result_errors{'node_line_arguments'} = [
   {

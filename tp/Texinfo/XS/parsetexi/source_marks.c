@@ -15,12 +15,17 @@
 
 #include <config.h>
 #include <string.h>
+#include <stdlib.h>
 
-#include "parser.h"
-#include "debug.h"
-#include "source_marks.h"
+#include "tree_types.h"
 #include "tree.h"
-#include "errors.h"
+#include "debug.h"
+#include "debug_parser.h"
+/* for count_multibyte and other */
+#include "utils.h"
+/* for add_source_mark */
+#include "manipulate_tree.h"
+#include "source_marks.h"
 
 int include_counter = 0;
 int setfilename_counter = 0;
@@ -37,7 +42,8 @@ int expanded_conditional_command_counter = 0;
    it only if static (or in only one file if extern) */
 static char *source_marks_names[SM_type_expanded_conditional_command + 1] =
 {
-  #define sm_type(name) [SM_type_ ## name] = #name,
+  /* #define sm_type(name) [SM_type_ ## name] = #name, */
+  #define sm_type(name) #name,
     SM_TYPES_LIST
   #undef sm_type
 };
@@ -60,22 +66,6 @@ new_source_mark (enum source_mark_type type)
   source_mark->counter = -1;
   source_mark->status = SM_status_none;
   return source_mark;
-}
-
-void
-add_source_mark (SOURCE_MARK *source_mark, ELEMENT *e)
-{
-  SOURCE_MARK_LIST *s_mark_list = &(e->source_mark_list);
-  if (s_mark_list->number == s_mark_list->space)
-    {
-      s_mark_list->space++;  s_mark_list->space *= 1.5;
-      s_mark_list->list = realloc (s_mark_list->list,
-                          s_mark_list->space * sizeof (SOURCE_MARK));
-      if (!s_mark_list->list)
-        fatal ("realloc failed");
-    }
-  s_mark_list->list[s_mark_list->number] = source_mark;
-  s_mark_list->number++;
 }
 
 void
@@ -107,7 +97,7 @@ place_source_mark (ELEMENT *e, SOURCE_MARK *source_mark)
       ELEMENT *last_child = last_contents_child (e);
       mark_element = last_child;
       if (last_child->text.end > 0)
-        source_mark->position = count_convert_u8 (last_child->text.text);
+        source_mark->position = count_multibyte (last_child->text.text);
     }
   else
     {
@@ -124,8 +114,8 @@ place_source_mark (ELEMENT *e, SOURCE_MARK *source_mark)
          source_mark->status == SM_status_start ? "start"
           : source_mark->status == SM_status_end ? "end"
           : "UNDEF", add_element_string);
-  debug_print_element(mark_element, 0); debug_nonl (" ");
-  debug_print_element(e, 0); debug ("");
+  debug_parser_print_element(mark_element, 0); debug_nonl (" ");
+  debug_parser_print_element(e, 0); debug ("");
 
   add_source_mark (source_mark, mark_element);
 }
@@ -198,75 +188,5 @@ source_marks_reset_counters (void)
   value_expansion_counter = 0;
   ignored_conditional_block_counter = 0;
   expanded_conditional_command_counter = 0;
-}
-
-SOURCE_MARK *
-remove_from_source_mark_list (SOURCE_MARK_LIST *list, int where)
-{
-  SOURCE_MARK *removed;
-
-  if (where < 0)
-    where = list->number + where;
-
-  if (where < 0 || where > list->number)
-    fatal ("source marks list index out of bounds");
-
-  removed = list->list[where];
-  memmove (&list->list[where], &list->list[where + 1],
-           (list->number - (where+1)) * sizeof (SOURCE_MARK *));
-  list->number--;
-  return removed;
-}
-
-/* relocate SOURCE_MARKS source marks with position between
-   BEGIN_POSITION and BEGIN_POSITION + LEN to be relative to BEGIN_POSITION,
-   and move to element E.
-   Returns BEGIN_POSITION + LEN if there were source marks.
-*/
-size_t
-relocate_source_marks (SOURCE_MARK_LIST *source_mark_list, ELEMENT *new_e,
-                       size_t begin_position, size_t len)
-{
-  int i = 0;
-  int j;
-  int list_number = source_mark_list->number;
-  int *indices_to_remove;
-  size_t end_position;
-
-  if (list_number == 0)
-    return 0;
-
-  end_position = begin_position + len;
-
-  indices_to_remove = malloc (sizeof(int) * list_number);
-  memset (indices_to_remove, 0, sizeof(int) * list_number);
-
-  while (i < list_number)
-    {
-      SOURCE_MARK *source_mark
-         = source_mark_list->list[i];
-      if ((begin_position == 0 && source_mark->position == 0)
-          || (source_mark->position > begin_position
-              && source_mark->position <= end_position))
-        {
-          indices_to_remove[i] = 1;
-          source_mark->position
-            = source_mark->position - begin_position;
-          add_source_mark (source_mark, new_e);
-        }
-      i++;
-      if (source_mark->position > end_position)
-        break;
-    }
-  /* i is past the last index with a potential source mark to remove
-     (to be ready for the next pass in the loop above).  So remove one */
-  for (j = i - 1; j >= 0; j--)
-    {
-      if (indices_to_remove[j] == 1)
-        remove_from_source_mark_list (source_mark_list, j);
-    }
-
-  free (indices_to_remove);
-  return end_position;
 }
 

@@ -187,7 +187,7 @@ use Texinfo::Convert::Converter;
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 # could export convert_to_latex_math
 
@@ -988,9 +988,7 @@ sub _prepare_conversion($;$)
   if ($self->{'global_commands'}->{'settitle'}) {
     my $settitle_root = $self->{'global_commands'}->{'settitle'};
     if ($settitle_root->{'args'}->[0]
-        and $settitle_root->{'args'}->[0]->{'contents'}
-        and not ($settitle_root->{'extra'}
-                 and $settitle_root->{'extra'}->{'missing_argument'})) {
+        and $settitle_root->{'args'}->[0]->{'contents'}) {
       $self->{'settitle_tree'} =
          {'contents' => $settitle_root->{'args'}->[0]->{'contents'}};
     }
@@ -1014,7 +1012,8 @@ sub _associate_other_nodes_to_sections($$)
   foreach my $element_content (@{$root->{'contents'}}) {
     if ($element_content->{'cmdname'}
         and $element_content->{'cmdname'} eq 'node') {
-      if (not $element_content->{'extra'}->{'associated_section'}
+      if ($element_content->{'extra'}
+          and not $element_content->{'extra'}->{'associated_section'}
           and defined($element_content->{'extra'}->{'normalized'})) {
         if (defined($current_sectioning_command)) {
           $additional_node_section_associations
@@ -1051,7 +1050,10 @@ my $latex_document_type = 'preamble_before_content';
 
 sub output($$)
 {
-  my ($self, $root) = @_;
+  my $self = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
 
   my ($output_file, $destination_directory, $output_filename)
     = $self->determine_files_and_directory();
@@ -1156,7 +1158,9 @@ sub output($$)
 sub convert($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
 
   $self->_prepare_conversion($root);
 
@@ -1820,8 +1824,7 @@ sub _begin_document($)
   }
 
   if (exists($self->{'global_commands'}->{'contents'})
-      and $self->{'structuring'}
-      and $self->{'structuring'}->{'sectioning_root'}
+      and $self->{'sections_list'}
       and not (defined($self->get_conf('CONTENTS_OUTPUT_LOCATION'))
                and $self->get_conf('CONTENTS_OUTPUT_LOCATION') eq 'inline')) {
     if (exists($self->{'global_commands'}->{'titlepage'})
@@ -2037,19 +2040,21 @@ my %custom_headings_map = (
 # replace the footing or heading specifications.
 sub _set_custom_headings($$$)
 {
-  my ($self, $cmdname, $headings_spec) = @_;
+  my ($self, $cmdname, $headings_spec_element) = @_;
   my ($head_or_foot, $page_spec) = @{$custom_headings_map{$cmdname}};
 
   my $location_index = -1;
   my @headings = ('', '', '');
   _push_new_context($self, 'custom_heading');
   $self->{'formatting_context'}->[-1]->{'in_custom_heading'} = 1;
-  foreach my $location_heading_spec (@$headings_spec) {
-    $location_index++;
-    my $heading = $self->_convert({'contents' => $location_heading_spec});
-    $heading =~ s/^\s*//;
-    $heading =~ s/\s*$//;
-    $headings[$location_index] = $heading;
+  if ($headings_spec_element) {
+    foreach my $location_heading_spec (@{$headings_spec_element->{'contents'}}) {
+      $location_index++;
+      my $heading = $self->_convert($location_heading_spec);
+      $heading =~ s/^\s*//;
+      $heading =~ s/\s*$//;
+      $headings[$location_index] = $heading;
+    }
   }
   _pop_context($self);
 
@@ -2396,7 +2401,7 @@ sub _finish_front_cover_page($)
 sub _tree_anchor_label {
   my $node_content = shift;
 
-  my $label = Texinfo::Convert::NodeNameNormalization::normalize_node
+  my $label = Texinfo::Convert::NodeNameNormalization::convert_to_identifier
     ({'contents' => $node_content});
   return "anchor:$label";
 }
@@ -2666,16 +2671,16 @@ sub _convert($$)
       $result .= _protect_text($self, $element->{'text'});
       return $result;
     } else {
-      my $tree = $self->gdt($element->{'text'});
+      my $tree;
+      if ($element->{'extra'}
+          and $element->{'extra'}->{'translation_context'}) {
+        $tree = $self->pgdt($element->{'extra'}->{'translation_context'},
+                            $element->{'text'});
+      } else {
+        $tree = $self->gdt($element->{'text'});
+      }
       my $converted = _convert($self, $tree);
       return $converted;
-    }
-  }
-
-  if ($element->{'extra'}) {
-    if ($element->{'extra'}->{'missing_argument'}
-             and (!$element->{'contents'} or !@{$element->{'contents'}})) {
-      return $result;
     }
   }
 
@@ -3106,9 +3111,8 @@ sub _convert($$)
               and @{$element->{'args'}->[1]->{'contents'}}) {
             my $description = _convert($self, {'contents',
                                    $element->{'args'}->[1]->{'contents'}});
-            my $text = $self->gdt('{text} ({url})',
-                    {'text' => $description, 'url' => "\\nolinkurl{$url_text}"},
-                                  undef, 'translated_text');
+            my $text = $self->gdt_string('{text} ({url})',
+                {'text' => $description, 'url' => "\\nolinkurl{$url_text}"});
             $result .= "\\href{$url_text}{$text}";
             return $result;
           } else {
@@ -3179,12 +3183,12 @@ sub _convert($$)
             and $node_arg and $node_arg->{'extra'}
             and defined($node_arg->{'extra'}->{'normalized'})
             and !$node_arg->{'extra'}->{'manual_content'}
-            and $self->{'labels'}
-            and $self->{'labels'}
+            and $self->{'identifiers_target'}
+            and $self->{'identifiers_target'}
                    ->{$node_arg->{'extra'}->{'normalized'}}) {
           # internal reference
           my $reference
-           = $self->{'labels'}
+           = $self->{'identifiers_target'}
                    ->{$node_arg->{'extra'}->{'normalized'}};
           my $label_element = Texinfo::Common::get_label_element($reference);
           my $reference_node_content = $label_element->{'contents'};
@@ -3329,7 +3333,7 @@ sub _convert($$)
             # If an unwanted comma is added, follow the argument with a command such as @:
             if ($reference->{'cmdname'} and $reference->{'cmdname'} eq 'node'
                 and $section_command) {
-              if ($section_command->{'structure'}->{'section_level'} > 1) {
+              if ($section_command->{'extra'}->{'section_level'} > 1) {
                 # TODO command that could be used for translation \sectionname
                 # does not exist in the default case.  it is defined in the
                 # pagenote package together with \pagename which is page in
@@ -3435,7 +3439,7 @@ sub _convert($$)
            = $self->gdt('{abbr_or_acronym} ({explanation})',
                         {'abbr_or_acronym' => $argument,
                          'explanation'
-                                   => $element->{'args'}->[-1]->{'contents'}});
+                                   => $element->{'args'}->[-1]});
           $result .= _convert($self, $prepended);
         } else {
           $result .= _convert($self, $argument);
@@ -3587,7 +3591,8 @@ sub _convert($$)
       return $result;
     } elsif ($cmdname eq 'value') {
       my $expansion = $self->gdt('@{No value for `{value}\'@}',
-                                 {'value' => $element->{'args'}->[0]});
+                                 {'value'
+                                    => $element->{'args'}->[0]});
       $expansion = {'type' => 'paragraph',
                     'contents' => [$expansion]};
       $result .= _convert($self, $expansion);
@@ -3645,7 +3650,7 @@ sub _convert($$)
             and $element->{'args'}->[0]->{'contents'}
             and @{$element->{'args'}->[0]->{'contents'}}) {
           my $prepended = $self->gdt('@b{{quotation_arg}:} ',
-             {'quotation_arg' => $element->{'args'}->[0]->{'contents'}});
+                      {'quotation_arg' => $element->{'args'}->[0]});
           $result .= $self->_convert($prepended);
         }
       } elsif ($cmdname eq 'multitable') {
@@ -3722,7 +3727,8 @@ sub _convert($$)
       }
       if ($cmdname eq 'node') {
         # add the label only if not associated with a section
-        if (not $element->{'extra'}->{'associated_section'}) {
+        if (!$element->{'extra'}
+            or not $element->{'extra'}->{'associated_section'}) {
           my $node_label
             = _tree_anchor_label($element->{'args'}->[0]->{'contents'});
           $result .= "\\label{$node_label}%\n";
@@ -3905,7 +3911,9 @@ sub _convert($$)
       return $result;
     } elsif ($cmdname eq 'sp') {
       my $sp_nr = 1;
-      if ($element->{'extra'}->{'misc_args'}->[0]) {
+      if ($element->{'extra'}
+          and $element->{'extra'}->{'misc_args'}
+          and $element->{'extra'}->{'misc_args'}->[0]) {
         # this useless copy avoids perl changing the type to integer!
         $sp_nr = $element->{'extra'}->{'misc_args'}->[0];
       }
@@ -3982,15 +3990,13 @@ sub _convert($$)
     } elsif ($cmdname eq 'contents') {
       if (defined($self->get_conf('CONTENTS_OUTPUT_LOCATION'))
           and $self->get_conf('CONTENTS_OUTPUT_LOCATION') eq 'inline'
-          and $self->{'structuring'}
-          and $self->{'structuring'}->{'sectioning_root'}
+          and $self->{'sections_list'}
           and not $self->{'formatting_context'}->[-1]->{'in_skipped_node_top'}) {
         $result .= "\\tableofcontents\\newpage\n";
       }
       return $result;
     } elsif ($cmdname eq 'shortcontents' or $cmdname eq 'summarycontents') {
-      if ($self->{'structuring'}
-            and $self->{'structuring'}->{'sectioning_root'}) {
+      if ($self->{'sections_list'}) {
         # TODO see notes at the beginning
         $result .= '';
       }
@@ -4000,7 +4006,7 @@ sub _convert($$)
           and $element->{'args'}->[0]->{'contents'}) {
         my $custom_headings_specification
          = Texinfo::Common::split_custom_heading_command_contents(
-                                $element->{'args'}->[0]->{'contents'});
+                                             $element->{'args'}->[0]);
         $result .= _set_custom_headings($self, $cmdname,
                                         $custom_headings_specification);
       }
@@ -4113,7 +4119,7 @@ sub _convert($$)
         if ($arguments) {
           $def_line_result .= $def_space;
           if ($Texinfo::Common::def_no_var_arg_commands{$command}) {
-            $def_line_result .= _convert($self, {'contents' => $arguments});
+            $def_line_result .= _convert($self, $arguments);
           } else {
             $self->{'packages'}->{'embrac'} = 1;
             # we want slanted roman and not slanted typewriter, including
@@ -4124,7 +4130,7 @@ sub _convert($$)
             push @{$self->{'formatting_context'}->[-1]->{'embrac'}},
               {'status' => 1, 'made_known' => {}};
 
-            $def_line_result .= _convert($self, {'contents' => $arguments});
+            $def_line_result .= _convert($self, $arguments);
 
             # \EmbracOff{} is probably not really needed here as \EmbracOn{}
             # should be local to the texttt
@@ -4349,7 +4355,7 @@ sub _convert($$)
             $result .= _convert($self,
                  # TRANSLATORS: quotation author
                  $self->gdt('@center --- @emph{{author}}',
-                    {'author' => $author->{'args'}->[0]->{'contents'}}));
+                    {'author' => $author->{'args'}->[0]}));
           }
         }
       }

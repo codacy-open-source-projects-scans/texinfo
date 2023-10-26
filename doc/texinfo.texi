@@ -788,25 +788,18 @@ verbatim modes).
 
 @cindex Form feed character
 @cindex @kbd{CTRL-l}
-Form feed (@kbd{CTRL-l}) characters in normal text end any open paragraph.
-Other ASCII whitespace (tab, carriage return) may be treated
-the same as space characters, although the results may differ depending
-on output format.  Hence, there is not much point in using these
-in documents.  Non-ASCII spaces, such as Unicode ``em space'', are
-not recognized as whitespace at all and will be treated as regular,
-non-whitespace characters.
+
+Form feed (@kbd{CTRL-l}) characters terminate any open paragraph.
+Other form feeds, as well other ASCII whitespace (tab, carriage return)
+are treated the same as space characters (although the results may
+differ depending on the output format).  Hence, there is not much point
+in using these whitespace characters in documents.  Non-ASCII spaces,
+such as Unicode ``em space'', are not recognized as whitespace at all,
+and will be treated as regular, non-whitespace characters.
 
 However, in verbatim modes, for example in code samples, tab characters
 may produce the correct formatting in the output.
 
-@ignore @c Excessive detail?
-
-To avoid this problem, Texinfo mode in GNU Emacs inserts
-multiple spaces when you press the @key{TAB} key.  Also, you can run
-@code{untabify} in Emacs to convert tabs in a region to multiple
-spaces, or use the @code{unexpand} command from the shell.
-
-@end ignore
 @ignore @c too detailed for the manual, but kept for implementation tips
 @item
 Form feed characters outside of a paragraph are handled as follows:
@@ -822,10 +815,10 @@ in the output otherwise.
 @c Written as @code{\par@{@}}, a @LaTeX{} macro that starts a paragraph.
 
 @item Info
-Output as-is between paragraphs (their most common use); ignored in contexts
-where spaces are ignored except after specific commands closing braces
-(@code{@@caption} for example).  In other contexts, they may be treated as
-regular spaces (and thus consolidated with surrounding whitespace).
+Ignored in contexts where spaces are ignored except after specific
+commands closing braces (@code{@@caption} for example).  In other
+contexts, they may be treated as regular spaces (and thus consolidated
+with surrounding whitespace).
 
 @item HTML
 Written as a numeric entity except contexts where spaces are ignored;
@@ -9311,9 +9304,9 @@ inserting quotation marks.
 @cindex Left quotation marks
 @cindex Right quotation marks
 @findex quotedblleft
-@cindex `@w{}`
+@cindex @code{`@w{}`}
 @findex quoteleft
-@cindex `
+@cindex @code{`}
 @cindex " (undirected double quote character)
 @findex quotedblright
 @cindex '@w{}'
@@ -15677,14 +15670,6 @@ Header formatting level used for the footnotes header with
 the `separate' footnotestyle; default @samp{4}.  @xref{Footnote
 Styles}.
 
-@item FRAMES
-If set, a file describing the frame layout is generated,
-together with a file with the short table of contents; default false.
-
-@item FRAMESET_DOCTYPE
-Same as DOCTYPE, but for the file containing the frame
-description.
-
 @item HEADER_IN_TABLE
 Use tables for header formatting rather than a simple
 @code{<div>} element; default false.
@@ -15839,11 +15824,6 @@ Output the built-in default CSS rules on the standard output and exit.
 If set, output the title at the beginning of the document;
 default @samp{undef}.  If set to @samp{undef}, setting
 @code{NO_TOP_NODE_OUTPUT} also sets @code{SHOW_TITLE} for HTML.
-
-@item SIMPLE_MENU
-If set, use a simple preformatted style for the menu,
-instead of breaking down the different parts of the menu; default false.
-@xref{Menu Parts}.
 
 @item TOC_LINKS
 If set, links from headings to toc entries are created;
@@ -16231,7 +16211,7 @@ to 1.
 
 @item EPUB_KEEP_CONTAINER_FOLDER
 If set, keep the directory containing the directories and files
-needed for EPUB.   The EPUB output file is a ZIP archive of this
+needed for EPUB@.   The EPUB output file is a ZIP archive of this
 directory.  Default is not defined.  Set if not defined and @code{TEST} or
 @code{DEBUG} is set. @xref{EPUB Output File and Directory}.
 
@@ -16524,11 +16504,6 @@ reassociate the index entry information from an index @@-command
 appearing right after an @code{@@item} line with the first element of
 the @code{@@item}.  Remove the index @@-command from the tree.
 
-@item simple_menu
-Mostly the same as @code{SIMPLE_MENU}: use a simple preformatted style
-for the menu.  It differs from setting @code{SIMPLE_MENU} in that
-@code{SIMPLE_MENU} only has an effect in HTML output.
-
 @end ftable
 
 @item USE_NODES
@@ -16636,9 +16611,13 @@ UTF-8 is used for most documents.  Note that accented characters
 are required to be expressed as @@-commands in the @code{us-ascii} locales,
 which may be inconvenient for translators.
 
-@item Next, the string is expanded as Texinfo, and converted.
-The arguments are substituted; for example, @samp{@{arg_name@}} is
-replaced by the corresponding actual argument.
+@item Next, in most cases, the string is expanded as Texinfo, and converted.
+The arguments are substituted; for example, @samp{@{arg_name@}} is replaced by
+the corresponding actual argument.
+
+It is also possible for the string and the argument to be already converted.
+In that case, the arguments are simply substituted.  Similarly,
+@samp{@{arg_name@}} is replaced by the corresponding actual argument.
 
 @end enumerate
 
@@ -16786,11 +16765,11 @@ corresponding @command{texi2any} customization variables.
 @item @option{--use-nodes}            @tab @code{USE_NODES}
 @item @option{--monolithic}           @tab @code{MONOLITHIC}
 @item @option{--top-file}             @tab @code{TOP_FILE}
-@item @option{--frames}               @tab @code{FRAMES}
+@item @option{--frames}               @tab no equivalent
 @item @option{--menu}                 @tab @code{FORMAT_MENU}
 @item @option{--debug}                @tab @code{DEBUG}
 @item @option{--doctype}              @tab @code{DOCTYPE}
-@item @option{--frameset-doctype}     @tab @code{FRAMESET_DOCTYPE}
+@item @option{--frameset-doctype}     @tab no equivalent
 @item @option{--test}                 @tab @code{TEST}
 @end multitable
 
@@ -17787,7 +17766,7 @@ the files and directories needed for the EPUB file by setting the
 @cindex Container directory for EPUB
 @cindex EPUB Container directory
 A directory containing the files and directories needed for the
-EPUB format is created when outputting EPUB.  The name of this
+EPUB format is created when outputting EPUB@.  The name of this
 container directory is derived from the base name of the input file (that
 is, any extension is removed), with @code{_epub_package} postpended.
 If an output directory is specified, with @option{--output},
@@ -17841,7 +17820,7 @@ The HTML generated for EPUB is XHTML conformant, UTF-8 encoded, and
 formatted without the usual HTML navigation headers and footers.
 Most of these features are enabled with customization variables, such as
 @code{USE_XML_SYNTAX} or @code{OUTPUT_FILE_NAME_ENCODING}.  Some
-features of printed output are used in EPUB.  In particular, the Top
+features of printed output are used in EPUB@.  In particular, the Top
 node does not appear in the EPUB output, while a title page is
 generated.  This is obtained by setting @code{NO_TOP_NODE_OUTPUT}.
 

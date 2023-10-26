@@ -10,7 +10,6 @@ $result_trees{'explicit_sort_key'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'explicit_sort_key'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -187,6 +187,7 @@ $result_trees{'explicit_sort_key'} = {
             'sortas' => 'A'
           },
           'info' => {
+            'command_name' => 'SKindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -247,6 +248,7 @@ $result_trees{'explicit_sort_key'} = {
             'sortas' => 'B'
           },
           'info' => {
+            'command_name' => 'SKindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -307,6 +309,7 @@ $result_trees{'explicit_sort_key'} = {
             'sortas' => '0'
           },
           'info' => {
+            'command_name' => 'SKindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -377,6 +380,7 @@ $result_trees{'explicit_sort_key'} = {
             ]
           },
           'info' => {
+            'command_name' => 'SKindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -593,6 +597,7 @@ $result_trees{'explicit_sort_key'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -648,7 +653,7 @@ and cmd .
 ';
 
 $result_sectioning{'explicit_sort_key'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -657,53 +662,58 @@ $result_sectioning{'explicit_sort_key'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'explicit_sort_key'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'explicit_sort_key'};
+$result_sectioning{'explicit_sort_key'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'explicit_sort_key'};
 
-$result_nodes{'explicit_sort_key'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'explicit_sort_key'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'explicit_sort_key'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'explicit_sort_key'}[0];
+$result_nodes{'explicit_sort_key'}[1] = $result_nodes{'explicit_sort_key'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'explicit_sort_key'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'explicit_sort_key'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'explicit_sort_key'};
-
-$result_menus{'explicit_sort_key'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'explicit_sort_key'} = [
   {
@@ -766,51 +776,30 @@ $result_errors{'explicit_sort_key'} = [
 $result_indices{'explicit_sort_key'} = {
   'index_names' => {
     'SK' => {
-      'contained_indices' => {
-        'SK' => 1
-      },
       'in_code' => 0,
       'name' => 'SK'
     },
     'cp' => {
-      'contained_indices' => {
-        'cp' => 1
-      },
       'in_code' => 0,
       'name' => 'cp'
     },
     'fn' => {
-      'contained_indices' => {
-        'fn' => 1
-      },
       'in_code' => 1,
       'name' => 'fn'
     },
     'ky' => {
-      'contained_indices' => {
-        'ky' => 1
-      },
       'in_code' => 1,
       'name' => 'ky'
     },
     'pg' => {
-      'contained_indices' => {
-        'pg' => 1
-      },
       'in_code' => 1,
       'name' => 'pg'
     },
     'tp' => {
-      'contained_indices' => {
-        'tp' => 1
-      },
       'in_code' => 1,
       'name' => 'tp'
     },
     'vr' => {
-      'contained_indices' => {
-        'vr' => 1
-      },
       'in_code' => 1,
       'name' => 'vr'
     }

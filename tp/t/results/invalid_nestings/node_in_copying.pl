@@ -57,6 +57,7 @@ $result_trees{'node_in_copying'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'node'
       },
       'info' => {
@@ -83,19 +84,22 @@ $result_texis{'node_in_copying'} = '@copying
 $result_texts{'node_in_copying'} = '
 ';
 
-$result_nodes{'node_in_copying'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'node'
+$result_nodes{'node_in_copying'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'node'
+    }
   }
-};
+];
 
-$result_menus{'node_in_copying'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'node'
+$result_menus{'node_in_copying'} = [
+  {
+    'extra' => {
+      'normalized' => 'node'
+    }
   }
-};
+];
 
 $result_errors{'node_in_copying'} = [
   {

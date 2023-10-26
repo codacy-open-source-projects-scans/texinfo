@@ -61,6 +61,7 @@ $result_trees{'anchor_in_copying_in_footnote'} = {
                                   ],
                                   'cmdname' => 'anchor',
                                   'extra' => {
+                                    'is_target' => 1,
                                     'normalized' => 'Copying-footnote'
                                   },
                                   'source_info' => {
@@ -182,6 +183,7 @@ $result_trees{'anchor_in_copying_in_footnote'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -299,6 +301,7 @@ $result_trees{'anchor_in_copying_in_footnote'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -348,32 +351,41 @@ Copying footnote.
 
 ';
 
-$result_nodes{'anchor_in_copying_in_footnote'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'anchor_in_copying_in_footnote'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'anchor_in_copying_in_footnote'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'anchor_in_copying_in_footnote'}[0];
+$result_nodes{'anchor_in_copying_in_footnote'}[1] = $result_nodes{'anchor_in_copying_in_footnote'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'anchor_in_copying_in_footnote'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'anchor_in_copying_in_footnote'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'anchor_in_copying_in_footnote'};
-
-$result_menus{'anchor_in_copying_in_footnote'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'anchor_in_copying_in_footnote'} = [];
 

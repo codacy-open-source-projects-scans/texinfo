@@ -20,7 +20,6 @@ $result_trees{'empty_listoffloats_with_floats'} = {
           'type' => 'preamble_before_beginning'
         },
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         },
         {
@@ -92,6 +91,7 @@ $result_trees{'empty_listoffloats_with_floats'} = {
           ],
           'extra' => {
             'float_type' => '',
+            'is_target' => 1,
             'normalized' => 'label1'
           },
           'info' => {
@@ -211,6 +211,7 @@ $result_trees{'empty_listoffloats_with_floats'} = {
           'extra' => {
             'caption' => {},
             'float_type' => '',
+            'is_target' => 1,
             'normalized' => 'label2'
           },
           'info' => {
@@ -477,11 +478,9 @@ $result_floats{'empty_listoffloats_with_floats'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => '',
         'normalized' => 'label1'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     },
     {
@@ -493,11 +492,9 @@ $result_floats{'empty_listoffloats_with_floats'} = {
             'float' => {}
           }
         },
+        'float_number' => '2',
         'float_type' => '',
         'normalized' => 'label2'
-      },
-      'structure' => {
-        'float_number' => 2
       }
     },
     {

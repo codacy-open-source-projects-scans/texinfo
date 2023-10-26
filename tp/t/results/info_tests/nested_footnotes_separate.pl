@@ -148,6 +148,7 @@ $result_trees{'nested_footnotes_separate'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -179,19 +180,22 @@ $result_texts{'nested_footnotes_separate'} = '
 F
 ';
 
-$result_nodes{'nested_footnotes_separate'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'nested_footnotes_separate'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'nested_footnotes_separate'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'nested_footnotes_separate'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'nested_footnotes_separate'} = [
   {

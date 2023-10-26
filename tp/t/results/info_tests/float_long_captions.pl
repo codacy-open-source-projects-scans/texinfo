@@ -131,6 +131,7 @@ $result_trees{'float_long_captions'} = {
           'extra' => {
             'caption' => {},
             'float_type' => 'Text',
+            'is_target' => 1,
             'normalized' => 'text1'
           },
           'info' => {
@@ -246,6 +247,7 @@ $result_trees{'float_long_captions'} = {
           'extra' => {
             'caption' => {},
             'float_type' => 'Text',
+            'is_target' => 1,
             'normalized' => 'text2'
           },
           'info' => {
@@ -298,6 +300,7 @@ $result_trees{'float_long_captions'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -340,19 +343,22 @@ Text, text2
 
 ';
 
-$result_nodes{'float_long_captions'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'float_long_captions'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'float_long_captions'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'float_long_captions'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'float_long_captions'} = [];
 
@@ -368,11 +374,9 @@ $result_floats{'float_long_captions'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'Text',
         'normalized' => 'text1'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     },
     {
@@ -384,11 +388,9 @@ $result_floats{'float_long_captions'} = {
             'float' => {}
           }
         },
+        'float_number' => '2',
         'float_type' => 'Text',
         'normalized' => 'text2'
-      },
-      'structure' => {
-        'float_number' => 2
       }
     }
   ]

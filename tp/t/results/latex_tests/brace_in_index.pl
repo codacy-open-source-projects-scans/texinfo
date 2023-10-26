@@ -10,7 +10,6 @@ $result_trees{'brace_in_index'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         },
         {
@@ -152,6 +151,7 @@ $result_trees{'brace_in_index'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -208,6 +208,7 @@ $result_trees{'brace_in_index'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -264,6 +265,7 @@ $result_trees{'brace_in_index'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }

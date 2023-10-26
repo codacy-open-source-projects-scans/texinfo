@@ -143,6 +143,7 @@ $result_trees{'novalidate_empty_refs'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -281,19 +282,22 @@ $result_texts{'novalidate_empty_refs'} = '
 
 ';
 
-$result_nodes{'novalidate_empty_refs'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'novalidate_empty_refs'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'novalidate_empty_refs'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'novalidate_empty_refs'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'novalidate_empty_refs'} = [
   {

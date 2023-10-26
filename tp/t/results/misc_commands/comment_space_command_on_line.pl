@@ -36,7 +36,6 @@ $result_trees{'comment_space_command_on_line'} = {
             }
           ],
           'cmdname' => 'settitle',
-          'extra' => {},
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -84,6 +83,7 @@ $result_trees{'comment_space_command_on_line'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -174,6 +174,7 @@ $result_trees{'comment_space_command_on_line'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -355,6 +356,7 @@ $result_trees{'comment_space_command_on_line'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -549,6 +551,7 @@ $result_trees{'comment_space_command_on_line'} = {
           'extra' => {
             'float_section' => {},
             'float_type' => 'Text',
+            'is_target' => 1,
             'normalized' => 'label'
           },
           'info' => {
@@ -614,7 +617,9 @@ $result_trees{'comment_space_command_on_line'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -691,7 +696,7 @@ float
 ';
 
 $result_sectioning{'comment_space_command_on_line'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -700,11 +705,8 @@ $result_sectioning{'comment_space_command_on_line'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -714,73 +716,82 @@ $result_sectioning{'comment_space_command_on_line'} = {
                   'extra' => {
                     'isindex' => 1,
                     'normalized' => 'chap'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'comment_space_command_on_line'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'comment_space_command_on_line'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'comment_space_command_on_line'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'comment_space_command_on_line'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'comment_space_command_on_line'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'comment_space_command_on_line'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'comment_space_command_on_line'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'comment_space_command_on_line'};
+$result_sectioning{'comment_space_command_on_line'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'comment_space_command_on_line'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'comment_space_command_on_line'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'comment_space_command_on_line'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'comment_space_command_on_line'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'comment_space_command_on_line'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'comment_space_command_on_line'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'comment_space_command_on_line'};
 
-$result_nodes{'comment_space_command_on_line'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'comment_space_command_on_line'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'comment_space_command_on_line'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'comment_space_command_on_line'}[0];
+$result_nodes{'comment_space_command_on_line'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'comment_space_command_on_line'}[0];
+$result_nodes{'comment_space_command_on_line'}[1] = $result_nodes{'comment_space_command_on_line'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'comment_space_command_on_line'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'comment_space_command_on_line'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'comment_space_command_on_line'};
-$result_nodes{'comment_space_command_on_line'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'comment_space_command_on_line'};
-
-$result_menus{'comment_space_command_on_line'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'comment_space_command_on_line'} = [];
 
@@ -790,18 +801,15 @@ $result_floats{'comment_space_command_on_line'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1.1',
         'float_section' => {
           'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
+          'extra' => {
+            'section_number' => '1'
           }
         },
         'float_type' => 'Text',
         'normalized' => 'label'
-      },
-      'structure' => {
-        'float_number' => '1.1'
       }
     }
   ]
@@ -961,7 +969,7 @@ $result_converted{'docbook_doc'}->{'comment_space_command_on_line'} = '<?xml ver
   <!ENTITY tex "TeX">
   <!ENTITY latex "LaTeX">
 ]>
-<book lang="">
+<book lang="en">
 <title>Settitle &#160;</title><!-- settittle -->
 <bookinfo><title>Settitle &#160;</title><!-- settittle -->
 </bookinfo>

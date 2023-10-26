@@ -46,9 +46,17 @@
 
 #include "xspara.h"
 
-#include "text.h"
+#include "xspara_text.h"
 
-int debug = 0;
+static int debug = 0;
+
+enum eos_status { eos_undef = -2, eos_inhibited = 0, eos_present = 1,
+                  eos_present_frenchspacing = -1 };
+/* eos_undef                 - not at the end of a sentence (undef in Perl),
+   eos_inhibited             - end of sentence is inhibited
+   eos_present               - at end of sentence
+   eos_present_frenchspacing - at end of sentence but frenchspacing is on. */
+
 
 typedef struct {
     TEXT space; /* Pending space, to be output before the pending word. */
@@ -65,11 +73,7 @@ typedef struct {
     /* Characters added so far in current word. */
     int word_counter; 
 
-    /* -2 means we are not at the end of a sentence (undefined in Perl),
-       1 means we are at the end of a sentence and French spacing is off,
-       -1 means we are at the end of a sentence and French spacing is on.
-       0 means it is "inhibited". */
-    int end_sentence;
+    enum eos_status end_sentence;
 
     int max; /* Maximum length of line. */
     int indent_length; /* Columns to indent this line. */
@@ -238,12 +242,12 @@ iswupper (wint_t wi)
 
 /* for debug */
 char *
-xspara__print_escaped_spaces (char *string)
+xspara__print_escaped_spaces (char *string, size_t len)
 {
   static TEXT t;
   char *p = string;
   text_reset (&t);
-  while (*p)
+  while (p < string + len)
     {
       if (*p == ' ')
         text_append_n (&t, p, 1);
@@ -253,10 +257,9 @@ xspara__print_escaped_spaces (char *string)
         text_append_n (&t, "\\f", 2);
       else if (isspace(*p))
         {
-          char *protected_string = malloc (7 * sizeof (char));
+          char protected_string[7];
           sprintf (protected_string, "\\x%04x", *p);
           text_append (&t, protected_string);
-          free (protected_string);
         }
       p++;
     }
@@ -419,7 +422,7 @@ xspara_new (HV *conf)
   /* Default values. */
   state.max = 72;
   state.indent_length_next = -1; /* Special value meaning undefined. */
-  state.end_sentence = -2; /* Special value meaning undefined. */
+  state.end_sentence = eos_undef;
   state.last_letter = L'\0';
 
   if (conf)
@@ -566,6 +569,8 @@ xspara_get_pending (void)
 void
 xspara__add_pending_word (TEXT *result, int add_spaces)
 {
+  dTHX;
+
   if (state.word.end == 0 && !state.invisible_pending_word && !add_spaces)
     return;
 
@@ -641,6 +646,9 @@ char *
 xspara_end (void)
 {
   static TEXT ret;
+
+  dTHX;
+
   text_reset (&ret);
   state.end_line_count = 0;
 
@@ -687,15 +695,10 @@ xspara_end (void)
 void
 xspara__add_next (TEXT *result, char *word, int word_len, int transparent)
 {
-  int disinhibit = 0;
+  dTHX;
+
   if (!word)
     return;
-
-  if (word_len >= 1 && word[word_len - 1] == '\b')
-    {
-      word[--word_len] = '\0';
-      disinhibit = 1;
-    }
 
   text_append_n (&state.word, word, word_len);
   if (word_len == 0 && word)
@@ -703,45 +706,40 @@ xspara__add_next (TEXT *result, char *word, int word_len, int transparent)
 
   if (!transparent)
     {
-      if (disinhibit)
-        state.last_letter = L'a'; /* a lower-case letter */
-      else
+      /* Save last character in WORD */
+      char *p = word + word_len;
+
+      while (p > word)
         {
-          /* Save last character in WORD */
-          char *p = word + word_len;
-
-          while (p > word)
+          int len = 0;
+          /* Back one UTF-8 code point */
+          do
             {
-              int len = 0;
-              /* Back one UTF-8 code point */
-              do
-                {
-                  p--;
-                  len++;
-                }
-              while ((*p & 0xC0) == 0x80 && p > word);
+              p--;
+              len++;
+            }
+          while ((*p & 0xC0) == 0x80 && p > word);
 
-              if (!strchr (end_sentence_characters
-                           after_punctuation_characters, *p))
+          if (!strchr (end_sentence_characters
+                       after_punctuation_characters, *p))
+            {
+              if (!PRINTABLE_ASCII(*p))
                 {
-                  if (!PRINTABLE_ASCII(*p))
-                    {
-                      wchar_t wc = L'\0';
-                      mbrtowc (&wc, p, len, NULL);
-                      state.last_letter = wc;
-                      break;
-                    }
-                  else
-                    {
-                      state.last_letter = btowc (*p);
-                      break;
-                    }
+                  wchar_t wc = L'\0';
+                  mbrtowc (&wc, p, len, NULL);
+                  state.last_letter = wc;
+                  break;
+                }
+              else
+                {
+                  state.last_letter = btowc (*p);
+                  break;
                 }
             }
         }
     }
 
-  if (strchr (word, '\n'))
+  if (memchr (word, '\n', word_len))
     {
       /* If there was a newline in the word we just added, put the entire
          pending ouput in the results string, and start a new line. */
@@ -798,8 +796,13 @@ xspara__add_next (TEXT *result, char *word, int word_len, int transparent)
         }
     }
   if (debug)
-    fprintf (stderr, "WORD+ %s -> %s\n", word, state.word.space == 0 ?
-                "UNDEF" : state.word.text);
+    {
+      static TEXT printed_word;
+      text_reset (&printed_word);
+      text_append_n (&printed_word, word, word_len);
+      fprintf (stderr, "WORD+ %s -> %s\n", printed_word.text,
+               state.word.space == 0 ? "UNDEF" : state.word.text);
+    }
 }
 
 /* Like _add_next but zero end_line_count at beginning. */
@@ -818,7 +821,7 @@ xspara_add_next (char *text, int text_len, int transparent)
 void
 xspara_remove_end_sentence (void)
 {
-  state.end_sentence = 0;
+  state.end_sentence = eos_inhibited;
 }
 
 void
@@ -875,57 +878,150 @@ xspara_set_space_protection (int no_break,
 
 /*****************************************************************/
 
+enum text_class { type_NULL, type_spaces, type_regular,
+                 type_double_width, type_EOS, type_finished,
+                 type_unknown };
+
 /* Return string to be added to paragraph contents, wrapping text. This 
    function relies on there being a UTF-8 locale in LC_CTYPE for mbrtowc to
    work correctly. */
 TEXT
 xspara_add_text (char *text, int len)
 {
-  char *p = text;
-  wchar_t wc;
-  size_t char_len;
+  char *p = text, *q = 0;
+  wchar_t wc, wc_fw;
+  size_t next_len = 0;
   int width;
   static TEXT result;
+  enum text_class type = type_NULL, next_type = type_NULL;
+
   dTHX;
 
   text_reset (&result);
 
   state.end_line_count = 0;
 
-  while (len > 0)
+  while (1)
     {
       if (debug)
         {
           fprintf(stderr, "p (%d+%d) s `%s', l `%lc', w `%s'\n",
                     state.counter, state.word_counter,
                     state.space.end == 0 ? ""
-                      : xspara__print_escaped_spaces (state.space.text),
+                      : xspara__print_escaped_spaces (state.space.text,
+                                                      state.space.end),
                     state.last_letter,
                     state.word.end > 0 ? state.word.text : "UNDEF");
         }
-      if (isspace ((unsigned char) *p))
+
+      /* p is now at the beginning of the text we have left to process.
+         next_type is set to the type of the next block, or is null. */
+
+      type = next_type;
+
+      q = p;
+      q += next_len; len -= next_len; /* Skip over the last character
+                                         processed. */
+
+      /* Set q to the end of the block.  Set next_len to the length of
+         the following character, and next_type to the type of
+         the block after. */
+      while (1)
+        {
+          if (len <= 0)
+            {
+              next_type = type_finished;
+            }
+          else if (isspace ((unsigned char) *q))
+            {
+              next_type = type_spaces;
+              next_len = 1;
+            }
+          else if (*q == '\b')
+            {
+            /* Code to say that a following full stop (or question or
+               exclamation mark) may be an end of sentence. */
+              next_type = type_EOS;
+              next_len = 1;
+            }
+          else
+            {
+              /* Set wc and next_len */
+              if (!PRINTABLE_ASCII(*q))
+                {
+                  next_len = mbrtowc (&wc, q, len, NULL);
+                }
+              else
+                {
+                  /* Functionally the same as mbrtowc but (tested) slightly
+                     quicker. */
+                  next_len = 1;
+                  wc = btowc (*q);
+                }
+
+              if ((long) next_len == 0)
+                break; /* Null character. Shouldn't happen. */
+              else if ((long) next_len < 0)
+                {
+                  q++; len--; /* Invalid.  Just try to keep going. */
+                  continue;
+                }
+
+             /* Note: width == 0 includes accent characters which should not
+                properly increase the column count.  This is not what the pure
+                Perl code does, though. */
+              width = wcwidth (wc);
+              if (width == 1 || width == 0)
+                next_type = type_regular;
+              else if (width == 2)
+                {
+                  next_type = type_double_width;
+                  wc_fw = wc; /* final value is used below */
+                }
+              else
+                next_type = type_unknown;
+            }
+
+          /* For type_regular and type_spaces we operate on blocks of
+             multiple characters at once. */
+          if ((type != type_regular && type != type_spaces)
+              || next_type != type || next_type == type_finished)
+            break;
+
+          q += next_len; len -= next_len;
+        }
+
+      /* For the very start of the string. */
+      if (type == type_NULL)
+        continue;
+
+      /* Now type is the type of the block we are about to operate on, and
+         next_type the one after it.  p is the beginning of the span and q
+         is the end. */
+
+      if (type == type_finished)
+        break;
+      /*************** Whitespace character. *********************/
+      if (type == type_spaces)
         {
           if (debug)
             {
-              char t[2];
-              t[0] = *p;
-              t[1] = '\0';
               fprintf(stderr, "SPACES(%d) `%s'\n", state.counter,
-                      xspara__print_escaped_spaces (t));
+                      xspara__print_escaped_spaces (p, q - p));
             }
 
           if (state.unfilled)
             {
               xspara__add_pending_word (&result, 0);
-              if (*p == '\n')
+              if (memchr (p, '\n', q - p))
                 {
                    xspara__end_line ();
                    text_append (&result, "\n");
                 }
               else
                 {
-                  text_append_n (&state.space, p, 1);
-                  state.space_counter++;
+                  text_append_n (&state.space, p, q - p);
+                  state.space_counter += q - p;
                 }
             }
           else if (state.no_break)
@@ -934,7 +1030,8 @@ xspara_add_text (char *text, int len)
               if (state.word.end == 0
                   || state.word.text[state.word.end - 1] != ' ')
                 {
-                  if (state.end_sentence == 1 && !state.french_spacing)
+                  if (state.end_sentence == eos_present
+                      && !state.french_spacing)
                     {
                       text_append_n (&state.word, "  ", 2);
                       state.word_counter += 2;
@@ -962,7 +1059,7 @@ xspara_add_text (char *text, int len)
                 {
                   /* If we are at the end of a sentence where two spaces
                      are required. */
-                  if (state.end_sentence == 1
+                  if (state.end_sentence == eos_present
                       && !state.french_spacing)
                     {
                       state.space.end = 0;
@@ -974,16 +1071,8 @@ xspara_add_text (char *text, int len)
                       /* Only save the first space. */
                       if (state.space_counter < 1)
                         {
-                          if (*p == '\n')
-                            {
-                              text_append_n (&state.space, " ", 1);
-                              state.space_counter++;
-                            }
-                          else
-                            {
-                              text_append_n (&state.space, p, 1);
-                              state.space_counter++;
-                            }
+                          text_append_n (&state.space, " ", 1);
+                          state.space_counter++;
                         }
                     }
                 }
@@ -996,49 +1085,27 @@ xspara_add_text (char *text, int len)
               xspara__cut_line (&result);
             }
 
-          if (!state.unfilled && *p == '\n' && state.keep_end_lines)
+          if (!state.unfilled && state.keep_end_lines
+              && memchr (p, '\n', q - p))
             {
               xspara__end_line ();
               text_append (&result, "\n");
             }
-          p++; len--;
           state.last_letter = ' ';
-          continue;
         }
 
-      /************** Not a white space character. *****************/
-      if (!PRINTABLE_ASCII(*p))
-        {
-          char_len = mbrtowc (&wc, p, len, NULL);
-        }
-      else
-        {
-          /* Functonally the same as mbrtowc but (tested) slightly quicker. */
-          char_len = 1;
-          wc = btowc (*p);
-        }
-
-      if ((long) char_len == 0)
-        break; /* Null character. Shouldn't happen. */
-      else if ((long) char_len < 0)
-        {
-          p++; len--; /* Invalid.  Just try to keep going. */
-          continue;
-        }
-
-      width = wcwidth (wc);
       /*************** Double width character. *********************/
-      if (width == 2)
+      else if (type == type_double_width)
         {
           if (debug)
             fprintf (stderr, "FULLWIDTH\n");
 
-          text_append_n (&state.word, p, char_len);
+          text_append_n (&state.word, p, q - p);
           state.word_counter += 2;
 
           /* fullwidth latin letters can be upper case, so it is important to
              use the actual characters here. */
-          state.last_letter = wc;
+          state.last_letter = wc_fw;
 
           /* We allow a line break in between Chinese characters even if
              there was no space between them, unlike single-width
@@ -1055,67 +1122,63 @@ xspara_add_text (char *text, int len)
             {
               xspara__add_pending_word (&result, 0);
             }
-          state.end_sentence = -2;
+          state.end_sentence = eos_undef;
         }
-      else if (wc == L'\b')
+      else if (type == type_EOS)
         {
-          /* Code to say that a following full stop (or question or
-             exclamation mark) may be an end of sentence. */
           xspara_allow_end_sentence ();
         }
       /*************** Word character ******************************/
-      /* Note: width == 0 includes accent characters which should not
-         properly increase the column count.  This is not what the pure
-         Perl code does, though. */
-      else if (width == 1 || width == 0)
+      else if (type == type_regular)
         {
-          static char added_word[8]; /* long enough for one UTF-8 character */
-          memcpy (added_word, p, char_len);
-          added_word[char_len] = '\0';
+          xspara__add_next (&result, p, q - p, 0);
 
-          xspara__add_next (&result, added_word, char_len, 0);
-
-          /* Now check if it is considered as an end of sentence, and
-             set state.end_sentence if it is. */
-
-          if (strchr (end_sentence_characters, *p) && !state.unfilled)
+          /* Now check for an end of sentence.  We can iterate backwards
+             by bytes as all the end-sentence characters or punctuation are
+             ASCII. */
+          char *q2 = q;
+          while (q2 > p)
             {
-              /* Doesn't count if preceded by an upper-case letter. */
-              if (!iswupper (state.last_letter))
+              q2--;
+              if (strchr (end_sentence_characters, *q2) && !state.unfilled)
                 {
-                  if (state.french_spacing)
-                    state.end_sentence = -1;
-                  else
-                    state.end_sentence = 1;
-                  if (debug)
-                    fprintf (stderr, "END_SENTENCE\n");
+                  /* Doesn't count if preceded by an upper-case letter. */
+                  if (!iswupper (state.last_letter))
+                    {
+                      if (state.french_spacing)
+                        state.end_sentence = eos_present_frenchspacing;
+                      else
+                        state.end_sentence = eos_present;
+                      if (debug)
+                        fprintf (stderr, "END_SENTENCE\n");
+                      break;
+                    }
+                }
+              else if (strchr (after_punctuation_characters, *q2))
+                {
+                  /* These characters are ignored when checking for the end
+                     of a sentence. */
+                }
+              else
+                {
+                  /* Not at the end of a sentence. */
+                  if (debug && state.end_sentence != eos_undef)
+                    fprintf (stderr, "delete END_SENTENCE(%d)\n",
+                                      state.end_sentence);
+                  state.end_sentence = eos_undef;
+                  break;
                 }
             }
-          else if (strchr (after_punctuation_characters, *p))
-            {
-              /* '"', '\'', ']' and ')' are ignored for the purpose
-               of deciding whether a full stop ends a sentence. */
-            }
-          else
-            {
-              /* Otherwise reset the end of sentence marker: a full stop in
-                 a string like "aaaa.bbbb" doesn't mark an end of
-                 sentence. */
-              state.last_letter = wc;
-              if (debug && state.end_sentence != -2)
-                fprintf (stderr, "delete END_SENTENCE(%d)\n",
-                                  state.end_sentence);
-              state.end_sentence = -2;
-            }
         }
-      else
+      else if (type == type_unknown)
         {
           /* Not printable, possibly a tab, or a combining character.
              Add it to the pending word without increasing the column
              count. */
-          text_append_n (&state.word, p, char_len);
+          text_append_n (&state.word, p, q - p);
         }
-      p += char_len; len -= char_len;
+
+      p = q;
     }
 
   return result;

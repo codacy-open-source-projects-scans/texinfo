@@ -200,6 +200,7 @@ $result_trees{'top_node_normalization'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -236,41 +237,35 @@ TOP. tOP.
 * tOP::
 ';
 
-$result_nodes{'top_node_normalization'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {},
-    'node_next' => {},
-    'node_prev' => {}
-  }
-};
-$result_nodes{'top_node_normalization'}{'structure'}{'menu_child'} = $result_nodes{'top_node_normalization'};
-$result_nodes{'top_node_normalization'}{'structure'}{'node_next'} = $result_nodes{'top_node_normalization'};
-$result_nodes{'top_node_normalization'}{'structure'}{'node_prev'} = $result_nodes{'top_node_normalization'};
-
-$result_menus{'top_node_normalization'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {},
-    'menu_up' => {},
-    'menu_up_hash' => {
-      'Top' => 1
+$result_nodes{'top_node_normalization'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {},
+        'prev' => {}
+      },
+      'normalized' => 'Top'
     }
   }
-};
-$result_menus{'top_node_normalization'}{'structure'}{'menu_child'} = $result_menus{'top_node_normalization'};
-$result_menus{'top_node_normalization'}{'structure'}{'menu_up'} = $result_menus{'top_node_normalization'};
+];
+$result_nodes{'top_node_normalization'}[0]{'extra'}{'node_directions'}{'next'} = $result_nodes{'top_node_normalization'}[0];
+$result_nodes{'top_node_normalization'}[0]{'extra'}{'node_directions'}{'prev'} = $result_nodes{'top_node_normalization'}[0];
+
+$result_menus{'top_node_normalization'} = [
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  }
+];
+$result_menus{'top_node_normalization'}[0]{'extra'}{'menu_directions'}{'up'} = $result_menus{'top_node_normalization'}[0];
 
 $result_errors{'top_node_normalization'} = [
   {

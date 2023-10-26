@@ -48,7 +48,7 @@ use Pod::Simple::PullParser ();
 # for parselink()
 #use Pod::ParseLink;
 
-use Texinfo::Convert::NodeNameNormalization qw(normalize_node);
+use Texinfo::Convert::NodeNameNormalization qw(convert_to_identifier);
 use Texinfo::Parser qw(parse_texi_line parse_texi_text);
 use Texinfo::Convert::Texinfo;
 use Texinfo::Convert::TextContent;
@@ -354,6 +354,7 @@ sub _protect_comma($)
   my $texinfo = shift;
   my $tree = parse_texi_line(undef, $texinfo);
   $tree = protect_comma_in_tree($tree);
+  $tree = Texinfo::Structuring::rebuild_tree($tree);
   return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 }
 
@@ -362,6 +363,7 @@ sub _protect_colon($)
   my $texinfo = shift;
   my $tree = parse_texi_line(undef, $texinfo);
   $tree = protect_colon_in_tree($tree);
+  $tree = Texinfo::Structuring::rebuild_tree($tree);
   return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 }
 
@@ -370,8 +372,11 @@ sub _protect_hashchar($)
   my $texinfo = shift;
   # protect # first in line
   if ($texinfo =~ /#/) {
-    my $tree = parse_texi_text(undef, $texinfo);
-    protect_hashchar_at_line_beginning(undef, undef, $tree);
+    # FIXME use parse_texi_piece?
+    my $document = parse_texi_text(undef, $texinfo);
+    my $tree = $document->tree();
+    protect_hashchar_at_line_beginning($tree);
+    $tree = Texinfo::Structuring::rebuild_tree($tree);
     return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
   } else {
     return $texinfo;
@@ -381,8 +386,11 @@ sub _protect_hashchar($)
 sub _reference_to_text_in_texi($)
 {
   my $texinfo = shift;
-  my $tree = parse_texi_text(undef, $texinfo);
+  # FIXME use parse_texi_piece?
+  my $document = parse_texi_text(undef, $texinfo);
+  my $tree = $document->tree();
   reference_to_arg_in_tree($tree);
+  $tree = Texinfo::Structuring::rebuild_tree($tree);
   return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 }
 
@@ -420,8 +428,8 @@ sub _normalize_texinfo_name($$)
     $texinfo_text = "\@$command $name\n";
   }
   my $parser = Texinfo::Parser::parser();
-  my $tree = $parser->parse_texi_piece($texinfo_text);
-  if (!defined($tree)) {
+  my $document = $parser->parse_texi_piece($texinfo_text);
+  if (!defined($document)) {
     my $texinfo_text_str = $texinfo_text;
     chomp($texinfo_text_str);
     warn "ERROR: Texinfo parsing failed for: $texinfo_text_str\n";
@@ -437,24 +445,10 @@ sub _normalize_texinfo_name($$)
     # FIXME Or undef, and callers check the return to be defined?
     return '';
   }
+  my $tree = $document->tree();
   if ($command eq 'anchor') {
-    # FIXME this works to find the anchor command only if
-    # the tree structure always leads to the interesting
-    # elements being first in the contents.
-    my $current = $tree;
-    while ((not exists($current->{'cmdname'})
-            or $current->{'cmdname'} ne 'anchor')
-           and $current->{'contents'}
-           and scalar(@{$current->{'contents'}})) {
-      $current = $current->{'contents'}->[0];
-    }
-    if (not exists($current->{'cmdname'}) or $current->{'cmdname'} ne 'anchor') {
-      cluck "BUG: could not find anchor: $texinfo_text";
-    } elsif ($current->{'args'}->[0]->{'contents'}) {
-      my $protected_contents
-          = protect_first_parenthesis($current->{'args'}->[0]->{'contents'});
-      $current->{'args'}->[0]->{'contents'} = $protected_contents;
-    }
+    Texinfo::Transformations::protect_first_parenthesis_in_targets($tree);
+    $tree = Texinfo::Structuring::rebuild_tree($tree);
   }
   my $fixed_text = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
   my $result = $fixed_text;
@@ -493,7 +487,7 @@ sub _prepare_anchor($$)
   }
   # Now we know that we have something.
   my $node_tree = parse_texi_line(undef, $node);
-  my $normalized_base = normalize_node($node_tree);
+  my $normalized_base = convert_to_identifier($node_tree);
   my $normalized = $normalized_base;
   my $number_appended = 0;
   while ($self->{'texinfo_nodes'}->{$normalized}) {
@@ -507,6 +501,7 @@ sub _prepare_anchor($$)
   }
   $node_tree = protect_comma_in_tree($node_tree);
   $node_tree = protect_colon_in_tree($node_tree);
+  $node_tree = Texinfo::Structuring::rebuild_tree($node_tree);
   $self->{'texinfo_nodes'}->{$normalized} = $node_tree;
   my $final_node_name = Texinfo::Convert::Texinfo::convert_to_texinfo($node_tree);
   return $final_node_name;

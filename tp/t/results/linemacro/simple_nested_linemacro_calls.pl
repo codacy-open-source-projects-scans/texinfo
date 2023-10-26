@@ -531,6 +531,7 @@ $result_trees{'simple_nested_linemacro_calls'} = {
                     ]
                   },
                   'info' => {
+                    'command_name' => 'cindex',
                     'spaces_before_argument' => {
                       'text' => ' '
                     }
@@ -586,6 +587,7 @@ $result_trees{'simple_nested_linemacro_calls'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -629,19 +631,22 @@ $result_texts{'simple_nested_linemacro_calls'} = '
 type: a function inside X operator Y ( remaining, type typed )
 ';
 
-$result_nodes{'simple_nested_linemacro_calls'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'simple_nested_linemacro_calls'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'simple_nested_linemacro_calls'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'simple_nested_linemacro_calls'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'simple_nested_linemacro_calls'} = [];
 

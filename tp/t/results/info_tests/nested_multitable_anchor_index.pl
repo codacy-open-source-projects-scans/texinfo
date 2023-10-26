@@ -170,6 +170,7 @@ $result_trees{'nested_multitable_anchor_index'} = {
                                               ],
                                               'cmdname' => 'anchor',
                                               'extra' => {
+                                                'is_target' => 1,
                                                 'normalized' => 'mark-inside'
                                               },
                                               'source_info' => {
@@ -209,6 +210,7 @@ $result_trees{'nested_multitable_anchor_index'} = {
                                                 ]
                                               },
                                               'info' => {
+                                                'command_name' => 'cindex',
                                                 'spaces_before_argument' => {
                                                   'text' => ' '
                                                 }
@@ -387,6 +389,7 @@ $result_trees{'nested_multitable_anchor_index'} = {
                               ],
                               'cmdname' => 'anchor',
                               'extra' => {
+                                'is_target' => 1,
                                 'normalized' => 'mark'
                               },
                               'source_info' => {
@@ -426,6 +429,7 @@ $result_trees{'nested_multitable_anchor_index'} = {
                                 ]
                               },
                               'info' => {
+                                'command_name' => 'cindex',
                                 'spaces_before_argument' => {
                                   'text' => ' '
                                 }
@@ -613,6 +617,7 @@ $result_trees{'nested_multitable_anchor_index'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'Top'
       },
@@ -663,21 +668,23 @@ mark.
 mark inside.
 ';
 
-$result_nodes{'nested_multitable_anchor_index'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'isindex' => 1,
-    'normalized' => 'Top'
+$result_nodes{'nested_multitable_anchor_index'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'isindex' => 1,
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'nested_multitable_anchor_index'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'isindex' => 1,
-    'normalized' => 'Top'
+$result_menus{'nested_multitable_anchor_index'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'nested_multitable_anchor_index'} = [];
 

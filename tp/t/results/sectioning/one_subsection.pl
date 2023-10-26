@@ -10,7 +10,6 @@ $result_trees{'one_subsection'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -34,6 +33,9 @@ $result_trees{'one_subsection'} = {
         }
       ],
       'cmdname' => 'subsection',
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -58,21 +60,21 @@ $result_texts{'one_subsection'} = '1 The subsection
 ';
 
 $result_sectioning{'one_subsection'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'subsection',
-        'structure' => {
+        'extra' => {
           'section_level' => 3,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 2
   }
 };
-$result_sectioning{'one_subsection'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'one_subsection'};
+$result_sectioning{'one_subsection'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'one_subsection'};
 
 $result_errors{'one_subsection'} = [];
 

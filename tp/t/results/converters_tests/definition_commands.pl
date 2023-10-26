@@ -10,7 +10,6 @@ $result_trees{'definition_commands'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'definition_commands'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -104,6 +104,7 @@ $result_trees{'definition_commands'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chapter'
       },
       'info' => {
@@ -9158,20 +9159,40 @@ $result_trees{'definition_commands'} = {
                 'def_command' => 'deftypecv',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'border-pattern'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'Window'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'border-pattern'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'Window'
+                    }
                   ]
                 },
                 'element_node' => {},
@@ -17893,7 +17914,9 @@ $result_trees{'definition_commands'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -17994,10 +18017,6 @@ $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[17]{'contents'}[
 $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[17]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'definition_commands'}{'contents'}[3];
 $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[22]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[22]{'contents'}[0]{'args'}[0]{'contents'}[4];
 $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[22]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'definition_commands'}{'contents'}[3];
-$result_trees{'definition_commands'}{'contents'}[4]{'contents'}[24]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[24]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'definition_commands'}{'contents'}[4]{'contents'}[24]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[24]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'definition_commands'}{'contents'}[4]{'contents'}[24]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[24]{'contents'}[0]{'args'}[0]{'contents'}[6];
-$result_trees{'definition_commands'}{'contents'}[4]{'contents'}[24]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[24]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[24]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'definition_commands'}{'contents'}[3];
 $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[26]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[26]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[4];
 $result_trees{'definition_commands'}{'contents'}[4]{'contents'}[26]{'contents'}[0]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'definition_commands'}{'contents'}[3];
@@ -18335,7 +18354,7 @@ name
 ';
 
 $result_sectioning{'definition_commands'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -18344,11 +18363,8 @@ $result_sectioning{'definition_commands'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -18357,72 +18373,81 @@ $result_sectioning{'definition_commands'} = {
                   'cmdname' => 'node',
                   'extra' => {
                     'normalized' => 'chapter'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'definition_commands'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'definition_commands'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'definition_commands'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'definition_commands'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'definition_commands'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'definition_commands'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'definition_commands'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'definition_commands'};
+$result_sectioning{'definition_commands'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'definition_commands'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'definition_commands'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'definition_commands'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'definition_commands'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'definition_commands'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'definition_commands'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'definition_commands'};
 
-$result_nodes{'definition_commands'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'normalized' => 'chapter'
+$result_nodes{'definition_commands'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chapter'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'definition_commands'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'definition_commands'}[0];
+$result_nodes{'definition_commands'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'definition_commands'}[0];
+$result_nodes{'definition_commands'}[1] = $result_nodes{'definition_commands'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'definition_commands'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chapter'
     }
   }
-};
-$result_nodes{'definition_commands'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'definition_commands'};
-$result_nodes{'definition_commands'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'definition_commands'};
-
-$result_menus{'definition_commands'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'definition_commands'} = [];
 
@@ -18713,8 +18738,8 @@ $result_converted{'html_text'}->{'definition_commands'} = '<div class="top-level
 
 <dl class="first-deffn">
 <dt class="deffn" id="index-_002eft"><span class="category-def">Request: </span><span><strong class="def-name"><code class="t">.ft</code></strong> <var class="def-var-arguments">[<span class="r"><i class="slanted">font</i></span>]</var><a class="copiable-link" href="#index-_002eft"> &para;</a></span></dt>
-<dt class="deffnx def-cmd-deffn" id="index-_005cff"><span class="category-def">Escape&nbsp;sequence: </span><span><strong class="def-name"><code class="t">\\f</code><span class="r"><i class="slanted">f</i></span><code class="t"></code></strong><a class="copiable-link" href="#index-_005cff"> &para;</a></span></dt>
-<dt class="deffnx def-cmd-deffn" id="index-_005cf_0028fn"><span class="category-def">Escape&nbsp;sequence: </span><span><strong class="def-name"><code class="t">\\f(</code><span class="r"><i class="slanted">fn</i></span><code class="t"></code></strong><a class="copiable-link" href="#index-_005cf_0028fn"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-_005cff"><span class="category-def">Escape&nbsp;sequence: </span><span><strong class="def-name"><code class="t">\\f</code><span class="r"><i class="slanted">f</i></span></strong><a class="copiable-link" href="#index-_005cff"> &para;</a></span></dt>
+<dt class="deffnx def-cmd-deffn" id="index-_005cf_0028fn"><span class="category-def">Escape&nbsp;sequence: </span><span><strong class="def-name"><code class="t">\\f(</code><span class="r"><i class="slanted">fn</i></span></strong><a class="copiable-link" href="#index-_005cf_0028fn"> &para;</a></span></dt>
 <dt class="deffnx def-cmd-deffn" id="index-_005cf_005bfont_005d"><span class="category-def">Escape&nbsp;sequence: </span><span><strong class="def-name"><code class="t">\\f[</code><span class="r"><i class="slanted">font</i></span><code class="t">]</code></strong> <var class="def-var-arguments"><code class="t">\\f[</code><span class="r"><i class="slanted">font</i></span><code class="t">]</code></var><a class="copiable-link" href="#index-_005cf_005bfont_005d"> &para;</a></span></dt>
 <dt class="deffnx def-cmd-deffn" id="index-_005cn_005b_002esty_005d"><span class="category-def">Register: </span><span><strong class="def-name"><code class="t">\\n[.sty]</code></strong><a class="copiable-link" href="#index-_005cn_005b_002esty_005d"> &para;</a></span></dt>
 <dd><p>The <code class="code">ft</code> request and the <code class="code">\\f</code> escape change the current font

@@ -314,6 +314,7 @@ $result_trees{'invalid_node_name_warning'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -368,6 +369,7 @@ $result_trees{'invalid_node_name_warning'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'nodename_002e-a'
       },
       'info' => {
@@ -423,6 +425,7 @@ $result_trees{'invalid_node_name_warning'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'node_002ccomma'
       },
       'info' => {
@@ -654,6 +657,7 @@ $result_trees{'invalid_node_name_warning'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'bidule_003a'
       },
       'info' => {
@@ -715,109 +719,104 @@ nodename. a. node,comma.
 bidule:.
 ';
 
-$result_nodes{'invalid_node_name_warning'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'nodename_002e-a'
-      },
-      'structure' => {
-        'node_next' => {
+$result_nodes{'invalid_node_name_warning'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
           'cmdname' => 'node',
           'extra' => {
-            'normalized' => 'node_002ccomma'
-          },
-          'structure' => {
-            'node_next' => {
-              'cmdname' => 'node',
-              'extra' => {
-                'normalized' => 'bidule_003a'
-              },
-              'structure' => {
-                'node_prev' => {},
-                'node_up' => {}
-              }
-            },
-            'node_prev' => {},
-            'node_up' => {}
-          }
-        },
-        'node_prev' => {},
-        'node_up' => {}
-      }
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'node_next'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'node_next'};
-$result_nodes{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'node_next'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'invalid_node_name_warning'};
-$result_nodes{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'invalid_node_name_warning'}{'structure'}{'menu_child'};
-$result_nodes{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'invalid_node_name_warning'};
-$result_nodes{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'node_prev'} = $result_nodes{'invalid_node_name_warning'};
-$result_nodes{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'invalid_node_name_warning'};
-$result_nodes{'invalid_node_name_warning'}{'structure'}{'node_next'} = $result_nodes{'invalid_node_name_warning'}{'structure'}{'menu_child'};
-
-$result_menus{'invalid_node_name_warning'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'nodename_002e-a'
-      },
-      'structure' => {
-        'menu_next' => {
-          'cmdname' => 'node',
-          'extra' => {
-            'normalized' => 'node_002ccomma'
-          },
-          'structure' => {
-            'menu_next' => {
-              'cmdname' => 'node',
-              'extra' => {
-                'normalized' => 'bidule_003a'
-              },
-              'structure' => {
-                'menu_prev' => {},
-                'menu_up' => {},
-                'menu_up_hash' => {
-                  'Top' => 1
+            'node_directions' => {
+              'next' => {
+                'cmdname' => 'node',
+                'extra' => {
+                  'node_directions' => {
+                    'next' => {
+                      'cmdname' => 'node',
+                      'extra' => {
+                        'node_directions' => {
+                          'prev' => {},
+                          'up' => {}
+                        },
+                        'normalized' => 'bidule_003a'
+                      }
+                    },
+                    'prev' => {},
+                    'up' => {}
+                  },
+                  'normalized' => 'node_002ccomma'
                 }
-              }
+              },
+              'prev' => {},
+              'up' => {}
             },
-            'menu_prev' => {},
-            'menu_up' => {},
-            'menu_up_hash' => {
-              'Top' => 1
-            }
+            'normalized' => 'nodename_002e-a'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {},
+  {},
+  {}
+];
+$result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
+$result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'invalid_node_name_warning'}[0];
+$result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'invalid_node_name_warning'}[0];
+$result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'invalid_node_name_warning'}[0];
+$result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'invalid_node_name_warning'}[0];
+$result_nodes{'invalid_node_name_warning'}[1] = $result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'invalid_node_name_warning'}[2] = $result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
+$result_nodes{'invalid_node_name_warning'}[3] = $result_nodes{'invalid_node_name_warning'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'invalid_node_name_warning'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'next' => {
+          'extra' => {
+            'menu_directions' => {
+              'next' => {
+                'extra' => {
+                  'menu_directions' => {
+                    'prev' => {},
+                    'up' => {}
+                  },
+                  'normalized' => 'bidule_003a'
+                }
+              },
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'node_002ccomma'
           }
         },
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'Top' => 1
-        }
-      }
+        'up' => {}
+      },
+      'normalized' => 'nodename_002e-a'
     }
-  }
-};
-$result_menus{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'menu_next'}{'structure'}{'menu_next'}{'structure'}{'menu_prev'} = $result_menus{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'menu_next'};
-$result_menus{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'menu_next'}{'structure'}{'menu_next'}{'structure'}{'menu_up'} = $result_menus{'invalid_node_name_warning'};
-$result_menus{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'menu_next'}{'structure'}{'menu_prev'} = $result_menus{'invalid_node_name_warning'}{'structure'}{'menu_child'};
-$result_menus{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'menu_next'}{'structure'}{'menu_up'} = $result_menus{'invalid_node_name_warning'};
-$result_menus{'invalid_node_name_warning'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'invalid_node_name_warning'};
+  },
+  {},
+  {}
+];
+$result_menus{'invalid_node_name_warning'}[1]{'extra'}{'menu_directions'}{'next'}{'extra'}{'menu_directions'}{'next'}{'extra'}{'menu_directions'}{'prev'} = $result_menus{'invalid_node_name_warning'}[1]{'extra'}{'menu_directions'}{'next'};
+$result_menus{'invalid_node_name_warning'}[1]{'extra'}{'menu_directions'}{'next'}{'extra'}{'menu_directions'}{'next'}{'extra'}{'menu_directions'}{'up'} = $result_menus{'invalid_node_name_warning'}[0];
+$result_menus{'invalid_node_name_warning'}[1]{'extra'}{'menu_directions'}{'next'}{'extra'}{'menu_directions'}{'prev'} = $result_menus{'invalid_node_name_warning'}[1];
+$result_menus{'invalid_node_name_warning'}[1]{'extra'}{'menu_directions'}{'next'}{'extra'}{'menu_directions'}{'up'} = $result_menus{'invalid_node_name_warning'}[0];
+$result_menus{'invalid_node_name_warning'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'invalid_node_name_warning'}[0];
+$result_menus{'invalid_node_name_warning'}[2] = $result_menus{'invalid_node_name_warning'}[1]{'extra'}{'menu_directions'}{'next'};
+$result_menus{'invalid_node_name_warning'}[3] = $result_menus{'invalid_node_name_warning'}[1]{'extra'}{'menu_directions'}{'next'}{'extra'}{'menu_directions'}{'next'};
 
 $result_errors{'invalid_node_name_warning'} = [];
 

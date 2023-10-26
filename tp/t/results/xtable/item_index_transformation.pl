@@ -29,6 +29,7 @@ $result_trees{'item_index_transformation'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -121,6 +122,7 @@ $result_trees{'item_index_transformation'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -158,6 +160,7 @@ $result_trees{'item_index_transformation'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -195,6 +198,7 @@ $result_trees{'item_index_transformation'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -473,6 +477,7 @@ $result_trees{'item_index_transformation'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -510,6 +515,7 @@ $result_trees{'item_index_transformation'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -788,6 +794,7 @@ $result_trees{'item_index_transformation'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -825,6 +832,7 @@ $result_trees{'item_index_transformation'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -1127,6 +1135,7 @@ $result_trees{'item_index_transformation'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -1164,6 +1173,7 @@ $result_trees{'item_index_transformation'} = {
                         ]
                       },
                       'info' => {
+                        'command_name' => 'cindex',
                         'spaces_before_argument' => {
                           'text' => ' '
                         }
@@ -1301,7 +1311,9 @@ $result_trees{'item_index_transformation'} = {
           }
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -1409,7 +1421,7 @@ HHHHHH
 ';
 
 $result_sectioning{'item_index_transformation'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'chapter',
@@ -1419,40 +1431,40 @@ $result_sectioning{'item_index_transformation'} = {
             'extra' => {
               'normalized' => 'chap'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_level' => 1,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 0
   }
 };
-$result_sectioning{'item_index_transformation'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'item_index_transformation'};
+$result_sectioning{'item_index_transformation'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'item_index_transformation'};
 
-$result_nodes{'item_index_transformation'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'chapter',
-      'extra' => {},
-      'structure' => {
-        'section_number' => 1
-      }
-    },
-    'normalized' => 'chap'
+$result_nodes{'item_index_transformation'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'chapter',
+        'extra' => {
+          'section_number' => '1'
+        }
+      },
+      'normalized' => 'chap'
+    }
   }
-};
+];
 
-$result_menus{'item_index_transformation'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'chap'
+$result_menus{'item_index_transformation'} = [
+  {
+    'extra' => {
+      'normalized' => 'chap'
+    }
   }
-};
+];
 
 $result_errors{'item_index_transformation'} = [];
 

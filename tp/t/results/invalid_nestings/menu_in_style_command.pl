@@ -164,6 +164,7 @@ $result_trees{'menu_in_style_command'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -196,48 +197,25 @@ $result_texts{'menu_in_style_command'} = '
 * (truc)::
 ';
 
-$result_nodes{'menu_in_style_command'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'truc'
-          }
-        ]
-      },
-      'type' => 'menu_entry_node'
+$result_nodes{'menu_in_style_command'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'first'
     }
   }
-};
+];
 
-$result_menus{'menu_in_style_command'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'truc'
-          }
-        ]
-      },
-      'type' => 'menu_entry_node'
+$result_menus{'menu_in_style_command'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'first'
     }
   }
-};
+];
 
 $result_errors{'menu_in_style_command'} = [
   {

@@ -30,7 +30,7 @@ $result = Texinfo::Convert::Text::convert_to_text($tree, {'sort_string' => 1,
 is ($result, "\x{00A9} ,,", 'sort iso-8859-1');
 
 my $parser = Texinfo::Parser::parser();
-$tree = $parser->parse_texi_text('@node Top
+my $document = $parser->parse_texi_text('@node Top
 
 @cindex !
 @cindex e
@@ -41,16 +41,17 @@ $tree = $parser->parse_texi_text('@node Top
 @cindex aaaaaaaaaaaa
 @cindex @l{}
 ');
+$tree = $document->tree();
 
 my $registrar = $parser->registered_errors();
-my ($indices_information, $merged_indices) = $parser->indices_information();
+my $indices_information = $document->indices_information();
 my $index_entries = Texinfo::Structuring::merge_indices($indices_information);
-my $parser_information = $parser->global_information();
+my $document_information = $document->global_information();
 my $main_configuration = Texinfo::MainConfig::new({'ENABLE_ENCODING' => 1});
-Texinfo::Common::set_output_encodings($main_configuration, $parser_information);
+Texinfo::Common::set_output_encodings($main_configuration, $document_information);
 my ($sorted_index_entries, $index_entries_sort_strings)
-  = Texinfo::Structuring::sort_indices($registrar, $main_configuration,
-                                       $index_entries, $indices_information);
+  = Texinfo::Structuring::sort_indices_by_index($registrar, $main_configuration,
+                                          $index_entries, $indices_information);
 
 my @entries = ();
 foreach my $entry (@{$sorted_index_entries->{'cp'}}) {
@@ -65,9 +66,8 @@ my @entries_ref = ('!', '"', 'aaaaaaaaaaaa', 'e', 'E', 'ẽ', 'ł');
 cmp_deeply (\@entries, \@entries_ref, 'sorted index entries');
 
 my ($sorted_index_entries_by_letter, $by_letter_index_entries_sort_strings)
-  = Texinfo::Structuring::sort_indices($registrar, $main_configuration,
-                                       $index_entries, $indices_information,
-                                       'by_letter');
+ = Texinfo::Structuring::sort_indices_by_letter($registrar, $main_configuration,
+                                       $index_entries, $indices_information);
 
 my @letter_entries_ref = (
    {'!' => [ '!' ]},
@@ -104,7 +104,7 @@ local $Data::Dumper::Indent = 1;
 cmp_deeply (\@letter_entries, \@letter_entries_ref, 'by letter index entries');
 
 $parser = Texinfo::Parser::parser();
-$tree = $parser->parse_texi_text('@node Top
+$document = $parser->parse_texi_text('@node Top
 
 @cindex hhh @subentry jjj @subentry lll
 @cindex hhh @subentry jjj
@@ -119,13 +119,14 @@ $tree = $parser->parse_texi_text('@node Top
 @cindex @subentry aa
 @cindex hhh @subentry jjj @subentry lll @sortas{A}
 ');
+$tree = $document->tree();
 
 $registrar = $parser->registered_errors();
-($indices_information, $merged_indices) = $parser->indices_information();
+$indices_information = $document->indices_information();
 $index_entries = Texinfo::Structuring::merge_indices($indices_information);
 ($sorted_index_entries, $index_entries_sort_strings)
-  = Texinfo::Structuring::sort_indices($registrar, $main_configuration,
-                                       $index_entries, $indices_information);
+  = Texinfo::Structuring::sort_indices_by_index($registrar, $main_configuration,
+                                          $index_entries, $indices_information);
 
 @entries = ();
 foreach my $entry (@{$sorted_index_entries->{'cp'}}) {

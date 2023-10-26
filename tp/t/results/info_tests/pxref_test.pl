@@ -236,6 +236,7 @@ $result_trees{'pxref_test'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -273,19 +274,22 @@ Hey ((m) in pxref) and continue ((m) in pxref) and end.
 (m) n. (m) n.
 ';
 
-$result_nodes{'pxref_test'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'pxref_test'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'pxref_test'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'pxref_test'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'pxref_test'} = [];
 

@@ -99,6 +99,7 @@ $result_trees{'references_to_top_no_top_output'} = {
                       ],
                       'cmdname' => 'anchor',
                       'extra' => {
+                        'is_target' => 1,
                         'normalized' => 'a-in-copying'
                       },
                       'source_info' => {
@@ -184,6 +185,7 @@ $result_trees{'references_to_top_no_top_output'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -248,6 +250,7 @@ $result_trees{'references_to_top_no_top_output'} = {
           ],
           'cmdname' => 'anchor',
           'extra' => {
+            'is_target' => 1,
             'normalized' => 'a-in-top'
           },
           'source_info' => {
@@ -284,6 +287,7 @@ $result_trees{'references_to_top_no_top_output'} = {
               ],
               'cmdname' => 'anchor',
               'extra' => {
+                'is_target' => 1,
                 'normalized' => 'a-in-paragraph-in-top'
               },
               'source_info' => {
@@ -328,6 +332,7 @@ $result_trees{'references_to_top_no_top_output'} = {
                           ],
                           'cmdname' => 'anchor',
                           'extra' => {
+                            'is_target' => 1,
                             'normalized' => 'a-in-footnote'
                           },
                           'source_info' => {
@@ -431,6 +436,7 @@ $result_trees{'references_to_top_no_top_output'} = {
                   ],
                   'cmdname' => 'anchor',
                   'extra' => {
+                    'is_target' => 1,
                     'normalized' => 'a-in-float'
                   },
                   'source_info' => {
@@ -468,6 +474,7 @@ $result_trees{'references_to_top_no_top_output'} = {
                           ],
                           'cmdname' => 'anchor',
                           'extra' => {
+                            'is_target' => 1,
                             'normalized' => 'a-in-caption'
                           },
                           'source_info' => {
@@ -535,6 +542,7 @@ $result_trees{'references_to_top_no_top_output'} = {
             'caption' => {},
             'float_section' => {},
             'float_type' => 'list',
+            'is_target' => 1,
             'normalized' => 'My-Flist'
           },
           'info' => {
@@ -579,6 +587,7 @@ $result_trees{'references_to_top_no_top_output'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -641,6 +650,7 @@ $result_trees{'references_to_top_no_top_output'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chapter'
       },
@@ -883,6 +893,7 @@ $result_trees{'references_to_top_no_top_output'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1045,6 +1056,7 @@ $result_trees{'references_to_top_no_top_output'} = {
             'caption' => {},
             'float_section' => {},
             'float_type' => 'list',
+            'is_target' => 1,
             'normalized' => 'Main-Flist'
           },
           'info' => {
@@ -1096,7 +1108,9 @@ $result_trees{'references_to_top_no_top_output'} = {
           }
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -1218,7 +1232,7 @@ In Main
 ';
 
 $result_sectioning{'references_to_top_no_top_output'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -1227,11 +1241,8 @@ $result_sectioning{'references_to_top_no_top_output'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -1241,73 +1252,82 @@ $result_sectioning{'references_to_top_no_top_output'} = {
                   'extra' => {
                     'isindex' => 1,
                     'normalized' => 'chapter'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'references_to_top_no_top_output'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'references_to_top_no_top_output'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'references_to_top_no_top_output'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'references_to_top_no_top_output'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'references_to_top_no_top_output'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'references_to_top_no_top_output'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'references_to_top_no_top_output'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'references_to_top_no_top_output'};
+$result_sectioning{'references_to_top_no_top_output'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'references_to_top_no_top_output'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'references_to_top_no_top_output'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'references_to_top_no_top_output'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'references_to_top_no_top_output'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'references_to_top_no_top_output'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'references_to_top_no_top_output'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'references_to_top_no_top_output'};
 
-$result_nodes{'references_to_top_no_top_output'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'isindex' => 1,
-        'normalized' => 'chapter'
+$result_nodes{'references_to_top_no_top_output'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chapter'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'references_to_top_no_top_output'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'references_to_top_no_top_output'}[0];
+$result_nodes{'references_to_top_no_top_output'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'references_to_top_no_top_output'}[0];
+$result_nodes{'references_to_top_no_top_output'}[1] = $result_nodes{'references_to_top_no_top_output'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'references_to_top_no_top_output'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chapter'
     }
   }
-};
-$result_nodes{'references_to_top_no_top_output'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'references_to_top_no_top_output'};
-$result_nodes{'references_to_top_no_top_output'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'references_to_top_no_top_output'};
-
-$result_menus{'references_to_top_no_top_output'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'references_to_top_no_top_output'} = [];
 
@@ -1323,16 +1343,13 @@ $result_floats{'references_to_top_no_top_output'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_section' => {
           'cmdname' => 'top',
-          'extra' => {},
-          'structure' => {}
+          'extra' => {}
         },
         'float_type' => 'list',
         'normalized' => 'My-Flist'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     },
     {
@@ -1344,18 +1361,15 @@ $result_floats{'references_to_top_no_top_output'} = {
             'float' => {}
           }
         },
+        'float_number' => '1.1',
         'float_section' => {
           'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
+          'extra' => {
+            'section_number' => '1'
           }
         },
         'float_type' => 'list',
         'normalized' => 'Main-Flist'
-      },
-      'structure' => {
-        'float_number' => '1.1'
       }
     }
   ]

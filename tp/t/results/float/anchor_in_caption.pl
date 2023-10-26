@@ -10,7 +10,6 @@ $result_trees{'anchor_in_caption'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'anchor_in_caption'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -170,6 +170,7 @@ $result_trees{'anchor_in_caption'} = {
                           ],
                           'cmdname' => 'anchor',
                           'extra' => {
+                            'is_target' => 1,
                             'normalized' => 'in-anchor'
                           },
                           'source_info' => {
@@ -236,6 +237,7 @@ $result_trees{'anchor_in_caption'} = {
           'extra' => {
             'caption' => {},
             'float_type' => 'fl',
+            'is_target' => 1,
             'normalized' => 'label'
           },
           'info' => {
@@ -251,6 +253,7 @@ $result_trees{'anchor_in_caption'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -288,32 +291,41 @@ fl, label
 In float.
 ';
 
-$result_nodes{'anchor_in_caption'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'anchor_in_caption'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'anchor_in_caption'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'anchor_in_caption'}[0];
+$result_nodes{'anchor_in_caption'}[1] = $result_nodes{'anchor_in_caption'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'anchor_in_caption'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'anchor_in_caption'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'anchor_in_caption'};
-
-$result_menus{'anchor_in_caption'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'anchor_in_caption'} = [];
 
@@ -329,11 +341,9 @@ $result_floats{'anchor_in_caption'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'fl',
         'normalized' => 'label'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

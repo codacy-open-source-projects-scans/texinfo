@@ -50,6 +50,7 @@ $result_trees{'text_before_top_and_contents_after_title'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -159,6 +160,9 @@ $result_trees{'text_before_top_and_contents_after_title'} = {
           'type' => 'empty_line'
         }
       ],
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -204,7 +208,7 @@ In top.
 ';
 
 $result_sectioning{'text_before_top_and_contents_after_title'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -214,52 +218,57 @@ $result_sectioning{'text_before_top_and_contents_after_title'} = {
             'extra' => {
               'normalized' => 'Top'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
-              'structure' => {
+              'extra' => {
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'text_before_top_and_contents_after_title'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'text_before_top_and_contents_after_title'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'text_before_top_and_contents_after_title'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'text_before_top_and_contents_after_title'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'text_before_top_and_contents_after_title'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'text_before_top_and_contents_after_title'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'text_before_top_and_contents_after_title'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'text_before_top_and_contents_after_title'};
+$result_sectioning{'text_before_top_and_contents_after_title'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'text_before_top_and_contents_after_title'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'text_before_top_and_contents_after_title'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'text_before_top_and_contents_after_title'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'text_before_top_and_contents_after_title'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'text_before_top_and_contents_after_title'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'text_before_top_and_contents_after_title'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'text_before_top_and_contents_after_title'};
 
-$result_nodes{'text_before_top_and_contents_after_title'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
+$result_nodes{'text_before_top_and_contents_after_title'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
+      },
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'text_before_top_and_contents_after_title'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'text_before_top_and_contents_after_title'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'text_before_top_and_contents_after_title'} = [];
 

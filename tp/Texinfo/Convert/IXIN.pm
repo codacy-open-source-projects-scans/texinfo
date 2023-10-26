@@ -26,9 +26,10 @@
 #
 #
 # This module alone is not sufficient to output the IXIN format, as it
-# calls convert_tree() but does not implement the conversion of Texinfo
-# (of the Texinfo tree) nor inherit from a module that does so.  A module
-# inheriting both from a converter module, for convert_tree(), and this module
+# calls convert_tree() and convert_output_unit() but does not implement
+# the conversion of Texinfo (of the Texinfo tree) nor inherit from a module
+# that does so.  A module inheriting both from a converter module, for
+# convert_tree() and convert_output_unit(), and this module
 # should be used.  A functional implementation of IXIN is available as the
 # Texinfo::Convert::IXINSXML module which uses Texinfo::Convert::TexinfoSXML
 # for the Texinfo tree conversion.  Using a Texinfo tree converter that does
@@ -72,13 +73,14 @@ use MIME::Base64;
 use Carp qw(cluck);
 
 use Texinfo::Commands;
+use Texinfo::Options;
 use Texinfo::Common;
 use Texinfo::Convert::TexinfoSXML;
 
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 my $ixin_version = 1;
@@ -229,35 +231,30 @@ sub ixin_none_element($$)
 # end output specific subs
 
 # FIXME this is rather non specific. Move to Converter?
-# FIXME need to be changed for {'structure'}->{'associated_unit'}.
 # There is a version HTML specific, _html_get_tree_root_element
-# which is up to date and handles better content in @insertcopying
+# which is always up to date and handles better content in @insertcopying
 # or @titlepage, but has specific HTML code related to separate
-# elements, it could be used to update if needed.
+# elements.
 sub _get_element($$);
 sub _get_element($$)
 {
   my $self = shift;
   my $current = shift;
 
-  my ($element, $root_command);
+  my $root_command;
   while (1) {
     #print STDERR Texinfo::Common::debug_print_element($current);
-    if ($current->{'type'}) {
-      if ($current->{'type'} eq 'unit') {
-        return ($current, $root_command);
-      }
-    }
     if ($current->{'cmdname'}) {
       if ($Texinfo::Commands::root_commands{$current->{'cmdname'}}) {
         $root_command = $current;
-        return ($element, $root_command) if defined($element);
       }
     }
-    if ($current->{'parent'}) {
+    if ($current->{'associated_unit'}) {
+      return ($current->{'associated_unit'}, $root_command);
+    } elsif ($current->{'parent'}) {
       $current = $current->{'parent'};
     } else {
-      return ($element, $root_command);
+      return (undef, $root_command);
     }
   }
 }
@@ -282,11 +279,11 @@ sub _associated_node_id($$$;$)
 
     if ($root_command) {
       if (!$root_command->{'cmdname'} or $root_command->{'cmdname'} ne 'node') {
-        if ($element and $element->{'extra'}
-            and $element->{'extra'}->{'unit_command'}
-            and $element->{'extra'}->{'unit_command'}->{'cmdname'}
-            and $element->{'extra'}->{'unit_command'}->{'cmdname'} eq 'node') {
-          $node_command = $element->{'extra'}->{'unit_command'};
+        if ($element
+            and $element->{'unit_command'}
+            and $element->{'unit_command'}->{'cmdname'}
+            and $element->{'unit_command'}->{'cmdname'} eq 'node') {
+          $node_command = $element->{'unit_command'};
         }
       } else {
         $node_command = $root_command;
@@ -370,9 +367,10 @@ sub output_ixin($$)
   $result .= $self->ixin_list_element('lang', [['name', $lang]]);
   # FIXME title: use simpletitle or fulltitle
 
-  if ($self->{'parser_info'}->{'dircategory_direntry'}) {
+  if ($self->{'document_info'}->{'dircategory_direntry'}) {
     my $current_category;
-    foreach my $dircategory_direntry (@{$self->{'parser_info'}->{'dircategory_direntry'}}) {
+    foreach my $dircategory_direntry
+                  (@{$self->{'document_info'}->{'dircategory_direntry'}}) {
       if ($dircategory_direntry->{'cmdname'}
           and $dircategory_direntry->{'cmdname'} eq 'dircategory') {
         if ($current_category) {
@@ -395,7 +393,7 @@ sub output_ixin($$)
 
   # FIXME vars: wait for Thien-Thi answer.
 
-  my $tree_units = Texinfo::Structuring::split_by_node($root);
+  my $output_units = Texinfo::Structuring::split_by_node($root);
   # setting_commands is for @-commands appearing before the first node,
   # while end_of_nodes_setting_commands holds, for @-commands names, the
   # last @-command element.
@@ -410,9 +408,9 @@ sub output_ixin($$)
          or $additional_setting_commands{$global_command})
         and !$global_line_not_setting_commands{$global_command}) {
       if (ref($self->{'global_commands'}->{$global_command}) eq 'ARRAY') {
-        if (defined($Texinfo::Common::document_settable_multiple_at_commands{$global_command})) {
+        if (defined($Texinfo::Options::multiple_at_command_options{$global_command})) {
           $setting_commands_defaults{$global_command}
-            = $Texinfo::Common::document_settable_multiple_at_commands{$global_command};
+            = $Texinfo::Options::multiple_at_command_options{$global_command};
         }
         foreach my $command (@{$self->{'global_commands'}->{$global_command}}) {
           my ($element, $root_command) = _get_element($self, $command);
@@ -429,11 +427,6 @@ sub output_ixin($$)
           #print STDERR "$element $root_command->{'extra'} $global_command\n";
         }
       } else {
-        # FIXME the value is reset just after, this is useless...
-        if (defined($Texinfo::Common::document_settable_unique_at_commands{$global_command})) {
-          $setting_commands_defaults{$global_command}
-            = $Texinfo::Common::document_settable_unique_at_commands{$global_command};
-        }
         $setting_commands{$global_command} = $self->{'global_commands'}->{$global_command};
       }
     }
@@ -487,22 +480,21 @@ sub output_ixin($$)
   $result .= $self->ixin_close_element('meta');
   $result .= "\n";
 
-  # to do the nodes index, one need the size of each node.
-  # to do the counts list, one need to know the sizze of the node index.
+  # to do the nodes index, one need the size of each output unit.
+  # to do the counts list, one need to know the size of the node index.
   # So we have to start by the node data.
   my $node_nr = 0;
   my %current_settings;
   my %node_label_number;
-  my %node_byte_sizes;
+  my %output_unit_byte_sizes;
   my %node_tweaks;
   my @nodes;
   my $document_output = '';
-  if ($tree_units) {
-    foreach my $node_element (@$tree_units) {
-      next if (not defined ($node_element->{'extra'})
-               or not defined($node_element->{'extra'}->{'unit_command'}));
+  if ($output_units) {
+    foreach my $output_unit (@$output_units) {
+      next if (not defined($output_unit->{'unit_command'}));
       $node_nr++;
-      my $node = $node_element->{'extra'}->{'unit_command'};
+      my $node = $output_unit->{'unit_command'};
       push @nodes, $node;
       my $normalized_node_name = $node->{'extra'}->{'normalized'};
       foreach my $setting_command_name (keys(%current_settings)) {
@@ -511,12 +503,12 @@ sub output_ixin($$)
       }
       $node_label_number{$normalized_node_name} = $node_nr;
 
-      my $node_result = $self->convert_tree($node_element)."\n";
-      $document_output .= $node_result;
+      my $output_unit_result = $self->convert_output_unit($output_unit)."\n";
+      $document_output .= $output_unit_result;
 
       # get node length.
-      $node_byte_sizes{$normalized_node_name}
-         = $self->_count_bytes($node_result);
+      $output_unit_byte_sizes{$normalized_node_name}
+         = $self->_count_bytes($output_unit_result);
       # update current settings
       if (defined($end_of_nodes_setting_commands{$normalized_node_name})) {
         foreach my $setting_command_name (keys(%{$end_of_nodes_setting_commands{$normalized_node_name}})) {
@@ -544,10 +536,13 @@ sub output_ixin($$)
     my $normalized_node_name = $node->{'extra'}->{'normalized'};
     # FIXME name should be a renderable sequence
     my @attributes = (['name', $normalized_node_name],
-                      ['length', $node_byte_sizes{$normalized_node_name}]);
+                      ['length',
+                       $output_unit_byte_sizes{$normalized_node_name}]);
     foreach my $direction (@node_directions) {
-      if ($node->{'node_'.lc($direction)}) {
-        my $node_direction = $node->{'node_'.lc($direction)};
+      if ($node->{'extra'}->{'node_directions'}
+          and $node->{'extra'}->{'node_directions'}->{lc($direction)}) {
+        my $node_direction
+           = $node->{'extra'}->{'node_directions'}->{lc($direction)};
         if ($node_direction->{'extra'}->{'manual_content'}) {
           # FIXME?
           push @attributes, ['node'.lc($direction), -2];
@@ -588,9 +583,10 @@ sub output_ixin($$)
   # do sectioning tree
   my $sectioning_tree = '';
   $sectioning_tree  .= $self->ixin_open_element('sectioningtree');
-  if ($self->{'structuring'} and $self->{'structuring'}->{'sectioning_root'}) {
-    my $section_root = $self->{'structuring'}->{'sectioning_root'};
-    foreach my $top_section (@{$section_root->{'structure'}->{'section_childs'}}) {
+  if ($self->{'sections_list'}) {
+    my $section_root = $self->{'sections_list'}->[0]
+                                   ->{'extra'}->{'sectioning_root'};
+    foreach my $top_section (@{$section_root->{'extra'}->{'section_childs'}}) {
       my $section = $top_section;
  SECTION:
       while ($section) {
@@ -610,29 +606,32 @@ sub output_ixin($$)
         if ($section->{'cmdname'} eq 'top') {
           $sectioning_tree .= $self->ixin_close_element('sectionentry');
         }
-        if ($section->{'structure'}->{'section_childs'}) {
-          $section = $section->{'structure'}->{'section_childs'}->[0];
-        } elsif ($section->{'structure'}->{'section_next'}) {
+        if ($section->{'extra'}->{'section_childs'}) {
+          $section = $section->{'extra'}->{'section_childs'}->[0];
+        } elsif ($section->{'extra'}->{'section_directions'}
+                 and $section->{'extra'}->{'section_directions'}->{'next'}) {
           $sectioning_tree .= $self->ixin_close_element('sectionentry');
           last if ($section eq $top_section);
-          $section = $section->{'structure'}->{'section_next'};
+          $section = $section->{'extra'}->{'section_directions'}->{'next'};
         } else {
           if ($section eq $top_section) {
             $sectioning_tree .= $self->ixin_close_element('sectionentry')
               unless ($section->{'cmdname'} eq 'top');
             last;
           }
-          while ($section->{'structure'}->{'section_up'}) {
-            $section = $section->{'structure'}->{'section_up'};
+          while ($section->{'extra'}->{'section_directions'}
+                 and $section->{'extra'}->{'section_directions'}->{'up'}) {
+            $section = $section->{'extra'}->{'section_directions'}->{'up'};
             $sectioning_tree .= $self->ixin_close_element('sectionentry');
             if ($section eq $top_section) {
               $sectioning_tree .= $self->ixin_close_element('sectionentry')
                  unless ($section->{'cmdname'} eq 'top');
               last SECTION;
             }
-            if ($section->{'structure'}->{'section_next'}) {
+            if ($section->{'extra'}->{'section_directions'}
+                and $section->{'extra'}->{'section_directions'}->{'next'}) {
               $sectioning_tree .= $self->ixin_close_element('sectionentry');
-              $section = $section->{'structure'}->{'section_next'};
+              $section = $section->{'extra'}->{'section_directions'}->{'next'};
               last;
             }
           }
@@ -647,9 +646,9 @@ sub output_ixin($$)
   my $non_node_labels_text = '';
   my $labels_nr = 0;
   my %floats_associated_node_id;
-  if ($self->{'labels'}) {
-    foreach my $label (sort(keys(%{$self->{'labels'}}))) {
-      my $command = $self->{'labels'}->{$label};
+  if ($self->{'identifiers_target'}) {
+    foreach my $label (sort(keys(%{$self->{'identifiers_target'}}))) {
+      my $command = $self->{'identifiers_target'}->{$label};
       next if ($command->{'cmdname'} eq 'node');
       $labels_nr++;
       my $associated_node_id = $self->_associated_node_id($command,
@@ -683,7 +682,7 @@ sub output_ixin($$)
     my $merged_index_entries
         = Texinfo::Structuring::merge_indices($indices_information);
     my ($entries, $index_entries_sort_strings)
-      = Texinfo::Structuring::sort_indices($self, $self,
+      = Texinfo::Structuring::sort_indices_by_index($self, $self,
                                            $merged_index_entries,
                                            $indices_information);
     # first do the dts_text as the counts are needed for the dts index

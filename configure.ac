@@ -10,12 +10,11 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
-AC_INIT([GNU Texinfo], [7.0.92], [bug-texinfo@gnu.org])
+AC_INIT([GNU Texinfo], [7.1], [bug-texinfo@gnu.org])
 
 dnl Must come before AM_INIT_AUTOMAKE.
 AC_CONFIG_AUX_DIR([build-aux])
 dnl tar-ustar because we have long filenames for some test files.
-dnl parallel-tests as recommended by stefano.
 AM_INIT_AUTOMAKE([1.16.2 dist-xz
                  info-in-builddir parallel-tests tar-ustar])
 
@@ -61,14 +60,14 @@ AC_ARG_VAR([PERL_EXT_LDFLAGS], [Linker flags for a Perl extension])
 AC_ARG_VAR([PERL_EXT_CC], [Compiler for a Perl extension])
 
 AC_MSG_CHECKING([Perl version and modules])
-if $PERL -e "use 5.008_001; use Encode; use Data::Dumper" >/dev/null 2>&1; then
+if $PERL -e "use 5.008_001; use Encode; use Data::Dumper; use Unicode::Normalize" >/dev/null 2>&1; then
   perl_version_requirement='yes'
 else
   perl_version_requirement='no'
 fi
 AC_MSG_RESULT($perl_version_requirement)
 if test z"$perl_version_requirement" = 'zno' ; then
-  AC_MSG_ERROR([perl >= 5.8.1 with Encode and Data::Dumper required by Texinfo.])
+  AC_MSG_ERROR([perl >= 5.8.1 with Encode, Data::Dumper and Unicode::Normalize required by Texinfo.])
 fi
 
 AC_MSG_CHECKING([Unicode::Collate])
@@ -582,6 +581,7 @@ AC_SUBST([HOST_IS_WINDOWS_VARIABLE])
 AC_CONFIG_FILES([\
   Makefile
   doc/Makefile
+  doc/refcard/Makefile
   doc/tp_api/Makefile
   gnulib/lib/Makefile
   info/Makefile

@@ -46,6 +46,7 @@ $result_trees{'anchor_in_copying_insertcopying_titlepage'} = {
                       ],
                       'cmdname' => 'anchor',
                       'extra' => {
+                        'is_target' => 1,
                         'normalized' => 'a-in-copying'
                       },
                       'source_info' => {
@@ -179,6 +180,7 @@ $result_trees{'anchor_in_copying_insertcopying_titlepage'} = {
                   ],
                   'cmdname' => 'anchor',
                   'extra' => {
+                    'is_target' => 1,
                     'normalized' => 'a-in-titlepage'
                   },
                   'source_info' => {
@@ -276,6 +278,7 @@ $result_trees{'anchor_in_copying_insertcopying_titlepage'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -345,6 +348,7 @@ $result_trees{'anchor_in_copying_insertcopying_titlepage'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Chapter'
       },
       'info' => {
@@ -444,7 +448,9 @@ $result_trees{'anchor_in_copying_insertcopying_titlepage'} = {
           'type' => 'paragraph'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -498,7 +504,7 @@ a in titlepage.
 ';
 
 $result_sectioning{'anchor_in_copying_insertcopying_titlepage'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -507,11 +513,8 @@ $result_sectioning{'anchor_in_copying_insertcopying_titlepage'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -520,72 +523,81 @@ $result_sectioning{'anchor_in_copying_insertcopying_titlepage'} = {
                   'cmdname' => 'node',
                   'extra' => {
                     'normalized' => 'Chapter'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'anchor_in_copying_insertcopying_titlepage'};
+$result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'anchor_in_copying_insertcopying_titlepage'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'anchor_in_copying_insertcopying_titlepage'};
 
-$result_nodes{'anchor_in_copying_insertcopying_titlepage'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'normalized' => 'Chapter'
+$result_nodes{'anchor_in_copying_insertcopying_titlepage'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'Chapter'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'anchor_in_copying_insertcopying_titlepage'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'anchor_in_copying_insertcopying_titlepage'}[0];
+$result_nodes{'anchor_in_copying_insertcopying_titlepage'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'anchor_in_copying_insertcopying_titlepage'}[0];
+$result_nodes{'anchor_in_copying_insertcopying_titlepage'}[1] = $result_nodes{'anchor_in_copying_insertcopying_titlepage'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'anchor_in_copying_insertcopying_titlepage'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'Chapter'
     }
   }
-};
-$result_nodes{'anchor_in_copying_insertcopying_titlepage'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'anchor_in_copying_insertcopying_titlepage'};
-$result_nodes{'anchor_in_copying_insertcopying_titlepage'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'anchor_in_copying_insertcopying_titlepage'};
-
-$result_menus{'anchor_in_copying_insertcopying_titlepage'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'anchor_in_copying_insertcopying_titlepage'} = [];
 

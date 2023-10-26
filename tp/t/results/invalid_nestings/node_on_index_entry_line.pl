@@ -38,6 +38,7 @@ $result_trees{'node_on_index_entry_line'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -178,6 +179,7 @@ $result_trees{'node_on_index_entry_line'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'a'
       },
       'info' => {
@@ -213,52 +215,57 @@ $result_texts{'node_on_index_entry_line'} = '
 Content
 ';
 
-$result_nodes{'node_on_index_entry_line'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'a'
-  },
-  'structure' => {
-    'node_next' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'm'
-          }
-        ],
-        'normalized' => 'b'
-      }
-    },
-    'node_prev' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'm'
-          }
-        ],
-        'normalized' => 'c'
-      }
-    },
-    'node_up' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'h'
-          }
-        ],
-        'normalized' => 'd'
-      }
+$result_nodes{'node_on_index_entry_line'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'm'
+              }
+            ],
+            'normalized' => 'b'
+          },
+          'type' => 'line_arg'
+        },
+        'prev' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'm'
+              }
+            ],
+            'normalized' => 'c'
+          },
+          'type' => 'line_arg'
+        },
+        'up' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'h'
+              }
+            ],
+            'normalized' => 'd'
+          },
+          'type' => 'line_arg'
+        }
+      },
+      'normalized' => 'a'
     }
   }
-};
+];
 
-$result_menus{'node_on_index_entry_line'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'a'
-  },
-  'structure' => {}
-};
+$result_menus{'node_on_index_entry_line'} = [
+  {
+    'extra' => {
+      'normalized' => 'a'
+    }
+  }
+];
 
 $result_errors{'node_on_index_entry_line'} = [
   {

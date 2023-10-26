@@ -58,6 +58,7 @@ $result_trees{'transparent_sort_chars'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -185,6 +186,7 @@ $result_trees{'transparent_sort_chars'} = {
             'index_ignore_chars' => '-'
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -223,6 +225,7 @@ $result_trees{'transparent_sort_chars'} = {
             'index_ignore_chars' => '-'
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -261,6 +264,7 @@ $result_trees{'transparent_sort_chars'} = {
             'index_ignore_chars' => '-'
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -313,6 +317,7 @@ $result_trees{'transparent_sort_chars'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -356,7 +361,7 @@ $result_texts{'transparent_sort_chars'} = '
 ';
 
 $result_sectioning{'transparent_sort_chars'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -365,53 +370,58 @@ $result_sectioning{'transparent_sort_chars'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'transparent_sort_chars'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'transparent_sort_chars'};
+$result_sectioning{'transparent_sort_chars'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'transparent_sort_chars'};
 
-$result_nodes{'transparent_sort_chars'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'transparent_sort_chars'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'transparent_sort_chars'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'transparent_sort_chars'}[0];
+$result_nodes{'transparent_sort_chars'}[1] = $result_nodes{'transparent_sort_chars'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'transparent_sort_chars'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'transparent_sort_chars'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'transparent_sort_chars'};
-
-$result_menus{'transparent_sort_chars'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'transparent_sort_chars'} = [];
 

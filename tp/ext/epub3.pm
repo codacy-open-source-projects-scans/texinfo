@@ -198,9 +198,9 @@ texinfo_register_formatting_function('format_navigation_panel', \&epub_noop);
 
 texinfo_register_command_formatting('image', \&epub_convert_image_command);
 
-texinfo_register_type_formatting('unit', \&epub_convert_tree_unit_type);
-texinfo_register_type_formatting('special_element',
-                                 \&epub_convert_special_element_type);
+texinfo_register_output_unit_formatting('unit', \&epub_convert_unit_type);
+texinfo_register_output_unit_formatting('special_unit',
+                                 \&epub_convert_special_unit_type);
 
 my %epub_images_extensions_mimetypes = (
   '.png' =>  'image/png',
@@ -355,26 +355,26 @@ sub epub_convert_image_command($$$$)
   return '';
 }
 
-my @epub_tree_units_output_filenames;
+my @epub_output_units_filenames;
 # collect filenames in units order
-sub epub_convert_tree_unit_type($$$$)
+sub epub_convert_unit_type($$$$)
 {
   my $self = shift;
   my $type = shift;
   my $element = shift;
   my $content = shift;
 
-  push @epub_tree_units_output_filenames,
-   $element->{'structure'}->{'unit_filename'}
-    unless grep {$_ eq $element->{'structure'}->{'unit_filename'}}
-            @epub_tree_units_output_filenames;
-  return &{$self->default_type_conversion($type)}($self,
+  push @epub_output_units_filenames,
+   $element->{'unit_filename'}
+    unless grep {$_ eq $element->{'unit_filename'}}
+            @epub_output_units_filenames;
+  return &{$self->default_output_unit_conversion($type)}($self,
                                       $type, $element, $content);
 }
 
 my @epub_special_elements_filenames;
 # collect filenames in order
-sub epub_convert_special_element_type($$$$)
+sub epub_convert_special_unit_type($$$$)
 {
   my $self = shift;
   my $type = shift;
@@ -382,10 +382,10 @@ sub epub_convert_special_element_type($$$$)
   my $content = shift;
 
   push @epub_special_elements_filenames,
-   $element->{'structure'}->{'unit_filename'}
-    unless grep {$_ eq $element->{'structure'}->{'unit_filename'}}
+   $element->{'unit_filename'}
+    unless grep {$_ eq $element->{'unit_filename'}}
             @epub_special_elements_filenames;
-  return &{$self->default_type_conversion($type)}($self,
+  return &{$self->default_output_unit_conversion($type)}($self,
                                       $type, $element, $content);
 }
 
@@ -433,7 +433,7 @@ sub epub_setup($)
   $epub_destination_directory = undef;
   $epub_document_destination_directory = undef;
   $encoded_epub_destination_directory = undef;
-  @epub_tree_units_output_filenames = ();
+  @epub_output_units_filenames = ();
   @epub_special_elements_filenames = ();
   %epub_images = ();
   $nav_filename = $default_nav_filename;
@@ -565,7 +565,7 @@ sub epub_finish($$)
   my $self = shift;
   my $document_root = shift;
 
-  my @epub_output_filenames = (@epub_tree_units_output_filenames,
+  my @epub_output_filenames = (@epub_output_units_filenames,
                                @epub_special_elements_filenames);
 
   if (scalar(@epub_output_filenames) == 0) {
@@ -653,7 +653,7 @@ EOT
   my $nav_id = 'nav';
   my $nav_file_path_name;
   my $title = _epub_convert_tree_to_text($self, $self->get_info('title_tree'));
-  if ($self->{'structuring'} and $self->{'structuring'}->{'sectioning_root'}) {
+  if ($self->{'sections_list'}) {
     $nav_file_path_name
      = File::Spec->catfile($epub_document_destination_directory, $nav_filename);
     my ($encoded_nav_file_path_name, $nav_path_encoding)
@@ -684,19 +684,20 @@ EOT
 EOT
 
     # similar code as in chm.pm
-    my $section_root = $self->{'structuring'}->{'sectioning_root'};
-    my $upper_level = $section_root->{'structure'}->{'section_childs'}->[0]
-                                            ->{'structure'}->{'section_level'};
-    foreach my $top_section (@{$section_root->{'structure'}->{'section_childs'}}) {
-      $upper_level = $top_section->{'structure'}->{'section_level'}
-      if ($top_section->{'structure'}->{'section_level'} < $upper_level);
+    my $section_root = $self->{'sections_list'}->[0]
+                                         ->{'extra'}->{'sectioning_root'};
+    my $upper_level = $section_root->{'extra'}->{'section_childs'}->[0]
+                                            ->{'extra'}->{'section_level'};
+    foreach my $top_section (@{$section_root->{'extra'}->{'section_childs'}}) {
+      $upper_level = $top_section->{'extra'}->{'section_level'}
+      if ($top_section->{'extra'}->{'section_level'} < $upper_level);
     }
     $upper_level = 1 if ($upper_level <= 0);
     my $root_level = $upper_level - 1;
     my $level = $root_level;
-    foreach my $section (@{$self->{'structuring'}->{'sections_list'}}) {
+    foreach my $section (@{$self->{'sections_list'}}) {
       next if ($section->{'cmdname'} eq 'part');
-      my $section_level = $section->{'structure'}->{'section_level'};
+      my $section_level = $section->{'extra'}->{'section_level'};
       $section_level = 1 if ($section_level == 0);
       # FIXME with gaps in sectioning there could be nesting issues?
       if ($level < $section_level) {
@@ -705,7 +706,7 @@ EOT
           print $nav_fh "\n". " " x $level . "<ol>\n";
           $level++;
         }
-      } elsif ($level > $section->{'structure'}->{'section_level'}) {
+      } elsif ($level > $section->{'extra'}->{'section_level'}) {
         # on the same line as the a element for the first </li>
         print $nav_fh "</li>\n". " " x ($level -1) . "</ol>\n";
         $level--;

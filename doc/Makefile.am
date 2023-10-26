@@ -13,7 +13,7 @@
 # The links to texi2any_internals require that to avoid many warnings
 AM_MAKEINFOFLAGS = -c INFO_SPECIAL_CHARS_WARNING=0
 
-SUBDIRS = tp_api
+SUBDIRS = tp_api refcard
 
 info_TEXINFOS = texinfo.texi info-stnd.texi texi2any_api.texi
 texinfo_TEXINFOS = pod2texi.texi
@@ -40,7 +40,7 @@ if BUILD_PERL_API_TEXI
 # is therefore determined by the information in the Pod file NAME
 # section.
 pod2texi.texi: $(pod2texi_pl)
-	$(PERL) -I $(top_srcdir)/Pod-Simple-Texinfo/lib/ -I $(top_srcdir)/tp/ -I $(top_srcdir)/tp/maintain/lib/Text-Unidecode/lib/ -I $(top_srcdir)/tp/maintain/lib/libintl-perl/lib/ -I $(top_srcdir)/tp/maintain/lib/Unicode-EastAsianWidth/lib/ $(top_srcdir)/Pod-Simple-Texinfo/pod2texi.pl --base-level=subsubsection --no-section-nodes --headings-as-sections $(pod2texi_pl) > /dev/null
+	$(PERL) -I $(top_srcdir)/Pod-Simple-Texinfo/lib/ -I $(top_srcdir)/tp/ $(top_srcdir)/Pod-Simple-Texinfo/pod2texi.pl --base-level=subsubsection --no-section-nodes --headings-as-sections $(pod2texi_pl) > /dev/null
 endif
 
 # We'd also like to use something like this, but Automake calls
@@ -53,18 +53,10 @@ TXI_XLATE = txi-ca.tex txi-cs.tex txi-de.tex txi-en.tex txi-es.tex \
 	    txi-pt.tex txi-ru.tex txi-sr.tex txi-tr.tex txi-uk.tex \
 	    txi-zh.tex
 
-refcard_files = refcard/Makefile refcard/txicmdcheck \
-                refcard/txirefcard-a4.pdf refcard/txirefcard.pdf \
-		refcard/txirefcard.tex
-
-refcard/txirefcard.pdf refcard/txirefcard-a4.pdf: refcard/txirefcard.tex
-	cd $(srcdir)/refcard && make
-
 # Include our texinfo.tex, not Automake's.
 EXTRA_DIST = epsf.tex texinfo.tex \
              fdl.texi \
 	     $(man_MANS) $(TXI_XLATE) \
-             $(refcard_files) \
 	     texinfo-tex-test.texi texinfo-tex-test.WIDOWs \
              texinfo-ja.tex short-sample-ja.texi \
              texinfo-zh.tex short-sample-zh.texi
@@ -179,5 +171,4 @@ wwwdoc-install:
 	        $(www_target)
 	$(MKDIR_P) $(www_target)/Pod/Simple
 	cp -arf $(doctemp)/Pod/Simple/Texinfo.html $(www_target)/Pod/Simple
-	ls -ltu $(www_target)/*/html_node | tail  # cvs rm -f obsolete files
 # followed by cvs add of new files and cvs commit.

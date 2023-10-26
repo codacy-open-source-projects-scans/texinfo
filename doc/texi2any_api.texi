@@ -756,59 +756,58 @@ and which directions are available as the directions is the basis for
 navigation panel customization.
 
 
-@node Output Element Units
-@section Output Element Units
+@node Output Units
+@section Output Units
 
 @cindex Output elements
 @cindex Elements, main unit of output documents
 @cindex Document units
-@cindex Texinfo tree element units
+@cindex Texinfo tree output units
 
-We will call the main unit of output documents a document @dfn{unit},
-or a Texinfo tree element @dfn{unit}.  An
-element unit's association with output files is determined by the split
+We will call the main unit of output documents a document output @dfn{unit}.
+An output unit's association with output files is determined by the split
 options (@pxref{Splitting Output,,, texinfo, Texinfo}).  This section describes
 precisely how these output units work, with details for customization.
 
-@cindex Output elements, defined
+@cindex Output units, defined
 
-The output elements are:
+The output units are:
 
 @table @emph
-@item Normal document units
-@cindex Normal document units
-These are normal sections and nodes.  Usually a node is associated
+@item Normal output units
+@cindex Normal output units
+These are composed of normal sections and nodes.  Usually a node is associated
 with a following sectioning command, while a sectioning command is
 associated with a previous node; they both together make up the
-element unit.  Either the node or the sectioning command is considered to
+output unit.  Either the node or the sectioning command is considered to
 be the main element component, depending on the values of the
 customization variables @code{USE_NODES}
 (@pxref{HTML Customization Variables,,, texinfo, Texinfo}).
 
-For example, when generating Info, the nodes are the units; when
+For example, when generating Info, the nodes are the main elements; when
 generating HTML, either case may happen (@pxref{Two Paths,,, texinfo,
 Texinfo}).
 
-@item Top element
-@cindex Top element
+@item Top output unit
+@cindex Top output unit
 
-The top element is the highest element unit in the document structure.  If the
+The top output unit is the highest output unit in the document structure.  If the
 document has an @code{@@top} section (@pxref{@code{@@top} Command,,, texinfo,
-Texinfo}), it is the element associated with that section; otherwise, it is the
-element associated with the document's @code{@@node Top} (@pxref{The Top
+Texinfo}), it is the output unit associated with that section; otherwise, it is the
+output unit associated with the document's @code{@@node Top} (@pxref{The Top
 Node,,, texinfo, Texinfo}).  If there is no @code{@@node Top}, the first
-element in the document is the top element.  The Top element is also
-a normal element.
+output unit in the document is the top output unit.  The Top output unit is also
+a normal output unit.
 
-@item Miscellaneous elements
-@cindex Table of contents, output element unit
-@cindex Short table of contents, output element unit
-@cindex Overview, output element unit
-@cindex Footnotes, output element unit
-@cindex About page, output element unit
-The remaining element units are associated with different files if the
+@item Miscellaneous output units
+@cindex Table of contents, output unit
+@cindex Short table of contents, output unit
+@cindex Overview, output unit
+@cindex Footnotes, output unit
+@cindex About page, output unit
+The remaining output units are associated with different files if the
 document is split, and also if @code{MONOLITHIC} is not set.  There
-are four such miscellaneous elements, also called special elements:
+are four such miscellaneous output units, also called special output units:
 @enumerate
 @item Table of contents
 @item Short table of contents, also called Overview
@@ -827,20 +826,20 @@ More details:
 
 @item The customization variables @code{contents} and
 @code{shortcontents} may be set to trigger the output of the
-respective elements.
+respective output units.
 
 @vindex CONTENTS_OUTPUT_LOCATION@r{, Elements}
 @item If @code{CONTENTS_OUTPUT_LOCATION} is set to @samp{separate_element}, the
-@emph{Table of contents} and @emph{Short table of contents} elements are
+@emph{Table of contents} and @emph{Short table of contents} output units are
 separate (@pxref{Contents and Short Table of Contents Customization}).
 Otherwise the @emph{Table of contents} and @emph{Short table of contents}
-elements are directly included within the document, at locations depending on
+are directly included within the document, at locations depending on
 the specific @code{CONTENTS_OUTPUT_LOCATION} value.
 
 @item When generating HTML, the @emph{Footnotes page} should only
 be present if the footnotes appear on a separate page (@pxref{Footnote
-Styles,,, texinfo, Texinfo}).  However, a footnote element is present if the document is
-not split.
+Styles,,, texinfo, Texinfo}).  However, a footnote output unit is present
+if the document is not split.
 
 @item The @emph{About page} shouldn't be present for documents
 consisting of only one sectioning element, or for monolithic documents
@@ -849,51 +848,59 @@ without navigation information, or if @code{DO_ABOUT} is not set.
 @end itemize
 @end table
 
-It is common not to have anything but normal element units, especially in
+It is common not to have anything but normal output units, especially in
 case of monolithic output.
 
 @vindex USE_NODES
-The main component of elements is sections if @code{USE_NODES} is 0;
+The main component of output units is sections if @code{USE_NODES} is 0;
 conversely, the main component is nodes if @code{USE_NODES} is set.
 
-When sections are the main components of element units, ``isolated'' nodes
+When sections are the main components of output units, ``isolated'' nodes
 not directly associated with a sectioning command are associated with
 the following sectioning command, while sectioning commands without
-nodes constitute element units.  Conversely, when nodes are the main
-components of elements, isolated sections not associated with nodes
+nodes constitute output units.  Conversely, when nodes are the main
+components of output units, isolated sections not associated with nodes
 are associated with the previous node, and isolated nodes are
-element units.
+output units.
 
 
 @node Directions
 @section Directions
 
-@cindex Output element unit directions
+@cindex Output unit directions
 @cindex Links information
 @cindex Element directions
 @cindex Directions
 
 A variety of data items, called @dfn{element directions}, are associated
-with element units.  They may be used in the formatting functions, and/or
+with output units.  They may be used in the formatting functions, and/or
 associated with a button (@pxref{Simple Navigation Panel Customization}).
 
-Each element direction has a name and a reference to the element unit they
-point to, when such an element exists.  The element is either a
-global element unit (for example, the Top element) or relative to the
-current element unit (for example, the next element unit).  Such relative
-elements are determined with respect to the document structure defined
+@c FIXME check if the links are to output units only or also to elements
+@c such as sections or nodes
+Each element direction has a name and a reference to the unit they
+point to, when such an unit exists.  The unit is either a
+global unit (for example, the Top output unit) or relative to the
+current output unit (for example, the next output unit).  Such relative
+output units are determined with respect to the document structure defined
 by the section structuring commands (@code{@@chapter},
 @code{@@unnumbered}@dots{}) or by the nodes if the node pointers are
 specified on @code{@@node} lines or in menus (@pxref{Two Paths,,, texinfo, Texinfo}).
 
-Here is the list of global element units directions:
+Here is the list of global output units directions:
 
 @table @emph
 @item @samp{@ }
 An empty button.
 
 @item Top
-Top element.
+Top output unit.
+
+@item First
+First output unit in reading order.
+
+@item Last
+Last output unit in reading order.
 
 @item About
 About (help) page.
@@ -905,70 +912,63 @@ Table of contents.
 Overview: short table of contents.
 
 @item Footnotes
-Corresponds to the @code{Footnotes} element (@pxref{Output Element
-Units}).
+Corresponds to the @code{Footnotes} output unit (@pxref{Output Units}).
 
 @item Index
-The first element unit with @code{@@printindex}.
+The first output unit with @code{@@printindex}.
 
 @end table
 
-Here is the list of relative element units directions:
+Here is the list of relative output units directions:
 
 @table @emph
 @item This
-The current element unit.
+The current output unit.
 
 @item Forward
-Next element unit in reading order.
-
-@item First
-First element unit in reading order.
-
-@item Last
-Last element unit in reading order.
+Next output unit in reading order.
 
 @item Back
-Previous element unit in reading order.
+Previous output unit in reading order.
 
 @item FastForward
-Next chapter element unit.
+Next chapter output unit.
 
 @item FastBack
 Beginning of this chapter, or previous chapter if the element is a chapter.
 
 @item Next
-Next section element unit at the same level.
+Next section output unit at the same level.
 
 @item Prev
-Previous section element unit at the same level.
+Previous section output unit at the same level.
 
 @item Up
 Up section.
 
 @item SectionNext
-Next element unit in section reading order.
+Next output unit in section reading order.
 
 @item SectionPrev
-Previous element unit in section reading order.
+Previous output unit in section reading order.
 
 @item SectionUp
 Up in section reading order.
 
 @item NodeNext
-Next node element unit.
+Next node output unit.
 
 @item NodeForward
-Next node element unit in node reading order.
+Next node output unit in node reading order.
 
 @item NodeBack
-Previous node element unit in node reading order.
+Previous node output unit in node reading order.
 
 @item NodePrev
-Previous node element unit.
+Previous node output unit.
 
 @item NodeUp
-Up node element unit.
+Up node output unit.
 
 @end table
 
@@ -987,13 +987,13 @@ is the next node element relative to the first element in file.  The
 @cindex Direction information type
 @cindex Type, of direction information
 The element directions also have types of information associated,
-which are in general set dynamically depending on the current element
-unit, for instance on the element unit whose navigation panel is being
+which are in general set dynamically depending on the current output
+unit, for instance on the output unit whose navigation panel is being
 formatted:
 
 @table @code
 @item href
-A string that can be used as an href attribute linking to the element unit
+A string that can be used as an href attribute linking to the output unit
 corresponding to the direction.
 
 @item string
@@ -1011,16 +1011,16 @@ A Texinfo tree element representing the direction.
 
 @item target
 A string representing the target of the direction, typically used as id
-attribute in the element unit corresponding to the direction, and in href
+attribute in the output unit corresponding to the direction, and in href
 attribute.
 
 @item node
-Same as @code{text}, but selecting the node associated with the element unit
-direction in priority.
+Same as @code{text}, but selecting the node associated with the
+element direction in priority.
 
 @item section
 Same as @code{text}, but selecting the sectioning command
-associated with the element unit direction in priority.
+associated with the element direction in priority.
 
 @end table
 
@@ -1128,8 +1128,8 @@ variables need to be set in addition:
 @itemx PASSIVE_ICONS
 Hash references with element directions as key (@pxref{Directions}) and button
 image icons as values.  @code{ACTIVE_ICONS} is used for directions actually
-linking to an element, and @code{PASSIVE_ICONS} are used if there is no
-element to link to.  The button images are interpreted as URLs.
+linking to an output unit, and @code{PASSIVE_ICONS} are used if there is no
+output unit to link to.  The button images are interpreted as URLs.
 @end vtable
 
 @cindex Navigation panel button specification
@@ -1161,28 +1161,27 @@ Specifies the buttons appearing at the page header if split at chapters and
 there is no section navigation.
 
 @item MISC_BUTTONS
-Specifies the buttons appearing at the beginning of special elements
-and, if the output is split, at the end of such elements.
+Specifies the buttons appearing at the beginning of special output units
+and, if the output is split, at the end of such units.
 
 @item LINKS_BUTTONS
 Used for @code{<link>} elements if they are output in the headers.
 
 @item TOP_BUTTONS
-Specifies the buttons used in the top element (@pxref{Output Element
-Units}).
+Specifies the buttons used in the top output unit (@pxref{Output Units}).
 @end vtable
 
 Each array specifies which buttons are included, and how they are
-displayed.  Each array element is associated with a button of the
-navigation panel from left to right.  The meaning of the array element
+displayed.  Each array item is associated with a button of the
+navigation panel from left to right.  The meaning of the array item
 values is the following:
 
 @anchor{Buttons Display}
 
 @table @emph
-@item string with an element unit direction
+@item string with an element direction
 If icons are not used, the button is a link to the corresponding
-element whose text is the @code{text} direction string
+output unit whose text is the @code{text} direction string
 (@pxref{Direction Strings}), surrounded by @samp{[} and
 @samp{]}. If the element direction is @samp{ }, the @samp{[} and @samp{]}
 are omitted.
@@ -1192,9 +1191,9 @@ are omitted.
 @cindex Icons, in navigation buttons
 If icons are used, the button is an image whose file is determined by
 the value associated with the element direction in the
-@code{ACTIVE_ICONS} variable hash if the link leads to an element, or in the
-@code{PASSIVE_ICONS} variable hash if there is no element to link to.  If
-there is a link to the element, the icon links to that element.  The
+@code{ACTIVE_ICONS} variable hash if the link leads to an output unit, or in the
+@code{PASSIVE_ICONS} variable hash if there is no output unit to link to.  If
+there is a link to the output unit, the icon links to that output unit.  The
 button name and button description are given as HTML attributes to
 have a textual description of the icon.  The corresponding strings
 correspond to the @code{button} direction string for the button name
@@ -1210,9 +1209,9 @@ button text.
 The scalar value is printed.
 
 @item array reference of length 2
-Here, the first array element should be a an element direction.
-A link to the element unit associated with the element direction
-is generated.  The text of the link depends on the second array element.
+Here, the first array item should be a an element direction.
+A link to the output unit associated with the element direction
+is generated.  The text of the link depends on the second array item.
 
 @table @emph
 @item reference to a text string
@@ -1228,14 +1227,14 @@ The text string is interpreted as an element direction information type
 and the corresponding text is used for the link.
 @xref{Element Direction Information Type}.
 
-For example, if the button array element is
+For example, if the button array item is
 @example
 [ 'Next', 'node' ]
 @end example
 
 @noindent
 Then the button will be a link to the next section with text
-based on the name of the node associated with the next section element unit.
+based on the name of the node associated with the next section output unit.
 
 @end table
 
@@ -1443,29 +1442,15 @@ The following is not ok:
 push @@@{$element->@{'contents'@}@}, @{'text' => ' my added text'@};
 @end example
 
-In addition to the elements obtained after parsing a Texinfo
-document, two elements are added,
-@code{unit} type elements that correspond to the normal document units
-(@pxref{Output Element Units}), and special elements with type
-@code{special_element} that correspond to added special elements (@pxref{Output
-Element Units}).  These added elements, as well as nodes and sectioning elements
-hold information on the document structure in the @code{structure} element hash
-(@pxref{Texinfo::Structuring METHODS,,,texi2any_internals}).
+Nodes and sectioning elements hold information on the document
+structure (@pxref{Texinfo::Structuring METHODS,,,texi2any_internals}).
 
-Normal tree unit elements have a @code{unit_command} key in the
-@code{extra} hash that points to the associated @code{@@node} or
-sectioning @@-command depending on which of nodes or sectioning commands
-are the main components of elements. @xref{Output Element Units}.
-
-The following keys of the @code{structure} hash can be interesting:
 
 @cindex Document structure
 
-@table @code
-@item associated_unit
-For sectioning and @code{@@node} @@-command elements.  The associated
-tree unit element.
+The following keys of the @code{extra} elements hash can be interesting:
 
+@table @code
 @item section_childs
 For sectioning commands elements.  The children of the sectioning element
 in the sectioning tree.
@@ -1476,20 +1461,47 @@ The level of the section, taking into account @code{@@raisesections} and
 and level 1 to @code{@@chapter} level sectioning commands.
 @xref{Raise/lower sections,,, texinfo, Texinfo}.
 
-@item unit_filename
-For tree unit elements. The associated file name.
-
-@item unit_next
-For tree unit elements. The next unit element in document order.
-
-@item unit_prev
-For tree unit elements. The previous unit element in document order.
 @end table
-
 
 Detailed information on the tree elements is available in the Texinfo Parser
 documentation, in particular a list of types and of information in the elements
 @code{extra} hash (@pxref{Texinfo::Parser TEXINFO TREE,,,texi2any_internals}).
+
+
+@node Output Units in User Defined Functions
+@section Output Units in User Defined Functions
+
+Output units that are not part of the tree nor tree elements are
+formatted, both normal output units and special units (@pxref{Output
+Units}).  The output units hold information on the document
+structure (@pxref{Texinfo::Structuring METHODS,,,texi2any_internals}).
+
+The following keys of output unit hashes can be interesting:
+
+@table @code
+@item unit_type
+@code{unit} for normal output units, @code{special_unit} for
+special units.
+
+@item unit_command
+Points to the associated @code{@@node} or sectioning @@-command depending
+on which of nodes or sectioning commands are the main components of
+output units. @xref{Output Units}.  The corresponding sectioning
+and @code{@@node} @@-command elements have a @code{associated_unit}
+key directly in their hash that points to the associated output unit.
+@cindex @code{unit_command} element
+@cindex @code{associated_unit} output unit
+
+@item unit_contents
+Array reference on tree elements associated to the output unit.
+
+@item unit_filename
+The associated file name.
+
+@item unit_directions
+Hash with @code{next} and @code{prev} for the
+next and previous output units in document order.
+@end table
 
 
 @node Encoding and Decoding File Path Strings
@@ -1726,7 +1738,7 @@ Text appearing in @code{@@copying} with all the Texinfo commands
 put into comments (@pxref{@code{@@copying},,, texinfo, Texinfo}).
 
 @item current_filename
-The file name of the current document unit being converted.
+The file name of the current output unit being converted.
 
 @item destination_directory
 Destination directory for the output files.  It is common to use that string in directory
@@ -1745,13 +1757,13 @@ Expansion Contexts}.
 
 @item floats
 Information on floats. Gathered from the Texinfo parsing result.
-@xref{Texinfo::Parser $float_types = floats_information($parser),,
-Texinfo::Parser::floats_information,texi2any_internals}.
+@xref{Texinfo::Document $float_types = floats_information($document),,
+Texinfo::Document::floats_information,texi2any_internals}.
 
 @item global_commands
 Global commands information.  Gathered from the Texinfo parsing result.
-@xref{Texinfo::Parser $commands = global_commands_information($parser),,
-Texinfo::Parser::global_commands_information,texi2any_internals}.
+@xref{Texinfo::Document $commands = global_commands_information($document),,
+Texinfo::Document::global_commands_information,texi2any_internals}.
 
 @item index_entries
 Information on indices taking into account merged indices.
@@ -1762,7 +1774,7 @@ Index entries sorted by letter. @xref{Texinfo::Structuring ($index_entries_sorte
 
 @item indices_information
 Information about defined indices, merged indices and index entries.
-@xref{Texinfo@asis{::}Parser $indices_information = $parser->indices_information(),,Texinfo@asis{::}Parser@asis{::}indices_information,texi2any_internals}.
+@xref{Texinfo@asis{::}Document $indices_information = $document->indices_information(),,Texinfo@asis{::}Document@asis{::}indices_information,texi2any_internals}.
 
 @item jslicenses
 An hash reference with  categories of javascript used in the document
@@ -1788,12 +1800,12 @@ HTML line break element, based on @samp{<br>}, also taking into account
 @item non_breaking_space
 Non breaking space, can be @samp{&nbsp;}, but also a non breaking
 space character or the corresponding numeric entity based on
-@code{ENABLE_ENCODING} and @code{USE_NUMERIC_ENTITY} customization variables
+@code{OUTPUT_CHARACTERS} and @code{USE_NUMERIC_ENTITY} customization variables
 values.
 
 @item paragraph_symbol
 Paragraph symbol, can be @samp{&para;}, but also the corresponding numeric entity
-or encoded character based on @code{ENABLE_ENCODING} and
+or encoded character based on @code{OUTPUT_CHARACTERS} and
 @code{USE_NUMERIC_ENTITY} customization variables values.
 
 @item title_string
@@ -1812,12 +1824,8 @@ all the title-related commands, including @code{@@top} and
 a Texinfo tree corresponding to the simpletitle, and @code{simpletitle_command_name}
 is the @@-command name used for the simpletitle, without the leading @@.
 
-@item structuring
-Information on the document structure.  Gathered before the conversion.
-Two hash keys correspond to interesting information, @code{sectioning_root}
-which points to the top level sectioning command tree element, and
-@code{sections_list} which holds the list of the sectioning commands in the
-document.
+@item sections_list
+List of the sectioning commands in the document.
 
 @item title_titlepage
 The formatted title, possibly based on @code{@@titlepage}, or on
@@ -1905,28 +1913,26 @@ name that has been already set.  The function should return the node file name
 (@var{$node_file}).
 @end deftypefn
 
-The other function reference, @code{tree_unit_file_name}, is used to
-customize the file names associated with each normal element unit
-(@pxref{Output Element Units}).
+The other function reference, @code{unit_file_name}, is used to
+customize the file names associated with each normal output unit
+(@pxref{Output Units}).
 
-@deftypefn {Function Reference} {(@var{$file}, @var{$path})} tree_unit_file_name (@var{$converter}, @
-                  @var{\%unit_element}, @var{$file_name}, @var{$file_path})
-@var{$converter} is a converter object.  @var{\%unit_element} is the Texinfo
-element corresponding to the unit element.  @var{$file_name} is the file
-name that has been already set.  @var{$file_path} is the file path that has
-been already set.  @var{$file_path} is @samp{undef} if the file is relative to
-the output directory, which is the case if the output is split.  The
-function should return the file name for the unit element, @var{$file}, and the
-file path for the unit element, @var{$path}, which should be @samp{undef} if
-the file path is to be constructed by putting @var{$file} in the destination
-directory.
+@deftypefn {Function Reference} {(@var{$file}, @var{$path})} unit_file_name (@var{$converter}, @
+                  @var{\%output_unit}, @var{$file_name}, @var{$file_path})
+@var{$converter} is a converter object.  @var{\%output_unit} is the output unit.
+@var{$file_name} is the file name that has been already set.  @var{$file_path}
+is the file path that has been already set.  @var{$file_path} is @samp{undef}
+if the file is relative to the output directory, which is the case if the output
+is split.  The function should return the file name for the output unit,
+@var{$file}, and the file path for the output unit, @var{$path}, which should
+be @samp{undef} if the file path is to be constructed by putting @var{$file}
+in the destination directory.
 @end deftypefn
 
-In the user defined functions, the information that a unit element
-is associated with @code{@@top} or @code{@@node Top} or more generally
-considered to be the Top element may be determined with
+In the user defined functions, the information that an output unit
+is associated with @code{@@top} or @code{@@node Top} may be determined with:
 @example
-$converter->element_is_tree_unit_top(\%unit_element);
+$converter->unit_is_top_output_unit(\%output_unit);
 @end example
 
 The information on tree elements may be interesting for those functions
@@ -1957,10 +1963,11 @@ The following function reference is for target items (nodes, anchors,
 floats), including for external manuals:
 
 @deftypefn {Function Reference} @var{$target} label_target_name @
-           (@var{$converter}, @var{$normalized}, @var{\@@node_contents}, @var{$default_target})
+           (@var{$converter}, @var{$normalized}, @var{\%element}, @var{$default_target})
 @var{$converter} is a converter object.  @var{$normalized} is the
-normalized node name, @var{\@@node_contents} is a reference on an
-array containing the Texinfo tree contents of the command label.
+normalized node name, @var{\%element} is a reference on a
+Texinfo tree command label element whose contents correspond
+to the node name.
 @var{$default_target} is the target that has been already set.  The function
 should return the target (@var{$target}).
 @end deftypefn
@@ -2017,11 +2024,11 @@ to be split, and @code{external_target_non_split_name} if the external
 target is non split.
 
 @deftypefn {Function Reference} {(@var{$target}, @var{$host_directory}, @var{$file_name})} @
-  external_target_split_name(@var{$converter}, @var{$normalized}, @var{\@@node_contents}, @var{$default_target}, @
+  external_target_split_name(@var{$converter}, @var{$normalized}, @var{\%element}, @var{$default_target}, @
     @var{$default_host_directory}, @var{$default_file_name})
 @var{$converter} is a converter object. @var{$normalized} is the
-normalized node name, @var{\@@node_contents} is a reference
-on an array containing the Texinfo tree contents of the external target.
+normalized node name, @var{\%element} is a reference
+on an element containing information on the external node.
 
 @var{$default_target}, @var{$default_host_directory} and
 @var{$default_file_name} are the target, host and directory URL part and file name
@@ -2032,11 +2039,11 @@ The function should return the @var{$target}, @var{$host_directory} and
 @end deftypefn
 
 @deftypefn {Function Reference} {(@var{$target}, @var{$host_directory_file})} @
-  external_target_non_split_name(@var{$converter}, @var{$normalized}, @var{\@@node_contents}, @var{$default_target}, @
+  external_target_non_split_name(@var{$converter}, @var{$normalized}, @var{\%element}, @var{$default_target}, @
     @var{$default_host_directory_file})
 @var{$converter} is a converter object. @var{$normalized} is the
-normalized node name, @var{\@@node_contents} is a reference
-on an array containing the Texinfo tree contents of the external target.
+normalized node name, @var{\%element} is a reference
+on an element containing information on the external node.
 
 @var{$default_target} is the target and @var{$default_host_directory_file}
 is the host and file name part of the URL that have been already
@@ -2054,21 +2061,21 @@ URL parts.
 @cindex Special Elements id names, customizing
 @cindex Special Elements file names, customizing
 
-For special element units file and target (@pxref{Output Element Units}), the
+For special output units file and target (@pxref{Output Units}), the
 function reference is:
 
-@deftypefn {Function Reference} {(@var{$target}, @var{$file})} special_element_target_file_name @
-           (@var{$converter}, @var{\%element}, @var{$default_target}, @var{$file_name})
-@var{$converter} is a converter object. @var{\%element} is the Texinfo
-element corresponding to the special element unit. @var{$default_target} is the
+@deftypefn {Function Reference} {(@var{$target}, @var{$file})} special_unit_target_file_name @
+           (@var{$converter}, @var{\%output_unit}, @var{$default_target}, @var{$file_name})
+@var{$converter} is a converter object. @var{\%output_unit} is the special
+output unit hash. @var{$default_target} is the
 target that has been already set, and @var{$file_name} is the
 file name that has been already set. The function should return the @var{$target}
 and @var{$file}.
 @end deftypefn
 
-To determine the variety of the special element processed, the @code{extra}
-hash @code{special_element_variety} key can be used.
-@xref{Special Elements Varieties}.
+To determine the variety of the special output unit processed, the
+output unit @code{special_unit_variety} hash key can be used.
+@xref{Special Units Varieties}.
 
 
 @node Init File Calling at Different Stages
@@ -2098,7 +2105,7 @@ customization variables pre-conversion values.
 @item structure
 Called after setting and determining information on CSS, output files and directories,
 document structure and associated directions, file names, labels and links for nodes,
-sectioning commands, special elements, footnotes and index entries.
+sectioning commands, special output units, footnotes and index entries.
 
 @item init
 Called after some gathering of global information on the document,
@@ -2151,8 +2158,8 @@ is 100.
 Full customization of output is achieved with replacing default
 formatting functions with user defined functions.  There
 are two broad classes of functions, the @dfn{conversion} functions used
-for elements of the Texinfo tree, and other @dfn{formatting} functions with
-diverse purposes, including formatting that are not based on
+for output units and elements of the Texinfo tree, and other @dfn{formatting}
+functions with diverse purposes, including formatting that are not based on
 tree elements (for example beginning and end of file formatting).
 
 
@@ -2226,7 +2233,8 @@ element.
 
 @var{\@@args}, if defined, is a reference on the formatted arguments
 of the @@-command. Each of the array items correspond to each of
-the @@-command argument. Each array item is a hash references, with keys
+the @@-command argument. Each array item is either @code{undef} if the
+argument is empty, or a hash reference, with keys
 corresponding to possible argument formatting contexts:
 
 @table @code
@@ -2248,7 +2256,7 @@ text.  @xref{Converter Object and Conversion Functions}.
 @item filenametext
 Same as monospacetext, but in addition the document encoding is used
 to convert accented letters and special insertion @@-commands to plain
-text even if @code{ENABLE_ENCODING} is unset.
+text independently of customization variables.
 
 @item raw
 Text is kept as is, special HTML characters are not protected.  Appears only
@@ -2366,7 +2374,7 @@ The call of the user defined functions is:
 associated with text, or the formatted contents for other elements.
 @var{$content} can be @code{undef} or the empty string.
 
-The @var{$text} returned is the result of the @@-command conversion.
+The @var{$text} returned is the result of the element conversion.
 @end deftypefn
 
 To call a conversion function from user defined code, the function reference
@@ -2388,6 +2396,49 @@ which should only be the case for types ignored in HTML.
 @end deftypefun
 
 
+@node Output Units Conversion Functions
+@section Output Units Conversion Functions
+
+Output units formatting function are setup and used similarly as
+for tree container types (@pxref{Type Tree Element Conversion Functions}).
+
+User defined functions called for the conversion of an output unit
+are registered with @code{texinfo_register_output_unit_formatting}.  The user
+defined function is called after conversion of the content.
+
+@defun texinfo_register_output_unit_formatting ($type, \@ampchar{}handler)
+@var{$type} is the output unit type.
+@var{\&handler} is the user defined function reference.
+@end defun
+
+The call of the user defined functions is:
+
+@deftypefn {Function Reference} @var{$text} output_unit_conversion (@var{$converter}, @
+        @var{$type}, @var{\%output_unit}, @var{$content})
+@var{$converter} is a converter object. @var{$type} is the output unit type.
+@var{\%output_unit} is the output unit.  @var{$content} the formatted contents.
+@var{$content} can be @code{undef} or the empty string.
+
+The @var{$text} returned is the result of the output unit conversion.
+@end deftypefn
+
+To call a conversion function from user defined code, the function reference
+should first be retrieved using @code{type_conversion}:
+
+@deftypefun {@var{\&output_unit_conversion} =} @var{$converter}->output_unit_conversion (@var{$type})
+@var{$type} is the output unit type.  Returns the
+conversion function reference for @var{$type}, or @samp{undef} if there is none.
+@end deftypefun
+
+It is possible to have access to the default conversion function reference.
+The function used is:
+
+@deftypefun {@var{\&default_output_unit_conversion} =} @var{$converter}->default_output_unit_conversion (@var{$type})
+@var{$type} is the output unit type.  Returns the
+default conversion function reference for @var{$type}, or @samp{undef} if there is none.
+@end deftypefun
+
+
 @node Formatting Functions
 @section Formatting Functions
 
@@ -2395,7 +2446,7 @@ Most formatting functions are specific, with specific arguments,
 and a specific item formatted.
 
 User defined functions associated with
-the formatting of special elements body (@pxref{Output Element Units})
+the formatting of special output units body (@pxref{Output Units})
 are handled separately.
 
 The formatting functions are often called from function that can be
@@ -2555,7 +2606,7 @@ $description = $converter->close_html_lone_element(
 
 If a @code{&nbsp;} can appear in formatted code,
 the corresponding text should be in a call to @code{substitute_html_non_breaking_space},
-to take into account @code{ENABLE_ENCODING} and @code{USE_NUMERIC_ENTITY}
+to take into account @code{OUTPUT_CHARACTERS} and @code{USE_NUMERIC_ENTITY}
 customization variables:
 
 @deftypefun {@var{$substituted_text} =} @var{$converter}->substitute_html_non_breaking_space @
@@ -2734,7 +2785,7 @@ Texinfo::Convert::Converter::xml_comment,texi2any_internals}.
 Returns a heading formatted using @var{$input_text} as heading text, @var{$level}
 as heading level, @var{\@@classes} for a class attribute.  @var{$command_name}
 gives an information on the @@-command the heading is associated to and can be
-@code{undef}, for instance for special elements headings.
+@code{undef}, for instance for special output units headings.
 
 @var{$id} is an optional identifier, and @var{\%element} is an optional
 Texinfo tree element associated with the heading.  @var{$target} is the
@@ -2747,7 +2798,8 @@ to the element the user sees the anchor on.
 @end deftypefn
 
 This function reference can be called for @code{@@node} and sectioning
-commands, heading commands, tree units, special elements and title @@-commands.
+commands, heading commands, normal output units, special output units and
+title @@-commands.
 
 A formatted headings is, in the default case, like @code{<h2>@var{$input_text}</h2>}
 for a @var{$level} 2 heading.
@@ -3026,10 +3078,10 @@ Translated strings can be specified in customization functions, for
 @@-commands without arguments (@pxref{Simple Customization for Commands
 Without Arguments}), for direction strings (@pxref{Direction Strings
 Customization}) and for specific elements headings such as footnotes,
-contents or about (@pxref{Special Elements Information Customization}).
+contents or about (@pxref{Special Units Information Customization}).
 Translated strings can also be inserted in the output in user-defined
 customization functions, by using specific functions for internationalization
-of strings, @code{gdt} or @code{pgdt}.
+of strings, @code{gdt}, @code{gdt_string} or @code{pgdt}.
 
 It is possible to customize the translated strings, in order to
 change the translations of the strings translated in the default case.
@@ -3043,35 +3095,33 @@ information on the default case.
 @section Internationalization of Strings Function
 
 @vindex texinfo_document @r{Gettext domain}
-The subroutines @code{gdt} or @code{pgdt}, are used for translated strings:
+The subroutines @code{gdt}, @code{gdt_string} or @code{pgdt}, are used for
+translated strings:
 
-@deftypefun {@var{$translated_tree} =} @var{$converter}->gdt (@var{$string}, @var{\%variables_hash}, @var{$translation_context}, @var{$mode})
-@deftypefunx {@var{$translated_tree} =} @var{$converter}->pgdt (@var{$translation_context}, @var{$string}, @var{\%variables_hash}, @var{$mode})
+@deftypefun {@var{$translated_tree} =} @var{$converter}->gdt (@var{$string}, @var{\%variables_hash}, @var{$translation_context})
+@deftypefunx {@var{$translated_string} =} @var{$converter}->gdt_string (@var{$string}, @var{\%variables_hash}, @var{$translation_context})
+@deftypefunx {@var{$translated_tree} =} @var{$converter}->pgdt (@var{$translation_context}, @var{$string}, @var{\%variables_hash})
 @var{$string} is the string to be translated, @var{\%variables_hash}
 is a hash reference holding the variable parts of the translated
 string.   @var{$translation_context} is an optional translation context
 that limits the search of the translated string to that context
 (@pxref{Contexts,,,gettext,GNU gettext tools}).
-The result returned is a perl Texinfo tree in the default case.
 
-@var{$mode} is an optional string which may modify how the function behaves. The
-possible values are:
-@table @code
-@item translated_text
-In that case the string is not considered to be Texinfo, a plain string
-that is returned after translation and substitution. The substitutions
-may only be strings in that case.
-@end table
+The result returned is a perl Texinfo tree for @code{gdt} and @code{pgdt}
+and a string for @code{gdt_string}.  With @code{gdt_string} the substitutions
+may only be strings.
 
 If called as @code{pgdt}, @var{$translation_context} is not optional
 and is the first argument.
 @end deftypefun
 
-When the string is expanded as Texinfo, and converted to a
-Texinfo tree in perl, the arguments are substituted; for
-example, @samp{@{arg_name@}} is replaced by the corresponding
-actual argument, which should be Texinfo perl trees, Texinfo
-perl tree contents arrays or strings.
+With @code{gdt} and @code{pgdt}, when the string is expanded as Texinfo, and
+converted to a Texinfo tree in perl, the arguments are substituted; for
+example, @samp{@{arg_name@}} is replaced by the corresponding actual argument,
+which should be a Texinfo tree element.  With @code{gdt_string}, the string
+should already be converted, the arguments are substituted as strings; for
+example @samp{@{arg_name@}} is replaced by the corresponding actual argument,
+which should be a string.
 
 In the following example, @samp{@{date@}}, @samp{@{program_homepage@}}
 and @samp{@{program@}} are the arguments of the string.  Since they
@@ -3079,18 +3129,14 @@ are used in @code{@@uref}, their order in the formatted output depends on
 the formatting and is not predictable.
 @samp{@{date@}}, @samp{@{program_homepage@}} and @samp{@{program@}} are
 substituted after the expansion, which means that they should already be
-Texinfo perl trees, Texinfo perl tree contents.  A string is turned
-into a Texinfo text element without type, with the string as @code{text}.
+Texinfo tree elements.
 
 @example
   $converter->gdt('Generated @@emph@{@@today@{@}@} using '
-   .'@@uref@{@{program_homepage@}, @@emph@{@{program@}@}@}.',
-      @{ 'program_homepage' => $converter->get_conf('PACKAGE_URL'),
+   .'@@uref@{@{homepage@}, @@emph@{@{program@}@}@}.',
+      @{ 'homepage' => @{ 'text' => $converter->get_conf('PACKAGE_URL') @},
         'program' => @{ 'text' => $converter->get_conf('PROGRAM') @}@}));
 @end example
-
-In the example, the @code{$converter->get_conf('PACKAGE_URL')} string is turned
-into @code{@{ 'text' => $converter->get_conf('PACKAGE_URL')  @}}.
 
 An example of combining conversion with translation:
 @example
@@ -3103,53 +3149,63 @@ $converter->convert_tree($converter->gdt(
                          "convert explained $cmdname");
 @end example
 
-In the default case, the @code{gdt} function from the @code{Texinfo::Translations}
-module is used for translated strings.  It is possible to use a user-defined
-function instead as seen next.  @xref{Texinfo::Translations,,,texi2any_internals} for more
+In the default case, the functions from the @code{Texinfo::Translations}
+module are used for translated strings.  It is possible to use user-defined
+functions instead as seen next.  @xref{Texinfo::Translations,,,texi2any_internals} for more
 on @code{Texinfo::Translations}.
 
-In @command{texi2any} code, @code{gdt} is also used to mark translated
-strings for tools extracting translatable strings to produce template
-files.  @code{pgdt} is used to mark translated string with a translation
-context associated.
+In @command{texi2any} code, @code{gdt} and @code{gdt_string} are also used to
+mark translated strings for tools extracting translatable strings to produce
+template files.  @code{pgdt} is used to mark translated string with a
+translation context associated.
 
 
 @node Translated Strings Customization
 @section Translated Strings Customization
 
-To customize strings translations, register the @code{format_translate_string}
-function reference:
+To customize strings translations, register the
+@code{format_translate_message_tree} and/or
+@code{format_translate_message_string} function references:
 
-@deftypefn {Function Reference} @var{$translated_tree} format_translate_string @
+@deftypefn {Function Reference} @var{$translated_tree} format_translate_message_tree @
   (@var{$converter}, @var{$string}, @var{$lang}, @var{\%variables_hash}, @
-  @var{$translation_context}, @var{$mode})
+  @var{$translation_context})
+@deftypefnx {Function Reference} @var{$translated_string} format_translate_message_string @
+  (@var{$converter}, @var{$string}, @var{$lang}, @var{\%variables_hash}, @
+  @var{$translation_context})
 @var{$string} is the string to be translated, @var{$lang} is the language.
 @var{$translation_context} is an optional translation context.
-@var{$mode} is an optional string which should modify how the function behaves.
 
-The result returned should be a perl Texinfo tree in the default case, or
-a string if @var{$mode} is set to @code{translated_text}.
-The result returned may also be @samp{undef}, in which case the translation
-is done as if the function reference had not been defined.
+The result returned should be a perl Texinfo tree for
+@code{format_translate_message_tree} (replacing @code{gdt} and
+@code{pgdt}), and a string for @code{format_translate_message_string}
+(replacing @code{gdt_string}).  The result returned may also be @samp{undef},
+in which case the translation is done as if the function reference had not been
+defined.
 
 @xref{Internationalization of Strings Function} for more information on
 strings translations function arguments.
 
 The @code{replace_convert_substrings} method of @code{Texinfo::Translations}
 can be used to substitute @var{\%variables_hash} and return a Texinfo tree
-based on a translated string, taking into account @var{$mode}
-(@pxref{Texinfo@asis{::}Translations $tree = $object->replace_convert_substrings($translated_string@comma{} $replaced_substrings@comma{} $mode),,
+based on a translated string
+(@pxref{Texinfo@asis{::}Translations $tree = $object->replace_convert_substrings($translated_string@comma{} $replaced_substrings),,
 Texinfo@asis{::}Translations replace_convert_substrings, texi2any_internals}).
+The @code{replace_substrings} method of @code{Texinfo::Translations}
+can be used to substitute @var{\%variables_hash} and return a string
+based on a translated string
+(@pxref{Texinfo@asis{::}Translations $string = $object->replace_substrings($translated_string@comma{} $replaced_substrings),,
+Texinfo@asis{::}Translations replace_substrings, texi2any_internals}).
 @end deftypefn
 
 This function reference is not set in the default case, in the default case
-the @code{gdt} method from the @code{Texinfo::Translations} module is
-called (@pxref{Internationalization of Strings Function}).
-@xref{Specific formating Functions} for information on how to register and get
-the function reference.
+the @code{gdt} and @code{gdt_string} methods from the
+@code{Texinfo::Translations} module are called (@pxref{Internationalization of
+Strings Function}).  @xref{Specific formating Functions} for information on how
+to register and get the function reference.
 
 Here is an example with new translated strings added and definition
-of @code{format_translate_string} to translate the strings:
+of @code{format_translate_message_string} to translate the strings:
 
 @example
 texinfo_register_no_arg_command_formatting('error', undef, undef,
@@ -3166,10 +3222,10 @@ my %translations = (
  # @dots{}
 );
 
-sub my_format_translate_string($$$;$$$)
+sub my_format_translate_message_string($$$;$$)
 @{
   my ($self, $string, $lang, $replaced_substrings,
-                              $translation_context, $type) = @@_;
+                              $translation_context) = @@_;
   $translation_context = '' if (!defined($translation_context));
   if (exists($translations@{$lang@})
       and exists($translations@{$lang@}->@{$string@})
@@ -3177,14 +3233,14 @@ sub my_format_translate_string($$$;$$$)
                                   ->@{$translation_context@})) @{
     my $translation = $translations@{$lang@}->@{$string@}
                                       ->@{$translation_context@};
-    return $self->replace_convert_substrings($translation,
-                           $replaced_substrings, $type);
+    return $self->replace_substrings($translation,
+                                     $replaced_substrings);
   @}
   return undef;
 @}
 
-texinfo_register_formatting_function('format_translate_string',
-                                       \&my_format_translate_string);
+texinfo_register_formatting_function('format_translate_message_string',
+                                  \&my_format_translate_message_string);
 
 @end example
 
@@ -3195,8 +3251,8 @@ texinfo_register_formatting_function('format_translate_string',
 Translation contexts may be set to avoid ambiguities for translated
 strings, in particular when the strings are short (@pxref{Contexts,,,gettext,
 GNU @code{gettext} utilities}).  Translation contexts are set for translated
-direction strings (@pxref{Direction Strings}) and for special elements headings
-(@pxref{Special Elements Information Customization}).
+direction strings (@pxref{Direction Strings}) and for special output units headings
+(@pxref{Special Units Information Customization}).
 
 For direction strings, the translation context is based on the direction
 name (@pxref{Directions}), with @samp{direction} prepended and another
@@ -3221,18 +3277,19 @@ prepended to have a more explicit translation context.  The @code{This}
 direction @code{text} direction string translation context is thus @samp{This
 (current section) direction string}.
 
-For special element headings, the translation context is obtained by
-prepending @samp{section heading} to the special element variety (@pxref{Special
-Elements Varieties}).  For example, the @code{footnotes} special element
+For special output unit headings, the translation context is obtained by
+prepending @samp{section heading} to the special output unit variety (@pxref{Special
+Units Varieties}).  For example, the @code{footnotes} special output unit
 variety heading translation context is @samp{footnotes section heading}.
 
-Here is an example, which could be used with the same
-function registered as @code{format_translate_string} as in the example above:
+Here is an example, which could be used with a similar
+function registered as in the example above, but using
+@code{format_translate_message_tree}:
 
 @example
 texinfo_register_direction_string_info('Forward', 'text', undef,
                                        'Forward');
-texinfo_register_special_element_info('heading', 'contents',
+texinfo_register_special_unit_info('heading', 'contents',
                               'The @@emph@{Table of Contents@}');
 
 my %translations = (
@@ -3338,13 +3395,13 @@ Return text in string context.  @xref{Init File Expansion Contexts}.
 @end table
 @end deftypefun
 
-To get the top level element and the tree unit element associated to any
+To get the top level element and the output unit associated to any
 Texinfo tree element, use @code{get_element_root_command_element}:
 
 @deftypefun {@var{\%top_level_element}, @var{\%element_unit} =} @var{$converter}->get_element_root_command_element (@var{\%element})
-Return the top level element and tree element unit a Texinfo tree
+Return the top level element and output unit a Texinfo tree
 @var{\%element} is in (@pxref{Texinfo Tree Elements in User Defined
-Functions}).  Both the top level element and the tree element unit may be
+Functions}).  Both the top level element and the output unit may be
 undefined, depending on how the converter is called and on the Texinfo tree.
 The top level element returned is also determined by the customization variable
 @code{USE_NODES}. If @code{USE_NODES} is set the @code{@@node} is preferred,
@@ -3418,30 +3475,30 @@ location in the table of contents, if @var{$contents_or_shortcontents} is
 from. If not set, the current file name is used.
 @end deftypefun
 
-To determine if a tree unit element is the top element, use
-@code{element_is_tree_unit_top}:
+To determine if a output unit is associated to the top output unit, use
+@code{unit_is_top_output_unit}:
 
-@deftypefun {@var{$is_tree_unit_top} =} @var{$converter}->element_is_tree_unit_top (@var{\%element})
-Returns true if the @var{\%element} Texinfo tree element is the tree unit
-Top element (@pxref{Output Element Units}) and is either associated with the
+@deftypefun {@var{$is_top_output_unit} =} @var{$converter}->unit_is_top_output_unit (@var{\%output_unit})
+Returns true if the @var{\%output_unit} output unit is the Top output unit
+(@pxref{Output Units}) and is either associated with the
 @code{@@top} sectioning command or with the @code{Top} @code{@@node}.
 @end deftypefun
 
-To get information on the special element variety associated with
-an @@-command command name, use @code{command_name_special_element_information}:
+To get information on the special output unit variety associated with
+an @@-command command name, use @code{command_name_special_unit_information}:
 
-@deftypefun {(@var{$special_element_variety}, @var{\%special_element}, @var{$class_base}, @var{$special_element_direction}) =} @
-  @var{$converter}->command_name_special_element_information (@var{$command_name})
+@deftypefun {(@var{$special_unit_variety}, @var{\%output_unit}, @var{$class_base}, @var{$output_unit_direction}) =} @
+  @var{$converter}->command_name_special_unit_information (@var{$command_name})
 @var{$command_name} is an @@-command name without the leading @@.
-If the @var{$command_name} is not associated with a special element, returns
-@code{undef}.  Otherwise, return the @var{$special_element_variety}
-(@pxref{Special Elements Varieties}), the @var{\%special_element} texinfo tree
+If the @var{$command_name} is not associated with a special output unit, returns
+@code{undef}.  Otherwise, return the @var{$special_unit_variety}
+(@pxref{Special Units Varieties}), the @var{\%output_unit} output
 unit, a @var{$class_base} string for HTML class attribute and the
-@var{$special_element_direction} direction corresponding to that special
+@var{$output_unit_direction} direction corresponding to that special
 elements (@pxref{Directions}).
 @end deftypefun
 
-In the current setup, special elements are associated with @code{@@contents},
+In the current setup, special output units are associated with @code{@@contents},
 @code{@@shortcontents} and @code{@@summarycontents} and with @code{@@footnote}.
 
 
@@ -3450,23 +3507,17 @@ In the current setup, special elements are associated with @code{@@contents},
 
 @xref{Directions} for the list of directions.
 
-To get the Texinfo tree unit special element associated with
-a special element direction, such as @samp{About} or @samp{Contents},
-use @code{special_direction_element}:
+To get the Texinfo special output unit associated with
+a special output unit direction, such as @samp{About} or @samp{Contents},
+as well as output unit associated with other global directions, such as
+@samp{Top} or @samp{Index}, use
+use @code{global_direction_unit}:
 
-@deftypefun {@var{\%special_element} =} @var{$converter}->special_direction_element (@var{$direction})
-Return the special element associated with direction @var{$direction}, or
-@code{undef} if the direction is not a special element direction or the special
-element is not output.
-@end deftypefun
-
-To get the Texinfo tree unit element associated with other global element
-directions, such as @samp{Top} or @samp{Index}, use
-@code{global_direction_element}:
-
-@deftypefun {@var{\%element} =} @var{$converter}->global_direction_element (@var{$direction})
-Return the Texinfo tree unit element corresponding to direction
-@var{$direction}, or @code{undef} if the direction is not a global direction.
+@deftypefun {@var{\%output_unit} =} @var{$converter}->global_direction_unit (@var{$direction})
+Return the output unit associated with direction @var{$direction}, or
+@code{undef} if the direction is not a global output unit direction nor
+a special output unit direction or the associated special output unit is
+not output.
 @end deftypefun
 
 To get link information for relative and global
@@ -3479,8 +3530,8 @@ to be used for a hyperlink to @var{$direction}, depending on @var{$type}.
 The possible values for @var{$type} are described in
 @ref{Element Direction Information Type}.
 
-@var{$source_element} is the tree unit element the link comes from. If not set,
-the current tree unit element is used.  @var{$source_filename} is the file the
+@var{$source_element} is the output unit the link comes from. If not set,
+the current output unit is used.  @var{$source_filename} is the file the
 link comes from. If not set, the current file name is used.
 @var{$source_command}
 is an optional argument, the @@-command the link comes from. It is only used for
@@ -3491,7 +3542,7 @@ messages.
 @node Element Counters in Files
 @section Element Counters in Files
 
-The position of the tree unit element being formatted in its file
+The position of the output unit being formatted in its file
 or the total number of elements output to a file is interesting, for instance
 to format end of files, decide which navigation header or footer is needed and
 whether a rule should be output.
@@ -3501,18 +3552,18 @@ To get information on tree elements unit counter in files, use
 
 @deftypefun {@var{$count} =} @var{$converter}->count_elements_in_filename @
                                      (@var{$specification}, @var{$file_name})
-Return tree unit element counter for @var{$file_name}, or @code{undef} if
+Return output unit counter for @var{$file_name}, or @code{undef} if
 the counter does not exist.  The counter returned depends on @var{$specification}:
 
 @table @emph
 @item current
-Return the number of unit elements associated with @var{$file_name}
+Return the number of output units associated with @var{$file_name}
 having already been processed.
 @item remaining
-Return the number of unit elements associated with @var{$file_name}
+Return the number of output units associated with @var{$file_name}
 that remains to be processed.
 @item total
-Return the total number of element units associated with the file.
+Return the total number of output units associated with the file.
 @end table
 @end deftypefun
 
@@ -3521,18 +3572,18 @@ Return the total number of element units associated with the file.
 @chapter Customizing Footnotes, Tables of Contents and About
 
 Some customization is specific for the different cases, especially when
-the formatting is not done in a separate document unit (@pxref{Output Element Units}),
-but some customization is relevant for all the special elements.
-The formatting of special elements bodies
-is handled the same for all the special elements, when formatted as separate
-elements.
-To specify a special element in those contexts, the special elements varieties
+the formatting is not done in a separate output unit (@pxref{Output Units}),
+but some customization is relevant for all the special units.
+The formatting of special units bodies
+is handled the same for all the special units, when formatted as separate
+units.
+To specify a special unit in those contexts, the special units varieties
 are used, as described in
-@ref{Special Elements Varieties}.
+@ref{Special Units Varieties}.
 
-@float Table, Special Elements Varieties
-@multitable {Short table of contents} {Special Element Variety}
-@headitem Special Element @tab Special Element Variety
+@float Table, Special Units Varieties
+@multitable {Short table of contents} {Special Unit Variety}
+@headitem Special Unit @tab Special Unit Variety
 @item Table of contents @tab @code{contents}
 @item Short table of contents @tab @code{shortcontents}
 @item Footnotes @tab @code{footnotes}
@@ -3541,14 +3592,14 @@ are used, as described in
 @caption{Association of special elements names with their special element variety}
 @end float
 
-The variety of special elements is in the element @code{extra}
-hash @code{special_element_variety} key.
+The variety of special elements is in the special unit
+hash @code{special_unit_variety} key.
 
 
-@node Special Elements Information Customization
-@section Special Elements Information Customization
+@node Special Units Information Customization
+@section Special Units Information Customization
 
-The following items are common to all the special elements:
+The following items are common to all the special units:
 
 @table @code
 @item class
@@ -3581,26 +3632,33 @@ string.  @code{heading_tree} cannot be set directly, but can be retrieved.
 It is determined from @code{heading} after translation and conversion to
 a Texinfo tree.
 
-To set the information, use @code{texinfo_register_special_element_info}
+To set the information, use @code{texinfo_register_special_unit_info}
 in an init file:
 
-@defun texinfo_register_special_element_info ($item_type, @
-                           $special_element_variety, $value)
-Set @var{$item_type} information for the special element variety
-@var{$special_element_variety} to @var{$value}.  @var{$value} may be
+@defun texinfo_register_special_unit_info ($item_type, @
+                           $special_unit_variety, $value)
+Set @var{$item_type} information for the special unit variety
+@var{$special_unit_variety} to @var{$value}.  @var{$value} may be
 @samp{undef}, or an empty string, but only @code{heading} and
 @code{target} should be set to that value as a non-empty value is
 needed for the other items for formatting.
 @end defun
 
-To retrieve the information for formatting, use @code{special_element_info}:
+To get the list of varieties, use @code{get_special_unit_info_varieties}:
 
-@deftypefun {@var{$list_or_value} =} @var{$converter}->special_element_info @
-                  (@var{$item_type}, @var{$special_element_variety})
+@deftypefun {@var{$list} =} @var{$converter}->get_special_unit_info_varieties @
+               (@var{$item_type})
 @var{$item_type} is the type of information to be retrieved as described above.
-If @var{$special_element_variety} is @samp{undef}, the list of the special elements
-varieties with information for the @var{$item_type} is returned.  If
-@var{$special_element_variety} is a special element variety, the corresponding
+The list of the special units varieties with information for the
+@var{$item_type} is returned.
+@end deftypefun
+
+To retrieve the information for formatting, use @code{special_unit_info}:
+
+@deftypefun {@var{$list_or_value} =} @var{$converter}->special_unit_info @
+                  (@var{$item_type}, @var{$special_unit_variety})
+@var{$item_type} is the type of information to be retrieved as described above.
+@var{$special_unit_variety} is a special unit variety, the corresponding
 value is returned.
 
 The value returned is translated and converted to a Texinfo tree
@@ -3634,7 +3692,7 @@ identifier for the location where the footnote arguments are expanded.
 @var{$foot_in_doc_id} is the identifier for the location where the footnote
 appears in the document.  @var{$number_in_doc} is the symbol used to format the
 footnote in the document.  @var{$footnote_location_filename} is the filename of
-the tree unit element of the footnote in the document. If the footnote appears
+the output unit of the footnote in the document. If the footnote appears
 in a region that is expanded multiple times, the information on the expansion
 is @var{$multi_expanded_region} (@pxref{Dynamic Converter Formatting
 Information}).
@@ -3665,13 +3723,13 @@ Associated Information for Special Elements}) to link to the location
 in the document where the footnote appeared.
 @end deftypefn
 
-If footnotes are in a separate element unit (@pxref{Output Element Units}), the
-default footnote special element body formatting function calls
-@code{format_footnotes_sequence} (@pxref{Special Element
+If footnotes are in a separate output unit (@pxref{Output Units}), the
+default footnote special output unit body formatting function calls
+@code{format_footnotes_sequence} (@pxref{Special Unit
 Body Formatting Functions}).
 
-If the footnotes are not in a separate element unit, or there is no separate element because
-there is only one tree unit element or no tree unit element, the
+If the footnotes are not in a separate output unit, or there is no separate
+unit because there is only one output unit or no output unit, the
 @code{format_footnotes_segment} formatting reference is called when
 pending footnotes need to be formatted.  This function reference
 can be replaced by a user defined function.
@@ -3683,7 +3741,7 @@ calls @code{format_footnotes_sequence} and also sets up a header with
 @code{format_heading_text} (@pxref{Basic Formatting Customization}), using the
 customization variables @code{FOOTNOTE_END_HEADER_LEVEL} and
 the special @code{footnotes} element @code{heading} information
-(@pxref{Special Elements Information Customization}).
+(@pxref{Special Units Information Customization}).
 @end deftypefn
 
 
@@ -3773,9 +3831,9 @@ is used, using @code{$converter->get_info('current_filename')}.
 Return formatted table of contents or short table of contents.
 @end deftypefn
 
-If contents are in a separate element unit (@pxref{Output Element Units}), the
+If contents are in a separate output unit (@pxref{Output Units}), the
 default contents and shortcontents special element body formatting function
-calls @code{format_contents} (@pxref{Special Element Body Formatting
+calls @code{format_contents} (@pxref{Special Unit Body Formatting
 Functions}).  Otherwise, @code{format_contents} is called in the conversion
 of heading @@-command, in title page formatting, and in @code{@@contents}
 conversion function, depending on the @code{CONTENTS_OUTPUT_LOCATION} value.
@@ -3799,55 +3857,55 @@ direction strings (@pxref{Direction Strings}) and by @code{ACTIVE_ICONS}
 the About element formatting.
 
 If the above is not enough and you want to control exactly the
-formatting of the about element, the @code{about} special element body reference
-function may be overridden (@pxref{Special Element Body Formatting Functions}).
+formatting of the about unit, the @code{about} special output unit body reference
+function may be overridden (@pxref{Special Unit Body Formatting Functions}).
 
 
-@node Special Element Body Formatting Functions
-@section Special Element Body Formatting Functions
+@node Special Unit Body Formatting Functions
+@section Special Unit Body Formatting Functions
 
 In addition to the formatting possibilities available with the default
-special element formatting presented previously, it is also possible
-to control completely how a separate special element is formatted.
+special output units formatting presented previously, it is also possible
+to control completely how a separate special output unit is formatted.
 
-To register body formating user defined functions for special element
-(@pxref{Output Element Units}), the special elements varieties are used, as
-described in @ref{Special Elements Varieties}.
+To register body formating user defined functions for special output units
+(@pxref{Output Units}), the special output units varieties are used, as
+described in @ref{Special Units Varieties}.
 Special element body formatting user defined functions are registered with
-@code{texinfo_register_formatting_special_element_body}:
+@code{texinfo_register_formatting_special_unit_body}:
 
-@defun texinfo_register_formatting_special_element_body ($special_element_variety, @
+@defun texinfo_register_formatting_special_unit_body ($special_unit_variety, @
                             \@ampchar{}handler)
-@var{$special_element_variety} is the element variety
-(@pxref{Special Elements Varieties}).  @var{\&handler} is the user defined
+@var{$special_unit_variety} is the element variety
+(@pxref{Special Units Varieties}).  @var{\&handler} is the user defined
 function reference.
 @end defun
 
 The call of the user defined functions is:
-@deftypefn {Function Reference} @var{$text} special_element_body (@var{$converter}, @
-                                @var{$special_element_variety}, @var{\%element})
-@var{$converter} is a converter object. @var{$special_element_variety} is the
-element variety.  @var{\%element} is the Texinfo element.
+@deftypefn {Function Reference} @var{$text} special_unit_body (@var{$converter}, @
+                                @var{$special_unit_variety}, @var{\%special_unit})
+@var{$converter} is a converter object. @var{$special_unit_variety} is the
+unit variety.  @var{\%special_unit} is the special output unit.
 
-The @var{$text} returned is the formatted special element body.
+The @var{$text} returned is the formatted special output unit body.
 @end deftypefn
 
-To call a special element body formatting function from user defined code, the
+To call a special output unit body formatting function from user defined code, the
 function reference should first be retrieved using
-@code{special_element_body_formatting}:
+@code{special_unit_body_formatting}:
 
-@deftypefun {@var{\&special_element_body_formatting} =} @var{$converter}->special_element_body_formatting @
-                                              (@var{$special_element_variety})
-@var{$special_element_variety} is the special element variety.  Returns the
+@deftypefun {@var{\&special_unit_body_formatting} =} @var{$converter}->special_unit_body_formatting @
+                                              (@var{$special_unit_variety})
+@var{$special_unit_variety} is the special output unit variety.  Returns the
 conversion function reference for @var{$variety}, or @samp{undef} if there is none,
-which should not happen for the special elements described in this manual.
+which should not happen for the special output units described in this manual.
 @end deftypefun
 
 For example:
 @example
 @group
 my $footnotes_element_body
- = &@{$converter->special_element_body_formatting('footnotes')@}(
+ = &@{$converter->special_unit_body_formatting('footnotes')@}(
                                    $converter, 'footnotes', $element);
 @end group
 @end example
@@ -3855,12 +3913,12 @@ my $footnotes_element_body
 It is possible to have access to the default conversion function reference.
 The function used is:
 
-@deftypefun {@var{\&default_special_element_body_formatting} =} @
-               @var{$converter}->defaults_special_element_body_formatting @
-                                               (@var{$special_element_variety})
-@var{$special_element_variety} is the special element variety.  Returns the
-default conversion function reference for @var{$special_element_variety}, or
-@code{undef} if there is none, which should not happen for the special elements
+@deftypefun {@var{\&default_special_unit_body_formatting} =} @
+               @var{$converter}->defaults_special_unit_body_formatting @
+                                               (@var{$special_unit_variety})
+@var{$special_unit_variety} is the special output unit variety.  Returns the
+default conversion function reference for @var{$special_unit_variety}, or
+@code{undef} if there is none, which should not happen for the special output units
 described in this manual.
 @end deftypefun
 
@@ -3913,7 +3971,7 @@ the buttons for the navigation panel
 (@pxref{Simple Navigation Panel Customization}). @var{\%element} is the
 element in which the navigation header is formatted. @var{$command_name} is
 the associated command (sectioning command or @code{@@node}).  It may be @code{undef}
-for special elements.
+for special output units.
 
 Returns the formatted navigation header and panel. The navigation
 panel itself can be formatted with a
@@ -3967,14 +4025,14 @@ formatting of a button.
 All the formatting functions take a converter object as first argument.
 
 By default, the function associated with @code{format_element_header}
-formats the header and navigation panel of a tree unit element.
+formats the header and navigation panel of an output unit.
 
 @deftypefn {Function Reference} @var{$formatted_header} format_element_header @
     (@var{$converter}, @var{$command_name}, @var{\%element}, @var{\%tree_unit_element})
 @var{\%element} is the element in which the navigation header is formatted
-(sectioning command, @code{@@node} or special element). @var{$command_name} is
-the associated command name.  It may be @code{undef} for special elements.
-@var{\%tree_unit_element} is the associated tree unit element (@pxref{Texinfo
+(sectioning command, @code{@@node} or special output unit). @var{$command_name} is
+the associated command name.  It may be @code{undef} for special output units.
+@var{\%tree_unit_element} is the associated output unit (@pxref{Texinfo
 Tree Elements in User Defined Functions}).
 
 Returns the formatted navigation header and panel.
@@ -3988,15 +4046,15 @@ variables values and location in file.
 @end deftypefn
 
 Similarly, the function associated with @code{format_element_footer}
-formats the footer and navigation panel of a tree unit element.
+formats the footer and navigation panel of a output unit.
 
 @deftypefn {Function Reference} @var{$formatted_footer} format_element_footer @
-   (@var{$converter}, @var{$tree_unit_type}, @var{\%tree_unit_element}, @
+   (@var{$converter}, @var{$tree_unit_type}, @var{\%output_unit}, @
     @var{$content}, @var{$command})
-@var{\%tree_unit_element} is the tree unit element element in which the
+@var{\%output_unit} is the output unit in which the
 navigation footer is formatted.  @var{$tree_unit_type} is the associated type.
 @var{$content} is the formatted element content.  @var{$command} is an optional
-argument, the @@-command associated with the @var{\%tree_unit_element}.
+argument, the @@-command associated with the @var{\%output_unit}.
 
 Returns the formatted navigation footer and panel.
 
@@ -4037,21 +4095,22 @@ The conversion for these elements with type @code{unit} can be be replaced by
 user defined functions for a precise control of conversion (@pxref{Type Tree
 Element Conversion Functions}).
 
-Special elements conversion is achieved by calling
-@code{special_element_body_formatting} (@pxref{Special Element Body Formatting
+Special units conversion is achieved by calling
+@code{special_unit_body_formatting} (@pxref{Special Unit Body Formatting
 Functions}), @code{format_navigation_header} (@pxref{Navigation Panel and
 Navigation Header Formatting}), @code{format_heading_text} (@pxref{Basic
 Formatting Customization}) and @code{format_element_footer} (@pxref{Element
-Header and Footer Formatting}).  The conversion for these elements with type
-@code{special_element_type} can be be replaced by user defined functions for a
-precise control of conversion (@pxref{Type Tree Element Conversion Functions}).
+Header and Footer Formatting}).  The conversion for these special units with
+unit type @code{special_unit_type} can be be replaced by user defined functions
+for a precise control of conversion (@pxref{Output Units Conversion
+Functions}).
 
 
 @node Beginning and Ending Files
 @chapter Beginning and Ending Files
 
 The end of file (footers) formatting function reference is called from the converter
-after all the element units in the file have been converted.
+after all the output units in the file have been converted.
 The beginning of file (headers) formatting function reference is called right after
 the footers formatting function reference.
 
@@ -4126,7 +4185,7 @@ page header formatting done at the top of each HTML output file.
                (@var{$converter}, @var{$filename}, @var{\%tree_unit_element})
 @cindex @code{<body>} tag, outputting
 @var{$filename} is the name of the file output.
-@var{\%tree_unit_element} is the first tree unit element of the file.
+@var{\%tree_unit_element} is the first output unit of the file.
 This function should print the page header, in HTML,
 including the @code{<body>} element.
 @end deftypefn
@@ -4243,9 +4302,6 @@ HTML cross manual references (@pxref{HTML Xref,,, texinfo, Texinfo}).
 
 Returns the content of the node redirection file.
 @end deftypefn
-
-@c NOTE format_frame_files is not documented, we do not want users to use/set this
-@c we want frames to disappear
 
 
 @node Specific Functions for Specific Elements

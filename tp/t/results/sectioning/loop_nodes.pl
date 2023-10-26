@@ -10,7 +10,6 @@ $result_trees{'loop_nodes'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'loop_nodes'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -339,6 +339,7 @@ $result_trees{'loop_nodes'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap-node-up'
       },
       'info' => {
@@ -502,6 +503,7 @@ $result_trees{'loop_nodes'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'node-middle'
       },
       'info' => {
@@ -534,6 +536,7 @@ $result_trees{'loop_nodes'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'node-down'
       },
       'info' => {
@@ -593,7 +596,7 @@ $result_texts{'loop_nodes'} = 'top
 ';
 
 $result_sectioning{'loop_nodes'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -602,131 +605,110 @@ $result_sectioning{'loop_nodes'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'loop_nodes'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'loop_nodes'};
+$result_sectioning{'loop_nodes'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'loop_nodes'};
 
-$result_nodes{'loop_nodes'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'menus' => [
-          {
-            'cmdname' => 'menu'
-          }
-        ],
-        'normalized' => 'chap-node-up'
+$result_nodes{'loop_nodes'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'menu_child' => {
+      'node_directions' => {
+        'next' => {
           'cmdname' => 'node',
           'extra' => {
-            'menus' => [
-              {
-                'cmdname' => 'menu'
-              }
-            ],
-            'normalized' => 'node-middle'
-          },
-          'structure' => {
-            'menu_child' => {
-              'cmdname' => 'node',
-              'extra' => {
-                'normalized' => 'node-down'
-              },
-              'structure' => {
-                'node_up' => {}
-              }
-            },
-            'node_up' => {}
-          }
-        },
-        'node_prev' => {},
-        'node_up' => {}
-      }
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'menu_child'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'menu_child'};
-$result_nodes{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'loop_nodes'}{'structure'}{'menu_child'};
-$result_nodes{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'node_prev'} = $result_nodes{'loop_nodes'};
-$result_nodes{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'menu_child'}{'structure'}{'menu_child'};
-$result_nodes{'loop_nodes'}{'structure'}{'node_next'} = $result_nodes{'loop_nodes'}{'structure'}{'menu_child'};
-
-$result_menus{'loop_nodes'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap-node-up'
-      },
-      'structure' => {
-        'menu_child' => {
-          'cmdname' => 'node',
-          'extra' => {
-            'normalized' => 'node-middle'
-          },
-          'structure' => {
-            'menu_child' => {
-              'cmdname' => 'node',
-              'extra' => {
-                'normalized' => 'node-down'
-              },
-              'structure' => {
-                'menu_up' => {},
-                'menu_up_hash' => {
-                  'node-middle' => 1
+            'node_directions' => {
+              'prev' => {},
+              'up' => {
+                'cmdname' => 'node',
+                'extra' => {
+                  'node_directions' => {
+                    'up' => {
+                      'cmdname' => 'node',
+                      'extra' => {
+                        'node_directions' => {
+                          'up' => {}
+                        },
+                        'normalized' => 'node-middle'
+                      }
+                    }
+                  },
+                  'normalized' => 'node-down'
                 }
               }
             },
-            'menu_up' => {},
-            'menu_up_hash' => {
-              'chap-node-up' => 1
-            }
+            'normalized' => 'chap-node-up'
           }
-        },
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'Top' => 1
         }
-      }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {},
+  {},
+  {}
+];
+$result_nodes{'loop_nodes'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'loop_nodes'}[0];
+$result_nodes{'loop_nodes'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'}{'extra'}{'node_directions'}{'up'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'loop_nodes'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'loop_nodes'}[1] = $result_nodes{'loop_nodes'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'loop_nodes'}[2] = $result_nodes{'loop_nodes'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'}{'extra'}{'node_directions'}{'up'};
+$result_nodes{'loop_nodes'}[3] = $result_nodes{'loop_nodes'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'};
+
+$result_menus{'loop_nodes'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'chap-node-up'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'node-middle'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'normalized' => 'node-down'
     }
   }
-};
-$result_menus{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'menu_child'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'menu_child'};
-$result_menus{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'loop_nodes'}{'structure'}{'menu_child'};
-$result_menus{'loop_nodes'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'loop_nodes'};
+];
+$result_menus{'loop_nodes'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'loop_nodes'}[0];
+$result_menus{'loop_nodes'}[2]{'extra'}{'menu_directions'}{'up'} = $result_menus{'loop_nodes'}[1];
+$result_menus{'loop_nodes'}[3]{'extra'}{'menu_directions'}{'up'} = $result_menus{'loop_nodes'}[2];
 
 $result_errors{'loop_nodes'} = [
   {

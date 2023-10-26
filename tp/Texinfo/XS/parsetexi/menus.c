@@ -18,12 +18,23 @@
 #include <string.h>
 
 #include "parser.h"
+#include "tree_types.h"
+#include "tree.h"
+#include "element_types.h"
 #include "debug.h"
+#include "errors.h"
+/* for whitespace_chars */
+#include "utils.h"
+/* for parse_node_manual */
+#include "manipulate_tree.h"
 #include "input.h"
 #include "text.h"
-#include "convert.h"
+/* for conf */
+#include "conf.h"
+#include "convert_to_texinfo.h"
 #include "labels.h"
 #include "source_marks.h"
+#include "extra.h"
 
 /* Save 'menu_entry_node' extra keys. */
 ELEMENT *

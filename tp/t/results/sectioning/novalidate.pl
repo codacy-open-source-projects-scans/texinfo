@@ -217,6 +217,7 @@ $result_trees{'novalidate'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -258,32 +259,25 @@ $result_texts{'novalidate'} = '
 unknown ref.
 ';
 
-$result_nodes{'novalidate'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'node_next' => {
-      'extra' => {
-        'normalized' => 'unknown-node'
-      }
+$result_nodes{'novalidate'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'first'
     }
   }
-};
+];
 
-$result_menus{'novalidate'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
-  },
-  'structure' => {}
-};
+$result_menus{'novalidate'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'first'
+    }
+  }
+];
 
 $result_errors{'novalidate'} = [];
 

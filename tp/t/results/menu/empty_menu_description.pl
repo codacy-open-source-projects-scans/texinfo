@@ -165,6 +165,7 @@ $result_trees{'empty_menu_description'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -199,50 +200,25 @@ $result_texts{'empty_menu_description'} = '
 
 ';
 
-$result_nodes{'empty_menu_description'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'f'
-          }
-        ],
-        'normalized' => 'b'
-      },
-      'type' => 'menu_entry_node'
+$result_nodes{'empty_menu_description'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'first'
     }
   }
-};
+];
 
-$result_menus{'empty_menu_description'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'f'
-          }
-        ],
-        'normalized' => 'b'
-      },
-      'type' => 'menu_entry_node'
+$result_menus{'empty_menu_description'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'first'
     }
   }
-};
+];
 
 $result_errors{'empty_menu_description'} = [];
 

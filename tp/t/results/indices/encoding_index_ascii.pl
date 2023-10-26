@@ -121,6 +121,7 @@ $result_trees{'encoding_index_ascii'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -250,6 +251,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -359,6 +361,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -486,6 +489,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -523,6 +527,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -560,6 +565,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -597,6 +603,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -634,6 +641,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -671,6 +679,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -708,6 +717,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -745,6 +755,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -782,6 +793,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -819,6 +831,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -856,6 +869,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -893,6 +907,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -930,6 +945,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -967,6 +983,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1004,6 +1021,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1041,6 +1059,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1078,6 +1097,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1115,6 +1135,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1152,6 +1173,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1189,6 +1211,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1226,6 +1249,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1263,6 +1287,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1300,6 +1325,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1337,6 +1363,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1374,6 +1401,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1411,6 +1439,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1448,6 +1477,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1485,6 +1515,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1522,6 +1553,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1569,6 +1601,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1616,6 +1649,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1692,6 +1726,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1798,6 +1833,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1845,6 +1881,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1892,6 +1929,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1939,6 +1977,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -1986,6 +2025,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2033,6 +2073,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2080,6 +2121,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2127,6 +2169,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2164,6 +2207,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2201,6 +2245,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2248,6 +2293,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2295,6 +2341,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2342,6 +2389,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2379,6 +2427,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2416,6 +2465,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2453,6 +2503,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2490,6 +2541,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2527,6 +2579,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2564,6 +2617,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2601,6 +2655,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2638,6 +2693,7 @@ $result_trees{'encoding_index_ascii'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -2690,6 +2746,7 @@ $result_trees{'encoding_index_ascii'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -2839,7 +2896,7 @@ top
 ';
 
 $result_sectioning{'encoding_index_ascii'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -2848,53 +2905,58 @@ $result_sectioning{'encoding_index_ascii'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'encoding_index_ascii'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'encoding_index_ascii'};
+$result_sectioning{'encoding_index_ascii'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'encoding_index_ascii'};
 
-$result_nodes{'encoding_index_ascii'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'encoding_index_ascii'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'encoding_index_ascii'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'encoding_index_ascii'}[0];
+$result_nodes{'encoding_index_ascii'}[1] = $result_nodes{'encoding_index_ascii'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'encoding_index_ascii'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'encoding_index_ascii'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'encoding_index_ascii'};
-
-$result_menus{'encoding_index_ascii'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'encoding_index_ascii'} = [];
 

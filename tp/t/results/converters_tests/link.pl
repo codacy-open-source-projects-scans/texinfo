@@ -29,6 +29,7 @@ $result_trees{'link'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'One'
       },
       'info' => {
@@ -81,7 +82,9 @@ $result_trees{'link'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -503,6 +506,7 @@ $result_trees{'link'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Two'
       },
       'info' => {
@@ -581,7 +585,7 @@ Introduction
 ';
 
 $result_sectioning{'link'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'chapter',
@@ -591,40 +595,51 @@ $result_sectioning{'link'} = {
             'extra' => {
               'normalized' => 'One'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_level' => 1,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 0
   }
 };
-$result_sectioning{'link'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'link'};
+$result_sectioning{'link'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'link'};
 
-$result_nodes{'link'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'chapter',
-      'extra' => {},
-      'structure' => {
-        'section_number' => 1
-      }
-    },
-    'normalized' => 'One'
+$result_nodes{'link'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'chapter',
+        'extra' => {
+          'section_number' => '1'
+        }
+      },
+      'normalized' => 'One'
+    }
+  },
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Two'
+    }
   }
-};
+];
 
-$result_menus{'link'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'One'
+$result_menus{'link'} = [
+  {
+    'extra' => {
+      'normalized' => 'One'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'Two'
+    }
   }
-};
+];
 
 $result_errors{'link'} = [
   {

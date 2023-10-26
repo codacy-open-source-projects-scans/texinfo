@@ -56,6 +56,7 @@ $result_trees{'image_not_found'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -81,19 +82,22 @@ $result_texis{'image_not_found'} = '@node Top
 $result_texts{'image_not_found'} = 'n_f_image
 ';
 
-$result_nodes{'image_not_found'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'image_not_found'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'image_not_found'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'image_not_found'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'image_not_found'} = [];
 

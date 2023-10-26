@@ -10,7 +10,6 @@ $result_trees{'test_allowcodebreaks'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -35,6 +34,7 @@ $result_trees{'test_allowcodebreaks'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -548,6 +548,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'anchor',
                       'extra' => {
+                        'is_target' => 1,
                         'normalized' => 'A-node0'
                       },
                       'source_info' => {
@@ -1039,6 +1040,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'anchor',
                       'extra' => {
+                        'is_target' => 1,
                         'normalized' => 'A-node1'
                       },
                       'source_info' => {
@@ -1499,6 +1501,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               ],
                               'cmdname' => 'anchor',
                               'extra' => {
+                                'is_target' => 1,
                                 'normalized' => 'A-nodew'
                               },
                               'source_info' => {
@@ -1994,6 +1997,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'anchor',
                       'extra' => {
+                        'is_target' => 1,
                         'normalized' => 'A-node2'
                       },
                       'source_info' => {
@@ -2140,6 +2144,7 @@ $result_trees{'test_allowcodebreaks'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -2274,32 +2279,41 @@ anc-hor
 in-example
 ';
 
-$result_nodes{'test_allowcodebreaks'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'test_allowcodebreaks'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'test_allowcodebreaks'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'test_allowcodebreaks'}[0];
+$result_nodes{'test_allowcodebreaks'}[1] = $result_nodes{'test_allowcodebreaks'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'test_allowcodebreaks'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'test_allowcodebreaks'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'test_allowcodebreaks'};
-
-$result_menus{'test_allowcodebreaks'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'test_allowcodebreaks'} = [
   {

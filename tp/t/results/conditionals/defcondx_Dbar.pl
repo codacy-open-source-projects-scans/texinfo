@@ -327,6 +327,7 @@ $result_trees{'defcondx_Dbar'} = {
           'type' => 'empty_line'
         }
       ],
+      'extra' => {},
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -388,20 +389,20 @@ Documentation.
 ';
 
 $result_sectioning{'defcondx_Dbar'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
-        'structure' => {
+        'extra' => {
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'defcondx_Dbar'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'defcondx_Dbar'};
+$result_sectioning{'defcondx_Dbar'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'defcondx_Dbar'};
 
 $result_errors{'defcondx_Dbar'} = [
   {

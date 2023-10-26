@@ -106,7 +106,6 @@ $result_trees{'line_breaks'} = {
             }
           ],
           'cmdname' => 'settitle',
-          'extra' => {},
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -142,7 +141,6 @@ $result_trees{'line_breaks'} = {
             }
           ],
           'cmdname' => 'title',
-          'extra' => {},
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -594,7 +592,7 @@ $result_converted{'docbook_doc'}->{'line_breaks'} = '<?xml version="1.0"?>
   <!ENTITY tex "TeX">
   <!ENTITY latex "LaTeX">
 ]>
-<book lang="">
+<book lang="en">
 <title>AWK As A Major Systems Programming 
  Language&#8212;Revisited</title>
 <titleabbrev>the manual 

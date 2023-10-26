@@ -29,6 +29,7 @@ $result_trees{'refs_formatting'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chapter'
       },
       'info' => {
@@ -2841,7 +2842,9 @@ $result_trees{'refs_formatting'} = {
           'type' => 'paragraph'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -2983,7 +2986,7 @@ $result_texts{'refs_formatting'} = '1 chapter
 ';
 
 $result_sectioning{'refs_formatting'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'chapter',
@@ -2993,40 +2996,40 @@ $result_sectioning{'refs_formatting'} = {
             'extra' => {
               'normalized' => 'chapter'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_level' => 1,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 0
   }
 };
-$result_sectioning{'refs_formatting'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'refs_formatting'};
+$result_sectioning{'refs_formatting'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'refs_formatting'};
 
-$result_nodes{'refs_formatting'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'chapter',
-      'extra' => {},
-      'structure' => {
-        'section_number' => 1
-      }
-    },
-    'normalized' => 'chapter'
+$result_nodes{'refs_formatting'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'chapter',
+        'extra' => {
+          'section_number' => '1'
+        }
+      },
+      'normalized' => 'chapter'
+    }
   }
-};
+];
 
-$result_menus{'refs_formatting'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'chapter'
+$result_menus{'refs_formatting'} = [
+  {
+    'extra' => {
+      'normalized' => 'chapter'
+    }
   }
-};
+];
 
 $result_errors{'refs_formatting'} = [
   {

@@ -14,10 +14,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <config.h>
+#include <stdlib.h>
 
+#include "tree_types.h"
+#include "utils.h"
 #include "counter.h"
-#include "parser.h"
-
 
 void
 counter_push (COUNTER *c, ELEMENT *elt, int num)

@@ -36,6 +36,7 @@ $result_trees{'section_node_before_part'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -74,7 +75,9 @@ $result_trees{'section_node_before_part'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -104,6 +107,7 @@ $result_trees{'section_node_before_part'} = {
         }
       ],
       'cmdname' => 'part',
+      'extra' => {},
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -136,7 +140,7 @@ part
 ';
 
 $result_sectioning{'section_node_before_part'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'section',
@@ -146,48 +150,46 @@ $result_sectioning{'section_node_before_part'} = {
             'extra' => {
               'normalized' => 'Top'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_level' => 2,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       },
       {
         'cmdname' => 'part',
-        'structure' => {
-          'section_level' => 0,
-          'section_up' => {}
+        'extra' => {
+          'section_level' => 0
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'section_node_before_part'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'section_node_before_part'};
-$result_sectioning{'section_node_before_part'}{'structure'}{'section_childs'}[1]{'structure'}{'section_up'} = $result_sectioning{'section_node_before_part'};
+$result_sectioning{'section_node_before_part'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'section_node_before_part'};
 
-$result_nodes{'section_node_before_part'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'section',
-      'extra' => {},
-      'structure' => {
-        'section_number' => 1
-      }
-    },
-    'normalized' => 'Top'
+$result_nodes{'section_node_before_part'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'section',
+        'extra' => {
+          'section_number' => '1'
+        }
+      },
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'section_node_before_part'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'section_node_before_part'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'section_node_before_part'} = [
   {

@@ -134,6 +134,7 @@ $result_trees{'empty_caption'} = {
           'extra' => {
             'caption' => {},
             'float_type' => 'a',
+            'is_target' => 1,
             'normalized' => 'b'
           },
           'info' => {
@@ -186,6 +187,7 @@ $result_trees{'empty_caption'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -224,19 +226,22 @@ aa
 
 ';
 
-$result_nodes{'empty_caption'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'empty_caption'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'empty_caption'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'empty_caption'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'empty_caption'} = [];
 
@@ -252,11 +257,9 @@ $result_floats{'empty_caption'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'a',
         'normalized' => 'b'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

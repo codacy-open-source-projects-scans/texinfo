@@ -66,7 +66,7 @@ use vars qw($VERSION @EXPORT_OK %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 our %unicode_diacritics = (
@@ -93,6 +93,8 @@ foreach my $diacritic(keys(%unicode_diacritics)) {
   $diacritics_accent_commands{$unicode_diacritics{$diacritic}} = $diacritic;
 }
 
+# dotless in unicode_accented_letters not in diacritics,
+# tieaccent in diacritics not in unicode_accented_letters.
 our %unicode_accented_letters = (
     'dotaccent' => { # dot above
         'A' => '0226',
@@ -635,10 +637,17 @@ our %transliterate_map = (
                '009E'  => '',
                '009F'  => '',
                # explicit transliterations
-               '00C5'  => 'AA',
-               '00E5'  => 'aa',
-               '00D8'  => 'O',
-               '00F8'  => 'o',
+               '00A3' => 'GBP', # iconv @pounds
+               '00A9' => '(C)', # iconv
+               '00AA' => 'a', # ordf iconv and unidecode
+               '00AE' => '(R)', # iconv
+               '00BA' => 'o', # ordm iconv and unidecode
+               #'00B0' => '?', #iconv @textdegree, probably no translit
+               #'00BF' => '?', #iconv @questiondown
+               '00C5' => 'A',
+               '00E5' => 'a',
+               '00D8' => 'O',
+               '00F8' => 'o',
                '00E6' => 'ae',
                '0153' => 'oe',
                '00C6' => 'AE',
@@ -665,6 +674,20 @@ our %transliterate_map = (
                '04D7'  => 'IO',
                '00DD'  => 'Y', # unidecode gets this wrong ?
                '0237'  => 'j', # unknown dotless j for unidecode, returns [?]
+               '20AC'  => 'EUR', # iconv and unidecode
+               # following based on iconv
+               '2022'  => 'o', # bullet
+               '2026'  => '...', # ellipsis
+               #'21A6'  => '?', # expansion, probably no translit
+               '2192'  => '->', # arrow
+               '21D2'  => '=>', # result
+               '2212'  => '-',
+               #'2261'  => '?', # equiv, probably no translit
+               '2264'  => '<=', # leq
+               '2265'  => '>=', # geq
+               #'22A3'  => '?', # print, probably no translit
+               #'22C6'  => '?', # point, probably no translit
+
                # following appears in tests, this is required to have
                # the same output with and without unidecode
                '4E2D'  => 'Zhong',
@@ -712,7 +735,8 @@ foreach my $command (keys(%unicode_accented_letters)) {
 # Also note that values below A0, which correspond to the ascii range
 # are not in the values and therefore should be handled differently by the
 # codes using the hash.
-my %unicode_to_eight_bit = (
+# used in code generating C data structure.
+our %unicode_to_eight_bit = (
    'iso-8859-1' => {
       '00A0' => 'A0',
       '00A1' => 'A1',
@@ -1304,7 +1328,7 @@ sub unicode_accent($$)
         and (!$command->{'parent'}
              or !$command->{'parent'}->{'parent'}
              or !$command->{'parent'}->{'parent'}->{'cmdname'}
-             or !$unicode_accented_letters{$command->{'parent'}
+             or !$unicode_diacritics{$command->{'parent'}
                                         ->{'parent'}->{'cmdname'}})) {
       return chr(hex($unicode_accented_letters{$accent}->{$text}));
     } else {
@@ -1322,6 +1346,7 @@ sub unicode_accent($$)
       # tieaccent diacritic is naturally and correctly composed
       # between two characters
       my $remaining_text = $text;
+      # \p{L} matches a single code point in the category "letter".
       if ($remaining_text =~ s/^([\p{L}\d])([\p{L}\d])(.*)$/$3/) {
         return Unicode::Normalize::NFC($1.$diacritic.$2 . $remaining_text);
       } else {
@@ -1401,13 +1426,13 @@ sub _format_unicode_accents_stack($$$$;$)
 sub _format_eight_bit_accents_stack($$$$$;$)
 {
   my $converter = shift;
-  my $unicode_formatted = shift;
+  my $text = shift;
   my $stack = shift;
   my $encoding = shift;
   my $convert_accent = shift;
   my $set_case = shift;
 
-  my $result = $unicode_formatted;
+  my $result = $text;
 
   my $debug;
   #$debug = 1;
@@ -1420,6 +1445,7 @@ sub _format_eight_bit_accents_stack($$$$$;$)
   # that we can return the maximum of multiaccented letters that can be
   # rendered with a given eight bit formatting.  undef is stored when
   # there is no corresponding unicode anymore.
+  my $unicode_formatted = $text;
   my @results_stack = ([$unicode_formatted, undef]);
 
   while (@$stack) {
@@ -1710,11 +1736,11 @@ Texinfo::Convert::Unicode - Representation as Unicode characters
                                    unicode_text);
   use Texinfo::Convert::Text qw(convert_to_text);
 
-  my ($innermost_contents, $stack)
+  my ($contents_element, $stack)
       = Texinfo::Convert::Utils::find_innermost_accent_contents($accent);
   
   my $formatted_accents = encoded_accents ($converter,
-                 convert_to_text($innermost_contents), $stack, $encoding,
+                 convert_to_text($contents_element), $stack, $encoding,
                         \&Texinfo::Text::ascii_accent_fallback);
 
   my $accent_text = unicode_accent('e', $accent_command);
@@ -1769,7 +1795,7 @@ their content are passed with I<$text> and I<$stack>.  I<$text> is the text
 appearing within nested accent commands.  I<$stack> is an array reference
 holding the nested accents texinfo tree elements.  In general, I<$text> is
 the formatted contents and I<$stack> the stack returned by
-L<Texinfo::Convert::Utils::find_innermost_accent_contents|Texinfo::Convert::Utils/(\@contents,
+L<Texinfo::Convert::Utils::find_innermost_accent_contents|Texinfo::Convert::Utils/($contents_element,
 \@accent_commands) = find_innermost_accent_contents($element)>.  The function
 tries to convert as much as possible the accents to I<$encoding> starting from the
 innermost accent.

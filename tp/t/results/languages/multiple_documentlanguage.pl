@@ -73,7 +73,8 @@ $result_trees{'multiple_documentlanguage'} = {
                               'contents' => [
                                 {
                                   'extra' => {
-                                    'documentlanguage' => 'fr'
+                                    'documentlanguage' => 'fr',
+                                    'translation_context' => 'category of instance variables in object-oriented programming for @defivar'
                                   },
                                   'text' => 'Instance Variable',
                                   'type' => 'untranslated'
@@ -137,20 +138,40 @@ $result_trees{'multiple_documentlanguage'} = {
                         'def_command' => 'defivar',
                         'def_index_element' => {
                           'contents' => [
-                            {},
+                            {
+                              'extra' => {
+                                'def_role' => 'name'
+                              },
+                              'text' => 'a'
+                            },
                             {
                               'text' => ' de '
                             },
-                            {}
+                            {
+                              'extra' => {
+                                'def_role' => 'class'
+                              },
+                              'text' => 'copying'
+                            }
                           ]
                         },
                         'def_index_ref_element' => {
                           'contents' => [
-                            {},
+                            {
+                              'extra' => {
+                                'def_role' => 'name'
+                              },
+                              'text' => 'a'
+                            },
                             {
                               'text' => ' of '
                             },
-                            {}
+                            {
+                              'extra' => {
+                                'def_role' => 'class'
+                              },
+                              'text' => 'copying'
+                            }
                           ]
                         },
                         'documentlanguage' => 'fr',
@@ -308,6 +329,7 @@ $result_trees{'multiple_documentlanguage'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -377,6 +399,7 @@ $result_trees{'multiple_documentlanguage'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -426,7 +449,8 @@ $result_trees{'multiple_documentlanguage'} = {
                       'contents' => [
                         {
                           'extra' => {
-                            'documentlanguage' => 'fr'
+                            'documentlanguage' => 'fr',
+                            'translation_context' => 'category of instance variables in object-oriented programming for @defivar'
                           },
                           'text' => 'Instance Variable',
                           'type' => 'untranslated'
@@ -490,20 +514,40 @@ $result_trees{'multiple_documentlanguage'} = {
                 'def_command' => 'defivar',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'BBB'
+                    },
                     {
                       'text' => ' de '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'fr'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'BBB'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'fr'
+                    }
                   ]
                 },
                 'documentlanguage' => 'fr',
@@ -702,7 +746,8 @@ $result_trees{'multiple_documentlanguage'} = {
                       'contents' => [
                         {
                           'extra' => {
-                            'documentlanguage' => 'hr'
+                            'documentlanguage' => 'hr',
+                            'translation_context' => 'category of instance variables in object-oriented programming for @defivar'
                           },
                           'text' => 'Instance Variable',
                           'type' => 'untranslated'
@@ -766,20 +811,40 @@ $result_trees{'multiple_documentlanguage'} = {
                 'def_command' => 'defivar',
                 'def_index_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'BBB'
+                    },
                     {
                       'text' => ' od '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'hr'
+                    }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
-                    {},
+                    {
+                      'extra' => {
+                        'def_role' => 'name'
+                      },
+                      'text' => 'BBB'
+                    },
                     {
                       'text' => ' of '
                     },
-                    {}
+                    {
+                      'extra' => {
+                        'def_role' => 'class'
+                      },
+                      'text' => 'hr'
+                    }
                   ]
                 },
                 'documentlanguage' => 'hr',
@@ -928,7 +993,9 @@ $result_trees{'multiple_documentlanguage'} = {
           }
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -943,19 +1010,7 @@ $result_trees{'multiple_documentlanguage'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'multiple_documentlanguage'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'multiple_documentlanguage'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'multiple_documentlanguage'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'multiple_documentlanguage'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'multiple_documentlanguage'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'multiple_documentlanguage'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'multiple_documentlanguage'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'multiple_documentlanguage'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[1]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'multiple_documentlanguage'}{'contents'}[3];
-$result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[9]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[0] = $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[9]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[9]{'contents'}[0]{'extra'}{'def_index_element'}{'contents'}[2] = $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[9]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[9]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[0] = $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[9]{'contents'}[0]{'args'}[0]{'contents'}[4];
-$result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[9]{'contents'}[0]{'extra'}{'def_index_ref_element'}{'contents'}[2] = $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[9]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'multiple_documentlanguage'}{'contents'}[4]{'contents'}[9]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'multiple_documentlanguage'}{'contents'}[3];
 
 $result_texis{'multiple_documentlanguage'} = '@documentlanguage fr
@@ -1013,7 +1068,7 @@ error-->
 ';
 
 $result_sectioning{'multiple_documentlanguage'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -1022,11 +1077,8 @@ $result_sectioning{'multiple_documentlanguage'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -1036,73 +1088,82 @@ $result_sectioning{'multiple_documentlanguage'} = {
                   'extra' => {
                     'isindex' => 1,
                     'normalized' => 'chap'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'multiple_documentlanguage'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'multiple_documentlanguage'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'multiple_documentlanguage'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'multiple_documentlanguage'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'multiple_documentlanguage'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'multiple_documentlanguage'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'multiple_documentlanguage'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'multiple_documentlanguage'};
+$result_sectioning{'multiple_documentlanguage'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'multiple_documentlanguage'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'multiple_documentlanguage'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'multiple_documentlanguage'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'multiple_documentlanguage'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'multiple_documentlanguage'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'multiple_documentlanguage'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'multiple_documentlanguage'};
 
-$result_nodes{'multiple_documentlanguage'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'multiple_documentlanguage'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'multiple_documentlanguage'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'multiple_documentlanguage'}[0];
+$result_nodes{'multiple_documentlanguage'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'multiple_documentlanguage'}[0];
+$result_nodes{'multiple_documentlanguage'}[1] = $result_nodes{'multiple_documentlanguage'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'multiple_documentlanguage'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'multiple_documentlanguage'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'multiple_documentlanguage'};
-$result_nodes{'multiple_documentlanguage'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'multiple_documentlanguage'};
-
-$result_menus{'multiple_documentlanguage'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'multiple_documentlanguage'} = [];
 
@@ -1126,16 +1187,16 @@ $result_converted{'plaintext'}->{'multiple_documentlanguage'} = 'top
 1 Chap
 ******
 
- -- Instance Variable de fr : BBB CCC
+ -- Variable d\'instance de fr : BBB CCC
      erreur→
 
- -- Instance Variable von copying: a b
+ -- Instanzvariable von copying: a b
      error→
 
- -- Instance Variable od hr: BBB CCC
+ -- Primjerak varijable od hr: BBB CCC
      greška→
 
- -- Instance Variable od copying: a b
+ -- Primjerak varijable od copying: a b
      greška→
 
 * Menu:
@@ -1149,7 +1210,7 @@ $result_converted{'plaintext'}->{'multiple_documentlanguage'} = 'top
 
 $result_converted{'info'}->{'multiple_documentlanguage'} = 'This is , produced from .
 
- -- Instance Variable de copying : a b
+ -- Variable d\'instance de copying : a b
      erreur→
 
 
@@ -1168,16 +1229,16 @@ File: ,  Node: chap,  Prev: Top,  Up: Top
 1 Chap
 ******
 
- -- Instance Variable de fr : BBB CCC
+ -- Variable d\'instance de fr : BBB CCC
      erreur→
 
- -- Instance Variable von copying: a b
+ -- Instanzvariable von copying: a b
      error→
 
- -- Instance Variable od hr: BBB CCC
+ -- Primjerak varijable od hr: BBB CCC
      greška→
 
- -- Instance Variable od copying: a b
+ -- Primjerak varijable od copying: a b
      greška→
 
  [index ]
@@ -1190,8 +1251,8 @@ File: ,  Node: chap,  Prev: Top,  Up: Top
 
 
 Tag Table:
-Node: Top82
-Node: chap157
+Node: Top84
+Node: chap159
 
 End Tag Table
 
@@ -1207,7 +1268,7 @@ $result_converted{'html'}->{'multiple_documentlanguage'} = '<!DOCTYPE html>
 <!-- Created by texinfo, http://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<!-- Instance Variable de copying: a b
+<!-- Variable d\'instance de copying: a b
 erreur→ -->
 <title>top</title>
 
@@ -1241,7 +1302,7 @@ th.sections-header-printindex {text-align:left; padding-left: 1em}
 <div class="top-level-extent" id="Top">
 <div class="nav-panel">
 <p>
-Next: <a href="#chap" accesskey="n" rel="next">Chap</a> &nbsp; [<a href="#chap" title="Index" rel="index">Index</a>]</p>
+Suivant: <a href="#chap" accesskey="n" rel="next">Chap</a> &nbsp; [<a href="#chap" title="Index" rel="index">Index</a>]</p>
 </div>
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
@@ -1252,29 +1313,29 @@ Next: <a href="#chap" accesskey="n" rel="next">Chap</a> &nbsp; [<a href="#chap" 
 <div class="chapter-level-extent" id="chap">
 <div class="nav-panel">
 <p>
-Previous: <a href="#Top" accesskey="p" rel="prev">top</a>, Up: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; [<a href="#chap" title="Index" rel="index">Index</a>]</p>
+Pr&eacute;c&eacute;dent: <a href="#Top" accesskey="p" rel="prev">top</a>, Monter: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; [<a href="#chap" title="Index" rel="index">Index</a>]</p>
 </div>
 <h2 class="chapter" id="Chap"><span>1 Chap<a class="copiable-link" href="#Chap"> &para;</a></span></h2>
 
 <dl class="first-defcv first-defivar-alias-first-defcv">
-<dt class="defcv defivar-alias-defcv" id="index-BBB-of-fr"><span class="category-def">Instance Variable de <code class="code">fr</code>&nbsp;: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-fr"> &para;</a></span></dt>
+<dt class="defcv defivar-alias-defcv" id="index-BBB-of-fr"><span class="category-def">Variable d&rsquo;instance de <code class="code">fr</code>&nbsp;: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-fr"> &para;</a></span></dt>
 <dd><p>erreur&rarr;
 </p></dd></dl>
 
 
 <dl class="first-defcv first-defivar-alias-first-defcv">
-<dt class="defcv defivar-alias-defcv" id="index-copying-a-of-copying"><span class="category-def">Instance Variable of <code class="code">copying</code>: </span><span><strong class="def-name">a</strong> <var class="def-var-arguments">b</var><a class="copiable-link" href="#index-copying-a-of-copying"> &para;</a></span></dt>
+<dt class="defcv defivar-alias-defcv" id="index-copying-a-of-copying"><span class="category-def">Instanzvariable of <code class="code">copying</code>: </span><span><strong class="def-name">a</strong> <var class="def-var-arguments">b</var><a class="copiable-link" href="#index-copying-a-of-copying"> &para;</a></span></dt>
 <dd><p>error&rarr;
 </p></dd></dl>
 
 
 <dl class="first-defcv first-defivar-alias-first-defcv">
-<dt class="defcv defivar-alias-defcv" id="index-BBB-of-hr"><span class="category-def">Instance Variable od <code class="code">hr</code>: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-hr"> &para;</a></span></dt>
+<dt class="defcv defivar-alias-defcv" id="index-BBB-of-hr"><span class="category-def">Primjerak varijable od <code class="code">hr</code>: </span><span><strong class="def-name">BBB</strong> <var class="def-var-arguments">CCC</var><a class="copiable-link" href="#index-BBB-of-hr"> &para;</a></span></dt>
 <dd><p>greška&rarr;
 </p></dd></dl>
 
 <dl class="first-defcv first-defivar-alias-first-defcv">
-<dt class="defcv defivar-alias-defcv" id="index-copying-a-of-copying"><span class="category-def">Instance Variable od <code class="code">copying</code>: </span><span><strong class="def-name">a</strong> <var class="def-var-arguments">b</var><a class="copiable-link" href="#index-copying-a-of-copying"> &para;</a></span></dt>
+<dt class="defcv defivar-alias-defcv" id="index-copying-a-of-copying"><span class="category-def">Primjerak varijable od <code class="code">copying</code>: </span><span><strong class="def-name">a</strong> <var class="def-var-arguments">b</var><a class="copiable-link" href="#index-copying-a-of-copying"> &para;</a></span></dt>
 <dd><p>greška&rarr;
 </p></dd></dl>
 

@@ -24,6 +24,8 @@ package Texinfo::Convert::Info;
 use 5.00405;
 use strict;
 
+use Carp qw(cluck);
+
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
 
@@ -36,7 +38,7 @@ use Texinfo::Convert::Paragraph;
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::Plaintext);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 my $STDIN_DOCU_NAME = 'stdin';
@@ -60,10 +62,12 @@ sub converter_defaults($$)
   return %defaults;
 }
 
-sub output($)
+sub output($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
 
   my $result;
 
@@ -112,10 +116,10 @@ sub output($)
   print STDERR "DOCUMENT\n" if ($self->get_conf('DEBUG'));
   my $out_file_nr = 0;
   my @indirect_files;
-  if (!defined($tree_units) or not defined($tree_units->[0]->{'extra'})
-      or not defined($tree_units->[0]->{'extra'}->{'unit_command'})) {
+  if (!defined($tree_units) or not defined($tree_units->[0])
+      or not defined($tree_units->[0]->{'unit_command'})) {
     $self->line_warn($self, __("document without nodes"),
-             {'file_name' => $self->{'parser_info'}->{'input_file_name'}});
+             {'file_name' => $self->{'document_info'}->{'input_file_name'}});
     my $output = $header.$self->convert_tree($root);
     $self->count_context_bug_message('no element ');
 
@@ -129,18 +133,19 @@ sub output($)
       $result = $output;
     }
   } else {
-    unless ($self->{'structuring'} and $self->{'structuring'}->{'top_node'}
-     and $self->{'structuring'}->{'top_node'}->{'extra'}->{'normalized'} eq 'Top') {
+    unless ($self->{'identifiers_target'}
+            and $self->{'identifiers_target'}->{'Top'}) {
       $self->line_warn($self, __("document without Top node"),
-             {'file_name' => $self->{'parser_info'}->{'input_file_name'}});
+             {'file_name' => $self->{'document_info'}->{'input_file_name'}});
     }
     $out_file_nr = 1;
     my $first_node = 0;
     $self->{'count_context'}->[-1]->{'bytes'} += $header_bytes;
+    # FIXME use a simple foreach
     my @nodes_root_elements = @$tree_units;
     while (@nodes_root_elements) {
       my $node_root_element = shift @nodes_root_elements;
-      my $node_text = $self->convert_tree($node_root_element);
+      my $node_text = $self->convert_output_unit($node_root_element);
       if (!$first_node) {
         $first_node = 1;
         if (defined($self->{'text_before_first_node'})) {
@@ -254,7 +259,7 @@ sub output($)
   my %seen_anchors;
   foreach my $label (@{$self->{'count_context'}->[-1]->{'locations'}}) {
     next unless ($label->{'root'} and $label->{'root'}->{'extra'}
-                 and defined($label->{'root'}->{'extra'}->{'normalized'}));
+                 and $label->{'root'}->{'extra'}->{'is_target'});
     my $label_element = Texinfo::Common::get_label_element($label->{'root'});
     my $prefix;
     
@@ -350,7 +355,7 @@ sub _info_header($$$)
   # This ensures that spaces in file are kept.
   $result .= add_next($paragraph, $output_filename);
   my $program = $self->get_conf('PROGRAM');
-  my $version = $self->get_conf('PACKAGE_VERSION');
+  my $version = $self->get_conf('PACKAGE_VERSION_OPTION');
   if (defined($program) and $program ne '') {
     $result .=
         add_text($paragraph, ", produced by $program version $version from ");
@@ -377,9 +382,9 @@ sub _info_header($$$)
   }
   $self->set_global_document_commands('before', \@informative_global_commands);
 
-  if ($self->{'parser_info'}->{'dircategory_direntry'}) {
+  if ($self->{'document_info'}->{'dircategory_direntry'}) {
     $self->{'ignored_commands'}->{'direntry'} = 0;
-    foreach my $command (@{$self->{'parser_info'}->{'dircategory_direntry'}}) {
+    foreach my $command (@{$self->{'document_info'}->{'dircategory_direntry'}}) {
       if ($command->{'cmdname'} eq 'dircategory') {
         if ($command->{'args'} and @{$command->{'args'}}
             and defined($command->{'args'}->[0]->{'contents'})) {
@@ -436,7 +441,7 @@ sub format_node($$)
 
   my $result = '';
   return '' if (not $node->{'extra'}
-                or not defined($node->{'extra'}->{'normalized'}));
+                or not $node->{'extra'}->{'is_target'});
 
   my ($node_text, $byte_count) = $self->node_line($node);
   # check not needed most probably because of the test of 'normalized'.
@@ -483,8 +488,10 @@ sub format_node($$)
   $self->{'count_context'}->[-1]->{'bytes'} += $byte_count;
   $result .= $pre_quote . $node_text . $post_quote;
   foreach my $direction (@directions) {
-    if ($node->{'structure'}->{'node_'.lc($direction)}) {
-      my $node_direction = $node->{'structure'}->{'node_'.lc($direction)};
+    if ($node->{'extra'}->{'node_directions'}
+        and $node->{'extra'}->{'node_directions'}->{lc($direction)}) {
+      my $node_direction
+          = $node->{'extra'}->{'node_directions'}->{lc($direction)};
       my $text = ",  $direction: ";
       $self->add_text_to_count($text);
       $result .= $text;
@@ -635,10 +642,10 @@ Texinfo::Convert::Info - Convert Texinfo tree to Info
 =head1 SYNOPSIS
 
   my $converter
-    = Texinfo::Convert::Info->converter({'parser' => $parser});
+    = Texinfo::Convert::Info->converter({'document' => $document});
 
-  $converter->output($tree);
-  $converter->convert($tree);
+  $converter->output($document);
+  $converter->convert($document);
   $converter->convert_tree($tree);
 
 =head1 NOTES
@@ -659,24 +666,25 @@ Texinfo::Convert::Info converts a Texinfo tree to Info.
 Initialize converter from Texinfo to Info.
 
 The I<$options> hash reference holds options for the converter.  In
-this option hash reference a L<parser object|Texinfo::Parser>
-may be associated with the I<parser> key.  The other options
-are Texinfo customization options and a few other options that can
-be passed to the converter. Most of the customization options are described in
-the Texinfo manual.  Those customization options, when appropriate, override
-the document content.  The parser should not be available directly anymore
-after getting the associated information.
+this option hash reference a L<document|Texinfo::Document>
+may be associated with the I<document> key.  The document should not
+be available directly anymore after getting the associated information.
+
+The other options are Texinfo customization options and a few other options
+that can be passed to the converter. Most of the customization options are
+described in the Texinfo manual.  Those customization options, when
+appropriate, override the document content.
 
 See L<Texinfo::Convert::Converter> for more information.
 
-=item $converter->output($tree)
+=item $converter->output($document)
 
-Convert a Texinfo tree I<$tree> and output the result in files as
+Convert a Texinfo parsed document I<$document> and output the result in files as
 described in the Texinfo manual.
 
-=item $result = $converter->convert($tree)
+=item $result = $converter->convert($document)
 
-Convert a Texinfo tree I<$tree> and return the resulting output.
+Convert a Texinfo parsed document I<$document> and return the resulting output.
 
 =item $result = $converter->convert_tree($tree)
 

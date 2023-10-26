@@ -86,6 +86,7 @@ $result_trees{'one_node_explicit_directions_anchor_no_use_node'} = {
               ],
               'cmdname' => 'anchor',
               'extra' => {
+                'is_target' => 1,
                 'normalized' => 'ref'
               },
               'source_info' => {
@@ -144,6 +145,7 @@ $result_trees{'one_node_explicit_directions_anchor_no_use_node'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'one-node'
       },
       'info' => {
@@ -179,31 +181,34 @@ anchor ref .
 ref to ref ref.
 ';
 
-$result_nodes{'one_node_explicit_directions_anchor_no_use_node'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'one-node'
-  },
-  'structure' => {
-    'node_up' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'dir'
-          }
-        ]
-      }
+$result_nodes{'one_node_explicit_directions_anchor_no_use_node'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'up' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'dir'
+              }
+            ]
+          },
+          'type' => 'line_arg'
+        }
+      },
+      'normalized' => 'one-node'
     }
   }
-};
+];
 
-$result_menus{'one_node_explicit_directions_anchor_no_use_node'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'one-node'
-  },
-  'structure' => {}
-};
+$result_menus{'one_node_explicit_directions_anchor_no_use_node'} = [
+  {
+    'extra' => {
+      'normalized' => 'one-node'
+    }
+  }
+];
 
 $result_errors{'one_node_explicit_directions_anchor_no_use_node'} = [];
 

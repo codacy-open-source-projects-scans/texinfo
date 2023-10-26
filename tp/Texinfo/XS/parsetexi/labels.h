@@ -16,22 +16,23 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include <stddef.h>
+
 #include "tree_types.h"
 
-extern ELEMENT **target_elements_list;
-extern size_t labels_number;
+/* declaration of extern data is in parser.h to avoid exposure
+   to code including labels.h */
+
 void reset_labels (void);
+void forget_labels (void);
 void check_register_target_element_label (ELEMENT *label_element,
                                           ELEMENT *target_element);
+void wipe_identifiers_target (void);
 
 
-
-NODE_SPEC_EXTRA *parse_node_manual (ELEMENT *node, int modify_node);
-
-
-extern ELEMENT **internal_xref_list;
-extern size_t internal_xref_number;
+extern ELEMENT_LIST internal_xref_list;
 
 void remember_internal_xref (ELEMENT *element);
 void reset_internal_xrefs (void);
+void forget_internal_xrefs (void);
 #endif

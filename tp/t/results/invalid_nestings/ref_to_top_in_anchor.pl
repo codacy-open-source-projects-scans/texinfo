@@ -66,6 +66,7 @@ $result_trees{'ref_to_top_in_anchor'} = {
           ],
           'cmdname' => 'anchor',
           'extra' => {
+            'is_target' => 1,
             'normalized' => 'TOP-Top'
           },
           'source_info' => {
@@ -76,6 +77,7 @@ $result_trees{'ref_to_top_in_anchor'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -100,19 +102,22 @@ $result_texis{'ref_to_top_in_anchor'} = '@node Top
 
 $result_texts{'ref_to_top_in_anchor'} = '';
 
-$result_nodes{'ref_to_top_in_anchor'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'ref_to_top_in_anchor'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'ref_to_top_in_anchor'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'ref_to_top_in_anchor'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'ref_to_top_in_anchor'} = [
   {

@@ -280,6 +280,7 @@ $result_trees{'multitable_anchor_and_index_entry'} = {
                                 ]
                               },
                               'info' => {
+                                'command_name' => 'cindex',
                                 'spaces_before_argument' => {
                                   'text' => ' '
                                 }
@@ -304,6 +305,7 @@ $result_trees{'multitable_anchor_and_index_entry'} = {
                               ],
                               'cmdname' => 'anchor',
                               'extra' => {
+                                'is_target' => 1,
                                 'normalized' => 'anchor-in-multitable'
                               },
                               'source_info' => {
@@ -586,6 +588,7 @@ $result_trees{'multitable_anchor_and_index_entry'} = {
                                 ]
                               },
                               'info' => {
+                                'command_name' => 'cindex',
                                 'spaces_before_argument' => {
                                   'text' => ' '
                                 }
@@ -677,6 +680,7 @@ $result_trees{'multitable_anchor_and_index_entry'} = {
                               ],
                               'cmdname' => 'anchor',
                               'extra' => {
+                                'is_target' => 1,
                                 'normalized' => 'mark'
                               },
                               'source_info' => {
@@ -880,6 +884,7 @@ $result_trees{'multitable_anchor_and_index_entry'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'Top'
       },
@@ -963,21 +968,23 @@ mark
 anchor in multitable
 ';
 
-$result_nodes{'multitable_anchor_and_index_entry'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'isindex' => 1,
-    'normalized' => 'Top'
+$result_nodes{'multitable_anchor_and_index_entry'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'isindex' => 1,
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'multitable_anchor_and_index_entry'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'isindex' => 1,
-    'normalized' => 'Top'
+$result_menus{'multitable_anchor_and_index_entry'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'multitable_anchor_and_index_entry'} = [];
 

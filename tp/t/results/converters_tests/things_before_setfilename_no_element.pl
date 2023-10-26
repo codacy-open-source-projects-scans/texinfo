@@ -39,6 +39,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
               ],
               'cmdname' => 'anchor',
               'extra' => {
+                'is_target' => 1,
                 'normalized' => 'An-anchor'
               },
               'source_info' => {
@@ -174,6 +175,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                           ],
                           'cmdname' => 'anchor',
                           'extra' => {
+                            'is_target' => 1,
                             'normalized' => 'Anchor-in-footnote'
                           },
                           'source_info' => {
@@ -321,6 +323,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
               ],
               'extra' => {
                 'float_type' => '',
+                'is_target' => 1,
                 'normalized' => 'float-anchor'
               },
               'info' => {
@@ -492,6 +495,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
               'extra' => {
                 'caption' => {},
                 'float_type' => 'Text',
+                'is_target' => 1,
                 'normalized' => 'ta'
               },
               'info' => {
@@ -659,6 +663,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                 ]
               },
               'info' => {
+                'command_name' => 'cindex',
                 'spaces_before_argument' => {
                   'text' => ' '
                 }
@@ -1011,11 +1016,9 @@ $result_floats{'things_before_setfilename_no_element'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => '',
         'normalized' => 'float-anchor'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ],
@@ -1029,11 +1032,9 @@ $result_floats{'things_before_setfilename_no_element'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'Text',
         'normalized' => 'ta'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

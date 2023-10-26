@@ -62,6 +62,7 @@ $result_trees{'equivalent_labels'} = {
           ],
           'cmdname' => 'anchor',
           'extra' => {
+            'is_target' => 1,
             'normalized' => 'anch'
           },
           'source_info' => {
@@ -158,6 +159,7 @@ $result_trees{'equivalent_labels'} = {
           ],
           'extra' => {
             'float_type' => 'truc',
+            'is_target' => 1,
             'normalized' => 'floa'
           },
           'info' => {
@@ -338,6 +340,7 @@ $result_trees{'equivalent_labels'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -382,65 +385,25 @@ In float
 * floa::
 ';
 
-$result_nodes{'equivalent_labels'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'anchor',
-      'extra' => {
-        'normalized' => 'anch'
-      },
-      'structure' => {}
+$result_nodes{'equivalent_labels'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'first'
     }
   }
-};
+];
 
-$result_menus{'equivalent_labels'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'anchor',
-      'extra' => {
-        'normalized' => 'anch'
-      },
-      'structure' => {
-        'menu_next' => {
-          'cmdname' => 'float',
-          'extra' => {
-            'float_type' => 'truc',
-            'normalized' => 'floa'
-          },
-          'structure' => {
-            'float_number' => 1,
-            'menu_prev' => {},
-            'menu_up' => {},
-            'menu_up_hash' => {
-              'first' => 1
-            }
-          }
-        },
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'first' => 1
-        }
-      }
+$result_menus{'equivalent_labels'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'first'
     }
   }
-};
-$result_menus{'equivalent_labels'}{'structure'}{'menu_child'}{'structure'}{'menu_next'}{'structure'}{'menu_prev'} = $result_menus{'equivalent_labels'}{'structure'}{'menu_child'};
-$result_menus{'equivalent_labels'}{'structure'}{'menu_child'}{'structure'}{'menu_next'}{'structure'}{'menu_up'} = $result_menus{'equivalent_labels'};
-$result_menus{'equivalent_labels'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'equivalent_labels'};
+];
 
 $result_errors{'equivalent_labels'} = [
   {
@@ -469,11 +432,9 @@ $result_floats{'equivalent_labels'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => 'truc',
         'normalized' => 'floa'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

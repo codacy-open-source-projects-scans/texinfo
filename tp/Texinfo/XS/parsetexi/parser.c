@@ -18,19 +18,44 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>
-#include <stdbool.h>
-#include "uniconv.h"
-#include "unistr.h"
 
-#include "parser.h"
+#include "global_commands_types.h"
+#include "element_types.h"
+#include "tree_types.h"
+#include "tree.h"
+/* for isascii_alnum, whitespace_chars, read_flag_name, item_line_parent
+   delete_global_info, parse_line_directive, count_multibyte */
+#include "utils.h"
+/* for relocate_source_marks */
+#include "manipulate_tree.h"
 #include "debug.h"
+#include "debug_parser.h"
+/* error_messages_list forget_errors ... */
+#include "errors.h"
 #include "text.h"
+#include "counter.h"
+#include "builtin_commands.h"
+#include "macro.h"
+/* forget_small_strings small_strings ... */
 #include "input.h"
 #include "source_marks.h"
+#include "extra.h"
+/* for conf */
+#include "conf.h"
+/* for nesting_context */
+#include "context_stack.h"
+#include "commands.h"
+/* for labels_list labels_number forget_labels forget_internal_xrefs */
+#include "labels.h"
+/* for register_document */
+#include "document.h"
+/* for set_labels_identifiers_target */
+#include "targets.h"
+/* for complete_indices forget_indices */
+#include "indices.h"
+#include "parser.h"
 
 
-const char *whitespace_chars = " \t\v\f\r\n";
-const char *digit_chars = "0123456789";
 
 /* in the perl parser, comments including whitespace_chars_except_newline
    show where code should be changed if the list of characters changes here */
@@ -41,31 +66,11 @@ const char *linecommand_expansion_delimiters = WHITESPACE_CHARS_EXCEPT_NEWLINE
                                                "{}@";
 #undef WHITESPACE_CHARS_EXCEPT_NEWLINE
 
-/* count characters, not bytes. */
-size_t
-count_convert_u8 (char *text)
-{
-  /* FIXME error checking? */
-  uint8_t *resultbuf = u8_strconv_from_encoding (text, "UTF-8",
-                                                 iconveh_question_mark);
-  size_t result = u8_mbsnlen (resultbuf, u8_strlen (resultbuf));
-
-  free (resultbuf);
-
-  return result;
-}
-
 /* Check if the contents of S2 appear at S1). */
 int
 looking_at (char *s1, char *s2)
 {
   return !strncmp (s1, s2, strlen (s2));
-}
-
-int
-isascii_alnum (int c)
-{
-  return (((c & ~0x7f) == 0) && isalnum(c));
 }
 
 /* Look for a sequence of alphanumeric characters or hyphens, where the
@@ -123,27 +128,6 @@ parse_command_name (char **ptr, int *single_char)
   return ret;
 }
 
-/* Read a name used for @set and @value. */
-char *
-read_flag_name (char **ptr)
-{
-  char *p = *ptr, *q;
-  char *ret = 0;
-
-  q = p;
-  if (!isascii_alnum (*q) && *q != '-' && *q != '_')
-    return 0; /* Invalid. */
-
-  while (!strchr (whitespace_chars, *q)
-         && !strchr ("{\\}~`^+\"<>|@", *q))
-    q++;
-  ret = strndup (p, q - p);
-  p = q;
-
-  *ptr = p;
-  return ret;
-}
-
 char *
 element_type_name (ELEMENT *e)
 {
@@ -197,6 +181,43 @@ check_space_element (ELEMENT *e)
     }
   return 1;
 }
+
+
+/*
+   Convert the contents of E to plain text.  Suitable for specifying a file
+   name containing an at sign or braces, but no other commands nor element
+   types.  Set *SUPERFLUOUS_ARG if the E contains other commands or element
+   types. */
+char *
+text_contents_to_plain_text (ELEMENT *e, int *superfluous_arg)
+{
+#define ADD(x) text_append (&result, x)
+
+  TEXT result; int i;
+
+  if (!e)
+    return "";
+  text_init (&result);
+  for (i = 0; i < e->contents.number; i++)
+    {
+      ELEMENT *e1 = contents_child_by_index (e, i);
+      if (e1->text.end > 0)
+        ADD(e1->text.text);
+      else if (e1->cmd == CM_AT_SIGN
+               || e1->cmd == CM_atchar)
+        ADD("@");
+      else if (e1->cmd == CM_OPEN_BRACE
+               || e1->cmd == CM_lbracechar)
+        ADD("{");
+      else if (e1->cmd == CM_CLOSE_BRACE
+               || e1->cmd == CM_rbracechar)
+        ADD("}");
+      else
+        *superfluous_arg = 1;
+    }
+  return result.text;
+}
+#undef ADD
 
 
 /* Current node, section and part. */
@@ -291,6 +312,7 @@ COUNTER count_cells;
 /* Information that is not local to where it is set in the Texinfo input,
    for example document language and encoding. */
 GLOBAL_INFO global_info;
+GLOBAL_COMMANDS global_commands;
 char *global_clickstyle = 0;
 char *global_documentlanguage = 0;
 int global_documentlanguage_fixed = 0;
@@ -319,9 +341,9 @@ set_documentlanguage_override (char *value)
 
 
 void
-set_accept_internalvalue()
+set_accept_internalvalue(int value)
 {
-  global_accept_internalvalue = 1;
+  global_accept_internalvalue = value;
 }
 
 /* Record the information from a command of global effect. */
@@ -340,47 +362,19 @@ register_global_command (ELEMENT *current)
         {
 #define GLOBAL_CASE(cmx) \
         case CM_##cmx:   \
-          add_to_contents_as_array (&global_info.cmx, current); \
+          add_to_contents_as_array (&global_commands.cmx, current); \
           break
 
         case CM_footnote:
-          add_to_contents_as_array (&global_info.footnotes, current);
+          add_to_contents_as_array (&global_commands.footnotes, current);
           break;
 
         case CM_float:
-          add_to_contents_as_array (&global_info.floats, current);
+          add_to_contents_as_array (&global_commands.floats, current);
           break;
 
-        /* global in command_data.txt */
-        GLOBAL_CASE(author);
-        GLOBAL_CASE(detailmenu);
-        GLOBAL_CASE(hyphenation);
-        GLOBAL_CASE(insertcopying);
-        GLOBAL_CASE(listoffloats);
-        GLOBAL_CASE(part);
-        GLOBAL_CASE(printindex);
-        GLOBAL_CASE(subtitle);
-        GLOBAL_CASE(titlefont);
+#include "global_multi_commands_case.c"
 
-        /* from Common.pm %document_settable_multiple_at_commands */
-        GLOBAL_CASE(allowcodebreaks);
-        GLOBAL_CASE(clickstyle);
-        GLOBAL_CASE(codequotebacktick);
-        GLOBAL_CASE(codequoteundirected);
-        GLOBAL_CASE(contents);
-        GLOBAL_CASE(deftypefnnewline);
-        GLOBAL_CASE(documentencoding);
-        GLOBAL_CASE(documentlanguage);
-        GLOBAL_CASE(exampleindent);
-        GLOBAL_CASE(firstparagraphindent);
-        GLOBAL_CASE(frenchspacing);
-        GLOBAL_CASE(headings);
-        GLOBAL_CASE(kbdinputstyle);
-        GLOBAL_CASE(microtype);
-        GLOBAL_CASE(paragraphindent);
-        GLOBAL_CASE(shortcontents);
-        GLOBAL_CASE(urefbreakstyle);
-        GLOBAL_CASE(xrefautomaticsectiontitle);
 #undef GLOBAL_CASE
         default:
           /* do nothing; just silence -Wswitch about lots of un-covered cases */
@@ -400,46 +394,17 @@ register_global_command (ELEMENT *current)
           /* Check if we are inside an @include, and if so, do nothing. */
           if (top_file_index () > 0)
             break;
-          where = &global_info.setfilename;
+          where = &global_commands.setfilename;
           break;
 
 #define GLOBAL_UNIQUE_CASE(cmd) \
         case CM_##cmd: \
-          where = &global_info.cmd; \
+          where = &global_commands.cmd; \
           break
 
-        GLOBAL_UNIQUE_CASE(settitle);
-        GLOBAL_UNIQUE_CASE(copying);
-        GLOBAL_UNIQUE_CASE(titlepage);
-        GLOBAL_UNIQUE_CASE(top);
-        GLOBAL_UNIQUE_CASE(documentdescription);
-        GLOBAL_UNIQUE_CASE(pagesizes);
-        GLOBAL_UNIQUE_CASE(fonttextsize);
-        GLOBAL_UNIQUE_CASE(footnotestyle);
-        GLOBAL_UNIQUE_CASE(setchapternewpage);
-        GLOBAL_UNIQUE_CASE(everyheading);
-        GLOBAL_UNIQUE_CASE(everyfooting);
-        GLOBAL_UNIQUE_CASE(evenheading);
-        GLOBAL_UNIQUE_CASE(evenfooting);
-        GLOBAL_UNIQUE_CASE(oddheading);
-        GLOBAL_UNIQUE_CASE(oddfooting);
-        GLOBAL_UNIQUE_CASE(everyheadingmarks);
-        GLOBAL_UNIQUE_CASE(everyfootingmarks);
-        GLOBAL_UNIQUE_CASE(evenheadingmarks);
-        GLOBAL_UNIQUE_CASE(oddheadingmarks);
-        GLOBAL_UNIQUE_CASE(evenfootingmarks);
-        GLOBAL_UNIQUE_CASE(oddfootingmarks);
-        GLOBAL_UNIQUE_CASE(shorttitlepage);
-        GLOBAL_UNIQUE_CASE(title);
-        GLOBAL_UNIQUE_CASE(novalidate);
-        GLOBAL_UNIQUE_CASE(afourpaper);
-        GLOBAL_UNIQUE_CASE(afourlatex);
-        GLOBAL_UNIQUE_CASE(afourwide);
-        GLOBAL_UNIQUE_CASE(afivepaper);
-        GLOBAL_UNIQUE_CASE(bsixpaper);
-        GLOBAL_UNIQUE_CASE(smallbook);
+#include "main/global_unique_commands_case.c"
+
 #undef GLOBAL_UNIQUE_CASE
-        /* NOTE: Same list in api.c:build_global_info2 and wipe_global_info. */
         default:
           /* do nothing; just silence -Wswitch about lots of un-covered cases */
           break;
@@ -459,7 +424,7 @@ register_global_command (ELEMENT *current)
 
 
 void
-wipe_global_info (void)
+wipe_parser_global_info (void)
 {
   free (global_clickstyle);
   global_clickstyle = strdup ("arrow");
@@ -470,49 +435,12 @@ wipe_global_info (void)
     }
   global_kbdinputstyle = kbd_distinct;
 
-  free (global_info.dircategory_direntry.contents.list);
-  free (global_info.footnotes.contents.list);
+  delete_global_info (&global_info);
+  delete_global_commands (&global_commands);
 
-  free (global_input_encoding_name);
-  /* set by set_input_encoding */
-  global_input_encoding_name = 0;
-
-#define GLOBAL_CASE(cmx) \
-  free (global_info.cmx.contents.list)
-
-  GLOBAL_CASE(author);
-  GLOBAL_CASE(detailmenu);
-  GLOBAL_CASE(hyphenation);
-  GLOBAL_CASE(insertcopying);
-  GLOBAL_CASE(printindex);
-  GLOBAL_CASE(subtitle);
-  GLOBAL_CASE(titlefont);
-  GLOBAL_CASE(listoffloats);
-  GLOBAL_CASE(part);
-  GLOBAL_CASE(floats);
-  GLOBAL_CASE(allowcodebreaks);
-  GLOBAL_CASE(clickstyle);
-  GLOBAL_CASE(codequotebacktick);
-  GLOBAL_CASE(codequoteundirected);
-  GLOBAL_CASE(contents);
-  GLOBAL_CASE(deftypefnnewline);
-  GLOBAL_CASE(documentencoding);
-  GLOBAL_CASE(documentlanguage);
-  GLOBAL_CASE(exampleindent);
-  GLOBAL_CASE(firstparagraphindent);
-  GLOBAL_CASE(frenchspacing);
-  GLOBAL_CASE(headings);
-  GLOBAL_CASE(kbdinputstyle);
-  GLOBAL_CASE(microtype);
-  GLOBAL_CASE(paragraphindent);
-  GLOBAL_CASE(shortcontents);
-  GLOBAL_CASE(urefbreakstyle);
-  GLOBAL_CASE(xrefautomaticsectiontitle);
-
-#undef GLOBAL_CASE
-
-  /* clear the rest of the fields */
+  /* clear the rest of the fields and reset elements lists */
   memset (&global_info, 0, sizeof (global_info));
+  memset (&global_commands, 0, sizeof (global_commands));
 }
 
 ELEMENT *
@@ -524,10 +452,71 @@ setup_document_root_and_before_node_section ()
   return before_node_section;
 }
 
+void
+rearrange_tree_beginning (ELEMENT *before_node_section)
+{
+  ELEMENT *informational_preamble;
+  /* temporary placeholder */
+  ELEMENT *first_types = new_element (ET_NONE);
+
+  /* Put everything before @setfilename in a special type.  This allows to
+     ignore everything before @setfilename. */
+  if (global_commands.setfilename
+      && global_commands.setfilename->parent == before_node_section)
+    {
+      ELEMENT *before_setfilename
+         = new_element (ET_preamble_before_setfilename);
+      while (before_node_section->contents.number > 0
+             && before_node_section->contents.list[0]->cmd != CM_setfilename)
+        {
+          ELEMENT *e = remove_from_contents (before_node_section, 0);
+          add_to_element_contents (before_setfilename, e);
+        }
+      if (before_setfilename->contents.number > 0)
+        insert_into_contents (before_node_section, before_setfilename, 0);
+      else
+        destroy_element (before_setfilename);
+    }
+
+  /* _add_preamble_before_content */
+
+  /* add a preamble for informational commands */
+  informational_preamble = new_element (ET_preamble_before_content);
+  if (before_node_section->contents.number > 0)
+    {
+      while (before_node_section->contents.number > 0)
+        {
+          ELEMENT *next_content = before_node_section->contents.list[0];
+          if (next_content->type == ET_preamble_before_beginning
+              || next_content->type == ET_preamble_before_setfilename)
+            add_to_element_contents (first_types,
+                            remove_from_contents (before_node_section, 0));
+          else if (next_content->type == ET_paragraph
+                   || (next_content->cmd
+                       && !(command_data(next_content->cmd).flags
+                                                      & CF_preamble)))
+            break;
+          else
+            {
+              ELEMENT *e = remove_from_contents (before_node_section, 0);
+              add_to_element_contents (informational_preamble, e);
+            }
+        }
+    }
+  add_to_element_contents (first_types, informational_preamble);
+  while (first_types->contents.number > 0)
+    {
+      ELEMENT *e = pop_element_from_contents (first_types);
+      insert_into_contents (before_node_section, e, 0);
+    }
+  destroy_element (first_types);
+}
+
 
-ELEMENT *
+int
 parse_texi_document (void)
 {
+  int document_descriptor;
   char *linep, *line = 0;
   ELEMENT *before_node_section = setup_document_root_and_before_node_section ();
   ELEMENT *preamble_before_beginning = 0;
@@ -565,7 +554,11 @@ parse_texi_document (void)
   if (preamble_before_beginning)
     add_to_element_contents (before_node_section, preamble_before_beginning);
 
-  return parse_texi (document_root, before_node_section);
+  document_descriptor = parse_texi (document_root, before_node_section);
+
+  rearrange_tree_beginning (before_node_section);
+
+  return document_descriptor;
 }
 
 
@@ -728,7 +721,7 @@ merge_text (ELEMENT *current, char *text, ELEMENT *transfer_marks_element)
       if (transfer_marks_element
           && transfer_marks_element->source_mark_list.number > 0)
         {
-          size_t additional_length = count_convert_u8 (last_child->text.text);
+          size_t additional_length = count_multibyte (last_child->text.text);
           SOURCE_MARK_LIST *s_mark_list
              = &(transfer_marks_element->source_mark_list);
           int i;
@@ -743,9 +736,9 @@ merge_text (ELEMENT *current, char *text, ELEMENT *transfer_marks_element)
         }
 
       debug_nonl ("MERGED TEXT: %s||| in ", text);
-      debug_print_element (last_child, 0);
+      debug_parser_print_element (last_child, 0);
       debug_nonl (" last of ");
-      debug_print_element (current, 0); debug ("");
+      debug_parser_print_element (current, 0); debug ("");
 
       /* Append text */
       text_append (&last_child->text, text);
@@ -784,9 +777,8 @@ abort_empty_line (ELEMENT **current_inout, char *additional_spaces)
           || last_child->type == ET_spaces_after_close_brace))
     {
       retval = 1;
-
       debug_nonl ("ABORT EMPTY in ");
-      debug_print_element (current, 0);
+      debug_parser_print_element (current, 0);
       debug_nonl ("(p:%d): %s; add |%s| to |%s|",
                   in_paragraph_context (current_context ()),
                   element_type_name (last_child), additional_spaces,
@@ -822,12 +814,11 @@ abort_empty_line (ELEMENT **current_inout, char *additional_spaces)
           /* Remove element from main tree. It will still be referenced in
              the 'info' hash as 'spaces_before_argument'. */
           ELEMENT *owning_element;
-          KEY_PAIR *k;
           ELEMENT *e = pop_element_from_contents (current);
           ELEMENT *spaces_element = new_element (ET_NONE);
 
-          k = lookup_extra (last_child, "spaces_associated_command");
-          owning_element = (ELEMENT *) k->value;
+          owning_element = lookup_extra_element (last_child,
+                                                 "spaces_associated_command");
           text_append (&spaces_element->text, e->text.text);
           transfer_source_marks (e, spaces_element);
           add_info_element_oot (owning_element, "spaces_before_argument",
@@ -882,15 +873,17 @@ isolate_last_space_internal (ELEMENT *current)
                      trailing_spaces);
 
       text[text_len - trailing_spaces] = '\0';
-      if (last_elt->source_mark_list.number > 0)
-        {
-          size_t begin_position = count_convert_u8 (text);
-          relocate_source_marks (&(last_elt->source_mark_list), spaces_element,
-                                 begin_position, count_convert_u8 (t.text));
-        }
       last_elt->text.end -= trailing_spaces;
 
       text_append (&spaces_element->text, t.text);
+
+      if (last_elt->source_mark_list.number > 0)
+        {
+          size_t begin_position = count_multibyte (text);
+          relocate_source_marks (&(last_elt->source_mark_list), spaces_element,
+                                 begin_position, count_multibyte (t.text));
+        }
+
       add_info_element_oot (current, "spaces_after_argument",
                             spaces_element);
     }
@@ -975,9 +968,9 @@ isolate_last_space (ELEMENT *current)
     goto no_isolate_space;
 
   debug_nonl ("ISOLATE SPACE p ");
-  debug_print_element (current, 0);
+  debug_parser_print_element (current, 0);
   debug_nonl ("; c ");
-  debug_print_element (last_elt, 0); debug ("");
+  debug_parser_print_element (last_elt, 0); debug ("");
 
   if (current->type == ET_menu_entry_node)
     isolate_trailing_space (current, ET_space_at_end_menu_node);
@@ -988,10 +981,10 @@ isolate_last_space (ELEMENT *current)
 
  no_isolate_space:
   debug_nonl ("NOT ISOLATING p ");
-  debug_print_element (current, 0);
+  debug_parser_print_element (current, 0);
   debug_nonl ("; c ");
   if (last_elt)
-    debug_print_element (last_elt, 0);
+    debug_parser_print_element (last_elt, 0);
   debug ("");
 
   return;
@@ -1055,7 +1048,7 @@ parent_of_command_as_argument (ELEMENT *current)
 {
   return current->type == ET_block_line_arg
     && (current->parent->cmd == CM_itemize
-        || item_line_command (current->parent->cmd))
+        || command_data(current->parent->cmd).data == BLOCK_item_line)
     && (current->contents.number == 1);
 }
 
@@ -1189,7 +1182,7 @@ check_valid_nesting (ELEMENT *current, enum command_id cmd)
            || outer == CM_itemx
            || outer == CM_nodedescription)
     {
-      /* Start by checking if the command is allowed inside a "full text 
+      /* Start by checking if the command is allowed inside a "full text
          command" - this is the most permissive. */
       /* in the perl parser the checks are not dynamic as in this function,
          a hash is used and modified when defining the definfoenclose command */
@@ -1232,8 +1225,8 @@ check_valid_nesting (ELEMENT *current, enum command_id cmd)
     }
   else
     {
-      /* Default to valid nesting, for example for commands for which 
-         it is not defined which commands can occur within them (e.g. 
+      /* Default to valid nesting, for example for commands for which
+         it is not defined which commands can occur within them (e.g.
          @tab?). */
       ok = 1;
     }
@@ -1243,7 +1236,7 @@ check_valid_nesting (ELEMENT *current, enum command_id cmd)
       invalid_parent = current->parent->cmd;
       if (!invalid_parent)
         {
-          /* current_context () == ct_def.  Find def block containing 
+          /* current_context () == ct_def.  Find def block containing
              command. */
           ELEMENT *d = current;
           while (d->parent
@@ -1472,14 +1465,17 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
                               macro = lookup_macro (existing);
                               if (macro)
                                 {
-                                  line_error_ext (1, &current->source_info,
+                                  line_error_ext (MSG_warning, 0,
+                                                  &current->source_info,
                                      "macro `%s' previously defined", name);
-                                  line_error_ext (1, &macro->element->source_info,
+                                  line_error_ext (MSG_warning, 0,
+                                                  &macro->element->source_info,
                                      "here is the previous definition of `%s'", name);
                                 }
                               else if (!(existing & USER_COMMAND_BIT))
                                 {
-                                  line_error_ext (1, &current->source_info,
+                                  line_error_ext (MSG_warning, 0,
+                                                  &current->source_info,
                                     "redefining Texinfo language command: @%s",
                                     name);
                                 }
@@ -1596,11 +1592,10 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
     {
       char *delimiter;
       char *q;
-      KEY_PAIR *k;
+      KEY_PAIR *k_delimiter;
 
-      k = lookup_info (current->parent, "delimiter");
-
-      delimiter = (char *)k->value;
+      k_delimiter = lookup_info (current->parent, "delimiter");
+      delimiter = (char *)k_delimiter->value;
       if (strcmp (delimiter, ""))
         {
           /* Look forward for the delimiter character followed by a close
@@ -1650,7 +1645,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
     } /* CM_verb */
   else if (command_flags(current) & CF_block
            && command_data(current->cmd).data == BLOCK_format_raw
-           && !format_expanded_p (command_name(current->cmd)))
+           && !parser_format_expanded_p (command_name(current->cmd)))
     {
       ELEMENT *e_elided_rawpreformatted;
       ELEMENT *e_empty_line;
@@ -1714,7 +1709,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
     {
       static char *allocated_text;
       debug_nonl ("EMPTY TEXT in: ");
-      debug_print_element (current, 0); debug ("");
+      debug_parser_print_element (current, 0); debug ("");
 
       /* Each place we supply Texinfo input we store the supplied
          input in a static variable like allocated_text, to prevent
@@ -2007,7 +2002,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
               by calls of gather_spaces_after_cmd_before_arg, which transfer
               the element to the info hash.  The contents allow to have source
               marks easily associated.
-              The type name is not used anywhere but can be usefull for
+              The type name is not used anywhere but can be useful for
               debugging, in particular to check that the element does not
               appear anywhere in the tree.
               Note that contents is transiently set for brace commands, which in
@@ -2109,7 +2104,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
       enum command_id data_cmd = cmd;
       ELEMENT *command_element;
 
-      debug ("COMMAND @%s", debug_command_name(cmd));
+      debug ("COMMAND @%s", debug_parser_command_name(cmd));
 
       line = line_after_command;
 
@@ -2389,7 +2384,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
   else if (*line == '\f')
     {
       line++;
-      debug_nonl ("FORM FEED in "); debug_print_element (current, 1);
+      debug_nonl ("FORM FEED in "); debug_parser_print_element (current, 1);
       debug_nonl (": "); debug_print_protected_string (line); debug ("");
       if (current->type == ET_paragraph)
         {
@@ -2425,7 +2420,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
   else /*  End of line */
     {
       debug_nonl ("END LINE ");
-      debug_print_element (current, 1);
+      debug_parser_print_element (current, 1);
       debug ("");
 
       if (*line == '\n')
@@ -2454,9 +2449,9 @@ funexit:
 static int
 check_line_directive (char *line)
 {
-  char *p = line, *q;
   int line_no = 0;
-  char *filename = 0;
+  int status = 0;
+  char *parsed_filename;
 
   if (!conf.cpp_line_directives)
     return 0;
@@ -2466,56 +2461,135 @@ check_line_directive (char *line)
       || (current_source_info.macro && *current_source_info.macro))
     return 0;
 
-  p += strspn (p, " \t");
-  if (*p != '#')
-    return 0;
-  p++;
-
-  q = p + strspn (p, " \t");
-  if (!memcmp (q, "line", strlen ("line")))
-    p = q + strlen ("line");
-
-  if (!strchr (" \t", *p))
-    return 0;
-  p += strspn (p, " \t");
-
-  /* p should now be at the line number */
-  if (!strchr (digit_chars, *p))
-    return 0;
-  line_no = strtoul (p, &p, 10);
-
-  p += strspn (p, " \t");
-  if (*p == '"')
+  parsed_filename = parse_line_directive (line, &status, &line_no);
+  if (status)
     {
-      char saved;
-      p++;
-      q = strchr (p, '"');
-      if (!q)
-        return 0;
-      saved = *q;
-      *q = 0;
-      filename = save_string (p);
-      *q = saved;
-      p = q + 1;
-      p += strspn (p, " \t");
+      save_line_directive (line_no, parsed_filename);
+      free (parsed_filename);
 
-      p += strspn (p, digit_chars);
-      p += strspn (p, " \t");
+      return 1;
     }
-  if (*p && *p != '\n')
-    return 0; /* trailing text on line */
-
-  save_line_directive (line_no, filename);
-
-  return 1;
+  return 0;
 }
 
-/* Pass in and return root of a "Texinfo tree".  Starting point for adding
-   to the tree is current_elt */
-ELEMENT *
+/* store global parser information in a document calling register_document
+   and forgetting about the global information that got registered */
+int
+store_document (ELEMENT *root)
+{
+  int document_descriptor;
+  int i;
+  LABEL_LIST *labels;
+  FLOAT_RECORD_LIST *floats;
+  ELEMENT_LIST *internal_references;
+  STRING_LIST *small_strings_list;
+  ERROR_MESSAGE_LIST *error_messages;
+  GLOBAL_INFO *doc_global_info = malloc (sizeof (GLOBAL_INFO));
+  GLOBAL_COMMANDS *doc_global_commands = malloc (sizeof (GLOBAL_COMMANDS));
+
+  labels = malloc (sizeof (LABEL_LIST));
+
+  /* this is actually used to deallocate above labels_number */
+  labels_list = realloc (labels_list,
+                         labels_number * sizeof (LABEL));
+
+  labels->list = labels_list;
+  labels->number = labels_number;
+  labels->space = labels_number;
+
+  floats = malloc (sizeof (FLOAT_RECORD_LIST));
+  float_records.float_types = realloc (float_records.float_types,
+                    float_records.number * sizeof (FLOAT_RECORD));
+
+  floats->float_types = float_records.float_types;
+  floats->number = float_records.number;
+  floats->space = float_records.number;
+
+  internal_references = malloc (sizeof (ELEMENT_LIST));
+
+  internal_xref_list.list = realloc (internal_xref_list.list,
+                             internal_xref_list.number * sizeof (ELEMENT));
+
+  internal_references->list = internal_xref_list.list;
+  internal_references->number = internal_xref_list.number;
+  internal_references->space = internal_xref_list.number;
+
+  memcpy (doc_global_info, &global_info, sizeof (GLOBAL_INFO));
+  if (global_info.input_encoding_name)
+    doc_global_info->input_encoding_name
+      = strdup (global_info.input_encoding_name);
+  if (global_info.input_file_name)
+    doc_global_info->input_file_name
+      = strdup (global_info.input_file_name);
+  if (global_info.input_directory)
+    doc_global_info->input_directory
+      = strdup (global_info.input_directory);
+  #define COPY_GLOBAL_ARRAY(type,cmd) \
+   doc_global_##type->cmd.contents.list = 0;                          \
+   doc_global_##type->cmd.contents.number = 0;                         \
+   doc_global_##type->cmd.contents.space = 0;        \
+   if (global_##type.cmd.contents.number > 0)                              \
+    {                                                                   \
+      for (i = 0; i < global_##type.cmd.contents.number; i++)             \
+        {                                                               \
+          ELEMENT *e = contents_child_by_index (&global_##type.cmd, i);            \
+          add_to_contents_as_array (&doc_global_##type->cmd, e);           \
+        }                                                               \
+    }
+  COPY_GLOBAL_ARRAY(info,dircategory_direntry);
+
+  memcpy (doc_global_commands, &global_commands, sizeof (GLOBAL_COMMANDS));
+
+  #define GLOBAL_CASE(cmd) \
+   COPY_GLOBAL_ARRAY(commands,cmd)
+
+  GLOBAL_CASE(footnotes);
+  GLOBAL_CASE(floats);
+
+#include "global_multi_commands_case.c"
+
+  #undef GLOBAL_CASE
+  #undef COPY_GLOBAL_ARRAY
+
+  small_strings = realloc (small_strings, small_strings_num * sizeof (char *));
+  small_strings_list = malloc (sizeof (STRING_LIST));
+  small_strings_list->list = small_strings;
+  small_strings_list->number = small_strings_num;
+  small_strings_list->space = small_strings_num;
+
+  error_messages_list.list = realloc (error_messages_list.list,
+                        error_messages_list.number * sizeof (ERROR_MESSAGE));
+  error_messages = malloc (sizeof (ERROR_MESSAGE_LIST));
+  error_messages->list = error_messages_list.list;
+  error_messages->number = error_messages_list.number;
+  error_messages->space = error_messages_list.number;
+
+  document_descriptor
+   = register_document (root, index_names, floats, internal_references,
+                        labels, identifiers_target, doc_global_info,
+                        doc_global_commands,
+                        small_strings_list, error_messages);
+  forget_indices ();
+  forget_labels ();
+
+  memset (&float_records, 0, sizeof (FLOAT_RECORD_LIST));
+
+  forget_internal_xrefs ();
+  forget_small_strings ();
+  forget_errors ();
+
+  identifiers_target = 0;
+
+  return document_descriptor;
+}
+
+/* Pass in a root of "Texinfo tree".  Starting point for adding
+   to the tree is current_elt.  Returns a stored document_descriptor */
+int
 parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
 {
   ELEMENT *current = current_elt;
+  int document_descriptor;
   static char *allocated_line;
   char *line;
   int status;
@@ -2542,7 +2616,7 @@ parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
              && ((command_data(current->cmd).data == BLOCK_raw
                   || command_data(current->cmd).data == BLOCK_conditional)
                  || (command_data(current->cmd).data == BLOCK_format_raw
-                     && !format_expanded_p (command_name(current->cmd)))))
+                     && !parser_format_expanded_p (command_name(current->cmd)))))
             || (current->parent && current->parent->cmd == CM_verb))
           && current_context () != ct_def)
         {
@@ -2660,5 +2734,15 @@ parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
   if (input_number > 0)
     fprintf (stderr, "BUG: at end, input_number > 0: %d\n", input_number);
 
-  return current;
+  /* update merged_in for merging hapening after first index merge */
+  resolve_indices_merged_in ();
+
+  identifiers_target
+    = set_labels_identifiers_target (labels_list, labels_number);
+
+  document_descriptor = store_document(current);
+
+  complete_indices (document_descriptor);
+
+  return document_descriptor;
 }

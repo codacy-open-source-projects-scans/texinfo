@@ -81,6 +81,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                   ],
                   'cmdname' => 'anchor',
                   'extra' => {
+                    'is_target' => 1,
                     'normalized' => 'an-anchor'
                   },
                   'source_info' => {
@@ -272,7 +273,6 @@ $result_converted_errors{'html'}->{'example_invalid_at_commands_arguments'} = [
   {
     'error_line' => 'warning: must specify a title with a title command or @top
 ',
-    'file_name' => 'example_invalid_at_commands_arguments.texi',
     'text' => 'must specify a title with a title command or @top',
     'type' => 'warning'
   }

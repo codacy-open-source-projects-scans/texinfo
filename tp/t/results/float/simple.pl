@@ -10,7 +10,6 @@ $result_trees{'simple'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         },
         {
@@ -118,6 +117,7 @@ $result_trees{'simple'} = {
           'extra' => {
             'caption' => {},
             'float_type' => 'Type',
+            'is_target' => 1,
             'normalized' => 'Label'
           },
           'info' => {
@@ -166,11 +166,9 @@ $result_floats{'simple'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'Type',
         'normalized' => 'Label'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

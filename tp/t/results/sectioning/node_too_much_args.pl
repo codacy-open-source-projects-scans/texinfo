@@ -63,6 +63,7 @@ $result_trees{'node_too_much_args'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -86,31 +87,34 @@ $result_texis{'node_too_much_args'} = '@node first, , ,  (dir)';
 
 $result_texts{'node_too_much_args'} = '';
 
-$result_nodes{'node_too_much_args'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'node_up' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'dir'
-          }
-        ]
-      }
+$result_nodes{'node_too_much_args'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'up' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'dir'
+              }
+            ]
+          },
+          'type' => 'line_arg'
+        }
+      },
+      'normalized' => 'first'
     }
   }
-};
+];
 
-$result_menus{'node_too_much_args'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
-  },
-  'structure' => {}
-};
+$result_menus{'node_too_much_args'} = [
+  {
+    'extra' => {
+      'normalized' => 'first'
+    }
+  }
+];
 
 $result_errors{'node_too_much_args'} = [
   {

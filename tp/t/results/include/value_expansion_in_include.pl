@@ -122,6 +122,7 @@ $result_trees{'value_expansion_in_include'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -699,6 +700,7 @@ $result_trees{'value_expansion_in_include'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -761,32 +763,41 @@ test_var include: This is the included file (include-value2.txi) <> --.
 
 test_var verbatiminclude: ';
 
-$result_nodes{'value_expansion_in_include'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'value_expansion_in_include'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'value_expansion_in_include'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'value_expansion_in_include'}[0];
+$result_nodes{'value_expansion_in_include'}[1] = $result_nodes{'value_expansion_in_include'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'value_expansion_in_include'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'value_expansion_in_include'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'value_expansion_in_include'};
-
-$result_menus{'value_expansion_in_include'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'value_expansion_in_include'} = [
   {

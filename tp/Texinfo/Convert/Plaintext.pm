@@ -33,7 +33,7 @@ use strict;
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
 
-use Carp qw(cluck);
+use Carp qw(cluck confess);
 
 use Texinfo::Commands;
 use Texinfo::Common;
@@ -62,7 +62,7 @@ sub import {
   goto &Exporter::import;
 }
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 # commands that are of use for formatting.
@@ -536,67 +536,26 @@ sub converter_initialize($)
 
 sub count_context_bug_message($$$)
 {
-  my ($self, $precision, $element) = @_;
+  my ($self, $precision, $output_unit) = @_;
 
   if (scalar(@{$self->{'count_context'}}) != 1) {
-    my $element_text;
-    if ($element) {
-      $element_text
-         = Texinfo::Structuring::root_or_external_element_cmd_texi($element);
+    my $output_unit_text;
+    if ($output_unit) {
+      $output_unit_text
+         = Texinfo::Structuring::output_unit_texi($output_unit);
     } else {
-      $element_text = '';
+      $output_unit_text = '';
     }
     $self->present_bug_message("Too much count_context ${precision}(".
-      scalar(@{$self->{'count_context'}}). "): ". $element_text, $element);
+      scalar(@{$self->{'count_context'}}). "): ". $output_unit_text,
+                               $output_unit->{'unit_command'});
     die;
   }
 }
 
-sub _convert_root_element($$)
+sub _initialize_converter_state($)
 {
-  my ($self, $element) = @_;
-
-  my $result = '';
-  $result .= $self->_convert($element);
-  $self->count_context_bug_message('', $element);
-  $result .= $self->process_footnotes($element);
-  $self->count_context_bug_message('footnotes ', $element);
-
-  return $result;
-}
-
-sub convert($$)
-{
-  my ($self, $root) = @_;
-
-  my $result = '';
-
-  my $tree_units = Texinfo::Structuring::split_by_node($root);
-  $self->{'seenmenus'} = {};
-  $self->{'empty_lines_count'} = 1;
-  $self->{'index_entries_line_location'} = {};
-  if (!defined($tree_units)) {
-    $result = $self->_convert($root);
-    $self->count_context_bug_message('no element ');
-    my $footnotes = $self->process_footnotes();
-    $self->count_context_bug_message('no element footnotes ');
-    $result .= $footnotes;
-  } else {
-    foreach my $node_root_element (@$tree_units) {
-      my $node_text = _convert_root_element($self, $node_root_element);
-      $result .= $node_text;
-    }
-  }
-
-  return $result;
-}
-
-# the initialization of module specific state is not done in output()
-# as output() is the generic Converter::Convert function, so it needs
-# to be done here
-sub convert_tree($$)
-{
-  my ($self, $root) = @_;
+  my $self = shift;
 
   if (!defined($self->{'empty_lines_count'})) {
     # setting to 1 ensures that nothing is done, as there is
@@ -607,12 +566,62 @@ sub convert_tree($$)
     if (!$self->{'seenmenus'});
   $self->{'index_entries_line_location'} = {}
     if (!$self->{'index_entries_line_location'});
-  my $result;
-  if ($root->{'type'} and $root->{'type'} eq 'unit') {
-    $result = _convert_root_element($self, $root);
-  } else {
-    $result = $self->_convert($root);
+}
+
+# the initialization of module specific state is not done in output()
+# as output() is the generic Converter::Convert function, so it needs
+# to be done here by calling _initialize_converter_state.
+sub convert_output_unit($$)
+{
+  my ($self, $output_unit) = @_;
+
+  _initialize_converter_state($self);
+
+  my $result = '';
+  if ($output_unit->{'unit_contents'}) {
+    foreach my $content (@{$output_unit->{'unit_contents'}}) {
+      $result .= _convert($self, $content);
+    }
   }
+  $self->count_context_bug_message('', $output_unit);
+  $result .= $self->process_footnotes($output_unit);
+  $self->count_context_bug_message('footnotes ', $output_unit);
+  return $result;
+}
+
+sub convert($$)
+{
+  my ($self, $document) = @_;
+
+  my $root = $document->tree();
+
+  my $result = '';
+
+  my $output_units = Texinfo::Structuring::split_by_node($root);
+  $self->{'seenmenus'} = {};
+  $self->{'empty_lines_count'} = 1;
+  $self->{'index_entries_line_location'} = {};
+  if (!defined($output_units)) {
+    $result = $self->_convert($root);
+    $self->count_context_bug_message('no element ');
+    my $footnotes = $self->process_footnotes();
+    $self->count_context_bug_message('no element footnotes ');
+    $result .= $footnotes;
+  } else {
+    foreach my $output_unit (@$output_units) {
+      my $node_text = convert_output_unit($self, $output_unit);
+      $result .= $node_text;
+    }
+  }
+
+  return $result;
+}
+
+sub convert_tree($$)
+{
+  my ($self, $root) = @_;
+
+  my $result = $self->_convert($root);
   return $result;
 }
 
@@ -975,12 +984,11 @@ sub process_footnotes($;$)
   if (scalar(@{$self->{'pending_footnotes'}})) {
 
     $element = undef if ($element and
-                         (not defined($element->{'extra'})
-                          or not defined($element->{'extra'}->{'unit_command'})));
+                         not defined($element->{'unit_command'}));
     my $node_element;
     my $node_contents;
     if ($element) {
-      $node_element = $element->{'extra'}->{'unit_command'};
+      $node_element = $element->{'unit_command'};
       if ($node_element->{'extra'}
           and defined($node_element->{'extra'}->{'normalized'})) {
         $node_contents = $node_element->{'args'}->[0]->{'contents'};
@@ -1002,10 +1010,12 @@ sub process_footnotes($;$)
             = [@$node_contents, {'text' => '-Footnotes'}];
       my $footnotes_node = {
         'cmdname' => 'node',
-        'structure' => {'node_up' => $node_element},
         'args' => [{'contents' => $footnotes_node_contents}],
-        'extra' => {'normalized'
-                  => $node_element->{'extra'}->{'normalized'}.'-Footnotes'}
+        'extra' => {'is_target' => 1,
+                'normalized'
+                  => $node_element->{'extra'}->{'normalized'}.'-Footnotes',
+                    'node_directions' => {'up' => $node_element},
+                   }
       };
       $result .= $self->format_node($footnotes_node);
       $self->{'current_node'} = $footnotes_node;
@@ -1025,7 +1035,8 @@ sub process_footnotes($;$)
             {'text' => $footnote_anchor_postfix}];
         $self->add_location({'cmdname' => 'anchor',
                     'args' => [{'contents' => $footnote_anchor_contents}],
-                    'extra' => {'normalized'
+                    'extra' => {'is_target' => 1,
+                        'normalized'
        => $node_element->{'extra'}->{'normalized'}.$footnote_anchor_postfix},
                             });
       }
@@ -1214,6 +1225,7 @@ sub _align_environment($$$$)
   return $result;
 }
 
+# format @contents or @shortcontents
 sub format_contents($$$)
 {
   my ($self, $section_root, $contents_or_shortcontents) = @_;
@@ -1222,44 +1234,41 @@ sub format_contents($$$)
 
   # no sections
   return ('', 0) if (!$section_root
-                     or !$section_root->{'structure'}->{'section_childs'});
-  my $root_level = $section_root->{'structure'}->{'section_childs'}->[0]
-                                          ->{'structure'}->{'section_level'};
-  foreach my $top_section (@{$section_root->{'structure'}->{'section_childs'}}) {
-    $root_level = $top_section->{'structure'}->{'section_level'}
-      if ($top_section->{'structure'}->{'section_level'} < $root_level);
+                     or !$section_root->{'extra'}->{'section_childs'});
+  my $root_level = $section_root->{'extra'}->{'section_childs'}->[0]
+                                          ->{'extra'}->{'section_level'};
+  foreach my $top_section (@{$section_root->{'extra'}->{'section_childs'}}) {
+    $root_level = $top_section->{'extra'}->{'section_level'}
+      if ($top_section->{'extra'}->{'section_level'} < $root_level);
   }
 
   my $result = '';
   my $lines_count = 0;
   # This is done like that because the tree may not be well formed if
   # there is a @part after a @chapter for example.
-  foreach my $top_section (@{$section_root->{'structure'}->{'section_childs'}}) {
+  foreach my $top_section (@{$section_root->{'extra'}->{'section_childs'}}) {
     my $section = $top_section;
  SECTION:
     while ($section) {
       push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
       my $section_title_tree;
-      if (defined($section->{'structure'}->{'section_number'})
+      if (defined($section->{'extra'}->{'section_number'})
           and ($self->get_conf('NUMBER_SECTIONS')
                or !defined($self->get_conf('NUMBER_SECTIONS')))) {
         if ($section->{'cmdname'} eq 'appendix'
-            and $section->{'structure'}->{'section_level'} == 1) {
+            and $section->{'extra'}->{'section_level'} == 1) {
           $section_title_tree = $self->gdt('Appendix {number} {section_title}',
                {'number' => {'text'
-                               => $section->{'structure'}->{'section_number'}},
-                'section_title' =>
-                        {'contents' => $section->{'args'}->[0]->{'contents'}}});
+                               => $section->{'extra'}->{'section_number'}},
+                'section_title' => $section->{'args'}->[0]});
         } else {
           $section_title_tree = $self->gdt('{number} {section_title}',
                {'number' => {'text'
-                               => $section->{'structure'}->{'section_number'}},
-                'section_title' =>
-                        {'contents' => $section->{'args'}->[0]->{'contents'}}});
+                               => $section->{'extra'}->{'section_number'}},
+                'section_title' => $section->{'args'}->[0]});
         }
       } else {
-        $section_title_tree
-                = {'contents' => $section->{'args'}->[0]->{'contents'}};
+        $section_title_tree = $section->{'args'}->[0];
       }
       my $section_title = $self->convert_line(
             {'contents' => [$section_title_tree],
@@ -1269,24 +1278,27 @@ sub format_contents($$$)
       chomp ($text);
       $text .= "\n";
       my $repeat_count
-        = 2 * ($section->{'structure'}->{'section_level'} - ($root_level+1));
+        = 2 * ($section->{'extra'}->{'section_level'} - ($root_level+1));
       ($result .= (' ' x $repeat_count)) if $repeat_count > 0;
       $result .= $text;
       $lines_count++;
-      if ($section->{'structure'}->{'section_childs'}
+      if ($section->{'extra'}->{'section_childs'}
           and ($contents
-               or $section->{'structure'}->{'section_level'} < $root_level+1)) {
-        $section = $section->{'structure'}->{'section_childs'}->[0];
-      } elsif ($section->{'structure'}->{'section_next'}) {
+               or $section->{'extra'}->{'section_level'} < $root_level+1)) {
+        $section = $section->{'extra'}->{'section_childs'}->[0];
+      } elsif ($section->{'extra'}->{'section_directions'}
+               and $section->{'extra'}->{'section_directions'}->{'next'}) {
         last if ($section eq $top_section);
-        $section = $section->{'structure'}->{'section_next'};
+        $section = $section->{'extra'}->{'section_directions'}->{'next'};
       } else {
         last if ($section eq $top_section);
-        while ($section->{'structure'}->{'section_up'}) {
-          $section = $section->{'structure'}->{'section_up'};
+        while ($section->{'extra'}->{'section_directions'}
+               and $section->{'extra'}->{'section_directions'}->{'up'}) {
+          $section = $section->{'extra'}->{'section_directions'}->{'up'};
           last SECTION if ($section eq $top_section);
-          if ($section->{'structure'}->{'section_next'}) {
-            $section = $section->{'structure'}->{'section_next'};
+          if ($section->{'extra'}->{'section_directions'}
+              and $section->{'extra'}->{'section_directions'}->{'next'}) {
+            $section = $section->{'extra'}->{'section_directions'}->{'next'};
             last;
           }
         }
@@ -1378,7 +1390,7 @@ sub process_printindex($$;$)
       = Texinfo::Structuring::merge_indices($indices_information);
     my $index_entries_sort_strings;
     ($self->{'index_entries'}, $index_entries_sort_strings)
-      = Texinfo::Structuring::sort_indices($self, $self,
+      = Texinfo::Structuring::sort_indices_by_index($self, $self,
                                            $merged_index_entries,
                                            $indices_information);
   }
@@ -1735,6 +1747,10 @@ sub _convert($$)
 {
   my ($self, $element) = @_;
 
+  if (!defined($element)) {
+    cluck("BUG? Plaintext _convert element undef\n");
+  }
+
   my $formatter = $self->{'formatters'}->[-1];
 
   my $type = $element->{'type'};
@@ -1832,20 +1848,16 @@ sub _convert($$)
                   add_text($formatter->{'container'}, $element->{'text'}));
       }
     } else {
-      my $tree = $self->gdt($element->{'text'});
+      my $tree;
+      if ($element->{'extra'}
+          and $element->{'extra'}->{'translation_context'}) {
+        $tree = $self->pgdt($element->{'extra'}->{'translation_context'},
+                            $element->{'text'});
+      } else {
+        $tree = $self->gdt($element->{'text'});
+      }
       my $converted = _convert($self, $tree);
       return $converted;
-    }
-  }
-
-  if ($element->{'extra'}) {
-    # REMARK it is not that wise to rely on {'extra'}->{'missing_argument'}
-    # being set, additional tests of $element->{'contents'}
-    # being defined could be added, in addition to be more robust in case
-    # {'extra'}->{'missing_argument'} is removed
-    if ($element->{'extra'}->{'missing_argument'}
-             and (!$element->{'contents'} or !@{$element->{'contents'}})) {
-      return '';
     }
   }
 
@@ -1902,6 +1914,8 @@ sub _convert($$)
     if ($self->{'current_node'}) {
       $location->{'node'} = $self->{'current_node'};
     }
+    $self->{'index_entries_line_location'} = {}
+      unless $self->{'index_entries_line_location'};
     $self->{'index_entries_line_location'}->{$element} = $location;
   }
 
@@ -2096,10 +2110,12 @@ sub _convert($$)
           if ($node_arg and $node_arg->{'extra'}
               and !$node_arg->{'extra'}->{'manual_content'}
               and defined($node_arg->{'extra'}->{'normalized'})
-              and $self->{'labels'}
-              and $self->{'labels'}->{$node_arg->{'extra'}->{'normalized'}}) {
+              and $self->{'identifiers_target'}
+              and $self->{'identifiers_target'}->{
+                                    $node_arg->{'extra'}->{'normalized'}}) {
             $target_element
-              = $self->{'labels'}->{$node_arg->{'extra'}->{'normalized'}};
+              = $self->{'identifiers_target'}->{
+                                       $node_arg->{'extra'}->{'normalized'}};
             my $label_element
               = Texinfo::Common::get_label_element($target_element);
             if (defined($label_element) and $label_element->{'contents'}) {
@@ -2358,14 +2374,6 @@ sub _convert($$)
                                              $self->{'convert_text_options'});
         }
 
-        # @AA{} should suppress an end sentence, @aa{} shouldn't.  This
-        # is the case whether we are in @sc or not.
-        if ($formatter->{'upper_case_stack'}->[-1]->{'upper_case'}
-            and $letter_no_arg_commands{$command}) {
-          $text = _protect_sentence_ends($text);
-          $text = uc($text);
-        }
-
         if ($punctuation_no_arg_commands{$command}) {
           $result .= _count_added($self, $formatter->{'container'},
                       add_next($formatter->{'container'}, $text));
@@ -2374,6 +2382,14 @@ sub _convert($$)
           $result .= _count_added($self, $formatter->{'container'},
                          add_next($formatter->{'container'}, $text));
         } else {
+          # @AA{} should suppress an end sentence, @aa{} shouldn't.  This
+          # is the case whether we are in @sc or not.
+          if ($formatter->{'upper_case_stack'}->[-1]->{'upper_case'}
+              and $letter_no_arg_commands{$command}) {
+            $text = _protect_sentence_ends($text);
+            $text = uc($text);
+          }
+
           $result .= _count_added($self, $formatter->{'container'},
                          add_text($formatter->{'container'}, $text));
 
@@ -2401,12 +2417,12 @@ sub _convert($$)
               and defined($element->{'args'}->[1])
               and $element->{'args'}->[1]->{'contents'}
               and @{$element->{'args'}->[1]->{'contents'}}) {
-            $name = $element->{'args'}->[1]->{'contents'};
+            $name = $element->{'args'}->[1];
           }
           if (defined($element->{'args'}->[0])
               and $element->{'args'}->[0]->{'contents'}
               and @{$element->{'args'}->[0]->{'contents'}}) {
-            $email = $element->{'args'}->[0]->{'contents'};
+            $email = $element->{'args'}->[0];
           }
           my $email_tree;
           if ($name and $email) {
@@ -2416,7 +2432,7 @@ sub _convert($$)
             $email_tree = $self->gdt('@url{{email}}',
                              {'email' => $email});
           } elsif ($name) {
-            $email_tree = {'contents' => $name};
+            $email_tree = $name;
           } else {
             return '';
           }
@@ -2445,7 +2461,7 @@ sub _convert($$)
                and $element->{'args'}->[1]->{'contents'}
                and @{$element->{'args'}->[1]->{'contents'}}) {
               $inserted = $self->gdt('{text} ({url})',
-                   {'text' => $element->{'args'}->[1]->{'contents'},
+                   {'text' => $element->{'args'}->[1],
                     'url' => $url });
             } else {
               $inserted = $self->gdt('@t{<{url}>}', {'url' => $url});
@@ -2520,7 +2536,7 @@ sub _convert($$)
               and @{$element->{'args'}->[-1]->{'contents'}}) {
             my $inserted = $self->gdt('{abbr_or_acronym} ({explanation})',
                    {'abbr_or_acronym' => $argument,
-                    'explanation' => $element->{'args'}->[-1]->{'contents'}});
+                    'explanation' => $element->{'args'}->[-1]});
             $result .= _convert($self, $inserted);
             return $result;
           } else {
@@ -2575,7 +2591,7 @@ sub _convert($$)
                  'contents' => [$element->{'args'}->[0]]});
         pop @{$self->{'count_context'}};
         $result = Texinfo::Convert::Text::text_heading(
-                          {'structure' => {'section_level' => 0},
+                          {'extra' => {'section_level' => 0},
                            'cmdname' => 'titlefont'},
                             $result, $self, $self->get_conf('NUMBER_SECTIONS'),
           ($self->{'format_context'}->[-1]->{'indent_level'}) *$indent_length);
@@ -2725,7 +2741,7 @@ sub _convert($$)
             and $element->{'args'}->[0]->{'contents'}
             and @{$element->{'args'}->[0]->{'contents'}}) {
           my $prepended = $self->gdt('@b{{quotation_arg}:} ',
-             {'quotation_arg' => $element->{'args'}->[0]->{'contents'}});
+             {'quotation_arg' => $element->{'args'}->[0]});
           $prepended->{'type'} = 'frenchspacing';
           $result .= $self->convert_line($prepended);
           $self->{'text_element_context'}->[-1]->{'counter'} +=
@@ -2778,7 +2794,7 @@ sub _convert($$)
           # FIXME reset the paragraph count in cartouche and use a
           # specific format_context?
           my $prepended = $self->gdt('@center @b{{cartouche_arg}}',
-             {'cartouche_arg' => $element->{'args'}->[0]->{'contents'}});
+             {'cartouche_arg' => $element->{'args'}->[0]});
           $prepended->{'type'} = 'frenchspacing';
           # Do not consider the title to be like a paragraph
           my $previous_paragraph_count
@@ -2908,10 +2924,6 @@ sub _convert($$)
       #my ($counts, $new_locations);
       push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0,
                                                    'locations' => []};
-      # $element->{'args'}->[0]->{'contents'} not set cannot happen
-      # as in that case missing_argument would be set.  This condition
-      # is therefre not really needed, but still put in case missing_argument
-      # disappears
       my $result = '';
       if ($element->{'args'}->[0]
           and $element->{'args'}->[0]->{'contents'}) {
@@ -2934,10 +2946,6 @@ sub _convert($$)
       return $result;
     } elsif ($command eq 'exdent') {
       $result = '';
-      # $element->{'args'}->[0]->{'contents'} not set cannot happen
-      # as in that case missing_argument would be set.  This condition
-      # is therefre not really needed, but still put in case missing_argument
-      # disappears
       if ($element->{'args'}->[0]
           and $element->{'args'}->[0]->{'contents'}) {
         if ($self->{'preformatted_context_commands'}->{$self->{'context'}->[-1]}) {
@@ -2960,7 +2968,7 @@ sub _convert($$)
     } elsif ($command eq 'verbatiminclude') {
       my $expansion = Texinfo::Convert::Utils::expand_verbatiminclude($self,
                                                                $self, $element);
-      $result .= _convert($self, $expansion);
+      $result .= _convert($self, $expansion) if (defined($expansion));
       return $result;
     } elsif ($command eq 'insertcopying') {
       if ($self->{'global_commands'}
@@ -3058,7 +3066,10 @@ sub _convert($$)
       _add_lines_count($self, $lines_count);
       return $result;
     } elsif ($command eq 'sp') {
-      if ($element->{'extra'}->{'misc_args'}->[0]) {
+      # FIXME No argument should mean 1, not 0, to check
+      if ($element->{'extra'}
+          and $element->{'extra'}->{'misc_args'}
+          and $element->{'extra'}->{'misc_args'}->[0]) {
         $result = _count_added($self, $formatter->{'container'},
                               add_pending_word($formatter->{'container'}));
         # this useless copy avoids perl changing the type to integer!
@@ -3072,11 +3083,12 @@ sub _convert($$)
       }
       return $result;
     } elsif ($command eq 'contents') {
-      if ($self->{'structuring'}
-            and $self->{'structuring'}->{'sectioning_root'}) {
+      if ($self->{'sections_list'}) {
+        my $sectioning_root = $self->{'sections_list'}->[0]
+                                ->{'extra'}->{'sectioning_root'};
         my $lines_count;
         ($result, $lines_count)
-          = $self->format_contents($self->{'structuring'}->{'sectioning_root'},
+          = $self->format_contents($sectioning_root,
                                    'contents');
         _add_lines_count($self, $lines_count);
         add_text_to_count($self, $result);
@@ -3084,11 +3096,12 @@ sub _convert($$)
       return $result;
     } elsif ($command eq 'shortcontents'
                or $command eq 'summarycontents') {
-      if ($self->{'structuring'}
-            and $self->{'structuring'}->{'sectioning_root'}) {
+      if ($self->{'sections_list'}) {
+        my $sectioning_root = $self->{'sections_list'}->[0]
+                                ->{'extra'}->{'sectioning_root'};
         my $lines_count;
         ($result, $lines_count)
-          = $self->format_contents($self->{'structuring'}->{'sectioning_root'},
+          = $self->format_contents($sectioning_root,
                                    'shortcontents');
         _add_lines_count($self, $lines_count);
         add_text_to_count($self, $result);
@@ -3169,7 +3182,7 @@ sub _convert($$)
         } else {
           $command = $element->{'extra'}->{'def_command'};
         }
-        $name = '' if (!defined($name));
+        $name = {'text' => ''} if (!defined($name));
 
         my $omit_def_space = $element->{'extra'}->{'omit_def_name_space'};
 
@@ -3471,11 +3484,11 @@ sub _convert($$)
                                   ->{'contents'}->[0]->{'text'} !~ /\S/)))) {
           if ($menu_entry_node and $menu_entry_node->{'extra'}
               and defined($menu_entry_node->{'extra'}->{'normalized'})
-              and $self->{'labels'}
+              and $self->{'identifiers_target'}
                 ->{$menu_entry_node->{'extra'}->{'normalized'}}
-              and $self->{'labels'}
+              and $self->{'identifiers_target'}
                 ->{$menu_entry_node->{'extra'}->{'normalized'}}->{'extra'}
-              and $self->{'labels'}
+              and $self->{'identifiers_target'}
                 ->{$menu_entry_node->{'extra'}->{'normalized'}}->{'extra'}
                                                        ->{'node_description'}) {
             my $description_align_column;
@@ -3489,7 +3502,7 @@ sub _convert($$)
             }
             my $description_indent_length = $description_align_column - 1;
 
-            my $description_element = $self->{'labels'}
+            my $description_element = $self->{'identifiers_target'}
                  ->{$menu_entry_node->{'extra'}->{'normalized'}}->{'extra'}
                                                        ->{'node_description'};
             if (! exists($self->{'seen_node_descriptions'}
@@ -3784,8 +3797,8 @@ sub _convert($$)
     if ($command eq 'float') {
       if ($element->{'extra'}
           and ($element->{'extra'}->{'float_type'} ne ''
-               or ($element->{'structure'}
-                   and defined($element->{'structure'}->{'float_number'}))
+               or ($element->{'extra'}
+                   and defined($element->{'extra'}->{'float_number'}))
                or $element->{'extra'}->{'caption'}
                or $element->{'extra'}->{'shortcaption'})) {
         $result .= _add_newline_if_needed($self);
@@ -3809,14 +3822,12 @@ sub _convert($$)
                or $command eq 'smallquotation')
              and $element->{'extra'} and $element->{'extra'}->{'authors'}) {
       foreach my $author (@{$element->{'extra'}->{'authors'}}) {
-        # this cannot happen as this should be caugth by 'missing_argument'
-        # but it is more robust to check anyway
         if ($author->{'args'}->[0]
             and $author->{'args'}->[0]->{'contents'}) {
           $result .= _convert($self,
                    # TRANSLATORS: quotation author
                    $self->gdt("\@center --- \@emph{{author}}",
-                      {'author' => $author->{'args'}->[0]->{'contents'}}));
+                      {'author' => $author->{'args'}->[0]}));
         }
       }
     } elsif (($command eq 'multitable')) {
@@ -3835,7 +3846,7 @@ sub _convert($$)
         $self->{'seenmenus'}->{$node} = 1;
         my $menu_node
          = Texinfo::Structuring::new_complete_menu_master_menu($self,
-                                             $self->{'labels'}, $node);
+                                     $self->{'identifiers_target'}, $node);
         if ($menu_node) {
           my $menu_text = $self->_convert($menu_node);
           if ($menu_text) {
@@ -3895,10 +3906,10 @@ Texinfo::Convert::Plaintext - Convert Texinfo tree to Plaintext
 =head1 SYNOPSIS
 
   my $converter
-    = Texinfo::Convert::Plaintext->converter({'parser' => $parser});
+    = Texinfo::Convert::Plaintext->converter({'document' => $document});
 
-  $converter->output($tree);
-  $converter->convert($tree);
+  $converter->output($document);
+  $converter->convert($document);
   $converter->convert_tree($tree);
 
 =head1 NOTES
@@ -3919,24 +3930,25 @@ Texinfo::Convert::Plaintext converts a Texinfo tree to Plaintext.
 Initialize converter from Texinfo to Plaintext.
 
 The I<$options> hash reference holds options for the converter.  In
-this option hash reference a L<parser object|Texinfo::Parser>
-may be associated with the I<parser> key.  The other options
-are Texinfo customization options and a few other options that can
-be passed to the converter. Most of the customization options are described in
-the Texinfo manual.  Those customization options, when appropriate, override
-the document content.  The parser should not be available directly anymore
-after getting the associated information.
+this option hash reference a L<document|Texinfo::Document>
+may be associated with the I<document> key.  The document should not
+be available directly anymore after getting the associated information.
+
+The other options are Texinfo customization options and a few other options
+that can be passed to the converter. Most of the customization options are
+described in the Texinfo manual.  Those customization options, when
+appropriate, override the document content.
 
 See L<Texinfo::Convert::Converter> for more information.
 
-=item $converter->output($tree)
+=item $converter->output($document)
 
-Convert a Texinfo tree I<$tree> and output the result in files as
+Convert a Texinfo parsed document I<$document> and output the result in files as
 described in the Texinfo manual.
 
-=item $result = $converter->convert($tree)
+=item $result = $converter->convert($document)
 
-Convert a Texinfo tree I<$tree> and return the resulting output.
+Convert a Texinfo parsed document I<$document> and return the resulting output.
 
 =item $result = $converter->convert_tree($tree)
 

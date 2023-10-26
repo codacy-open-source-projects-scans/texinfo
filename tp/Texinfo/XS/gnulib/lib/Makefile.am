@@ -36,10 +36,28 @@
 #  iconv \
 #  libunistring \
 #  obstack \
+#  setenv \
 #  strchrnul \
 #  strndup \
+#  unicase/u8-tolower \
+#  unicase/u8-toupper \
+#  uniconv/u32-strconv-from-enc \
 #  uniconv/u8-strconv-from-enc \
+#  uniconv/u8-strconv-to-enc \
+#  unictype/category-L \
+#  unictype/category-Mn \
+#  unictype/category-test \
+#  uninorm/nfc \
+#  uninorm/nfkd \
+#  uninorm/u8-normalize \
+#  unistr/u32-next \
 #  unistr/u8-mbsnlen \
+#  unistr/u8-next \
+#  unistr/u8-strlen \
+#  unistr/u8-uctomb \
+#  uniwidth/u8-strwidth \
+#  uniwidth/u8-width \
+#  unsetenv \
 #  vasprintf \
 #  wcwidth
 
@@ -112,6 +130,13 @@ MOSTLYCLEANFILES += alloca.h alloca.h-t
 EXTRA_DIST += alloca.in.h
 
 ## end   gnulib module alloca-opt
+
+## begin gnulib module array-mergesort
+
+
+EXTRA_DIST += array-mergesort.h
+
+## end   gnulib module array-mergesort
 
 ## begin gnulib module assert-h
 
@@ -512,6 +537,14 @@ endif
 EXTRA_DIST += rawmemchr.valgrind
 
 ## end   gnulib module rawmemchr
+
+## begin gnulib module setenv
+
+if GL_COND_OBJ_SETENV
+libgnu_la_SOURCES += setenv.c
+endif
+
+## end   gnulib module setenv
 
 ## begin gnulib module size_max
 
@@ -1000,9 +1033,7 @@ EXTRA_DIST += streq.h
 ## begin gnulib module striconveh
 
 libgnu_la_SOURCES += striconveh.h striconveh.c
-if GL_COND_LIBTOOL
 libgnu_la_LDFLAGS += $(LTLIBICONV)
-endif
 
 EXTRA_DIST += iconveh.h
 
@@ -1171,6 +1202,126 @@ EXTRA_DIST += sys_types.in.h
 
 ## end   gnulib module sys_types
 
+## begin gnulib module unicase/base
+
+BUILT_SOURCES += $(LIBUNISTRING_UNICASE_H)
+
+unicase.h: unicase.in.h
+	$(gl_V_at)$(SED_HEADER_STDOUT) \
+	      -e 's|@''HAVE_UNISTRING_WOE32DLL_H''@|$(HAVE_UNISTRING_WOE32DLL_H)|g' \
+	      -e 's/@''GNULIB_UNICASE_EMPTY_PREFIX_CONTEXT_DLL_VARIABLE''@/$(GL_GNULIB_UNICASE_EMPTY_PREFIX_CONTEXT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICASE_EMPTY_SUFFIX_CONTEXT_DLL_VARIABLE''@/$(GL_GNULIB_UNICASE_EMPTY_SUFFIX_CONTEXT_DLL_VARIABLE)/g' \
+	      $(srcdir)/unicase.in.h > $@-t
+	$(AM_V_at)mv $@-t $@
+MOSTLYCLEANFILES += unicase.h unicase.h-t
+
+EXTRA_DIST += unicase.in.h
+
+## end   gnulib module unicase/base
+
+## begin gnulib module unicase/cased
+
+libgnu_la_SOURCES += unicase/cased.c
+
+EXTRA_DIST += unicase/cased.h unicase/caseprop.h unictype/bitmap.h
+
+## end   gnulib module unicase/cased
+
+## begin gnulib module unicase/empty-prefix-context
+
+if LIBUNISTRING_COMPILE_UNICASE_EMPTY_PREFIX_CONTEXT
+libgnu_la_SOURCES += unicase/empty-prefix-context.c
+endif
+
+## end   gnulib module unicase/empty-prefix-context
+
+## begin gnulib module unicase/empty-suffix-context
+
+if LIBUNISTRING_COMPILE_UNICASE_EMPTY_SUFFIX_CONTEXT
+libgnu_la_SOURCES += unicase/empty-suffix-context.c
+endif
+
+## end   gnulib module unicase/empty-suffix-context
+
+## begin gnulib module unicase/ignorable
+
+libgnu_la_SOURCES += unicase/ignorable.c
+
+EXTRA_DIST += unicase/caseprop.h unicase/ignorable.h unictype/bitmap.h
+
+## end   gnulib module unicase/ignorable
+
+## begin gnulib module unicase/special-casing
+
+libgnu_la_SOURCES += unicase/special-casing.c
+
+$(srcdir)/unicase/special-casing-table.h: $(srcdir)/unicase/special-casing-table.gperf
+	$(V_GPERF)$(GPERF) -m 10 $(srcdir)/unicase/special-casing-table.gperf > $(srcdir)/unicase/special-casing-table.h-t && \
+	mv $(srcdir)/unicase/special-casing-table.h-t $(srcdir)/unicase/special-casing-table.h
+BUILT_SOURCES        += unicase/special-casing-table.h
+MOSTLYCLEANFILES     += unicase/special-casing-table.h-t
+MAINTAINERCLEANFILES += unicase/special-casing-table.h
+EXTRA_DIST           += unicase/special-casing-table.h
+
+# Generate special-casing.h with a declaration that depends on the gperf version.
+unicase/special-casing.h: unicase/special-casing.in.h unicase/special-casing-table.h
+	$(AM_V_GEN)$(MKDIR_P) '%reldir%/unicase'
+	$(AM_V_at)declaration=`grep '^gl_unicase_special_lookup' $(srcdir)/unicase/special-casing-table.h | sed -e 's/register //g'` && \
+	$(SED_HEADER_STDOUT) \
+	  -e "/gl_unicase_special_lookup/s/gl_unicase_special_lookup.*/$${declaration};/" \
+	  $(srcdir)/unicase/special-casing.in.h > $@-t
+	$(AM_V_at)mv $@-t $@
+BUILT_SOURCES        += unicase/special-casing.h
+MOSTLYCLEANFILES     += unicase/special-casing.h unicase/special-casing.h-t
+
+EXTRA_DIST += unicase/special-casing-table.gperf unicase/special-casing.in.h
+
+## end   gnulib module unicase/special-casing
+
+## begin gnulib module unicase/tolower
+
+if LIBUNISTRING_COMPILE_UNICASE_TOLOWER
+libgnu_la_SOURCES += unicase/tolower.c
+endif
+
+EXTRA_DIST += unicase/simple-mapping.h unicase/tolower.h
+
+## end   gnulib module unicase/tolower
+
+## begin gnulib module unicase/toupper
+
+if LIBUNISTRING_COMPILE_UNICASE_TOUPPER
+libgnu_la_SOURCES += unicase/toupper.c
+endif
+
+EXTRA_DIST += unicase/simple-mapping.h unicase/toupper.h
+
+## end   gnulib module unicase/toupper
+
+## begin gnulib module unicase/u8-casemap
+
+libgnu_la_SOURCES += unicase/u8-casemap.c
+
+EXTRA_DIST += unicase/context.h unicase/u-casemap.h unicase/unicasemap.h
+
+## end   gnulib module unicase/u8-casemap
+
+## begin gnulib module unicase/u8-tolower
+
+if LIBUNISTRING_COMPILE_UNICASE_U8_TOLOWER
+libgnu_la_SOURCES += unicase/u8-tolower.c
+endif
+
+## end   gnulib module unicase/u8-tolower
+
+## begin gnulib module unicase/u8-toupper
+
+if LIBUNISTRING_COMPILE_UNICASE_U8_TOUPPER
+libgnu_la_SOURCES += unicase/u8-toupper.c
+endif
+
+## end   gnulib module unicase/u8-toupper
+
 ## begin gnulib module uniconv/base
 
 BUILT_SOURCES += $(LIBUNISTRING_UNICONV_H)
@@ -1183,6 +1334,26 @@ MOSTLYCLEANFILES += uniconv.h uniconv.h-t
 EXTRA_DIST += iconveh.h localcharset.h striconveha.h uniconv.in.h
 
 ## end   gnulib module uniconv/base
+
+## begin gnulib module uniconv/u32-conv-from-enc
+
+if LIBUNISTRING_COMPILE_UNICONV_U32_CONV_FROM_ENC
+libgnu_la_SOURCES += uniconv/u32-conv-from-enc.c
+endif
+
+EXTRA_DIST += uniconv/u-conv-from-enc.h
+
+## end   gnulib module uniconv/u32-conv-from-enc
+
+## begin gnulib module uniconv/u32-strconv-from-enc
+
+if LIBUNISTRING_COMPILE_UNICONV_U32_STRCONV_FROM_ENC
+libgnu_la_SOURCES += uniconv/u32-strconv-from-enc.c
+endif
+
+EXTRA_DIST += uniconv/u-strconv-from-enc.h
+
+## end   gnulib module uniconv/u32-strconv-from-enc
 
 ## begin gnulib module uniconv/u8-conv-from-enc
 
@@ -1201,6 +1372,335 @@ endif
 EXTRA_DIST += uniconv/u-strconv-from-enc.h
 
 ## end   gnulib module uniconv/u8-strconv-from-enc
+
+## begin gnulib module uniconv/u8-strconv-to-enc
+
+if LIBUNISTRING_COMPILE_UNICONV_U8_STRCONV_TO_ENC
+libgnu_la_SOURCES += uniconv/u8-strconv-to-enc.c
+endif
+
+## end   gnulib module uniconv/u8-strconv-to-enc
+
+## begin gnulib module unictype/base
+
+BUILT_SOURCES += $(LIBUNISTRING_UNICTYPE_H)
+
+unictype.h: unictype.in.h
+	$(gl_V_at)$(SED_HEADER_STDOUT) \
+	      -e 's|@''HAVE_UNISTRING_WOE32DLL_H''@|$(HAVE_UNISTRING_WOE32DLL_H)|g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_L_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_L_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_LC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_LC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_LU_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_LU_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_LL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_LL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_LT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_LT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_LM_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_LM_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_LO_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_LO_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_M_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_M_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_MN_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_MN_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_MC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_MC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_ME_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_ME_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_N_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_N_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_ND_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_ND_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_NL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_NL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_NO_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_NO_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_P_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_P_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_PC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_PC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_PD_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_PD_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_PS_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_PS_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_PE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_PE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_PI_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_PI_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_PF_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_PF_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_PO_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_PO_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_S_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_S_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_SM_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_SM_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_SC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_SC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_SK_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_SK_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_SO_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_SO_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_Z_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_Z_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_ZS_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_ZS_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_ZL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_ZL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_ZP_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_ZP_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_C_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_C_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_CC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_CC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_CF_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_CF_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_CS_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_CS_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_CO_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_CO_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_CATEGORY_CN_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_CATEGORY_CN_DLL_VARIABLE)/g' \
+	      < $(srcdir)/unictype.in.h > $@-t1
+	$(AM_V_at)sed \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_WHITE_SPACE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_WHITE_SPACE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_ALPHABETIC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_ALPHABETIC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_OTHER_ALPHABETIC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_OTHER_ALPHABETIC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_NOT_A_CHARACTER_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_NOT_A_CHARACTER_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_DEFAULT_IGNORABLE_CODE_POINT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_DEFAULT_IGNORABLE_CODE_POINT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_OTHER_DEFAULT_IGNORABLE_CODE_POINT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_OTHER_DEFAULT_IGNORABLE_CODE_POINT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_DEPRECATED_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_DEPRECATED_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_LOGICAL_ORDER_EXCEPTION_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_LOGICAL_ORDER_EXCEPTION_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_VARIATION_SELECTOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_VARIATION_SELECTOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_PRIVATE_USE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_PRIVATE_USE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_UNASSIGNED_CODE_VALUE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_UNASSIGNED_CODE_VALUE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_UPPERCASE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_UPPERCASE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_OTHER_UPPERCASE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_OTHER_UPPERCASE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_LOWERCASE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_LOWERCASE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_OTHER_LOWERCASE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_OTHER_LOWERCASE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_TITLECASE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_TITLECASE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_CASED_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_CASED_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_CASE_IGNORABLE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_CASE_IGNORABLE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_LOWERCASED_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_LOWERCASED_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_UPPERCASED_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_UPPERCASED_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_TITLECASED_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_TITLECASED_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_CASEFOLDED_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_CASEFOLDED_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_CASEMAPPED_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_CHANGES_WHEN_CASEMAPPED_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_SOFT_DOTTED_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_SOFT_DOTTED_DLL_VARIABLE)/g' \
+	      < $@-t1 > $@-t2
+	$(AM_V_at)sed \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_ID_START_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_ID_START_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_OTHER_ID_START_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_OTHER_ID_START_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_ID_CONTINUE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_ID_CONTINUE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_OTHER_ID_CONTINUE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_OTHER_ID_CONTINUE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_XID_START_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_XID_START_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_XID_CONTINUE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_XID_CONTINUE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_PATTERN_WHITE_SPACE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_PATTERN_WHITE_SPACE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_PATTERN_SYNTAX_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_PATTERN_SYNTAX_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_JOIN_CONTROL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_JOIN_CONTROL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_GRAPHEME_BASE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_GRAPHEME_BASE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_GRAPHEME_EXTEND_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_GRAPHEME_EXTEND_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_OTHER_GRAPHEME_EXTEND_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_OTHER_GRAPHEME_EXTEND_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_GRAPHEME_LINK_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_GRAPHEME_LINK_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_CONTROL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_CONTROL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_LEFT_TO_RIGHT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_LEFT_TO_RIGHT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_HEBREW_RIGHT_TO_LEFT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_HEBREW_RIGHT_TO_LEFT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_ARABIC_RIGHT_TO_LEFT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_ARABIC_RIGHT_TO_LEFT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_EUROPEAN_DIGIT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_EUROPEAN_DIGIT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_EUR_NUM_SEPARATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_EUR_NUM_SEPARATOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_EUR_NUM_TERMINATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_EUR_NUM_TERMINATOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_ARABIC_DIGIT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_ARABIC_DIGIT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_COMMON_SEPARATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_COMMON_SEPARATOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_BLOCK_SEPARATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_BLOCK_SEPARATOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_SEGMENT_SEPARATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_SEGMENT_SEPARATOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_WHITESPACE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_WHITESPACE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_NON_SPACING_MARK_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_NON_SPACING_MARK_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_BOUNDARY_NEUTRAL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_BOUNDARY_NEUTRAL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_PDF_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_PDF_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_EMBEDDING_OR_OVERRIDE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_EMBEDDING_OR_OVERRIDE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_BIDI_OTHER_NEUTRAL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_BIDI_OTHER_NEUTRAL_DLL_VARIABLE)/g' \
+	      < $@-t2 > $@-t3
+	$(AM_V_at)sed \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_HEX_DIGIT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_HEX_DIGIT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_ASCII_HEX_DIGIT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_ASCII_HEX_DIGIT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_IDEOGRAPHIC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_IDEOGRAPHIC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_UNIFIED_IDEOGRAPH_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_UNIFIED_IDEOGRAPH_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_RADICAL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_RADICAL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_IDS_BINARY_OPERATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_IDS_BINARY_OPERATOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_IDS_TRINARY_OPERATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_IDS_TRINARY_OPERATOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_EMOJI_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_EMOJI_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_EMOJI_PRESENTATION_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_EMOJI_PRESENTATION_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_EMOJI_MODIFIER_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_EMOJI_MODIFIER_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_EMOJI_MODIFIER_BASE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_EMOJI_MODIFIER_BASE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_EMOJI_COMPONENT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_EMOJI_COMPONENT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_EXTENDED_PICTOGRAPHIC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_EXTENDED_PICTOGRAPHIC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_ZERO_WIDTH_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_ZERO_WIDTH_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_SPACE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_SPACE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_NON_BREAK_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_NON_BREAK_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_ISO_CONTROL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_ISO_CONTROL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_FORMAT_CONTROL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_FORMAT_CONTROL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_DASH_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_DASH_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_HYPHEN_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_HYPHEN_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_PUNCTUATION_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_PUNCTUATION_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_LINE_SEPARATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_LINE_SEPARATOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_PARAGRAPH_SEPARATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_PARAGRAPH_SEPARATOR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_QUOTATION_MARK_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_QUOTATION_MARK_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_SENTENCE_TERMINAL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_SENTENCE_TERMINAL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_TERMINAL_PUNCTUATION_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_TERMINAL_PUNCTUATION_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_CURRENCY_SYMBOL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_CURRENCY_SYMBOL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_MATH_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_MATH_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_OTHER_MATH_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_OTHER_MATH_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_PAIRED_PUNCTUATION_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_PAIRED_PUNCTUATION_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_LEFT_OF_PAIR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_LEFT_OF_PAIR_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_COMBINING_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_COMBINING_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_COMPOSITE_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_COMPOSITE_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_DECIMAL_DIGIT_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_DECIMAL_DIGIT_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_NUMERIC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_NUMERIC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_DIACRITIC_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_DIACRITIC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_EXTENDER_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_EXTENDER_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_IGNORABLE_CONTROL_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_IGNORABLE_CONTROL_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNICTYPE_PROPERTY_REGIONAL_INDICATOR_DLL_VARIABLE''@/$(GL_GNULIB_UNICTYPE_PROPERTY_REGIONAL_INDICATOR_DLL_VARIABLE)/g' \
+	      < $@-t3 > $@-t4
+	$(AM_V_at)rm -f $@-t1 $@-t2 $@-t3
+	$(AM_V_at)mv $@-t4 $@
+MOSTLYCLEANFILES += unictype.h unictype.h-t1 unictype.h-t2 unictype.h-t3 unictype.h-t4
+
+EXTRA_DIST += unictype.in.h
+
+## end   gnulib module unictype/base
+
+## begin gnulib module unictype/category-L
+
+if LIBUNISTRING_COMPILE_UNICTYPE_CATEGORY_L
+libgnu_la_SOURCES += unictype/categ_L.c
+endif
+
+EXTRA_DIST += unictype/categ_L.h
+
+## end   gnulib module unictype/category-L
+
+## begin gnulib module unictype/category-Mn
+
+if LIBUNISTRING_COMPILE_UNICTYPE_CATEGORY_MN
+libgnu_la_SOURCES += unictype/categ_Mn.c
+endif
+
+EXTRA_DIST += unictype/categ_Mn.h
+
+## end   gnulib module unictype/category-Mn
+
+## begin gnulib module unictype/category-test
+
+if LIBUNISTRING_COMPILE_UNICTYPE_CATEGORY_TEST
+libgnu_la_SOURCES += unictype/categ_test.c
+endif
+
+EXTRA_DIST += unictype/bitmap.h
+
+## end   gnulib module unictype/category-test
+
+## begin gnulib module unictype/combining-class
+
+if LIBUNISTRING_COMPILE_UNICTYPE_COMBINING_CLASS
+libgnu_la_SOURCES += unictype/combiningclass.c
+endif
+
+EXTRA_DIST += unictype/combiningclass.h
+
+## end   gnulib module unictype/combining-class
+
+## begin gnulib module unictype/property-soft-dotted
+
+if LIBUNISTRING_COMPILE_UNICTYPE_PROPERTY_SOFT_DOTTED
+libgnu_la_SOURCES += unictype/pr_soft_dotted.c
+endif
+
+EXTRA_DIST += unictype/bitmap.h unictype/pr_soft_dotted.h
+
+## end   gnulib module unictype/property-soft-dotted
+
+## begin gnulib module uninorm/base
+
+BUILT_SOURCES += $(LIBUNISTRING_UNINORM_H)
+
+uninorm.h: uninorm.in.h
+	$(gl_V_at)$(SED_HEADER_STDOUT) \
+	      -e 's|@''HAVE_UNISTRING_WOE32DLL_H''@|$(HAVE_UNISTRING_WOE32DLL_H)|g' \
+	      -e 's/@''GNULIB_UNINORM_NFD_DLL_VARIABLE''@/$(GL_GNULIB_UNINORM_NFD_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNINORM_NFC_DLL_VARIABLE''@/$(GL_GNULIB_UNINORM_NFC_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNINORM_NFKD_DLL_VARIABLE''@/$(GL_GNULIB_UNINORM_NFKD_DLL_VARIABLE)/g' \
+	      -e 's/@''GNULIB_UNINORM_NFKC_DLL_VARIABLE''@/$(GL_GNULIB_UNINORM_NFKC_DLL_VARIABLE)/g' \
+	      $(srcdir)/uninorm.in.h > $@-t
+	$(AM_V_at)mv $@-t $@
+MOSTLYCLEANFILES += uninorm.h uninorm.h-t
+
+EXTRA_DIST += uninorm.in.h
+
+## end   gnulib module uninorm/base
+
+## begin gnulib module uninorm/canonical-decomposition
+
+if LIBUNISTRING_COMPILE_UNINORM_CANONICAL_DECOMPOSITION
+libgnu_la_SOURCES += uninorm/canonical-decomposition.c
+endif
+
+## end   gnulib module uninorm/canonical-decomposition
+
+## begin gnulib module uninorm/compat-decomposition
+
+libgnu_la_SOURCES += uninorm/compat-decomposition.c
+
+EXTRA_DIST += uninorm/decompose-internal.h
+
+## end   gnulib module uninorm/compat-decomposition
+
+## begin gnulib module uninorm/composition
+
+if LIBUNISTRING_COMPILE_UNINORM_COMPOSITION
+libgnu_la_SOURCES += uninorm/composition.c
+endif
+
+$(srcdir)/uninorm/composition-table.h: $(srcdir)/uninorm/composition-table.gperf
+	$(V_GPERF)$(GPERF) -m 1 $(srcdir)/uninorm/composition-table.gperf > $(srcdir)/uninorm/composition-table.h-t1 \
+	&& sed -e 's/^const/static const/' < $(srcdir)/uninorm/composition-table.h-t1 > $(srcdir)/uninorm/composition-table.h-t2 \
+	&& mv $(srcdir)/uninorm/composition-table.h-t2 $(srcdir)/uninorm/composition-table.h
+BUILT_SOURCES        += uninorm/composition-table.h
+MOSTLYCLEANFILES     += uninorm/composition-table.h-t1 uninorm/composition-table.h-t2
+MAINTAINERCLEANFILES += uninorm/composition-table.h
+EXTRA_DIST           += uninorm/composition-table.h
+
+EXTRA_DIST += uninorm/composition-table.gperf
+
+## end   gnulib module uninorm/composition
+
+## begin gnulib module uninorm/decompose-internal
+
+libgnu_la_SOURCES += uninorm/decompose-internal.c
+
+EXTRA_DIST += uninorm/decompose-internal.h
+
+## end   gnulib module uninorm/decompose-internal
+
+## begin gnulib module uninorm/decomposition
+
+if LIBUNISTRING_COMPILE_UNINORM_DECOMPOSITION
+libgnu_la_SOURCES += uninorm/decomposition.c
+endif
+
+## end   gnulib module uninorm/decomposition
+
+## begin gnulib module uninorm/decomposition-table
+
+libgnu_la_SOURCES += uninorm/decomposition-table.c
+
+EXTRA_DIST += uninorm/decomposition-table.h uninorm/decomposition-table1.h uninorm/decomposition-table2.h
+
+## end   gnulib module uninorm/decomposition-table
+
+## begin gnulib module uninorm/nfc
+
+if LIBUNISTRING_COMPILE_UNINORM_NFC
+libgnu_la_SOURCES += uninorm/nfc.c
+endif
+
+EXTRA_DIST += uninorm/normalize-internal.h
+
+## end   gnulib module uninorm/nfc
+
+## begin gnulib module uninorm/nfd
+
+if LIBUNISTRING_COMPILE_UNINORM_NFD
+libgnu_la_SOURCES += uninorm/nfd.c
+endif
+
+EXTRA_DIST += uninorm/normalize-internal.h
+
+## end   gnulib module uninorm/nfd
+
+## begin gnulib module uninorm/nfkd
+
+if LIBUNISTRING_COMPILE_UNINORM_NFKD
+libgnu_la_SOURCES += uninorm/nfkd.c
+endif
+
+EXTRA_DIST += uninorm/normalize-internal.h
+
+## end   gnulib module uninorm/nfkd
+
+## begin gnulib module uninorm/u8-normalize
+
+if LIBUNISTRING_COMPILE_UNINORM_U8_NORMALIZE
+libgnu_la_SOURCES += uninorm/u8-normalize.c
+endif
+
+EXTRA_DIST += uninorm/normalize-internal.h uninorm/u-normalize-internal.h
+
+## end   gnulib module uninorm/u8-normalize
 
 ## begin gnulib module unistd
 
@@ -1370,6 +1870,7 @@ unistd.h: unistd.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H
 	      -e 's|@''REPLACE_EXECVP''@|$(REPLACE_EXECVP)|g' \
 	      -e 's|@''REPLACE_EXECVPE''@|$(REPLACE_EXECVPE)|g' \
 	      -e 's|@''REPLACE_FACCESSAT''@|$(REPLACE_FACCESSAT)|g' \
+	      -e 's|@''REPLACE_FCHDIR''@|$(REPLACE_FCHDIR)|g' \
 	      -e 's|@''REPLACE_FCHOWNAT''@|$(REPLACE_FCHOWNAT)|g' \
 	      -e 's|@''REPLACE_FDATASYNC''@|$(REPLACE_FDATASYNC)|g' \
 	      -e 's|@''REPLACE_FTRUNCATE''@|$(REPLACE_FTRUNCATE)|g' \
@@ -1432,6 +1933,40 @@ EXTRA_DIST += unistr.in.h
 
 ## end   gnulib module unistr/base
 
+## begin gnulib module unistr/u32-mblen
+
+if LIBUNISTRING_COMPILE_UNISTR_U32_MBLEN
+libgnu_la_SOURCES += unistr/u32-mblen.c
+endif
+
+## end   gnulib module unistr/u32-mblen
+
+## begin gnulib module unistr/u32-next
+
+if LIBUNISTRING_COMPILE_UNISTR_U32_NEXT
+libgnu_la_SOURCES += unistr/u32-next.c
+endif
+
+## end   gnulib module unistr/u32-next
+
+## begin gnulib module unistr/u32-strlen
+
+if LIBUNISTRING_COMPILE_UNISTR_U32_STRLEN
+libgnu_la_SOURCES += unistr/u32-strlen.c
+endif
+
+EXTRA_DIST += unistr/u-strlen.h
+
+## end   gnulib module unistr/u32-strlen
+
+## begin gnulib module unistr/u32-strmbtouc
+
+if LIBUNISTRING_COMPILE_UNISTR_U32_STRMBTOUC
+libgnu_la_SOURCES += unistr/u32-strmbtouc.c
+endif
+
+## end   gnulib module unistr/u32-strmbtouc
+
 ## begin gnulib module unistr/u8-check
 
 if LIBUNISTRING_COMPILE_UNISTR_U8_CHECK
@@ -1439,6 +1974,16 @@ libgnu_la_SOURCES += unistr/u8-check.c
 endif
 
 ## end   gnulib module unistr/u8-check
+
+## begin gnulib module unistr/u8-cpy
+
+if LIBUNISTRING_COMPILE_UNISTR_U8_CPY
+libgnu_la_SOURCES += unistr/u8-cpy.c
+endif
+
+EXTRA_DIST += unistr/u-cpy.h
+
+## end   gnulib module unistr/u8-cpy
 
 ## begin gnulib module unistr/u8-mblen
 
@@ -1480,6 +2025,14 @@ endif
 
 ## end   gnulib module unistr/u8-mbtoucr
 
+## begin gnulib module unistr/u8-next
+
+if LIBUNISTRING_COMPILE_UNISTR_U8_NEXT
+libgnu_la_SOURCES += unistr/u8-next.c
+endif
+
+## end   gnulib module unistr/u8-next
+
 ## begin gnulib module unistr/u8-prev
 
 if LIBUNISTRING_COMPILE_UNISTR_U8_PREV
@@ -1495,6 +2048,22 @@ libgnu_la_SOURCES += unistr/u8-strlen.c
 endif
 
 ## end   gnulib module unistr/u8-strlen
+
+## begin gnulib module unistr/u8-strmbtouc
+
+if LIBUNISTRING_COMPILE_UNISTR_U8_STRMBTOUC
+libgnu_la_SOURCES += unistr/u8-strmbtouc.c
+endif
+
+## end   gnulib module unistr/u8-strmbtouc
+
+## begin gnulib module unistr/u8-to-u32
+
+if LIBUNISTRING_COMPILE_UNISTR_U8_TO_U32
+libgnu_la_SOURCES += unistr/u8-to-u32.c
+endif
+
+## end   gnulib module unistr/u8-to-u32
 
 ## begin gnulib module unistr/u8-uctomb
 
@@ -1530,6 +2099,22 @@ EXTRA_DIST += localcharset.h uniwidth.in.h
 
 ## end   gnulib module uniwidth/base
 
+## begin gnulib module uniwidth/u8-strwidth
+
+if LIBUNISTRING_COMPILE_UNIWIDTH_U8_STRWIDTH
+libgnu_la_SOURCES += uniwidth/u8-strwidth.c
+endif
+
+## end   gnulib module uniwidth/u8-strwidth
+
+## begin gnulib module uniwidth/u8-width
+
+if LIBUNISTRING_COMPILE_UNIWIDTH_U8_WIDTH
+libgnu_la_SOURCES += uniwidth/u8-width.c
+endif
+
+## end   gnulib module uniwidth/u8-width
+
 ## begin gnulib module uniwidth/width
 
 if LIBUNISTRING_COMPILE_UNIWIDTH_WIDTH
@@ -1539,6 +2124,14 @@ endif
 EXTRA_DIST += unictype/bitmap.h uniwidth/cjk.h uniwidth/width0.h uniwidth/width2.h
 
 ## end   gnulib module uniwidth/width
+
+## begin gnulib module unsetenv
+
+if GL_COND_OBJ_UNSETENV
+libgnu_la_SOURCES += unsetenv.c
+endif
+
+## end   gnulib module unsetenv
 
 ## begin gnulib module vasnprintf
 
@@ -1617,6 +2210,7 @@ wchar.h: wchar.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H) 
 	      -e 's/@''GNULIB_WCSTOK''@/$(GL_GNULIB_WCSTOK)/g' \
 	      -e 's/@''GNULIB_WCSWIDTH''@/$(GL_GNULIB_WCSWIDTH)/g' \
 	      -e 's/@''GNULIB_WCSFTIME''@/$(GL_GNULIB_WCSFTIME)/g' \
+	      -e 's/@''GNULIB_WGETCWD''@/$(GL_GNULIB_WGETCWD)/g' \
 	      -e 's/@''GNULIB_MDA_WCSDUP''@/$(GL_GNULIB_MDA_WCSDUP)/g' \
 	      -e 's/@''GNULIB_FREE_POSIX''@/$(GL_GNULIB_FREE_POSIX)/g' \
 	      < $(srcdir)/wchar.in.h > $@-t1
@@ -1718,6 +2312,7 @@ wctype.h: wctype.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H
 	      -e 's/@''GNULIBHEADERS_OVERRIDE_WINT_T''@/$(GNULIBHEADERS_OVERRIDE_WINT_T)/g' \
 	      -e 's/@''GNULIB_ISWBLANK''@/$(GL_GNULIB_ISWBLANK)/g' \
 	      -e 's/@''GNULIB_ISWDIGIT''@/$(GL_GNULIB_ISWDIGIT)/g' \
+	      -e 's/@''GNULIB_ISWPUNCT''@/$(GL_GNULIB_ISWPUNCT)/g' \
 	      -e 's/@''GNULIB_ISWXDIGIT''@/$(GL_GNULIB_ISWXDIGIT)/g' \
 	      -e 's/@''GNULIB_WCTYPE''@/$(GL_GNULIB_WCTYPE)/g' \
 	      -e 's/@''GNULIB_ISWCTYPE''@/$(GL_GNULIB_ISWCTYPE)/g' \
@@ -1730,6 +2325,7 @@ wctype.h: wctype.in.h $(top_builddir)/config.status $(CXXDEFS_H) $(ARG_NONNULL_H
 	      -e 's/@''HAVE_WINT_T''@/$(HAVE_WINT_T)/g' \
 	      -e 's/@''REPLACE_ISWBLANK''@/$(REPLACE_ISWBLANK)/g' \
 	      -e 's/@''REPLACE_ISWDIGIT''@/$(REPLACE_ISWDIGIT)/g' \
+	      -e 's/@''REPLACE_ISWPUNCT''@/$(REPLACE_ISWPUNCT)/g' \
 	      -e 's/@''REPLACE_ISWXDIGIT''@/$(REPLACE_ISWXDIGIT)/g' \
 	      -e 's/@''REPLACE_ISWCNTRL''@/$(REPLACE_ISWCNTRL)/g' \
 	      -e 's/@''REPLACE_TOWLOWER''@/$(REPLACE_TOWLOWER)/g' \

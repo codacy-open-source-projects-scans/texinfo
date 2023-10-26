@@ -23,10 +23,16 @@ package Texinfo::Convert::Texinfo;
 use 5.00405;
 use strict;
 
+# stop \s from matching non-ASCII spaces, etc.  \p{...} can still be
+# used to match Unicode character classes.
+use if $] >= 5.014, re => '/a';
+
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
 
 use Carp qw(cluck confess);
+
+use Texinfo::Convert::ConvertXS;
 
 # commands definitions
 use Texinfo::Commands;
@@ -45,8 +51,25 @@ use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
+our $module_loaded = 0;
+sub import {
+  if (!$module_loaded) {
+    if (defined $ENV{TEXINFO_XS_CONVERT}
+        and $ENV{TEXINFO_XS_CONVERT} eq '1') {
+      # We do not simply override, we must check at runtime
+      # that the document tree was stored by the XS parser.
+      Texinfo::XSLoader::override(
+        "Texinfo::Convert::Texinfo::_convert_tree_with_XS",
+        "Texinfo::Convert::ConvertXS::plain_texinfo_convert_tree"
+      );
+    }
+    $module_loaded = 1;
+  }
+  # The usual import method
+  goto &Exporter::import;
+}
 
 my %brace_commands           = %Texinfo::Commands::brace_commands;
 my %block_commands           = %Texinfo::Commands::block_commands;
@@ -87,6 +110,41 @@ sub target_element_to_texi_label($)
   return convert_to_texinfo({'contents' => $label_element->{'contents'}});
 }
 
+# only used in Texinfo::Structuring.  Here and not in Texinfo::Structuring
+# to use re => '/a'.
+# $REFERENCE_NODE should always be a target element associated to
+# a label.
+sub check_node_same_texinfo_code($$)
+{
+  my $reference_node = shift;
+  my $node_content = shift;
+
+  my $reference_node_texi;
+  if (defined($reference_node->{'extra'}->{'normalized'})) {
+    my $label_element = Texinfo::Common::get_label_element($reference_node);
+    $reference_node_texi = convert_to_texinfo(
+                        {'contents' => $label_element->{'contents'}});
+    $reference_node_texi =~ s/\s+/ /g;
+  } else {
+    $reference_node_texi = '';
+  }
+
+  my $node_texi;
+  if ($node_content) {
+    my $contents_node = $node_content;
+    if ($node_content->[-1]->{'type'}
+        and $node_content->[-1]->{'type'} eq 'space_at_end_menu_node') {
+      $contents_node = [ @{$node_content} ];
+      pop @$contents_node;
+    }
+    $node_texi = convert_to_texinfo({'contents' => $contents_node});
+    $node_texi =~ s/\s+/ /g;
+  } else {
+    $node_texi = '';
+  }
+  return ($reference_node_texi eq $node_texi);
+}
+
 # for debugging.
 sub root_heading_command_to_texinfo($)
 {
@@ -99,7 +157,7 @@ sub root_heading_command_to_texinfo($)
       $tree = $element->{'args'}->[0]->{'contents'};
     }
   } else {
-    return "Not a root command";
+    return "Not a command";
   }
   return '@'.$element->{'cmdname'}.' '.convert_to_texinfo({'contents' => $tree})
           if ($tree);
@@ -109,9 +167,29 @@ sub root_heading_command_to_texinfo($)
 # Following subroutines deal with transforming a texinfo tree into texinfo
 # text.  Should give the text that was used parsed, except for a few cases.
 
+# This is used if the document is available for XS, but XS is not
+# used (most likely $TEXINFO_XS_CONVERT is 0).
+sub _convert_tree_with_XS($)
+{
+  my $root = shift;
+
+  return _convert_to_texinfo($root);
+}
+
 # expand a tree to the corresponding texinfo.
 sub convert_to_texinfo($);
 sub convert_to_texinfo($)
+{
+  my $element = shift;
+
+  if (defined($element->{'tree_document_descriptor'})) {
+    return _convert_tree_with_XS($element);
+  }
+  return _convert_to_texinfo($element);
+}
+
+sub _convert_to_texinfo($);
+sub _convert_to_texinfo($)
 {
   my $element = shift;
 
@@ -141,14 +219,14 @@ sub convert_to_texinfo($)
     }
     if (defined($element->{'contents'})) {
       foreach my $child (@{$element->{'contents'}}) {
-        $result .= convert_to_texinfo($child);
+        $result .= _convert_to_texinfo($child);
       }
     }
     if ($element->{'info'} and $element->{'info'}->{'spaces_after_argument'}) {
       $result .= $element->{'info'}->{'spaces_after_argument'}->{'text'};
     }
     if ($element->{'info'} and $element->{'info'}->{'comment_at_end'}) {
-      $result .= convert_to_texinfo($element->{'info'}->{'comment_at_end'})
+      $result .= _convert_to_texinfo($element->{'info'}->{'comment_at_end'})
     }
     $result .= '}' if ($element->{'type'}
                        and ($element->{'type'} eq 'bracketed_arg'
@@ -162,7 +240,7 @@ sub _expand_cmd_args_to_texi($) {
   my $cmd = shift;
 
   my $cmdname = $cmd->{'cmdname'};
-  $cmdname = '' if (!$cmd->{'cmdname'});
+  $cmdname = '' if (! defined($cmd->{'cmdname'}));
   my $result = '';
 
   if ($cmdname) {
@@ -210,7 +288,7 @@ sub _expand_cmd_args_to_texi($) {
         $result .= ',' if ($arg_nr);
         $arg_nr++;
       }
-      $result .= convert_to_texinfo($arg);
+      $result .= _convert_to_texinfo($arg);
     }
     if ($cmdname eq 'verb') {
       $result .= $cmd->{'info'}->{'delimiter'};

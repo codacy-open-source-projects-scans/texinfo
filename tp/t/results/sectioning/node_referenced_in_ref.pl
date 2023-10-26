@@ -178,6 +178,7 @@ $result_trees{'node_referenced_in_ref'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -217,6 +218,7 @@ $result_trees{'node_referenced_in_ref'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap-first-level-node'
       },
       'info' => {
@@ -249,6 +251,7 @@ $result_trees{'node_referenced_in_ref'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'second-level-node'
       },
       'info' => {
@@ -290,55 +293,61 @@ second level node.
 
 ';
 
-$result_nodes{'node_referenced_in_ref'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap-first-level-node'
-      },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'node_referenced_in_ref'}{'structure'}{'menu_child'}{'structure'}{'node_prev'} = $result_nodes{'node_referenced_in_ref'};
-$result_nodes{'node_referenced_in_ref'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'node_referenced_in_ref'};
-$result_nodes{'node_referenced_in_ref'}{'structure'}{'node_next'} = $result_nodes{'node_referenced_in_ref'}{'structure'}{'menu_child'};
-
-$result_menus{'node_referenced_in_ref'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap-first-level-node'
-      },
-      'structure' => {
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'Top' => 1
+$result_nodes{'node_referenced_in_ref'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chap-first-level-node'
+          }
         }
-      }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {},
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'second-level-node'
     }
   }
-};
-$result_menus{'node_referenced_in_ref'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'node_referenced_in_ref'};
+];
+$result_nodes{'node_referenced_in_ref'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'node_referenced_in_ref'}[0];
+$result_nodes{'node_referenced_in_ref'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'node_referenced_in_ref'}[0];
+$result_nodes{'node_referenced_in_ref'}[1] = $result_nodes{'node_referenced_in_ref'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'node_referenced_in_ref'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'normalized' => 'chap-first-level-node'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'second-level-node'
+    }
+  }
+];
+$result_menus{'node_referenced_in_ref'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'node_referenced_in_ref'}[0];
 
 $result_errors{'node_referenced_in_ref'} = [];
 

@@ -639,9 +639,6 @@ $result_trees{'codequoteundirected_codequotebacktick'} = {
                     }
                   ],
                   'cmdname' => 'codequoteundirected',
-                  'extra' => {
-                    'missing_argument' => 1
-                  },
                   'source_info' => {
                     'file_name' => '',
                     'line_nr' => 31,
@@ -661,9 +658,6 @@ $result_trees{'codequoteundirected_codequotebacktick'} = {
                     }
                   ],
                   'cmdname' => 'codequotebacktick',
-                  'extra' => {
-                    'missing_argument' => 1
-                  },
                   'source_info' => {
                     'file_name' => '',
                     'line_nr' => 31,
@@ -1523,6 +1517,7 @@ $result_trees{'codequoteundirected_codequotebacktick'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -1592,6 +1587,7 @@ $result_trees{'codequoteundirected_codequotebacktick'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -2013,9 +2009,6 @@ $result_trees{'codequoteundirected_codequotebacktick'} = {
             }
           ],
           'cmdname' => 'codequoteundirected',
-          'extra' => {
-            'missing_argument' => 1
-          },
           'source_info' => {
             'file_name' => '',
             'line_nr' => 45,
@@ -2035,9 +2028,6 @@ $result_trees{'codequoteundirected_codequotebacktick'} = {
             }
           ],
           'cmdname' => 'codequotebacktick',
-          'extra' => {
-            'missing_argument' => 1
-          },
           'source_info' => {
             'file_name' => '',
             'line_nr' => 45,
@@ -3149,9 +3139,6 @@ $result_trees{'codequoteundirected_codequotebacktick'} = {
                     }
                   ],
                   'cmdname' => 'codequoteundirected',
-                  'extra' => {
-                    'missing_argument' => 1
-                  },
                   'source_info' => {
                     'file_name' => '',
                     'line_nr' => 48,
@@ -3171,9 +3158,6 @@ $result_trees{'codequoteundirected_codequotebacktick'} = {
                     }
                   ],
                   'cmdname' => 'codequotebacktick',
-                  'extra' => {
-                    'missing_argument' => 1
-                  },
                   'source_info' => {
                     'file_name' => '',
                     'line_nr' => 48,
@@ -3925,7 +3909,9 @@ $result_trees{'codequoteundirected_codequotebacktick'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -4186,7 +4172,7 @@ samp: ``simple-double--three---four----\'\' `simple\' quotedblleft: "
 ';
 
 $result_sectioning{'codequoteundirected_codequotebacktick'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -4195,11 +4181,8 @@ $result_sectioning{'codequoteundirected_codequotebacktick'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -4208,72 +4191,81 @@ $result_sectioning{'codequoteundirected_codequotebacktick'} = {
                   'cmdname' => 'node',
                   'extra' => {
                     'normalized' => 'chap'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'codequoteundirected_codequotebacktick'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'codequoteundirected_codequotebacktick'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'codequoteundirected_codequotebacktick'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'codequoteundirected_codequotebacktick'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'codequoteundirected_codequotebacktick'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'codequoteundirected_codequotebacktick'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'codequoteundirected_codequotebacktick'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'codequoteundirected_codequotebacktick'};
+$result_sectioning{'codequoteundirected_codequotebacktick'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'codequoteundirected_codequotebacktick'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'codequoteundirected_codequotebacktick'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'codequoteundirected_codequotebacktick'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'codequoteundirected_codequotebacktick'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'codequoteundirected_codequotebacktick'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'codequoteundirected_codequotebacktick'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'codequoteundirected_codequotebacktick'};
 
-$result_nodes{'codequoteundirected_codequotebacktick'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'normalized' => 'chap'
+$result_nodes{'codequoteundirected_codequotebacktick'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'codequoteundirected_codequotebacktick'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'codequoteundirected_codequotebacktick'}[0];
+$result_nodes{'codequoteundirected_codequotebacktick'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'codequoteundirected_codequotebacktick'}[0];
+$result_nodes{'codequoteundirected_codequotebacktick'}[1] = $result_nodes{'codequoteundirected_codequotebacktick'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'codequoteundirected_codequotebacktick'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'codequoteundirected_codequotebacktick'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'codequoteundirected_codequotebacktick'};
-$result_nodes{'codequoteundirected_codequotebacktick'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'codequoteundirected_codequotebacktick'};
-
-$result_menus{'codequoteundirected_codequotebacktick'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'codequoteundirected_codequotebacktick'} = [
   {
@@ -4701,7 +4693,7 @@ $result_converted{'docbook_doc'}->{'codequoteundirected_codequotebacktick'} = '<
   <!ENTITY tex "TeX">
   <!ENTITY latex "LaTeX">
 ]>
-<book lang="">
+<book lang="en">
 <title>test quotes</title>
 <bookinfo><title>test quotes</title>
 <legalnotice><para>&#8220;simple-double&#8211;three&#8212;four&#8212;-&#8221; &#8216;simple&#8217; quotedblleft: &#8220; 

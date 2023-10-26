@@ -59,6 +59,7 @@ $result_trees{'on_index_entry_line'} = {
                   ],
                   'cmdname' => 'anchor',
                   'extra' => {
+                    'is_target' => 1,
                     'normalized' => 'in-anchor'
                   },
                   'source_info' => {
@@ -134,6 +135,7 @@ $result_trees{'on_index_entry_line'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }

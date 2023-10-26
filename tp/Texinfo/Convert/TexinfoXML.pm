@@ -35,7 +35,7 @@ use Texinfo::Convert::Converter;
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::TexinfoMarkup Texinfo::Convert::Converter);
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
 
 
 # TexinfoXML specific
@@ -47,7 +47,7 @@ my %defaults = (
   'FORMAT_MENU'          => 'menu',
   'EXTENSION'            => 'xml',
   'OUTPUT_ENCODING_NAME' => 'utf-8',
-  'SPLIT'                => 0,
+  'SPLIT'                => '',
   'documentlanguage'     => 'en',
 );
 
@@ -262,10 +262,10 @@ Texinfo::Convert::TexinfoXML - Convert Texinfo tree to TexinfoXML
 =head1 SYNOPSIS
 
   my $converter
-    = Texinfo::Convert::TexinfoXML->converter({'parser' => $parser});
+    = Texinfo::Convert::TexinfoXML->converter({'document' => $document});
 
-  $converter->output($tree);
-  $converter->convert($tree);
+  $converter->output($document);
+  $converter->convert($document);
   $converter->convert_tree($tree);
 
 =head1 NOTES
@@ -286,24 +286,25 @@ Texinfo::Convert::TexinfoXML converts a Texinfo tree to TexinfoXML.
 Initialize converter from Texinfo to TexinfoXML.
 
 The I<$options> hash reference holds options for the converter.  In
-this option hash reference a L<parser object|Texinfo::Parser>
-may be associated with the I<parser> key.  The other options
-are Texinfo customization options and a few other options that can
-be passed to the converter. Most of the customization options are described in
-the Texinfo manual.  Those customization options, when appropriate, override
-the document content.  The parser should not be available directly anymore
-after getting the associated information.
+this option hash reference a L<document|Texinfo::Document>
+may be associated with the I<document> key.  The document should not
+be available directly anymore after getting the associated information.
+
+The other options are Texinfo customization options and a few other options
+that can be passed to the converter. Most of the customization options are
+described in the Texinfo manual.  Those customization options, when
+appropriate, override the document content.
 
 See L<Texinfo::Convert::Converter> for more information.
 
-=item $converter->output($tree)
+=item $converter->output($document)
 
-Convert a Texinfo tree I<$tree> and output the result in files as
+Convert a Texinfo parsed document I<$document> and output the result in files as
 described in the Texinfo manual.
 
-=item $result = $converter->convert($tree)
+=item $result = $converter->convert($document)
 
-Convert a Texinfo tree I<$tree> and return the resulting output.
+Convert a Texinfo parsed document I<$document> and return the resulting output.
 
 =item $result = $converter->convert_tree($tree)
 

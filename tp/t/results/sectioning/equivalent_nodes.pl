@@ -187,6 +187,7 @@ $result_trees{'equivalent_nodes'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -274,6 +275,7 @@ $result_trees{'equivalent_nodes'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'node'
       },
       'info' => {
@@ -313,53 +315,48 @@ $result_texts{'equivalent_nodes'} = '
 node.
 ';
 
-$result_nodes{'equivalent_nodes'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'node'
-      },
-      'structure' => {
-        'node_up' => {}
-      }
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'equivalent_nodes'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'equivalent_nodes'};
-$result_nodes{'equivalent_nodes'}{'structure'}{'node_next'} = $result_nodes{'equivalent_nodes'}{'structure'}{'menu_child'};
-
-$result_menus{'equivalent_nodes'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'node'
-      },
-      'structure' => {
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'first' => 1
+$result_nodes{'equivalent_nodes'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'up' => {}
+            },
+            'normalized' => 'node'
+          }
         }
-      }
+      },
+      'normalized' => 'first'
+    }
+  },
+  {}
+];
+$result_nodes{'equivalent_nodes'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'equivalent_nodes'}[0];
+$result_nodes{'equivalent_nodes'}[1] = $result_nodes{'equivalent_nodes'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'equivalent_nodes'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'first'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'normalized' => 'node'
     }
   }
-};
-$result_menus{'equivalent_nodes'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'equivalent_nodes'};
+];
+$result_menus{'equivalent_nodes'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'equivalent_nodes'}[0];
 
 $result_errors{'equivalent_nodes'} = [
   {
@@ -372,21 +369,21 @@ $result_errors{'equivalent_nodes'} = [
     'type' => 'warning'
   },
   {
-    'error_line' => 'warning: @menu entry node name `@strong{node}\' different from node name `@samp{node}\'
-',
-    'file_name' => '',
-    'line_nr' => 4,
-    'macro' => '',
-    'text' => '@menu entry node name `@strong{node}\' different from node name `@samp{node}\'',
-    'type' => 'warning'
-  },
-  {
     'error_line' => 'warning: Next pointer `@emph{node}\' (for node `first\') different from node name `@samp{node}\'
 ',
     'file_name' => '',
     'line_nr' => 1,
     'macro' => '',
     'text' => 'Next pointer `@emph{node}\' (for node `first\') different from node name `@samp{node}\'',
+    'type' => 'warning'
+  },
+  {
+    'error_line' => 'warning: @menu entry node name `@strong{node}\' different from node name `@samp{node}\'
+',
+    'file_name' => '',
+    'line_nr' => 4,
+    'macro' => '',
+    'text' => '@menu entry node name `@strong{node}\' different from node name `@samp{node}\'',
     'type' => 'warning'
   }
 ];

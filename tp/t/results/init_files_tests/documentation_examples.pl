@@ -10,130 +10,140 @@ $result_trees{'documentation_examples'} = {
     {
       'contents' => [
         {
-          'text' => '
-',
-          'type' => 'empty_line'
-        },
-        {
-          'args' => [
+          'contents' => [
             {
-              'contents' => [
-                {
-                  'args' => [
-                    {
-                      'contents' => [
-                        {
-                          'text' => 'someone'
-                        },
-                        {
-                          'cmdname' => '@'
-                        },
-                        {
-                          'text' => 'example.com'
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
-                    },
-                    {
-                      'contents' => [
-                        {
-                          'text' => 'me'
-                        }
-                      ],
-                      'info' => {
-                        'spaces_before_argument' => {
-                          'text' => ' '
-                        }
-                      },
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'email',
-                  'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 2,
-                    'macro' => ''
-                  }
-                },
-                {
-                  'text' => ' '
-                },
-                {
-                  'args' => [
-                    {
-                      'contents' => [
-                        {
-                          'text' => 'in--title'
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'sansserif',
-                  'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 2,
-                    'macro' => ''
-                  }
-                },
-                {
-                  'text' => ' '
-                },
-                {
-                  'args' => [
-                    {
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'error',
-                  'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 2,
-                    'macro' => ''
-                  }
-                },
-                {
-                  'text' => ' '
-                },
-                {
-                  'args' => [
-                    {
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'equiv',
-                  'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 2,
-                    'macro' => ''
-                  }
-                }
-              ],
-              'info' => {
-                'spaces_after_argument' => {
-                  'text' => '
-'
-                }
-              },
-              'type' => 'line_arg'
+              'text' => '
+',
+              'type' => 'text_before_beginning'
             }
           ],
-          'cmdname' => 'settitle',
-          'info' => {
-            'spaces_before_argument' => {
-              'text' => ' '
-            }
-          },
-          'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
-          }
+          'type' => 'preamble_before_beginning'
         },
         {
-          'text' => '
+          'contents' => [
+            {
+              'args' => [
+                {
+                  'contents' => [
+                    {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'someone'
+                            },
+                            {
+                              'cmdname' => '@'
+                            },
+                            {
+                              'text' => 'example.com'
+                            }
+                          ],
+                          'type' => 'brace_command_arg'
+                        },
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'me'
+                            }
+                          ],
+                          'info' => {
+                            'spaces_before_argument' => {
+                              'text' => ' '
+                            }
+                          },
+                          'type' => 'brace_command_arg'
+                        }
+                      ],
+                      'cmdname' => 'email',
+                      'source_info' => {
+                        'file_name' => '',
+                        'line_nr' => 2,
+                        'macro' => ''
+                      }
+                    },
+                    {
+                      'text' => ' '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'in--title'
+                            }
+                          ],
+                          'type' => 'brace_command_arg'
+                        }
+                      ],
+                      'cmdname' => 'sansserif',
+                      'source_info' => {
+                        'file_name' => '',
+                        'line_nr' => 2,
+                        'macro' => ''
+                      }
+                    },
+                    {
+                      'text' => ' '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'type' => 'brace_command_arg'
+                        }
+                      ],
+                      'cmdname' => 'error',
+                      'source_info' => {
+                        'file_name' => '',
+                        'line_nr' => 2,
+                        'macro' => ''
+                      }
+                    },
+                    {
+                      'text' => ' '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'type' => 'brace_command_arg'
+                        }
+                      ],
+                      'cmdname' => 'equiv',
+                      'source_info' => {
+                        'file_name' => '',
+                        'line_nr' => 2,
+                        'macro' => ''
+                      }
+                    }
+                  ],
+                  'info' => {
+                    'spaces_after_argument' => {
+                      'text' => '
+'
+                    }
+                  },
+                  'type' => 'line_arg'
+                }
+              ],
+              'cmdname' => 'settitle',
+              'info' => {
+                'spaces_before_argument' => {
+                  'text' => ' '
+                }
+              },
+              'source_info' => {
+                'file_name' => '',
+                'line_nr' => 2,
+                'macro' => ''
+              }
+            },
+            {
+              'text' => '
 ',
-          'type' => 'empty_line'
+              'type' => 'empty_line'
+            }
+          ],
+          'type' => 'preamble_before_content'
         }
       ],
       'type' => 'before_node_section'
@@ -157,6 +167,7 @@ $result_trees{'documentation_examples'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -226,6 +237,7 @@ $result_trees{'documentation_examples'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chapter'
       },
       'info' => {
@@ -752,7 +764,9 @@ $result_trees{'documentation_examples'} = {
           'type' => 'empty_line'
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -886,6 +900,7 @@ $result_trees{'documentation_examples'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'my-node'
       },
       'info' => {
@@ -943,7 +958,6 @@ $result_texis{'documentation_examples'} = '
 
 
 $result_texts{'documentation_examples'} = '
-
 top
 ***
 
@@ -974,7 +988,7 @@ error-->.
 ';
 
 $result_sectioning{'documentation_examples'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -983,11 +997,8 @@ $result_sectioning{'documentation_examples'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -996,72 +1007,92 @@ $result_sectioning{'documentation_examples'} = {
                   'cmdname' => 'node',
                   'extra' => {
                     'normalized' => 'chapter'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'documentation_examples'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'documentation_examples'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'documentation_examples'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'documentation_examples'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'documentation_examples'};
+$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'documentation_examples'};
 
-$result_nodes{'documentation_examples'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'normalized' => 'chapter'
+$result_nodes{'documentation_examples'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chapter'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {},
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'my-node'
     }
   }
-};
-$result_nodes{'documentation_examples'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'documentation_examples'};
-$result_nodes{'documentation_examples'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'documentation_examples'};
+];
+$result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'documentation_examples'}[0];
+$result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'documentation_examples'}[0];
+$result_nodes{'documentation_examples'}[1] = $result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'};
 
-$result_menus{'documentation_examples'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'documentation_examples'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   },
-  'structure' => {}
-};
+  {
+    'extra' => {
+      'normalized' => 'chapter'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'my-node'
+    }
+  }
+];
 
 $result_errors{'documentation_examples'} = [];
 

@@ -76,6 +76,7 @@ $result_trees{'same_index_entry_merged_indices'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -135,6 +136,7 @@ $result_trees{'same_index_entry_merged_indices'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -487,7 +489,9 @@ $result_trees{'same_index_entry_merged_indices'} = {
           }
         }
       ],
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -545,7 +549,7 @@ This variable represents MMM Mode.
 ';
 
 $result_sectioning{'same_index_entry_merged_indices'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -554,11 +558,8 @@ $result_sectioning{'same_index_entry_merged_indices'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_childs' => [
             {
               'cmdname' => 'chapter',
@@ -568,73 +569,82 @@ $result_sectioning{'same_index_entry_merged_indices'} = {
                   'extra' => {
                     'isindex' => 1,
                     'normalized' => 'chap'
-                  },
-                  'structure' => {}
-                }
-              },
-              'structure' => {
+                  }
+                },
+                'section_directions' => {
+                  'up' => {}
+                },
                 'section_level' => 1,
-                'section_number' => 1,
-                'section_up' => {},
-                'toplevel_prev' => {},
-                'toplevel_up' => {}
+                'section_number' => '1',
+                'toplevel_directions' => {
+                  'prev' => {},
+                  'up' => {}
+                }
               }
             }
           ],
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'same_index_entry_merged_indices'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'same_index_entry_merged_indices'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'same_index_entry_merged_indices'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_prev'} = $result_sectioning{'same_index_entry_merged_indices'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'same_index_entry_merged_indices'}{'structure'}{'section_childs'}[0]{'structure'}{'section_childs'}[0]{'structure'}{'toplevel_up'} = $result_sectioning{'same_index_entry_merged_indices'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'same_index_entry_merged_indices'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'same_index_entry_merged_indices'};
+$result_sectioning{'same_index_entry_merged_indices'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'same_index_entry_merged_indices'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'same_index_entry_merged_indices'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'same_index_entry_merged_indices'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'same_index_entry_merged_indices'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'same_index_entry_merged_indices'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'same_index_entry_merged_indices'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'same_index_entry_merged_indices'};
 
-$result_nodes{'same_index_entry_merged_indices'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'associated_section' => {
-          'cmdname' => 'chapter',
-          'extra' => {},
-          'structure' => {
-            'section_number' => 1
-          }
-        },
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'same_index_entry_merged_indices'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'associated_section' => {
+              'cmdname' => 'chapter',
+              'extra' => {
+                'section_number' => '1'
+              }
+            },
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'same_index_entry_merged_indices'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'same_index_entry_merged_indices'}[0];
+$result_nodes{'same_index_entry_merged_indices'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'same_index_entry_merged_indices'}[0];
+$result_nodes{'same_index_entry_merged_indices'}[1] = $result_nodes{'same_index_entry_merged_indices'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'same_index_entry_merged_indices'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'same_index_entry_merged_indices'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'same_index_entry_merged_indices'};
-$result_nodes{'same_index_entry_merged_indices'}{'structure'}{'node_next'}{'structure'}{'node_up'} = $result_nodes{'same_index_entry_merged_indices'};
-
-$result_menus{'same_index_entry_merged_indices'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'same_index_entry_merged_indices'} = [];
 
@@ -642,38 +652,22 @@ $result_errors{'same_index_entry_merged_indices'} = [];
 $result_indices{'same_index_entry_merged_indices'} = {
   'index_names' => {
     'cp' => {
-      'contained_indices' => {
-        'cp' => 1
-      },
       'in_code' => 0,
       'name' => 'cp'
     },
     'fn' => {
-      'contained_indices' => {
-        'fn' => 1,
-        'vr' => 1
-      },
       'in_code' => 1,
       'name' => 'fn'
     },
     'ky' => {
-      'contained_indices' => {
-        'ky' => 1
-      },
       'in_code' => 1,
       'name' => 'ky'
     },
     'pg' => {
-      'contained_indices' => {
-        'pg' => 1
-      },
       'in_code' => 1,
       'name' => 'pg'
     },
     'tp' => {
-      'contained_indices' => {
-        'tp' => 1
-      },
       'in_code' => 1,
       'name' => 'tp'
     },

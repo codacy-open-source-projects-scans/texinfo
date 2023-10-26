@@ -36,6 +36,7 @@ $result_trees{'omit_def_space'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -350,6 +351,7 @@ $result_trees{'omit_def_space'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'chap'
       },
       'info' => {
@@ -392,32 +394,41 @@ Function: another (aarg)
 explain
 ';
 
-$result_nodes{'omit_def_space'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'chap'
+$result_nodes{'omit_def_space'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'omit_def_space'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'omit_def_space'}[0];
+$result_nodes{'omit_def_space'}[1] = $result_nodes{'omit_def_space'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'omit_def_space'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'omit_def_space'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'omit_def_space'};
-
-$result_menus{'omit_def_space'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'omit_def_space'} = [];
 

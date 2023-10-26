@@ -151,6 +151,7 @@ $result_trees{'comment_on_menu_line'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -182,7 +183,9 @@ $result_trees{'comment_on_menu_line'} = {
         }
       ],
       'cmdname' => 'chapter',
-      'extra' => {},
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -213,6 +216,7 @@ $result_trees{'comment_on_menu_line'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -250,7 +254,7 @@ $result_texts{'comment_on_menu_line'} = '
 ';
 
 $result_sectioning{'comment_on_menu_line'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'chapter',
@@ -259,78 +263,69 @@ $result_sectioning{'comment_on_menu_line'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'Top'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_level' => 1,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 0
   }
 };
-$result_sectioning{'comment_on_menu_line'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'comment_on_menu_line'};
+$result_sectioning{'comment_on_menu_line'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'comment_on_menu_line'};
 
-$result_nodes{'comment_on_menu_line'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'chapter',
-      'extra' => {},
-      'structure' => {
-        'section_number' => 1
-      }
-    },
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'first'
-      },
-      'structure' => {
-        'node_prev' => {},
-        'node_up' => {}
-      }
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'comment_on_menu_line'}{'structure'}{'menu_child'}{'structure'}{'node_prev'} = $result_nodes{'comment_on_menu_line'};
-$result_nodes{'comment_on_menu_line'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'comment_on_menu_line'};
-$result_nodes{'comment_on_menu_line'}{'structure'}{'node_next'} = $result_nodes{'comment_on_menu_line'}{'structure'}{'menu_child'};
-
-$result_menus{'comment_on_menu_line'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'first'
-      },
-      'structure' => {
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'Top' => 1
+$result_nodes{'comment_on_menu_line'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'chapter',
+        'extra' => {
+          'section_number' => '1'
         }
-      }
+      },
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'node_directions' => {
+              'prev' => {},
+              'up' => {}
+            },
+            'normalized' => 'first'
+          }
+        }
+      },
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'comment_on_menu_line'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'comment_on_menu_line'}[0];
+$result_nodes{'comment_on_menu_line'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'comment_on_menu_line'}[0];
+$result_nodes{'comment_on_menu_line'}[1] = $result_nodes{'comment_on_menu_line'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'comment_on_menu_line'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
+      },
+      'normalized' => 'first'
     }
   }
-};
-$result_menus{'comment_on_menu_line'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'comment_on_menu_line'};
+];
+$result_menus{'comment_on_menu_line'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'comment_on_menu_line'}[0];
 
 $result_errors{'comment_on_menu_line'} = [];
 

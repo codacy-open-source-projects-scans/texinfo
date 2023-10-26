@@ -29,6 +29,7 @@ $result_trees{'space_in_def_for_index'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -373,6 +374,7 @@ $result_trees{'space_in_def_for_index'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'isindex' => 1,
         'normalized' => 'chap'
       },
@@ -412,33 +414,42 @@ AAA1: AAA2 arg3
 
 ';
 
-$result_nodes{'space_in_def_for_index'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'node_next' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'isindex' => 1,
-        'normalized' => 'chap'
+$result_nodes{'space_in_def_for_index'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'cmdname' => 'node',
+          'extra' => {
+            'isindex' => 1,
+            'node_directions' => {
+              'prev' => {}
+            },
+            'normalized' => 'chap'
+          }
+        }
       },
-      'structure' => {
-        'node_prev' => {}
-      }
+      'normalized' => 'Top'
+    }
+  },
+  {}
+];
+$result_nodes{'space_in_def_for_index'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'space_in_def_for_index'}[0];
+$result_nodes{'space_in_def_for_index'}[1] = $result_nodes{'space_in_def_for_index'}[0]{'extra'}{'node_directions'}{'next'};
+
+$result_menus{'space_in_def_for_index'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  },
+  {
+    'extra' => {
+      'normalized' => 'chap'
     }
   }
-};
-$result_nodes{'space_in_def_for_index'}{'structure'}{'node_next'}{'structure'}{'node_prev'} = $result_nodes{'space_in_def_for_index'};
-
-$result_menus{'space_in_def_for_index'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {}
-};
+];
 
 $result_errors{'space_in_def_for_index'} = [];
 

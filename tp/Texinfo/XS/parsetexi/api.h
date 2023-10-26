@@ -2,30 +2,25 @@
 #ifndef API_H
 #define API_H
 
-int init (int texinfo_uninstalled, char *srcdir_in);
+#include <config.h>
+#include "tree_types.h"
 
-int parse_file (char *filename);
-void parse_piece (char *, int line_nr);
-void parse_string (char *, int line_nr);
-void parse_text (char *, int line_nr);
+int parse_file (char *filename, char *input_file_name, char *input_directory);
+int parse_piece (char *, int line_nr);
+int parse_string (char *, int line_nr);
+int parse_text (char *, int line_nr);
 void reset_parser (int debug_output);
 void reset_parser_except_conf (void);
-void set_debug (int);
-void wipe_values (void);
-void reset_context_stack (void);
 
-void set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i);
-void conf_set_input_file_name_encoding (char *value);
-void conf_set_locale_encoding (char *value);
-void conf_set_documentlanguage_override (char *value);
-
-HV *build_texinfo_tree (void);
-AV *build_target_elements_list (void);
-AV *build_internal_xref_list (void);
-HV *build_float_list (void);
-HV *build_index_data (void);
-HV *build_global_info (void);
-HV *build_global_info2 (void);
-AV *get_errors (void);
+void parser_set_debug (int value);
+void parser_store_value (char *name, char *value);
+void parser_add_include_directory (char *filename);
+void parser_add_expanded_format (char *format);
+void parser_clear_expanded_formats (void);
+void parser_set_accept_internalvalue (int value);
+void parser_set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i);
+void parser_set_input_file_name_encoding (char *value);
+void parser_set_locale_encoding (char *value);
+void parser_set_documentlanguage_override (char *value);
 
 #endif

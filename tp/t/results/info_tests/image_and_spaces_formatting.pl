@@ -712,6 +712,7 @@ $result_trees{'image_and_spaces_formatting'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -761,19 +762,22 @@ Text. words       words.
 
 ';
 
-$result_nodes{'image_and_spaces_formatting'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'image_and_spaces_formatting'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'image_and_spaces_formatting'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'image_and_spaces_formatting'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'image_and_spaces_formatting'} = [];
 

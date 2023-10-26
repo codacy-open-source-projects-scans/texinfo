@@ -401,6 +401,7 @@ $result_trees{'sc_in_menu'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -721,6 +722,7 @@ $result_trees{'sc_in_menu'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'node'
       },
       'info' => {
@@ -786,51 +788,44 @@ EXAMPLE COMMENT
 
 ';
 
-$result_nodes{'sc_in_menu'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'first'
+$result_nodes{'sc_in_menu'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'first'
+    }
   },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'node'
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'up' => {}
       },
-      'structure' => {
-        'node_up' => {}
-      }
+      'normalized' => 'node'
     }
   }
-};
-$result_nodes{'sc_in_menu'}{'structure'}{'menu_child'}{'structure'}{'node_up'} = $result_nodes{'sc_in_menu'};
+];
+$result_nodes{'sc_in_menu'}[1]{'extra'}{'node_directions'}{'up'} = $result_nodes{'sc_in_menu'}[0];
 
-$result_menus{'sc_in_menu'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
+$result_menus{'sc_in_menu'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'first'
+    }
   },
-  'structure' => {
-    'menu_child' => {
-      'cmdname' => 'node',
-      'extra' => {
-        'normalized' => 'node'
+  {
+    'extra' => {
+      'menu_directions' => {
+        'up' => {}
       },
-      'structure' => {
-        'menu_up' => {},
-        'menu_up_hash' => {
-          'first' => 1
-        }
-      }
+      'normalized' => 'node'
     }
   }
-};
-$result_menus{'sc_in_menu'}{'structure'}{'menu_child'}{'structure'}{'menu_up'} = $result_menus{'sc_in_menu'};
+];
+$result_menus{'sc_in_menu'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'sc_in_menu'}[0];
 
 $result_errors{'sc_in_menu'} = [
   {

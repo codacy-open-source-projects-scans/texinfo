@@ -29,6 +29,8 @@ use Texinfo::Common;
 use Texinfo::Convert::Texinfo;
 use Texinfo::Structuring;
 
+my %sectioning_heading_commands = %Texinfo::Commands::sectioning_heading_commands;
+
 texinfo_set_from_init_file('contents', 1);
 texinfo_set_from_init_file('CONTENTS_OUTPUT_LOCATION', 'inline');
 texinfo_set_from_init_file('NO_TOP_NODE_OUTPUT', 1);
@@ -81,11 +83,15 @@ sub book_print_up_toc($$)
   my $result = '';
   my $current_command = $command;
   my @up_commands;
-  while (defined($current_command->{'structure'}->{'section_up'})
-           and ($current_command->{'structure'}->{'section_up'} ne $current_command)
-           and defined($current_command->{'structure'}->{'section_up'}->{'cmdname'})) {
-    unshift (@up_commands, $current_command->{'structure'}->{'section_up'});
-    $current_command = $current_command->{'structure'}->{'section_up'};
+  while ($current_command->{'extra'}->{'section_directions'}
+         and defined($current_command->{'extra'}->{'section_directions'}->{'up'})
+         and ($current_command->{'extra'}->{'section_directions'}->{'up'}
+                                                           ne $current_command)
+         and defined($current_command->{'extra'}->{'section_directions'}->{'up'}
+                                                                ->{'cmdname'})) {
+    unshift (@up_commands,
+                $current_command->{'extra'}->{'section_directions'}->{'up'});
+    $current_command = $current_command->{'extra'}->{'section_directions'}->{'up'};
   }
   # this happens for example for top tree unit
   return '' if !(@up_commands);
@@ -114,16 +120,16 @@ sub book_format_navigation_header($$$$)
   my $cmdname = shift;
   my $element = shift;
 
-  my $tree_unit = $element->{'structure'}->{'associated_unit'};
-  if ($tree_unit and $tree_unit->{'extra'}->{'unit_command'}
-      and not $tree_unit->{'extra'}->{'unit_command'}->{'cmdname'} eq 'node'
-      and ($tree_unit->{'contents'}->[0] eq $element
-          or (!$tree_unit->{'contents'}->[0]->{'cmdname'}
-              and $tree_unit->{'contents'}->[1] eq $element))
-      and defined($tree_unit->{'structure'}->{'unit_filename'})
+  my $output_unit = $element->{'associated_unit'};
+  if ($output_unit and $output_unit->{'unit_command'}
+      and not $output_unit->{'unit_command'}->{'cmdname'} eq 'node'
+      and ($output_unit->{'unit_contents'}->[0] eq $element
+          or (!$output_unit->{'unit_contents'}->[0]->{'cmdname'}
+              and $output_unit->{'unit_contents'}->[1] eq $element))
+      and defined($output_unit->{'unit_filename'})
       and $self->count_elements_in_filename('current',
-                         $tree_unit->{'structure'}->{'unit_filename'}) == 1) {
-    return book_print_up_toc($self, $tree_unit->{'extra'}->{'unit_command'}) .
+                         $output_unit->{'unit_filename'}) == 1) {
+    return book_print_up_toc($self, $output_unit->{'unit_command'}) .
        &{$self->default_formatting_function('format_navigation_header')}($self,
                                  $buttons, $cmdname, $element);
 
@@ -150,16 +156,17 @@ sub book_print_sub_toc($$$)
   if ($content_href) {
     $result .= "<li> "."<a href=\"$content_href\">$heading</a>" . " </li>\n";
   }
-  if ($command->{'structure'}->{'section_childs'}
-      and @{$command->{'structure'}->{'section_childs'}}) {
+  if ($command->{'extra'}->{'section_childs'}
+      and @{$command->{'extra'}->{'section_childs'}}) {
     $result .= '<li>'.$converter->html_attribute_class('ul', [$toc_numbered_mark_class])
      .">\n". book_print_sub_toc($converter, $parent_command,
-                                $command->{'structure'}->{'section_childs'}->[0])
+                                $command->{'extra'}->{'section_childs'}->[0])
      ."</ul></li>\n";
   }
-  if (exists($command->{'structure'}->{'section_next'})) {
+  if ($command->{'extra'}->{'section_directions'}
+      and exists($command->{'extra'}->{'section_directions'}->{'next'})) {
     $result .= book_print_sub_toc($converter, $parent_command,
-                                  $command->{'structure'}->{'section_next'});
+                  $command->{'extra'}->{'section_directions'}->{'next'});
   }
   return $result;
 }
@@ -178,7 +185,7 @@ sub book_convert_heading_command($$$$$)
   my $result = '';
 
   # No situation where this could happen
-  if ($self->in_string) {
+  if ($self->in_string()) {
     $result .= $self->command_text($element, 'string') ."\n"
       if ($cmdname ne 'node');
     $result .= $content if (defined($content));
@@ -187,27 +194,28 @@ sub book_convert_heading_command($$$$$)
 
   my $element_id = $self->command_id($element);
 
-  print STDERR "CONVERT elt heading $element "
+  print STDERR "CONVERT elt heading "
+        # uncomment next line for the perl object name
+        #."$element "
         .Texinfo::Convert::Texinfo::root_heading_command_to_texinfo($element)."\n"
           if ($self->get_conf('DEBUG'));
-  my $tree_unit;
+  my $output_unit;
   if ($Texinfo::Commands::root_commands{$element->{'cmdname'}}
-      and $element->{'structure'}->{'associated_unit'}) {
-    $tree_unit = $element->{'structure'}->{'associated_unit'};
+      and $element->{'associated_unit'}) {
+    $output_unit = $element->{'associated_unit'};
   }
   my $element_header = '';
-  if ($tree_unit) {
+  if ($output_unit) {
     $element_header = &{$self->formatting_function('format_element_header')}(
-                                        $self, $cmdname, $element, $tree_unit);
+                                        $self, $cmdname, $element, $output_unit);
   }
 
   my $tables_of_contents = '';
-  my $structuring = $self->get_info('structuring');
   if ($self->get_conf('CONTENTS_OUTPUT_LOCATION') eq 'after_top'
       and $cmdname eq 'top'
-      and $structuring and $structuring->{'sectioning_root'}
-      and scalar(@{$structuring->{'sections_list'}}) > 1) {
-    foreach my $content_command_name ('contents', 'shortcontents') {
+      and $self->{'sections_list'}
+      and scalar(@{$self->{'sections_list'}}) > 1) {
+    foreach my $content_command_name ('shortcontents', 'contents') {
       if ($self->get_conf($content_command_name)) {
         my $contents_text
           = $self->_contents_inline_element($content_command_name, undef);
@@ -220,14 +228,14 @@ sub book_convert_heading_command($$$$$)
 
   my $sub_toc = '';
   if ($tables_of_contents eq ''
-      and $element->{'structure'}->{'section_childs'}
-      and @{$element->{'structure'}->{'section_childs'}}
+      and $element->{'extra'}->{'section_childs'}
+      and @{$element->{'extra'}->{'section_childs'}}
       # FIXME why not @top?
       and $cmdname ne 'top'
       and $Texinfo::Commands::sectioning_heading_commands{$cmdname}) {
     $sub_toc .= $self->html_attribute_class('ul', [$toc_numbered_mark_class]).">\n";
     $sub_toc .= book_print_sub_toc($self, $element,
-                                  $element->{'structure'}->{'section_childs'}->[0]);
+                                 $element->{'extra'}->{'section_childs'}->[0]);
     $sub_toc .= "</ul>\n";
   }
 
@@ -235,10 +243,17 @@ sub book_convert_heading_command($$$$$)
       and $Texinfo::Commands::root_commands{$cmdname}) {
     my $in_skipped_node_top
       = $self->shared_conversion_state('in_skipped_node_top', 0);
+    my $node_element;
     if ($cmdname eq 'node') {
-      if ($$in_skipped_node_top == 0
-          and $element->{'extra'}
-          and $element->{'extra'}->{'normalized'} eq 'Top') {
+      $node_element = $element;
+    } elsif ($cmdname eq 'part' and $element->{'extra'}
+             and $element->{'extra'}->{'part_following_node'}) {
+      $node_element = $element->{'extra'}->{'part_following_node'};
+    }
+    if ($node_element or $cmdname eq 'part') {
+      if ($node_element and $node_element->{'extra'}
+          and $node_element->{'extra'}->{'normalized'}
+          and $node_element->{'extra'}->{'normalized'} eq 'Top') {
         $$in_skipped_node_top = 1;
       } elsif ($$in_skipped_node_top == 1) {
         $$in_skipped_node_top = -1;
@@ -257,7 +272,8 @@ sub book_convert_heading_command($$$$$)
 
   my @heading_classes;
   my $level_corrected_cmdname = $cmdname;
-  if (defined $element->{'structure'}->{'section_level'}) {
+  if ($element->{'extra'}
+      and defined $element->{'extra'}->{'section_level'}) {
     # if the level was changed, use a consistent command name
     $level_corrected_cmdname
       = Texinfo::Structuring::section_level_adjusted_command_name($element);
@@ -271,14 +287,18 @@ sub book_convert_heading_command($$$$$)
   # preceding the section, or the section itself
   my $opening_section;
   my $level_corrected_opening_section_cmdname;
-  if ($cmdname eq 'node' and $element->{'extra'}->{'associated_section'}) {
+  if ($cmdname eq 'node'
+      and $element->{'extra'}
+      and $element->{'extra'}->{'associated_section'}) {
     $opening_section = $element->{'extra'}->{'associated_section'};
     $level_corrected_opening_section_cmdname
-     = Texinfo::Structuring::section_level_adjusted_command_name($opening_section);
+     = Texinfo::Structuring::section_level_adjusted_command_name(
+                                                             $opening_section);
   } elsif ($cmdname ne 'node'
            # if there is an associated node, it is not a section opening
            # the section was opened before when the node was encountered
-           and not $element->{'extra'}->{'associated_node'}
+           and (not $element->{'extra'}
+                or not $element->{'extra'}->{'associated_node'})
            # to avoid *heading* @-commands
            and $Texinfo::Commands::root_commands{$cmdname}) {
     $opening_section = $element;
@@ -291,22 +311,51 @@ sub book_convert_heading_command($$$$$)
   my $heading_level;
   # node is used as heading if there is nothing else.
   if ($cmdname eq 'node') {
-    # FIXME what to do if the $tree_unit extra does not contain any
-    # unit_command, but tree_unit is defined (it can contain only 'first_in_page')
-    if ((!$tree_unit # or !$tree_unit->{'extra'}
-         # or !$tree_unit->{'extra'}->{'unit_command'}
-         or ($tree_unit->{'extra'}->{'unit_command'}
-             and $tree_unit->{'extra'}->{'unit_command'} eq $element
-             and not $element->{'extra'}->{'associated_section'}))
+    # FIXME what to do if the $output_unit extra does not contain any
+    # unit_command, but tree_unit is defined (it can contain only
+    # 'first_in_page')
+    if ((!$output_unit
+         # or !$output_unit->{'unit_command'}
+         or ($output_unit->{'unit_command'}
+             and $output_unit->{'unit_command'} eq $element
+             and (not $element->{'extra'}
+                  or not $element->{'extra'}->{'associated_section'})))
+        and defined($element->{'extra'})
         and defined($element->{'extra'}->{'normalized'})) {
       if ($element->{'extra'}->{'normalized'} eq 'Top') {
         $heading_level = 0;
       } else {
-        $heading_level = 3;
+        my $use_next_heading = 0;
+        if ($self->get_conf('USE_NEXT_HEADING_FOR_LONE_NODE')) {
+          my $expanded_format_raw
+             = $self->shared_conversion_state('expanded_format_raw', {});
+          # if no format is expanded, the formats will be checked each time
+          # but this is very unlikely, as html is always expanded.
+          if (length(keys(%$expanded_format_raw)) == 0) {
+            foreach my $output_format_command
+                (keys(%Texinfo::Comon::texinfo_output_formats)) {
+              if ($self->is_format_expanded($output_format_command)) {
+                $expanded_format_raw->{$output_format_command} = 1;
+              }
+            }
+          }
+          my $next_heading
+            = Texinfo::Convert::Utils::find_root_command_next_heading_command(
+                     $element, $expanded_format_raw,
+                     ($self->get_conf('CONTENTS_OUTPUT_LOCATION') eq 'inline'));
+          if ($next_heading) {
+            $use_next_heading = 1;
+          }
+        }
+        if (!$use_next_heading) {
+          # use node
+          $heading_level = 3;
+        }
       }
     }
-  } elsif (defined $element->{'structure'}->{'section_level'}) {
-    $heading_level = $element->{'structure'}->{'section_level'};
+  } elsif ($element->{'extra'}
+           and defined($element->{'extra'}->{'section_level'})) {
+    $heading_level = $element->{'extra'}->{'section_level'};
   } else {
     # for *heading* @-commands which do not have a level
     # in the document as they are not associated with the
@@ -320,7 +369,7 @@ sub book_convert_heading_command($$$$$)
   # if set, the id is associated to the heading text
   my $heading_id;
   if ($opening_section) {
-    my $level = $opening_section->{'structure'}->{'section_level'};
+    my $level = $opening_section->{'extra'}->{'section_level'};
     $result .= join('', $self->close_registered_sections_level($level));
     $self->register_opened_section_level($level, "</div>\n");
 
@@ -353,13 +402,12 @@ sub book_convert_heading_command($$$$$)
   if ($do_heading) {
     if ($self->get_conf('TOC_LINKS')
         and $Texinfo::Commands::root_commands{$cmdname}
-        and $Texinfo::Commands::sectioning_heading_commands{$cmdname}) {
+        and $sectioning_heading_commands{$cmdname}) {
       my $content_href = $self->command_contents_href($element, 'contents');
       if ($content_href ne '') {
         $heading = "<a href=\"$content_href\">$heading</a>";
       }
     }
-
 
     my $heading_class = $level_corrected_cmdname;
     unshift @heading_classes, $heading_class;
@@ -374,7 +422,7 @@ sub book_convert_heading_command($$$$$)
       $result .= &{$self->formatting_function('format_heading_text')}($self,
                      $level_corrected_cmdname, \@heading_classes, $heading,
                      $heading_level +$self->get_conf('CHAPTER_HEADER_LEVEL') -1,
-                     $heading_id, $element);
+                     $heading_id, $element, $element_id);
     }
   } elsif (defined($heading_id)) {
     # case of a lone node and no header, and case of an empty @top
@@ -384,6 +432,7 @@ sub book_convert_heading_command($$$$$)
 
   $result .= $tables_of_contents;
   $result .= $sub_toc;
+
   $result .= $content if (defined($content));
 
   return $result;
@@ -395,10 +444,10 @@ foreach my $command (keys(%Texinfo::Commands::sectioning_heading_commands),
                                 \&book_convert_heading_command);
 }
 
-sub book_element_file_name($$$$)
+sub book_unit_file_name($$$$)
 {
   my $converter = shift;
-  my $element = shift;
+  my $output_unit = shift;
   my $filename = shift;
   my $filepath = shift;
 
@@ -416,20 +465,20 @@ sub book_element_file_name($$$$)
   my $prefix = $converter->{'document_name'};
   my $new_file_name;
   my $command;
-  if ($element->{'extra'}->{'unit_command'}) {
-    if ($element->{'extra'}->{'unit_command'}->{'cmdname'} ne 'node') {
-      $command = $element->{'extra'}->{'unit_command'};
-    } elsif ($element->{'extra'}->{'unit_command'}->{'extra'}
-             and $element->{'extra'}->{'unit_command'}->{'extra'}->{'associated_section'}) {
-      $command = $element->{'extra'}->{'unit_command'}->{'extra'}->{'associated_section'};
+  if ($output_unit->{'unit_command'}) {
+    if ($output_unit->{'unit_command'}->{'cmdname'} ne 'node') {
+      $command = $output_unit->{'unit_command'};
+    } elsif ($output_unit->{'unit_command'}->{'extra'}
+             and $output_unit->{'unit_command'}->{'extra'}->{'associated_section'}) {
+      $command = $output_unit->{'unit_command'}->{'extra'}->{'associated_section'};
     }
   }
   return undef unless ($command);
-  if ($converter->element_is_tree_unit_top($element)) {
+  if ($converter->unit_is_top_output_unit($output_unit)) {
     $new_file_name = "${prefix}_top.html";
-  } elsif (defined($command->{'structure'}->{'section_number'})
-           and ($command->{'structure'}->{'section_number'} ne '')) {
-    my $number = $command->{'structure'}->{'section_number'};
+  } elsif (defined($command->{'extra'}->{'section_number'})
+           and ($command->{'extra'}->{'section_number'} ne '')) {
+    my $number = $command->{'extra'}->{'section_number'};
     $number .= '.' unless ($number =~ /\.$/);
     $new_file_name = "${prefix}_$number" . 'html';
   } else {
@@ -441,7 +490,7 @@ sub book_element_file_name($$$$)
   return ($new_file_name, undef);
 }
 
-texinfo_register_file_id_setting_function('tree_unit_file_name',
-                                          \&book_element_file_name);
+texinfo_register_file_id_setting_function('unit_file_name',
+                                          \&book_unit_file_name);
 
 1;

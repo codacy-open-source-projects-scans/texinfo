@@ -74,6 +74,7 @@ $result_trees{'accentenc'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -2305,7 +2306,7 @@ should be dotless j": j"
 ';
 
 $result_sectioning{'accentenc'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -2315,37 +2316,37 @@ $result_sectioning{'accentenc'} = {
             'extra' => {
               'normalized' => 'first'
             }
-          }
-        },
-        'structure' => {
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'accentenc'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'accentenc'};
+$result_sectioning{'accentenc'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'accentenc'};
 
-$result_nodes{'accentenc'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'normalized' => 'first'
+$result_nodes{'accentenc'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
+      },
+      'normalized' => 'first'
+    }
   }
-};
+];
 
-$result_menus{'accentenc'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
+$result_menus{'accentenc'} = [
+  {
+    'extra' => {
+      'normalized' => 'first'
+    }
   }
-};
+];
 
 $result_errors{'accentenc'} = [];
 

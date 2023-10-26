@@ -10,7 +10,6 @@ $result_trees{'float_in_block_commands'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         },
         {
@@ -132,6 +131,7 @@ $result_trees{'float_in_block_commands'} = {
               'extra' => {
                 'caption' => {},
                 'float_type' => 'Text',
+                'is_target' => 1,
                 'normalized' => 'in-example'
               },
               'info' => {
@@ -300,6 +300,7 @@ $result_trees{'float_in_block_commands'} = {
               'extra' => {
                 'caption' => {},
                 'float_type' => 'Text',
+                'is_target' => 1,
                 'normalized' => 'in-quotation'
               },
               'info' => {
@@ -468,6 +469,7 @@ $result_trees{'float_in_block_commands'} = {
               'extra' => {
                 'caption' => {},
                 'float_type' => 'Text',
+                'is_target' => 1,
                 'normalized' => 'in-cartouche'
               },
               'info' => {
@@ -582,11 +584,9 @@ $result_floats{'float_in_block_commands'} = {
             'float' => {}
           }
         },
+        'float_number' => '1',
         'float_type' => 'Text',
         'normalized' => 'in-example'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     },
     {
@@ -598,11 +598,9 @@ $result_floats{'float_in_block_commands'} = {
             'float' => {}
           }
         },
+        'float_number' => '2',
         'float_type' => 'Text',
         'normalized' => 'in-quotation'
-      },
-      'structure' => {
-        'float_number' => 2
       }
     },
     {
@@ -614,11 +612,9 @@ $result_floats{'float_in_block_commands'} = {
             'float' => {}
           }
         },
+        'float_number' => '3',
         'float_type' => 'Text',
         'normalized' => 'in-cartouche'
-      },
-      'structure' => {
-        'float_number' => 3
       }
     }
   ]

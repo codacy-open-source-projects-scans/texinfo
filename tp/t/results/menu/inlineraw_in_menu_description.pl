@@ -29,6 +29,7 @@ $result_trees{'inlineraw_in_menu_description'} = {
       ],
       'cmdname' => 'node',
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'first'
       },
       'info' => {
@@ -275,7 +276,7 @@ end inlineraw
 ';
 
 $result_sectioning{'inlineraw_in_menu_description'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
@@ -284,68 +285,41 @@ $result_sectioning{'inlineraw_in_menu_description'} = {
             'cmdname' => 'node',
             'extra' => {
               'normalized' => 'first'
-            },
-            'structure' => {}
-          }
-        },
-        'structure' => {
+            }
+          },
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'inlineraw_in_menu_description'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'inlineraw_in_menu_description'};
+$result_sectioning{'inlineraw_in_menu_description'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'inlineraw_in_menu_description'};
 
-$result_nodes{'inlineraw_in_menu_description'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'associated_section' => {
-      'cmdname' => 'top',
-      'extra' => {},
-      'structure' => {}
-    },
-    'menus' => [
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'manual'
-          }
-        ]
+$result_nodes{'inlineraw_in_menu_description'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'associated_section' => {
+        'cmdname' => 'top',
+        'extra' => {}
       },
-      'type' => 'menu_entry_node'
+      'normalized' => 'first'
     }
   }
-};
+];
 
-$result_menus{'inlineraw_in_menu_description'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'first'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'manual'
-          }
-        ]
-      },
-      'type' => 'menu_entry_node'
+$result_menus{'inlineraw_in_menu_description'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {}
+      ],
+      'normalized' => 'first'
     }
   }
-};
+];
 
 $result_errors{'inlineraw_in_menu_description'} = [];
 

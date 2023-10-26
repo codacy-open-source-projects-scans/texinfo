@@ -25,7 +25,6 @@ $result_trees{'simplest_test_prefix'} = {
           'type' => 'preamble_before_beginning'
         },
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         }
       ],
@@ -77,6 +76,7 @@ $result_trees{'simplest_test_prefix'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -119,19 +119,22 @@ This is a very simple texi manual   <>.
 
 ';
 
-$result_nodes{'simplest_test_prefix'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'simplest_test_prefix'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
-$result_menus{'simplest_test_prefix'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'simplest_test_prefix'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   }
-};
+];
 
 $result_errors{'simplest_test_prefix'} = [];
 

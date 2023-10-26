@@ -31,6 +31,8 @@ use Data::Dumper;
 use Carp qw(cluck carp confess);
 use Encode qw(decode);
 
+use Texinfo::Convert::ConvertXS;
+
 use Texinfo::Commands;
 use Texinfo::Common;
 use Texinfo::Convert::Unicode;
@@ -51,7 +53,25 @@ use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.0.92';
+$VERSION = '7.1';
+
+our $module_loaded = 0;
+sub import {
+  if (!$module_loaded) {
+    if (defined $ENV{TEXINFO_XS_CONVERT}
+        and $ENV{TEXINFO_XS_CONVERT} eq '1') {
+      # We do not simply override, we must check at runtime
+      # that the document tree was stored by the XS parser.
+      Texinfo::XSLoader::override(
+        "Texinfo::Convert::Text::_convert_tree_with_XS",
+        "Texinfo::Convert::ConvertXS::text_convert_tree"
+      );
+    }
+    $module_loaded = 1;
+  }
+  # The usual import method
+  goto &Exporter::import;
+}
 
 
 # this is in fact not needed for 'footnote', 'shortcaption', 'caption'
@@ -65,9 +85,13 @@ foreach my $ignored_brace_command (#'xref','ref','pxref','inforef',
 
 my %ignored_block_commands;
 foreach my $ignored_command ('titlepage', 'copying', 'documentdescription',
-  'html', 'tex', 'xml', 'docbook', 'latex', 'ignore', 'macro', 'rmacro',
-  'linemacro', 'nodedescriptionblock') {
+  'ignore', 'macro', 'rmacro', 'linemacro', 'nodedescriptionblock') {
   $ignored_block_commands{$ignored_command} = 1;
+}
+
+my %ignored_format_raw_commands;
+foreach my $ignored_command ('html', 'tex', 'xml', 'docbook', 'latex') {
+  $ignored_format_raw_commands{$ignored_command} = 1;
 }
 
 # used by Texinfo::Convert::NodeNormalization
@@ -136,7 +160,8 @@ our %text_brace_no_arg_commands = (
                'click'           => '', # specially treated
 );
 
-my %sort_brace_no_arg_commands = (
+# used in C commands table generation
+our %sort_brace_no_arg_commands = (
   'copyright' => 'C',
   'registeredsymbol' => 'R',
   'today' => 't',
@@ -193,7 +218,7 @@ sub _ascii_accents($$;$)
   my $stack = shift;
   my $set_case = shift;
 
-  if ($set_case and $result =~ /^\w$/) {
+  if ($set_case and $result =~ /^\w+$/) {
     if ($set_case > 0) {
       $result = uc($result);
     } else {
@@ -226,13 +251,13 @@ sub text_accents($;$$)
   my $encoding = shift;
   my $set_case = shift;
 
-  my ($contents, $stack)
+  my ($contents_element, $stack)
       = Texinfo::Convert::Utils::find_innermost_accent_contents($accent);
 
   my $options = {};
   $options->{'enabled_encoding'} = $encoding if (defined($encoding));
   $options->{'sc'} = $set_case if (defined($set_case));
-  my $text = convert_to_text({'contents' => $contents}, $options);
+  my $text = convert_to_text($contents_element, $options);
 
   my $result = Texinfo::Convert::Unicode::encoded_accents(undef, $text,
                      $stack, $encoding, \&ascii_accent_fallback, $set_case);
@@ -282,6 +307,9 @@ sub brace_no_arg_command($;$)
   if ($options and $Texinfo::Commands::letter_no_arg_commands{$command}) {
     if ($options->{'sc'}) {
       $result = uc($result);
+    # NOTE does not seems to be set anywhere.  Not a big deal to keep it,
+    # but if it become used, it should be checked whether code elsewhere
+    # should be changed to look for lc too.  XS should be ok.
     } elsif ($options->{'lc'}) {
       $result = lc($result);
     }
@@ -312,6 +340,7 @@ sub text_heading($$$;$$)
   chomp($text);
   $text = Texinfo::Convert::Utils::add_heading_number($converter, $current,
                                                       $text, $numbered);
+  # What about non-ascii spaces?
   return '' if ($text !~ /\S/);
   my $result = $text ."\n";
   if (defined($indent_length)) {
@@ -323,16 +352,22 @@ sub text_heading($$$;$$)
     $indent_length = 0;
   }
   my $section_level;
-  if (!defined($current->{'structure'})
-      or !defined($current->{'structure'}->{'section_level'})) {
+  if (!defined($current->{'extra'})
+      or !defined($current->{'extra'}->{'section_level'})) {
     $section_level = Texinfo::Common::section_level($current);
   } else {
-    $section_level = $current->{'structure'}->{'section_level'};
+    $section_level = $current->{'extra'}->{'section_level'};
   }
+  # $text is indented if indent_length is set, so $indent_length need to
+  # be substracted to have the width of heading only.
   $result .= ($underline_symbol{$section_level}
      x (Texinfo::Convert::Unicode::string_width($text) - $indent_length))."\n";
   return $result;
 }
+
+my @text_indicator_converter_options = ('NUMBER_SECTIONS', 'ASCII_GLYPH', 'TEST',
+    # for error registering,
+    'DEBUG');
 
 # TODO not documented, used in many converters
 # $SELF is typically a converter object.
@@ -353,17 +388,81 @@ sub copy_options_for_convert_text($;$)
           and $self->get_conf('OUTPUT_ENCODING_NAME') ne 'us-ascii')) {
     $options{'enabled_encoding'} = $self->get_conf('OUTPUT_ENCODING_NAME');
   }
-  $options{'TEST'} = 1 if ($self->get_conf('TEST'));
-  $options{'NUMBER_SECTIONS'} = $self->get_conf('NUMBER_SECTIONS');
-  $options{'converter'} = $self;
+
+  foreach my $option (@text_indicator_converter_options) {
+    my $conf = $self->get_conf($option);
+    if ($conf) {
+      $options{$option} = 1;
+    } elsif (defined($conf)) {
+      $options{$option} = 0;
+    }
+  }
   $options{'expanded_formats_hash'} = $self->{'expanded_formats_hash'};
   # for locate_include_file
   $options{'INCLUDE_DIRECTORIES'} = $self->get_conf('INCLUDE_DIRECTORIES');
-  # for error registering
-  $options{'DEBUG'} = $self->get_conf('DEBUG');
+  # FIXME remove
   $options{'PROGRAM'} = $self->get_conf('PROGRAM');
-  $options{'ASCII_GLYPH'} = $self->get_conf('ASCII_GLYPH');
+
+  $options{'converter'} = $self;
   return %options;
+}
+
+# encode to UTF-8 bytes before passing to XS code.  Specific
+# text options are in general ASCII strings, but this is still
+# cleaner.  Also encode and select converter options passed.
+sub encode_text_options($)
+{
+  my $options = shift;
+  my $encoded_options = {};
+
+  foreach my $option ('enabled_encoding') {
+    if (defined($options->{$option})) {
+      $encoded_options->{$option}
+        = Encode::encode("UTF-8", $options->{$option});
+    }
+  }
+
+  foreach my $option (@text_indicator_converter_options,
+                      'INCLUDE_DIRECTORIES',
+                      # non-converter indicator options
+                      'sc', 'code', 'sort_string') {
+    if (defined($options->{$option})) {
+      $encoded_options->{$option} = $options->{$option};
+    }
+  }
+
+  if (defined($options->{'expanded_formats_hash'})) {
+    my $expanded_formats = [];
+    foreach my $format (keys(%{$options->{'expanded_formats_hash'}})) {
+      push @$expanded_formats, Encode::encode("UTF-8", $format);
+    }
+    $encoded_options->{'expanded_formats'} = $expanded_formats;
+  }
+
+  # called through convert_to_text with a converter in text options
+  if ($options->{'converter'}
+      and $options->{'converter'}->{'conf'}) {
+    my $encoded_converter_options
+     = Texinfo::Common::encode_options($options->{'converter'}->{'conf'});
+    $encoded_options->{'other_converter_options'} = $encoded_converter_options;
+  }
+
+  my $encoded_converter_options
+    = Texinfo::Common::encode_options($options);
+  $encoded_options->{'self_converter_options'} = $encoded_converter_options;
+
+  return $encoded_options;
+}
+
+# This is used if the document is available for XS, but XS is not
+# used (most likely $TEXINFO_XS_CONVERT is 0).
+sub _convert_tree_with_XS($$;$)
+{
+  my $encoded_options = shift;
+  my $root = shift;
+  my $options = shift;
+
+  return _convert($root, $options);
 }
 
 sub convert_to_text($;$)
@@ -371,16 +470,35 @@ sub convert_to_text($;$)
   my $root = shift;
   my $options = shift;
 
+  if (ref($root) ne 'HASH') {
+    cluck;
+  }
+
   #print STDERR "CONVERT\n";
   # this is needed for locate_include_file which uses
   # $configurations_information->get_conf() and thus requires a blessed
   # reference.
+  $options = {} if (!defined($options));
   if (defined($options)) {
     bless $options;
     if ($options->{'code'}) {
       $options->{'_code_state'} = 1;
     }
   }
+
+  # Interface with XS converter.
+  if (defined($root->{'tree_document_descriptor'})) {
+    my $encoded_options = encode_text_options($options);
+    my $XS_result = _convert_tree_with_XS($encoded_options, $root, $options);
+    if (defined ($XS_result)) {
+      return $XS_result;
+    } else {
+      my $result = _convert($root, $options);
+      print STDERR "NO XS Text: $root->{'tree_document_descriptor'}\n";
+      cluck();
+    }
+  }
+
   return _convert($root, $options);
 }
 
@@ -390,8 +508,6 @@ sub _convert($;$)
 {
   my $element = shift;
   my $options = shift;
-
-  $options = {} if (!defined($options));
 
   #print STDERR "E: c: ".(defined($options->{'_code_state'})
   #                         ? $options->{'_code_state'} : 'UNDEF')
@@ -407,7 +523,8 @@ sub _convert($;$)
      and (($element->{'type'} and $ignored_types{$element->{'type'}})
           or ($element->{'cmdname'}
              and ($ignored_brace_commands{$element->{'cmdname'}}
-                 or ($ignored_block_commands{$element->{'cmdname'}}
+                 or $ignored_block_commands{$element->{'cmdname'}}
+                 or ($ignored_format_raw_commands{$element->{'cmdname'}}
                      and !(defined($options->{'expanded_formats_hash'})
                            and $options->{'expanded_formats_hash'}
                                                     ->{$element->{'cmdname'}}))
@@ -439,10 +556,18 @@ sub _convert($;$)
       # the tree documentlanguage corresponds to the documentlanguage
       # at the place of the tree, but the converter may want to use
       # another documentlanguage, for instance the documentlanguage at
-      # the end of th epreamble, so we let the converter set it.
+      # the end of the preamble, so we let the converter set it.
       #my $tree = $options->{'converter'}->gdt($element->{'text'}, undef,
       #                  undef, $element->{'extra'}->{'documentlanguage'});
-      my $tree = $options->{'converter'}->gdt($element->{'text'});
+      my $tree;
+      if ($element->{'extra'}
+          and $element->{'extra'}->{'translation_context'}) {
+        $tree = $options->{'converter'}->pgdt(
+                            $element->{'extra'}->{'translation_context'},
+                            $element->{'text'});
+      } else {
+        $tree = $options->{'converter'}->gdt($element->{'text'});
+      }
       $result = _convert($tree, $options);
     } else {
       $result = $element->{'text'};
@@ -480,7 +605,7 @@ sub _convert($;$)
         my($sec, $min, $hour, $mday, $mon, $year, $wday, $yday, $isdst)
           = localtime(time);
         $year += ($year < 70) ? 2000 : 1900;
-        return "$Texinfo::Convert::Utils::MONTH_NAMES[$mon] $mday, $year";
+        return "$Texinfo::Convert::Utils::month_name[$mon] $mday, $year";
       }
     } elsif (defined($text_brace_no_arg_commands{$element->{'cmdname'}})) {
       return brace_no_arg_command($element, $options);
@@ -495,13 +620,13 @@ sub _convert($;$)
       $options->{'_code_state'}--;
       return $text;
     } elsif ($element->{'cmdname'} eq 'email') {
-      $options->{'_code_state'}++;
-      my $mail = _convert($element->{'args'}->[0], $options);
-      $options->{'_code_state'}--;
       my $text;
       $text = _convert($element->{'args'}->[1], $options)
          if (defined($element->{'args'}->[1]));
       return $text if (defined($text) and ($text ne ''));
+      $options->{'_code_state'}++;
+      my $mail = _convert($element->{'args'}->[0], $options);
+      $options->{'_code_state'}--;
       return $mail;
     } elsif ($element->{'cmdname'} eq 'uref' or $element->{'cmdname'} eq 'url') {
       my $replacement;
@@ -610,9 +735,19 @@ sub _convert($;$)
           $result = "\n" x $sp_nr;
         }
       } elsif ($element->{'cmdname'} eq 'verbatiminclude') {
-        my $verbatim_include_verbatim
-          = Texinfo::Convert::Utils::expand_verbatiminclude(
-                               $options->{'converter'}, $options, $element);
+        my $verbatim_include_verbatim;
+        if ($options->{'converter'}) {
+          # NOTE we use $options->{'converter'} both for error registration
+          # and for other uses of customization information, to get the same
+          # output as for the main $options->{'converter'}.
+          $verbatim_include_verbatim
+            = Texinfo::Convert::Utils::expand_verbatiminclude(
+                $options->{'converter'}, $options->{'converter'}, $element);
+        } else {
+          $verbatim_include_verbatim
+            = Texinfo::Convert::Utils::expand_verbatiminclude(undef,
+                                                        $options, $element);
+        }
         if (defined($verbatim_include_verbatim)) {
           $result .= _convert($verbatim_include_verbatim, $options);
         }
@@ -646,7 +781,7 @@ sub _convert($;$)
 
       if ($arguments) {
         push @contents, {'text' => ' '};
-        push @contents, @$arguments;
+        push @contents, $arguments;
       }
       push @contents, {'text' => "\n"};
       $options->{'_code_state'}++;
@@ -698,21 +833,13 @@ sub _convert($;$)
 
 # Implement the converters API, but as simply as possible
 # initialization
-sub converter($)
+sub converter($;$)
 {
   my $class = shift;
-  my $conf;
+  my $conf = shift;
+
   my $converter = {};
-  if (ref($class) eq 'HASH') {
-    $conf = $class;
-    bless $converter;
-  } elsif (defined($class)) {
-    bless $converter, $class;
-    $conf = shift;
-  } else {
-    bless $converter;
-    $conf = shift;
-  }
+  bless $converter, $class;
 
   if ($conf) {
     %{$converter} = %{$conf};
@@ -720,28 +847,12 @@ sub converter($)
   }
 
   my $expanded_formats = $converter->{'EXPANDED_FORMATS'};
-  if ($converter->{'parser'}) {
-    $converter->{'parser_info'} = $converter->{'parser'}->global_information();
+  if ($converter->{'document'}) {
+    $converter->{'document_info'}
+       = $converter->{'document'}->global_information();
     $converter->{'global_commands'}
-       = $converter->{'parser'}->global_commands_information();
-    foreach my $global_command ('documentencoding') {
-      if (defined($converter->{'global_commands'}->{$global_command})) {
-        my $element = $converter->{'global_commands'}->{$global_command}->[0];
-        if ($global_command eq 'documentencoding'
-            and defined($element->{'extra'})
-            and defined($element->{'extra'}->{'input_encoding_name'})) {
-          $converter->{'OUTPUT_ENCODING_NAME'}
-             = $element->{'extra'}->{'input_encoding_name'};
-          # can be undef
-          $converter->{'OUTPUT_PERL_ENCODING'}
-             = Texinfo::Common::element_associated_processing_encoding($element);
-        }
-      }
-    }
-    if (!$expanded_formats and $converter->{'parser'}->{'EXPANDED_FORMATS'}) {
-      $expanded_formats = $converter->{'parser'}->{'EXPANDED_FORMATS'};
-    }
-    delete $converter->{'parser'};
+       = $converter->{'document'}->global_commands_information();
+    delete $converter->{'document'};
   }
   if ($expanded_formats) {
     $converter->{'expanded_formats_hash'} = {};
@@ -750,10 +861,10 @@ sub converter($)
     }
   }
 
-  Texinfo::Common::set_output_encodings($converter, $converter->{'parser_info'})
-    if ($converter->{'parser_info'});
+  Texinfo::Common::set_output_encodings($converter,
+                                        $converter->{'document_info'})
+    if ($converter->{'document_info'});
 
-  bless $converter;
   return $converter;
 }
 
@@ -762,15 +873,22 @@ sub convert_tree($$)
   my $self = shift;
   my $element = shift;
 
-  return _convert($element);
+  my $options = {};
+
+  return _convert($element, $options);
 }
 
+# FIXME set options with $self if defined?
 sub convert($$)
 {
   my $self = shift;
-  my $element = shift;
+  my $document = shift;
 
-  return _convert($element);
+  my $root = $document->tree();
+
+  my $options = {};
+
+  return _convert($root, $options);
 }
 
 # determine outfile and output to that file
@@ -778,11 +896,14 @@ my $STDIN_DOCU_NAME = 'stdin';
 sub output($$)
 {
   my $self = shift;
-  my $tree = shift;
+  my $document = shift;
+
+  my $root = $document->tree();
+
   #print STDERR "OUTPUT\n";
   my $input_basename;
-  if (defined($self->{'parser_info'}->{'input_file_name'})) {
-    my $input_file_name = $self->{'parser_info'}->{'input_file_name'};
+  if (defined($self->{'document_info'}->{'input_file_name'})) {
+    my $input_file_name = $self->{'document_info'}->{'input_file_name'};
     my $encoding = $self->{'COMMAND_LINE_ENCODING'};
     if (defined($encoding)) {
       $input_file_name = decode($encoding, $input_file_name);
@@ -872,7 +993,22 @@ sub output($$)
   # reference, merge specific Text options with $self (possibly
   # overwriting/ignoring but values should be the same).
   %$self = (%$self, %options);
-  my $result = _convert($tree, $self);
+
+  my $result;
+  # Interface with XS converter.
+  if (defined($root->{'tree_document_descriptor'})) {
+    my $encoded_options = encode_text_options($self);
+    my $XS_result = _convert_tree_with_XS($encoded_options, $root, $self);
+    if (defined ($XS_result)) {
+      $result = $XS_result;
+    } else {
+      print STDERR "NO XS Text: $root->{'tree_document_descriptor'}\n";
+      cluck();
+    }
+  } else {
+    $result = _convert($root, $self);
+  }
+
   if ($fh) {
     print $fh $result;
     Texinfo::Common::output_files_register_closed(

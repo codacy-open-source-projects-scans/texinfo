@@ -49,6 +49,7 @@ $result_trees{'double_top_section'} = {
           'type' => 'empty_line'
         }
       ],
+      'extra' => {},
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -94,6 +95,7 @@ $result_trees{'double_top_section'} = {
           'type' => 'paragraph'
         }
       ],
+      'extra' => {},
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -131,34 +133,38 @@ Second top.
 ';
 
 $result_sectioning{'double_top_section'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'top',
-        'structure' => {
+        'extra' => {
+          'section_directions' => {},
           'section_level' => 0,
-          'section_up' => {}
+          'sectioning_root' => {},
+          'toplevel_directions' => {}
         }
       },
       {
         'cmdname' => 'top',
-        'structure' => {
+        'extra' => {
+          'section_directions' => {
+            'prev' => {}
+          },
           'section_level' => 0,
-          'section_prev' => {},
-          'section_up' => {},
-          'toplevel_prev' => {},
-          'toplevel_up' => {}
+          'toplevel_directions' => {
+            'prev' => {},
+            'up' => {}
+          }
         }
       }
     ],
     'section_level' => -1
   }
 };
-$result_sectioning{'double_top_section'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'double_top_section'};
-$result_sectioning{'double_top_section'}{'structure'}{'section_childs'}[1]{'structure'}{'section_prev'} = $result_sectioning{'double_top_section'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'double_top_section'}{'structure'}{'section_childs'}[1]{'structure'}{'section_up'} = $result_sectioning{'double_top_section'};
-$result_sectioning{'double_top_section'}{'structure'}{'section_childs'}[1]{'structure'}{'toplevel_prev'} = $result_sectioning{'double_top_section'}{'structure'}{'section_childs'}[0];
-$result_sectioning{'double_top_section'}{'structure'}{'section_childs'}[1]{'structure'}{'toplevel_up'} = $result_sectioning{'double_top_section'}{'structure'}{'section_childs'}[0];
+$result_sectioning{'double_top_section'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'double_top_section'};
+$result_sectioning{'double_top_section'}{'extra'}{'section_childs'}[1]{'extra'}{'section_directions'}{'prev'} = $result_sectioning{'double_top_section'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'double_top_section'}{'extra'}{'section_childs'}[1]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'double_top_section'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'double_top_section'}{'extra'}{'section_childs'}[1]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'double_top_section'}{'extra'}{'section_childs'}[0];
 
 $result_errors{'double_top_section'} = [
   {

@@ -33,6 +33,7 @@ $result_trees{'section_on_index_entry_line'} = {
             ]
           },
           'info' => {
+            'command_name' => 'cindex',
             'spaces_before_argument' => {
               'text' => ' '
             }
@@ -81,6 +82,9 @@ $result_trees{'section_on_index_entry_line'} = {
           'type' => 'paragraph'
         }
       ],
+      'extra' => {
+        'section_number' => '1'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -109,21 +113,21 @@ Somethin
 ';
 
 $result_sectioning{'section_on_index_entry_line'} = {
-  'structure' => {
+  'extra' => {
     'section_childs' => [
       {
         'cmdname' => 'section',
-        'structure' => {
+        'extra' => {
           'section_level' => 2,
-          'section_number' => 1,
-          'section_up' => {}
+          'section_number' => '1',
+          'sectioning_root' => {}
         }
       }
     ],
     'section_level' => 1
   }
 };
-$result_sectioning{'section_on_index_entry_line'}{'structure'}{'section_childs'}[0]{'structure'}{'section_up'} = $result_sectioning{'section_on_index_entry_line'};
+$result_sectioning{'section_on_index_entry_line'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'section_on_index_entry_line'};
 
 $result_errors{'section_on_index_entry_line'} = [
   {

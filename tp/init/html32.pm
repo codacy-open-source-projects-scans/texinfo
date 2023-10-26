@@ -44,8 +44,6 @@ texinfo_set_from_init_file('COMPLEX_FORMAT_IN_TABLE', 1);
 
 texinfo_set_from_init_file('DOCTYPE', '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 3.2//EN" "http://www.w3.org/TR/html32/loose.dtd">');
 
-texinfo_set_from_init_file('FRAMESET_DOCTYPE', texinfo_get_conf('DOCTYPE'));
-
 texinfo_set_from_init_file('BODYTEXT', 'bgcolor="#FFFFFF" text="#000000" link="#0000FF" vlink="#800080" alink="#FF0000"');
 
 texinfo_set_from_init_file('BEFORE_SHORT_TOC_LINES', '');
@@ -183,10 +181,10 @@ sub html32_convert_explained_command($$$$)
 
   my $with_explanation;
 
-  return '' if (!$args->[0] or !defined($args->[0]->{'normal'})
+  return '' if (!defined($args->[0]) or !defined($args->[0]->{'normal'})
                 or $args->[0]->{'normal'} !~ /\S/);
 
-  if ($args->[1] and defined($args->[1]->{'string'})
+  if (defined($args->[1]) and defined($args->[1]->{'string'})
                  and $args->[1]->{'string'} =~ /\S/) {
     $with_explanation = 1;
   }
@@ -334,6 +332,10 @@ sub html32_convert_center_command($$$$)
   my $command = shift;
   my $args = shift;
 
+  if (!defined($args->[0])) {
+    return '';
+  }
+
   if ($self->in_string()) {
     # FIXME use an API?
     return $self->{'types_conversion'}->{'preformatted'}($self, $cmdname, $command,
@@ -397,7 +399,8 @@ sub html32_convert_subtitle_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  return '' if (!$args->[0]);
+  return '' if (! defined($args->[0]));
+
   if (!$self->in_string()) {
     return "<h3 align=\"right\">$args->[0]->{'normal'}</h3>\n";
   } else {

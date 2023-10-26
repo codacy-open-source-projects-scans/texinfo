@@ -53,6 +53,7 @@ $result_trees{'double_top'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -133,6 +134,9 @@ $result_trees{'double_top'} = {
             }
           ],
           'cmdname' => 'anchor',
+          'extra' => {
+            'normalized' => 'Top'
+          },
           'source_info' => {
             'file_name' => '',
             'line_nr' => 5,
@@ -149,6 +153,9 @@ $result_trees{'double_top'} = {
           'type' => 'paragraph'
         }
       ],
+      'extra' => {
+        'normalized' => 'Top'
+      },
       'info' => {
         'spaces_before_argument' => {
           'text' => ' '
@@ -180,24 +187,43 @@ $result_texts{'double_top'} = '
 .
 ';
 
-$result_nodes{'double_top'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_nodes{'double_top'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {}
+      },
+      'normalized' => 'Top'
+    }
   },
-  'structure' => {
-    'node_next' => {}
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'prev' => {},
+        'up' => {}
+      },
+      'normalized' => 'Top'
+    }
   }
-};
-$result_nodes{'double_top'}{'structure'}{'node_next'} = $result_nodes{'double_top'};
+];
+$result_nodes{'double_top'}[0]{'extra'}{'node_directions'}{'next'} = $result_nodes{'double_top'}[0];
+$result_nodes{'double_top'}[1]{'extra'}{'node_directions'}{'prev'} = $result_nodes{'double_top'}[0];
+$result_nodes{'double_top'}[1]{'extra'}{'node_directions'}{'up'} = $result_nodes{'double_top'}[0];
 
-$result_menus{'double_top'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
+$result_menus{'double_top'} = [
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
   },
-  'structure' => {}
-};
+  {
+    'extra' => {
+      'normalized' => 'Top'
+    }
+  }
+];
 
 $result_errors{'double_top'} = [
   {
@@ -245,6 +271,15 @@ $result_errors{'double_top'} = [
     'line_nr' => 1,
     'macro' => '',
     'text' => 'Next pointer `top\' (for node `ToP\') different from node name `ToP\'',
+    'type' => 'warning'
+  },
+  {
+    'error_line' => 'warning: Up pointer `Top\' (for node `top\') different from node name `ToP\'
+',
+    'file_name' => '',
+    'line_nr' => 3,
+    'macro' => '',
+    'text' => 'Up pointer `Top\' (for node `top\') different from node name `ToP\'',
     'type' => 'warning'
   }
 ];
@@ -307,6 +342,8 @@ Next: <a href="#Top" accesskey="n" rel="next">ToP</a> &nbsp; </p>
 
 <hr>
 <div class="nav-panel">
+<p>
+Previous: <a href="#Top" accesskey="p" rel="prev">ToP</a>, Up: <a href="#Top" accesskey="u" rel="up">ToP</a> &nbsp; </p>
 </div>
 
 <p>.

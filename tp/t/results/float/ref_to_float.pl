@@ -10,7 +10,6 @@ $result_trees{'ref_to_float'} = {
     {
       'contents' => [
         {
-          'contents' => [],
           'type' => 'preamble_before_content'
         },
         {
@@ -87,6 +86,7 @@ $result_trees{'ref_to_float'} = {
           ],
           'extra' => {
             'float_type' => 'Text',
+            'is_target' => 1,
             'normalized' => 'Label1'
           },
           'info' => {
@@ -174,6 +174,7 @@ $result_trees{'ref_to_float'} = {
           ],
           'extra' => {
             'float_type' => '',
+            'is_target' => 1,
             'normalized' => 'Label2'
           },
           'info' => {
@@ -305,11 +306,9 @@ $result_floats{'ref_to_float'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => '',
         'normalized' => 'Label2'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ],
@@ -317,11 +316,9 @@ $result_floats{'ref_to_float'} = {
     {
       'cmdname' => 'float',
       'extra' => {
+        'float_number' => '1',
         'float_type' => 'Text',
         'normalized' => 'Label1'
-      },
-      'structure' => {
-        'float_number' => 1
       }
     }
   ]

@@ -263,6 +263,7 @@ $result_trees{'multiple_menus'} = {
         }
       ],
       'extra' => {
+        'is_target' => 1,
         'normalized' => 'Top'
       },
       'info' => {
@@ -302,55 +303,39 @@ $result_texts{'multiple_menus'} = '
 * (b)b::
 ';
 
-$result_nodes{'multiple_menus'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'menus' => [
-      {
-        'cmdname' => 'menu'
+$result_nodes{'multiple_menus'} = [
+  {
+    'cmdname' => 'node',
+    'extra' => {
+      'node_directions' => {
+        'next' => {
+          'extra' => {
+            'manual_content' => [
+              {
+                'text' => 'a'
+              }
+            ],
+            'normalized' => 'a'
+          },
+          'type' => 'menu_entry_node'
+        }
       },
-      {
-        'cmdname' => 'menu'
-      }
-    ],
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'b'
-          }
-        ],
-        'normalized' => 'b'
-      },
-      'type' => 'menu_entry_node'
-    },
-    'node_next' => {}
-  }
-};
-$result_nodes{'multiple_menus'}{'structure'}{'node_next'} = $result_nodes{'multiple_menus'}{'structure'}{'menu_child'};
-
-$result_menus{'multiple_menus'} = {
-  'cmdname' => 'node',
-  'extra' => {
-    'normalized' => 'Top'
-  },
-  'structure' => {
-    'menu_child' => {
-      'extra' => {
-        'manual_content' => [
-          {
-            'text' => 'b'
-          }
-        ],
-        'normalized' => 'b'
-      },
-      'type' => 'menu_entry_node'
+      'normalized' => 'Top'
     }
   }
-};
+];
+
+$result_menus{'multiple_menus'} = [
+  {
+    'extra' => {
+      'menus' => [
+        {},
+        {}
+      ],
+      'normalized' => 'Top'
+    }
+  }
+];
 
 $result_errors{'multiple_menus'} = [
   {

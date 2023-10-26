@@ -30,10 +30,12 @@
 
 #include "ppport.h"
 
-#include "parser.h"
 #include "api.h"
-#include "indices.h"
+#include "conf.h"
+#include "build_perl_info.h"
 #include "input.h"
+/* for clear_document_errors */
+#include "document.h"
 
 MODULE = Texinfo::Parser	PACKAGE = Texinfo::Parser
 
@@ -50,81 +52,69 @@ PROTOTYPES: ENABLE
 # Called from Texinfo::XSLoader.pm.  The arguments are not actually used.
 # file path, can be in any encoding
 int
-init (texinfo_uninstalled, srcdir)
+init (texinfo_uninstalled, builddir)
      int texinfo_uninstalled
-     char *srcdir = (char *)SvPVbyte_nolen($arg);
-
-void
-wipe_errors ()
-
-# file path, can be in any encoding
-int
-parse_file(filename)
-        char *filename = (char *)SvPVbyte_nolen($arg);
-
-void
-parse_piece(string, line_nr)
-        char *string = (char *)SvPVbyte_nolen($arg);
-        int line_nr
-
-void
-parse_string(string, line_nr)
-        char *string = (char *)SvPVbyte_nolen($arg);
-        int line_nr
-
-void
-parse_text(string, line_nr)
-        char *string = (char *)SvPVbyte_nolen($arg);
-        int line_nr
-
-void
-store_value (name, value)
-        char *name = (char *)SvPVbyte_nolen($arg);
-        char *value = (char *)SvPVbyte_nolen($arg);
-
-void
-wipe_values ()
-
-void
-reset_context_stack ()
-
-void
-init_index_commands ()
-
-# file path, can be in any encoding
-void
-add_include_directory (filename)
-        char *filename = (char *)SvPVbyte_nolen($arg);
-
-HV *
-build_texinfo_tree ()
-
-AV *
-build_target_elements_list ()
-
-AV *
-build_internal_xref_list ()
-
-HV *
-build_float_list ()
-
-HV *
-build_index_data ()
-
-HV *
-build_global_info ()
-
-HV *
-build_global_info2 ()
+     char *builddir = (char *)SvPVbyte_nolen($arg);
 
 void
 reset_parser (int debug_output)
 
-void
-clear_expanded_formats ()
+# file path, can be in any encoding
+int
+parse_file(filename, input_file_name, input_directory)
+        char *filename = (char *)SvPVbyte_nolen($arg);
+        char *input_file_name = (char *)SvPVbyte_nolen($arg);
+        char *input_directory = (char *)SvPVbyte_nolen($arg);
+
+int
+parse_piece(string, line_nr)
+        char *string = (char *)SvPVbyte_nolen($arg);
+        int line_nr
+
+int
+parse_string(string, line_nr)
+        char *string = (char *)SvPVbyte_nolen($arg);
+        int line_nr
+
+int
+parse_text(string, line_nr)
+        char *string = (char *)SvPVbyte_nolen($arg);
+        int line_nr
+
+# note that giving optional arguments, like: int no_store=0
+# would have been nice, but in that case an undef value cannot be passed
+# and leads to a perl warning
+SV *
+build_document (int document_descriptor, ...)
+      PROTOTYPE: $;$
+      PREINIT:
+        int no_store = 0;
+      CODE:
+        if (items > 1)
+          if (SvOK(ST(1)))
+            no_store = SvIV (ST(1));
+        RETVAL = build_document (document_descriptor, no_store);
+      OUTPUT:
+        RETVAL
 
 void
-add_expanded_format (format)
+clear_document_errors (int document_descriptor)
+
+void
+parser_store_value (name, value)
+        char *name = (char *)SvPVbyte_nolen($arg);
+        char *value = (char *)SvPVbyte_nolen($arg);
+
+# file path, can be in any encoding
+void
+parser_add_include_directory (filename)
+        char *filename = (char *)SvPVbyte_nolen($arg);
+
+void
+parser_clear_expanded_formats ()
+
+void
+parser_add_expanded_format (format)
      char *format = (char *)SvPVbyte_nolen($arg);
 
 void
@@ -140,25 +130,23 @@ void
 conf_set_MAX_MACRO_CALL_NESTING (int i)
 
 void
-set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i)
+parser_set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i)
 
 void
-conf_set_input_file_name_encoding (value)
+parser_set_input_file_name_encoding (value)
      char *value = (char *)SvPVbyte_nolen($arg);
 
 void
-conf_set_locale_encoding (value)
+parser_set_locale_encoding (value)
      char *value = (char *)SvPVbyte_nolen($arg);
 
 void
-conf_set_documentlanguage_override (value)
+parser_set_documentlanguage_override (value)
      char *value = (char *)SvPVbyte_nolen($arg);
 
 void
-set_debug (int i)
+parser_set_debug (int i)
 
 void
-set_accept_internalvalue()
+parser_set_accept_internalvalue (int value)
 
-AV *
-get_errors ()

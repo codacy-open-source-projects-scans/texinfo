@@ -19,11 +19,25 @@
 #include <stdio.h>
 
 #include "parser.h"
-#include "debug.h"
+#include "tree_types.h"
+#include "tree.h"
 #include "text.h"
-#include "convert.h"
-#include "input.h"
+#include "counter.h"
+/* for command_name and others */
+#include "builtin_commands.h"
+#include "debug.h"
+#include "debug_parser.h"
+#include "errors.h"
+#include "context_stack.h"
+/* for parse_node_manual */
+#include "manipulate_tree.h"
+/* check_register_target_element_label and remember_internal_xref */
 #include "labels.h"
+/* for close_preformatted_command */
+#include "commands.h"
+#include "extra.h"
+#include "input.h"
+#include "convert_to_texinfo.h"
 
 ELEMENT *
 handle_open_brace (ELEMENT *current, char **line_inout)
@@ -176,7 +190,7 @@ handle_open_brace (ELEMENT *current, char **line_inout)
                   command_name (current->parent->cmd),
                   counter_value (&count_remaining_args, current->parent) > 0 ?
                    counter_value (&count_remaining_args, current->parent) : 0);
-      debug_print_element (current, 0); debug ("");
+      debug_parser_print_element (current, 0); debug ("");
     }
   else if (current->parent && (current->parent->cmd == CM_multitable
                                || current->parent->type == ET_def_line
@@ -419,9 +433,9 @@ handle_close_brace (ELEMENT *current, char **line_inout)
             {
               line_error ("@image missing filename argument");
             }
-          if (global_input_encoding_name)
+          if (global_info.input_encoding_name)
             add_extra_string_dup (image, "input_encoding_name",
-                                  global_input_encoding_name);
+                                  global_info.input_encoding_name);
         }
       else if (closed_command == CM_dotless)
         {
@@ -516,7 +530,8 @@ handle_close_brace (ELEMENT *current, char **line_inout)
               if (current->parent->cmd == CM_sortas)
                 {
                   int superfluous_arg;
-                  char *arg = convert_to_text (current, &superfluous_arg);
+                  char *arg = text_contents_to_plain_text (current,
+                                                           &superfluous_arg);
                   if (arg && *arg)
                     {
                       add_extra_string (index_elt,
@@ -584,10 +599,10 @@ handle_comma (ELEMENT *current, char **line_inout)
 
   if (command_data(current->cmd).data == BRACE_inline)
     {
-      KEY_PAIR *k;
+      KEY_PAIR *k_format;
       int expandp = 0;
-      k = lookup_extra (current, "format");
-      if (!k)
+      k_format = lookup_extra (current, "format");
+      if (!k_format)
         {
           ELEMENT *arg = 0;
           char *inline_type = 0;
@@ -612,7 +627,7 @@ handle_comma (ELEMENT *current, char **line_inout)
                   || current->cmd == CM_inlinefmt
                   || current->cmd == CM_inlinefmtifelse)
                 {
-                  if (format_expanded_p (inline_type))
+                  if (parser_format_expanded_p (inline_type))
                     {
                       expandp = 1;
                       add_extra_integer (current, "expand_index", 1);
