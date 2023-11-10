@@ -109,6 +109,14 @@ Texinfo::Translations::configure($localesdir);
 
 Locale::Messages::bindtextdomain('texinfo', $localesdir);
 
+# XS parser and not explicitely unset
+my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
+                        or $ENV{TEXINFO_XS} ne 'omit')
+                       and (not defined($ENV{TEXINFO_XS_PARSER})
+                            or $ENV{TEXINFO_XS_PARSER} eq '1')
+                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
+                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+
 my $generated_texis_dir = 't_texis';
 
 my $input_files_dir = $srcdir."t/input_files/";
@@ -217,6 +225,9 @@ sub protect_perl_string($)
   return $string;
 }
 
+# not that subdirectories are not compared, so subdirectories generated
+# by INFO_JS_DIR, if different, will not trigger an error in test, but
+# will lead to different directories and files for diffs..
 sub compare_dirs_files($$;$)
 {
   my $dir1 = shift;
@@ -742,11 +753,6 @@ sub output_preamble_postamble_latex($$)
   }
 }
 
-my $with_XS = ((not defined($ENV{TEXINFO_XS})
-                or $ENV{TEXINFO_XS} ne 'omit')
-               and (!defined $ENV{TEXINFO_XS_PARSER}
-                    or $ENV{TEXINFO_XS_PARSER} eq '1'));
-
 my %tested_transformations;
 
 # Run a single test case.  Each test case is an array
@@ -955,10 +961,10 @@ sub test($$)
   if (!$test_file) {
     if ($full_document) {
       print STDERR "  TEST FULL $test_name\n" if ($self->{'DEBUG'});
-      $document = $parser->parse_texi_text($test_text);
+      $document = $parser->parse_texi_text($test_text, undef, $XS_structuring);
     } else {
       print STDERR "  TEST $test_name\n" if ($self->{'DEBUG'});
-      $document = $parser->parse_texi_piece($test_text);
+      $document = $parser->parse_texi_piece($test_text, undef, $XS_structuring);
       if (defined($test_input_file_name)) {
         warn "ERROR: $self->{'name'}: $test_name: piece of texi with a file name\n";
       }
@@ -972,7 +978,7 @@ sub test($$)
     }
   } else {
     print STDERR "  TEST $test_name ($test_file)\n" if ($self->{'DEBUG'});
-    $document = $parser->parse_texi_file($test_file);
+    $document = $parser->parse_texi_file($test_file, $XS_structuring);
   }
   my $tree = $document->tree();
   my $registrar = $parser->registered_errors();
@@ -1000,7 +1006,7 @@ sub test($$)
                                         $document_information);
 
   my $global_commands = $document->global_commands_information();
-  if ($global_commands->{'novalidate'}) {
+  if ($document_information->{'novalidate'}) {
     $main_configuration->set_conf('novalidate', 1);
   }
 
@@ -1008,10 +1014,8 @@ sub test($$)
   # document XS
   $main_configuration->register_XS_document_main_configuration($document);
 
-  my $indices_information = $document->indices_information();
   if ($tree_transformations{'relate_index_entries_to_items'}) {
-    Texinfo::Common::relate_index_entries_to_table_items_in_tree($tree,
-                                                     $indices_information);
+    Texinfo::Common::relate_index_entries_to_table_items_in_tree($document);
   }
 
   if ($tree_transformations{'move_index_entries_after_items'}) {
@@ -1079,12 +1083,13 @@ sub test($$)
       }
     }
   }
-
+  # could be in a if !$XS_structuring, but the function should not be
+  # overriden already in that case
   $document = Texinfo::Structuring::rebuild_document($document);
   # should not actually be useful, as the same element should be reused.
   $tree = $document->tree();
 
-  if ($with_XS) {
+  if ($XS_structuring) {
     foreach my $error (@{$document->{'errors'}}) {
       $registrar->add_formatted_message($error);
     }
@@ -1093,6 +1098,8 @@ sub test($$)
   }
 
   my ($errors, $error_nrs) = $registrar->errors();
+
+  my $indices_information = $document->indices_information();
   # FIXME maybe it would be good to compare $merged_index_entries?
   my $merged_index_entries
      = Texinfo::Structuring::merge_indices($indices_information);
@@ -1129,15 +1136,15 @@ sub test($$)
   # and also to avoid having @inline* and raw output format @-commands
   # with elided contents especially parsed because they are ignored
   # and appearing as raw content in the tree in the output.
-  my %expanded_formats_hash;
+  my %expanded_formats;
   if ($parser_options->{'EXPANDED_FORMATS'}) {
     foreach my $expanded_format (@{$parser_options->{'EXPANDED_FORMATS'}}) {
-      $expanded_formats_hash{$expanded_format} = 1;
+      $expanded_formats{$expanded_format} = 1;
     }
   }
   my $converted_text
       = Texinfo::Convert::Text::convert_to_text($tree, {'TEST' => 1,
-                          'expanded_formats_hash' => \%expanded_formats_hash});
+                          'expanded_formats' => \%expanded_formats});
 
   my %converted;
   my %converted_errors;

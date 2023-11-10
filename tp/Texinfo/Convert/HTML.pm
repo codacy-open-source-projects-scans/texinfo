@@ -49,6 +49,8 @@ use strict;
 #no autovivification qw(fetch delete exists store strict);
 
 use Carp qw(cluck confess);
+# for abort
+#use POSIX;
 
 use File::Copy qw(copy);
 
@@ -58,6 +60,8 @@ use Encode qw(find_encoding decode encode);
 use charnames ();
 
 use Texinfo::Convert::ConvertXS;
+
+use Texinfo::XSLoader;
 
 use Texinfo::Commands;
 use Texinfo::Common;
@@ -82,7 +86,11 @@ require Exporter;
 use vars qw($VERSION @ISA);
 @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.1';
+$VERSION = '7.1dev';
+
+my $XS_convert = 0;
+$XS_convert = 1 if (defined $ENV{TEXINFO_XS_CONVERT}
+                    and $ENV{TEXINFO_XS_CONVERT} eq '1');
 
 our $module_loaded = 0;
 sub import {
@@ -94,36 +102,51 @@ sub import {
       "Texinfo::Convert::HTML::_entity_text",
       "Texinfo::MiscXS::entity_text");
 
-    Texinfo::XSLoader::override(
+    if ($XS_convert) {
+
+      Texinfo::XSLoader::override(
       "Texinfo::Convert::HTML::_XS_converter_initialize",
       "Texinfo::Convert::ConvertXS::html_converter_initialize_sv");
-    Texinfo::XSLoader::override(
+      Texinfo::XSLoader::override(
       "Texinfo::Convert::HTML::_XS_initialize_output_state",
       "Texinfo::Convert::ConvertXS::html_initialize_output_state");
-    Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_sort_sortable_index_entries_by_letter",
-      "Texinfo::Convert::ConvertXS::sort_sortable_index_entries_by_letter");
-    Texinfo::XSLoader::override(
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_finalize_output_state",
+      "Texinfo::Convert::ConvertXS::html_finalize_output_state");
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_new_document_context",
+      "Texinfo::Convert::ConvertXS::html_new_document_context");
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_pop_document_context",
+      "Texinfo::Convert::ConvertXS::html_pop_document_context");
+      Texinfo::XSLoader::override(
       "Texinfo::Convert::HTML::_XS_get_index_entries_sorted_by_letter",
       "Texinfo::Convert::ConvertXS::get_index_entries_sorted_by_letter");
-    Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_prepare_conversion_units",
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_prepare_conversion_units",
       "Texinfo::Convert::ConvertXS::html_prepare_conversion_units");
-    Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_prepare_units_directions_files",
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_prepare_units_directions_files",
       "Texinfo::Convert::ConvertXS::html_prepare_units_directions_files");
-    Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_prepare_output_units_global_targets",
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_prepare_output_units_global_targets",
       "Texinfo::Convert::ConvertXS::html_prepare_output_units_global_targets");
-    Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_translate_names",
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_translate_names",
       "Texinfo::Convert::ConvertXS::html_translate_names");
-    Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_html_convert_init",
-      "Texinfo::Convert::ConvertXS::html_convert_init");
-    Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_html_convert_convert",
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_prepare_title_titlepage",
+      "Texinfo::Convert::ConvertXS::html_prepare_title_titlepage");
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_html_convert_convert",
       "Texinfo::Convert::ConvertXS::html_convert_convert");
+      Texinfo::XSLoader::override(
+      "Texinfo::Convert::HTML::_html_convert_output",
+      "Texinfo::Convert::ConvertXS::html_convert_output");
+      #Texinfo::XSLoader::override(
+      #"Texinfo::Convert::HTML::_XS_html_convert_tree",
+      #"Texinfo::Convert::ConvertXS::html_convert_tree");
+    }
 
     $module_loaded = 1;
   }
@@ -655,7 +678,7 @@ sub is_format_expanded($$)
   my $self = shift;
   my $format = shift;
 
-  return $self->{'expanded_formats_hash'}->{$format};
+  return $self->{'expanded_formats'}->{$format};
 }
 
 # the main data structure of the element target API is a hash reference, called
@@ -1148,7 +1171,9 @@ sub command_text($$;$)
                                           and $target->{'tree_nonumber'});
     return $tree if ($type eq 'tree' or $type eq 'tree_nonumber');
 
-    $self->_new_document_context($command->{'cmdname'}, $explanation);
+    my $context_name = $command->{'cmdname'};
+    $context_name = $command->{'type'} if (!defined($context_name));
+    $self->_new_document_context($context_name, $explanation);
 
     if ($type eq 'string') {
       $tree = {'type' => '_string',
@@ -1520,11 +1545,13 @@ sub direction_string($$$;$)
       } else {
         $converted_tree = $translated_tree;
       }
+      my $context_str = "DIRECTION $direction ($string_type/$context)";
       # FIXME calling convert_tree_new_formatting_context may remove
       # $self->{'directions_strings'}->{$string_type}->{$direction}, that was
       # set above if not already existing.
-      my $result_string = $self->convert_tree_new_formatting_context($converted_tree,
-                             "direction $direction", undef, "direction $direction");
+      my $result_string
+         = $self->convert_tree_new_formatting_context($converted_tree,
+                 $context_str, undef, $context_str);
       $self->{'directions_strings'}->{$string_type}->{$direction} = {}
           if (not $self->{'directions_strings'}->{$string_type}->{$direction});
       $self->{'directions_strings'}->{$string_type}->{$direction}->{$context}
@@ -1822,9 +1849,14 @@ sub register_file_information($$;$)
   my $key = shift;
   my $value = shift;
 
-  $self->{'files_information'}->{$self->{'current_filename'}} = {}
-    if (!$self->{'files_information'}->{$self->{'current_filename'}});
-  $self->{'files_information'}->{$self->{'current_filename'}}->{$key} = $value;
+  if (!defined ($self->{'current_filename'})) {
+    cluck();
+  }
+
+  $self->{'html_files_information'}->{$self->{'current_filename'}} = {}
+    if (!$self->{'html_files_information'}->{$self->{'current_filename'}});
+  $self->{'html_files_information'}->{$self->{'current_filename'}}->{$key}
+    = $value;
 }
 
 sub get_file_information($$;$)
@@ -1837,12 +1869,12 @@ sub get_file_information($$;$)
     $filename = $self->{'current_filename'};
   }
   if (not defined($filename)
-      or not $self->{'files_information'}
-      or not $self->{'files_information'}->{$filename}
-      or not exists($self->{'files_information'}->{$filename}->{$key})) {
+      or not $self->{'html_files_information'}
+      or not $self->{'html_files_information'}->{$filename}
+      or not exists($self->{'html_files_information'}->{$filename}->{$key})) {
     return (0, undef);
   }
-  return (1, $self->{'files_information'}->{$filename}->{$key})
+  return (1, $self->{'html_files_information'}->{$filename}->{$key})
 }
 
 # information from converter available 'read-only', in general set up before
@@ -2312,23 +2344,9 @@ my %default_translated_directions_strings = (
   }
 );
 
-sub _XS_translate_names($)
-{
-}
-
-sub _translate_names($;$)
+sub _translate_names($)
 {
   my $self = shift;
-  my $do_XS = shift;
-
-  if ($do_XS and $self->{'converter_descriptor'}) {
-    my $encoded_conf = Texinfo::Common::encode_options($self->{'conf'});
-    my $encoded_converter
-             = {'converter_descriptor' => $self->{'converter_descriptor'},
-                'conf' => $encoded_conf,
-               };
-    _XS_translate_names($encoded_converter);
-  }
 
   print STDERR "\nTRANSLATE_NAMES encoding_name: "
     .$self->get_conf('OUTPUT_ENCODING_NAME')
@@ -2404,46 +2422,24 @@ sub _translate_names($;$)
 
 # redefined functions
 #
-# Texinfo::Translations::gdt redefined to call user defined function.
-sub gdt($$;$$$)
+# Texinfo::Translations::translate_string redefined to call user defined function.
+sub translate_string($$;$$)
 {
-  my ($self, $message, $replaced_substrings, $message_context, $lang) = @_;
-  if (defined($self->{'formatting_function'}->{'format_translate_message_tree'})) {
-    my $format_lang = $lang;
-    $format_lang = $self->get_conf('documentlanguage')
-                           if ($self and !defined($format_lang));
-    my $result_tree
-      = &{$self->{'formatting_function'}->{'format_translate_message_tree'}}($self,
-                                 $message, $format_lang, $replaced_substrings,
-                                 $message_context);
-    if (defined($result_tree)) {
-      return $result_tree;
-    }
-  }
-  return $self->SUPER::gdt($message, $replaced_substrings, $message_context,
-                           $lang);
-}
-
-# Texinfo::Translations::gdt_string redefined to call user defined function.
-sub gdt_string($$;$$$)
-{
-  my ($self, $message, $replaced_substrings, $message_context, $lang) = @_;
-  if (defined($self->{'formatting_function'}->{'format_translate_message_string'})) {
+  my ($self, $string, $translation_context, $lang) = @_;
+  if (defined($self->{'formatting_function'}->{'format_translate_message'})) {
     my $format_lang = $lang;
     $format_lang = $self->get_conf('documentlanguage')
                            if ($self and !defined($format_lang));
     my $translated_string
-      = &{$self->{'formatting_function'}->{'format_translate_message_string'}}($self,
-                                 $message, $format_lang, $replaced_substrings,
-                                 $message_context);
+      = &{$self->{'formatting_function'}->{'format_translate_message'}}($self,
+                                 $string, $format_lang, $translation_context);
     if (defined($translated_string)) {
       return $translated_string;
     }
   }
-  return $self->SUPER::gdt_string($message, $replaced_substrings, $message_context,
-                                  $lang);
-}
 
+  return $self->SUPER::translate_string($string, $translation_context, $lang);
+}
 
 sub converter_defaults($$)
 {
@@ -2986,10 +2982,10 @@ sub _convert_style_command($$$$)
   my $args = shift;
 
   my $text;
-  $text = $args->[0]->{'normal'} if ($args->[0]);
-  if (!defined($text)) {
+  if ($args and $args->[0]) {
+    $text = $args->[0]->{'normal'};
+  } else {
     # happens with bogus @-commands without argument, like @strong something
-    #cluck "text not defined in _convert_style_command";
     return '';
   }
 
@@ -3044,9 +3040,9 @@ sub _convert_w_command($$$$)
   my $args = shift;
 
   my $text;
-  $text = $args->[0]->{'normal'} if ($args->[0]);
-
-  if (!defined($text)) {
+  if ($args and $args->[0]) {
+    $text = $args->[0]->{'normal'};
+  } else {
     $text = '';
   }
   if ($self->in_string()) {
@@ -3077,7 +3073,10 @@ sub _convert_email_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  my $args_nr = scalar(@$args);
+  my $args_nr = 0;
+  if ($args) {
+    $args_nr = scalar(@$args);
+  }
 
   my $mail = '';
   my $mail_string = '';
@@ -3129,7 +3128,7 @@ sub _convert_explained_command($$$$)
   $explained_commands->{$cmdname} = {} if (!$explained_commands->{$cmdname});
   my $element_explanation_contents
     = $self->shared_conversion_state('element_explanation_contents', {});
-  if ($args->[1] and defined($args->[1]->{'string'})
+  if ($args and $args->[1] and defined($args->[1]->{'string'})
                  and $args->[1]->{'string'} =~ /\S/) {
     $with_explanation = 1;
     $explanation_string = $args->[1]->{'string'};
@@ -3175,7 +3174,7 @@ sub _convert_explained_command($$$$)
     $element_explanation_contents->{$command} = [];
   }
   my $result = '';
-  if (defined($args->[0])) {
+  if ($args and defined($args->[0])) {
     $result = $args->[0]->{'normal'};
   }
   if (!$self->in_string()) {
@@ -3308,7 +3307,11 @@ sub _convert_uref_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  my $args_nr = scalar(@$args);
+  my $args_nr = 0;
+
+  if ($args) {
+    $args_nr = scalar(@$args);
+  }
 
   my $text = '';
   my $url = '';
@@ -3347,7 +3350,7 @@ sub _convert_image_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  if (defined($args->[0])
+  if ($args and defined($args->[0])
       and defined($args->[0]->{'filenametext'})
       and $args->[0]->{'filenametext'} ne '') {
     my $basefile_string = '';
@@ -3388,7 +3391,12 @@ sub _convert_math_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  my $arg = $args->[0]->{'normal'};
+  my $arg;
+  if ($args and $args->[0]) {
+    $arg = $args->[0]->{'normal'};
+  } else {
+    return '';
+  }
 
   my $math_type = $self->get_conf('HTML_MATH');
   if ($math_type and $math_type eq 'mathjax') {
@@ -3552,7 +3560,13 @@ sub _convert_indicateurl_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  my $text = $args->[0]->{'normal'};
+  my $text;
+  if ($args and $args->[0]) {
+    $text = $args->[0]->{'normal'};
+  } else {
+    return '';
+  }
+
   if (!defined($text)) {
     # happens with bogus @-commands without argument, like @strong something
     return '';
@@ -3577,14 +3591,14 @@ sub _convert_titlefont_command($$$$)
   my $command = shift;
   my $args = shift;
 
+  my $text;
+  if ($args and $args->[0]) {
+    $text = $args->[0]->{'normal'};
+  } else {
   # happens with empty command
-  return '' if (!$args->[0]);
-
-  my $text = $args->[0]->{'normal'};
-  if (!defined($text)) {
-    # happens with bogus @-commands without argument, like @strong something
     return '';
   }
+
   return &{$self->formatting_function('format_heading_text')}($self, $cmdname,
                                                          [$cmdname], $text, 0);
 }
@@ -3597,16 +3611,14 @@ sub _convert_U_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  my $arg;
-  $arg = $args->[0]->{'normal'} if ($args->[0]);
-  my $res;
-  if (defined($arg) and $arg ne '') {
-    # checks on the value already done in Parser, just output it here.
-    $res = "&#x$arg;";
-  } else {
-    $res = '';
+  if ($args and $args->[0]) {
+    my $arg = $args->[0]->{'normal'};
+    if ($arg ne '') {
+      # checks on the value already done in Parser, just output it here.
+      return "&#x$arg;";
+    }
   }
-  return $res;
+  return '';
 }
 $default_commands_conversion{'U'} = \&_convert_U_command;
 
@@ -4489,6 +4501,8 @@ sub _convert_raw_command($$$$$)
   my $args = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   if ($cmdname eq 'html') {
     return $content;
   }
@@ -4568,6 +4582,8 @@ sub _convert_preformatted_command($$$$$)
   my $args = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   my @classes;
 
   # this is mainly for classes as there are purprosely no classes
@@ -4625,6 +4641,8 @@ sub _convert_indented_command($$$$$)
   my $args = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   my @classes;
 
   my $main_cmdname;
@@ -4657,6 +4675,8 @@ sub _convert_verbatim_command($$$$$)
   my $args = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   if (!$self->in_string()) {
     return $self->html_attribute_class('pre', [$cmdname]).'>'
           .$content . '</pre>';
@@ -4674,6 +4694,8 @@ sub _convert_displaymath_command($$$$$)
   my $command = shift;
   my $args = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   if ($self->in_string()) {
     return $content;
@@ -4722,6 +4744,8 @@ sub _convert_command_simple_block($$$$$)
   my $command = shift;
   my $args = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   return $self->html_attribute_class('div', [$cmdname]).'>'
         .$content.'</div>';
@@ -4806,7 +4830,7 @@ sub _convert_author_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  return '' if (!$args->[0] or !$command->{'extra'}
+  return '' if (!$args or !$args->[0] or !$command->{'extra'}
                 or !$command->{'extra'}->{'titlepage'});
   if (!$self->in_string()) {
     return $self->html_attribute_class('strong', [$cmdname])
@@ -4825,7 +4849,7 @@ sub _convert_title_command($$$$)
   my $cmdname = shift;
   my $command = shift;
   my $args = shift;
-  return '' if (!$args->[0]);
+  return '' if (!$args or !$args->[0]);
   if (!$self->in_string()) {
     return $self->html_attribute_class('h1', [$cmdname])
                             .">$args->[0]->{'normal'}</h1>\n";
@@ -4842,7 +4866,7 @@ sub _convert_subtitle_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  return '' if (!$args->[0]);
+  return '' if (!$args or !$args->[0]);
   if (!$self->in_string()) {
     return $self->html_attribute_class('h3', [$cmdname])
                             .">$args->[0]->{'normal'}</h3>\n";
@@ -4944,6 +4968,8 @@ sub _convert_menu_command($$$$$)
   my $args = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   return $content if ($cmdname eq 'detailmenu');
 
   my $html_menu_entry_index
@@ -4980,6 +5006,8 @@ sub _convert_float_command($$$$$)
   my $command = shift;
   my $args = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   my ($caption, $prepended)
      = Texinfo::Convert::Converter::float_name_caption($self, $command);
@@ -5064,6 +5092,8 @@ sub _convert_quotation_command($$$$$)
   my $args = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   $self->cancel_pending_formatted_inline_content($cmdname);
 
   my @classes;
@@ -5111,10 +5141,12 @@ sub _convert_cartouche_command($$$$$)
   my $args = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   return $content if ($self->in_string());
 
   my $title_content = '';
-  if ($args->[0] and $args->[0]->{'normal'} ne '') {
+  if ($args and $args->[0] and $args->[0]->{'normal'} ne '') {
     $title_content = "<tr><th>\n". $args->[0]->{'normal'} ."</th></tr>";
   }
   my $cartouche_content = '';
@@ -5138,6 +5170,8 @@ sub _convert_itemize_command($$$$$)
   my $command = shift;
   my $args = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   if ($self->in_string()) {
     return $content;
@@ -5196,12 +5230,12 @@ sub _convert_enumerate_command($$$$$)
   my $args = shift;
   my $content = shift;
 
-  if ($self->in_string()) {
+  if (!defined($content) or $content eq '') {
+    return '';
+  } elsif ($self->in_string()) {
     return $content;
   }
-  if ($content eq '') {
-    return '';
-  }
+
   my $type_attribute = '';
   my $start_attribute = '';
   my $specification = $command->{'extra'}->{'enumerate_specification'};
@@ -5233,6 +5267,8 @@ sub _convert_multitable_command($$$$$)
   my $args = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   if ($self->in_string()) {
     return $content;
   }
@@ -5253,6 +5289,8 @@ sub _convert_xtable_command($$$$$)
   my $command = shift;
   my $args = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   if ($self->in_string()) {
     return $content;
@@ -5275,6 +5313,8 @@ sub _convert_item_command($$$$$)
   my $command = shift;
   my $args = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   if ($self->in_string()) {
     return $content;
@@ -5364,6 +5404,8 @@ sub _convert_tab_command($$$$$)
       $fractions = " width=\"$fraction%\"";
     }
   }
+
+  $content = '' if (!defined($content));
 
   $content =~ s/^\s*//;
   $content =~ s/\s*$//;
@@ -6310,6 +6352,8 @@ sub _convert_paragraph_type($$$$)
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   $content = $self->get_associated_formatted_inline_content($element).$content;
 
   if ($self->paragraph_number() == 1) {
@@ -6385,10 +6429,7 @@ sub _convert_preformatted_type($$$$)
   my $element = shift;
   my $content = shift;
 
-  if (!defined($content)) {
-    cluck "content undef in _convert_preformatted_type "
-       .Texinfo::Common::debug_print_element($element, 1);
-  }
+  $content = '' if (!defined($content));
 
   $content = $self->get_associated_formatted_inline_content($element).$content;
 
@@ -6442,6 +6483,8 @@ sub _convert_balanced_braces_type($$$$) {
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   return $content;
 }
 
@@ -6475,6 +6518,8 @@ sub _convert_definfoenclose_type($$$$) {
   my $type = shift;
   my $element = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   # FIXME add a span to mark the original command as a class?
   return &{$self->formatting_function('format_protect_text')}($self,
@@ -6635,7 +6680,10 @@ sub _convert_row_type($$$$) {
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   return $content if ($self->in_string());
+
   if ($content =~ /\S/) {
     my $result = '<tr>' . $content . '</tr>';
     if ($element->{'contents'}
@@ -6657,7 +6705,10 @@ sub _convert_multitable_head_type($$$$) {
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   return $content if ($self->in_string());
+
   if ($content =~ /\S/) {
     return '<thead>' . $content . '</thead>' . "\n";
   } else {
@@ -6921,6 +6972,8 @@ sub _convert_menu_comment_type($$$$)
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   if ($self->_in_preformatted_in_menu() or $self->in_string()) {
     return $content;
   } else {
@@ -6938,7 +6991,7 @@ sub _convert_before_item_type($$$$)
   my $element = shift;
   my $content = shift;
 
-  return '' if ($content !~ /\S/);
+  return '' if (!defined ($content) or $content !~ /\S/);
   return $content if ($self->in_string());
   my $top_block_command = $self->top_block_command();
   if ($top_block_command eq 'itemize' or $top_block_command eq 'enumerate') {
@@ -6963,6 +7016,8 @@ sub _convert_table_term_type($$$$)
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   return '<dt>'.$content;
 }
 
@@ -6979,7 +7034,7 @@ sub _convert_def_line_type($$$$)
     # should probably never happen
     return &{$self->formatting_function('format_protect_text')}($self,
      Texinfo::Convert::Text::convert_to_text(
-      $element, Texinfo::Convert::Text::copy_options_for_convert_text($self)));
+      $element, {Texinfo::Convert::Text::copy_options_for_convert_text($self)}));
   }
 
   my $index_label = '';
@@ -7051,6 +7106,7 @@ sub _convert_def_line_type($$$$)
           if ($arguments_formatted =~ /\S/);
     } else {
       # only metasyntactic variable arguments (deffn, defvr, deftp, defop, defcv)
+      # FIXME should not access directly 'document_context'
       push @{$self->{'document_context'}->[-1]->{'monospace'}}, 0;
       my $arguments_formatted = $self->_convert({'contents' => [$arguments]});
       pop @{$self->{'document_context'}->[-1]->{'monospace'}};
@@ -7157,7 +7213,10 @@ sub _convert_def_item_type($$$$)
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   return $content if ($self->in_string());
+
   if ($content =~ /\S/) {
     if (! $self->get_conf('DEF_TABLE')) {
       return '<dd>' . $content . '</dd>';
@@ -7176,6 +7235,8 @@ sub _convert_def_command($$$$$) {
   my $command = shift;
   my $args = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   return $content if ($self->in_string());
 
@@ -7209,7 +7270,10 @@ sub _convert_table_definition_type($$$$)
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   return $content if ($self->in_string());
+
   if ($content =~ /\S/) {
     return '<dd>' . $content . '</dd>'."\n";
   }
@@ -7303,6 +7367,8 @@ sub _convert_special_unit_type($$$$)
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   if ($self->in_string()) {
     return '';
   }
@@ -7368,12 +7434,10 @@ sub _convert_unit_type($$$$)
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   if ($self->in_string()) {
-    if (defined($content)) {
-      return $content;
-    } else {
-      return '';
-    }
+    return $content;
   }
   my $result = '';
   my $output_unit = $element;
@@ -7473,6 +7537,7 @@ sub _default_format_element_footer($$$$;$)
       if ($self->get_conf('HEADERS')) {
         my $no_footer_word_count;
         if ($self->get_conf('WORDS_IN_PAGE')) {
+          $content = '' if (!defined($content));
           # FIXME it seems that NO-BREAK SPACE and NEXT LINE (NEL) may
           # not be in \h and \v in some case, but not sure which case it is
           my @cnt = split(/\P{Word}*[\h\v]+\P{Word}*/, $content);
@@ -7524,7 +7589,7 @@ sub _default_format_element_footer($$$$;$)
 # is not done within the document formatting flow, but the formatted
 # output may still end up in the document.  In particular for
 # command_text() which caches its computations.
-sub _new_document_context($;$$)
+sub _new_document_context($$;$$)
 {
   my $self = shift;
   my $context = shift;
@@ -7533,9 +7598,8 @@ sub _new_document_context($;$$)
 
   push @{$self->{'document_context'}},
           {'context' => $context,
-           'formatting_context' => [{'context_name' => $context}],
+           'formatting_context' => [{'context_name' => '_format'}],
            'composition_context' => [''],
-           'formats' => [],
            'monospace' => [0],
            'document_global_context' => $document_global_context,
            'block_commands' => [],
@@ -7592,8 +7656,7 @@ foreach my $customized_reference ('external_target_split_name',
      'format_separate_anchor' => \&_default_format_separate_anchor,
      'format_titlepage' => \&_default_format_titlepage,
      'format_title_titlepage' => \&_default_format_title_titlepage,
-     'format_translate_message_tree' => undef,
-     'format_translate_message_string' => undef,
+     'format_translate_message' => undef,
 );
 
 # not up for customization
@@ -7639,27 +7702,29 @@ sub _reset_unset_no_arg_commands_formatting_context($$$$;$)
     my $translated_tree
       = $no_arg_command_context->{'tree'};
     my $translation_result;
+    my $explanation
+       = "Translated NO ARG \@$cmdname ctx $reset_context";
+    my $context_str = "Tr $cmdname ctx $reset_context";
     if ($reset_context eq 'normal') {
       $translation_result
-        = $self->convert_tree($translated_tree, "no arg $cmdname translated");
+        = $self->convert_tree($translated_tree, $explanation);
     } elsif ($reset_context eq 'preformatted') {
       # there does not seems to be anything simpler...
       my $preformatted_command_name = 'example';
-      $self->_new_document_context();
+      $self->_new_document_context($context_str);
       push @{$self->{'document_context'}->[-1]->{'composition_context'}},
           $preformatted_command_name;
       # should not be needed for at commands no brace translation strings
       push @{$self->{'document_context'}->[-1]->{'preformatted_classes'}},
           $pre_class_commands{$preformatted_command_name};
       $translation_result
-        = $self->convert_tree($translated_tree, "no arg $cmdname translated");
-      # only pop the main context
+        = $self->convert_tree($translated_tree, $explanation);
       $self->_pop_document_context();
     } elsif ($reset_context eq 'string') {
       $translation_result
         = $self->convert_tree_new_formatting_context({'type' => '_string',
                                           'contents' => [$translated_tree]},
-                     'translated_string', "string no arg $cmdname translated");
+                                              $context_str);
     } elsif ($reset_context eq 'css_string') {
       $translation_result = $self->html_convert_css_string($translated_tree);
     }
@@ -7964,7 +8029,7 @@ my %special_characters = (
   'non_breaking_space' => [undef, '00A0'],
 );
 
-sub _XS_converter_initialize($$$$$$$)
+sub _XS_converter_initialize($$$$$$$$$$)
 {
 }
 
@@ -8184,7 +8249,8 @@ sub converter_initialize($)
            and ($command eq 'menu' or $command eq 'detailmenu')) {
         $self->{'commands_conversion'}->{$command} = undef;
       } elsif ($format_raw_commands{$command}
-               and !$self->{'expanded_formats_hash'}->{$command}) {
+               and !$self->{'expanded_formats'}->{$command}) {
+        $self->{'commands_conversion'}->{$command} = undef;
       } elsif (exists($default_commands_conversion{$command})) {
         $self->{'commands_conversion'}->{$command}
            = $default_commands_conversion{$command};
@@ -8402,7 +8468,6 @@ sub converter_initialize($)
   $self->{'document_context'} = [];
   $self->{'multiple_pass'} = [];
   $self->{'pending_closes'} = [];
-  $self->_new_document_context('_toplevel_context');
 
   # TODO warn if the split specification is not one known?  The main
   # program warns if the specific command line option value is not known.
@@ -8412,18 +8477,59 @@ sub converter_initialize($)
     $self->force_conf('SPLIT', 'node');
   }
 
-  if ($self->{'document_descriptor'}) {
-    my $encoded_converter = $self->encode_converter_document();
-    _XS_converter_initialize($encoded_converter,
+  # XS parser initialization
+  if ($self->{'document_descriptor'} and $XS_convert) {
+    # reformat special_unit_info information passed to XS to simplify
+    # XS code
+    if ($self->{'special_unit_info'}) {
+      # information that does not need to be translated
+      $self->{'simplified_special_unit_info'}
+         = Storable::dclone($self->{'special_unit_info'});
+      # information needing translation, simplify the structure to
+      # be more like non-translated special_unit_info information
+      if ($self->{'translated_special_unit_info'}) {
+        foreach my $tree_type (keys(%{$self->{'translated_special_unit_info'}})) {
+          my $type = $self->{'translated_special_unit_info'}->{$tree_type}->[0];
+          my $variety_strings
+            = $self->{'translated_special_unit_info'}->{$tree_type}->[1];
+          # we do not need both tree type and string type to pass to XS,
+          # pass only the string type $type and associated varieties information
+          $self->{'simplified_special_unit_info'}->{$type} = $variety_strings;
+        }
+      }
+
+      # to help the XS code to set arrays of C structures, already prepare
+      # a list of special units varieties.
+      my %all_special_unit_varieties;
+      foreach my $type (keys(%{$self->{'simplified_special_unit_info'}})) {
+        foreach my $special_unit_variety
+              (keys (%{$self->{'simplified_special_unit_info'}->{$type}})) {
+          $all_special_unit_varieties{$special_unit_variety} = 1;
+        }
+      }
+      $self->{'sorted_special_unit_varieties'}
+        = [sort(keys(%all_special_unit_varieties))];
+    }
+    _XS_converter_initialize($self,
                              \%default_formatting_references,
                              \%default_css_string_formatting_references,
                              \%default_commands_open,
                              \%default_commands_conversion,
+                             \%default_css_string_commands_conversion,
                              \%default_types_open,
-                             \%default_types_conversion);
+                             \%default_types_conversion,
+                             \%default_css_string_types_conversion,
+                             \%default_output_units_conversion);
+    delete $self->{'sorted_special_unit_varieties'};
+    delete $self->{'simplified_special_unit_info'};
   }
 
   return $self;
+}
+
+sub _XS_html_convert_tree($$;$)
+{
+  return undef;
 }
 
 # the entry point for _convert
@@ -8432,6 +8538,10 @@ sub convert_tree($$;$)
   my $self = shift;
   my $tree = shift;
   my $explanation = shift;
+
+  # No XS, convert_tree is not called on trees registered in XS
+  #my $XS_result = _XS_html_convert_tree($self, $tree, $explanation);
+  #return $XS_result if (defined($XS_result));
 
   # when formatting accents, goes through xml_accent without
   # explanation, as explanation is not in the standard API, but
@@ -9261,12 +9371,7 @@ sub _html_set_pages_files($$$$$$$$$)
     }
   }
 
-  return %files_source_info;
-}
-
-sub _XS_prepare_conversion_units($;$)
-{
-  return 1;
+  return \%files_source_info;
 }
 
 # $ROOT is a parsed Texinfo tree.  Return a list of the "elements" we need to
@@ -9281,28 +9386,6 @@ sub _prepare_conversion_units($$$)
   my $document_name = shift;
 
   my ($output_units, $special_units, $associated_special_units);
-
-  # the presence of contents elements in the document is used in diverse
-  # places, set it once for all here
-  my @contents_elements_options
-                  = grep {Texinfo::Common::valid_customization_option($_)}
-                        sort(keys(%contents_command_special_unit_variety));
-  $self->set_global_document_commands('last', \@contents_elements_options);
-
-  if ($self->{'converter_descriptor'}) {
-    my $encoded_converter = $self->encode_converter_for_output();
-    my $encoded_document_name = Encode::encode('UTF-8', $document_name);
-    my ($targets, $special_targets, $seen_ids);
-    ($output_units, $special_units, $associated_special_units,
-     $targets, $special_targets, $seen_ids)
-      = _XS_prepare_conversion_units($encoded_converter,
-                                     $encoded_document_name);
-    $self->{'targets'} = $targets;
-    $self->{'special_targets'} = $special_targets;
-    $self->{'seen_ids'} = $seen_ids;
-    $self->{'document_units'} = $output_units;
-    return ($output_units, $special_units, $associated_special_units);
-  }
 
   if ($self->get_conf('USE_NODES')) {
     $output_units = Texinfo::Structuring::split_by_node($root);
@@ -9347,10 +9430,6 @@ sub _prepare_conversion_units($$$)
   return ($output_units, $special_units, $associated_special_units);
 }
 
-sub _XS_prepare_units_directions_files($$$$$$$$)
-{
-}
-
 sub _prepare_units_directions_files($$$$$$$$)
 {
   my $self = shift;
@@ -9362,31 +9441,6 @@ sub _prepare_units_directions_files($$$$$$$$)
   my $output_filename = shift;
   my $document_name = shift;
 
-  if ($self->{'converter_descriptor'}) {
-    my $encoded_converter = $self->encode_converter_for_output();
-    my $encoded_document_name = Encode::encode('UTF-8', $document_name);
-    my $encoded_output_file = Encode::encode('UTF-8', $output_file);
-    my $encoded_destination_directory
-         = Encode::encode('UTF-8', $destination_directory);
-    my $encoded_output_filename = Encode::encode('UTF-8', $output_filename);
-
-    my ($XS_files_source_info, $global_units_directions,
-        $elements_in_file_count, $filenames,
-        $file_counters, $out_filepaths)
-      = _XS_prepare_units_directions_files($encoded_converter,
-           $output_units, $special_units, $associated_special_units,
-           $encoded_output_file, $encoded_destination_directory,
-           $encoded_output_filename, $encoded_document_name);
-    $self->{'global_units_directions'} = $global_units_directions;
-    $self->{'elements_in_file_count'} = $elements_in_file_count;
-
-    $self->{'filenames'} = $filenames;
-    $self->{'file_counters'} = $file_counters;
-    $self->{'out_filepaths'} = $out_filepaths;
-
-    return %$XS_files_source_info;
-  }
-
   $self->_prepare_output_units_global_targets($output_units, $special_units,
                                               $associated_special_units);
 
@@ -9394,9 +9448,9 @@ sub _prepare_units_directions_files($$$$$$$$)
 
   # determine file names associated with the different pages, and setup
   # the counters for special element pages.
-  my %files_source_info;
+  my $files_source_info;
   if ($output_file ne '') {
-    %files_source_info =
+    $files_source_info =
       $self->_html_set_pages_files($output_units, $special_units,
                     $associated_special_units, $output_file,
                     $destination_directory, $output_filename, $document_name);
@@ -9425,7 +9479,7 @@ sub _prepare_units_directions_files($$$$$$$$)
     }
   }
 
-  return %files_source_info;
+  return $files_source_info;
 }
 
 sub _register_special_unit($$)
@@ -9764,10 +9818,6 @@ sub _prepare_output_units_global_targets($$$$)
   }
 }
 
-sub _XS_sort_sortable_index_entries_by_letter($$)
-{
-}
-
 sub _XS_get_index_entries_sorted_by_letter($$)
 {
 }
@@ -9783,42 +9833,6 @@ sub _sort_index_entries($)
         = Texinfo::Structuring::merge_indices($indices_information);
     my $index_entries_sort_strings;
 
-    ## see TODO in convert/indices_in_conversion.c sort_indices_by_letter,
-    ## sorting letters requires a collation in C, so this cannot be done,
-    ## even when starting from index_sortable_index_entries
-    #if ($self->{'converter_descriptor'}) {
-    #  my ($index_sortable_index_entries, $collator, $index_entries_sort_strings)
-    #   = Texinfo::Structuring::setup_sortable_index_entries ($self, $self,
-    #                        $merged_index_entries, $indices_information, 1, 1);
-    #  if ($index_sortable_index_entries) {
-    #    # encode and pass as arrays only, in reproducible order
-    #    my $index_encoded_sortable_entries = [];
-    #    foreach my $index_name (sort(keys(%$index_sortable_index_entries))) {
-    #      my $encoded_index_name = Encode::encode('UTF-8', $index_name);
-    #      my $encoded_sortable_entries = [];
-    #      foreach my $sortable_entry
-    #          (@{$index_sortable_index_entries->{$index_name}}) {
-    #        my $encoded_sortable_entry = {
-    #          'keys' => $sortable_entry->{'keys'},
-    #          'index_name'
-    #            => Encode::encode('UTF-8', $sortable_entry->{'index_name'}),
-    #          'number' => $sortable_entry->{'number'},
-    #          'entry_keys' => [],
-    #        };
-    #        foreach my $entry_key (@{$sortable_entry->{'entry_keys'}}) {
-    #          push @{$encoded_sortable_entry->{'entry_keys'}},
-    #            Encode::encode('UTF-8', $entry_key);
-    #        }
-    #        push @$encoded_sortable_entries, $encoded_sortable_entry;
-    #      }
-    #      push @{$index_encoded_sortable_entries},
-    #       [$encoded_index_name, $encoded_sortable_entries],
-    #    }
-    #    _XS_sort_sortable_index_entries_by_letter($self,
-    #                                $index_encoded_sortable_entries);
-    #  }
-    #}
-
     ($self->{'index_entries_by_letter'}, $index_entries_sort_strings)
             = Texinfo::Structuring::sort_indices_by_letter($self,
                                     $self, $merged_index_entries,
@@ -9826,27 +9840,9 @@ sub _sort_index_entries($)
     $self->{'index_entries'} = $merged_index_entries;
 
     # pass sorted index entries to XS for a reproducible sorting.
-    if ($self->{'converter_descriptor'}) {
-      # encode. Also setup list of lists for easier import of data in C.
-      my $encoded_index_entries_by_letter = [];
-      if ($self->{'index_entries_by_letter'}) {
-        foreach my $index_name
-            (sort(keys(%{$self->{'index_entries_by_letter'}}))) {
-          my $letter_entries
-            = $self->{'index_entries_by_letter'}->{$index_name};
-          my $encoded_index_by_letters = [];
-          foreach my $letter_entry (@$letter_entries) {
-            my $letter = $letter_entry->{'letter'};
-            push @$encoded_index_by_letters,
-              [Encode::encode('UTF-8', $letter), $letter_entry->{'entries'}];
-          }
-          push @$encoded_index_entries_by_letter,
-                 [Encode::encode('UTF-8', $index_name),
-                  $encoded_index_by_letters];
-        }
-      }
+    if ($self->{'converter_descriptor'} and $XS_convert) {
       _XS_get_index_entries_sorted_by_letter($self,
-                                 $encoded_index_entries_by_letter);
+                                 $self->{'index_entries_by_letter'});
     }
   }
 }
@@ -10931,8 +10927,12 @@ sub _do_jslicenses_file {
 __("cannot use absolute path or URL `%s' for JS_WEBLABELS_FILE when generating web labels file"), $path));
     return;
   }
-  my $license_file = File::Spec->catdir($destination_directory,
-                                        $path);
+  my $license_file;
+  if ($destination_directory ne '') {
+    $license_file = File::Spec->catdir($destination_directory, $path);
+  } else {
+    $license_file = $path;
+  }
   # sequence of bytes
   my ($licence_file_path, $path_encoding)
      = $self->encoded_output_file_name($license_file);
@@ -10968,7 +10968,7 @@ sub _has_contents_or_shortcontents($)
   return 0;
 }
 
-sub _XS_initialize_output_state($)
+sub _XS_initialize_output_state($$)
 {
 }
 
@@ -10976,11 +10976,14 @@ sub _XS_initialize_output_state($)
 # NOTE not called directly by convert_tree, which means that convert_tree
 # needs to be called from a converter which would have had this function
 # called already.
-sub _initialize_output_state($)
+sub _initialize_output_state($$)
 {
   my $self = shift;
+  my $context = shift;
 
-  _XS_initialize_output_state($self);
+  # TODO override the whole function and add a C build_ function to setup
+  # the perl state similarly with what is done in that function.
+  _XS_initialize_output_state($self, $context.'C');
 
   # for diverse API used in conversion
   $self->{'shared_conversion_state'} = {};
@@ -10988,7 +10991,7 @@ sub _initialize_output_state($)
   $self->{'associated_inline_content'} = {};
 
   # even if there is no actual file, this is needed if the API is used.
-  $self->{'files_information'} = {};
+  $self->{'html_files_information'} = {};
 
   # Needed for CSS gathering, even if nothing related to CSS is output
   $self->{'document_global_context_css'} = {};
@@ -11007,10 +11010,6 @@ sub _initialize_output_state($)
   $self->{'targets'} = {};
   $self->{'seen_ids'} = {};
 
-  # to avoid infinite recursions when a section refers to itself, possibly
-  # indirectly
-  $self->{'referred_command_stack'} = [];
-
   # for global directions always set, and for directions to special elements,
   # only filled if special elements are actually used.
   $self->{'global_units_directions'} = {};
@@ -11021,103 +11020,54 @@ sub _initialize_output_state($)
   # other
   $self->{'pending_footnotes'} = [];
 
+  # to avoid infinite recursions when a section refers to itself, possibly
+  # indirectly
+  $self->{'referred_command_stack'} = [];
+
   $self->{'check_htmlxref_already_warned'} = {}
     if ($self->get_conf('CHECK_HTMLXREF'));
+
+  $self->_new_document_context($context);
 }
 
-
-sub _XS_prepare_output_units_global_targets($$$$)
-{
-}
-
-sub _XS_html_convert_init($)
-{
-}
-
-sub _XS_html_convert_convert($$$$)
-{
-}
-
-sub convert($$)
+sub _finalize_output_state($)
 {
   my $self = shift;
-  my $document = shift;
+  $self->_pop_document_context();
+}
 
-  my $encoded_converter;
-  my $root = $document->tree();
+
+sub _prepare_title_titlepage($$$$)
+{
+  my $self = shift;
+  my $output_units = shift;
+  my $output_file = shift;
+  my $output_filename = shift;
+
+  # set file name to be the first file name for formatting of title page.
+  # The title page prepared here is thus only fit to be used in the first
+  # output unit.
+  if ($output_file ne '') {
+    $self->{'current_filename'}
+      = $output_units->[0]->{'unit_filename'};
+  } else {
+    $self->{'current_filename'} = $output_filename;
+  }
+
+  # title
+  $self->{'title_titlepage'}
+    = &{$self->formatting_function('format_title_titlepage')}($self);
+  $self->{'current_filename'} = undef;
+}
+
+sub _html_convert_convert($$$$)
+{
+  my $self = shift;
+  my $root = shift;
+  my $output_units = shift;
+  my $special_units = shift;
 
   my $result = '';
-
-  $self->_initialize_output_state();
-
-  # needed for CSS rules gathering
-  $self->{'current_filename'} = '';
-
-  # call before _prepare_conversion_units.
-  # Some information is not available yet.
-  $self->_reset_info();
-
-  $self->_sort_index_entries();
-
-  my ($output_units, $special_units, $associated_special_units)
-    = $self->_prepare_conversion_units($root, undef);
-
-  # setup global targets.  It is not clearly relevant to have those
-  # global targets when called as convert, but the Top global
-  # unit directions is often referred to in code, so at least this
-  # global target needs to be setup.
-  if ($self->{'converter_descriptor'}) {
-    # Do it preferentially in XS, and import to perl, to have data
-    # setup in C for XS too.
-    $encoded_converter = $self->encode_converter_for_output();
-    my $global_units_directions =
-      _XS_prepare_output_units_global_targets($encoded_converter,
-           $output_units, $special_units, $associated_special_units);
-    $self->{'global_units_directions'} = $global_units_directions;
-  } else {
-    $self->_prepare_output_units_global_targets($output_units,
-                                                $special_units,
-                                                $associated_special_units);
-  }
-
-  # setup untranslated strings
-  $self->_translate_names(1);
-
-  # FIXME duplicate of code in output()
-  foreach my $simpletitle_command ('settitle', 'shorttitlepage') {
-    if ($self->{'global_commands'}->{$simpletitle_command}) {
-      my $command = $self->{'global_commands'}->{$simpletitle_command};
-      next if (!$command->{'args'} or !$command->{'args'}->[0]
-                or !$command->{'args'}->[0]->{'contents'}
-                or !scalar(@{$command->{'args'}->[0]->{'contents'}}));
-      $self->{'simpletitle_tree'} = $command->{'args'}->[0];
-      $self->{'simpletitle_command_name'} = $simpletitle_command;
-      last;
-    }
-  }
-  $self->_reset_info();
-
-  # title.  Not often set in the default case, as convert() is only
-  # used in the *.t tests, and a title requires both simpletitle_tree
-  # and SHOW_TITLE set, with the default formatting function.
-  if ($self->{'converter_descriptor'}) {
-    # FIXME distinguish failure and no title?  Could actually use
-    # unddef for failurre, as without title, return an empty string.
-    my $title_titlepage =
-      _XS_html_convert_init($encoded_converter);
-    $self->{'title_titlepage'} = $title_titlepage;
-  } else {
-    $self->{'title_titlepage'}
-     = &{$self->formatting_function('format_title_titlepage')}($self);
-  }
-
-  # complete information should be available.
-  $self->_reset_info();
-
-  if ($self->{'converter_descriptor'}) {
-    my $XS_result = _XS_html_convert_convert ($encoded_converter, $root,
-                                              $output_units, $special_units);
-  }
 
   if (!defined($output_units)) {
     print STDERR "\nC NO UNIT\n" if ($self->get_conf('DEBUG'));
@@ -11136,7 +11086,76 @@ sub convert($$)
       $unit_nr++;
     }
   }
+  return $result;
+}
 
+sub convert($$)
+{
+  my $self = shift;
+  my $document = shift;
+
+  my $converter_info;
+  my $root = $document->tree();
+
+  $self->_initialize_output_state('_convert');
+
+  # the presence of contents elements in the document is used in diverse
+  # places, set it once for all here
+  my @contents_elements_options
+                  = grep {Texinfo::Common::valid_customization_option($_)}
+                        sort(keys(%contents_command_special_unit_variety));
+  $self->set_global_document_commands('last', \@contents_elements_options);
+
+  # call before _prepare_conversion_units.
+  # Some information is not available yet.
+  $self->_reset_info();
+
+  $self->_sort_index_entries();
+
+  my ($output_units, $special_units, $associated_special_units)
+    = $self->_prepare_conversion_units($root, undef);
+
+  # setup global targets.  It is not clearly relevant to have those
+  # global targets when called as convert, but the Top global
+  # unit directions is often referred to in code, so at least this
+  # global target needs to be setup.
+  $self->_prepare_output_units_global_targets($output_units,
+                                              $special_units,
+                                              $associated_special_units);
+
+  # setup untranslated strings
+  $self->_translate_names();
+
+  # FIXME duplicate of code in output()
+  foreach my $simpletitle_command ('settitle', 'shorttitlepage') {
+    if ($self->{'global_commands'}->{$simpletitle_command}) {
+      my $command = $self->{'global_commands'}->{$simpletitle_command};
+      next if (!$command->{'args'} or !$command->{'args'}->[0]
+                or !$command->{'args'}->[0]->{'contents'}
+                or !scalar(@{$command->{'args'}->[0]->{'contents'}}));
+      $self->{'simpletitle_tree'} = $command->{'args'}->[0];
+      $self->{'simpletitle_command_name'} = $simpletitle_command;
+      last;
+    }
+  }
+  $self->_reset_info();
+
+  # title.  Not often set in the default case, as convert() is only
+  # used in the *.t tests, and a title requires both simpletitle_tree
+  # and SHOW_TITLE set, with the default formatting function.
+  $self->_prepare_title_titlepage($output_units, '', '');
+
+  # complete information should be available.
+  $self->_reset_info();
+
+  $self->{'current_filename'} = '';
+
+  # main conversion here
+  my $result = $self->_html_convert_convert ($root, $output_units,
+                                             $special_units);
+  $self->{'current_filename'} = undef;
+
+  $self->_finalize_output_state();
   return $result;
 }
 
@@ -11154,11 +11173,14 @@ sub convert_output_unit($$;$)
   if (exists ($self->{'output_units_conversion'}->{$unit_type_name})
       and !defined($self->{'output_units_conversion'}->{$unit_type_name})) {
     if ($debug) {
-      my $string = 'IGNORED';
-      $string .= " $unit_type_name" if ($unit_type_name);
-      print STDERR "$string\n";
+      print STDERR "IGNORED OU $unit_type_name\n";
     }
     return '';
+  }
+
+  if ($debug) {
+    print STDERR "UNIT($explanation) -> ou: $unit_type_name '"
+        .Texinfo::Structuring::output_unit_texi($output_unit)."'\n";
   }
 
   $self->{'current_output_unit'} = $output_unit;
@@ -11185,7 +11207,7 @@ sub convert_output_unit($$;$)
 
   delete $self->{'current_output_unit'};
 
-  print STDERR "UNIT ($unit_type_name) => `$result'\n" if $debug;
+  print STDERR "DOUNIT ($unit_type_name) => `$result'\n" if $debug;
 
   return $result;
 }
@@ -11319,6 +11341,205 @@ sub _reset_info()
   }
 }
 
+sub _do_js_files($$)
+{
+  my $self = shift;
+  my $destination_directory = shift;
+
+  if ($self->get_conf('INFO_JS_DIR')) {
+    my $info_js_dir = $self->get_conf('INFO_JS_DIR');
+    my $jsdir;
+    if ($destination_directory ne '') {
+      $jsdir = File::Spec->catdir($destination_directory, $info_js_dir);
+    } else {
+      $jsdir = $info_js_dir;
+    }
+    if (!-d $jsdir) {
+      if (-f $jsdir) {
+        $self->document_error($self,
+          sprintf(__("%s already exists but is not a directory"), $jsdir));
+      } else {
+        mkdir $jsdir;
+      }
+    }
+    # Copy JS files.
+    if (-d $jsdir) {
+      if (!$self->get_conf('TEST')) {
+        my $jssrcdir;
+        if (!$Texinfo::ModulePath::texinfo_uninstalled) {
+          $jssrcdir = File::Spec->catdir(
+            $Texinfo::ModulePath::pkgdatadir, 'js');
+        } else {
+          $jssrcdir = File::Spec->catdir(
+            $Texinfo::ModulePath::top_srcdir, 'js');
+        }
+        for my $f ('info.js', 'modernizr.js', 'info.css') {
+          my $from = File::Spec->catfile($jssrcdir, $f);
+
+          if (!copy($from, $jsdir)) {
+            $self->document_error($self,
+              sprintf(__("error on copying %s into %s"), $from, $jsdir));
+          }
+        }
+      } else {
+      # create empty files for tests to keep results stable.
+        for my $f ('info.js', 'modernizr.js', 'info.css') {
+          my $filename = File::Spec->catfile($jsdir, $f);
+          if (!open (FH, '>', $filename)) {
+            $self->document_error($self,
+              sprintf(__("error on creating empty %s: %s"),
+                      $filename, $!));
+          }
+          if (!close(FH)) {
+            $self->document_error($self,
+              sprintf(__("error on closing empty %s: %s"),
+                      $filename, $!));
+          }
+        }
+      }
+    }
+  }
+
+  my $jslicenses = $self->get_info('jslicenses');
+  if ($jslicenses and scalar(%$jslicenses)) {
+    $self->_do_jslicenses_file($destination_directory);
+  }
+}
+
+# units or root conversion
+sub _html_convert_output($$$$$$$$)
+{
+  my ($self, $root, $output_units, $special_units, $output_file,
+      $destination_directory, $output_filename, $document_name) = @_;
+
+  my $text_output = '';
+  if ($output_file eq '') {
+    $self->{'current_filename'} = $output_filename;
+    my $body = '';
+    if ($output_units and @$output_units) {
+      my $unit_nr = 0;
+      # TODO there is no rule before the footnotes special element in
+      # case of separate footnotes in the default formatting style.
+      # Not sure if it is an issue.
+      foreach my $output_unit (@$output_units, @$special_units) {
+        print STDERR "\nUNIT NO-PAGE $unit_nr\n" if ($self->get_conf('DEBUG'));
+        my $output_unit_text
+          = $self->convert_output_unit($output_unit,
+                                       "no-page output unit $unit_nr");
+        $body .= $output_unit_text;
+        $unit_nr++;
+      }
+    } else {
+      $body .= $self->get_info('title_titlepage');
+      print STDERR "\nNO UNIT NO PAGE\n" if ($self->get_conf('DEBUG'));
+      $body .= $self->_convert($root, 'no-page output no unit');
+      $body .= &{$self->formatting_function('format_footnotes_segment')}($self);
+    }
+
+    # do end file first, in case it needs some CSS
+    my $file_end = &{$self->formatting_function('format_end_file')}($self,
+                                                  $output_filename, undef);
+    my $file_beginning
+        = &{$self->formatting_function('format_begin_file')}($self,
+                                                  $output_filename, undef);
+    $text_output .= $file_beginning;
+    $text_output .= $body;
+    $text_output .= $file_end;
+
+    $self->{'current_filename'} = undef;
+  } else {
+    # output with pages
+    print STDERR "DO Units with filenames\n"
+      if ($self->get_conf('DEBUG'));
+    my %files;
+
+    my $unit_nr = -1;
+    # Now do the output, converting each output units and special output units
+    # in turn
+    $special_units = [] if (!defined($special_units));
+    foreach my $output_unit (@$output_units, @$special_units) {
+      $unit_nr++;
+
+      my $output_unit_filename = $output_unit->{'unit_filename'};
+      $self->{'current_filename'} = $output_unit_filename;
+
+
+      # convert body before header in case this affects the header
+      # and, for special output unit, to avoid outputting anything if empty.
+      my $body;
+      if ($output_unit->{'unit_type'} eq 'special_unit') {
+        print STDERR "\nUNIT SPECIAL $output_unit->{'special_unit_variety'}\n"
+           if ($self->get_conf('DEBUG'));
+        $body = $self->convert_output_unit($output_unit,
+                                           "output s-unit $unit_nr");
+        if ($body eq '') {
+          $body = undef;
+        }
+      } else {
+        print STDERR "\nUNIT $unit_nr\n" if ($self->get_conf('DEBUG'));
+        $body = $self->convert_output_unit($output_unit,
+                                           "output unit $unit_nr");
+      }
+
+      $self->{'file_counters'}->{$output_unit_filename}--;
+
+      # register the output but do not print anything. Printing
+      # only when file_counters reach 0, to be sure that all the
+      # elements have been converted before headers are done.
+      if (defined($body)) {
+        if (!exists($files{$output_unit_filename})) {
+          $files{$output_unit_filename} = {'first_unit' => $output_unit,
+                                           'body' => ''};
+        }
+        $files{$output_unit_filename}->{'body'} .= $body;
+      } else {
+        next if (!exists($files{$output_unit_filename})
+                 or $files{$output_unit_filename}->{'body'} eq '');
+      }
+
+      if ($self->{'file_counters'}->{$output_unit_filename} == 0) {
+        my $out_filepath = $self->{'out_filepaths'}->{$output_unit_filename};
+        my $file_output_unit = $files{$output_unit_filename}->{'first_unit'};
+        my ($encoded_out_filepath, $path_encoding)
+          = $self->encoded_output_file_name($out_filepath);
+        my ($file_fh, $error_message)
+                = Texinfo::Common::output_files_open_out(
+                         $self->output_files_information(), $self,
+                         $encoded_out_filepath);
+        if (!$file_fh) {
+          $self->document_error($self,
+               sprintf(__("could not open %s for writing: %s"),
+                                    $out_filepath, $error_message));
+          return undef;
+        }
+        # do end file first in case it requires some CSS
+        my $end_file = &{$self->formatting_function('format_end_file')}($self,
+                                                           $output_unit_filename,
+                                                           $output_unit);
+        print $file_fh "".&{$self->formatting_function('format_begin_file')}(
+                                       $self, $output_unit_filename, $file_output_unit);
+        print $file_fh "".$files{$output_unit_filename}->{'body'};
+        # end file
+        print $file_fh "". $end_file;
+
+        # NOTE do not close STDOUT here to avoid a perl warning
+        if ($out_filepath ne '-') {
+          Texinfo::Common::output_files_register_closed(
+             $self->output_files_information(), $encoded_out_filepath);
+          if (!close($file_fh)) {
+            $self->document_error($self,
+                       sprintf(__("error on closing %s: %s"),
+                                  $out_filepath, $!));
+            return undef;
+          }
+        }
+      }
+    }
+    delete $self->{'current_filename'};
+  }
+  return $text_output;
+}
+
 # Main function for outputting a manual in HTML.
 # $SELF is the output converter object of class Texinfo::Convert::HTML (this
 # module), and $DOCUMENT is the Texinfo parsed document from the parser.
@@ -11329,9 +11550,11 @@ sub output($$)
 
   my $root = $document->tree();
 
+  # set here early even though actual values are only set later on.  It is
+  # therefore set in converter_info early too (using the reference).
   $self->{'current_filename'} = undef;
 
-  $self->_initialize_output_state();
+  $self->_initialize_output_state('_output');
 
   # no splitting when writing to the null device or to stdout or returning
   # a string
@@ -11394,8 +11617,11 @@ sub output($$)
   $self->_reset_info();
 
   my $setup_status = $self->run_stage_handlers($root, 'setup');
-  return undef unless ($setup_status < $handler_fatal_error_level
-                       and $setup_status > -$handler_fatal_error_level);
+  unless ($setup_status < $handler_fatal_error_level
+          and $setup_status > -$handler_fatal_error_level) {
+    $self->_finalize_output_state();
+    return undef;
+  }
 
   # the configuration has potentially been modified for
   # this output file especially.  Set a corresponding initial
@@ -11408,6 +11634,13 @@ sub output($$)
   $self->set_conf('BODYTEXT',
                   'lang="' . $structure_preamble_document_language . '"');
   $self->set_global_document_commands('before', ['documentlanguage']);
+
+  # the presence of contents elements in the document is used in diverse
+  # places, set it once for all here
+  my @contents_elements_options
+                  = grep {Texinfo::Common::valid_customization_option($_)}
+                        sort(keys(%contents_command_special_unit_variety));
+  $self->set_global_document_commands('last', \@contents_elements_options);
 
   $self->{'jslicenses'} = {};
   if ($self->get_conf('HTML_MATH')
@@ -11436,8 +11669,9 @@ sub output($$)
   }
   $self->_prepare_css();
 
-  # this sets OUTFILE, to be used if not split, but also
-  # 'destination_directory' and 'output_filename' that are useful when split.
+  # this sets OUTFILE, to be used if not split, but also 'output_filename'
+  # that is useful when split, 'destination_directory' that is mainly useful
+  # when split and 'document_name' that is generally useful.
   my ($output_file, $destination_directory, $output_filename,
               $document_name) = $self->determine_files_and_directory();
   my ($encoded_destination_directory, $dir_encoding)
@@ -11445,7 +11679,10 @@ sub output($$)
   my $succeeded
     = $self->create_destination_directory($encoded_destination_directory,
                                           $destination_directory);
-  return undef unless $succeeded;
+  unless ($succeeded) {
+    $self->_finalize_output_state();
+    return undef;
+  }
 
   # set for init files
   $self->{'document_name'} = $document_name;
@@ -11464,9 +11701,9 @@ sub output($$)
     = $self->_prepare_conversion_units($root, $document_name);
 
   # setup untranslated strings
-  $self->_translate_names(1);
+  $self->_translate_names();
 
-  my %files_source_info
+  my $files_source_info
     = $self->_prepare_units_directions_files($output_units, $special_units,
                 $associated_special_units,
                 $output_file, $destination_directory, $output_filename,
@@ -11477,8 +11714,11 @@ sub output($$)
   $self->_reset_info();
 
   my $structure_status = $self->run_stage_handlers($root, 'structure');
-  return undef unless ($structure_status < $handler_fatal_error_level
-                       and $structure_status > -$handler_fatal_error_level);
+  unless ($structure_status < $handler_fatal_error_level
+          and $structure_status > -$handler_fatal_error_level) {
+    $self->_finalize_output_state();
+    return undef;
+  }
 
   my $default_document_language = $self->get_conf('documentlanguage');
 
@@ -11487,7 +11727,7 @@ sub output($$)
   my $preamble_document_language = $self->get_conf('documentlanguage');
 
   if ($default_document_language ne $preamble_document_language) {
-    $self->_translate_names(1);
+    $self->_translate_names();
   }
 
   # prepare title.  fulltitle uses more possibility than simpletitle for
@@ -11582,262 +11822,52 @@ sub output($$)
   # Some information is not available yet.
   $self->_reset_info();
 
+
   my $init_status = $self->run_stage_handlers($root, 'init');
-  return undef unless ($init_status < $handler_fatal_error_level
-                       and $init_status > -$handler_fatal_error_level);
-
-  # determine first file name
-  if (!$output_units
-      or !defined($output_units->[0]->{'unit_filename'})) {
-    # no page
-    if ($output_file ne '') {
-      my $no_page_output_filename;
-      my $no_page_out_filepath;
-      if ($self->get_conf('SPLIT')) {
-        $no_page_output_filename = $self->top_node_filename($document_name);
-        if (defined($destination_directory) and $destination_directory ne '') {
-          $no_page_out_filepath = File::Spec->catfile($destination_directory,
-                                                    $no_page_output_filename);
-        } else {
-          $no_page_out_filepath = $no_page_output_filename;
-        }
-      } else {
-        $no_page_out_filepath = $output_file;
-        $no_page_output_filename = $output_filename;
-      }
-      $self->{'out_filepaths'}->{$no_page_output_filename} = $no_page_out_filepath;
-
-      $self->{'current_filename'} = $no_page_output_filename;
-    } else {
-      $self->{'current_filename'} = $output_filename;
-    }
-  } else {
-    $self->{'current_filename'}
-      = $output_units->[0]->{'unit_filename'};
+  unless ($init_status < $handler_fatal_error_level
+          and $init_status > -$handler_fatal_error_level) {
+    $self->_finalize_output_state();
+    return undef;
   }
-  # title
-  $self->{'title_titlepage'}
-    = &{$self->formatting_function('format_title_titlepage')}($self);
+
+
+  $self->_prepare_title_titlepage($output_units, $output_file,
+                                  $output_filename);
 
   # complete information should be available.
   $self->_reset_info();
 
+  # conversion
+  my $text_output = $self->_html_convert_output($root, $output_units,
+                       $special_units, $output_file, $destination_directory,
+                       $output_filename, $document_name);
 
-  if (!$output_units
-      or !defined($output_units->[0]->{'unit_filename'})) {
-    my $output = '';
-    my $fh;
-    my $encoded_no_page_out_filepath;
-    my $no_page_out_filepath;
-    if ($self->{'current_filename'} ne ''
-        and $self->{'out_filepaths'}
-        and defined($self->{'out_filepaths'}->{$self->{'current_filename'}})) {
-      my $path_encoding;
-      $no_page_out_filepath
-         = $self->{'out_filepaths'}->{$self->{'current_filename'}};
-      ($encoded_no_page_out_filepath, $path_encoding)
-        = $self->encoded_output_file_name($no_page_out_filepath);
-      my $error_message;
-      ($fh, $error_message) = Texinfo::Common::output_files_open_out(
-                                 $self->output_files_information(), $self,
-                                 $encoded_no_page_out_filepath);
-      if (!$fh) {
-        $self->document_error($self,
-              sprintf(__("could not open %s for writing: %s"),
-                                      $no_page_out_filepath, $error_message));
-        return undef;
-      }
-    }
-    my $body = '';
-    if ($output_units and @$output_units) {
-      my $unit_nr = 0;
-      # TODO there is no rule before the footnotes special element in
-      # case of separate footnotes in the default formatting style.
-      # Not sure if it is an issue.
-      foreach my $output_unit (@$output_units, @$special_units) {
-        print STDERR "\nUNIT NO-PAGE $unit_nr\n" if ($self->get_conf('DEBUG'));
-        my $output_unit_text
-          = $self->convert_output_unit($output_unit,
-                                       "no-page output unit $unit_nr");
-        $body .= $output_unit_text;
-        $unit_nr++;
-      }
-    } else {
-      $body .= $self->get_info('title_titlepage');
-      print STDERR "\nNO UNIT NO PAGE\n" if ($self->get_conf('DEBUG'));
-      $body .= $self->_convert($root, 'no-page output no unit');
-      $body .= &{$self->formatting_function('format_footnotes_segment')}($self);
-    }
+  $self->get_output_files_XS_unclosed_streams();
 
-    # do end file first, in case it needs some CSS
-    my $footer = &{$self->formatting_function('format_end_file')}($self,
-                                                  $output_filename, undef);
-    my $header = &{$self->formatting_function('format_begin_file')}($self,
-                                                  $output_filename, undef);
-    $output .= $self->write_or_return($header, $fh);
-    $output .= $self->write_or_return($body, $fh);
-    $output .= $self->write_or_return($footer, $fh);
-
-    # NOTE do not close STDOUT now to avoid a perl warning.
-    if ($fh and $no_page_out_filepath ne '-') {
-      Texinfo::Common::output_files_register_closed(
-            $self->output_files_information(), $encoded_no_page_out_filepath);
-      if (!close($fh)) {
-        $self->document_error($self,
-              sprintf(__("error on closing %s: %s"),
-                                      $no_page_out_filepath, $!));
-      }
-    }
-    $self->{'current_filename'} = undef;
-    return $output if ($output_file eq '');
-  } else {
-    # output with pages
-    print STDERR "DO Elements with filenames\n"
-      if ($self->get_conf('DEBUG'));
-    my %files;
-
-    my $unit_nr = -1;
-    # Now do the output, converting each output units and special output units
-    # in turn
-    $special_units = [] if (!defined($special_units));
-    foreach my $output_unit (@$output_units, @$special_units) {
-      my $output_unit_filename = $output_unit->{'unit_filename'};
-      my $out_filepath = $self->{'out_filepaths'}->{$output_unit_filename};
-      $self->{'current_filename'} = $output_unit_filename;
-
-      $unit_nr++;
-      # First do the special pages, to avoid outputting these if they are
-      # empty.
-      my $special_unit_content;
-      if (defined($output_unit->{'unit_type'})
-          and $output_unit->{'unit_type'} eq 'special_unit') {
-        print STDERR "\nUNIT SPECIAL $output_unit->{'special_unit_variety'}\n"
-           if ($self->get_conf('DEBUG'));
-        $special_unit_content
-                  .= $self->convert_output_unit($output_unit,
-                                                "output s-unit $unit_nr");
-        if ($special_unit_content eq '') {
-          $self->{'file_counters'}->{$output_unit_filename}--;
-          next ;
-        }
-      }
-
-      # convert body before header in case this affects the header
-      my $body = '';
-      if (defined($special_unit_content)) {
-        $body = $special_unit_content;
-      } else {
-        print STDERR "\nUNIT $unit_nr\n" if ($self->get_conf('DEBUG'));
-        $body = $self->convert_output_unit($output_unit,
-                                           "output unit $unit_nr");
-      }
-
-      # register the element but do not print anything. Printing
-      # only when file_counters reach 0, to be sure that all the
-      # elements have been converted.
-      if (!exists($files{$output_unit_filename})) {
-        $files{$output_unit_filename} = {'first_unit' => $output_unit,
-                                     'body' => ''};
-      }
-      $files{$output_unit_filename}->{'body'} .= $body;
-      $self->{'file_counters'}->{$output_unit_filename}--;
-
-      if ($self->{'file_counters'}->{$output_unit_filename} == 0) {
-        my $file_output_unit = $files{$output_unit_filename}->{'first_unit'};
-        my ($encoded_out_filepath, $path_encoding)
-          = $self->encoded_output_file_name($out_filepath);
-        my ($file_fh, $error_message)
-                = Texinfo::Common::output_files_open_out(
-                         $self->output_files_information(), $self,
-                         $encoded_out_filepath);
-        if (!$file_fh) {
-          $self->document_error($self,
-               sprintf(__("could not open %s for writing: %s"),
-                                    $out_filepath, $error_message));
-          return undef;
-        }
-        # do end file first in case it requires some CSS
-        my $end_file = &{$self->formatting_function('format_end_file')}($self,
-                                                           $output_unit_filename,
-                                                           $output_unit);
-        print $file_fh "".&{$self->formatting_function('format_begin_file')}(
-                                       $self, $output_unit_filename, $file_output_unit);
-        print $file_fh "".$files{$output_unit_filename}->{'body'};
-        # end file
-        print $file_fh "". $end_file;
-
-        # NOTE do not close STDOUT here to avoid a perl warning
-        if ($out_filepath ne '-') {
-          Texinfo::Common::output_files_register_closed(
-             $self->output_files_information(), $encoded_out_filepath);
-          if (!close($file_fh)) {
-            $self->document_error($self,
-                       sprintf(__("error on closing %s: %s"),
-                                  $out_filepath, $!));
-            return undef;
-          }
-        }
-      }
-    }
-    delete $self->{'current_filename'};
-    if ($self->get_conf('INFO_JS_DIR')) {
-      my $jsdir = File::Spec->catdir($destination_directory,
-                                     $self->get_conf('INFO_JS_DIR'));
-      if (!-d $jsdir) {
-        if (-f $jsdir) {
-          $self->document_error($self,
-            sprintf(__("%s already exists but is not a directory"), $jsdir));
-        } else {
-          mkdir $jsdir;
-        }
-      }
-      # Copy JS files.
-      if (-d $jsdir) {
-        if (!$self->get_conf('TEST')) {
-          my $jssrcdir;
-          if (!$Texinfo::ModulePath::texinfo_uninstalled) {
-            $jssrcdir = File::Spec->catdir(
-              $Texinfo::ModulePath::pkgdatadir, 'js');
-          } else {
-            $jssrcdir = File::Spec->catdir(
-              $Texinfo::ModulePath::top_srcdir, 'js');
-          }
-          for my $f ('info.js', 'modernizr.js', 'info.css') {
-            my $from = File::Spec->catfile($jssrcdir, $f);
-
-            if (!copy($from, $jsdir)) {
-              $self->document_error($self,
-                sprintf(__("error on copying %s into %s"), $from, $jsdir));
-            }
-          }
-        } else {
-        # create empty files for tests to keep results stable.
-          for my $f ('info.js', 'modernizr.js', 'info.css') {
-            my $filename = File::Spec->catfile($jsdir, $f);
-            if (!open (FH, '>', $filename)) {
-              $self->document_error($self,
-                sprintf(__("error on creating empty %s: %s"),
-                        $filename, $!));
-            }
-            if (!close(FH)) {
-              $self->document_error($self,
-                sprintf(__("error on closing empty %s: %s"),
-                        $filename, $!));
-            }
-          }
-        }
-      }
-    }
+  if (!defined($text_output)) {
+    $self->_finalize_output_state();
+    return undef;
   }
 
-  my $jslicenses = $self->get_info('jslicenses');
-  if ($jslicenses and scalar(%$jslicenses)) {
-    $self->_do_jslicenses_file($destination_directory);
+  if ($text_output ne '' and $output_file eq '') {
+    # $output_file eq '' should always be true, see comment above.
+    if (!$self->get_conf('TEST')) {
+      # This case is unlikely to happen, as there is no output file
+      # only if formatting is called as convert, which only happens in tests.
+      $self->_do_js_files($destination_directory);
+    }
+    $self->_finalize_output_state();
+    return $text_output;
   }
+
+  $self->_do_js_files($destination_directory);
 
   my $finish_status = $self->run_stage_handlers($root, 'finish');
-  return undef unless ($finish_status < $handler_fatal_error_level
-                       and $finish_status > -$handler_fatal_error_level);
+  unless ($finish_status < $handler_fatal_error_level
+          and $finish_status > -$handler_fatal_error_level) {
+    $self->_finalize_output_state();
+    return undef;
+  }
 
   my $extension = '';
   $extension = '.'.$self->get_conf('EXTENSION')
@@ -11883,7 +11913,7 @@ sub output($$)
                                                    => $label_contents}),
                $redirection_filename),
             $target_element->{'source_info'});
-          my $file_source = $files_source_info{$redirection_filename};
+          my $file_source = $files_source_info->{$redirection_filename};
           my $file_info_type = $file_source->{'file_info_type'};
           if ($file_info_type eq 'special_file'
               or $file_info_type eq 'stand_in_file') {
@@ -11951,7 +11981,7 @@ sub output($$)
           next;
         }
         $redirection_filenames{$redirection_filename} = $target_element;
-        $files_source_info{$redirection_filename}
+        $files_source_info->{$redirection_filename}
           = {'file_info_type' => 'redirection',
              'file_info_element' => $target_element,
              'file_info_path' => undef,
@@ -11960,7 +11990,7 @@ sub output($$)
           = &{$self->formatting_function('format_node_redirection_page')}($self,
                                                                $target_element);
         my $out_filename;
-        if (defined($destination_directory) and $destination_directory ne '') {
+        if ($destination_directory ne '') {
           $out_filename = File::Spec->catfile($destination_directory,
                                               $redirection_filename);
         } else {
@@ -11984,12 +12014,14 @@ sub output($$)
             $self->document_error($self, sprintf(__(
                              "error on closing redirection node file %s: %s"),
                                     $out_filename, $!));
+            $self->_finalize_output_state();
             return undef;
           }
         }
       }
     }
   }
+  $self->_finalize_output_state();
   return undef;
 }
 
@@ -12035,10 +12067,14 @@ sub _convert($$;$)
 
   if ($debug) {
     $explanation = 'NO EXPLANATION' if (!defined($explanation));
+    my @document_contexts = map {defined($_->{'context'})
+                                       ? $_->{'context'}: 'UNDEF'}
+                                  @{$self->{'document_context'}};
     my @contexts_names = map {defined($_->{'context_name'})
                                  ? $_->{'context_name'}: 'UNDEF'}
          @{$self->{'document_context'}->[-1]->{'formatting_context'}};
-    print STDERR "ELEMENT($explanation) (".join('|',@contexts_names)."), ->";
+    print STDERR "ELEMENT($explanation) [".join('|',@document_contexts)
+                                   ."](".join('|',@contexts_names)."), ->";
     print STDERR " cmd: $element->{'cmdname'}," if ($element->{'cmdname'});
     print STDERR " type: $element->{'type'}" if ($element->{'type'});
     my $text = $element->{'text'};
@@ -12186,8 +12222,8 @@ sub _convert($$;$)
               or $command_name eq 'smallquotation')
           or $command_name eq 'float'
           or $command_name eq 'cartouche') {
-        $args_formatted = [];
         if ($element->{'args'}) {
+          $args_formatted = [];
           my @args_specification;
           @args_specification = @{$default_commands_args{$command_name}}
             if (defined($default_commands_args{$command_name}));
@@ -12199,9 +12235,7 @@ sub _convert($$;$)
             if ($arg_idx < $spec_nr) {
               $arg_spec = $args_specification[$arg_idx];
             }
-            if ((!$arg->{'contents'} or !scalar(@{$arg->{'contents'}}))
-                # special case for @value argument
-                and !defined($arg->{'text'})) {
+            if (!$arg->{'contents'} or !scalar(@{$arg->{'contents'}})) {
               push @$args_formatted, undef;
               next;
             }
@@ -12228,9 +12262,10 @@ sub _convert($$;$)
                 $self->_pop_document_context();
               } elsif ($arg_type eq 'monospacestring') {
                 $self->_new_document_context($command_type);
-                $self->{'document_context'}->[-1]->{'monospace'}->[-1] = 1;
+                push @{$self->{'document_context'}->[-1]->{'monospace'}}, 1;
                 $self->{'document_context'}->[-1]->{'string'}++;
                 $arg_formatted->{$arg_type} = $self->_convert($arg, $explanation);
+                pop @{$self->{'document_context'}->[-1]->{'monospace'}};
                 $self->_pop_document_context();
               } elsif ($arg_type eq 'monospacetext') {
                 $arg_formatted->{$arg_type}
@@ -12324,6 +12359,9 @@ sub _convert($$;$)
     } else {
       print STDERR "Command not converted: $command_name\n"
        if ($self->get_conf('VERBOSE') or $self->get_conf('DEBUG'));
+      if ($root_commands{$command_name}) {
+        delete $self->{'current_root_command'};
+      }
       return '';
     }
     if ($root_commands{$command_name}) {

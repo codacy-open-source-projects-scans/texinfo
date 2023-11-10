@@ -21,10 +21,10 @@
 
 #include <stddef.h>
 
-/* for GLOBAL_INFO */
-#include "utils.h"
 #include "global_commands_types.h"
 #include "tree_types.h"
+/* for GLOBAL_INFO */
+#include "converter_types.h"
 #include "tree.h"
 #include "context_stack.h"
 #include "commands.h"
@@ -76,12 +76,17 @@ typedef struct {
     SOURCE_MARK *source_mark;
 } CONDITIONAL_STACK_ITEM;
 
+ELEMENT *setup_document_root_and_before_node_section (void);
 int parse_texi (ELEMENT *root_elt, ELEMENT *current_elt);
+int parse_texi_document (void);
+void set_documentlanguage_override (char *value);
+void set_accept_internalvalue (int value);
+
 void push_conditional_stack (enum command_id cond, SOURCE_MARK *source_mark);
 CONDITIONAL_STACK_ITEM *pop_conditional_stack (void);
 CONDITIONAL_STACK_ITEM *top_conditional_stack (void);
 extern size_t conditional_number;
-int parse_texi_document (void);
+
 int abort_empty_line (ELEMENT **current_inout, char *additional);
 ELEMENT *end_paragraph (ELEMENT *current,
                         enum command_id closed_block_command,
@@ -105,9 +110,6 @@ ELEMENT *begin_paragraph (ELEMENT *current);
 int is_end_current_command (ELEMENT *current, char **line,
                             enum command_id *end_cmd);
 void set_documentlanguage (char *);
-void set_documentlanguage_override (char *value);
-void set_accept_internalvalue (int value);
-char *element_type_name (ELEMENT *e);
 int check_space_element (ELEMENT *e);
 void gather_spaces_after_cmd_before_arg (ELEMENT *current);
 char *parse_command_name (char **ptr, int *single_char);
@@ -138,8 +140,6 @@ int register_global_command (ELEMENT *current);
 void wipe_parser_global_info (void);
 
 extern COUNTER count_remaining_args, count_items, count_cells;
-
-ELEMENT *setup_document_root_and_before_node_section (void);
 
 /* In multitable.c */
 ELEMENT *item_multitable_parent (ELEMENT *current);

@@ -1393,14 +1393,17 @@ die _encode_message(
    .sprintf(__("Try `%s --help' for more information.\n"), $real_command_name))
      unless (scalar(@input_files) >= 1);
 
-my $with_XS = ((not defined($ENV{TEXINFO_XS})
-                or $ENV{TEXINFO_XS} ne 'omit')
-               and (!defined $ENV{TEXINFO_XS_PARSER}
-                    or $ENV{TEXINFO_XS_PARSER} eq '1'));
+# XS parser and not explicitely unset
+my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
+                        or $ENV{TEXINFO_XS} ne 'omit')
+                       and (not defined($ENV{TEXINFO_XS_PARSER})
+                            or $ENV{TEXINFO_XS_PARSER} eq '1')
+                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
+                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
 
 my $file_number = -1;
 my @opened_files = ();
-my %unclosed_files;
+my %main_unclosed_files;
 my $error_count = 0;
 # main processing
 while(@input_files) {
@@ -1449,7 +1452,7 @@ while(@input_files) {
           @prepended_include_directories;
 
   my $parser = Texinfo::Parser::parser($parser_file_options);
-  my $document = $parser->parse_texi_file($input_file_name);
+  my $document = $parser->parse_texi_file($input_file_name, $XS_structuring);
   my $tree;
   if (defined($document)) {
     $tree = $document->tree();
@@ -1495,13 +1498,13 @@ while(@input_files) {
   # encoding is needed for output files
   # encoding and documentlanguage are needed for gdt() in regenerate_master_menu
   Texinfo::Common::set_output_encodings($main_configuration, $document_information);
-  my $global_commands = $document->global_commands_information();
-  if (not defined($main_configuration->get_conf('documentlanguage'))) {
-    my $element = Texinfo::Common::set_global_document_command($main_configuration,
-       $global_commands, 'documentlanguage', 'preamble');
+  if (not defined($main_configuration->get_conf('documentlanguage'))
+      and defined ($document_information->{'documentlanguage'})) {
+    $main_configuration->set_conf('documentlanguage',
+                                  $document_information->{'documentlanguage'});
   }
   # relevant for many Structuring methods.
-  if ($global_commands->{'novalidate'}) {
+  if ($document_information->{'novalidate'}) {
     $main_configuration->set_conf('novalidate', 1);
   }
 
@@ -1511,6 +1514,12 @@ while(@input_files) {
 
   if (defined(get_conf('MACRO_EXPAND')) and $file_number == 0) {
     require Texinfo::Convert::Texinfo;
+    # no need to rebuild the tree here if convert_to_texinfo is XS code.
+    if (not (defined $ENV{TEXINFO_XS_CONVERT}
+             and $ENV{TEXINFO_XS_CONVERT} eq '1')) {
+      $document = Texinfo::Structuring::rebuild_document($document);
+      $tree = $document->tree();
+    }
     my $texinfo_text = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
     #print STDERR "$texinfo_text\n";
     my $encoded_macro_expand_file_name = get_conf('MACRO_EXPAND');
@@ -1555,9 +1564,7 @@ while(@input_files) {
 
   if ($formats_table{$converted_format}->{'relate_index_entries_to_table_items'}
       or $tree_transformations{'relate_index_entries_to_table_items'}) {
-    my $indices_information = $document->indices_information();
-    Texinfo::Common::relate_index_entries_to_table_items_in_tree($tree,
-                                                          $indices_information);
+    Texinfo::Common::relate_index_entries_to_table_items_in_tree($document);
   }
 
   if ($formats_table{$converted_format}->{'move_index_entries_after_items'}
@@ -1634,7 +1641,7 @@ while(@input_files) {
 
   $document = Texinfo::Structuring::rebuild_document($document);
 
-  if ($with_XS) {
+  if ($XS_structuring) {
     foreach my $error (@{$document->{'errors'}}) {
       $registrar->add_formatted_message($error);
     }
@@ -1693,7 +1700,7 @@ while(@input_files) {
   if ($converter_unclosed_files) {
     foreach my $unclosed_file (keys(%$converter_unclosed_files)) {
       if ($unclosed_file eq '-') {
-        $unclosed_files{$unclosed_file}
+        $main_unclosed_files{$unclosed_file}
           = $converter_unclosed_files->{$unclosed_file};
       } else {
         if (!close($converter_unclosed_files->{$unclosed_file})) {
@@ -1823,8 +1830,8 @@ while(@input_files) {
   Texinfo::Document::remove_document($document);
 }
 
-foreach my $unclosed_file (keys(%unclosed_files)) {
-  if (!close($unclosed_files{$unclosed_file})) {
+foreach my $unclosed_file (keys(%main_unclosed_files)) {
+  if (!close($main_unclosed_files{$unclosed_file})) {
     warn(sprintf(__("%s: error on closing %s: %s\n"),
                      $real_command_name, $unclosed_file, $!));
     $error_count++;

@@ -62,7 +62,7 @@ sub import {
   goto &Exporter::import;
 }
 
-$VERSION = '7.1';
+$VERSION = '7.1dev';
 
 
 # commands that are of use for formatting.
@@ -432,7 +432,7 @@ sub converter_initialize($)
 
   foreach my $format (keys(%format_raw_commands)) {
     $self->{'ignored_commands'}->{$format} = 1
-       unless ($self->{'expanded_formats_hash'}->{$format});
+       unless ($self->{'expanded_formats'}->{$format});
   }
 
   if ($self->get_conf('ASCII_PUNCTUATION')) {
@@ -1764,7 +1764,7 @@ sub _convert($$)
                      and $command ne 'inlinefmtifelse'
                      and (($inline_format_commands{$command}
                           and (!$element->{'extra'}->{'format'}
-                               or !$self->{'expanded_formats_hash'}
+                               or !$self->{'expanded_formats'}
                                            ->{$element->{'extra'}->{'format'}}))
                          or (!$inline_format_commands{$command}
                              and !defined($element->{'extra'}->{'expand_index'}))))))) {
@@ -2553,7 +2553,7 @@ sub _convert($$)
         my $arg_index = 1;
         if ($command eq 'inlinefmtifelse'
             and (!$element->{'extra'}->{'format'}
-                 or !$self->{'expanded_formats_hash'}
+                 or !$self->{'expanded_formats'}
                                         ->{$element->{'extra'}->{'format'}})) {
           $arg_index = 2;
         }
@@ -2739,7 +2739,7 @@ sub _convert($$)
           or $command eq 'smallquotation') {
         if ($element->{'args'} and $element->{'args'}->[0]
             and $element->{'args'}->[0]->{'contents'}
-            and @{$element->{'args'}->[0]->{'contents'}}) {
+            and scalar(@{$element->{'args'}->[0]->{'contents'}})) {
           my $prepended = $self->gdt('@b{{quotation_arg}:} ',
              {'quotation_arg' => $element->{'args'}->[0]});
           $prepended->{'type'} = 'frenchspacing';

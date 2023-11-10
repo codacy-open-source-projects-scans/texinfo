@@ -74,6 +74,10 @@ ET_untranslated,
 ET_macro_call,
 ET_rmacro_call,
 ET_linemacro_call,
+ET_text,
+ET__code,
+ET__converted,
+ET__string,
 ET_special_unit_element,
 };
 

@@ -43,13 +43,15 @@ use Carp qw(cluck confess);
 
 use Locale::Messages;
 
-use Texinfo::Documentlanguages;
-use Texinfo::Commands;
-use Texinfo::Options;
-
 # FIXME do we really want XS in that file?  Move to
 # Structuring.pm?
 use Texinfo::StructTransf;
+
+use Texinfo::XSLoader;
+
+use Texinfo::Documentlanguages;
+use Texinfo::Commands;
+use Texinfo::Options;
 
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
@@ -76,39 +78,40 @@ valid_tree_transformation
 __ __p
 );
 
-$VERSION = '7.1';
+$VERSION = '7.1dev';
+
+# XS parser and not explicitely unset
+my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
+                        or $ENV{TEXINFO_XS} ne 'omit')
+                       and (not defined($ENV{TEXINFO_XS_PARSER})
+                            or $ENV{TEXINFO_XS_PARSER} eq '1')
+                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
+                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+
+our %XS_overrides = (
+  "Texinfo::Common::set_document_options"
+    => "Texinfo::StructTransf::set_document_options",
+  "Texinfo::Common::copy_tree"
+    => "Texinfo::StructTransf::copy_tree",
+  "Texinfo::Common::relate_index_entries_to_table_items_in_tree"
+    => "Texinfo::StructTransf::relate_index_entries_to_table_items_in_tree",
+  "Texinfo::Common::move_index_entries_after_items_in_tree"
+    => "Texinfo::StructTransf::move_index_entries_after_items_in_tree",
+  "Texinfo::Common::protect_colon_in_tree"
+    => "Texinfo::StructTransf::protect_colon_in_tree",
+  "Texinfo::Common::protect_comma_in_tree"
+    => "Texinfo::StructTransf::protect_comma_in_tree",
+  "Texinfo::Common::protect_node_after_label_in_tree"
+    => "Texinfo::StructTransf::protect_node_after_label_in_tree",
+);
 
 our $module_loaded = 0;
 sub import {
   if (!$module_loaded) {
-    if (!defined $ENV{TEXINFO_XS_PARSER}
-        or $ENV{TEXINFO_XS_PARSER} eq '1') {
-      Texinfo::XSLoader::override(
-        "Texinfo::Common::set_document_options",
-        "Texinfo::StructTransf::set_document_options");
-      Texinfo::XSLoader::override(
-        "Texinfo::Common::copy_tree",
-        "Texinfo::StructTransf::copy_tree");
-      Texinfo::XSLoader::override(
-        "Texinfo::Common::relate_index_entries_to_table_items_in_tree",
-        "Texinfo::StructTransf::relate_index_entries_to_table_items_in_tree"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Common::move_index_entries_after_items_in_tree",
-        "Texinfo::StructTransf::move_index_entries_after_items_in_tree"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Common::protect_colon_in_tree",
-        "Texinfo::StructTransf::protect_colon_in_tree"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Common::protect_comma_in_tree",
-        "Texinfo::StructTransf::protect_comma_in_tree"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Common::protect_node_after_label_in_tree",
-        "Texinfo::StructTransf::protect_node_after_label_in_tree"
-      );
+    if ($XS_structuring) {
+      for my $sub (keys %XS_overrides) {
+        Texinfo::XSLoader::override ($sub, $XS_overrides{$sub});
+      }
     }
     $module_loaded = 1;
   }
@@ -609,7 +612,17 @@ sub output_files_open_out($$$;$$)
     binmode($filehandle, ":encoding($encoding)");
   }
   if ($self) {
-    push @{$self->{'opened_files'}}, $file_path;
+    if ($self->{'unclosed_files'}->{$file_path}) {
+      warn "BUG: already open: $file_path\n";
+    } else {
+      # FIXME check that this file has not already been registered
+      # as opened_file?  If not, it will be unlink'ed twice if the
+      # main program aborts.  It is not possible to use the file name
+      # twice except with user customization file name set to a file
+      # name also used for a specific purpose such as MACRO_EXPAND
+      # or the like, as output units files are never opened twice.
+      push @{$self->{'opened_files'}}, $file_path;
+    }
     $self->{'unclosed_files'}->{$file_path} = $filehandle;
   }
   return $filehandle, undef;
@@ -625,7 +638,7 @@ sub output_files_register_closed($$)
   if ($self->{'unclosed_files'}->{$file_path}) {
     delete $self->{'unclosed_files'}->{$file_path};
   } else {
-    cluck "$file_path not opened\n";
+    cluck "BUG: $file_path not opened\n";
   }
 }
 
@@ -1173,7 +1186,8 @@ sub locate_include_file($$)
   return $found_file;
 }
 
-sub _informative_command_value($)
+# TODO document?
+sub informative_command_value($)
 {
   my $element = shift;
 
@@ -1213,7 +1227,7 @@ sub set_informative_command_value($$)
   my $cmdname = $element->{'cmdname'};
   $cmdname = 'shortcontents' if ($cmdname eq 'summarycontents');
 
-  my $value = _informative_command_value($element);
+  my $value = informative_command_value($element);
 
   if (defined($value)) {
     return $self->set_conf($cmdname, $value);
@@ -1243,20 +1257,15 @@ sub _in_preamble($)
 # 'last' means setting to the last value for the command in the document.
 #
 # For unique command, the last may be considered to be the same as the first.
-#
-# Notice that the only effect is to use set_conf (directly or through
-# set_informative_command_value), no @-commands setting side effects are done
-# and associated customization variables are not set/reset either.
-sub set_global_document_command($$$$)
+sub get_global_document_command($$$)
 {
-  my $self = shift;
   my $global_commands_information = shift;
   my $global_command = shift;
   my $command_location = shift;
 
   if ($command_location ne 'last' and $command_location ne 'preamble_or_first'
       and $command_location ne 'preamble') {
-    warn "BUG: set_global_document_command: unknown command_location: $command_location";
+    warn "BUG: get_global_document_command: unknown command_location: $command_location";
   }
 
   my $element;
@@ -1265,18 +1274,15 @@ sub set_global_document_command($$$$)
       and ref($global_commands_information->{$global_command}) eq 'ARRAY') {
     if ($command_location eq 'last') {
       $element = $global_commands_information->{$global_command}->[-1];
-      set_informative_command_value($self, $element);
     } else {
       if ($command_location eq 'preamble_or_first'
           and not _in_preamble($global_commands_information->{$global_command}->[0])) {
         $element =
           $global_commands_information->{$global_command}->[0];
-        set_informative_command_value($self, $element);
       } else {
         foreach my $command_element (@{$global_commands_information->{$global_command}}) {
           if (_in_preamble($command_element)) {
             $element = $command_element;
-            set_informative_command_value($self, $element);
           } else {
             last;
           }
@@ -1287,6 +1293,24 @@ sub set_global_document_command($$$$)
            and defined($global_commands_information->{$global_command})) {
     # unique command, first, preamble and last are the same
     $element = $global_commands_information->{$global_command};
+  }
+  return $element;
+}
+
+# Notice that the only effect is to use set_conf (directly or through
+# set_informative_command_value), no @-commands setting side effects are done
+# and associated customization variables are not set/reset either.
+sub set_global_document_command($$$$)
+{
+  my $self = shift;
+  my $global_commands_information = shift;
+  my $global_command = shift;
+  my $command_location = shift;
+
+  my $element = get_global_document_command($global_commands_information,
+                                            $global_command, $command_location);
+
+  if ($element) {
     set_informative_command_value($self, $element);
   }
   return $element;
@@ -2040,21 +2064,19 @@ sub _copy_extra_info($$;$)
   }
 }
 
-sub copy_tree($;$)
+sub copy_tree($)
 {
   my $current = shift;
-  my $parent = shift;
-  my $copy = _copy_tree($current, $parent);
+  my $copy = _copy_tree($current, undef);
   _copy_extra_info($current, $copy);
   return $copy;
 }
 
 # Never overriden by XS version
-sub copy_treeNonXS($;$)
+sub copy_treeNonXS($)
 {
   my $current = shift;
-  my $parent = shift;
-  my $copy = _copy_tree($current, $parent);
+  my $copy = _copy_tree($current, undef);
   _copy_extra_info($current, $copy);
   return $copy;
 }
@@ -2495,10 +2517,12 @@ sub _relate_index_entries_to_table_items($$$)
   return undef;
 }
 
-sub relate_index_entries_to_table_items_in_tree($$)
+sub relate_index_entries_to_table_items_in_tree($)
 {
-  my $tree = shift;
-  my $indices_information = shift;
+  my $document = shift;
+
+  my $tree = $document->tree();
+  my $indices_information = $document->indices_information();
 
   modify_tree($tree, \&_relate_index_entries_to_table_items,
               $indices_information);
@@ -2519,24 +2543,6 @@ sub get_label_element($)
     return $current->{'args'}->[1];
   }
   return undef;
-}
-
-sub encode_options($)
-{
-  my $options = shift;
-  my $encoded_options = {};
-  foreach my $option (keys(%$options)) {
-    next unless ($valid_customization_options{$option});
-    if (defined($options->{$option})
-        and ref($options->{$option}) eq ''
-        and not $non_decoded_customization_variables{$option}) {
-      $encoded_options->{$option}
-        = Encode::encode("UTF-8", $options->{$option});
-    } else {
-      $encoded_options->{$option} = $options->{$option};
-    }
-  }
-  return $encoded_options;
 }
 
 # non-XS does nothing and should not even be called as the caller verifies
@@ -2964,7 +2970,7 @@ In C<@enumerate> and C<@itemize> from the tree, move index entries
 appearing just before C<@item> after the C<@item>.  Comment lines
 between index entries are moved too.
 
-=item relate_index_entries_to_table_items_in_tree($tree)
+=item relate_index_entries_to_table_items_in_tree($document)
 X<C<relate_index_entries_to_table_items_in_tree>>
 
 In tables, relate index entries preceding and following an

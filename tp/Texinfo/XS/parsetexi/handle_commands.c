@@ -28,6 +28,7 @@
 /* for isascii_alnum whitespace_chars read_flag_name item_line_parent */
 #include "utils.h"
 #include "counter.h"
+#include "command_stack.h"
 #include "context_stack.h"
 /* for conf */
 #include "conf.h"
@@ -973,7 +974,7 @@ funexit:
   return current;
 }
 
-struct expanded_format parser_expanded_formats[] = {
+EXPANDED_FORMAT parser_expanded_formats[] = {
     "html", 0,
     "docbook", 0,
     "plaintext", 1,
@@ -1043,7 +1044,7 @@ handle_block_command (ELEMENT *current, char **line_inout,
               else
                 {
                   bug_message ("menu description parent not a menu_entry: %s",
-                               element_type_name (current));
+                               element_type_names[current->type]);
                   abort ();
                 }
             }

@@ -24,6 +24,7 @@
 #include "element_types.h"
 #include "options_types.h"
 #include "tree_types.h"
+#include "converter_types.h"
 #include "tree.h"
 #include "extra.h"
 #include "errors.h"
@@ -37,10 +38,8 @@
 #include "node_name_normalization.h"
 #include "convert_to_texinfo.h"
 #include "targets.h"
-#include "document.h"
 #include "transformations.h"
 #include "translations.h"
-#include "output_unit.h"
 #include "structuring.h"
 
 void
@@ -1838,7 +1837,7 @@ print_down_menus(ELEMENT *node, LABEL_LIST *identifiers_target,
           ELEMENT *entry = menu->contents.list[j];
           if (entry->type == ET_menu_entry)
             {
-              ELEMENT *entry_copy = copy_tree (entry, 0);
+              ELEMENT *entry_copy = copy_tree (entry);
               ELEMENT *node;
               add_to_contents_as_array (master_menu_contents, entry_copy);
               /* gather node children to recursively print their menus */

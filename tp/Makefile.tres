@@ -487,9 +487,6 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/float/ref_to_float.pl \
   t/results/float/simple.pl \
   t/results/float/special_characters_in_float_type.pl \
-  t/results/formats_encodings/8bit_document_translations.pl \
-  t/results/formats_encodings/8bit_document_translations/res_html \
-  t/results/formats_encodings/8bit_document_translations/res_info \
   t/results/formats_encodings/accent.pl \
   t/results/formats_encodings/accent_argument_non_ascii.pl \
   t/results/formats_encodings/accent_enable_encoding.pl \
@@ -635,6 +632,10 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/image_link_prefix.pl \
   t/results/html_tests/index_and_node_same_name.pl \
   t/results/html_tests/index_below.pl \
+  t/results/html_tests/info_js_dir_html.pl \
+  t/results/html_tests/info_js_dir_html_file.pl \
+  t/results/html_tests/info_js_dir_html_file/res_html \
+  t/results/html_tests/info_js_dir_html_text.pl \
   t/results/html_tests/itemize_arguments.pl \
   t/results/html_tests/itemize_arguments/res_html \
   t/results/html_tests/itemize_arguments_enable_encoding.pl \
@@ -642,6 +643,8 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/mathjax_with_texinfo.pl \
   t/results/html_tests/mathjax_with_texinfo_enable_encoding.pl \
   t/results/html_tests/mathjax_with_texinfo_enable_encoding/res_latex \
+  t/results/html_tests/mathjax_with_texinfo_html_file.pl \
+  t/results/html_tests/mathjax_with_texinfo_html_file/res_html \
   t/results/html_tests/mathjax_with_texinfo_html_text.pl \
   t/results/html_tests/mathjax_with_texinfo_no_convert_to_latex.pl \
   t/results/html_tests/menu.pl \
@@ -1109,6 +1112,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/languages/multiple_lang_chapters_texi2html.pl \
   t/results/languages/multiple_lang_chapters_texi2html/res_html \
   t/results/languages/multiple_lang_chapters_texi2html/res_info \
+  t/results/languages/no_documentlanguage_before_copying.pl \
   t/results/languages/simple_documentlanguage.pl \
   t/results/languages/unknown_language.pl \
   t/results/languages/unknown_region.pl \

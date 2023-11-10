@@ -121,7 +121,7 @@ sub import {
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.1';
+$VERSION = '7.1dev';
 
 
 # these are the default values for the parser state
@@ -841,6 +841,18 @@ sub get_parser_info($)
     $self->{'info'}->{'input_encoding_name'} = $self->{'input_encoding_name'};
   } else {
     $self->{'info'}->{'input_encoding_name'} = 'utf-8';
+  }
+  my $global_commands = $self->{'commands_info'};
+  my $document_language
+    = Texinfo::Common::get_global_document_command($global_commands,
+                                                   'documentlanguage',
+                                                   'preamble');
+  if ($document_language) {
+    $self->{'info'}->{'documentlanguage'}
+      = Texinfo::Common::informative_command_value($document_language);
+  }
+  if ($global_commands->{'novalidate'}) {
+    $self->{'info'}->{'novalidate'} = 1;
   }
 }
 
@@ -4820,13 +4832,11 @@ sub _new_value_element($$;$$)
   my $value_elt = { 'cmdname' => $command,
                       'args' => [] };
   $value_elt->{'parent'} = $current if (defined($current));
-  # Add a 'brace_command_arg' container?  On the one hand it is
-  # not useful, as there is no contents, only a flag, on the
-  # other end, it is different from other similar commands, like 'U'.
-  # Beware that it is also used for txiinternalvalue, which for
-  # now requires that structure, but it could easily be changed too.
-  push @{$value_elt->{'args'}}, {'text' => $flag,
-                                 'parent' => $value_elt};
+  my $brace_command_arg = {'type' => 'brace_command_arg',
+                           'contents' => [], 'parent' => $value_elt};
+  push @{$value_elt->{'args'}}, $brace_command_arg;
+  push @{$brace_command_arg->{'contents'}}, {'text' => $flag,
+                                            'parent' => $brace_command_arg};
   if ($spaces_element) {
     $value_elt->{'info'} = {} if (!$value_elt->{'info'});
     $value_elt->{'info'}->{'spaces_after_cmd_before_arg'} = $spaces_element;
@@ -7025,7 +7035,7 @@ sub _process_remaining_on_line($$$$)
 
             # caller should expand something along
             # gdt($self, '@{No value for `{value}\'@}',
-            #                            {'value' => {'text' => $value}});
+            #                            {'value' => ...});
             my $new_element = _new_value_element($command, $value, $current,
                                                  $spaces_element);
             push @{$current->{'contents'}}, $new_element;
@@ -8340,11 +8350,6 @@ leads to
  {'cmdname' => 'code',
   'args' => [{'type' => 'brace_command_arg',
               'contents' => [{'text' => 'in code'}]}]}
-
-As an exception, C<@value> flag argument is directly in the I<args> array
-reference, not in a I<brace_command_arg> container.  Note that only C<@value>
-commands that are not expanded because there is no corresponding value set
-are present as elements in the tree.
 
 =item bracketed_arg
 

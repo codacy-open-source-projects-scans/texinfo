@@ -26,9 +26,14 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "tree_types.h"
+#include "converter_types.h"
 /* also for xvasprintf */
 #include "text.h"
+/* for debug_output */
 #include "debug.h"
+/* for fatal */
+#include "utils.h"
 #include "errors.h"
 
 
@@ -208,10 +213,8 @@ message_list_document_error_internal (ERROR_MESSAGE_LIST *error_messages,
 
   error_message->error_line = error_line.text;
 
-  /*
-  if (debug_output)
-    fprintf (stderr, error_message->error_line);
-   */
+  if (conf && conf->DEBUG > 0)
+    fprintf (stderr, "%s", error_message->error_line);
 }
 
 static void

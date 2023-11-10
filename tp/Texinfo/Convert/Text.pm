@@ -33,6 +33,8 @@ use Encode qw(decode);
 
 use Texinfo::Convert::ConvertXS;
 
+use Texinfo::XSLoader;
+
 use Texinfo::Commands;
 use Texinfo::Common;
 use Texinfo::Convert::Unicode;
@@ -53,13 +55,16 @@ use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.1';
+$VERSION = '7.1dev';
+
+my $XS_convert = 0;
+$XS_convert = 1 if (defined $ENV{TEXINFO_XS_CONVERT}
+                    and $ENV{TEXINFO_XS_CONVERT} eq '1');
 
 our $module_loaded = 0;
 sub import {
   if (!$module_loaded) {
-    if (defined $ENV{TEXINFO_XS_CONVERT}
-        and $ENV{TEXINFO_XS_CONVERT} eq '1') {
+    if ($XS_convert) {
       # We do not simply override, we must check at runtime
       # that the document tree was stored by the XS parser.
       Texinfo::XSLoader::override(
@@ -366,6 +371,8 @@ sub text_heading($$$;$$)
 }
 
 my @text_indicator_converter_options = ('NUMBER_SECTIONS', 'ASCII_GLYPH', 'TEST',
+    # FIXME not used directly in the module code.  It is unlikely for that variable
+    # to be used elsewhere from text options and not converter options.
     # for error registering,
     'DEBUG');
 
@@ -397,72 +404,46 @@ sub copy_options_for_convert_text($;$)
       $options{$option} = 0;
     }
   }
-  $options{'expanded_formats_hash'} = $self->{'expanded_formats_hash'};
+  $options{'expanded_formats'} = $self->{'expanded_formats'};
   # for locate_include_file
   $options{'INCLUDE_DIRECTORIES'} = $self->get_conf('INCLUDE_DIRECTORIES');
-  # FIXME remove
-  $options{'PROGRAM'} = $self->get_conf('PROGRAM');
 
   $options{'converter'} = $self;
   return %options;
 }
 
-# encode to UTF-8 bytes before passing to XS code.  Specific
-# text options are in general ASCII strings, but this is still
-# cleaner.  Also encode and select converter options passed.
-sub encode_text_options($)
+# select converter options passed.
+sub select_text_options($)
 {
   my $options = shift;
-  my $encoded_options = {};
-
-  foreach my $option ('enabled_encoding') {
-    if (defined($options->{$option})) {
-      $encoded_options->{$option}
-        = Encode::encode("UTF-8", $options->{$option});
-    }
-  }
+  my $selected_options = {};
 
   foreach my $option (@text_indicator_converter_options,
                       'INCLUDE_DIRECTORIES',
+                      'expanded_formats',
                       # non-converter indicator options
-                      'sc', 'code', 'sort_string') {
+       'enabled_encoding', 'sc', 'code', 'sort_string') {
     if (defined($options->{$option})) {
-      $encoded_options->{$option} = $options->{$option};
+      $selected_options->{$option} = $options->{$option};
     }
-  }
-
-  if (defined($options->{'expanded_formats_hash'})) {
-    my $expanded_formats = [];
-    foreach my $format (keys(%{$options->{'expanded_formats_hash'}})) {
-      push @$expanded_formats, Encode::encode("UTF-8", $format);
-    }
-    $encoded_options->{'expanded_formats'} = $expanded_formats;
   }
 
   # called through convert_to_text with a converter in text options
   if ($options->{'converter'}
       and $options->{'converter'}->{'conf'}) {
-    my $encoded_converter_options
-     = Texinfo::Common::encode_options($options->{'converter'}->{'conf'});
-    $encoded_options->{'other_converter_options'} = $encoded_converter_options;
+    $selected_options->{'other_converter_options'}
+       = $options->{'converter'}->{'conf'};
   }
 
-  my $encoded_converter_options
-    = Texinfo::Common::encode_options($options);
-  $encoded_options->{'self_converter_options'} = $encoded_converter_options;
+  $selected_options->{'self_converter_options'} = $options;
 
-  return $encoded_options;
+  return $selected_options;
 }
 
 # This is used if the document is available for XS, but XS is not
 # used (most likely $TEXINFO_XS_CONVERT is 0).
 sub _convert_tree_with_XS($$;$)
 {
-  my $encoded_options = shift;
-  my $root = shift;
-  my $options = shift;
-
-  return _convert($root, $options);
 }
 
 sub convert_to_text($;$)
@@ -471,7 +452,7 @@ sub convert_to_text($;$)
   my $options = shift;
 
   if (ref($root) ne 'HASH') {
-    cluck;
+    confess "root not a hash";
   }
 
   #print STDERR "CONVERT\n";
@@ -480,6 +461,9 @@ sub convert_to_text($;$)
   # reference.
   $options = {} if (!defined($options));
   if (defined($options)) {
+    if (!ref($options)) {
+      confess("convert_to_text options not a ref\n");
+    }
     bless $options;
     if ($options->{'code'}) {
       $options->{'_code_state'} = 1;
@@ -487,9 +471,9 @@ sub convert_to_text($;$)
   }
 
   # Interface with XS converter.
-  if (defined($root->{'tree_document_descriptor'})) {
-    my $encoded_options = encode_text_options($options);
-    my $XS_result = _convert_tree_with_XS($encoded_options, $root, $options);
+  if ($XS_convert and defined($root->{'tree_document_descriptor'})) {
+    my $selected_options = select_text_options($options);
+    my $XS_result = _convert_tree_with_XS($selected_options, $root, $options);
     if (defined ($XS_result)) {
       return $XS_result;
     } else {
@@ -525,8 +509,8 @@ sub _convert($;$)
              and ($ignored_brace_commands{$element->{'cmdname'}}
                  or $ignored_block_commands{$element->{'cmdname'}}
                  or ($ignored_format_raw_commands{$element->{'cmdname'}}
-                     and !(defined($options->{'expanded_formats_hash'})
-                           and $options->{'expanded_formats_hash'}
+                     and !(defined($options->{'expanded_formats'})
+                           and $options->{'expanded_formats'}
                                                     ->{$element->{'cmdname'}}))
                  or ($Texinfo::Commands::brace_commands{$element->{'cmdname'}}
                      and $Texinfo::Commands::brace_commands{
@@ -535,8 +519,8 @@ sub _convert($;$)
                      and (($Texinfo::Commands::inline_format_commands{
                                                          $element->{'cmdname'}}
                            and (!$element->{'extra'}->{'format'}
-                                or !$options->{'expanded_formats_hash'}
-                                or !$options->{'expanded_formats_hash'}
+                                or !$options->{'expanded_formats'}
+                                or !$options->{'expanded_formats'}
                                            ->{$element->{'extra'}->{'format'}}))
                          or (!$Texinfo::Commands::inline_format_commands{
                                                           $element->{'cmdname'}}
@@ -660,8 +644,8 @@ sub _convert($;$)
       my $arg_index = 1;
       if ($element->{'cmdname'} eq 'inlinefmtifelse'
           and (!$element->{'extra'}->{'format'}
-               or !$options->{'expanded_formats_hash'}
-               or !$options->{'expanded_formats_hash'}
+               or !$options->{'expanded_formats'}
+               or !$options->{'expanded_formats'}
                                    ->{$element->{'extra'}->{'format'}})) {
         $arg_index = 2;
       }
@@ -855,9 +839,9 @@ sub converter($;$)
     delete $converter->{'document'};
   }
   if ($expanded_formats) {
-    $converter->{'expanded_formats_hash'} = {};
+    $converter->{'expanded_formats'} = {};
     foreach my $expanded_format(@$expanded_formats) {
-      $converter->{'expanded_formats_hash'}->{$expanded_format} = 1;
+      $converter->{'expanded_formats'}->{$expanded_format} = 1;
     }
   }
 
@@ -996,9 +980,9 @@ sub output($$)
 
   my $result;
   # Interface with XS converter.
-  if (defined($root->{'tree_document_descriptor'})) {
-    my $encoded_options = encode_text_options($self);
-    my $XS_result = _convert_tree_with_XS($encoded_options, $root, $self);
+  if ($XS_convert and defined($root->{'tree_document_descriptor'})) {
+    my $selected_options = select_text_options($self);
+    my $XS_result = _convert_tree_with_XS($selected_options, $root, $self);
     if (defined ($XS_result)) {
       $result = $XS_result;
     } else {
@@ -1142,7 +1126,7 @@ object may be used during conversion.  Mostly error reporting and strings
 translation, as the converter object is also supposed to be a
 L<Texinfo::Report> objet.  See also L<Texinfo::Convert::Converter>.
 
-=item expanded_formats_hash
+=item expanded_formats
 
 A reference on a hash.  The keys should be format names (like C<html>,
 C<tex>), and if the corresponding value is set, the format is expanded.

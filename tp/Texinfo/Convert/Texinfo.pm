@@ -51,7 +51,7 @@ use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.1';
+$VERSION = '7.1dev';
 
 our $module_loaded = 0;
 sub import {
@@ -159,9 +159,12 @@ sub root_heading_command_to_texinfo($)
   } else {
     return "Not a command";
   }
-  return '@'.$element->{'cmdname'}.' '.convert_to_texinfo({'contents' => $tree})
-          if ($tree);
-  return '@'.$element->{'cmdname'};
+  if ($tree) {
+    return '@'.$element->{'cmdname'}.' '
+                .convert_to_texinfo({'contents' => $tree});
+  } else {
+    return '@'.$element->{'cmdname'};
+  }
 }
 
 # Following subroutines deal with transforming a texinfo tree into texinfo
@@ -263,8 +266,7 @@ sub _expand_cmd_args_to_texi($) {
     $braces = 1 if (scalar(@{$cmd->{'args'}})
                     and ($cmd->{'args'}->[0]->{'type'}
                           and ($cmd->{'args'}->[0]->{'type'} eq 'brace_command_arg'
-                               or $cmd->{'args'}->[0]->{'type'} eq 'brace_command_context'))
-                         or $cmdname eq 'value');
+                               or $cmd->{'args'}->[0]->{'type'} eq 'brace_command_context')));
     $result .= '{' if ($braces);
     if ($cmdname eq 'verb') {
       $result .= $cmd->{'info'}->{'delimiter'};

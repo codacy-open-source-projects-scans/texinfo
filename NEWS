@@ -16,6 +16,13 @@ See the manual for detailed information.
 * texi2any
  . remove SIMPLE_MENU customization option and tree transformation.
  . remove FRAMES and FRAMESET_DOCTYPE customization options.
+ . rename PACKAGE* customization variables to PACKAGE*_OPTION.  For example
+   PACKAGE_VERSION customization option is now PACKAGE_VERSION_OPTION.
+ . some unused translation files have been removed for the
+   "texinfo_document" domain
+* info
+ . check for init file under ~/.config/texinfo/infokey before checking
+  ~/.infokey, in accordance with the XDG Base Directory Specification
 
 
 7.1 (18 October 2023)

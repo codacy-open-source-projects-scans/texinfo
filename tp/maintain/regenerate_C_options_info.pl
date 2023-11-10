@@ -254,50 +254,50 @@ open (GET, ">$get_file") or die "Open $get_file: $!\n";
 print GET "/* Automatically generated from $0 */\n\n";
 
 print GET 'void
-get_sv_options (SV *sv, OPTIONS *options)
+get_sv_option (OPTIONS *options, const char *key, SV *value)
 {
-  I32 hv_number;
-  I32 i;
-  HV *hv;
-
   dTHX;
 
-  hv = (HV *)SvRV (sv);
-  hv_number = hv_iterinit (hv);
-  for (i = 0; i < hv_number; i++)
-    {
-      char *key;
-      I32 retlen;
-      SV *value = hv_iternextsv(hv, &key, &retlen);
-      if (value && SvOK (value))
-        {
-          if (0) {}
+  if (0) {}
 ';
 
+#my %non_decoded_customization_variables
+#   = %Texinfo::Common::non_decoded_customization_variables;
+
+# duplicated from Texinfo::Common to avoid depending on Texinfo::Common
+my %non_decoded_customization_variables;
+foreach my $variable_name ('MACRO_EXPAND', 'INTERNAL_LINKS') {
+  $non_decoded_customization_variables{$variable_name} = 1;
+}
 
 foreach my $category (sort(keys(%option_categories))) {
   print GET "\n/* ${category} */\n\n";
   foreach my $option_info (@{$option_categories{$category}}) {
     my ($option, $value, $type) = @$option_info;
-    print GET "          else if (!strcmp (key, \"$option\"))\n";
+    print GET "  else if (!strcmp (key, \"$option\"))\n";
     if ($type eq 'char *') {
-      print GET "            options->$option = strdup (SvPVbyte_nolen (value));\n";
+      my $SV_function_type = 'utf8';
+      if ($non_decoded_customization_variables{$option}) {
+        $SV_function_type = 'byte';
+      }
+      print GET "    {
+      free (options->$option);
+      options->$option = strdup (SvPV${SV_function_type}_nolen (value));
+    }\n";
     } elsif ($type eq 'int') {
-      print GET "            options->$option = SvIV (value);\n";
+      print GET "    options->$option = SvIV (value);\n";
     } elsif ($type eq 'STRING_LIST') {
       my $dir_string_arg = 0;
       $dir_string_arg = 1
         if ($option eq 'INCLUDE_DIRECTORIES');
-      print GET "            add_svav_to_string_list (&value, &options->$option, $dir_string_arg);\n";
+      print GET "    add_svav_to_string_list (value, &options->$option, $dir_string_arg);\n";
     } else {
-      print GET "            {}\n";
+      print GET "    {}\n";
     }
   }
 }
 
-print GET '        }
-    }
-}
+print GET '}
 ';
 
 close(GET);

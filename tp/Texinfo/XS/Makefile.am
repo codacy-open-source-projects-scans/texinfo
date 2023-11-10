@@ -97,17 +97,15 @@ XSParagraph_la_SOURCES = XSParagraph.c xspara.c xspara.h \
 XSParagraph_la_CFLAGS = $(XSLIBS_CFLAGS)
 XSParagraph_la_CPPFLAGS = $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) $(XSLIBS_CPPFLAGS)
 XSParagraph_la_LIBADD = $(builddir)/gnulib/lib/libgnu.la
-XSParagraph_la_LDFLAGS = $(AM_LDFLAGS) $(XSLIBS_LDFLAGS) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+XSParagraph_la_LDFLAGS = $(AM_LDFLAGS) $(XSLIBS_LDFLAGS) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING) $(LTLIBC32CONV)
 
 EXTRA_DIST += XSParagraph.xs MiscXS.xs
 
 
 ########################## shared common library and parser library
 
-# FIXME this is an internal library.  Do not put it in lib?
-# it still needs to be found by the linker.
 if HAVE_ICONV
-lib_LTLIBRARIES = libtexinfo.la
+xs_LTLIBRARIES += libtexinfo.la
 endif
 
 # The files in the main directory correspond to code used both
@@ -143,10 +141,13 @@ libtexinfo_la_SOURCES= \
 		      main/manipulate_tree.h \
 		      main/node_name_normalization.c \
 		      main/node_name_normalization.h \
+		      main/command_stack.c \
+		      main/command_stack.h \
 		      main/targets.c \
 		      main/targets.h \
 		      main/utils.c \
 		      main/utils.h \
+		      main/converter_types.h \
 		      main/unicode.c \
 		      main/unicode.h \
 		      main/translations.c \
@@ -259,7 +260,7 @@ $(srcdir)/main/accent_tables_8bit_codepoints.c:
 	$(TXI_MODULES_ENV) $(PERL) $(srcdir)/../../maintain/setup_accent_tables.pl \
 	              $(srcdir)/main/accent_tables_8bit_codepoints.c
 
-$(srcdir)/main/options_init_free.c $(srcdir)/main/options_types.h $(srcdir)/main/options_get_perl.c: ../options_data.txt main/command_data.c
+$(srcdir)/main/options_init_free.c $(srcdir)/main/options_types.h $(srcdir)/main/options_get_perl.c: ../options_data.txt main/command_data.c $(srcdir)/../../maintain/regenerate_C_options_info.pl
 	$(PERL) $(srcdir)/../../maintain/regenerate_C_options_info.pl \
 	        < $(srcdir)/../options_data.txt \
 	              $(srcdir)/main/command_data.c \
@@ -273,25 +274,29 @@ $(srcdir)/main/options_init_free.c $(srcdir)/main/options_types.h $(srcdir)/main
 # and flags; it depends on perl and not on gnulib.  Both libraries
 # are used by following XS.
 
-# FIXME this is an internal library.  Do not put it in lib?
-# it still needs to be found by the linker.
 if HAVE_ICONV
-lib_LTLIBRARIES += libtexinfoxs.la
+xs_LTLIBRARIES += libtexinfoxs.la
 endif
 
 libtexinfoxs_la_SOURCES= \
-		      main/tree_perl_api.h \
+		      main/api_to_perl.c \
+		      main/api_to_perl.h \
 		      main/build_perl_info.c \
 		      main/build_perl_info.h \
 		      main/get_perl_info.c \
 		      main/get_perl_info.h \
-		      main/call_perl_function.c
+		      main/call_perl_function.c \
+		      main/call_perl_function.h
 
 # locate include files under out-of-source builds.
 libtexinfoxs_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/convert $(AM_CPPFLAGS) $(XSLIBS_CPPFLAGS)
 libtexinfoxs_la_CFLAGS = $(XSLIBS_CFLAGS)
 libtexinfoxs_la_LIBADD = libtexinfo.la
 libtexinfoxs_la_LDFLAGS = -version-info 0:0:0 $(AM_LDFLAGS) $(PERL_CONF_ccdlflags) $(PLATFORM_LDFLAGS) $(LTLIBINTL)
+
+# FIXME libtexinfo.so.* and libtexinfoxs.so.* are sought in system
+# directories first (${libdir}) before the correct installed location, so
+# there is potential for the wrong library file to be dynamically loaded.
 
 
 ########################## Parsetexi XS parser
@@ -315,23 +320,20 @@ Parsetexi_la_LDFLAGS = $(AM_LDFLAGS) $(XSLIBS_LDFLAGS)
 
 ########################## Translations XS
 
-mainmodulesdir = $(pkgdatadir)/Texinfo/XS/main
-dist_mainmodules_DATA = main/TranslationsXS.pm
-
 if HAVE_ICONV
-xs_LTLIBRARIES += Translations.la
+xs_LTLIBRARIES += TranslationsXS.la
 endif
 
-Translations_la_SOURCES = \
-                       main/Translations.c
+TranslationsXS_la_SOURCES = \
+                       main/TranslationsXS.c
 
-EXTRA_DIST += main/Translations.xs
+EXTRA_DIST += main/TranslationsXS.xs
 
 # locate include files under out-of-source builds.
-Translations_la_CPPFLAGS = -I$(srcdir)/main $(AM_CPPFLAGS) $(XSLIBS_CPPFLAGS)
-Translations_la_CFLAGS = $(XSLIBS_CFLAGS)
-Translations_la_LIBADD = libtexinfoxs.la libtexinfo.la
-Translations_la_LDFLAGS = $(AM_LDFLAGS) $(XSLIBS_LDFLAGS)
+TranslationsXS_la_CPPFLAGS = -I$(srcdir)/main $(AM_CPPFLAGS) $(XSLIBS_CPPFLAGS)
+TranslationsXS_la_CFLAGS = $(XSLIBS_CFLAGS)
+TranslationsXS_la_LIBADD = libtexinfoxs.la libtexinfo.la
+TranslationsXS_la_LDFLAGS = $(AM_LDFLAGS) $(XSLIBS_LDFLAGS)
 
 ########################## StructuringTransfo XS
 
@@ -362,6 +364,12 @@ endif
 
 ConvertXS_la_SOURCES = \
                        convert/ConvertXS.c \
+                       convert/build_html_perl_state.h \
+                       convert/build_html_perl_state.c \
+                       convert/call_html_perl_function.h \
+                       convert/call_html_perl_function.c \
+                       convert/get_html_perl_info.c \
+                       convert/get_html_perl_info.h \
                        convert/convert_plain_texinfo.h \
                        convert/convert_plain_texinfo.c \
                        convert/convert_text.h \

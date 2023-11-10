@@ -56,10 +56,17 @@ const char *direction_names[] = {"next", "prev", "up"};
 const char *direction_texts[] = {"Next", "Prev", "Up"};
 const size_t directions_length = sizeof (direction_names) / sizeof (direction_names[0]);
 
+const enum command_id small_block_associated_command[][2] = {
+  #define smbc_command_name(name) {CM_small##name, CM_##name},
+   SMALL_BLOCK_COMMANDS_LIST
+  #undef smbc_command_name
+   {0, 0},
+};
+
 /* to keep synchronized with enum output_unit_type in tree_types.h */
 const char *output_unit_type_names[] = {"unit",
-                                        "external_node_unit",
-                                        "special_unit"};
+                                  "external_node_unit",
+                                  "special_unit"};
 
 char *html_global_unit_direction_names[] = {
   #define hgdt_name(name) #name,
@@ -79,10 +86,22 @@ char *html_formatting_reference_names[] = {
   #undef html_fr_reference
 };
 
-char *html_css_string_formatting_reference_names[] = {
-  #define html_fr_reference(name) #name,
-   HTML_CSS_FORMATTING_REFERENCES_LIST
-  #undef html_fr_reference
+const char *html_argument_formatting_type_names[] = {
+   #define html_aft_type(name) #name,
+    HTML_ARGUMENTS_FORMATTED_FORMAT_TYPE
+   #undef html_aft_type
+};
+
+const char *special_unit_info_type_names[SUI_type_heading + 1] =
+{
+  #define sui_type(name) #name,
+    SUI_TYPES_LIST
+  #undef sui_type
+};
+
+TRANSLATED_SUI_ASSOCIATION translated_special_unit_info[] = {
+  {SUIT_type_heading, SUI_type_heading},
+  {-1, -1},
 };
 
 ENCODING_CONVERSION_LIST output_conversions = {0, 0, 0, -1};
@@ -93,7 +112,7 @@ const char *command_location_names[]
   = {"before", "last", "preamble", "preamble_or_first"};
 
 /* duplicated when creating a new expanded_formats */
-struct expanded_format expanded_formats[] = {
+EXPANDED_FORMAT expanded_formats[] = {
     "html", 0,
     "docbook", 0,
     "plaintext", 0,
@@ -153,6 +172,8 @@ isascii_upper (int c)
   return (((c & ~0x7f) == 0) && isupper(c));
 }
 
+
+/* operations on strings considered as multibytes.  Use libunistring */
 /* count characters, not bytes. */
 size_t
 count_multibyte (const char *text)
@@ -209,7 +230,10 @@ width_multibyte (const char *text)
   return result;
 }
 
-/* ENCODING should always be lower cased */
+
+/* encoding and decoding. Use iconv. */
+/* conversion to or from utf-8 should always be set before other
+   conversion */
 ENCODING_CONVERSION *
 get_encoding_conversion (char *encoding,
                          ENCODING_CONVERSION_LIST *encodings_list)
@@ -222,10 +246,10 @@ get_encoding_conversion (char *encoding,
      Thoughts on this mapping are available near
      Texinfo::Common::encoding_name_conversion_map definition
   */
-  if (!strcmp (encoding, "us-ascii"))
+  if (!strcasecmp (encoding, "us-ascii"))
     conversion_encoding = "iso-8859-1";
 
-  if (!strcmp (encoding, "utf-8"))
+  if (!strcasecmp (encoding, "utf-8"))
     {
       if (encodings_list->number > 0)
         encoding_index = 0;
@@ -237,8 +261,8 @@ get_encoding_conversion (char *encoding,
       int i;
       for (i = 1; i < encodings_list->number; i++)
         {
-          if (!strcmp (conversion_encoding,
-                       encodings_list->list[i].encoding_name))
+          if (!strcasecmp (conversion_encoding,
+                           encodings_list->list[i].encoding_name))
             {
               encoding_index = i;
               break;
@@ -426,8 +450,11 @@ encode_string (char *input_string, char *encoding, int *status,
   return result;
 }
 
+
+/* code related to the EXPANDED_FORMAT structure holding informations on the
+   expanded formats (html, info, tex...) */
 void
-clear_expanded_formats (struct expanded_format *formats)
+clear_expanded_formats (EXPANDED_FORMAT *formats)
 {
   int i;
   for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
@@ -438,7 +465,7 @@ clear_expanded_formats (struct expanded_format *formats)
 }
 
 void
-add_expanded_format (struct expanded_format *formats, char *format)
+add_expanded_format (EXPANDED_FORMAT *formats, char *format)
 {
   int i;
   for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
@@ -456,10 +483,10 @@ add_expanded_format (struct expanded_format *formats, char *format)
 
 /* FORMAT is an optional argument, to set a format at the expanded_format
    structure creation */
-struct expanded_format *
+EXPANDED_FORMAT *
 new_expanded_formats (char *format)
 {
-  struct expanded_format *formats;
+  EXPANDED_FORMAT *formats;
 
   formats = malloc (sizeof (expanded_formats));
   memcpy (formats, expanded_formats, sizeof (expanded_formats));
@@ -471,7 +498,7 @@ new_expanded_formats (char *format)
 }
 
 int
-format_expanded_p (struct expanded_format *formats, char *format)
+format_expanded_p (EXPANDED_FORMAT *formats, char *format)
 {
   int i;
   for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
@@ -483,6 +510,7 @@ format_expanded_p (struct expanded_format *formats, char *format)
   return 0;
 }
 
+
 /* Return the parent if in an item_line command, @*table */
 ELEMENT *
 item_line_parent (ELEMENT *current)
@@ -509,6 +537,8 @@ get_label_element (ELEMENT *e)
   return 0;
 }
 
+
+/* index related code used both in parsing and conversion */
 /* NAME is the name of an index, e.g. "cp" */
 INDEX *
 indices_info_index_by_name (INDEX **indices_information, char *name)
@@ -529,6 +559,8 @@ ultimate_index (INDEX *index)
   return index;
 }
 
+
+/* text parsing functions used in diverse situations */
 /* Read a name used for @set, @value and translations arguments. */
 char *
 read_flag_name (char **ptr)
@@ -677,6 +709,8 @@ normalize_encoding_name (char *text, int *possible_encoding)
   return normalized_text;
 }
 
+
+/* index related functions used in diverse situations, not only in parser */
 void
 wipe_index (INDEX *idx)
 {
@@ -699,17 +733,8 @@ wipe_index_names (INDEX **index_names)
   free (index_names);
 }
 
-/* options */
-
-OPTIONS *
-new_options (void)
-{
-  OPTIONS *options = (OPTIONS *) malloc (sizeof (OPTIONS));
-  initialize_options (options);
-  return options;
-}
-
-
+
+/* string lists */
 /* include directories and include file */
 
 void
@@ -725,15 +750,14 @@ add_include_directory (char *input_filename, STRING_LIST *include_dirs_list)
 }
 
 void
-add_string (char *string, STRING_LIST *strings_list)
+add_string (const char *string, STRING_LIST *strings_list)
 {
   if (strings_list->number == strings_list->space)
     {
       strings_list->list = realloc (strings_list->list,
                    sizeof (char *) * (strings_list->space += 5));
     }
-  string = strdup (string);
-  strings_list->list[strings_list->number++] = string;
+  strings_list->list[strings_list->number++] = strdup (string);
 }
 
 void
@@ -751,6 +775,21 @@ merge_strings (STRING_LIST *strings_list, STRING_LIST *merged_strings)
       strings_list->list[strings_list->number +i] = merged_strings->list[i];
     }
   strings_list->number += merged_strings->number;
+}
+
+/* return the index +1, to return 0 if not found */
+size_t
+find_string (STRING_LIST *strings_list, const char *target)
+{
+  size_t j;
+  for (j = 0; j < strings_list->number; j++)
+    {
+      if (!strcmp (target, strings_list->list[j]))
+        {
+          return j+1;
+        }
+    }
+  return 0;
 }
 
 /* Return value to be freed by caller. */
@@ -822,6 +861,8 @@ destroy_strings_list (STRING_LIST *strings)
   free (strings);
 }
 
+
+/* code related to document global info used both in parser and other codes */
 void
 delete_global_info (GLOBAL_INFO *global_info_ref)
 {
@@ -883,7 +924,7 @@ get_cmd_global_command (GLOBAL_COMMANDS *global_commands_ref,
    }
 }
 
-static char *
+char *
 informative_command_value (ELEMENT *element)
 {
   ELEMENT *misc_args;
@@ -974,15 +1015,6 @@ in_preamble (ELEMENT *element)
   return 0;
 }
 
-CONVERTER *
-new_converter (void)
-{
-  CONVERTER *converter
-   = (CONVERTER *) malloc (sizeof (CONVERTER));
-  memset (converter, 0, sizeof (CONVERTER));
-  return converter;
-}
-
 /*
   COMMAND_LOCATION is 'last', 'preamble' or 'preamble_or_first'
   'preamble' means setting sequentially to the values in the preamble.
@@ -992,23 +1024,20 @@ new_converter (void)
   'last' means setting to the last value for the command in the document.
 
   For unique command, the last may be considered to be the same as the first.
-
-  Notice that the only effect is to use set_conf (directly or through
-  set_informative_command_value), no @-commands setting side effects are done
-  and associated customization variables are not set/reset either.
- */
+*/
 ELEMENT *
-set_global_document_command (CONVERTER *self, enum command_id cmd,
+get_global_document_command (GLOBAL_COMMANDS *global_commands,
+                             enum command_id cmd,
                              enum command_location command_location)
 {
   ELEMENT *element = 0;
   if (command_location != CL_last && command_location != CL_preamble_or_first
       && command_location != CL_preamble)
-    fprintf (stderr, "BUG: set_global_document_command: unknown CL: %d\n",
+    fprintf (stderr, "BUG: get_global_document_command: unknown CL: %d\n",
                      command_location);
 
   ELEMENT *command
-     = get_cmd_global_command (self->document->global_commands, cmd);
+     = get_cmd_global_command (global_commands, cmd);
   if (builtin_command_data[cmd].flags & CF_global)
     {
       if (command->contents.number)
@@ -1016,7 +1045,6 @@ set_global_document_command (CONVERTER *self, enum command_id cmd,
           if (command_location == CL_last)
             {
               element = command->contents.list[command->contents.number -1];
-              set_informative_command_value (self, element);
             }
           else
             {
@@ -1024,7 +1052,6 @@ set_global_document_command (CONVERTER *self, enum command_id cmd,
                    && !in_preamble (command->contents.list[0]))
                 {
                   element = command->contents.list[0];
-                  set_informative_command_value (self, element);
                 }
               else
                 {
@@ -1035,7 +1062,6 @@ set_global_document_command (CONVERTER *self, enum command_id cmd,
                       if (in_preamble (command_element))
                         {
                           element = command_element;
-                          set_informative_command_value (self, element);
                         }
                       else
                         break;
@@ -1047,12 +1073,50 @@ set_global_document_command (CONVERTER *self, enum command_id cmd,
   else if (command)
     {
       element = command;
-      set_informative_command_value (self, element);
     }
   return element;
 }
 
-/* in Common.pm */
+/*
+  Notice that the only effect is to use set_conf (directly or through
+  set_informative_command_value), no @-commands setting side effects are done
+  and associated customization variables are not set/reset either.
+ */
+ELEMENT *
+set_global_document_command (CONVERTER *self, enum command_id cmd,
+                             enum command_location command_location)
+{
+  ELEMENT *element
+     = get_global_document_command (self->document->global_commands, cmd,
+                                    command_location);
+  if (element)
+    set_informative_command_value (self, element);
+  return element;
+}
+
+
+/* options and converters */
+OPTIONS *
+new_options (void)
+{
+  OPTIONS *options = (OPTIONS *) malloc (sizeof (OPTIONS));
+  initialize_options (options);
+  return options;
+}
+
+CONVERTER *
+new_converter (void)
+{
+  CONVERTER *converter
+   = (CONVERTER *) malloc (sizeof (CONVERTER));
+  memset (converter, 0, sizeof (CONVERTER));
+  return converter;
+}
+
+
+/* misc functions used in general in structuring and in conversion */
+
+/* corresponding perl function in Common.pm */
 /* the returned level will be < 0 if the command is not supposed
    to be associated to a level. */
 int
@@ -1075,7 +1139,7 @@ section_level (ELEMENT *section)
   return level;
 }
 
-/* from Common.pm */
+/* corresponding perl function in Common.pm */
 int
 is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries)
 {

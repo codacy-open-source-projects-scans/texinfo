@@ -30,13 +30,15 @@ use strict;
 
 use Carp qw(cluck);
 
+use Texinfo::StructTransf;
+
+use Texinfo::XSLoader;
+
 use Texinfo::Commands;
 use Texinfo::Common;
 use Texinfo::Translations;
 use Texinfo::Structuring;
 use Texinfo::Document;
-
-use Texinfo::StructTransf;
 
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
@@ -49,45 +51,42 @@ reference_to_arg_in_tree
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.1';
+$VERSION = '7.1dev';
+
+# XS parser and not explicitely unset
+my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
+                        or $ENV{TEXINFO_XS} ne 'omit')
+                       and (not defined($ENV{TEXINFO_XS_PARSER})
+                            or $ENV{TEXINFO_XS_PARSER} eq '1')
+                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
+                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+
+our %XS_overrides = (
+  "Texinfo::Transformations::fill_gaps_in_sectioning"
+    => "Texinfo::StructTransf::fill_gaps_in_sectioning",
+  "Texinfo::Transformations::reference_to_arg_in_tree"
+    => "Texinfo::StructTransf::reference_to_arg_in_tree",
+  "Texinfo::Transformations::complete_tree_nodes_menus"
+    => "Texinfo::StructTransf::complete_tree_nodes_menus",
+  "Texinfo::Transformations::complete_tree_nodes_missing_menu"
+    => "Texinfo::StructTransf::complete_tree_nodes_missing_menu",
+  "Texinfo::Transformations::regenerate_master_menu"
+    => "Texinfo::StructTransf::regenerate_master_menu",
+  "Texinfo::Transformations::insert_nodes_for_sectioning_commands"
+    => "Texinfo::StructTransf::insert_nodes_for_sectioning_commands",
+  "Texinfo::Transformations::protect_hashchar_at_line_beginning"
+    => "Texinfo::StructTransf::protect_hashchar_at_line_beginning",
+  "Texinfo::Transformations::protect_first_parenthesis_in_targets"
+    => "Texinfo::StructTransf::protect_first_parenthesis_in_targets",
+);
 
 our $module_loaded = 0;
 sub import {
   if (!$module_loaded) {
-    if (!defined $ENV{TEXINFO_XS_PARSER}
-        or $ENV{TEXINFO_XS_PARSER} eq '1') {
-      Texinfo::XSLoader::override(
-        "Texinfo::Transformations::fill_gaps_in_sectioning",
-        "Texinfo::StructTransf::fill_gaps_in_sectioning"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Transformations::reference_to_arg_in_tree",
-        "Texinfo::StructTransf::reference_to_arg_in_tree"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Transformations::complete_tree_nodes_menus",
-        "Texinfo::StructTransf::complete_tree_nodes_menus"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Transformations::complete_tree_nodes_missing_menu",
-        "Texinfo::StructTransf::complete_tree_nodes_missing_menu"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Transformations::regenerate_master_menu",
-        "Texinfo::StructTransf::regenerate_master_menu"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Transformations::insert_nodes_for_sectioning_commands",
-        "Texinfo::StructTransf::insert_nodes_for_sectioning_commands"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Transformations::protect_hashchar_at_line_beginning",
-        "Texinfo::StructTransf::protect_hashchar_at_line_beginning"
-      );
-      Texinfo::XSLoader::override(
-        "Texinfo::Transformations::protect_first_parenthesis_in_targets",
-        "Texinfo::StructTransf::protect_first_parenthesis_in_targets"
-      );
+    if ($XS_structuring) {
+      for my $sub (keys %XS_overrides) {
+        Texinfo::XSLoader::override ($sub, $XS_overrides{$sub});
+      }
     }
     $module_loaded = 1;
   }

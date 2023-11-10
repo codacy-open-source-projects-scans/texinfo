@@ -2,11 +2,19 @@
 #ifndef CONVERT_HTML_H
 #define CONVERT_HTML_H
 
+#include "converter_types.h"
+/* for FILE_SOURCE_INFO_LIST */
 #include "utils.h"
 
 void html_converter_initialize (CONVERTER *self);
 
-void html_initialize_output_state (CONVERTER *self);
+void html_initialize_output_state (CONVERTER *self, char *context);
+void html_finalize_output_state (CONVERTER *self);
+
+void html_new_document_context (CONVERTER *self,
+        char *context_name, char *document_global_context,
+        enum command_id block_command);
+void html_pop_document_context (CONVERTER *self);
 
 void html_prepare_conversion_units (CONVERTER *self,
                                     int *output_units_descriptor_ref,
@@ -32,10 +40,17 @@ void html_prepare_output_units_global_targets (CONVERTER *self,
 
 void html_translate_names (CONVERTER *self);
 
-void html_convert_init (CONVERTER *self);
+void html_prepare_title_titlepage (CONVERTER *self, int output_units_descriptor,
+                                   char *output_file, char *output_filename);
 
 char *html_convert_convert (CONVERTER *self, ELEMENT *root,
                             int output_units_descriptor,
                             int special_units_descriptor);
+char *html_convert_tree (CONVERTER *self, ELEMENT *tree, char *explanation);
 
+char *html_convert_output (CONVERTER *self, ELEMENT *root,
+                           int output_units_descriptor,
+                           int special_units_descriptor,
+                           char *output_file, char *destination_directory,
+                           char *output_filename, char *document_name);
 #endif

@@ -1,20 +1,20 @@
 # Converter.pm: Common code for Converters.
 #
 # Copyright 2011-2023 Free Software Foundation, Inc.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License,
 # or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 # Original author: Patrice Dumas <pertusus@free.fr>
 
 package Texinfo::Convert::Converter;
@@ -35,6 +35,10 @@ use Storable;
 #use Data::Dumper;
 
 use Carp qw(cluck confess);
+
+use Texinfo::Convert::ConvertXS;
+
+use Texinfo::XSLoader;
 
 use Texinfo::Options;
 use Texinfo::Common;
@@ -63,7 +67,29 @@ xml_accents
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
 
-$VERSION = '7.1';
+$VERSION = '7.1dev';
+
+my $XS_convert = 0;
+$XS_convert = 1 if (defined $ENV{TEXINFO_XS_CONVERT}
+                    and $ENV{TEXINFO_XS_CONVERT} eq '1');
+
+our $module_loaded = 0;
+sub import {
+  if (!$module_loaded) {
+    if ($XS_convert) {
+      Texinfo::XSLoader::override(
+       "Texinfo::Convert::Converter::_XS_set_conf",
+       "Texinfo::Convert::ConvertXS::set_conf");
+      Texinfo::XSLoader::override(
+       "Texinfo::Convert::Converter::_XS_get_unclosed_stream",
+       "Texinfo::Convert::ConvertXS::get_unclosed_stream");
+    }
+
+    $module_loaded = 1;
+  }
+  # The usual import method
+  goto &Exporter::import;
+}
 
 my %defaults = (
   'documentlanguage'     => undef,
@@ -89,6 +115,9 @@ my %common_converters_defaults = (
 
   # Not set in the main program
   'translated_commands'  => {'error' => 'error@arrow{}',},
+
+  # used in tests to have XS data passed to converter
+  'document_descriptor' => undef,
 
 # This is the default, mainly for tests; the caller should set them.  These
 # values are what is used in tests of the Converters.  These variables are
@@ -230,13 +259,12 @@ sub converter($;$)
   Texinfo::Common::set_output_encodings($converter,
                                         $converter->{'document_info'});
 
-  # turn the array to a hash for speed.  Not sure it really matters for such
-  # a small array.
+  # turn the array to a hash.
   my $expanded_formats = $converter->get_conf('EXPANDED_FORMATS');
-  $converter->{'expanded_formats_hash'} = {};
+  $converter->{'expanded_formats'} = {};
   if (defined($expanded_formats)) {
     foreach my $expanded_format (@{$converter->get_conf('EXPANDED_FORMATS')}) {
-      $converter->{'expanded_formats_hash'}->{$expanded_format} = 1;
+      $converter->{'expanded_formats'}->{$expanded_format} = 1;
     }
   }
 
@@ -330,7 +358,7 @@ sub output($$)
     if ($output_file ne '') {
       if ($self->get_conf('SPLIT')) {
         my $top_node_file_name = $self->top_node_filename($document_name);
-        if (defined($destination_directory) and $destination_directory ne '') {
+        if ($destination_directory ne '') {
           $outfile_name = File::Spec->catfile($destination_directory,
                                               $top_node_file_name);
         } else {
@@ -388,7 +416,7 @@ sub output($$)
     print STDERR "DO Elements with filenames\n"
       if ($self->get_conf('DEBUG'));
     my %files_filehandle;
-    
+
     foreach my $output_unit (@$output_units) {
       my $output_unit_filename = $output_unit->{'unit_filename'};
       my $out_filepath = $self->{'out_filepaths'}->{$output_unit_filename};
@@ -431,125 +459,6 @@ sub output($$)
 }
 
 ###############################################################
-# XS Interface for a document to be converted.
-# Select and encode to UTF-8 to pass to the XS code
-# TODO document?
-# To be called for initialization
-sub encode_converter_document($)
-{
-  my $self = shift;
-  my $result = {'converter' => $self, # pass full converter to be able to modify
-                                      # and set converter_descriptor
-                'document_descriptor' => $self->{'document_descriptor'}};
-
-  foreach my $variable ('style_commands_formatting', 'formatting_function',
-     'types_open', 'types_conversion', 'commands_open', 'commands_conversion') {
-    if ($self->{$variable}) {
-      $result->{$variable} = $self->{$variable};
-    }
-  }
-
-  if (defined($self->{'converter_init_conf'})) {
-    my $encoded_converter_init_conf
-      = Texinfo::Common::encode_options($self->{'converter_init_conf'});
-    $result->{'converter_init_conf'} = $encoded_converter_init_conf;
-  }
-
-  if ($self->{'translated_commands'}) {
-    my $encoded_translated_commands = {};
-    foreach my $cmdname (keys(%{$self->{'translated_commands'}})) {
-      $encoded_translated_commands->{$cmdname}
-        = Encode::encode('UTF-8', $self->{'translated_commands'}->{$cmdname});
-    }
-    $result->{'translated_commands'} = $encoded_translated_commands;
-  }
-
-  # HTML specific
-  if ($self->{'special_unit_info'}) {
-    # to help the XS code to set arrays of C structures, already prepare
-    # a list of special units varieties.
-    my %all_special_unit_varieties;
-    # only ascii, no need for encoding
-    $result->{'special_unit_info'} = Storable::dclone($self->{'special_unit_info'});
-    foreach my $type (keys(%{$result->{'special_unit_info'}})) {
-      foreach my $special_unit_variety
-            (keys (%{$result->{'special_unit_info'}->{$type}})) {
-        $all_special_unit_varieties{$special_unit_variety} = 1;
-      }
-    }
-
-    if ($self->{'translated_special_unit_info'}) {
-      # could have encoded characters from user init files
-      foreach my $tree_type (keys(%{$self->{'translated_special_unit_info'}})) {
-        my $type = $self->{'translated_special_unit_info'}->{$tree_type}->[0];
-        my $variety_strings
-          = $self->{'translated_special_unit_info'}->{$tree_type}->[1];
-        # simplify the structure, as we do not need both tree and
-        # string to pass to XS
-        $result->{'special_unit_info'}->{$type} = {};
-        foreach my $special_unit_variety (keys (%$variety_strings)) {
-          $all_special_unit_varieties{$special_unit_variety} = 1;
-          $result->{'special_unit_info'}->{$type}
-             ->{$special_unit_variety} = Encode::encode('UTF-8',
-                                   $variety_strings->{$special_unit_variety});
-        }
-      }
-    }
-    $result->{'sorted_special_unit_varieties'}
-      = [sort(keys(%all_special_unit_varieties))];
-  }
-  if ($self->{'no_arg_commands_formatting'}) {
-    my $encoded_no_arg_commands_formatting = {};
-    foreach my $cmdname (keys(%{$self->{'no_arg_commands_formatting'}})) {
-      $encoded_no_arg_commands_formatting->{$cmdname} = {};
-      my $format_contexts = $self->{'no_arg_commands_formatting'}->{$cmdname};
-      foreach my $context (keys(%$format_contexts)) {
-        my $spec = $format_contexts->{$context};
-        $encoded_no_arg_commands_formatting->{$cmdname}->{$context} = {};
-        my $encoded_spec
-            = $encoded_no_arg_commands_formatting->{$cmdname}->{$context};
-        foreach my $key ('element', 'unset') {
-          if (exists($spec->{$key})) {
-            $encoded_spec->{$key} = $spec->{$key};
-          }
-        }
-        foreach my $key ('text', 'translated_converted',
-                         'translated_to_convert') {
-          if (exists($spec->{$key})) {
-            $encoded_spec->{$key} = Encode::encode('UTF-8', $spec->{$key});
-          }
-        }
-      }
-    }
-    $result->{'no_arg_commands_formatting'}
-      = $encoded_no_arg_commands_formatting;
-  }
-
-  return $result;
-}
-
-# to be used before output
-# TODO document?
-sub encode_converter_for_output($)
-{
-  my $self = shift;
-  my $encoded_conf = Texinfo::Common::encode_options($self->{'conf'});
-
-  my $result = {'converter_descriptor' => $self->{'converter_descriptor'},
-                'conf' => $encoded_conf,
-               };
-
-  if (defined($self->{'output_init_conf'})) {
-    my $encoded_init_conf
-      = Texinfo::Common::encode_options($self->{'output_init_conf'});
-    $result->{'output_init_conf'} = $encoded_init_conf;
-  }
-
-  return $result;
-}
-
-
-###############################################################
 # Implementation of the customization API that is used in many
 # Texinfo modules
 
@@ -564,6 +473,10 @@ sub get_conf($$)
   return $self->{'conf'}->{$conf};
 }
 
+sub _XS_set_conf($$$)
+{
+}
+
 sub set_conf($$$)
 {
   my $self = shift;
@@ -576,6 +489,14 @@ sub set_conf($$$)
   if ($self->{'set'}->{$conf}) {
     return 0;
   } else {
+    if ($self->{'converter_descriptor'} and $XS_convert) {
+      if (ref($value) eq ''
+       and not $Texinfo::Common::non_decoded_customization_variables{$conf}) {
+        _XS_set_conf($self, $conf, Encode::encode("UTF-8", $value));
+      } else {
+        _XS_set_conf($self, $conf, $value);
+      }
+    }
     $self->{'conf'}->{$conf} = $value;
     return 1;
   }
@@ -589,6 +510,14 @@ sub force_conf($$$)
   if (!Texinfo::Common::valid_customization_option($conf)) {
     die "BUG: force_conf: unknown option $conf\n";
     return undef;
+  }
+  if ($self->{'converter_descriptor'} and $XS_convert) {
+    if (ref($value) eq ''
+     and not $Texinfo::Common::non_decoded_customization_variables{$conf}) {
+      _XS_set_conf($self, $conf, Encode::encode("UTF-8", $value));
+    } else {
+      _XS_set_conf($self, $conf, $value);
+    }
   }
   $self->{'conf'}->{$conf} = $value;
   return 1;
@@ -753,13 +682,14 @@ sub determine_files_and_directory($;$)
     # $output_file_filename is not used, but $output_filename should be
     # the same as long as $output_file is the same as $output_filepath
     # which is the case except if $output_file is ''.
+    # Note that fileparse may return a string for the directory part even
+    # for a relative file without directory, ie
+    # myfile.html -> $output_dir = './'
+    # In that case the $destination_directory will never be ''.
     my ($output_file_filename, $output_dir, $suffix) = fileparse($output_file);
-    if ($output_dir ne '') {
-      $destination_directory = $output_dir;
-    }
+    $destination_directory = $output_dir;
   }
-  if (defined($destination_directory)
-      and $destination_directory ne '') {
+  if ($destination_directory ne '') {
     $destination_directory = File::Spec->canonpath($destination_directory);
   }
   return ($output_file, $destination_directory, $output_filename,
@@ -1595,6 +1525,37 @@ sub sort_element_counts($$;$$)
   return (\@sorted_name_counts_array, $result);
 }
 
+sub _XS_get_unclosed_stream($$)
+{
+  return undef;
+}
+
+# this method retrieves the file streams of all the unclosed file paths
+# that came from XS (normally through build_output_files_unclosed_files)
+# but are not associated to a stream yet, as they can't be directly
+# associated to a stream in C code, but the stream can be returned through
+# an XS interface, here Texinfo::Convert::ConvertXS::get_unclosed_stream.
+sub get_output_files_XS_unclosed_streams($)
+{
+  my $self = shift;
+
+  my $converter_unclosed_files
+       = Texinfo::Common::output_files_unclosed_files(
+                               $self->output_files_information());
+  if ($converter_unclosed_files) {
+    foreach my $unclosed_file (keys(%$converter_unclosed_files)) {
+      if (!defined($converter_unclosed_files->{$unclosed_file})) {
+        my $fh = _XS_get_unclosed_stream($self, $unclosed_file);
+        if (defined($fh)) {
+          $converter_unclosed_files->{$unclosed_file} = $fh;
+        } else {
+          delete $converter_unclosed_files->{$unclosed_file};
+        }
+      }
+    }
+  }
+}
+
 
 ########################################################################
 # XML related methods and variables that may be used in different
@@ -1782,7 +1743,7 @@ sub xml_accent($$$;$$$)
   my $in_upper_case = shift;
   my $use_numeric_entities = shift;
   my $accent = $command->{'cmdname'};
-  
+
   if ($in_upper_case and $text =~ /^\w$/) {
     $text = uc ($text);
   }
@@ -1800,7 +1761,7 @@ sub xml_accent($$$;$$$)
       return $text;
     }
   }
- 
+
   if ($use_numeric_entities) {
     my $formatted_accent = xml_numeric_entity_accent($accent, $text);
     if (defined($formatted_accent)) {
@@ -1849,7 +1810,7 @@ sub xml_accents($$;$)
   } else {
     $format_accents = \&xml_accent;
   }
-  
+
   return $self->convert_accents($accent, $format_accents,
                                 $self->get_conf('OUTPUT_CHARACTERS'),
                                 $in_upper_case);

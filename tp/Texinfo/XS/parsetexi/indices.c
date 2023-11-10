@@ -18,14 +18,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "parser.h"
 #include "options_types.h"
+#include "converter_types.h"
 #include "tree_types.h"
-#include "tree.h"
 #include "command_ids.h"
+#include "tree.h"
 /* for xasprintf and other */
 #include "errors.h"
 #include "debug.h"
+#include "command_stack.h"
 #include "context_stack.h"
 #include "builtin_commands.h"
 #include "extra.h"
@@ -39,6 +40,7 @@
 /*
 #include "convert_to_texinfo.h"
 */
+#include "parser.h"
 #include "indices.h"
 
 INDEX **index_names = 0;
@@ -120,6 +122,7 @@ add_index_internal (char *name, int in_code)
 }
 
 
+
 /* Add a user defined index with the name NAME */
 void
 add_index (char *name, int in_code)
@@ -134,15 +137,6 @@ add_index (char *name, int in_code)
   xasprintf (&cmdname, "%s%s", name, "index");
   add_index_command (cmdname, idx);
   free (cmdname);
-}
-
-/* reset indices without unallocating them nor the list of indices */
-void
-forget_indices (void)
-{
-  index_names = 0;
-  number_of_indices = 0;
-  space_for_indices = 0;
 }
 
 void
@@ -348,8 +342,17 @@ set_non_ignored_space_in_index_before_command (ELEMENT *content)
     }
 }
 
-
 
+
+/* reset indices without unallocating them nor the list of indices */
+void
+forget_indices (void)
+{
+  index_names = 0;
+  number_of_indices = 0;
+  space_for_indices = 0;
+}
+
 void
 resolve_indices_merged_in (void)
 {
@@ -366,6 +369,9 @@ resolve_indices_merged_in (void)
     }
 }
 
+/* complete some @def* index information that require translations.
+   Done in a separate function and not inside the main parser loop because
+   it requires parsing Texinfo code in gdt_tree too */
 void
 complete_indices (int document_descriptor)
 {
@@ -442,10 +448,10 @@ complete_indices (int document_descriptor)
                                                        "documentlanguage");
                       NAMED_STRING_ELEMENT_LIST *substrings
                                        = new_named_string_element_list ();
-                      ELEMENT *name_copy = copy_tree (name, 0);
-                      ELEMENT *class_copy = copy_tree (class, 0);
-                      ELEMENT *ref_name_copy = copy_tree (name, 0);
-                      ELEMENT *ref_class_copy = copy_tree (class, 0);
+                      ELEMENT *name_copy = copy_tree (name);
+                      ELEMENT *class_copy = copy_tree (class);
+                      ELEMENT *ref_name_copy = copy_tree (name);
+                      ELEMENT *ref_class_copy = copy_tree (class);
 
                       add_element_to_named_string_element_list (substrings,
                                                            "name", name_copy);

@@ -181,11 +181,10 @@ sub html32_convert_explained_command($$$$)
 
   my $with_explanation;
 
-  return '' if (!defined($args->[0]) or !defined($args->[0]->{'normal'})
+  return '' if (!$args or !$args->[0]
                 or $args->[0]->{'normal'} !~ /\S/);
 
-  if (defined($args->[1]) and defined($args->[1]->{'string'})
-                 and $args->[1]->{'string'} =~ /\S/) {
+  if ($args->[1] and $args->[1]->{'string'} =~ /\S/) {
     $with_explanation = 1;
   }
 
@@ -212,6 +211,8 @@ sub html32_convert_multitable_head_type($$$$) {
   my $element = shift;
   my $content = shift;
 
+  $content = '' if (!defined($content));
+
   return $content if ($self->in_string());
   if ($content =~ /\S/) {
     return $content . "\n";
@@ -226,6 +227,8 @@ sub html32_convert_multitable_body_type($$$$) {
   my $type = shift;
   my $element = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   return $content if ($self->in_string());
   if ($content =~ /\S/) {
@@ -243,6 +246,8 @@ sub html32_convert_itemize_command($$$$$)
   my $command = shift;
   my $args = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   if ($self->in_string()) {
     return $content;
@@ -263,6 +268,8 @@ sub html32_convert_tab_command($$$$$)
 
   my $row = $command->{'parent'};
   my $row_cmdname = $row->{'contents'}->[0]->{'cmdname'};
+
+  $content = '' if (!defined($content));
 
   # FIXME is it right?
   $content =~ s/^\s*//;
@@ -287,6 +294,8 @@ sub html32_convert_item_command($$$$$)
   my $command = shift;
   my $args = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   if ($self->in_string()) {
     return $content;
@@ -332,7 +341,7 @@ sub html32_convert_center_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  if (!defined($args->[0])) {
+  if (!$args or !$args->[0]) {
     return '';
   }
 
@@ -361,6 +370,8 @@ sub html32_convert_paragraph_type($$$$)
   my $type = shift;
   my $element = shift;
   my $content = shift;
+
+  $content = '' if (!defined($content));
 
   $content = $self->get_associated_formatted_inline_content($element).$content;
 
@@ -399,7 +410,7 @@ sub html32_convert_subtitle_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  return '' if (! defined($args->[0]));
+  return '' if (!$args or !$args->[0]);
 
   if (!$self->in_string()) {
     return "<h3 align=\"right\">$args->[0]->{'normal'}</h3>\n";

@@ -18,11 +18,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "parser.h"
 #include "command_ids.h"
 #include "element_types.h"
 #include "tree_types.h"
-#include "tree.h"
 #include "def.h"
 #include "debug.h"
 #include "debug_parser.h"
@@ -30,8 +28,13 @@
 #include "counter.h"
 #include "builtin_commands.h"
 #include "source_marks.h"
+#include "command_stack.h"
 #include "context_stack.h"
 #include "extra.h"
+#include "tree.h"
+/* for fatal */
+#include "utils.h"
+#include "parser.h"
 
 /* Return CURRENT->parent.  The other arguments are used if an error message
    should be printed. */
@@ -438,7 +441,7 @@ close_current (ELEMENT *current,
     {
       ELEMENT *close_brace;
 
-      debug ("CLOSING type %s", element_type_name (current));
+      debug ("CLOSING type %s", element_type_names[current->type]);
 
       switch (current->type)
         {
