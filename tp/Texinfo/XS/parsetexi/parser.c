@@ -357,15 +357,15 @@ register_global_command (ELEMENT *current)
         {
 #define GLOBAL_CASE(cmx) \
         case CM_##cmx:   \
-          add_to_contents_as_array (&global_commands.cmx, current); \
+          add_to_element_list (&global_commands.cmx, current); \
           break
 
         case CM_footnote:
-          add_to_contents_as_array (&global_commands.footnotes, current);
+          add_to_element_list (&global_commands.footnotes, current);
           break;
 
         case CM_float:
-          add_to_contents_as_array (&global_commands.floats, current);
+          add_to_element_list (&global_commands.floats, current);
           break;
 
 #include "global_multi_commands_case.c"
@@ -457,7 +457,7 @@ rearrange_tree_beginning (ELEMENT *before_node_section)
 {
   ELEMENT *informational_preamble;
   /* temporary placeholder */
-  ELEMENT *first_types = new_element (ET_NONE);
+  ELEMENT_LIST *first_types = new_list ();
 
   /* Put everything before @setfilename in a special type.  This allows to
      ignore everything before @setfilename. */
@@ -489,7 +489,7 @@ rearrange_tree_beginning (ELEMENT *before_node_section)
           ELEMENT *next_content = before_node_section->contents.list[0];
           if (next_content->type == ET_preamble_before_beginning
               || next_content->type == ET_preamble_before_setfilename)
-            add_to_element_contents (first_types,
+            add_to_element_list (first_types,
                             remove_from_contents (before_node_section, 0));
           else if (next_content->type == ET_paragraph
                    || (next_content->cmd
@@ -503,13 +503,19 @@ rearrange_tree_beginning (ELEMENT *before_node_section)
             }
         }
     }
-  add_to_element_contents (first_types, informational_preamble);
-  while (first_types->contents.number > 0)
+  add_to_element_list (first_types, informational_preamble);
+  /* use insert_into_contents and not insert_list_slice_into_contents
+     to have parent set */
+  if (first_types->number > 0)
     {
-      ELEMENT *e = pop_element_from_contents (first_types);
-      insert_into_contents (before_node_section, e, 0);
+      int j;
+      for (j = first_types->number -1; j >= 0; j--)
+        {
+          ELEMENT *e = first_types->list[j];
+          insert_into_contents (before_node_section, e, 0);
+        }
     }
-  destroy_element (first_types);
+  destroy_list (first_types);
 }
 
 
@@ -2504,12 +2510,12 @@ store_document (ELEMENT *root)
   labels->space = labels_number;
 
   floats = malloc (sizeof (FLOAT_RECORD_LIST));
-  float_records.float_types = realloc (float_records.float_types,
-                    float_records.number * sizeof (FLOAT_RECORD));
+  parser_float_list.list = realloc (parser_float_list.list,
+        parser_float_list.number * sizeof (FLOAT_RECORD));
 
-  floats->float_types = float_records.float_types;
-  floats->number = float_records.number;
-  floats->space = float_records.number;
+  floats->list = parser_float_list.list;
+  floats->number = parser_float_list.number;
+  floats->space = parser_float_list.number;
 
   internal_references = malloc (sizeof (ELEMENT_LIST));
 
@@ -2530,16 +2536,17 @@ store_document (ELEMENT *root)
   if (global_info.input_directory)
     doc_global_info->input_directory
       = strdup (global_info.input_directory);
+
   #define COPY_GLOBAL_ARRAY(type,cmd) \
-   doc_global_##type->cmd.contents.list = 0;                            \
-   doc_global_##type->cmd.contents.number = 0;                          \
-   doc_global_##type->cmd.contents.space = 0;                           \
-   if (global_##type.cmd.contents.number > 0)                           \
+   doc_global_##type->cmd.list = 0;                            \
+   doc_global_##type->cmd.number = 0;                          \
+   doc_global_##type->cmd.space = 0;                           \
+   if (global_##type.cmd.number > 0)                           \
     {                                                                   \
-      for (i = 0; i < global_##type.cmd.contents.number; i++)           \
+      for (i = 0; i < global_##type.cmd.number; i++)           \
         {                                                               \
-          ELEMENT *e = contents_child_by_index (&global_##type.cmd, i); \
-          add_to_contents_as_array (&doc_global_##type->cmd, e);        \
+          ELEMENT *e = global_##type.cmd.list[i]; \
+          add_to_element_list (&doc_global_##type->cmd, e);        \
         }                                                               \
     }
   COPY_GLOBAL_ARRAY(info,dircategory_direntry);
@@ -2578,7 +2585,7 @@ store_document (ELEMENT *root)
   forget_indices ();
   forget_labels ();
 
-  memset (&float_records, 0, sizeof (FLOAT_RECORD_LIST));
+  memset (&parser_float_list, 0, sizeof (FLOAT_RECORD_LIST));
 
   forget_internal_xrefs ();
   forget_small_strings ();

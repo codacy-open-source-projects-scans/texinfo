@@ -70,6 +70,7 @@ dist_modules_DATA = \
  Texinfo/Commands.pm \
  Texinfo/DebugTree.pm \
  Texinfo/Document.pm \
+ Texinfo/DocumentXS.pm \
  Texinfo/Documentlanguages.pm \
  Texinfo/MiscXS.pm \
  Texinfo/Options.pm \
@@ -315,6 +316,7 @@ maintenance_files = \
 
 EXTRA_DIST = \
   texi2any.pl \
+  texi2any.supp \
   $(test_files_generated_list) \
   $(test_files) \
   $(tp_tests) \

@@ -37,8 +37,6 @@
 #  --no-conditional-dependencies \
 #  --libtool \
 #  --macro-prefix=gl \
-#  c32isupper \
-#  c32width \
 #  getline \
 #  iconv \
 #  libunistring \
@@ -46,6 +44,7 @@
 #  setenv \
 #  strchrnul \
 #  strndup \
+#  uchar \
 #  unicase/u8-tolower \
 #  unicase/u8-toupper \
 #  uniconv/u32-strconv-from-enc \
@@ -54,6 +53,7 @@
 #  unictype/category-L \
 #  unictype/category-Mn \
 #  unictype/category-test \
+#  unictype/ctype-upper \
 #  uninorm/nfc \
 #  uninorm/nfkd \
 #  uninorm/u8-normalize \
@@ -66,14 +66,11 @@
 #  uniwidth/u8-strwidth \
 #  uniwidth/u8-width \
 #  unsetenv \
-#  vasprintf \
-#  wcwidth
+#  vasprintf
 
 # Specification in the form of a few gnulib-tool.m4 macro invocations:
 gl_LOCAL_DIR([])
 gl_MODULES([
-  c32isupper
-  c32width
   getline
   iconv
   libunistring
@@ -81,6 +78,7 @@ gl_MODULES([
   setenv
   strchrnul
   strndup
+  uchar
   unicase/u8-tolower
   unicase/u8-toupper
   uniconv/u32-strconv-from-enc
@@ -89,6 +87,7 @@ gl_MODULES([
   unictype/category-L
   unictype/category-Mn
   unictype/category-test
+  unictype/ctype-upper
   uninorm/nfc
   uninorm/nfkd
   uninorm/u8-normalize
@@ -102,7 +101,6 @@ gl_MODULES([
   uniwidth/u8-width
   unsetenv
   vasprintf
-  wcwidth
 ])
 gl_AVOID([])
 gl_SOURCE_BASE([gnulib/lib])

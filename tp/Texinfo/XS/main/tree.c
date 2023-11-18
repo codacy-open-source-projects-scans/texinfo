@@ -117,6 +117,21 @@ new_element (enum element_type type)
   return e;
 }
 
+ELEMENT_LIST *
+new_list ()
+{
+  ELEMENT_LIST *list = (ELEMENT_LIST *) malloc (sizeof (ELEMENT_LIST));
+  memset (list, 0, sizeof (ELEMENT_LIST));
+  return list;
+}
+
+void
+destroy_list (ELEMENT_LIST * list)
+{
+  free (list->list);
+  free (list);
+}
+
 void
 destroy_associated_info (ASSOCIATED_INFO *a)
 {
@@ -308,42 +323,51 @@ insert_into_args (ELEMENT *parent, ELEMENT *e, int where)
   e->parent = parent;
 }
 
-/* Insert elements to the contents of TO at position WHERE from FROM
-   from START inclusive to END exclusive.  Do not set the parent fields. */
+/* Insert elements to TO at position WHERE from FROM from START inclusive
+   to END exclusive. */
 void
-insert_slice_into_contents (ELEMENT *to, int where, ELEMENT *from,
-                            int start, int end)
+insert_list_slice_into_list (ELEMENT_LIST *to, int where, const ELEMENT_LIST *from,
+                             int start, int end)
 {
   int num = end - start;
-  reallocate_list_for (num, &to->contents);
+  reallocate_list_for (num, to);
 
-  memmove (&to->contents.list[where + num],
-           &to->contents.list[where],
-           (to->contents.number - where) * sizeof (ELEMENT *));
-  memmove (&to->contents.list[where],
-           &from->contents.list[start],
+  memmove (&to->list[where + num],
+           &to->list[where],
+           (to->number - where) * sizeof (ELEMENT *));
+  memmove (&to->list[where],
+           &from->list[start],
            num * sizeof (ELEMENT *));
 
-  to->contents.number += num;
+  to->number += num;
 }
 
-/* Insert elements to the args of TO at position WHERE from FROM contents
+/* Insert elements to the contents of TO at position WHERE from FROM contents
    from START inclusive to END exclusive.  Do not set the parent fields. */
 void
-insert_contents_slice_into_args (ELEMENT *to, int where, ELEMENT *from,
+insert_slice_into_contents (ELEMENT *to, int where, const ELEMENT *from,
+                            int start, int end)
+{
+  insert_list_slice_into_list (&to->contents, where, &from->contents,
+                               start, end);
+}
+
+/* Insert elements to the args of TO at position WHERE from FROM
+   from START inclusive to END exclusive. */
+void
+insert_list_slice_into_args (ELEMENT *to, int where, ELEMENT_LIST *from,
+                             int start, int end)
+{
+  insert_list_slice_into_list (&to->args, where, from, start, end);
+}
+
+/* Insert elements to the contents of TO at position WHERE from FROM
+   from START inclusive to END exclusive. */
+void
+insert_list_slice_into_contents (ELEMENT *to, int where, ELEMENT_LIST *from,
                                  int start, int end)
 {
-  int num = end - start;
-  reallocate_list_for (num, &to->args);
-
-  memmove (&to->args.list[where + num],
-           &to->args.list[where],
-           (to->args.number - where) * sizeof (ELEMENT *));
-  memmove (&to->args.list[where],
-           &from->contents.list[start],
-           num * sizeof (ELEMENT *));
-
-  to->args.number += num;
+  insert_list_slice_into_list (&to->contents, where, from, start, end);
 }
 
 /* ensure that there are n slots, and void them */
@@ -456,7 +480,7 @@ last_args_child (ELEMENT *current)
 }
 
 ELEMENT *
-last_contents_child (ELEMENT *current)
+last_contents_child (const ELEMENT *current)
 {
   if (current->contents.number == 0)
     return 0;
@@ -488,25 +512,31 @@ args_child_by_index (ELEMENT *e, int index)
   return e->args.list[index];
 }
 
-/* do not set parent as it can be used to replace in a container element */
-int
-replace_element_in_contents (ELEMENT *parent, ELEMENT *removed, ELEMENT *added)
+int replace_element_in_list (ELEMENT_LIST *list, ELEMENT *removed,
+                             ELEMENT *added)
 {
   int i;
 
-  if (!parent || !parent->contents.number)
+  if (!list || !list->number)
     return 0;
 
-  for (i = 0; i < parent->contents.number; i++)
+  for (i = 0; i < list->number; i++)
     {
-      ELEMENT *content = parent->contents.list[i];
+      ELEMENT *content = list->list[i];
       if (content == removed)
         {
-          parent->contents.list[i] = added;
+          list->list[i] = added;
           return 1;
         }
     }
   return 0;
+}
+
+/* do not set parent as it can be used to replace in a container element */
+int
+replace_element_in_contents (ELEMENT *parent, ELEMENT *removed, ELEMENT *added)
+{
+  return replace_element_in_list (&parent->contents, removed, added);
 }
 
 /* should only be used if the nse->manual_content

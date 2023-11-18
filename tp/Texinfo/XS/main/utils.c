@@ -68,42 +68,6 @@ const char *output_unit_type_names[] = {"unit",
                                   "external_node_unit",
                                   "special_unit"};
 
-char *html_global_unit_direction_names[] = {
-  #define hgdt_name(name) #name,
-   HTML_GLOBAL_DIRECTIONS_LIST
-  #undef hgdt_name
-};
-
-char *html_conversion_context_type_names[] = {
-  #define cctx_type(name) #name,
-    HCC_CONTEXT_TYPES_LIST
-  #undef cctx_type
-};
-
-char *html_formatting_reference_names[] = {
-  #define html_fr_reference(name) #name,
-   HTML_FORMATTING_REFERENCES_LIST
-  #undef html_fr_reference
-};
-
-const char *html_argument_formatting_type_names[] = {
-   #define html_aft_type(name) #name,
-    HTML_ARGUMENTS_FORMATTED_FORMAT_TYPE
-   #undef html_aft_type
-};
-
-const char *special_unit_info_type_names[SUI_type_heading + 1] =
-{
-  #define sui_type(name) #name,
-    SUI_TYPES_LIST
-  #undef sui_type
-};
-
-TRANSLATED_SUI_ASSOCIATION translated_special_unit_info[] = {
-  {SUIT_type_heading, SUI_type_heading},
-  {-1, -1},
-};
-
 ENCODING_CONVERSION_LIST output_conversions = {0, 0, 0, -1};
 ENCODING_CONVERSION_LIST input_conversions = {0, 0, 0, 1};
 
@@ -353,7 +317,7 @@ text_buffer_iconv (TEXT *buf, iconv_t iconv_state,
 }
 
 char *
-encode_with_iconv (iconv_t our_iconv, char *s, SOURCE_INFO *source_info)
+encode_with_iconv (iconv_t our_iconv, char *s, const SOURCE_INFO *source_info)
 {
   static TEXT t;
   ICONV_CONST char *inptr; size_t bytes_left;
@@ -406,7 +370,7 @@ encode_with_iconv (iconv_t our_iconv, char *s, SOURCE_INFO *source_info)
 
 char *
 decode_string (char *input_string, char *encoding, int *status,
-               SOURCE_INFO *source_info)
+               const SOURCE_INFO *source_info)
 {
   char *result;
   *status = 0;
@@ -428,7 +392,7 @@ decode_string (char *input_string, char *encoding, int *status,
 
 char *
 encode_string (char *input_string, char *encoding, int *status,
-               SOURCE_INFO *source_info)
+               const SOURCE_INFO *source_info)
 {
   char *result;
   *status = 0;
@@ -481,18 +445,12 @@ add_expanded_format (EXPANDED_FORMAT *formats, char *format)
     add_expanded_format (formats, "info");
 }
 
-/* FORMAT is an optional argument, to set a format at the expanded_format
-   structure creation */
 EXPANDED_FORMAT *
-new_expanded_formats (char *format)
+new_expanded_formats ()
 {
-  EXPANDED_FORMAT *formats;
-
-  formats = malloc (sizeof (expanded_formats));
+  EXPANDED_FORMAT *formats
+     = (EXPANDED_FORMAT *) malloc (sizeof (expanded_formats));
   memcpy (formats, expanded_formats, sizeof (expanded_formats));
-
-  if (format)
-    add_expanded_format (formats, format);
 
   return formats;
 }
@@ -527,7 +485,7 @@ item_line_parent (ELEMENT *current)
 }
 
 ELEMENT *
-get_label_element (ELEMENT *e)
+get_label_element (const ELEMENT *e)
 {
   if ((e->cmd == CM_node || e->cmd == CM_anchor)
       && e->args.number > 0)
@@ -681,9 +639,9 @@ parse_line_directive (char *line, int *retval, int *out_line_no)
 
 /* return should be freed by the caller */
 char *
-normalize_encoding_name (char *text, int *possible_encoding)
+normalize_encoding_name (const char *text, int *possible_encoding)
 {
-  char *p;
+  const char *p;
   char *normalized_text = strdup (text);
   char *q = normalized_text;
   *possible_encoding = 0;
@@ -868,7 +826,7 @@ delete_global_info (GLOBAL_INFO *global_info_ref)
 {
   GLOBAL_INFO global_info = *global_info_ref;
 
-  free (global_info.dircategory_direntry.contents.list);
+  free (global_info.dircategory_direntry.list);
 
   free (global_info.input_encoding_name);
   free (global_info.input_file_name);
@@ -881,7 +839,7 @@ delete_global_commands (GLOBAL_COMMANDS *global_commands_ref)
   GLOBAL_COMMANDS global_commands = *global_commands_ref;
 
 #define GLOBAL_CASE(cmx) \
-  free (global_commands.cmx.contents.list)
+  free (global_commands.cmx.list)
 
   GLOBAL_CASE(floats);
   GLOBAL_CASE(footnotes);
@@ -891,15 +849,15 @@ delete_global_commands (GLOBAL_COMMANDS *global_commands_ref)
 #undef GLOBAL_CASE
 }
 
-ELEMENT *
-get_cmd_global_command (GLOBAL_COMMANDS *global_commands_ref,
-                        enum command_id cmd)
+ELEMENT_LIST *
+get_cmd_global_multi_command (GLOBAL_COMMANDS *global_commands_ref,
+                              enum command_id cmd)
 {
 
   switch (cmd)
     {
 #define GLOBAL_CASE(cmx) \
-     case CM_##cmx:   \
+     case CM_##cmx: \
        return &global_commands_ref->cmx;
 
      case CM_footnote:
@@ -911,7 +869,18 @@ get_cmd_global_command (GLOBAL_COMMANDS *global_commands_ref,
 #include "global_multi_commands_case.c"
 
 #undef GLOBAL_CASE
+     default:
+       return 0;
+   }
+}
 
+ELEMENT *
+get_cmd_global_uniq_command (GLOBAL_COMMANDS *global_commands_ref,
+                             enum command_id cmd)
+{
+
+  switch (cmd)
+    {
 #define GLOBAL_UNIQUE_CASE(cmd) \
      case CM_##cmd: \
        return global_commands_ref->cmd;
@@ -975,8 +944,8 @@ informative_command_value (ELEMENT *element)
   return 0;
 }
 
-void
-set_informative_command_value (CONVERTER *self, ELEMENT *element)
+static void
+set_informative_command_value (OPTIONS *options, ELEMENT *element)
 {
   char *value = 0;
   enum command_id cmd = element_builtin_cmd (element);
@@ -987,7 +956,7 @@ set_informative_command_value (CONVERTER *self, ELEMENT *element)
 
   if (value)
     {
-      COMMAND_OPTION_REF *option_ref = get_command_option (self->conf, cmd);
+      COMMAND_OPTION_REF *option_ref = get_command_option (options, cmd);
       if (option_ref)
         {
           if (option_ref->type == GO_int)
@@ -1036,29 +1005,29 @@ get_global_document_command (GLOBAL_COMMANDS *global_commands,
     fprintf (stderr, "BUG: get_global_document_command: unknown CL: %d\n",
                      command_location);
 
-  ELEMENT *command
-     = get_cmd_global_command (global_commands, cmd);
+  ELEMENT_LIST *command_list
+     = get_cmd_global_multi_command (global_commands, cmd);
   if (builtin_command_data[cmd].flags & CF_global)
     {
-      if (command->contents.number)
+      if (command_list->number)
         {
           if (command_location == CL_last)
             {
-              element = command->contents.list[command->contents.number -1];
+              element = command_list->list[command_list->number -1];
             }
           else
             {
               if (command_location == CL_preamble_or_first
-                   && !in_preamble (command->contents.list[0]))
+                   && !in_preamble (command_list->list[0]))
                 {
-                  element = command->contents.list[0];
+                  element = command_list->list[0];
                 }
               else
                 {
                   int i;
-                  for (i = 0; i < command->contents.number; i++)
+                  for (i = 0; i < command_list->number; i++)
                     {
-                      ELEMENT *command_element = command->contents.list[i];
+                      ELEMENT *command_element = command_list->list[i];
                       if (in_preamble (command_element))
                         {
                           element = command_element;
@@ -1070,9 +1039,12 @@ get_global_document_command (GLOBAL_COMMANDS *global_commands,
             }
         }
     }
-  else if (command)
+  else
     {
-      element = command;
+      ELEMENT *command
+        = get_cmd_global_uniq_command (global_commands, cmd);
+      if (command)
+        element = command;
     }
   return element;
 }
@@ -1083,14 +1055,15 @@ get_global_document_command (GLOBAL_COMMANDS *global_commands,
   and associated customization variables are not set/reset either.
  */
 ELEMENT *
-set_global_document_command (CONVERTER *self, enum command_id cmd,
+set_global_document_command (GLOBAL_COMMANDS *global_commands, OPTIONS *options,
+                             enum command_id cmd,
                              enum command_location command_location)
 {
   ELEMENT *element
-     = get_global_document_command (self->document->global_commands, cmd,
+     = get_global_document_command (global_commands, cmd,
                                     command_location);
   if (element)
-    set_informative_command_value (self, element);
+    set_informative_command_value (options, element);
   return element;
 }
 
@@ -1104,13 +1077,40 @@ new_options (void)
   return options;
 }
 
-CONVERTER *
-new_converter (void)
+
+/* accents/elements stacks */
+void
+push_stack_element (ELEMENT_STACK *stack, const ELEMENT *e)
 {
-  CONVERTER *converter
-   = (CONVERTER *) malloc (sizeof (CONVERTER));
-  memset (converter, 0, sizeof (CONVERTER));
-  return converter;
+  if (stack->top >= stack->space)
+    {
+      stack->stack
+        = realloc (stack->stack,
+                   (stack->space += 5) * sizeof (ELEMENT *));
+    }
+
+  stack->stack[stack->top] = e;
+  stack->top++;
+}
+
+/* currently unused */
+const ELEMENT *
+pop_stack_element (ELEMENT_STACK *stack)
+{
+  if (stack->top == 0)
+    fatal ("element stack empty");
+
+  stack->top--;
+  return stack->stack[stack->top +1];
+}
+
+void
+destroy_accent_stack (ACCENTS_STACK *accent_stack)
+{
+  free (accent_stack->stack.stack);
+  if (accent_stack->argument)
+    destroy_element (accent_stack->argument);
+  free (accent_stack);
 }
 
 
@@ -1120,7 +1120,7 @@ new_converter (void)
 /* the returned level will be < 0 if the command is not supposed
    to be associated to a level. */
 int
-section_level (ELEMENT *section)
+section_level (const ELEMENT *section)
 {
   int level = command_structuring_level[section->cmd];
   KEY_PAIR *k_level_modifier = lookup_extra (section, "level_modifier");
@@ -1193,59 +1193,6 @@ is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries)
         return 0;
     }
   return 1;
-}
-
-/*
-  NOTE this code does nothing with the current tree, as comments
-  are in 'info' 'comment_at_end', ignorable_spaces_after_command only appear
-  in specific situations, spaces_after_close_brace are only after some
-  commands and not first in contents, while spaces_at_end are before commands
-  and not at the end of contents. Spaces will also be in 'info'
-  if at the end of contents/line.
-  Also this code is not often called, likely because it is not useful with
-  the current tree.
-  In 2023, nothing was trimmed in the test suite.
- */
-ELEMENT *
-trim_spaces_comment_from_content (ELEMENT *element)
-{
-  if (element->contents.number <= 0)
-    return 0;
-
-  if (element->contents.number > 0)
-    {
-      int i, j;
-
-      /* index to start from, from the beginning */
-      for (i = 0; i < element->contents.number; i++)
-        {
-          ELEMENT *content = element->contents.list[i];
-          if (!content->type
-              || (content->type != ET_ignorable_spaces_after_command
-                  && content->type != ET_spaces_after_close_brace))
-            break;
-        }
-
-      for (j = element->contents.number -1; j >= 0; j--)
-        {
-          ELEMENT *content = element->contents.list[j];
-          if ((content->cmd == CM_c || content->cmd == CM_comment)
-              || content->type == ET_spaces_at_end)
-            {}
-          else
-            break;
-        }
-
-      if (j < i)
-        return 0;
-      else
-        {
-          ELEMENT *result = new_element (ET_NONE);
-          insert_slice_into_contents (result, 0, element, i, j);
-          return result;
-        }
-    }
-  return 0;
 }
 
 /*

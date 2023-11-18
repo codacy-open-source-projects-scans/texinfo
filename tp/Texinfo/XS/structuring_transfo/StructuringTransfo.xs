@@ -32,7 +32,7 @@
 
 #include "options_types.h"
 #include "tree_types.h"
-#include "converter_types.h"
+#include "document_types.h"
 #include "tree.h"
 #include "utils.h"
 #include "manipulate_tree.h"
@@ -47,136 +47,10 @@ MODULE = Texinfo::StructTransf		PACKAGE = Texinfo::StructTransf
 
 PROTOTYPES: ENABLE
 
-SV *
-rebuild_document (SV *document_in, ...)
-      PROTOTYPE: $;$
-      PREINIT:
-        int no_store = 0;
-        int document_descriptor;
-        SV **document_descriptor_sv;
-        char *descriptor_key = "document_descriptor";
-        HV *hv_in;
-      CODE:
-        if (items > 1)
-          if (SvOK(ST(1)))
-            no_store = SvIV (ST(1));
-
-        hv_in = (HV *)SvRV (document_in);
-        document_descriptor_sv = hv_fetch (hv_in, descriptor_key,
-                                           strlen (descriptor_key), 0);
-        if (document_descriptor_sv)
-          {
-            SV **info_sv;
-            SV *rebuilt_doc_sv;
-            HV *rebuilt_doc_hv;
-
-            document_descriptor = SvIV (*document_descriptor_sv);
-            rebuilt_doc_sv = build_document (document_descriptor, no_store);
-            RETVAL = rebuilt_doc_sv;
-            rebuilt_doc_hv = (HV *)SvRV (rebuilt_doc_sv);
-            info_sv = hv_fetch (hv_in, "info", strlen ("info"), 0);
-            /* copy input document info keys values not already in new document
-               info.  Should only happen for info keys set in perl only. */
-            if (info_sv)
-              {
-                I32 hv_number;
-                I32 i;
-                HV *info_hv = (HV *)SvRV (*info_sv);
-                SV **rebuilt_info_sv = hv_fetch (rebuilt_doc_hv, "info",
-                                                strlen ("info"), 0);
-                HV *rebuilt_info_hv = 0;
-                if (!rebuilt_info_sv)
-                  {
-                    HV *rebuilt_info_hv = newHV ();
-                    SV *rebuilt_info_ref = newRV_noinc ((SV *) rebuilt_info_hv);
-                    hv_store (rebuilt_doc_hv, "info", strlen ("info"),
-                              rebuilt_info_ref, 0);
-                  }
-                else
-                  {
-                    rebuilt_info_hv = (HV *)SvRV (*rebuilt_info_sv);
-                  }
-                hv_number = hv_iterinit (info_hv);
-                for (i = 0; i < hv_number; i++)
-                  {
-                    char *key;
-                    I32 retlen;
-                    SV *value = hv_iternextsv(info_hv,
-                                              &key, &retlen);
-                    SV **existing_key_sv = hv_fetch (rebuilt_info_hv, key,
-                                                     strlen (key), 0);
-                    if (!existing_key_sv)
-                      hv_store (rebuilt_info_hv, key, strlen (key), value, 0);
-                  }
-              }
-          }
-        else
-          {
-            fprintf (stderr, "ERROR: document rebuild: no %s\n", descriptor_key);
-            RETVAL = newSV(0);
-          }
-    OUTPUT:
-        RETVAL
-
-SV *
-rebuild_tree (SV *tree_in, ...)
-      PROTOTYPE: $;$
-      PREINIT:
-        int no_store = 0;
-        DOCUMENT *document = 0;
-      CODE:
-        if (items > 1)
-          if (SvOK(ST(1)))
-            no_store = SvIV (ST(1));
-
-        document = get_sv_tree_document (tree_in, "rebuild_tree");
-        if (document)
-          {
-            ELEMENT *tree;
-
-            build_document (document->descriptor, no_store);
-            tree = document->tree;
-            RETVAL = newRV_inc ((SV *) tree->hv);
-          }
-        else
-          RETVAL = newSV(0);
-    OUTPUT:
-        RETVAL
-
-void
-remove_document_descriptor (int document_descriptor)
-
-void
-remove_document (SV *document_in)
-    PREINIT:
-        DOCUMENT *document = 0;
-     CODE:
-        /* it is ok not to found a document if there is no
-           document descriptor */
-        document = get_sv_document_document (document_in, 0);
-        if (document)
-          remove_document_descriptor (document->descriptor);
-
-void
-clear_document_errors (int document_descriptor)
-
-void
-set_document_options (SV *sv_options_in, SV *document_in)
-    PREINIT:
-        DOCUMENT *document = 0;
-     CODE:
-        document = get_sv_document_document (document_in,
-                                             "set_document_options");
-        if (document)
-          {
-            OPTIONS *options = copy_sv_options (sv_options_in);
-            register_document_options (document, options);
-          }
-
 void
 fill_gaps_in_sectioning (SV *tree_in)
     PREINIT:
-        ELEMENT *added_sections;
+        ELEMENT_LIST *added_sections;
         DOCUMENT *document;
      CODE:
         document = get_sv_tree_document (tree_in, "fill_gaps_in_sectioning");
@@ -185,7 +59,7 @@ fill_gaps_in_sectioning (SV *tree_in)
             added_sections = fill_gaps_in_sectioning (document->tree);
             /* cannot easily be used as it does not match with perl tree.
                Also the return would not be usable as error status */
-            destroy_element (added_sections);
+            destroy_list (added_sections);
           }
 
 SV *
@@ -279,7 +153,7 @@ sectioning_structure (SV *tree_in, ...)
         document = get_sv_tree_document (tree_in, 0);
         if (document)
           {
-            ELEMENT *sections_list = sectioning_structure (document);
+            ELEMENT_LIST *sections_list = sectioning_structure (document);
             register_document_sections_list (document, sections_list);
           }
 
@@ -396,9 +270,9 @@ insert_nodes_for_sectioning_commands (SV *document_in, ...)
                                "insert_nodes_for_sectioning_commands");
         if (document)
           {
-            ELEMENT *added_nodes
+            ELEMENT_LIST *added_nodes
               = insert_nodes_for_sectioning_commands (document);
-            destroy_element (added_nodes);
+            destroy_list (added_nodes);
           }
 
 # The perl function returns a list of nodes, but it is only used
@@ -413,7 +287,7 @@ nodes_tree (SV *document_in, ...)
         document = get_sv_document_document (document_in, "nodes_tree");
         if (document)
           {
-            ELEMENT *nodes_list = nodes_tree (document);
+            ELEMENT_LIST *nodes_list = nodes_tree (document);
             register_document_nodes_list (document, nodes_list);
           }
 

@@ -9,6 +9,7 @@
 
 #include "global_commands_types.h"
 #include "tree_types.h"
+#include "document_types.h"
 #include "converter_types.h"
 
 int init (int texinfo_uninstalled, char *srcdir_in);
@@ -38,12 +39,15 @@ SV *build_output_units_list (size_t output_units_descriptor);
 void rebuild_output_units_list (SV *output_units_sv,
                                 size_t output_units_descriptor);
 
+AV *build_integer_stack (INTEGER_STACK *integer_stack);
+
 void pass_output_unit_files (SV *converter_sv,
                         FILE_NAME_PATH_COUNTER_LIST *output_unit_files);
 
 void pass_converter_errors (ERROR_MESSAGE_LIST *error_messages,
                             HV *converter_hv);
 
-void build_output_files_information (CONVERTER *converter);
+void build_output_files_information (SV *converter_sv,
+                   OUTPUT_FILES_INFORMATION *output_files_information);
 
 #endif

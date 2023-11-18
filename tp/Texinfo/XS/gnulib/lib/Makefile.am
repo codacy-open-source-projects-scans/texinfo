@@ -32,8 +32,6 @@
 #  --no-conditional-dependencies \
 #  --libtool \
 #  --macro-prefix=gl \
-#  c32isupper \
-#  c32width \
 #  getline \
 #  iconv \
 #  libunistring \
@@ -41,6 +39,7 @@
 #  setenv \
 #  strchrnul \
 #  strndup \
+#  uchar \
 #  unicase/u8-tolower \
 #  unicase/u8-toupper \
 #  uniconv/u32-strconv-from-enc \
@@ -49,6 +48,7 @@
 #  unictype/category-L \
 #  unictype/category-Mn \
 #  unictype/category-test \
+#  unictype/ctype-upper \
 #  uninorm/nfc \
 #  uninorm/nfkd \
 #  uninorm/u8-normalize \
@@ -61,8 +61,7 @@
 #  uniwidth/u8-strwidth \
 #  uniwidth/u8-width \
 #  unsetenv \
-#  vasprintf \
-#  wcwidth
+#  vasprintf
 
 AUTOMAKE_OPTIONS = 1.14 gnits subdir-objects
 
@@ -92,7 +91,6 @@ libgnu_la_DEPENDENCIES = $(gl_LTLIBOBJS)
 EXTRA_libgnu_la_SOURCES =
 libgnu_la_LDFLAGS = $(AM_LDFLAGS)
 libgnu_la_LDFLAGS += -no-undefined
-libgnu_la_LDFLAGS += $(LTLIBC32CONV)
 libgnu_la_LDFLAGS += $(LTLIBICONV)
 libgnu_la_LDFLAGS += $(LTLIBINTL)
 libgnu_la_LDFLAGS += $(LTLIBUNISTRING)
@@ -198,20 +196,6 @@ libgnu_la_SOURCES += c-strcase.h c-strcasecmp.c c-strncasecmp.c
 EXTRA_DIST += c-strcaseeq.h
 
 ## end   gnulib module c-strcaseeq
-
-## begin gnulib module c32isupper
-
-libgnu_la_SOURCES += c32isupper.c
-
-EXTRA_DIST += c32is-impl.h
-
-## end   gnulib module c32isupper
-
-## begin gnulib module c32width
-
-libgnu_la_SOURCES += c32width.c
-
-## end   gnulib module c32width
 
 ## begin gnulib module errno
 
@@ -503,14 +487,6 @@ MOSTLYCLEANFILES += limits.h limits.h-t
 EXTRA_DIST += limits.in.h
 
 ## end   gnulib module limits-h
-
-## begin gnulib module localcharset
-
-libgnu_la_SOURCES += localcharset.c
-
-EXTRA_DIST += localcharset.h
-
-## end   gnulib module localcharset
 
 ## begin gnulib module malloca
 
@@ -2449,14 +2425,6 @@ MOSTLYCLEANFILES += wctype.h wctype.h-t
 EXTRA_DIST += wctype.in.h
 
 ## end   gnulib module wctype-h
-
-## begin gnulib module wcwidth
-
-if GL_COND_OBJ_WCWIDTH
-libgnu_la_SOURCES += wcwidth.c
-endif
-
-## end   gnulib module wcwidth
 
 ## begin gnulib module xalloc-oversized
 

@@ -52,8 +52,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module c-ctype:
   # Code from module c-strcase:
   # Code from module c-strcaseeq:
-  # Code from module c32isupper:
-  # Code from module c32width:
   # Code from module c99:
   # Code from module environ:
   # Code from module errno:
@@ -77,7 +75,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module inttypes-incomplete:
   # Code from module libunistring:
   # Code from module limits-h:
-  # Code from module localcharset:
   # Code from module malloca:
   # Code from module mbszero:
   # Code from module memchr:
@@ -173,7 +170,6 @@ AC_DEFUN([gl_EARLY],
   # Code from module vasprintf:
   # Code from module wchar:
   # Code from module wctype-h:
-  # Code from module wcwidth:
   # Code from module xalloc-oversized:
   # Code from module xsize:
 ])
@@ -202,18 +198,6 @@ AC_DEFUN([gl_INIT],
   gl_ASSERT_H
   gl_CONDITIONAL_HEADER([assert.h])
   AC_PROG_MKDIR_P
-  AC_REQUIRE([gl_UCHAR_H])
-  dnl Determine REPLACE_MBSTATE_T, from which GNULIB_defined_mbstate_t is
-  dnl determined.  It describes how mbrtoc32 is implemented.
-  AC_REQUIRE([gl_MBSTATE_T_BROKEN])
-  AC_REQUIRE([gl_MBRTOC32_SANITYCHECK])
-  gl_UCHAR_MODULE_INDICATOR([c32isupper])
-  AC_REQUIRE([gl_UCHAR_H])
-  dnl Determine REPLACE_MBSTATE_T, from which GNULIB_defined_mbstate_t is
-  dnl determined.  It describes how mbrtoc32 is implemented.
-  AC_REQUIRE([gl_MBSTATE_T_BROKEN])
-  AC_REQUIRE([gl_MBRTOC32_SANITYCHECK])
-  gl_UCHAR_MODULE_INDICATOR([c32width])
   gl_ENVIRON
   gl_UNISTD_MODULE_INDICATOR([environ])
   gl_HEADER_ERRNO_H
@@ -267,10 +251,6 @@ AC_DEFUN([gl_INIT],
   gl_LIMITS_H
   gl_CONDITIONAL_HEADER([limits.h])
   AC_PROG_MKDIR_P
-  gl_LOCALCHARSET
-  dnl For backward compatibility. Some packages still use this.
-  LOCALCHARSET_TESTS_ENVIRONMENT=
-  AC_SUBST([LOCALCHARSET_TESTS_ENVIRONMENT])
   gl_MALLOCA
   AC_REQUIRE([AC_TYPE_MBSTATE_T])
   gl_MBSTATE_T_BROKEN
@@ -500,13 +480,6 @@ AC_DEFUN([gl_INIT],
   gl_WCTYPE_H
   gl_WCTYPE_H_REQUIRE_DEFAULTS
   AC_PROG_MKDIR_P
-  gl_FUNC_WCWIDTH
-  gl_CONDITIONAL([GL_COND_OBJ_WCWIDTH],
-                 [test $HAVE_WCWIDTH = 0 || test $REPLACE_WCWIDTH = 1])
-  AM_COND_IF([GL_COND_OBJ_WCWIDTH], [
-    gl_PREREQ_WCWIDTH
-  ])
-  gl_WCHAR_MODULE_INDICATOR([wcwidth])
   gl_XSIZE
   # End of code from modules
   m4_ifval(gl_LIBSOURCES_LIST, [
@@ -693,9 +666,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/c-strcasecmp.c
   lib/c-strcaseeq.h
   lib/c-strncasecmp.c
-  lib/c32is-impl.h
-  lib/c32isupper.c
-  lib/c32width.c
   lib/errno.in.h
   lib/exitfail.c
   lib/exitfail.h
@@ -723,7 +693,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/itold.c
   lib/libunistring.valgrind
   lib/limits.in.h
-  lib/localcharset.c
   lib/localcharset.h
   lib/malloca.c
   lib/malloca.h
@@ -862,7 +831,6 @@ AC_DEFUN([gl_FILE_LIST], [
   lib/wchar.in.h
   lib/wctype-h.c
   lib/wctype.in.h
-  lib/wcwidth.c
   lib/xalloc-oversized.h
   lib/xsize.c
   lib/xsize.h
@@ -898,13 +866,11 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/libunistring-base.m4
   m4/libunistring.m4
   m4/limits-h.m4
-  m4/localcharset.m4
   m4/locale-fr.m4
   m4/locale-ja.m4
   m4/locale-zh.m4
   m4/malloca.m4
   m4/math_h.m4
-  m4/mbrtoc32.m4
   m4/mbrtowc.m4
   m4/mbstate_t.m4
   m4/memchr.m4
@@ -943,7 +909,6 @@ AC_DEFUN([gl_FILE_LIST], [
   m4/wchar_h.m4
   m4/wchar_t.m4
   m4/wctype_h.m4
-  m4/wcwidth.m4
   m4/wint_t.m4
   m4/xsize.m4
   m4/zzgnulib.m4

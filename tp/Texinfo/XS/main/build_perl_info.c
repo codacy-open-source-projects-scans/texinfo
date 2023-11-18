@@ -51,7 +51,7 @@
 #include "builtin_commands.h"
 #include "document.h"
 #include "output_unit.h"
-/* for wipe_error_message_list */
+/* for clear_error_message_list */
 #include "errors.h"
 #include "build_perl_info.h"
 
@@ -220,7 +220,7 @@ newSVpv_byte (const char *str, STRLEN len)
 }
 
 static void
-store_additional_info (ELEMENT *e, ASSOCIATED_INFO* a, char *key)
+store_additional_info (const ELEMENT *e, ASSOCIATED_INFO* a, char *key)
 {
   dTHX;
 
@@ -701,7 +701,7 @@ build_internal_xref_list (ELEMENT **internal_xref_list,
 }
 
 AV *
-build_elements_contents_list (ELEMENT *element)
+build_elements_list (ELEMENT_LIST *list)
 {
   AV *list_av;
   SV *sv;
@@ -711,11 +711,11 @@ build_elements_contents_list (ELEMENT *element)
 
   list_av = newAV ();
 
-  av_unshift (list_av, element->contents.number);
+  av_unshift (list_av, list->number);
 
-  for (i = 0; i < element->contents.number; i++)
+  for (i = 0; i < list->number; i++)
     {
-      sv = newRV_inc (element->contents.list[i]->hv);
+      sv = newRV_inc (list->list[i]->hv);
       av_store (list_av, i, sv);
     }
 
@@ -769,7 +769,7 @@ build_float_types_list (FLOAT_RECORD *floats_list, size_t floats_number)
 /* returns a hash for a single entry in $self->{'index_names'}, containing
    information about a single index. */
 static HV *
-build_single_index_data (INDEX *i)
+build_single_index_data (INDEX *index)
 {
 #define STORE(key, value) hv_store (hv, key, strlen (key), value, 0)
 
@@ -782,32 +782,32 @@ build_single_index_data (INDEX *i)
 
   hv = newHV ();
 
-  STORE("name", newSVpv_utf8 (i->name, 0));
-  STORE("in_code", i->in_code ? newSViv(1) : newSViv(0));
+  STORE("name", newSVpv_utf8 (index->name, 0));
+  STORE("in_code", index->in_code ? newSViv(1) : newSViv(0));
 
-  if (i->merged_in)
+  if (index->merged_in)
     {
-      STORE("merged_in", newSVpv_utf8 (i->merged_in->name, 0));
+      STORE("merged_in", newSVpv_utf8 (index->merged_in->name, 0));
     }
 
-  if (i->index_number > 0)
+  if (index->entries_number > 0)
     {
       entries = newAV ();
-      av_unshift (entries, i->index_number);
+      av_unshift (entries, index->entries_number);
       STORE("index_entries", newRV_noinc ((SV *) entries));
 #undef STORE
 
       entry_number = 1;
-      for (j = 0; j < i->index_number; j++)
+      for (j = 0; j < index->entries_number; j++)
         {
 #define STORE2(key, value) hv_store (entry, key, strlen (key), value, 0)
           HV *entry;
           INDEX_ENTRY *e;
 
-          e = &i->index_entries[j];
+          e = &index->index_entries[j];
           entry = newHV ();
 
-          STORE2("index_name", newSVpv_utf8 (i->name, 0));
+          STORE2("index_name", newSVpv_utf8 (index->name, 0));
           STORE2("entry_element",
                  newRV_inc ((SV *)e->entry_element->hv));
           if (e->entry_associated_element)
@@ -900,14 +900,14 @@ build_global_info_tree_info (HV *hv, GLOBAL_INFO *global_info_ref)
 
   dTHX;
 
-  if (global_info.dircategory_direntry.contents.number > 0)
+  if (global_info.dircategory_direntry.number > 0)
     {
       AV *av = newAV ();
       hv_store (hv, "dircategory_direntry", strlen ("dircategory_direntry"),
                 newRV_noinc ((SV *) av), 0);
-      for (i = 0; i < global_info.dircategory_direntry.contents.number; i++)
+      for (i = 0; i < global_info.dircategory_direntry.number; i++)
         {
-          e = contents_child_by_index (&global_info.dircategory_direntry, i);
+          e = global_info.dircategory_direntry.list[i];
           if (e->hv)
             av_push (av, newRV_inc ((SV *) e->hv));
         }
@@ -946,42 +946,42 @@ build_global_commands (GLOBAL_COMMANDS *global_commands_ref)
 
   /* The following are arrays of elements. */
 
-  if (global_commands.footnotes.contents.number > 0)
+  if (global_commands.footnotes.number > 0)
     {
       av = newAV ();
       hv_store (hv, "footnote", strlen ("footnote"),
                 newRV_noinc ((SV *) av), 0);
-      for (i = 0; i < global_commands.footnotes.contents.number; i++)
+      for (i = 0; i < global_commands.footnotes.number; i++)
         {
-          e = contents_child_by_index (&global_commands.footnotes, i);
+          e = global_commands.footnotes.list[i];
           if (e->hv)
             av_push (av, newRV_inc ((SV *) e->hv));
         }
     }
 
   /* float is a type, it does not work there, use floats instead */
-  if (global_commands.floats.contents.number > 0)
+  if (global_commands.floats.number > 0)
     {
       av = newAV ();
       hv_store (hv, "float", strlen ("float"),
                 newRV_noinc ((SV *) av), 0);
-      for (i = 0; i < global_commands.floats.contents.number; i++)
+      for (i = 0; i < global_commands.floats.number; i++)
         {
-          e = contents_child_by_index (&global_commands.floats, i);
+          e = global_commands.floats.list[i];
           if (e->hv)
             av_push (av, newRV_inc ((SV *) e->hv));
         }
     }
 
 #define GLOBAL_CASE(cmd) \
-  if (global_commands.cmd.contents.number > 0)                              \
+  if (global_commands.cmd.number > 0)                              \
     {                                                                   \
       av = newAV ();                                                    \
       hv_store (hv, #cmd, strlen (#cmd),                                \
                 newRV_noinc ((SV *) av), 0);                              \
-      for (i = 0; i < global_commands.cmd.contents.number; i++)             \
+      for (i = 0; i < global_commands.cmd.number; i++)             \
         {                                                               \
-          e = contents_child_by_index (&global_commands.cmd, i);            \
+          e = global_commands.cmd.list[i];            \
           if (e->hv)                                                    \
             av_push (av, newRV_inc ((SV *) e->hv));                     \
         }                                                               \
@@ -1176,7 +1176,7 @@ build_document (size_t document_descriptor, int no_store)
      for example build_listoffloats_list that would create the
      hv_listoffloats_list based on document->listoffloats. */
   hv_listoffloats_list
-         = build_float_types_list (document->floats->float_types,
+         = build_float_types_list (document->floats->list,
                                    document->floats->number);
 
   av_internal_xref = build_internal_xref_list (
@@ -1192,10 +1192,10 @@ build_document (size_t document_descriptor, int no_store)
                                document->error_messages->number);
 
   if (document->nodes_list)
-    av_nodes_list = build_elements_contents_list (document->nodes_list);
+    av_nodes_list = build_elements_list (document->nodes_list);
 
   if (document->sections_list)
-    av_sections_list = build_elements_contents_list (document->sections_list);
+    av_sections_list = build_elements_list (document->sections_list);
 
 #define STORE(key, value) hv_store (hv, key, strlen (key), newRV_inc ((SV *) value), 0)
 
@@ -1509,7 +1509,7 @@ pass_converter_errors (ERROR_MESSAGE_LIST *error_messages,
                   strlen ("error_nrs"), newSViv (error_nrs), 0);
     }
 
-  wipe_error_message_list (error_messages);
+  clear_error_message_list (error_messages);
 }
 
 void
@@ -1548,6 +1548,24 @@ rebuild_output_units_list (SV *output_units_sv, size_t output_units_descriptor)
   hv_store (output_units->list[0]->hv, "output_units_descriptor",
             strlen ("output_units_descriptor"),
             newSViv (output_units_descriptor), 0);
+}
+
+AV *
+build_integer_stack (INTEGER_STACK *integer_stack)
+{
+  AV *av;
+  int i;
+
+  dTHX;
+
+  av = newAV ();
+
+  for (i = 0; i < integer_stack->top; i++)
+    {
+      int value = integer_stack->stack[i];
+      av_push (av, newSViv (value));
+    }
+  return av;
 }
 
 SV *
@@ -1757,9 +1775,9 @@ build_output_files_opened_files (HV *hv,
     }
 }
 
-/* for the perl converter associated to CONVERTER */
 void
-build_output_files_information (CONVERTER *converter)
+build_output_files_information (SV *converter_sv,
+                   OUTPUT_FILES_INFORMATION *output_files_information)
 {
   HV *hv;
   SV **output_files_sv;
@@ -1767,10 +1785,7 @@ build_output_files_information (CONVERTER *converter)
 
   dTHX;
 
-  if (!converter->hv)
-    return;
-
-  hv = converter->hv;
+  hv = (HV *) SvRV (converter_sv);
 
   output_files_sv = hv_fetch (hv, "output_files",
                                 strlen ("output_files"), 0);
@@ -1787,8 +1802,8 @@ build_output_files_information (CONVERTER *converter)
     }
 
   build_output_files_opened_files (output_files_hv,
-                                   &converter->output_files_information);
+                                   output_files_information);
   build_output_files_unclosed_files (output_files_hv,
-                                   &converter->output_files_information);
+                                     output_files_information);
 }
 

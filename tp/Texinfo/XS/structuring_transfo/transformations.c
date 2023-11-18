@@ -29,7 +29,7 @@
 #include "element_types.h"
 #include "tree_types.h"
 #include "command_ids.h"
-#include "converter_types.h"
+#include "document_types.h"
 #include "text.h"
 #include "tree.h"
 #include "builtin_commands.h"
@@ -65,7 +65,7 @@ lookup_index_entry (ELEMENT *index_entry_info, INDEX **indices_information)
   result = malloc (sizeof (INDEX_ENTRY_AND_INDEX));
   result->index = index_info;
   result->index_entry = 0;
-  if (index_info->index_number && entry_number <= index_info->index_number)
+  if (index_info->entries_number && entry_number <= index_info->entries_number)
     {
       result->index_entry = &index_info->index_entries[entry_number -1];
     }
@@ -109,27 +109,27 @@ protect_first_parenthesis (ELEMENT *element)
            = new_asis_command_with_text ("(", content->parent, content->type);
           ELEMENT *removed = 0;
           /* count UTF-8 encoded Unicode characters for source marks locations */
-          size_t current_position = 0;
           uint8_t *u8_text = 0;
-          uint8_t *u8_p = 0;
-          size_t u8_len = 0;
+          size_t current_position;
+          uint8_t *u8_p;
+          size_t u8_len;
 
           if (content->source_mark_list.number)
             {
               u8_text = u8_strconv_from_encoding (p, "UTF-8",
                                                iconveh_question_mark);
               u8_p = u8_text;
-            }
 
-          if (u8_text)
-            {
+              current_position = 0;
+
               u8_len = u8_mbsnlen (u8_p, 1);
               u8_p += u8_len;
-            }
-          current_position
-            = relocate_source_marks (&(content->source_mark_list),
+
+              current_position
+                = relocate_source_marks (&(content->source_mark_list),
                               new_command->args.list[0]->contents.list[0],
                                      current_position, u8_len);
+            }
 
           if (!*(p+1))
             /* should be the same as content */
@@ -137,25 +137,24 @@ protect_first_parenthesis (ELEMENT *element)
           else
             {
               /* remove leading open brace */
-              char *new_text = strdup (p+1);
-              SOURCE_MARK_LIST source_mark_list = content->source_mark_list;
-              memset (&(content->source_mark_list), 0,
-                      sizeof (SOURCE_MARK_LIST));
-
               text_reset (&content->text);
-              text_append (&content->text, new_text);
-              free (new_text);
+              text_append (&content->text, p+1);
 
-              /* relocate all the remaining source marks */
               if (u8_text)
                 {
+                  /* relocate all the remaining source marks */
+                  SOURCE_MARK_LIST source_mark_list = content->source_mark_list;
+                  memset (&(content->source_mark_list), 0,
+                      sizeof (SOURCE_MARK_LIST));
+
                   u8_len = u8_mbsnlen (u8_p, u8_strlen (u8_p));
                   u8_p += u8_len;
-                }
-              current_position
-                = relocate_source_marks (&source_mark_list,
-                   content, current_position, u8_len);
-              free (source_mark_list.list);
+
+                  current_position
+                    = relocate_source_marks (&source_mark_list,
+                       content, current_position, u8_len);
+                  free (source_mark_list.list);
+               }
             }
           insert_into_contents (element, new_command, i);
           free (u8_text);
@@ -171,7 +170,7 @@ protect_first_parenthesis (ELEMENT *element)
 /* in Common.pm */
 ELEMENT *
 modify_tree (ELEMENT *tree,
-             ELEMENT *(*operation)(const char *type, ELEMENT *element, void* argument),
+             ELEMENT_LIST *(*operation)(const char *type, ELEMENT *element, void* argument),
              void *argument)
 {
   if (tree->args.number > 0)
@@ -179,19 +178,17 @@ modify_tree (ELEMENT *tree,
       int i;
       for (i = 0; i < tree->args.number; i++)
         {
-          ELEMENT *new_args;
+          ELEMENT_LIST *new_args;
           new_args = (*operation) ("arg", tree->args.list[i], argument);
           if (new_args)
             {
               /* *operation should take care of destroying removed element */
-              /* NOTE even when we replace the args, we use the contents of the
-                 temporary container element returned by (*operation). */
               remove_from_args (tree, i);
-              insert_contents_slice_into_args (tree, i,
-                                               new_args, 0,
-                                               new_args->contents.number);
-              i += new_args->contents.number -1;
-              destroy_element (new_args);
+              insert_list_slice_into_args (tree, i,
+                                           new_args, 0,
+                                           new_args->number);
+              i += new_args->number -1;
+              destroy_list (new_args);
             }
           else
             modify_tree (tree->args.list[i], operation, argument);
@@ -202,18 +199,18 @@ modify_tree (ELEMENT *tree,
       int i;
       for (i = 0; i < tree->contents.number; i++)
         {
-          ELEMENT *new_contents;
+          ELEMENT_LIST *new_contents;
           new_contents = (*operation) ("content", tree->contents.list[i],
                                        argument);
           if (new_contents)
             {
               /* *operation should take care of destroying removed element */
               remove_from_contents (tree, i);
-              insert_slice_into_contents (tree, i,
-                                          new_contents, 0,
-                                          new_contents->contents.number);
-              i += new_contents->contents.number -1;
-              destroy_element (new_contents);
+              insert_list_slice_into_contents (tree, i,
+                                              new_contents, 0,
+                                              new_contents->number);
+              i += new_contents->number -1;
+              destroy_list (new_contents);
             }
           else
             modify_tree (tree->contents.list[i], operation, argument);
@@ -226,7 +223,7 @@ modify_tree (ELEMENT *tree,
         {
           if (tree->source_mark_list.list[i]->element)
             {
-              ELEMENT *new_element;
+              ELEMENT_LIST *new_element;
               new_element = (*operation) ("source_mark",
                                      tree->source_mark_list.list[i]->element,
                                           argument);
@@ -234,7 +231,9 @@ modify_tree (ELEMENT *tree,
                 {
                   /* FIXME destroy previous element? or let (*operation)
                      do it? */
-                  tree->source_mark_list.list[i]->element = new_element;
+                  tree->source_mark_list.list[i]->element
+                      = new_element->list[0];
+                  destroy_list (new_element);
                 }
             }
         }
@@ -280,10 +279,10 @@ correct_level (ELEMENT *section, ELEMENT *parent, int modifier)
     }
 }
 
-ELEMENT *
+ELEMENT_LIST *
 fill_gaps_in_sectioning (ELEMENT *root)
 {
-  ELEMENT *added_sections = new_element (ET_NONE);
+  ELEMENT_LIST *added_sections = new_list ();
   int idx_current_section = -1;
   int idx_next_section = -1;
   size_t idx = 0;
@@ -320,7 +319,7 @@ fill_gaps_in_sectioning (ELEMENT *root)
 
       if (next_section_level - current_section_level > 1)
         {
-          ELEMENT *new_sections = new_element (ET_NONE);
+          ELEMENT_LIST *new_sections = new_list ();
           correct_level (next_section, current_section, 1);
           while (next_section_level - current_section_level > 1)
             {
@@ -353,19 +352,19 @@ fill_gaps_in_sectioning (ELEMENT *root)
               text_append (&empty_line->text, "\n");
               add_to_element_contents (new_section, empty_line);
 
-              add_to_contents_as_array (new_sections, new_section);
+              add_to_element_list (new_sections, new_section);
             }
-          insert_slice_into_contents (root, idx_current_section+1,
+          insert_list_slice_into_contents (root, idx_current_section+1,
+                                          new_sections, 0,
+                                          new_sections->number);
+          idx_next_section += new_sections->number;
+          insert_list_slice_into_list (added_sections,
+                                      added_sections->number,
                                       new_sections, 0,
-                                      new_sections->contents.number);
-          idx_next_section += new_sections->contents.number;
-          insert_slice_into_contents (added_sections,
-                                      added_sections->contents.number,
-                                      new_sections, 0,
-                                      new_sections->contents.number);
-          correct_level (next_section, last_contents_child (new_sections),
-                         -1);
-          destroy_element (new_sections);
+                                      new_sections->number);
+          correct_level (next_section,
+                         new_sections->list[new_sections->number -1], -1);
+          destroy_list (new_sections);
         }
       idx_current_section = idx_next_section;
 
@@ -483,7 +482,7 @@ relate_index_entries_to_table_items_in (ELEMENT *table,
     }
 }
 
-ELEMENT *
+ELEMENT_LIST *
 relate_index_entries_to_table_items_internal (const char *type,
                                               ELEMENT *current,
                                               void *argument)
@@ -582,7 +581,7 @@ move_index_entries_after_items (ELEMENT *current)
     }
 }
 
-ELEMENT *
+ELEMENT_LIST *
 move_index_entries_after_items_internal (const char *type,
                                          ELEMENT *current,
                                          void *argument)
@@ -735,12 +734,12 @@ new_node (ELEMENT *node_tree, DOCUMENT *document)
   return node;
 }
 
-ELEMENT *
+ELEMENT_LIST *
 reassociate_to_node (const char *type, ELEMENT *current, void *argument)
 {
-  ELEMENT *new_previous = (ELEMENT *) argument;
-  ELEMENT *added_node = new_previous->contents.list[0];
-  ELEMENT *previous_node = new_previous->contents.list[1];
+  ELEMENT_LIST *new_previous = (ELEMENT_LIST *) argument;
+  ELEMENT *added_node = new_previous->list[0];
+  ELEMENT *previous_node = new_previous->list[1];
 
   if (current->cmd == CM_menu)
     {
@@ -808,11 +807,11 @@ reassociate_to_node (const char *type, ELEMENT *current, void *argument)
 
 /* in perl registrar and configuration, but they are not useful,
    see comment before new_node */
-ELEMENT *
+ELEMENT_LIST *
 insert_nodes_for_sectioning_commands (DOCUMENT *document)
 {
   ELEMENT *root = document->tree;
-  ELEMENT *added_nodes = new_element (ET_NONE);
+  ELEMENT_LIST *added_nodes = new_list ();
   int idx;
   ELEMENT *previous_node = 0;
 
@@ -845,20 +844,20 @@ insert_nodes_for_sectioning_commands (DOCUMENT *document)
               destroy_element (new_node_tree);
               if (added_node)
                 {
-                  ELEMENT *new_previous = new_element (ET_NONE);
+                  ELEMENT_LIST *new_previous = new_list ();
                   insert_into_contents (root, added_node, idx);
                   idx++;
-                  add_to_contents_as_array (added_nodes, added_node);
+                  add_to_element_list (added_nodes, added_node);
                   add_extra_element (added_node, "associated_section",
                                      content);
                   add_extra_element (content, "associated_node", added_node);
                   added_node->parent = content->parent;
                   /* reassociate index entries and menus */
-                  add_to_contents_as_array (new_previous, added_node);
-                  add_to_contents_as_array (new_previous, previous_node);
+                  add_to_element_list (new_previous, added_node);
+                  add_to_element_list (new_previous, previous_node);
                   modify_tree (content, &reassociate_to_node,
                                (void *)new_previous);
-                  destroy_element (new_previous);
+                  destroy_list (new_previous);
                 }
             }
         }
@@ -884,7 +883,7 @@ int ref_5_args_order[] = {0, 1, 2, 4, 3, -1};
  reference @-command while there could be some in the tree used in
  input for the node name tree.
  */
-ELEMENT *
+ELEMENT_LIST *
 reference_to_arg_internal (const char *type,
                            ELEMENT *e,
                            void *argument)
@@ -896,10 +895,10 @@ reference_to_arg_internal (const char *type,
       int *arguments_order = ref_5_args_order;
       /* container for the new elements to insert, will be destroyed
          by the caller */
-      ELEMENT *container = new_element (ET_NONE);
+      ELEMENT_LIST *container = new_list ();
       ELEMENT *new = new_element (ET_NONE);
       new->parent = e->parent;
-      add_to_contents_as_array (container, new);
+      add_to_element_list (container, new);
       if (e->cmd == CM_inforef || e->cmd == CM_link)
         arguments_order = ref_3_args_order;
       while (arguments_order[index] >= 0)
@@ -969,15 +968,15 @@ typedef struct EXISTING_ENTRY {
 void
 complete_node_menu (ELEMENT *node, int use_sections)
 {
-  ELEMENT *node_childs = get_node_node_childs_from_sectioning (node);
+  ELEMENT_LIST *node_childs = get_node_node_childs_from_sectioning (node);
 
-  if (node_childs->contents.number)
+  if (node_childs->number)
     {
       int existing_entries_nr = 0;
       int existing_entries_space = 5;
       EXISTING_ENTRY *existing_entries = 0;
 
-      ELEMENT *pending = new_element (ET_NONE);
+      ELEMENT_LIST *pending = new_list ();
       ELEMENT *current_menu = 0;
 
       int i;
@@ -1018,9 +1017,9 @@ complete_node_menu (ELEMENT *node, int use_sections)
             }
         }
 
-      for (i = 0; i < node_childs->contents.number; i++)
+      for (i = 0; i < node_childs->number; i++)
         {
-          ELEMENT *node_entry = node_childs->contents.list[i];
+          ELEMENT *node_entry = node_childs->list[i];
           KEY_PAIR *k_normalized = lookup_extra (node_entry, "normalized");
           if (k_normalized && k_normalized->value)
             {
@@ -1039,19 +1038,19 @@ complete_node_menu (ELEMENT *node, int use_sections)
                 }
               if (entry)
                 {
-                  if (pending->contents.number)
+                  if (pending->number)
                     {
                       int k;
                       for (j = 0; j < current_menu->contents.number; j++)
                       if (current_menu->contents.list[j] == entry)
                         break;
-                      insert_slice_into_contents (current_menu, j,
-                                                  pending, 0,
-                                                  pending->contents.number);
-                      for (k = 0; k < pending->contents.number; k++)
-                        pending->contents.list[k]->parent = current_menu;
+                      insert_list_slice_into_contents (current_menu, j,
+                                                       pending, 0,
+                                                       pending->number);
+                      for (k = 0; k < pending->number; k++)
+                        pending->list[k]->parent = current_menu;
 
-                      pending->contents.number = 0;
+                      pending->number = 0;
                     }
                 }
               else
@@ -1062,19 +1061,22 @@ complete_node_menu (ELEMENT *node, int use_sections)
               we try, in general, to be silent in the transformations.
               */
                   if (entry)
-                    add_to_contents_as_array (pending, entry);
+                    add_to_element_list (pending, entry);
                 }
             }
         }
 
-      if (pending->contents.number)
+      if (pending->number)
         {
           int j;
           if (!current_menu)
             {
               ELEMENT *section = lookup_extra_element (node,
                                                        "associated_section");
-              current_menu = pending;
+              current_menu = new_element (ET_NONE);
+              insert_list_slice_into_contents (current_menu, 0,
+                                               pending, 0,
+                                               pending->number);
               current_menu->parent = section;
               new_block_command (current_menu, CM_menu);
               prepend_new_menu_in_node_section (node, section,
@@ -1087,28 +1089,26 @@ complete_node_menu (ELEMENT *node, int use_sections)
 
               if (last_menu_content->cmd != CM_end)
                 offset_at_end = 0;
-              insert_slice_into_contents (current_menu,
+              insert_list_slice_into_contents (current_menu,
                                 current_menu->contents.number + offset_at_end,
-                                        pending, 0, pending->contents.number);
+                                        pending, 0, pending->number);
             }
-          for (j = 0; j < pending->contents.number; j++)
-            pending->contents.list[j]->parent = current_menu;
+          for (j = 0; j < pending->number; j++)
+            pending->list[j]->parent = current_menu;
 
-          if (current_menu != pending)
-            destroy_element (pending);
         }
-      else
-        destroy_element (pending);
+
+      destroy_list (pending);
 
       free (existing_entries);
     }
-  destroy_element (node_childs);
+  destroy_list (node_childs);
 }
 
-ELEMENT *
+static ELEMENT_LIST *
 get_non_automatic_nodes_with_sections (ELEMENT *root)
 {
-  ELEMENT *non_automatic_nodes = new_element (ET_NONE);
+  ELEMENT_LIST *non_automatic_nodes = new_list ();
   int i;
 
   for (i = 0; i < root->contents.number; i++)
@@ -1120,7 +1120,7 @@ get_non_automatic_nodes_with_sections (ELEMENT *root)
           ELEMENT *associated_section
             = lookup_extra_element (content, "associated_section");
           if (associated_section)
-            add_to_contents_as_array (non_automatic_nodes, content);
+            add_to_element_list (non_automatic_nodes, content);
         }
     }
   return non_automatic_nodes;
@@ -1130,26 +1130,26 @@ get_non_automatic_nodes_with_sections (ELEMENT *root)
 void
 complete_tree_nodes_menus (ELEMENT *root, int use_sections)
 {
-  ELEMENT *non_automatic_nodes
+  ELEMENT_LIST *non_automatic_nodes
      = get_non_automatic_nodes_with_sections (root);
   int i;
-  for (i = 0; i < non_automatic_nodes->contents.number; i++)
+  for (i = 0; i < non_automatic_nodes->number; i++)
     {
-      ELEMENT *node = non_automatic_nodes->contents.list[i];
+      ELEMENT *node = non_automatic_nodes->list[i];
       complete_node_menu (node, use_sections);
     }
-  destroy_element (non_automatic_nodes);
+  destroy_list (non_automatic_nodes);
 }
 
 void
 complete_tree_nodes_missing_menu (ELEMENT *root, int use_sections)
 {
-  ELEMENT *non_automatic_nodes
+  ELEMENT_LIST *non_automatic_nodes
      = get_non_automatic_nodes_with_sections (root);
   int i;
-  for (i = 0; i < non_automatic_nodes->contents.number; i++)
+  for (i = 0; i < non_automatic_nodes->number; i++)
     {
-      ELEMENT *node = non_automatic_nodes->contents.list[i];
+      ELEMENT *node = non_automatic_nodes->list[i];
       ELEMENT *menus = lookup_extra_element (node, "menus");
       if (!(menus && menus->contents.number > 0))
         {
@@ -1159,7 +1159,7 @@ complete_tree_nodes_missing_menu (ELEMENT *root, int use_sections)
             prepend_new_menu_in_node_section (node, section, current_menu);
         }
     }
-  destroy_element (non_automatic_nodes);
+  destroy_list (non_automatic_nodes);
 }
 
 /* NOTE in perl there is a customization_information argument:
@@ -1208,7 +1208,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
             {
               int j;
               ELEMENT *removed = remove_from_contents (menu, detailmenu_index);
-              replace_element_in_contents (
+              replace_element_in_list (
                  &document->global_commands->detailmenu, removed, master_menu);
               /* FIXME are the new entries added to internal refs?
                  Note that if they are not, it is possible that this has
@@ -1294,35 +1294,36 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
     }
   /* insert master menu */
   insert_into_contents (last_menu, master_menu, index);
-  add_to_contents_as_array (&document->global_commands->detailmenu,
-                            master_menu);
+  add_to_element_list (&document->global_commands->detailmenu, master_menu);
   return 1;
 }
 
-ELEMENT *
+ELEMENT_LIST *
 protect_text (ELEMENT *current, char *to_protect)
 {
   if (current->text.end > 0 && !(current->type == ET_raw
                                  || current->type == ET_rawline_arg)
       && strpbrk (current->text.text, to_protect))
     {
-      ELEMENT *container = new_element (ET_NONE);
+      ELEMENT_LIST *container = new_list();
       char *p = current->text.text;
       /* count UTF-8 encoded Unicode characters for source marks locations */
-      size_t current_position = 0;
       uint8_t *u8_text = 0;
+      size_t current_position;
       uint8_t *u8_p = 0;
+      size_t u8_len;
 
       if (current->source_mark_list.number)
         {
           u8_text = u8_strconv_from_encoding (p, "UTF-8",
                                             iconveh_question_mark);
           u8_p = u8_text;
+
+          current_position = 0;
         }
 
       while (*p)
         {
-          size_t u8_len = 0;
           int leading_nr = strcspn (p, to_protect);
           ELEMENT *text_elt = new_element (current->type);
           text_elt->parent = current->parent;
@@ -1340,14 +1341,15 @@ protect_text (ELEMENT *current, char *to_protect)
             {
               u8_len = u8_mbsnlen (u8_p, leading_nr);
               u8_p += u8_len;
+
+              current_position
+                = relocate_source_marks (&(current->source_mark_list),
+                                        text_elt,
+                                        current_position, u8_len);
             }
-          current_position
-            = relocate_source_marks (&(current->source_mark_list),
-                                     text_elt,
-                                     current_position, u8_len);
 
           if (leading_nr || text_elt->source_mark_list.number)
-            add_to_contents_as_array (container, text_elt);
+            add_to_element_list (container, text_elt);
           else
             destroy_element (text_elt);
 
@@ -1365,17 +1367,17 @@ protect_text (ELEMENT *current, char *to_protect)
                       comma->cmd = CM_comma;
                       comma->parent = current->parent;
                       add_to_element_args (comma, brace_command_arg);
-                      add_to_contents_as_array (container, comma);
+                      add_to_element_list (container, comma);
                       if (u8_text)
                         {
                           u8_len = u8_mbsnlen (u8_p, 1);
                           u8_p += u8_len;
-                        }
-                      current_position
-                       = relocate_source_marks (&(current->source_mark_list),
-                                                comma,
-                                                current_position, u8_len);
 
+                        current_position
+                          = relocate_source_marks (&(current->source_mark_list),
+                                                   comma,
+                                                   current_position, u8_len);
+                        }
                     }
                   p += to_protect_nr;
                 }
@@ -1386,16 +1388,17 @@ protect_text (ELEMENT *current, char *to_protect)
                   p[to_protect_nr] = '\0';
                   new_command = new_asis_command_with_text(p, current->parent,
                                                            current->type);
-                  add_to_contents_as_array (container, new_command);
+                  add_to_element_list (container, new_command);
                   if (u8_text)
                     {
                       u8_len = u8_mbsnlen (u8_p, to_protect_nr);
                       u8_p += u8_len;
-                    }
-                  current_position
-                     = relocate_source_marks (&(current->source_mark_list),
+
+                      current_position
+                       = relocate_source_marks (&(current->source_mark_list),
                                 new_command->args.list[0]->contents.list[0],
                                               current_position, u8_len);
+                    }
                   p += to_protect_nr;
                   *p = saved;
                 }
@@ -1409,7 +1412,7 @@ protect_text (ELEMENT *current, char *to_protect)
     return 0;
 }
 
-ELEMENT *
+ELEMENT_LIST *
 protect_colon (const char *type, ELEMENT *current, void *argument)
 {
   return protect_text(current, ":");
@@ -1421,7 +1424,7 @@ protect_colon_in_tree (ELEMENT *tree)
   return modify_tree (tree, &protect_colon, 0);
 }
 
-ELEMENT *
+ELEMENT_LIST *
 protect_comma (const char *type, ELEMENT *current, void *argument)
 {
   return protect_text(current, ",");
@@ -1433,7 +1436,7 @@ protect_comma_in_tree (ELEMENT *tree)
   return modify_tree (tree, &protect_comma, 0);
 }
 
-ELEMENT *
+ELEMENT_LIST *
 protect_node_after_label (const char *type, ELEMENT *current, void *argument)
 {
   return protect_text(current, ".\t,");
@@ -1446,7 +1449,7 @@ protect_node_after_label_in_tree (ELEMENT *tree)
 }
 
 /* $customization_information in argument in perl */
-ELEMENT *
+ELEMENT_LIST *
 protect_hashchar_at_line_beginning_internal (const char *type,
                                              ELEMENT *current,
                                              void *argument)
@@ -1514,7 +1517,7 @@ protect_hashchar_at_line_beginning_internal (const char *type,
                         }
                       else
                         {
-                          ELEMENT *container = new_element (ET_NONE);
+                          ELEMENT_LIST *container = new_list ();
                           char *current_text = strdup (current->text.text);
                           char *p = current_text;
                           int leading_spaces_nr;
@@ -1523,20 +1526,23 @@ protect_hashchar_at_line_beginning_internal (const char *type,
                           ELEMENT *arg = new_element (ET_brace_command_arg);
                           /* count UTF-8 encoded Unicode characters for
                              source marks locations */
-                          size_t current_position = 0;
                           uint8_t *u8_text = 0;
-                          uint8_t *u8_p = 0;
-                          size_t u8_len = 0;
-                          SOURCE_MARK_LIST source_mark_list
-                             = current->source_mark_list;
-                          memset (&(current->source_mark_list), 0,
+                          size_t current_position;
+                          uint8_t *u8_p;
+                          size_t u8_len;
+                          SOURCE_MARK_LIST source_mark_list;
+
+                          if (current->source_mark_list.number)
+                            {
+                              source_mark_list = current->source_mark_list;
+                              memset (&(current->source_mark_list), 0,
                                   sizeof (SOURCE_MARK_LIST));
 
-                          if (source_mark_list.number)
-                            {
                               u8_text = u8_strconv_from_encoding (p, "UTF-8",
                                               iconveh_question_mark);
                               u8_p = u8_text;
+
+                              current_position = 0;
                             }
 
                           /* NOTE not exactly the perl code, but use similar
@@ -1555,16 +1561,16 @@ protect_hashchar_at_line_beginning_internal (const char *type,
                             {
                               u8_len = u8_mbsnlen (u8_p, leading_spaces_nr);
                               u8_p += u8_len;
-                            }
-                          current_position
-                            = relocate_source_marks (&source_mark_list,
-                                                     leading_spaces,
+
+                              current_position
+                                = relocate_source_marks (&source_mark_list,
+                                                         leading_spaces,
                                                      current_position, u8_len);
+                            }
 
                           if (leading_spaces_nr
                               || leading_spaces->source_mark_list.number)
-                            add_to_contents_as_array (container,
-                                                      leading_spaces);
+                            add_to_element_list (container, leading_spaces);
                           else
                             destroy_element (leading_spaces);
 
@@ -1574,35 +1580,38 @@ protect_hashchar_at_line_beginning_internal (const char *type,
                           hashchar->cmd = CM_hashchar;
                           hashchar->parent = parent;
                           add_to_element_args (hashchar, arg);
-                          add_to_contents_as_array (container, hashchar);
+                          add_to_element_list (container, hashchar);
 
                           if (u8_text)
                             {
                               u8_len = u8_mbsnlen (u8_p, 1);
                               u8_p += u8_len;
-                            }
-                          current_position
-                            = relocate_source_marks (&source_mark_list,
-                                                     hashchar,
+
+                              current_position
+                                = relocate_source_marks (&source_mark_list,
+                                                         hashchar,
                                                      current_position, u8_len);
+                            }
 
                           text_reset (&current->text);
                           text_append (&current->text, p);
                           free (current_text);
 
-                          /* relocate all the remaining source marks */
                           if (u8_text)
                             {
+                              /* relocate all the remaining source marks */
                               u8_len = u8_mbsnlen (u8_p, u8_strlen (u8_p));
                               u8_p += u8_len;
-                            }
-                          current_position
-                            = relocate_source_marks (&source_mark_list,
-                                      current, current_position, u8_len);
-                          free (source_mark_list.list);
-                          free (u8_text);
 
-                          add_to_contents_as_array (container, current);
+                              current_position
+                                = relocate_source_marks (&source_mark_list,
+                                          current, current_position, u8_len);
+
+                              free (source_mark_list.list);
+                              free (u8_text);
+                            }
+
+                          add_to_element_list (container, current);
                           return container;
                         }
                     }
@@ -1622,7 +1631,7 @@ protect_hashchar_at_line_beginning (DOCUMENT *document)
                       (void *) document);
 }
 
-ELEMENT *
+ELEMENT_LIST *
 protect_first_parenthesis_in_targets_internal (const char *type,
                                                ELEMENT *current,
                                                void *argument)

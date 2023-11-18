@@ -114,6 +114,7 @@ endif
 # in main but not the other way around.
 libtexinfo_la_SOURCES= \
 		      main/tree_types.h \
+		      main/document_types.h \
 		      main/tree.c \
 		      main/tree.h \
 		      main/text.c \
@@ -318,22 +319,42 @@ Parsetexi_la_CFLAGS = $(XSLIBS_CFLAGS)
 Parsetexi_la_LIBADD = libtexinfoxs.la libtexinfo.la
 Parsetexi_la_LDFLAGS = $(AM_LDFLAGS) $(XSLIBS_LDFLAGS)
 
-########################## Translations XS
+########################## Document XS
 
 if HAVE_ICONV
-xs_LTLIBRARIES += TranslationsXS.la
+xs_LTLIBRARIES += DocumentXS.la
 endif
 
-TranslationsXS_la_SOURCES = \
-                       main/TranslationsXS.c
+DocumentXS_la_SOURCES = \
+                       main/DocumentXS.c
 
-EXTRA_DIST += main/TranslationsXS.xs
+EXTRA_DIST += main/DocumentXS.xs
 
 # locate include files under out-of-source builds.
-TranslationsXS_la_CPPFLAGS = -I$(srcdir)/main $(AM_CPPFLAGS) $(XSLIBS_CPPFLAGS)
-TranslationsXS_la_CFLAGS = $(XSLIBS_CFLAGS)
-TranslationsXS_la_LIBADD = libtexinfoxs.la libtexinfo.la
-TranslationsXS_la_LDFLAGS = $(AM_LDFLAGS) $(XSLIBS_LDFLAGS)
+DocumentXS_la_CPPFLAGS = -I$(srcdir)/main $(AM_CPPFLAGS) $(XSLIBS_CPPFLAGS)
+DocumentXS_la_CFLAGS = $(XSLIBS_CFLAGS)
+DocumentXS_la_LIBADD = libtexinfoxs.la libtexinfo.la
+DocumentXS_la_LDFLAGS = $(AM_LDFLAGS) $(XSLIBS_LDFLAGS)
+
+########################## Translations XS
+
+# Not used for now as replaced_substrings
+# perl element tree cannot be retrieved in C stored documents.
+
+#if HAVE_ICONV
+#xs_LTLIBRARIES += TranslationsXS.la
+#endif
+#
+#TranslationsXS_la_SOURCES = \
+#                       main/TranslationsXS.c
+#
+#EXTRA_DIST += main/TranslationsXS.xs
+#
+## locate include files under out-of-source builds.
+#TranslationsXS_la_CPPFLAGS = -I$(srcdir)/main $(AM_CPPFLAGS) $(XSLIBS_CPPFLAGS)
+#TranslationsXS_la_CFLAGS = $(XSLIBS_CFLAGS)
+#TranslationsXS_la_LIBADD = libtexinfoxs.la libtexinfo.la
+#TranslationsXS_la_LDFLAGS = $(AM_LDFLAGS) $(XSLIBS_LDFLAGS)
 
 ########################## StructuringTransfo XS
 

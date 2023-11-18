@@ -55,7 +55,7 @@ static char *locale_command = 0;
 static char *strings_textdomain = "texinfo_document";
 
 void
-configure (char *localesdir, char *strings_textdomain_in)
+translations_configure (char *localesdir, char *strings_textdomain_in)
 {
   char *textdomain_directory;
   if (strings_textdomain_in)
@@ -174,11 +174,12 @@ translate_string (OPTIONS *options, const char * string,
       lang = "en";
     }
 
-  #ifndef ENABLE_NLS
-  
+#ifndef ENABLE_NLS
   translated_string = strdup (string);
+  return translated_string;
+#endif ENABLE_NLS
 
-  #else
+  /* with the following code valgrind reports issues in perl memory */
 
   /* if a code calls setlocale and accesses global locale while perl
      uses per thread locale, the result is unpredictable.  So we switch to
@@ -194,7 +195,7 @@ translate_string (OPTIONS *options, const char * string,
   and (b) this could interfere with the LC_CTYPE setting in XSParagraph.
    */
 
-  #ifndef _WIN32
+#ifndef _WIN32
   /* In
    https://www.gnu.org/software/gettext/manual/html_node/The-LANGUAGE-variable.html
     Note: The variable LANGUAGE is ignored if the locale is set to ‘C’. In
@@ -203,10 +204,7 @@ translate_string (OPTIONS *options, const char * string,
     list through the LANGUAGE variable.
 
    We set LANG and then LC_MESSAGES to a valid locale in
-   switch_messages_locale to have LANGUAGE work in that case.
-   FIXME it does not work.  Also tested with setting LC_ALL instead of
-         LC_MESSAGES and it does not work either
-   */
+   switch_messages_locale to have LANGUAGE work in that case. */
 
   saved_LANG = getenv ("LANG");
 
@@ -222,7 +220,7 @@ translate_string (OPTIONS *options, const char * string,
 
   switch_messages_locale ();
 
-  #endif
+#endif
 
   saved_LANGUAGE = getenv ("LANGUAGE");
 
@@ -234,34 +232,6 @@ translate_string (OPTIONS *options, const char * string,
   textdomain (strings_textdomain);
   bind_textdomain_codeset (strings_textdomain, "utf-8");
 
-  /*
-   {
-     char *bindtextdomain_dir;
-     char *current_textdomain;
-     current_textdomain = textdomain (NULL);
-     bindtextdomain_dir = bindtextdomain (current_textdomain, NULL);
-     fprintf (stderr, "DOMAIN %s '%s'\n", current_textdomain,
-                                         bindtextdomain_dir);
-   }
-   */
-
-/*
-  if ($self) {
-    # NOTE the following customization variables are not set for
-    # a Parser, so the encoding will be undef when gdt is called from
-    # parsers.
-    if ($self->get_conf('OUTPUT_ENCODING_NAME')) {
-      $encoding = $self->get_conf('OUTPUT_ENCODING_NAME');
-    }
-    #if (defined($self->get_conf('OUTPUT_PERL_ENCODING'))) {
-    #  $perl_encoding = $self->get_conf('OUTPUT_PERL_ENCODING');
-    #}
-  } else {
-    # NOTE never happens in the tests, unlikely to happen at all.
-    $encoding = $DEFAULT_ENCODING;
-    #$perl_encoding = $DEFAULT_PERL_ENCODING;
-  }
- */
   langs[0] = strdup (lang);
   p = strchr (lang, '_');
   if (p && p - lang > 0)
@@ -345,8 +315,7 @@ translate_string (OPTIONS *options, const char * string,
 
   free (language_locales.text);
 
-  #ifndef _WIN32
-
+#ifndef _WIN32
   if (saved_LANG)
     {
       setenv ("LANG", saved_LANG, 1);
@@ -362,12 +331,9 @@ translate_string (OPTIONS *options, const char * string,
     }
   else
     setlocale (LC_MESSAGES, "");
-
-  #endif
+#endif
 
   call_sync_locale ();
-
-  #endif
 
   return translated_string;
 }
@@ -564,9 +530,12 @@ replace_convert_substrings (char *translated_string,
     }
 
 
-  debug("XS|RESULT GDT %d: '%s'\n", document_descriptor,
-                                          convert_to_texinfo (document->tree));
 /*
+  {
+    char *result_texi = convert_to_texinfo (document->tree);
+    debug("XS|RESULT GDT %d: '%s'\n", document_descriptor, result_texi);
+    free (result_texi);
+  }
 */
 
   return document_descriptor;

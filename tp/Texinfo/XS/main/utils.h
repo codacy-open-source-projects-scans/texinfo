@@ -24,7 +24,7 @@
 #include "global_commands_types.h"
 #include "tree_types.h"
 #include "command_ids.h"
-#include "converter_types.h"
+#include "document_types.h"
 #include "builtin_commands.h"
 
 extern const char *whitespace_chars;
@@ -39,11 +39,6 @@ extern const size_t directions_length;
 extern const char *output_unit_type_names[];
 
 extern const char *command_location_names[];
-
-extern char *html_conversion_context_type_names[];
-extern char *html_global_unit_direction_names[];
-
-extern char *html_formatting_reference_names[];
 
 typedef struct {
     char *encoding_name;
@@ -134,20 +129,6 @@ enum command_location {
    CL_preamble_or_first,
 };
 
-#define HCC_CONTEXT_TYPES_LIST \
-  cctx_type(normal) \
-  cctx_type(preformatted) \
-  cctx_type(string) \
-  cctx_type(css_string) \
-  cctx_type(code) \
-  cctx_type(math)
-
-enum conversion_context {
-  #define cctx_type(name) HCC_type_## name,
-   HCC_CONTEXT_TYPES_LIST
-  #undef cctx_type
-};
-
 /* HTML modified state flags */
 #define HMSF_current_root            0x0001
 #define HMSF_document_context        0x0002
@@ -166,14 +147,6 @@ enum conversion_context {
 #define HMSF_multiple_pass           0x2000
 #define HMSF_translations            0x4000
 
-typedef struct TRANSLATED_SUI_ASSOCIATION {
-    int tree_type;
-    int string_type;
-} TRANSLATED_SUI_ASSOCIATION;
-
-extern TRANSLATED_SUI_ASSOCIATION translated_special_unit_info[];
-extern const char *special_unit_info_type_names[SUI_type_heading + 1];
-
 typedef struct TARGET_FILENAME {
     char *target;
     char *filename;
@@ -183,7 +156,7 @@ typedef struct FILE_SOURCE_INFO {
     char *filename;
     char *type;
     char *name;
-    ELEMENT *element;
+    const ELEMENT *element;
     char *path;
 } FILE_SOURCE_INFO;
 
@@ -193,34 +166,18 @@ typedef struct FILE_SOURCE_INFO_LIST {
     FILE_SOURCE_INFO *list;
 } FILE_SOURCE_INFO_LIST;
 
-#define HTML_ARGUMENTS_FORMATTED_FORMAT_TYPE \
-  html_aft_type(none) \
-  html_aft_type(normal) \
-  html_aft_type(string) \
-  html_aft_type(monospace) \
-  html_aft_type(monospacetext) \
-  html_aft_type(monospacestring) \
-  html_aft_type(filenametext) \
-  html_aft_type(url) \
-  html_aft_type(raw)
-
-enum html_argument_formatting_type {
-   #define html_aft_type(name) AFT_type_##name,
-    HTML_ARGUMENTS_FORMATTED_FORMAT_TYPE
-   #undef html_aft_type
-};
-
 extern const char *html_argument_formatting_type_names[];
 
-typedef struct HTML_ARG_FORMATTED {
-    ELEMENT *tree;
-    char *formatted[AFT_type_raw+1];
-} HTML_ARG_FORMATTED;
+typedef struct ELEMENT_STACK {
+    const ELEMENT **stack;
+    size_t top;
+    size_t space;
+} ELEMENT_STACK;
 
-typedef struct HTML_ARGS_FORMATTED {
-    size_t number;
-    HTML_ARG_FORMATTED *args;
-} HTML_ARGS_FORMATTED;
+typedef struct ACCENTS_STACK {
+    ELEMENT_STACK stack;
+    ELEMENT *argument;
+} ACCENTS_STACK;
 
 
 int xasprintf (char **ptr, const char *template, ...);
@@ -240,13 +197,13 @@ int width_multibyte (const char *text);
 void delete_global_info (GLOBAL_INFO *global_info_ref);
 void delete_global_commands (GLOBAL_COMMANDS *global_commands_ref);
 
-char *normalize_encoding_name (char *text, int *possible_encoding);
+char *normalize_encoding_name (const char *text, int *possible_encoding);
 ELEMENT *item_line_parent (ELEMENT *current);
-ELEMENT *get_label_element (ELEMENT *e);
+ELEMENT *get_label_element (const ELEMENT *e);
 INDEX *indices_info_index_by_name (INDEX **indices_information, char *name);
 INDEX *ultimate_index (INDEX *index);
 char *read_flag_name (char **ptr);
-int section_level (ELEMENT *section);
+int section_level (const ELEMENT *section);
 char *collapse_spaces (char *text);
 char *parse_line_directive (char *line, int *retval, int *out_line_no);
 int is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries);
@@ -257,6 +214,10 @@ void destroy_strings_list (STRING_LIST *strings);
 void add_string (const char *string, STRING_LIST *strings_list);
 void merge_strings (STRING_LIST *strings_list, STRING_LIST *merged_strings);
 size_t find_string (STRING_LIST *strings_list, const char *string);
+
+void push_stack_element (ELEMENT_STACK *stack, const ELEMENT *e);
+const ELEMENT *pop_stack_element (ELEMENT_STACK *stack);
+void destroy_accent_stack (ACCENTS_STACK *accent_stack);
 
 void wipe_index (INDEX *idx);
 void wipe_index_names (INDEX **index_names);
@@ -271,30 +232,28 @@ char *locate_include_file (char *filename, STRING_LIST *include_dirs_list);
 
 ENCODING_CONVERSION *get_encoding_conversion (char *encoding,
                                     ENCODING_CONVERSION_LIST *encodings_list);
-char *encode_with_iconv (iconv_t our_iconv,  char *s, SOURCE_INFO *source_info);
+char *encode_with_iconv (iconv_t our_iconv,  char *s,
+                         const SOURCE_INFO *source_info);
 void reset_encoding_list (ENCODING_CONVERSION_LIST *encodings_list);
 char *decode_string (char *input_string, char *encoding, int *status,
-                     SOURCE_INFO *source_info);
+                     const SOURCE_INFO *source_info);
 char *encode_string (char *input_string, char *encoding, int *status,
-                     SOURCE_INFO *source_info);
+                     const SOURCE_INFO *source_info);
 
-EXPANDED_FORMAT *new_expanded_formats (char *format);
+EXPANDED_FORMAT *new_expanded_formats (void);
 void clear_expanded_formats (EXPANDED_FORMAT *formats);
 void add_expanded_format (EXPANDED_FORMAT *formats, char *format);
 int format_expanded_p (EXPANDED_FORMAT *formats, char *format);
 
-ELEMENT *trim_spaces_comment_from_content (ELEMENT *element);
-
 char *enumerate_item_representation (char *specification, int number);
-
-CONVERTER *new_converter (void);
 
 ELEMENT *get_global_document_command (GLOBAL_COMMANDS *global_commands,
                                       enum command_id cmd,
                                       enum command_location command_location);
 char *informative_command_value (ELEMENT *element);
-ELEMENT *set_global_document_command (CONVERTER *self, enum command_id cmd,
-                                      enum command_location command_location);
-ELEMENT *get_cmd_global_command (GLOBAL_COMMANDS *global_commands_ref,
-                                 enum command_id cmd);
+ELEMENT *set_global_document_command (GLOBAL_COMMANDS *global_commands,
+                             OPTIONS *options, enum command_id cmd,
+                             enum command_location command_location);
+ELEMENT_LIST *get_cmd_global_multi_command (GLOBAL_COMMANDS *global_commands_ref,
+                                      enum command_id cmd);
 #endif

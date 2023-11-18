@@ -31,8 +31,8 @@
 #include "extra.h"
 #include "errors.h"
 #include "debug.h"
-#include "manipulate_tree.h"
 #include "utils.h"
+#include "manipulate_tree.h"
 #include "translations.h"
 #include "convert_to_texinfo.h"
 #include "convert_utils.h"
@@ -45,31 +45,30 @@ char *convert_utils_month_name[12] = {
 
 /* in Texinfo::Common */
 char *
-element_associated_processing_encoding (ELEMENT *element)
+element_associated_processing_encoding (const ELEMENT *element)
 {
   char *input_encoding = lookup_extra_string (element, "input_encoding_name");
   return input_encoding;
 }
 
 ACCENTS_STACK *
-find_innermost_accent_contents (ELEMENT *element)
+find_innermost_accent_contents (const ELEMENT *element)
 {
-  ELEMENT *current = element;
+  const ELEMENT *current = element;
   ELEMENT *argument = 0;
-  ACCENTS_STACK *accent_stack = malloc (sizeof (ACCENTS_STACK));
-
-  accent_stack->stack = new_element (ET_NONE);
-  accent_stack->argument = 0;
+  ACCENTS_STACK *accent_stack = (ACCENTS_STACK *)
+         malloc (sizeof (ACCENTS_STACK));
+  memset (accent_stack, 0, sizeof (ACCENTS_STACK));
 
   while (1)
     {
-      ELEMENT *arg;
+      const ELEMENT *arg;
       int i;
 
       /* the following can happen if called with a bad tree */
       if (!current->cmd || !(builtin_command_flags(current) & CF_accent))
         return accent_stack;
-      add_to_contents_as_array (accent_stack->stack, current);
+      push_stack_element (&accent_stack->stack, current);
       /* A bogus accent, that may happen */
       if (current->args.number <= 0)
         return accent_stack;
@@ -109,15 +108,6 @@ find_innermost_accent_contents (ELEMENT *element)
   return accent_stack;
 }
 
-void
-destroy_accent_stack (ACCENTS_STACK *accent_stack)
-{
-  destroy_element (accent_stack->stack);
-  if (accent_stack->argument)
-    destroy_element (accent_stack->argument);
-  free (accent_stack);
-}
-
 /*
  TEXT can be indented, however this can only happen for
  *heading headings, which are not numbered.  If it was not the case,
@@ -125,7 +115,7 @@ destroy_accent_stack (ACCENTS_STACK *accent_stack)
 */
 /* caller should free return */
 char *
-add_heading_number (OPTIONS *options, ELEMENT *current, char *text,
+add_heading_number (OPTIONS *options, const ELEMENT *current, char *text,
                     int numbered)
 {
   TEXT result;
@@ -173,8 +163,8 @@ add_heading_number (OPTIONS *options, ELEMENT *current, char *text,
 }
 
 static char *
-convert_to_utf8 (char *s, ENCODING_CONVERSION *conversion,
-                 SOURCE_INFO *source_info)
+convert_to_utf8_verbatiminclude (char *s, ENCODING_CONVERSION *conversion,
+                                 const SOURCE_INFO *source_info)
 {
   char *result;
   if (!conversion)
@@ -192,7 +182,8 @@ char *
 encoded_input_file_name (OPTIONS *options,
                          GLOBAL_INFO *global_information,
                          char *file_name, char *input_file_encoding,
-                         char **file_name_encoding, SOURCE_INFO *source_info)
+                         char **file_name_encoding,
+                         const SOURCE_INFO *source_info)
 {
   char *result;
   char *encoding = 0;
@@ -214,7 +205,7 @@ encoded_input_file_name (OPTIONS *options,
   result = encode_string (file_name, encoding, &status, source_info);
 
   if (status)
-    *file_name_encoding = strdup(encoding);
+    *file_name_encoding = strdup (encoding);
    else
     *file_name_encoding = 0;
   return result;
@@ -243,7 +234,7 @@ encoded_output_file_name (OPTIONS *options, GLOBAL_INFO *global_information,
   result = encode_string (file_name, encoding, &status, source_info);
 
   if (status)
-    *file_name_encoding = strdup(encoding);
+    *file_name_encoding = strdup (encoding);
    else
     *file_name_encoding = 0;
   return result;
@@ -252,7 +243,7 @@ encoded_output_file_name (OPTIONS *options, GLOBAL_INFO *global_information,
 ELEMENT *
 expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
                         OPTIONS *options, GLOBAL_INFO *global_information,
-                        ELEMENT *current)
+                        const ELEMENT *current)
 {
   ELEMENT *verbatiminclude = 0;
   char *file_name_encoding;
@@ -320,7 +311,8 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
                   break;
                 }
 
-              text = convert_to_utf8 (line, conversion, &current->source_info);
+              text = convert_to_utf8_verbatiminclude
+                       (line, conversion, &current->source_info);
               free (line);
               raw = new_element (ET_raw);
               text_append (&raw->text, text);
@@ -362,14 +354,14 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
 }
 
 PARSED_DEF *
-definition_arguments_content (ELEMENT *element)
+definition_arguments_content (const ELEMENT *element)
 {
   PARSED_DEF *result = malloc (sizeof (PARSED_DEF));
   memset (result, 0, sizeof (PARSED_DEF));
   if (element->args.number >= 0)
     {
       int i;
-      ELEMENT *def_line = element->args.list[0];
+      const ELEMENT *def_line = element->args.list[0];
       if (def_line->contents.number > 0)
         {
           for (i = 0; i < def_line->contents.number; i++)
@@ -414,7 +406,7 @@ destroy_parsed_def (PARSED_DEF *parsed_def)
 }
 
 ELEMENT *
-definition_category_tree (OPTIONS * options, ELEMENT *current)
+definition_category_tree (OPTIONS * options, const ELEMENT *current)
 {
   ELEMENT *result = 0;
   ELEMENT *arg_category = 0;
@@ -426,7 +418,7 @@ definition_category_tree (OPTIONS * options, ELEMENT *current)
   if (current->args.number >= 0)
     {
       int i;
-      ELEMENT *def_line = current->args.list[0];
+      const ELEMENT *def_line = current->args.list[0];
       for (i = 0; i < def_line->contents.number; i++)
         {
           ELEMENT *arg = def_line->contents.list[i];
@@ -539,21 +531,33 @@ definition_category_tree (OPTIONS * options, ELEMENT *current)
 ELEMENT *
 translated_command_tree (CONVERTER *self, enum command_id cmd)
 {
-  if (self->translated_commands)
+  size_t i;
+  for (i = 0; self->translated_commands[i].cmd; i++)
     {
-      TRANSLATED_COMMAND **i;
-      TRANSLATED_COMMAND *tc;
-      for (i = self->translated_commands; (tc = *i); i++)
+      TRANSLATED_COMMAND *translated_command
+        = &self->translated_commands[i];
+      if (translated_command->cmd == cmd
+          && translated_command->translation)
         {
-          if (tc->cmd == cmd && tc->translation)
-            {
-              ELEMENT *result = gdt_tree (tc->translation, 0, self->conf,
-                                          0, 0, 0);
-              return result;
-            }
+          ELEMENT *result = gdt_tree (translated_command->translation, 0,
+                                      self->conf, 0, 0, 0);
+          return result;
         }
     }
   return 0;
+}
+
+void
+destroy_translated_commands (TRANSLATED_COMMAND *translated_commands)
+{
+  TRANSLATED_COMMAND *translated_command;
+
+  for (translated_command = translated_commands;
+       translated_command->translation; translated_command++)
+    {
+      free (translated_command->translation);
+    }
+  free (translated_commands);
 }
 
 /*
@@ -616,6 +620,37 @@ register_unclosed_file (OUTPUT_FILES_INFORMATION *self, const char *file_path,
   return;
 }
 
+static void
+free_unclosed_files (FILE_STREAM_LIST *unclosed_files)
+{
+  if (unclosed_files->number)
+    {
+      size_t i;
+      for (i = 0; i < unclosed_files->number; i++)
+        {
+          free (unclosed_files->list[i].file_path);
+        }
+    }
+}
+
+/* not zeroed, left to the caller, if needed */
+void
+free_output_files_information (OUTPUT_FILES_INFORMATION *self)
+{
+  free_unclosed_files (&self->unclosed_files);
+  free (self->unclosed_files.list);
+
+  free_strings_list (&self->opened_files);
+}
+
+void
+clear_output_files_information (OUTPUT_FILES_INFORMATION *self)
+{
+  free_unclosed_files (&self->unclosed_files);
+  self->unclosed_files.number = 0;
+
+  clear_strings_list (&self->opened_files);
+}
 
 /*
  FILE_PATH is the file path, it should be a binary string.

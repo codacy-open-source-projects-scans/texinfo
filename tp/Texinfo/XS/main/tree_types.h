@@ -176,7 +176,7 @@ typedef struct OUTPUT_UNIT {
        but lets keep it an option */
     char *special_unit_variety;
     /* for special units associated to a document output unit */
-    struct OUTPUT_UNIT *associated_document_unit;
+    const struct OUTPUT_UNIT *associated_document_unit;
 } OUTPUT_UNIT;
 
 /* Could be elsewhere, but it is practical to have it here as it is used
@@ -230,8 +230,8 @@ typedef struct INDEX {
     struct INDEX *merged_in; /* Index this index is merged into, if any. */
 
     INDEX_ENTRY *index_entries;
-    size_t index_number;
-    size_t index_space;
+    size_t entries_number;
+    size_t entries_space;
 } INDEX;
 
 /* not used in parser */
@@ -266,13 +266,24 @@ typedef struct {
 
 typedef struct {
     char *type;
+    ELEMENT_LIST float_list;
+} LISTOFFLOATS_TYPE;
+
+typedef struct {
+    size_t number;
+    size_t space;
+    LISTOFFLOATS_TYPE *float_types;
+} LISTOFFLOATS_TYPE_LIST;
+
+typedef struct {
+    char *type;
     ELEMENT *element;
 } FLOAT_RECORD;
 
 typedef struct {
     size_t number;
     size_t space;
-    FLOAT_RECORD *float_types;
+    FLOAT_RECORD *list;
 } FLOAT_RECORD_LIST;
 
 typedef struct STRING_LIST {

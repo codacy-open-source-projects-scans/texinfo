@@ -35,14 +35,14 @@
 #include "convert_to_texinfo.h"
 
 
-static void expand_cmd_args_to_texi (ELEMENT *e, TEXT *result);
-static void convert_to_texinfo_internal (ELEMENT *e, TEXT *result);
+static void expand_cmd_args_to_texi (const ELEMENT *e, TEXT *result);
+static void convert_to_texinfo_internal (const ELEMENT *e, TEXT *result);
 
 
 #define ADD(x) text_append (result, x)
 
 static void
-expand_cmd_args_to_texi (ELEMENT *e, TEXT *result)
+expand_cmd_args_to_texi (const ELEMENT *e, TEXT *result)
 {
   enum command_id cmd = element_builtin_cmd (e);
   KEY_PAIR *arg_line;
@@ -135,7 +135,7 @@ expand_cmd_args_to_texi (ELEMENT *e, TEXT *result)
 }
 
 static void
-convert_to_texinfo_internal (ELEMENT *e, TEXT *result)
+convert_to_texinfo_internal (const ELEMENT *e, TEXT *result)
 {
   ELEMENT *elt;
 
@@ -190,7 +190,7 @@ convert_to_texinfo_internal (ELEMENT *e, TEXT *result)
 
 /* Return value to be freed by caller. */
 char *
-convert_to_texinfo (ELEMENT *e)
+convert_to_texinfo (const ELEMENT *e)
 {
   TEXT result;
 
@@ -205,7 +205,7 @@ convert_to_texinfo (ELEMENT *e)
 }
 
 char *
-convert_contents_to_texinfo (ELEMENT *e)
+convert_contents_to_texinfo (const ELEMENT *e)
 {
   ELEMENT *tmp = new_element (ET_NONE);
   char *result;
@@ -220,7 +220,7 @@ convert_contents_to_texinfo (ELEMENT *e)
 
 /* Return value to be freed by caller. */
 char *
-link_element_to_texi (ELEMENT *element)
+link_element_to_texi (const ELEMENT *element)
 {
   TEXT result;
   ELEMENT *element_link;
@@ -250,24 +250,26 @@ link_element_to_texi (ELEMENT *element)
 
 /* Return value to be freed by caller. */
 char *
-target_element_to_texi_label (ELEMENT *element)
+target_element_to_texi_label (const ELEMENT *element)
 {
-  ELEMENT *label_element = get_label_element (element);
+  const ELEMENT *label_element = get_label_element (element);
   return convert_contents_to_texinfo (label_element);
 }
 
 int
-check_node_same_texinfo_code (ELEMENT *reference_node, ELEMENT *node_content)
+check_node_same_texinfo_code (const ELEMENT *reference_node,
+                              const ELEMENT *node_content)
 {
   char *reference_node_texi;
   char *node_texi;
   int equal_texi;
-  KEY_PAIR *k_normalized = lookup_extra (reference_node, "normalized");
+  const KEY_PAIR *k_normalized
+    = lookup_extra (reference_node, "normalized");
 
   if (k_normalized && k_normalized->value)
     {
       char *tmp_texi;
-      ELEMENT *label_element = get_label_element (reference_node);
+      const ELEMENT *label_element = get_label_element (reference_node);
 
       tmp_texi = convert_contents_to_texinfo (label_element);
       reference_node_texi = collapse_spaces (tmp_texi);
@@ -280,7 +282,7 @@ check_node_same_texinfo_code (ELEMENT *reference_node, ELEMENT *node_content)
     {
       char *tmp_texi;
 
-      ELEMENT *last_content = last_contents_child (node_content);
+      const ELEMENT *last_content = last_contents_child (node_content);
       if (last_content && last_content->type == ET_space_at_end_menu_node)
         {
           ELEMENT *tmp_elt = new_element (ET_NONE);
@@ -309,9 +311,9 @@ check_node_same_texinfo_code (ELEMENT *reference_node, ELEMENT *node_content)
 /* for debugging */
 /* Return value to be freed by caller. */
 char *
-root_heading_command_to_texinfo (ELEMENT *element)
+root_heading_command_to_texinfo (const ELEMENT *element)
 {
-  ELEMENT *tree = 0;
+  const ELEMENT *tree = 0;
   TEXT text;
 
   if (element->cmd)

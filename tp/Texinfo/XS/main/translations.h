@@ -6,7 +6,7 @@
 
 #include "options_types.h"
 #include "tree_types.h"
-#include "converter_types.h"
+#include "document_types.h"
 
 /* element or string may not always be present */
 typedef struct NAMED_STRING_ELEMENT {
@@ -20,6 +20,8 @@ typedef struct NAMED_STRING_ELEMENT_LIST {
     size_t space;
     NAMED_STRING_ELEMENT *list;
 } NAMED_STRING_ELEMENT_LIST;
+
+void translations_configure (char *localesdir, char *strings_textdomain_in);
 
 char *translate_string (OPTIONS *options, const char * string,
                   const char *translation_context, const char *in_lang);
@@ -53,7 +55,5 @@ void add_string_to_named_string_element_list (NAMED_STRING_ELEMENT_LIST *nsel,
 void add_element_to_named_string_element_list (NAMED_STRING_ELEMENT_LIST *nsel,
                                                char *name, ELEMENT *element);
 void destroy_named_string_element_list (NAMED_STRING_ELEMENT_LIST *nsel);
-
-void configure (char *localesdir, char *strings_textdomain_in);
 
 #endif

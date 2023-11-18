@@ -102,8 +102,8 @@ register_formatting_reference_with_default (char *type_string,
         formatting_reference->status = FRS_status_ignored;
     }
    /*
-  fprintf (stderr, "register: %s %d '%s'\n", type_string,
-           formatting_reference->status, ref_name);
+  fprintf (stderr, "register: %s %d '%s' %p\n", type_string,
+           formatting_reference->status, ref_name, formatting_reference);
     */
 }
 
@@ -149,6 +149,7 @@ html_converter_initialize_sv (SV *converter_sv,
   SV **commands_conversion_sv;
   SV **output_units_conversion_sv;
   SV **code_types_sv;
+  SV **upper_case_commands_sv;
   SV **pre_class_types_sv;
   HV *formatting_function_hv;
   HV *commands_open_hv;
@@ -157,11 +158,15 @@ html_converter_initialize_sv (SV *converter_sv,
   HV *types_conversion_hv;
   HV *output_units_conversion_hv;
   int converter_descriptor = 0;
+  CONVERTER initial_converter;
   CONVERTER *converter;
 
   dTHX;
 
-  converter = converter_initialize (converter_sv);
+  converter = &initial_converter;
+  memset (converter, 0, sizeof (CONVERTER));
+
+  converter_initialize (converter_sv, converter);
 
   converter_hv = (HV *)SvRV (converter_sv);
 
@@ -294,7 +299,7 @@ html_converter_initialize_sv (SV *converter_sv,
   types_conversion_hv = (HV *)SvRV (*types_conversion_sv);
   default_types_conversion_hv = (HV *)SvRV (default_types_conversion);
 
-  for (i = 0; i < ET_special_unit_element+1; i++)
+  for (i = 0; i < TXI_TREE_TYPES_NUMBER; i++)
     {
       char *ref_name;
       if (i == 0)
@@ -321,8 +326,8 @@ html_converter_initialize_sv (SV *converter_sv,
      specific references */
   memcpy (&converter->css_string_types_conversion,
           &converter->types_conversion,
-      (ET_special_unit_element+1) * sizeof (FORMATTING_REFERENCE));
-  for (i = 0; i < ET_special_unit_element+1; i++)
+      (TXI_TREE_TYPES_NUMBER) * sizeof (FORMATTING_REFERENCE));
+  for (i = 0; i < TXI_TREE_TYPES_NUMBER; i++)
     {
       char *ref_name;
       if (i == 0)
@@ -447,7 +452,7 @@ html_converter_initialize_sv (SV *converter_sv,
              in the default case.  If this is needed more, a qsort/bfind
              could be used, but the overhead could probably only be
              justified if finding the type index happens more often */
-              for (j = 1; j < ET_special_unit_element+1; j++)
+              for (j = 1; j < TXI_TREE_TYPES_NUMBER; j++)
                 {
                   if (!strcmp (element_type_names[j], type_name))
                     {
@@ -479,27 +484,15 @@ html_converter_initialize_sv (SV *converter_sv,
 
       for (i = 0; i < hv_number; i++)
         {
-          int j;
           I32 retlen;
           char *type_name;
           SV *pre_class_sv = hv_iternextsv (pre_class_types_hv,
                                             &type_name, &retlen);
           if (SvOK (pre_class_sv))
             {
-              enum element_type type = ET_NONE;
               char *pre_class = SvPV_nolen (pre_class_sv);
-          /* this is not very efficient, but should be done only once
-             in the default case.  If this is needed more, a qsort/bfind
-             could be used, but the overhead could probably only be
-             justified if finding the type index happens more often */
-              for (j = 1; j < ET_special_unit_element+1; j++)
-                {
-                  if (!strcmp (element_type_names[j], type_name))
-                    {
-                      type = j;
-                      break;
-                    }
-                }
+              enum element_type type = find_element_type (type_name);
+
               if (type == ET_NONE)
                 {
                   fprintf (stderr, "ERROR: %s: pre class type not found\n",
@@ -511,6 +504,34 @@ html_converter_initialize_sv (SV *converter_sv,
         }
     }
 
+  FETCH(upper_case_commands)
+
+  if (upper_case_commands_sv)
+    {
+      I32 hv_number;
+      I32 i;
+
+      HV *upper_case_commands_hv = (HV *)SvRV (*upper_case_commands_sv);
+
+      hv_number = hv_iterinit (upper_case_commands_hv);
+
+      for (i = 0; i < hv_number; i++)
+        {
+          I32 retlen;
+          char *cmdname;
+          SV *upper_case_sv = hv_iternextsv (upper_case_commands_hv,
+                                             &cmdname, &retlen);
+          if (SvOK (upper_case_sv))
+            {
+              int upper_case_value = SvIV (upper_case_sv);
+              enum command_id cmd = lookup_builtin_command (cmdname);
+              if (!cmd)
+                fprintf (stderr, "ERROR: %s: no upper-case command\n", cmdname);
+              else
+                converter->upper_case[cmd] = upper_case_value;
+           }
+       }
+   }
 
   FETCH(no_arg_commands_formatting)
 
@@ -548,11 +569,6 @@ html_converter_initialize_sv (SV *converter_sv,
                 {
                   I32 context_nr;
                   I32 j;
-                  converter->html_command_conversion[cmd] =
-                   (HTML_COMMAND_CONVERSION **) malloc ((max_context +1) *
-                     sizeof (HTML_COMMAND_CONVERSION *));
-                  memset (converter->html_command_conversion[cmd], 0,
-                     (max_context +1) * sizeof (HTML_COMMAND_CONVERSION *));
 
                   context_nr = hv_iterinit (context_hv);
                   for (j = 0; j < context_nr; j++)
@@ -587,14 +603,9 @@ html_converter_initialize_sv (SV *converter_sv,
 
                           HV *format_spec_hv = (HV *)SvRV (format_spec_sv);
 
-                          converter->html_command_conversion[cmd][context_idx]
-                           = (HTML_COMMAND_CONVERSION *)
-                               malloc (sizeof (HTML_COMMAND_CONVERSION));
                           format_spec
-                            = converter
+                            = &converter
                                ->html_command_conversion[cmd][context_idx];
-                          memset (format_spec, 0,
-                                  sizeof (HTML_COMMAND_CONVERSION));
 
                           spec_number = hv_iterinit (format_spec_hv);
                           for (s = 0; s < spec_number; s++)
@@ -669,11 +680,6 @@ html_converter_initialize_sv (SV *converter_sv,
                 {
                   I32 context_nr;
                   I32 j;
-                  converter->html_command_conversion[cmd] =
-                   (HTML_COMMAND_CONVERSION **) malloc ((max_context +1) *
-                     sizeof (HTML_COMMAND_CONVERSION *));
-                  memset (converter->html_command_conversion[cmd], 0,
-                     (max_context +1) * sizeof (HTML_COMMAND_CONVERSION *));
 
                   context_nr = hv_iterinit (context_hv);
                   for (j = 0; j < context_nr; j++)
@@ -708,14 +714,9 @@ html_converter_initialize_sv (SV *converter_sv,
 
                           HV *format_spec_hv = (HV *)SvRV (format_spec_sv);
 
-                          converter->html_command_conversion[cmd][context_idx]
-                           = (HTML_COMMAND_CONVERSION *)
-                               malloc (sizeof (HTML_COMMAND_CONVERSION));
                           format_spec
-                            = converter
+                            = &converter
                                ->html_command_conversion[cmd][context_idx];
-                          memset (format_spec, 0,
-                                  sizeof (HTML_COMMAND_CONVERSION));
 
                           spec_number = hv_iterinit (format_spec_hv);
                           for (s = 0; s < spec_number; s++)
@@ -726,9 +727,11 @@ html_converter_initialize_sv (SV *converter_sv,
                                                            &key, &retlen);
                               if (!strcmp (key, "element"))
                                 {
+                                   /* TODO add when it is used, and free
                                   char *tmp_spec
                                     = (char *) SvPVutf8_nolen (spec_sv);
                                   format_spec->element = strdup (tmp_spec);
+                                    */
                                 }
                               else if (!strcmp (key, "quote"))
                                 format_spec->quote = SvIV (spec_sv);

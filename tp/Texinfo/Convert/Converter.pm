@@ -83,6 +83,9 @@ sub import {
       Texinfo::XSLoader::override(
        "Texinfo::Convert::Converter::_XS_get_unclosed_stream",
        "Texinfo::Convert::ConvertXS::get_unclosed_stream");
+      Texinfo::XSLoader::override(
+       "Texinfo::Convert::Converter::destroy",
+       "Texinfo::Convert::ConvertXS::destroy");
     }
 
     $module_loaded = 1;
@@ -456,6 +459,11 @@ sub output($$)
     }
   }
   return undef;
+}
+
+# Nothing to do in perl.  XS function frees memory
+sub destroy($)
+{
 }
 
 ###############################################################
@@ -866,8 +874,9 @@ sub set_file_path($$$;$)
       $filepath = $filename;
     }
   }
-  # should not happen, the file path should be set only once
-  # per file name.
+  # the file path should be set only once per file name.  With
+  # CASE_INSENSITIVE_FILENAMES the same file path can appear more
+  # than once when files differ in case.
   if (defined($self->{'out_filepaths'}->{$filename})) {
     if ($self->{'out_filepaths'}->{$filename} eq $filepath) {
       print STDERR "set_file_path: filepath set: $filepath\n"
@@ -1561,12 +1570,12 @@ sub get_output_files_XS_unclosed_streams($)
 # XML related methods and variables that may be used in different
 # XML Converters.
 
-my $xml_numeric_entity_mdash = '&#'.hex('2014').';';
-my $xml_numeric_entity_ndash = '&#'.hex('2013').';';
-my $xml_numeric_entity_ldquo = '&#'.hex('201C').';';
-my $xml_numeric_entity_rdquo = '&#'.hex('201D').';';
-my $xml_numeric_entity_lsquo = '&#'.hex('2018').';';
-my $xml_numeric_entity_rsquo = '&#'.hex('2019').';';
+my $xml_numeric_entity_mdash = '&#'.hex('2014').';'; #8212
+my $xml_numeric_entity_ndash = '&#'.hex('2013').';'; #8211
+my $xml_numeric_entity_ldquo = '&#'.hex('201C').';'; #8220
+my $xml_numeric_entity_rdquo = '&#'.hex('201D').';'; #8221
+my $xml_numeric_entity_lsquo = '&#'.hex('2018').';'; #8216
+my $xml_numeric_entity_rsquo = '&#'.hex('2019').';'; #8217
 
 sub xml_format_text_with_numeric_entities($$)
 {

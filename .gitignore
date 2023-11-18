@@ -89,6 +89,7 @@ tp/Texinfo/XS/gnulib/lib/stdckdint.h
 tp/Texinfo/XS/gnulib/lib/uchar.h
 tp/Texinfo/XS/gnulib/lib/uniconv.h
 tp/Texinfo/XS/gnulib/lib/unistr.h
+tp/Texinfo/XS/gnulib/lib/wctype.h
 
 
 gnulib/lib/**/.dirstamp
@@ -309,7 +310,6 @@ tp/Texinfo/XS/gnulib/lib/uninorm.h
 tp/Texinfo/XS/gnulib/lib/unitypes.h
 tp/Texinfo/XS/gnulib/lib/uniwidth.h
 tp/Texinfo/XS/gnulib/lib/wchar.h
-tp/Texinfo/XS/gnulib/lib/wctype.h
 tp/Texinfo/XS/gnulib/lib/sys/types.h
 
 tp/Texinfo/XS/gnulib/m4/libtool.m4
@@ -318,6 +318,7 @@ tp/Texinfo/XS/gnulib/m4/ltsugar.m4
 tp/Texinfo/XS/gnulib/m4/ltversion.m4
 tp/Texinfo/XS/gnulib/m4/lt~obsolete.m4
 
+tp/Texinfo/XS/main/DocumentXS.c
 tp/Texinfo/XS/main/TranslationsXS.c
 tp/Texinfo/XS/main/accent_tables_8bit_codepoints.c
 tp/Texinfo/XS/main/command_data.c

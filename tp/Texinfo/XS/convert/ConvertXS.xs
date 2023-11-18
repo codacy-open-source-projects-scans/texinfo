@@ -51,7 +51,20 @@ MODULE = Texinfo::Convert::ConvertXS	PACKAGE = Texinfo::Convert::ConvertXS
 # they are enabled, and they can/may need to be overriden in a declaration
 PROTOTYPES: ENABLE
 
-void set_conf(SV *converter_in, conf, SV *value)
+# Called from Texinfo::XSLoader.pm.  The arguments are not actually used.
+# file path, can be in any encoding
+#        int texinfo_uninstalled
+#        char *builddir = (char *)SvPVbyte_nolen($arg);
+int
+init (...)
+      CODE:
+        set_element_type_name_info ();
+        RETVAL = 1;
+    OUTPUT:
+        RETVAL
+
+void
+set_conf(SV *converter_in, conf, SV *value)
          char *conf = (char *)SvPVbyte_nolen($arg);
       PREINIT:
          CONVERTER *self;
@@ -65,7 +78,7 @@ void
 get_index_entries_sorted_by_letter (SV *converter_in, SV *index_entries_sorted_by_letter)
       PREINIT:
          CONVERTER *self;
-         INDEX_SORTED_BY_LETTER **index_entries_by_letter;
+         INDEX_SORTED_BY_LETTER *index_entries_by_letter;
       CODE:
          self = get_sv_converter (converter_in,
                                   "get_index_entries_sorted_by_letter");
@@ -108,6 +121,27 @@ get_unclosed_stream (SV *converter_in, file_path)
     OUTPUT:
          RETVAL
 
+void
+destroy (SV *converter_in)
+      PREINIT:
+         CONVERTER *self;
+         HV *stash;
+         char *name;
+      CODE:
+         stash = SvSTASH (SvRV (converter_in));
+         name = HvNAME (stash);
+         if (!strcmp (name, "Texinfo::Convert::HTML"))
+           {
+             self = get_sv_converter (converter_in, "destroy html");
+             html_destroy (self);
+           }
+          /*
+         else if (!strcmp (name, "Texinfo::Convert::Text"))
+           {
+             self = get_sv_converter (converter_in, "destroy text");
+             text_destroy (self);
+           }
+           */
 
 SV *
 plain_texinfo_convert_tree (SV *tree_in)
@@ -154,6 +188,9 @@ text_convert_tree (SV *text_options_in, SV *tree_in, unused=0)
 
 # HTML
 
+void
+html_format_init ()
+
 int
 html_converter_initialize_sv (SV *converter_in, SV *default_formatting_references, SV *default_css_string_formatting_references, SV *default_commands_open, SV *default_commands_conversion, SV *default_css_string_commands_conversion, SV *default_types_open, SV *default_types_conversion, SV *default_css_string_types_conversion, SV *default_output_units_conversion)
 
@@ -181,6 +218,7 @@ html_finalize_output_state (SV *converter_in)
                  build_html_formatting_state (self, self->modified_state);
                  self->modified_state = 0;
                }
+             html_check_transfer_state_finalization (self);
            }
 
 void
@@ -220,6 +258,7 @@ html_new_document_context (SV *converter_in, char *context_name, ...)
              /* reset to ignore the HMSF_formatting_context flag just set */
              self->modified_state = 0;
              document_context = html_top_document_context (self);
+
              document_context_hv = build_html_document_context
                                                       (document_context);
              av_push (document_context_av,
@@ -251,6 +290,7 @@ html_pop_document_context (SV *converter_in)
                }
               */
              html_pop_document_context (self);
+
              av_pop (document_context_av);
              hv_store (converter_hv, "document_global_context",
                        strlen ("document_global_context"),
@@ -260,6 +300,16 @@ html_pop_document_context (SV *converter_in)
              self->document_context_change++;
            }
 
+
+void
+html_merge_index_entries (SV *converter_in)
+      PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_merge_index_entries");
+         if (self)
+           html_merge_index_entries (self);
 
 #  my ($output_units, $special_units, $associated_special_units)
 #    = $self->_prepare_conversion_units($root, $document_name);
@@ -283,6 +333,13 @@ html_prepare_conversion_units (SV *converter_in, ...)
 
          self = set_output_converter_sv (converter_in,
                                          "html_prepare_conversion_units");
+
+         if (self->conf->OUTPUT_CHARACTERS > 0
+             && self->conf->OUTPUT_ENCODING_NAME
+             /* not sure if strcasecmp is needed or not */
+             && !strcasecmp (self->conf->OUTPUT_ENCODING_NAME, "utf-8"))
+           self->use_unicode_text = 1;
+
          html_prepare_conversion_units (self,
               &output_units_descriptor, &special_units_descriptor,
               &associated_special_units_descriptor);
@@ -307,7 +364,7 @@ html_prepare_conversion_units (SV *converter_in, ...)
          pass_html_special_targets (converter_in, self->html_special_targets);
          pass_html_seen_ids (converter_in, &self->seen_ids);
 
-         pass_converter_errors (self->error_messages, self->hv);
+         pass_converter_errors (&self->error_messages, self->hv);
 
          EXTEND(SP, 3);
          PUSHs(sv_2mortal(output_units_sv));
@@ -363,6 +420,11 @@ html_prepare_units_directions_files (SV *converter_in, SV *output_units_in, SV *
 
          /* file names API */
          pass_output_unit_files (converter_in, &self->output_unit_files);
+
+         if (files_source_info)
+           {
+             html_destroy_files_source_info (files_source_info);
+           }
 
          RETVAL = files_source_info_sv;
     OUTPUT:
@@ -578,7 +640,8 @@ html_convert_output (SV *converter_in, SV *tree_in, SV *output_units_in, SV *spe
                  free (result);
                }
 
-             build_output_files_information (self);
+             build_output_files_information (converter_in,
+                                             &self->output_files_information);
            }
 
          if (result_sv)

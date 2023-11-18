@@ -49,7 +49,7 @@ int ref_5_args_order[] = {0, 1, 2, 4, 3, -1};
 
 #define ADD(x) text_append (result, x)
 void
-convert_to_normalized_internal (ELEMENT *e, TEXT *result)
+convert_to_normalized_internal (const ELEMENT *e, TEXT *result)
 {
   if ((e->type == ET_ignorable_spaces_after_command
        || e->type == ET_postamble_after_end
@@ -170,7 +170,7 @@ convert_to_normalized_internal (ELEMENT *e, TEXT *result)
 
 /* Return value to be freed by caller. */
 char *
-convert_to_normalized (ELEMENT *e)
+convert_to_normalized (const ELEMENT *e)
 {
   TEXT result;
 
@@ -184,7 +184,7 @@ convert_to_normalized (ELEMENT *e)
 }
 
 void
-protect_unicode_char (char *text, TEXT *result)
+protect_unicode_char (const char *text, TEXT *result)
 {
   uint8_t *encoded_u8;
   const uint8_t *next;
@@ -213,10 +213,11 @@ protect_unicode_char (char *text, TEXT *result)
   free (str);
 }
 
-char *unicode_to_protected (char *text)
+/* to be freed by caller */
+char *unicode_to_protected (const char *text)
 {
   TEXT result;
-  char *p = text;
+  const char *p = text;
 
   text_init (&result);
   text_append (&result, "");
@@ -256,45 +257,53 @@ char *unicode_to_protected (char *text)
   return (result.text);
 }
 
-/* frees input if another string is returned */
-char *normalize_top_name (char *text)
+/* to be freed by caller */
+char *normalize_top_name (const char *text)
 {
-  char *result = text;
-  if (strlen(text) == 3)
+  if (strlen (text) == 3)
     {
       char *normalized = strdup (text);
       char *p;
 
       for (p = normalized; *p; p++)
-        if (isascii_alnum(*p))
-          *p = tolower (*p);
+        if (isascii_alnum (*p))
+          {
+            *p = tolower (*p);
+          }
+        else
+          {
+            free (normalized);
+            return strdup (text);
+          }
 
       if (!strcmp (normalized, "top"))
         {
-          result = strdup ("Top");
-          free (text);
+          free (normalized);
+          return strdup ("Top");
         }
 
       free (normalized);
+      return strdup (text);
     }
-  return result;
+  return strdup (text);
 }
 
 char *
-convert_to_identifier (ELEMENT *root)
+convert_to_identifier (const ELEMENT *root)
 {
   char *converted_name = convert_to_normalized (root);
   char *normalized_name = normalize_NFC (converted_name);
   char *protected = unicode_to_protected (normalized_name);
   char *result = normalize_top_name (protected);
 
+  free (protected);
   free (converted_name);
   free (normalized_name);
   return result;
 }
 
 char *
-convert_contents_to_identifier (ELEMENT *e)
+convert_contents_to_identifier (const ELEMENT *e)
 {
   ELEMENT *tmp = new_element (ET_NONE);
   char *result;
@@ -321,7 +330,7 @@ unicode_to_transliterate (char *text, int external)
 }
 
 char *
-normalize_transliterate_texinfo (ELEMENT *e, int external_translit)
+normalize_transliterate_texinfo (const ELEMENT *e, int external_translit)
 {
   char *converted_name = convert_to_normalized (e);
   char *normalized_name = normalize_NFC (converted_name);
@@ -336,7 +345,8 @@ normalize_transliterate_texinfo (ELEMENT *e, int external_translit)
 }
 
 char *
-normalize_transliterate_texinfo_contents (ELEMENT *e, int external_translit)
+normalize_transliterate_texinfo_contents (const ELEMENT *e,
+                                          int external_translit)
 {
   ELEMENT *tmp = new_element (ET_NONE);
   char *result;

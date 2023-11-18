@@ -30,6 +30,9 @@
 #include <ctype.h>
 #endif
 
+#include <unitypes.h>
+#include <uniwidth.h>
+#include <unictype.h>
 #include <unistr.h>
 #include <uchar.h>
 
@@ -330,7 +333,7 @@ xspara_new (HV *conf)
   state.max = 72;
   state.indent_length_next = -1; /* Special value meaning undefined. */
   state.end_sentence = eos_undef;
-  state.last_letter = U'\0';
+  state.last_letter = (char32_t) '\0';
 
   if (conf)
     xspara_init_state (conf);
@@ -448,7 +451,7 @@ xspara__end_line (void)
   state.lines_counter++;
   state.end_line_count++;
   /* could be set to other values, anything that is not upper case. */
-  state.last_letter = U'\n';
+  state.last_letter = (char32_t) '\n';
 }
 
 char *
@@ -563,7 +566,7 @@ xspara_end (void)
     fprintf (stderr, "PARA END\n");
 
   /* probably not really useful, but cleaner */
-  state.last_letter = U'\0';
+  state.last_letter = (char32_t) '\0';
 
   xspara__add_pending_word (&ret, state.add_final_space);
   if (!state.no_final_newline && state.counter != 0)
@@ -598,9 +601,11 @@ xspara_end (void)
 /* Add WORD to paragraph in RESULT, not refilling WORD.  If we go past the end 
    of the line start a new one.  TRANSPARENT means that the letters in WORD
    are ignored for the purpose of deciding whether a full stop ends a sentence
-   or not. */
+   or not.  If COL_COUNT is non-negative, it is the number of screen columns
+   taken up by the word. */
 void
-xspara__add_next (TEXT *result, char *word, int word_len, int transparent)
+xspara__add_next (TEXT *result, char *word, int word_len,
+                  int transparent, int col_count)
 {
   dTHX;
 
@@ -631,7 +636,7 @@ xspara__add_next (TEXT *result, char *word, int word_len, int transparent)
                        after_punctuation_characters, *p))
             {
               char32_t wc;
-              u8_mbtouc (&wc, p, len);
+              u8_mbtouc (&wc, (uint8_t *) p, len);
               state.last_letter = wc;
               break;
             }
@@ -647,45 +652,50 @@ xspara__add_next (TEXT *result, char *word, int word_len, int transparent)
     }
   else
     {
-      /* Calculate length of multibyte string in characters. */
-      int len = 0;
-      int left = word_len;
-      char32_t w;
-      char *p = word;
-
-      while (left > 0)
+     if (col_count >= 0)
+        state.word_counter += col_count;
+      else
         {
-          int columns;
-          int char_len;
+          /* Calculate length of multibyte string in characters. */
+          int len = 0;
+          int left = word_len;
+          char32_t w;
+          char *p = word;
 
-          if (PRINTABLE_ASCII(*p))
+          while (left > 0)
             {
-              len++; p++; left--;
-              continue;
+              int columns;
+              int char_len;
+
+              if (PRINTABLE_ASCII(*p))
+                {
+                  len++; p++; left--;
+                  continue;
+                }
+
+              char_len = u8_mbtouc (&w, (uint8_t *) p, left);
+              if (char_len == (size_t) -2) {
+                /* unfinished multibyte character */
+                char_len = left;
+              } else if (char_len == (size_t) -1) {
+                /* invalid character */
+                char_len = 1;
+              } else if (char_len == 0) {
+                /* not sure what this means but we must avoid an infinite loop.
+                   Possibly only happens with invalid strings */
+                char_len = 1;
+              }
+              left -= char_len;
+
+              columns = uc_width (w, "UTF-8");
+              if (columns > 0)
+                len += columns;
+
+              p += char_len;
             }
+          state.word_counter += len;
+       }
 
-          char_len = u8_mbtouc (&w, p, left);
-          if (char_len == (size_t) -2) {
-            /* unfinished multibyte character */
-            char_len = left;
-          } else if (char_len == (size_t) -1) {
-            /* invalid character */
-            char_len = 1;
-          } else if (char_len == 0) {
-            /* not sure what this means but we must avoid an infinite loop.
-               Possibly only happens with invalid strings */
-            char_len = 1;
-          }
-          left -= char_len;
-
-          columns = c32width (w);
-          if (columns > 0)
-            len += columns;
-
-          p += char_len;
-        }
-
-      state.word_counter += len;
 
       if (state.counter != 0
           && state.counter + state.word_counter + state.space_counter
@@ -712,7 +722,7 @@ xspara_add_next (char *text, int text_len, int transparent)
 
   text_reset (&t);
   state.end_line_count = 0;
-  xspara__add_next (&t, text, text_len, transparent);
+  xspara__add_next (&t, text, text_len, transparent, -1);
 
   return t;
 }
@@ -732,7 +742,7 @@ xspara_add_end_sentence (int value)
 void
 xspara_allow_end_sentence (void)
 {
-  state.last_letter = U'a'; /* A lower-case letter. */
+  state.last_letter = (char32_t) 'a'; /* A lower-case letter. */
 }
 
 /* -1 in a parameter means leave that value as it is. */
@@ -786,11 +796,17 @@ TEXT
 xspara_add_text (char *text, int len)
 {
   char *p = text, *q = 0;
-  char32_t wc, wc_fw;
+  char32_t wc_fw = (char32_t) '0';
   size_t next_len = 0;
   int width;
   static TEXT result;
   enum text_class type = type_NULL, next_type = type_NULL;
+
+  /* Column count of next type_regular block, either for type or
+     next_type.  We do not have two type_regular blocks in a row so there
+     is no chance of this being overwritten before it is used.  It is
+     zeroed when the block is output. */
+  int regular_col_count = 0;
 
   dTHX;
 
@@ -843,7 +859,8 @@ xspara_add_text (char *text, int len)
             }
           else
             {
-              next_len = u8_mbtouc (&wc, q, len);
+              char32_t wc;
+              next_len = u8_mbtouc (&wc, (uint8_t *) q, len);
 
               if ((long) next_len == 0)
                 break; /* Null character. Shouldn't happen. */
@@ -853,12 +870,13 @@ xspara_add_text (char *text, int len)
                   continue;
                 }
 
-             /* Note: width == 0 includes accent characters which should not
-                properly increase the column count.  This is not what the pure
-                Perl code does, though. */
-              width = c32width (wc);
+             /* Note: width == 0 includes accent characters. */
+              width = uc_width (wc, "UTF-8");
               if (width == 1 || width == 0)
-                next_type = type_regular;
+                {
+                  regular_col_count += width;
+                  next_type = type_regular;
+                }
               else if (width == 2)
                 {
                   next_type = type_double_width;
@@ -977,7 +995,7 @@ xspara_add_text (char *text, int len)
               xspara__end_line ();
               text_append (&result, "\n");
             }
-          state.last_letter = U' ';
+          state.last_letter = (char32_t) ' ';
         }
 
       /*************** Double width character. *********************/
@@ -1017,7 +1035,8 @@ xspara_add_text (char *text, int len)
       /*************** Word character ******************************/
       else if (type == type_regular)
         {
-          xspara__add_next (&result, p, q - p, 0);
+          xspara__add_next (&result, p, q - p, 0, regular_col_count);
+          regular_col_count = 0;
 
           /* Now check for an end of sentence.  We can iterate backwards
              by bytes as all the end-sentence characters or punctuation are
@@ -1029,7 +1048,7 @@ xspara_add_text (char *text, int len)
               if (strchr (end_sentence_characters, *q2) && !state.unfilled)
                 {
                   /* Doesn't count if preceded by an upper-case letter. */
-                  if (!c32isupper (state.last_letter))
+                  if (!uc_is_upper (state.last_letter))
                     {
                       if (state.french_spacing)
                         state.end_sentence = eos_present_frenchspacing;

@@ -25,7 +25,7 @@
 # and formatted content, such that users can overrides them independently
 # without risking unwanted results.  Also in formatting functions, the state of
 # the converter should only be accessed through functions, such as in_math,
-# in_preformatted, preformatted_classes_stack and similar functions.
+# in_preformatted_context, preformatted_classes_stack and similar functions.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
 
@@ -39,6 +39,7 @@ use 5.008;
 # the same regardless of whether the string is using a UTF-8 encoding.
 #  For older Perls, you can use utf8::upgrade on the strings, where the
 # difference matters.
+# Also follows unicode rules for uc() and lc ().
 use if $] >= 5.012, feature => 'unicode_strings';
 
 use if $] >= 5.014, re => '/a';  # ASCII-only character classes in regexes
@@ -92,69 +93,71 @@ my $XS_convert = 0;
 $XS_convert = 1 if (defined $ENV{TEXINFO_XS_CONVERT}
                     and $ENV{TEXINFO_XS_CONVERT} eq '1');
 
+my %XS_overrides = (
+  "Texinfo::Convert::HTML::_default_format_protect_text"
+    => "Texinfo::MiscXS::default_format_protect_text",
+  "Texinfo::Convert::HTML::_entity_text"
+    => "Texinfo::MiscXS::entity_text",
+);
+
+my %XS_conversion_overrides = (
+  "Texinfo::Convert::HTML::_XS_format_init"
+   => "Texinfo::Convert::ConvertXS::html_format_init",
+  "Texinfo::Convert::HTML::_XS_converter_initialize"
+   => "Texinfo::Convert::ConvertXS::html_converter_initialize_sv",
+  "Texinfo::Convert::HTML::_XS_initialize_output_state"
+   => "Texinfo::Convert::ConvertXS::html_initialize_output_state",
+  "Texinfo::Convert::HTML::_finalize_output_state"
+   => "Texinfo::Convert::ConvertXS::html_finalize_output_state",
+  "Texinfo::Convert::HTML::_new_document_context"
+   => "Texinfo::Convert::ConvertXS::html_new_document_context",
+  "Texinfo::Convert::HTML::_pop_document_context"
+   => "Texinfo::Convert::ConvertXS::html_pop_document_context",
+  "Texinfo::Convert::HTML::_XS_get_index_entries_sorted_by_letter"
+   => "Texinfo::Convert::ConvertXS::get_index_entries_sorted_by_letter",
+  "Texinfo::Convert::HTML::_XS_html_merge_index_entries"
+   => "Texinfo::Convert::ConvertXS::html_merge_index_entries",
+  "Texinfo::Convert::HTML::_prepare_conversion_units"
+   => "Texinfo::Convert::ConvertXS::html_prepare_conversion_units",
+  "Texinfo::Convert::HTML::_prepare_units_directions_files"
+   => "Texinfo::Convert::ConvertXS::html_prepare_units_directions_files",
+  "Texinfo::Convert::HTML::_prepare_output_units_global_targets"
+   => "Texinfo::Convert::ConvertXS::html_prepare_output_units_global_targets",
+  "Texinfo::Convert::HTML::_translate_names"
+   => "Texinfo::Convert::ConvertXS::html_translate_names",
+  "Texinfo::Convert::HTML::_prepare_title_titlepage"
+   => "Texinfo::Convert::ConvertXS::html_prepare_title_titlepage",
+  "Texinfo::Convert::HTML::_html_convert_convert"
+   => "Texinfo::Convert::ConvertXS::html_convert_convert",
+  "Texinfo::Convert::HTML::_html_convert_output"
+   => "Texinfo::Convert::ConvertXS::html_convert_output",
+  #"Texinfo::Convert::HTML::_XS_html_convert_tree"
+  # => "Texinfo::Convert::ConvertXS::html_convert_tree",
+);
+
+# XS function does initialization independent of customization
+sub _XS_format_init()
+{
+}
+
 our $module_loaded = 0;
 sub import {
   if (!$module_loaded) {
-    Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_default_format_protect_text",
-      "Texinfo::MiscXS::default_format_protect_text");
-    Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_entity_text",
-      "Texinfo::MiscXS::entity_text");
-
-    if ($XS_convert) {
-
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_converter_initialize",
-      "Texinfo::Convert::ConvertXS::html_converter_initialize_sv");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_initialize_output_state",
-      "Texinfo::Convert::ConvertXS::html_initialize_output_state");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_finalize_output_state",
-      "Texinfo::Convert::ConvertXS::html_finalize_output_state");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_new_document_context",
-      "Texinfo::Convert::ConvertXS::html_new_document_context");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_pop_document_context",
-      "Texinfo::Convert::ConvertXS::html_pop_document_context");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_XS_get_index_entries_sorted_by_letter",
-      "Texinfo::Convert::ConvertXS::get_index_entries_sorted_by_letter");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_prepare_conversion_units",
-      "Texinfo::Convert::ConvertXS::html_prepare_conversion_units");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_prepare_units_directions_files",
-      "Texinfo::Convert::ConvertXS::html_prepare_units_directions_files");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_prepare_output_units_global_targets",
-      "Texinfo::Convert::ConvertXS::html_prepare_output_units_global_targets");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_translate_names",
-      "Texinfo::Convert::ConvertXS::html_translate_names");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_prepare_title_titlepage",
-      "Texinfo::Convert::ConvertXS::html_prepare_title_titlepage");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_html_convert_convert",
-      "Texinfo::Convert::ConvertXS::html_convert_convert");
-      Texinfo::XSLoader::override(
-      "Texinfo::Convert::HTML::_html_convert_output",
-      "Texinfo::Convert::ConvertXS::html_convert_output");
-      #Texinfo::XSLoader::override(
-      #"Texinfo::Convert::HTML::_XS_html_convert_tree",
-      #"Texinfo::Convert::ConvertXS::html_convert_tree");
+    foreach my $sub (keys %XS_overrides) {
+      Texinfo::XSLoader::override ($sub, $XS_overrides{$sub});
     }
 
+    if ($XS_convert) {
+      foreach my $sub (keys %XS_conversion_overrides) {
+        Texinfo::XSLoader::override ($sub, $XS_conversion_overrides{$sub});
+      }
+      _XS_format_init();
+    }
     $module_loaded = 1;
   }
   # The usual import method
   goto &Exporter::import;
 }
-
-
 
 my %nobrace_commands = %Texinfo::Commands::nobrace_commands;
 my %line_commands = %Texinfo::Commands::line_commands;
@@ -206,9 +209,6 @@ foreach my $block_command (keys(%block_commands)) {
   $format_raw_commands{$block_command} = 1
     if ($block_commands{$block_command} eq 'format_raw');
 }
-
-# FIXME allow customization? (also in DocBook)
-my %upper_case_commands = ( 'sc' => 1 );
 
 
 # API for html formatting
@@ -543,19 +543,16 @@ sub in_math($)
 }
 
 # set if in menu or preformatted command
-sub in_preformatted($)
+sub in_preformatted_context($)
 {
   my $self = shift;
-  my $context = $self->{'document_context'}->[-1]->{'composition_context'}->[-1];
-  if ($preformatted_commands{$context}
-      or $self->{'pre_class_types'}->{$context}
-      or ($block_commands{$context}
-          and $block_commands{$context} eq 'menu'
-          and $self->_in_preformatted_in_menu())) {
-    return $context;
-  } else {
-    return undef;
-  }
+  return $self->{'document_context'}->[-1]->{'preformatted_context'}->[-1];
+}
+
+sub inside_preformatted($)
+{
+  my $self = shift;
+  return $self->{'document_context'}->[-1]->{'inside_preformatted'};
 }
 
 sub in_upper_case($)
@@ -2804,7 +2801,7 @@ sub _convert_no_arg_command($$$)
   if ($cmdname eq 'click' and $command->{'extra'}
       and exists($command->{'extra'}->{'clickstyle'})) {
     my $click_cmdname = $command->{'extra'}->{'clickstyle'};
-    if (($self->in_preformatted() or $self->in_math()
+    if (($self->in_preformatted_context() or $self->in_math()
          and $self->{'no_arg_commands_formatting'}->{$click_cmdname}
                                                         ->{'preformatted'})
         or ($self->in_string() and
@@ -2820,7 +2817,7 @@ sub _convert_no_arg_command($$$)
 
   my $result;
 
-  if ($self->in_preformatted() or $self->in_math()) {
+  if ($self->in_preformatted_context() or $self->in_math()) {
     $result = $self->_text_element_conversion(
       $self->{'no_arg_commands_formatting'}->{$cmdname}->{'preformatted'},
       $cmdname);
@@ -2887,6 +2884,8 @@ my %quoted_style_commands;
 foreach my $quoted_command ('samp') {
   $quoted_style_commands{$quoted_command} = 1;
 }
+
+my %default_upper_case_commands = ( 'sc' => 1 );
 
 my %style_commands_element = (
       'b'           => 'b',
@@ -3006,7 +3005,7 @@ sub _convert_style_command($$$$)
     my $style_formatting
        = $self->{'style_commands_formatting'}->{$style_cmdname};
     my $formatting_spec;
-    if ($self->in_preformatted()) {
+    if ($self->in_preformatted_context()) {
       $formatting_spec = $style_formatting->{'preformatted'};
     } else {
       $formatting_spec = $style_formatting->{'normal'};
@@ -3290,7 +3289,7 @@ sub _convert_footnote_command($$$$)
                     $self->get_info('current_filename'), $multi_expanded_region);
 
   my $footnote_number_text;
-  if ($self->in_preformatted()) {
+  if ($self->in_preformatted_context()) {
     $footnote_number_text = "($number_in_doc)";
   } else {
     $footnote_number_text = "<sup>$number_in_doc</sup>";
@@ -4462,7 +4461,7 @@ sub _convert_heading_command($$$$$)
 
     my $heading_class = $level_corrected_cmdname;
     unshift @heading_classes, $heading_class;
-    if ($self->in_preformatted()) {
+    if ($self->in_preformatted_context()) {
       my $id_str = '';
       if (defined($heading_id)) {
         $id_str = " id=\"$heading_id\"";
@@ -4767,7 +4766,7 @@ sub _convert_sp_command($$$$)
       and defined($command->{'extra'}->{'misc_args'})
       and defined($command->{'extra'}->{'misc_args'}->[0])) {
     my $sp_nr = $command->{'extra'}->{'misc_args'}->[0];
-    if ($self->in_preformatted() or $self->in_string()) {
+    if ($self->in_preformatted_context() or $self->in_string()) {
       return "\n" x $sp_nr;
     } else {
       return ($self->get_info('line_break_element')."\n") x $sp_nr;
@@ -4793,7 +4792,7 @@ sub _convert_exdent_command($$$$)
 
   # FIXME do something with CSS?  Currently nothing is defined for exdent
 
-  if ($self->in_preformatted()) {
+  if ($self->in_preformatted_context()) {
     return $self->html_attribute_class('pre', [$cmdname]).'>'.$arg ."\n</pre>";
   } else {
     return $self->html_attribute_class('p', [$cmdname]).'>'.$arg ."\n</p>";
@@ -4950,16 +4949,6 @@ sub _convert_listoffloats_command($$$$)
 }
 $default_commands_conversion{'listoffloats'} = \&_convert_listoffloats_command;
 
-sub _in_preformatted_in_menu($)
-{
-  my $self = shift;
-  my @pre_classes = $self->preformatted_classes_stack();
-  foreach my $pre_class (@pre_classes) {
-    return 1 if ($preformatted_commands{$pre_class});
-  }
-  return 0;
-}
-
 sub _convert_menu_command($$$$$)
 {
   my $self = shift;
@@ -4988,7 +4977,7 @@ sub _convert_menu_command($$$$$)
 
   my $begin_row = '';
   my $end_row = '';
-  if ($self->_in_preformatted_in_menu()) {
+  if ($self->inside_preformatted()) {
     $begin_row = '<tr><td>';
     $end_row = '</td></tr>';
   }
@@ -5340,7 +5329,7 @@ sub _convert_item_command($$$$$)
                                                 [$args->[0]->{'tree'}]);
       my $result = $self->convert_tree($table_item_tree,
                                        'convert table_item_tree');
-      if ($self->in_preformatted()) {
+      if ($self->in_preformatted_context()) {
         my @pre_classes = $self->preformatted_classes_stack();
         foreach my $pre_class (@pre_classes) {
           if ($preformatted_code_commands{$pre_class}) {
@@ -5502,7 +5491,7 @@ sub _convert_xref_commands($$$$)
         }
       } elsif (!$self->get_conf('XREF_USE_NODE_NAME_ARG')
                and (defined($self->get_conf('XREF_USE_NODE_NAME_ARG'))
-                    or !$self->in_preformatted())) {
+                    or !$self->in_preformatted_context())) {
         $name = $self->command_text($command, 'text_nonumber');
         #die "$command $command->{'normalized'}" if (!defined($name));
       } elsif (defined($args->[0]->{'monospace'})) {
@@ -6447,7 +6436,7 @@ sub _convert_preformatted_type($$$$)
   # environment where spaces and newlines are preserved.
   if ($element->{'parent'}->{'type'}
       and $element->{'parent'}->{'type'} eq 'menu_entry_description') {
-    if (!$self->_in_preformatted_in_menu()) {
+    if (!$self->inside_preformatted()) {
       # If not in preformatted block command,
       # we don't preserve spaces and newlines in menu_entry_description,
       # instead the whole menu_entry is in a table, so no <pre> in that situation
@@ -6506,7 +6495,7 @@ sub _convert_index_entry_command_type($$$$)
       and !$self->in_string()) {
     my $result = &{$self->formatting_function('format_separate_anchor')}($self,
                                                    $index_id, 'index-entry-id');
-    $result .= "\n" unless ($self->in_preformatted());
+    $result .= "\n" unless ($self->in_preformatted_context());
     return $result;
   }
   return '';
@@ -6576,13 +6565,13 @@ sub _convert_text($$$)
   #$text = &{$self->formatting_function('format_protect_text')}($self, $text);
   $text = _default_format_protect_text($self, $text);
 
-  # API info: get_conf() API code conforming would be:
+  # API info: for efficiency, we cache the result of the calls to configuration
+  # in $self->{'use_unicode_text'}.
+  # API code conforming would be:
   #if ($self->get_conf('OUTPUT_CHARACTERS')
   #    and $self->get_conf('OUTPUT_ENCODING_NAME')
   #    and $self->get_conf('OUTPUT_ENCODING_NAME') eq 'utf-8') {
-  if ($self->{'conf'}->{'OUTPUT_CHARACTERS'}
-      and $self->{'conf'}->{'OUTPUT_ENCODING_NAME'}
-      and $self->{'conf'}->{'OUTPUT_ENCODING_NAME'} eq 'utf-8') {
+  if ($self->{'use_unicode_text'}) {
     $text = Texinfo::Convert::Unicode::unicode_text($text,
                                         (in_code($self) or in_math($self)));
   # API info: in_code() API code conforming and
@@ -6606,7 +6595,7 @@ sub _convert_text($$$)
     }
   }
 
-  return $text if (in_preformatted($self));
+  return $text if (in_preformatted_context($self));
 
   # API info: in_non_breakable_space() API code conforming would be:
   #if ($self->in_non_breakable_space()) {
@@ -6838,7 +6827,7 @@ sub _convert_menu_entry_type($$$)
   my $MENU_ENTRY_COLON = $self->get_conf('MENU_ENTRY_COLON');
 
   my $in_string = $self->in_string();
-  if ($self->_in_preformatted_in_menu() or $in_string) {
+  if ($self->inside_preformatted() or $in_string) {
     my $leading_text = $menu_entry_leading_text->{'text'};
     $leading_text =~ s/\*/$MENU_SYMBOL/;
     my $result_name_node = $leading_text;
@@ -6974,7 +6963,7 @@ sub _convert_menu_comment_type($$$$)
 
   $content = '' if (!defined($content));
 
-  if ($self->_in_preformatted_in_menu() or $self->in_string()) {
+  if ($self->inside_preformatted() or $self->in_string()) {
     return $content;
   } else {
     return '<tr>'.$self->html_attribute_class('th', ['menu-comment'])
@@ -7600,6 +7589,8 @@ sub _new_document_context($$;$$)
           {'context' => $context,
            'formatting_context' => [{'context_name' => '_format'}],
            'composition_context' => [''],
+           'preformatted_context' => [0],
+           'inside_preformatted' => 0,
            'monospace' => [0],
            'document_global_context' => $document_global_context,
            'block_commands' => [],
@@ -7714,6 +7705,8 @@ sub _reset_unset_no_arg_commands_formatting_context($$$$;$)
       $self->_new_document_context($context_str);
       push @{$self->{'document_context'}->[-1]->{'composition_context'}},
           $preformatted_command_name;
+      push @{$self->{'document_context'}->[-1]->{'preformatted_context'}}, 1;
+      $self->{'document_context'}->[-1]->{'inside_preformatted'}++;
       # should not be needed for at commands no brace translation strings
       push @{$self->{'document_context'}->[-1]->{'preformatted_classes'}},
           $pre_class_commands{$preformatted_command_name};
@@ -8235,6 +8228,19 @@ sub converter_initialize($)
     $self->{'pre_class_types'}->{$type}
      = $customized_type_formatting->{$type}->{'pre_class'};
   }
+
+  $self->{'upper_case_commands'} = {};
+  foreach my $command (keys(%default_upper_case_commands)) {
+    $self->{'upper_case_commands'}->{$command}
+     = $default_upper_case_commands{$command};
+  }
+  my $customized_upper_case_commands
+    = Texinfo::Config::GNUT_get_upper_case_commands_info();
+  foreach my $command (keys(%$customized_upper_case_commands)) {
+    $self->{'upper_case_commands'}->{$command}
+      = $customized_upper_case_commands->{$command};
+  }
+
 
   $self->{'commands_conversion'} = {};
   my $customized_commands_conversion
@@ -9822,6 +9828,10 @@ sub _XS_get_index_entries_sorted_by_letter($$)
 {
 }
 
+sub _XS_html_merge_index_entries($)
+{
+}
+
 sub _sort_index_entries($)
 {
   my $self = shift;
@@ -9843,6 +9853,7 @@ sub _sort_index_entries($)
     if ($self->{'converter_descriptor'} and $XS_convert) {
       _XS_get_index_entries_sorted_by_letter($self,
                                  $self->{'index_entries_by_letter'});
+      _XS_html_merge_index_entries($self);
     }
   }
 }
@@ -11005,8 +11016,8 @@ sub _initialize_output_state($$)
 
   # targets and directions
 
-  # used for diverse elements: tree units, indices, footnotes, special
-  # elements, contents elements...
+  # used for diverse tree elements: nodes and sectioning commands, indices,
+  # footnotes, special output units elements...
   $self->{'targets'} = {};
   $self->{'seen_ids'} = {};
 
@@ -11111,6 +11122,13 @@ sub convert($$)
   $self->_reset_info();
 
   $self->_sort_index_entries();
+
+  # cache, as it is checked for each text element
+  if ($self->{'conf'}->{'OUTPUT_CHARACTERS'}
+      and $self->{'conf'}->{'OUTPUT_ENCODING_NAME'}
+      and $self->{'conf'}->{'OUTPUT_ENCODING_NAME'} eq 'utf-8') {
+    $self->{'use_unicode_text'} = 1;
+  }
 
   my ($output_units, $special_units, $associated_special_units)
     = $self->_prepare_conversion_units($root, undef);
@@ -11542,7 +11560,7 @@ sub _html_convert_output($$$$$$$$)
 
 # Main function for outputting a manual in HTML.
 # $SELF is the output converter object of class Texinfo::Convert::HTML (this
-# module), and $DOCUMENT is the Texinfo parsed document from the parser.
+# module), and $DOCUMENT is the parsed document from the parser and structuring
 sub output($$)
 {
   my $self = shift;
@@ -11688,13 +11706,19 @@ sub output($$)
   $self->{'document_name'} = $document_name;
   $self->{'destination_directory'} = $destination_directory;
 
-  # set information, to have it available for the conversions below,
-  # in translate_names called by _prepare_conversion_units and in
-  # titles formatting.
+  # set information, to have it available for the conversions
+  # in translate_names
   # Some information is not available yet.
   $self->_reset_info();
 
   $self->_sort_index_entries();
+
+  # cache, as it is checked for each text element
+  if ($self->{'conf'}->{'OUTPUT_CHARACTERS'}
+      and $self->{'conf'}->{'OUTPUT_ENCODING_NAME'}
+      and $self->{'conf'}->{'OUTPUT_ENCODING_NAME'} eq 'utf-8') {
+    $self->{'use_unicode_text'} = 1;
+  }
 
   # Get the list of output units to be processed.
   my ($output_units, $special_units, $associated_special_units)
@@ -11709,8 +11733,8 @@ sub output($$)
                 $output_file, $destination_directory, $output_filename,
                 $document_name);
 
-  # set information, to have it ready for
-  # run_stage_handlers.  Some information is not available yet.
+  # set information, to have it ready for run_stage_handlers and for titles
+  # formatting.  Some information is not available yet.
   $self->_reset_info();
 
   my $structure_status = $self->run_stage_handlers($root, 'structure');
@@ -11798,11 +11822,6 @@ sub output($$)
        = &{$self->formatting_function('format_comment')}($self, $copying_comment);
     }
   }
-  $self->set_global_document_commands('before', ['documentlanguage']);
-
-  if ($default_document_language ne $preamble_document_language) {
-    $self->_translate_names();
-  }
 
   # documentdescription
   if (defined($self->get_conf('documentdescription'))) {
@@ -11822,7 +11841,8 @@ sub output($$)
   # Some information is not available yet.
   $self->_reset_info();
 
-
+  # TODO document that this stage handler is called with end of
+  # preamble documentlanguage.
   my $init_status = $self->run_stage_handlers($root, 'init');
   unless ($init_status < $handler_fatal_error_level
           and $init_status > -$handler_fatal_error_level) {
@@ -11830,9 +11850,14 @@ sub output($$)
     return undef;
   }
 
-
   $self->_prepare_title_titlepage($output_units, $output_file,
                                   $output_filename);
+
+  $self->set_global_document_commands('before', ['documentlanguage']);
+
+  if ($default_document_language ne $preamble_document_language) {
+    $self->_translate_names();
+  }
 
   # complete information should be available.
   $self->_reset_info();
@@ -12040,6 +12065,166 @@ sub _protect_class_name($$)
   return _default_format_protect_text($self, $class_name);
 }
 
+sub _open_command_update_context($$)
+{
+  my $self = shift;
+  my $command_name = shift;
+  my $convert_to_latex;
+
+  if (exists($brace_commands{$command_name})
+      and $brace_commands{$command_name} eq 'context') {
+    $self->_new_document_context($command_name);
+      }
+  if (exists($format_context_commands{$command_name})) {
+    push @{$self->{'document_context'}->[-1]->{'formatting_context'}},
+                                  {'context_name' => '@'.$command_name};
+  }
+  if (exists($block_commands{$command_name})) {
+    push @{$self->{'document_context'}->[-1]->{'block_commands'}},
+                                                      $command_name;
+  }
+  my $preformatted = 0;
+  if ($pre_class_commands{$command_name}) {
+    push @{$self->{'document_context'}->[-1]->{'preformatted_classes'}},
+      $pre_class_commands{$command_name};
+    if ($preformatted_commands{$command_name}) {
+      $self->{'document_context'}->[-1]->{'inside_preformatted'}++;
+      $preformatted = 1;
+    } elsif ($block_commands{$command_name} eq 'menu'
+             and $self->{'document_context'}->[-1]->{'inside_preformatted'}) {
+      $preformatted = 1;
+    }
+  }
+  if (exists ($composition_context_commands{$command_name})) {
+    push @{$self->{'document_context'}->[-1]->{'composition_context'}},
+                                                           $command_name;
+    push @{$self->{'document_context'}->[-1]->{'preformatted_context'}},
+         $preformatted;
+  }
+  if ($format_raw_commands{$command_name}) {
+    $self->{'document_context'}->[-1]->{'raw'}++;
+  } elsif ($command_name eq 'verbatim') {
+    $self->{'document_context'}->[-1]->{'verbatim'}++;
+  }
+  if ($brace_code_commands{$command_name} or
+      $preformatted_code_commands{$command_name}) {
+    push @{$self->{'document_context'}->[-1]->{'monospace'}}, 1;
+  } elsif ($brace_commands{$command_name}
+           and $brace_commands{$command_name} eq 'style_no_code') {
+    push @{$self->{'document_context'}->[-1]->{'monospace'}}, 0;
+  } elsif ($self->{'upper_case_commands'}->{$command_name}) {
+    $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
+                                                         ->{'upper_case'}++;
+  } elsif ($math_commands{$command_name}) {
+    $self->{'document_context'}->[-1]->{'math'}++;
+    $convert_to_latex = 1 if ($self->get_conf('CONVERT_TO_LATEX_IN_MATH'));
+  }
+  if ($command_name eq 'verb') {
+    $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
+                                                    ->{'space_protected'}++;
+  } elsif ($command_name eq 'w') {
+    $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
+                                               ->{'no_break'}++;
+  }
+  return $convert_to_latex;
+}
+
+sub _convert_command_update_context($$)
+{
+  my $self = shift;
+  my $command_name = shift;
+
+  if (exists ($composition_context_commands{$command_name})) {
+    pop @{$self->{'document_context'}->[-1]->{'composition_context'}};
+    pop @{$self->{'document_context'}->[-1]->{'preformatted_context'}};
+  }
+  if ($pre_class_commands{$command_name}) {
+    pop @{$self->{'document_context'}->[-1]->{'preformatted_classes'}};
+    if ($preformatted_commands{$command_name}) {
+      $self->{'document_context'}->[-1]->{'inside_preformatted'}--;
+    }
+  }
+  if ($preformatted_code_commands{$command_name}
+      or ($brace_commands{$command_name}
+          and $brace_commands{$command_name} eq 'style_no_code')
+      or $brace_code_commands{$command_name}) {
+    pop @{$self->{'document_context'}->[-1]->{'monospace'}};
+  } elsif ($self->{'upper_case_commands'}->{$command_name}) {
+    $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
+                                                    ->{'upper_case'}--;
+  } elsif ($math_commands{$command_name}) {
+    $self->{'document_context'}->[-1]->{'math'}--;
+  }
+  if ($command_name eq 'verb') {
+    $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
+                                               ->{'space_protected'}--;
+  } elsif ($command_name eq 'w') {
+    $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
+                                               ->{'no_break'}--;
+  }
+  if ($format_raw_commands{$command_name}) {
+    $self->{'document_context'}->[-1]->{'raw'}--;
+  } elsif ($command_name eq 'verbatim') {
+    $self->{'document_context'}->[-1]->{'verbatim'}--;
+  }
+  if (exists($block_commands{$command_name})) {
+    pop @{$self->{'document_context'}->[-1]->{'block_commands'}};
+  }
+  if (exists($format_context_commands{$command_name})) {
+    pop @{$self->{'document_context'}->[-1]->{'formatting_context'}};
+  }
+  if (exists($brace_commands{$command_name})
+      and $brace_commands{$command_name} eq 'context') {
+    $self->_pop_document_context();
+  }
+}
+
+sub _open_type_update_context($$)
+{
+  my $self = shift;
+  my $type_name = shift;
+
+  if ($type_name eq 'paragraph') {
+    $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
+                                                    ->{'paragraph_number'}++;
+  } elsif ($type_name eq 'preformatted'
+           or $type_name eq 'rawpreformatted') {
+    $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
+                                                 ->{'preformatted_number'}++;
+  } elsif ($self->{'pre_class_types'}->{$type_name}) {
+    push @{$self->{'document_context'}->[-1]->{'preformatted_classes'}},
+      $self->{'pre_class_types'}->{$type_name};
+    push @{$self->{'document_context'}->[-1]->{'preformatted_context'}}, 1;
+    push @{$self->{'document_context'}->[-1]->{'composition_context'}},
+      $type_name;
+  }
+
+  if ($self->{'code_types'}->{$type_name}) {
+    push @{$self->{'document_context'}->[-1]->{'monospace'}}, 1;
+  }
+  if ($type_name eq '_string') {
+    $self->{'document_context'}->[-1]->{'string'}++;
+  }
+}
+
+sub _convert_type_update_context($$)
+{
+  my $self = shift;
+  my $type_name = shift;
+
+  if ($self->{'code_types'}->{$type_name}) {
+    pop @{$self->{'document_context'}->[-1]->{'monospace'}};
+  }
+  if ($type_name eq '_string') {
+    $self->{'document_context'}->[-1]->{'string'}--;
+  }
+  if ($self->{'pre_class_types'}->{$type_name}) {
+    pop @{$self->{'document_context'}->[-1]->{'preformatted_classes'}};
+    pop @{$self->{'document_context'}->[-1]->{'composition_context'}};
+    pop @{$self->{'document_context'}->[-1]->{'preformatted_context'}};
+  }
+}
+
 # Convert tree element $ELEMENT, and return HTML text for the output files.
 sub _convert($$;$);
 sub _convert($$;$)
@@ -12144,52 +12329,8 @@ sub _convert($$;$)
       $self->{'current_root_command'} = $element;
     }
     if (exists($self->{'commands_conversion'}->{$command_name})) {
-      my $convert_to_latex;
-      if (exists($brace_commands{$command_name})
-          and $brace_commands{$command_name} eq 'context') {
-        $self->_new_document_context($command_name);
-      }
-      if (exists($format_context_commands{$command_name})) {
-        push @{$self->{'document_context'}->[-1]->{'formatting_context'}},
-                                      {'context_name' => '@'.$command_name};
-      }
-      if (exists($block_commands{$command_name})) {
-        push @{$self->{'document_context'}->[-1]->{'block_commands'}},
-                                                          $command_name;
-      }
-      if (exists ($composition_context_commands{$command_name})) {
-        push @{$self->{'document_context'}->[-1]->{'composition_context'}},
-                                                               $command_name;
-      }
-      if ($pre_class_commands{$command_name}) {
-        push @{$self->{'document_context'}->[-1]->{'preformatted_classes'}},
-          $pre_class_commands{$command_name};
-      }
-      if ($format_raw_commands{$command_name}) {
-        $self->{'document_context'}->[-1]->{'raw'}++;
-      } elsif ($command_name eq 'verbatim') {
-        $self->{'document_context'}->[-1]->{'verbatim'}++;
-      }
-      if ($brace_code_commands{$command_name} or
-          $preformatted_code_commands{$command_name}) {
-        push @{$self->{'document_context'}->[-1]->{'monospace'}}, 1;
-      } elsif ($brace_commands{$command_name}
-               and $brace_commands{$command_name} eq 'style_no_code') {
-        push @{$self->{'document_context'}->[-1]->{'monospace'}}, 0;
-      } elsif ($upper_case_commands{$command_name}) {
-        $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
-                                                             ->{'upper_case'}++;
-      } elsif ($math_commands{$command_name}) {
-        $self->{'document_context'}->[-1]->{'math'}++;
-        $convert_to_latex = 1 if ($self->get_conf('CONVERT_TO_LATEX_IN_MATH'));
-      }
-      if ($command_name eq 'verb') {
-        $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
-                                                        ->{'space_protected'}++;
-      } elsif ($command_name eq 'w') {
-        $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
-                                                   ->{'no_break'}++;
-      }
+      my $convert_to_latex
+        = _open_command_update_context($self, $command_name);
       my $result = '';
       if (defined($self->{'commands_open'}->{$command_name})) {
         $result .= &{$self->{'commands_open'}->{$command_name}}($self,
@@ -12297,45 +12438,8 @@ sub _convert($$;$)
           }
         }
       }
-      if (exists ($composition_context_commands{$command_name})) {
-        pop @{$self->{'document_context'}->[-1]->{'composition_context'}};
-      }
-      if ($pre_class_commands{$command_name}) {
-        pop @{$self->{'document_context'}->[-1]->{'preformatted_classes'}};
-      }
-      if ($preformatted_code_commands{$command_name}
-          or ($brace_commands{$command_name}
-              and $brace_commands{$command_name} eq 'style_no_code')
-          or $brace_code_commands{$command_name}) {
-        pop @{$self->{'document_context'}->[-1]->{'monospace'}};
-      } elsif ($upper_case_commands{$command_name}) {
-        $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
-                                                        ->{'upper_case'}--;
-      } elsif ($math_commands{$command_name}) {
-        $self->{'document_context'}->[-1]->{'math'}--;
-      }
-      if ($command_name eq 'verb') {
-        $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
-                                                   ->{'space_protected'}--;
-      } elsif ($command_name eq 'w') {
-        $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
-                                                   ->{'no_break'}--;
-      }
-      if ($format_raw_commands{$command_name}) {
-        $self->{'document_context'}->[-1]->{'raw'}--;
-      } elsif ($command_name eq 'verbatim') {
-        $self->{'document_context'}->[-1]->{'verbatim'}--;
-      }
-      if (exists($block_commands{$command_name})) {
-        pop @{$self->{'document_context'}->[-1]->{'block_commands'}};
-      }
-      if (exists($format_context_commands{$command_name})) {
-        pop @{$self->{'document_context'}->[-1]->{'formatting_context'}};
-      }
-      if (exists($brace_commands{$command_name})
-          and $brace_commands{$command_name} eq 'context') {
-        $self->_pop_document_context();
-      }
+
+      _convert_command_update_context($self, $command_name);
 
       if ($element->{'cmdname'} eq 'node') {
         $self->{'current_node'} = $element;
@@ -12371,29 +12475,12 @@ sub _convert($$;$)
 
     my $result = '';
     my $type_name = $element->{'type'};
+
+    _open_type_update_context($self, $type_name);
+
     if (defined($self->{'types_open'}->{$type_name})) {
       $result .= &{$self->{'types_open'}->{$type_name}}($self,
-                                               $type_name, $element);
-    }
-    if ($type_name eq 'paragraph') {
-      $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
-                                                      ->{'paragraph_number'}++;
-    } elsif ($type_name eq 'preformatted'
-             or $type_name eq 'rawpreformatted') {
-      $self->{'document_context'}->[-1]->{'formatting_context'}->[-1]
-                                                   ->{'preformatted_number'}++;
-    } elsif ($self->{'pre_class_types'}->{$type_name}) {
-      push @{$self->{'document_context'}->[-1]->{'preformatted_classes'}},
-        $self->{'pre_class_types'}->{$type_name};
-      push @{$self->{'document_context'}->[-1]->{'composition_context'}},
-        $type_name;
-    }
-
-    if ($self->{'code_types'}->{$type_name}) {
-      push @{$self->{'document_context'}->[-1]->{'monospace'}}, 1;
-    }
-    if ($type_name eq '_string') {
-      $self->{'document_context'}->[-1]->{'string'}++;
+                                             $type_name, $element);
     }
 
     my $content_formatted = '';
@@ -12410,6 +12497,8 @@ sub _convert($$;$)
       }
     }
 
+    _convert_type_update_context($self, $type_name);
+
     if (exists($self->{'types_conversion'}->{$type_name})) {
       $result .= &{$self->{'types_conversion'}->{$type_name}} ($self,
                                                  $type_name,
@@ -12417,16 +12506,6 @@ sub _convert($$;$)
                                                  $content_formatted);
     } elsif (defined($content_formatted)) {
       $result .= $content_formatted;
-    }
-    if ($self->{'code_types'}->{$type_name}) {
-      pop @{$self->{'document_context'}->[-1]->{'monospace'}};
-    }
-    if ($type_name eq '_string') {
-      $self->{'document_context'}->[-1]->{'string'}--;
-    }
-    if ($self->{'pre_class_types'}->{$type_name}) {
-      pop @{$self->{'document_context'}->[-1]->{'preformatted_classes'}};
-      pop @{$self->{'document_context'}->[-1]->{'composition_context'}};
     }
     print STDERR "DO type ($type_name) => `$result'\n" if $debug;
     return $result;

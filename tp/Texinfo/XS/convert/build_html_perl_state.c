@@ -42,6 +42,7 @@
 #include "build_perl_info.h"
 /* for NAMED_STRING_ELEMENT_LIST */
 #include "translations.h"
+#include "convert_html.h"
 #include "build_html_perl_state.h"
 
 #define LOCALEDIR DATADIR "/locale"
@@ -62,6 +63,9 @@
      free below is redirected to Perl's implementation.  This could
      cause crashes if the two malloc/free implementations were different.  */
 
+/* this function is used to set the initial targets information. */
+/* Dynamical changes are done in other functions, build_html_translated_names
+   .... */
 HV *
 build_html_element_targets (HTML_TARGET_LIST *html_targets)
 {
@@ -257,12 +261,10 @@ build_html_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info)
 }
 
 HV *
-build_html_global_units_directions (OUTPUT_UNIT **global_units_directions,
-                       SPECIAL_UNIT_DIRECTION **special_units_direction_name)
+build_html_global_units_directions (const OUTPUT_UNIT **global_units_directions,
+                       SPECIAL_UNIT_DIRECTION *special_units_direction_name)
 {
   int i;
-  SPECIAL_UNIT_DIRECTION **s;
-  SPECIAL_UNIT_DIRECTION *special_unit_direction;
   HV *hv;
 
   dTHX;
@@ -282,10 +284,14 @@ build_html_global_units_directions (OUTPUT_UNIT **global_units_directions,
         }
     }
 
-  for (s = special_units_direction_name; (special_unit_direction = *s) ; s++)
+  /* html_prepare_units_directions_files is allocated because
+     html_prepare_units_directions_files was called before */
+  for (i = 0; special_units_direction_name[i].output_unit; i++)
     {
+      SPECIAL_UNIT_DIRECTION *special_unit_direction
+       = &special_units_direction_name[i];
       char *direction_name = special_unit_direction->direction;
-      OUTPUT_UNIT *output_unit = special_unit_direction->output_unit;
+      const OUTPUT_UNIT *output_unit = special_unit_direction->output_unit;
       hv_store (hv, direction_name, strlen (direction_name),
                   newRV_inc ((SV *) output_unit->hv), 0);
     }
@@ -295,8 +301,8 @@ build_html_global_units_directions (OUTPUT_UNIT **global_units_directions,
 
 void
 pass_html_global_units_directions (SV *converter_sv,
-                       OUTPUT_UNIT **global_units_directions,
-                       SPECIAL_UNIT_DIRECTION **special_units_direction_name)
+                       const OUTPUT_UNIT **global_units_directions,
+                       SPECIAL_UNIT_DIRECTION *special_units_direction_name)
 {
   HV *global_units_directions_hv;
   SV *global_units_directions_sv;
@@ -395,10 +401,11 @@ build_html_translated_names (HV *hv, CONVERTER *converter)
   special_unit_info_hv = (HV *) SvRV (*special_unit_info_sv);
 
   /* reset with empty hash */
-  for (j = 0; translated_special_unit_info[j].tree_type >= 0; j++)
+  for (j = 0; translated_special_unit_info[j].tree_type != SUIT_type_none; j++)
     {
-      int tree_type = translated_special_unit_info[j].string_type;
-      const char *type_name = special_unit_info_type_names[tree_type];
+      enum special_unit_info_type string_type
+        = translated_special_unit_info[j].string_type;
+      const char *type_name = special_unit_info_type_names[string_type];
       char *key;
       HV *special_unit_hv = newHV ();
       xasprintf (&key, "%s_tree", type_name);
@@ -456,7 +463,7 @@ build_html_translated_names (HV *hv, CONVERTER *converter)
           int k;
           enum command_id cmd
             = converter->no_arg_formatted_cmd_translated.list[j];
-          HTML_COMMAND_CONVERSION **conversion_contexts
+          HTML_COMMAND_CONVERSION *conversion_contexts
                 = converter->html_command_conversion[cmd];
           char *cmdname = builtin_command_data[cmd].cmdname;
           SV **no_arg_command_sv
@@ -465,40 +472,37 @@ build_html_translated_names (HV *hv, CONVERTER *converter)
           HV *no_arg_command_hv = (HV *) SvRV (*no_arg_command_sv);
           for (k = 0; k < max_context; k++)
             {
-              if (conversion_contexts[k])
-                {
-                  HTML_COMMAND_CONVERSION *no_arg_cmd_context
-                      = conversion_contexts[k];
+              HTML_COMMAND_CONVERSION *no_arg_cmd_context
+                  = &conversion_contexts[k];
 
-                  char *context_name = html_conversion_context_type_names[k];
-                  SV **context_sv = hv_fetch (no_arg_command_hv,
-                                     context_name, strlen (context_name), 0);
-                  HV *context_hv = (HV *) SvRV (*context_sv);
+              char *context_name = html_conversion_context_type_names[k];
+              SV **context_sv = hv_fetch (no_arg_command_hv,
+                                 context_name, strlen (context_name), 0);
+              HV *context_hv = (HV *) SvRV (*context_sv);
 
  #define REPLACE_STR(key) \
-                  if (no_arg_cmd_context->key) \
-                    {               \
-                      hv_store (context_hv, #key, strlen (#key), \
-                                newSVpv_utf8 (no_arg_cmd_context->key, 0), 0); \
-                    }   \
-                  else if (hv_exists (context_hv, #key, strlen (#key))) \
-                    hv_delete (context_hv, #key, strlen (#key), G_DISCARD);
+              if (no_arg_cmd_context->key) \
+                {               \
+                  hv_store (context_hv, #key, strlen (#key), \
+                            newSVpv_utf8 (no_arg_cmd_context->key, 0), 0); \
+                }   \
+              else if (hv_exists (context_hv, #key, strlen (#key))) \
+                hv_delete (context_hv, #key, strlen (#key), G_DISCARD);
 
-                  REPLACE_STR(text)
-                  REPLACE_STR(translated_converted)
-                  REPLACE_STR(translated_to_convert)
+              REPLACE_STR(text)
+              REPLACE_STR(translated_converted)
+              REPLACE_STR(translated_to_convert)
  #undef REPLACE_STR
 
-                  if (no_arg_cmd_context->tree)
-                    {
-                      if (!no_arg_cmd_context->tree->hv)
-                        element_to_perl_hash (no_arg_cmd_context->tree);
-                      hv_store (context_hv, "tree", strlen ("tree"),
-                              newRV_inc ((SV *) no_arg_cmd_context->tree->hv), 0);
-                    }
-                  else if (hv_exists (context_hv, "tree", strlen ("tree")))
-                    hv_delete (context_hv, "tree", strlen ("tree"), G_DISCARD);
+              if (no_arg_cmd_context->tree)
+                {
+                  if (!no_arg_cmd_context->tree->hv)
+                    element_to_perl_hash (no_arg_cmd_context->tree);
+                  hv_store (context_hv, "tree", strlen ("tree"),
+                          newRV_inc ((SV *) no_arg_cmd_context->tree->hv), 0);
                 }
+              else if (hv_exists (context_hv, "tree", strlen ("tree")))
+                hv_delete (context_hv, "tree", strlen ("tree"), G_DISCARD);
             }
         }
 
@@ -617,25 +621,6 @@ build_html_preformatted_classes_stack
 }
 
 AV *
-build_html_monospace_stack (MONOSPACE_CONTEXT_STACK *monospace_stack)
-{
-  AV *monospace_av;
-  int i;
-
-  dTHX;
-
-  monospace_av = newAV ();
-
-  for (i = 0; i < monospace_stack->top; i++)
-    {
-      enum monospace_context context
-        = monospace_stack->stack[i];
-      av_push (monospace_av, newSViv (context));
-    }
-  return monospace_av;
-}
-
-AV *
 build_html_block_commands_stack (COMMAND_STACK *block_commands_stack)
 {
   AV *block_commands_av;
@@ -675,6 +660,7 @@ build_html_document_context (HTML_DOCUMENT_CONTEXT *document_context)
 {
   HV *hv;
   AV *monospace_av;
+  AV *preformatted_context_av;
   AV *composition_context_av;
   AV *block_commands_av;
   AV *formatting_context_av;
@@ -692,9 +678,13 @@ build_html_document_context (HTML_DOCUMENT_CONTEXT *document_context)
   STORE ("document_global_context",
          newSVpv_utf8 (document_context->document_global_context, 0));
 
-  monospace_av = build_html_monospace_stack (
+  monospace_av = build_integer_stack (
                                 &document_context->monospace);
   STORE ("monospace", newRV_noinc ((SV *) monospace_av));
+
+  preformatted_context_av = build_integer_stack (
+                                &document_context->preformatted_context);
+  STORE ("preformatted_context", newRV_noinc ((SV *) preformatted_context_av));
 
   composition_context_av = build_html_composition_context_stack (
                                 &document_context->composition_context);
@@ -861,6 +851,7 @@ build_html_formatting_state (CONVERTER *converter, unsigned long flags)
       AV *preformatted_classes_av;
       AV *block_commands_av;
       AV *monospace_av;
+      AV *preformatted_context_av;
 
       document_context_sv = hv_fetch (hv, "document_context",
                                       strlen ("document_context"), 0);
@@ -894,8 +885,31 @@ build_html_formatting_state (CONVERTER *converter, unsigned long flags)
   build_context(composition_context)
   build_context(preformatted_classes)
   build_context(block_commands)
-  build_context(monospace)
 #undef build_context
+
+#define STORE_DOC_CTX(key, value) hv_store (top_document_context_hv, \
+                                            key, strlen (key), value, 0)
+      if (flags & HMSF_monospace)
+        {
+          monospace_av = build_integer_stack (
+                    &top_document_ctx->monospace);
+          STORE_DOC_CTX("monospace",
+                        newRV_noinc ((SV *) monospace_av));
+        }
+      if (flags & HMSF_composition_context)
+        {
+          preformatted_context_av = build_integer_stack (
+                    &top_document_ctx->preformatted_context);
+          STORE_DOC_CTX("preformatted_context",
+                        newRV_noinc ((SV *) preformatted_context_av));
+        }
+
+      if (flags & HMSF_preformatted_classes)
+        {
+           STORE_DOC_CTX("inside_preformatted",
+            newSViv (top_document_ctx->inside_preformatted));
+        }
+#undef STORE_DOC_CTX
 
       if (flags & HMSF_top_document_ctx)
         build_html_document_context_ctx (top_document_context_hv,
@@ -995,7 +1009,7 @@ build_html_formatting_state (CONVERTER *converter, unsigned long flags)
 }
 
 SV *
-build_html_command_formatted_args (HTML_ARGS_FORMATTED *args_formatted)
+build_html_command_formatted_args (const HTML_ARGS_FORMATTED *args_formatted)
 {
   AV *av;
   int i;
@@ -1009,7 +1023,7 @@ build_html_command_formatted_args (HTML_ARGS_FORMATTED *args_formatted)
 
   for (i = 0; i < args_formatted->number; i++)
     {
-      HTML_ARG_FORMATTED *arg_formatted = &args_formatted->args[i];
+      const HTML_ARG_FORMATTED *arg_formatted = &args_formatted->args[i];
       if (arg_formatted->tree)
         {
           int j;

@@ -4,6 +4,7 @@
 
 #include "options_types.h"
 #include "tree_types.h"
+#include "document_types.h"
 #include "converter_types.h"
 
 typedef struct TEXT_OPTIONS {
@@ -24,7 +25,7 @@ typedef struct TEXT_OPTIONS {
     int document_descriptor;
 } TEXT_OPTIONS;
 
-char *convert_to_text (ELEMENT *root, TEXT_OPTIONS *text_options);
+char *convert_to_text (const ELEMENT *root, TEXT_OPTIONS *text_options);
 TEXT_OPTIONS *new_text_options (void);
 void destroy_text_options (TEXT_OPTIONS *text_options);
 TEXT_OPTIONS *copy_options_for_convert_text (CONVERTER *self,

@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include "tree_types.h"
-#include "converter_types.h"
+#include "document_types.h"
 /* also for xvasprintf */
 #include "text.h"
 /* for debug_output */
@@ -62,7 +62,7 @@ reallocate_error_messages (ERROR_MESSAGE_LIST *error_messages)
 static void
 message_list_line_error_internal (ERROR_MESSAGE_LIST *error_messages,
                                   enum error_type type, int continuation,
-                                  SOURCE_INFO *cmd_source_info,
+                                  const SOURCE_INFO *cmd_source_info,
                                   char *format, va_list v)
 {
   char *message;
@@ -287,7 +287,7 @@ command_error (ELEMENT *e, char *format, ...)
 
 void
 message_list_command_error (ERROR_MESSAGE_LIST *error_messages,
-                            ELEMENT *e, char *format, ...)
+                            const ELEMENT *e, char *format, ...)
 {
   va_list v;
 
@@ -323,8 +323,8 @@ message_list_document_warn (ERROR_MESSAGE_LIST *error_messages,
                                         format, v);
 }
 
-void
-wipe_error_message_list (ERROR_MESSAGE_LIST *error_messages)
+static void
+wipe_error_messages (ERROR_MESSAGE_LIST *error_messages)
 {
   int j;
   for (j = 0; j < error_messages->number; j++)
@@ -332,8 +332,21 @@ wipe_error_message_list (ERROR_MESSAGE_LIST *error_messages)
       free (error_messages->list[j].message);
       free (error_messages->list[j].error_line);
     }
+}
+
+void
+wipe_error_message_list (ERROR_MESSAGE_LIST *error_messages)
+{
+  wipe_error_messages (error_messages);
   free (error_messages->list);
   memset (error_messages, 0, sizeof (ERROR_MESSAGE_LIST));
+}
+
+void
+clear_error_message_list (ERROR_MESSAGE_LIST *error_messages)
+{
+  wipe_error_messages (error_messages);
+  error_messages->number = 0;
 }
 
 /* not used */

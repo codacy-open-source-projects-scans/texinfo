@@ -28,6 +28,7 @@
 #include "utils.h"
 #include "builtin_commands.h"
 #include "node_name_normalization.h"
+#include "convert_utils.h"
 #include "converter.h"
 
 static CONVERTER *converter_list;
@@ -79,8 +80,6 @@ register_converter (CONVERTER *converter)
   fprintf(stderr, "REGISTER CONVERTER %zu %p %p %p\n", converter_index +1,
                        converter, registered_converter, converter->document);
    */
-
-  free (converter);
 
   registered_converter->converter_descriptor = converter_index +1;
 
@@ -192,7 +191,10 @@ set_global_document_commands (CONVERTER *converter,
                        command_location_names[location],
                        builtin_command_data[cmd].cmdname);
             }
-          element = set_global_document_command (converter, cmd, location);
+          element
+            = set_global_document_command (converter->document->global_commands,
+                                           converter->conf,
+                                           cmd, location);
           if (!element)
             {
               COMMAND_OPTION_VALUE *option_value = command_init (cmd,
@@ -231,7 +233,7 @@ id_to_filename (CONVERTER *self, char **id_ref)
 }
 
 TARGET_FILENAME *
-normalized_sectioning_command_filename (CONVERTER *self, ELEMENT *command)
+normalized_sectioning_command_filename (CONVERTER *self, const ELEMENT *command)
 {
   TARGET_FILENAME *result
      = (TARGET_FILENAME *) malloc (sizeof (TARGET_FILENAME));
@@ -261,7 +263,7 @@ normalized_sectioning_command_filename (CONVERTER *self, ELEMENT *command)
 
 char *
 node_information_filename (CONVERTER *self, char *normalized,
-                           ELEMENT *label_element)
+                           const ELEMENT *label_element)
 {
   char *filename;
 
@@ -286,50 +288,51 @@ node_information_filename (CONVERTER *self, char *normalized,
   return filename;
 }
 
-ELEMENT *
-comma_index_subentries_tree (ELEMENT *current_entry,
+ELEMENT_LIST *
+comma_index_subentries_tree (const ELEMENT *current_entry,
                              char *separator)
 {
-  ELEMENT *result = new_element (ET_NONE);
+  ELEMENT_LIST *result = new_list ();
   char *subentry_separator = separator;
   if (!separator)
     subentry_separator = ", ";
 
   while (1)
     {
-      ELEMENT *subentry = lookup_extra_element (current_entry, "subentry");
+      const ELEMENT *subentry
+        = lookup_extra_element (current_entry, "subentry");
       if (subentry)
         {
           ELEMENT *separator = new_element (ET_NONE);
           text_append (&separator->text, subentry_separator);
           current_entry = subentry;
-          add_to_contents_as_array (result, separator);
-          add_to_contents_as_array (result, current_entry->args.list[0]);
+          add_to_element_list (result, separator);
+          add_to_element_list (result, current_entry->args.list[0]);
         }
       else
         break;
     }
-  if (result->contents.number > 0)
+  if (result->number > 0)
     return result;
   else
     {
-      destroy_element (result);
+      destroy_list (result);
       return 0;
     }
 }
 
 void
-free_comma_index_subentries_tree (ELEMENT *element)
+free_comma_index_subentries_tree (ELEMENT_LIST *element_list)
 {
   /* destroy separator elements */
   int i;
-  for (i = 0; i < element->contents.number; i++)
+  for (i = 0; i < element_list->number; i++)
     {
-      ELEMENT *content = element->contents.list[i];
+      ELEMENT *content = element_list->list[i];
       if (content->type == ET_NONE)
         destroy_element (content);
     }
-  destroy_element (element);
+  destroy_list (element_list);
 }
 
 /* to be freed by caller */
@@ -504,7 +507,130 @@ set_file_path (CONVERTER *self, char *filename, char *filepath,
   else
     filepath_str = filepath;
 
-  output_unit_file->filepath = strdup (filepath_str);
+  if (output_unit_file->filepath)
+    {
+      if (!strcmp (output_unit_file->filepath, filepath_str))
+        {
+          if (self->conf->DEBUG > 0)
+            fprintf (stderr, "set_file_path: filepath set: %s\n",
+                             filepath_str);
+        }
+      else
+        {
+          if (self->conf->DEBUG > 0)
+            fprintf (stderr, "set_file_path: filepath reset: %s, %s\n",
+                             output_unit_file->filepath, filepath_str);
+          free (output_unit_file->filepath);
+          output_unit_file->filepath = strdup (filepath_str);
+        }
+    }
+  else
+    output_unit_file->filepath = strdup (filepath_str);
   if (free_filepath)
     free (filepath_str);
+}
+
+static void
+free_output_unit_files_file (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+{
+  int i;
+  for (i = 0; i < output_unit_files->number; i++)
+    {
+      FILE_NAME_PATH_COUNTER *output_unit_file = &output_unit_files->list[i];
+      free (output_unit_file->filename);
+      free (output_unit_file->normalized_filename);
+      free (output_unit_file->filepath);
+      if (output_unit_file->body.space)
+        free (output_unit_file->body.text);
+    }
+}
+
+void
+clear_output_unit_files (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+{
+  free_output_unit_files_file (output_unit_files);
+  output_unit_files->number = 0;
+}
+
+void
+free_output_unit_files (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+{
+  free_output_unit_files_file (output_unit_files);
+  free (output_unit_files->list);
+}
+
+void
+free_generic_converter (CONVERTER *self)
+{
+  if (self->translated_commands)
+    {
+      destroy_translated_commands (self->translated_commands);
+    }
+
+  free (self->expanded_formats);
+
+  if (self->init_conf)
+    free_options (self->init_conf);
+  free (self->init_conf);
+
+  if (self->conf)
+    free_options (self->conf);
+  free (self->conf);
+
+  free_output_files_information (&self->output_files_information);
+  free_output_unit_files (&self->output_unit_files);
+}
+
+
+/* XML conversion functions */
+
+void
+xml_format_text_with_numeric_entities (const char *text, TEXT *result)
+{
+  const char *p;
+
+  p = text;
+  while (*p)
+    {
+      int before_sep_nr = strcspn (p, "-'`");
+      if (before_sep_nr)
+        {
+          text_append_n (result, p, before_sep_nr);
+          p += before_sep_nr;
+        }
+      if (!*p)
+        break;
+      switch (*p)
+        {
+        OTXI_NUMERIC_ENTITY_TEXT_CASES(p)
+        }
+    }
+}
+
+
+void
+xml_protect_text (const char *text, TEXT *result)
+{
+  const char *p;
+
+  p = text;
+
+  while (*p)
+    {
+      int before_sep_nr = strcspn (p, "<>&\"");
+      if (before_sep_nr)
+        {
+          text_append_n (result, p, before_sep_nr);
+          p += before_sep_nr;
+        }
+      if (!*p)
+        break;
+      switch (*p)
+        {
+        OTXI_PROTECT_XML_CASES(p);
+        /* should never happen */
+        default:
+         p++;
+        }
+    }
 }

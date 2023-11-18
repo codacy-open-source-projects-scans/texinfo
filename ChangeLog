@@ -1,3 +1,1038 @@
+2023-11-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/translations.c (translate_string):
+	Remove commented-out code, the purpose of which is not evident.
+	Remove FIXME comment as this should be working now we call
+	switch_to_global_locale.
+
+2023-11-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/translations.c (translate_string):
+	Exdent preprocessor #ifndef directives.  Add a return statement
+	to #ifndef block to avoid wrapping the rest of the function in
+	the #else block.
+
+2023-11-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/translations.c (translate_string):
+	Remove commented-out Perl code and comments.  It's hard
+	to read and does not match the current Perl code in
+	Texinfo/Translations.pm.
+
+2023-11-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_open_command_update_context)
+	(_convert_command_update_context, _open_type_update_context)
+	(_convert_type_update_context, _convert),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_open_command_update_context)
+	(html_convert_command_update_context, html_open_type_update_context)
+	(html_convert_type_update_context, convert_to_html_internal): use
+	functions for state update, and modify when updating takes place for
+	types, before open and before the type element formatting.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(special_characters_formatting): use numeric entities.
+
+	* tp/Texinfo/XS/convert/convert_html.c (in_string): add.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_row_type)
+	(types_internal_conversion_table): row type conversion in C.
+
+2023-11-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/convert_utils.c
+	(convert_to_utf8, convert_to_utf8_verbatiminclude):
+	Rename function to avoid confusion with convert_to_utf8 in input.c.
+
+2023-11-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/api_to_perl.c (croak_message):
+	Add wrapper for Perl croak.  Useful for debugging.
+
+2023-11-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/texi2any.supp: Use "..." in suppressions file to allow
+	for varying numbers of times tdestroy_recurse appears in the stack
+	trace.
+
+2023-11-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/regenerate_C_options_info.pl: handle value set
+	from perl being undef.
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv): remove unused variable.
+
+2023-11-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/ConvertXS.pm: remove fallback module.
+
+	* tp/Texinfo/XSLoader.pm (init): update fatal error message.
+
+2023-11-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.awk,
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER): output code defining
+	TXI_TREE_TYPES_NUMBER to the number of tree element types.  Update
+	codes that used the last type instead.
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/builtin_commands.c
+	(TYPE_INDEX, type_name_index, compare_type_index_fn)
+	(set_element_type_name_info, find_element_type),
+	tp/Texinfo/XS/convert/ConvertXS.xs (init): prepare a list of element
+	types names and type number in set_element_type_name_info and sort.
+	Called from init in ConvertXS.xs.  Add find_element_type to find the
+	type of a type name and use it in html_converter_initialize_sv.
+
+2023-11-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/command_stack.c (top_integer_stack): use correct
+	function name instead of top_integer_context.
+
+	* tp/Texinfo/XS/main/get_perl_info.c (converter_initialize)
+	(set_output_converter_sv): set conf already in converter_initialize.
+
+	* tp/Texinfo/XS/main/unicode.h (OTXI_UNICODE_TEXT_CASES): always
+	increase var after appending.  Use a constant "-".
+
+	* tp/Texinfo/XS/convert/convert_html.c (special_characters_formatting)
+	(in_non_breakable_space, in_space_protected)
+	(OTXI_ISO_ENTITY_TEXT_CASES, OTXI_NO_ISO_ENTITY_TEXT_CASES)
+	(OTXI_NO_BREAK_CASES, OTXI_SPACE_PROTECTION_CASES, OTXI_CONVERT_TEXT)
+	(OTXI_ALL_CONVERT_TEXT, html_default_format_protect_text)
+	(convert_text, html_converter_initialize)
+	(types_internal_conversion_table), tp/Texinfo/XS/convert/converter.c
+	(xml_format_text_with_numeric_entities),
+	tp/Texinfo/XS/convert/converter.h (OTXI_NUMERIC_ENTITY_TEXT_CASES),
+	tp/Texinfo/XS/main/converter_types.h (enum html_special_character)
+	(STRING_WITH_LEN, CONVERTER): use macros to generate inline code for
+	text conversion, remove protect_text_unicode_text,
+	protect_text_use_iso_entities and protect_text_no_iso_entities.  Setup
+	special characters and line_break_element.
+
+2023-11-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/input_files/punctuation_small_case_accents_latin1.texi,
+	tp/t/input_files/punctuation_small_case_accents_utf8.texi,
+	tp/t/input_files/punctuation_small_case_accents_us_ascii.texi:
+	add an encoded character in @sc.
+
+2023-11-16  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/texi2any.supp: Add valgrind suppression file.  Add
+	suppressions for setenv bug with perl 5.36 and earlier.
+
+2023-11-16  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* contrib/nontests/latex2html.test: Remove.
+	* contrib/nontests/bibtex.test, contrib/nontests/defs.in:
+	Remove checks using hevea.
+	* configure.ac: Delete commented-out AC_CHECK_PROGS line for hevea.
+	* contrib/nontests/Makefile.am: Remove as file is unused.
+
+2023-11-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_types_conversion, call_types_open, call_commands_conversion)
+	(call_commands_open, call_output_units_conversion),
+	tp/Texinfo/XS/convert/convert_html.c (TYPE_INTERNAL_CONVERSION)
+	(convert_table_term_type, command_conversion_external)
+	(command_open, type_conversion_external, type_open)
+	(convert_to_html_internal, output_unit_conversion)
+	(convert_output_unit, convert_convert_output_unit_internal):
+	pass TEXT to gather conversion results instead of returning char *.
+	Also more const for functions arguments.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(convert_output_output_unit_internal): use text->end for res_len
+	if possible.
+
+2023-11-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_text, convert, output),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_conversion_units):
+	cache OUTPUT_CHARACTERS and OUTPUT_ENCODING_NAME equal to utf8
+	in self->use_unicode_text.
+
+	* tp/Texinfo/Convert/HTML.pm (output): keep documentlanguage
+	as in preamble until the beginning of conversion.
+
+	* tp/Texinfo/XS/convert/convert_html.c (protect_text_unicode_text),
+	tp/Texinfo/XS/main/unicode.h (OTXI_UNICODE_TEXT_CASES): add conversion
+	of text to HTML with encoded characters.
+
+2023-11-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/xspara.c (xspara_add_text, xspara__add_next):
+	Cast char * to uint8_t * when calling u8_mbtouc to avoid a
+	compiler warning.  This is valid as we know the strings we are
+	getting from Perl are UTF-8 encoded.
+	(xspara_add_text): Avoid a warning about a variable possibly
+	being undefined.
+
+2023-11-15  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Conversion in Preformatted Context),
+	tp/Texinfo/Convert/HTML.pm (in_preformatted_context),
+	tp/Texinfo/Convert/HTML.pm (inside_preformatted): rename
+	in_preformatted as in_preformatted_context and
+	_in_preformatted_in_menu as inside_preformatted.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_formatting_state), tp/Texinfo/XS/convert/convert_html.c
+	(html_new_document_context, convert_to_html_internal),
+	tp/Texinfo/XS/main/build_perl_info.c (build_integer_stack),
+	tp/Texinfo/XS/main/command_stack.c (push_integer_stack_integer)
+	(pop_integer_stack, top_integer_context),
+	tp/Texinfo/XS/main/converter_types.h (INTEGER_STACK, CONVERTER):
+	replace the monospace stack by a generic integer stack with the same
+	functionalities.  Remove enum monospace_context.
+
+	* tp/Texinfo/Convert/HTML.pm (in_preformatted_context)
+	(inside_preformatted, _new_document_context)
+	(_reset_unset_no_arg_commands_formatting_context, _convert),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_document_context, build_html_formatting_state),
+	tp/Texinfo/XS/convert/convert_html.c (html_new_document_context)
+	(html_pop_document_context)
+	(reset_unset_no_arg_commands_formatting_context)
+	(convert_to_html_internal), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER): add states for preformatted_context and
+	inside_preformatted, set together with preformatted_classes and
+	composition_context, in order to access faster to the context.
+
+	* tp/Texinfo/XS/convert/convert_html.c (in_preformatted_context)
+	(inside_preformatted): add.
+
+2023-11-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (TYPE_INTERNAL_CONVERSION)
+	(types_internal_conversion_table, convert_table_term_type)
+	(html_converter_initialize), tp/Texinfo/XS/main/converter_types.h
+	(enum formatting_reference_status): add
+	types_internal_conversion_table where type conversion implemented in C
+	is registered, use it to replace type_conversion function.
+	Implement convert_table_term_type as a type conversion function.
+
+	* tp/Texinfo/XS/convert/convert_html.c (in_code, in_math, in_raw)
+	(in_upper_case, in_verbatim): add.
+
+2023-11-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.h, tp/Texinfo/XS/main/converter_types.h
+	(HTML_ARGUMENTS_FORMATTED_FORMAT_TYPE, HTML_ARGS_FORMATTED)
+	(HTML_ARG_FORMATTED): move from utils.h to converter_types.h.
+
+	* tp/Texinfo/XS/convert/convert_html.c (command_conversion_external)
+	(type_conversion_external, register_type_conversion_function)
+	(register_command_conversion_function, html_converter_initialize)
+	(html_initialize_output_state, html_destroy, html_convert_css_string)
+	(convert_to_html_internal), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER, TYPE_CONVERSION_FUNCTION, COMMAND_CONVERSION_FUNCTION):
+	use directly function references to convert types and commands, in
+	order to be able to replace functions calling perl by C functions.
+	Rename type_conversion as type_conversion_external and
+	command_conversion as command_conversion_external.
+
+2023-11-15  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Simple Output Customization for Simple
+	Commands with Braces): fix example.
+
+	* tp/init/documentation_examples.pm: new example for uppercase.
+
+	* tp/Makefile.tres, tp/t/init_files_tests.t (sc_formatting_with_css),
+	tp/init/sc_formatting_with_css.pm: example of init file to format
+	small caps with CSS.
+
+2023-11-15  Patrice Dumas  <pertusus@free.fr>
+
+	Customization of uppercasing commands
+
+	* doc/texi2any_api.texi (Customization of Commands Converting to
+	Uppercase), tp/Texinfo/Config.pm ($GNUT_upper_case_commands)
+	(texinfo_register_upper_case_command)
+	(GNUT_get_upper_case_commands_info, GNUT_reinitialize_init_files),
+	tp/Texinfo/Convert/HTML.pm (%default_upper_case_commands)
+	(converter_initialize, _convert), tp/Texinfo/XS/convert/convert_html.c
+	(html_format_init, convert_to_html_internal),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER): add possibility of customizing commands converting their
+	argument to uppercase letters.
+
+2023-11-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.h (OTXI_PROTECT_XML_CASES),
+	tp/Texinfo/XS/convert/converter.c
+	(xml_format_text_with_numeric_entities, xml_protect_text):
+	add code that can be inlined for the protection of XML special
+	characters as OTXI_PROTECT_XML_CASES.  Use in converter.c and base
+	code more on misc.c code with memcmp and case.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(OTXI_PROTECT_XML_FORM_FEED_CASES, html_default_format_protect_text)
+	(protect_text_use_iso_entities, protect_text_no_iso_entities):
+	setup OTXI_PROTECT_XML_FORM_FEED_CASES to be inlined for the
+	protection of XML special charcters and form feeds.  Implement
+	protect_text_use_iso_entities and html_default_format_protect_text.
+
+2023-11-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_overrides, %XS_conversion_overrides)
+	(import): use hashes for association of overriden sub with XS sub.
+
+	* tp/Texinfo/Convert/HTML.pm (_XS_format_init, import),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_format_init),
+	tp/Texinfo/XS/convert/convert_html.c (html_converter_initialize)
+	(html_format_init): add html_format_init function to be called once to
+	setup C data that does not need any information on customization
+	with code from html_converter_initialize.  Setup XS interface.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_to_html_internal):
+	use current_commands_conversion and not commands_conversion and
+	current_types_conversion and not types_conversion.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_protect_text)
+	(default_css_string_format_protect_text): implement.
+
+	* tp/Texinfo/XS/convert/converter.c
+	(xml_format_text_with_numeric_entities, xml_protect_text): implement.
+
+2023-11-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/command_data.txt
+	(item_LINE, itemx, defblock, defline, deftypeline):
+	Remove contain_basic_inline flag.  There is no reason an @anchor
+	should not occur inside @item, inside @table, or the other
+	commands, as no index entry is being created with the @anchor.
+
+	Report from Ihor Radchenko <yantar92@posteo.net> for Org mode manual.
+
+2023-11-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Translations.pm (import), tp/Texinfo/XS/Makefile.am,
+	tp/Texinfo/XS/main/DocumentXS.xs (translations_configure),
+	tp/Texinfo/XS/main/TranslationsXS.xs: rename configure as
+	translations_configure and move to DocumentXS.xs.  Do not build
+	TranslationsXS anymore.
+
+2023-11-14  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm,
+	Pod-Simple-Texinfo/pod2texi.pl: update for the move of functions to
+	Texinfo::Document.
+
+2023-11-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (rebuild_document, rebuild_tree)
+	(remove_document_descriptor, remove_document, clear_document_errors)
+	(set_document_options), tp/Makefile.am (dist_modules_DATA),
+	tp/Texinfo/Document.pm (import, rebuild_document, rebuild_tree)
+	(clear_document_errors), tp/Texinfo/XS/Makefile.am
+	(DocumentXS_la_SOURCES): move rebuild_document, rebuild_tree,
+	remove_document_descriptor, remove_document and clear_document_errors
+	to a new XS associated to Texinfo::Document.
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_destroy): output a debug
+	message if the html converter is destroyed while there are error messages
+	that have not been registered.
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c (replace_element_in_list): add.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_get_tree_root_element)
+	(prepare_special_units, prepare_footnotes_targets)
+	(html_prepare_output_units_global_targets),
+	tp/Texinfo/XS/main/build_perl_info.c (build_global_info_tree_info)
+	(build_global_commands), tp/Texinfo/XS/main/command_data.awk,
+	tp/Texinfo/XS/main/utils.c (delete_global_info)
+	(delete_global_commands, get_cmd_global_multi_command)
+	(get_cmd_global_uniq_command, get_global_document_command),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command)
+	(handle_block_command), tp/Texinfo/XS/parsetexi/parser.c
+	(register_global_command, store_document),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (warn_non_empty_parts)
+	(set_menus_node_directions),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(regenerate_master_menu): use ELEMENT_LIST as container of global multi
+	commands, not ELEMENT.
+
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_file_id_setting_label_target_name)
+	(call_file_id_setting_node_file_name)
+	(call_file_id_setting_sectioning_command_target_name),
+	tp/Texinfo/XS/convert/convert_html.c (find_element_target)
+	(prepare_special_units, add_element_target_to_list)
+	(add_element_target, add_special_target, normalized_label_id_file)
+	(new_sectioning_command_target, set_root_commands_targets_node_files)
+	(prepare_index_entries_targets, prepare_footnotes_targets)
+	(html_set_pages_files, convert_tree_new_formatting_context)
+	(html_convert_css_string, convert_to_html_internal)
+	(convert_output_unit), tp/Texinfo/XS/convert/converter.c
+	(normalized_sectioning_command_filename, node_information_filename)
+	(comma_index_subentries_tree),
+	tp/Texinfo/XS/convert/indices_in_conversion.c (index_content_element),
+	tp/Texinfo/XS/main/converter_types.h (HTML_TARGET),
+	tp/Texinfo/XS/main/node_name_normalization.c
+	(convert_to_normalized_internal, convert_to_normalized)
+	(convert_to_identifier, normalize_transliterate_texinfo)
+	(normalize_transliterate_texinfo_contents), tp/Texinfo/XS/main/utils.h
+	(HTML_ARG_FORMATTED): mark elements as const in HTML conversion and
+	node_name_normalization.
+
+2023-11-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Update required gnulib modules for XS
+
+	* tp/Texinfo/XS:
+	Run "gnulib-tool --add-import uchar".
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.c (text_accents, text_heading)
+	(convert_to_text_internal, convert_to_text): set element arguments and
+	elemnts to const if they are not modified, to make sure that the
+	Texinfo tree is not modified.
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.c (ascii_accents_internal),
+	tp/Texinfo/XS/main/convert_utils.c (find_innermost_accent_contents),
+	tp/Texinfo/XS/main/convert_utils.h, tp/Texinfo/XS/main/unicode.c
+	(format_eight_bit_accents_stack, encoded_accents)
+	(format_unicode_accents_stack_internal), tp/Texinfo/XS/main/utils.c
+	(push_stack_element, pop_stack_element, destroy_accent_stack),
+	tp/Texinfo/XS/main/utils.h (ELEMENT_STACK, ACCENTS_STACK): move
+	ACCENTS_STACK and destroy_accent_stack to main/utils.c.  Add a stack
+	for elements, with elements unmodifed (const), in main/utils.c.  Use
+	that stack for accent commands.
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_texinfo.c
+	(convert_contents_to_texinfo, check_node_same_texinfo_code)
+	(root_heading_command_to_texinfo), tp/Texinfo/XS/main/debug.c
+	(print_associate_info_debug, print_element_debug_details),
+	tp/Texinfo/XS/main/tree.c (last_args_child): mark elements in argument
+	and in code as const when they are not modified.
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.c (brace_no_arg_command)
+	(text_heading), tp/Texinfo/XS/main/convert_utils.c
+	(element_associated_processing_encoding, add_heading_number)
+	(find_innermost_accent_contents, convert_to_utf8)
+	(encoded_input_file_name, expand_verbatiminclude)
+	(definition_arguments_content, definition_category_tree),
+	tp/Texinfo/XS/main/errors.c (message_list_line_error_internal)
+	(message_list_command_error), tp/Texinfo/XS/main/tree.c
+	(insert_list_slice_into_list, insert_slice_into_contents),
+	tp/Texinfo/XS/main/utils.c (encode_with_iconv, decode_string)
+	(encode_string, section_level): add const for source info and elements
+	in argument for function that should not modify the argument they point
+	to.  Not much successful in making sure that the Texinfo tree is not
+	modified, though.
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c,
+	tp/Texinfo/XS/convert/call_html_perl_function.c,
+	tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/main/builtin_commands.c (element_builtin_data_cmd),
+	tp/Texinfo/XS/main/output_unit.c (output_unit_texi),
+	tp/Texinfo/XS/main/converter_types.h (FILE_NAME_PATH_COUNTER)
+	(SPECIAL_UNIT_DIRECTION, CONVERTER), tp/Texinfo/XS/main/tree_types.h
+	(OUTPUT_UNIT), tp/Texinfo/XS/main/utils.h (FILE_SOURCE_INFO): set
+	output units and elements to be const whenever relevant to make sure
+	that the tree and the output units are not modified.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (store_additional_info): set
+	input element as const.
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/indices_in_conversion.c
+	(index_content_element), tp/Texinfo/XS/main/builtin_commands.c
+	(element_command_name, element_builtin_cmd),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal, convert_to_texinfo)
+	(link_element_to_texi, target_element_to_texi_label),
+	tp/Texinfo/XS/main/debug.c (debug_element_command_name)
+	(print_element_debug, debug_print_element), tp/Texinfo/XS/main/extra.c
+	(lookup*), tp/Texinfo/XS/main/utils.c (get_label_element): add const
+	to elements in input of soe functions, especially for conversion to
+	Texinfo, to make sure that the tree is not modified by the conversion.
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/node_name_normalization.c (normalize_top_name)
+	(convert_to_identifier): never free input of normalize_top_name,
+	result always need to be freed.
+
+	* tp/Texinfo/XS/main/node_name_normalization.c (normalize_top_name)
+	(unicode_to_protected, protect_unicode_char): set input text to be
+	const.
+
+2023-11-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/def.c (split_delimiters, split_def_args),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(protect_first_parenthesis, protect_text)
+	(protect_hashchar_at_line_beginning_internal): call relocate source
+	marks only if there are source marks.  Do not initialize variables
+	that do not need to be.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (register_converter),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/get_perl_info.c
+	(converter_initialize), tp/Texinfo/XS/main/utils.c: use a local
+	variable as initial converter before calling register_converter. Pass
+	converter to converter_initialize. Remove new_converter function.
+
+	* tp/Texinfo/XS/convert/converter.c (set_global_document_commands),
+	tp/Texinfo/XS/main/utils.c (set_informative_command_value)
+	(set_global_document_command): pass options and global commands to
+	set_informative_command_value and set_global_document_command, not
+	converters.
+
+	* tp/Texinfo/XS/main/converter_types.h (TRANSLATED_SUI_ASSOCIATION),
+	tp/Texinfo/XS/main/utils.c: move TRANSLATED_SUI_ASSOCIATION to
+	converter_types.h.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_convert_output),
+	tp/Texinfo/XS/main/build_perl_info.c (build_output_files_information):
+	pass converter SV to build_output_files_information and pass directly
+	OUTPUT_FILES_INFORMATION.
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_la_SOURCES),
+	tp/Texinfo/XS/main/converter_types.h,
+	tp/Texinfo/XS/main/document_types.h (enum error_type, ERROR_MESSAGE)
+	(ERROR_MESSAGE_LIST, GLOBAL_INFO, DOCUMENT, EXPANDED_FORMAT): move
+	parsed document types to a new file, document_types.h. Update includes
+	for all the files.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_global_unit_direction_names, html_conversion_context_type_names)
+	(html_formatting_reference_names, html_argument_formatting_type_names)
+	(special_unit_info_type_names, translated_special_unit_info),
+	tp/Texinfo/XS/main/utils.c: move code used in HTML conversion to
+	convert_html.c.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (split_custom_heading_command_contents),
+	tp/t/init/translation_in_parser_in_translation.pm,
+	tp/Texinfo/XS/main/utils.c: do not use
+	trim_spaces_comment_from_content in
+	split_custom_heading_command_contents and
+	translation_in_parser_in_translation.pm and remove
+	trim_spaces_comment_from_content.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/floats.c (add_to_listoffloats_list)
+	(float_list_to_listoffloats_list, destroy_listoffloats_list),
+	tp/Texinfo/XS/main/tree_types.h (LISTOFFLOATS_TYPE),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (number_floats):
+	use ELEMENT_LIST for float_list in listoffloats data, directly and not
+	as a pointer.  Change add_to_listoffloats_list to return the
+	listoffloats type if found, and create a new one otherwise.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	Separate types for list of floats and list of listoffloats
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_document),
+	tp/Texinfo/XS/main/converter_types.h (DOCUMENT),
+	tp/Texinfo/XS/main/document.c
+	(destroy_document_information_except_tree),
+	tp/Texinfo/XS/main/floats.c (add_to_float_record_list)
+	(add_to_listoffloats_list, find_float_type)
+	(float_list_to_listoffloats_list, destroy_listoffloats_list),
+	tp/Texinfo/XS/main/tree_types.h (LISTOFFLOATS_TYPE)
+	(LISTOFFLOATS_TYPE_LIST, FLOAT_RECORD_LIST),
+	tp/Texinfo/XS/parsetexi/parser.c (store_document),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (number_floats):
+	add new types for listoffloats lists LISTOFFLOATS_TYPE_LIST instead of
+	using the same as for floats lists. Rename a field of floats lists
+	structure. Add add_to_listoffloats_list as a distinct function to add
+	to LISTOFFLOATS_TYPE_LIST. Update DOCUMENT and functions to use the
+	relevant types.
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block): no
+	initialization of float_type, it is not used and is confusing.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.h (parser_float_list),
+	tp/Texinfo/XS/parsetexi/parser.c (store_document),
+	tp/Texinfo/XS/parsetexi/end_line.c (parser_float_list)
+	(end_line_starting_block): rename global float_records as
+	parser_float_list.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(prepare_index_entries_targets), tp/Texinfo/XS/convert/converter.c
+	(comma_index_subentries_tree, free_comma_index_subentries_tree): have
+	comma_index_subentries_tree return an ELEMENT_LIST.
+
+	* tp/Texinfo/XS/main/output_unit.c (split_by_node): set pending_parts
+	to be an ELEMENT_LIST.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (rearrange_tree_beginning): use an
+	ELEMENT_LIST for first_types.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.c (text_accents),
+	tp/Texinfo/XS/main/convert_utils.c (find_innermost_accent_contents)
+	(destroy_accent_stack), tp/Texinfo/XS/main/convert_utils.h
+	(ACCENTS_STACK): put the stack in ACCENTS_STACK directly, not as a
+	pointer.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.c (ascii_accent)
+	(ascii_accents_internal), tp/Texinfo/XS/main/unicode.c
+	(unicode_accent, format_eight_bit_accents_stack)
+	(format_unicode_accents_stack_internal, encoded_accents),
+	tp/Texinfo/XS/main/utils.c (normalize_encoding_name): make some
+	variables const to make sure that the accent formatting function do
+	not modify their associated elements, texts or accent commands lists.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.c (ascii_accent)
+	(ascii_accents_internal): call encoded_accents with ascii_accent as
+	argument, not ascii_accents_internal.  Add an unused set_case argument
+	to ascii_accent to have a prototype matching with the prototype used
+	by encoded_accents.
+
+	* tp/Texinfo/XS/main/convert_to_text.c (ascii_accents_internal),
+	tp/Texinfo/XS/main/convert_utils.c (find_innermost_accent_contents)
+	(destroy_accent_stack), tp/Texinfo/XS/main/convert_utils.h
+	(ACCENTS_STACK), tp/Texinfo/XS/main/unicode.c
+	(format_eight_bit_accents_stack, encoded_accents)
+	(format_unicode_accents_stack_internal): use an ELEMENT_LIST for the
+	ACCENTS_STACK stack.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (prepare_special_units)
+	(set_root_commands_targets_node_files),
+	tp/Texinfo/XS/main/build_perl_info.c (build_elements_list)
+	(build_document), tp/Texinfo/XS/main/converter_types.h (DOCUMENT),
+	tp/Texinfo/XS/main/document.c (register_document_nodes_list)
+	(register_document_sections_list)
+	(destroy_document_information_except_tree),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfo.xs
+	(sectioning_structure, nodes_tree),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (sectioning_structure)
+	(nodes_tree, check_nodes_are_referenced, set_menus_node_directions)
+	(complete_node_tree_with_menus): use ELEMENT_LIST for nodes_list and
+	sections_list.
+
+	* tp/Texinfo/XS/structuring_transfo/StructuringTransfo.xs
+	(fill_gaps_in_sectioning),
+	tp/Texinfo/XS/structuring_transfo/structuring.c
+	(get_node_node_childs_from_sectioning, new_complete_node_menu)
+	(print_down_menus, new_master_menu),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(fill_gaps_in_sectioning, insert_nodes_for_sectioning_commands)
+	(complete_node_menu, get_non_automatic_nodes_with_sections)
+	(complete_tree_nodes_menus, complete_tree_nodes_missing_menu): use
+	ELEMENT_LIST for fill_gaps_in_sectioning,
+	get_node_node_childs_from_sectioning, print_down_menus and
+	get_non_automatic_nodes_with_sections.
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(reassociate_to_node, insert_nodes_for_sectioning_commands): use
+	ELEMENT_LIST for new_previous.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c (new_list, destroy_list),
+	tp/Texinfo/XS/structuring_transfo/transformations.c (modify_tree)
+	(protect_text, protect_hashchar_at_line_beginning_internal)
+	(reference_to_arg_internal): add new_list and destroy_list, use those
+	functions.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c (insert_list_slice_into_list)
+	(insert_slice_into_contents, insert_list_slice_into_args)
+	(insert_list_slice_into_contents): add insert_list_slice_into_list,
+	use it in other functions, add insert_list_slice_into_args and
+	insert_list_slice_into_contents.  Remove
+	insert_contents_slice_into_args.
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c (modify_tree)
+	(reference_to_arg_internal, protect_text)
+	(protect_hashchar_at_line_beginning_internal): change function called
+	by modify_tree to return element lists instead of elements.  Update
+	functions use as modify_tree argument.
+
+2023-11-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/xspara.c (xspara_add_text):
+	Keep running total of return values of uc_width and pass it to
+	xspara_add__next.  Remove an apparently obsolete comment about
+	the width of accent characters.
+	(xspara__add_next): Take extra argument.  If non-negative, use for
+	the column count of the word, rather than using uc_width. This way
+	we avoid calling it twice for every character.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/get_perl_info.c
+	(get_sv_index_entries_sorted_by_letter): use
+	indices_info_index_by_name.  Use entry_idx_in_index for index in
+	index_entries.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(convert_output_output_unit_internal): free path_encoding.
+
+	* tp/Texinfo/XS/main/convert_utils.c: change in spacing.
+
+2023-11-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (HTML_COMMAND_STRUCT)
+	(register_format_context_command, convert_to_html_internal): set
+	context command context string dynamically.
+
+	* tp/Texinfo/XS/convert/converter.c (set_file_path): add more messages
+	for file paths already set/reset, as in perl, and handle memory
+	correctly in that case.
+
+2023-11-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/xspara.c (xspara__add_next, xspara_add_next):
+	Remove unnecessary casts to ucs4_t when calling uc_width.  Advice
+	from Bruno.
+
+2023-11-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Update required gnulib modules for XS
+
+	* tp/Texinfo/XS:
+	Run "gnulib-tool --remove-import wcwidth c32width c32isupper", and
+	"gnulib-tool --import unictype/ctype-upper".
+
+2023-11-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Revised locale-independent paragraph formatting.
+
+	* tp/Texinfo/XS/xspara.c (PARAGRAPH) <last_letter>:
+	Declare as char32_t instead of wchar_t.
+
+	(xspara_add_text, xspara__add_next): Use gnulib/libunstring
+	function u8_mbtouc instead of mbrtowc or btowc, uc_width instead
+	of wcwidth, and uc_is_upper instead of iswupper.
+
+	(xspara_init): Eliminate lengthy code attempting to switch to
+	a locale with UTF-8 encoding.
+
+	* tp/Texinfo/XS/Makefile.am (XSParagraph_la_LDFLAGS):
+	Link with $(LTLIBC32CONV), set from gnulib.
+
+	Patch originally applied 2023-11-09 and reverted 2023-11-10.
+	Advice to use uc_width instead of c32width from Bruno Haible.
+	c32width does not work for non-ASCII characters in the C locale.
+
+2023-11-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_finalize_output_state),
+	tp/Texinfo/XS/convert/converter.c (free_output_unit_files_file)
+	(clear_output_unit_files, free_output_unit_files)
+	(free_generic_converter): clear/free output_unit_files information.
+
+2023-11-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_finalize_output_state),
+	tp/Texinfo/XS/convert/converter.c (free_generic_converter),
+	tp/Texinfo/XS/main/convert_utils.c (free_unclosed_files)
+	(free_output_files_information, clear_output_files_information):
+	clear/free output_files_information.
+
+2023-11-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_destroy),
+	tp/Texinfo/XS/convert/convert_html.c
+	(reset_unset_no_arg_commands_formatting_context): free
+	html_command_conversion strings and trees for no args commands, free
+	no_arg_formatted_cmd, free translated_to_convert when replacing it in
+	reset_unset_no_arg_commands_formatting_context.
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv): comment out allocating memory for
+	style converting, as it is not used/tested/freed for now.
+
+2023-11-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_units_directions_files),
+	tp/Texinfo/XS/convert/convert_html.c (html_destroy_files_source_info):
+	free files_source_info.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_set_pages_files): free
+	top_node_filename_str, filename and output_unit_file_name file names
+	setting loop, and unit_file_name_paths.
+	
+	* tp/Texinfo/XS/convert/convert_html.c (html_translate_names):
+	free/destroy text or tree before replacing.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(convert_output_output_unit_internal): free encoded_out_filepath.
+
+	* tp/Texinfo/XS/main/output_unit.c (units_directions): use an
+	ELEMENT_LIST for up_list instead of an ELEMENT, and free.
+
+	* tp/Texinfo/XS/main/translations.c (replace_convert_substrings): free
+	convert_to_texinfo debug string.
+
+2023-11-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/converter_types.h (HCC_CONTEXT_TYPES_LIST),
+	tp/Texinfo/XS/main/utils.h: move definition of HCC_CONTEXT_TYPES_LIST
+	to main/converter_types.h.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_translated_names), tp/Texinfo/XS/convert/convert_html.c
+	(reset_unset_no_arg_commands_formatting_context)
+	(html_translate_names), tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER): change html_command_conversion in converter to be a two
+	dimension array with known size.
+
+2023-11-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove hevea support from texi2dvi
+
+	* util/texi2dvi (run_hevea, run_tex4ht): Remove.
+	(run_tex_suite): Call run_tex directly instead of run_core_conversion.
+	(run_core_conversion): Remove.
+
+	(top level): Remove options --info, --html, --text, --tex4ht.
+	(out_lang_set, out_lang_ext, out_lang_tex):
+	Do not recognize "html", "info" or "text".
+	(usage): Update usage message.
+
+	(latex2html): Remove variable.
+	(index_file_p, make_tex_cmd, run_index, run_tex_suite):
+	Do not check value of $latex2html.
+
+	It did not work at all due to calls to make_tex_cmd in
+	run_tex_suite (added 2019-04-08) and in make_openout_text, called
+	via decide_aux_files_method (added 2015-09-02).  Even when I
+	disabled those calls, there were other errors.	Since nobody
+	has complained in 8 years, it is probably not important, and
+	it complicates the script significantly anyway, integrated into
+	many parts of the code for a very rare if non-existent use case.
+
+2023-11-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (destroy),
+	tp/Texinfo/Convert/Converter.pm (import, destroy),
+	tp/Texinfo/Convert/Text.pm(import, destroy),
+	tp/Texinfo/XS/convert/convert_html.c (html_destroy),
+	tp/Texinfo/XS/convert/converter.c (free_generic_converter),
+	tp/Texinfo/XS/main/convert_utils.c (destroy_translated_commands),
+	tp/t/test_utils.pl (test), tp/texi2any.pl: add function, XS interface
+	and C code to destroy a converter, to free its memory, called both in
+	texi2any.pl and test_utils.pl.
+
+2023-11-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_finalize_output_state),
+	tp/Texinfo/XS/convert/convert_html.c (html_finalize_output_state)
+	(html_check_transfer_state_finalization): add checks on final
+	converter output state and on state used to sync perl converter state
+	after the last sync of perl state.
+
+2023-11-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_finalize_output_state),
+	tp/Texinfo/XS/convert/indices_in_conversion.c (destroy_merged_indices)
+	(destroy_indices_sorted_by_letter): free merged indices, indices
+	sorted by letter and title_titlepage.
+
+2023-11-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree_types.h (INDEX),
+	tp/Texinfo/XS/main/converter_types.h (MERGED_INDEX)
+	(LETTER_INDEX_ENTRIES, INDEX_SORTED_BY_LETTER): rename structure
+	fields related to index numberof entries or space for entries and
+	letter number.  Update code using those structures.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_single_index_data):
+	rename i as index.
+
+	* tp/Texinfo/XS/convert/convert_html.c: reindent.
+
+2023-11-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(get_index_entries_sorted_by_letter),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER),
+	tp/Texinfo/XS/main/get_perl_info.c
+	(get_sv_index_entries_sorted_by_letter): set index_entries_by_letter
+	as a pointer on INDEX_SORTED_BY_LETTER, not a pointer on pointer.
+
+	* tp/Texinfo/XS/main/get_perl_info.c
+	(get_sv_index_entries_sorted_by_letter): add a zeroed entry to mark
+	the end of the array. strdup letter string. Check that index entry
+	index name is set in perl. When finding the index entry in C index
+	data, verify that the index number from perl leads to an index
+	consistent with index size. Debug message if the index entry is not
+	found.
+
+2023-11-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/indices_in_conversion.c (merge_indices): add a
+	trailing zeroed merged index index entry.
+
+2023-11-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/texi2dvi (move_to_dest): When --output is given, report
+	that a file was moved successfully.  Error out if the file could
+	not be moved.
+
+	Jonathan Dushoff <dushoff@mcmaster.ca> reported that the output
+	with the --output option was confusing, as TeX would not print
+	the name of the final location.
+
+2023-11-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/texi2dvi (move_to_dest): Rearrange code slightly
+	for simplicity and change a variable name.  No functional
+	changes intended.
+
+2023-11-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/texi2dvi (move_to_dest): Only take a single argument,
+	as it is only called with multiple arguments when outputing
+	to Info with hevea, which is an extremely niche use case.  In
+	fact, running with hevea (--html or --info on a LaTeX source)
+	appears to be broken.  (Loop introduced on 2006-06-27.)
+	(run_hevea): Put the loop here.  Code not tested.
+
+2023-11-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (import, _XS_html_merge_index_entries)
+	(_sort_index_entries), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_merge_index_entries), tp/Texinfo/XS/convert/convert_html.c
+	(html_merge_index_entries): rename sort_index_entries as
+	html_merge_index_entries, add an XS override and call it.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_merge_index_entries),
+	tp/Texinfo/XS/convert/indices_in_conversion.c (merge_indices),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER): set index_entries as
+	a pointer on MERGED_INDEX, not a pointer on pointer.
+
+	* tp/Texinfo/XS/convert/indices_in_conversion.c (merge_indices):
+	update and fix code, in particular to store index without another
+	index merged in.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_conversion_units),
+	tp/Texinfo/XS/convert/convert_html.c
+	(set_root_commands_targets_node_files, html_set_pages_files)
+	(convert_output_output_unit_internal),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER),
+	tp/Texinfo/XS/main/get_perl_info.c (converter_initialize): put
+	error_messages directly in converter, not as a pointer.
+
+	* tp/Texinfo/XS/main/errors.c (wipe_error_messages)
+	(wipe_error_message_list, clear_error_message_list),
+	tp/Texinfo/XS/main/build_perl_info.c (pass_converter_errors): add
+	clear_error_message_list that clears messages but does not deallocate
+	the list memory.  Use clear_error_message_list instead of
+	wipe_error_message_list to reuse memory in converter.
+
+	* tp/Texinfo/XS/main/utils.c (new_expanded_formats): remove format
+	argument. Update callers.
+
+2023-11-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_set_pages_files): strdup
+	on the special_unit_filename for associated output units.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(special_unit_variety_direction_index, html_converter_initialize),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER):
+	remove varieties_direction_index, do the index computation in
+	special_unit_variety_direction_index.
+
+	* tp/Texinfo/XS/convert/convert_html.c (reset_html_targets)
+	(html_initialize_output_state, html_finalize_output_state): add
+	reset_html_targets to free targets contents, called in
+	html_finalize_output_state both for html_targets and
+	html_special_targets.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_finalize_output_state):
+	clear seen_ids, free special_units_direction_name,
+	output_unit_file_indices and special_unit_file_indices.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_global_units_directions)
+	(pass_html_global_units_directions),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_prepare_output_units_global_targets),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER): change
+	special_units_direction_name to be a list of SPECIAL_UNIT_DIRECTION,
+	not a list of pointers.
+
+	* tp/Texinfo/XS/main/get_perl_info.c (set_translated_commands),
+	tp/Texinfo/XS/main/convert_utils.c (translated_command_tree),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER): change
+	translated_commands to be a list of TRANSLATED_COMMAND, not a list of
+	pointers.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_set_pages_files): no
+	memset for special_unit_file_indices and output_unit_file_indices as
+	they are filled anyway.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_translated_names): use enum and SUIT_type_none.
+
+2023-11-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Revert change on 2023-11-09 "Locale-independent XS paragraph
+	formatting".
+
+	This gives inconsistent test results between XS and pure Perl.
+	Reverting until this can be investigated.
+
+2023-11-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(reset_translated_special_unit_info_tree)
+	(html_finalize_output_state, html_translate_names): add function
+	reset_translated_special_unit_info_tree based on code from
+	html_translate_names and use it in html_finalize_output_state too.
+
+	* tp/Texinfo/XS/main/converter_types.h (enum special_unit_info_type)
+	(enum special_unit_info_tree), tp/Texinfo/XS/convert/convert_html.c
+	(special_unit_info_tree, reset_translated_special_unit_info_tree),
+	tp/Texinfo/XS/main/utils.c (translated_special_unit_info),
+	tp/Texinfo/XS/main/utils.h (TRANSLATED_SUI_ASSOCIATION): add *_none
+	set to -1 for special_unit_info_type and special_unit_info_tree.  Use
+	enum as types more.
+
 2023-11-09  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_conversion_units),

@@ -43,9 +43,9 @@
 #include "cmd_text.c"
 
 char *
-ascii_accent (char *text, ELEMENT *command)
+ascii_accent (const char *text, const ELEMENT *command, int set_case)
 {
-  enum command_id cmd = command->cmd;
+  const enum command_id cmd = command->cmd;
   TEXT accent_text;
 
   text_init (&accent_text);
@@ -81,7 +81,8 @@ ascii_accent (char *text, ELEMENT *command)
 }
 
 char *
-ascii_accents_internal (char *text, ELEMENT *stack, int set_case)
+ascii_accents_internal (const char *text, const ELEMENT_STACK *stack,
+                        int set_case)
 {
   char *result;
   int i;
@@ -91,10 +92,10 @@ ascii_accents_internal (char *text, ELEMENT *stack, int set_case)
   else
     result = strdup (text);
 
-  for (i = stack->contents.number - 1; i >= 0; i--)
+  for (i = stack->top - 1; i >= 0; i--)
     {
-      ELEMENT *accent_command = stack->contents.list[i];
-      char *formatted_accent = ascii_accent (result, accent_command);
+      const ELEMENT *accent_command = stack->stack[i];
+      char *formatted_accent = ascii_accent (result, accent_command, set_case);
       free (result);
       result = formatted_accent;
     }
@@ -107,7 +108,7 @@ new_text_options (void)
 {
   TEXT_OPTIONS *options = malloc (sizeof (TEXT_OPTIONS));
   memset (options, 0, sizeof (TEXT_OPTIONS));
-  options->expanded_formats = new_expanded_formats (0);
+  options->expanded_formats = new_expanded_formats ();
   options->NUMBER_SECTIONS = -1;
   memset (&options->include_directories, 0, sizeof (STRING_LIST));
   return options;
@@ -174,7 +175,7 @@ copy_options_for_convert_text (CONVERTER *self,
 
 /* format an accent command and nested accents within as Text. */
 char *
-text_accents (ELEMENT *accent, char *encoding, int set_case)
+text_accents (const ELEMENT *accent, char *encoding, int set_case)
 {
   ACCENTS_STACK *accent_stack = find_innermost_accent_contents (accent);
   char *text;
@@ -190,11 +191,11 @@ text_accents (ELEMENT *accent, char *encoding, int set_case)
   else
     text = strdup ("");
 
-  result = encoded_accents (text, accent_stack->stack, encoding,
-                            ascii_accents_internal, set_case);
+  result = encoded_accents (text, &accent_stack->stack, encoding,
+                            ascii_accent, set_case);
 
   if (!result)
-    result = ascii_accents_internal (text, accent_stack->stack, set_case);
+    result = ascii_accents_internal (text, &accent_stack->stack, set_case);
   free (text);
   destroy_accent_stack (accent_stack);
   destroy_text_options (text_options);
@@ -203,7 +204,7 @@ text_accents (ELEMENT *accent, char *encoding, int set_case)
 
 /* result to be freed by caller */
 char *
-brace_no_arg_command (ELEMENT *e, TEXT_OPTIONS *options)
+brace_no_arg_command (const ELEMENT *e, TEXT_OPTIONS *options)
 {
   char *result = 0;
   enum command_id cmd = e->cmd;
@@ -269,7 +270,7 @@ static const char *underline_symbol[5] = {"*", "*", "=", "-", "."};
 /* Return the text of an underlined heading, possibly indented. */
 /* return to be freed by caller */
 char *
-text_heading (ELEMENT *current, char *text, OPTIONS *options,
+text_heading (const ELEMENT *current, const char *text, OPTIONS *options,
               int numbered, int indent_length)
 {
   int i;
@@ -336,11 +337,11 @@ text_heading (ELEMENT *current, char *text, OPTIONS *options,
 #define ADD(x) text_append (result, x)
 
 void
-convert_to_text_internal (ELEMENT *element, TEXT_OPTIONS *text_options,
+convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
                           TEXT *result);
 
 void
-convert_to_text_internal (ELEMENT *element, TEXT_OPTIONS *text_options,
+convert_to_text_internal (const ELEMENT *element, TEXT_OPTIONS *text_options,
                           TEXT *result)
 {
   enum command_id data_cmd = 0;
@@ -711,7 +712,7 @@ convert_to_text_internal (ELEMENT *element, TEXT_OPTIONS *text_options,
               text_init (&args_line);
               for (i = 0; i < element->args.number; i++)
                 {
-                  ELEMENT *arg = element->args.list[i];
+                  const ELEMENT *arg = element->args.list[i];
                   TEXT converted_arg;
                   text_init (&converted_arg);
                   convert_to_text_internal (arg, text_options, &converted_arg);
@@ -775,7 +776,7 @@ convert_to_text_internal (ELEMENT *element, TEXT_OPTIONS *text_options,
         }
       else if (element->cmd == CM_sp)
         {
-          ELEMENT *misc_args = lookup_extra_element (element, "misc_args");
+          const ELEMENT *misc_args = lookup_extra_element (element, "misc_args");
           /* misc_args can be 0 with invalid args */
           if (misc_args && misc_args->contents.number > 0)
             {
@@ -834,8 +835,8 @@ convert_to_text_internal (ELEMENT *element, TEXT_OPTIONS *text_options,
     {
       PARSED_DEF *parsed_def = definition_arguments_content (element);
       ELEMENT *parsed_definition_category
-         = definition_category_tree(0, /* $options->{'converter'} */
-                                    element);
+         = definition_category_tree (0, /* $options->{'converter'} */
+                                     element);
       if (parsed_definition_category)
         {
           ELEMENT *converted_element = new_element (ET_NONE);
@@ -910,7 +911,7 @@ convert_to_text_internal (ELEMENT *element, TEXT_OPTIONS *text_options,
 
       for (i = 0; i < element->contents.number; i++)
         {
-          ELEMENT *content = element->contents.list[i];
+          const ELEMENT *content = element->contents.list[i];
           convert_to_text_internal (content,
                                     text_options, result);
         }
@@ -932,7 +933,7 @@ convert_to_text_internal (ELEMENT *element, TEXT_OPTIONS *text_options,
 
 /* Return value to be freed by caller. */
 char *
-convert_to_text (ELEMENT *root, TEXT_OPTIONS *text_options)
+convert_to_text (const ELEMENT *root, TEXT_OPTIONS *text_options)
 {
   TEXT result;
 

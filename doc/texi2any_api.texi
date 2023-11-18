@@ -538,6 +538,31 @@ customization of translated strings.
 @node Simple Customization for Simple Commands with Braces
 @section Simple Customization for Simple Commands with Braces
 
+@node Customization of Commands Converting to Uppercase
+@subsection Customization of Commands Converting to Uppercase
+
+@cindex HTML determine commands converting to uppercase
+
+Formatting of @code{@@sc} may involve uppercasing the argument.
+The specification of @@-command argument uppercasing can be changed with
+@code{texinfo_register_upper_case_command}:
+
+@defun texinfo_register_upper_case_command ($command_name, $value)
+@var{$command_name} is the @@-command name, without the leading @@.
+@var{$value} sets or unsets uppercasing of argument.
+@end defun
+
+For example, to prevent @code{@@sc} argument from being upper-cased and set
+@code{@@var} argument to be uppercased:
+
+@example
+texinfo_register_upper_case_command('sc', 0);
+texinfo_register_upper_case_command('var', 1);
+@end example
+
+@node Simple Output Customization for Simple Commands with Braces
+@subsection Simple Output Customization for Simple Commands with Braces
+
 @cindex HTML customization for simple commands
 @cindex Simple commands, customizing HTML for
 @cindex Style commands, customizing HTML for
@@ -583,7 +608,7 @@ texinfo_register_style_command_formatting('sansserif', undef, 1,
 
 To output the formatted argument of @code{@@t} as is:
 @example
-foreach my $context ('normal', 'example', string') @{
+foreach my $context ('normal', 'preformatted', 'string') @{
   texinfo_register_style_command_formatting ('t', undef,
                                              undef, $context);
 @}
@@ -2653,10 +2678,20 @@ if ($converter->in_string()) @{
 Conversion and formatting functions should test if in preformatted
 context to convert accordingly. @xref{Init File Expansion Contexts}.
 
-To determine if in preformatted context, the functions is @code{in_preformatted}:
+To determine if in preformatted context, the functions is
+@code{in_preformatted_context}:
 
-@deftypefun {@var{$in_preformatted} =} @var{$converter}->in_preformatted ()
+@deftypefun {@var{$in_preformatted} =} @var{$converter}->in_preformatted_context ()
 Return true if in preformatted context.
+@end deftypefun
+
+Another function tells if within a preformatted command:
+@deftypefun {@var{$inside_preformatted} =} @var{$converter}->inside_preformatted ()
+Return true if within a preformatted block command such as
+@code{@@preformatted}, @code{@@format}.
+
+It is not exactly the same as preformatted context, for instance menu comments
+are in preformatted context even if not in a preformatted block command.
 @end deftypefun
 
 If in preformatted context, it is possible to get preformatted @@-commands and
@@ -2683,7 +2718,8 @@ foreach my $pre_class (@@pre_classes) @{
 @}
 @end example
 
-@xref{Simple Customization of Containers} on customizing containers preformatted class.
+@xref{Simple Customization of Containers} on customizing containers
+preformatted class.
 
 
 @node Text Formatting Context
