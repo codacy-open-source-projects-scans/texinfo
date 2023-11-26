@@ -69,8 +69,17 @@ xml_accents
 
 $VERSION = '7.1dev';
 
+# XS parser and not explicitely unset
+my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
+                        or $ENV{TEXINFO_XS} ne 'omit')
+                       and (not defined($ENV{TEXINFO_XS_PARSER})
+                            or $ENV{TEXINFO_XS_PARSER} eq '1')
+                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
+                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+
 my $XS_convert = 0;
-$XS_convert = 1 if (defined $ENV{TEXINFO_XS_CONVERT}
+$XS_convert = 1 if ($XS_structuring
+                    and defined $ENV{TEXINFO_XS_CONVERT}
                     and $ENV{TEXINFO_XS_CONVERT} eq '1');
 
 our $module_loaded = 0;
@@ -1259,24 +1268,21 @@ sub float_type_number($$)
   if ($float->{'extra'}->{'float_type'} ne '') {
     $type_element = $float->{'args'}->[0];
   }
+  my $float_number = $float->{'extra'}->{'float_number'};
 
   my $tree;
   if ($type_element) {
-    if (defined($float->{'extra'})
-        and defined($float->{'extra'}->{'float_number'})) {
+    if (defined($float_number)) {
       $tree = $self->gdt("{float_type} {float_number}",
-          {'float_type' => $type_element,
-            'float_number'
-                => {'text' => $float->{'extra'}->{'float_number'}}});
+                         {'float_type' => $type_element,
+                          'float_number' => {'text' => $float_number}});
     } else {
       $tree = $self->gdt("{float_type}",
-          {'float_type' => $type_element});
+                         {'float_type' => $type_element});
     }
-  } elsif (defined($float->{'extra'})
-           and defined($float->{'extra'}->{'float_number'})) {
+  } elsif (defined($float_number)) {
     $tree = $self->gdt("{float_number}",
-       {'float_number'
-           => {'text' => $float->{'extra'}->{'float_number'}}});
+                       {'float_number' => {'text' => $float_number}});
   }
   return $tree;
 }

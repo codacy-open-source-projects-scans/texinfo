@@ -40,7 +40,7 @@ AC_DEFUN([lookup_perl_conf],
          [AC_MSG_CHECKING([Perl configuration value $1])
           fetch_conf $1
           AC_MSG_RESULT([$conf_value])
-          AC_SUBST([PERL_CONF_$1], [$conf_value])
+          PERL_CONF_$1=$conf_value
 ])
 
 AC_DEFUN([lookup_perl_conf_values],
@@ -68,6 +68,11 @@ AC_ARG_VAR([PERL_EXT_CPPFLAGS], [C preprocessor flags for a Perl extension])
 AC_ARG_VAR([PERL_EXT_LDFLAGS], [Linker flags for a Perl extension])
 AC_ARG_VAR([PERL_EXT_CC], [Compiler for a Perl extension])
 
+perl_conf_CFLAGS=
+perl_conf_LDFLAGS=
+XSUBPPARGS=
+PERL_INC=
+
 # See (automake)Conditional Subdirectories.  Even if --disable-perl-xs
 # is given, we still need to configure this directory minimally, so that
 # "make dist" will work.
@@ -93,12 +98,16 @@ if test x$disable_xs != xyes; then
   # flags for linking the extension, e.g. -rpath.
   lookup_perl_conf([ccdlflags])
 
+  perl_conf_CFLAGS="$PERL_CONF_ccflags $PERL_CONF_optimize $PERL_CONF_cccdlflags"
+  perl_conf_LDFLAGS="$PERL_CONF_ccdlflags"
+
   # Override these variables set by configure at the top level, because 
   # the compiler used in this subdirectory might be different.
-  # Change these now so they are used in the checks that follow.
-  CFLAGS="$PERL_EXT_CFLAGS $PERL_CONF_ccflags $PERL_CONF_optimize $PERL_CONF_cccdlflags"
+  # Change these now so they are used in the checks that follow so that
+  # we are using the same flags for the checks as for the build.
+  CFLAGS="$PERL_EXT_CFLAGS $perl_conf_CFLAGS"
   CPPFLAGS=$PERL_EXT_CPPFLAGS
-  LDFLAGS="$PERL_EXT_LDFLAGS $PERL_CONF_ccdlflags"
+  LDFLAGS="$PERL_EXT_LDFLAGS $perl_conf_LDFLAGS"
   
   lookup_perl_conf([libperl])
   # Change libperl.so into -lperl to indicate a library dependency to 
@@ -110,9 +119,14 @@ if test x$disable_xs != xyes; then
                    -e 's/^cygperl.*/-lperl/' `
   
   lookup_perl_conf_values([[archlibexp], [privlibexp]])
+  PERL_INC=${PERL_CONF_archlibexp}/CORE
+  XSUBPPARGS="-typemap ${PERL_CONF_privlibexp}/ExtUtils/typemap"
   
   AC_CONFIG_HEADERS([config.h:config.in])
 fi # not disable_xs
+
+AC_SUBST([PERL_INC], [$PERL_INC])
+AC_SUBST([XSUBPPARGS], [$XSUBPPARGS])
 
 
 AC_PROG_CC
@@ -136,13 +150,6 @@ GL_GNULIB_MDA_FDOPEN=0
 GL_GNULIB_MDA_MKTEMP=0
 GL_GNULIB_MDA_PUTENV=0
 
-host_needs_no_undefined=no
-case "$host" in *-mingw32 | *-mingw64 | *-msdosdjgpp | *-cygwin )
-  host_needs_no_undefined=yes ;;
-esac     
-AM_CONDITIONAL([HOST_NEEDS_NO_UNDEFINED],
-               [test "x$host_needs_no_undefined" = "xyes"])
-
 AM_CONDITIONAL([HAVE_ICONV],
                [test "x$am_func_iconv" = "xyes"])
 
@@ -157,6 +164,16 @@ AM_CONDITIONAL([HAVE_ICONV],
 # CPPFLAGS-like variable, the main CPPFLAGS is modified.
 CFLAGS=$PERL_EXT_CFLAGS
 LDFLAGS=$PERL_EXT_LDFLAGS
+
+# Use the -no-undefined flag on MS-Windows.  See info node
+# `(gnulib)Libtool and Windows'.  The -L and -l options after it show
+# where to find the undefined symbols.
+case "$host" in *-mingw32 | *-mingw64 | *-msdosdjgpp | *-cygwin )
+  perl_conf_LDFLAGS += -no-undefined -L$PERL_INC $PERL_CONF_libperl
+esac
+
+AC_SUBST([perl_conf_CFLAGS], [$perl_conf_CFLAGS])
+AC_SUBST([perl_conf_LDFLAGS], [$perl_conf_LDFLAGS])
 
 AC_CONFIG_FILES([Makefile gnulib/lib/Makefile])
 AC_OUTPUT

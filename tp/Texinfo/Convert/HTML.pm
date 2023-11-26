@@ -89,8 +89,17 @@ use vars qw($VERSION @ISA);
 
 $VERSION = '7.1dev';
 
+# XS parser and not explicitely unset
+my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
+                        or $ENV{TEXINFO_XS} ne 'omit')
+                       and (not defined($ENV{TEXINFO_XS_PARSER})
+                            or $ENV{TEXINFO_XS_PARSER} eq '1')
+                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
+                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+
 my $XS_convert = 0;
-$XS_convert = 1 if (defined $ENV{TEXINFO_XS_CONVERT}
+$XS_convert = 1 if ($XS_structuring
+                    and defined $ENV{TEXINFO_XS_CONVERT}
                     and $ENV{TEXINFO_XS_CONVERT} eq '1');
 
 my %XS_overrides = (
@@ -113,6 +122,14 @@ my %XS_conversion_overrides = (
    => "Texinfo::Convert::ConvertXS::html_new_document_context",
   "Texinfo::Convert::HTML::_pop_document_context"
    => "Texinfo::Convert::ConvertXS::html_pop_document_context",
+  "Texinfo::Convert::HTML::register_opened_section_level"
+   => "Texinfo::Convert::ConvertXS::html_register_opened_section_level",
+  "Texinfo::Convert::HTML::close_registered_sections_level"
+   => "Texinfo::Convert::ConvertXS::html_close_registered_sections_level",
+  "Texinfo::Convert::HTML::html_attribute_class"
+   => "Texinfo::Convert::ConvertXS::html_attribute_class",
+  "Texinfo::Convert::HTML::html_get_css_elements_classes"
+   => "Texinfo::Convert::ConvertXS::html_get_css_elements_classes",
   "Texinfo::Convert::HTML::_XS_get_index_entries_sorted_by_letter"
    => "Texinfo::Convert::ConvertXS::get_index_entries_sorted_by_letter",
   "Texinfo::Convert::HTML::_XS_html_merge_index_entries"
@@ -225,9 +242,9 @@ sub _collect_css_element_class($$)
     if ($self->{'document_global_context'}) {
       $self->{'document_global_context_css'}->{$element_class} = 1;
     } elsif (defined($self->{'current_filename'})) {
-      $self->{'file_css'}->{$self->{'current_filename'}} = {}
-        if (!$self->{'file_css'}->{$self->{'current_filename'}});
-      $self->{'file_css'}->{$self->{'current_filename'}}->{$element_class} = 1;
+      $self->{'page_css'}->{$self->{'current_filename'}} = {}
+        if (!$self->{'page_css'}->{$self->{'current_filename'}});
+      $self->{'page_css'}->{$self->{'current_filename'}}->{$element_class} = 1;
     }
   }
 }
@@ -301,17 +318,18 @@ sub html_get_css_elements_classes($;$)
                               %{$self->{'document_global_context_css'}} );
   }
 
-  if (defined($filename) and $self->{'file_css'}
-      and $self->{'file_css'}->{$filename}) {
+  if (defined($filename) and $self->{'page_css'}
+      and $self->{'page_css'}->{$filename}) {
     %css_elements_classes = ( %css_elements_classes,
-                              %{$self->{'file_css'}->{$filename}} );
+                              %{$self->{'page_css'}->{$filename}} );
   }
 
   if ($css_elements_classes{'a.copiable-link'}) {
     $css_elements_classes{'span:hover a.copiable-link'} = 1;
   }
 
-  return sort(keys(%css_elements_classes));
+  my @result = sort(keys(%css_elements_classes));
+  return \@result;
 }
 
 sub close_html_lone_element($$) {
@@ -407,7 +425,7 @@ sub html_image_file_location_name($$$$)
           $image_path_encoding);
 }
 
-sub css_add_info($$$;$)
+sub css_add_info($$$)
 {
   my $self = shift;
   my $spec = shift;
@@ -418,38 +436,51 @@ sub css_add_info($$$;$)
     push @{$self->{'css_rule_lines'}}, $css_info;
   } elsif ($spec eq 'imports') {
     push @{$self->{'css_import_lines'}}, $css_info;
-  } else {
-    $self->{'css_element_class_styles'}->{$css_info} = $css_style;
   }
 }
 
-sub css_get_info($$;$) {
+sub css_set_selector_style($$$)
+{
+  my $self = shift;
+  my $css_info = shift;
+  my $css_style = shift;
+
+  $self->{'css_element_class_styles'}->{$css_info} = $css_style;
+}
+
+sub css_get_info($$) {
   my $self = shift;
   my $spec = shift;
   my $css_info = shift;
+  my @empty_array;
 
   if ($spec eq 'rules') {
     if (defined($self->{'css_rule_lines'})) {
-      return @{$self->{'css_rule_lines'}};
+      return $self->{'css_rule_lines'};
     } else {
-      return ();
+      return \@empty_array;
     }
   } elsif ($spec eq 'imports') {
     if (defined($self->{'css_import_lines'})) {
-      return @{$self->{'css_import_lines'}};
+      return $self->{'css_import_lines'};
     } else {
-      return ();
+      return \@empty_array;
     }
   } else {
-    if (defined($css_info)) {
-      if ($self->{'css_element_class_styles'}->{$css_info}) {
-        return $self->{'css_element_class_styles'}->{$css_info};
-      } else {
-        return undef;
-      }
-    } else {
-      return { %{$self->{'css_element_class_styles'}} };
-    }
+    my @result = sort(keys(%{$self->{'css_element_class_styles'}}));
+    return \@result;
+  }
+}
+
+sub css_selector_style($$)
+{
+  my $self = shift;
+  my $css_info = shift;
+
+  if ($self->{'css_element_class_styles'}->{$css_info}) {
+    return $self->{'css_element_class_styles'}->{$css_info};
+  } else {
+    return undef;
   }
 }
 
@@ -628,6 +659,10 @@ sub count_elements_in_filename($$$)
   my $self = shift;
   my $spec = shift;
   my $filename = shift;
+
+  if (!defined($filename)) {
+    confess("count_elements_in_filename: filename undef");
+  }
 
   if ($spec eq 'total') {
     if (defined($self->{'elements_in_file_count'}->{$filename})) {
@@ -1052,12 +1087,92 @@ sub footnote_location_href($$;$$$)
   return $href;
 }
 
+sub command_tree($$;$)
+{
+  my $self = shift;
+  my $command = shift;
+  my $no_number = shift;
+
+  if (!defined($command)) {
+    cluck "in command_tree command not defined";
+  }
+
+  if ($command->{'extra'} and $command->{'extra'}->{'manual_content'}) {
+    my $node_content = $command->{'extra'}->{'node_content'};
+    my $tree = {'type' => '_code',
+          'contents' => [{'text' => '('},
+                         $command->{'extra'}->{'manual_content'},
+                         {'text' => ')'}]};
+    if ($node_content) {
+      push @{$tree->{'contents'}}, $node_content;
+    }
+    return $tree;
+  }
+
+  my $target = $self->_get_target($command);
+  if ($target) {
+    if (!exists($target->{'tree'})) {
+      my $tree;
+      if ($command->{'type'}
+          and $command->{'type'} eq 'special_unit_element') {
+        my $special_unit_variety
+           = $command->{'associated_unit'}->{'special_unit_variety'};
+        $tree
+          = $self->special_unit_info('heading_tree',
+                                      $special_unit_variety);
+      } elsif ($command->{'cmdname'}
+               and ($command->{'cmdname'} eq 'node'
+                    or $command->{'cmdname'} eq 'anchor')) {
+        # FIXME is it possible not to have contents (nor args)?
+        $tree = {'type' => '_code',
+                 'contents' => [$command->{'args'}->[0]]};
+      } elsif ($command->{'cmdname'} and ($command->{'cmdname'} eq 'float')) {
+        $tree = $self->float_type_number($command);
+      } elsif (!$command->{'args'}->[0]
+               or !$command->{'args'}->[0]->{'contents'}
+               or !scalar(@{$command->{'args'}->[0]->{'contents'}})) {
+      } else {
+        my $section_number;
+        $section_number = $command->{'extra'}->{'section_number'}
+          if ($command->{'extra'}
+              and defined($command->{'extra'}->{'section_number'}));
+        if ($section_number
+            and ($self->get_conf('NUMBER_SECTIONS')
+                 or !defined($self->get_conf('NUMBER_SECTIONS')))) {
+          my $substituted_strings
+            = {'number' => {'text' => $section_number},
+               'section_title' => $command->{'args'}->[0]};
+
+          if ($command->{'cmdname'} eq 'appendix'
+              and $command->{'extra'}->{'section_level'} == 1) {
+            $tree = $self->gdt('Appendix {number} {section_title}',
+                               $substituted_strings);
+          } else {
+            # TRANSLATORS: numbered section title
+            $tree = $self->gdt('{number} {section_title}',
+                               $substituted_strings);
+          }
+        } else {
+          $tree = $command->{'args'}->[0];
+        }
+
+        $target->{'tree_nonumber'}
+          = $command->{'args'}->[0];
+      }
+      $target->{'tree'} = $tree;
+    }
+
+    return $target->{'tree_nonumber'} if ($no_number
+                                          and $target->{'tree_nonumber'});
+    return $target->{'tree'};
+  }
+  return undef;
+}
+
 # Return text to be used for a hyperlink to $COMMAND.
 # $TYPE refers to the type of value returned from this function:
 #  'text' - return text
-#  'tree' - return a tree
-#  'tree_nonumber' - return tree representing text without a chapter number
-#                    being included.
+#  'text_nonumber' - return text, without the section/chapter number
 #  'string' - return simpler text that can be used in element attributes
 sub command_text($$;$)
 {
@@ -1073,117 +1188,63 @@ sub command_text($$;$)
   }
 
   if ($command->{'extra'} and $command->{'extra'}->{'manual_content'}) {
-    my $node_content = [];
-    $node_content = $command->{'extra'}->{'node_content'}
-      if (defined($command->{'extra'}->{'node_content'}));
-    my $tree;
-    if ($command->{'extra'}->{'manual_content'}) {
-      $tree = {'type' => '_code',
-          'contents' => [{'text' => '('}, @{$command->{'extra'}->{'manual_content'}},
-                         {'text' => ')'}, @$node_content]};
-    } else {
-      $tree = {'type' => '_code',
-          'contents' => $node_content};
-    }
-    if ($type eq 'tree') {
-      return $tree;
-    } else {
-      if ($type eq 'string') {
-        $tree = {'type' => '_string',
-                 'contents' => [$tree]};
-      }
-      my $result = $self->convert_tree_new_formatting_context(
-        # FIXME check if $document_global_context argument would be needed?
-            $tree, $command->{'cmdname'}, 'command_text-manual_content');
-      return $result;
-    }
-  }
-
-  my $target = $self->_get_target($command);
-  if ($target) {
-    my $explanation;
-    $explanation = "command_text:$type \@$command->{'cmdname'}"
-       if ($command->{'cmdname'});
-    if (defined($target->{$type})) {
-      return $target->{$type};
-    }
-    my $tree;
-    if (!$target->{'tree'}) {
-      if ($command->{'type'}
-          and $command->{'type'} eq 'special_unit_element') {
-        my $special_unit_variety
-           = $command->{'associated_unit'}->{'special_unit_variety'};
-        $tree
-          = $self->special_unit_info('heading_tree',
-                                      $special_unit_variety);
-        $tree = {} if (!defined($tree));
-        $explanation = "command_text $special_unit_variety";
-      } elsif ($command->{'cmdname'} and ($command->{'cmdname'} eq 'node'
-                                          or $command->{'cmdname'} eq 'anchor')) {
-        # FIXME is it possible not to have contents (nor args)?
-        $tree = {'type' => '_code',
-                 'contents' => $command->{'args'}->[0]->{'contents'}};
-      } elsif ($command->{'cmdname'} and ($command->{'cmdname'} eq 'float')) {
-        $tree = $self->float_type_number($command);
-      } elsif (!$command->{'args'}->[0]
-               or !$command->{'args'}->[0]->{'contents'}
-               or !scalar(@{$command->{'args'}->[0]->{'contents'}})) {
-        if ($type eq 'tree' or $type eq 'tree_nonumber') {
-          return {};
-        } else {
-          return '';
-        }
-      } else {
-        if ($command->{'extra'}
-            and defined($command->{'extra'}->{'section_number'})
-            and ($self->get_conf('NUMBER_SECTIONS')
-                 or !defined($self->get_conf('NUMBER_SECTIONS')))) {
-          if ($command->{'cmdname'} eq 'appendix'
-              and $command->{'extra'}->{'section_level'} == 1) {
-            $tree = $self->gdt('Appendix {number} {section_title}',
-                    {'number' => {'text' => $command->{'extra'}
-                                                    ->{'section_number'}},
-                     'section_title'
-                                => $command->{'args'}->[0]});
-          } else {
-            # TRANSLATORS: numbered section title
-            $tree = $self->gdt('{number} {section_title}',
-                     {'number' => {'text' => $command->{'extra'}
-                                                       ->{'section_number'}},
-                     'section_title'
-                         => $command->{'args'}->[0]});
-          }
-        } else {
-          $tree = $command->{'args'}->[0];
-        }
-
-        $target->{'tree_nonumber'}
-          = $command->{'args'}->[0];
-      }
-      $target->{'tree'} = $tree;
-    } else {
-      $tree = $target->{'tree'};
-    }
-    return $target->{'tree_nonumber'} if ($type eq 'tree_nonumber'
-                                          and $target->{'tree_nonumber'});
-    return $tree if ($type eq 'tree' or $type eq 'tree_nonumber');
-
-    my $context_name = $command->{'cmdname'};
-    $context_name = $command->{'type'} if (!defined($context_name));
-    $self->_new_document_context($context_name, $explanation);
-
+    my $tree = command_tree($self, $command);
     if ($type eq 'string') {
       $tree = {'type' => '_string',
                'contents' => [$tree]};
     }
+    my $result = $self->convert_tree_new_formatting_context(
+      # FIXME check if $document_global_context argument would be needed?
+          $tree, $command->{'cmdname'}, 'command_text-manual_content');
+    return $result;
+  }
 
-    if ($type =~ /^(.*)_nonumber$/) {
-      $tree = $target->{'tree_nonumber'}
-        if (defined($target->{'tree_nonumber'}));
+  my $target = $self->_get_target($command);
+  if ($target) {
+    if (defined($target->{$type})) {
+      return $target->{$type};
     }
+    my $command_tree = $self->command_tree($command);
+    return '' if (!defined($command_tree));
+
+    my $explanation;
+    my $context_name;
+
+    if (defined($command->{'cmdname'})) {
+      my $cmdname = $command->{'cmdname'};
+      $context_name = $cmdname;
+      $explanation = "command_text:$type \@$cmdname";
+    } else {
+      $context_name = $command->{'type'};
+      if ($command->{'type'} eq 'special_unit_element') {
+        my $special_unit_variety
+          = $command->{'associated_unit'}->{'special_unit_variety'};
+        $explanation = "command_text $special_unit_variety";
+      }
+    }
+
+    $self->_new_document_context($context_name, $explanation);
+
+    my $selected_tree;
+
+    if ($type =~ /^(.*)_nonumber$/
+        and defined($target->{'tree_nonumber'})) {
+      $selected_tree = $target->{'tree_nonumber'};
+    } else {
+      $selected_tree = $command_tree;
+    }
+
+    my $tree_root;
+    if ($type eq 'string') {
+      $tree_root = {'type' => '_string',
+                    'contents' => [$selected_tree]};
+    } else {
+      $tree_root = $selected_tree;
+    }
+
     $self->{'ignore_notice'}++;
     push @{$self->{'referred_command_stack'}}, $command;
-    $target->{$type} = $self->_convert($tree, $explanation);
+    $target->{$type} = $self->_convert($tree_root, $explanation);
     pop @{$self->{'referred_command_stack'}};
     $self->{'ignore_notice'}--;
 
@@ -1279,8 +1340,6 @@ my %valid_direction_return_type = (
   # a string representing the direction to be used in contexts
   # not restricted in term of available formatting (ie with HTML elements)
   'text' => 1,
-  # Texinfo tree element representing the direction
-  'tree' => 1,
   # string representing the target, typically used as id and in href
   'target' => 1,
   # same as 'text', but select node in priority
@@ -1289,7 +1348,7 @@ my %valid_direction_return_type = (
   'section' => 1
 );
 
-foreach my $no_number_type ('text', 'tree', 'string') {
+foreach my $no_number_type ('text', 'string') {
   # without section number
   $valid_direction_return_type{$no_number_type .'_nonumber'} = 1;
 }
@@ -4180,11 +4239,11 @@ sub register_opened_section_level($$$)
 {
   my $self = shift;
   my $level = shift;
-  my $close = shift;
+  my $close_string = shift;
   while (@{$self->{'pending_closes'}} < $level) {
     push(@{$self->{'pending_closes'}}, "");
   }
-  push(@{$self->{'pending_closes'}}, $close);
+  push(@{$self->{'pending_closes'}}, $close_string);
 }
 
 sub close_registered_sections_level($$)
@@ -4195,13 +4254,12 @@ sub close_registered_sections_level($$)
     cluck 'close_registered_sections_level $level not defined';
   }
   my @closed_elements;
-  my $result = '';
   while (@{$self->{'pending_closes'}} > $level) {
-      my $close = pop @{$self->{'pending_closes'}};
-      push(@closed_elements, $close)
-        if ($close);
+      my $close_string = pop @{$self->{'pending_closes'}};
+      push(@closed_elements, $close_string)
+        if ($close_string ne "");
   }
-  return @closed_elements;
+  return \@closed_elements;
 }
 
 sub _convert_heading_command($$$$$)
@@ -4420,7 +4478,8 @@ sub _convert_heading_command($$$$$)
   my $heading_id;
   if ($opening_section) {
     my $level = $opening_section->{'extra'}->{'section_level'};
-    $result .= join('', $self->close_registered_sections_level($level));
+    my $closed_strings = $self->close_registered_sections_level($level);
+    $result .= join('', @{$closed_strings});
     $self->register_opened_section_level($level, "</div>\n");
 
     # use a specific class name to mark that this is the start of
@@ -5185,7 +5244,7 @@ sub _convert_itemize_command($$$$$)
   }
 
   if (defined($mark_class_name)
-      and defined($self->css_get_info('style', 'ul.mark-'.$mark_class_name))) {
+      and defined($self->css_selector_style('ul.mark-'.$mark_class_name))) {
     return $self->html_attribute_class('ul', [$cmdname,
                                               'mark-'.$mark_class_name])
         .">\n" . $content. "</ul>\n";
@@ -5537,14 +5596,14 @@ sub _convert_xref_commands($$$$)
     # file argument takes precedence over the file in the node (file)node entry
     if (defined($file_arg_tree) and $file ne '') {
       $label_element->{'extra'} = {} if (!$label_element->{'extra'});
-      $label_element->{'extra'}->{'manual_content'} = $file_arg_tree->{'contents'};
+      $label_element->{'extra'}->{'manual_content'} = $file_arg_tree;
     } elsif ($node_arg and $node_arg->{'extra'}
              and $node_arg->{'extra'}->{'manual_content'}) {
       $label_element->{'extra'} = {} if (!$label_element->{'extra'});
       $label_element->{'extra'}->{'manual_content'}
         = $node_arg->{'extra'}->{'manual_content'};
       my $file_with_node_tree = {'type' => '_code',
-                 'contents' => [@{$label_element->{'extra'}->{'manual_content'}}]};
+   'contents' => [$label_element->{'extra'}->{'manual_content'}]};
       $file = $self->convert_tree($file_with_node_tree, 'node file in ref');
     }
     my $href = $self->command_href($label_element, undef, $root);
@@ -5557,7 +5616,7 @@ sub _convert_xref_commands($$$$)
     } elsif (!defined($name) and $label_element->{'extra'}
              and $label_element->{'extra'}->{'node_content'}) {
       my $node_no_file_tree = {'type' => '_code',
-                   'contents' => [@{$label_element->{'extra'}->{'node_content'}}]};
+                 'contents' => [$label_element->{'extra'}->{'node_content'}]};
       my $node_name = $self->convert_tree($node_no_file_tree, 'node in ref');
       if (defined($node_name) and $node_name ne 'Top') {
         $name = $node_name;
@@ -6910,7 +6969,7 @@ sub _convert_menu_entry_type($$$)
         $name = $self->command_text($menu_entry_node);
       } elsif ($menu_entry_node->{'extra'}) {
         $name = $self->convert_tree({'type' => '_code',
-               'contents' => $menu_entry_node->{'extra'}->{'node_content'}},
+                 'contents' => [$menu_entry_node->{'extra'}->{'node_content'}]},
                                     'menu_arg name');
       } else {
         $name = '';
@@ -7348,12 +7407,12 @@ sub _default_format_title_titlepage($)
   return $result;
 }
 
-# Function for converting special elements
+# Function for converting special output units
 sub _convert_special_unit_type($$$$)
 {
   my $self = shift;
   my $type = shift;
-  my $element = shift;
+  my $output_unit = shift;
   my $content = shift;
 
   $content = '' if (!defined($content));
@@ -7364,12 +7423,13 @@ sub _convert_special_unit_type($$$$)
 
   my $result = '';
 
-  my $special_unit_variety = $element->{'special_unit_variety'};
-  $result .= join('', $self->close_registered_sections_level(0));
+  my $special_unit_variety = $output_unit->{'special_unit_variety'};
+  my $closed_strings = $self->close_registered_sections_level(0);
+  $result .= join('', @{$closed_strings});
 
   my $special_unit_body
     .= &{$self->special_unit_body_formatting($special_unit_variety)}($self,
-                                          $special_unit_variety, $element);
+                                      $special_unit_variety, $output_unit);
 
   # This may happen with footnotes in regions that are not expanded,
   # like @copying or @titlepage
@@ -7377,7 +7437,7 @@ sub _convert_special_unit_type($$$$)
     return '';
   }
 
-  my $unit_command = $element->{'unit_command'};
+  my $unit_command = $output_unit->{'unit_command'};
 
   my $id = $self->command_id($unit_command);
   my $class_base
@@ -7389,8 +7449,9 @@ sub _convert_special_unit_type($$$$)
   $result .= ">\n";
   if ($self->get_conf('HEADERS')
       # first in page
-      or $self->count_elements_in_filename('current',
-                  $element->{'unit_filename'}) == 1) {
+      or (defined($output_unit->{'unit_filename'})
+          and $self->count_elements_in_filename('current',
+                             $output_unit->{'unit_filename'}) == 1)) {
     $result .= &{$self->formatting_function('format_navigation_header')}($self,
                      $self->get_conf('MISC_BUTTONS'), undef, $unit_command);
   }
@@ -7404,8 +7465,8 @@ sub _convert_special_unit_type($$$$)
 
 
   $result .= $special_unit_body . '</div>';
-  $result .= &{$self->formatting_function('format_element_footer')}($self, $type,
-                                               $element, $content, $unit_command);
+  $result .= &{$self->formatting_function('format_element_footer')}($self,
+                                 $type, $output_unit, $content, $unit_command);
   return $result;
 }
 
@@ -7440,12 +7501,15 @@ sub _convert_unit_type($$$$)
       # if there is one unit it also means that there is no formatting
       # of footnotes in a separate unit.  And if footnotestyle is end
       # the footnotes won't be done in format_element_footer either.
-      $result .= &{$self->formatting_function('format_footnotes_segment')}($self);
+      $result
+        .= &{$self->formatting_function('format_footnotes_segment')}($self);
       $result .= $self->get_conf('DEFAULT_RULE') ."\n"
         if ($self->get_conf('PROGRAM_NAME_IN_FOOTER')
           and defined($self->get_conf('DEFAULT_RULE')));
-      # do it here, as it is won't be done at end of page in format_element_footer
-      $result .= join('', $self->close_registered_sections_level(0));
+      # do it here, as it is won't be done at end of page in
+      # format_element_footer
+      my $closed_strings = $self->close_registered_sections_level(0);
+      $result .= join('', @{$closed_strings});
       return $result;
     }
   }
@@ -7462,7 +7526,7 @@ sub _convert_unit_type($$$$)
 
 $default_output_units_conversion{'unit'} = \&_convert_unit_type;
 
-# for output units and special elements
+# for output units, both normal and special
 sub _default_format_element_footer($$$$;$)
 {
   my $self = shift;
@@ -7505,7 +7569,8 @@ sub _default_format_element_footer($$$$;$)
   my $buttons;
 
   if ($end_page) {
-    $result .= join('', $self->close_registered_sections_level(0));
+    my $closed_strings = $self->close_registered_sections_level(0);
+    $result .= join('', @{$closed_strings});
 
     # setup buttons for navigation footer
     if (($is_top or $is_special)
@@ -7995,7 +8060,7 @@ sub _load_htmlxref_files {
 #
 #     API exists
 #  document_global_context_css
-#  file_css
+#  page_css
 #
 #     API exists
 #  files_information
@@ -8022,7 +8087,7 @@ my %special_characters = (
   'non_breaking_space' => [undef, '00A0'],
 );
 
-sub _XS_converter_initialize($$$$$$$$$$)
+sub _XS_converter_initialize($$$$$$$$$$$)
 {
 }
 
@@ -8473,7 +8538,6 @@ sub converter_initialize($)
 
   $self->{'document_context'} = [];
   $self->{'multiple_pass'} = [];
-  $self->{'pending_closes'} = [];
 
   # TODO warn if the split specification is not one known?  The main
   # program warns if the specific command line option value is not known.
@@ -8525,7 +8589,8 @@ sub converter_initialize($)
                              \%default_types_open,
                              \%default_types_conversion,
                              \%default_css_string_types_conversion,
-                             \%default_output_units_conversion);
+                             \%default_output_units_conversion,
+                             \%defaults_format_special_unit_body_contents);
     delete $self->{'sorted_special_unit_varieties'};
     delete $self->{'simplified_special_unit_info'};
   }
@@ -8612,24 +8677,24 @@ sub _default_format_css_lines($;$)
   return '' if ($self->get_conf('NO_CSS'));
 
   my $css_refs = $self->get_conf('CSS_REFS');
-  my @css_element_classes = $self->html_get_css_elements_classes($filename);
-  my @css_import_lines = $self->css_get_info('imports');
-  my @css_rule_lines = $self->css_get_info('rules');
+  my $css_element_classes = $self->html_get_css_elements_classes($filename);
+  my $css_import_lines = $self->css_get_info('imports');
+  my $css_rule_lines = $self->css_get_info('rules');
 
-  return '' if !@css_import_lines and !@css_element_classes
-                 and !@css_rule_lines
+  return '' if !@$css_import_lines and !@$css_element_classes
+                 and !@$css_rule_lines
                  and (!defined($css_refs) or !@$css_refs);
 
   my $css_text = "<style type=\"text/css\">\n<!--\n";
-  $css_text .= join('', @css_import_lines) . "\n"
-    if (@css_import_lines);
-  foreach my $element_class (@css_element_classes) {
-    my $css_style = $self->css_get_info('style', $element_class);
+  $css_text .= join('', @$css_import_lines) . "\n"
+    if (@$css_import_lines);
+  foreach my $element_class (@$css_element_classes) {
+    my $css_style = $self->css_selector_style($element_class);
     $css_text .= "$element_class {$css_style}\n"
       if defined($css_style );
   }
-  $css_text .= join('', @css_rule_lines) . "\n"
-    if (@css_rule_lines);
+  $css_text .= join('', @$css_rule_lines) . "\n"
+    if (@$css_rule_lines);
   $css_text .= "-->\n</style>\n";
   foreach my $ref (@$css_refs) {
     $css_text .= $self->close_html_lone_element(
@@ -8832,9 +8897,10 @@ sub _normalized_label_id_file($$$)
   my $label_element = shift;
 
   my $target;
-  if (!defined($normalized)) {
-    $normalized = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
-      { 'contents' => $label_element->{'contents'} });
+  if (!defined($normalized) and defined($label_element)) {
+    $normalized
+      = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
+        $label_element);
   }
 
   if (defined($normalized)) {
@@ -9967,8 +10033,7 @@ sub _external_node_href($$$;$)
   my $node_contents = $external_node->{'extra'}->{'node_content'};
   #print STDERR "external_node: ".join('|', keys(%$external_node))."\n";
   my ($target_filebase, $target)
-      = $self->_normalized_label_id_file($normalized,
-                                      {'contents' => $node_contents});
+      = $self->_normalized_label_id_file($normalized, $node_contents);
 
   # undef if conversion is called through convert()
   my $default_target_split = $self->get_conf('EXTERNAL_CROSSREF_SPLIT');
@@ -9993,7 +10058,7 @@ sub _external_node_href($$$;$)
   my $directory = '';
   if ($external_node->{'extra'}->{'manual_content'}) {
     my $manual_name = Texinfo::Convert::Text::convert_to_text(
-       {'contents' => $external_node->{'extra'}->{'manual_content'}},
+       $external_node->{'extra'}->{'manual_content'},
        { 'code' => 1,
          Texinfo::Convert::Text::copy_options_for_convert_text($self)});
     if ($self->get_conf('IGNORE_REF_TO_TOP_NODE_UP') and $target eq '') {
@@ -10136,7 +10201,12 @@ sub _mini_toc
     $result .= $self->html_attribute_class('ul', ['mini-toc']).">\n";
 
     foreach my $section (@{$command->{'extra'}->{'section_childs'}}) {
-      my $tree = $self->command_text($section, 'tree_nonumber');
+      # using command_text leads to the same HTML formatting, but does not give
+      # the same result for the other files, as the formatting is done in a
+      # global context, while taking the tree first and calling convert_tree
+      # converts in the current page context.
+      #my $text = $self->command_text($section, 'text_nonumber');
+      my $tree = $self->command_tree($section, 1);
       my $text = $self->convert_tree($tree, "mini_toc \@$section->{'cmdname'}");
 
       $entry_index++;
@@ -10406,7 +10476,7 @@ sub _file_header_information($$;$)
   my $title;
   if ($command) {
     my $command_string = $self->command_text($command, 'string');
-    if (defined($command_string)
+    if (defined($command_string) and $command_string ne ''
         and $command_string ne $self->get_info('title_string')) {
       my $element_tree;
       if ($self->get_conf('SECTION_NAME_IN_TITLE')
@@ -10416,7 +10486,7 @@ sub _file_header_information($$;$)
           and $command->{'extra'}->{'associated_section'}->{'args'}->[0]) {
         $element_tree = $command->{'extra'}->{'associated_section'}->{'args'}->[0];
       } else {
-        $element_tree = $self->command_text($command, 'tree');
+        $element_tree = $self->command_tree($command);
       }
       # TRANSLATORS: sectioning element title for the page header
       my $title_tree = $self->gdt('{element_text} ({title})',
@@ -11006,7 +11076,7 @@ sub _initialize_output_state($$)
 
   # Needed for CSS gathering, even if nothing related to CSS is output
   $self->{'document_global_context_css'} = {};
-  $self->{'file_css'} = {};
+  $self->{'page_css'} = {};
 
   # direction strings
   foreach my $string_type (keys(%default_translated_directions_strings)) {
@@ -11030,6 +11100,8 @@ sub _initialize_output_state($$)
 
   # other
   $self->{'pending_footnotes'} = [];
+  # not used if conversion with XS
+  $self->{'pending_closes'} = [];
 
   # to avoid infinite recursions when a section refers to itself, possibly
   # indirectly
@@ -11080,6 +11152,8 @@ sub _html_convert_convert($$$$)
 
   my $result = '';
 
+  $self->{'current_filename'} = '';
+
   if (!defined($output_units)) {
     print STDERR "\nC NO UNIT\n" if ($self->get_conf('DEBUG'));
     $result = $self->_convert($root, 'convert no unit');
@@ -11097,6 +11171,7 @@ sub _html_convert_convert($$$$)
       $unit_nr++;
     }
   }
+  $self->{'current_filename'} = undef;
   return $result;
 }
 
@@ -11166,12 +11241,9 @@ sub convert($$)
   # complete information should be available.
   $self->_reset_info();
 
-  $self->{'current_filename'} = '';
-
   # main conversion here
   my $result = $self->_html_convert_convert ($root, $output_units,
                                              $special_units);
-  $self->{'current_filename'} = undef;
 
   $self->_finalize_output_state();
   return $result;
@@ -11243,7 +11315,7 @@ sub output_internal_links($)
       if (defined($command)) {
         # Use '' for filename, to force a filename in href.
         $href = $self->command_href($command, '');
-        my $tree = $self->command_text($command, 'tree');
+        my $tree = $self->command_tree($command);
         if ($tree) {
           $text = Texinfo::Convert::Text::convert_to_text($tree,
              {Texinfo::Convert::Text::copy_options_for_convert_text($self)});
@@ -11721,6 +11793,7 @@ sub output($$)
   }
 
   # Get the list of output units to be processed.
+  # Customization information in $self->{'conf'} is passed to XS code too.
   my ($output_units, $special_units, $associated_special_units)
     = $self->_prepare_conversion_units($root, $document_name);
 
@@ -11850,6 +11923,7 @@ sub output($$)
     return undef;
   }
 
+  # information settable by customization files is passed to XS too
   $self->_prepare_title_titlepage($output_units, $output_file,
                                   $output_filename);
 
@@ -12338,10 +12412,11 @@ sub _convert($$;$)
       }
       my $content_formatted = '';
       if ($element->{'contents'}) {
-        if ($convert_to_latex) {
+        if ($convert_to_latex and !$brace_commands{$command_name}) {
+          # displaymath
           $content_formatted
            = Texinfo::Convert::LaTeX::convert_to_latex_math(undef,
-                                {'contents' => $element->{'contents'}},
+                                    {'contents' => $element->{'contents'}},
                                          $self->{'options_latex_math'});
         } else {
           my $content_idx = 0;

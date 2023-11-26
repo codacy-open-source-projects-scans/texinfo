@@ -1177,7 +1177,7 @@ sub associate_internal_references($$$)
         and $label_element->{'extra'}->{'node_content'}) {
       my $normalized =
         Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
-            {'contents' => $label_element->{'extra'}->{'node_content'} });
+            $label_element->{'extra'}->{'node_content'});
       $label_element->{'extra'}->{'normalized'} = $normalized
         if (defined($normalized) and $normalized ne '');
     }
@@ -1357,12 +1357,12 @@ sub new_node_menu_entry
     foreach my $label_info (keys(%$parsed_node_manual)) {
       $menu_entry_node->{'extra'} = {} if (!$menu_entry_node->{'extra'});
       $menu_entry_node->{'extra'}->{$label_info}
-         = [@{$parsed_node_manual->{$label_info}}];
+         = $parsed_node_manual->{$label_info};
 
       if ($label_info eq 'node_content') {
         $menu_entry_node->{'extra'}->{'normalized'}
           = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
-             {'contents' => $menu_entry_node->{'extra'}->{$label_info}});
+             $menu_entry_node->{'extra'}->{$label_info});
       }
     }
   }
@@ -2130,6 +2130,8 @@ sub output_unit_texi($)
   if ($output_unit->{'unit_type'} eq 'external_node_unit') {
     return Texinfo::Convert::Texinfo::convert_to_texinfo(
                             {'contents' => $unit_command->{'contents'}});
+  } elsif ($output_unit->{'unit_type'} eq 'special_unit') {
+    return "_SPECIAL_UNIT: $output_unit->{'special_unit_variety'}";
   }
 
   if (!$unit_command) {

@@ -51,10 +51,11 @@ INDEX_ENTRY_AND_INDEX *
 lookup_index_entry (ELEMENT *index_entry_info, INDEX **indices_information)
 {
   INDEX_ENTRY_AND_INDEX *result = 0;
-  KEY_PAIR *k_integer
-              = lookup_extra (index_entry_info->contents.list[1], "integer");
+  int status;
+  int entry_number
+    = lookup_extra_integer (index_entry_info->contents.list[1], "integer",
+                            &status);
   char *entry_index_name = index_entry_info->contents.list[0]->text.text;
-  int entry_number = (intptr_t) k_integer->value;
   INDEX *index_info;
 
   index_info = indices_info_index_by_name (indices_information,
@@ -250,11 +251,12 @@ modify_tree (ELEMENT *tree,
 void
 correct_level (ELEMENT *section, ELEMENT *parent, int modifier)
 {
-  KEY_PAIR *k_level_modifier = lookup_extra (section, "level_modifier");
-  if (k_level_modifier)
+  int status;
+  int section_modifier = lookup_extra_integer (section, "level_modifier",
+                                               &status);
+  if (status >= 0)
     {
       int level_to_remove;
-      int section_modifier = (intptr_t) k_level_modifier->value;
       enum command_id cmd;
       int remaining_level;
 
@@ -743,17 +745,18 @@ reassociate_to_node (const char *type, ELEMENT *current, void *argument)
 
   if (current->cmd == CM_menu)
     {
-      ELEMENT *added_node_menus;
+      ELEMENT_LIST *added_node_menus;
       if (previous_node)
         {
-          ELEMENT *menus = lookup_extra_element (previous_node, "menus");
+          ELEMENT_LIST *menus
+            = lookup_extra_contents (previous_node, "menus", 0);
           int previous_idx = -1;
           if (menus)
             {
               int i;
-              for (i = 0; i < menus->contents.number; i++)
+              for (i = 0; i < menus->number; i++)
                 {
-                  if (menus->contents.list[i] == current)
+                  if (menus->list[i] == current)
                     {
                       previous_idx = i;
                       break;
@@ -766,18 +769,18 @@ reassociate_to_node (const char *type, ELEMENT *current, void *argument)
           else
             {
               /* removed element should be current */
-              remove_from_contents (menus, previous_idx);
-              if (menus->contents.number <= 0)
+              remove_from_element_list (menus, previous_idx);
+              if (menus->number <= 0)
                 {
                   KEY_PAIR *k = lookup_extra (previous_node, "menus");
                   k->key = "";
                   k->type = extra_deleted;
-                  destroy_element (menus);
+                  destroy_list (menus);
                 }
             }
         }
       added_node_menus = lookup_extra_contents (added_node, "menus", 1);
-      add_to_contents_as_array (added_node_menus, current);
+      add_to_element_list (added_node_menus, current);
     }
   else
     {
@@ -950,13 +953,13 @@ prepend_new_menu_in_node_section (ELEMENT * node, ELEMENT *section,
                                   ELEMENT *current_menu)
 {
   ELEMENT *empty_line = new_element (ET_empty_line);
-  ELEMENT *menus = lookup_extra_contents (node, "menus", 1);
+  ELEMENT_LIST *menus = lookup_extra_contents (node, "menus", 1);
 
   add_to_element_contents (section, current_menu);
   text_append (&empty_line->text, "\n");
   add_to_element_contents (section, empty_line);
 
-  add_to_contents_as_array (menus, current_menu);
+  add_to_element_list (menus, current_menu);
 }
 
 typedef struct EXISTING_ENTRY {
@@ -980,16 +983,16 @@ complete_node_menu (ELEMENT *node, int use_sections)
       ELEMENT *current_menu = 0;
 
       int i;
-      ELEMENT* menus = lookup_extra_element (node, "menus");
+      ELEMENT_LIST *menus = lookup_extra_contents (node, "menus", 0);
 
       if (menus)
         {
           existing_entries
            = malloc(existing_entries_space * sizeof (EXISTING_ENTRY));
 
-          for (i = 0; i < menus->contents.number; i++)
+          for (i = 0; i < menus->number; i++)
             {
-              ELEMENT *menu = menus->contents.list[i];
+              ELEMENT *menu = menus->list[i];
               int j;
               for (j = 0; j < menu->contents.number; j++)
                 {
@@ -1020,10 +1023,9 @@ complete_node_menu (ELEMENT *node, int use_sections)
       for (i = 0; i < node_childs->number; i++)
         {
           ELEMENT *node_entry = node_childs->list[i];
-          KEY_PAIR *k_normalized = lookup_extra (node_entry, "normalized");
-          if (k_normalized && k_normalized->value)
+          char *normalized = lookup_extra_string (node_entry, "normalized");
+          if (normalized)
             {
-              char *normalized = (char *)k_normalized->value;
               int j;
               ELEMENT *entry = 0;
 
@@ -1150,8 +1152,8 @@ complete_tree_nodes_missing_menu (ELEMENT *root, int use_sections)
   for (i = 0; i < non_automatic_nodes->number; i++)
     {
       ELEMENT *node = non_automatic_nodes->list[i];
-      ELEMENT *menus = lookup_extra_element (node, "menus");
-      if (!(menus && menus->contents.number > 0))
+      ELEMENT_LIST *menus = lookup_extra_contents (node, "menus", 0);
+      if (!(menus && menus->number > 0))
         {
           ELEMENT *section = lookup_extra_element (node, "associated_section");
           ELEMENT *current_menu = new_complete_node_menu (node, use_sections);
@@ -1173,7 +1175,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
   LABEL_LIST *identifiers_target = document->identifiers_target;
 
   ELEMENT *top_node = find_identifier_target (identifiers_target, "Top");
-  ELEMENT *menus;
+  ELEMENT_LIST *menus;
   ELEMENT *master_menu;
   ELEMENT *last_menu;
   ELEMENT *last_content;
@@ -1182,8 +1184,8 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
 
   if (top_node)
     {
-      menus = lookup_extra_element (top_node, "menus");
-      if (!menus || (menus->contents.number <= 0))
+      menus = lookup_extra_contents (top_node, "menus", 0);
+      if (!menus || (menus->number <= 0))
         return 0;
     }
   else
@@ -1196,10 +1198,10 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
   if (!master_menu)
     return 0;
 
-  for (i = 0; i < menus->contents.number; i++)
+  for (i = 0; i < menus->number; i++)
     {
       int detailmenu_index = 0;
-      ELEMENT *menu = menus->contents.list[i];
+      ELEMENT *menu = menus->list[i];
       for (detailmenu_index = 0; detailmenu_index < menu->contents.number;
            detailmenu_index++)
         {
@@ -1250,7 +1252,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
         }
     }
 
-  last_menu = last_contents_child (menus);
+  last_menu = menus->list[menus->number -1];
   index = last_menu->contents.number;
   last_content = last_contents_child (last_menu);
   if (last_content && last_content->cmd == CM_end)

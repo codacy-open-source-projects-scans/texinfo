@@ -5,7 +5,7 @@ use vars qw(%result_texis %result_texts %result_trees %result_errors
 
 use utf8;
 
-$result_trees{'two_footnotes_in_nodes_separate'} = {
+$result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
   'contents' => [
     {
       'contents' => [
@@ -518,9 +518,9 @@ $result_trees{'two_footnotes_in_nodes_separate'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'two_footnotes_in_nodes_separate'}{'contents'}[2]{'contents'}[5]{'contents'}[0]{'contents'}[1]{'extra'}{'node_content'}{'contents'}[0] = $result_trees{'two_footnotes_in_nodes_separate'}{'contents'}[2]{'contents'}[5]{'contents'}[0]{'contents'}[1]{'contents'}[0];
+$result_trees{'two_footnotes_in_nodes_separate_no_header'}{'contents'}[2]{'contents'}[5]{'contents'}[0]{'contents'}[1]{'extra'}{'node_content'}{'contents'}[0] = $result_trees{'two_footnotes_in_nodes_separate_no_header'}{'contents'}[2]{'contents'}[5]{'contents'}[0]{'contents'}[1]{'contents'}[0];
 
-$result_texis{'two_footnotes_in_nodes_separate'} = '@footnotestyle separate
+$result_texis{'two_footnotes_in_nodes_separate_no_header'} = '@footnotestyle separate
 @node Top
 @top 2 footnotes in 2 nodes
 
@@ -550,7 +550,7 @@ para2}
 ';
 
 
-$result_texts{'two_footnotes_in_nodes_separate'} = '2 footnotes in 2 nodes
+$result_texts{'two_footnotes_in_nodes_separate_no_header'} = '2 footnotes in 2 nodes
 **********************
 
 A
@@ -568,7 +568,7 @@ D
 
 ';
 
-$result_sectioning{'two_footnotes_in_nodes_separate'} = {
+$result_sectioning{'two_footnotes_in_nodes_separate_no_header'} = {
   'extra' => {
     'section_childs' => [
       {
@@ -611,12 +611,12 @@ $result_sectioning{'two_footnotes_in_nodes_separate'} = {
     'section_level' => -1
   }
 };
-$result_sectioning{'two_footnotes_in_nodes_separate'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'two_footnotes_in_nodes_separate'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'two_footnotes_in_nodes_separate'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'two_footnotes_in_nodes_separate'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'two_footnotes_in_nodes_separate'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'two_footnotes_in_nodes_separate'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'two_footnotes_in_nodes_separate'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'two_footnotes_in_nodes_separate'};
+$result_sectioning{'two_footnotes_in_nodes_separate_no_header'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'two_footnotes_in_nodes_separate_no_header'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'two_footnotes_in_nodes_separate_no_header'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'two_footnotes_in_nodes_separate_no_header'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'two_footnotes_in_nodes_separate_no_header'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'two_footnotes_in_nodes_separate_no_header'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'two_footnotes_in_nodes_separate_no_header'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'two_footnotes_in_nodes_separate_no_header'};
 
-$result_nodes{'two_footnotes_in_nodes_separate'} = [
+$result_nodes{'two_footnotes_in_nodes_separate_no_header'} = [
   {
     'cmdname' => 'node',
     'extra' => {
@@ -647,11 +647,11 @@ $result_nodes{'two_footnotes_in_nodes_separate'} = [
   },
   {}
 ];
-$result_nodes{'two_footnotes_in_nodes_separate'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'two_footnotes_in_nodes_separate'}[0];
-$result_nodes{'two_footnotes_in_nodes_separate'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'two_footnotes_in_nodes_separate'}[0];
-$result_nodes{'two_footnotes_in_nodes_separate'}[1] = $result_nodes{'two_footnotes_in_nodes_separate'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'two_footnotes_in_nodes_separate_no_header'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'two_footnotes_in_nodes_separate_no_header'}[0];
+$result_nodes{'two_footnotes_in_nodes_separate_no_header'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'two_footnotes_in_nodes_separate_no_header'}[0];
+$result_nodes{'two_footnotes_in_nodes_separate_no_header'}[1] = $result_nodes{'two_footnotes_in_nodes_separate_no_header'}[0]{'extra'}{'node_directions'}{'next'};
 
-$result_menus{'two_footnotes_in_nodes_separate'} = [
+$result_menus{'two_footnotes_in_nodes_separate_no_header'} = [
   {
     'extra' => {
       'menus' => [
@@ -669,16 +669,16 @@ $result_menus{'two_footnotes_in_nodes_separate'} = [
     }
   }
 ];
-$result_menus{'two_footnotes_in_nodes_separate'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'two_footnotes_in_nodes_separate'}[0];
+$result_menus{'two_footnotes_in_nodes_separate_no_header'}[1]{'extra'}{'menu_directions'}{'up'} = $result_menus{'two_footnotes_in_nodes_separate_no_header'}[0];
 
-$result_errors{'two_footnotes_in_nodes_separate'} = [];
-
-
-$result_floats{'two_footnotes_in_nodes_separate'} = {};
+$result_errors{'two_footnotes_in_nodes_separate_no_header'} = [];
 
 
+$result_floats{'two_footnotes_in_nodes_separate_no_header'} = {};
 
-$result_converted{'html'}->{'two_footnotes_in_nodes_separate'} = '<!DOCTYPE html>
+
+
+$result_converted{'html'}->{'two_footnotes_in_nodes_separate_no_header'} = '<!DOCTYPE html>
 <html>
 <!-- Created by texinfo, http://www.gnu.org/software/texinfo/ -->
 <head>
@@ -704,10 +704,6 @@ span:hover a.copiable-link {visibility: visible}
 
 <body lang="en">
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#chapter" accesskey="n" rel="next">chapter</a> &nbsp; </p>
-</div>
 <h1 class="top" id="g_t2-footnotes-in-2-nodes"><span>2 footnotes in 2 nodes<a class="copiable-link" href="#g_t2-footnotes-in-2-nodes"> &para;</a></span></h1>
 
 <p>A<a class="footnote" id="DOCF1" href="#FOOT1"><sup>1</sup></a>
@@ -720,10 +716,6 @@ Next: <a href="#chapter" accesskey="n" rel="next">chapter</a> &nbsp; </p>
 </ul>
 <hr>
 <div class="chapter-level-extent" id="chapter">
-<div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">2 footnotes in 2 nodes</a>, Up: <a href="#Top" accesskey="u" rel="up">2 footnotes in 2 nodes</a> &nbsp; </p>
-</div>
 <h2 class="chapter" id="chapter-1"><span>1 chapter<a class="copiable-link" href="#chapter-1"> &para;</a></span></h2>
 
 <p>C<a class="footnote" id="DOCF3" href="#FOOT3"><sup>3</sup></a>
@@ -734,8 +726,6 @@ Previous: <a href="#Top" accesskey="p" rel="prev">2 footnotes in 2 nodes</a>, Up
 </div>
 </div>
 <div class="element-footnotes" id="SEC_Footnotes">
-<div class="nav-panel">
-</div>
 <h4 class="footnotes-heading">Footnotes</h4>
 
 <h5 class="footnote-body-heading"><a id="FOOT1" href="#DOCF1">(1)</a></h5>
@@ -762,7 +752,7 @@ Previous: <a href="#Top" accesskey="p" rel="prev">2 footnotes in 2 nodes</a>, Up
 ';
 
 
-$result_converted{'info'}->{'two_footnotes_in_nodes_separate'} = 'This is , produced from .
+$result_converted{'info'}->{'two_footnotes_in_nodes_separate_no_header'} = 'This is , produced from .
 
 
 File: ,  Node: Top,  Next: chapter,  Up: (dir)
@@ -831,7 +821,7 @@ End:
 ';
 
 
-$result_converted{'plaintext'}->{'two_footnotes_in_nodes_separate'} = '2 footnotes in 2 nodes
+$result_converted{'plaintext'}->{'two_footnotes_in_nodes_separate_no_header'} = '2 footnotes in 2 nodes
 **********************
 
 A(1) (*note Top-Footnote-1::)
@@ -864,7 +854,7 @@ C(1) (*note chapter-Footnote-1::)
 ';
 
 
-$result_converted{'latex_text'}->{'two_footnotes_in_nodes_separate'} = '\\begin{document}
+$result_converted{'latex_text'}->{'two_footnotes_in_nodes_separate_no_header'} = '\\begin{document}
 \\label{anchor:Top}%
 \\chapter{{chapter}}
 \\label{anchor:chapter}%

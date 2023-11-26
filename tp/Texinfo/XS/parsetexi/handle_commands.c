@@ -416,12 +416,12 @@ handle_other_command (ELEMENT *current, char **line_inout,
           /* In a @multitable */
           else if ((parent = item_multitable_parent (current)))
             {
-              long max_columns = 0;
+              int max_columns = 0;
               KEY_PAIR *k_max_columns;
 
               k_max_columns = lookup_extra (parent, "max_columns");
               if (k_max_columns)
-                max_columns = (long) k_max_columns->value;
+                max_columns = k_max_columns->integer;
 
               if (max_columns == 0)
                 {
@@ -785,7 +785,7 @@ handle_line_command (ELEMENT *current, char **line_inout,
             }
           else if (cmd == CM_subentry)
             {
-              long level = 1;
+              int level = 1;
               ELEMENT *parent = current->parent;
 
               if (!(command_flags(parent) & CF_index_entry_command)
@@ -798,9 +798,11 @@ handle_line_command (ELEMENT *current, char **line_inout,
 
               if (parent->cmd == CM_subentry)
                 {
-                  KEY_PAIR *k_parent_level = lookup_extra (parent, "level");
-                  if (k_parent_level && k_parent_level->value)
-                    level = (long) k_parent_level->value + 1;
+                  int status;
+                  int parent_level
+                        = lookup_extra_integer (parent, "level", &status);
+                  if (status >= 0 && parent_level)
+                    level = parent_level + 1;
                   else
                     fatal ("No subentry parent level or level 0");
                 }
@@ -939,8 +941,8 @@ handle_line_command (ELEMENT *current, char **line_inout,
               else if (parent->cmd == CM_quotation
                        || parent->cmd == CM_smallquotation)
                 {
-                  ELEMENT *e = lookup_extra_contents (parent, "authors", 1);
-                  add_to_contents_as_array (e, current);
+                  ELEMENT_LIST *l = lookup_extra_contents (parent, "authors", 1);
+                  add_to_element_list (l, current);
                   add_extra_element (current, "quotation", parent);
                   found = 1; break;
                 }
@@ -1116,9 +1118,9 @@ handle_block_command (ELEMENT *current, char **line_inout,
                     line_warn ("@menu in invalid context");
                   else
                     {
-                      ELEMENT *e
+                      ELEMENT_LIST *l
                         = lookup_extra_contents (current_node, "menus", 1);
-                      add_to_contents_as_array (e, block);
+                      add_to_element_list (l, block);
                     }
                 }
             }

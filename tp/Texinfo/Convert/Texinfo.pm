@@ -53,11 +53,23 @@ use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 
 $VERSION = '7.1dev';
 
+# XS parser and not explicitely unset
+my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
+                        or $ENV{TEXINFO_XS} ne 'omit')
+                       and (not defined($ENV{TEXINFO_XS_PARSER})
+                            or $ENV{TEXINFO_XS_PARSER} eq '1')
+                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
+                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+
+my $XS_convert = 0;
+$XS_convert = 1 if ($XS_structuring
+                    and defined $ENV{TEXINFO_XS_CONVERT}
+                    and $ENV{TEXINFO_XS_CONVERT} eq '1');
+
 our $module_loaded = 0;
 sub import {
   if (!$module_loaded) {
-    if (defined $ENV{TEXINFO_XS_CONVERT}
-        and $ENV{TEXINFO_XS_CONVERT} eq '1') {
+    if ($XS_convert) {
       # We do not simply override, we must check at runtime
       # that the document tree was stored by the XS parser.
       Texinfo::XSLoader::override(
@@ -92,12 +104,11 @@ sub link_element_to_texi($)
   my $result = '';
   return $result if (!$element->{'extra'});
   if ($element->{'extra'}->{'manual_content'}) {
-    $result = '('.convert_to_texinfo({'contents'
-                         => $element->{'extra'}->{'manual_content'}}) .')';
+    $result = '('.convert_to_texinfo($element->{'extra'}->{'manual_content'})
+                    .')';
   }
   if ($element->{'extra'}->{'node_content'}) {
-    $result .= convert_to_texinfo({'contents'
-                         => $element->{'extra'}->{'node_content'}});
+    $result .= convert_to_texinfo($element->{'extra'}->{'node_content'});
   }
   return $result
 }
@@ -123,7 +134,7 @@ sub check_node_same_texinfo_code($$)
   if (defined($reference_node->{'extra'}->{'normalized'})) {
     my $label_element = Texinfo::Common::get_label_element($reference_node);
     $reference_node_texi = convert_to_texinfo(
-                        {'contents' => $label_element->{'contents'}});
+                                {'contents' => $label_element->{'contents'}});
     $reference_node_texi =~ s/\s+/ /g;
   } else {
     $reference_node_texi = '';
@@ -132,12 +143,13 @@ sub check_node_same_texinfo_code($$)
   my $node_texi;
   if ($node_content) {
     my $contents_node = $node_content;
-    if ($node_content->[-1]->{'type'}
-        and $node_content->[-1]->{'type'} eq 'space_at_end_menu_node') {
-      $contents_node = [ @{$node_content} ];
-      pop @$contents_node;
+    if ($node_content->{'contents'}->[-1]->{'type'}
+        and $node_content->{'contents'}->[-1]->{'type'}
+                                      eq 'space_at_end_menu_node') {
+      $contents_node = {'contents' => [@{$node_content->{'contents'}}]};
+      pop @{$contents_node->{'contents'}};
     }
-    $node_texi = convert_to_texinfo({'contents' => $contents_node});
+    $node_texi = convert_to_texinfo($contents_node);
     $node_texi =~ s/\s+/ /g;
   } else {
     $node_texi = '';

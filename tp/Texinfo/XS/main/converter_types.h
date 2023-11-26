@@ -22,8 +22,13 @@
 
 #include "element_types.h"
 #include "tree_types.h"
-#include "options_types.h"
 #include "document_types.h"
+/*
+#include "options_types.h"
+ */
+
+/* for interdependency with options_types.h */
+struct OPTIONS;
 
 enum formatting_reference_status {
    FRS_status_none,
@@ -149,11 +154,18 @@ enum html_argument_formatting_type {
 };
 
 enum html_special_character {
-  SC_paragraph_symbol,
-  SC_left_quote,
-  SC_right_quote,
-  SC_bullet,
-  SC_non_breaking_space,
+   SC_paragraph_symbol,
+   SC_left_quote,
+   SC_right_quote,
+   SC_bullet,
+   SC_non_breaking_space,
+};
+
+enum html_command_text_type {
+   HCTT_text,
+   HCTT_text_nonumber,
+   HCTT_string,
+   HCTT_string_nonumber, /* not sure that it is set/used */
 };
 
 typedef struct {
@@ -203,12 +215,9 @@ typedef struct HTML_TARGET {
     char *contents_target;
     char *shortcontents_target;
 
-    char *text;
-    char *text_nonumber;
-    ELEMENT *tree;
-    ELEMENT *tree_nonumber;
-    char *string;
-    char *string_nonumber;
+    char *command_text[HCTT_string_nonumber+1];
+    TREE_ADDED_ELEMENTS tree;
+    TREE_ADDED_ELEMENTS tree_nonumber;
     char *filename;
     /*
     ELEMENT *node_command;
@@ -261,6 +270,29 @@ typedef struct ARRAY_INDEX_LIST {
     size_t *list;
 } ARRAY_INDEX_LIST;
 
+typedef struct PAGE_NAME_NUMBER {
+    size_t number;
+    const char *page_name;
+} PAGE_NAME_NUMBER;
+
+typedef struct PAGE_NAME_NUMBER_LIST {
+    size_t number;
+    PAGE_NAME_NUMBER *list;
+} PAGE_NAME_NUMBER_LIST;
+
+typedef struct CSS_LIST {
+    char *page_name;
+    size_t number;
+    size_t space;
+    char **list;
+} CSS_LIST;
+
+typedef struct PAGES_CSS_LIST {
+    size_t number;
+    CSS_LIST *list; /* index 0 is for document_global_context_css
+                       others for the output files */
+} PAGES_CSS_LIST;
+
 typedef struct COMMAND_ID_INDEX {
     enum command_id cmd;
     size_t index;
@@ -289,6 +321,11 @@ typedef struct FILE_NAME_PATH_COUNTER_LIST {
     size_t space;
     FILE_NAME_PATH_COUNTER *list;
 } FILE_NAME_PATH_COUNTER_LIST;
+
+typedef struct CURRENT_FILE_INFO {
+    size_t file_number;
+    char *filename;
+} CURRENT_FILE_INFO;
 
 typedef struct FILE_STREAM {
     char *file_path;
@@ -361,114 +398,25 @@ typedef struct STRING_WITH_LEN {
     size_t len;
 } STRING_WITH_LEN;
 
-typedef struct CONVERTER {
-    int converter_descriptor;
-  /* perl converter. This should be HV *hv,
-     but we don't want to include the Perl headers everywhere; */
-    void *hv;
+typedef struct HTML_ADDED_TARGET_LIST {
+    size_t space;
+    size_t number;
+    HTML_TARGET **list;
+} HTML_ADDED_TARGET_LIST;
 
-    OPTIONS *conf;
-    OPTIONS *init_conf;
-    EXPANDED_FORMAT *expanded_formats;
-    TRANSLATED_COMMAND *translated_commands;
+typedef struct CSS_SELECTOR_STYLE {
+    char *selector;
+    char *style;
+} CSS_SELECTOR_STYLE;
 
-    ERROR_MESSAGE_LIST error_messages;
+typedef struct CSS_SELECTOR_STYLE_LIST {
+    size_t number;
+    CSS_SELECTOR_STYLE *list;
+} CSS_SELECTOR_STYLE_LIST;
 
-    struct DOCUMENT *document;
-    MERGED_INDEX *index_entries;
-    INDEX_SORTED_BY_LETTER *index_entries_by_letter;
-    int document_units_descriptor;
-
-  /* output unit files API */
-    FILE_NAME_PATH_COUNTER_LIST output_unit_files;
-
-  /* API to open, set encoding and register files */
-    OUTPUT_FILES_INFORMATION output_files_information;
-
-  /* maybe HTML specific */
-    char *title_titlepage;
-
-  /* HTML specific */
-    /* set for a converter */
-    COMMAND_ID_LIST no_arg_formatted_cmd;
-    int code_types[TXI_TREE_TYPES_NUMBER];
-    char *pre_class_types[TXI_TREE_TYPES_NUMBER];
-    int upper_case[BUILTIN_CMD_NUMBER];
-    STRING_WITH_LEN special_character[SC_non_breaking_space+1];
-    STRING_WITH_LEN line_break_element;
-    FORMATTING_REFERENCE
-       formatting_references[FR_format_translate_message+1];
-    FORMATTING_REFERENCE
-       css_string_formatting_references[FR_format_translate_message+1];
-    FORMATTING_REFERENCE commands_open[BUILTIN_CMD_NUMBER];
-    FORMATTING_REFERENCE commands_conversion[BUILTIN_CMD_NUMBER];
-    FORMATTING_REFERENCE css_string_commands_conversion[BUILTIN_CMD_NUMBER];
-    FORMATTING_REFERENCE types_open[TXI_TREE_TYPES_NUMBER];
-    FORMATTING_REFERENCE types_conversion[TXI_TREE_TYPES_NUMBER];
-    FORMATTING_REFERENCE css_string_types_conversion[TXI_TREE_TYPES_NUMBER];
-    FORMATTING_REFERENCE output_units_conversion[OU_special_unit+1];
-    STRING_LIST special_unit_varieties;
-    char **special_unit_info[SUI_type_heading+1];
-    /* in the next line we use a pointer and not directly the structure
-       because the type is incomplete, the structure is defined after the
-       CONVERTER because it uses the CONVERTER in a function pointer
-       argument prototype, which does not seems to be possible with
-       incomplete types */
-    struct TYPE_CONVERSION_FUNCTION *type_conversion_function[TXI_TREE_TYPES_NUMBER];
-    struct TYPE_CONVERSION_FUNCTION *css_string_type_conversion_function[TXI_TREE_TYPES_NUMBER];
-    struct COMMAND_CONVERSION_FUNCTION *command_conversion_function[BUILTIN_CMD_NUMBER];
-    struct COMMAND_CONVERSION_FUNCTION *css_string_command_conversion_function[BUILTIN_CMD_NUMBER];
-    /* set for a converter, modified in a document */
-    HTML_COMMAND_CONVERSION html_command_conversion[BUILTIN_CMD_NUMBER][HCC_type_css_string+1];
-
-    /* set for a document */
-    const OUTPUT_UNIT **global_units_directions;
-    SPECIAL_UNIT_DIRECTION *special_units_direction_name;
-    ELEMENT **special_unit_info_tree[SUIT_type_heading+1];
-    STRING_LIST seen_ids;
-    HTML_TARGET_LIST html_targets;
-    HTML_TARGET_LIST html_special_targets[ST_footnote_location+1];
-    char **directions_strings[TDS_type_rel+1];
-    /* associate cmd and index in special_unit_varieties STRING_LIST */
-    /* number in sync with command_special_unit_variety, +1 for trailing 0 */
-    COMMAND_ID_INDEX command_special_variety_name_index[4+1];
-    size_t *output_unit_file_indices;   /* array of indices in output_unit_files
-              each position corresponding to an output unit. */
-    size_t *special_unit_file_indices;  /* same for special output units */
-
-    /* state only in C converter */
-    unsigned long modified_state; /* specifies which perl state to rebuild */
-    ELEMENT *tree_to_build; /* C tree that needs to be built to perl
-                               before calling perl functions on it */
-    COMMAND_ID_LIST no_arg_formatted_cmd_translated; /* list of commands that
-                         were translated and need to be passed back to perl */
-    ELEMENT_LIST reset_target_commands; /* element targets that should have
-                                           their texts reset after language
-                                           change */
-    ARRAY_INDEX_LIST file_changed_counter;  /* index of files in
-                                 output_unit_files with changed counter */
-    int document_context_change; /* change of document context top that may need
-                                    to be brought to perl */
-    int document_contexts_to_pop;  /* number of contexts to pop in perl before
-                                      readding the new contexts */
-    /* next three allow to switch from normal HTML formatting to css strings
-       formatting */
-    FORMATTING_REFERENCE *current_formatting_references;
-    struct TYPE_CONVERSION_FUNCTION **current_types_conversion_function;
-    struct COMMAND_CONVERSION_FUNCTION **current_commands_conversion_function;
-
-    /* state common with perl converter */
-    int document_global_context;
-    int ignore_notice;
-    const ELEMENT *current_root_command;
-    const ELEMENT *current_node;
-    const OUTPUT_UNIT *current_output_unit;
-    HTML_DOCUMENT_CONTEXT_STACK html_document_context;
-    STRING_STACK multiple_pass;
-    char *current_filename;
-    /* state common with perl converter, not transmitted to perl */
-    int use_unicode_text;
-} CONVERTER;
+/* we have a circular reference with TYPE_CONVERSION_FUNCTION
+   and CONVERTER and with COMMAND_CONVERSION_FUNCTION and CONVERTER */
+struct CONVERTER;
 
 typedef struct TYPE_CONVERSION_FUNCTION {
     enum formatting_reference_status status;
@@ -477,7 +425,7 @@ typedef struct TYPE_CONVERSION_FUNCTION {
     FORMATTING_REFERENCE *formatting_reference;
     /* the function used for conversion, either a function that calls
        the perl function in formatting_reference, or another C function */
-    void (* type_conversion) (CONVERTER *self, const enum element_type type,
+    void (* type_conversion) (struct CONVERTER *self, const enum element_type type,
                               const ELEMENT *element, const char *content,
                               TEXT *text);
 } TYPE_CONVERSION_FUNCTION;
@@ -499,15 +447,202 @@ typedef struct COMMAND_CONVERSION_FUNCTION {
     FORMATTING_REFERENCE *formatting_reference;
     /* the function used for conversion, either a function that calls
        the perl function in formatting_reference, or another C function */
-    void (* command_conversion) (CONVERTER *self, const enum command_id cmd,
-                                   const ELEMENT *element,
-                                   const HTML_ARGS_FORMATTED *args_formatted,
-                                   const char *content, TEXT *result);
+    void (* command_conversion) (struct CONVERTER *self,
+                                 const enum command_id cmd,
+                                 const ELEMENT *element,
+                                 const HTML_ARGS_FORMATTED *args_formatted,
+                                 const char *content, TEXT *result);
 } COMMAND_CONVERSION_FUNCTION;
+
+typedef struct OUTPUT_UNIT_CONVERSION_FUNCTION {
+    enum formatting_reference_status status;
+    /* points to the perl formatting reference if it is used for
+       conversion */
+    FORMATTING_REFERENCE *formatting_reference;
+    /* the function used for conversion, either a function that calls
+       the perl function in formatting_reference, or another C function */
+    void (* output_unit_conversion) (struct CONVERTER *self,
+                        const enum output_unit_type unit_type,
+                        const OUTPUT_UNIT *output_unit, const char *content,
+                        TEXT *result);
+} OUTPUT_UNIT_CONVERSION_FUNCTION;
+
+typedef struct SPECIAL_UNIT_BODY_FORMATTING {
+    enum formatting_reference_status status;
+    /* points to the perl formatting reference if it is used for
+       conversion */
+    FORMATTING_REFERENCE *formatting_reference;
+    /* the function used for conversion, either a function that calls
+       the perl function in formatting_reference, or another C function */
+    void (* special_unit_body_formatting) (struct CONVERTER *self,
+            const size_t special_unit_number, const char *special_unit_variety,
+            const OUTPUT_UNIT *output_unit,
+            TEXT *result);
+} SPECIAL_UNIT_BODY_FORMATTING;
+
+typedef struct CONVERTER {
+    int converter_descriptor;
+  /* perl converter. This should be HV *hv,
+     but we don't want to include the Perl headers everywhere; */
+    void *hv;
+
+    struct OPTIONS *conf;
+    struct OPTIONS *init_conf;
+    EXPANDED_FORMAT *expanded_formats;
+    TRANSLATED_COMMAND *translated_commands;
+
+    ERROR_MESSAGE_LIST error_messages;
+
+    DOCUMENT *document;
+    MERGED_INDEX *index_entries;
+    INDEX_SORTED_BY_LETTER *index_entries_by_letter;
+    int document_units_descriptor;
+
+  /* output unit files API */
+    FILE_NAME_PATH_COUNTER_LIST output_unit_files;
+
+  /* to find index in output_unit_files based on name */
+    PAGE_NAME_NUMBER_LIST page_name_number;
+
+  /* API to open, set encoding and register files */
+    OUTPUT_FILES_INFORMATION output_files_information;
+
+  /* maybe HTML specific */
+    char *title_titlepage;
+
+  /* HTML specific */
+    /* set for a converter */
+    COMMAND_ID_LIST no_arg_formatted_cmd;
+    int code_types[TXI_TREE_TYPES_NUMBER];
+    char *pre_class_types[TXI_TREE_TYPES_NUMBER];
+    int upper_case[BUILTIN_CMD_NUMBER];
+    STRING_WITH_LEN special_character[SC_non_breaking_space+1];
+    STRING_WITH_LEN line_break_element;
+    CSS_SELECTOR_STYLE_LIST css_element_class_styles;
+    FORMATTING_REFERENCE
+       formatting_references[FR_format_translate_message+1];
+    FORMATTING_REFERENCE
+       css_string_formatting_references[FR_format_translate_message+1];
+    FORMATTING_REFERENCE commands_open[BUILTIN_CMD_NUMBER];
+    FORMATTING_REFERENCE commands_conversion[BUILTIN_CMD_NUMBER];
+    FORMATTING_REFERENCE css_string_commands_conversion[BUILTIN_CMD_NUMBER];
+    FORMATTING_REFERENCE types_open[TXI_TREE_TYPES_NUMBER];
+    FORMATTING_REFERENCE types_conversion[TXI_TREE_TYPES_NUMBER];
+    FORMATTING_REFERENCE css_string_types_conversion[TXI_TREE_TYPES_NUMBER];
+    FORMATTING_REFERENCE output_units_conversion[OU_special_unit+1];
+    FORMATTING_REFERENCE *special_unit_body;
+    STRING_LIST special_unit_varieties;
+    char **special_unit_info[SUI_type_heading+1];
+    TYPE_CONVERSION_FUNCTION type_conversion_function[TXI_TREE_TYPES_NUMBER];
+    TYPE_CONVERSION_FUNCTION css_string_type_conversion_function[TXI_TREE_TYPES_NUMBER];
+    COMMAND_CONVERSION_FUNCTION command_conversion_function[BUILTIN_CMD_NUMBER];
+    COMMAND_CONVERSION_FUNCTION css_string_command_conversion_function[BUILTIN_CMD_NUMBER];
+    OUTPUT_UNIT_CONVERSION_FUNCTION output_unit_conversion_function[OU_special_unit+1];
+    SPECIAL_UNIT_BODY_FORMATTING *special_unit_body_formatting;
+    /* set for a converter, modified in a document */
+    HTML_COMMAND_CONVERSION html_command_conversion[BUILTIN_CMD_NUMBER][HCC_type_css_string+1];
+
+    /* set for a document */
+    const OUTPUT_UNIT **global_units_directions;
+    SPECIAL_UNIT_DIRECTION *special_units_direction_name;
+    ELEMENT **special_unit_info_tree[SUIT_type_heading+1];
+    STRING_LIST seen_ids;
+    HTML_TARGET_LIST html_targets;
+    HTML_TARGET_LIST html_special_targets[ST_footnote_location+1];
+    char **directions_strings[TDS_type_rel+1];
+    /* associate cmd and index in special_unit_varieties STRING_LIST */
+    /* number in sync with command_special_unit_variety, +1 for trailing 0 */
+    COMMAND_ID_INDEX command_special_variety_name_index[4+1];
+    size_t *output_unit_file_indices;   /* array of indices in output_unit_files
+              each position corresponding to an output unit. */
+    size_t *special_unit_file_indices;  /* same for special output units */
+    PAGES_CSS_LIST page_css;
+
+    /* state only in C converter */
+    unsigned long modified_state; /* specifies which perl state to rebuild */
+    ELEMENT_LIST tree_to_build; /* C trees that needs to be built to perl
+                               before calling perl functions on it */
+    COMMAND_ID_LIST no_arg_formatted_cmd_translated; /* list of commands that
+                         were translated and need to be passed back to perl */
+    ELEMENT_LIST reset_target_commands; /* element targets that should have
+                                           their texts reset after language
+                                           change */
+    ARRAY_INDEX_LIST file_changed_counter;  /* index of files in
+                                 output_unit_files with changed counter */
+    int document_context_change; /* change of document context top that may need
+                                    to be brought to perl */
+    int document_contexts_to_pop;  /* number of contexts to pop in perl before
+                                      readding the new contexts */
+    HTML_ADDED_TARGET_LIST added_targets; /* targets added */
+    /* next three allow to switch from normal HTML formatting to css strings
+       formatting */
+    FORMATTING_REFERENCE *current_formatting_references;
+    TYPE_CONVERSION_FUNCTION *current_types_conversion_function;
+    COMMAND_CONVERSION_FUNCTION *current_commands_conversion_function;
+
+    /* state common with perl converter */
+    int document_global_context;
+    int ignore_notice;
+    const ELEMENT *current_root_command;
+    const ELEMENT *current_node;
+    const OUTPUT_UNIT *current_output_unit;
+    HTML_DOCUMENT_CONTEXT_STACK html_document_context;
+    STRING_STACK multiple_pass;
+    STRING_STACK pending_closes;
+    CURRENT_FILE_INFO current_filename;
+    ELEMENT_LIST referred_command_stack;
+    /* state common with perl converter, not transmitted to perl */
+    int use_unicode_text;
+} CONVERTER;
 
 typedef struct TRANSLATED_SUI_ASSOCIATION {
     enum special_unit_info_tree tree_type;
     enum special_unit_info_type string_type;
 } TRANSLATED_SUI_ASSOCIATION;
+
+/* FIXME move somewhere else? */
+
+enum button_specification_type {
+  BST_direction,
+  BST_function,
+  BST_string,
+  BST_direction_info,
+};
+
+enum button_information_type {
+  BIT_string,
+  BIT_function,
+  BIT_direction_information_type,
+};
+
+typedef struct BUTTON_SPECIFICATION_INFO {
+    char *direction; /* or direction enum/index? need both global and relative */
+    enum button_information_type type;
+    union {
+  /* perl references. This should be SV *sv_*,
+     but we don't want to include the Perl headers everywhere; */
+      void *sv_reference;
+      void *sv_string;
+      int direction_information_type; /* TODO should be an enum? */
+    };
+} BUTTON_SPECIFICATION_INFO;
+
+typedef struct BUTTON_SPECIFICATION {
+    enum button_specification_type type;
+    union {
+      char *string; /* or direction enum/index? need both global and relative */
+  /* perl references. This should be SV *sv_*,
+     but we don't want to include the Perl headers everywhere; */
+      void *sv_reference;
+      void *sv_string;
+      BUTTON_SPECIFICATION_INFO *button_info;
+    };
+} BUTTON_SPECIFICATION;
+
+typedef struct BUTTON_SPECIFICATION_LIST {
+    void *av; /* reference to perl data */
+    size_t number;
+    BUTTON_SPECIFICATION *list;
+} BUTTON_SPECIFICATION_LIST;
 
 #endif

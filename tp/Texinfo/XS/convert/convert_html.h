@@ -21,10 +21,22 @@ void html_converter_initialize (CONVERTER *self);
 void html_initialize_output_state (CONVERTER *self, char *context);
 void html_finalize_output_state (CONVERTER *self);
 
+void html_converter_prepare_output (CONVERTER* self);
+
 void html_new_document_context (CONVERTER *self,
         char *context_name, char *document_global_context,
         enum command_id block_command);
 void html_pop_document_context (CONVERTER *self);
+
+void html_register_opened_section_level (CONVERTER *self, int level,
+                                         const char *close_string);
+STRING_LIST *html_close_registered_sections_level (CONVERTER *self,
+                                                   int level);
+
+char *html_attribute_class (CONVERTER *self, const char *element,
+                            const STRING_LIST *classes);
+STRING_LIST *html_get_css_elements_classes (CONVERTER *self,
+                                            const char *filename);
 
 void html_merge_index_entries (CONVERTER *self);
 
@@ -68,6 +80,6 @@ char *html_convert_output (CONVERTER *self, const ELEMENT *root,
                            char *output_filename, char *document_name);
 
 void html_check_transfer_state_finalization (CONVERTER *self);
-void html_destroy (CONVERTER *self);
+void html_free_converter (CONVERTER *self);
 void html_destroy_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info);
 #endif

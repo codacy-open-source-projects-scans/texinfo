@@ -707,31 +707,35 @@ rules selectors are, classically, @code{@var{element}.@var{class}} strings with
 @var{element} an HTML element and @var{class} an attribute class associated to
 that element.
 
-The function used are @code{css_get_info} to get information and
-@code{css_add_info} to modify:
+The function used are @code{css_get_info} and @code{css_selector_style}
+to get information and @code{css_add_info} and @code{css_set_selector_style}
+to modify:
 
-@defun @var{$converter}->css_get_info ($specification, $css_info)
-@defunx @var{$converter}->css_add_info ($specification, $css_info, $css_style)
+@defun @var{$converter}->css_get_info ($specification)
+@defunx @var{$converter}->css_selector_style ($selector)
+@defunx @var{$converter}->css_add_info ($specification, $css_info)
+@defunx @var{$converter}->css_set_selector_style ($selector, $css_style)
 
 Those functions can only be used on a converter @var{$converter}, from
 functions registered and called with a converter.  @var{$specification} is
 @code{'rules'} to get information on or set information for CSS rules lines and
 @code{'imports'} to get information on or set information for CSS import lines.
-Any other value for @var{$specification} corresponds to CSS style rules
-associated with HTML elements and class attributes selectors.
+Any other value for @var{$specification} corresponds to HTML elements and
+class attributes selectors, and can be used to get the list of selectors.
 
-With @code{css_get_info}, if @var{$specification} is set to @code{'rules'} or
-@code{'imports'}, the corresponding arrays are returned.  Otherwise,
-if @var{$css_info} is @code{undef}, a hash reference with all the CSS rules selector as keys
-and the corresponding rules as values is returned.  If @var{$css_info} is defined,
-it is considered to be a CSS rule selector and the corresponding CSS style is returned,
-or @code{undef} if not found.
+With @code{css_get_info}, array references corresponding to @var{$specification}
+are returned.
+
+@code{css_selector_style} returns the CSS style corresponding to the HTML
+element and class attribute selector @var{$selector}, or @code{undef} if not
+found.
 
 With @code{css_add_info}, @var{$css_info} is an additional entry added to
 CSS rules lines if @var{$specification} is set to @code{'rules'} or an additional
 entry added to CSS import lines if @var{$specification} is set to @code{'imports'}.
-Otherwise, @var{$css_info} is a CSS rule selector and the associated
-style rule is set to @var{$css_style}.
+
+With @code{css_set_selector_style}, @var{$selector} is a CSS rule selector and the
+associated style rule is set to @var{$css_style}.
 @end defun
 
 Some examples of use:
@@ -739,10 +743,9 @@ Some examples of use:
 @example
 my @@all_included_rules = $converter->css_get_info('rules');
 my $all_default_selector_styles = $converter->css_get_info('styles');
-my $titlefont_header_style = $converter->css_get_info('styles',
-                                                      'h1.titlefont');
+my $titlefont_header_style = $converter->css_selector_style('h1.titlefont');
 
-$converter->css_add_info('styles', 'h1.titlefont', 'text-align:center');
+$converter->css_set_selector_style('h1.titlefont', 'text-align:center');
 $converter->css_add_info('imports', "\@@import \"special.css\";\n");
 @end example
 
@@ -753,16 +756,16 @@ document. @xref{Customizing CSS}.
 
 How to run code during the conversion process is described later
 (@pxref{Init File Calling at Different Stages}). The simplest way to
-use the @code{css_add_info} function would be to use a function
+modify CSS rules would be to use a function
 registered for the @samp{structure} stage:
 
 @example
 sub my_function_set_some_css @{
   my $converter = shift;
 
-  $converter->css_add_info('styles', 'h1.titlefont',
-                           'text-align:center');
-  # ... more calls to  $converter->css_add_info();
+  $converter->css_set_selector_style('h1.titlefont',
+                                     'text-align:center');
+  # ... calls to  $converter->css_add_info();
 @}
 
 texinfo_register_handler('structure', \&my_function_set_some_css);
@@ -1031,9 +1034,6 @@ A string representing the direction to be used in contexts
 with HTML elements (preformatted and normal contexts).
 @xref{Init File Expansion Contexts}.
 
-@item tree
-A Texinfo tree element representing the direction.
-
 @item target
 A string representing the target of the direction, typically used as id
 attribute in the output unit corresponding to the direction, and in href
@@ -1049,7 +1049,7 @@ associated with the element direction in priority.
 
 @end table
 
-@code{text}, @code{tree} and @code{string} also have a variant with
+@code{text} and @code{string} also have a variant with
 @samp{_nonumber} prepended, such as @code{text_nonumber} without sectioning
 command number in the representation.
 
@@ -1496,8 +1496,7 @@ documentation, in particular a list of types and of information in the elements
 @node Output Units in User Defined Functions
 @section Output Units in User Defined Functions
 
-Output units that are not part of the tree nor tree elements are
-formatted, both normal output units and special units (@pxref{Output
+Both normal output units and special units are formatted (@pxref{Output
 Units}).  The output units hold information on the document
 structure (@pxref{Texinfo::Structuring METHODS,,,texi2any_internals}).
 
@@ -1509,13 +1508,19 @@ The following keys of output unit hashes can be interesting:
 special units.
 
 @item unit_command
-Points to the associated @code{@@node} or sectioning @@-command depending
-on which of nodes or sectioning commands are the main components of
-output units. @xref{Output Units}.  The corresponding sectioning
-and @code{@@node} @@-command elements have a @code{associated_unit}
-key directly in their hash that points to the associated output unit.
+For normal output units, points to the associated @code{@@node} or sectioning
+@@-command depending on which of nodes or sectioning commands are the main
+components of output units. @xref{Output Units}.  The corresponding sectioning
+and @code{@@node} @@-command elements have an @code{associated_unit} key
+directly in their hash that points to the associated output unit.
 @cindex @code{unit_command} element
 @cindex @code{associated_unit} output unit
+
+For special units, points to a ``virtual'' tree element with type
+@code{special_unit_element} associated to the special element, that does not
+appear in the Texinfo tree but can be used as a target for directions
+to the special unit.  This element has an @code{associated_unit} key
+that points to the associated output unit.
 
 @item unit_contents
 Array reference on tree elements associated to the output unit.
@@ -2975,7 +2980,7 @@ The function for registering opened section extent is
 
 @defun @var{$converter}->register_opened_section_level ($level, $closing_text)
 @var{$level} is the sectioning command level.  It is typically
-obtained with @code{section->@{'structure'@}->@{'section_level'@}}
+obtained with @code{section->@{'extra'@}->@{'section_level'@}}
 (@pxref{Texinfo Tree Elements in User Defined Functions}).
 @var{$closing_text} is the text that should be output when the
 section level @var{$level} is closed.
@@ -2984,18 +2989,22 @@ section level @var{$level} is closed.
 The function for closing registered section extents is
 @code{close_registered_sections_level}:
 
-@deftypefun {@var{@@closing_texts} =} @var{$converter}->close_registered_sections_level (@var{$level})
+@deftypefun {@var{\@@closing_texts} =} @var{$converter}->close_registered_sections_level (@var{$level})
 @var{$level} is the sectioning command level.  Opened section are closed
 down to section level @var{$level}.  The closing texts are returned in the
-@var{@@closing_texts} array in order.
+@var{\@@closing_texts} array reference in order.
 @end deftypefun
 
 Example of use:
 @example
 @group
-my $level = $opening_section->@{'structure'@}->@{'section_level'@};
-$result
-   .= join('', $converter->close_registered_sections_level($level));
+my $level = $opening_section->@{'extra'@}->@{'section_level'@};
+my $closed_strings
+   = $converter->close_registered_sections_level($level);
+$result .= join('', @@@{$closed_strings@});
+
+# ....
+
 $converter->register_opened_section_level($level, "</div>\n");
 @end group
 @end example
@@ -3362,7 +3371,10 @@ The string will be translated if needed.
 Target @@-commands are @@-commands that are associated with an identifier
 and can be linked to.  They corresponds first to @@-commands with unique identifier
 used as labels, @code{@@node}, @code{@@anchor} and @code{@@float}.  Sectioning
-commands, index entries and footnotes are also associated to targets.
+commands, index entries, footnotes are also associated to targets.  The
+``virtual'' elements associated to special output units are also
+associated to targets leading to each special unit
+(@pxref{Output Units in User Defined Functions}).
 
 To get the unique Texinfo tree element corresponding to a label, use
 @code{label_command}:
@@ -3403,16 +3415,18 @@ The information returned depends on @var{$type}:
 @item text
 Return text.
 
-@item tree
-Return a Texinfo elements tree.
-
-@item tree_nonumber
-Return a Texinfo elements tree representing text without a chapter number
-being included.
-
 @item string
 Return text in string context.  @xref{Init File Expansion Contexts}.
 @end table
+@end deftypefun
+
+To get a Texinfo tree of elements that may be used as link description, use
+@code{command_tree}:
+
+@deftypefun {@var{$result} =} @var{$converter}->command_tree (@var{\%target_element}, @var{$no_number})
+Return the a Texinfo tree to be used for a hyperlink to @var{\%target_element}.
+If @var{$no_number} is set, return a Texinfo elements tree representing text
+without a chapter number being included.
 @end deftypefun
 
 To get the top level element and the output unit associated to any
@@ -4285,10 +4299,10 @@ The CSS @var{element}.@var{class} that appeared in a file, gathered through
 Classes}) are available through the @code{html_get_css_elements_classes}
 function:
 
-@deftypefun {@var{@@css_element_classes} =} @var{$converter}->html_get_css_elements_classes @
+@deftypefun {@var{\@@css_element_classes} =} @var{$converter}->html_get_css_elements_classes @
     (@var{$file_name})
-Returns an array containing @code{element.class} pairs of elements and classes
-appearing in @var{$file_name}.
+Returns a reference on an array containing @code{element.class} pairs of elements
+and classes appearing in @var{$file_name}.
 @end deftypefun
 
 It is possible to change completely how CSS lines are generated
@@ -4300,8 +4314,9 @@ This function returns the CSS lines and @code{<script>} HTML element
 for @var{$file_name}.
 
 In the default case, the function reference uses @code{CSS_REFS} corresponding
-to command-line @option{--css-ref}, @code{html_get_css_elements_classes} and
-@code{css_get_info} (@pxref{Simple Customization of CSS}) to determine the CSS
+to command-line @option{--css-ref}, @code{html_get_css_elements_classes},
+@code{css_get_info} and @code{css_element_class_rule}
+(@pxref{Simple Customization of CSS}) to determine the CSS
 lines.
 @end deftypefn
 
@@ -4387,7 +4402,7 @@ Texinfo::Common::set_informative_command_value, texi2any_internals}.
 @xref{Texinfo::Common $level = section_level($section),,
 Texinfo::Common::section_level, texi2any_internals}.  This function would work
 for sectioning commands too, but for sectioning commands,
-@code{section->@{'structure'@}->@{'section_level'@}} can also be used.
+@code{section->@{'extra'@}->@{'section_level'@}} can also be used.
 @xref{Texinfo Tree Elements in User Defined Functions}.
 
 @item sectioning commands

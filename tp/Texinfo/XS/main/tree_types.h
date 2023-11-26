@@ -27,8 +27,8 @@ enum extra_type {
    extra_element,
    extra_element_oot,
    extra_contents,
+   extra_container,
    extra_directions,
-   extra_text,
    extra_misc_args,
    extra_string,
    extra_integer,
@@ -109,20 +109,22 @@ enum relative_unit_direction_type {
   #undef rud_type
 };
 
-/* in output_units.c */
-extern char *relative_unit_direction_name[];
-
-typedef struct KEY_PAIR {
-    char *key;
-    enum extra_type type;
-    intptr_t value;
-} KEY_PAIR;
-
 typedef struct ELEMENT_LIST {
     struct ELEMENT **list;
     size_t number;
     size_t space;
 } ELEMENT_LIST;
+
+typedef struct KEY_PAIR {
+    char *key;
+    enum extra_type type;
+    union {
+      struct ELEMENT *element;
+      ELEMENT_LIST *list;
+      char *string;
+      int integer;
+    };
+} KEY_PAIR;
 
 typedef struct SOURCE_INFO {
     int line_nr;
@@ -291,5 +293,21 @@ typedef struct STRING_LIST {
     size_t number;
     size_t space;
 } STRING_LIST;
+
+enum tree_added_elements_status {
+  tree_added_status_none,
+  tree_added_status_normal,
+  tree_added_status_new_tree,
+  tree_added_status_reused_tree,
+  tree_added_status_no_tree,
+};
+
+/* not used in parser */
+typedef struct TREE_ADDED_ELEMENTS {
+    ELEMENT *tree;
+    ELEMENT_LIST added; /* list of added elements in tree that are not in the
+                           document Texinfo tree */
+    enum tree_added_elements_status status;
+} TREE_ADDED_ELEMENTS;
 
 #endif

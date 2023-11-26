@@ -37,17 +37,17 @@ copy_tree_internal (ELEMENT* current, ELEMENT *parent);
 
 void
 increase_ref_counter (ELEMENT *element)
-{           
+{
   KEY_PAIR *k_counter;
-  intptr_t *counter_ptr;
-        
+  int *counter_ptr;
+
   k_counter = lookup_extra_by_index (element, "_counter", -1);
   if (!k_counter)
     add_extra_integer (element, "_counter", 0);
   k_counter = lookup_extra_by_index (element, "_counter", -1);
-  counter_ptr = (intptr_t *) &k_counter->value;
+  counter_ptr = &k_counter->integer;
   (*counter_ptr) ++;
-}    
+}
 
 void
 copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
@@ -56,16 +56,18 @@ copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
 
   for (i = 0; i < info->info_number; i++)
     {
-      char *key = info->info[i].key;
-      ELEMENT *f = (ELEMENT *) info->info[i].value;
-      ELEMENT *new_extra_contents;
+      KEY_PAIR *k_ref = &info->info[i];
+      char *key = k_ref->key;
+      ELEMENT *f = k_ref->element;
+      ELEMENT *new_extra_element;
+      ELEMENT_LIST *new_extra_contents;
       KEY_PAIR *k_copy = 0;
       int j;
 
-      if (info->info[i].type == extra_deleted)
+      if (k_ref->type == extra_deleted)
         continue;
 
-      switch (info->info[i].type)
+      switch (k_ref->type)
         {
         case extra_element:
         case extra_element_oot:
@@ -73,8 +75,11 @@ copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
             break;
           k_copy = lookup_extra_by_index (f, "_copy", -1);
           if (k_copy)
-            add_associated_info_key (new_info, key, (intptr_t)k_copy->value,
-                                     info->info[i].type);
+            {
+              KEY_PAIR *k
+                = get_associated_info_key (new_info, key, k_ref->type);
+              k->element = k_copy->element;
+            }
           else
             {
               increase_ref_counter (f);
@@ -82,31 +87,55 @@ copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
           copy_tree_internal (f, 0);
           break;
         case extra_contents:
+          {
+          KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
+          new_extra_contents = new_list ();
+          k->list = new_extra_contents;
+          for (j = 0; j < k_ref->list->number; j++)
+            {
+              ELEMENT *e = k_ref->list->list[j];
+              k_copy = lookup_extra_by_index (e, "_copy", -1);
+              if (k_copy)
+                add_to_element_list (new_extra_contents,
+                                     k_copy->element);
+              else
+                {
+                  increase_ref_counter (e);
+                  add_to_element_list (new_extra_contents, 0);
+                }
+              copy_tree_internal (e, 0);
+            }
+          break;
+          }
         case extra_directions:
-          new_extra_contents = new_element (ET_NONE);
-          add_associated_info_key (new_info, key, (intptr_t)new_extra_contents,
-                                   info->info[i].type);
+        case extra_container:
+          {
+          KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
+          new_extra_element = new_element (ET_NONE);
+          k->element = new_extra_element;
           for (j = 0; j < f->contents.number; j++)
             {
               ELEMENT *e = f->contents.list[j];
               if (!e && info->info[i].type == extra_directions)
                 {
-                  add_to_contents_as_array (new_extra_contents, 0);
+                  add_to_contents_as_array (new_extra_element, 0);
                 }
               else
                 {
                   k_copy = lookup_extra_by_index (e, "_copy", -1);
                   if (k_copy)
-                    add_to_contents_as_array (new_extra_contents,
-                                              (ELEMENT *)k_copy->value);
+                    add_to_contents_as_array (new_extra_element,
+                                              k_copy->element);
                   else
                     {
                       increase_ref_counter (e);
-                      add_to_contents_as_array (new_extra_contents, 0);
+                      add_to_contents_as_array (new_extra_element, 0);
                     }
                   copy_tree_internal (e, 0);
                 }
             }
+            break;
+          }
         default:
           break;
         }
@@ -123,7 +152,7 @@ copy_tree_internal (ELEMENT* current, ELEMENT *parent)
   k_copy = lookup_extra_by_index (current, "_copy", -1);
   if (k_copy)
     {
-      new = (ELEMENT *)k_copy->value;
+      new = k_copy->element;
       if (parent && !new->parent)
         new->parent = parent;
       return new;
@@ -160,14 +189,14 @@ ELEMENT *
 get_copy_ref (ELEMENT *element)
 {
   KEY_PAIR *k_counter, *k_copy;
-  intptr_t *counter_ptr;
+  int *counter_ptr;
   ELEMENT *result;
 
   k_copy = lookup_extra_by_index (element, "_copy", -1);
-  result = (ELEMENT *)k_copy->value;
+  result = k_copy->element;
 
   k_counter = lookup_extra_by_index (element, "_counter", -2);
-  counter_ptr = (intptr_t *) &k_counter->value;
+  counter_ptr = &k_counter->integer;
   (*counter_ptr) --;
 
   if (*counter_ptr == 0)
@@ -188,15 +217,16 @@ associate_info_references (ASSOCIATED_INFO *info, ASSOCIATED_INFO *new_info)
 
   for (i = 0; i < info->info_number; i++)
     {
-      char *key = info->info[i].key;
-      ELEMENT *f = (ELEMENT *) info->info[i].value;
-      ELEMENT *new_extra_contents;
+      KEY_PAIR *k_ref = &info->info[i];
+      char *key = k_ref->key;
+      ELEMENT *f = k_ref->element;
+      ELEMENT *new_extra_element;
       int j;
 
-      if (info->info[i].type == extra_deleted)
+      if (k_ref->type == extra_deleted)
         continue;
 
-      switch (info->info[i].type)
+      switch (k_ref->type)
         {
         case extra_element:
         case extra_element_oot:
@@ -209,24 +239,46 @@ associate_info_references (ASSOCIATED_INFO *info, ASSOCIATED_INFO *new_info)
             if (!k)
               {
                 ELEMENT *e = get_copy_ref (f);
-                add_associated_info_key (new_info, key, (intptr_t)e,
-                                         info->info[i].type);
+                k = get_associated_info_key (new_info, key,
+                                             info->info[i].type);
+                k->element = e;
               }
             k_copy = lookup_extra_by_index (f, "_copy", -1);
             if (k_copy)
-              copy_extra_info (f, (ELEMENT *) k_copy->value);
+              copy_extra_info (f, k_copy->element);
             break;
           }
         case extra_contents:
+          {
+            KEY_PAIR *k = lookup_associated_info (new_info, key);
+            ELEMENT_LIST *new_extra_contents = k->list;
+            for (j = 0; j < k_ref->list->number; j++)
+              {
+                KEY_PAIR *k_copy;
+                ELEMENT *e = k_ref->list->list[j];
+                ELEMENT *new_e = new_extra_contents->list[j];
+                if (!new_e)
+                  {
+                    ELEMENT *new_ref = get_copy_ref (e);
+                    new_extra_contents->list[j] = new_ref;
+                  }
+
+                k_copy = lookup_extra_by_index (e, "_copy", -1);
+                if (k_copy)
+                  copy_extra_info (e, k_copy->element);
+              }
+              break;
+            }
+        case extra_container:
         case extra_directions:
           {
             KEY_PAIR *k = lookup_associated_info (new_info, key);
-            new_extra_contents = (ELEMENT *)k->value;
+            new_extra_element = k->element;
             for (j = 0; j < f->contents.number; j++)
               {
                 KEY_PAIR *k_copy;
                 ELEMENT *e = f->contents.list[j];
-                ELEMENT *new_e = new_extra_contents->contents.list[j];
+                ELEMENT *new_e = new_extra_element->contents.list[j];
                 if (!e && info->info[i].type == extra_directions)
                   {
                   }
@@ -235,56 +287,56 @@ associate_info_references (ASSOCIATED_INFO *info, ASSOCIATED_INFO *new_info)
                     if (!new_e)
                       {
                         ELEMENT *new_ref = get_copy_ref (e);
-                        new_extra_contents->contents.list[j] = new_ref;
+                        new_extra_element->contents.list[j] = new_ref;
                       }
 
                     k_copy = lookup_extra_by_index (e, "_copy", -1);
                     if (k_copy)
-                      copy_extra_info (e, (ELEMENT *) k_copy->value);
+                      copy_extra_info (e, k_copy->element);
                   }
                 }
               break;
             }
         case extra_string:
           { /* A simple string. */
-            char *value = (char *) f;
-            add_associated_info_key (new_info, key, (intptr_t) strdup (value),
-                                     info->info[i].type);
+            char *value = k_ref->string;
+            KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
+            k->string = strdup (value);
             break;
           }
         case extra_integer:
           if (!strcmp(key, "_counter"))
             break;
           { /* A simple integer. */
-            add_associated_info_key (new_info, key, (intptr_t)f,
-                                     info->info[i].type);
+            KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
+            k->integer = k_ref->integer;
             break;
           }
         case extra_misc_args:
           {
           int j;
-          new_extra_contents = new_element (ET_NONE);
-          add_associated_info_key (new_info, key, (intptr_t)new_extra_contents,
-                                   info->info[i].type);
+          new_extra_element = new_element (ET_NONE);
+          KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
+          k->element = new_extra_element;
           for (j = 0; j < f->contents.number; j++)
             {
               ELEMENT *e = new_element (ET_NONE);
               KEY_PAIR *k_integer = lookup_extra (f->contents.list[j], "integer");
               if (k_integer)
                 {
-                  add_extra_integer (e, "integer", (intptr_t) k_integer->value);
+                  add_extra_integer (e, "integer", k_integer->integer);
                 }
               else
                 {
                   if (f->contents.list[j]->text.space > 0)
                     text_append (&e->text, f->contents.list[j]->text.text);
                 }
-              add_to_contents_as_array (new_extra_contents, e);
+              add_to_contents_as_array (new_extra_element, e);
             }
           break;
           }
         default:
-          fatal ("unknown extra type");
+          fatal ("associate_info_references: unknown extra type");
           break;
         }
     }
@@ -390,8 +442,8 @@ relocate_source_marks (SOURCE_MARK_LIST *source_mark_list, ELEMENT *new_e,
 
   end_position = begin_position + len;
 
-  indices_to_remove = malloc (sizeof(int) * list_number);
-  memset (indices_to_remove, 0, sizeof(int) * list_number);
+  indices_to_remove = malloc (sizeof (int) * list_number);
+  memset (indices_to_remove, 0, sizeof (int) * list_number);
 
   while (i < list_number)
     {
@@ -752,13 +804,13 @@ normalized_entry_associated_internal_node (ELEMENT *entry,
 ELEMENT *
 first_menu_node (ELEMENT *node, LABEL_LIST *identifiers_target)
 {
-  ELEMENT *menus = lookup_extra_element (node, "menus");
+  ELEMENT_LIST *menus = lookup_extra_contents (node, "menus", 0);
   if (menus)
     {
       int i;
-      for (i = 0; i < menus->contents.number; i++)
+      for (i = 0; i < menus->number; i++)
         {
-          ELEMENT *menu = menus->contents.list[i];
+          ELEMENT *menu = menus->list[i];
           int j;
           for (j = 0; j < menu->contents.number; j++)
             {

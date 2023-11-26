@@ -70,10 +70,8 @@ element_command_name (const ELEMENT *e)
     return builtin_command_data[e->cmd].cmdname;
   else
     {
-      KEY_PAIR *k_cmdname;
-      k_cmdname = lookup_info (e, "command_name");
-      if (k_cmdname && k_cmdname->value)
-        return (char *)k_cmdname->value;
+      char *cmdname = lookup_info_string (e, "command_name");
+      return cmdname;
     }
 
   return 0;
@@ -138,7 +136,7 @@ compare_type_index_fn (const void *a, const void *b)
 }
 
 void
-set_element_type_name_info ()
+set_element_type_name_info (void)
 {
   int i;
   for (i = 1; i < TXI_TREE_TYPES_NUMBER; i++)

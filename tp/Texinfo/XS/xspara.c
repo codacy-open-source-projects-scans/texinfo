@@ -19,16 +19,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <locale.h>
-#ifndef _WIN32
-#include <langinfo.h>
-#else  /* _WIN32 */
-/* Workaround for problems caused in mingw.org's MinGW build by
-   Gnulib's wchar.h overriding the wint_t type definition, which
-   causes compilation errors when perl.h is included below, because
-   perl.h includes ctype.h.  */
-#include <ctype.h>
-#endif
 
 #include <unitypes.h>
 #include <uniwidth.h>
@@ -115,122 +105,6 @@ typedef struct {
 static PARAGRAPH state;
 
 #ifdef _WIN32
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <errno.h>
-
-/* If Gnulib overrides wint_t with a wider type, we cannot use
-   iswspace etc. names, whose prototypes were seen with the original
-   wint_t in effect.  */
-#ifdef GNULIB_defined_wint_t
-# undef iswspace
-# define iswspace(w) w32_iswspace(w)
-# undef iswupper
-# define iswupper(w) w32_iswupper(w)
-#endif
-
-char *
-w32_setlocale (int category, const char *value)
-{
-  if (_stricmp (value, "en_us.utf-8") != 0)
-    return NULL;
-
-  /* Switch to the Windows U.S. English locale with its default
-     codeset.  We will handle the non-ASCII text ourselves, so the
-     codeset is unimportant, and Windows doesn't support UTF-8 as the
-     codeset anyway.  */
-  return setlocale (category, "ENU");
-}
-#define setlocale(c,v)  w32_setlocale(c,v)
-
-size_t
-mbrlen (const char * __restrict__ mbs, size_t n, mbstate_t * __restrict__ ps)
-{
-  unsigned char byte1 = *mbs;
-
-  if (ps != NULL)
-    {
-      errno = ENOSYS;
-      return -1;
-    }
-
-  return
-    ((byte1 & 0x80) == 0) ? 1 : ((byte1 & 0x20) == 0) ? 2 :
-    ((byte1 & 0x10) == 0) ? 3 : 4;
-}
-
-/* Convert a UTF-8 encoded multibyte string to a wide character.  */
-size_t
-mbrtowc (wchar_t * __restrict__ pwc, const char * __restrict__ mbs, size_t n,
-	 mbstate_t * __restrict__ ps)
-{
-  int len = mbrlen (mbs, n, ps);
-
-  if (mbs == NULL)
-    return 0;
-  else
-    {
-      wchar_t wc[2];
-      size_t n_utf16 = MultiByteToWideChar (CP_UTF8, MB_ERR_INVALID_CHARS,
-					    mbs, len, wc, 2);
-      if (n_utf16 == 0)
-	{
-	  errno = EILSEQ;
-	  return (size_t)-1;
-	}
-      if (ps != NULL)
-	{
-	  errno = ENOSYS;
-	  return (size_t)-1;
-	}
-      /* We don't support UTF-16 surrogates, because the calling code
-	 doesn't, and because character classification functions on
-	 Windows don't support anything beyond the BMP anyway.  So we
-	 return the first character of the surrogate pair and set
-	 errno.  */
-      if (n_utf16 > 1)
-	errno = ENOSYS;
-      if (pwc != NULL)
-	*pwc = wc[0];
-
-      return len;
-    }
-}
-
-/* NOTE - not used at present */
-int
-iswspace (wint_t wc)
-{
-  /* See Unicode's Proplist.txt.  */
-  if ((wc >= 0x09 && wc <= 0x0D)
-      || wc == 0x20
-      || wc == 0x85
-      || wc == 0xA0
-      || wc == 0x1680
-      || (wc >= 0x2000 && wc <= 0x200A)
-      || wc == 0x2028
-      || wc == 0x2029
-      || wc == 0x202F
-      || wc == 0x205F
-      || wc == 0x3000)
-    return 1;
-
-  return 0;
-}
-
-int
-iswupper (wint_t wi)
-{
-  WORD char_type;
-  wchar_t wc = wi;
-  BOOL status = GetStringTypeW (CT_CTYPE1, &wc, 1, &char_type);
-
-  if (!status || (char_type & C1_UPPER) == 0)
-    return 0;
-
-  return 1;
-}
 
 /* Avoid warnings due to redefinition of popen/pclose in Perl headers.  */
 #ifdef popen
@@ -674,24 +548,17 @@ xspara__add_next (TEXT *result, char *word, int word_len,
                 }
 
               char_len = u8_mbtouc (&w, (uint8_t *) p, left);
-              if (char_len == (size_t) -2) {
-                /* unfinished multibyte character */
-                char_len = left;
-              } else if (char_len == (size_t) -1) {
-                /* invalid character */
-                char_len = 1;
-              } else if (char_len == 0) {
-                /* not sure what this means but we must avoid an infinite loop.
-                   Possibly only happens with invalid strings */
-                char_len = 1;
-              }
+              if (w == 0xfffd) /* bug - invalid string */
+                {
+                  if (char_len <= 0)
+                    char_len = 1; /* avoid an infinte loop */
+                }
               left -= char_len;
+              p += char_len;
 
               columns = uc_width (w, "UTF-8");
               if (columns > 0)
                 len += columns;
-
-              p += char_len;
             }
           state.word_counter += len;
        }
@@ -862,12 +729,10 @@ xspara_add_text (char *text, int len)
               char32_t wc;
               next_len = u8_mbtouc (&wc, (uint8_t *) q, len);
 
-              if ((long) next_len == 0)
-                break; /* Null character. Shouldn't happen. */
-              else if ((long) next_len < 0)
+              if (wc == 0xfffd) /* bug - invalid string */
                 {
-                  q++; len--; /* Invalid.  Just try to keep going. */
-                  continue;
+                  if (next_len <= 0)
+                    next_len = 1; /* avoid an infinte loop */
                 }
 
              /* Note: width == 0 includes accent characters. */

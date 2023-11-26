@@ -118,7 +118,7 @@ new_element (enum element_type type)
 }
 
 ELEMENT_LIST *
-new_list ()
+new_list (void)
 {
   ELEMENT_LIST *list = (ELEMENT_LIST *) malloc (sizeof (ELEMENT_LIST));
   memset (list, 0, sizeof (ELEMENT_LIST));
@@ -142,18 +142,21 @@ destroy_associated_info (ASSOCIATED_INFO *a)
       switch (a->info[i].type)
         {
         case extra_string:
-          free ((char *) a->info[i].value);
+          free (a->info[i].string);
           break;
         case extra_element_oot:
-          destroy_element_and_children ((ELEMENT *) a->info[i].value);
+          destroy_element_and_children (a->info[i].element);
           break;
         case extra_contents:
+          destroy_list (a->info[i].list);
+          break;
+        case extra_container:
         case extra_directions:
-          if (a->info[i].value)
-            destroy_element ((ELEMENT *) a->info[i].value);
+          if (a->info[i].element)
+            destroy_element (a->info[i].element);
           break;
         case extra_misc_args:
-          destroy_element_and_children ((ELEMENT *) a->info[i].value);
+          destroy_element_and_children (a->info[i].element);
           break;
 
         default:
@@ -395,12 +398,13 @@ remove_from_element_list (ELEMENT_LIST *list, int where)
   if (where < 0)
     where = list->number + where;
 
-  if (where < 0 || where > list->number)
+  if (where < 0 || where > list->number -1)
     fatal ("element list index out of bounds");
 
   removed = list->list[where];
-  memmove (&list->list[where], &list->list[where + 1],
-           (list->number - (where+1)) * sizeof (ELEMENT *));
+  if (where < list->number - 1)
+    memmove (&list->list[where], &list->list[where + 1],
+             (list->number - (where+1)) * sizeof (ELEMENT *));
   list->number--;
   return removed;
 }
@@ -436,6 +440,20 @@ remove_element_from_list (ELEMENT_LIST *list, ELEMENT *e)
     return remove_from_element_list (list, index);
 
   return 0;
+}
+
+void
+add_element_if_not_in_list (ELEMENT_LIST *list, ELEMENT *e)
+{
+  int i;
+  for (i = 0; i < list->number; i++)
+    {
+      if (list->list[i] == e)
+        {
+          return;
+        }
+    }
+  add_to_element_list (list, e);
 }
 
 /* Remove elements from START inclusive to END exclusive.  Do not

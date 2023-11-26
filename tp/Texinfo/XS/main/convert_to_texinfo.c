@@ -45,7 +45,7 @@ static void
 expand_cmd_args_to_texi (const ELEMENT *e, TEXT *result)
 {
   enum command_id cmd = element_builtin_cmd (e);
-  KEY_PAIR *arg_line;
+  char *arg_line;
   ELEMENT *elt, *spc_before_arg;
 
   if (cmd)
@@ -59,19 +59,13 @@ expand_cmd_args_to_texi (const ELEMENT *e, TEXT *result)
 
   spc_before_arg = lookup_info_element (e, "spaces_before_argument");
 
-  arg_line = lookup_info (e, "arg_line");
+  arg_line = lookup_info_string (e, "arg_line");
   if (arg_line)
     {
-      char *s = 0;
-
       if (spc_before_arg)
         ADD((char *)spc_before_arg->text.text);
 
-      s = (char *)arg_line->value;
-      if (s)
-        {
-          ADD(s);
-        }
+      ADD(arg_line);
     }
   else if (e->args.number > 0)
     {
@@ -85,8 +79,8 @@ expand_cmd_args_to_texi (const ELEMENT *e, TEXT *result)
 
       if (cmd == CM_verb)
         {
-          KEY_PAIR *k_delimiter = lookup_info (e, "delimiter");
-          ADD((char *)k_delimiter->value);
+          char *delimiter = lookup_info_string (e, "delimiter");
+          ADD(delimiter);
         }
 
       if (spc_before_arg)
@@ -120,8 +114,8 @@ expand_cmd_args_to_texi (const ELEMENT *e, TEXT *result)
 
       if (cmd == CM_verb)
         {
-          KEY_PAIR *k_delimiter = lookup_info (e, "delimiter");
-          ADD((char *)k_delimiter->value);
+          char *delimiter = lookup_info_string (e, "delimiter");
+          ADD(delimiter);
         }
 
       if (braces)
@@ -263,10 +257,9 @@ check_node_same_texinfo_code (const ELEMENT *reference_node,
   char *reference_node_texi;
   char *node_texi;
   int equal_texi;
-  const KEY_PAIR *k_normalized
-    = lookup_extra (reference_node, "normalized");
+  const char *normalized = lookup_extra_string (reference_node, "normalized");
 
-  if (k_normalized && k_normalized->value)
+  if (normalized)
     {
       char *tmp_texi;
       const ELEMENT *label_element = get_label_element (reference_node);

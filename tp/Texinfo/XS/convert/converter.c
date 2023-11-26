@@ -29,9 +29,11 @@
 #include "builtin_commands.h"
 #include "node_name_normalization.h"
 #include "convert_utils.h"
+#include "translations.h"
+#include "manipulate_tree.h"
 #include "converter.h"
 
-static CONVERTER *converter_list;
+static CONVERTER **converter_list;
 static size_t converter_number;
 static size_t converter_space;
 
@@ -39,14 +41,14 @@ CONVERTER *
 retrieve_converter (int converter_descriptor)
 {
   if (converter_descriptor <= converter_number
-      && converter_list[converter_descriptor -1].document != 0)
-    return &converter_list[converter_descriptor -1];
+      && converter_list[converter_descriptor -1] != 0)
+    return converter_list[converter_descriptor -1];
   return 0;
 }
 
 /* descriptor starts at 1, 0 is not found or an error */
 size_t
-register_converter (CONVERTER *converter)
+new_converter (void)
 {
   size_t converter_index;
   int slot_found = 0;
@@ -55,7 +57,7 @@ register_converter (CONVERTER *converter)
 
   for (i = 0; i < converter_number; i++)
     {
-      if (converter_list[i].document == 0)
+      if (converter_list[i] == 0)
         {
           slot_found = 1;
           converter_index = i;
@@ -66,24 +68,35 @@ register_converter (CONVERTER *converter)
       if (converter_number == converter_space)
         {
           converter_list = realloc (converter_list,
-                              (converter_space += 5) * sizeof (CONVERTER));
+                              (converter_space += 5) * sizeof (CONVERTER *));
           if (!converter_list)
             fatal ("realloc failed");
         }
       converter_index = converter_number;
       converter_number++;
     }
-  registered_converter = &converter_list[converter_index];
-  memcpy (registered_converter, converter, sizeof (CONVERTER));
+  registered_converter = (CONVERTER *) malloc (sizeof (CONVERTER));
+  memset (registered_converter, 0, sizeof (CONVERTER));
+
+  converter_list[converter_index] = registered_converter;
+  registered_converter->converter_descriptor = converter_index +1;
 
   /*
   fprintf(stderr, "REGISTER CONVERTER %zu %p %p %p\n", converter_index +1,
                        converter, registered_converter, converter->document);
    */
-
-  registered_converter->converter_descriptor = converter_index +1;
-
   return converter_index +1;
+}
+
+void
+unregister_converter_descriptor (int converter_descriptor)
+{
+  CONVERTER *converter = retrieve_converter (converter_descriptor);
+  if (converter)
+    {
+      converter_list[converter_descriptor-1] = 0;
+      free (converter);
+    }
 }
 
 /* freed by caller */
@@ -633,4 +646,48 @@ xml_protect_text (const char *text, TEXT *result)
          p++;
         }
     }
+}
+
+ELEMENT *
+float_type_number (CONVERTER *self, ELEMENT *float_e)
+{
+  int have_float_number;
+  ELEMENT *tree = 0;
+  ELEMENT *type_element = 0;
+  NAMED_STRING_ELEMENT_LIST *replaced_substrings
+     = new_named_string_element_list ();
+  char *float_type = lookup_extra_string (float_e, "float_type");
+  int float_number
+     = lookup_extra_integer (float_e, "float_number", &have_float_number);
+
+  if (float_type && strlen (float_type))
+    type_element = float_e->args.list[0];
+
+  if (have_float_number)
+    {
+      ELEMENT *e_number = new_element (ET_NONE);
+      text_printf (&e_number->text, "%d", float_number);
+      add_element_to_named_string_element_list (replaced_substrings,
+                                     "float_number", e_number);
+    }
+
+  if (type_element)
+    {
+      ELEMENT *type_element_copy = copy_tree (type_element);
+      add_element_to_named_string_element_list (replaced_substrings,
+                                     "float_type", type_element_copy);
+      if (have_float_number)
+        tree = gdt_tree ("{float_type} {float_number}", self->document,
+                         self->conf, replaced_substrings, 0, 0);
+      else
+        tree = gdt_tree ("{float_type}", self->document, self->conf,
+                         replaced_substrings, 0, 0);
+    }
+  else if (have_float_number)
+    tree = gdt_tree ("{float_number}", self->document, self->conf,
+                     replaced_substrings, 0, 0);
+
+  destroy_named_string_element_list (replaced_substrings);
+
+  return tree;
 }

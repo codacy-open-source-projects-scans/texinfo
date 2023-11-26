@@ -41,6 +41,7 @@
 #include "builtin_commands.h"
 #include "indices_in_conversion.h"
 #include "command_stack.h"
+#include "converter.h"
 #include "convert_html.h"
 #include "get_html_perl_info.h"
 #include "document.h"
@@ -124,7 +125,7 @@ get_unclosed_stream (SV *converter_in, file_path)
 void
 destroy (SV *converter_in)
       PREINIT:
-         CONVERTER *self;
+         CONVERTER *self = 0;
          HV *stash;
          char *name;
       CODE:
@@ -133,7 +134,7 @@ destroy (SV *converter_in)
          if (!strcmp (name, "Texinfo::Convert::HTML"))
            {
              self = get_sv_converter (converter_in, "destroy html");
-             html_destroy (self);
+             html_free_converter (self);
            }
           /*
          else if (!strcmp (name, "Texinfo::Convert::Text"))
@@ -142,6 +143,8 @@ destroy (SV *converter_in)
              text_destroy (self);
            }
            */
+         if (self)
+           unregister_converter_descriptor (self->converter_descriptor);
 
 SV *
 plain_texinfo_convert_tree (SV *tree_in)
@@ -192,7 +195,7 @@ void
 html_format_init ()
 
 int
-html_converter_initialize_sv (SV *converter_in, SV *default_formatting_references, SV *default_css_string_formatting_references, SV *default_commands_open, SV *default_commands_conversion, SV *default_css_string_commands_conversion, SV *default_types_open, SV *default_types_conversion, SV *default_css_string_types_conversion, SV *default_output_units_conversion)
+html_converter_initialize_sv (SV *converter_in, SV *default_formatting_references, SV *default_css_string_formatting_references, SV *default_commands_open, SV *default_commands_conversion, SV *default_css_string_commands_conversion, SV *default_types_open, SV *default_types_conversion, SV *default_css_string_types_conversion, SV *default_output_units_conversion, SV *default_special_unit_body)
 
 void
 html_initialize_output_state (SV *converter_in, char *context)
@@ -299,6 +302,124 @@ html_pop_document_context (SV *converter_in)
              self->modified_state = 0;
              self->document_context_change++;
            }
+
+void
+html_register_opened_section_level (SV *converter_in, int level, close_string)
+         char *close_string = (char *)SvPVutf8_nolen($arg);
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_register_opened_section_level");
+         if (self)
+           {
+             html_register_opened_section_level (self, level, close_string);
+           }
+
+SV *
+html_close_registered_sections_level (SV *converter_in, int level)
+     PREINIT:
+         CONVERTER *self;
+         AV *closed_elements_av;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_close_registered_sections_level");
+         closed_elements_av = newAV ();
+         if (self)
+           {
+             STRING_LIST *closed_elements
+               = html_close_registered_sections_level (self, level);
+
+             if (closed_elements->number > 0)
+               {
+                 int i;
+                 for (i = 0; i < closed_elements->number; i++)
+                   {
+                     SV *close_string_sv
+                          = newSVpv_utf8 (closed_elements->list[i], 0);
+                     av_push (closed_elements_av, close_string_sv);
+                   }
+               }
+             destroy_strings_list (closed_elements);
+           }
+         RETVAL = newRV_noinc ((SV *) closed_elements_av);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_attribute_class (SV *converter_in, element, ...)
+         char *element = (char *)SvPVutf8_nolen($arg);
+    PROTOTYPE: $$;$
+    PREINIT:
+         CONVERTER *self;
+         SV *classes_sv = 0;
+         STRING_LIST *classes = 0;
+    CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_attribute_class");
+         if (items > 2 && SvOK(ST(2)))
+           classes_sv = ST(2);
+
+         if (self)
+           {
+             char *result;
+             if (classes_sv)
+               {
+                 classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+                 memset (classes, 0, sizeof (STRING_LIST));
+                 add_svav_to_string_list (classes_sv, classes, svt_char);
+               }
+             result = html_attribute_class (self, element, classes);
+             if (classes)
+               destroy_strings_list (classes);
+             RETVAL = newSVpv_utf8 (result, 0);
+             free (result);
+           }
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_get_css_elements_classes (SV *converter_in, ...)
+    PROTOTYPE: $;$
+    PREINIT:
+         CONVERTER *self;
+         SV *filename_sv = 0;
+         AV *css_selector_av;
+    CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_attribute_class");
+         if (items > 1 && SvOK(ST(1)))
+           filename_sv = ST(1);
+
+         css_selector_av = newAV ();
+
+         if (self)
+           {
+             STRING_LIST *result;
+             char *filename = 0;
+             if (filename_sv)
+               filename = SvPVutf8_nolen (filename_sv);
+             result = html_get_css_elements_classes (self, filename);
+             if (result)
+               {
+                 if (result->number)
+                   {
+                     int i;
+                     for (i = 0; i < result->number; i++)
+                       {
+                         SV *selector_sv
+                            = newSVpv_utf8 (result->list[i], 0);
+                         av_push (css_selector_av, selector_sv);
+                       }
+                   }
+                 destroy_strings_list (result);
+               }
+           }
+         RETVAL = newRV_noinc ((SV *) css_selector_av);
+    OUTPUT:
+         RETVAL
 
 
 void
@@ -515,6 +636,8 @@ html_prepare_title_titlepage (SV *converter_in, SV *output_units_in, output_file
 
          if (self)
            {
+             html_converter_prepare_output_sv (converter_in, self);
+
              html_prepare_title_titlepage (self, output_units_descriptor,
                                            output_file, output_filename);
              if (self->modified_state)
