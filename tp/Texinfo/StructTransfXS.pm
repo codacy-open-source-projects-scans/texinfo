@@ -14,7 +14,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-package Texinfo::StructTransf;
+package Texinfo::StructTransfXS;
 
 use strict;
 use warnings;
@@ -30,9 +30,9 @@ BEGIN {
                             or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
   if ($XS_structuring) {
     Texinfo::XSLoader::init (
-      "Texinfo::StructTransf",
-      "Texinfo::StructTransf",
-      "StructuringTransfo",
+      "Texinfo::StructTransfXS",
+      "Texinfo::StructTransfXS",
+      "StructuringTransfoXS",
       undef,
       0,
       undef,

@@ -32,19 +32,23 @@
 
 #include "ppport.h"
 
-#include "get_perl_info.h"
-#include "build_perl_info.h"
-#include "build_html_perl_state.h"
+#include "command_ids.h"
+#include "element_types.h"
+#include "converter_types.h"
+#include "builtin_commands.h"
 #include "convert_plain_texinfo.h"
 #include "convert_text.h"
 #include "convert_to_text.h"
-#include "builtin_commands.h"
+#include "convert_to_texinfo.h"
 #include "indices_in_conversion.h"
 #include "command_stack.h"
+#include "document.h"
+#include "get_perl_info.h"
+#include "build_perl_info.h"
+#include "build_html_perl_state.h"
 #include "converter.h"
 #include "convert_html.h"
 #include "get_html_perl_info.h"
-#include "document.h"
 
 MODULE = Texinfo::Convert::ConvertXS	PACKAGE = Texinfo::Convert::ConvertXS
 
@@ -243,35 +247,9 @@ html_new_document_context (SV *converter_in, char *context_name, ...)
 
          if (self)
            {
-             HV *document_context_hv;
-             HTML_DOCUMENT_CONTEXT *document_context;
-             HV *converter_hv = (HV *) SvRV (converter_in);
-             SV **document_context_sv = hv_fetch (converter_hv,
-                   "document_context", strlen("document_context"), 0);
-             AV *document_context_av = (AV *) SvRV (*document_context_sv);
-             /* should not be needed as we are calling from perl
-             if (self->modified_state)
-               {
-                 build_html_formatting_state (self, self->modified_state);
-                 self->modified_state = 0;
-               }
-              */
              html_new_document_context (self, context_name,
                                         document_global_context, block_command);
-             /* reset to ignore the HMSF_formatting_context flag just set */
-             self->modified_state = 0;
-             document_context = html_top_document_context (self);
-
-             document_context_hv = build_html_document_context
-                                                      (document_context);
-             av_push (document_context_av,
-                      newRV_noinc ((SV *) document_context_hv));
-             self->document_context_change--;
-             hv_store (converter_hv, "document_global_context",
-                       strlen ("document_global_context"),
-                       newSViv (self->document_global_context), 0);
            }
-
 
 void
 html_pop_document_context (SV *converter_in)
@@ -281,27 +259,321 @@ html_pop_document_context (SV *converter_in)
          self = get_sv_converter (converter_in, "html_new_document_context");
          if (self)
            {
-             HV *converter_hv = (HV *) SvRV (converter_in);
-             SV **document_context_sv = hv_fetch (converter_hv,
-                   "document_context", strlen("document_context"), 0);
-             AV *document_context_av = (AV *) SvRV (*document_context_sv);
-             /* should not be needed as we are calling from perl
-             if (self->modified_state)
-               {
-                 build_html_formatting_state (self, self->modified_state);
-                 self->modified_state = 0;
-               }
-              */
              html_pop_document_context (self);
-
-             av_pop (document_context_av);
-             hv_store (converter_hv, "document_global_context",
-                       strlen ("document_global_context"),
-                       newSViv (self->document_global_context), 0);
-             /* reset to ignore the HMSF_formatting_context flag just set */
-             self->modified_state = 0;
-             self->document_context_change++;
            }
+
+int
+html_open_command_update_context (SV *converter_in, char *command_name)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_open_command_update_context");
+         RETVAL = 0;
+         if (self)
+           {
+             enum command_id cmd = lookup_builtin_command (command_name);
+             RETVAL = html_open_command_update_context (self, cmd);
+           }
+    OUTPUT:
+         RETVAL
+
+void
+html_convert_command_update_context (SV *converter_in, char *command_name)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_convert_command_update_context");
+         if (self)
+           {
+             enum command_id cmd = lookup_builtin_command (command_name);
+             html_convert_command_update_context (self, cmd);
+           }
+
+void
+html_open_type_update_context (SV *converter_in, char *type_name)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_open_type_update_context");
+         if (self)
+           {
+             enum element_type type = find_element_type (type_name);
+             html_open_type_update_context (self, type);
+           }
+
+void
+html_convert_type_update_context (SV *converter_in, char *type_name)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_convert_type_update_context");
+         if (self)
+           {
+             enum element_type type = find_element_type (type_name);
+             html_convert_type_update_context (self, type);
+           }
+
+void
+html_set_code_context (SV *converter_in, int code)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_set_code_context");
+         if (self)
+           html_set_code_context (self, code);
+
+void
+html_pop_code_context (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_pop_code_context");
+         if (self)
+           html_pop_code_context (self);
+
+void
+html_set_string_context (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_set_string_context");
+         if (self)
+           html_set_string_context (self);
+
+void
+html_unset_string_context (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_unset_string_context");
+         if (self)
+           html_unset_string_context (self);
+
+void
+html_set_raw_context (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_set_raw_context");
+         if (self)
+           html_set_raw_context (self);
+
+void
+html_unset_raw_context (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_unset_raw_context");
+         if (self)
+           html_unset_raw_context (self);
+
+SV *
+html_debug_print_html_contexts (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_debug_print_html_contexts");
+         if (self)
+           {
+             char *result = debug_print_html_contexts (self);
+             RETVAL = newSVpv_utf8 (result, 0);
+             free (result);
+           }
+         else
+           RETVAL = newSVpv_utf8 ("", 0);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_math (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_math");
+         RETVAL = html_in_math (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_preformatted_context (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_preformatted_context");
+         RETVAL = html_in_preformatted_context (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_inside_preformatted (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_inside_preformatted");
+         RETVAL = html_inside_preformatted (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_upper_case (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_upper_case");
+         RETVAL = html_in_upper_case (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_non_breakable_space (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_non_breakable_space");
+         RETVAL = html_in_non_breakable_space (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_space_protected (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_space_protected");
+         RETVAL = html_in_space_protected (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_code (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_code");
+         RETVAL = html_in_code (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_string (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_string");
+         RETVAL = html_in_string (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_verbatim (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_verbatim");
+         RETVAL = html_in_verbatim (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_raw (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_raw");
+         RETVAL = html_in_raw (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_paragraph_number (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_paragraph_number");
+         RETVAL = html_paragraph_number (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_preformatted_number (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_preformatted_number");
+         RETVAL = html_preformatted_number (self);
+    OUTPUT:
+         RETVAL
+
+char *
+html_top_block_command (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+         enum command_id cmd;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_top_block_command");
+         cmd = html_top_block_command (self);
+         RETVAL = builtin_command_name (cmd);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_preformatted_classes_stack (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+         STRING_STACK *preformatted_classes_stack;
+         AV *preformatted_classes_av;
+         size_t i;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_preformatted_classes_stack");
+         preformatted_classes_stack = html_preformatted_classes_stack (self);
+         preformatted_classes_av = newAV();
+         for (i = 0; i < preformatted_classes_stack->top; i++)
+           {
+             SV *class_sv
+               = newSVpv_utf8 (preformatted_classes_stack->stack[i], 0);
+             av_push (preformatted_classes_av, class_sv);
+           }
+         RETVAL = newRV_noinc ((SV *)preformatted_classes_av);
+    OUTPUT:
+         RETVAL
+
+char *
+html_in_align (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+         enum command_id cmd;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_align");
+         cmd = html_in_align (self);
+         RETVAL = builtin_command_name (cmd);
+    OUTPUT:
+         RETVAL
 
 void
 html_register_opened_section_level (SV *converter_in, int level, close_string)
@@ -421,6 +693,194 @@ html_get_css_elements_classes (SV *converter_in, ...)
     OUTPUT:
          RETVAL
 
+void
+html_register_footnote (SV *converter_in, SV *command, footid, docid, int number_in_doc, footnote_location_filename, ...)
+         char *footid = (char *)SvPVutf8_nolen($arg);
+         char *docid = (char *)SvPVutf8_nolen($arg);
+         char *footnote_location_filename = (char *)SvPVutf8_nolen($arg);
+      PROTOTYPE: $$$$$$$
+      PREINIT:
+         CONVERTER *self;
+         char *multi_expanded_region = 0;
+      CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_register_footnote");
+         if (self)
+           {
+             /* find footnote in XS.  First use number_in_doc, if not
+                effective, do a linear search */
+             /* TODO if not found, could determine an offset with
+                     number_in_doc and reuse it. */
+             /* TODO another possibility would be to setup a sorted array
+                when setting up the footnotes targets and use bsearch,
+                although it is not clear that it would be more efficient */
+             ELEMENT *footnote = 0;
+             ELEMENT *current;
+             HV *command_hv = (HV *) SvRV (command);
+             ELEMENT_LIST *footnotes
+                = &self->document->global_commands->footnotes;
+             if (number_in_doc - 1 < footnotes->number)
+               {
+                 ELEMENT *current = footnotes->list[number_in_doc - 1];
+                 if (command_hv == current->hv)
+                   footnote = current;
+                   /*
+                 else
+                   fprintf (stderr,
+                            "REMARK: footnote %d %s not directly found\n", 
+                            number_in_doc, footid);
+                    */
+               }
+             if (!footnote)
+               {
+                 size_t i;
+                 for (i = 0; i < footnotes->number; i++)
+                   {
+                     current = footnotes->list[i];
+                     if (current->hv == command_hv)
+                       {
+                         footnote = current;
+                         break;
+                       }
+                   }
+               }
+             if (footnote)
+               {
+              /*
+                 fprintf (stderr, "FFF %s\n", convert_to_texinfo (footnote));
+               */
+                  if (items > 7 && SvOK(ST(7)))
+                    multi_expanded_region = SvPVutf8_nolen (ST(7));
+                  html_register_footnote (self, footnote, footid, docid,
+                              number_in_doc, footnote_location_filename,
+                                                  multi_expanded_region);
+               }
+             else
+               {
+                 fprintf (stderr, "ERROR: footnote not found\n");
+               }
+           }
+
+SV *
+html_get_pending_footnotes (SV *converter_in)
+      PREINIT:
+         CONVERTER *self;
+         AV *pending_footnotes_av;
+      CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_register_footnote");
+         pending_footnotes_av = newAV ();
+         if (self)
+           {
+             HTML_PENDING_FOOTNOTE_STACK *stack
+              = html_get_pending_footnotes (self);
+
+             build_pending_footnotes (pending_footnotes_av, stack);
+
+             destroy_pending_footnotes (stack);
+           }
+         RETVAL = newRV_noinc ((SV *) pending_footnotes_av);
+    OUTPUT:
+         RETVAL
+
+void
+html_register_pending_formatted_inline_content (SV *converter_in, category, ...)
+         char *category = (char *)SvPVutf8_nolen($arg);
+      PROTOTYPE: $$$
+      PREINIT:
+         CONVERTER *self;
+         char *inline_content = 0;
+     CODE:
+         self = get_sv_converter (converter_in,
+                       "html_register_pending_formatted_inline_content");
+         if (self)
+           {
+             if (items > 2 && SvOK(ST(2)))
+               inline_content = SvPVutf8_nolen (ST(2));
+
+             html_register_pending_formatted_inline_content (self,
+                                                 category, inline_content);
+           }
+
+SV *
+html_cancel_pending_formatted_inline_content (SV *converter_in, category)
+         char *category = (char *)SvPVutf8_nolen($arg);
+      PREINIT:
+         CONVERTER *self;
+         char *inline_content = 0;
+     CODE:
+         self = get_sv_converter (converter_in,
+                          "html_cancel_pending_formatted_inline_content");
+         if (self)
+           {
+             inline_content
+              = html_cancel_pending_formatted_inline_content (self, category);
+           }
+         if (inline_content)
+           {
+             RETVAL = newSVpv_utf8 (inline_content, 0);
+             free (inline_content);
+           }
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_get_pending_formatted_inline_content (SV *converter_in)
+      PREINIT:
+         CONVERTER *self;
+         char *inline_content = 0;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                "html_get_pending_formatted_inline_content");
+         if (self)
+           {
+             inline_content = html_get_pending_formatted_inline_content (self);
+           }
+         if (inline_content)
+           {
+             RETVAL = newSVpv_utf8 (inline_content, 0);
+             free (inline_content);
+           }
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
+void
+html_associate_pending_formatted_inline_content (SV *converter_in, SV *element_sv, inline_content)
+         char *inline_content = (char *)SvPVutf8_nolen($arg);
+      PREINIT:
+         CONVERTER *self;
+      CODE:
+         self = get_sv_converter (converter_in,
+                       "html_associate_pending_formatted_inline_content");
+         if (self)
+           {
+             html_associate_pending_formatted_inline_content (self,
+                                  0, SvRV (element_sv), inline_content);
+           }
+
+SV *
+html_get_associated_formatted_inline_content (SV *converter_in, SV *element_sv)
+      PREINIT:
+         CONVERTER *self;
+      CODE:
+         self = get_sv_converter (converter_in,
+                       "html_get_associated_formatted_inline_content");
+         if (self)
+           {
+             char *inline_content
+              = html_get_associated_formatted_inline_content (self,
+                                                   0, SvRV (element_sv));
+             RETVAL = newSVpv_utf8 (inline_content, 0);
+             free (inline_content);
+           }
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
 
 void
 html_merge_index_entries (SV *converter_in)

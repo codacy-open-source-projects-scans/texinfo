@@ -668,26 +668,24 @@ sub new_formatter($$;$)
 {
   my ($self, $type, $conf) = @_;
 
-  my $first_indent_length;
-  if ($conf) {
-    $first_indent_length = $conf->{'first_indent_length'};
-    delete $conf->{'first_indent_length'};
-  }
-
-  my $container;
   my $container_conf = {
-         'max'           => $self->{'text_element_context'}->[-1]->{'max'},
-         'indent_level'  => $self->{'format_context'}->[-1]->{'indent_level'},
+    'max' => $self->{'text_element_context'}->[-1]->{'max'},
   };
 
-  $container_conf->{'indent_length'}
-    = $self->{'format_context'}->[-1]->{'indent_length'}
-      if (defined($self->{'format_context'}->[-1]->{'indent_length'}));
+  my $indent = $self->{'format_context'}->[-1]->{'indent_length'};
+  if (defined($indent)) {
+    $container_conf->{'indent_length'} = $indent;
+  } else {
+    $container_conf->{'indent_length'}
+      = $indent_length*($self->{'format_context'}->[-1]->{'indent_level'});
+  }
+
+  my $frenchspacing_conf = $self->{'conf'}->{'frenchspacing'};
+  #my $frenchspacing_conf = $self->get_conf('frenchspacing');
+  # access 'conf' hash directly for efficiency
 
   $container_conf->{'frenchspacing'} = 1
-    if ($self->{'conf'}->{'frenchspacing'} eq 'on');
-    #if ($self->get_conf('frenchspacing') eq 'on');
-    # access 'conf' hash directly for efficiency
+    if ($frenchspacing_conf eq 'on');
 
   $container_conf->{'counter'}
     = $self->{'text_element_context'}->[-1]->{'counter'}
@@ -700,25 +698,15 @@ sub new_formatter($$;$)
     }
   }
 
-  my $indent = $container_conf->{'indent_length'};
-  $indent = $indent_length*$container_conf->{'indent_level'}
-    if (!defined($indent));
-
-  if ($first_indent_length) {
-    $container_conf->{'indent_length'} = $first_indent_length;
-    $container_conf->{'indent_length_next'} = $indent;
-  } else {
-    $container_conf->{'indent_length'} = $indent;
-  }
-
-  if ($type eq 'line') {
+  my $container;
+  if ($type eq 'paragraph') {
+    $container = Texinfo::Convert::Paragraph->new($container_conf);
+  } elsif ($type eq 'line') {
     $container_conf->{'max'} = 10000001;
     $container_conf->{'keep_end_lines'} = 1;
     $container_conf->{'no_final_newline'} = 1;
     $container_conf->{'add_final_space'} = 1;
 
-    $container = Texinfo::Convert::Paragraph->new($container_conf);
-  } elsif ($type eq 'paragraph') {
     $container = Texinfo::Convert::Paragraph->new($container_conf);
   } elsif ($type eq 'unfilled') {
     $container_conf->{'max'} = 10000000;
@@ -740,16 +728,13 @@ sub new_formatter($$;$)
   my $formatter = {'container' => $container,
                    'upper_case_stack' => [{}],
                    'font_type_stack' => [{}],
-                   'w' => 0, 'type' => $type,
-              'frenchspacing_stack' => [$self->{'conf'}->{'frenchspacing'}],
-              #'frenchspacing_stack' => [$self->get_conf('frenchspacing')],
-              # access 'conf' hash directly for efficiency
-              'suppress_styles' => undef,
-              'no_added_eol' => undef};
+                   'w' => 0,
+                   'frenchspacing_stack' => [ $frenchspacing_conf ],
+                   'suppress_styles' => undef,
+                   'no_added_eol' => undef};
   if ($conf) {
-    foreach my $configuration ('suppress_styles', 'no_added_eol') {
-      $formatter->{$configuration} = $conf->{$configuration};
-    }
+    $formatter->{'suppress_styles'} = $conf->{'suppress_styles'};
+    $formatter->{'no_added_eol'} = $conf->{'no_added_eol'};
   }
 
   if ($type eq 'unfilled') {
@@ -807,17 +792,21 @@ sub convert_line($$;$)
   return $text;
 }
 
-sub _convert_unfilled($$;$)
+# convert with a line formatter in a new count context, not changing
+# the current context.  return the result of the conversion.
+sub convert_line_new_context($$;$)
 {
   my ($self, $converted, $conf) = @_;
-  my $formatter = $self->new_formatter('unfilled', $conf);
-  $formatter->{'font_type_stack'}->[-1]->{'monospace'} = 1;
+
+  push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
+  my $formatter = $self->new_formatter('line', $conf);
   push @{$self->{'formatters'}}, $formatter;
-  my $result = $self->_convert($converted);
-  $result .= _count_added($self, $formatter->{'container'},
+  my $text = $self->_convert($converted);
+  $text .= _count_added($self, $formatter->{'container'},
                 Texinfo::Convert::Paragraph::end($formatter->{'container'}));
   pop @{$self->{'formatters'}};
-  return $result;
+  pop @{$self->{'count_context'}};
+  return $text;
 }
 
 sub count_bytes($$)
@@ -1228,7 +1217,6 @@ sub format_contents($$$)
     my $section = $top_section;
  SECTION:
     while ($section) {
-      push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
       my $section_title_tree;
       if (defined($section->{'extra'}->{'section_number'})
           and ($self->get_conf('NUMBER_SECTIONS')
@@ -1248,10 +1236,9 @@ sub format_contents($$$)
       } else {
         $section_title_tree = $section->{'args'}->[0];
       }
-      my $section_title = $self->convert_line(
+      my $section_title = $self->convert_line_new_context(
             {'contents' => [$section_title_tree],
              'type' => 'frenchspacing'});
-      pop @{$self->{'count_context'}};
       my $text = $section_title;
       chomp ($text);
       $text .= "\n";
@@ -1316,11 +1303,11 @@ sub _normalize_top_node($)
 }
 
 # convert and cache a node name.  $NODE is a node element.
-sub node_line($$)
+sub node_name($$)
 {
   my ($self, $node) = @_;
-  $self->{'node_lines_text'} = {} if (!$self->{'node_lines_text'});
-  if (!$self->{'node_lines_text'}->{$node}) {
+  $self->{'node_names_text'} = {} if (!$self->{'node_names_text'});
+  if (!$self->{'node_names_text'}->{$node}) {
     my $label_element;
     if ($node->{'cmdname'}) {
       $label_element = Texinfo::Common::get_label_element($node);
@@ -1331,17 +1318,17 @@ sub node_line($$)
     my $node_text = {'type' => '_code',
                      'contents' => [$label_element]};
     push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
-    $self->{'node_lines_text'}->{$node}
+    $self->{'node_names_text'}->{$node}
       = {'text' => _normalize_top_node($self->convert_line($node_text,
                                                  {'suppress_styles' => 1,
                                                   'no_added_eol' => 1,}))};
     update_count_context($self);
     my $end_context = pop @{$self->{'count_context'}};
-    $self->{'node_lines_text'}->{$node}->{'count'}
+    $self->{'node_names_text'}->{$node}->{'count'}
       = $end_context->{'bytes'};
   }
-  return ($self->{'node_lines_text'}->{$node}->{'text'},
-          $self->{'node_lines_text'}->{$node}->{'count'});
+  return ($self->{'node_names_text'}->{$node}->{'text'},
+          $self->{'node_names_text'}->{$node}->{'count'});
 }
 
 my $index_length_to_node = 41;
@@ -1548,31 +1535,31 @@ sub process_printindex($$;$)
         $self->{'index_entries_no_node'}->{$entry} = 1;
       }
     } else {
-      my ($node_line, $byte_count) = $self->node_line($node);
+      my ($node_name, $byte_count) = $self->node_name($node);
       $self->{'count_context'}->[-1]->{'bytes'} += $byte_count;
       # protect characters that need to be protected in menu node entry
       # after menu entry name and also :, as the Info readers
       # should consider text up to : to be part of the index entry.
-      if ($node_line =~ /([,\t:]|\.\s)/) {
+      if ($node_name =~ /([,\t:]|\.\s)/) {
         my $warned_char = $1;
         if ($self->{'info_special_chars_warning'}) {
           # Warn only once
-          if (! $self->{'index_entry_node_colon'}->{$node_line}) {
+          if (! $self->{'index_entry_node_colon'}->{$node_name}) {
             $self->converter_line_warn($self, sprintf(__(
              "node name with index entries should not contain `%s'"),
                                             $warned_char),
                            $node->{'source_info'});
           }
-          $self->{'index_entry_node_colon'}->{$node_line} = 1;
+          $self->{'index_entry_node_colon'}->{$node_name} = 1;
         }
         if ($self->{'info_special_chars_quote'}) {
           my $pre_quote = "\x{7f}";
           my $post_quote = $pre_quote;
           $self->{'count_context'}->[-1]->{'bytes'} += 2;
-          $node_line = $pre_quote . $node_line . $post_quote;
+          $node_name = $pre_quote . $node_name . $post_quote;
         }
       }
-      $entry_line_addition .= $node_line;
+      $entry_line_addition .= $node_name;
     }
     $entry_line_addition .= '.';
     add_text_to_count($self, '.');
@@ -2210,7 +2197,7 @@ sub _convert($$)
           # Due to the paragraph formatter holding pending text, converting
           # the node name with the current formatter does not yield all the
           # converted text.  To get the full node name (and no more), we
-          # can convert in a new context, using convert_line.
+          # can convert in a new context, using convert_line_new_context.
           # However, it is slow to do this for every node.  So in the most
           # frequent case when the node name is a simple text element, use
           # that text instead.
@@ -2221,13 +2208,12 @@ sub _convert($$)
           } else {
             $self->{'silent'} = 0 if (!defined($self->{'silent'}));
             $self->{'silent'}++;
-            push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
 
-            $node_line_name = $self->convert_line({'type' => '_code',
-                                            'contents' => [$label_element]},
+            $node_line_name = $self->convert_line_new_context(
+                                          {'type' => '_code',
+                                           'contents' => [$label_element]},
                                           {'suppress_styles' => 1,
                                             'no_added_eol' => 1});
-            pop @{$self->{'count_context'}};
             $self->{'silent'}--;
           }
 
@@ -2346,7 +2332,7 @@ sub _convert($$)
         my ($image, $lines_count) = $self->format_image($element);
         _add_lines_count($self, $lines_count);
         add_text_to_count($self, $image);
-        if ($image ne '' and $formatter->{'type'} ne 'paragraph') {
+        if ($image ne '') {
           $self->{'empty_lines_count'} = 0;
         }
         $result .= $image;
@@ -2577,10 +2563,9 @@ sub _convert($$)
         die if ($old_context ne $command);
         return $result;
       } elsif ($command eq 'titlefont') {
-        push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
-        $result = $self->convert_line ({'type' => 'frenchspacing',
-                                      'contents' => [$element->{'args'}->[0]]});
-        pop @{$self->{'count_context'}};
+        $result = $self->convert_line_new_context (
+                     {'type' => 'frenchspacing',
+                      'contents' => [$element->{'args'}->[0]]});
         $result = Texinfo::Convert::Text::text_heading(
                           {'extra' => {'section_level' => 0},
                            'cmdname' => 'titlefont'},
@@ -2678,12 +2663,9 @@ sub _convert($$)
       }
       if ($self->{'preformatted_context_commands'}->{$command}
           or $command eq 'float') {
-        if ($self->{'formatters'}->[-1]->{'type'} eq 'paragraph'
-            and $format_raw_commands{$command}) {
+        if ($format_raw_commands{$command}) {
           $result .= _count_added($self, $formatter->{'container'},
                               add_pending_word($formatter->{'container'}, 1));
-          $result .= _count_added($self, $formatter->{'container'},
-                              end_line($formatter->{'container'}));
         }
         push @{$self->{'context'}}, $command;
       } elsif ($flush_commands{$command}) {
@@ -2756,10 +2738,9 @@ sub _convert($$)
             if ($content->{'type'} and $content->{'type'} eq 'bracketed_arg') {
               my $column_size = 0;
               if ($content->{'contents'}) {
-                push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
-                my ($formatted_prototype) = $self->convert_line($content,
-                                                       {'indent_length' => 0});
-                pop @{$self->{'count_context'}};
+                my ($formatted_prototype)
+                    = $self->convert_line_new_context($content,
+                                                      {'indent_length' => 0});
                 $column_size
                   = Texinfo::Convert::Unicode::string_width($formatted_prototype);
               }
@@ -2820,10 +2801,9 @@ sub _convert($$)
       }
 
       if ($heading_element) {
-        push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
-        my $heading = $self->convert_line({'type' => 'frenchspacing',
+        my $heading = $self->convert_line_new_context (
+                        {'type' => 'frenchspacing',
                          'contents' => [$heading_element]});
-        pop @{$self->{'count_context'}};
         # @* leads to an end of line, underlying appears on the line below
         # over one line
         my $heading_underlined =
@@ -2853,8 +2833,9 @@ sub _convert($$)
 
         $table_item_tree->{'type'} = 'frenchspacing';
         $result = $self->convert_line($table_item_tree,
-                    {'indent_level'
-                      => $self->{'format_context'}->[-1]->{'indent_level'} -1});
+             {'indent_length' =>
+                 ($self->{'format_context'}->[-1]->{'indent_level'} -1)
+                   * $indent_length});
         if ($result ne '') {
           $result = $self->ensure_end_of_line($result);
           $self->{'empty_lines_count'} = 0;
@@ -2939,13 +2920,21 @@ sub _convert($$)
       if ($element->{'args'}->[0]
           and $element->{'args'}->[0]->{'contents'}) {
         if ($self->{'preformatted_context_commands'}->{$self->{'context'}->[-1]}) {
-          $result = $self->_convert_unfilled($element->{'args'}->[0],
-               {'indent_level'
-                 => $self->{'format_context'}->[-1]->{'indent_level'} -1});
+          my $formatter = $self->new_formatter('unfilled',
+            {'indent_length' =>
+                ($self->{'format_context'}->[-1]->{'indent_level'} -1)
+                  * $indent_length});
+          $formatter->{'font_type_stack'}->[-1]->{'monospace'} = 1;
+          push @{$self->{'formatters'}}, $formatter;
+          $result = $self->_convert($element->{'args'}->[0]);
+          $result .= _count_added($self, $formatter->{'container'},
+              Texinfo::Convert::Paragraph::end($formatter->{'container'}));
+          pop @{$self->{'formatters'}};
         } else {
           $result = $self->convert_line($element->{'args'}->[0],
-             {'indent_level'
-               => $self->{'format_context'}->[-1]->{'indent_level'} -1});
+             {'indent_length' =>
+                 ($self->{'format_context'}->[-1]->{'indent_level'} -1)
+                   * $indent_length});
         }
       }
       if ($result ne '') {
@@ -3127,9 +3116,10 @@ sub _convert($$)
                 and ($self->{'format_context'}->[-1]->{'paragraph_count'}
                   or $self->get_conf('firstparagraphindent') eq 'insert')
                and !$self->{'text_element_context'}->[-1]->{'counter'}))) {
-        $conf->{'first_indent_length'} = $self->get_conf('paragraphindent');
-        $conf->{'first_indent_length'} = 0
-          if ($conf->{'first_indent_length'} eq 'none');
+        my $para_indent = $self->get_conf('paragraphindent');
+        $para_indent = 0 if $para_indent eq 'none';
+        $conf->{'indent_length'} = $para_indent;
+        $conf->{'indent_length_next'} = 0;
       }
       $paragraph = $self->new_formatter('paragraph', $conf);
       push @{$self->{'formatters'}}, $paragraph;

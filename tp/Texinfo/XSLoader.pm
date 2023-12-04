@@ -226,7 +226,7 @@ sub init {
   
  FALLBACK:
   if ($TEXINFO_XS eq 'required') {
-    die "unset the TEXINFO_XS environment variable to use the "
+    die "set the TEXINFO_XS environment variable to 'omit' to use the "
        ."pure Perl modules\n";
   } elsif ($TEXINFO_XS eq 'warn' or $TEXINFO_XS eq 'debug') {
     if (defined($fallback_module)) {
@@ -240,8 +240,11 @@ sub init {
   }
 
   # Fall back to using the Perl code.
+  # Note that if no import method can be found, then the call is skipped (this
+  # special case is described in perldoc use), therefore the fallback module
+  # does not need to implement import().
   # Use eval here to interpret :: properly in module name.
-  eval "require $fallback_module; Texinfo::Parser->import();";
+  eval "require $fallback_module; $module->import();";
   if ($@) {
     warn();
     die "Error loading $fallback_module\n";

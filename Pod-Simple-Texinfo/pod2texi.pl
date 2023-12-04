@@ -292,53 +292,20 @@ sub _parsed_manual_tree($$$$$)
   my $identifier_target = $document->labels_information();
 
   if ($fill_gaps_in_sectioning) {
-    Texinfo::Transformations::fill_gaps_in_sectioning($tree);
-    # there should already be nodes associated with other sections.  Therefore
-    # new nodes should only be created for the added sections.
+    my $commands_heading_content;
+    if ($self->texinfo_sectioning_base_level() > 0) {
+      my $manual_texi = Pod::Simple::Texinfo::_protect_text(
+             $self->texinfo_short_title(), 1, 1);
+      $commands_heading_content
+        = Texinfo::Parser::parse_texi_line(undef, $manual_texi);
+    }
+    Texinfo::Transformations::fill_gaps_in_sectioning($tree,
+                                                      $commands_heading_content);
     if ($section_nodes) {
-      # FIXME the following code does not work when using XS code only
-      # as $added_nodes is undef.  There are other issues, the entries
-      # deleted in identifier_target are not deleted in XS, and more generally
-      # the code is done as if everything was done with pure perl code.
       my $added_nodes
         = Texinfo::Transformations::insert_nodes_for_sectioning_commands(
                                            $document, $registrar, $texi_parser);
       $document = Texinfo::Document::rebuild_document($document);
-      if ($self and $self->texinfo_sectioning_base_level() > 0) {
-        # prepend the manual name
-        foreach my $node (@$added_nodes) {
-          # First remove the old normalized entry
-          # FIXME should go through an API
-          delete $identifier_target->{$node->{'extra'}->{'normalized'}};
-
-          # prepare the new node Texinfo name and parse it to a Texinfo tree
-          my $node_texi = Texinfo::Convert::Texinfo::convert_to_texinfo(
-                {'contents' => $node->{'args'}->[0]->{'contents'}});
-          # We could have kept the asis, too, it is kept when !section_nodes
-          $node_texi =~ s/^\s*(\@asis\{\})?\s*//;
-          # complete with manual name
-          # FIXME _node_name is an internal function of Pod::Simple::Texinfo
-          # used, it is wrong to use it here.
-          my $complete_node_name = $self->_node_name($node_texi);
-          my $completed_node_tree
-            = Texinfo::Parser::parse_texi_line(undef, $complete_node_name);
-
-          # now recreate node arg
-          my $node_arg = $node->{'args'}->[0];
-          $node_arg->{'contents'} = $completed_node_tree->{'contents'};
-          foreach my $content (@{$node_arg->{'contents'}}) {
-            $content->{'parent'} = $node_arg;
-          }
-
-          my $normalized_node_name
-             = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
-                  { 'contents' => $node_arg->{'contents'} });
-          $node->{'extra'}->{'normalized'} = $normalized_node_name;
-
-          Texinfo::Document::register_label_element($document, $node,
-                                                    $registrar, $texi_parser);
-        }
-      }
     }
   }
   Texinfo::Structuring::sectioning_structure($tree, $registrar, $texi_parser);

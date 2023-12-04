@@ -133,8 +133,8 @@ $result_converted{'html'}->{'macro_defined_txiinternalvalue_in_translation'} = '
 </head>
 
 <body lang="en">
-user internalvalue TeX
-user internalvalue TeX
+1 TeX
+2 TeX
 
 
 

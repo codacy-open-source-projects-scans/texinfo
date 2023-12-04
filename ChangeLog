@@ -1,3 +1,439 @@
+2023-12-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (node_line): Rename to
+	'node_name' as node_line is a confusing name, the result not
+	being a full line but usually only part of a line.
+
+2023-12-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (preformatted_classes_stack),
+	doc/texi2any_api.texi (Conversion in Preformatted Context): return a
+	reference on an array instead of an array.  Update callers.
+
+	* tp/Texinfo/Convert/HTML.pm
+	(_reset_unset_no_arg_commands_formatting_context): use
+	_open_command_update_context to set the context of a preformatted
+	command.
+
+	* tp/Texinfo/Convert/HTML.pm (_set_code_context, _pop_code_context)
+	(_set_string_context, _unset_string_context, _set_raw_context)
+	(_unset_raw_context, _convert): add functions to encapsulate
+	modification of document context to be able to override them with XS.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_new_document_context)
+	(html_pop_document_context, html_open_command_update_context)
+	(html_convert_command_update_context, html_open_type_update_context)
+	(html_convert_type_update_context, html_set_code_context)
+	(html_pop_code_context, html_set_string_context)
+	(html_unset_string_context, html_set_raw_context)
+	(html_unset_raw_context, html_debug_print_html_contexts)
+	(html_in*, html_paragraph_number, html_preformatted_number)
+	(html_top_block_command, html_preformatted_classes_stack),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_formatting_state), tp/Texinfo/XS/convert/convert_html.c
+	(html_in*, html_paragraph_number html_preformatted_number)
+	(html_top_block_command, html_preformatted_classes_stack)
+	(html_in_align, html_set_code_context, html_pop_code_context)
+	(html_set_string_context) (html_unset_string_context)
+	(html_set_raw_context, html_unset_raw_context)
+	(html_new_document_context, html_check_transfer_state_finalization)
+	(html_open_command_update_context, html_open_type_update_context)
+	(html_convert_command_update_context)
+	(html_convert_type_update_context, convert_to_html_internal),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER): override all
+	the functions setting or accessing document context instead of
+	keeping track of modifications to pass information to perl.
+	Remove code and data related to the previous design, in particular
+	remove build_html_document_context_ctx and build_html_document_context
+
+2023-12-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm: use non object oriented call when not
+	useful and possibly harmful as we do not want replacement of those
+	calls.  For in_preformatted_context, in_math, in_upper_case,
+	in_multi_expanded, top_block_command, inside_preformatted.
+
+2023-12-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_text): revert inlining of calls
+	to get state information for speed, to be able to override the
+	function calls in XS.
+
+	* tp/Texinfo/Convert/HTML.pm: use non object oriented call for in_string
+	and _debug_print_html_contexts.
+
+2023-12-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (default_commands_args): reorder to
+	have an arg formatting done in the same order in perl and C.
+
+	* tp/Texinfo/XS/convert/convert_html.c (default_commands_args):
+	use F_AFT_none as flag for commands that do not have flag set but
+	should not have their argument considered as normal.
+
+	* tp/Texinfo/Convert/HTML.pm (_debug_print_html_contexts, _convert),
+	tp/Texinfo/XS/convert/convert_html.c (debug_print_html_contexts)
+	(convert_to_html_internal): separate the code showing the contexts to
+	be able to use it for debugging.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_w_command)
+	(commands_internal_conversion_table): implement and use
+	convert_w_command.
+
+	* tp/Texinfo/XS/convert/convert_html.c (open_quotation_command)
+	(commands_internal_open_table): implement and use
+	open_quotation_command.
+
+	* tp/Texinfo/XS/convert/convert_html.c (open_inline_container_type):
+	implement.
+
+2023-12-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (COMMAND_INTERNAL_CONVERSION)
+	(COMMAND_INTERNAL_OPEN, TYPE_INTERNAL_OPEN, types_internal_open_table)
+	(commands_internal_conversion_table, commands_internal_open_table)
+	(command_open_external, type_open_external)
+	(register_type_open_function, register_command_open_function)
+	(html_converter_initialize, convert_to_html_internal),
+	tp/Texinfo/XS/main/converter_types.h (TYPE_OPEN_FUNCTION)
+	(COMMAND_OPEN_FUNCTION, CONVERTER): add type_open_function and
+	command_open_function to converter structure and functions to register
+	command_open_external (renamed from command_open) and
+	type_open_external (renamed from type_open).  Use the function
+	references in conversion.  Add commands_internal_conversion_table,
+	commands_internal_open_table and types_internal_open_table to list
+	functions in C replacing perl functions if the default perl function
+	is used.
+
+2023-11-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(default_format_footnotes_segment): free foot_lines.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_unit_type)
+	(convert_special_unit_type): free closed strings strings.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_finalize_output_state)
+	(html_free_converter): clear pending_inline_content,
+	associated_inline_content and shared_conversion_state.integers in
+	html_finalize_output_state and free the stack/lists/associated_info
+	in html_free_converter.
+
+2023-11-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm
+	(associate_pending_formatted_inline_content): remove useless code.
+
+	* tp/Texinfo/Convert/HTML.pm
+	(register_pending_formatted_inline_content): do not register undef
+	inline_content.
+
+	* tp/Texinfo/Convert/HTML.pm
+	(cancel_pending_formatted_inline_content): fix prototype, simpler code
+	without intermediary array.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_register_pending_formatted_inline_content)
+	(html_cancel_pending_formatted_inline_content)
+	(html_get_pending_formatted_inline_content)
+	(html_associate_pending_formatted_inline_content)
+	(html_get_associated_formatted_inline_content),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_register_pending_formatted_inline_content)
+	(html_cancel_pending_formatted_inline_content)
+	(html_get_pending_formatted_inline_content)
+	(html_associate_pending_formatted_inline_content)
+	(html_get_associated_formatted_inline_content),
+	tp/Texinfo/XS/main/converter_types.h (HTML_INLINE_CONTENT)
+	(HTML_INLINE_CONTENT_STACK, HTML_ASSOCIATED_INLINE_CONTENT)
+	(HTML_ASSOCIATED_INLINE_CONTENT_LIST, CONVERTER): implement
+	register_pending_formatted_inline_content,
+	cancel_pending_formatted_inline_content and
+	get_pending_formatted_inline_content in C and XS interface.
+	Implement associate_pending_formatted_inline_content and
+	get_associated_formatted_inline_content in C and XS interface.
+
+2023-11-30  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (format_contents):
+	Use convert_line_new_context instead of convert_line.
+
+2023-11-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (convert_line_new_context):
+	New function, like convert_line but with a new context pushed
+	onto $self->{'count_context'}.
+	(_count): Use convert_line_new_context wherever we previously
+	surrounded a call to convert_line with pushing and popping
+	a new context.
+
+2023-11-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert_unfilled):
+	Inline into the only call site, and remove function.
+
+2023-11-28  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Customizing Footnotes),
+	tp/Texinfo/Convert/HTML.pm (get_pending_footnotes)
+	(_default_format_footnotes_sequence): have get_pending_footnotes
+	return a reference on an array.
+
+	* doc/texi2any_api.texi (Customizing Footnotes),
+	tp/Texinfo/Convert/HTML.pm (_convert_footnote_command)
+	(_default_format_footnotes_sequence, _convert_footnote_command):
+	always pass the number of the footnote to register_footnote.
+
+	* tp/Texinfo/Convert/HTML.pm (shared_conversion_state)
+	(_initialize_output_state),
+	tp/Texinfo/XS/convert/call_html_perl_function.c
+	(get_shared_conversion_state, call_*),
+	tp/Texinfo/XS/main/converter_types.h (HTML_SHARED_CONVERSION_STATE)
+	(CONVERTER), tp/Texinfo/XS/main/extra.c (add_associated_info_integer):
+	register in $self->{'shared_conversion_state_integers'} the conversion
+	states that are integers.  Register in
+	$self->{'shared_conversion_accessed_integers'} the integer conversion
+	states that were accessed such that XS code can get their values.  Get
+	the accessed integers at the end of call_* function by calling
+	get_shared_conversion_state that add the integer to the C converter
+	shared_conversion_state.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_register_footnote)
+	(html_get_pending_footnotes),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_pending_footnotes), tp/Texinfo/XS/convert/convert_html.c
+	(html_register_footnote, html_get_pending_footnotes)
+	(destroy_pending_footnotes), tp/Texinfo/XS/main/converter_types.h
+	(HTML_PENDING_FOOTNOTE, HTML_PENDING_FOOTNOTE_STACK, CONVERTER):
+	implement register_footnote and get_pending_footnotes in C, add XS
+	interface.
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_explained_command):
+	rename element_explanation_contents shared_conversion_state as
+	element_explanation_content. Avoid using contents separate from the
+	associated element.
+
+2023-11-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/ParserNonXS.pm (%parser_state_configuration):
+	Add default value for 'restricted'.
+
+2023-11-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	restricted flag for XS parser
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (parse_line_command_args)
+	<@alias, @definfoenclose, @defindex, @defcodeindex>,
+	* tp/Texinfo/XS/parsetexi/indices.c (enter_index_entry):
+	Do nothing if global_restricted is set.
+
+2023-11-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/api.c (reset_parser):
+	Reset global_restricted.
+
+2023-11-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (set_restricted, global_restricted):
+	New.
+	* tp/Texinfo/XS/parsetexi/macro.c (new_macro): Do nothing if
+	global_restricted is set.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs,
+	* tp/Texinfo/XS/parsetexi/api.c (parser_set_restricted):
+	New function.  Call set_restricted.
+
+	* tp/Texinfo/Common.pm (%parser_options): Add 'restricted'.
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (simple_parser):
+	Set 'restricted' flag.
+	(parser): If 'restricted' flag is set, call parser_set_restricted.
+
+	* tp/t/init_files_tests.t
+	(macro_defined_txiinternalvalue_in_translation): Re-add test,
+	to check what is done with this input and init file.  From Patrice.
+
+2023-11-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/ParserNonXS.pm (_new_macro),
+	(_parse_line_command_args) <@alias, @definfoenclose>
+	<@defindex, @defcodeindex>: Do nothing if 'restricted' flag set.
+
+	* tp/t/init_files_tests.t
+	(macro_defined_txiinternalvalue_in_translation): Remove test,
+	as @macro no longer works inside a translated string.
+
+2023-11-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Parser 'restricted' flag
+
+	* tp/Texinfo/ParserNonXS.pm (simple_parser): Add 'restricted'
+	flag on parser.
+	(_enter_index_entry): Do nothing if flag is set.  This prevents
+	index information leaking among simple_parser objects.
+	(simple_parser): Re-use indices information.
+
+	* tp/t/init/translation_in_parser_in_translation.pm:
+	Do not access index information from translation parser, as it
+	isn't there.
+
+2023-11-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Re-add simple_parser
+
+	* tp/Texinfo/ParserNonXS.pm, tp/Texinfo/XS/parsetexi/Parsetexi.pm
+	(parser, simple_parser): Re-add simple_parser, used for document
+	translations.  The only difference from before is that we
+	do not share the indices between parsers.
+	* tp/Texinfo/Translations.pm (replace_convert_substrings):
+	Call simple_parser again.
+
+	This reverses the change on 2023-08-10.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv): fix comparison of default reference
+	formatting and customized reference formating to use SvRV.
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_formatting_function_format_footnotes_sequence),
+	tp/Texinfo/XS/convert/convert_html.c
+	(default_format_footnotes_segment, format_footnotes_segment)
+	(convert_unit_type, html_convert_convert, html_convert_output): add
+	call_formatting_function_format_footnotes_sequence, implement
+	default_format_footnotes_segment in C.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_unit_type)
+	(output_units_internal_conversion_table): implement convert_unit_type.
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_unit_type): only use
+	$output_unit as variable name.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Transformations.pm (fill_gaps_in_sectioning),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(fill_gaps_in_sectioning),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(fill_gaps_in_sectioning): new optional Texinfo tree argument for
+	fill_gaps_in_sectioning to use for all the added commands headings
+	instead of an empty @asis.
+
+	* Pod-Simple-Texinfo/pod2texi.pl,
+	Pod-Simple-Texinfo/manual_tests/reference_Th1.texi,
+	Pod-Simple-Texinfo/manual_tests/reference_sectioning_gap.texi:
+	setup a Texinfo tree with the manual name to use as
+	fill_gaps_in_sectioning argument if the sectioning base level is > 0.
+
+	* Pod-Simple-Texinfo/manual_tests/manual_sectioning_gap_test.sh,
+	manual_tests/Module1.pod, manual_tests/Module2.pod,
+	manual_tests/reference_includes/
+	manual_tests/reference_modules_main.texi: new manual test with two
+	modules.
+
+2023-11-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	No 'first_indent_length' option for new_formatter
+
+	* tp/Texinfo/Convert/Plaintext.pm (new_formatter):
+	Eliminate 'first_indent_length' as a possible configuration
+	option.  This is not used by the paragraph formatting module
+	itself, and was only used at place new_formatter was called.
+	This means the options passed to new_formatter are now the
+	same as those used for the paragraph formatter.
+	(_convert) <paragraph indent>: Set 'indent_length' and
+	'indent_length_next' here, rather than 'first_indent_length'.
+
+2023-11-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (new_formatter):
+	Propagate two formatter options directly rather than in a loop.
+
+2023-11-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (new_formatter):
+	Do not set 'indent_level' on config structure passed to paragraph
+	formatter, as it is not used.
+	(_convert): Do not call new_formatter with 'indent_level' in the
+	conf, setting 'indent_length' instead.
+
+2023-11-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	new_formatter tweaks
+
+	* tp/Texinfo/Convert/Plaintext.pm (new_formatter):
+	Save value of a configuration variable to reuse it.
+	Reorder conditional to check for 'paragraph' formatter first
+	as this is the most frequently used.
+
+2023-11-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (new_formatter):
+	Do no save the "type" of the formatter (line/paragraph/unfilled).
+	(_convert) <@image>: Reset 'empty_lines_count' regardless of
+	formatter type.
+	<"format raw commands">: Always flush the output of the current
+	formatter, not just for "paragraph" formatters.  Do not output
+	an extra end of line afterwards.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl (_parsed_manual_tree): modify code to
+	avoid using separately contents and elements clarify what is actually
+	done.  Update information in FIXME comment.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/ParagraphNonXS.pm: remove a FIXME comment fixed.
+	* tp/TODO: update.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am b/tp/Makefile.am (dist_init_DATA): add
+	init/sc_formatting_with_css.pm.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XSLoader.pm (init): call $module->import when falling
+	back on pure perl module, not Texinfo::Parser->import.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (gdt): update build_texinfo_tree
+	call.
+
+	* tp/Makefile.am (dist_modules_DATA), tp/Texinfo/StructTransfXS.pm,
+	tp/Texinfo/XS/Makefile.am (StructuringTransfoXS*),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs: rename
+	StructTransf to StructTransfXS and StructuringTransfo to
+	StructuringTransfoXS.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (gdt): move from TranslationsXS to
+	DocumentXS.  Remove TranslationsXS.pm and TranslationsXS.xs.
+
+	* tp/Texinfo/XSLoader.pm (init): update message.
+
+2023-11-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.c (section_level),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block)
+	(end_line_misc_line), tp/Texinfo/XS/parsetexi/handle_commands.c
+	(handle_other_command), tp/Texinfo/XS/parsetexi/separator.c
+	(handle_comma): use lookup_extra_* functions with a specific type and
+	dynaic type checking, when possible.
+
+	* tp/Texinfo/XS/parsetexi/macro.c: reindent.
+
+	* tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace): use a
+	variable name for clearer code.
+
 2023-11-25  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/XS/main/debug.c (print_associate_info_debug),

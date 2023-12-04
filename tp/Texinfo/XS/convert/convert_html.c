@@ -64,12 +64,33 @@ typedef struct CMD_VARIETY {
     char *variety;
 } CMD_VARIETY;
 
+typedef struct COMMAND_INTERNAL_CONVERSION {
+    enum command_id cmd;
+    void (* command_conversion) (struct CONVERTER *self,
+                                 const enum command_id cmd,
+                                 const ELEMENT *element,
+                                 const HTML_ARGS_FORMATTED *args_formatted,
+                                 const char *content, TEXT *result);
+} COMMAND_INTERNAL_CONVERSION;
+
+typedef struct COMMAND_INTERNAL_OPEN {
+    enum command_id cmd;
+    void (* command_open) (CONVERTER *self, const enum command_id cmd,
+                           const ELEMENT *element, TEXT *result);
+} COMMAND_INTERNAL_OPEN;
+
 typedef struct TYPE_INTERNAL_CONVERSION {
     enum element_type type;
     void (* type_conversion) (CONVERTER *self, const enum element_type type,
                               const ELEMENT *element, const char *content,
                               TEXT *result);
 } TYPE_INTERNAL_CONVERSION;
+
+typedef struct TYPE_INTERNAL_OPEN {
+    enum element_type type;
+    void (* type_open) (CONVERTER *self, const enum element_type type,
+                        const ELEMENT *element, TEXT *result);
+} TYPE_INTERNAL_OPEN;
 
 typedef struct OUTPUT_UNIT_INTERNAL_CONVERSION {
     enum output_unit_type type;
@@ -124,7 +145,7 @@ CMD_VARIETY command_special_unit_variety[] = {
                                 {0, 0},
 };
 
-/* unused */
+/* used to set flags to non-zero with a flag that does nothing */
 #define F_AFT_none              0x0001
 
 #define F_AFT_normal            0x0002
@@ -175,11 +196,11 @@ typedef struct COMMAND_ID_ARGS_SPECIFICATION {
 static COMMAND_ID_ARGS_SPECIFICATION default_commands_args[] = {
   {CM_anchor, {F_AFT_monospacestring}},
   {CM_email, {F_AFT_url | F_AFT_monospacestring, F_AFT_normal}},
-  {CM_footnote, {0}},
-  {CM_printindex, {0}},
+  {CM_footnote, {F_AFT_none}}, /* no flag */
+  {CM_printindex, {F_AFT_none}}, /* no flag */
   {CM_uref, {F_AFT_url | F_AFT_monospacestring, F_AFT_normal, F_AFT_normal}},
   {CM_url, {F_AFT_url | F_AFT_monospacestring, F_AFT_normal, F_AFT_normal}},
-  {CM_sp, {0}},
+  {CM_sp, {F_AFT_none}}, /* no flag */
   {CM_inforef, {F_AFT_monospace, F_AFT_normal, F_AFT_filenametext}},
   {CM_xref, {F_AFT_monospace, F_AFT_normal, F_AFT_normal, F_AFT_filenametext, F_AFT_normal}},
   {CM_pxref, {F_AFT_monospace, F_AFT_normal, F_AFT_normal, F_AFT_filenametext, F_AFT_normal}},
@@ -191,8 +212,8 @@ static COMMAND_ID_ARGS_SPECIFICATION default_commands_args[] = {
   {CM_inlineraw, {F_AFT_monospacetext, F_AFT_raw}},
   {CM_inlineifclear, {F_AFT_monospacetext, F_AFT_normal}},
   {CM_inlineifset, {F_AFT_monospacetext, F_AFT_normal}},
-  {CM_item, {0}},
-  {CM_itemx, {0}},
+  {CM_item, {F_AFT_none}}, /* no flag */
+  {CM_itemx, {F_AFT_none}}, /* no flag */
   {CM_value, {F_AFT_monospacestring}},
   {CM_abbr, {F_AFT_normal, F_AFT_string}},
   {CM_acronym, {F_AFT_normal, F_AFT_string}},
@@ -484,7 +505,7 @@ html_pgdt_tree (const char *translation_context, const char *string,
 }
 
 int
-in_code (CONVERTER *self)
+html_in_code (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
@@ -492,7 +513,7 @@ in_code (CONVERTER *self)
 }
 
 int
-in_math (CONVERTER *self)
+html_in_math (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
@@ -500,7 +521,7 @@ in_math (CONVERTER *self)
 }
 
 int
-in_preformatted_context (CONVERTER *self)
+html_in_preformatted_context (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
@@ -508,7 +529,7 @@ in_preformatted_context (CONVERTER *self)
 }
 
 int
-inside_preformatted (CONVERTER *self)
+html_inside_preformatted (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
@@ -516,7 +537,7 @@ inside_preformatted (CONVERTER *self)
 }
 
 int
-in_non_breakable_space (CONVERTER *self)
+html_in_non_breakable_space (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   HTML_FORMATTING_CONTEXT *top_formating_ctx;
@@ -527,7 +548,7 @@ in_non_breakable_space (CONVERTER *self)
 }
 
 int
-in_raw (CONVERTER *self)
+html_in_raw (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
@@ -535,7 +556,7 @@ in_raw (CONVERTER *self)
 }
 
 int
-in_space_protected (CONVERTER *self)
+html_in_space_protected (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   HTML_FORMATTING_CONTEXT *top_formating_ctx;
@@ -546,14 +567,15 @@ in_space_protected (CONVERTER *self)
 }
 
 int
-in_string (CONVERTER *self)
+html_in_string (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
   return top_document_ctx->string_ctx;
 }
 
-int in_upper_case (CONVERTER *self)
+int
+html_in_upper_case (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   HTML_FORMATTING_CONTEXT *top_formating_ctx;
@@ -564,11 +586,115 @@ int in_upper_case (CONVERTER *self)
 }
 
 int
-in_verbatim (CONVERTER *self)
+html_in_verbatim (CONVERTER *self)
 {
   HTML_DOCUMENT_CONTEXT *top_document_ctx;
   top_document_ctx = html_top_document_context (self);
   return top_document_ctx->verbatim_ctx;
+}
+
+int
+html_paragraph_number (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  HTML_FORMATTING_CONTEXT *top_formating_ctx;
+  top_document_ctx = html_top_document_context (self);
+  top_formating_ctx
+    = html_top_formatting_context (&top_document_ctx->formatting_context);
+  return top_formating_ctx->paragraph_number;
+}
+
+int
+html_preformatted_number (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  HTML_FORMATTING_CONTEXT *top_formating_ctx;
+  top_document_ctx = html_top_document_context (self);
+  top_formating_ctx
+    = html_top_formatting_context (&top_document_ctx->formatting_context);
+  return top_formating_ctx->preformatted_number;
+}
+
+enum command_id
+html_top_block_command (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  top_document_ctx = html_top_document_context (self);
+  if (top_document_ctx->block_commands.top <= 0)
+    return 0;
+  return top_command (&top_document_ctx->block_commands);
+}
+
+STRING_STACK *
+html_preformatted_classes_stack (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  top_document_ctx = html_top_document_context (self);
+  return &top_document_ctx->preformatted_classes;
+}
+
+enum command_id
+html_in_align (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  COMMAND_OR_TYPE *context;
+  top_document_ctx = html_top_document_context (self);
+  context = top_command_or_type (&top_document_ctx->composition_context);
+  if (context->variety == CTV_type_command)
+    {
+      enum command_id cmd = context->cmd;
+      if (html_commands_data[cmd].flags & HF_HTML_align)
+        return cmd;
+    }
+  return 0;
+}
+
+void
+html_set_code_context (CONVERTER *self, int code)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  top_document_ctx = html_top_document_context (self);
+  push_integer_stack_integer (&top_document_ctx->monospace, code);
+}
+
+void
+html_pop_code_context (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  top_document_ctx = html_top_document_context (self);
+  pop_integer_stack (&top_document_ctx->monospace);
+}
+
+void
+html_set_string_context (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  top_document_ctx = html_top_document_context (self);
+  top_document_ctx->string_ctx++;
+}
+
+void
+html_unset_string_context (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  top_document_ctx = html_top_document_context (self);
+  top_document_ctx->string_ctx--;
+}
+
+void
+html_set_raw_context (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  top_document_ctx = html_top_document_context (self);
+  top_document_ctx->raw_ctx++;
+}
+
+void
+html_unset_raw_context (CONVERTER *self)
+{
+  HTML_DOCUMENT_CONTEXT *top_document_ctx;
+  top_document_ctx = html_top_document_context (self);
+  top_document_ctx->raw_ctx--;
 }
 
 size_t
@@ -637,6 +763,231 @@ special_unit_info (CONVERTER *self, enum special_unit_info_type type,
   int i = number -1;
 
   return self->special_unit_info[type][i];
+}
+
+void
+html_register_footnote (CONVERTER *self, const ELEMENT *command,
+     const char *footid, const char *docid, const int number_in_doc,
+     const char *footnote_location_filename, char *multi_expanded_region)
+{
+  HTML_PENDING_FOOTNOTE_STACK *stack;
+  HTML_PENDING_FOOTNOTE *pending_footnote;
+  KEY_PAIR *k = lookup_associated_info (&self->shared_conversion_state.integers,
+                                        "in_skipped_node_top");
+
+  if (k && k->integer == 1)
+    return;
+
+  stack = &self->pending_footnotes;
+
+  if (stack->top >= stack->space)
+    {
+      stack->stack
+        = realloc (stack->stack,
+                   (stack->space += 5) * sizeof (HTML_PENDING_FOOTNOTE *));
+    }
+  pending_footnote = (HTML_PENDING_FOOTNOTE *)
+                      malloc (sizeof (HTML_PENDING_FOOTNOTE));
+  stack->stack[stack->top] = pending_footnote;
+  stack->top++;
+
+  pending_footnote->command = command;
+  pending_footnote->footid = strdup (footid);
+  pending_footnote->docid = strdup (docid);
+  pending_footnote->number_in_doc = number_in_doc;
+  pending_footnote->footnote_location_filename
+       = strdup (footnote_location_filename);
+
+  if (multi_expanded_region)
+    pending_footnote->multi_expanded_region = strdup (multi_expanded_region);
+  else
+    pending_footnote->multi_expanded_region = 0;
+}
+
+HTML_PENDING_FOOTNOTE_STACK *
+html_get_pending_footnotes (CONVERTER *self)
+{
+  HTML_PENDING_FOOTNOTE_STACK *stack = (HTML_PENDING_FOOTNOTE_STACK *)
+     malloc (sizeof (HTML_PENDING_FOOTNOTE_STACK));
+
+  stack->top = self->pending_footnotes.top;
+  stack->space = self->pending_footnotes.space;
+  stack->stack = self->pending_footnotes.stack;
+
+  memset (&self->pending_footnotes, 0, sizeof (HTML_PENDING_FOOTNOTE_STACK));
+
+  return stack;
+}
+
+void
+destroy_pending_footnotes (HTML_PENDING_FOOTNOTE_STACK *stack)
+{
+  int i;
+  for (i = 0; i < stack->top; i++)
+    {
+      free (stack->stack[i]->multi_expanded_region);
+      free (stack->stack[i]->footid);
+      free (stack->stack[i]->docid);
+      free (stack->stack[i]->footnote_location_filename);
+      free (stack->stack[i]);
+    }
+  free (stack->stack);
+  free (stack);
+}
+
+void
+html_register_pending_formatted_inline_content (CONVERTER *self,
+                             const char *category, const char *inline_content)
+{
+  HTML_INLINE_CONTENT *pending_content;
+  HTML_INLINE_CONTENT_STACK *stack;
+
+  if (!inline_content)
+    return;
+
+  stack = &self->pending_inline_content;
+  if (stack->top >= stack->space)
+    {
+      stack->stack
+        = realloc (stack->stack,
+                   (stack->space += 5) * sizeof (HTML_INLINE_CONTENT));
+    }
+  pending_content = &stack->stack[stack->top];
+
+  pending_content->category = strdup (category);
+  pending_content->string = strdup (inline_content);
+
+  stack->top++;
+}
+
+/* cancel only the first pending content for the category */
+char *
+html_cancel_pending_formatted_inline_content (CONVERTER *self,
+                                              const char *category)
+{
+  HTML_INLINE_CONTENT_STACK *stack = &self->pending_inline_content;
+  if (stack->top)
+    {
+      size_t current_idx = stack->top - 1;
+      while (current_idx >= 0)
+        {
+          if (!strcmp (stack->stack[current_idx].category, category))
+            {
+              char *inline_content = stack->stack[current_idx].string;
+              free (stack->stack[current_idx].category);
+              if (current_idx < stack->top - 1)
+                {
+                  memmove (&stack->stack[current_idx],
+                           &stack->stack[current_idx+1],
+                           sizeof (HTML_INLINE_CONTENT)
+                               * (stack->top - (current_idx +1)));
+                }
+              stack->top--;
+              return inline_content;
+            }
+        }
+    }
+  return 0;
+}
+
+char *
+html_get_pending_formatted_inline_content (CONVERTER *self)
+{
+  HTML_INLINE_CONTENT_STACK *stack = &self->pending_inline_content;
+  if (stack->top)
+    {
+      TEXT result;
+      size_t i;
+      text_init (&result);
+      for (i = 0; i < stack->top; i++)
+        {
+          text_append (&result, stack->stack[i].string);
+          free (stack->stack[i].string);
+          free (stack->stack[i].category);
+        }
+      stack->top = 0;
+      return result.text;
+    }
+  else
+    return strdup ("");
+}
+
+/* API to associate inline content to an element, typically
+   paragraph or preformatted.  Allows to associate the pending
+   content to the first inline element. */
+/* hv is used when called from perl, element when called from C */
+void
+html_associate_pending_formatted_inline_content (CONVERTER *self,
+                                            const ELEMENT *element,
+                                            const void *hv,
+                                            const char *inline_content)
+{
+  HTML_ASSOCIATED_INLINE_CONTENT_LIST *associated_content_list
+    = &self->associated_inline_content;
+  HTML_ASSOCIATED_INLINE_CONTENT *element_associated_content;
+  size_t i;
+  size_t element_associated_content_idx;
+  int empty_slot = 0;
+
+  for (i = 0; i < associated_content_list->number; i++)
+    {
+      if (associated_content_list->list[i].inline_content == 0)
+        {
+          empty_slot = 1;
+          element_associated_content_idx = i;
+        }
+    }
+
+  if (!empty_slot)
+    {
+      if (associated_content_list->number >= associated_content_list->space)
+        {
+          associated_content_list->list
+            = realloc (associated_content_list->list,
+               (associated_content_list->space += 5)
+                          * sizeof (HTML_ASSOCIATED_INLINE_CONTENT));
+        }
+      element_associated_content_idx = associated_content_list->number;
+
+      associated_content_list->number++;
+    }
+  element_associated_content
+    = &associated_content_list->list[element_associated_content_idx];
+  element_associated_content->element = element;
+  element_associated_content->hv = hv;
+  element_associated_content->inline_content = strdup (inline_content);
+}
+
+/* hv is used when called from perl element when called from C */
+char *
+html_get_associated_formatted_inline_content (CONVERTER *self,
+                                              const ELEMENT *element,
+                                              void *hv)
+{
+  HTML_ASSOCIATED_INLINE_CONTENT_LIST *associated_content_list
+    = &self->associated_inline_content;
+  size_t i;
+  for (i = 0; i < associated_content_list->number; i++)
+    {
+      HTML_ASSOCIATED_INLINE_CONTENT *element_associated_content
+        = &associated_content_list->list[i];
+      if ((element && (element_associated_content->element == element
+                       || (element->hv
+                           && element_associated_content->hv == element->hv)))
+          || (hv && (element_associated_content->hv == hv
+                     || (element_associated_content->element
+                         && element_associated_content->element->hv == hv))))
+        {
+          char *result = element_associated_content->inline_content;
+          if (i == associated_content_list->number -1)
+            associated_content_list->number--;
+          else
+            memset (element_associated_content, 0,
+                    sizeof (HTML_ASSOCIATED_INLINE_CONTENT));
+          return result;
+        }
+    }
+  return strdup ("");
 }
 
 void
@@ -1605,7 +1956,7 @@ default_css_string_format_protect_text (const char *text, TEXT *result)
    conversion, with the possibility to add more for spaces protection */
 #define OTXI_ALL_CONVERT_TEXT(additional_delim,other_cases) \
   const char *p = content_used; \
-      if (in_code (self) || in_math (self)) \
+      if (html_in_code (self) || html_in_math (self)) \
         OTXI_CONVERT_TEXT(additional_delim,  \
           other_cases) \
       else if (self->use_unicode_text) \
@@ -1714,9 +2065,6 @@ html_new_document_context (CONVERTER *self,
   HTML_DOCUMENT_CONTEXT_STACK *stack = &self->html_document_context;
   HTML_DOCUMENT_CONTEXT *doc_context;
 
-  self->modified_state |= HMSF_document_context;
-  self->document_context_change++;
-
   if (stack->top >= stack->space)
     {
       stack->stack
@@ -1755,13 +2103,6 @@ html_pop_document_context (CONVERTER *self)
 
   if (stack->top == 0)
     fatal ("HTML document context stack empty for pop");
-
-  self->modified_state |= HMSF_document_context;
-  self->document_context_change--;
-  /* set document_contexts_to_pop to the lowest level below last sync with
-     perl reached */
-  if (-self->document_context_change > self->document_contexts_to_pop)
-    self->document_contexts_to_pop = -self->document_context_change;
 
   document_ctx = &stack->stack[stack->top -1];
 
@@ -2173,10 +2514,10 @@ html_command_text (CONVERTER *self, ELEMENT *command,
 static int
 compare_page_name_number (const void *a, const void *b)
 {
-  const PAGE_NAME_NUMBER *css_a = (const PAGE_NAME_NUMBER *) a;
-  const PAGE_NAME_NUMBER *css_b = (const PAGE_NAME_NUMBER *) b;
+  const PAGE_NAME_NUMBER *pnn_a = (const PAGE_NAME_NUMBER *) a;
+  const PAGE_NAME_NUMBER *pnn_b = (const PAGE_NAME_NUMBER *) b;
 
-  return strcmp (css_a->page_name, css_b->page_name);
+  return strcmp (pnn_a->page_name, pnn_b->page_name);
 }
 
 size_t
@@ -3500,18 +3841,18 @@ convert_text (CONVERTER *self, const enum element_type type,
   char *content_used;
   int contents_used_to_be_freed = 0;
 
-  if (in_verbatim (self))
+  if (html_in_verbatim (self))
     {
       html_default_format_protect_text (content, result);
       return;
     }
-  else if (in_raw (self))
+  else if (html_in_raw (self))
     {
       text_append (result, content);
       return;
     }
 
-  if (in_upper_case (self))
+  if (html_in_upper_case (self))
     {
       content_used = to_upper_or_lower_multibyte (content, 1);
       contents_used_to_be_freed = 1;
@@ -3520,15 +3861,15 @@ convert_text (CONVERTER *self, const enum element_type type,
     /* cast needed to avoid a compiler warning */
     content_used = (char *) content;
 
-  if (in_preformatted_context (self))
+  if (html_in_preformatted_context (self))
     {
       OTXI_ALL_CONVERT_TEXT ( , )
     }
-  else if (in_non_breakable_space (self))
+  else if (html_in_non_breakable_space (self))
     {
       OTXI_ALL_CONVERT_TEXT (" \n", OTXI_NO_BREAK_CASES(p))
     }
-  else if (in_space_protected (self))
+  else if (html_in_space_protected (self))
     {
       OTXI_ALL_CONVERT_TEXT (" \n", OTXI_SPACE_PROTECTION_CASES(p))
     }
@@ -3541,6 +3882,104 @@ convert_text (CONVERTER *self, const enum element_type type,
     free (content_used);
 }
 
+void
+default_format_footnotes_segment (CONVERTER *self, TEXT *result)
+{
+  char *class_base;
+  char *attribute_class;
+  char *class;
+  STRING_LIST *classes;
+  ELEMENT *footnote_heading_tree;
+  char *footnote_heading;
+  int level;
+  char *formatted_heading;
+  char *foot_lines = call_formatting_function_format_footnotes_sequence (self);
+
+  if (!foot_lines || !strlen (foot_lines))
+    {
+      free (foot_lines);
+      return;
+    }
+
+  classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+  memset (classes, 0, sizeof (STRING_LIST));
+
+  class_base = special_unit_info (self, SUI_type_class,
+                                  "footnotes");
+  xasprintf (&class, "%s-segment", class_base);
+
+  add_string (class, classes);
+  free (class);
+  attribute_class = html_attribute_class (self, "div", classes);
+  clear_strings_list (classes);
+
+  text_append (result, attribute_class);
+  free (attribute_class);
+
+  text_append_n (result, ">\n", 2);
+
+  if (self->conf->DEFAULT_RULE && strlen (self->conf->DEFAULT_RULE))
+    {
+      text_append (result, self->conf->DEFAULT_RULE);
+      text_append_n (result, "\n", 1);
+    }
+
+  footnote_heading_tree = special_unit_info_tree (self,
+                              SUIT_type_heading, "footnotes");
+  if (footnote_heading_tree)
+    {
+      footnote_heading = html_convert_tree (self, footnote_heading_tree,
+                                    "convert footnotes special heading");
+    }
+  else
+    {
+      footnote_heading = "";
+    }
+
+  level = self->conf->FOOTNOTE_END_HEADER_LEVEL;
+
+  xasprintf (&class, "%s-heading", class_base);
+
+  add_string (class, classes);
+  free (class);
+
+  formatted_heading
+    = call_formatting_function_format_heading_text (self, 0, classes,
+                                                    footnote_heading,
+                                                    level, 0, 0, 0);
+  destroy_strings_list (classes);
+  text_append (result, formatted_heading);
+  text_append_n (result, "\n", 1);
+
+  free (formatted_heading);
+
+  if (footnote_heading_tree)
+    free (footnote_heading);
+
+  text_append (result, foot_lines);
+  free (foot_lines);
+  text_append (result, "</div>\n");
+}
+
+void
+format_footnotes_segment (CONVERTER *self, TEXT *result)
+{
+  if (self->formatting_references[FR_format_footnotes_segment].status
+                                             == FRS_status_default_set)
+    {
+      default_format_footnotes_segment (self, result);
+    }
+  else
+    {
+      char *footnotes_segment
+        = call_formatting_function_format_footnotes_segment (self);
+      if (footnotes_segment)
+        {
+          text_append (result, footnotes_segment);
+          free (footnotes_segment);
+        }
+    }
+}
 
 void
 convert_table_term_type (CONVERTER *self, const enum element_type type,
@@ -3559,7 +3998,7 @@ convert_row_type (CONVERTER *self, const enum element_type type,
                   const ELEMENT *element, const char *content,
                   TEXT *result)
 {
-  if (in_string (self))
+  if (html_in_string (self))
     {
       if (content)
         text_append (result, content);
@@ -3580,6 +4019,80 @@ convert_row_type (CONVERTER *self, const enum element_type type,
     }
 }
 
+void
+convert_w_command (CONVERTER *self, const enum command_id cmd,
+                    const ELEMENT *element,
+                    const HTML_ARGS_FORMATTED *args_formatted,
+                    const char *content, TEXT *result)
+{
+  if (args_formatted && args_formatted->number > 0)
+    {
+      if (args_formatted->args[0].formatted[AFT_type_normal])
+        text_append (result,
+                     args_formatted->args[0].formatted[AFT_type_normal]);
+    }
+  if (!html_in_string (self))
+    {
+      text_append (result, "<!-- /@w -->");
+    }
+}
+
+/* associate command to the C function implementing the conversion */
+static COMMAND_INTERNAL_CONVERSION commands_internal_conversion_table[] = {
+  {CM_w, &convert_w_command},
+  {0, 0},
+};
+
+void
+open_quotation_command (CONVERTER *self, const enum command_id cmd,
+                        const ELEMENT *element, TEXT *result)
+{
+  char *cmdname = element_command_name (element);
+  char *formatted_quotation_arg_to_prepend = 0;
+  if (element->args.number > 0 && element->args.list[0]->contents.number > 0)
+    {
+      ELEMENT *tree;
+      char *explanation;
+      NAMED_STRING_ELEMENT_LIST *substrings
+                                       = new_named_string_element_list ();
+      ELEMENT *quotation_arg_copy = copy_tree (element->args.list[0]);
+      add_element_to_named_string_element_list (substrings,
+                          "quotation_arg", quotation_arg_copy);
+      tree = html_gdt_tree ("@b{{quotation_arg}:} ", self->document,
+                           self, substrings, 0, 0);
+      destroy_named_string_element_list (substrings);
+      xasprintf (&explanation, "open %s prepended arg", cmdname);
+      add_to_element_list (&self->tree_to_build, tree);
+      formatted_quotation_arg_to_prepend
+        = html_convert_tree (self, tree, explanation);
+      remove_element_from_list (&self->tree_to_build, tree);
+      destroy_element_and_children (tree);
+      free (explanation);
+    }
+  html_register_pending_formatted_inline_content (self, cmdname,
+                                  formatted_quotation_arg_to_prepend);
+  free (formatted_quotation_arg_to_prepend);
+}
+
+void
+open_inline_container_type (CONVERTER *self, const enum element_type type,
+                            const ELEMENT *element, TEXT *result)
+{
+  char *pending_formatted = html_get_pending_formatted_inline_content (self);
+  if (pending_formatted)
+    {
+      html_associate_pending_formatted_inline_content (self, element, 0,
+                                                       pending_formatted);
+      free (pending_formatted);
+    }
+}
+
+/* associate command to the C function implementing the opening */
+static COMMAND_INTERNAL_OPEN commands_internal_open_table[] = {
+  {CM_quotation, &open_quotation_command},
+  {CM_smallquotation, &open_quotation_command},
+  {0, 0},
+};
 
 /* associate type to the C function implementing the conversion */
 static TYPE_INTERNAL_CONVERSION types_internal_conversion_table[] = {
@@ -3588,6 +4101,78 @@ static TYPE_INTERNAL_CONVERSION types_internal_conversion_table[] = {
   {ET_row, &convert_row_type},
   {0, 0},
 };
+
+/* associate type to the C function implementing the opening */
+static TYPE_INTERNAL_OPEN types_internal_open_table[] = {
+  /*
+  {ET_paragraph, &open_inline_container_type},
+  {ET_preformatted, &open_inline_container_type},
+   */
+  {0, 0},
+};
+
+void
+convert_unit_type (CONVERTER *self, const enum output_unit_type unit_type,
+                   const OUTPUT_UNIT *output_unit, const char *content,
+                   TEXT *result)
+{
+  STRING_LIST *closed_strings;
+  ELEMENT *unit_command;
+  char *formatted_footer;
+
+  if (html_in_string (self))
+    return;
+
+  if (!output_unit->tree_unit_directions[D_prev])
+    {
+      text_append (result, self->title_titlepage);
+      if (!output_unit->tree_unit_directions[D_next])
+        {
+          /* only one unit, use simplified formatting */
+          if (content)
+            text_append (result, content);
+   /*  if there is one unit it also means that there is no formatting
+       of footnotes in a separate unit.  And if footnotestyle is end
+       the footnotes won't be done in format_element_footer either. */
+          format_footnotes_segment (self, result);
+          if (self->conf->DEFAULT_RULE
+              && self->conf->PROGRAM_NAME_IN_FOOTER > 0)
+            {
+              text_append (result, self->conf->DEFAULT_RULE);
+              text_append_n (result, "\n", 1);
+            }
+
+    /* do it here, as it is won't be done at end of page in
+       format_element_footer */
+          closed_strings = html_close_registered_sections_level (self, 0);
+
+          if (closed_strings->number)
+            {
+              int i;
+              for (i = 0; i < closed_strings->number; i++)
+                {
+                  text_append (result, closed_strings->list[i]);
+                  free (closed_strings->list[i]);
+                }
+              free (closed_strings->list);
+            }
+          free (closed_strings);
+          return;
+        }
+    }
+
+  if (content)
+    text_append (result, content);
+
+  unit_command = output_unit->unit_command;
+
+  formatted_footer
+    = call_formatting_function_format_element_footer (self, unit_type,
+                                         output_unit, content, unit_command);
+  text_append (result, formatted_footer);
+
+  free (formatted_footer);
+}
 
 void
 convert_special_unit_type (CONVERTER *self,
@@ -3612,7 +4197,7 @@ convert_special_unit_type (CONVERTER *self,
   char *formatted_footer;
   char *formatted_heading;
 
-  if (in_string (self))
+  if (html_in_string (self))
     return;
 
   special_unit_variety = output_unit->special_unit_variety;
@@ -3627,6 +4212,7 @@ convert_special_unit_type (CONVERTER *self,
       for (i = 0; i < closed_strings->number; i++)
         {
           text_append (result, closed_strings->list[i]);
+          free (closed_strings->list[i]);
         }
       free (closed_strings->list);
     }
@@ -3718,6 +4304,7 @@ convert_special_unit_type (CONVERTER *self,
 
 static OUTPUT_UNIT_INTERNAL_CONVERSION output_units_internal_conversion_table[] = {
   {OU_special_unit, &convert_special_unit_type},
+  {OU_unit, &convert_unit_type},
   {0, 0},
 };
 
@@ -3727,9 +4314,7 @@ command_conversion_external (CONVERTER *self, const enum command_id cmd,
                     const HTML_ARGS_FORMATTED *args_formatted,
                     const char *content, TEXT *result)
 {
-  /* TODO call a C function if status is FRS_status_default_set
-     maybe putting function references in an array */
-  /* FIXME XS specific debug message */
+  /* XS specific debug message */
   /*
   if (self->conf->DEBUG > 0)
     fprintf (stderr, "DEBUG: command conversion %s '%s'\n",
@@ -3746,11 +4331,9 @@ command_conversion_external (CONVERTER *self, const enum command_id cmd,
 }
 
 static void
-command_open (CONVERTER *self, const enum command_id cmd,
-              const ELEMENT *element, TEXT *result)
+command_open_external (CONVERTER *self, const enum command_id cmd,
+                       const ELEMENT *element, TEXT *result)
 {
-  /* TODO call a C function if status is FRS_status_default_set
-     maybe putting function references in an array */
   if (self->commands_open[cmd].status > 0)
     call_commands_open (self, cmd, element, result);
 }
@@ -3762,18 +4345,15 @@ type_conversion_external (CONVERTER *self, const enum element_type type,
 {
   FORMATTING_REFERENCE *formatting_reference
     = self->current_types_conversion_function[type].formatting_reference;
-
   if (formatting_reference->status > 0)
     call_types_conversion (self, type, formatting_reference,
                            element, content, result);
 }
 
 static void
-type_open (CONVERTER *self, enum element_type type, const ELEMENT *element,
-           TEXT *result)
+type_open_external (CONVERTER *self, enum element_type type,
+                    const ELEMENT *element, TEXT *result)
 {
-  /* TODO call a C function if status is FRS_status_default_set
-     maybe putting function references in an array */
   if (self->types_open[type].status > 0)
     call_types_open (self, type, element, result);
 }
@@ -3905,6 +4485,22 @@ register_type_conversion_function (TYPE_CONVERSION_FUNCTION *result,
 }
 
 void
+register_type_open_function (TYPE_OPEN_FUNCTION *result,
+                             enum element_type type,
+                             FORMATTING_REFERENCE *formatting_reference)
+{
+  if (formatting_reference->status > 0)
+    {
+      result->status = formatting_reference->status;
+      if (formatting_reference->status != FRS_status_ignored)
+        {
+          result->type_open = &type_open_external;
+          result->formatting_reference = formatting_reference;
+        }
+    }
+}
+
+void
 register_command_conversion_function (COMMAND_CONVERSION_FUNCTION *result,
                          enum command_id cmd,
                          FORMATTING_REFERENCE *formatting_reference)
@@ -3915,6 +4511,22 @@ register_command_conversion_function (COMMAND_CONVERSION_FUNCTION *result,
       if (formatting_reference->status != FRS_status_ignored)
         {
           result->command_conversion = &command_conversion_external;
+          result->formatting_reference = formatting_reference;
+        }
+    }
+}
+
+void
+register_command_open_function (COMMAND_OPEN_FUNCTION *result,
+                                enum command_id cmd,
+                                FORMATTING_REFERENCE *formatting_reference)
+{
+  if (formatting_reference->status > 0)
+    {
+      result->status = formatting_reference->status;
+      if (formatting_reference->status != FRS_status_ignored)
+        {
+          result->command_open = &command_open_external;
           result->formatting_reference = formatting_reference;
         }
     }
@@ -4045,6 +4657,8 @@ html_converter_initialize (CONVERTER *self)
     {
       register_type_conversion_function (&self->type_conversion_function[i],
                                         i, &self->types_conversion[i]);
+      register_type_open_function (&self->type_open_function[i],
+                                   i, &self->types_open[i]);
       register_type_conversion_function (
              &self->css_string_type_conversion_function[i], i,
              &self->css_string_types_conversion[i]);
@@ -4064,14 +4678,57 @@ html_converter_initialize (CONVERTER *self)
         }
     }
 
+  for (i = 0; types_internal_open_table[i].type_open; i++)
+    {
+      enum element_type type = types_internal_open_table[i].type;
+      TYPE_OPEN_FUNCTION *type_open = &self->type_open_function[type];
+      if (type_open->status == FRS_status_default_set)
+        {
+          type_open->formatting_reference = 0;
+          type_open->status = FRS_status_internal;
+          type_open->type_open
+              = types_internal_open_table[i].type_open;
+        }
+    }
+
   for (i = 0; i < BUILTIN_CMD_NUMBER; i++)
     {
       register_command_conversion_function (
            &self->command_conversion_function[i],
            i, &self->commands_conversion[i]);
+      register_command_open_function (
+           &self->command_open_function[i],
+           i, &self->commands_open[i]);
       register_command_conversion_function (
             &self->css_string_command_conversion_function[i], i,
              &self->css_string_commands_conversion[i]);
+    }
+
+  for (i = 0; commands_internal_conversion_table[i].command_conversion; i++)
+    {
+      enum command_id cmd = commands_internal_conversion_table[i].cmd;
+      COMMAND_CONVERSION_FUNCTION *command_conversion
+               = &self->command_conversion_function[cmd];
+      if (command_conversion->status == FRS_status_default_set)
+        {
+          command_conversion->formatting_reference = 0;
+          command_conversion->status = FRS_status_internal;
+          command_conversion->command_conversion
+              = commands_internal_conversion_table[i].command_conversion;
+        }
+    }
+
+  for (i = 0; commands_internal_open_table[i].command_open; i++)
+    {
+      enum command_id cmd = commands_internal_open_table[i].cmd;
+      COMMAND_OPEN_FUNCTION *command_open = &self->command_open_function[cmd];
+      if (command_open->status == FRS_status_default_set)
+        {
+          command_open->formatting_reference = 0;
+          command_open->status = FRS_status_internal;
+          command_open->command_open
+              = commands_internal_open_table[i].command_open;
+        }
     }
 
   for (i = 0; i < OU_special_unit+1; i++)
@@ -4233,6 +4890,32 @@ html_finalize_output_state (CONVERTER *self)
       clear_string_stack (&self->pending_closes);
     }
 
+  if (self->pending_inline_content.top > 0)
+    {
+      char *inline_content = html_get_pending_formatted_inline_content (self);
+      message_list_document_warn (&self->error_messages, self->conf,
+         "%zu registered inline contents: %s",
+           self->pending_inline_content.top, inline_content);
+      free (inline_content);
+    }
+
+  for (i = 0; i < self->associated_inline_content.number; i++)
+    {
+      HTML_ASSOCIATED_INLINE_CONTENT *associated_content
+        = &self->associated_inline_content.list[i];
+      if (associated_content->inline_content)
+        {
+          char *inline_content = associated_content->inline_content;
+          message_list_document_warn (&self->error_messages, self->conf,
+             "associated inline content not used: %s\n",
+              inline_content);
+          free (associated_content->inline_content);
+        }
+    }
+  self->associated_inline_content.number = 0;
+
+  self->shared_conversion_state.integers.info_number = 0;
+
   html_pop_document_context (self);
 
   /* could change to 0 in releases? */
@@ -4265,12 +4948,6 @@ html_check_transfer_state_finalization (CONVERTER *self)
         fprintf (stderr, "BUG: tree_to_build: %zu\n",
                          self->tree_to_build.number);
        */
-      if (self->document_context_change)
-        fprintf (stderr, "BUG: document_context_change: %d\n",
-                         self->document_context_change);
-      if (self->document_contexts_to_pop)
-        fprintf (stderr, "BUG: document_contexts_to_pop: %d\n",
-                         self->document_contexts_to_pop);
       if (self->no_arg_formatted_cmd_translated.number)
         fprintf (stderr, "BUG: no_arg_formatted_cmd_translated: %zu\n",
                          self->no_arg_formatted_cmd_translated.number);
@@ -4356,6 +5033,11 @@ html_free_converter (CONVERTER *self)
   free (self->no_arg_formatted_cmd.list);
 
   free (self->pending_closes.stack);
+  free (self->pending_inline_content.stack);
+
+  free (self->associated_inline_content.list);
+
+  destroy_associated_info (&self->shared_conversion_state.integers);
 
   free (self->no_arg_formatted_cmd_translated.list);
   free (self->reset_target_commands.list);
@@ -4726,7 +5408,6 @@ html_open_command_update_context (CONVERTER *self, enum command_id data_cmd)
                  &top_document_ctx->formatting_context,
                  context_str);
       free (context_str);
-      self->modified_state |= HMSF_formatting_context;
     }
 
   top_formating_ctx
@@ -4735,14 +5416,12 @@ html_open_command_update_context (CONVERTER *self, enum command_id data_cmd)
   if (builtin_command_data[data_cmd].flags & CF_block)
     {
       push_command (&top_document_ctx->block_commands, data_cmd);
-      self->modified_state |= HMSF_block_commands;
     }
 
   if (html_commands_data[data_cmd].flags & HF_pre_class)
     {
       push_string_stack_string (&top_document_ctx->preformatted_classes,
                                 html_commands_data[data_cmd].pre_class);
-      self->modified_state |= HMSF_preformatted_classes;
       if (builtin_command_data[data_cmd].flags & CF_preformatted)
         {
           preformatted = 1;
@@ -4759,53 +5438,44 @@ html_open_command_update_context (CONVERTER *self, enum command_id data_cmd)
                             data_cmd, 0);
       push_integer_stack_integer (&top_document_ctx->preformatted_context,
                                 preformatted);
-      self->modified_state |= HMSF_composition_context;
     }
 
   if (html_commands_data[data_cmd].flags & HF_format_raw)
     {
       top_document_ctx->raw_ctx++;
-      self->modified_state |= HMSF_top_document_ctx;
     }
   else if (data_cmd == CM_verbatim)
     {
       top_document_ctx->verbatim_ctx++;
-      self->modified_state |= HMSF_top_document_ctx;
     }
 
   if (builtin_command_data[data_cmd].other_flags & CF_brace_code
       || builtin_command_data[data_cmd].flags & CF_preformatted_code)
     {
       push_integer_stack_integer (&top_document_ctx->monospace, 1);
-      self->modified_state |= HMSF_monospace;
     }
   else if (builtin_command_data[data_cmd].flags & CF_brace
            && builtin_command_data[data_cmd].data == BRACE_style_no_code)
     {
       push_integer_stack_integer (&top_document_ctx->monospace, 0);
-      self->modified_state |= HMSF_monospace;
     }
   else if (self->upper_case[data_cmd])
     {
       top_formating_ctx->upper_case_ctx++;
-      self->modified_state |= HMSF_top_formatting_context;
     }
   else if (builtin_command_data[data_cmd].flags & CF_math)
     {
       top_document_ctx->math_ctx++;
-      self->modified_state |= HMSF_top_document_ctx;
       if (self->conf->CONVERT_TO_LATEX_IN_MATH > 0)
         convert_to_latex = 1;
     }
   if (data_cmd == CM_verb)
     {
       top_formating_ctx->space_protected++;
-      self->modified_state |= HMSF_top_formatting_context;
     }
   else if (data_cmd == CM_w)
     {
       top_formating_ctx->no_break++;
-      self->modified_state |= HMSF_top_formatting_context;
     }
   return convert_to_latex;
 }
@@ -4825,7 +5495,6 @@ html_convert_command_update_context (CONVERTER *self, enum command_id data_cmd)
     {
       pop_command_or_type (&top_document_ctx->composition_context);
       pop_integer_stack (&top_document_ctx->preformatted_context);
-      self->modified_state |= HMSF_composition_context;
     }
 
   if (html_commands_data[data_cmd].flags & HF_pre_class)
@@ -4833,18 +5502,15 @@ html_convert_command_update_context (CONVERTER *self, enum command_id data_cmd)
       pop_string_stack (&top_document_ctx->preformatted_classes);
       if (builtin_command_data[data_cmd].flags & CF_preformatted)
         top_document_ctx->inside_preformatted--;
-      self->modified_state |= HMSF_preformatted_classes;
     }
 
   if (data_cmd == CM_verb)
     {
       top_formating_ctx->space_protected--;
-      self->modified_state |= HMSF_top_formatting_context;
     }
   else if (data_cmd == CM_w)
     {
       top_formating_ctx->no_break--;
-      self->modified_state |= HMSF_top_formatting_context;
     }
 
   if (builtin_command_data[data_cmd].flags & CF_preformatted_code
@@ -4853,41 +5519,34 @@ html_convert_command_update_context (CONVERTER *self, enum command_id data_cmd)
       || builtin_command_data[data_cmd].other_flags & CF_brace_code)
     {
       pop_integer_stack (&top_document_ctx->monospace);
-      self->modified_state |= HMSF_monospace;
     }
   else if (self->upper_case[data_cmd])
     {
       top_formating_ctx->upper_case_ctx--;
-      self->modified_state |= HMSF_top_formatting_context;
     }
   else if (builtin_command_data[data_cmd].flags & CF_math)
     {
       top_document_ctx->math_ctx--;
-      self->modified_state |= HMSF_top_document_ctx;
     }
 
   if (html_commands_data[data_cmd].flags & HF_format_raw)
     {
       top_document_ctx->raw_ctx--;
-      self->modified_state |= HMSF_top_document_ctx;
     }
   else if (data_cmd == CM_verbatim)
     {
       top_document_ctx->verbatim_ctx--;
-      self->modified_state |= HMSF_top_document_ctx;
     }
 
   if (builtin_command_data[data_cmd].flags & CF_block)
     {
       pop_command (&top_document_ctx->block_commands);
-      self->modified_state |= HMSF_block_commands;
     }
 
   if (html_commands_data[data_cmd].flags & HF_format_context)
     {
       pop_html_formatting_context (
                  &top_document_ctx->formatting_context);
-      self->modified_state |= HMSF_formatting_context;
     }
 
   if (builtin_command_data[data_cmd].flags & CF_brace
@@ -4907,12 +5566,10 @@ html_open_type_update_context (CONVERTER *self, enum element_type type)
   if (type == ET_paragraph)
     {
       top_formating_ctx->paragraph_number++;
-      self->modified_state |= HMSF_top_formatting_context;
     }
   else if (type == ET_preformatted || type == ET_rawpreformatted)
     {
       top_formating_ctx->preformatted_number++;
-      self->modified_state |= HMSF_top_formatting_context;
     }
   else if (self->pre_class_types[type])
     {
@@ -4921,20 +5578,16 @@ html_open_type_update_context (CONVERTER *self, enum element_type type)
       push_command_or_type (&top_document_ctx->composition_context,
                             0, type);
       push_integer_stack_integer (&top_document_ctx->preformatted_context, 1);
-      self->modified_state |= HMSF_preformatted_classes
-                              | HMSF_composition_context;
     }
 
   if (self->code_types[type])
     {
       push_integer_stack_integer (&top_document_ctx->monospace, 1);
-      self->modified_state |= HMSF_monospace;
     }
 
   if (type == ET__string)
     {
       top_document_ctx->string_ctx++;
-      self->modified_state |= HMSF_top_document_ctx;
     }
 }
 
@@ -4946,13 +5599,11 @@ html_convert_type_update_context (CONVERTER *self, enum element_type type)
   if (self->code_types[type])
     {
       pop_integer_stack (&top_document_ctx->monospace);
-      self->modified_state |= HMSF_monospace;
     }
 
   if (type == ET__string)
     {
       top_document_ctx->string_ctx--;
-      self->modified_state |= HMSF_top_document_ctx;
     }
 
   if (self->pre_class_types[type])
@@ -4960,12 +5611,64 @@ html_convert_type_update_context (CONVERTER *self, enum element_type type)
       pop_string_stack (&top_document_ctx->preformatted_classes);
       pop_command_or_type (&top_document_ctx->composition_context);
       pop_integer_stack (&top_document_ctx->preformatted_context);
-      self->modified_state |= HMSF_preformatted_classes
-                              | HMSF_composition_context;
     }
 }
 
 #define ADD(x) text_append (result, x)
+
+char *
+debug_print_html_contexts (CONVERTER *self)
+{
+  int i;
+  TEXT contexts_str;
+  text_init (&contexts_str);
+  text_append (&contexts_str, "[");
+  HTML_DOCUMENT_CONTEXT_STACK *document_context_stack
+    = &self->html_document_context;
+  HTML_DOCUMENT_CONTEXT *top_document_ctx
+    = html_top_document_context (self);
+  HTML_FORMATTING_CONTEXT_STACK *formatting_context_stack
+    = &top_document_ctx->formatting_context;
+
+  for (i = 0; i < document_context_stack->top; i++)
+    {
+      HTML_DOCUMENT_CONTEXT *document_context
+        = &document_context_stack->stack[i];
+      if (i != 0)
+        text_append (&contexts_str, "|");
+      if (document_context->context)
+        text_append (&contexts_str, document_context->context);
+      else
+        text_append (&contexts_str, "UNDEF");
+    }
+  text_append (&contexts_str, "](");
+
+  for (i = 0; i < formatting_context_stack->top; i++)
+    {
+      HTML_FORMATTING_CONTEXT *formatting_context
+       = &formatting_context_stack->stack[i];
+      if (i != 0)
+        text_append (&contexts_str, "|");
+      if (formatting_context->context_name)
+        text_append (&contexts_str, formatting_context->context_name);
+      else
+        text_append (&contexts_str, "UNDEF");
+
+    }
+  text_append (&contexts_str, ")");
+   /*
+  text_append (&contexts_str, "{");
+  for (i = 0; i < top_document_ctx->block_commands.top; i++)
+    {
+      enum command_id cmd = top_document_ctx->block_commands.stack[i];
+      if (i != 0)
+        text_append (&contexts_str, "|");
+      text_append (&contexts_str, builtin_command_name (cmd));
+    }
+  text_append (&contexts_str, "}");
+    */
+  return contexts_str.text;
+}
 
 /* EXPLANATION is used for debugging */
 void
@@ -4987,48 +5690,12 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
 
   if (self->conf->DEBUG > 0)
     {
-      int i;
       TEXT debug_str;
-      TEXT contexts_str;
+      char *contexts_str = debug_print_html_contexts (self);
       text_init (&debug_str);
-      text_init (&contexts_str);
-      text_append (&contexts_str, "[");
-      HTML_DOCUMENT_CONTEXT_STACK *document_context_stack
-        = &self->html_document_context;
-      HTML_DOCUMENT_CONTEXT *top_document_ctx
-        = html_top_document_context (self);
-      HTML_FORMATTING_CONTEXT_STACK *formatting_context_stack
-        = &top_document_ctx->formatting_context;
-
-      for (i = 0; i < document_context_stack->top; i++)
-        {
-          HTML_DOCUMENT_CONTEXT *document_context
-            = &document_context_stack->stack[i];
-          if (i != 0)
-            text_append (&contexts_str, "|");
-          if (document_context->context)
-            text_append (&contexts_str, document_context->context);
-          else
-            text_append (&contexts_str, "UNDEF");
-        }
-      text_append (&contexts_str, "](");
-
-      for (i = 0; i < formatting_context_stack->top; i++)
-        {
-          HTML_FORMATTING_CONTEXT *formatting_context
-           = &formatting_context_stack->stack[i];
-          if (i != 0)
-            text_append (&contexts_str, "|");
-          if (formatting_context->context_name)
-            text_append (&contexts_str, formatting_context->context_name);
-          else
-            text_append (&contexts_str, "UNDEF");
-
-        }
-      text_append (&contexts_str, ")");
       text_printf (&debug_str, "XS|ELEMENT(%s) %s, ->", explanation,
-                                                       contexts_str.text);
-      free (contexts_str.text);
+                                                       contexts_str);
+      free (contexts_str);
       if (command_name)
         text_printf (&debug_str, " cmd: %s,", command_name);
       if (element->type)
@@ -5105,7 +5772,7 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
           && element->type != ET_index_entry_command))
     {
       enum command_id data_cmd = element_builtin_data_cmd (element);
-      /* FIXME XS only debug message */
+      /* XS only debug message */
       /*
       if (self->conf->DEBUG > 0)
         fprintf (stderr, "COMMAND: %s %s\n",
@@ -5127,9 +5794,10 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
           int convert_to_latex
                = html_open_command_update_context (self, data_cmd);
 
-          if (self->commands_open[cmd].status)
+          if (self->command_open_function[cmd].command_open)
             {
-              command_open (self, data_cmd, element, result);
+              (*self->command_open_function[cmd].command_open)
+                                (self, data_cmd, element, result);
             }
 
           text_init (&content_formatted);
@@ -5213,6 +5881,9 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
                         {
                           continue;
                         }
+                      /* NOTE that commands with F_AFT_none as only flag do not
+                         have their flag reset to F_AFT_normal here, such that
+                         their argument is not converter here */
                       if (arg_idx < MAX_COMMAND_ARGS_NR
                           /* could check command_args_flags[cmd].status,
                              but it is probably faster not to */
@@ -5258,13 +5929,11 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
                                                    command_type.text, arg_idx);
                           push_integer_stack_integer (
                                           &top_document_ctx->monospace, 1);
-                          self->modified_state |= HMSF_monospace;
 
                           convert_to_html_internal (self, arg, &formatted_arg,
                                                     explanation);
                           pop_integer_stack
                               (&top_document_ctx->monospace);
-                          self->modified_state |= HMSF_monospace;
 
                           free (explanation);
                           arg_formatted->formatted[AFT_type_monospace]
@@ -5363,7 +6032,6 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
                             = html_top_document_context (self);
                           text_reset (&formatted_arg);
                           top_document_ctx->raw_ctx++;
-                          self->modified_state |= HMSF_top_document_ctx;
                           xasprintf (&explanation, "%s A[%d]raw",
                                                    command_type.text, arg_idx);
                           convert_to_html_internal (self, arg, &formatted_arg,
@@ -5371,7 +6039,6 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
 
                           free (explanation);
                           top_document_ctx->raw_ctx--;
-                          self->modified_state |= HMSF_top_document_ctx;
                           arg_formatted->formatted[AFT_type_raw]
                             = strdup (formatted_arg.text);
                         }
@@ -5439,7 +6106,9 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
 
       html_open_type_update_context(self, type);
 
-      type_open (self, type, element, &type_result);
+      if (self->type_open_function[type].type_open)
+        (*self->type_open_function[type].type_open)
+               (self, type, element, &type_result);
 
       text_init (&content_formatted);
 
@@ -5526,10 +6195,9 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
         {
           (*self->current_types_conversion_function[0].type_conversion)
                            (self, 0, element, "", result);
-          goto out;
         }
-      else
-        goto out;
+
+      goto out;
     }
   debug_str = print_element_debug (element, 0);
   fprintf (stderr, "DEBUG: HERE!(%p:%s)\n", element, debug_str);
@@ -5647,20 +6315,13 @@ html_convert_convert (CONVERTER *self, const ELEMENT *root,
 
   if (!output_units || !output_units->number)
     {
-      char *footnotes_segment;
       if (self->conf->DEBUG > 0)
         fprintf (stderr, "\nC NO UNIT\n");
 
       convert_to_html_internal (self, root, &result,
                                 "convert no unit");
 
-      footnotes_segment
-        = call_formatting_function_format_footnotes_segment (self);
-      if (footnotes_segment)
-        {
-          text_append (&result, footnotes_segment);
-          free (footnotes_segment);
-        }
+      format_footnotes_segment (self, &result);
     }
   else
     {
@@ -5950,20 +6611,13 @@ html_convert_output (CONVERTER *self, const ELEMENT *root,
         }
       else
         {
-          char *footnotes_segment;
           if (self->conf->DEBUG > 0)
             fprintf (stderr, "\nNO UNIT NO PAGE\n");
 
           text_append (&text, self->title_titlepage);
           convert_to_html_internal (self, root, &text,
                                      "no-page output no unit");
-          footnotes_segment
-            = call_formatting_function_format_footnotes_segment (self);
-          if (footnotes_segment)
-            {
-              text_append (&text, footnotes_segment);
-              free (footnotes_segment);
-            }
+          format_footnotes_segment (self, &result);
         }
 
       /* do end file first, in case it needs some CSS */

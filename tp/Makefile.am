@@ -77,11 +77,10 @@ dist_modules_DATA = \
  Texinfo/Parser.pm \
  Texinfo/ParserNonXS.pm \
  Texinfo/Report.pm \
- Texinfo/StructTransf.pm \
+ Texinfo/StructTransfXS.pm \
  Texinfo/Structuring.pm \
  Texinfo/Transformations.pm \
  Texinfo/Translations.pm \
- Texinfo/TranslationsXS.pm \
  Texinfo/XSLoader.pm
 
 dist_noinst_DATA = \
@@ -127,7 +126,8 @@ dist_init_DATA = \
  init/book.pm \
  init/chm.pm \
  init/documentation_examples.pm \
- init/html32.pm
+ init/html32.pm \
+ init/sc_formatting_with_css.pm
 
 test_files = \
  t/README \

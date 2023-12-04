@@ -231,6 +231,21 @@ typedef struct HTML_TARGET_LIST {
     HTML_TARGET *list;
 } HTML_TARGET_LIST;
 
+typedef struct HTML_SHARED_CONVERSION_STATE {
+    int explained_commands; /* explained_commands->{char $cmdname}->{char $normalized_type}
+                               = ELEMENT */
+    int element_explanation_content; /* element_explanation_content->{ELEMENT $command}
+                                = ELEMENT */
+    int footnote_id_numbers; /* footnote_id_numbers->{char $footid} = int */
+    /* probably not useful, directly use expanded formats in the converter 
+       needed in perl as expanded formats are accessed per format in the API
+    int expanded_format_raw;
+     */
+    int formatted_index_entries; /* formatted_index_entries->{INDEX_ENTRY $index_entry_ref} = 1, ++ */
+    int formatted_nodedescriptions; /* formatted_nodedescriptions->{ELEMENT $node_description} = 1, ++ */
+    ASSOCIATED_INFO integers;
+} HTML_SHARED_CONVERSION_STATE;
+
 typedef struct MERGED_INDEX {
     char *name;
     INDEX_ENTRY *index_entries;
@@ -430,6 +445,17 @@ typedef struct TYPE_CONVERSION_FUNCTION {
                               TEXT *text);
 } TYPE_CONVERSION_FUNCTION;
 
+typedef struct TYPE_OPEN_FUNCTION {
+    enum formatting_reference_status status;
+    /* points to the perl formatting reference if it is used for
+       conversion */
+    FORMATTING_REFERENCE *formatting_reference;
+    /* the function used for conversion, either a function that calls
+       the perl function in formatting_reference, or another C function */
+    void (* type_open) (struct CONVERTER *self, const enum element_type type,
+                         const ELEMENT *element, TEXT *text);
+} TYPE_OPEN_FUNCTION;
+
 typedef struct HTML_ARG_FORMATTED {
     const ELEMENT *tree;
     char *formatted[AFT_type_raw+1];
@@ -453,6 +479,17 @@ typedef struct COMMAND_CONVERSION_FUNCTION {
                                  const HTML_ARGS_FORMATTED *args_formatted,
                                  const char *content, TEXT *result);
 } COMMAND_CONVERSION_FUNCTION;
+
+typedef struct COMMAND_OPEN_FUNCTION {
+    enum formatting_reference_status status;
+    /* points to the perl formatting reference if it is used for
+       conversion */
+    FORMATTING_REFERENCE *formatting_reference;
+    /* the function used for conversion, either a function that calls
+       the perl function in formatting_reference, or another C function */
+    void (* command_open) (struct CONVERTER *self, const enum command_id cmd,
+                           const ELEMENT *element, TEXT *result);
+} COMMAND_OPEN_FUNCTION;
 
 typedef struct OUTPUT_UNIT_CONVERSION_FUNCTION {
     enum formatting_reference_status status;
@@ -479,6 +516,49 @@ typedef struct SPECIAL_UNIT_BODY_FORMATTING {
             const OUTPUT_UNIT *output_unit,
             TEXT *result);
 } SPECIAL_UNIT_BODY_FORMATTING;
+
+typedef struct HTML_PENDING_FOOTNOTE {
+    const ELEMENT *command;
+    char *footid;
+    char *docid;
+    int number_in_doc;
+    char *footnote_location_filename;
+    char *multi_expanded_region;
+} HTML_PENDING_FOOTNOTE;
+
+typedef struct HTML_PENDING_FOOTNOTE_STACK {
+    size_t top;
+    size_t space;
+    HTML_PENDING_FOOTNOTE **stack;
+} HTML_PENDING_FOOTNOTE_STACK;
+
+typedef struct HTML_INLINE_CONTENT {
+    char *category;
+    char *string;
+} HTML_INLINE_CONTENT;
+
+typedef struct HTML_INLINE_CONTENT_STACK {
+    size_t top;
+    size_t space;
+    HTML_INLINE_CONTENT *stack;
+} HTML_INLINE_CONTENT_STACK;
+
+/* there should be either a pointer to a C tree element in element,
+   if set from C, or a reference to a perl tree element in hv, if set
+   from perl */
+typedef struct HTML_ASSOCIATED_INLINE_CONTENT {
+    const ELEMENT *element;
+  /* perl element. This should be HV *hv,
+     but we don't want to include the Perl headers everywhere; */
+    const void *hv;
+    char *inline_content;
+} HTML_ASSOCIATED_INLINE_CONTENT;
+
+typedef struct HTML_ASSOCIATED_INLINE_CONTENT_LIST {
+    size_t number;
+    size_t space;
+    HTML_ASSOCIATED_INLINE_CONTENT *list;
+} HTML_ASSOCIATED_INLINE_CONTENT_LIST;
 
 typedef struct CONVERTER {
     int converter_descriptor;
@@ -535,7 +615,9 @@ typedef struct CONVERTER {
     char **special_unit_info[SUI_type_heading+1];
     TYPE_CONVERSION_FUNCTION type_conversion_function[TXI_TREE_TYPES_NUMBER];
     TYPE_CONVERSION_FUNCTION css_string_type_conversion_function[TXI_TREE_TYPES_NUMBER];
+    TYPE_OPEN_FUNCTION type_open_function[TXI_TREE_TYPES_NUMBER];
     COMMAND_CONVERSION_FUNCTION command_conversion_function[BUILTIN_CMD_NUMBER];
+    COMMAND_OPEN_FUNCTION command_open_function[BUILTIN_CMD_NUMBER];
     COMMAND_CONVERSION_FUNCTION css_string_command_conversion_function[BUILTIN_CMD_NUMBER];
     OUTPUT_UNIT_CONVERSION_FUNCTION output_unit_conversion_function[OU_special_unit+1];
     SPECIAL_UNIT_BODY_FORMATTING *special_unit_body_formatting;
@@ -569,10 +651,6 @@ typedef struct CONVERTER {
                                            change */
     ARRAY_INDEX_LIST file_changed_counter;  /* index of files in
                                  output_unit_files with changed counter */
-    int document_context_change; /* change of document context top that may need
-                                    to be brought to perl */
-    int document_contexts_to_pop;  /* number of contexts to pop in perl before
-                                      readding the new contexts */
     HTML_ADDED_TARGET_LIST added_targets; /* targets added */
     /* next three allow to switch from normal HTML formatting to css strings
        formatting */
@@ -591,6 +669,10 @@ typedef struct CONVERTER {
     STRING_STACK pending_closes;
     CURRENT_FILE_INFO current_filename;
     ELEMENT_LIST referred_command_stack;
+    HTML_SHARED_CONVERSION_STATE shared_conversion_state;
+    HTML_INLINE_CONTENT_STACK pending_inline_content;
+    HTML_PENDING_FOOTNOTE_STACK pending_footnotes;
+    HTML_ASSOCIATED_INLINE_CONTENT_LIST associated_inline_content;
     /* state common with perl converter, not transmitted to perl */
     int use_unicode_text;
 } CONVERTER;
