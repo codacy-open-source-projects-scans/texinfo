@@ -37,6 +37,7 @@
 #include "extra.h"
 /* for newSVpv_utf8 build_texinfo_tree */
 #include "build_perl_info.h"
+#include "debug.h"
 #include "build_html_perl_state.h"
 #include "call_html_perl_function.h"
 
@@ -109,8 +110,8 @@ get_shared_conversion_state (CONVERTER *self)
 
 TARGET_FILENAME *
 call_file_id_setting_special_unit_target_file_name (CONVERTER *self,
-                                      OUTPUT_UNIT *special_unit, char *target,
-                                                    char *default_filename)
+                         const OUTPUT_UNIT *special_unit, const char *target,
+                                                const char *default_filename)
 {
   SV **file_id_setting_sv;
 
@@ -191,8 +192,8 @@ call_file_id_setting_special_unit_target_file_name (CONVERTER *self,
 
 char *
 call_file_id_setting_label_target_name (CONVERTER *self,
-                       char *normalized, const ELEMENT *label_element, char *target,
-                       int *called)
+                const char *normalized, const ELEMENT *label_element,
+                const char *target, int *called)
 {
   SV **file_id_setting_sv;
 
@@ -265,8 +266,8 @@ call_file_id_setting_label_target_name (CONVERTER *self,
 
 char *
 call_file_id_setting_node_file_name (CONVERTER *self,
-                       const ELEMENT *target_element, char *node_filename,
-                       int *called)
+                   const ELEMENT *target_element, const char *node_filename,
+                   int *called)
 {
   SV **file_id_setting_sv;
 
@@ -342,9 +343,9 @@ call_file_id_setting_node_file_name (CONVERTER *self,
 
 TARGET_CONTENTS_FILENAME *
 call_file_id_setting_sectioning_command_target_name (CONVERTER *self,
-                      const ELEMENT *command, char *target,
-                      char *target_contents,
-                      char *target_shortcontents, char *filename)
+                      const ELEMENT *command, const char *target,
+                      const char *target_contents,
+                      const char *target_shortcontents, const char *filename)
 {
   SV **file_id_setting_sv;
 
@@ -430,8 +431,9 @@ call_file_id_setting_sectioning_command_target_name (CONVERTER *self,
 }
 
 FILE_NAME_PATH *
-call_file_id_setting_unit_file_name (CONVERTER *self, OUTPUT_UNIT *output_unit,
-                                     char *filename, char *filepath)
+call_file_id_setting_unit_file_name (CONVERTER *self,
+                                 const OUTPUT_UNIT *output_unit,
+                                 const char *filename, const char *filepath)
 {
   SV **file_id_setting_sv;
 
@@ -510,8 +512,191 @@ call_file_id_setting_unit_file_name (CONVERTER *self, OUTPUT_UNIT *output_unit,
   return 0;
 }
 
+TARGET_DIRECTORY_FILENAME *
+call_file_id_setting_external_target_split_name (CONVERTER *self,
+                     const char *normalized, const ELEMENT *element,
+                     const char *target, const char *directory,
+                     const char *file_name)
+{
+  SV **file_id_setting_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  file_id_setting_sv = hv_fetch (self->hv, "file_id_setting",
+                                 strlen ("file_id_setting"), 0);
+  if (file_id_setting_sv)
+    {
+      SV **external_target_split_name_sv;
+      HV *file_id_setting_hv = (HV *)SvRV(*file_id_setting_sv);
+      external_target_split_name_sv = hv_fetch (file_id_setting_hv,
+                                   "external_target_split_name",
+                                   strlen ("external_target_split_name"), 0);
+
+      if (external_target_split_name_sv)
+        {
+          int count;
+          SV *target_sv;
+          SV *filename_sv;
+          SV *directory_sv;
+          TARGET_DIRECTORY_FILENAME *result = (TARGET_DIRECTORY_FILENAME *)
+              malloc (sizeof (TARGET_DIRECTORY_FILENAME));
+          memset (result, 0, sizeof (TARGET_DIRECTORY_FILENAME));
+
+          dSP;
+
+          ENTER;
+          SAVETMPS;
+
+          PUSHMARK(SP);
+          EXTEND(SP, 6);
+
+          PUSHs(sv_2mortal (newRV_inc (self->hv)));
+          PUSHs(sv_2mortal (newSVpv (normalized, 0)));
+          PUSHs(sv_2mortal (newRV_inc (element->hv)));
+          /* FIXME encoding */
+          PUSHs(sv_2mortal (newSVpv (target, 0)));
+          PUSHs(sv_2mortal (newSVpv (directory, 0)));
+          PUSHs(sv_2mortal (newSVpv (file_name, 0)));
+          PUTBACK;
+
+          count = call_sv (*external_target_split_name_sv, G_ARRAY);
+
+          SPAGAIN;
+
+          if (count != 3)
+            croak("external_target_split_name should return 3 items\n");
+
+          filename_sv = POPs;
+          if (SvOK (filename_sv))
+            {
+              STRLEN len;
+              char *filename_ret = SvPV (filename_sv, len);
+              result->filename = strdup (filename_ret);
+            }
+          else
+            result->filename = strdup ("");
+
+          directory_sv = POPs;
+          if (SvOK (directory_sv))
+            {
+              STRLEN len;
+              char *directory_ret = SvPV (directory_sv, len);
+              result->directory = strdup (directory_ret);
+            }
+          else
+            result->directory = strdup ("");
+
+          target_sv = POPs;
+          if (SvOK (target_sv))
+            {
+              STRLEN len;
+              char *target_ret = SvPV (target_sv, len);
+              result->target = strdup (target_ret);
+            }
+          else
+            result->target = strdup ("");
+
+          PUTBACK;
+
+          FREETMPS;
+          LEAVE;
+
+          return result;
+        }
+    }
+  return 0;
+}
+
+TARGET_FILENAME *
+call_file_id_setting_external_target_non_split_name (CONVERTER *self,
+                     const char *normalized, const ELEMENT *element,
+                     const char *target, const char *file)
+{
+  SV **file_id_setting_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  file_id_setting_sv = hv_fetch (self->hv, "file_id_setting",
+                                 strlen ("file_id_setting"), 0);
+  if (file_id_setting_sv)
+    {
+      SV **external_target_non_split_name_sv;
+      HV *file_id_setting_hv = (HV *)SvRV(*file_id_setting_sv);
+      external_target_non_split_name_sv = hv_fetch (file_id_setting_hv,
+                                   "external_target_non_split_name",
+                                strlen ("external_target_non_split_name"), 0);
+
+      if (external_target_non_split_name_sv)
+        {
+          int count;
+          SV *target_sv;
+          SV *file_sv;
+          TARGET_FILENAME *result
+            = (TARGET_FILENAME *) malloc (sizeof (TARGET_FILENAME));
+          result->filename = 0;
+
+          dSP;
+
+          ENTER;
+          SAVETMPS;
+
+          PUSHMARK(SP);
+          EXTEND(SP, 5);
+
+          PUSHs(sv_2mortal (newRV_inc (self->hv)));
+          PUSHs(sv_2mortal (newSVpv (normalized, 0)));
+          PUSHs(sv_2mortal (newRV_inc (element->hv)));
+          /* FIXME encoding */
+          PUSHs(sv_2mortal (newSVpv (target, 0)));
+          PUSHs(sv_2mortal (newSVpv (file, 0)));
+          PUTBACK;
+
+          count = call_sv (*external_target_non_split_name_sv, G_ARRAY);
+
+          SPAGAIN;
+
+          if (count != 2)
+            croak("external_target_non_split_name should return 2 items\n");
+
+          file_sv = POPs;
+          if (SvOK (file_sv))
+            {
+              STRLEN len;
+              char *file_ret = SvPV (file_sv, len);
+              result->filename = strdup (file_ret);
+            }
+
+          target_sv = POPs;
+          if (SvOK (target_sv))
+            {
+              STRLEN len;
+              char *target_ret = SvPV (target_sv, len);
+              result->target = strdup (target_ret);
+            }
+
+          PUTBACK;
+
+          FREETMPS;
+          LEAVE;
+
+          return result;
+        }
+    }
+  return 0;
+}
+
+
+
+
 char *
-call_formatting_function_format_title_titlepage (CONVERTER *self)
+call_formatting_function_format_program_string (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference)
 {
   int count;
   char *result;
@@ -525,8 +710,121 @@ call_formatting_function_format_title_titlepage (CONVERTER *self)
   if (!self->hv)
     return 0;
 
-  formatting_reference_sv
-    = self->formatting_references[FR_format_title_titlepage].sv_reference;
+  formatting_reference_sv = formatting_reference->sv_reference;
+
+  if (self->modified_state)
+    {
+      build_html_formatting_state (self, self->modified_state);
+      self->modified_state = 0;
+    }
+
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  PUSHMARK(SP);
+  EXTEND(SP, 1);
+
+  PUSHs(sv_2mortal (newRV_inc (self->hv)));
+  PUTBACK;
+
+  count = call_sv (formatting_reference_sv,
+                   G_SCALAR);
+
+  SPAGAIN;
+
+  if (count != 1)
+    croak("format_program_string should return 1 item\n");
+
+  result_sv = POPs;
+  result_ret = SvPVutf8 (result_sv, len);
+  result = strdup (result_ret);
+
+  PUTBACK;
+
+  FREETMPS;
+  LEAVE;
+
+  get_shared_conversion_state (self);
+
+  return result;
+}
+
+char *
+call_formatting_function_format_titlepage (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference)
+{
+  int count;
+  char *result;
+  char *result_ret;
+  STRLEN len;
+  SV *result_sv;
+  SV *formatting_reference_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  formatting_reference_sv = formatting_reference->sv_reference;
+
+  if (self->modified_state)
+    {
+      build_html_formatting_state (self, self->modified_state);
+      self->modified_state = 0;
+    }
+
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  PUSHMARK(SP);
+  EXTEND(SP, 1);
+
+  PUSHs(sv_2mortal (newRV_inc (self->hv)));
+  PUTBACK;
+
+  count = call_sv (formatting_reference_sv,
+                   G_SCALAR);
+
+  SPAGAIN;
+
+  if (count != 1)
+    croak("format_titlepage should return 1 item\n");
+
+  result_sv = POPs;
+  result_ret = SvPVutf8 (result_sv, len);
+  result = strdup (result_ret);
+
+  PUTBACK;
+
+  FREETMPS;
+  LEAVE;
+
+  get_shared_conversion_state (self);
+
+  return result;
+}
+
+char *
+call_formatting_function_format_title_titlepage (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference)
+{
+  int count;
+  char *result;
+  char *result_ret;
+  STRLEN len;
+  SV *result_sv;
+  SV *formatting_reference_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  formatting_reference_sv = formatting_reference->sv_reference;
 
   if (self->modified_state)
     {
@@ -554,8 +852,7 @@ call_formatting_function_format_title_titlepage (CONVERTER *self)
     croak("format_title_titlepage should return 1 item\n");
 
   result_sv = POPs;
-  /* FIXME encoding */
-  result_ret = SvPV (result_sv, len);
+  result_ret = SvPVutf8 (result_sv, len);
   result = strdup (result_ret);
 
   PUTBACK;
@@ -569,7 +866,9 @@ call_formatting_function_format_title_titlepage (CONVERTER *self)
 }
 
 char *
-call_formatting_function_format_footnotes_segment (CONVERTER *self)
+call_formatting_function_format_protect_text (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                                              const char *text)
 {
   int count;
   char *result;
@@ -583,8 +882,65 @@ call_formatting_function_format_footnotes_segment (CONVERTER *self)
   if (!self->hv)
     return 0;
 
-  formatting_reference_sv
-    = self->formatting_references[FR_format_footnotes_segment].sv_reference;
+  formatting_reference_sv = formatting_reference->sv_reference;
+
+  if (self->modified_state)
+    {
+      build_html_formatting_state (self, self->modified_state);
+      self->modified_state = 0;
+    }
+
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  PUSHMARK(SP);
+  EXTEND(SP, 1);
+
+  PUSHs(sv_2mortal (newRV_inc (self->hv)));
+  PUSHs(sv_2mortal (newSVpv_utf8 (text, 0)));
+  PUTBACK;
+
+  count = call_sv (formatting_reference_sv,
+                   G_SCALAR);
+
+  SPAGAIN;
+
+  if (count != 1)
+    croak("format_protect_text should return 1 item\n");
+
+  result_sv = POPs;
+  result_ret = SvPVutf8 (result_sv, len);
+  result = strdup (result_ret);
+
+  PUTBACK;
+
+  FREETMPS;
+  LEAVE;
+
+  get_shared_conversion_state (self);
+
+  return result;
+}
+
+char *
+call_formatting_function_format_footnotes_segment (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference)
+{
+  int count;
+  char *result;
+  char *result_ret;
+  STRLEN len;
+  SV *result_sv;
+  SV *formatting_reference_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  formatting_reference_sv = formatting_reference->sv_reference;
 
   if (self->modified_state)
     {
@@ -612,8 +968,7 @@ call_formatting_function_format_footnotes_segment (CONVERTER *self)
     croak("format_footnotes_segment should return 1 item\n");
 
   result_sv = POPs;
-  /* FIXME encoding */
-  result_ret = SvPV (result_sv, len);
+  result_ret = SvPVutf8 (result_sv, len);
   result = strdup (result_ret);
 
   PUTBACK;
@@ -627,7 +982,8 @@ call_formatting_function_format_footnotes_segment (CONVERTER *self)
 }
 
 char *
-call_formatting_function_format_footnotes_sequence (CONVERTER *self)
+call_formatting_function_format_footnotes_sequence (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference)
 {
   int count;
   char *result;
@@ -641,8 +997,7 @@ call_formatting_function_format_footnotes_sequence (CONVERTER *self)
   if (!self->hv)
     return 0;
 
-  formatting_reference_sv
-    = self->formatting_references[FR_format_footnotes_sequence].sv_reference;
+  formatting_reference_sv = formatting_reference->sv_reference;
 
   if (self->modified_state)
     {
@@ -670,8 +1025,7 @@ call_formatting_function_format_footnotes_sequence (CONVERTER *self)
     croak("format_footnotes_sequence should return 1 item\n");
 
   result_sv = POPs;
-  /* FIXME encoding */
-  result_ret = SvPV (result_sv, len);
+  result_ret = SvPVutf8 (result_sv, len);
   result = strdup (result_ret);
 
   PUTBACK;
@@ -685,8 +1039,9 @@ call_formatting_function_format_footnotes_sequence (CONVERTER *self)
 }
 
 char *
-call_formatting_function_format_end_file (CONVERTER *self, char *filename,
-                                          const OUTPUT_UNIT *output_unit)
+call_formatting_function_format_end_file (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                    const char *filename, const OUTPUT_UNIT *output_unit)
 {
   int count;
   char *result;
@@ -701,8 +1056,7 @@ call_formatting_function_format_end_file (CONVERTER *self, char *filename,
   if (!self->hv)
     return 0;
 
-  formatting_reference_sv
-    = self->formatting_references[FR_format_end_file].sv_reference;
+  formatting_reference_sv = formatting_reference->sv_reference;
 
   if (self->modified_state)
     {
@@ -737,8 +1091,7 @@ call_formatting_function_format_end_file (CONVERTER *self, char *filename,
     croak("format_end_file should return 1 item\n");
 
   result_sv = POPs;
-  /* FIXME encoding */
-  result_ret = SvPV (result_sv, len);
+  result_ret = SvPVutf8 (result_sv, len);
   result = strdup (result_ret);
 
   PUTBACK;
@@ -752,7 +1105,9 @@ call_formatting_function_format_end_file (CONVERTER *self, char *filename,
 }
 
 char *
-call_formatting_function_format_begin_file (CONVERTER *self, char *filename,
+call_formatting_function_format_begin_file (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                                            const char *filename,
                                             const OUTPUT_UNIT *output_unit)
 {
   int count;
@@ -768,8 +1123,7 @@ call_formatting_function_format_begin_file (CONVERTER *self, char *filename,
   if (!self->hv)
     return 0;
 
-  formatting_reference_sv
-    = self->formatting_references[FR_format_begin_file].sv_reference;
+  formatting_reference_sv = formatting_reference->sv_reference;
 
   if (self->modified_state)
     {
@@ -804,8 +1158,7 @@ call_formatting_function_format_begin_file (CONVERTER *self, char *filename,
     croak("format_begin_file should return 1 item\n");
 
   result_sv = POPs;
-  /* FIXME encoding */
-  result_ret = SvPV (result_sv, len);
+  result_ret = SvPVutf8 (result_sv, len);
   result = strdup (result_ret);
 
   PUTBACK;
@@ -820,6 +1173,7 @@ call_formatting_function_format_begin_file (CONVERTER *self, char *filename,
 
 char *
 call_formatting_function_format_translate_message (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
                                   const char *message, const char *lang,
                                   const char *message_context)
 {
@@ -835,9 +1189,7 @@ call_formatting_function_format_translate_message (CONVERTER *self,
   if (!self->hv)
     return 0;
 
-  formatting_reference_sv
-    = self->formatting_references[
-         FR_format_translate_message].sv_reference;
+  formatting_reference_sv = formatting_reference->sv_reference;
 
   if (self->modified_state)
     {
@@ -884,11 +1236,98 @@ call_formatting_function_format_translate_message (CONVERTER *self,
   return result;
 }
 
+FORMATTED_BUTTON_INFO *
+call_formatting_function_format_button (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                                  const BUTTON_SPECIFICATION *button,
+                                  const ELEMENT *element)
+{
+  int count;
+  SV *need_delimiter_sv;
+  SV *passive_sv;
+  SV *active_sv;
+  SV *formatting_reference_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  formatting_reference_sv = formatting_reference->sv_reference;
+
+  if (self->modified_state)
+    {
+      build_html_formatting_state (self, self->modified_state);
+      self->modified_state = 0;
+    }
+
+  build_tree_to_build (&self->tree_to_build);
+
+  FORMATTED_BUTTON_INFO *result
+   = (FORMATTED_BUTTON_INFO *) malloc (sizeof (FORMATTED_BUTTON_INFO));
+  memset (result, 0, sizeof (FORMATTED_BUTTON_INFO));
+
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  PUSHMARK(SP);
+  EXTEND(SP, 3);
+
+  SvREFCNT_inc (button->sv);
+
+  PUSHs(sv_2mortal (newRV_inc (self->hv)));
+  PUSHs(sv_2mortal (button->sv));
+  PUSHs(sv_2mortal (newRV_inc (element->hv)));
+  PUTBACK;
+
+  count = call_sv (formatting_reference_sv,
+                   G_ARRAY);
+
+  SPAGAIN;
+
+  if (count != 3)
+    croak("format_button should return 3 items\n");
+
+  need_delimiter_sv = POPs;
+  if (SvOK (need_delimiter_sv))
+    {
+      result->need_delimiter = SvIV (need_delimiter_sv);
+    }
+
+  passive_sv = POPs;
+  if (SvOK (passive_sv))
+    {
+      STRLEN len;
+      char *passive_ret = SvPV (passive_sv, len);
+      result->passive = strdup (passive_ret);
+    }
+
+  active_sv = POPs;
+  if (SvOK (active_sv))
+    {
+      STRLEN len;
+      char *active_ret = SvPV (active_sv, len);
+      result->active = strdup (active_ret);
+    }
+
+  PUTBACK;
+
+  FREETMPS;
+  LEAVE;
+
+  get_shared_conversion_state (self);
+
+  return result;
+}
+
 char *
-call_formatting_function_format_navigation_header (CONVERTER *self,
+call_formatting_function_format_navigation_panel (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
                                   const BUTTON_SPECIFICATION_LIST *buttons,
-                                  const char *cmdname,
-                                  ELEMENT *element)
+                                  const char *cmdname, const ELEMENT *element,
+                                  int vertical)
 {
   int count;
   char *result = 0;
@@ -902,9 +1341,73 @@ call_formatting_function_format_navigation_header (CONVERTER *self,
   if (!self->hv)
     return 0;
 
-  formatting_reference_sv
-    = self->formatting_references[
-         FR_format_navigation_header].sv_reference;
+  formatting_reference_sv = formatting_reference->sv_reference;
+
+  if (self->modified_state)
+    {
+      build_html_formatting_state (self, self->modified_state);
+      self->modified_state = 0;
+    }
+
+  build_tree_to_build (&self->tree_to_build);
+
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  PUSHMARK(SP);
+  EXTEND(SP, 5);
+
+  PUSHs(sv_2mortal (newRV_inc (self->hv)));
+  PUSHs(sv_2mortal (newRV_inc (buttons->av)));
+  PUSHs(sv_2mortal (newSVpv (cmdname, 0)));
+  PUSHs(sv_2mortal (newRV_inc (element->hv)));
+  PUSHs(sv_2mortal (newSViv ((IV) vertical)));
+  PUTBACK;
+
+  count = call_sv (formatting_reference_sv,
+                   G_SCALAR);
+
+  SPAGAIN;
+
+  if (count != 1)
+    croak("format_navigation_panel should return 1 item\n");
+
+  result_sv = POPs;
+  result_ret = SvPVutf8 (result_sv, len);
+  result = strdup (result_ret);
+
+  PUTBACK;
+
+  FREETMPS;
+  LEAVE;
+
+  get_shared_conversion_state (self);
+
+  return result;
+}
+
+char *
+call_formatting_function_format_navigation_header (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                                  const BUTTON_SPECIFICATION_LIST *buttons,
+                                  const char *cmdname,
+                                  const ELEMENT *element)
+{
+  int count;
+  char *result = 0;
+  char *result_ret;
+  STRLEN len;
+  SV *result_sv;
+  SV *formatting_reference_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  formatting_reference_sv = formatting_reference->sv_reference;
 
   if (self->modified_state)
     {
@@ -952,11 +1455,12 @@ call_formatting_function_format_navigation_header (CONVERTER *self,
 
 char *
 call_formatting_function_format_heading_text (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
                                   const char *cmdname,
                                   const STRING_LIST *classes,
                                   const char *text,
                                   int level, const char *id,
-                                  ELEMENT *element, const char *target)
+                                  const ELEMENT *element, const char *target)
 {
   int count;
   char *result = 0;
@@ -972,9 +1476,7 @@ call_formatting_function_format_heading_text (CONVERTER *self,
   if (!self->hv)
     return 0;
 
-  formatting_reference_sv
-    = self->formatting_references[
-         FR_format_heading_text].sv_reference;
+  formatting_reference_sv = formatting_reference->sv_reference;
 
   if (self->modified_state)
     {
@@ -1045,7 +1547,204 @@ call_formatting_function_format_heading_text (CONVERTER *self,
 }
 
 char *
+call_formatting_function_format_contents (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                              const char *cmdname, const ELEMENT *command,
+                              const char *filename)
+{
+  int count;
+  char *result = 0;
+  char *result_ret;
+  STRLEN len;
+  SV *command_sv;
+  SV *result_sv;
+  SV *formatting_reference_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  formatting_reference_sv = formatting_reference->sv_reference;
+
+  if (self->modified_state)
+    {
+      build_html_formatting_state (self, self->modified_state);
+      self->modified_state = 0;
+    }
+
+  build_tree_to_build (&self->tree_to_build);
+
+  if (command)
+    command_sv = newRV_inc (command->hv);
+  else
+    command_sv = newSV (0);
+
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  PUSHMARK(SP);
+  EXTEND(SP, 4);
+
+  PUSHs(sv_2mortal (newRV_inc (self->hv)));
+  PUSHs(sv_2mortal (newSVpv (cmdname, 0)));
+  PUSHs(sv_2mortal (command_sv));
+  PUSHs(sv_2mortal (newSVpv (filename, 0)));
+  PUTBACK;
+
+  count = call_sv (formatting_reference_sv,
+                   G_SCALAR);
+
+  SPAGAIN;
+
+  if (count != 1)
+    croak("format_contents should return 1 item\n");
+
+  result_sv = POPs;
+  result_ret = SvPVutf8 (result_sv, len);
+  result = strdup (result_ret);
+
+  PUTBACK;
+
+  FREETMPS;
+  LEAVE;
+
+  get_shared_conversion_state (self);
+
+  return result;
+}
+
+char *
+call_formatting_function_format_separate_anchor (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                                   const char *id, const char *class)
+{
+  int count;
+  char *result = 0;
+  char *result_ret;
+  STRLEN len;
+  SV *result_sv;
+  SV *formatting_reference_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  formatting_reference_sv = formatting_reference->sv_reference;
+
+  if (self->modified_state)
+    {
+      build_html_formatting_state (self, self->modified_state);
+      self->modified_state = 0;
+    }
+
+  build_tree_to_build (&self->tree_to_build);
+
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  PUSHMARK(SP);
+  EXTEND(SP, 4);
+
+  PUSHs(sv_2mortal (newRV_inc (self->hv)));
+  PUSHs(sv_2mortal (newSVpv_utf8 (id, 0)));
+  PUSHs(sv_2mortal (newSVpv_utf8 (class, 0)));
+  PUTBACK;
+
+  count = call_sv (formatting_reference_sv,
+                   G_SCALAR);
+
+  SPAGAIN;
+
+  if (count != 1)
+    croak("format_separate_anchor should return 1 item\n");
+
+  result_sv = POPs;
+  result_ret = SvPVutf8 (result_sv, len);
+  result = strdup (result_ret);
+
+  PUTBACK;
+
+  FREETMPS;
+  LEAVE;
+
+  get_shared_conversion_state (self);
+
+  return result;
+}
+
+char *
+call_formatting_function_format_element_header (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                              const char *cmdname, const ELEMENT *command,
+                              const OUTPUT_UNIT *output_unit)
+{
+  int count;
+  char *result = 0;
+  char *result_ret;
+  STRLEN len;
+  SV *result_sv;
+  SV *formatting_reference_sv;
+
+  dTHX;
+
+  if (!self->hv)
+    return 0;
+
+  formatting_reference_sv = formatting_reference->sv_reference;
+
+  if (self->modified_state)
+    {
+      build_html_formatting_state (self, self->modified_state);
+      self->modified_state = 0;
+    }
+
+  build_tree_to_build (&self->tree_to_build);
+
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  PUSHMARK(SP);
+  EXTEND(SP, 4);
+
+  PUSHs(sv_2mortal (newRV_inc (self->hv)));
+  PUSHs(sv_2mortal (newSVpv (cmdname, 0)));
+  PUSHs(sv_2mortal (newRV_inc (command->hv)));
+  PUSHs(sv_2mortal (newRV_inc (output_unit->hv)));
+  PUTBACK;
+
+  count = call_sv (formatting_reference_sv,
+                   G_SCALAR);
+
+  SPAGAIN;
+
+  if (count != 1)
+    croak("format_element_header should return 1 item\n");
+
+  result_sv = POPs;
+  result_ret = SvPVutf8 (result_sv, len);
+  result = strdup (result_ret);
+
+  PUTBACK;
+
+  FREETMPS;
+  LEAVE;
+
+  get_shared_conversion_state (self);
+
+  return result;
+}
+
+char *
 call_formatting_function_format_element_footer (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
                               const enum output_unit_type unit_type,
                               const OUTPUT_UNIT *output_unit,
                               const char *content, ELEMENT *command)
@@ -1062,9 +1761,7 @@ call_formatting_function_format_element_footer (CONVERTER *self,
   if (!self->hv)
     return 0;
 
-  formatting_reference_sv
-    = self->formatting_references[
-         FR_format_element_footer].sv_reference;
+  formatting_reference_sv = formatting_reference->sv_reference;
 
   if (self->modified_state)
     {
@@ -1144,6 +1841,14 @@ call_types_conversion (CONVERTER *self, const enum element_type type,
       self->modified_state = 0;
     }
 
+  if (!element->hv)
+    {
+      char *element_str = print_element_debug (element, 0);
+      fprintf (stderr, "BUG: no hv: %p %s\n", element, element_str);
+      free (element_str);
+      abort ();
+    }
+
   dSP;
 
   ENTER;
@@ -1195,10 +1900,10 @@ call_types_open (CONVERTER *self, const enum element_type type,
 
   dTHX;
 
-  build_tree_to_build (&self->tree_to_build);
-
   if (!self->hv)
     return;
+
+  build_tree_to_build (&self->tree_to_build);
 
   formatting_reference_sv = self->types_open[type].sv_reference;
 

@@ -36,6 +36,7 @@
 #include "element_types.h"
 #include "converter_types.h"
 #include "builtin_commands.h"
+#include "errors.h"
 #include "convert_plain_texinfo.h"
 #include "convert_text.h"
 #include "convert_to_text.h"
@@ -123,6 +124,26 @@ get_unclosed_stream (SV *converter_in, file_path)
                }
            }
          RETVAL = result;
+    OUTPUT:
+         RETVAL
+
+SV *
+get_converter_errors (SV *converter_in)
+      PREINIT:
+         AV *errors_av;
+         CONVERTER *self = 0;
+      CODE:
+         self = get_sv_converter (converter_in, 0);
+         if (self && self->error_messages.number)
+           {
+             errors_av = get_errors (self->error_messages.list,
+                                     self->error_messages.number);
+             wipe_error_message_list (&self->error_messages);
+           }
+         else
+           errors_av = newAV ();
+
+         RETVAL = newRV_noinc ((SV *) errors_av);
     OUTPUT:
          RETVAL
 
@@ -227,6 +248,31 @@ html_finalize_output_state (SV *converter_in)
                }
              html_check_transfer_state_finalization (self);
            }
+
+void
+html_register_id (SV *converter_in, id)
+         char *id = (char *)SvPVutf8_nolen($arg);
+      PREINIT:
+         CONVERTER *self;
+      CODE:
+         self = get_sv_converter (converter_in, "html_register_id");
+         if (self)
+          /* note that we do not care about having the same id twice */
+           add_string (id, &self->seen_ids);
+
+
+int html_id_is_registered (SV *converter_in, id)
+         char *id = (char *)SvPVutf8_nolen($arg);
+      PREINIT:
+         CONVERTER *self;
+         int found = 0;
+      CODE:
+         self = get_sv_converter (converter_in, "html_id_is_registered");
+         if (self)
+           found = find_string (&self->seen_ids, id);
+         RETVAL = found;
+    OUTPUT:
+         RETVAL
 
 void
 html_new_document_context (SV *converter_in, char *context_name, ...)
@@ -574,6 +620,55 @@ html_in_align (SV *converter_in)
          RETVAL = builtin_command_name (cmd);
     OUTPUT:
          RETVAL
+
+void
+html_register_file_information (SV *converter_in, key, int value)
+         char *key = (char *)SvPVutf8_nolen($arg);
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_register_file_information");
+         if (self)
+           {
+             html_register_file_information (self, key, value);
+           }
+
+void
+html_get_file_information (SV *converter_in, key, ...)
+         char *key = (char *)SvPVutf8_nolen($arg);
+    PROTOTYPE: $$;$
+     PREINIT:
+         CONVERTER *self;
+         SV *filename_sv = 0;
+         int found = 0;
+         int result = 0;
+         SV *found_sv;
+         SV *result_sv;
+     PPCODE:
+         self = get_sv_converter (converter_in,
+                                  "html_get_file_information");
+         if (items > 2 && SvOK(ST(2)))
+           filename_sv = ST(2);
+         if (self)
+           {
+             char *filename = 0;
+             int status;
+             if (filename_sv)
+               filename = SvPVutf8_nolen (filename_sv);
+             result = html_get_file_information (self, key, filename, &status);
+             if (status >= 0)
+               found = 1;
+           }
+         found_sv = newSViv ((IV)found);
+         if (found)
+           result_sv = newSViv ((IV)result);
+         else
+           result_sv = newSV(0);
+
+         EXTEND(SP, 2);
+         PUSHs(sv_2mortal(found_sv));
+         PUSHs(sv_2mortal(result_sv));
 
 void
 html_register_opened_section_level (SV *converter_in, int level, close_string)
@@ -1068,7 +1163,7 @@ html_translate_names (SV *converter_in)
              free (self->conf);
 
              self->conf
-              = copy_sv_options (*converter_options_sv);
+              = copy_sv_options (*converter_options_sv, self);
            }
 
          html_translate_names (self);
@@ -1077,6 +1172,27 @@ html_translate_names (SV *converter_in)
            {
              build_html_formatting_state (self, self->modified_state);
              self->modified_state = 0;
+           }
+
+void
+html_prepare_simpletitle (SV *converter_in)
+  PREINIT:
+         CONVERTER *self = 0;
+     CODE:
+         self = get_sv_converter (converter_in, "html_prepare_simpletitle");
+         if (self)
+           {
+             html_prepare_simpletitle (self);
+             if (self->simpletitle_tree)
+               {
+                 HV *converter_hv = (HV *) SvRV (converter_in);
+                 hv_store (converter_hv, "simpletitle_tree",
+                           strlen ("simpletitle_tree"),
+                           newRV_inc ((SV *) self->simpletitle_tree->hv), 0);
+                 hv_store (converter_hv, "simpletitle_command_name",
+                           strlen ("simpletitle_command_name"),
+                  newSVpv (builtin_command_name (self->simpletitle_cmd), 0), 0);
+               }
            }
 
 

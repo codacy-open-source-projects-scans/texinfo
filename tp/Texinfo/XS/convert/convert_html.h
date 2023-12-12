@@ -15,6 +15,7 @@ extern char *html_formatting_reference_names[];
 
 extern TRANSLATED_SUI_ASSOCIATION translated_special_unit_info[];
 extern const char *special_unit_info_type_names[SUI_type_heading + 1];
+extern const char *htmlxref_split_type_names[htmlxref_split_type_chapter + 1];
 
 void html_format_init (void);
 
@@ -60,6 +61,11 @@ STRING_STACK *html_preformatted_classes_stack (CONVERTER *self);
 enum command_id html_in_align (CONVERTER *self);
 
 char *debug_print_html_contexts (CONVERTER *self);
+
+void html_register_file_information (CONVERTER *self, const char *key,
+                                     int value);
+int html_get_file_information (CONVERTER *self, const char *key,
+                               const char *filename, int *status);
 
 void html_register_opened_section_level (CONVERTER *self, int level,
                                          const char *close_string);
@@ -117,6 +123,7 @@ void html_prepare_output_units_global_targets (CONVERTER *self,
 
 void html_translate_names (CONVERTER *self);
 
+void html_prepare_simpletitle (CONVERTER *self);
 void html_prepare_title_titlepage (CONVERTER *self, int output_units_descriptor,
                                    char *output_file, char *output_filename);
 

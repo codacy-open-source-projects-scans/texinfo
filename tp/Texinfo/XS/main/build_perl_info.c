@@ -258,7 +258,7 @@ store_additional_info (const ELEMENT *e, ASSOCIATED_INFO* a, char *key,
         {
           KEY_PAIR *k = &a->info[i];
 #define STORE(sv) hv_store (extra, key, strlen (key), sv, 0)
-          char *key = k->key;
+          const char *key = k->key;
           ELEMENT *f = k->element;
 
           if (k->type == extra_deleted)
@@ -1041,16 +1041,24 @@ build_source_info_hash (SOURCE_INFO source_info, HV *hv)
       hv_store (hv, "file_name", strlen ("file_name"),
                 newSVpv (source_info.file_name, 0), 0);
     }
+   /*
   else
     {
       hv_store (hv, "file_name", strlen ("file_name"),
                 newSVpv ("", 0), 0);
     }
+    */
 
   if (source_info.line_nr)
     {
       hv_store (hv, "line_nr", strlen ("line_nr"),
                 newSViv (source_info.line_nr), 0);
+      if (!source_info.file_name)
+        hv_store (hv, "file_name", strlen ("file_name"),
+                  newSVpv ("", 0), 0);
+      if (!source_info.macro)
+        hv_store (hv, "macro", strlen ("macro"),
+                newSVpv_utf8 ("", 0), 0);
     }
 
   if (source_info.macro)
@@ -1058,11 +1066,13 @@ build_source_info_hash (SOURCE_INFO source_info, HV *hv)
       hv_store (hv, "macro", strlen ("macro"),
                 newSVpv_utf8 (source_info.macro, 0), 0);
     }
+   /*
   else
     {
       hv_store (hv, "macro", strlen ("macro"),
                 newSVpv_utf8 ("", 0), 0);
     }
+   */
 }
 
 static SV *

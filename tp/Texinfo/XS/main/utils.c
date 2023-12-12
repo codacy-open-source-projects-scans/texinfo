@@ -40,9 +40,9 @@
 #include "errors.h"
 #include "debug.h"
 #include "builtin_commands.h"
+#include "api_to_perl.h"
 #include "utils.h"
 
-#include "cmd_structuring.c"
 #include "options_init_free.c"
 
 #define min_level command_structuring_level[CM_chapter]
@@ -50,6 +50,34 @@
 
 const char *whitespace_chars = " \t\v\f\r\n";
 const char *digit_chars = "0123456789";
+
+DEF_ALIAS def_aliases[] = {
+  CM_defun, CM_deffn, "Function", "category of functions for @defun",
+  CM_defmac, CM_deffn, "Macro", 0,
+  CM_defspec, CM_deffn, "Special Form", 0,
+  CM_defvar, CM_defvr, "Variable", "category of variables for @defvar",
+  CM_defopt, CM_defvr, "User Option", 0,
+  CM_deftypefun, CM_deftypefn, "Function", "category of functions for @deftypefun",
+  CM_deftypevar, CM_deftypevr, "Variable", "category of variables in typed languages for @deftypevar",
+  CM_defivar, CM_defcv, "Instance Variable", "category of instance variables in object-oriented programming for @defivar",
+  CM_deftypeivar, CM_deftypecv, "Instance Variable", "category of instance variables with data type in object-oriented programming for @deftypeivar",
+  CM_defmethod, CM_defop, "Method", "category of methods in object-oriented programming for @defmethod",
+  CM_deftypemethod, CM_deftypeop, "Method", "category of methods with data type in object-oriented programming for @deftypemethod",
+
+  /* the following aliases are not used in the XS parser */
+  CM_defunx, CM_deffnx, "Function", "category of functions for @defun",
+  CM_defmacx, CM_deffnx, "Macro", 0,
+  CM_defspecx, CM_deffnx, "Special Form", 0,
+  CM_defvarx, CM_defvrx, "Variable", "category of variables for @defvar",
+  CM_defoptx, CM_defvrx, "User Option", 0,
+  CM_deftypefunx, CM_deftypefnx, "Function", "category of functions for @deftypefun",
+  CM_deftypevarx, CM_deftypevrx, "Variable", "category of variables in typed languages for @deftypevar",
+  CM_defivarx, CM_defcvx, "Instance Variable", "category of instance variables in object-oriented programming for @defivar",
+  CM_deftypeivarx, CM_deftypecvx, "Instance Variable", "category of instance variables with data type in object-oriented programming for @deftypeivar",
+  CM_defmethodx, CM_defopx, "Method", "category of methods in object-oriented programming for @defmethod",
+  CM_deftypemethodx, CM_deftypeopx, "Method", "category of methods with data type in object-oriented programming for @deftypemethod",
+  0, 0, 0, 0
+};
 
 /* to keep synchronized with enum directions in tree_types.h */
 const char *direction_names[] = {"next", "prev", "up"};
@@ -84,6 +112,22 @@ EXPANDED_FORMAT expanded_formats[] = {
     "xml", 0,
     "info", 0,
     "latex", 0,
+};
+
+/* special output units global directions are not there, they are
+   determined from perl dynamically */
+const char *html_button_direction_names[] = {
+  #define hgdt_name(name) #name,
+   HTML_GLOBAL_DIRECTIONS_LIST
+  #undef hgdt_name
+   " ",
+  #define rud_type(name) #name,
+   RUD_DIRECTIONS_TYPES_LIST
+   RUD_FILE_DIRECTIONS_TYPES
+  #undef rud_type
+  #define rud_type(name) "FirstInFile" #name,
+   RUD_DIRECTIONS_TYPES_LIST
+  #undef rud_type
 };
 
 /* wrapper for asprintf */
@@ -894,7 +938,7 @@ get_cmd_global_uniq_command (GLOBAL_COMMANDS *global_commands_ref,
 }
 
 char *
-informative_command_value (ELEMENT *element)
+informative_command_value (const ELEMENT *element)
 {
   ELEMENT *misc_args;
   char *text_arg;
@@ -944,8 +988,8 @@ informative_command_value (ELEMENT *element)
   return 0;
 }
 
-static void
-set_informative_command_value (OPTIONS *options, ELEMENT *element)
+void
+set_informative_command_value (OPTIONS *options, const ELEMENT *element)
 {
   char *value = 0;
   enum command_id cmd = element_builtin_cmd (element);
@@ -1078,32 +1122,6 @@ new_options (void)
 }
 
 
-/* accents/elements stacks */
-void
-push_stack_element (ELEMENT_STACK *stack, const ELEMENT *e)
-{
-  if (stack->top >= stack->space)
-    {
-      stack->stack
-        = realloc (stack->stack,
-                   (stack->space += 5) * sizeof (ELEMENT *));
-    }
-
-  stack->stack[stack->top] = e;
-  stack->top++;
-}
-
-/* currently unused */
-const ELEMENT *
-pop_stack_element (ELEMENT_STACK *stack)
-{
-  if (stack->top == 0)
-    fatal ("element stack empty");
-
-  stack->top--;
-  return stack->stack[stack->top +1];
-}
-
 void
 destroy_accent_stack (ACCENTS_STACK *accent_stack)
 {
@@ -1140,6 +1158,27 @@ section_level (const ELEMENT *section)
   return level;
 }
 
+enum command_id
+section_level_adjusted_command_name (const ELEMENT *element)
+{
+  int status;
+  int heading_level;
+
+  heading_level = lookup_extra_integer (element, "section_level", &status);
+
+  if (status < 0)
+    {
+      bug ("section_level_adjusted_command_name: "
+           "unexpected missing section level");
+    }
+
+  if (command_structuring_level[element->cmd] != heading_level)
+    {
+      return level_to_structuring_command[element->cmd][heading_level];
+    }
+  return element->cmd;
+}
+
 /* corresponding perl function in Common.pm */
 int
 is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries)
@@ -1151,8 +1190,13 @@ is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries)
   for (i = 0; i < tree->contents.number; i++)
     {
       ELEMENT *content = tree->contents.list[i];
-      if (content->cmd)
+      enum command_id data_cmd = element_builtin_data_cmd (content);
+
+      if (data_cmd)
         {
+          unsigned long flags = builtin_command_data[data_cmd].flags;
+          unsigned long other_flags
+               = builtin_command_data[data_cmd].other_flags;
           if (content->type == ET_index_entry_command)
             {
               if (do_not_ignore_index_entries)
@@ -1160,23 +1204,24 @@ is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries)
               else
                continue;
             }
-          if (builtin_command_flags(content) & CF_line)
+
+          if (flags & CF_line)
             {
-              if (command_other_flags(content) & CF_formatted_line
-                  || command_other_flags(content) & CF_formattable_line)
+              if (other_flags & CF_formatted_line
+                  || other_flags & CF_formattable_line)
                 return 0;
               else
                 continue;
             }
-          else if (builtin_command_flags(content) & CF_nobrace)
+          else if (flags & CF_nobrace)
             {
-              if (command_other_flags(content) & CF_formatted_nobrace)
+              if (other_flags & CF_formatted_nobrace)
                 return 0;
               else
                 continue;
             }
-          else if (command_other_flags(content) & CF_non_formatted_brace
-                   || command_other_flags(content) & CF_non_formatted_block)
+          else if (other_flags & CF_non_formatted_brace
+                   || other_flags & CF_non_formatted_block)
             continue;
           else
             return 0;
@@ -1265,5 +1310,26 @@ enumerate_item_representation (char *specification, int number)
 
   free (letter_ords);
   return result.text;
+}
+
+void
+html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons)
+{
+  if (!buttons)
+    return;
+
+  if (buttons->number > 0)
+    {
+      size_t i;
+      for (i = 0; i < buttons->number; i++)
+        {
+          BUTTON_SPECIFICATION *button = &buttons->list[i];
+          if (button->type == BST_direction_info)
+            free (button->button_info);
+          unregister_perl_button (button);
+        }
+    }
+  free (buttons->list);
+  free (buttons);
 }
 

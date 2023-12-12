@@ -63,7 +63,7 @@ static void
 message_list_line_error_internal (ERROR_MESSAGE_LIST *error_messages,
                                   enum error_type type, int continuation,
                                   const SOURCE_INFO *cmd_source_info,
-                                  char *format, va_list v)
+                                  const char *format, va_list v)
 {
   char *message;
   TEXT error_line;
@@ -84,13 +84,8 @@ message_list_line_error_internal (ERROR_MESSAGE_LIST *error_messages,
 
   if (cmd_source_info)
     {
-      if (cmd_source_info->line_nr)
-        error_message->source_info = *cmd_source_info;
-      else
-        error_message->source_info = current_source_info;
+      error_message->source_info = *cmd_source_info;
     }
-  else
-    error_message->source_info = current_source_info;
 
   text_init (&error_line);
   text_append (&error_line, "");
@@ -148,7 +143,7 @@ static void
 message_list_document_error_internal (ERROR_MESSAGE_LIST *error_messages,
                                       OPTIONS *conf,
                                       enum error_type type, int continuation,
-                                      char *format, va_list v)
+                                      const char *format, va_list v)
 {
   char *message;
   TEXT error_line;
@@ -219,8 +214,8 @@ message_list_document_error_internal (ERROR_MESSAGE_LIST *error_messages,
 
 static void
 line_error_internal (enum error_type type, int continuation,
-                     SOURCE_INFO *cmd_source_info,
-                     char *format, va_list v)
+                     const SOURCE_INFO *cmd_source_info,
+                     const char *format, va_list v)
 {
   message_list_line_error_internal (&error_messages_list,
                       type, continuation, cmd_source_info,
@@ -230,7 +225,7 @@ line_error_internal (enum error_type type, int continuation,
 void
 line_error_ext (enum error_type type, int continuation,
                 SOURCE_INFO *cmd_source_info,
-                char *format, ...)
+                const char *format, ...)
 {
   va_list v;
 
@@ -239,25 +234,25 @@ line_error_ext (enum error_type type, int continuation,
 }
 
 void
-line_error (char *format, ...)
+line_error (const char *format, ...)
 {
   va_list v;
 
   va_start (v, format);
-  line_error_internal (MSG_error, 0, 0, format, v);
+  line_error_internal (MSG_error, 0, &current_source_info, format, v);
 }
 
 void
-line_warn (char *format, ...)
+line_warn (const char *format, ...)
 {
   va_list v;
 
   va_start (v, format);
-  line_error_internal (MSG_warning, 0, 0, format, v);
+  line_error_internal (MSG_warning, 0, &current_source_info, format, v);
 }
 
 void
-command_warn (ELEMENT *e, char *format, ...)
+command_warn (const ELEMENT *e, const char *format, ...)
 {
   va_list v;
 
@@ -266,8 +261,20 @@ command_warn (ELEMENT *e, char *format, ...)
 }
 
 void
+message_list_line_error_ext (ERROR_MESSAGE_LIST *error_messages,
+                             enum error_type type, int continuation,
+                     SOURCE_INFO *cmd_source_info, const char *format, ...)
+{
+  va_list v;
+
+  va_start (v, format);
+  message_list_line_error_internal (error_messages, type, continuation,
+                                    cmd_source_info, format, v);
+}
+
+void
 message_list_command_warn (ERROR_MESSAGE_LIST *error_messages,
-                           ELEMENT *e, char *format, ...)
+                           const ELEMENT *e, const char *format, ...)
 {
   va_list v;
 
@@ -276,8 +283,18 @@ message_list_command_warn (ERROR_MESSAGE_LIST *error_messages,
                                     &e->source_info, format, v);
 }
 
+/* similar as message_list_command_warn, to be used only when the calling
+   function already has a variable argument */
 void
-command_error (ELEMENT *e, char *format, ...)
+vmessage_list_command_warn (ERROR_MESSAGE_LIST *error_messages,
+                            const ELEMENT *e, const char *format, va_list v)
+{
+  message_list_line_error_internal (error_messages, MSG_warning, 0,
+                                    &e->source_info, format, v);
+}
+
+void
+command_error (const ELEMENT *e, const char *format, ...)
 {
   va_list v;
 
@@ -287,7 +304,7 @@ command_error (ELEMENT *e, char *format, ...)
 
 void
 message_list_command_error (ERROR_MESSAGE_LIST *error_messages,
-                            const ELEMENT *e, char *format, ...)
+                            const ELEMENT *e, const char *format, ...)
 {
   va_list v;
 
@@ -300,7 +317,7 @@ message_list_command_error (ERROR_MESSAGE_LIST *error_messages,
 void
 message_list_document_error (ERROR_MESSAGE_LIST *error_messages,
                              OPTIONS *conf,
-                             char *format, ...)
+                             const char *format, ...)
 {
   va_list v;
 
@@ -313,7 +330,7 @@ message_list_document_error (ERROR_MESSAGE_LIST *error_messages,
 void
 message_list_document_warn (ERROR_MESSAGE_LIST *error_messages,
                             OPTIONS *conf,
-                            char *format, ...)
+                            const char *format, ...)
 {
   va_list v;
 

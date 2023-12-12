@@ -2975,25 +2975,49 @@ sub _convert($$)
           next if !$float->{'args'} or !$float->{'args'}->[1]
                    or !$float->{'args'}->[1]->{'contents'}
                    or !@{$float->{'args'}->[1]->{'contents'}};
-          my $float_label_text = $self->convert_line({'type' => '_code',
-             'contents' => [$float->{'args'}->[1]]});
+
           my $float_entry = $self->float_type_number($float);
-          my $float_entry_text = ':';
-          if (defined($float_entry)) {
-            $float_entry->{'type'} = 'frenchspacing';
-            $float_entry_text = $self->convert_line($float_entry);
-          }
-          # no translation here, this is required Info format.
-          my $float_line = "* $float_entry_text: $float_label_text.";
+          next if !defined($float_entry);
+
+          my $formatter = $self->new_formatter('line');
+          my $container = $formatter->{'container'};
+          push @{$self->{'formatters'}}, $formatter;
+
+          # Output in format "* $float_entry_text: $float_label_text.".
+
+          $result .= _count_added($self, $container,
+                                  add_next($container, '* '));
+
+          $float_entry->{'type'} = 'frenchspacing';
+          $result .= $self->_convert($float_entry);
+
+          $result .= _count_added($self, $container,
+                                  add_next($container, ': '));
+
+          $result .= $self->_convert({'type' => '_code',
+                          'contents' => [$float->{'args'}->[1]]});
+          $result .= _count_added($self, $container,
+                                  add_next($container, '.'));
+          $result .= _count_added($self, $container,
+            Texinfo::Convert::Paragraph::end($container));
+
+          # NB we trust that only $container was used to format text
+          # inside the call to convert_line so that all output text is
+          # counted.
           my $line_width
-             = Texinfo::Convert::Unicode::string_width($float_line);
+             = Texinfo::Convert::Paragraph::counter($formatter->{'container'});
+
+          pop @{$self->{'formatters'}};
+
           if ($line_width > $listoffloat_entry_length) {
-            $float_line .= "\n" . ' ' x $listoffloat_entry_length;
+            $result .= "\n" . ' ' x $listoffloat_entry_length;
             $lines_count++;
           } else {
-            $float_line .= ' ' x ($listoffloat_entry_length - $line_width);
+            $result .= ' ' x ($listoffloat_entry_length - $line_width);
           }
           $line_width = $listoffloat_entry_length;
+
+          my $float_line = '';
           my $caption;
           if ($float->{'extra'}->{'shortcaption'}) {
             $caption = $float->{'extra'}->{'shortcaption'};

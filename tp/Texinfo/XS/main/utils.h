@@ -40,6 +40,8 @@ extern const char *output_unit_type_names[];
 
 extern const char *command_location_names[];
 
+extern const char *html_button_direction_names[];
+
 typedef struct {
     char *encoding_name;
     iconv_t iconv;
@@ -54,6 +56,15 @@ typedef struct {
 
 extern ENCODING_CONVERSION_LIST output_conversions;
 extern ENCODING_CONVERSION_LIST input_conversions;
+
+typedef struct {
+    enum command_id alias;
+    enum command_id command;
+    char *category;
+    char *translation_context;
+} DEF_ALIAS;
+
+extern DEF_ALIAS def_aliases[];
 
 enum global_option_command_type {
    GO_NONE,
@@ -98,30 +109,7 @@ typedef struct COMMAND_OPTION_VALUE {
 
 extern const enum command_id small_block_associated_command[][2];
 
-/* CONVERTER and associated types needed for set_global_document_command */
-/* see Texinfo::HTML _prepare_output_units_global_targets
-
-   NOTE the special output units names are not actually used, the
-   special output units direction names are obtained from the perl input
-   and stored in special_unit_info and put later on in
-   special_units_direction_name
- */
-#define HTML_GLOBAL_DIRECTIONS_LIST \
-   hgdt_name(First) \
-   hgdt_name(Top) \
-   hgdt_name(Index) \
-   hgdt_name(Last) \
-   hgdt_name(About) \
-   hgdt_name(Contents) \
-   hgdt_name(Overview) \
-   hgdt_name(Footnotes)
-
-enum global_unit_direction {
-  #define hgdt_name(name) D_ ## name,
-   HTML_GLOBAL_DIRECTIONS_LIST
-  #undef hgdt_name
-};
-
+/* enum needed for set_global_document_command */
 enum command_location {
    CL_before,
    CL_last,
@@ -131,8 +119,8 @@ enum command_location {
 
 /* HTML modified state flags */
 #define HMSF_current_root            0x0001
+#define HMSF_shared_conversion_state_integer  0x0002
 /*
-#define HMSF_        0x0002
 #define HMSF_      0x0004
 #define HMSF_     0x0008
 #define HMSF_    0x0010
@@ -172,12 +160,6 @@ typedef struct FILE_SOURCE_INFO_LIST {
 
 extern const char *html_argument_formatting_type_names[];
 
-typedef struct ELEMENT_STACK {
-    const ELEMENT **stack;
-    size_t top;
-    size_t space;
-} ELEMENT_STACK;
-
 typedef struct ACCENTS_STACK {
     ELEMENT_STACK stack;
     ELEMENT *argument;
@@ -208,6 +190,7 @@ INDEX *indices_info_index_by_name (INDEX **indices_information, char *name);
 INDEX *ultimate_index (INDEX *index);
 char *read_flag_name (char **ptr);
 int section_level (const ELEMENT *section);
+enum command_id section_level_adjusted_command_name (const ELEMENT *element);
 char *collapse_spaces (char *text);
 char *parse_line_directive (char *line, int *retval, int *out_line_no);
 int is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries);
@@ -219,8 +202,6 @@ void add_string (const char *string, STRING_LIST *strings_list);
 void merge_strings (STRING_LIST *strings_list, STRING_LIST *merged_strings);
 size_t find_string (STRING_LIST *strings_list, const char *string);
 
-void push_stack_element (ELEMENT_STACK *stack, const ELEMENT *e);
-const ELEMENT *pop_stack_element (ELEMENT_STACK *stack);
 void destroy_accent_stack (ACCENTS_STACK *accent_stack);
 
 void wipe_index (INDEX *idx);
@@ -254,10 +235,15 @@ char *enumerate_item_representation (char *specification, int number);
 ELEMENT *get_global_document_command (GLOBAL_COMMANDS *global_commands,
                                       enum command_id cmd,
                                       enum command_location command_location);
-char *informative_command_value (ELEMENT *element);
+char *informative_command_value (const ELEMENT *element);
+void set_informative_command_value (OPTIONS *options, const ELEMENT *element);
 ELEMENT *set_global_document_command (GLOBAL_COMMANDS *global_commands,
                              OPTIONS *options, enum command_id cmd,
                              enum command_location command_location);
 ELEMENT_LIST *get_cmd_global_multi_command (GLOBAL_COMMANDS *global_commands_ref,
                                       enum command_id cmd);
+ELEMENT *get_cmd_global_uniq_command (GLOBAL_COMMANDS *global_commands_ref,
+                                      enum command_id cmd);
+
+void html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons);
 #endif

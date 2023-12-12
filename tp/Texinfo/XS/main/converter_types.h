@@ -153,6 +153,7 @@ enum html_argument_formatting_type {
    #undef html_aft_type
 };
 
+/* TODO move to convert_html.c? */
 enum html_special_character {
    SC_paragraph_symbol,
    SC_left_quote,
@@ -166,6 +167,15 @@ enum html_command_text_type {
    HCTT_text_nonumber,
    HCTT_string,
    HCTT_string_nonumber, /* not sure that it is set/used */
+};
+
+enum htmlxref_split_type {
+   htmlxref_split_type_none = -1,
+
+   htmlxref_split_type_mono,
+   htmlxref_split_type_node,
+   htmlxref_split_type_section,
+   htmlxref_split_type_chapter,
 };
 
 typedef struct {
@@ -201,6 +211,17 @@ typedef struct {
     size_t space;
 } INTEGER_STACK;
 
+typedef struct ELEMENT_STACK {
+    const ELEMENT **stack;
+    size_t top;
+    size_t space;
+} ELEMENT_STACK;
+
+typedef struct FILE_NUMBER_NAME {
+    size_t file_number;
+    char *filename;
+} FILE_NUMBER_NAME;
+
 typedef struct VARIETY_DIRECTION_INDEX {
     char *special_unit_variety;
     int direction_index;
@@ -218,10 +239,12 @@ typedef struct HTML_TARGET {
     char *command_text[HCTT_string_nonumber+1];
     TREE_ADDED_ELEMENTS tree;
     TREE_ADDED_ELEMENTS tree_nonumber;
-    char *filename;
+    FILE_NUMBER_NAME file_number_name;
+    int filename_set;
+    ELEMENT *root_element_command;
+    int root_element_command_set;
     /*
     ELEMENT *node_command;
-    ELEMENT *root_element_command;
     */
 } HTML_TARGET;
 
@@ -237,8 +260,8 @@ typedef struct HTML_SHARED_CONVERSION_STATE {
     int element_explanation_content; /* element_explanation_content->{ELEMENT $command}
                                 = ELEMENT */
     int footnote_id_numbers; /* footnote_id_numbers->{char $footid} = int */
-    /* probably not useful, directly use expanded formats in the converter 
-       needed in perl as expanded formats are accessed per format in the API
+    /* Not useful, directly use expanded formats in the converter.
+       Needed in perl as expanded formats are accessed per format in the API
     int expanded_format_raw;
      */
     int formatted_index_entries; /* formatted_index_entries->{INDEX_ENTRY $index_entry_ref} = 1, ++ */
@@ -336,11 +359,6 @@ typedef struct FILE_NAME_PATH_COUNTER_LIST {
     size_t space;
     FILE_NAME_PATH_COUNTER *list;
 } FILE_NAME_PATH_COUNTER_LIST;
-
-typedef struct CURRENT_FILE_INFO {
-    size_t file_number;
-    char *filename;
-} CURRENT_FILE_INFO;
 
 typedef struct FILE_STREAM {
     char *file_path;
@@ -551,7 +569,7 @@ typedef struct HTML_ASSOCIATED_INLINE_CONTENT {
   /* perl element. This should be HV *hv,
      but we don't want to include the Perl headers everywhere; */
     const void *hv;
-    char *inline_content;
+    TEXT inline_content;
 } HTML_ASSOCIATED_INLINE_CONTENT;
 
 typedef struct HTML_ASSOCIATED_INLINE_CONTENT_LIST {
@@ -559,6 +577,50 @@ typedef struct HTML_ASSOCIATED_INLINE_CONTENT_LIST {
     size_t space;
     HTML_ASSOCIATED_INLINE_CONTENT *list;
 } HTML_ASSOCIATED_INLINE_CONTENT_LIST;
+
+typedef struct HTMLXREF_MANUAL {
+    char *manual;
+    char *urlprefix[htmlxref_split_type_chapter +1];
+} HTMLXREF_MANUAL;
+
+typedef struct HTMLXREF_MANUAL_LIST {
+    size_t number;
+    HTMLXREF_MANUAL *list;
+} HTMLXREF_MANUAL_LIST;
+
+typedef struct HTMLXREF_MANUAL_ELEMENT_WARNED {
+    const ELEMENT *element;
+    char *manual;
+} HTMLXREF_MANUAL_ELEMENT_WARNED;
+
+typedef struct HTMLXREF_MANUAL_ELEMENT_WARNED_LIST {
+    size_t number;
+    size_t space;
+    HTMLXREF_MANUAL_ELEMENT_WARNED *list;
+} HTMLXREF_MANUAL_ELEMENT_WARNED_LIST;
+
+typedef struct ASSOCIATED_INFO_LIST {
+    size_t number;
+    ASSOCIATED_INFO *list;
+} ASSOCIATED_INFO_LIST;
+
+typedef struct JSLICENSE_FILE_INFO {
+    char *filename;
+    char *license;
+    char *url;
+    char *source;
+} JSLICENSE_FILE_INFO;
+
+typedef struct JSLICENSE_FILE_INFO_LIST {
+    char *category;
+    size_t number;
+    JSLICENSE_FILE_INFO *list;
+} JSLICENSE_FILE_INFO_LIST;
+
+typedef struct JSLICENSE_CATEGORY_LIST {
+    size_t number;
+    JSLICENSE_FILE_INFO_LIST *list;
+} JSLICENSE_CATEGORY_LIST;
 
 typedef struct CONVERTER {
     int converter_descriptor;
@@ -568,6 +630,7 @@ typedef struct CONVERTER {
 
     struct OPTIONS *conf;
     struct OPTIONS *init_conf;
+    char *output_format;
     EXPANDED_FORMAT *expanded_formats;
     TRANSLATED_COMMAND *translated_commands;
 
@@ -613,6 +676,7 @@ typedef struct CONVERTER {
     FORMATTING_REFERENCE *special_unit_body;
     STRING_LIST special_unit_varieties;
     char **special_unit_info[SUI_type_heading+1];
+    HTMLXREF_MANUAL_LIST htmlxref;
     TYPE_CONVERSION_FUNCTION type_conversion_function[TXI_TREE_TYPES_NUMBER];
     TYPE_CONVERSION_FUNCTION css_string_type_conversion_function[TXI_TREE_TYPES_NUMBER];
     TYPE_OPEN_FUNCTION type_open_function[TXI_TREE_TYPES_NUMBER];
@@ -625,6 +689,7 @@ typedef struct CONVERTER {
     HTML_COMMAND_CONVERSION html_command_conversion[BUILTIN_CMD_NUMBER][HCC_type_css_string+1];
 
     /* set for a document */
+    enum htmlxref_split_type document_htmlxref_split_type;
     const OUTPUT_UNIT **global_units_directions;
     SPECIAL_UNIT_DIRECTION *special_units_direction_name;
     ELEMENT **special_unit_info_tree[SUIT_type_heading+1];
@@ -638,7 +703,9 @@ typedef struct CONVERTER {
     size_t *output_unit_file_indices;   /* array of indices in output_unit_files
               each position corresponding to an output unit. */
     size_t *special_unit_file_indices;  /* same for special output units */
-    PAGES_CSS_LIST page_css;
+    ELEMENT *simpletitle_tree;
+    enum command_id simpletitle_cmd;
+    JSLICENSE_CATEGORY_LIST jslicenses;
 
     /* state only in C converter */
     unsigned long modified_state; /* specifies which perl state to rebuild */
@@ -652,11 +719,13 @@ typedef struct CONVERTER {
     ARRAY_INDEX_LIST file_changed_counter;  /* index of files in
                                  output_unit_files with changed counter */
     HTML_ADDED_TARGET_LIST added_targets; /* targets added */
-    /* next three allow to switch from normal HTML formatting to css strings
+    STRING_LIST shared_conversion_state_integer; /* modified */
+    /* next 4 allow to switch from normal HTML formatting to css strings
        formatting */
     FORMATTING_REFERENCE *current_formatting_references;
     TYPE_CONVERSION_FUNCTION *current_types_conversion_function;
     COMMAND_CONVERSION_FUNCTION *current_commands_conversion_function;
+    void (* current_format_protect_text) (const char *text, TEXT *result);
 
     /* state common with perl converter */
     int document_global_context;
@@ -667,12 +736,15 @@ typedef struct CONVERTER {
     HTML_DOCUMENT_CONTEXT_STACK html_document_context;
     STRING_STACK multiple_pass;
     STRING_STACK pending_closes;
-    CURRENT_FILE_INFO current_filename;
-    ELEMENT_LIST referred_command_stack;
+    FILE_NUMBER_NAME current_filename;
+    ELEMENT_STACK referred_command_stack;
     HTML_SHARED_CONVERSION_STATE shared_conversion_state;
     HTML_INLINE_CONTENT_STACK pending_inline_content;
     HTML_PENDING_FOOTNOTE_STACK pending_footnotes;
     HTML_ASSOCIATED_INLINE_CONTENT_LIST associated_inline_content;
+    PAGES_CSS_LIST page_css;
+    HTMLXREF_MANUAL_ELEMENT_WARNED_LIST check_htmlxref_already_warned;
+    ASSOCIATED_INFO_LIST html_files_information;
     /* state common with perl converter, not transmitted to perl */
     int use_unicode_text;
 } CONVERTER;
@@ -683,6 +755,24 @@ typedef struct TRANSLATED_SUI_ASSOCIATION {
 } TRANSLATED_SUI_ASSOCIATION;
 
 /* FIXME move somewhere else? */
+
+/* button directions are not often used as enum, but it can be useful
+   sometime to have an enum name for a direction */
+/* special units are put after these fixed types, they are dynamically
+   determined from perl input */
+enum button_unit_direction {
+  #define hgdt_name(name) D_button_ ## name,
+   HTML_GLOBAL_DIRECTIONS_LIST
+  #undef hgdt_name
+   D_button_space,
+  #define rud_type(name) D_button_ ## name,
+   RUD_DIRECTIONS_TYPES_LIST
+   RUD_FILE_DIRECTIONS_TYPES
+  #undef rud_type
+  #define rud_type(name) D_button_FirstInFile## name,
+   RUD_DIRECTIONS_TYPES_LIST
+  #undef rud_type
+};
 
 enum button_specification_type {
   BST_direction,
@@ -698,33 +788,48 @@ enum button_information_type {
 };
 
 typedef struct BUTTON_SPECIFICATION_INFO {
-    char *direction; /* or direction enum/index? need both global and relative */
+     /* both global and relative directions index */
+    int direction;
     enum button_information_type type;
     union {
   /* perl references. This should be SV *sv_*,
      but we don't want to include the Perl headers everywhere; */
-      void *sv_reference;
-      void *sv_string;
-      int direction_information_type; /* TODO should be an enum? */
+      void *sv_reference; /* BIT_function */
+      void *sv_string; /* BIT_string */
+     /* both global and relative directions index */
+      int direction_information_type; /* BIT_direction_information_type
+            text string in perl, element direction information type */
     };
 } BUTTON_SPECIFICATION_INFO;
 
 typedef struct BUTTON_SPECIFICATION {
+    void *sv; /* reference to perl data that can be used instead of
+                 the C data */
+
     enum button_specification_type type;
     union {
-      char *string; /* or direction enum/index? need both global and relative */
+     /* both global and relative directions index */
+      int direction; /* BST_direction, string with an element direction */
   /* perl references. This should be SV *sv_*,
      but we don't want to include the Perl headers everywhere; */
-      void *sv_reference;
-      void *sv_string;
-      BUTTON_SPECIFICATION_INFO *button_info;
+      void *sv_reference; /* BST_function */
+      void *sv_string; /* BST_string scalar reference */
+      BUTTON_SPECIFICATION_INFO *button_info; /* BST_direction_info
+                                              array reference of length 2 */
     };
 } BUTTON_SPECIFICATION;
 
 typedef struct BUTTON_SPECIFICATION_LIST {
-    void *av; /* reference to perl data */
+    void *av; /* reference to perl data that can be used instead of
+                 the list */
     size_t number;
     BUTTON_SPECIFICATION *list;
 } BUTTON_SPECIFICATION_LIST;
+
+typedef struct FORMATTED_BUTTON_INFO {
+    char *active;
+    char *passive;
+    int need_delimiter;
+} FORMATTED_BUTTON_INFO;
 
 #endif

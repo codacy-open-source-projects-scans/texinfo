@@ -83,18 +83,24 @@ $XS_convert = 1 if ($XS_structuring
                     and $ENV{TEXINFO_XS_CONVERT} eq '1');
 
 our $module_loaded = 0;
+
+my %XS_overrides = (
+  "Texinfo::Convert::Converter::_XS_set_conf"
+   => "Texinfo::Convert::ConvertXS::set_conf",
+  "Texinfo::Convert::Converter::_XS_get_unclosed_stream"
+   => "Texinfo::Convert::ConvertXS::get_unclosed_stream",
+  "Texinfo::Convert::Converter::get_converter_errors"
+   => "Texinfo::Convert::ConvertXS::get_converter_errors",
+  "Texinfo::Convert::Converter::destroy"
+   => "Texinfo::Convert::ConvertXS::destroy",
+);
+
 sub import {
   if (!$module_loaded) {
     if ($XS_convert) {
-      Texinfo::XSLoader::override(
-       "Texinfo::Convert::Converter::_XS_set_conf",
-       "Texinfo::Convert::ConvertXS::set_conf");
-      Texinfo::XSLoader::override(
-       "Texinfo::Convert::Converter::_XS_get_unclosed_stream",
-       "Texinfo::Convert::ConvertXS::get_unclosed_stream");
-      Texinfo::XSLoader::override(
-       "Texinfo::Convert::Converter::destroy",
-       "Texinfo::Convert::ConvertXS::destroy");
+      foreach my $sub (keys %XS_overrides) {
+        Texinfo::XSLoader::override ($sub, $XS_overrides{$sub});
+      }
     }
 
     $module_loaded = 1;
@@ -472,6 +478,12 @@ sub output($$)
 
 # Nothing to do in perl.  XS function frees memory
 sub destroy($)
+{
+}
+
+# Nothing to do in perl as the converter is also a Texinfo::Report.
+# In XS return the error messages.
+sub get_converter_errors($)
 {
 }
 
