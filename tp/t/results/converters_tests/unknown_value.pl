@@ -38,9 +38,7 @@ $result_errors{'unknown_value'} = [
   {
     'error_line' => 'warning: undefined flag: unknown
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'undefined flag: unknown',
     'type' => 'warning'
   }

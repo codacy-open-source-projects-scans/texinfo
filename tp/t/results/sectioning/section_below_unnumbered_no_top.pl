@@ -40,9 +40,7 @@ $result_trees{'section_below_unnumbered_no_top'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -70,9 +68,7 @@ $result_trees{'section_below_unnumbered_no_top'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     }
   ],

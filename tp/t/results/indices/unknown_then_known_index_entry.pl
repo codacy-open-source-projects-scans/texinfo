@@ -48,9 +48,7 @@ $result_trees{'unknown_then_known_index_entry'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -84,9 +82,7 @@ $result_trees{'unknown_then_known_index_entry'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               },
               'type' => 'index_entry_command'
             }
@@ -113,18 +109,14 @@ $result_errors{'unknown_then_known_index_entry'} = [
   {
     'error_line' => 'unknown command `someindex\'
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'unknown command `someindex\'',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: entry for index `some\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'entry for index `some\' outside of any node',
     'type' => 'warning'
   }

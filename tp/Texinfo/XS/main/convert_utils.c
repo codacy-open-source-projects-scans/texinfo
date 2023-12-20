@@ -21,6 +21,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <time.h>
 
 #include "options_types.h"
 #include "element_types.h"
@@ -50,6 +51,62 @@ element_associated_processing_encoding (const ELEMENT *element)
 {
   char *input_encoding = lookup_extra_string (element, "input_encoding_name");
   return input_encoding;
+}
+
+ELEMENT *
+expand_today (OPTIONS *options)
+{
+  time_t tloc;
+  struct tm *time_tm;
+  int year;
+  char *source_date_epoch;
+  NAMED_STRING_ELEMENT_LIST *substrings;
+  ELEMENT *month_tree;
+  ELEMENT *day_element;
+  ELEMENT *year_element;
+  ELEMENT *result;
+
+  if (options->TEST > 0)
+    {
+      result = new_element (ET_NONE);
+      text_append (&result->text, "a sunny day");
+      return result;
+    }
+
+  /* See https://reproducible-builds.org/specs/source-date-epoch/ */
+  source_date_epoch = getenv ("SOURCE_DATE_EPOCH");
+
+  if (source_date_epoch)
+    {
+   /* This assumes that the SOURCE_DATE_EPOCH environment variable will contain
+      a correct, positive integer in the time_t range */
+      tloc = (time_t)strtoll(source_date_epoch, NULL, 10);
+      time_tm = gmtime (&tloc);
+    }
+  else
+    {
+      tloc = time (NULL);
+      time_tm = localtime (&tloc);
+    }
+
+  year = time_tm->tm_year + 1900;
+
+  month_tree = gdt_tree (convert_utils_month_name[time_tm->tm_mon], 0, options,
+                         0, 0, 0);
+  day_element = new_element (ET_NONE);
+  year_element = new_element (ET_NONE);
+  text_printf (&day_element->text, "%d", time_tm->tm_mday);
+  text_printf (&year_element->text, "%d", year);
+
+  substrings = new_named_string_element_list ();
+  add_element_to_named_string_element_list (substrings, "month", month_tree);
+  add_element_to_named_string_element_list (substrings, "day", day_element);
+  add_element_to_named_string_element_list (substrings, "year", year_element);
+
+  result = gdt_tree ("{month} {day}, {year}", 0, options, substrings, 0, 0);
+  destroy_named_string_element_list (substrings);
+
+  return result;
 }
 
 ACCENTS_STACK *
@@ -130,42 +187,61 @@ add_heading_number (OPTIONS *options, const ELEMENT *current, char *text,
   if (numbered != 0)
     number = lookup_extra_string (current, "section_number");
 
-  /* TODO translate code to use options as $self translation
-     to be done when this can be tested, so when Text converter
-     is called from another converter
-  if ($self) {
-    if (defined($number)) {
-      if ($current->{'cmdname'} eq 'appendix'
-          and $current->{'extra'}->{'section_level'} == 1) {
-        $result = $self->gdt_string('Appendix {number} {section_title}',
-                   {'number' => $number, 'section_title' => $text});
-      } else {
-        $result = $self->gdt_string('{number} {section_title}',
-                   {'number' => $number, 'section_title' => $text});
-      }
-    } else {
-      $result = $text;
-    }
-  } else
-*/
+  text_init (&result);
 
-  {
-    text_init (&result);
-    if (current->cmd == CM_appendix)
-      {
-        int status;
-        int section_level = lookup_extra_integer (current, "section_level",
-                                                  &status);
-        if (section_level == 1)
-          text_append (&result, "Appendix ");
-      }
-    if (number)
-      {
-        text_append (&result, number);
-        text_append (&result, " ");
-      }
-    text_append (&result, text);
-   }
+  if (options)
+    {
+      if (number)
+        {
+          char *numbered_heading = 0;
+          NAMED_STRING_ELEMENT_LIST *substrings
+                                       = new_named_string_element_list ();
+          add_string_to_named_string_element_list (substrings,
+                                                  "number", number);
+          add_string_to_named_string_element_list (substrings,
+                                             "section_title", text);
+          if (current->cmd == CM_appendix)
+            {
+              int status;
+              int section_level
+                    = lookup_extra_integer (current, "section_level",
+                                            &status);
+              if (section_level == 1)
+                {
+                  numbered_heading
+                   = gdt_string ("Appendix {number} {section_title}",
+                                 options, substrings, 0, 0);
+                }
+            }
+          if (!numbered_heading)
+            numbered_heading = gdt_string ("{number} {section_title}",
+                                          options, substrings, 0, 0);
+
+          destroy_named_string_element_list (substrings);
+
+          text_append (&result, numbered_heading);
+          free (numbered_heading);
+        }
+      else
+        text_append (&result, text);
+    }
+  else
+    {
+      if (current->cmd == CM_appendix)
+        {
+          int status;
+          int section_level = lookup_extra_integer (current, "section_level",
+                                                    &status);
+          if (section_level == 1)
+            text_append (&result, "Appendix ");
+        }
+      if (number)
+        {
+          text_append (&result, number);
+          text_append (&result, " ");
+        }
+      text_append (&result, text);
+    }
   return result.text;
 }
 
@@ -291,7 +367,7 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
                                               &status, &current->source_info);
               else
                 decoded_file = file;
-              message_list_command_error (error_messages, current,
+              message_list_command_error (error_messages, options, current,
                                           "could not read %s: %s",
                                           decoded_file, strerror (errno));
               if (file_name_encoding)
@@ -338,7 +414,7 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
                                                   &current->source_info);
                   else
                     decoded_file = file;
-                  message_list_command_error (error_messages, current,
+                  message_list_command_error (error_messages, options, current,
                              "error on closing @verbatiminclude file %s: %s",
                                  decoded_file, strerror (errno));
                   if (file_name_encoding)
@@ -350,7 +426,7 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
     }
   else if (error_messages)
     {
-      message_list_command_error (error_messages, current,
+      message_list_command_error (error_messages, options, current,
                                   "@%s: could not find %s",
                                   builtin_command_name (current->cmd),
                                   file_name_text);

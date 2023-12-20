@@ -33,9 +33,7 @@ $result_trees{'settitle_and_empty_top'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -68,9 +66,7 @@ $result_trees{'settitle_and_empty_top'} = {
       ],
       'extra' => {},
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     }
   ],

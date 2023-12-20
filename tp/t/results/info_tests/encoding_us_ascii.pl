@@ -42,9 +42,7 @@ $result_trees{'encoding_us_ascii'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         },
         {
@@ -90,9 +88,7 @@ $result_trees{'encoding_us_ascii'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     }
   ],

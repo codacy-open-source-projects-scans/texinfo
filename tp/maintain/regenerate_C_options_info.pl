@@ -104,13 +104,6 @@ print HEADER "#ifndef OPTIONS_TYPE_H\n#define OPTIONS_TYPE_H\n\n";
 print HEADER "#include \"tree_types.h\"\n";
 print HEADER "#include \"converter_types.h\"\n\n";
 
-print HEADER '
-/* temporary */
-typedef struct {
-} ICONS;
-
-';
-
 print HEADER "typedef struct OPTIONS {\n";
 
 foreach my $category (sort(keys(%option_categories))) {
@@ -130,7 +123,10 @@ close(HEADER);
 open (CODE, ">$code_file") or die "Open $code_file: $!\n";
 print CODE "/* Automatically generated from $0 */\n\n";
 
+print CODE '#include <config.h>'."\n\n";
+
 print CODE '#include <stdlib.h>'."\n\n";
+print CODE '#include <string.h>'."\n\n";
 
 print CODE '#include "options_types.h"'."\n";
 print CODE '#include "converter_types.h"'."\n";
@@ -142,7 +138,7 @@ foreach my $category (sort(keys(%option_categories))) {
   print CODE "\n/* ${category} */\n\n";
   foreach my $option_info (@{$option_categories{$category}}) {
     my ($option, $value, $type) = @$option_info;
-    if ($type eq 'STRING_LIST') {
+    if ($type eq 'STRING_LIST' or $type eq 'DIRECTION_ICON_LIST') {
       print CODE "  memset (&options->$option, 0, sizeof ($type));\n";
     } else {
       my $init_value = 0;
@@ -165,7 +161,9 @@ foreach my $category (sort(keys(%option_categories))) {
     } elsif ($type eq 'char *') {
       print CODE " free (options->$option);\n";
     } elsif ($type eq 'BUTTON_SPECIFICATION_LIST *') {
-      print GET "  html_free_button_specification_list (options->$option);\n";
+      print CODE "  html_free_button_specification_list (options->$option);\n";
+    } elsif ($type eq 'DIRECTION_ICON_LIST') {
+      print CODE "  html_free_direction_icons (&options->$option);\n";
     }
   }
 }
@@ -277,7 +275,9 @@ print GET '
 
 ';
 
-print GET '#include <string.h>'."\n\n";
+# FIXME include before or after perl?  Include config.h?
+print GET '#include <string.h>'."\n";
+print GET '#include <stdlib.h>'."\n\n";
 
 print GET '#include "options_types.h"'."\n";
 print GET '#include "converter_types.h"'."\n";
@@ -319,17 +319,30 @@ foreach my $category (sort(keys(%option_categories))) {
         options->$option = 0;
     }\n";
     } elsif ($type eq 'int') {
-      print GET "    options->$option = SvIV (value);\n";
+      print GET "    {
+      if (SvOK (value))
+        options->$option = SvIV (value);
+      else
+        options->$option = -1;
+    }\n";
     } elsif ($type eq 'STRING_LIST') {
       my $dir_string_arg = 'svt_byte';
       $dir_string_arg = 'svt_dir'
         if ($option eq 'INCLUDE_DIRECTORIES');
-      print GET "    add_svav_to_string_list (value, &options->$option, $dir_string_arg);\n";
+      print GET "    {\n";
+      print GET "      clear_strings_list (&options->$option);\n";
+      print GET "      add_svav_to_string_list (value, &options->$option, $dir_string_arg);\n";
+      print GET "    }\n";
     } elsif ($type eq 'BUTTON_SPECIFICATION_LIST *') {
       print GET "    {\n";
       print GET "      html_free_button_specification_list (options->$option);\n";
       print GET "      options->$option = "
                         ."html_get_button_specification_list (converter, value);\n";
+      print GET "    }\n";
+    } elsif ($type eq 'DIRECTION_ICON_LIST') {
+      print GET "    {\n";
+      print GET "      html_free_direction_icons (&options->$option);\n";
+      print GET "      html_get_direction_icons_sv (converter, &options->$option, value);\n";
       print GET "    }\n";
     } else {
       print GET "    {}\n";

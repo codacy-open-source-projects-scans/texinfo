@@ -55,9 +55,7 @@ $result_trees{'inlineifsetifclearspaces'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -113,9 +111,7 @@ $result_trees{'inlineifsetifclearspaces'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             },
             {
@@ -192,9 +188,7 @@ $result_trees{'inlineifsetifclearspaces'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             },
             {
@@ -254,9 +248,7 @@ $result_trees{'inlineifsetifclearspaces'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             },
             {
@@ -301,18 +293,14 @@ $result_errors{'inlineifsetifclearspaces'} = [
   {
     'error_line' => 'warning: command `@inlineifclear\' must not be followed by new line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'command `@inlineifclear\' must not be followed by new line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: command `@inlineifset\' must not be followed by new line
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'command `@inlineifset\' must not be followed by new line',
     'type' => 'warning'
   }

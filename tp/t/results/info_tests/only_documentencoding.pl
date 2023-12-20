@@ -31,9 +31,7 @@ $result_trees{'only_documentencoding'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

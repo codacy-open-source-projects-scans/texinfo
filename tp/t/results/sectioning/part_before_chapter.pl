@@ -58,9 +58,7 @@ $result_trees{'part_before_chapter'} = [
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         'section_number' => '1'
@@ -71,9 +69,7 @@ $result_trees{'part_before_chapter'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     'unit_contents' => [

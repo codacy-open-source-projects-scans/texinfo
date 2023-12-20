@@ -74,9 +74,7 @@ $result_trees{'end_of_line_end_file'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             }
@@ -87,9 +85,7 @@ $result_trees{'end_of_line_end_file'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -110,18 +106,14 @@ $result_errors{'end_of_line_end_file'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'no matching `@end deffn\'
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'no matching `@end deffn\'',
     'type' => 'error'
   }

@@ -36,9 +36,7 @@ $result_trees{'commands_in_abbr'} = {
                       ],
                       'cmdname' => 'b',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     },
                     {
@@ -55,9 +53,7 @@ $result_trees{'commands_in_abbr'} = {
               ],
               'cmdname' => 'abbr',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -113,9 +109,7 @@ $result_trees{'commands_in_abbr'} = {
                           ],
                           'cmdname' => 'b',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 4,
-                            'macro' => ''
+                            'line_nr' => 4
                           }
                         },
                         {
@@ -132,9 +126,7 @@ $result_trees{'commands_in_abbr'} = {
                   ],
                   'cmdname' => 'abbr',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 4,
-                    'macro' => ''
+                    'line_nr' => 4
                   }
                 },
                 {
@@ -171,16 +163,12 @@ $result_trees{'commands_in_abbr'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         }
       ],

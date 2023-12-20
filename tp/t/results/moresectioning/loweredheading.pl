@@ -68,9 +68,7 @@ $result_trees{'loweredheading'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         }
       ],
@@ -84,9 +82,7 @@ $result_trees{'loweredheading'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {

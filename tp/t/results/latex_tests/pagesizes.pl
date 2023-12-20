@@ -35,9 +35,7 @@ $result_trees{'pagesizes'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -79,9 +77,7 @@ $result_trees{'pagesizes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -116,9 +112,7 @@ $result_trees{'pagesizes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -149,9 +143,7 @@ $result_trees{'pagesizes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     },
     {
@@ -202,9 +194,7 @@ $result_trees{'pagesizes'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           }
         },
         {
@@ -222,9 +212,7 @@ $result_trees{'pagesizes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 7,
-        'macro' => ''
+        'line_nr' => 7
       }
     },
     {
@@ -275,9 +263,7 @@ $result_trees{'pagesizes'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 13,
-            'macro' => ''
+            'line_nr' => 13
           }
         },
         {
@@ -309,9 +295,7 @@ $result_trees{'pagesizes'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 15,
-            'macro' => ''
+            'line_nr' => 15
           }
         }
       ],
@@ -324,9 +308,7 @@ $result_trees{'pagesizes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 11,
-        'macro' => ''
+        'line_nr' => 11
       }
     }
   ],
@@ -484,27 +466,21 @@ $result_errors{'pagesizes'} = [
   {
     'error_line' => 'warning: multiple @pagesizes
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => 'multiple @pagesizes',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: multiple @pagesizes
 ',
-    'file_name' => '',
     'line_nr' => 13,
-    'macro' => '',
     'text' => 'multiple @pagesizes',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: multiple @pagesizes
 ',
-    'file_name' => '',
     'line_nr' => 15,
-    'macro' => '',
     'text' => 'multiple @pagesizes',
     'type' => 'warning'
   }

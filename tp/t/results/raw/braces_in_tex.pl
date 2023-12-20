@@ -80,16 +80,12 @@ $result_trees{'braces_in_tex'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         },
         {
@@ -184,16 +180,12 @@ $result_trees{'braces_in_tex'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 18,
-                        'macro' => ''
+                        'line_nr' => 18
                       }
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 12,
-                    'macro' => ''
+                    'line_nr' => 12
                   }
                 }
               ],
@@ -226,16 +218,12 @@ $result_trees{'braces_in_tex'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 19,
-                'macro' => ''
+                'line_nr' => 19
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 11,
-            'macro' => ''
+            'line_nr' => 11
           }
         },
         {

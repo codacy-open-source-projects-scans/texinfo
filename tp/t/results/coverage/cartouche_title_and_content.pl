@@ -29,9 +29,7 @@ $result_trees{'cartouche_title_and_content'} = {
                   ],
                   'cmdname' => 'emph',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 }
               ],
@@ -86,9 +84,7 @@ $result_trees{'cartouche_title_and_content'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -98,9 +94,7 @@ $result_trees{'cartouche_title_and_content'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

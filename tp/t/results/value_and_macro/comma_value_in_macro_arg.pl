@@ -80,9 +80,7 @@ $result_trees{'comma_value_in_macro_arg'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
@@ -91,9 +89,7 @@ $result_trees{'comma_value_in_macro_arg'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         },
         {
@@ -177,7 +173,6 @@ $result_trees{'comma_value_in_macro_arg'} = {
               ],
               'cmdname' => 'emph',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 7,
                 'macro' => 'macro1'
               }
@@ -193,7 +188,6 @@ $result_trees{'comma_value_in_macro_arg'} = {
               ],
               'cmdname' => 'emph',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 7,
                 'macro' => 'macro1'
               },

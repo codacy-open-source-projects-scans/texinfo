@@ -21,9 +21,7 @@ $result_trees{'no_argument_and_contents'} = {
               ],
               'cmdname' => 'contents',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -69,9 +67,7 @@ $result_trees{'no_argument_and_contents'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -86,9 +82,7 @@ $result_trees{'no_argument_and_contents'} = {
               ],
               'cmdname' => 'asis',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
@@ -118,9 +112,7 @@ $result_trees{'no_argument_and_contents'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     }
   ],

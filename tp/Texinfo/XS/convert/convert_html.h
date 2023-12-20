@@ -8,6 +8,12 @@
 /* for FILE_SOURCE_INFO_LIST */
 #include "utils.h"
 
+enum count_elements_in_filename_type {
+  CEFT_total,
+  CEFT_remaining,
+  CEFT_current,
+};
+
 extern char *html_conversion_context_type_names[];
 extern char *html_global_unit_direction_names[];
 
@@ -16,6 +22,11 @@ extern char *html_formatting_reference_names[];
 extern TRANSLATED_SUI_ASSOCIATION translated_special_unit_info[];
 extern const char *special_unit_info_type_names[SUI_type_heading + 1];
 extern const char *htmlxref_split_type_names[htmlxref_split_type_chapter + 1];
+
+extern const char *direction_string_type_names[];
+extern const char *direction_string_context_names[];
+
+extern char *count_elements_in_filename_type_names[];
 
 void html_format_init (void);
 
@@ -62,6 +73,10 @@ enum command_id html_in_align (CONVERTER *self);
 
 char *debug_print_html_contexts (CONVERTER *self);
 
+size_t html_count_elements_in_filename (CONVERTER *self,
+                 enum count_elements_in_filename_type type,
+                 const char *filename);
+
 void html_register_file_information (CONVERTER *self, const char *key,
                                      int value);
 int html_get_file_information (CONVERTER *self, const char *key,
@@ -97,6 +112,10 @@ char *html_get_associated_formatted_inline_content (CONVERTER *self,
                                               const ELEMENT *element,
                                               void *hv);
 
+size_t html_check_htmlxref_already_warned (CONVERTER *self,
+                                           const char *manual_name,
+                                           const SOURCE_INFO *source_info);
+
 void html_merge_index_entries (CONVERTER *self);
 
 void html_prepare_conversion_units (CONVERTER *self,
@@ -124,6 +143,7 @@ void html_prepare_output_units_global_targets (CONVERTER *self,
 void html_translate_names (CONVERTER *self);
 
 void html_prepare_simpletitle (CONVERTER *self);
+void html_prepare_converted_output_info (CONVERTER *self);
 void html_prepare_title_titlepage (CONVERTER *self, int output_units_descriptor,
                                    char *output_file, char *output_filename);
 
@@ -141,6 +161,7 @@ char *html_convert_output (CONVERTER *self, const ELEMENT *root,
 
 void html_check_transfer_state_finalization (CONVERTER *self);
 void html_free_converter (CONVERTER *self);
+void html_reset_converter (CONVERTER *self);
 void html_destroy_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info);
 
 #endif

@@ -289,7 +289,7 @@ PREFIX                             converter_customization undef   char *
 PROGRAM                            converter_customization undef   char *
 PROGRAM_NAME_IN_ABOUT              converter_customization undef   char *
 PROGRAM_NAME_IN_FOOTER             converter_customization undef   int
-SECTION_NAME_IN_TITLE              converter_customization undef   char *
+SECTION_NAME_IN_TITLE              converter_customization undef   int
 SHORT_TOC_LINK_TO_TOC              converter_customization undef   int
 SHOW_TITLE                         converter_customization undef   int
 T4H_LATEX_CONVERSION               converter_customization undef   char *
@@ -329,8 +329,8 @@ SECTION_FOOTER_BUTTONS             converter_other undef   BUTTON_SPECIFICATION_
 NODE_FOOTER_BUTTONS                converter_other undef   BUTTON_SPECIFICATION_LIST *
 MISC_BUTTONS                       converter_other undef   BUTTON_SPECIFICATION_LIST *
 CHAPTER_BUTTONS                    converter_other undef   BUTTON_SPECIFICATION_LIST *
-ACTIVE_ICONS                       converter_other undef   ICONS *
-PASSIVE_ICONS                      converter_other undef   ICONS *
+ACTIVE_ICONS                       converter_other undef   DIRECTION_ICON_LIST
+PASSIVE_ICONS                      converter_other undef   DIRECTION_ICON_LIST
 
 
 # set from command line.

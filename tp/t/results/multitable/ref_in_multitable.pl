@@ -19,9 +19,7 @@ $result_trees{'ref_in_multitable'} = {
           ],
           'cmdname' => 'novalidate',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -57,9 +55,7 @@ $result_trees{'ref_in_multitable'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -108,9 +104,7 @@ $result_trees{'ref_in_multitable'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 6,
-                    'macro' => ''
+                    'line_nr' => 6
                   }
                 }
               ],
@@ -144,9 +138,7 @@ $result_trees{'ref_in_multitable'} = {
                         'cell_number' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 7,
-                        'macro' => ''
+                        'line_nr' => 7
                       }
                     },
                     {
@@ -182,9 +174,7 @@ $result_trees{'ref_in_multitable'} = {
                               ],
                               'cmdname' => 'ref',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 8,
-                                'macro' => ''
+                                'line_nr' => 8
                               }
                             },
                             {
@@ -199,9 +189,7 @@ $result_trees{'ref_in_multitable'} = {
                         'cell_number' => 2
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 8,
-                        'macro' => ''
+                        'line_nr' => 8
                       }
                     }
                   ],
@@ -233,9 +221,7 @@ $result_trees{'ref_in_multitable'} = {
                         'cell_number' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 9,
-                        'macro' => ''
+                        'line_nr' => 9
                       }
                     },
                     {
@@ -271,9 +257,7 @@ $result_trees{'ref_in_multitable'} = {
                               ],
                               'cmdname' => 'ref',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 10,
-                                'macro' => ''
+                                'line_nr' => 10
                               }
                             },
                             {
@@ -288,9 +272,7 @@ $result_trees{'ref_in_multitable'} = {
                         'cell_number' => 2
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 10,
-                        'macro' => ''
+                        'line_nr' => 10
                       }
                     }
                   ],
@@ -345,9 +327,7 @@ $result_trees{'ref_in_multitable'} = {
                                           ],
                                           'cmdname' => 'ref',
                                           'source_info' => {
-                                            'file_name' => '',
-                                            'line_nr' => 11,
-                                            'macro' => ''
+                                            'line_nr' => 11
                                           }
                                         }
                                       ],
@@ -359,9 +339,7 @@ $result_trees{'ref_in_multitable'} = {
                               ],
                               'cmdname' => 'footnote',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 11,
-                                'macro' => ''
+                                'line_nr' => 11
                               }
                             },
                             {
@@ -375,9 +353,7 @@ $result_trees{'ref_in_multitable'} = {
                         'cell_number' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 11,
-                        'macro' => ''
+                        'line_nr' => 11
                       }
                     },
                     {
@@ -402,9 +378,7 @@ $result_trees{'ref_in_multitable'} = {
                         'cell_number' => 2
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 12,
-                        'macro' => ''
+                        'line_nr' => 12
                       }
                     }
                   ],
@@ -443,9 +417,7 @@ $result_trees{'ref_in_multitable'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               }
             }
           ],
@@ -459,9 +431,7 @@ $result_trees{'ref_in_multitable'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 6,
-            'macro' => ''
+            'line_nr' => 6
           }
         },
         {
@@ -497,9 +467,7 @@ $result_trees{'ref_in_multitable'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             },
             {

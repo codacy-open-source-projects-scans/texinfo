@@ -28,9 +28,7 @@ $result_trees{'indicateurl_end_lines'} = {
               ],
               'cmdname' => 'indicateurl',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -66,9 +64,7 @@ $result_trees{'indicateurl_end_lines'} = {
               ],
               'cmdname' => 'indicateurl',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -111,18 +107,14 @@ $result_errors{'indicateurl_end_lines'} = [
   {
     'error_line' => '@indicateurl missing closing brace
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => '@indicateurl missing closing brace',
     'type' => 'error'
   },
   {
     'error_line' => 'misplaced }
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'misplaced }',
     'type' => 'error'
   }

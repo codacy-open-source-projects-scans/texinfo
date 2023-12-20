@@ -54,9 +54,7 @@ $result_trees{'end_conditional_in_linemacro'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -65,9 +63,7 @@ $result_trees{'end_conditional_in_linemacro'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -98,9 +94,7 @@ $result_trees{'end_conditional_in_linemacro'} = {
                   }
                 },
                 'source_info' => {
-                  'file_name' => '',
-                  'line_nr' => 5,
-                  'macro' => ''
+                  'line_nr' => 5
                 }
               },
               'position' => 1,
@@ -185,7 +179,6 @@ $result_trees{'end_conditional_in_linemacro'} = {
                       }
                     },
                     'source_info' => {
-                      'file_name' => '',
                       'line_nr' => 7,
                       'macro' => 'lm'
                     }
@@ -255,9 +248,7 @@ $result_trees{'end_conditional_in_linemacro'} = {
                       }
                     },
                     'source_info' => {
-                      'file_name' => '',
-                      'line_nr' => 11,
-                      'macro' => ''
+                      'line_nr' => 11
                     }
                   }
                 ],
@@ -267,9 +258,7 @@ $result_trees{'end_conditional_in_linemacro'} = {
                   }
                 },
                 'source_info' => {
-                  'file_name' => '',
-                  'line_nr' => 9,
-                  'macro' => ''
+                  'line_nr' => 9
                 }
               },
               'position' => 1,
@@ -312,9 +301,7 @@ $result_errors{'end_conditional_in_linemacro'} = [
   {
     'error_line' => 'misplaced }
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => 'misplaced }',
     'type' => 'error'
   }

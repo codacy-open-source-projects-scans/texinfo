@@ -83,9 +83,7 @@ $result_trees{'double_exdent'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 5,
-                            'macro' => ''
+                            'line_nr' => 5
                           }
                         }
                       ],
@@ -99,9 +97,7 @@ $result_trees{'double_exdent'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 },
                 {
@@ -131,16 +127,12 @@ $result_trees{'double_exdent'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 6,
-                    'macro' => ''
+                    'line_nr' => 6
                   }
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -170,16 +162,12 @@ $result_trees{'double_exdent'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -208,9 +196,7 @@ $result_errors{'double_exdent'} = [
   {
     'error_line' => 'warning: @exdent should not appear in @exdent
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@exdent should not appear in @exdent',
     'type' => 'warning'
   }

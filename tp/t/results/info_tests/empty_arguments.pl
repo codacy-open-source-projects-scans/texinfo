@@ -24,9 +24,7 @@ $result_trees{'empty_arguments'} = {
               ],
               'cmdname' => 'strong',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -44,9 +42,7 @@ $result_trees{'empty_arguments'} = {
               ],
               'cmdname' => 'uref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -69,9 +65,7 @@ $result_trees{'empty_arguments'} = {
               ],
               'cmdname' => 'abbr',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             },
             {

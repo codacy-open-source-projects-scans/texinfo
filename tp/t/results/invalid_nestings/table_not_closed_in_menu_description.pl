@@ -71,9 +71,7 @@ $result_trees{'table_not_closed_in_menu_description'} = {
                             {
                               'cmdname' => 'asis',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 2,
-                                'macro' => ''
+                                'line_nr' => 2
                               },
                               'type' => 'command_as_argument'
                             }
@@ -117,9 +115,7 @@ $result_trees{'table_not_closed_in_menu_description'} = {
                                     }
                                   },
                                   'source_info' => {
-                                    'file_name' => '',
-                                    'line_nr' => 3,
-                                    'macro' => ''
+                                    'line_nr' => 3
                                   }
                                 }
                               ],
@@ -152,9 +148,7 @@ $result_trees{'table_not_closed_in_menu_description'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     }
                   ],
@@ -162,9 +156,7 @@ $result_trees{'table_not_closed_in_menu_description'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               },
               'type' => 'menu_entry'
             },
@@ -195,16 +187,12 @@ $result_trees{'table_not_closed_in_menu_description'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -232,18 +220,14 @@ $result_errors{'table_not_closed_in_menu_description'} = [
   {
     'error_line' => 'warning: @table should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@table should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => '`@end\' expected `table\', but saw `menu\'
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '`@end\' expected `table\', but saw `menu\'',
     'type' => 'error'
   }

@@ -59,9 +59,7 @@ $result_trees{'defx_after_comment_in_example'} = {
                             'def_role' => 'name'
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 2,
-                            'macro' => ''
+                            'line_nr' => 2
                           }
                         },
                         {
@@ -110,9 +108,7 @@ $result_trees{'defx_after_comment_in_example'} = {
                     'original_def_cmdname' => 'deffn'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 2,
-                    'macro' => ''
+                    'line_nr' => 2
                   },
                   'type' => 'def_line'
                 },
@@ -150,9 +146,7 @@ $result_trees{'defx_after_comment_in_example'} = {
                             'def_role' => 'category'
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 4,
-                            'macro' => ''
+                            'line_nr' => 4
                           },
                           'type' => 'bracketed_arg'
                         },
@@ -208,9 +202,7 @@ $result_trees{'defx_after_comment_in_example'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 4,
-                    'macro' => ''
+                    'line_nr' => 4
                   },
                   'type' => 'def_line'
                 },
@@ -241,9 +233,7 @@ $result_trees{'defx_after_comment_in_example'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 }
               ],
@@ -253,9 +243,7 @@ $result_trees{'defx_after_comment_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -285,16 +273,12 @@ $result_trees{'defx_after_comment_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -323,18 +307,14 @@ $result_errors{'defx_after_comment_in_example'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   }

@@ -39,9 +39,7 @@ $result_trees{'inlineifset_empty_second_arg'} = {
                 'format' => 'flag'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -86,9 +84,7 @@ $result_trees{'inlineifset_empty_second_arg'} = {
                 'format' => 'flag'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {

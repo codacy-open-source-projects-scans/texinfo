@@ -43,9 +43,7 @@ $result_trees{'titlepage_in_top_node'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -124,9 +122,7 @@ $result_trees{'titlepage_in_top_node'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             },
             {
@@ -156,16 +152,12 @@ $result_trees{'titlepage_in_top_node'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 6,
-            'macro' => ''
+            'line_nr' => 6
           }
         },
         {
@@ -181,9 +173,7 @@ $result_trees{'titlepage_in_top_node'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -214,9 +204,7 @@ $result_trees{'titlepage_in_top_node'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 10,
-        'macro' => ''
+        'line_nr' => 10
       }
     },
     {
@@ -262,9 +250,7 @@ $result_trees{'titlepage_in_top_node'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 11,
-        'macro' => ''
+        'line_nr' => 11
       }
     }
   ],

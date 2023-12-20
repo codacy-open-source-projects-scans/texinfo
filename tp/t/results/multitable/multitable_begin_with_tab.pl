@@ -20,9 +20,7 @@ $result_trees{'multitable_begin_with_tab'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'bracketed_arg'
                 },
@@ -36,9 +34,7 @@ $result_trees{'multitable_begin_with_tab'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'bracketed_arg'
                 }
@@ -99,9 +95,7 @@ $result_trees{'multitable_begin_with_tab'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -114,9 +108,7 @@ $result_trees{'multitable_begin_with_tab'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -135,9 +127,7 @@ $result_trees{'multitable_begin_with_tab'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   },
                   'type' => 'bracketed_arg'
                 },
@@ -151,9 +141,7 @@ $result_trees{'multitable_begin_with_tab'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   },
                   'type' => 'bracketed_arg'
                 }
@@ -212,9 +200,7 @@ $result_trees{'multitable_begin_with_tab'} = {
                         'cell_number' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 7,
-                        'macro' => ''
+                        'line_nr' => 7
                       }
                     }
                   ],
@@ -253,9 +239,7 @@ $result_trees{'multitable_begin_with_tab'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             }
           ],
@@ -268,9 +252,7 @@ $result_trees{'multitable_begin_with_tab'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         }
       ],
@@ -301,27 +283,21 @@ $result_errors{'multitable_begin_with_tab'} = [
   {
     'error_line' => '@tab before @item
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@tab before @item',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: @multitable has text but no @item
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@multitable has text but no @item',
     'type' => 'warning'
   },
   {
     'error_line' => '@tab before @item
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => '@tab before @item',
     'type' => 'error'
   }

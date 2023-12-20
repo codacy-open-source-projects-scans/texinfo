@@ -46,9 +46,7 @@ $result_trees{'punctuation_in_line_commands'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -82,9 +80,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                 {
                   'cmdname' => 'asis',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   },
                   'type' => 'command_as_argument'
                 }
@@ -128,9 +124,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 6,
-                        'macro' => ''
+                        'line_nr' => 6
                       }
                     }
                   ],
@@ -166,9 +160,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
@@ -181,9 +173,7 @@ $result_trees{'punctuation_in_line_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         },
         {
@@ -243,9 +233,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             },
             {
@@ -275,9 +263,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             }
           ],
@@ -287,9 +273,7 @@ $result_trees{'punctuation_in_line_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           }
         },
         {
@@ -357,9 +341,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                 'float' => {}
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             },
             {
@@ -394,9 +376,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 17,
-                'macro' => ''
+                'line_nr' => 17
               }
             }
           ],
@@ -413,9 +393,7 @@ $result_trees{'punctuation_in_line_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 14,
-            'macro' => ''
+            'line_nr' => 14
           }
         },
         {
@@ -483,9 +461,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                 'float' => {}
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 21,
-                'macro' => ''
+                'line_nr' => 21
               }
             },
             {
@@ -520,9 +496,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 22,
-                'macro' => ''
+                'line_nr' => 22
               }
             }
           ],
@@ -539,9 +513,7 @@ $result_trees{'punctuation_in_line_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 19,
-            'macro' => ''
+            'line_nr' => 19
           }
         },
         {
@@ -576,9 +548,7 @@ $result_trees{'punctuation_in_line_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 24,
-            'macro' => ''
+            'line_nr' => 24
           }
         },
         {
@@ -618,9 +588,7 @@ $result_trees{'punctuation_in_line_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 26,
-            'macro' => ''
+            'line_nr' => 26
           },
           'type' => 'index_entry_command'
         },
@@ -653,9 +621,7 @@ $result_trees{'punctuation_in_line_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 28,
-            'macro' => ''
+            'line_nr' => 28
           }
         },
         {
@@ -676,9 +642,7 @@ $result_trees{'punctuation_in_line_commands'} = {
           ],
           'cmdname' => 'titlefont',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 30,
-            'macro' => ''
+            'line_nr' => 30
           }
         },
         {
@@ -714,9 +678,7 @@ $result_trees{'punctuation_in_line_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 32,
-            'macro' => ''
+            'line_nr' => 32
           }
         },
         {
@@ -753,9 +715,7 @@ $result_trees{'punctuation_in_line_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 34,
-            'macro' => ''
+            'line_nr' => 34
           }
         },
         {
@@ -773,9 +733,7 @@ $result_trees{'punctuation_in_line_commands'} = {
           ],
           'cmdname' => 'contents',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 36,
-            'macro' => ''
+            'line_nr' => 36
           }
         },
         {
@@ -791,9 +749,7 @@ $result_trees{'punctuation_in_line_commands'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     }
   ],

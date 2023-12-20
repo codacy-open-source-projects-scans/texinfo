@@ -54,9 +54,7 @@ $result_trees{'complex_argument'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -65,9 +63,7 @@ $result_trees{'complex_argument'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -131,9 +127,7 @@ $result_trees{'complex_argument'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             }
           ],
@@ -142,9 +136,7 @@ $result_trees{'complex_argument'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         },
         {
@@ -206,9 +198,7 @@ $result_trees{'complex_argument'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               }
             }
           ],
@@ -217,9 +207,7 @@ $result_trees{'complex_argument'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 12,
-            'macro' => ''
+            'line_nr' => 12
           }
         },
         {
@@ -291,7 +279,6 @@ macroseven defined
                 'delimiter' => '%'
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 38,
                 'macro' => 'macrothree'
               }
@@ -353,7 +340,6 @@ macroseven defined
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 38,
                 'macro' => 'macrothree'
               }
@@ -421,7 +407,6 @@ macroseven defined
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 38,
                 'macro' => 'macrothree'
               }
@@ -495,14 +480,12 @@ macroseven defined
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 38,
                 'macro' => 'macrothree'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 38,
             'macro' => 'macrothree'
           }
@@ -553,14 +536,12 @@ macroseven defined
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 38,
                 'macro' => 'macrothree'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 38,
             'macro' => 'macrothree'
           }
@@ -610,7 +591,6 @@ macroseven defined
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 38,
                 'macro' => 'macrothree'
               }
@@ -621,7 +601,6 @@ macroseven defined
 '
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 38,
             'macro' => 'macrothree'
           }
@@ -678,14 +657,12 @@ macroseven defined
                           }
                         },
                         'source_info' => {
-                          'file_name' => '',
                           'line_nr' => 38,
                           'macro' => 'macrothree'
                         }
                       }
                     ],
                     'source_info' => {
-                      'file_name' => '',
                       'line_nr' => 38,
                       'macro' => 'macrothree'
                     }
@@ -741,14 +718,12 @@ macroseven defined
                           }
                         },
                         'source_info' => {
-                          'file_name' => '',
                           'line_nr' => 38,
                           'macro' => 'macrothree'
                         }
                       }
                     ],
                     'source_info' => {
-                      'file_name' => '',
                       'line_nr' => 38,
                       'macro' => 'macrothree'
                     }
@@ -874,7 +849,6 @@ macroseven defined
               ],
               'cmdname' => 'emph',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 41,
                 'macro' => 'macroseven'
               },
@@ -982,16 +956,13 @@ $result_errors{'complex_argument'} = [
   {
     'error_line' => 'warning: use @comma{} instead of \\, in macro arg
 ',
-    'file_name' => '',
     'line_nr' => 35,
-    'macro' => '',
     'text' => 'use @comma{} instead of \\, in macro arg',
     'type' => 'warning'
   },
   {
     'error_line' => 'bad argument to @headings: doubleafter 1 (possibly involving @macrofour)
 ',
-    'file_name' => '',
     'line_nr' => 38,
     'macro' => 'macrofour',
     'text' => 'bad argument to @headings: doubleafter 1',

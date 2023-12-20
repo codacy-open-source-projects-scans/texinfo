@@ -45,9 +45,7 @@ $result_trees{'unclosed_verb_on_section_line'} = {
                 'delimiter' => 'T'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             }
           ],
@@ -64,9 +62,7 @@ $result_trees{'unclosed_verb_on_section_line'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     }
   ],
@@ -106,18 +102,14 @@ $result_errors{'unclosed_verb_on_section_line'} = [
   {
     'error_line' => 'warning: @verb should not appear on @section line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@verb should not appear on @section line',
     'type' => 'warning'
   },
   {
     'error_line' => '@verb missing closing delimiter sequence: T}
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@verb missing closing delimiter sequence: T}',
     'type' => 'error'
   }

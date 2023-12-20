@@ -45,9 +45,7 @@ $result_trees{'comments_on_misc_command_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -90,9 +88,7 @@ $result_trees{'comments_on_misc_command_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         },
         {
@@ -133,9 +129,7 @@ $result_trees{'comments_on_misc_command_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         },
         {
@@ -158,9 +152,7 @@ $result_trees{'comments_on_misc_command_line'} = {
           ],
           'cmdname' => 'insertcopying',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         },
         {
@@ -196,9 +188,7 @@ $result_trees{'comments_on_misc_command_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 6,
-            'macro' => ''
+            'line_nr' => 6
           }
         },
         {
@@ -243,9 +233,7 @@ $result_trees{'comments_on_misc_command_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         },
         {
@@ -256,9 +244,7 @@ $result_trees{'comments_on_misc_command_line'} = {
         {
           'cmdname' => 'indent',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           }
         },
         {
@@ -315,9 +301,7 @@ $result_errors{'comments_on_misc_command_line'} = [
   {
     'error_line' => 'warning: @definfoenclose is obsolete
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@definfoenclose is obsolete',
     'type' => 'warning'
   }

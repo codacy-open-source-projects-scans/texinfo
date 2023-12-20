@@ -39,9 +39,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -83,9 +81,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -120,9 +116,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -153,9 +147,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     },
     {
@@ -205,9 +197,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                               ],
                               'cmdname' => 'dotless',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 9,
-                                'macro' => ''
+                                'line_nr' => 9
                               }
                             }
                           ],
@@ -216,9 +206,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                       ],
                       'cmdname' => '~',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 9,
-                        'macro' => ''
+                        'line_nr' => 9
                       }
                     }
                   ],
@@ -227,9 +215,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
               ],
               'cmdname' => '=',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             },
             {
@@ -267,9 +253,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                               ],
                               'cmdname' => '~',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 11,
-                                'macro' => ''
+                                'line_nr' => 11
                               }
                             }
                           ],
@@ -278,9 +262,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                       ],
                       'cmdname' => ',',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 11,
-                        'macro' => ''
+                        'line_nr' => 11
                       }
                     }
                   ],
@@ -289,9 +271,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
               ],
               'cmdname' => '=',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             },
             {
@@ -325,9 +305,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                       ],
                       'cmdname' => 'ubaraccent',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 13,
-                        'macro' => ''
+                        'line_nr' => 13
                       }
                     }
                   ],
@@ -336,9 +314,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
               ],
               'cmdname' => '=',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             },
             {
@@ -376,9 +352,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                               ],
                               'cmdname' => '`',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 15,
-                                'macro' => ''
+                                'line_nr' => 15
                               }
                             }
                           ],
@@ -387,9 +361,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                       ],
                       'cmdname' => 'udotaccent',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       }
                     }
                   ],
@@ -398,9 +370,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
               ],
               'cmdname' => '^',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               }
             },
             {
@@ -438,9 +408,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                               ],
                               'cmdname' => '`',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 17,
-                                'macro' => ''
+                                'line_nr' => 17
                               }
                             }
                           ],
@@ -449,9 +417,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
                       ],
                       'cmdname' => '\'',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 17,
-                        'macro' => ''
+                        'line_nr' => 17
                       }
                     }
                   ],
@@ -460,9 +426,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
               ],
               'cmdname' => '=',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 17,
-                'macro' => ''
+                'line_nr' => 17
               }
             },
             {
@@ -482,9 +446,7 @@ $result_trees{'weird_accents_disable_encoding'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 7,
-        'macro' => ''
+        'line_nr' => 7
       }
     }
   ],

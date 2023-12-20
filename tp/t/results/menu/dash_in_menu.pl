@@ -96,9 +96,7 @@ $result_trees{'dash_in_menu'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               },
               'type' => 'menu_entry'
             },
@@ -148,16 +146,12 @@ $result_trees{'dash_in_menu'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         }
       ],

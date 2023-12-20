@@ -41,9 +41,7 @@ $result_trees{'paragraph_command'} = {
               ],
               'cmdname' => 'b',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -73,9 +71,7 @@ $result_trees{'paragraph_command'} = {
               ],
               'cmdname' => 'dotless',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             },
             {
@@ -105,9 +101,7 @@ $result_trees{'paragraph_command'} = {
               ],
               'cmdname' => 'U',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             },
             {
@@ -137,9 +131,7 @@ $result_trees{'paragraph_command'} = {
               ],
               'cmdname' => 'email',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             },
             {
@@ -185,9 +177,7 @@ $result_trees{'paragraph_command'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 11,
-            'macro' => ''
+            'line_nr' => 11
           }
         },
         {
@@ -215,9 +205,7 @@ $result_trees{'paragraph_command'} = {
                 'command_name' => 'foo'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               },
               'type' => 'definfoenclose_command'
             },
@@ -253,9 +241,7 @@ $result_trees{'paragraph_command'} = {
               ],
               'cmdname' => 'footnote',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               }
             },
             {
@@ -315,9 +301,7 @@ $result_errors{'paragraph_command'} = [
   {
     'error_line' => 'warning: @definfoenclose is obsolete
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => '@definfoenclose is obsolete',
     'type' => 'warning'
   }

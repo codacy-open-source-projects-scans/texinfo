@@ -43,9 +43,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -80,9 +78,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -113,9 +109,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -159,9 +153,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
             'normalized' => 'fOO'
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         },
         {
@@ -184,9 +176,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -217,9 +207,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 9,
-        'macro' => ''
+        'line_nr' => 9
       }
     },
     {
@@ -256,9 +244,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 10,
-        'macro' => ''
+        'line_nr' => 10
       }
     },
     {
@@ -289,9 +275,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 12,
-        'macro' => ''
+        'line_nr' => 12
       }
     },
     {
@@ -328,9 +312,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 13,
-        'macro' => ''
+        'line_nr' => 13
       }
     },
     {
@@ -361,9 +343,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 15,
-        'macro' => ''
+        'line_nr' => 15
       }
     },
     {
@@ -413,9 +393,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 18,
-                'macro' => ''
+                'line_nr' => 18
               }
             },
             {
@@ -453,9 +431,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               }
             },
             {
@@ -475,9 +451,7 @@ $result_trees{'file_name_case_insensitive_conflict_node_no_redirections'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 16,
-        'macro' => ''
+        'line_nr' => 16
       }
     }
   ],

@@ -102,9 +102,7 @@ $result_trees{'reference_to_external_manual'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'menu_entry'
             },
@@ -135,16 +133,12 @@ $result_trees{'reference_to_external_manual'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 4,
-            'macro' => ''
+            'line_nr' => 4
           }
         }
       ],
@@ -158,9 +152,7 @@ $result_trees{'reference_to_external_manual'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     }
   ],

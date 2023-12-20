@@ -75,16 +75,12 @@ $result_trees{'paragraphindent_not_in_preamble'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -126,9 +122,7 @@ $result_trees{'paragraphindent_not_in_preamble'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 7,
-        'macro' => ''
+        'line_nr' => 7
       }
     },
     {
@@ -218,9 +212,7 @@ $result_trees{'paragraphindent_not_in_preamble'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 14,
-            'macro' => ''
+            'line_nr' => 14
           }
         },
         {
@@ -250,9 +242,7 @@ $result_trees{'paragraphindent_not_in_preamble'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 8,
-        'macro' => ''
+        'line_nr' => 8
       }
     },
     {

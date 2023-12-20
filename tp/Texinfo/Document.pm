@@ -52,6 +52,8 @@ our %XS_overrides = (
     => "Texinfo::DocumentXS::clear_document_errors",
   "Texinfo::Document::remove_document_descriptor"
     => "Texinfo::DocumentXS::remove_document_descriptor",
+  "Texinfo::Document::_XS_set_document_global_info",
+    => "Texinfo::DocumentXS::set_document_global_info",
 );
 
 # needed by structure code
@@ -98,7 +100,7 @@ sub register
     'listoffloats_list' => $floats_information,
     'internal_references' => $internal_references_information,
     'commands_info' => $global_commands_information,
-    'info' => $global_information,
+    'global_info' => $global_information,
     'identifiers_target' => $identifier_target,
     'labels_list' => $labels_list,
   };
@@ -119,6 +121,22 @@ sub register_document_sections_list($$)
   my $document = shift;
   my $sections_list = shift;
   $document->{'sections_list'} = $sections_list;
+}
+
+sub _XS_set_document_global_info($$$)
+{
+}
+
+# TODO document
+sub set_document_global_info($$$)
+{
+  my $document = shift;
+  my $key = shift;
+  my $value = shift;
+  if ($XS_parser) {
+    _XS_set_document_global_info($document, $key, $value);
+  }
+  $document->{'global_info'}->{$key} = $value;
 }
 
 sub tree($)
@@ -155,7 +173,7 @@ sub global_commands_information($)
 sub global_information($)
 {
   my $self = shift;
-  return $self->{'info'};
+  return $self->{'global_info'};
 }
 
 sub labels_information($)

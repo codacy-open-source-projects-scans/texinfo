@@ -118,9 +118,7 @@ $result_trees{'double_top_in_menu'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'menu_entry'
             },
@@ -166,9 +164,7 @@ $result_trees{'double_top_in_menu'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               },
               'type' => 'menu_entry'
             },
@@ -199,16 +195,12 @@ $result_trees{'double_top_in_menu'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 4,
-            'macro' => ''
+            'line_nr' => 4
           }
         },
         {
@@ -227,9 +219,7 @@ $result_trees{'double_top_in_menu'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -305,9 +295,7 @@ $result_trees{'double_top_in_menu'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 9,
-        'macro' => ''
+        'line_nr' => 9
       }
     }
   ],
@@ -393,9 +381,7 @@ $result_errors{'double_top_in_menu'} = [
   {
     'error_line' => '@node `top\' previously defined
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => '@node `top\' previously defined',
     'type' => 'error'
   },
@@ -403,45 +389,35 @@ $result_errors{'double_top_in_menu'} = [
     'continuation' => 1,
     'error_line' => 'here is the previous definition as @node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'here is the previous definition as @node',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: Next pointer `top\' (for node `ToP\') different from node name `ToP\'
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'Next pointer `top\' (for node `ToP\') different from node name `ToP\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: Up pointer `Top\' (for node `top\') different from node name `ToP\'
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => 'Up pointer `Top\' (for node `top\') different from node name `ToP\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @menu entry node name `top\' different from node name `ToP\'
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@menu entry node name `top\' different from node name `ToP\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @menu entry node name `TOP\' different from node name `ToP\'
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => '@menu entry node name `TOP\' different from node name `ToP\'',
     'type' => 'warning'
   }

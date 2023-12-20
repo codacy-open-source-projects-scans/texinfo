@@ -51,9 +51,7 @@ $result_trees{'footnote_in_quotation_with_arg'} = {
                   ],
                   'cmdname' => 'footnote',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 2,
-                    'macro' => ''
+                    'line_nr' => 2
                   }
                 },
                 {
@@ -90,9 +88,7 @@ $result_trees{'footnote_in_quotation_with_arg'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -102,9 +98,7 @@ $result_trees{'footnote_in_quotation_with_arg'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

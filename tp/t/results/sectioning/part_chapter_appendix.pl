@@ -49,9 +49,7 @@ $result_trees{'part_chapter_appendix'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -89,9 +87,7 @@ $result_trees{'part_chapter_appendix'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -121,9 +117,7 @@ $result_trees{'part_chapter_appendix'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     }
   ],

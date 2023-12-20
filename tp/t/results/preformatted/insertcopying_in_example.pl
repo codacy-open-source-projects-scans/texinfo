@@ -33,9 +33,7 @@ $result_trees{'insertcopying_in_example'} = {
               ],
               'cmdname' => 'insertcopying',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -74,16 +72,12 @@ $result_trees{'insertcopying_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

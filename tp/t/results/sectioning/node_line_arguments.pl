@@ -45,9 +45,7 @@ $result_trees{'node_line_arguments'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -97,9 +95,7 @@ $result_trees{'node_line_arguments'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -170,9 +166,7 @@ $result_trees{'node_line_arguments'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -264,9 +258,7 @@ $result_trees{'node_line_arguments'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -365,9 +357,7 @@ $result_trees{'node_line_arguments'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     },
     {
@@ -414,9 +404,7 @@ $result_trees{'node_line_arguments'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 8,
-        'macro' => ''
+        'line_nr' => 8
       }
     },
     {
@@ -434,9 +422,7 @@ $result_trees{'node_line_arguments'} = {
               ],
               'cmdname' => 'comma',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             },
             {
@@ -460,9 +446,7 @@ $result_trees{'node_line_arguments'} = {
               ],
               'cmdname' => ',',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             },
             {
@@ -500,9 +484,7 @@ $result_trees{'node_line_arguments'} = {
               ],
               'cmdname' => 'strong',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             }
           ],
@@ -546,9 +528,7 @@ $result_trees{'node_line_arguments'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 10,
-        'macro' => ''
+        'line_nr' => 10
       }
     }
   ],
@@ -672,162 +652,126 @@ $result_errors{'node_line_arguments'} = [
   {
     'error_line' => 'warning: superfluous arguments for node
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'superfluous arguments for node',
     'type' => 'warning'
   },
   {
     'error_line' => 'Next reference to nonexistent `two arg\'
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'Next reference to nonexistent `two arg\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Next reference to nonexistent `two arg\'
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'Next reference to nonexistent `two arg\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Prev reference to nonexistent `three arg\'
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'Prev reference to nonexistent `three arg\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Next reference to nonexistent `two arg\'
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'Next reference to nonexistent `two arg\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Prev reference to nonexistent `three arg\'
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'Prev reference to nonexistent `three arg\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Up reference to nonexistent `four arg\'
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'Up reference to nonexistent `four arg\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Next reference to nonexistent `two arg\'
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'Next reference to nonexistent `two arg\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Prev reference to nonexistent `three arg\'
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'Prev reference to nonexistent `three arg\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Up reference to nonexistent `four arg five arg\'
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'Up reference to nonexistent `four arg five arg\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Next reference to nonexistent `@,cedilla\'
 ',
-    'file_name' => '',
     'line_nr' => 10,
-    'macro' => '',
     'text' => 'Next reference to nonexistent `@,cedilla\'',
     'type' => 'error'
   },
   {
     'error_line' => 'Prev reference to nonexistent `@strong{comma in strong,}\'
 ',
-    'file_name' => '',
     'line_nr' => 10,
-    'macro' => '',
     'text' => 'Prev reference to nonexistent `@strong{comma in strong,}\'',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: node `one arg2\' unreferenced
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'node `one arg2\' unreferenced',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: node `one arg3\' unreferenced
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'node `one arg3\' unreferenced',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: node `one arg4\' unreferenced
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'node `one arg4\' unreferenced',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: node `one arg5\' unreferenced
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'node `one arg5\' unreferenced',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: node `comment\' unreferenced
 ',
-    'file_name' => '',
     'line_nr' => 8,
-    'macro' => '',
     'text' => 'node `comment\' unreferenced',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: node `arg1 @comma{} arg2\' unreferenced
 ',
-    'file_name' => '',
     'line_nr' => 10,
-    'macro' => '',
     'text' => 'node `arg1 @comma{} arg2\' unreferenced',
     'type' => 'warning'
   }

@@ -287,9 +287,7 @@ $result_trees{'double_command'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       },
                       'type' => 'def_line'
                     }
@@ -307,9 +305,7 @@ $result_trees{'double_command'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             },
@@ -354,9 +350,7 @@ $result_trees{'double_command'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -366,9 +360,7 @@ $result_trees{'double_command'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -468,9 +460,7 @@ $result_trees{'double_command'} = {
                             'original_def_cmdname' => 'defvr'
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 5,
-                            'macro' => ''
+                            'line_nr' => 5
                           },
                           'type' => 'def_line'
                         }
@@ -484,9 +474,7 @@ $result_trees{'double_command'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     }
                   ],
@@ -503,9 +491,7 @@ $result_trees{'double_command'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'def_line'
             },
@@ -550,9 +536,7 @@ $result_trees{'double_command'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
@@ -562,9 +546,7 @@ $result_trees{'double_command'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         }
       ],
@@ -601,90 +583,70 @@ $result_errors{'double_command'} = [
   {
     'error_line' => 'warning: @deffnx should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@deffnx should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @deffnx should not appear on @deffn line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@deffnx should not appear on @deffn line',
     'type' => 'warning'
   },
   {
     'error_line' => 'must be after `@deffn\' to use `@deffnx\'
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'must be after `@deffn\' to use `@deffnx\'',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @defvr should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@defvr should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @defvr should not appear on @deffn line
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@defvr should not appear on @deffn line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `vr\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'entry for index `vr\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'no matching `@end defvr\'
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'no matching `@end defvr\'',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   }

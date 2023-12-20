@@ -43,9 +43,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -80,9 +78,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -126,9 +122,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -178,9 +172,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
             'normalized' => 'ankh-p'
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         },
         {
@@ -257,9 +249,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 11,
-            'macro' => ''
+            'line_nr' => 11
           },
           'type' => 'index_entry_command'
         },
@@ -297,9 +287,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 13,
-            'macro' => ''
+            'line_nr' => 13
           }
         },
         {
@@ -317,9 +305,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -350,9 +336,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 15,
-        'macro' => ''
+        'line_nr' => 15
       }
     },
     {
@@ -418,9 +402,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 18,
-                'macro' => ''
+                'line_nr' => 18
               }
             },
             {
@@ -466,9 +448,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               }
             },
             {
@@ -533,9 +513,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 22,
-                'macro' => ''
+                'line_nr' => 22
               }
             },
             {
@@ -622,9 +600,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 25,
-                'macro' => ''
+                'line_nr' => 25
               },
               'type' => 'menu_entry'
             },
@@ -678,9 +654,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 26,
-                'macro' => ''
+                'line_nr' => 26
               },
               'type' => 'menu_entry'
             },
@@ -752,9 +726,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 27,
-                'macro' => ''
+                'line_nr' => 27
               },
               'type' => 'menu_entry'
             },
@@ -818,9 +790,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 28,
-                'macro' => ''
+                'line_nr' => 28
               },
               'type' => 'menu_entry'
             },
@@ -851,16 +821,12 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 29,
-                'macro' => ''
+                'line_nr' => 29
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 24,
-            'macro' => ''
+            'line_nr' => 24
           }
         }
       ],
@@ -873,9 +839,7 @@ $result_trees{'end_of_line_command_in_node_lines'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 16,
-        'macro' => ''
+        'line_nr' => 16
       }
     }
   ],
@@ -1148,9 +1112,7 @@ $result_errors{'end_of_line_command_in_node_lines'} = [
   {
     'error_line' => 'warning: @menu entry node name `ankh p\' different from anchor name `ankh @* p\'
 ',
-    'file_name' => '',
     'line_nr' => 28,
-    'macro' => '',
     'text' => '@menu entry node name `ankh p\' different from anchor name `ankh @* p\'',
     'type' => 'warning'
   }

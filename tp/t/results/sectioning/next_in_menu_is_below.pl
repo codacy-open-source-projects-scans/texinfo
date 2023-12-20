@@ -38,9 +38,7 @@ $result_trees{'next_in_menu_is_below'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -123,9 +121,7 @@ $result_trees{'next_in_menu_is_below'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'menu_entry'
             },
@@ -156,16 +152,12 @@ $result_trees{'next_in_menu_is_below'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 4,
-            'macro' => ''
+            'line_nr' => 4
           }
         },
         {
@@ -181,9 +173,7 @@ $result_trees{'next_in_menu_is_below'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -214,9 +204,7 @@ $result_trees{'next_in_menu_is_below'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 8,
-        'macro' => ''
+        'line_nr' => 8
       }
     },
     {
@@ -299,9 +287,7 @@ $result_trees{'next_in_menu_is_below'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               },
               'type' => 'menu_entry'
             },
@@ -347,9 +333,7 @@ $result_trees{'next_in_menu_is_below'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               },
               'type' => 'menu_entry'
             },
@@ -380,16 +364,12 @@ $result_trees{'next_in_menu_is_below'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 11,
-            'macro' => ''
+            'line_nr' => 11
           }
         },
         {
@@ -407,9 +387,7 @@ $result_trees{'next_in_menu_is_below'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 9,
-        'macro' => ''
+        'line_nr' => 9
       }
     },
     {
@@ -440,9 +418,7 @@ $result_trees{'next_in_menu_is_below'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 16,
-        'macro' => ''
+        'line_nr' => 16
       }
     },
     {
@@ -525,9 +501,7 @@ $result_trees{'next_in_menu_is_below'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               },
               'type' => 'menu_entry'
             },
@@ -558,16 +532,12 @@ $result_trees{'next_in_menu_is_below'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 21,
-                'macro' => ''
+                'line_nr' => 21
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 19,
-            'macro' => ''
+            'line_nr' => 19
           }
         },
         {
@@ -585,9 +555,7 @@ $result_trees{'next_in_menu_is_below'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 17,
-        'macro' => ''
+        'line_nr' => 17
       }
     },
     {
@@ -618,9 +586,7 @@ $result_trees{'next_in_menu_is_below'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 23,
-        'macro' => ''
+        'line_nr' => 23
       }
     },
     {
@@ -650,9 +616,7 @@ $result_trees{'next_in_menu_is_below'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 24,
-        'macro' => ''
+        'line_nr' => 24
       }
     }
   ],
@@ -919,18 +883,14 @@ $result_errors{'next_in_menu_is_below'} = [
   {
     'error_line' => 'warning: node `subsection\' is next for `section\' in menu but not in sectioning
 ',
-    'file_name' => '',
     'line_nr' => 16,
-    'macro' => '',
     'text' => 'node `subsection\' is next for `section\' in menu but not in sectioning',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: node `section\' is prev for `subsection\' in menu but not in sectioning
 ',
-    'file_name' => '',
     'line_nr' => 23,
-    'macro' => '',
     'text' => 'node `section\' is prev for `subsection\' in menu but not in sectioning',
     'type' => 'warning'
   }

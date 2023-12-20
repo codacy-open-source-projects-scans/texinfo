@@ -28,10 +28,9 @@
 #include "utils.h"
 /* for relocate_source_marks */
 #include "manipulate_tree.h"
-#include "debug.h"
 #include "debug_parser.h"
 /* error_messages_list forget_errors ... */
-#include "errors.h"
+#include "errors_parser.h"
 #include "text.h"
 #include "counter.h"
 #include "builtin_commands.h"
@@ -438,10 +437,10 @@ wipe_parser_global_info (void)
   global_kbdinputstyle = kbd_distinct;
 
   delete_global_info (&global_info);
-  delete_global_commands (&global_commands);
-
-  /* clear the rest of the fields and reset elements lists */
   memset (&global_info, 0, sizeof (global_info));
+
+  delete_global_commands (&global_commands);
+  /* clear the fields and reset elements lists */
   memset (&global_commands, 0, sizeof (global_commands));
 }
 

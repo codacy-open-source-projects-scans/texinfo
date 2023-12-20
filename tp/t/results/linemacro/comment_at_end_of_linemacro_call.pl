@@ -63,9 +63,7 @@ $result_trees{'comment_at_end_of_linemacro_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -74,9 +72,7 @@ $result_trees{'comment_at_end_of_linemacro_call'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -167,9 +163,7 @@ $result_trees{'comment_at_end_of_linemacro_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             },
             {

@@ -32,9 +32,7 @@ $result_trees{'float_with_at_commands'} = {
                   ],
                   'cmdname' => '\'',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -61,9 +59,7 @@ $result_trees{'float_with_at_commands'} = {
                   ],
                   'cmdname' => '`',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -82,9 +78,7 @@ $result_trees{'float_with_at_commands'} = {
                   ],
                   'cmdname' => '\'',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -128,9 +122,7 @@ $result_trees{'float_with_at_commands'} = {
                   ],
                   'cmdname' => '`',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 3,
-                    'macro' => ''
+                    'line_nr' => 3
                   }
                 },
                 {
@@ -149,9 +141,7 @@ $result_trees{'float_with_at_commands'} = {
                   ],
                   'cmdname' => '\'',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 3,
-                    'macro' => ''
+                    'line_nr' => 3
                   }
                 },
                 {
@@ -183,9 +173,7 @@ $result_trees{'float_with_at_commands'} = {
                           ],
                           'cmdname' => '`',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 4,
-                            'macro' => ''
+                            'line_nr' => 4
                           }
                         },
                         {
@@ -204,9 +192,7 @@ $result_trees{'float_with_at_commands'} = {
                           ],
                           'cmdname' => '\'',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 4,
-                            'macro' => ''
+                            'line_nr' => 4
                           }
                         },
                         {
@@ -224,9 +210,7 @@ $result_trees{'float_with_at_commands'} = {
                 'float' => {}
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             },
             {
@@ -266,9 +250,7 @@ $result_trees{'float_with_at_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
@@ -284,9 +266,7 @@ $result_trees{'float_with_at_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -319,9 +299,7 @@ $result_trees{'float_with_at_commands'} = {
                   ],
                   'cmdname' => '\'',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 9,
-                    'macro' => ''
+                    'line_nr' => 9
                   }
                 },
                 {
@@ -347,9 +325,7 @@ $result_trees{'float_with_at_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           }
         }
       ],

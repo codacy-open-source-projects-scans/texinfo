@@ -43,9 +43,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -70,9 +68,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
       ],
       'extra' => {},
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -104,9 +100,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -157,9 +151,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                   ],
                   'cmdname' => 'sortas',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 7,
-                    'macro' => ''
+                    'line_nr' => 7
                   }
                 }
               ],
@@ -191,9 +183,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                       ],
                       'cmdname' => 'sortas',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 7,
-                        'macro' => ''
+                        'line_nr' => 7
                       }
                     },
                     {
@@ -220,9 +210,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           },
@@ -233,9 +221,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           },
           'type' => 'index_entry_command'
         },
@@ -280,9 +266,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                       ],
                       'cmdname' => 'sortas',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 8,
-                        'macro' => ''
+                        'line_nr' => 8
                       }
                     }
                   ],
@@ -301,9 +285,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                 'sortas' => 'B---S1'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             }
           },
@@ -314,9 +296,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 8,
-            'macro' => ''
+            'line_nr' => 8
           },
           'type' => 'index_entry_command'
         },
@@ -378,9 +358,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                           ],
                           'cmdname' => 'sortas',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 9,
-                            'macro' => ''
+                            'line_nr' => 9
                           }
                         }
                       ],
@@ -404,9 +382,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 9,
-                    'macro' => ''
+                    'line_nr' => 9
                   }
                 }
               },
@@ -416,9 +392,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             }
           },
@@ -429,9 +403,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           },
           'type' => 'index_entry_command'
         },
@@ -501,9 +473,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 10,
-                    'macro' => ''
+                    'line_nr' => 10
                   }
                 }
               },
@@ -513,9 +483,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             }
           },
@@ -526,9 +494,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 10,
-            'macro' => ''
+            'line_nr' => 10
           },
           'type' => 'index_entry_command'
         },
@@ -568,9 +534,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 12,
-            'macro' => ''
+            'line_nr' => 12
           }
         }
       ],
@@ -583,9 +547,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     }
   ],

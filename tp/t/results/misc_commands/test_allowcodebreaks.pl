@@ -43,9 +43,7 @@ $result_trees{'test_allowcodebreaks'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -142,9 +140,7 @@ $result_trees{'test_allowcodebreaks'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             }
           ],
@@ -153,9 +149,7 @@ $result_trees{'test_allowcodebreaks'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 4,
-            'macro' => ''
+            'line_nr' => 4
           }
         },
         {
@@ -219,9 +213,7 @@ $result_trees{'test_allowcodebreaks'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 18,
-                'macro' => ''
+                'line_nr' => 18
               }
             }
           ],
@@ -230,9 +222,7 @@ $result_trees{'test_allowcodebreaks'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 13,
-            'macro' => ''
+            'line_nr' => 13
           }
         },
         {
@@ -287,7 +277,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -308,7 +297,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -329,7 +317,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -350,7 +337,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -372,7 +358,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -393,7 +378,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -414,7 +398,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -435,7 +418,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -457,7 +439,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -481,7 +462,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'minus',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 21,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -502,7 +482,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => '\'',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 21,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -523,7 +502,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'r',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 21,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -552,7 +530,6 @@ $result_trees{'test_allowcodebreaks'} = {
                         'normalized' => 'A-node0'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 21,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -563,7 +540,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'samp',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 21,
                 'macro' => 'testallowcodebreakspara'
               },
@@ -634,7 +610,6 @@ $result_trees{'test_allowcodebreaks'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 22,
                     'macro' => 'testallowcodebreaksexample'
                   }
@@ -681,14 +656,12 @@ $result_trees{'test_allowcodebreaks'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 22,
                 'macro' => 'testallowcodebreaksexample'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 22,
             'macro' => 'testallowcodebreaksexample'
           }
@@ -727,9 +700,7 @@ $result_trees{'test_allowcodebreaks'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 24,
-            'macro' => ''
+            'line_nr' => 24
           }
         },
         {
@@ -779,7 +750,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -800,7 +770,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -821,7 +790,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -842,7 +810,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -864,7 +831,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -885,7 +851,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -906,7 +871,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -927,7 +891,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -949,7 +912,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -973,7 +935,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'minus',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 26,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -994,7 +955,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => '\'',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 26,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1015,7 +975,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'r',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 26,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1044,7 +1003,6 @@ $result_trees{'test_allowcodebreaks'} = {
                         'normalized' => 'A-node1'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 26,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1055,7 +1013,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'samp',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 26,
                 'macro' => 'testallowcodebreakspara'
               },
@@ -1126,7 +1083,6 @@ $result_trees{'test_allowcodebreaks'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 27,
                     'macro' => 'testallowcodebreaksexample'
                   }
@@ -1173,14 +1129,12 @@ $result_trees{'test_allowcodebreaks'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 27,
                 'macro' => 'testallowcodebreaksexample'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 27,
             'macro' => 'testallowcodebreaksexample'
           }
@@ -1240,7 +1194,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1261,7 +1214,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1282,7 +1234,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1303,7 +1254,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1325,7 +1275,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1346,7 +1295,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1367,7 +1315,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1388,7 +1335,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1410,7 +1356,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1434,7 +1379,6 @@ $result_trees{'test_allowcodebreaks'} = {
                               ],
                               'cmdname' => 'minus',
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 30,
                                 'macro' => 'testallowcodebreakspara'
                               }
@@ -1455,7 +1399,6 @@ $result_trees{'test_allowcodebreaks'} = {
                               ],
                               'cmdname' => '\'',
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 30,
                                 'macro' => 'testallowcodebreakspara'
                               }
@@ -1476,7 +1419,6 @@ $result_trees{'test_allowcodebreaks'} = {
                               ],
                               'cmdname' => 'r',
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 30,
                                 'macro' => 'testallowcodebreakspara'
                               }
@@ -1505,7 +1447,6 @@ $result_trees{'test_allowcodebreaks'} = {
                                 'normalized' => 'A-nodew'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 30,
                                 'macro' => 'testallowcodebreakspara'
                               }
@@ -1516,7 +1457,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'samp',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 30,
                         'macro' => 'testallowcodebreakspara'
                       },
@@ -1538,9 +1478,7 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'w',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 30,
-                'macro' => ''
+                'line_nr' => 30
               }
             },
             {
@@ -1588,9 +1526,7 @@ $result_trees{'test_allowcodebreaks'} = {
                           ],
                           'cmdname' => 'code',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 34,
-                            'macro' => ''
+                            'line_nr' => 34
                           }
                         }
                       ],
@@ -1599,9 +1535,7 @@ $result_trees{'test_allowcodebreaks'} = {
                   ],
                   'cmdname' => 'w',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 34,
-                    'macro' => ''
+                    'line_nr' => 34
                   }
                 },
                 {
@@ -1638,16 +1572,12 @@ $result_trees{'test_allowcodebreaks'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 35,
-                'macro' => ''
+                'line_nr' => 35
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 33,
-            'macro' => ''
+            'line_nr' => 33
           }
         },
         {
@@ -1684,9 +1614,7 @@ $result_trees{'test_allowcodebreaks'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 37,
-            'macro' => ''
+            'line_nr' => 37
           }
         },
         {
@@ -1736,7 +1664,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -1757,7 +1684,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -1778,7 +1704,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -1799,7 +1724,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -1821,7 +1745,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -1842,7 +1765,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -1863,7 +1785,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -1884,7 +1805,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -1906,7 +1826,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               }
@@ -1930,7 +1849,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'minus',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 39,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1951,7 +1869,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => '\'',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 39,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -1972,7 +1889,6 @@ $result_trees{'test_allowcodebreaks'} = {
                       ],
                       'cmdname' => 'r',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 39,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -2001,7 +1917,6 @@ $result_trees{'test_allowcodebreaks'} = {
                         'normalized' => 'A-node2'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 39,
                         'macro' => 'testallowcodebreakspara'
                       }
@@ -2012,7 +1927,6 @@ $result_trees{'test_allowcodebreaks'} = {
               ],
               'cmdname' => 'samp',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 39,
                 'macro' => 'testallowcodebreakspara'
               },
@@ -2083,7 +1997,6 @@ $result_trees{'test_allowcodebreaks'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 40,
                     'macro' => 'testallowcodebreaksexample'
                   }
@@ -2130,14 +2043,12 @@ $result_trees{'test_allowcodebreaks'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 40,
                 'macro' => 'testallowcodebreaksexample'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 40,
             'macro' => 'testallowcodebreaksexample'
           }
@@ -2153,9 +2064,7 @@ $result_trees{'test_allowcodebreaks'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     }
   ],
@@ -2319,7 +2228,6 @@ $result_errors{'test_allowcodebreaks'} = [
   {
     'error_line' => 'warning: @anchor should not appear anywhere inside @w (possibly involving @testallowcodebreakspara)
 ',
-    'file_name' => '',
     'line_nr' => 30,
     'macro' => 'testallowcodebreakspara',
     'text' => '@anchor should not appear anywhere inside @w',

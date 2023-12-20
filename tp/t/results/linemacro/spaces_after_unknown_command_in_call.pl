@@ -72,9 +72,7 @@ $result_trees{'spaces_after_unknown_command_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
@@ -83,9 +81,7 @@ $result_trees{'spaces_after_unknown_command_in_call'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -237,7 +233,6 @@ $result_trees{'spaces_after_unknown_command_in_call'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 7,
                         'macro' => 'mylinecommand'
                       }
@@ -277,7 +272,6 @@ $result_trees{'spaces_after_unknown_command_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 7,
                 'macro' => 'mylinecommand'
               },
@@ -318,14 +312,12 @@ $result_trees{'spaces_after_unknown_command_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 7,
                 'macro' => 'mylinecommand'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 7,
             'macro' => 'mylinecommand'
           }
@@ -358,7 +350,6 @@ $result_errors{'spaces_after_unknown_command_in_call'} = [
   {
     'error_line' => 'unknown command `abc\' (possibly involving @mylinecommand)
 ',
-    'file_name' => '',
     'line_nr' => 7,
     'macro' => 'mylinecommand',
     'text' => 'unknown command `abc\'',

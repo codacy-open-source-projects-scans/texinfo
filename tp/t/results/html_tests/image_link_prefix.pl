@@ -25,9 +25,7 @@ $result_trees{'image_link_prefix'} = {
             'input_encoding_name' => 'utf-8'
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -84,9 +82,7 @@ $result_converted_errors{'html'}->{'image_link_prefix'} = [
   {
     'error_line' => 'warning: @image file `image\' (for HTML) not found, using `image.jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@image file `image\' (for HTML) not found, using `image.jpg\'',
     'type' => 'warning'
   }

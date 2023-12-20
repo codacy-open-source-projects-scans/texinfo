@@ -45,9 +45,7 @@ $result_trees{'in_table'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -81,9 +79,7 @@ $result_trees{'in_table'} = {
                 {
                   'cmdname' => 'xref',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   },
                   'type' => 'command_as_argument'
                 }
@@ -126,9 +122,7 @@ $result_trees{'in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
@@ -141,9 +135,7 @@ $result_trees{'in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         },
         {
@@ -158,9 +150,7 @@ $result_trees{'in_table'} = {
                 {
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 8,
-                    'macro' => ''
+                    'line_nr' => 8
                   },
                   'type' => 'command_as_argument'
                 }
@@ -187,9 +177,7 @@ $result_trees{'in_table'} = {
                             {
                               'cmdname' => 'indent',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 9,
-                                'macro' => ''
+                                'line_nr' => 9
                               }
                             },
                             {
@@ -209,9 +197,7 @@ $result_trees{'in_table'} = {
                               ],
                               'cmdname' => 'titlefont',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 9,
-                                'macro' => ''
+                                'line_nr' => 9
                               }
                             },
                             {
@@ -234,9 +220,7 @@ $result_trees{'in_table'} = {
                                 'normalized' => 'in-anchor'
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 9,
-                                'macro' => ''
+                                'line_nr' => 9
                               }
                             },
                             {
@@ -257,9 +241,7 @@ $result_trees{'in_table'} = {
                               ],
                               'cmdname' => 'footnote',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 9,
-                                'macro' => ''
+                                'line_nr' => 9
                               }
                             },
                             {
@@ -289,9 +271,7 @@ $result_trees{'in_table'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 9,
-                                'macro' => ''
+                                'line_nr' => 9
                               }
                             }
                           ],
@@ -305,9 +285,7 @@ $result_trees{'in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 9,
-                        'macro' => ''
+                        'line_nr' => 9
                       }
                     }
                   ],
@@ -338,9 +316,7 @@ $result_trees{'in_table'} = {
                           ],
                           'cmdname' => 'footnote',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 10,
-                            'macro' => ''
+                            'line_nr' => 10
                           }
                         },
                         {
@@ -394,9 +370,7 @@ $result_trees{'in_table'} = {
                               ],
                               'cmdname' => 'ref',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 11,
-                                'macro' => ''
+                                'line_nr' => 11
                               }
                             }
                           ],
@@ -410,9 +384,7 @@ $result_trees{'in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 11,
-                        'macro' => ''
+                        'line_nr' => 11
                       }
                     }
                   ],
@@ -467,9 +439,7 @@ $result_trees{'in_table'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 13,
-                                'macro' => ''
+                                'line_nr' => 13
                               }
                             }
                           ],
@@ -483,9 +453,7 @@ $result_trees{'in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 13,
-                        'macro' => ''
+                        'line_nr' => 13
                       }
                     }
                   ],
@@ -534,9 +502,7 @@ $result_trees{'in_table'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 14,
-                                'macro' => ''
+                                'line_nr' => 14
                               },
                               'type' => 'index_entry_command'
                             }
@@ -551,9 +517,7 @@ $result_trees{'in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 14,
-                        'macro' => ''
+                        'line_nr' => 14
                       }
                     }
                   ],
@@ -589,9 +553,7 @@ $result_trees{'in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               }
             }
           ],
@@ -604,9 +566,7 @@ $result_trees{'in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 8,
-            'macro' => ''
+            'line_nr' => 8
           }
         },
         {
@@ -621,9 +581,7 @@ $result_trees{'in_table'} = {
                 {
                   'cmdname' => 'asis',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 17,
-                    'macro' => ''
+                    'line_nr' => 17
                   },
                   'type' => 'command_as_argument'
                 }
@@ -679,9 +637,7 @@ $result_trees{'in_table'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 18,
-                                'macro' => ''
+                                'line_nr' => 18
                               },
                               'type' => 'index_entry_command'
                             }
@@ -703,9 +659,7 @@ $result_trees{'in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 18,
-                        'macro' => ''
+                        'line_nr' => 18
                       }
                     }
                   ],
@@ -728,9 +682,7 @@ $result_trees{'in_table'} = {
                           ],
                           'cmdname' => 'option',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 19,
-                            'macro' => ''
+                            'line_nr' => 19
                           }
                         },
                         {
@@ -790,9 +742,7 @@ $result_trees{'in_table'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 21,
-                                'macro' => ''
+                                'line_nr' => 21
                               },
                               'type' => 'index_entry_command'
                             }
@@ -814,9 +764,7 @@ $result_trees{'in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 21,
-                        'macro' => ''
+                        'line_nr' => 21
                       }
                     }
                   ],
@@ -839,9 +787,7 @@ $result_trees{'in_table'} = {
                           ],
                           'cmdname' => 'option',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 22,
-                            'macro' => ''
+                            'line_nr' => 22
                           }
                         },
                         {
@@ -888,9 +834,7 @@ $result_trees{'in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 24,
-                'macro' => ''
+                'line_nr' => 24
               }
             }
           ],
@@ -903,9 +847,7 @@ $result_trees{'in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 17,
-            'macro' => ''
+            'line_nr' => 17
           }
         },
         {
@@ -942,9 +884,7 @@ $result_trees{'in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 26,
-            'macro' => ''
+            'line_nr' => 26
           }
         },
         {
@@ -981,9 +921,7 @@ $result_trees{'in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 28,
-            'macro' => ''
+            'line_nr' => 28
           }
         }
       ],
@@ -998,9 +936,7 @@ $result_trees{'in_table'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     }
   ],
@@ -1107,108 +1043,84 @@ $result_errors{'in_table'} = [
   {
     'error_line' => 'warning: @xref should not appear on @table line
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@xref should not appear on @table line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @indent should not appear in @item
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => '@indent should not appear in @item',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => '@exdent should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should not appear in @item
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => '@exdent should not appear in @item',
     'type' => 'warning'
   },
   {
     'error_line' => '@ref missing closing brace
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => '@ref missing closing brace',
     'type' => 'error'
   },
   {
     'error_line' => 'misplaced }
 ',
-    'file_name' => '',
     'line_nr' => 12,
-    'macro' => '',
     'text' => 'misplaced }',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: @center should not appear in @item
 ',
-    'file_name' => '',
     'line_nr' => 13,
-    'macro' => '',
     'text' => '@center should not appear in @item',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @cindex should not appear in @item
 ',
-    'file_name' => '',
     'line_nr' => 14,
-    'macro' => '',
     'text' => '@cindex should not appear in @item',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @cindex should not appear in @item
 ',
-    'file_name' => '',
     'line_nr' => 18,
-    'macro' => '',
     'text' => '@cindex should not appear in @item',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @cindex should not appear in @item
 ',
-    'file_name' => '',
     'line_nr' => 21,
-    'macro' => '',
     'text' => '@cindex should not appear in @item',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: empty index key in @item
 ',
-    'file_name' => '',
     'line_nr' => 18,
-    'macro' => '',
     'text' => 'empty index key in @item',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: empty index key in @item
 ',
-    'file_name' => '',
     'line_nr' => 21,
-    'macro' => '',
     'text' => 'empty index key in @item',
     'type' => 'warning'
   }

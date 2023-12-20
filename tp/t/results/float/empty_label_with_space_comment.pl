@@ -70,9 +70,7 @@ $result_trees{'empty_label_with_space_comment'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             }
           ],
@@ -85,9 +83,7 @@ $result_trees{'empty_label_with_space_comment'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

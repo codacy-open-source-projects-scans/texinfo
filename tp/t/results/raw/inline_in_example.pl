@@ -60,9 +60,7 @@ $result_trees{'inline_in_example'} = {
                           ],
                           'cmdname' => 'lbracechar',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 4,
-                            'macro' => ''
+                            'line_nr' => 4
                           }
                         },
                         {
@@ -83,9 +81,7 @@ $result_trees{'inline_in_example'} = {
                     'format' => 'plaintext'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 2,
-                    'macro' => ''
+                    'line_nr' => 2
                   }
                 },
                 {
@@ -122,9 +118,7 @@ $result_trees{'inline_in_example'} = {
                     'format' => 'plaintext'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 },
                 {
@@ -173,9 +167,7 @@ $result_trees{'inline_in_example'} = {
                           ],
                           'cmdname' => 'acronym',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 10,
-                            'macro' => ''
+                            'line_nr' => 10
                           }
                         },
                         {
@@ -197,9 +189,7 @@ $result_trees{'inline_in_example'} = {
                     'format' => 'html'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 8,
-                    'macro' => ''
+                    'line_nr' => 8
                   }
                 },
                 {
@@ -236,16 +226,12 @@ $result_trees{'inline_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

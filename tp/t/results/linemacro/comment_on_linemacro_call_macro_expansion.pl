@@ -63,9 +63,7 @@ $result_trees{'comment_on_linemacro_call_macro_expansion'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -74,9 +72,7 @@ $result_trees{'comment_on_linemacro_call_macro_expansion'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -134,9 +130,7 @@ $result_trees{'comment_on_linemacro_call_macro_expansion'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             }
           ],
@@ -145,9 +139,7 @@ $result_trees{'comment_on_linemacro_call_macro_expansion'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 6,
-            'macro' => ''
+            'line_nr' => 6
           }
         },
         {

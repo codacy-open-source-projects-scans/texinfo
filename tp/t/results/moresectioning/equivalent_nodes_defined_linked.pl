@@ -35,9 +35,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
               ],
               'cmdname' => 'asis',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             }
           ],
@@ -103,9 +101,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
                       ],
                       'cmdname' => 'strong',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 4,
-                        'macro' => ''
+                        'line_nr' => 4
                       }
                     }
                   ],
@@ -139,9 +135,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               },
               'type' => 'menu_entry'
             },
@@ -172,16 +166,12 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         },
         {
@@ -200,9 +190,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -254,9 +242,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
                   ],
                   'cmdname' => 'samp',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 9,
-                    'macro' => ''
+                    'line_nr' => 9
                   }
                 }
               ],
@@ -310,9 +296,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             }
           ],
@@ -326,9 +310,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           }
         },
         {
@@ -363,9 +345,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 13,
-            'macro' => ''
+            'line_nr' => 13
           }
         },
         {
@@ -399,9 +379,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               }
             },
             {
@@ -456,9 +434,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
                       ],
                       'cmdname' => 'samp',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 17,
-                        'macro' => ''
+                        'line_nr' => 17
                       }
                     }
                   ],
@@ -475,9 +451,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 17,
-                'macro' => ''
+                'line_nr' => 17
               }
             },
             {
@@ -498,9 +472,7 @@ $result_trees{'equivalent_nodes_defined_linked'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 7,
-        'macro' => ''
+        'line_nr' => 7
       }
     }
   ],
@@ -591,9 +563,7 @@ $result_errors{'equivalent_nodes_defined_linked'} = [
   {
     'error_line' => '@float `@samp{chap}\' previously defined
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => '@float `@samp{chap}\' previously defined',
     'type' => 'error'
   },
@@ -601,36 +571,28 @@ $result_errors{'equivalent_nodes_defined_linked'} = [
     'continuation' => 1,
     'error_line' => 'here is the previous definition as @node
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => 'here is the previous definition as @node',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: @ref to `@samp{chap}\', different from node name `chap\'
 ',
-    'file_name' => '',
     'line_nr' => 17,
-    'macro' => '',
     'text' => '@ref to `@samp{chap}\', different from node name `chap\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: Next pointer `@asis{chap}\' (for node `Top\') different from node name `chap\'
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'Next pointer `@asis{chap}\' (for node `Top\') different from node name `chap\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @menu entry node name `@strong{chap}\' different from node name `chap\'
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => '@menu entry node name `@strong{chap}\' different from node name `chap\'',
     'type' => 'warning'
   }

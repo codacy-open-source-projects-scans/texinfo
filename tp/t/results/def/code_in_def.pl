@@ -81,9 +81,7 @@ $result_trees{'code_in_def'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     },
                     {
@@ -126,9 +124,7 @@ $result_trees{'code_in_def'} = {
                 'original_def_cmdname' => 'deftypefn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             },
@@ -152,9 +148,7 @@ $result_trees{'code_in_def'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     },
                     {
@@ -194,9 +188,7 @@ $result_trees{'code_in_def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -206,9 +198,7 @@ $result_trees{'code_in_def'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -233,9 +223,7 @@ $result_errors{'code_in_def'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   }

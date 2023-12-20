@@ -45,9 +45,7 @@ $result_trees{'character_and_spaces_in_node'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -139,9 +137,7 @@ $result_trees{'character_and_spaces_in_node'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -233,9 +229,7 @@ $result_trees{'character_and_spaces_in_node'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -317,9 +311,7 @@ $result_trees{'character_and_spaces_in_node'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -385,9 +377,7 @@ $result_trees{'character_and_spaces_in_node'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     }
   ],

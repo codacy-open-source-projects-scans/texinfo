@@ -39,9 +39,7 @@ $result_trees{'empty_deftype'} = {
                         'def_role' => 'type'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -131,9 +129,7 @@ $result_trees{'empty_deftype'} = {
                 'original_def_cmdname' => 'deftypefun'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             },
@@ -178,9 +174,7 @@ $result_trees{'empty_deftype'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -190,9 +184,7 @@ $result_trees{'empty_deftype'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -304,9 +296,7 @@ $result_trees{'empty_deftype'} = {
                 'original_def_cmdname' => 'defun'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'def_line'
             },
@@ -351,9 +341,7 @@ $result_trees{'empty_deftype'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
@@ -363,9 +351,7 @@ $result_trees{'empty_deftype'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         },
         {
@@ -416,9 +402,7 @@ $result_trees{'empty_deftype'} = {
                         'def_role' => 'type'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 9,
-                        'macro' => ''
+                        'line_nr' => 9
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -545,9 +529,7 @@ $result_trees{'empty_deftype'} = {
                 'original_def_cmdname' => 'deftypemethod'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               },
               'type' => 'def_line'
             },
@@ -592,9 +574,7 @@ $result_trees{'empty_deftype'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             }
           ],
@@ -604,9 +584,7 @@ $result_trees{'empty_deftype'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           }
         },
         {
@@ -768,9 +746,7 @@ $result_trees{'empty_deftype'} = {
                 'original_def_cmdname' => 'defmethod'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               },
               'type' => 'def_line'
             },
@@ -815,9 +791,7 @@ $result_trees{'empty_deftype'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               }
             }
           ],
@@ -827,9 +801,7 @@ $result_trees{'empty_deftype'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 13,
-            'macro' => ''
+            'line_nr' => 13
           }
         }
       ],
@@ -876,36 +848,28 @@ $result_errors{'empty_deftype'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 13,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   }

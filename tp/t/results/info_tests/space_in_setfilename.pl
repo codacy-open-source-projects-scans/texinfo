@@ -33,9 +33,7 @@ $result_trees{'space_in_setfilename'} = {
                     'delimiter' => ':'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -58,9 +56,7 @@ $result_trees{'space_in_setfilename'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -99,9 +95,7 @@ $result_trees{'space_in_setfilename'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     }
   ],
@@ -138,18 +132,14 @@ $result_errors{'space_in_setfilename'} = [
   {
     'error_line' => 'warning: @verb should not appear in @setfilename
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@verb should not appear in @setfilename',
     'type' => 'warning'
   },
   {
     'error_line' => 'bad argument to @setfilename: @ @verb{: name :}@
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'bad argument to @setfilename: @ @verb{: name :}@',
     'type' => 'error'
   }

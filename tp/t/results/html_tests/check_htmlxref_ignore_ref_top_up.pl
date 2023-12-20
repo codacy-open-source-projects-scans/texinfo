@@ -116,9 +116,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -206,9 +204,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             },
             {
@@ -274,9 +270,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             },
             {
@@ -347,9 +341,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               },
               'type' => 'menu_entry'
             },
@@ -400,9 +392,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               },
               'type' => 'menu_entry'
             },
@@ -448,9 +438,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               },
               'type' => 'menu_entry'
             },
@@ -481,16 +469,12 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 8,
-            'macro' => ''
+            'line_nr' => 8
           }
         },
         {
@@ -506,9 +490,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -570,9 +552,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 14,
-        'macro' => ''
+        'line_nr' => 14
       }
     },
     {
@@ -662,9 +642,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 16,
-        'macro' => ''
+        'line_nr' => 16
       }
     },
     {
@@ -727,9 +705,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 19,
-                'macro' => ''
+                'line_nr' => 19
               }
             },
             {
@@ -749,9 +725,7 @@ $result_trees{'check_htmlxref_ignore_ref_top_up'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 17,
-        'macro' => ''
+        'line_nr' => 17
       }
     }
   ],
@@ -1043,63 +1017,49 @@ $result_converted_errors{'html'}->{'check_htmlxref_ignore_ref_top_up'} = [
   {
     'error_line' => 'warning: no htmlxref.cnf entry found for `../there/no_existing_no_manual_direction\'
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'no htmlxref.cnf entry found for `../there/no_existing_no_manual_direction\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: no htmlxref.cnf entry found for `no_existing_no_manual.info\'
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'no htmlxref.cnf entry found for `no_existing_no_manual.info\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: no htmlxref.cnf entry found for `no_existing_no_manual.info\'
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'no htmlxref.cnf entry found for `no_existing_no_manual.info\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: no htmlxref.cnf entry found for `no_existing_no_manual.info\'
 ',
-    'file_name' => '',
     'line_nr' => 14,
-    'macro' => '',
     'text' => 'no htmlxref.cnf entry found for `no_existing_no_manual.info\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: no htmlxref.cnf entry found for `chap_not_existing\'
 ',
-    'file_name' => '',
     'line_nr' => 16,
-    'macro' => '',
     'text' => 'no htmlxref.cnf entry found for `chap_not_existing\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: no htmlxref.cnf entry found for `dir\'
 ',
-    'file_name' => '',
     'line_nr' => 16,
-    'macro' => '',
     'text' => 'no htmlxref.cnf entry found for `dir\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: no htmlxref.cnf entry found for `some_name_inf.inf\'
 ',
-    'file_name' => '',
     'line_nr' => 19,
-    'macro' => '',
     'text' => 'no htmlxref.cnf entry found for `some_name_inf.inf\'',
     'type' => 'warning'
   }

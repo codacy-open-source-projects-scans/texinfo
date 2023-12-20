@@ -71,9 +71,7 @@ $result_trees{'empty_ifset_in_ifset_no_set'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 6,
-                                'macro' => ''
+                                'line_nr' => 6
                               }
                             }
                           ]
@@ -93,9 +91,7 @@ $result_trees{'empty_ifset_in_ifset_no_set'} = {
                   }
                 },
                 'source_info' => {
-                  'file_name' => '',
-                  'line_nr' => 2,
-                  'macro' => ''
+                  'line_nr' => 2
                 }
               },
               'position' => 1,
@@ -124,9 +120,7 @@ $result_errors{'empty_ifset_in_ifset_no_set'} = [
   {
     'error_line' => 'no matching `@end ifset\'
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'no matching `@end ifset\'',
     'type' => 'error'
   }

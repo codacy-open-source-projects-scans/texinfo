@@ -62,9 +62,7 @@ $result_trees{'paragraph_no_paragraph'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -73,9 +71,7 @@ $result_trees{'paragraph_no_paragraph'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -158,7 +154,6 @@ $result_trees{'paragraph_no_paragraph'} = {
             'normalized' => 'aa'
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 5,
             'macro' => 'mycommand'
           }
@@ -181,7 +176,6 @@ $result_trees{'paragraph_no_paragraph'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 5,
                 'macro' => 'mycommand'
               },
@@ -286,7 +280,6 @@ $result_trees{'paragraph_no_paragraph'} = {
               ],
               'cmdname' => 'var',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 9,
                 'macro' => 'mycommand'
               },

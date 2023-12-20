@@ -44,9 +44,7 @@ $result_trees{'leading_space_in_def_arg'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -83,9 +81,7 @@ $result_trees{'leading_space_in_def_arg'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             },
@@ -116,9 +112,7 @@ $result_trees{'leading_space_in_def_arg'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             }
           ],
@@ -128,9 +122,7 @@ $result_trees{'leading_space_in_def_arg'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -153,9 +145,7 @@ $result_errors{'leading_space_in_def_arg'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   }

@@ -57,9 +57,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                   ],
                   'cmdname' => 'ref',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -87,9 +85,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                     'normalized' => 'an-anchor'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -133,9 +129,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 }
               ],
@@ -176,9 +170,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             }
           ],
@@ -188,9 +180,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -212,27 +202,21 @@ $result_errors{'example_invalid_at_commands_arguments'} = [
   {
     'error_line' => 'warning: @ref should not appear on @example line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@ref should not appear on @example line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @anchor should not appear on @example line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@anchor should not appear on @example line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @center should not appear on @example line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@center should not appear on @example line',
     'type' => 'warning'
   }

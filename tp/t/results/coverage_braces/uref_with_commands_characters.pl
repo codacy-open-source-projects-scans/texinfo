@@ -31,9 +31,7 @@ $result_trees{'uref_with_commands_characters'} = {
                       ],
                       'cmdname' => 'strong',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     },
                     {
@@ -77,9 +75,7 @@ $result_trees{'uref_with_commands_characters'} = {
                               ],
                               'cmdname' => 'LaTeX',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 1,
-                                'macro' => ''
+                                'line_nr' => 1
                               }
                             }
                           ],
@@ -88,9 +84,7 @@ $result_trees{'uref_with_commands_characters'} = {
                       ],
                       'cmdname' => 'strong',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     }
                   ],
@@ -104,9 +98,7 @@ $result_trees{'uref_with_commands_characters'} = {
               ],
               'cmdname' => 'uref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {

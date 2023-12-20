@@ -85,12 +85,26 @@ $XS_convert = 1 if ($XS_structuring
 our $module_loaded = 0;
 
 my %XS_overrides = (
+  "Texinfo::Convert::Converter::_XS_converter_initialize",
+   => "Texinfo::Convert::ConvertXS::converter_initialize",
   "Texinfo::Convert::Converter::_XS_set_conf"
    => "Texinfo::Convert::ConvertXS::set_conf",
   "Texinfo::Convert::Converter::_XS_get_unclosed_stream"
    => "Texinfo::Convert::ConvertXS::get_unclosed_stream",
   "Texinfo::Convert::Converter::get_converter_errors"
    => "Texinfo::Convert::ConvertXS::get_converter_errors",
+
+  "Texinfo::Convert::Converter::converter_line_error"
+   => "Texinfo::Convert::ConvertXS::converter_line_error",
+  "Texinfo::Convert::Converter::converter_line_warn"
+   => "Texinfo::Convert::ConvertXS::converter_line_warn",
+  "Texinfo::Convert::Converter::converter_document_error"
+   => "Texinfo::Convert::ConvertXS::converter_document_error",
+  "Texinfo::Convert::Converter::converter_document_warn"
+   => "Texinfo::Convert::ConvertXS::converter_document_warn",
+
+  "Texinfo::Convert::Converter::reset_converter"
+   => "Texinfo::Convert::ConvertXS::reset_converter",
   "Texinfo::Convert::Converter::destroy"
    => "Texinfo::Convert::ConvertXS::destroy",
 );
@@ -196,7 +210,13 @@ sub converter_defaults($$)
   return %defaults;
 }
 
+# should be redefined by specific converters
 sub converter_initialize($)
+{
+}
+
+# generic XS converter initialization
+sub _XS_converter_initialize($)
 {
 }
 
@@ -291,6 +311,10 @@ sub converter($;$)
   $converter->{'output_files'} = Texinfo::Common::output_files_initialize();
 
   $converter->Texinfo::Report::new();
+  $converter->{'error_warning_messages'} = [];
+
+  # XS converter initialization
+  _XS_converter_initialize($converter);
 
   $converter->converter_initialize();
 
@@ -327,7 +351,7 @@ sub output($$)
            or $self->get_conf('OUTFILE') eq '-'
            or $self->get_conf('OUTFILE') eq '')) {
     if ($self->get_conf('SPLIT')) {
-      $self->document_warn($self,
+      $self->converter_document_warn(
                sprintf(__("%s: output incompatible with split"),
                                    $self->get_conf('OUTFILE')));
       $self->force_conf('SPLIT', '');
@@ -395,7 +419,7 @@ sub output($$)
                     $self->output_files_information(), $self,
                     $encoded_outfile_name);
       if (!$fh) {
-        $self->document_error($self,
+        $self->converter_document_error(
                  sprintf(__("could not open %s for writing: %s"),
                                       $outfile_name, $error_message));
         return undef;
@@ -423,7 +447,7 @@ sub output($$)
       Texinfo::Common::output_files_register_closed(
                   $self->output_files_information(), $encoded_outfile_name);
       if (!close($fh)) {
-        $self->document_error($self,
+        $self->converter_document_error(
                  sprintf(__("error on closing %s: %s"),
                                       $outfile_name, $!));
       }
@@ -446,7 +470,7 @@ sub output($$)
                              $self->output_files_information(), $self,
                              $out_filepath);
         if (!$file_fh) {
-          $self->document_error($self,
+          $self->converter_document_error(
                 sprintf(__("could not open %s for writing: %s"),
                        $out_filepath, $error_message));
           return undef;
@@ -464,7 +488,7 @@ sub output($$)
           Texinfo::Common::output_files_register_closed(
             $self->output_files_information(), $out_filepath);
           if (!close($file_fh)) {
-            $self->document_error($self,
+            $self->converter_document_error(
                      sprintf(__("error on closing %s: %s"),
                                   $out_filepath, $!));
             return undef;
@@ -476,15 +500,82 @@ sub output($$)
   return undef;
 }
 
+# Nothing to do in perl.  XS function resets converter
+sub reset_converter($)
+{
+}
+
 # Nothing to do in perl.  XS function frees memory
 sub destroy($)
 {
 }
 
-# Nothing to do in perl as the converter is also a Texinfo::Report.
-# In XS return the error messages.
+sub converter_line_error($$$;$)
+{
+  my $self = shift;
+  my $text = shift;
+  my $error_location_info = shift;
+  my $continuation = shift;
+
+  my $message = Texinfo::Report::format_line_message ('error', $text,
+                                 $error_location_info, $continuation,
+                                            $self->get_conf('DEBUG'));
+  push @{$self->{'error_warning_messages'}}, $message;
+}
+
+sub converter_line_warn($$$;$)
+{
+  my $self = shift;
+  my $text = shift;
+  my $error_location_info = shift;
+  my $continuation = shift;
+
+  my $message = Texinfo::Report::format_line_message ('warning', $text,
+                                   $error_location_info, $continuation,
+                                              $self->get_conf('DEBUG'));
+  push @{$self->{'error_warning_messages'}}, $message;
+}
+
+sub converter_document_error($$;$)
+{
+  my $self = shift;
+  my $text = shift;
+  my $continuation = shift;
+
+  my $program_name;
+
+  if ($self->get_conf('PROGRAM') && $self->get_conf('PROGRAM') ne '') {
+    $program_name = $self->get_conf('PROGRAM');
+  }
+
+  my $message
+      = Texinfo::Report::format_document_message('error', $text, $program_name,
+                                                 $continuation);
+  push @{$self->{'error_warning_messages'}}, $message;
+}
+
+sub converter_document_warn($$;$)
+{
+  my $self = shift;
+  my $text = shift;
+  my $continuation = shift;
+
+  my $program_name;
+
+  if ($self->get_conf('PROGRAM') && $self->get_conf('PROGRAM') ne '') {
+    $program_name = $self->get_conf('PROGRAM');
+  }
+
+  my $message
+      = Texinfo::Report::format_document_message('warning', $text,
+                                        $program_name, $continuation);
+  push @{$self->{'error_warning_messages'}}, $message;
+}
+
 sub get_converter_errors($)
 {
+  my $self = shift;
+  return $self->{'error_warning_messages'};
 }
 
 ###############################################################
@@ -519,12 +610,7 @@ sub set_conf($$$)
     return 0;
   } else {
     if ($self->{'converter_descriptor'} and $XS_convert) {
-      if (ref($value) eq ''
-       and not $Texinfo::Common::non_decoded_customization_variables{$conf}) {
-        _XS_set_conf($self, $conf, Encode::encode("UTF-8", $value));
-      } else {
-        _XS_set_conf($self, $conf, $value);
-      }
+      _XS_set_conf($self, $conf, $value);
     }
     $self->{'conf'}->{$conf} = $value;
     return 1;
@@ -541,12 +627,7 @@ sub force_conf($$$)
     return undef;
   }
   if ($self->{'converter_descriptor'} and $XS_convert) {
-    if (ref($value) eq ''
-     and not $Texinfo::Common::non_decoded_customization_variables{$conf}) {
-      _XS_set_conf($self, $conf, Encode::encode("UTF-8", $value));
-    } else {
-      _XS_set_conf($self, $conf, $value);
-    }
+    _XS_set_conf($self, $conf, $value);
   }
   $self->{'conf'}->{$conf} = $value;
   return 1;
@@ -1079,7 +1160,7 @@ sub create_destination_directory($$$)
   if (defined($destination_directory_path)
       and ! -d $destination_directory_path) {
     if (!mkdir($destination_directory_path, oct(755))) {
-      $self->document_error($self, sprintf(__(
+      $self->converter_document_error(sprintf(__(
                                 "could not create directory `%s': %s"),
                                    $destination_directory_name, $!));
       return 0;
@@ -1253,7 +1334,7 @@ sub txt_image_text($$$)
         my $decoded_file_name = $txt_file;
         $decoded_file_name = Encode::decode($file_name_encoding, $txt_file)
           if (defined($file_name_encoding));
-        $self->document_warn($self,
+        $self->converter_document_warn(
            sprintf(__("error on closing image text file %s: %s"),
                                      $decoded_file_name, $!));
       }
@@ -1262,7 +1343,7 @@ sub txt_image_text($$$)
       my $decoded_file_name = $txt_file;
       $decoded_file_name = Encode::decode($file_name_encoding, $txt_file)
         if (defined($file_name_encoding));
-      $self->line_warn($self,
+      $self->converter_line_warn(
                sprintf(__("\@image file `%s' unreadable: %s"),
                           $decoded_file_name, $!), $element->{'source_info'});
     }

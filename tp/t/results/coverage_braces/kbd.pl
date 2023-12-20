@@ -27,9 +27,7 @@ $result_trees{'kbd'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -69,9 +67,7 @@ $result_trees{'kbd'} = {
                       ],
                       'cmdname' => 'kbd',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       }
                     }
                   ],
@@ -80,9 +76,7 @@ $result_trees{'kbd'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -122,9 +116,7 @@ $result_trees{'kbd'} = {
                       ],
                       'cmdname' => 'kbd',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     }
                   ],
@@ -133,9 +125,7 @@ $result_trees{'kbd'} = {
               ],
               'cmdname' => 'kbd',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             },
             {
@@ -203,9 +193,7 @@ $result_trees{'kbd'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 11,
-                    'macro' => ''
+                    'line_nr' => 11
                   }
                 },
                 {
@@ -242,16 +230,12 @@ $result_trees{'kbd'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           }
         },
         {
@@ -312,9 +296,7 @@ $result_trees{'kbd'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 18,
-                    'macro' => ''
+                    'line_nr' => 18
                   }
                 },
                 {
@@ -351,16 +333,12 @@ $result_trees{'kbd'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 19,
-                'macro' => ''
+                'line_nr' => 19
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 16,
-            'macro' => ''
+            'line_nr' => 16
           }
         }
       ],

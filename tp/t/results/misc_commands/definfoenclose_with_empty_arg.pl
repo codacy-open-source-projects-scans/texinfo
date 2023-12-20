@@ -45,9 +45,7 @@ $result_trees{'definfoenclose_with_empty_arg'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         },
         {
@@ -80,9 +78,7 @@ $result_trees{'definfoenclose_with_empty_arg'} = {
                 'command_name' => 'headword'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               },
               'type' => 'definfoenclose_command'
             },
@@ -123,9 +119,7 @@ $result_errors{'definfoenclose_with_empty_arg'} = [
   {
     'error_line' => 'warning: @definfoenclose is obsolete
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@definfoenclose is obsolete',
     'type' => 'warning'
   }

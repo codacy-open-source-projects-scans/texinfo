@@ -53,9 +53,7 @@ $result_trees{'index_entries_locations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -134,9 +132,7 @@ $result_trees{'index_entries_locations'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               },
               'type' => 'index_entry_command'
             },
@@ -176,9 +172,7 @@ $result_trees{'index_entries_locations'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               },
               'type' => 'index_entry_command'
             }
@@ -236,9 +230,7 @@ $result_trees{'index_entries_locations'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 14,
-            'macro' => ''
+            'line_nr' => 14
           },
           'type' => 'index_entry_command'
         },
@@ -288,9 +280,7 @@ $result_trees{'index_entries_locations'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 17,
-            'macro' => ''
+            'line_nr' => 17
           },
           'type' => 'index_entry_command'
         },
@@ -342,9 +332,7 @@ $result_trees{'index_entries_locations'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 21,
-            'macro' => ''
+            'line_nr' => 21
           }
         }
       ],
@@ -359,9 +347,7 @@ $result_trees{'index_entries_locations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     }
   ],

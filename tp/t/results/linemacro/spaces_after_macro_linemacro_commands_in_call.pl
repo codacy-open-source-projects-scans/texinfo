@@ -72,9 +72,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
@@ -83,9 +81,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -138,9 +134,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             }
           ],
@@ -149,9 +143,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         },
         {
@@ -208,9 +200,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             }
           ],
@@ -219,9 +209,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 11,
-            'macro' => ''
+            'line_nr' => 11
           }
         },
         {
@@ -354,7 +342,6 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                           ],
                           'cmdname' => 'samp',
                           'source_info' => {
-                            'file_name' => '',
                             'line_nr' => 15,
                             'macro' => 'mymac'
                           },
@@ -377,7 +364,6 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 15,
                         'macro' => 'mylinecommand'
                       },
@@ -399,7 +385,6 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 15,
                 'macro' => 'mylinecommand'
               },
@@ -440,14 +425,12 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 15,
                 'macro' => 'mylinecommand'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 15,
             'macro' => 'mylinecommand'
           }
@@ -585,7 +568,6 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 17,
                         'macro' => 'mylinecommand'
                       },
@@ -647,7 +629,6 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 17,
                         'macro' => 'mylinemac'
                       },
@@ -708,7 +689,6 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 17,
                 'macro' => 'mylinecommand'
               },
@@ -749,14 +729,12 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 17,
                 'macro' => 'mylinecommand'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 17,
             'macro' => 'mylinecommand'
           }
@@ -812,7 +790,6 @@ $result_errors{'spaces_after_macro_linemacro_commands_in_call'} = [
   {
     'error_line' => 'misplaced { (possibly involving @mylinecommand)
 ',
-    'file_name' => '',
     'line_nr' => 15,
     'macro' => 'mylinecommand',
     'text' => 'misplaced {',
@@ -821,7 +798,6 @@ $result_errors{'spaces_after_macro_linemacro_commands_in_call'} = [
   {
     'error_line' => 'misplaced { (possibly involving @mylinemac)
 ',
-    'file_name' => '',
     'line_nr' => 17,
     'macro' => 'mylinemac',
     'text' => 'misplaced {',
@@ -830,7 +806,6 @@ $result_errors{'spaces_after_macro_linemacro_commands_in_call'} = [
   {
     'error_line' => 'misplaced } (possibly involving @mylinemac)
 ',
-    'file_name' => '',
     'line_nr' => 17,
     'macro' => 'mylinemac',
     'text' => 'misplaced }',
@@ -839,7 +814,6 @@ $result_errors{'spaces_after_macro_linemacro_commands_in_call'} = [
   {
     'error_line' => 'warning: missing name for @defline (possibly involving @mylinecommand)
 ',
-    'file_name' => '',
     'line_nr' => 17,
     'macro' => 'mylinecommand',
     'text' => 'missing name for @defline',

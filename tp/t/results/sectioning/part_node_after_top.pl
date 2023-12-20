@@ -87,9 +87,7 @@ $result_trees{'part_node_after_top'} = [
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'menu_entry'
             },
@@ -120,16 +118,12 @@ $result_trees{'part_node_after_top'} = [
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 4,
-            'macro' => ''
+            'line_nr' => 4
           }
         },
         {
@@ -145,9 +139,7 @@ $result_trees{'part_node_after_top'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     'unit_contents' => [
@@ -182,9 +174,7 @@ $result_trees{'part_node_after_top'} = [
           }
         },
         'source_info' => {
-          'file_name' => '',
-          'line_nr' => 1,
-          'macro' => ''
+          'line_nr' => 1
         }
       },
       {},
@@ -216,9 +206,7 @@ $result_trees{'part_node_after_top'} = [
           }
         },
         'source_info' => {
-          'file_name' => '',
-          'line_nr' => 8,
-          'macro' => ''
+          'line_nr' => 8
         }
       }
     ],
@@ -250,9 +238,7 @@ $result_trees{'part_node_after_top'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 9,
-        'macro' => ''
+        'line_nr' => 9
       }
     },
     'unit_contents' => [
@@ -515,18 +501,14 @@ $result_errors{'part_node_after_top'} = [
   {
     'error_line' => 'warning: @node precedes @part, but parts may not be associated with nodes
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => '@node precedes @part, but parts may not be associated with nodes',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: no sectioning command associated with @part
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => 'no sectioning command associated with @part',
     'type' => 'warning'
   }

@@ -40,9 +40,7 @@ $result_trees{'formats_not_closed_in_example'} = {
                     {
                       'cmdname' => 'asis',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       },
                       'type' => 'command_as_argument'
                     }
@@ -86,9 +84,7 @@ $result_trees{'formats_not_closed_in_example'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 4,
-                            'macro' => ''
+                            'line_nr' => 4
                           }
                         }
                       ],
@@ -164,9 +160,7 @@ $result_trees{'formats_not_closed_in_example'} = {
                                 'item_number' => 1
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 10,
-                                'macro' => ''
+                                'line_nr' => 10
                               }
                             },
                             {
@@ -195,9 +189,7 @@ $result_trees{'formats_not_closed_in_example'} = {
                                 'item_number' => 2
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 11,
-                                'macro' => ''
+                                'line_nr' => 11
                               }
                             }
                           ],
@@ -205,9 +197,7 @@ $result_trees{'formats_not_closed_in_example'} = {
                             'enumerate_specification' => '1'
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 8,
-                            'macro' => ''
+                            'line_nr' => 8
                           }
                         }
                       ],
@@ -226,9 +216,7 @@ $result_trees{'formats_not_closed_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -258,16 +246,12 @@ $result_trees{'formats_not_closed_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -309,18 +293,14 @@ $result_errors{'formats_not_closed_in_example'} = [
   {
     'error_line' => '`@end\' expected `enumerate\', but saw `example\'
 ',
-    'file_name' => '',
     'line_nr' => 13,
-    'macro' => '',
     'text' => '`@end\' expected `enumerate\', but saw `example\'',
     'type' => 'error'
   },
   {
     'error_line' => '`@end\' expected `table\', but saw `example\'
 ',
-    'file_name' => '',
     'line_nr' => 13,
-    'macro' => '',
     'text' => '`@end\' expected `table\', but saw `example\'',
     'type' => 'error'
   }

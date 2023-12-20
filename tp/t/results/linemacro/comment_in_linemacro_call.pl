@@ -63,9 +63,7 @@ $result_trees{'comment_in_linemacro_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -74,9 +72,7 @@ $result_trees{'comment_in_linemacro_call'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -169,7 +165,6 @@ something @comment in}'
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 7,
                 'macro' => 'lm'
               }

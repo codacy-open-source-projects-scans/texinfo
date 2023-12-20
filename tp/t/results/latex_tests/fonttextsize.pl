@@ -40,9 +40,7 @@ $result_trees{'fonttextsize'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -84,9 +82,7 @@ $result_trees{'fonttextsize'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -121,9 +117,7 @@ $result_trees{'fonttextsize'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -154,9 +148,7 @@ $result_trees{'fonttextsize'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     },
     {
@@ -193,9 +185,7 @@ $result_trees{'fonttextsize'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 7,
-        'macro' => ''
+        'line_nr' => 7
       }
     },
     {
@@ -232,9 +222,7 @@ $result_trees{'fonttextsize'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 9,
-        'macro' => ''
+        'line_nr' => 9
       }
     },
     {
@@ -299,9 +287,7 @@ $result_trees{'fonttextsize'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 14,
-            'macro' => ''
+            'line_nr' => 14
           }
         }
       ],
@@ -314,9 +300,7 @@ $result_trees{'fonttextsize'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 11,
-        'macro' => ''
+        'line_nr' => 11
       }
     },
     {
@@ -381,9 +365,7 @@ $result_trees{'fonttextsize'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 19,
-            'macro' => ''
+            'line_nr' => 19
           }
         }
       ],
@@ -396,9 +378,7 @@ $result_trees{'fonttextsize'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 15,
-        'macro' => ''
+        'line_nr' => 15
       }
     },
     {
@@ -463,9 +443,7 @@ $result_trees{'fonttextsize'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 24,
-            'macro' => ''
+            'line_nr' => 24
           }
         }
       ],
@@ -478,9 +456,7 @@ $result_trees{'fonttextsize'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 20,
-        'macro' => ''
+        'line_nr' => 20
       }
     },
     {
@@ -526,9 +502,7 @@ $result_trees{'fonttextsize'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 25,
-        'macro' => ''
+        'line_nr' => 25
       }
     }
   ],
@@ -760,45 +734,35 @@ $result_errors{'fonttextsize'} = [
   {
     'error_line' => 'warning: multiple @fonttextsize
 ',
-    'file_name' => '',
     'line_nr' => 14,
-    'macro' => '',
     'text' => 'multiple @fonttextsize',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: multiple @fonttextsize
 ',
-    'file_name' => '',
     'line_nr' => 19,
-    'macro' => '',
     'text' => 'multiple @fonttextsize',
     'type' => 'warning'
   },
   {
     'error_line' => 'Only @fonttextsize 10 or 11 is supported, not `8\'
 ',
-    'file_name' => '',
     'line_nr' => 19,
-    'macro' => '',
     'text' => 'Only @fonttextsize 10 or 11 is supported, not `8\'',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: multiple @fonttextsize
 ',
-    'file_name' => '',
     'line_nr' => 24,
-    'macro' => '',
     'text' => 'multiple @fonttextsize',
     'type' => 'warning'
   },
   {
     'error_line' => 'Only @fonttextsize 10 or 11 is supported, not `15\'
 ',
-    'file_name' => '',
     'line_nr' => 24,
-    'macro' => '',
     'text' => 'Only @fonttextsize 10 or 11 is supported, not `15\'',
     'type' => 'error'
   }

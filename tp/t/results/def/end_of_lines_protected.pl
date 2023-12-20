@@ -92,9 +92,7 @@ $result_trees{'end_of_lines_protected'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -173,9 +171,7 @@ $result_trees{'end_of_lines_protected'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 4,
-                        'macro' => ''
+                        'line_nr' => 4
                       },
                       'type' => 'bracketed_arg'
                     }
@@ -199,9 +195,7 @@ $result_trees{'end_of_lines_protected'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             },
@@ -246,9 +240,7 @@ $result_trees{'end_of_lines_protected'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
@@ -258,9 +250,7 @@ $result_trees{'end_of_lines_protected'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -285,9 +275,7 @@ $result_errors{'end_of_lines_protected'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   }

@@ -45,9 +45,7 @@ $result_trees{'inlinefmtifelse_nesting'} = {
                       ],
                       'cmdname' => 'emph',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     }
                   ],
@@ -65,9 +63,7 @@ $result_trees{'inlinefmtifelse_nesting'} = {
                 'format' => 'info'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {

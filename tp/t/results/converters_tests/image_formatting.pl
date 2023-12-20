@@ -38,9 +38,7 @@ $result_trees{'image_formatting'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -75,9 +73,7 @@ $result_trees{'image_formatting'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -108,9 +104,7 @@ $result_trees{'image_formatting'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -164,9 +158,7 @@ $result_trees{'image_formatting'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             },
             {
@@ -188,9 +180,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             },
             {
@@ -222,9 +212,7 @@ $result_trees{'image_formatting'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             },
             {
@@ -254,9 +242,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             },
             {
@@ -288,9 +274,7 @@ $result_trees{'image_formatting'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             },
             {
@@ -323,9 +307,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             },
             {
@@ -357,9 +339,7 @@ $result_trees{'image_formatting'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             },
             {
@@ -395,9 +375,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             },
             {
@@ -429,9 +407,7 @@ $result_trees{'image_formatting'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             },
             {
@@ -470,9 +446,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             },
             {
@@ -504,9 +478,7 @@ $result_trees{'image_formatting'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             },
             {
@@ -560,9 +532,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             },
             {
@@ -591,9 +561,7 @@ $result_trees{'image_formatting'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             },
             {
@@ -642,9 +610,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             },
             {
@@ -676,9 +642,7 @@ $result_trees{'image_formatting'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               }
             },
             {
@@ -719,9 +683,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               }
             },
             {
@@ -798,9 +760,7 @@ $result_trees{'image_formatting'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               }
             },
             {
@@ -823,9 +783,7 @@ $result_trees{'image_formatting'} = {
                       ],
                       'cmdname' => 'file',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       }
                     },
                     {
@@ -876,9 +834,7 @@ $result_trees{'image_formatting'} = {
                       ],
                       'cmdname' => 'file',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       }
                     },
                     {
@@ -896,9 +852,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               }
             },
             {
@@ -921,9 +875,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             },
             {
@@ -945,9 +897,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             },
             {
@@ -1003,9 +953,7 @@ $result_trees{'image_formatting'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 19,
-                    'macro' => ''
+                    'line_nr' => 19
                   }
                 },
                 {
@@ -1027,9 +975,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 19,
-                    'macro' => ''
+                    'line_nr' => 19
                   }
                 },
                 {
@@ -1061,9 +1007,7 @@ $result_trees{'image_formatting'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 20,
-                    'macro' => ''
+                    'line_nr' => 20
                   }
                 },
                 {
@@ -1093,9 +1037,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 20,
-                    'macro' => ''
+                    'line_nr' => 20
                   }
                 },
                 {
@@ -1127,9 +1069,7 @@ $result_trees{'image_formatting'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 21,
-                    'macro' => ''
+                    'line_nr' => 21
                   }
                 },
                 {
@@ -1162,9 +1102,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 21,
-                    'macro' => ''
+                    'line_nr' => 21
                   }
                 },
                 {
@@ -1196,9 +1134,7 @@ $result_trees{'image_formatting'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 22,
-                    'macro' => ''
+                    'line_nr' => 22
                   }
                 },
                 {
@@ -1234,9 +1170,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 22,
-                    'macro' => ''
+                    'line_nr' => 22
                   }
                 },
                 {
@@ -1268,9 +1202,7 @@ $result_trees{'image_formatting'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 23,
-                    'macro' => ''
+                    'line_nr' => 23
                   }
                 },
                 {
@@ -1309,9 +1241,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 23,
-                    'macro' => ''
+                    'line_nr' => 23
                   }
                 },
                 {
@@ -1343,9 +1273,7 @@ $result_trees{'image_formatting'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 24,
-                    'macro' => ''
+                    'line_nr' => 24
                   }
                 },
                 {
@@ -1399,9 +1327,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 24,
-                    'macro' => ''
+                    'line_nr' => 24
                   }
                 },
                 {
@@ -1433,9 +1359,7 @@ $result_trees{'image_formatting'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 25,
-                    'macro' => ''
+                    'line_nr' => 25
                   }
                 },
                 {
@@ -1476,9 +1400,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 25,
-                    'macro' => ''
+                    'line_nr' => 25
                   }
                 },
                 {
@@ -1555,9 +1477,7 @@ $result_trees{'image_formatting'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 26,
-                    'macro' => ''
+                    'line_nr' => 26
                   }
                 },
                 {
@@ -1580,9 +1500,7 @@ $result_trees{'image_formatting'} = {
                           ],
                           'cmdname' => 'file',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 26,
-                            'macro' => ''
+                            'line_nr' => 26
                           }
                         },
                         {
@@ -1633,9 +1551,7 @@ $result_trees{'image_formatting'} = {
                           ],
                           'cmdname' => 'file',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 26,
-                            'macro' => ''
+                            'line_nr' => 26
                           }
                         },
                         {
@@ -1653,9 +1569,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 26,
-                    'macro' => ''
+                    'line_nr' => 26
                   }
                 },
                 {
@@ -1678,9 +1592,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 27,
-                    'macro' => ''
+                    'line_nr' => 27
                   }
                 },
                 {
@@ -1702,9 +1614,7 @@ $result_trees{'image_formatting'} = {
                     'input_encoding_name' => 'utf-8'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 27,
-                    'macro' => ''
+                    'line_nr' => 27
                   }
                 },
                 {
@@ -1741,16 +1651,12 @@ $result_trees{'image_formatting'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 28,
-                'macro' => ''
+                'line_nr' => 28
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 18,
-            'macro' => ''
+            'line_nr' => 18
           }
         },
         {
@@ -1788,9 +1694,7 @@ $result_trees{'image_formatting'} = {
             'input_encoding_name' => 'utf-8'
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 30,
-            'macro' => ''
+            'line_nr' => 30
           }
         },
         {
@@ -1838,9 +1742,7 @@ $result_trees{'image_formatting'} = {
                 'input_encoding_name' => 'utf-8'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 33,
-                'macro' => ''
+                'line_nr' => 33
               }
             },
             {
@@ -1860,9 +1762,7 @@ $result_trees{'image_formatting'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     }
   ],
@@ -2126,72 +2026,56 @@ $result_converted_errors{'html_text'}->{'image_formatting'} = [
   {
     'error_line' => 'warning: @image file `f-ile\' (for HTML) not found, using `f-ile.jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 14,
-    'macro' => '',
     'text' => '@image file `f-ile\' (for HTML) not found, using `f-ile.jpg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `f--ile@.\' (for HTML) not found, using `f--ile@.file ext e--xt}\'
 ',
-    'file_name' => '',
     'line_nr' => 15,
-    'macro' => '',
     'text' => '@image file `f--ile@.\' (for HTML) not found, using `f--ile@.file ext e--xt}\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `image\' (for HTML) not found, using `image.jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 16,
-    'macro' => '',
     'text' => '@image file `image\' (for HTML) not found, using `image.jpg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `image\' (for HTML) not found, using `image.jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 16,
-    'macro' => '',
     'text' => '@image file `image\' (for HTML) not found, using `image.jpg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `f-ile\' (for HTML) not found, using `f-ile.jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 25,
-    'macro' => '',
     'text' => '@image file `f-ile\' (for HTML) not found, using `f-ile.jpg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `f--ile@.\' (for HTML) not found, using `f--ile@.file ext e--xt}\'
 ',
-    'file_name' => '',
     'line_nr' => 26,
-    'macro' => '',
     'text' => '@image file `f--ile@.\' (for HTML) not found, using `f--ile@.file ext e--xt}\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `image\' (for HTML) not found, using `image.jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 27,
-    'macro' => '',
     'text' => '@image file `image\' (for HTML) not found, using `image.jpg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `image\' (for HTML) not found, using `image.jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 27,
-    'macro' => '',
     'text' => '@image file `image\' (for HTML) not found, using `image.jpg\'',
     'type' => 'warning'
   }
@@ -2280,36 +2164,28 @@ $result_converted_errors{'docbook'}->{'image_formatting'} = [
   {
     'error_line' => 'warning: @image file `f-ile\' not found, using `f-ile.jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 14,
-    'macro' => '',
     'text' => '@image file `f-ile\' not found, using `f-ile.jpg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `f--ile@.\' not found, using `f--ile@..jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 15,
-    'macro' => '',
     'text' => '@image file `f--ile@.\' not found, using `f--ile@..jpg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `f-ile\' not found, using `f-ile.jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 25,
-    'macro' => '',
     'text' => '@image file `f-ile\' not found, using `f-ile.jpg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `f--ile@.\' not found, using `f--ile@..jpg\'
 ',
-    'file_name' => '',
     'line_nr' => 26,
-    'macro' => '',
     'text' => '@image file `f--ile@.\' not found, using `f--ile@..jpg\'',
     'type' => 'warning'
   }
@@ -2356,72 +2232,56 @@ $result_converted_errors{'latex_text'}->{'image_formatting'} = [
   {
     'error_line' => 'warning: @image file `f-ile\' (for LaTeX) not found
 ',
-    'file_name' => '',
     'line_nr' => 14,
-    'macro' => '',
     'text' => '@image file `f-ile\' (for LaTeX) not found',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `f--ile@.\' (for LaTeX) not found
 ',
-    'file_name' => '',
     'line_nr' => 15,
-    'macro' => '',
     'text' => '@image file `f--ile@.\' (for LaTeX) not found',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `image\' (for LaTeX) not found
 ',
-    'file_name' => '',
     'line_nr' => 16,
-    'macro' => '',
     'text' => '@image file `image\' (for LaTeX) not found',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `image\' (for LaTeX) not found
 ',
-    'file_name' => '',
     'line_nr' => 16,
-    'macro' => '',
     'text' => '@image file `image\' (for LaTeX) not found',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `f-ile\' (for LaTeX) not found
 ',
-    'file_name' => '',
     'line_nr' => 25,
-    'macro' => '',
     'text' => '@image file `f-ile\' (for LaTeX) not found',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `f--ile@.\' (for LaTeX) not found
 ',
-    'file_name' => '',
     'line_nr' => 26,
-    'macro' => '',
     'text' => '@image file `f--ile@.\' (for LaTeX) not found',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `image\' (for LaTeX) not found
 ',
-    'file_name' => '',
     'line_nr' => 27,
-    'macro' => '',
     'text' => '@image file `image\' (for LaTeX) not found',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @image file `image\' (for LaTeX) not found
 ',
-    'file_name' => '',
     'line_nr' => 27,
-    'macro' => '',
     'text' => '@image file `image\' (for LaTeX) not found',
     'type' => 'warning'
   }

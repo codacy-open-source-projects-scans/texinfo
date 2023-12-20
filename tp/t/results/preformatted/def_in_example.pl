@@ -87,9 +87,7 @@ $result_trees{'def_in_example'} = {
                     'original_def_cmdname' => 'defun'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 2,
-                    'macro' => ''
+                    'line_nr' => 2
                   },
                   'type' => 'def_line'
                 },
@@ -134,9 +132,7 @@ $result_trees{'def_in_example'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 4,
-                    'macro' => ''
+                    'line_nr' => 4
                   }
                 }
               ],
@@ -146,9 +142,7 @@ $result_trees{'def_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -178,16 +172,12 @@ $result_trees{'def_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -214,9 +204,7 @@ $result_errors{'def_in_example'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   }

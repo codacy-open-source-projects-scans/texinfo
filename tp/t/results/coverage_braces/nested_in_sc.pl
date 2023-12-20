@@ -35,9 +35,7 @@ $result_trees{'nested_in_sc'} = {
                               ],
                               'cmdname' => '~',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 1,
-                                'macro' => ''
+                                'line_nr' => 1
                               }
                             },
                             {
@@ -51,9 +49,7 @@ $result_trees{'nested_in_sc'} = {
                               ],
                               'cmdname' => 'aa',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 1,
-                                'macro' => ''
+                                'line_nr' => 1
                               }
                             },
                             {
@@ -67,9 +63,7 @@ $result_trees{'nested_in_sc'} = {
                               ],
                               'cmdname' => 'TeX',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 1,
-                                'macro' => ''
+                                'line_nr' => 1
                               }
                             },
                             {
@@ -87,9 +81,7 @@ $result_trees{'nested_in_sc'} = {
                                       ],
                                       'cmdname' => 'aa',
                                       'source_info' => {
-                                        'file_name' => '',
-                                        'line_nr' => 1,
-                                        'macro' => ''
+                                        'line_nr' => 1
                                       }
                                     }
                                   ],
@@ -98,9 +90,7 @@ $result_trees{'nested_in_sc'} = {
                               ],
                               'cmdname' => '~',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 1,
-                                'macro' => ''
+                                'line_nr' => 1
                               }
                             },
                             {
@@ -124,9 +114,7 @@ $result_trees{'nested_in_sc'} = {
                               ],
                               'cmdname' => 'footnote',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 1,
-                                'macro' => ''
+                                'line_nr' => 1
                               }
                             },
                             {
@@ -158,9 +146,7 @@ $result_trees{'nested_in_sc'} = {
                               ],
                               'cmdname' => 'abbr',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 1,
-                                'macro' => ''
+                                'line_nr' => 1
                               }
                             },
                             {
@@ -184,9 +170,7 @@ $result_trees{'nested_in_sc'} = {
                                 'delimiter' => ':'
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 2,
-                                'macro' => ''
+                                'line_nr' => 2
                               }
                             }
                           ],
@@ -195,9 +179,7 @@ $result_trees{'nested_in_sc'} = {
                       ],
                       'cmdname' => 'sc',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     }
                   ],
@@ -206,9 +188,7 @@ $result_trees{'nested_in_sc'} = {
               ],
               'cmdname' => 'sc',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {

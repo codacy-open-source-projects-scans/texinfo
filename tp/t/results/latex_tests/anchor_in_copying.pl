@@ -50,9 +50,7 @@ $result_trees{'anchor_in_copying'} = {
                         'normalized' => 'a-in-copying'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     },
                     {
@@ -89,16 +87,12 @@ $result_trees{'anchor_in_copying'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 3,
-                    'macro' => ''
+                    'line_nr' => 3
                   }
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -140,9 +134,7 @@ $result_trees{'anchor_in_copying'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -177,9 +169,7 @@ $result_trees{'anchor_in_copying'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     },
     {
@@ -210,9 +200,7 @@ $result_trees{'anchor_in_copying'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 8,
-        'macro' => ''
+        'line_nr' => 8
       }
     },
     {
@@ -262,9 +250,7 @@ $result_trees{'anchor_in_copying'} = {
               ],
               'cmdname' => 'pxref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             },
             {
@@ -284,9 +270,7 @@ $result_trees{'anchor_in_copying'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 9,
-        'macro' => ''
+        'line_nr' => 9
       }
     }
   ],

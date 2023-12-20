@@ -58,9 +58,7 @@ $result_trees{'protect_in_body_line_arg'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -69,9 +67,7 @@ $result_trees{'protect_in_body_line_arg'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -106,7 +102,6 @@ $result_trees{'protect_in_body_line_arg'} = {
               ],
               'cmdname' => 'emph',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 5,
                 'macro' => 'macroone'
               }
@@ -122,7 +117,6 @@ $result_trees{'protect_in_body_line_arg'} = {
               ],
               'cmdname' => 'emph',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 5,
                 'macro' => 'macroone'
               },
@@ -150,9 +144,7 @@ $result_trees{'protect_in_body_line_arg'} = {
               ],
               'cmdname' => 'samp',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             },
             {
@@ -185,9 +177,7 @@ $result_errors{'protect_in_body_line_arg'} = [
   {
     'error_line' => 'warning: @macroone defined with zero or more than one argument should be invoked with {}
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@macroone defined with zero or more than one argument should be invoked with {}',
     'type' => 'warning'
   }

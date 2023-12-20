@@ -154,16 +154,12 @@ $result_trees{'menu_in_example'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 8,
-                                'macro' => ''
+                                'line_nr' => 8
                               }
                             }
                           ],
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 6,
-                            'macro' => ''
+                            'line_nr' => 6
                           }
                         }
                       ],
@@ -171,9 +167,7 @@ $result_trees{'menu_in_example'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   },
                   'type' => 'menu_entry'
                 },
@@ -239,16 +233,12 @@ $result_trees{'menu_in_example'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 12,
-                            'macro' => ''
+                            'line_nr' => 12
                           }
                         }
                       ],
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 10,
-                        'macro' => ''
+                        'line_nr' => 10
                       }
                     },
                     {
@@ -323,9 +313,7 @@ $result_trees{'menu_in_example'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 14,
-                    'macro' => ''
+                    'line_nr' => 14
                   },
                   'type' => 'menu_entry'
                 },
@@ -400,9 +388,7 @@ $result_trees{'menu_in_example'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 15,
-                    'macro' => ''
+                    'line_nr' => 15
                   },
                   'type' => 'menu_entry'
                 },
@@ -433,16 +419,12 @@ $result_trees{'menu_in_example'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 16,
-                    'macro' => ''
+                    'line_nr' => 16
                   }
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             },
             {
@@ -472,16 +454,12 @@ $result_trees{'menu_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 17,
-                'macro' => ''
+                'line_nr' => 17
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         }
       ],
@@ -495,9 +473,7 @@ $result_trees{'menu_in_example'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     }
   ],
@@ -560,9 +536,7 @@ $result_errors{'menu_in_example'} = [
   {
     'error_line' => 'warning: @menu in invalid context
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => '@menu in invalid context',
     'type' => 'warning'
   }

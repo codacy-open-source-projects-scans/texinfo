@@ -87,9 +87,7 @@ $result_trees{'part_node_before_top'} = [
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               },
               'type' => 'menu_entry'
             },
@@ -120,16 +118,12 @@ $result_trees{'part_node_before_top'} = [
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         }
       ],
@@ -166,9 +160,7 @@ $result_trees{'part_node_before_top'} = [
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         }
       },
@@ -178,9 +170,7 @@ $result_trees{'part_node_before_top'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     'unit_contents' => [
@@ -255,9 +245,7 @@ $result_trees{'part_node_before_top'} = [
           }
         },
         'source_info' => {
-          'file_name' => '',
-          'line_nr' => 1,
-          'macro' => ''
+          'line_nr' => 1
         }
       },
       {},
@@ -289,9 +277,7 @@ $result_trees{'part_node_before_top'} = [
           }
         },
         'source_info' => {
-          'file_name' => '',
-          'line_nr' => 4,
-          'macro' => ''
+          'line_nr' => 4
         }
       },
       {}
@@ -493,18 +479,14 @@ $result_errors{'part_node_before_top'} = [
   {
     'error_line' => 'warning: @node precedes @part, but parts may not be associated with nodes
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@node precedes @part, but parts may not be associated with nodes',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @part should not be associated with @top
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@part should not be associated with @top',
     'type' => 'warning'
   }

@@ -59,9 +59,7 @@ $result_trees{'unpaired_backslash_in_macro_body'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -70,9 +68,7 @@ $result_trees{'unpaired_backslash_in_macro_body'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {

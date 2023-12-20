@@ -20,9 +20,7 @@ $result_trees{'paragraph_in_cells'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'bracketed_arg'
                 },
@@ -36,9 +34,7 @@ $result_trees{'paragraph_in_cells'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'bracketed_arg'
                 }
@@ -78,9 +74,7 @@ $result_trees{'paragraph_in_cells'} = {
                         'cell_number' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     },
                     {
@@ -104,9 +98,7 @@ $result_trees{'paragraph_in_cells'} = {
                         'cell_number' => 2
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     }
                   ],
@@ -157,9 +149,7 @@ $result_trees{'paragraph_in_cells'} = {
                         'cell_number' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       }
                     },
                     {
@@ -197,9 +187,7 @@ $result_trees{'paragraph_in_cells'} = {
                         'cell_number' => 2
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 7,
-                        'macro' => ''
+                        'line_nr' => 7
                       }
                     }
                   ],
@@ -232,9 +220,7 @@ $result_trees{'paragraph_in_cells'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             }
           ],
@@ -247,9 +233,7 @@ $result_trees{'paragraph_in_cells'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

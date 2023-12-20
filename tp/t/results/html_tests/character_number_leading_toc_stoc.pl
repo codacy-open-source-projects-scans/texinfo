@@ -35,9 +35,7 @@ $result_trees{'character_number_leading_toc_stoc'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -67,9 +65,7 @@ $result_trees{'character_number_leading_toc_stoc'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -97,9 +93,7 @@ $result_trees{'character_number_leading_toc_stoc'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -136,9 +130,7 @@ $result_trees{'character_number_leading_toc_stoc'} = {
           ],
           'cmdname' => 'contents',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 6,
-            'macro' => ''
+            'line_nr' => 6
           }
         },
         {
@@ -156,9 +148,7 @@ $result_trees{'character_number_leading_toc_stoc'} = {
           ],
           'cmdname' => 'shortcontents',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 8,
-            'macro' => ''
+            'line_nr' => 8
           }
         },
         {
@@ -174,9 +164,7 @@ $result_trees{'character_number_leading_toc_stoc'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     }
   ],

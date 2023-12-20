@@ -54,6 +54,9 @@ TARGET_FILENAME *call_file_id_setting_external_target_non_split_name
                      const char *normalized, const ELEMENT *element,
                      const char *target, const char *file);
 
+char *call_formatting_function_format_comment (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                                              const char *text);
 char *call_formatting_function_format_program_string (CONVERTER *self,
                          const FORMATTING_REFERENCE *formatting_reference);
 char *call_formatting_function_format_titlepage (CONVERTER *self,
@@ -67,6 +70,9 @@ char *call_formatting_function_format_footnotes_segment (CONVERTER *self,
                          const FORMATTING_REFERENCE *formatting_reference);
 char *call_formatting_function_format_footnotes_sequence (CONVERTER *self,
                          const FORMATTING_REFERENCE *formatting_reference);
+char *call_formatting_function_format_css_lines (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                                              const char *filename);
 char *call_formatting_function_format_end_file (CONVERTER *self,
                          const FORMATTING_REFERENCE *formatting_reference,
                     const char *filename, const OUTPUT_UNIT *output_unit);
@@ -78,6 +84,10 @@ char *call_formatting_function_format_translate_message (CONVERTER *self,
                          const FORMATTING_REFERENCE *formatting_reference,
                                   const char *message, const char *lang,
                                   const char *message_context);
+char * call_formatting_function_format_button_icon_img (CONVERTER *self,
+                         const FORMATTING_REFERENCE *formatting_reference,
+                         const char *button_name,
+                         const char *icon, const char *name);
 FORMATTED_BUTTON_INFO *call_formatting_function_format_button (CONVERTER *self,
                          const FORMATTING_REFERENCE *formatting_reference,
                                   const BUTTON_SPECIFICATION *button,
@@ -140,4 +150,9 @@ void call_special_unit_body_formatting (CONVERTER *self,
                               TEXT *result);
 
 
+FORMATTED_BUTTON_INFO *call_button_simple_function (CONVERTER *self,
+                                         void *formatting_reference_sv);
+FORMATTED_BUTTON_INFO *call_button_direction_function (CONVERTER *self,
+                             void *formatting_reference_sv,
+                             int direction, const ELEMENT *element);
 #endif

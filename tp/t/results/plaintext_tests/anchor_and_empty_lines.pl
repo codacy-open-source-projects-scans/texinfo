@@ -40,9 +40,7 @@ $result_trees{'anchor_and_empty_lines'} = {
             'normalized' => 'in-anchor'
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         },
         {

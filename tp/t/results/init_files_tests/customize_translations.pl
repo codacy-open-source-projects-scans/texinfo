@@ -31,9 +31,7 @@ $result_trees{'customize_translations'} = {
               ],
               'cmdname' => 'contents',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -75,9 +73,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -112,9 +108,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -145,9 +139,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 7,
-        'macro' => ''
+        'line_nr' => 7
       }
     },
     {
@@ -184,9 +176,7 @@ $result_trees{'customize_translations'} = {
               ],
               'cmdname' => 'error',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             },
             {
@@ -228,9 +218,7 @@ $result_trees{'customize_translations'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 12,
-            'macro' => ''
+            'line_nr' => 12
           }
         }
       ],
@@ -243,9 +231,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 8,
-        'macro' => ''
+        'line_nr' => 8
       }
     },
     {
@@ -276,9 +262,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 13,
-        'macro' => ''
+        'line_nr' => 13
       }
     },
     {
@@ -315,9 +299,7 @@ $result_trees{'customize_translations'} = {
               ],
               'cmdname' => 'error',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             },
             {
@@ -342,9 +324,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 14,
-        'macro' => ''
+        'line_nr' => 14
       }
     },
     {
@@ -375,9 +355,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 18,
-        'macro' => ''
+        'line_nr' => 18
       }
     },
     {
@@ -431,9 +409,7 @@ $result_trees{'customize_translations'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 21,
-            'macro' => ''
+            'line_nr' => 21
           }
         }
       ],
@@ -446,9 +422,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 19,
-        'macro' => ''
+        'line_nr' => 19
       }
     },
     {
@@ -479,9 +453,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 22,
-        'macro' => ''
+        'line_nr' => 22
       }
     },
     {
@@ -518,9 +490,7 @@ $result_trees{'customize_translations'} = {
               ],
               'cmdname' => 'error',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 25,
-                'macro' => ''
+                'line_nr' => 25
               }
             },
             {
@@ -545,9 +515,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 23,
-        'macro' => ''
+        'line_nr' => 23
       }
     },
     {
@@ -578,9 +546,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 27,
-        'macro' => ''
+        'line_nr' => 27
       }
     },
     {
@@ -617,9 +583,7 @@ $result_trees{'customize_translations'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 28,
-        'macro' => ''
+        'line_nr' => 28
       }
     }
   ],

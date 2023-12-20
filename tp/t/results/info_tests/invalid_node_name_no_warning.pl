@@ -76,9 +76,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                       ],
                       'cmdname' => 'asis',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     }
                   ],
@@ -103,9 +101,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                       ],
                       'cmdname' => 'asis',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     },
                     {
@@ -127,9 +123,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'menu_entry'
             },
@@ -164,9 +158,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                       ],
                       'cmdname' => 'comma',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 6,
-                        'macro' => ''
+                        'line_nr' => 6
                       }
                     },
                     {
@@ -205,9 +197,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               },
               'type' => 'menu_entry'
             },
@@ -232,9 +222,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                       ],
                       'cmdname' => 'asis',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 7,
-                        'macro' => ''
+                        'line_nr' => 7
                       }
                     }
                   ],
@@ -268,9 +256,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               },
               'type' => 'menu_entry'
             },
@@ -301,16 +287,12 @@ $result_trees{'invalid_node_name_no_warning'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 4,
-            'macro' => ''
+            'line_nr' => 4
           }
         },
         {
@@ -329,9 +311,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -351,9 +331,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
               ],
               'cmdname' => 'asis',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             }
           ],
@@ -384,9 +362,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 10,
-        'macro' => ''
+        'line_nr' => 10
       }
     },
     {
@@ -404,9 +380,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
               ],
               'cmdname' => 'comma',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             },
             {
@@ -440,9 +414,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 12,
-        'macro' => ''
+        'line_nr' => 12
       }
     },
     {
@@ -462,9 +434,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
               ],
               'cmdname' => 'asis',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               }
             }
           ],
@@ -503,9 +473,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                       ],
                       'cmdname' => 'asis',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 16,
-                        'macro' => ''
+                        'line_nr' => 16
                       }
                     }
                   ],
@@ -534,9 +502,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                       ],
                       'cmdname' => 'asis',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 16,
-                        'macro' => ''
+                        'line_nr' => 16
                       }
                     }
                   ],
@@ -550,9 +516,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             },
             {
@@ -573,9 +537,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                       ],
                       'cmdname' => 'comma',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 16,
-                        'macro' => ''
+                        'line_nr' => 16
                       }
                     },
                     {
@@ -610,9 +572,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             },
             {
@@ -636,9 +596,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
                       ],
                       'cmdname' => 'asis',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 17,
-                        'macro' => ''
+                        'line_nr' => 17
                       }
                     }
                   ],
@@ -655,9 +613,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 17,
-                'macro' => ''
+                'line_nr' => 17
               }
             },
             {
@@ -678,9 +634,7 @@ $result_trees{'invalid_node_name_no_warning'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 14,
-        'macro' => ''
+        'line_nr' => 14
       }
     }
   ],

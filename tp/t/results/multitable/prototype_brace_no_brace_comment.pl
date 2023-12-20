@@ -20,9 +20,7 @@ $result_trees{'prototype_brace_no_brace_comment'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'bracketed_arg'
                 },
@@ -74,9 +72,7 @@ $result_trees{'prototype_brace_no_brace_comment'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             }
           ],
@@ -89,9 +85,7 @@ $result_trees{'prototype_brace_no_brace_comment'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

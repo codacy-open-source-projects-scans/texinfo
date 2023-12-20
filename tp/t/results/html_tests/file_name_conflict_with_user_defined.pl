@@ -43,9 +43,7 @@ $result_trees{'file_name_conflict_with_user_defined'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -80,9 +78,7 @@ $result_trees{'file_name_conflict_with_user_defined'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -113,9 +109,7 @@ $result_trees{'file_name_conflict_with_user_defined'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -159,9 +153,7 @@ $result_trees{'file_name_conflict_with_user_defined'} = {
             'normalized' => 'myanchor'
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         },
         {
@@ -184,9 +176,7 @@ $result_trees{'file_name_conflict_with_user_defined'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -217,9 +207,7 @@ $result_trees{'file_name_conflict_with_user_defined'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 9,
-        'macro' => ''
+        'line_nr' => 9
       }
     },
     {
@@ -249,9 +237,7 @@ $result_trees{'file_name_conflict_with_user_defined'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 10,
-        'macro' => ''
+        'line_nr' => 10
       }
     }
   ],
@@ -438,9 +424,7 @@ $result_converted_errors{'file_html'}->{'file_name_conflict_with_user_defined'} 
   {
     'error_line' => 'warning: @anchor `myanchor\' file myanchor.html for redirection exists
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => '@anchor `myanchor\' file myanchor.html for redirection exists',
     'type' => 'warning'
   },

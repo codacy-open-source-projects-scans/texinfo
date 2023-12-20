@@ -40,9 +40,7 @@ $result_trees{'index_entries'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           },
           'type' => 'index_entry_command'
         },
@@ -80,9 +78,7 @@ $result_trees{'index_entries'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         },
         {
@@ -121,9 +117,7 @@ $result_trees{'index_entries'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           },
           'type' => 'index_entry_command'
         }
@@ -150,18 +144,14 @@ $result_errors{'index_entries'} = [
   {
     'error_line' => 'warning: entry for index `cp\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `cp\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `truc\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'entry for index `truc\' outside of any node',
     'type' => 'warning'
   }

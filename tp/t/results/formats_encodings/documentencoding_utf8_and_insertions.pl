@@ -37,9 +37,7 @@ $result_trees{'documentencoding_utf8_and_insertions'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -65,9 +63,7 @@ $result_trees{'documentencoding_utf8_and_insertions'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -86,9 +82,7 @@ $result_trees{'documentencoding_utf8_and_insertions'} = {
               ],
               'cmdname' => '~',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -135,9 +129,7 @@ $result_trees{'documentencoding_utf8_and_insertions'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 6,
-                    'macro' => ''
+                    'line_nr' => 6
                   }
                 },
                 {
@@ -156,9 +148,7 @@ $result_trees{'documentencoding_utf8_and_insertions'} = {
                   ],
                   'cmdname' => '~',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 6,
-                    'macro' => ''
+                    'line_nr' => 6
                   }
                 },
                 {
@@ -195,16 +185,12 @@ $result_trees{'documentencoding_utf8_and_insertions'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         }
       ],

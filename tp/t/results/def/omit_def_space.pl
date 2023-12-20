@@ -45,9 +45,7 @@ $result_trees{'omit_def_space'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -196,9 +194,7 @@ $result_trees{'omit_def_space'} = {
                 'original_def_cmdname' => 'defun'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               },
               'type' => 'def_line'
             },
@@ -285,9 +281,7 @@ $result_trees{'omit_def_space'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               },
               'type' => 'def_line'
             },
@@ -332,9 +326,7 @@ $result_trees{'omit_def_space'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             }
           ],
@@ -344,9 +336,7 @@ $result_trees{'omit_def_space'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         }
       ],
@@ -360,9 +350,7 @@ $result_trees{'omit_def_space'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     }
   ],

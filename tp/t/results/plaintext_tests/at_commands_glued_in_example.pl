@@ -46,9 +46,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                   ],
                   'cmdname' => 'TeX',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 3,
-                    'macro' => ''
+                    'line_nr' => 3
                   }
                 },
                 {
@@ -71,9 +69,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 4,
-                    'macro' => ''
+                    'line_nr' => 4
                   }
                 },
                 {
@@ -109,9 +105,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                   ],
                   'cmdname' => 'acronym',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 },
                 {
@@ -134,9 +128,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                   ],
                   'cmdname' => 'acronym',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 6,
-                    'macro' => ''
+                    'line_nr' => 6
                   }
                 },
                 {
@@ -172,9 +164,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                   ],
                   'cmdname' => 'email',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 7,
-                    'macro' => ''
+                    'line_nr' => 7
                   }
                 },
                 {
@@ -205,9 +195,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                   ],
                   'cmdname' => 'ref',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 8,
-                    'macro' => ''
+                    'line_nr' => 8
                   }
                 },
                 {
@@ -235,9 +223,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                   ],
                   'cmdname' => 'footnote',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 9,
-                    'macro' => ''
+                    'line_nr' => 9
                   }
                 },
                 {
@@ -264,9 +250,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                           ],
                           'cmdname' => 'dotless',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 10,
-                            'macro' => ''
+                            'line_nr' => 10
                           }
                         }
                       ],
@@ -275,9 +259,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                   ],
                   'cmdname' => '^',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 10,
-                    'macro' => ''
+                    'line_nr' => 10
                   }
                 },
                 {
@@ -300,9 +282,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                 {
                   'cmdname' => 'noindent',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 12,
-                    'macro' => ''
+                    'line_nr' => 12
                   }
                 },
                 {
@@ -345,9 +325,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 13,
-                    'macro' => ''
+                    'line_nr' => 13
                   }
                 },
                 {
@@ -370,9 +348,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                     'normalized' => 'anchor'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 14,
-                    'macro' => ''
+                    'line_nr' => 14
                   }
                 },
                 {
@@ -413,9 +389,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 15,
-                    'macro' => ''
+                    'line_nr' => 15
                   },
                   'type' => 'index_entry_command'
                 }
@@ -449,16 +423,12 @@ $result_trees{'at_commands_glued_in_example'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -511,36 +481,28 @@ $result_errors{'at_commands_glued_in_example'} = [
   {
     'error_line' => 'warning: @sp should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 13,
-    'macro' => '',
     'text' => '@sp should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @cindex should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 15,
-    'macro' => '',
     'text' => '@cindex should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `cp\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 15,
-    'macro' => '',
     'text' => 'entry for index `cp\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => '@ref reference to nonexistent node `Top\'
 ',
-    'file_name' => '',
     'line_nr' => 8,
-    'macro' => '',
     'text' => '@ref reference to nonexistent node `Top\'',
     'type' => 'error'
   }

@@ -41,6 +41,7 @@ extern const char *output_unit_type_names[];
 extern const char *command_location_names[];
 
 extern const char *html_button_direction_names[];
+extern char *html_command_text_type_name[];
 
 typedef struct {
     char *encoding_name;
@@ -135,7 +136,7 @@ enum command_location {
 #define HMSF_converter_state         0x1000
 #define HMSF_multiple_pass           0x2000
 #define HMSF_translations            0x4000
-#define HMSF_file_counter            0x8000
+#define HMSF_            0x8000
 #define HMSF_added_target            0x00010000
 #define HMSF_referred_command_stack  0x00020000
 
@@ -198,7 +199,7 @@ int is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries);
 void clear_strings_list (STRING_LIST *strings);
 void free_strings_list (STRING_LIST *strings);
 void destroy_strings_list (STRING_LIST *strings);
-void add_string (const char *string, STRING_LIST *strings_list);
+char *add_string (const char *string, STRING_LIST *strings_list);
 void merge_strings (STRING_LIST *strings_list, STRING_LIST *merged_strings);
 size_t find_string (STRING_LIST *strings_list, const char *string);
 
@@ -207,10 +208,12 @@ void destroy_accent_stack (ACCENTS_STACK *accent_stack);
 void wipe_index (INDEX *idx);
 void wipe_index_names (INDEX **index_names);
 
-OPTIONS *new_options (void);
+/* in options_init_free.c */
+void initialize_options (OPTIONS *options);
 void free_options (OPTIONS *options);
-COMMAND_OPTION_REF *get_command_option (OPTIONS *options, enum command_id cmd);
 
+OPTIONS *new_options (void);
+COMMAND_OPTION_REF *get_command_option (OPTIONS *options, enum command_id cmd);
 
 void add_include_directory (char *filename, STRING_LIST *include_dirs_list);
 char *locate_include_file (char *filename, STRING_LIST *include_dirs_list);
@@ -246,4 +249,6 @@ ELEMENT *get_cmd_global_uniq_command (GLOBAL_COMMANDS *global_commands_ref,
                                       enum command_id cmd);
 
 void html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons);
+void html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons);
+
 #endif

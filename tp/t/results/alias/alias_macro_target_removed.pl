@@ -54,9 +54,7 @@ $result_trees{'alias_macro_target_removed'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -65,9 +63,7 @@ $result_trees{'alias_macro_target_removed'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -105,9 +101,7 @@ $result_trees{'alias_macro_target_removed'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         },
         {
@@ -222,27 +216,21 @@ $result_errors{'alias_macro_target_removed'} = [
   {
     'error_line' => 'unknown command `mystrong\'
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => 'unknown command `mystrong\'',
     'type' => 'error'
   },
   {
     'error_line' => 'misplaced {
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => 'misplaced {',
     'type' => 'error'
   },
   {
     'error_line' => 'misplaced }
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => 'misplaced }',
     'type' => 'error'
   }

@@ -43,9 +43,7 @@ $result_trees{'section_chapter_before_top_nodes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -82,9 +80,7 @@ $result_trees{'section_chapter_before_top_nodes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -115,9 +111,7 @@ $result_trees{'section_chapter_before_top_nodes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -200,9 +194,7 @@ $result_trees{'section_chapter_before_top_nodes'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               },
               'type' => 'menu_entry'
             },
@@ -233,16 +225,12 @@ $result_trees{'section_chapter_before_top_nodes'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         },
         {
@@ -260,9 +248,7 @@ $result_trees{'section_chapter_before_top_nodes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -293,9 +279,7 @@ $result_trees{'section_chapter_before_top_nodes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 11,
-        'macro' => ''
+        'line_nr' => 11
       }
     },
     {
@@ -378,9 +362,7 @@ $result_trees{'section_chapter_before_top_nodes'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               },
               'type' => 'menu_entry'
             },
@@ -411,16 +393,12 @@ $result_trees{'section_chapter_before_top_nodes'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 14,
-            'macro' => ''
+            'line_nr' => 14
           }
         },
         {
@@ -436,9 +414,7 @@ $result_trees{'section_chapter_before_top_nodes'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 12,
-        'macro' => ''
+        'line_nr' => 12
       }
     }
   ],
@@ -639,36 +615,28 @@ $result_errors{'section_chapter_before_top_nodes'} = [
   {
     'error_line' => 'warning: lowering the section level of @chapter appearing after a lower element
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'lowering the section level of @chapter appearing after a lower element',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: lowering the section level of @top appearing after a lower element
 ',
-    'file_name' => '',
     'line_nr' => 12,
-    'macro' => '',
     'text' => 'lowering the section level of @top appearing after a lower element',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: node `chapter node\' is up for `section node\' in menu but not in sectioning
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'node `chapter node\' is up for `section node\' in menu but not in sectioning',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: node `Top\' is up for `chapter node\' in menu but not in sectioning
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'node `Top\' is up for `chapter node\' in menu but not in sectioning',
     'type' => 'warning'
   }

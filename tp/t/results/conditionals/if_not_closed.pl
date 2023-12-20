@@ -21,9 +21,7 @@ $result_trees{'if_not_closed'} = {
                 ],
                 'cmdname' => 'iftex',
                 'source_info' => {
-                  'file_name' => '',
-                  'line_nr' => 1,
-                  'macro' => ''
+                  'line_nr' => 1
                 }
               },
               'sourcemark_type' => 'ignored_conditional_block'
@@ -47,9 +45,7 @@ $result_errors{'if_not_closed'} = [
   {
     'error_line' => 'no matching `@end iftex\'
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'no matching `@end iftex\'',
     'type' => 'error'
   }

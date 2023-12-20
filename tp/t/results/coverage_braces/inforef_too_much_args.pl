@@ -82,9 +82,7 @@ $result_trees{'inforef_too_much_args'} = {
               ],
               'cmdname' => 'inforef',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -105,9 +103,7 @@ $result_trees{'inforef_too_much_args'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     }
   ],
@@ -146,9 +142,7 @@ $result_errors{'inforef_too_much_args'} = [
   {
     'error_line' => 'warning: @inforef is obsolete
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => '@inforef is obsolete',
     'type' => 'warning'
   }

@@ -82,16 +82,12 @@ $result_trees{'comment_example_and_blank_lines'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         },
         {
@@ -172,16 +168,12 @@ $result_trees{'comment_example_and_blank_lines'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           }
         },
         {
@@ -248,16 +240,12 @@ $result_trees{'comment_example_and_blank_lines'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 14,
-            'macro' => ''
+            'line_nr' => 14
           }
         },
         {
@@ -329,16 +317,12 @@ $result_trees{'comment_example_and_blank_lines'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 22,
-                'macro' => ''
+                'line_nr' => 22
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 20,
-            'macro' => ''
+            'line_nr' => 20
           }
         },
         {

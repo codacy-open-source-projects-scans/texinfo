@@ -35,9 +35,7 @@ $result_trees{'on_def_line'} = {
                             'normalized' => 'in-anchor'
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 1,
-                            'macro' => ''
+                            'line_nr' => 1
                           }
                         }
                       ],
@@ -45,9 +43,7 @@ $result_trees{'on_def_line'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -74,9 +70,7 @@ $result_trees{'on_def_line'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     },
                     {
@@ -107,9 +101,7 @@ $result_trees{'on_def_line'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     },
                     {
@@ -146,9 +138,7 @@ $result_trees{'on_def_line'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     }
                   ],
@@ -165,9 +155,7 @@ $result_trees{'on_def_line'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             },
@@ -194,9 +182,7 @@ $result_trees{'on_def_line'} = {
                             'normalized' => 'in-anchorx'
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 2,
-                            'macro' => ''
+                            'line_nr' => 2
                           }
                         }
                       ],
@@ -204,9 +190,7 @@ $result_trees{'on_def_line'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -233,9 +217,7 @@ $result_trees{'on_def_line'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     },
                     {
@@ -266,9 +248,7 @@ $result_trees{'on_def_line'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     },
                     {
@@ -305,9 +285,7 @@ $result_trees{'on_def_line'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     }
                   ],
@@ -330,9 +308,7 @@ $result_trees{'on_def_line'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               },
               'type' => 'def_line'
             },
@@ -363,9 +339,7 @@ $result_trees{'on_def_line'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -375,9 +349,7 @@ $result_trees{'on_def_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -405,108 +377,84 @@ $result_errors{'on_def_line'} = [
   {
     'error_line' => 'warning: @anchor should not appear on @deffn line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@anchor should not appear on @deffn line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @titlefont should not appear on @deffn line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@titlefont should not appear on @deffn line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @footnote should not appear on @deffn line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@footnote should not appear on @deffn line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@exdent should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should not appear on @deffn line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@exdent should not appear on @deffn line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @anchor should not appear on @deffnx line
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@anchor should not appear on @deffnx line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @titlefont should not appear on @deffnx line
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@titlefont should not appear on @deffnx line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @footnote should not appear on @deffnx line
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@footnote should not appear on @deffnx line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@exdent should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should not appear on @deffnx line
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@exdent should not appear on @deffnx line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   }

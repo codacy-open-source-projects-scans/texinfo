@@ -43,9 +43,7 @@ $result_trees{'definition_commands'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -80,9 +78,7 @@ $result_trees{'definition_commands'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -113,9 +109,7 @@ $result_trees{'definition_commands'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -215,9 +209,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               },
               'type' => 'def_line'
             },
@@ -241,9 +233,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 8,
-                        'macro' => ''
+                        'line_nr' => 8
                       }
                     },
                     {
@@ -262,9 +252,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 8,
-                        'macro' => ''
+                        'line_nr' => 8
                       }
                     },
                     {
@@ -304,9 +292,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             }
           ],
@@ -316,9 +302,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         },
         {
@@ -375,9 +359,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 11,
-                        'macro' => ''
+                        'line_nr' => 11
                       }
                     },
                     {
@@ -403,9 +385,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 11,
-                        'macro' => ''
+                        'line_nr' => 11
                       }
                     }
                   ],
@@ -429,9 +409,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               },
               'type' => 'def_line'
             },
@@ -455,9 +433,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 12,
-                        'macro' => ''
+                        'line_nr' => 12
                       }
                     },
                     {
@@ -476,9 +452,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 12,
-                        'macro' => ''
+                        'line_nr' => 12
                       }
                     },
                     {
@@ -518,9 +492,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             }
           ],
@@ -530,9 +502,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 11,
-            'macro' => ''
+            'line_nr' => 11
           }
         },
         {
@@ -590,9 +560,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 15,
-                                'macro' => ''
+                                'line_nr' => 15
                               }
                             }
                           ],
@@ -604,9 +572,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       }
                     },
                     {
@@ -633,9 +599,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 15,
-                                'macro' => ''
+                                'line_nr' => 15
                               }
                             }
                           ],
@@ -647,9 +611,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       }
                     }
                   ],
@@ -673,9 +635,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               },
               'type' => 'def_line'
             },
@@ -699,9 +659,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 16,
-                        'macro' => ''
+                        'line_nr' => 16
                       }
                     },
                     {
@@ -720,9 +678,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 16,
-                        'macro' => ''
+                        'line_nr' => 16
                       }
                     },
                     {
@@ -762,9 +718,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 17,
-                'macro' => ''
+                'line_nr' => 17
               }
             }
           ],
@@ -774,9 +728,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 15,
-            'macro' => ''
+            'line_nr' => 15
           }
         },
         {
@@ -943,9 +895,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'defspec'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 19,
-                'macro' => ''
+                'line_nr' => 19
               },
               'type' => 'def_line'
             },
@@ -1020,9 +970,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 20,
-                        'macro' => ''
+                        'line_nr' => 20
                       }
                     },
                     {
@@ -1067,9 +1015,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 20,
-                        'macro' => ''
+                        'line_nr' => 20
                       }
                     },
                     {
@@ -1094,9 +1040,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 20,
-                        'macro' => ''
+                        'line_nr' => 20
                       }
                     },
                     {
@@ -1146,9 +1090,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               },
               'type' => 'def_line'
             },
@@ -1223,9 +1165,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 21,
-                        'macro' => ''
+                        'line_nr' => 21
                       }
                     },
                     {
@@ -1270,9 +1210,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 21,
-                        'macro' => ''
+                        'line_nr' => 21
                       }
                     },
                     {
@@ -1297,9 +1235,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 21,
-                        'macro' => ''
+                        'line_nr' => 21
                       }
                     },
                     {
@@ -1349,9 +1285,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 21,
-                'macro' => ''
+                'line_nr' => 21
               },
               'type' => 'def_line'
             },
@@ -1426,9 +1360,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 22,
-                        'macro' => ''
+                        'line_nr' => 22
                       }
                     },
                     {
@@ -1473,9 +1405,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 22,
-                        'macro' => ''
+                        'line_nr' => 22
                       }
                     },
                     {
@@ -1500,9 +1430,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 22,
-                        'macro' => ''
+                        'line_nr' => 22
                       }
                     },
                     {
@@ -1552,9 +1480,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 22,
-                'macro' => ''
+                'line_nr' => 22
               },
               'type' => 'def_line'
             },
@@ -1629,9 +1555,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 23,
-                        'macro' => ''
+                        'line_nr' => 23
                       }
                     },
                     {
@@ -1676,9 +1600,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 23,
-                        'macro' => ''
+                        'line_nr' => 23
                       }
                     },
                     {
@@ -1703,9 +1625,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 23,
-                        'macro' => ''
+                        'line_nr' => 23
                       }
                     },
                     {
@@ -1755,9 +1675,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 23,
-                'macro' => ''
+                'line_nr' => 23
               },
               'type' => 'def_line'
             },
@@ -1832,9 +1750,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 24,
-                        'macro' => ''
+                        'line_nr' => 24
                       }
                     },
                     {
@@ -1879,9 +1795,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 24,
-                        'macro' => ''
+                        'line_nr' => 24
                       }
                     },
                     {
@@ -1906,9 +1820,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 24,
-                        'macro' => ''
+                        'line_nr' => 24
                       }
                     },
                     {
@@ -1958,9 +1870,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 24,
-                'macro' => ''
+                'line_nr' => 24
               },
               'type' => 'def_line'
             },
@@ -2036,9 +1946,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'b',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 25,
-                                'macro' => ''
+                                'line_nr' => 25
                               }
                             }
                           ],
@@ -2050,9 +1958,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 25,
-                        'macro' => ''
+                        'line_nr' => 25
                       }
                     },
                     {
@@ -2098,9 +2004,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'b',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 25,
-                                'macro' => ''
+                                'line_nr' => 25
                               }
                             }
                           ],
@@ -2112,9 +2016,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 25,
-                        'macro' => ''
+                        'line_nr' => 25
                       }
                     },
                     {
@@ -2140,9 +2042,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'b',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 25,
-                                'macro' => ''
+                                'line_nr' => 25
                               }
                             }
                           ],
@@ -2154,9 +2054,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 25,
-                        'macro' => ''
+                        'line_nr' => 25
                       }
                     },
                     {
@@ -2206,9 +2104,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 25,
-                'macro' => ''
+                'line_nr' => 25
               },
               'type' => 'def_line'
             },
@@ -2284,9 +2180,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 26,
-                                'macro' => ''
+                                'line_nr' => 26
                               }
                             }
                           ],
@@ -2298,9 +2192,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 26,
-                        'macro' => ''
+                        'line_nr' => 26
                       }
                     },
                     {
@@ -2346,9 +2238,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 26,
-                                'macro' => ''
+                                'line_nr' => 26
                               }
                             }
                           ],
@@ -2360,9 +2250,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 26,
-                        'macro' => ''
+                        'line_nr' => 26
                       }
                     },
                     {
@@ -2388,9 +2276,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 26,
-                                'macro' => ''
+                                'line_nr' => 26
                               }
                             }
                           ],
@@ -2402,9 +2288,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 26,
-                        'macro' => ''
+                        'line_nr' => 26
                       }
                     },
                     {
@@ -2454,9 +2338,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 26,
-                'macro' => ''
+                'line_nr' => 26
               },
               'type' => 'def_line'
             },
@@ -2532,9 +2414,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 27,
-                                'macro' => ''
+                                'line_nr' => 27
                               }
                             }
                           ],
@@ -2546,9 +2426,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 27,
-                        'macro' => ''
+                        'line_nr' => 27
                       }
                     },
                     {
@@ -2594,9 +2472,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 27,
-                                'macro' => ''
+                                'line_nr' => 27
                               }
                             }
                           ],
@@ -2608,9 +2484,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 27,
-                        'macro' => ''
+                        'line_nr' => 27
                       }
                     },
                     {
@@ -2636,9 +2510,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 27,
-                                'macro' => ''
+                                'line_nr' => 27
                               }
                             }
                           ],
@@ -2650,9 +2522,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 27,
-                        'macro' => ''
+                        'line_nr' => 27
                       }
                     },
                     {
@@ -2702,9 +2572,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 27,
-                'macro' => ''
+                'line_nr' => 27
               },
               'type' => 'def_line'
             },
@@ -2780,9 +2648,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 28,
-                                'macro' => ''
+                                'line_nr' => 28
                               }
                             }
                           ],
@@ -2794,9 +2660,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 28,
-                        'macro' => ''
+                        'line_nr' => 28
                       }
                     },
                     {
@@ -2842,9 +2706,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 28,
-                                'macro' => ''
+                                'line_nr' => 28
                               }
                             }
                           ],
@@ -2856,9 +2718,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 28,
-                        'macro' => ''
+                        'line_nr' => 28
                       }
                     },
                     {
@@ -2884,9 +2744,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 28,
-                                'macro' => ''
+                                'line_nr' => 28
                               }
                             }
                           ],
@@ -2898,9 +2756,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 28,
-                        'macro' => ''
+                        'line_nr' => 28
                       }
                     },
                     {
@@ -2950,9 +2806,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 28,
-                'macro' => ''
+                'line_nr' => 28
               },
               'type' => 'def_line'
             },
@@ -3028,9 +2882,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 29,
-                                'macro' => ''
+                                'line_nr' => 29
                               }
                             }
                           ],
@@ -3042,9 +2894,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 29,
-                        'macro' => ''
+                        'line_nr' => 29
                       }
                     },
                     {
@@ -3090,9 +2940,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 29,
-                                'macro' => ''
+                                'line_nr' => 29
                               }
                             }
                           ],
@@ -3104,9 +2952,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 29,
-                        'macro' => ''
+                        'line_nr' => 29
                       }
                     },
                     {
@@ -3132,9 +2978,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 29,
-                                'macro' => ''
+                                'line_nr' => 29
                               }
                             }
                           ],
@@ -3146,9 +2990,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 29,
-                        'macro' => ''
+                        'line_nr' => 29
                       }
                     },
                     {
@@ -3198,9 +3040,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 29,
-                'macro' => ''
+                'line_nr' => 29
               },
               'type' => 'def_line'
             },
@@ -3276,9 +3116,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 30,
-                                'macro' => ''
+                                'line_nr' => 30
                               }
                             }
                           ],
@@ -3290,9 +3128,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 30,
-                        'macro' => ''
+                        'line_nr' => 30
                       }
                     },
                     {
@@ -3338,9 +3174,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 30,
-                                'macro' => ''
+                                'line_nr' => 30
                               }
                             }
                           ],
@@ -3352,9 +3186,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 30,
-                        'macro' => ''
+                        'line_nr' => 30
                       }
                     },
                     {
@@ -3380,9 +3212,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 30,
-                                'macro' => ''
+                                'line_nr' => 30
                               }
                             }
                           ],
@@ -3394,9 +3224,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 30,
-                        'macro' => ''
+                        'line_nr' => 30
                       }
                     },
                     {
@@ -3446,9 +3274,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 30,
-                'macro' => ''
+                'line_nr' => 30
               },
               'type' => 'def_line'
             },
@@ -3524,9 +3350,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 31,
-                                'macro' => ''
+                                'line_nr' => 31
                               }
                             }
                           ],
@@ -3538,9 +3362,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 31,
-                        'macro' => ''
+                        'line_nr' => 31
                       }
                     },
                     {
@@ -3586,9 +3408,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 31,
-                                'macro' => ''
+                                'line_nr' => 31
                               }
                             }
                           ],
@@ -3600,9 +3420,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 31,
-                        'macro' => ''
+                        'line_nr' => 31
                       }
                     },
                     {
@@ -3628,9 +3446,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 31,
-                                'macro' => ''
+                                'line_nr' => 31
                               }
                             }
                           ],
@@ -3642,9 +3458,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 31,
-                        'macro' => ''
+                        'line_nr' => 31
                       }
                     },
                     {
@@ -3694,9 +3508,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 31,
-                'macro' => ''
+                'line_nr' => 31
               },
               'type' => 'def_line'
             },
@@ -3772,9 +3584,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 32,
-                                'macro' => ''
+                                'line_nr' => 32
                               }
                             }
                           ],
@@ -3786,9 +3596,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 32,
-                        'macro' => ''
+                        'line_nr' => 32
                       }
                     },
                     {
@@ -3834,9 +3642,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 32,
-                                'macro' => ''
+                                'line_nr' => 32
                               }
                             }
                           ],
@@ -3848,9 +3654,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 32,
-                        'macro' => ''
+                        'line_nr' => 32
                       }
                     },
                     {
@@ -3876,9 +3680,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 32,
-                                'macro' => ''
+                                'line_nr' => 32
                               }
                             }
                           ],
@@ -3890,9 +3692,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 32,
-                        'macro' => ''
+                        'line_nr' => 32
                       }
                     },
                     {
@@ -3942,9 +3742,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 32,
-                'macro' => ''
+                'line_nr' => 32
               },
               'type' => 'def_line'
             },
@@ -4020,9 +3818,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 33,
-                                'macro' => ''
+                                'line_nr' => 33
                               }
                             }
                           ],
@@ -4034,9 +3830,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 33,
-                        'macro' => ''
+                        'line_nr' => 33
                       }
                     },
                     {
@@ -4082,9 +3876,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 33,
-                                'macro' => ''
+                                'line_nr' => 33
                               }
                             }
                           ],
@@ -4096,9 +3888,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 33,
-                        'macro' => ''
+                        'line_nr' => 33
                       }
                     },
                     {
@@ -4124,9 +3914,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 33,
-                                'macro' => ''
+                                'line_nr' => 33
                               }
                             }
                           ],
@@ -4138,9 +3926,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 33,
-                        'macro' => ''
+                        'line_nr' => 33
                       }
                     },
                     {
@@ -4190,9 +3976,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 33,
-                'macro' => ''
+                'line_nr' => 33
               },
               'type' => 'def_line'
             },
@@ -4237,9 +4021,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 35,
-                'macro' => ''
+                'line_nr' => 35
               }
             }
           ],
@@ -4249,9 +4031,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 19,
-            'macro' => ''
+            'line_nr' => 19
           }
         },
         {
@@ -4337,9 +4117,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'defspec'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 37,
-                'macro' => ''
+                'line_nr' => 37
               },
               'type' => 'def_line'
             },
@@ -4394,9 +4172,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 38,
-                        'macro' => ''
+                        'line_nr' => 38
                       }
                     },
                     {
@@ -4439,9 +4215,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 38,
-                'macro' => ''
+                'line_nr' => 38
               },
               'type' => 'def_line'
             },
@@ -4496,9 +4270,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 39,
-                        'macro' => ''
+                        'line_nr' => 39
                       }
                     },
                     {
@@ -4541,9 +4313,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 39,
-                'macro' => ''
+                'line_nr' => 39
               },
               'type' => 'def_line'
             },
@@ -4598,9 +4368,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 40,
-                        'macro' => ''
+                        'line_nr' => 40
                       }
                     },
                     {
@@ -4643,9 +4411,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 40,
-                'macro' => ''
+                'line_nr' => 40
               },
               'type' => 'def_line'
             },
@@ -4700,9 +4466,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 41,
-                        'macro' => ''
+                        'line_nr' => 41
                       }
                     },
                     {
@@ -4745,9 +4509,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 41,
-                'macro' => ''
+                'line_nr' => 41
               },
               'type' => 'def_line'
             },
@@ -4802,9 +4564,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 42,
-                        'macro' => ''
+                        'line_nr' => 42
                       }
                     },
                     {
@@ -4847,9 +4607,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 42,
-                'macro' => ''
+                'line_nr' => 42
               },
               'type' => 'def_line'
             },
@@ -4905,9 +4663,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'b',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 43,
-                                'macro' => ''
+                                'line_nr' => 43
                               }
                             }
                           ],
@@ -4919,9 +4675,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 43,
-                        'macro' => ''
+                        'line_nr' => 43
                       }
                     },
                     {
@@ -4964,9 +4718,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 43,
-                'macro' => ''
+                'line_nr' => 43
               },
               'type' => 'def_line'
             },
@@ -5022,9 +4774,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 44,
-                                'macro' => ''
+                                'line_nr' => 44
                               }
                             }
                           ],
@@ -5036,9 +4786,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 44,
-                        'macro' => ''
+                        'line_nr' => 44
                       }
                     },
                     {
@@ -5081,9 +4829,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 44,
-                'macro' => ''
+                'line_nr' => 44
               },
               'type' => 'def_line'
             },
@@ -5139,9 +4885,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 45,
-                                'macro' => ''
+                                'line_nr' => 45
                               }
                             }
                           ],
@@ -5153,9 +4897,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 45,
-                        'macro' => ''
+                        'line_nr' => 45
                       }
                     },
                     {
@@ -5198,9 +4940,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 45,
-                'macro' => ''
+                'line_nr' => 45
               },
               'type' => 'def_line'
             },
@@ -5256,9 +4996,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 46,
-                                'macro' => ''
+                                'line_nr' => 46
                               }
                             }
                           ],
@@ -5270,9 +5008,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 46,
-                        'macro' => ''
+                        'line_nr' => 46
                       }
                     },
                     {
@@ -5315,9 +5051,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 46,
-                'macro' => ''
+                'line_nr' => 46
               },
               'type' => 'def_line'
             },
@@ -5373,9 +5107,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 47,
-                                'macro' => ''
+                                'line_nr' => 47
                               }
                             }
                           ],
@@ -5387,9 +5119,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 47,
-                        'macro' => ''
+                        'line_nr' => 47
                       }
                     },
                     {
@@ -5432,9 +5162,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 47,
-                'macro' => ''
+                'line_nr' => 47
               },
               'type' => 'def_line'
             },
@@ -5490,9 +5218,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 48,
-                                'macro' => ''
+                                'line_nr' => 48
                               }
                             }
                           ],
@@ -5504,9 +5230,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 48,
-                        'macro' => ''
+                        'line_nr' => 48
                       }
                     },
                     {
@@ -5549,9 +5273,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 48,
-                'macro' => ''
+                'line_nr' => 48
               },
               'type' => 'def_line'
             },
@@ -5607,9 +5329,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 49,
-                                'macro' => ''
+                                'line_nr' => 49
                               }
                             }
                           ],
@@ -5621,9 +5341,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 49,
-                        'macro' => ''
+                        'line_nr' => 49
                       }
                     },
                     {
@@ -5666,9 +5384,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 49,
-                'macro' => ''
+                'line_nr' => 49
               },
               'type' => 'def_line'
             },
@@ -5724,9 +5440,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 50,
-                                'macro' => ''
+                                'line_nr' => 50
                               }
                             }
                           ],
@@ -5738,9 +5452,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 50,
-                        'macro' => ''
+                        'line_nr' => 50
                       }
                     },
                     {
@@ -5783,9 +5495,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 50,
-                'macro' => ''
+                'line_nr' => 50
               },
               'type' => 'def_line'
             },
@@ -5841,9 +5551,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 51,
-                                'macro' => ''
+                                'line_nr' => 51
                               }
                             }
                           ],
@@ -5855,9 +5563,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 51,
-                        'macro' => ''
+                        'line_nr' => 51
                       }
                     },
                     {
@@ -5900,9 +5606,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 51,
-                'macro' => ''
+                'line_nr' => 51
               },
               'type' => 'def_line'
             },
@@ -5947,9 +5651,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 53,
-                'macro' => ''
+                'line_nr' => 53
               }
             }
           ],
@@ -5959,9 +5661,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 37,
-            'macro' => ''
+            'line_nr' => 37
           }
         },
         {
@@ -6005,9 +5705,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 55,
-                        'macro' => ''
+                        'line_nr' => 55
                       }
                     },
                     {
@@ -6041,9 +5739,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 55,
-                                'macro' => ''
+                                'line_nr' => 55
                               }
                             }
                           ],
@@ -6055,9 +5751,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 55,
-                        'macro' => ''
+                        'line_nr' => 55
                       }
                     },
                     {
@@ -6088,9 +5782,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 55,
-                'macro' => ''
+                'line_nr' => 55
               },
               'type' => 'def_line'
             },
@@ -6111,9 +5803,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 'tie',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 56,
-                            'macro' => ''
+                            'line_nr' => 56
                           }
                         },
                         {
@@ -6147,9 +5837,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 't',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 56,
-                            'macro' => ''
+                            'line_nr' => 56
                           }
                         },
                         {
@@ -6169,9 +5857,7 @@ $result_trees{'definition_commands'} = {
                                   ],
                                   'cmdname' => 'slanted',
                                   'source_info' => {
-                                    'file_name' => '',
-                                    'line_nr' => 56,
-                                    'macro' => ''
+                                    'line_nr' => 56
                                   }
                                 }
                               ],
@@ -6180,9 +5866,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 'r',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 56,
-                            'macro' => ''
+                            'line_nr' => 56
                           }
                         },
                         {
@@ -6193,9 +5877,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 't',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 56,
-                            'macro' => ''
+                            'line_nr' => 56
                           }
                         }
                       ],
@@ -6231,9 +5913,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 56,
-                'macro' => ''
+                'line_nr' => 56
               },
               'type' => 'def_line'
             },
@@ -6254,9 +5934,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 'tie',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 57,
-                            'macro' => ''
+                            'line_nr' => 57
                           }
                         },
                         {
@@ -6290,9 +5968,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 't',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 57,
-                            'macro' => ''
+                            'line_nr' => 57
                           }
                         },
                         {
@@ -6312,9 +5988,7 @@ $result_trees{'definition_commands'} = {
                                   ],
                                   'cmdname' => 'slanted',
                                   'source_info' => {
-                                    'file_name' => '',
-                                    'line_nr' => 57,
-                                    'macro' => ''
+                                    'line_nr' => 57
                                   }
                                 }
                               ],
@@ -6323,9 +5997,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 'r',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 57,
-                            'macro' => ''
+                            'line_nr' => 57
                           }
                         },
                         {
@@ -6336,9 +6008,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 't',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 57,
-                            'macro' => ''
+                            'line_nr' => 57
                           }
                         }
                       ],
@@ -6374,9 +6044,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 57,
-                'macro' => ''
+                'line_nr' => 57
               },
               'type' => 'def_line'
             },
@@ -6397,9 +6065,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 'tie',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 58,
-                            'macro' => ''
+                            'line_nr' => 58
                           }
                         },
                         {
@@ -6433,9 +6099,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 't',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 58,
-                            'macro' => ''
+                            'line_nr' => 58
                           }
                         },
                         {
@@ -6455,9 +6119,7 @@ $result_trees{'definition_commands'} = {
                                   ],
                                   'cmdname' => 'slanted',
                                   'source_info' => {
-                                    'file_name' => '',
-                                    'line_nr' => 58,
-                                    'macro' => ''
+                                    'line_nr' => 58
                                   }
                                 }
                               ],
@@ -6466,9 +6128,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 'r',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 58,
-                            'macro' => ''
+                            'line_nr' => 58
                           }
                         },
                         {
@@ -6484,9 +6144,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 't',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 58,
-                            'macro' => ''
+                            'line_nr' => 58
                           }
                         }
                       ],
@@ -6518,9 +6176,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 58,
-                        'macro' => ''
+                        'line_nr' => 58
                       }
                     },
                     {
@@ -6540,9 +6196,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 58,
-                                'macro' => ''
+                                'line_nr' => 58
                               }
                             }
                           ],
@@ -6554,9 +6208,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 58,
-                        'macro' => ''
+                        'line_nr' => 58
                       }
                     },
                     {
@@ -6575,9 +6227,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 58,
-                        'macro' => ''
+                        'line_nr' => 58
                       }
                     }
                   ],
@@ -6607,9 +6257,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 58,
-                'macro' => ''
+                'line_nr' => 58
               },
               'type' => 'def_line'
             },
@@ -6646,9 +6294,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 59,
-                        'macro' => ''
+                        'line_nr' => 59
                       }
                     }
                   ],
@@ -6678,9 +6324,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 59,
-                'macro' => ''
+                'line_nr' => 59
               },
               'type' => 'def_line'
             },
@@ -6704,9 +6348,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 60,
-                        'macro' => ''
+                        'line_nr' => 60
                       }
                     },
                     {
@@ -6725,9 +6367,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 60,
-                        'macro' => ''
+                        'line_nr' => 60
                       }
                     },
                     {
@@ -6750,9 +6390,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 61,
-                        'macro' => ''
+                        'line_nr' => 61
                       }
                     },
                     {
@@ -6766,9 +6404,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'tie',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 61,
-                        'macro' => ''
+                        'line_nr' => 61
                       }
                     },
                     {
@@ -6784,9 +6420,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 61,
-                        'macro' => ''
+                        'line_nr' => 61
                       }
                     },
                     {
@@ -6806,9 +6440,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 62,
-                        'macro' => ''
+                        'line_nr' => 62
                       }
                     },
                     {
@@ -6848,9 +6480,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 63,
-                'macro' => ''
+                'line_nr' => 63
               }
             }
           ],
@@ -6860,9 +6490,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 55,
-            'macro' => ''
+            'line_nr' => 55
           }
         },
         {
@@ -6938,9 +6566,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -6966,9 +6592,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -6994,9 +6618,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7022,9 +6644,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7051,9 +6671,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7065,9 +6683,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7094,9 +6710,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7108,9 +6722,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7141,9 +6753,7 @@ $result_trees{'definition_commands'} = {
                                       ],
                                       'cmdname' => 'slanted',
                                       'source_info' => {
-                                        'file_name' => '',
-                                        'line_nr' => 65,
-                                        'macro' => ''
+                                        'line_nr' => 65
                                       }
                                     }
                                   ],
@@ -7152,9 +6762,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7166,9 +6774,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7195,9 +6801,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7209,9 +6813,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7251,9 +6853,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7279,9 +6879,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7307,9 +6905,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7335,9 +6931,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7364,9 +6958,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7378,9 +6970,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7407,9 +6997,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7421,9 +7009,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7454,9 +7040,7 @@ $result_trees{'definition_commands'} = {
                                       ],
                                       'cmdname' => 'slanted',
                                       'source_info' => {
-                                        'file_name' => '',
-                                        'line_nr' => 65,
-                                        'macro' => ''
+                                        'line_nr' => 65
                                       }
                                     }
                                   ],
@@ -7465,9 +7049,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7479,9 +7061,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7508,9 +7088,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7522,9 +7100,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7564,9 +7140,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7592,9 +7166,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7620,9 +7192,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7648,9 +7218,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7677,9 +7245,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7691,9 +7257,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7720,9 +7284,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7734,9 +7296,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7767,9 +7327,7 @@ $result_trees{'definition_commands'} = {
                                       ],
                                       'cmdname' => 'slanted',
                                       'source_info' => {
-                                        'file_name' => '',
-                                        'line_nr' => 65,
-                                        'macro' => ''
+                                        'line_nr' => 65
                                       }
                                     }
                                   ],
@@ -7778,9 +7336,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7792,9 +7348,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     },
                     {
@@ -7821,9 +7375,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 65,
-                                'macro' => ''
+                                'line_nr' => 65
                               }
                             }
                           ],
@@ -7835,9 +7387,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     }
                   ],
@@ -7861,9 +7411,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'defspec'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 65,
-                'macro' => ''
+                'line_nr' => 65
               },
               'type' => 'def_line'
             },
@@ -7939,9 +7487,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 66,
-                        'macro' => ''
+                        'line_nr' => 66
                       }
                     },
                     {
@@ -7967,9 +7513,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 66,
-                        'macro' => ''
+                        'line_nr' => 66
                       }
                     },
                     {
@@ -7995,9 +7539,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 66,
-                        'macro' => ''
+                        'line_nr' => 66
                       }
                     },
                     {
@@ -8023,9 +7565,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 66,
-                        'macro' => ''
+                        'line_nr' => 66
                       }
                     },
                     {
@@ -8052,9 +7592,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 66,
-                                'macro' => ''
+                                'line_nr' => 66
                               }
                             }
                           ],
@@ -8066,9 +7604,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 66,
-                        'macro' => ''
+                        'line_nr' => 66
                       }
                     },
                     {
@@ -8095,9 +7631,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 66,
-                                'macro' => ''
+                                'line_nr' => 66
                               }
                             }
                           ],
@@ -8109,9 +7643,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 66,
-                        'macro' => ''
+                        'line_nr' => 66
                       }
                     },
                     {
@@ -8142,9 +7674,7 @@ $result_trees{'definition_commands'} = {
                                       ],
                                       'cmdname' => 'slanted',
                                       'source_info' => {
-                                        'file_name' => '',
-                                        'line_nr' => 66,
-                                        'macro' => ''
+                                        'line_nr' => 66
                                       }
                                     }
                                   ],
@@ -8153,9 +7683,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 66,
-                                'macro' => ''
+                                'line_nr' => 66
                               }
                             }
                           ],
@@ -8167,9 +7695,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 66,
-                        'macro' => ''
+                        'line_nr' => 66
                       }
                     }
                   ],
@@ -8199,9 +7725,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 66,
-                'macro' => ''
+                'line_nr' => 66
               },
               'type' => 'def_line'
             },
@@ -8246,9 +7770,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 68,
-                'macro' => ''
+                'line_nr' => 68
               }
             }
           ],
@@ -8258,9 +7780,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 65,
-            'macro' => ''
+            'line_nr' => 65
           }
         },
         {
@@ -8285,9 +7805,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 70,
-                        'macro' => ''
+                        'line_nr' => 70
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -8360,9 +7878,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 70,
-                        'macro' => ''
+                        'line_nr' => 70
                       }
                     },
                     {
@@ -8408,9 +7924,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 70,
-                        'macro' => ''
+                        'line_nr' => 70
                       }
                     },
                     {
@@ -8441,9 +7955,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deftypefn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 70,
-                'macro' => ''
+                'line_nr' => 70
               },
               'type' => 'def_line'
             },
@@ -8459,9 +7971,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'dots',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 71,
-                        'macro' => ''
+                        'line_nr' => 71
                       }
                     },
                     {
@@ -8480,9 +7990,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 71,
-                        'macro' => ''
+                        'line_nr' => 71
                       }
                     },
                     {
@@ -8501,9 +8009,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 71,
-                        'macro' => ''
+                        'line_nr' => 71
                       }
                     },
                     {
@@ -8543,9 +8049,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 72,
-                'macro' => ''
+                'line_nr' => 72
               }
             }
           ],
@@ -8555,9 +8059,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 70,
-            'macro' => ''
+            'line_nr' => 70
           }
         },
         {
@@ -8582,9 +8084,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 74,
-                        'macro' => ''
+                        'line_nr' => 74
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -8658,9 +8158,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 74,
-                                'macro' => ''
+                                'line_nr' => 74
                               }
                             }
                           ],
@@ -8672,9 +8170,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 74,
-                        'macro' => ''
+                        'line_nr' => 74
                       }
                     },
                     {
@@ -8721,9 +8217,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 74,
-                                'macro' => ''
+                                'line_nr' => 74
                               }
                             }
                           ],
@@ -8735,9 +8229,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 74,
-                        'macro' => ''
+                        'line_nr' => 74
                       }
                     },
                     {
@@ -8768,9 +8260,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deftypefn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 74,
-                'macro' => ''
+                'line_nr' => 74
               },
               'type' => 'def_line'
             },
@@ -8786,9 +8276,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'dots',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 75,
-                        'macro' => ''
+                        'line_nr' => 75
                       }
                     },
                     {
@@ -8807,9 +8295,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 75,
-                        'macro' => ''
+                        'line_nr' => 75
                       }
                     },
                     {
@@ -8828,9 +8314,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 75,
-                        'macro' => ''
+                        'line_nr' => 75
                       }
                     },
                     {
@@ -8870,9 +8354,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 76,
-                'macro' => ''
+                'line_nr' => 76
               }
             }
           ],
@@ -8882,9 +8364,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 74,
-            'macro' => ''
+            'line_nr' => 74
           }
         },
         {
@@ -8895,9 +8375,7 @@ $result_trees{'definition_commands'} = {
         {
           'cmdname' => 'noindent',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 78,
-            'macro' => ''
+            'line_nr' => 78
           }
         },
         {
@@ -8933,9 +8411,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 79,
-                        'macro' => ''
+                        'line_nr' => 79
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -8986,9 +8462,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'defcv'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 79,
-                'macro' => ''
+                'line_nr' => 79
               },
               'type' => 'def_line'
             },
@@ -9004,9 +8478,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'dots',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 80,
-                        'macro' => ''
+                        'line_nr' => 80
                       }
                     },
                     {
@@ -9046,9 +8518,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 81,
-                'macro' => ''
+                'line_nr' => 81
               }
             }
           ],
@@ -9058,9 +8528,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 79,
-            'macro' => ''
+            'line_nr' => 79
           }
         },
         {
@@ -9085,9 +8553,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 83,
-                        'macro' => ''
+                        'line_nr' => 83
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -9127,9 +8593,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'type'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 83,
-                        'macro' => ''
+                        'line_nr' => 83
                       }
                     },
                     {
@@ -9203,9 +8667,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deftypecv'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 83,
-                'macro' => ''
+                'line_nr' => 83
               },
               'type' => 'def_line'
             },
@@ -9221,9 +8683,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'dots',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 84,
-                        'macro' => ''
+                        'line_nr' => 84
                       }
                     },
                     {
@@ -9263,9 +8723,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 85,
-                'macro' => ''
+                'line_nr' => 85
               }
             }
           ],
@@ -9275,9 +8733,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 83,
-            'macro' => ''
+            'line_nr' => 83
           }
         },
         {
@@ -9316,9 +8772,7 @@ $result_trees{'definition_commands'} = {
                             'def_role' => 'category'
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 88,
-                            'macro' => ''
+                            'line_nr' => 88
                           },
                           'type' => 'bracketed_arg'
                         },
@@ -9391,9 +8845,7 @@ $result_trees{'definition_commands'} = {
                             'def_role' => 'arg'
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 88,
-                            'macro' => ''
+                            'line_nr' => 88
                           }
                         },
                         {
@@ -9439,9 +8891,7 @@ $result_trees{'definition_commands'} = {
                             'def_role' => 'arg'
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 88,
-                            'macro' => ''
+                            'line_nr' => 88
                           }
                         },
                         {
@@ -9472,9 +8922,7 @@ $result_trees{'definition_commands'} = {
                     'original_def_cmdname' => 'deftypefn'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 88,
-                    'macro' => ''
+                    'line_nr' => 88
                   },
                   'type' => 'def_line'
                 },
@@ -9490,9 +8938,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 'dots',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 89,
-                            'macro' => ''
+                            'line_nr' => 89
                           }
                         },
                         {
@@ -9511,9 +8957,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 'var',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 89,
-                            'macro' => ''
+                            'line_nr' => 89
                           }
                         },
                         {
@@ -9532,9 +8976,7 @@ $result_trees{'definition_commands'} = {
                           ],
                           'cmdname' => 'var',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 89,
-                            'macro' => ''
+                            'line_nr' => 89
                           }
                         },
                         {
@@ -9574,9 +9016,7 @@ $result_trees{'definition_commands'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 90,
-                    'macro' => ''
+                    'line_nr' => 90
                   }
                 }
               ],
@@ -9586,9 +9026,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 88,
-                'macro' => ''
+                'line_nr' => 88
               }
             },
             {
@@ -9618,16 +9056,12 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 91,
-                'macro' => ''
+                'line_nr' => 91
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 87,
-            'macro' => ''
+            'line_nr' => 87
           }
         },
         {
@@ -9726,9 +9160,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'defun'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 93,
-                'macro' => ''
+                'line_nr' => 93
               },
               'type' => 'def_line'
             },
@@ -9749,9 +9181,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 94,
-                        'macro' => ''
+                        'line_nr' => 94
                       }
                     },
                     {
@@ -9770,9 +9200,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 94,
-                        'macro' => ''
+                        'line_nr' => 94
                       }
                     },
                     {
@@ -9791,9 +9219,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 94,
-                        'macro' => ''
+                        'line_nr' => 94
                       }
                     },
                     {
@@ -9833,9 +9259,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 95,
-                'macro' => ''
+                'line_nr' => 95
               }
             }
           ],
@@ -9845,9 +9269,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 93,
-            'macro' => ''
+            'line_nr' => 93
           }
         },
         {
@@ -9923,9 +9345,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'b',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 97,
-                                'macro' => ''
+                                'line_nr' => 97
                               }
                             }
                           ],
@@ -9937,9 +9357,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 97,
-                        'macro' => ''
+                        'line_nr' => 97
                       }
                     },
                     {
@@ -9976,9 +9394,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'defun'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 97,
-                'macro' => ''
+                'line_nr' => 97
               },
               'type' => 'def_line'
             },
@@ -10002,9 +9418,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 98,
-                        'macro' => ''
+                        'line_nr' => 98
                       }
                     },
                     {
@@ -10023,9 +9437,7 @@ $result_trees{'definition_commands'} = {
                       ],
                       'cmdname' => 'var',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 98,
-                        'macro' => ''
+                        'line_nr' => 98
                       }
                     },
                     {
@@ -10065,9 +9477,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 99,
-                'macro' => ''
+                'line_nr' => 99
               }
             }
           ],
@@ -10077,9 +9487,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 97,
-            'macro' => ''
+            'line_nr' => 97
           }
         },
         {
@@ -10149,9 +9557,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 101,
-                        'macro' => ''
+                        'line_nr' => 101
                       }
                     },
                     {
@@ -10177,9 +9583,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 101,
-                        'macro' => ''
+                        'line_nr' => 101
                       }
                     },
                     {
@@ -10205,9 +9609,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 101,
-                        'macro' => ''
+                        'line_nr' => 101
                       }
                     },
                     {
@@ -10253,9 +9655,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 101,
-                        'macro' => ''
+                        'line_nr' => 101
                       }
                     },
                     {
@@ -10288,9 +9688,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 101,
-                        'macro' => ''
+                        'line_nr' => 101
                       }
                     },
                     {
@@ -10323,9 +9721,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 101,
-                        'macro' => ''
+                        'line_nr' => 101
                       }
                     },
                     {
@@ -10365,9 +9761,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 102,
-                        'macro' => ''
+                        'line_nr' => 102
                       }
                     },
                     {
@@ -10400,9 +9794,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 102,
-                        'macro' => ''
+                        'line_nr' => 102
                       }
                     },
                     {
@@ -10447,9 +9839,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 101,
-                'macro' => ''
+                'line_nr' => 101
               },
               'type' => 'def_line'
             },
@@ -10494,9 +9884,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 104,
-                'macro' => ''
+                'line_nr' => 104
               }
             }
           ],
@@ -10506,9 +9894,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 101,
-            'macro' => ''
+            'line_nr' => 101
           }
         },
         {
@@ -10533,9 +9919,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 106,
-                        'macro' => ''
+                        'line_nr' => 106
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -10608,9 +9992,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 106,
-                        'macro' => ''
+                        'line_nr' => 106
                       }
                     },
                     {
@@ -10663,9 +10045,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 106,
-                        'macro' => ''
+                        'line_nr' => 106
                       }
                     },
                     {
@@ -10716,9 +10096,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deftypefn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 106,
-                'macro' => ''
+                'line_nr' => 106
               },
               'type' => 'def_line'
             },
@@ -10736,9 +10114,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 107,
-                        'macro' => ''
+                        'line_nr' => 107
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -10811,9 +10187,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 107,
-                        'macro' => ''
+                        'line_nr' => 107
                       }
                     },
                     {
@@ -10832,9 +10206,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 107,
-                        'macro' => ''
+                        'line_nr' => 107
                       }
                     },
                     {
@@ -10880,9 +10252,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 107,
-                        'macro' => ''
+                        'line_nr' => 107
                       }
                     },
                     {
@@ -10901,9 +10271,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 107,
-                        'macro' => ''
+                        'line_nr' => 107
                       }
                     },
                     {
@@ -10953,9 +10321,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 107,
-                'macro' => ''
+                'line_nr' => 107
               },
               'type' => 'def_line'
             },
@@ -10973,9 +10339,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 108,
-                        'macro' => ''
+                        'line_nr' => 108
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -11048,9 +10412,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 108,
-                        'macro' => ''
+                        'line_nr' => 108
                       }
                     },
                     {
@@ -11069,9 +10431,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 108,
-                        'macro' => ''
+                        'line_nr' => 108
                       }
                     },
                     {
@@ -11117,9 +10477,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 108,
-                        'macro' => ''
+                        'line_nr' => 108
                       }
                     },
                     {
@@ -11138,9 +10496,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 108,
-                        'macro' => ''
+                        'line_nr' => 108
                       }
                     },
                     {
@@ -11190,9 +10546,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 108,
-                'macro' => ''
+                'line_nr' => 108
               },
               'type' => 'def_line'
             },
@@ -11210,9 +10564,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 109,
-                        'macro' => ''
+                        'line_nr' => 109
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -11285,9 +10637,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 109,
-                        'macro' => ''
+                        'line_nr' => 109
                       }
                     },
                     {
@@ -11306,9 +10656,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 109,
-                        'macro' => ''
+                        'line_nr' => 109
                       }
                     },
                     {
@@ -11354,9 +10702,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 109,
-                        'macro' => ''
+                        'line_nr' => 109
                       }
                     },
                     {
@@ -11375,9 +10721,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 109,
-                        'macro' => ''
+                        'line_nr' => 109
                       }
                     },
                     {
@@ -11427,9 +10771,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 109,
-                'macro' => ''
+                'line_nr' => 109
               },
               'type' => 'def_line'
             },
@@ -11447,9 +10789,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 110,
-                        'macro' => ''
+                        'line_nr' => 110
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -11522,9 +10862,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 110,
-                        'macro' => ''
+                        'line_nr' => 110
                       }
                     },
                     {
@@ -11543,9 +10881,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 110,
-                        'macro' => ''
+                        'line_nr' => 110
                       }
                     },
                     {
@@ -11591,9 +10927,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 110,
-                        'macro' => ''
+                        'line_nr' => 110
                       }
                     },
                     {
@@ -11612,9 +10946,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 110,
-                        'macro' => ''
+                        'line_nr' => 110
                       }
                     },
                     {
@@ -11664,9 +10996,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 110,
-                'macro' => ''
+                'line_nr' => 110
               },
               'type' => 'def_line'
             },
@@ -11684,9 +11014,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 111,
-                        'macro' => ''
+                        'line_nr' => 111
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -11759,9 +11087,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 111,
-                        'macro' => ''
+                        'line_nr' => 111
                       }
                     },
                     {
@@ -11780,9 +11106,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 111,
-                        'macro' => ''
+                        'line_nr' => 111
                       }
                     },
                     {
@@ -11828,9 +11152,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 111,
-                        'macro' => ''
+                        'line_nr' => 111
                       }
                     },
                     {
@@ -11849,9 +11171,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 111,
-                        'macro' => ''
+                        'line_nr' => 111
                       }
                     },
                     {
@@ -11901,9 +11221,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 111,
-                'macro' => ''
+                'line_nr' => 111
               },
               'type' => 'def_line'
             },
@@ -11921,9 +11239,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 112,
-                        'macro' => ''
+                        'line_nr' => 112
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -11996,9 +11312,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 112,
-                        'macro' => ''
+                        'line_nr' => 112
                       }
                     },
                     {
@@ -12018,9 +11332,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'b',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 112,
-                                'macro' => ''
+                                'line_nr' => 112
                               }
                             }
                           ],
@@ -12032,9 +11344,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 112,
-                        'macro' => ''
+                        'line_nr' => 112
                       }
                     },
                     {
@@ -12080,9 +11390,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 112,
-                        'macro' => ''
+                        'line_nr' => 112
                       }
                     },
                     {
@@ -12102,9 +11410,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'b',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 112,
-                                'macro' => ''
+                                'line_nr' => 112
                               }
                             }
                           ],
@@ -12116,9 +11422,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 112,
-                        'macro' => ''
+                        'line_nr' => 112
                       }
                     },
                     {
@@ -12168,9 +11472,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 112,
-                'macro' => ''
+                'line_nr' => 112
               },
               'type' => 'def_line'
             },
@@ -12188,9 +11490,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 113,
-                        'macro' => ''
+                        'line_nr' => 113
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -12263,9 +11563,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 113,
-                        'macro' => ''
+                        'line_nr' => 113
                       }
                     },
                     {
@@ -12285,9 +11583,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 113,
-                                'macro' => ''
+                                'line_nr' => 113
                               }
                             }
                           ],
@@ -12299,9 +11595,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 113,
-                        'macro' => ''
+                        'line_nr' => 113
                       }
                     },
                     {
@@ -12347,9 +11641,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 113,
-                        'macro' => ''
+                        'line_nr' => 113
                       }
                     },
                     {
@@ -12369,9 +11661,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 113,
-                                'macro' => ''
+                                'line_nr' => 113
                               }
                             }
                           ],
@@ -12383,9 +11673,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 113,
-                        'macro' => ''
+                        'line_nr' => 113
                       }
                     },
                     {
@@ -12435,9 +11723,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 113,
-                'macro' => ''
+                'line_nr' => 113
               },
               'type' => 'def_line'
             },
@@ -12455,9 +11741,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 114,
-                        'macro' => ''
+                        'line_nr' => 114
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -12530,9 +11814,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 114,
-                        'macro' => ''
+                        'line_nr' => 114
                       }
                     },
                     {
@@ -12552,9 +11834,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 114,
-                                'macro' => ''
+                                'line_nr' => 114
                               }
                             }
                           ],
@@ -12566,9 +11846,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 114,
-                        'macro' => ''
+                        'line_nr' => 114
                       }
                     },
                     {
@@ -12614,9 +11892,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 114,
-                        'macro' => ''
+                        'line_nr' => 114
                       }
                     },
                     {
@@ -12636,9 +11912,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 114,
-                                'macro' => ''
+                                'line_nr' => 114
                               }
                             }
                           ],
@@ -12650,9 +11924,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 114,
-                        'macro' => ''
+                        'line_nr' => 114
                       }
                     },
                     {
@@ -12702,9 +11974,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 114,
-                'macro' => ''
+                'line_nr' => 114
               },
               'type' => 'def_line'
             },
@@ -12722,9 +11992,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 115,
-                        'macro' => ''
+                        'line_nr' => 115
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -12797,9 +12065,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 115,
-                        'macro' => ''
+                        'line_nr' => 115
                       }
                     },
                     {
@@ -12819,9 +12085,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 115,
-                                'macro' => ''
+                                'line_nr' => 115
                               }
                             }
                           ],
@@ -12833,9 +12097,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 115,
-                        'macro' => ''
+                        'line_nr' => 115
                       }
                     },
                     {
@@ -12881,9 +12143,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 115,
-                        'macro' => ''
+                        'line_nr' => 115
                       }
                     },
                     {
@@ -12903,9 +12163,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 115,
-                                'macro' => ''
+                                'line_nr' => 115
                               }
                             }
                           ],
@@ -12917,9 +12175,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 115,
-                        'macro' => ''
+                        'line_nr' => 115
                       }
                     },
                     {
@@ -12969,9 +12225,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 115,
-                'macro' => ''
+                'line_nr' => 115
               },
               'type' => 'def_line'
             },
@@ -12989,9 +12243,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 116,
-                        'macro' => ''
+                        'line_nr' => 116
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -13064,9 +12316,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 116,
-                        'macro' => ''
+                        'line_nr' => 116
                       }
                     },
                     {
@@ -13086,9 +12336,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 116,
-                                'macro' => ''
+                                'line_nr' => 116
                               }
                             }
                           ],
@@ -13100,9 +12348,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 116,
-                        'macro' => ''
+                        'line_nr' => 116
                       }
                     },
                     {
@@ -13148,9 +12394,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 116,
-                        'macro' => ''
+                        'line_nr' => 116
                       }
                     },
                     {
@@ -13170,9 +12414,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 116,
-                                'macro' => ''
+                                'line_nr' => 116
                               }
                             }
                           ],
@@ -13184,9 +12426,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 116,
-                        'macro' => ''
+                        'line_nr' => 116
                       }
                     },
                     {
@@ -13236,9 +12476,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 116,
-                'macro' => ''
+                'line_nr' => 116
               },
               'type' => 'def_line'
             },
@@ -13256,9 +12494,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 117,
-                        'macro' => ''
+                        'line_nr' => 117
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -13331,9 +12567,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 117,
-                        'macro' => ''
+                        'line_nr' => 117
                       }
                     },
                     {
@@ -13353,9 +12587,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 117,
-                                'macro' => ''
+                                'line_nr' => 117
                               }
                             }
                           ],
@@ -13367,9 +12599,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 117,
-                        'macro' => ''
+                        'line_nr' => 117
                       }
                     },
                     {
@@ -13415,9 +12645,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 117,
-                        'macro' => ''
+                        'line_nr' => 117
                       }
                     },
                     {
@@ -13437,9 +12665,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 117,
-                                'macro' => ''
+                                'line_nr' => 117
                               }
                             }
                           ],
@@ -13451,9 +12677,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 117,
-                        'macro' => ''
+                        'line_nr' => 117
                       }
                     },
                     {
@@ -13503,9 +12727,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 117,
-                'macro' => ''
+                'line_nr' => 117
               },
               'type' => 'def_line'
             },
@@ -13523,9 +12745,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 118,
-                        'macro' => ''
+                        'line_nr' => 118
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -13598,9 +12818,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 118,
-                        'macro' => ''
+                        'line_nr' => 118
                       }
                     },
                     {
@@ -13620,9 +12838,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 118,
-                                'macro' => ''
+                                'line_nr' => 118
                               }
                             }
                           ],
@@ -13634,9 +12850,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 118,
-                        'macro' => ''
+                        'line_nr' => 118
                       }
                     },
                     {
@@ -13682,9 +12896,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 118,
-                        'macro' => ''
+                        'line_nr' => 118
                       }
                     },
                     {
@@ -13704,9 +12916,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 118,
-                                'macro' => ''
+                                'line_nr' => 118
                               }
                             }
                           ],
@@ -13718,9 +12928,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 118,
-                        'macro' => ''
+                        'line_nr' => 118
                       }
                     },
                     {
@@ -13770,9 +12978,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 118,
-                'macro' => ''
+                'line_nr' => 118
               },
               'type' => 'def_line'
             },
@@ -13790,9 +12996,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 119,
-                        'macro' => ''
+                        'line_nr' => 119
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -13865,9 +13069,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 119,
-                        'macro' => ''
+                        'line_nr' => 119
                       }
                     },
                     {
@@ -13887,9 +13089,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 119,
-                                'macro' => ''
+                                'line_nr' => 119
                               }
                             }
                           ],
@@ -13901,9 +13101,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 119,
-                        'macro' => ''
+                        'line_nr' => 119
                       }
                     },
                     {
@@ -13949,9 +13147,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 119,
-                        'macro' => ''
+                        'line_nr' => 119
                       }
                     },
                     {
@@ -13971,9 +13167,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 119,
-                                'macro' => ''
+                                'line_nr' => 119
                               }
                             }
                           ],
@@ -13985,9 +13179,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 119,
-                        'macro' => ''
+                        'line_nr' => 119
                       }
                     },
                     {
@@ -14037,9 +13229,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 119,
-                'macro' => ''
+                'line_nr' => 119
               },
               'type' => 'def_line'
             },
@@ -14057,9 +13247,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 120,
-                        'macro' => ''
+                        'line_nr' => 120
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -14132,9 +13320,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 120,
-                        'macro' => ''
+                        'line_nr' => 120
                       }
                     },
                     {
@@ -14154,9 +13340,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 120,
-                                'macro' => ''
+                                'line_nr' => 120
                               }
                             }
                           ],
@@ -14168,9 +13352,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 120,
-                        'macro' => ''
+                        'line_nr' => 120
                       }
                     },
                     {
@@ -14216,9 +13398,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 120,
-                        'macro' => ''
+                        'line_nr' => 120
                       }
                     },
                     {
@@ -14238,9 +13418,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 120,
-                                'macro' => ''
+                                'line_nr' => 120
                               }
                             }
                           ],
@@ -14252,9 +13430,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 120,
-                        'macro' => ''
+                        'line_nr' => 120
                       }
                     },
                     {
@@ -14304,9 +13480,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 120,
-                'macro' => ''
+                'line_nr' => 120
               },
               'type' => 'def_line'
             },
@@ -14351,9 +13525,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 122,
-                'macro' => ''
+                'line_nr' => 122
               }
             }
           ],
@@ -14363,9 +13535,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 106,
-            'macro' => ''
+            'line_nr' => 106
           }
         },
         {
@@ -14390,9 +13560,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 124,
-                        'macro' => ''
+                        'line_nr' => 124
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -14465,9 +13633,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 124,
-                        'macro' => ''
+                        'line_nr' => 124
                       }
                     },
                     {
@@ -14520,9 +13686,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 124,
-                        'macro' => ''
+                        'line_nr' => 124
                       }
                     },
                     {
@@ -14573,9 +13737,7 @@ $result_trees{'definition_commands'} = {
                 'original_def_cmdname' => 'deftypefn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 124,
-                'macro' => ''
+                'line_nr' => 124
               },
               'type' => 'def_line'
             },
@@ -14593,9 +13755,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 125,
-                        'macro' => ''
+                        'line_nr' => 125
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -14655,9 +13815,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 125,
-                        'macro' => ''
+                        'line_nr' => 125
                       }
                     },
                     {
@@ -14683,9 +13841,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 125,
-                        'macro' => ''
+                        'line_nr' => 125
                       }
                     },
                     {
@@ -14738,9 +13894,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 125,
-                        'macro' => ''
+                        'line_nr' => 125
                       }
                     },
                     {
@@ -14797,9 +13951,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 125,
-                'macro' => ''
+                'line_nr' => 125
               },
               'type' => 'def_line'
             },
@@ -14817,9 +13969,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 126,
-                        'macro' => ''
+                        'line_nr' => 126
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -14879,9 +14029,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 126,
-                        'macro' => ''
+                        'line_nr' => 126
                       }
                     },
                     {
@@ -14907,9 +14055,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 126,
-                        'macro' => ''
+                        'line_nr' => 126
                       }
                     },
                     {
@@ -14962,9 +14108,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 126,
-                        'macro' => ''
+                        'line_nr' => 126
                       }
                     },
                     {
@@ -15021,9 +14165,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 126,
-                'macro' => ''
+                'line_nr' => 126
               },
               'type' => 'def_line'
             },
@@ -15041,9 +14183,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 127,
-                        'macro' => ''
+                        'line_nr' => 127
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -15103,9 +14243,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 127,
-                        'macro' => ''
+                        'line_nr' => 127
                       }
                     },
                     {
@@ -15131,9 +14269,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 127,
-                        'macro' => ''
+                        'line_nr' => 127
                       }
                     },
                     {
@@ -15186,9 +14322,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 127,
-                        'macro' => ''
+                        'line_nr' => 127
                       }
                     },
                     {
@@ -15245,9 +14379,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 127,
-                'macro' => ''
+                'line_nr' => 127
               },
               'type' => 'def_line'
             },
@@ -15265,9 +14397,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 128,
-                        'macro' => ''
+                        'line_nr' => 128
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -15327,9 +14457,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 128,
-                        'macro' => ''
+                        'line_nr' => 128
                       }
                     },
                     {
@@ -15355,9 +14483,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 128,
-                        'macro' => ''
+                        'line_nr' => 128
                       }
                     },
                     {
@@ -15410,9 +14536,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 128,
-                        'macro' => ''
+                        'line_nr' => 128
                       }
                     },
                     {
@@ -15469,9 +14593,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 128,
-                'macro' => ''
+                'line_nr' => 128
               },
               'type' => 'def_line'
             },
@@ -15489,9 +14611,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 129,
-                        'macro' => ''
+                        'line_nr' => 129
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -15551,9 +14671,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 129,
-                        'macro' => ''
+                        'line_nr' => 129
                       }
                     },
                     {
@@ -15579,9 +14697,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 129,
-                        'macro' => ''
+                        'line_nr' => 129
                       }
                     },
                     {
@@ -15634,9 +14750,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 129,
-                        'macro' => ''
+                        'line_nr' => 129
                       }
                     },
                     {
@@ -15693,9 +14807,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 129,
-                'macro' => ''
+                'line_nr' => 129
               },
               'type' => 'def_line'
             },
@@ -15713,9 +14825,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 130,
-                        'macro' => ''
+                        'line_nr' => 130
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -15776,9 +14886,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'b',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 130,
-                                'macro' => ''
+                                'line_nr' => 130
                               }
                             }
                           ],
@@ -15790,9 +14898,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 130,
-                        'macro' => ''
+                        'line_nr' => 130
                       }
                     },
                     {
@@ -15818,9 +14924,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 130,
-                        'macro' => ''
+                        'line_nr' => 130
                       }
                     },
                     {
@@ -15873,9 +14977,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 130,
-                        'macro' => ''
+                        'line_nr' => 130
                       }
                     },
                     {
@@ -15932,9 +15034,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 130,
-                'macro' => ''
+                'line_nr' => 130
               },
               'type' => 'def_line'
             },
@@ -15952,9 +15052,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 131,
-                        'macro' => ''
+                        'line_nr' => 131
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -16015,9 +15113,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 131,
-                                'macro' => ''
+                                'line_nr' => 131
                               }
                             }
                           ],
@@ -16029,9 +15125,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 131,
-                        'macro' => ''
+                        'line_nr' => 131
                       }
                     },
                     {
@@ -16057,9 +15151,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 131,
-                        'macro' => ''
+                        'line_nr' => 131
                       }
                     },
                     {
@@ -16112,9 +15204,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 131,
-                        'macro' => ''
+                        'line_nr' => 131
                       }
                     },
                     {
@@ -16171,9 +15261,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 131,
-                'macro' => ''
+                'line_nr' => 131
               },
               'type' => 'def_line'
             },
@@ -16191,9 +15279,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 132,
-                        'macro' => ''
+                        'line_nr' => 132
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -16254,9 +15340,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 132,
-                                'macro' => ''
+                                'line_nr' => 132
                               }
                             }
                           ],
@@ -16268,9 +15352,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 132,
-                        'macro' => ''
+                        'line_nr' => 132
                       }
                     },
                     {
@@ -16296,9 +15378,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 132,
-                        'macro' => ''
+                        'line_nr' => 132
                       }
                     },
                     {
@@ -16351,9 +15431,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 132,
-                        'macro' => ''
+                        'line_nr' => 132
                       }
                     },
                     {
@@ -16410,9 +15488,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 132,
-                'macro' => ''
+                'line_nr' => 132
               },
               'type' => 'def_line'
             },
@@ -16430,9 +15506,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 133,
-                        'macro' => ''
+                        'line_nr' => 133
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -16493,9 +15567,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'code',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 133,
-                                'macro' => ''
+                                'line_nr' => 133
                               }
                             }
                           ],
@@ -16507,9 +15579,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 133,
-                        'macro' => ''
+                        'line_nr' => 133
                       }
                     },
                     {
@@ -16535,9 +15605,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 133,
-                        'macro' => ''
+                        'line_nr' => 133
                       }
                     },
                     {
@@ -16590,9 +15658,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 133,
-                        'macro' => ''
+                        'line_nr' => 133
                       }
                     },
                     {
@@ -16649,9 +15715,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 133,
-                'macro' => ''
+                'line_nr' => 133
               },
               'type' => 'def_line'
             },
@@ -16669,9 +15733,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 134,
-                        'macro' => ''
+                        'line_nr' => 134
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -16732,9 +15794,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 't',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 134,
-                                'macro' => ''
+                                'line_nr' => 134
                               }
                             }
                           ],
@@ -16746,9 +15806,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 134,
-                        'macro' => ''
+                        'line_nr' => 134
                       }
                     },
                     {
@@ -16774,9 +15832,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 134,
-                        'macro' => ''
+                        'line_nr' => 134
                       }
                     },
                     {
@@ -16829,9 +15885,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 134,
-                        'macro' => ''
+                        'line_nr' => 134
                       }
                     },
                     {
@@ -16888,9 +15942,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 134,
-                'macro' => ''
+                'line_nr' => 134
               },
               'type' => 'def_line'
             },
@@ -16908,9 +15960,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 135,
-                        'macro' => ''
+                        'line_nr' => 135
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -16971,9 +16021,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 135,
-                                'macro' => ''
+                                'line_nr' => 135
                               }
                             }
                           ],
@@ -16985,9 +16033,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 135,
-                        'macro' => ''
+                        'line_nr' => 135
                       }
                     },
                     {
@@ -17013,9 +16059,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 135,
-                        'macro' => ''
+                        'line_nr' => 135
                       }
                     },
                     {
@@ -17068,9 +16112,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 135,
-                        'macro' => ''
+                        'line_nr' => 135
                       }
                     },
                     {
@@ -17127,9 +16169,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 135,
-                'macro' => ''
+                'line_nr' => 135
               },
               'type' => 'def_line'
             },
@@ -17147,9 +16187,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 136,
-                        'macro' => ''
+                        'line_nr' => 136
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -17210,9 +16248,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 136,
-                                'macro' => ''
+                                'line_nr' => 136
                               }
                             }
                           ],
@@ -17224,9 +16260,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 136,
-                        'macro' => ''
+                        'line_nr' => 136
                       }
                     },
                     {
@@ -17252,9 +16286,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 136,
-                        'macro' => ''
+                        'line_nr' => 136
                       }
                     },
                     {
@@ -17307,9 +16339,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 136,
-                        'macro' => ''
+                        'line_nr' => 136
                       }
                     },
                     {
@@ -17366,9 +16396,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 136,
-                'macro' => ''
+                'line_nr' => 136
               },
               'type' => 'def_line'
             },
@@ -17386,9 +16414,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 137,
-                        'macro' => ''
+                        'line_nr' => 137
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -17449,9 +16475,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 137,
-                                'macro' => ''
+                                'line_nr' => 137
                               }
                             }
                           ],
@@ -17463,9 +16487,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 137,
-                        'macro' => ''
+                        'line_nr' => 137
                       }
                     },
                     {
@@ -17491,9 +16513,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 137,
-                        'macro' => ''
+                        'line_nr' => 137
                       }
                     },
                     {
@@ -17546,9 +16566,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 137,
-                        'macro' => ''
+                        'line_nr' => 137
                       }
                     },
                     {
@@ -17605,9 +16623,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 137,
-                'macro' => ''
+                'line_nr' => 137
               },
               'type' => 'def_line'
             },
@@ -17625,9 +16641,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 138,
-                        'macro' => ''
+                        'line_nr' => 138
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -17688,9 +16702,7 @@ $result_trees{'definition_commands'} = {
                               ],
                               'cmdname' => 'slanted',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 138,
-                                'macro' => ''
+                                'line_nr' => 138
                               }
                             }
                           ],
@@ -17702,9 +16714,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 138,
-                        'macro' => ''
+                        'line_nr' => 138
                       }
                     },
                     {
@@ -17730,9 +16740,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 138,
-                        'macro' => ''
+                        'line_nr' => 138
                       }
                     },
                     {
@@ -17785,9 +16793,7 @@ $result_trees{'definition_commands'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 138,
-                        'macro' => ''
+                        'line_nr' => 138
                       }
                     },
                     {
@@ -17844,9 +16850,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 138,
-                'macro' => ''
+                'line_nr' => 138
               },
               'type' => 'def_line'
             },
@@ -17891,9 +16895,7 @@ $result_trees{'definition_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 140,
-                'macro' => ''
+                'line_nr' => 140
               }
             }
           ],
@@ -17903,9 +16905,7 @@ $result_trees{'definition_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 124,
-            'macro' => ''
+            'line_nr' => 124
           }
         },
         {
@@ -17923,9 +16923,7 @@ $result_trees{'definition_commands'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     }
   ],

@@ -35,9 +35,7 @@ $result_trees{'split_html_text'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     'unit_contents' => [
@@ -86,9 +84,7 @@ $result_trees{'split_html_text'} = [
           }
         },
         'source_info' => {
-          'file_name' => '',
-          'line_nr' => 2,
-          'macro' => ''
+          'line_nr' => 2
         }
       }
     ],
@@ -123,9 +119,7 @@ $result_trees{'split_html_text'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     'unit_contents' => [
@@ -157,9 +151,7 @@ $result_trees{'split_html_text'} = [
           }
         },
         'source_info' => {
-          'file_name' => '',
-          'line_nr' => 6,
-          'macro' => ''
+          'line_nr' => 6
         }
       }
     ],

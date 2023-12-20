@@ -43,8 +43,8 @@
 #
 # The following parser information is directly determined from the
 # input file name as binary strings
-# ->{'info'}->{'input_file_name'}
-# ->{'info'}->{'input_directory'}
+# ->{'global_info'}->{'input_file_name'}
+# ->{'global_info'}->{'input_directory'}
 
 package Texinfo::Parser;
 
@@ -157,7 +157,7 @@ my %parser_state_initialization = (
   'input_encoding_name' => 'utf-8', # current input encoding name, based on
                                     # mime type encoding names
   # initialization of information returned by global_information()
-  'info' => {},
+  'global_info' => {},
   # for get_conf, set for all the configuration keys that are also in
   # %Texinfo::Common::default_parser_customization_values to the
   # values set at parser initialization
@@ -720,20 +720,23 @@ sub _input_push_text($$$;$$)
   if (not $self->{'input'}) {
     $self->{'input'} = [];
   }
-  my $input_source_info = {'line_nr' => $line_nr, 'macro' => '',
-                           'file_name' => ''};
+  my $input_source_info = {'line_nr' => $line_nr};
   if (scalar(@{$self->{'input'}})) {
-    $input_source_info->{'file_name'}
-      = $self->{'input'}->[0]->{'input_source_info'}->{'file_name'};
+    if (exists($self->{'input'}->[0]->{'input_source_info'}->{'file_name'})) {
+      $input_source_info->{'file_name'}
+        = $self->{'input'}->[0]->{'input_source_info'}->{'file_name'};
+    }
     # context macro expansion
-    $input_source_info->{'macro'}
-      = $self->{'input'}->[0]->{'input_source_info'}->{'macro'};
+    if (exists($self->{'input'}->[0]->{'input_source_info'}->{'macro'})) {
+      $input_source_info->{'macro'}
+        = $self->{'input'}->[0]->{'input_source_info'}->{'macro'};
+    }
   }
   if (defined($macro_name) and $macro_name ne '') {
     # new macro expansion
     $input_source_info->{'macro'} = $macro_name;
   }
-  if (not defined($value_name) and $input_source_info->{'macro'} eq '') {
+  if (not defined($value_name) and not defined($input_source_info->{'macro'})) {
     # this counteracts the increment that would follow from the next
     # call to _next_text.
     $input_source_info->{'line_nr'} -= 1;
@@ -755,7 +758,7 @@ sub _input_pushback_text($$;$)
                           $self->{'input'}->[0]->{'input_source_info'});
     unshift @{$self->{'input'}}, $text_input;
     $text_input->{'input_source_info'}->{'line_nr'} -= 1
-      unless($text_input->{'input_source_info'}->{'macro'} ne '');
+      unless(defined($text_input->{'input_source_info'}->{'macro'}));
   }
 }
 
@@ -852,7 +855,6 @@ sub _input_push_file
           # binary
           'file_name' => $file_name,
           'line_nr' => 0,
-          'macro' => '',
        },
        'fh' => $filehandle,
        'input_file_path' => $input_file_path,
@@ -876,14 +878,15 @@ sub get_parser_info($)
     = Texinfo::Common::get_perl_encoding($self->{'commands_info'},
                                          $self->{'registrar'}, $self);
   if (defined($perl_encoding)) {
-    $self->{'info'}->{'input_perl_encoding'} = $perl_encoding
+    $self->{'global_info'}->{'input_perl_encoding'} = $perl_encoding
   } else {
-    $self->{'info'}->{'input_perl_encoding'} = 'utf-8';
+    $self->{'global_info'}->{'input_perl_encoding'} = 'utf-8';
   }
   if (defined($self->{'input_encoding_name'})) {
-    $self->{'info'}->{'input_encoding_name'} = $self->{'input_encoding_name'};
+    $self->{'global_info'}->{'input_encoding_name'}
+                               = $self->{'input_encoding_name'};
   } else {
-    $self->{'info'}->{'input_encoding_name'} = 'utf-8';
+    $self->{'global_info'}->{'input_encoding_name'} = 'utf-8';
   }
   my $global_commands = $self->{'commands_info'};
   my $document_language
@@ -891,11 +894,11 @@ sub get_parser_info($)
                                                    'documentlanguage',
                                                    'preamble');
   if ($document_language) {
-    $self->{'info'}->{'documentlanguage'}
+    $self->{'global_info'}->{'documentlanguage'}
       = Texinfo::Common::informative_command_value($document_language);
   }
   if ($global_commands->{'novalidate'}) {
-    $self->{'info'}->{'novalidate'} = 1;
+    $self->{'global_info'}->{'novalidate'} = 1;
   }
 }
 
@@ -923,8 +926,8 @@ sub parse_texi_file($$)
 
   my $document = $self->_parse_texi_document();
   get_parser_info($self);
-  $self->{'info'}->{'input_file_name'} = $file_name;
-  $self->{'info'}->{'input_directory'} = $directories;
+  $self->{'global_info'}->{'input_file_name'} = $file_name;
+  $self->{'global_info'}->{'input_directory'} = $directories;
 
   return $document;
 }
@@ -1096,10 +1099,15 @@ sub _bug_message($$;$$)
 
   my $line_message = '';
   if ($source_info) {
-    my $file = $source_info->{'file_name'};
+    my $file_name;
+    if (defined($source_info->{'file_name'})) {
+      $file_name = $source_info->{'file_name'};
+    } else {
+      $file_name = '';
+    }
     $line_message
-      = "last location: $source_info->{'file_name'}:$source_info->{'line_nr'}";
-    if ($source_info->{'macro'} ne '') {
+      = "last location: $file_name:$source_info->{'line_nr'}";
+    if (defined($source_info->{'macro'})) {
       $line_message .= " (possibly involving $source_info->{'macro'})";
     }
     $line_message .= "\n";
@@ -2365,7 +2373,7 @@ sub _next_text($;$)
         # need to decode to characters
         $next_line = Encode::decode('utf-8', $next_line);
         $input->{'input_source_info'}->{'line_nr'} += 1
-          unless ($input->{'input_source_info'}->{'macro'} ne ''
+          unless (defined($input->{'input_source_info'}->{'macro'})
                   or defined($input->{'value_flag'}));
         return ($next_line, { %{$input->{'input_source_info'}} });
       }
@@ -2389,7 +2397,13 @@ sub _next_text($;$)
         my $partially_decoded = Encode::decode($input->{'file_input_encoding'},
                                       $duplicate_input_line, Encode::FB_QUIET);
         my $error_byte = substr($duplicate_input_line, 0, 1);
-        warn("$input->{'input_source_info'}->{'file_name'}:"
+        my $file_name;
+        if (defined($input->{'input_source_info'}->{'file_name'})) {
+          $file_name = $input->{'input_source_info'}->{'file_name'};
+        } else {
+          $file_name = '';
+        }
+        warn("${file_name}:"
             . ($input->{'input_source_info'}->{'line_nr'} + 1).
                sprintf(": encoding error at byte 0x%2x\n", ord($error_byte)));
         # show perl message but only with debugging
@@ -4769,7 +4783,7 @@ sub _check_line_directive {
   if ($self->{'CPP_LINE_DIRECTIVES'}
       and defined($source_info->{'file_name'})
       and $source_info->{'file_name'} ne ''
-      and !$source_info->{'macro'}
+      and !defined($source_info->{'macro'})
       and $line =~ /^\s*#\s*(line)? (\d+)(( "([^"]+)")(\s+\d+)*)?\s*$/) {
     _save_line_directive($self, int($2), $5);
     return 1;
@@ -5735,7 +5749,7 @@ sub _handle_line_command($$$$$$)
   _register_global_command($self, $command_e, $source_info)
     if $command_e;
   if ($command eq 'dircategory') {
-    push @{$self->{'info'}->{'dircategory_direntry'}}, $command_e;
+    push @{$self->{'global_info'}->{'dircategory_direntry'}}, $command_e;
   }
   return ($current, $line, $retval, $command_e);
 }
@@ -5823,7 +5837,7 @@ sub _handle_block_command($$$$$)
     }
     if ($block_commands{$command} eq 'menu') {
       $self->_push_context('ct_preformatted', $command);
-      push @{$self->{'info'}->{'dircategory_direntry'}}, $block
+      push @{$self->{'global_info'}->{'dircategory_direntry'}}, $block
         if ($command eq 'direntry');
       if ($self->{'current_node'}) {
         if ($command eq 'direntry') {
@@ -6780,7 +6794,10 @@ sub _process_remaining_on_line($$$$)
     #        and $current->{'contents'}->[-1]->{'type'}
     #        and $current->{'contents'}->[-1]->{'type'} eq 'empty_line'
     #        and $line ne '') {
-    #  print STDERR "New text in empty line $source_info->{'line_nr'}.$source_info->{'macro'} !$line!\n";
+    #  my $macro_name = '';
+    #  $macro_name = $source_info->{'macro'}
+    #                   if (defined($source_info->{'macro'}));
+    #  print STDERR "New text in empty line $source_info->{'line_nr'}.$macro_name !$line!\n";
     #}
   }
 
@@ -7322,7 +7339,10 @@ sub _parse_texi($$$)
       my $additional_debug = '';
       if (0) {
         my $source_info_text = '';
-        $source_info_text = "$source_info->{'line_nr'}.$source_info->{'macro'}"
+        my $macro_name = '';
+        $macro_name = $source_info->{'macro'}
+                       if (defined($source_info->{'macro'}));
+        $source_info_text = "$source_info->{'line_nr'}.$macro_name"
           if ($source_info);
         my @cond_commands = map {$_->[0]} @{$self->{'conditional_stack'}};
         $additional_debug = '('.join('|', $self->_get_context_stack())
@@ -7474,7 +7494,7 @@ sub _parse_texi($$$)
   Texinfo::Translations::complete_indices($self, $self->{'index_names'});
 
   my $document = Texinfo::Document::register($root,
-     $self->{'info'}, $self->{'index_names'}, $self->{'floats'},
+     $self->{'global_info'}, $self->{'index_names'}, $self->{'floats'},
      $self->{'internal_references'}, $self->{'commands_info'},
      $self->{'identifiers_target'}, $self->{'labels_list'});
 

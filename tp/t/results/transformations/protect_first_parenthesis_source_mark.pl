@@ -50,9 +50,7 @@ $result_trees{'protect_first_parenthesis_source_mark'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -61,9 +59,7 @@ $result_trees{'protect_first_parenthesis_source_mark'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -130,9 +126,7 @@ $result_trees{'protect_first_parenthesis_source_mark'} = {
             'normalized' => '_0028some-text_0029-aa_002c_002c'
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         },
         {

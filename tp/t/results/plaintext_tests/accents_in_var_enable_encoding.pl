@@ -37,9 +37,7 @@ $result_trees{'accents_in_var_enable_encoding'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -69,9 +67,7 @@ $result_trees{'accents_in_var_enable_encoding'} = {
                       ],
                       'cmdname' => ',',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       }
                     },
                     {
@@ -90,9 +86,7 @@ $result_trees{'accents_in_var_enable_encoding'} = {
                       ],
                       'cmdname' => 'u',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       }
                     },
                     {
@@ -111,9 +105,7 @@ $result_trees{'accents_in_var_enable_encoding'} = {
                       ],
                       'cmdname' => '`',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       }
                     }
                   ],
@@ -122,9 +114,7 @@ $result_trees{'accents_in_var_enable_encoding'} = {
               ],
               'cmdname' => 'var',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {

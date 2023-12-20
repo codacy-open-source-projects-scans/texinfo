@@ -34,9 +34,7 @@ $result_trees{'nested'} = {
                       ],
                       'cmdname' => 'key',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     }
                   ],
@@ -45,9 +43,7 @@ $result_trees{'nested'} = {
               ],
               'cmdname' => 'kbd',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {

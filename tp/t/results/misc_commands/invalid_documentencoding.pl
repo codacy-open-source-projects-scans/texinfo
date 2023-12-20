@@ -34,9 +34,7 @@ $result_trees{'invalid_documentencoding'} = {
                   ],
                   'cmdname' => 'asis',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 2,
-                    'macro' => ''
+                    'line_nr' => 2
                   }
                 }
               ],
@@ -59,9 +57,7 @@ $result_trees{'invalid_documentencoding'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         },
         {
@@ -89,9 +85,7 @@ $result_trees{'invalid_documentencoding'} = {
                   ],
                   'cmdname' => 'asis',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 4,
-                    'macro' => ''
+                    'line_nr' => 4
                   }
                 }
               ],
@@ -114,9 +108,7 @@ $result_trees{'invalid_documentencoding'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 4,
-            'macro' => ''
+            'line_nr' => 4
           }
         },
         {
@@ -146,9 +138,7 @@ $result_trees{'invalid_documentencoding'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         },
         {
@@ -186,9 +176,7 @@ $result_trees{'invalid_documentencoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             },
             {
@@ -218,9 +206,7 @@ $result_trees{'invalid_documentencoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             },
             {
@@ -250,9 +236,7 @@ $result_trees{'invalid_documentencoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             },
             {
@@ -282,9 +266,7 @@ $result_trees{'invalid_documentencoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             },
             {
@@ -302,9 +284,7 @@ $result_trees{'invalid_documentencoding'} = {
                       ],
                       'cmdname' => 'TeX',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 10,
-                        'macro' => ''
+                        'line_nr' => 10
                       }
                     }
                   ],
@@ -327,9 +307,7 @@ $result_trees{'invalid_documentencoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             },
             {
@@ -352,9 +330,7 @@ $result_trees{'invalid_documentencoding'} = {
                       ],
                       'cmdname' => '\'',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 11,
-                        'macro' => ''
+                        'line_nr' => 11
                       }
                     }
                   ],
@@ -377,9 +353,7 @@ $result_trees{'invalid_documentencoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             }
           ],
@@ -413,135 +387,105 @@ $result_errors{'invalid_documentencoding'} = [
   {
     'error_line' => 'warning: @asis should not appear in @documentencoding
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@asis should not appear in @documentencoding',
     'type' => 'warning'
   },
   {
     'error_line' => 'bad argument to @documentencoding: us-ascii@asis{}
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'bad argument to @documentencoding: us-ascii@asis{}',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: @asis should not appear in @documentencoding
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => '@asis should not appear in @documentencoding',
     'type' => 'warning'
   },
   {
     'error_line' => 'bad argument to @documentencoding: latin1@asis{a}
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'bad argument to @documentencoding: latin1@asis{a}',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: encoding `YS-ASCII\' is not a canonical texinfo encoding
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'encoding `YS-ASCII\' is not a canonical texinfo encoding',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: unhandled encoding name `YS-ASCII\'
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'unhandled encoding name `YS-ASCII\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @documentencoding should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => '@documentencoding should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: encoding `bad encoding name\' is not a canonical texinfo encoding
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'encoding `bad encoding name\' is not a canonical texinfo encoding',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: unhandled encoding name `bad encoding name\'
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'unhandled encoding name `bad encoding name\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: encoding `1\' is not a canonical texinfo encoding
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => 'encoding `1\' is not a canonical texinfo encoding',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: unhandled encoding name `1\'
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => 'unhandled encoding name `1\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: bad encoding name `%\'
 ',
-    'file_name' => '',
     'line_nr' => 8,
-    'macro' => '',
     'text' => 'bad encoding name `%\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: bad encoding name `@\'
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => 'bad encoding name `@\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'bad argument to @documentencoding: AAA@TeX{}
 ',
-    'file_name' => '',
     'line_nr' => 10,
-    'macro' => '',
     'text' => 'bad argument to @documentencoding: AAA@TeX{}',
     'type' => 'error'
   },
   {
     'error_line' => 'bad argument to @documentencoding: BBB@\'e
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => 'bad argument to @documentencoding: BBB@\'e',
     'type' => 'error'
   }

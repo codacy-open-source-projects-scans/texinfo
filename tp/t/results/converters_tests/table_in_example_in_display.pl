@@ -44,9 +44,7 @@ $result_trees{'table_in_example_in_display'} = {
                         {
                           'cmdname' => 'asis',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 3,
-                            'macro' => ''
+                            'line_nr' => 3
                           },
                           'type' => 'command_as_argument'
                         }
@@ -90,9 +88,7 @@ $result_trees{'table_in_example_in_display'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 4,
-                                'macro' => ''
+                                'line_nr' => 4
                               }
                             }
                           ],
@@ -142,9 +138,7 @@ $result_trees{'table_in_example_in_display'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 6,
-                        'macro' => ''
+                        'line_nr' => 6
                       }
                     }
                   ],
@@ -157,9 +151,7 @@ $result_trees{'table_in_example_in_display'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 3,
-                    'macro' => ''
+                    'line_nr' => 3
                   }
                 },
                 {
@@ -189,16 +181,12 @@ $result_trees{'table_in_example_in_display'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 7,
-                    'macro' => ''
+                    'line_nr' => 7
                   }
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -228,16 +216,12 @@ $result_trees{'table_in_example_in_display'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

@@ -34,9 +34,7 @@ $result_trees{'empty_deftypeop_name'} = {
                           ],
                           'cmdname' => 'code',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 1,
-                            'macro' => ''
+                            'line_nr' => 1
                           }
                         }
                       ],
@@ -70,9 +68,7 @@ $result_trees{'empty_deftypeop_name'} = {
                           ],
                           'cmdname' => 'code',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 1,
-                            'macro' => ''
+                            'line_nr' => 1
                           }
                         }
                       ],
@@ -80,9 +76,7 @@ $result_trees{'empty_deftypeop_name'} = {
                         'def_role' => 'class'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -111,9 +105,7 @@ $result_trees{'empty_deftypeop_name'} = {
                           ],
                           'cmdname' => 'var',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 1,
-                            'macro' => ''
+                            'line_nr' => 1
                           }
                         }
                       ],
@@ -137,9 +129,7 @@ $result_trees{'empty_deftypeop_name'} = {
                 'original_def_cmdname' => 'deftypeop'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             },
@@ -170,9 +160,7 @@ $result_trees{'empty_deftypeop_name'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             }
           ],
@@ -182,9 +170,7 @@ $result_trees{'empty_deftypeop_name'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -206,9 +192,7 @@ $result_errors{'empty_deftypeop_name'} = [
   {
     'error_line' => 'warning: missing name for @deftypeop
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'missing name for @deftypeop',
     'type' => 'warning'
   }

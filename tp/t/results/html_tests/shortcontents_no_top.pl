@@ -44,9 +44,7 @@ $result_trees{'shortcontents_no_top'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -83,9 +81,7 @@ $result_trees{'shortcontents_no_top'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -122,9 +118,7 @@ $result_trees{'shortcontents_no_top'} = {
           ],
           'cmdname' => 'shortcontents',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         }
       ],
@@ -137,9 +131,7 @@ $result_trees{'shortcontents_no_top'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     }
   ],

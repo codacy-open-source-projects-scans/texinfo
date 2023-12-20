@@ -41,9 +41,7 @@ $result_trees{'def_syn_indices'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -85,9 +83,7 @@ $result_trees{'def_syn_indices'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -122,9 +118,7 @@ $result_trees{'def_syn_indices'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -156,9 +150,7 @@ $result_trees{'def_syn_indices'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     },
     {
@@ -220,9 +212,7 @@ $result_trees{'def_syn_indices'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             },
             {
@@ -269,9 +259,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 13,
-            'macro' => ''
+            'line_nr' => 13
           },
           'type' => 'index_entry_command'
         },
@@ -309,9 +297,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 15,
-            'macro' => ''
+            'line_nr' => 15
           }
         },
         {
@@ -339,9 +325,7 @@ $result_trees{'def_syn_indices'} = {
                   ],
                   'cmdname' => 'var',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 17,
-                    'macro' => ''
+                    'line_nr' => 17
                   }
                 },
                 {
@@ -360,9 +344,7 @@ $result_trees{'def_syn_indices'} = {
                   ],
                   'cmdname' => '~',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 17,
-                    'macro' => ''
+                    'line_nr' => 17
                   }
                 },
                 {
@@ -385,9 +367,7 @@ $result_trees{'def_syn_indices'} = {
                           ],
                           'cmdname' => 'dotless',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 17,
-                            'macro' => ''
+                            'line_nr' => 17
                           }
                         }
                       ],
@@ -396,9 +376,7 @@ $result_trees{'def_syn_indices'} = {
                   ],
                   'cmdname' => '^',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 17,
-                    'macro' => ''
+                    'line_nr' => 17
                   }
                 }
               ],
@@ -426,9 +404,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 17,
-            'macro' => ''
+            'line_nr' => 17
           },
           'type' => 'index_entry_command'
         },
@@ -469,9 +445,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 19,
-            'macro' => ''
+            'line_nr' => 19
           },
           'type' => 'index_entry_command'
         },
@@ -510,9 +484,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 21,
-            'macro' => ''
+            'line_nr' => 21
           }
         },
         {
@@ -552,9 +524,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 23,
-            'macro' => ''
+            'line_nr' => 23
           },
           'type' => 'index_entry_command'
         },
@@ -590,9 +560,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 24,
-            'macro' => ''
+            'line_nr' => 24
           },
           'type' => 'index_entry_command'
         },
@@ -631,9 +599,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 26,
-            'macro' => ''
+            'line_nr' => 26
           }
         },
         {
@@ -670,9 +636,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 28,
-            'macro' => ''
+            'line_nr' => 28
           }
         },
         {
@@ -704,9 +668,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 29,
-            'macro' => ''
+            'line_nr' => 29
           }
         },
         {
@@ -744,9 +706,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 31,
-            'macro' => ''
+            'line_nr' => 31
           }
         },
         {
@@ -779,9 +739,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 32,
-            'macro' => ''
+            'line_nr' => 32
           }
         },
         {
@@ -821,9 +779,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 34,
-            'macro' => ''
+            'line_nr' => 34
           },
           'type' => 'index_entry_command'
         },
@@ -864,9 +820,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 36,
-            'macro' => ''
+            'line_nr' => 36
           },
           'type' => 'index_entry_command'
         },
@@ -913,9 +867,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 39,
-            'macro' => ''
+            'line_nr' => 39
           }
         },
         {
@@ -961,9 +913,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 42,
-            'macro' => ''
+            'line_nr' => 42
           }
         },
         {
@@ -1009,9 +959,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 45,
-            'macro' => ''
+            'line_nr' => 45
           }
         },
         {
@@ -1057,9 +1005,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 48,
-            'macro' => ''
+            'line_nr' => 48
           }
         },
         {
@@ -1105,9 +1051,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 51,
-            'macro' => ''
+            'line_nr' => 51
           }
         },
         {
@@ -1153,9 +1097,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 54,
-            'macro' => ''
+            'line_nr' => 54
           }
         },
         {
@@ -1201,9 +1143,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 57,
-            'macro' => ''
+            'line_nr' => 57
           }
         },
         {
@@ -1249,9 +1189,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 60,
-            'macro' => ''
+            'line_nr' => 60
           }
         },
         {
@@ -1297,9 +1235,7 @@ $result_trees{'def_syn_indices'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 63,
-            'macro' => ''
+            'line_nr' => 63
           }
         }
       ],
@@ -1312,9 +1248,7 @@ $result_trees{'def_syn_indices'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 7,
-        'macro' => ''
+        'line_nr' => 7
       }
     }
   ],
@@ -1536,63 +1470,49 @@ $result_errors{'def_syn_indices'} = [
   {
     'error_line' => 'warning: printing an index `ky\' merged in another one, `pg\'
 ',
-    'file_name' => '',
     'line_nr' => 42,
-    'macro' => '',
     'text' => 'printing an index `ky\' merged in another one, `pg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: printing an index `truc\' merged in another one, `fn\'
 ',
-    'file_name' => '',
     'line_nr' => 45,
-    'macro' => '',
     'text' => 'printing an index `truc\' merged in another one, `fn\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: printing an index `truc\' merged in another one, `fn\'
 ',
-    'file_name' => '',
     'line_nr' => 48,
-    'macro' => '',
     'text' => 'printing an index `truc\' merged in another one, `fn\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: printing an index `cp\' merged in another one, `fn\'
 ',
-    'file_name' => '',
     'line_nr' => 51,
-    'macro' => '',
     'text' => 'printing an index `cp\' merged in another one, `fn\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: printing an index `cp\' merged in another one, `fn\'
 ',
-    'file_name' => '',
     'line_nr' => 54,
-    'macro' => '',
     'text' => 'printing an index `cp\' merged in another one, `fn\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: printing an index `defg\' merged in another one, `pg\'
 ',
-    'file_name' => '',
     'line_nr' => 57,
-    'macro' => '',
     'text' => 'printing an index `defg\' merged in another one, `pg\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: printing an index `abc\' merged in another one, `pg\'
 ',
-    'file_name' => '',
     'line_nr' => 60,
-    'macro' => '',
     'text' => 'printing an index `abc\' merged in another one, `pg\'',
     'type' => 'warning'
   }

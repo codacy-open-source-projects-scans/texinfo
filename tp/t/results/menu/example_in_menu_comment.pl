@@ -65,9 +65,7 @@ $result_trees{'example_in_menu_comment'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               },
               'type' => 'menu_entry'
             },
@@ -142,16 +140,12 @@ $result_trees{'example_in_menu_comment'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 8,
-                        'macro' => ''
+                        'line_nr' => 8
                       }
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 4,
-                    'macro' => ''
+                    'line_nr' => 4
                   }
                 },
                 {
@@ -203,16 +197,12 @@ $result_trees{'example_in_menu_comment'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

@@ -67,9 +67,7 @@ $result_trees{'transparent_sort_chars'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -94,9 +92,7 @@ $result_trees{'transparent_sort_chars'} = {
       ],
       'extra' => {},
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -140,9 +136,7 @@ $result_trees{'transparent_sort_chars'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 8,
-                    'macro' => ''
+                    'line_nr' => 8
                   }
                 },
                 {
@@ -161,9 +155,7 @@ $result_trees{'transparent_sort_chars'} = {
                   ],
                   'cmdname' => 'command',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 8,
-                    'macro' => ''
+                    'line_nr' => 8
                   }
                 }
               ],
@@ -192,9 +184,7 @@ $result_trees{'transparent_sort_chars'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 8,
-            'macro' => ''
+            'line_nr' => 8
           },
           'type' => 'index_entry_command'
         },
@@ -231,9 +221,7 @@ $result_trees{'transparent_sort_chars'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           },
           'type' => 'index_entry_command'
         },
@@ -270,9 +258,7 @@ $result_trees{'transparent_sort_chars'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 10,
-            'macro' => ''
+            'line_nr' => 10
           },
           'type' => 'index_entry_command'
         },
@@ -310,9 +296,7 @@ $result_trees{'transparent_sort_chars'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 12,
-            'macro' => ''
+            'line_nr' => 12
           }
         }
       ],
@@ -327,9 +311,7 @@ $result_trees{'transparent_sort_chars'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     }
   ],

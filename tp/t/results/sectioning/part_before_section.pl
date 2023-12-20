@@ -58,9 +58,7 @@ $result_trees{'part_before_section'} = [
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         'section_number' => '1'
@@ -71,9 +69,7 @@ $result_trees{'part_before_section'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     'unit_contents' => [
@@ -150,9 +146,7 @@ $result_errors{'part_before_section'} = [
   {
     'error_line' => 'raising the section level of @section which is too low
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'raising the section level of @section which is too low',
     'type' => 'error'
   }

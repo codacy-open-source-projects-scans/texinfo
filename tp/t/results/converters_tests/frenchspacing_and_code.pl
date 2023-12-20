@@ -43,9 +43,7 @@ $result_trees{'frenchspacing_and_code'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         },
         {
@@ -84,9 +82,7 @@ $result_trees{'frenchspacing_and_code'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     },
     {
@@ -121,9 +117,7 @@ $result_trees{'frenchspacing_and_code'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -154,9 +148,7 @@ $result_trees{'frenchspacing_and_code'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 7,
-        'macro' => ''
+        'line_nr' => 7
       }
     },
     {
@@ -212,9 +204,7 @@ $result_trees{'frenchspacing_and_code'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             },
             {
@@ -279,16 +269,12 @@ $result_trees{'frenchspacing_and_code'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 14,
-            'macro' => ''
+            'line_nr' => 14
           }
         },
         {
@@ -313,9 +299,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 18,
-                        'macro' => ''
+                        'line_nr' => 18
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -336,9 +320,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'class'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 18,
-                        'macro' => ''
+                        'line_nr' => 18
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -359,9 +341,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'type'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 18,
-                        'macro' => ''
+                        'line_nr' => 18
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -382,9 +362,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 18,
-                        'macro' => ''
+                        'line_nr' => 18
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -450,9 +428,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 18,
-                        'macro' => ''
+                        'line_nr' => 18
                       }
                     },
                     {
@@ -478,9 +454,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 18,
-                        'macro' => ''
+                        'line_nr' => 18
                       }
                     }
                   ],
@@ -561,9 +535,7 @@ $result_trees{'frenchspacing_and_code'} = {
                 'original_def_cmdname' => 'deftypeop'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 18,
-                'macro' => ''
+                'line_nr' => 18
               },
               'type' => 'def_line'
             },
@@ -608,9 +580,7 @@ $result_trees{'frenchspacing_and_code'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               }
             }
           ],
@@ -620,9 +590,7 @@ $result_trees{'frenchspacing_and_code'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 18,
-            'macro' => ''
+            'line_nr' => 18
           }
         },
         {
@@ -647,9 +615,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 22,
-                        'macro' => ''
+                        'line_nr' => 22
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -670,9 +636,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'class'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 22,
-                        'macro' => ''
+                        'line_nr' => 22
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -693,9 +657,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 22,
-                        'macro' => ''
+                        'line_nr' => 22
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -761,9 +723,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 22,
-                        'macro' => ''
+                        'line_nr' => 22
                       }
                     },
                     {
@@ -789,9 +749,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 22,
-                        'macro' => ''
+                        'line_nr' => 22
                       }
                     }
                   ],
@@ -872,9 +830,7 @@ $result_trees{'frenchspacing_and_code'} = {
                 'original_def_cmdname' => 'defop'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 22,
-                'macro' => ''
+                'line_nr' => 22
               },
               'type' => 'def_line'
             },
@@ -919,9 +875,7 @@ $result_trees{'frenchspacing_and_code'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 24,
-                'macro' => ''
+                'line_nr' => 24
               }
             }
           ],
@@ -931,9 +885,7 @@ $result_trees{'frenchspacing_and_code'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 22,
-            'macro' => ''
+            'line_nr' => 22
           }
         },
         {
@@ -970,9 +922,7 @@ $result_trees{'frenchspacing_and_code'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 26,
-            'macro' => ''
+            'line_nr' => 26
           }
         }
       ],
@@ -985,9 +935,7 @@ $result_trees{'frenchspacing_and_code'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 8,
-        'macro' => ''
+        'line_nr' => 8
       }
     },
     {
@@ -1018,9 +966,7 @@ $result_trees{'frenchspacing_and_code'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 27,
-        'macro' => ''
+        'line_nr' => 27
       }
     },
     {
@@ -1076,9 +1022,7 @@ $result_trees{'frenchspacing_and_code'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 32,
-                'macro' => ''
+                'line_nr' => 32
               }
             },
             {
@@ -1143,16 +1087,12 @@ $result_trees{'frenchspacing_and_code'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 36,
-                'macro' => ''
+                'line_nr' => 36
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 34,
-            'macro' => ''
+            'line_nr' => 34
           }
         },
         {
@@ -1177,9 +1117,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 38,
-                        'macro' => ''
+                        'line_nr' => 38
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1200,9 +1138,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'class'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 38,
-                        'macro' => ''
+                        'line_nr' => 38
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1223,9 +1159,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'type'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 38,
-                        'macro' => ''
+                        'line_nr' => 38
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1246,9 +1180,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 38,
-                        'macro' => ''
+                        'line_nr' => 38
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1314,9 +1246,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 38,
-                        'macro' => ''
+                        'line_nr' => 38
                       }
                     },
                     {
@@ -1342,9 +1272,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'typearg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 38,
-                        'macro' => ''
+                        'line_nr' => 38
                       }
                     }
                   ],
@@ -1425,9 +1353,7 @@ $result_trees{'frenchspacing_and_code'} = {
                 'original_def_cmdname' => 'deftypeop'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 38,
-                'macro' => ''
+                'line_nr' => 38
               },
               'type' => 'def_line'
             },
@@ -1472,9 +1398,7 @@ $result_trees{'frenchspacing_and_code'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 40,
-                'macro' => ''
+                'line_nr' => 40
               }
             }
           ],
@@ -1484,9 +1408,7 @@ $result_trees{'frenchspacing_and_code'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 38,
-            'macro' => ''
+            'line_nr' => 38
           }
         },
         {
@@ -1511,9 +1433,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 42,
-                        'macro' => ''
+                        'line_nr' => 42
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1534,9 +1454,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'class'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 42,
-                        'macro' => ''
+                        'line_nr' => 42
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1557,9 +1475,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 42,
-                        'macro' => ''
+                        'line_nr' => 42
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1625,9 +1541,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 42,
-                        'macro' => ''
+                        'line_nr' => 42
                       }
                     },
                     {
@@ -1653,9 +1567,7 @@ $result_trees{'frenchspacing_and_code'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 42,
-                        'macro' => ''
+                        'line_nr' => 42
                       }
                     }
                   ],
@@ -1736,9 +1648,7 @@ $result_trees{'frenchspacing_and_code'} = {
                 'original_def_cmdname' => 'defop'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 42,
-                'macro' => ''
+                'line_nr' => 42
               },
               'type' => 'def_line'
             },
@@ -1783,9 +1693,7 @@ $result_trees{'frenchspacing_and_code'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 44,
-                'macro' => ''
+                'line_nr' => 44
               }
             }
           ],
@@ -1795,9 +1703,7 @@ $result_trees{'frenchspacing_and_code'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 42,
-            'macro' => ''
+            'line_nr' => 42
           }
         }
       ],
@@ -1810,9 +1716,7 @@ $result_trees{'frenchspacing_and_code'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 28,
-        'macro' => ''
+        'line_nr' => 28
       }
     }
   ],

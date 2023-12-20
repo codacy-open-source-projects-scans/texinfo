@@ -29,9 +29,7 @@ $result_trees{'example_at_commands_arguments'} = {
                   ],
                   'cmdname' => '^',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -45,9 +43,7 @@ $result_trees{'example_at_commands_arguments'} = {
                   ],
                   'cmdname' => 'TeX',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -61,9 +57,7 @@ $result_trees{'example_at_commands_arguments'} = {
                   ],
                   'cmdname' => 'exclamdown',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -82,9 +76,7 @@ $result_trees{'example_at_commands_arguments'} = {
                   ],
                   'cmdname' => 'code',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -98,9 +90,7 @@ $result_trees{'example_at_commands_arguments'} = {
                   ],
                   'cmdname' => 'enddots',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 },
                 {
@@ -117,9 +107,7 @@ $result_trees{'example_at_commands_arguments'} = {
                   ],
                   'cmdname' => 'comma',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 }
               ],
@@ -192,9 +180,7 @@ $result_trees{'example_at_commands_arguments'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -204,9 +190,7 @@ $result_trees{'example_at_commands_arguments'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

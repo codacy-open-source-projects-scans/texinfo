@@ -50,9 +50,7 @@ $result_trees{'anchor_in_titlepage_titlepage'} = {
                     'normalized' => 'in-titlepage'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 3,
-                    'macro' => ''
+                    'line_nr' => 3
                   }
                 },
                 {
@@ -87,16 +85,12 @@ $result_trees{'anchor_in_titlepage_titlepage'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 4,
-                    'macro' => ''
+                    'line_nr' => 4
                   }
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -135,9 +129,7 @@ $result_trees{'anchor_in_titlepage_titlepage'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     },
     {
@@ -175,9 +167,7 @@ $result_trees{'anchor_in_titlepage_titlepage'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 7,
-        'macro' => ''
+        'line_nr' => 7
       }
     },
     {
@@ -207,9 +197,7 @@ $result_trees{'anchor_in_titlepage_titlepage'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 9,
-        'macro' => ''
+        'line_nr' => 9
       }
     },
     {
@@ -259,9 +247,7 @@ $result_trees{'anchor_in_titlepage_titlepage'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             },
             {
@@ -282,9 +268,7 @@ $result_trees{'anchor_in_titlepage_titlepage'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 10,
-        'macro' => ''
+        'line_nr' => 10
       }
     }
   ],

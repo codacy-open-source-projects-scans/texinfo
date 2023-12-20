@@ -24,9 +24,7 @@ $result_trees{'code_not_closed'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             }
           ],
@@ -48,9 +46,7 @@ $result_errors{'code_not_closed'} = [
   {
     'error_line' => '@code missing closing brace
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@code missing closing brace',
     'type' => 'error'
   }

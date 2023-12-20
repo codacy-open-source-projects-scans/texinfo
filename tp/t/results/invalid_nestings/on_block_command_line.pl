@@ -32,16 +32,12 @@ $result_trees{'on_block_command_line'} = {
                         'normalized' => 'in-anchor'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'bracketed_arg'
                 },
@@ -61,9 +57,7 @@ $result_trees{'on_block_command_line'} = {
                   ],
                   'cmdname' => 'titlefont',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 }
               ],
@@ -102,9 +96,7 @@ $result_trees{'on_block_command_line'} = {
                           ],
                           'cmdname' => 'titlefont',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 2,
-                            'macro' => ''
+                            'line_nr' => 2
                           }
                         },
                         {
@@ -116,9 +108,7 @@ $result_trees{'on_block_command_line'} = {
                         'cell_number' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     }
                   ],
@@ -157,9 +147,7 @@ $result_trees{'on_block_command_line'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -172,9 +160,7 @@ $result_trees{'on_block_command_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -189,9 +175,7 @@ $result_trees{'on_block_command_line'} = {
                 {
                   'cmdname' => 'indent',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 },
                 {
@@ -211,9 +195,7 @@ $result_trees{'on_block_command_line'} = {
                   ],
                   'cmdname' => 'titlefont',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 },
                 {
@@ -236,9 +218,7 @@ $result_trees{'on_block_command_line'} = {
                     'normalized' => 'in-quotation-anchor'
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 },
                 {
@@ -259,9 +239,7 @@ $result_trees{'on_block_command_line'} = {
                   ],
                   'cmdname' => 'footnote',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 },
                 {
@@ -291,9 +269,7 @@ $result_trees{'on_block_command_line'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   }
                 }
               ],
@@ -329,9 +305,7 @@ $result_trees{'on_block_command_line'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
@@ -341,9 +315,7 @@ $result_trees{'on_block_command_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         }
       ],
@@ -371,81 +343,63 @@ $result_errors{'on_block_command_line'} = [
   {
     'error_line' => 'warning: @anchor should not appear on @multitable line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@anchor should not appear on @multitable line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @titlefont should not appear on @multitable line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@titlefont should not appear on @multitable line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: unexpected argument on @multitable line: @titlefont{in titlefont}
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'unexpected argument on @multitable line: @titlefont{in titlefont}',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @indent should not appear on @quotation line
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@indent should not appear on @quotation line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @titlefont should not appear on @quotation line
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@titlefont should not appear on @quotation line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @anchor should not appear on @quotation line
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@anchor should not appear on @quotation line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @footnote should not appear on @quotation line
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@footnote should not appear on @quotation line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@exdent should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should not appear on @quotation line
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@exdent should not appear on @quotation line',
     'type' => 'warning'
   }

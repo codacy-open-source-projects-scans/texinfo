@@ -45,9 +45,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     },
                     {
@@ -96,9 +94,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             },
@@ -154,9 +150,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 4,
-                        'macro' => ''
+                        'line_nr' => 4
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -172,9 +166,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 4,
-                        'macro' => ''
+                        'line_nr' => 4
                       },
                       'type' => 'bracketed_arg'
                     }
@@ -204,9 +196,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               },
               'type' => 'def_line'
             },
@@ -243,9 +233,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   },
                   'type' => 'index_entry_command'
                 }
@@ -289,9 +277,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                               ],
                               'cmdname' => 'samp',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 6,
-                                'macro' => ''
+                                'line_nr' => 6
                               }
                             },
                             {
@@ -306,9 +292,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 6,
-                        'macro' => ''
+                        'line_nr' => 6
                       }
                     },
                     {
@@ -350,9 +334,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               },
               'type' => 'def_line'
             },
@@ -389,9 +371,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 7,
-                    'macro' => ''
+                    'line_nr' => 7
                   },
                   'type' => 'index_entry_command'
                 },
@@ -439,9 +419,7 @@ $result_trees{'inter_item_commands_in_def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             }
           ],
@@ -451,9 +429,7 @@ $result_trees{'inter_item_commands_in_def'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -491,45 +467,35 @@ $result_errors{'inter_item_commands_in_def'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `cp\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'entry for index `cp\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `cp\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => 'entry for index `cp\' outside of any node',
     'type' => 'warning'
   }

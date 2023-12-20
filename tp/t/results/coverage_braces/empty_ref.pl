@@ -24,9 +24,7 @@ $result_trees{'empty_ref'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -51,9 +49,7 @@ $result_trees{'empty_ref'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -72,9 +68,7 @@ $result_trees{'empty_ref'} = {
               ],
               'cmdname' => 'inforef',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -110,9 +104,7 @@ $result_trees{'empty_ref'} = {
               ],
               'cmdname' => 'inforef',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -144,54 +136,42 @@ $result_errors{'empty_ref'} = [
   {
     'error_line' => 'warning: command @ref missing a node or external manual argument
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'command @ref missing a node or external manual argument',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: command @xref missing a node or external manual argument
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'command @xref missing a node or external manual argument',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @inforef is obsolete
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@inforef is obsolete',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: command @inforef missing a node or external manual argument
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'command @inforef missing a node or external manual argument',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @inforef is obsolete
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => '@inforef is obsolete',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: command @inforef missing a node or external manual argument
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'command @inforef missing a node or external manual argument',
     'type' => 'warning'
   }

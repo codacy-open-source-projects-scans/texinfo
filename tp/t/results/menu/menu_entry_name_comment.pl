@@ -93,9 +93,7 @@ $result_trees{'menu_entry_name_comment'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               },
               'type' => 'menu_entry'
             },
@@ -174,9 +172,7 @@ $result_trees{'menu_entry_name_comment'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               },
               'type' => 'menu_entry'
             },
@@ -254,9 +250,7 @@ $result_trees{'menu_entry_name_comment'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               },
               'type' => 'menu_entry'
             },
@@ -334,9 +328,7 @@ $result_trees{'menu_entry_name_comment'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'menu_entry'
             },
@@ -417,9 +409,7 @@ $result_trees{'menu_entry_name_comment'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               },
               'type' => 'menu_entry'
             },
@@ -450,16 +440,12 @@ $result_trees{'menu_entry_name_comment'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

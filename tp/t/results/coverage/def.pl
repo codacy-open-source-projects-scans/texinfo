@@ -31,9 +31,7 @@ $result_trees{'def'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -83,9 +81,7 @@ $result_trees{'def'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               },
               'type' => 'def_line'
             },
@@ -130,9 +126,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -142,9 +136,7 @@ $result_trees{'def'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         },
         {
@@ -296,9 +288,7 @@ $result_trees{'def'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               },
               'type' => 'def_line'
             },
@@ -343,9 +333,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             }
           ],
@@ -355,9 +343,7 @@ $result_trees{'def'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 6,
-            'macro' => ''
+            'line_nr' => 6
           }
         },
         {
@@ -401,9 +387,7 @@ $result_trees{'def'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 11,
-                        'macro' => ''
+                        'line_nr' => 11
                       }
                     },
                     {
@@ -452,9 +436,7 @@ $result_trees{'def'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               },
               'type' => 'def_line'
             },
@@ -472,9 +454,7 @@ $result_trees{'def'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 12,
-                        'macro' => ''
+                        'line_nr' => 12
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -503,9 +483,7 @@ $result_trees{'def'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 12,
-                        'macro' => ''
+                        'line_nr' => 12
                       },
                       'type' => 'bracketed_arg'
                     }
@@ -535,9 +513,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               },
               'type' => 'def_line'
             },
@@ -568,9 +544,7 @@ $result_trees{'def'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 13,
-                        'macro' => ''
+                        'line_nr' => 13
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -586,9 +560,7 @@ $result_trees{'def'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 13,
-                        'macro' => ''
+                        'line_nr' => 13
                       },
                       'type' => 'bracketed_arg'
                     }
@@ -618,9 +590,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               },
               'type' => 'def_line'
             },
@@ -656,9 +626,7 @@ $result_trees{'def'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 14,
-                        'macro' => ''
+                        'line_nr' => 14
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -674,9 +642,7 @@ $result_trees{'def'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 14,
-                        'macro' => ''
+                        'line_nr' => 14
                       },
                       'type' => 'bracketed_arg'
                     }
@@ -706,9 +672,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               },
               'type' => 'def_line'
             },
@@ -744,9 +708,7 @@ $result_trees{'def'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -762,9 +724,7 @@ $result_trees{'def'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       },
                       'type' => 'bracketed_arg'
                     }
@@ -794,9 +754,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               },
               'type' => 'def_line'
             },
@@ -833,9 +791,7 @@ $result_trees{'def'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 16,
-                        'macro' => ''
+                        'line_nr' => 16
                       }
                     },
                     {
@@ -877,9 +833,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               },
               'type' => 'def_line'
             },
@@ -920,9 +874,7 @@ $result_trees{'def'} = {
                               ],
                               'cmdname' => 'samp',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 17,
-                                'macro' => ''
+                                'line_nr' => 17
                               }
                             },
                             {
@@ -937,9 +889,7 @@ $result_trees{'def'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 17,
-                        'macro' => ''
+                        'line_nr' => 17
                       }
                     },
                     {
@@ -981,9 +931,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 17,
-                'macro' => ''
+                'line_nr' => 17
               },
               'type' => 'def_line'
             },
@@ -996,9 +944,7 @@ $result_trees{'def'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 18,
-                        'macro' => ''
+                        'line_nr' => 18
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1036,9 +982,7 @@ $result_trees{'def'} = {
                 'original_def_cmdname' => 'deffnx'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 18,
-                'macro' => ''
+                'line_nr' => 18
               },
               'type' => 'def_line'
             },
@@ -1051,9 +995,7 @@ $result_trees{'def'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 19,
-                        'macro' => ''
+                        'line_nr' => 19
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1074,9 +1016,7 @@ $result_trees{'def'} = {
                         'def_role' => 'name'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 19,
-                        'macro' => ''
+                        'line_nr' => 19
                       },
                       'type' => 'bracketed_arg'
                     }
@@ -1101,9 +1041,7 @@ $result_trees{'def'} = {
                 'original_def_cmdname' => 'deffnx'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 19,
-                'macro' => ''
+                'line_nr' => 19
               },
               'type' => 'def_line'
             },
@@ -1121,9 +1059,7 @@ $result_trees{'def'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 20,
-                        'macro' => ''
+                        'line_nr' => 20
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1161,9 +1097,7 @@ $result_trees{'def'} = {
                 'original_def_cmdname' => 'deffnx'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               },
               'type' => 'def_line'
             },
@@ -1181,9 +1115,7 @@ $result_trees{'def'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 21,
-                        'macro' => ''
+                        'line_nr' => 21
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1265,9 +1197,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 21,
-                'macro' => ''
+                'line_nr' => 21
               },
               'type' => 'def_line'
             },
@@ -1300,9 +1230,7 @@ $result_trees{'def'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 23,
-                        'macro' => ''
+                        'line_nr' => 23
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1384,9 +1312,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 23,
-                'macro' => ''
+                'line_nr' => 23
               },
               'type' => 'def_line'
             },
@@ -1419,9 +1345,7 @@ $result_trees{'def'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 25,
-                        'macro' => ''
+                        'line_nr' => 25
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -1503,9 +1427,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 25,
-                'macro' => ''
+                'line_nr' => 25
               },
               'type' => 'def_line'
             },
@@ -1550,9 +1472,7 @@ $result_trees{'def'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 27,
-                'macro' => ''
+                'line_nr' => 27
               }
             }
           ],
@@ -1562,9 +1482,7 @@ $result_trees{'def'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 11,
-            'macro' => ''
+            'line_nr' => 11
           }
         }
       ],
@@ -1646,135 +1564,105 @@ $result_errors{'def'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 12,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 13,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 14,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 15,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 16,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 17,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 18,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 19,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 20,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 21,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 23,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 25,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   }

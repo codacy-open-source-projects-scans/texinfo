@@ -55,9 +55,7 @@ $result_trees{'macro_end_call_in_ignored_raw'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -66,9 +64,7 @@ $result_trees{'macro_end_call_in_ignored_raw'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -158,14 +154,11 @@ $result_trees{'macro_end_call_in_ignored_raw'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 6,
             'macro' => 'startraw'
           }

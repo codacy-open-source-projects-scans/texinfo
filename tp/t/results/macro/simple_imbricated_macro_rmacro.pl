@@ -65,9 +65,7 @@ $result_trees{'simple_imbricated_macro_rmacro'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
@@ -76,9 +74,7 @@ $result_trees{'simple_imbricated_macro_rmacro'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -160,7 +156,6 @@ $result_trees{'simple_imbricated_macro_rmacro'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 8,
                     'macro' => 'truc'
                   }
@@ -171,7 +166,6 @@ $result_trees{'simple_imbricated_macro_rmacro'} = {
 '
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 8,
                 'macro' => 'truc'
               }

@@ -29,9 +29,7 @@ $result_trees{'math'} = {
                         }
                       ],
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       },
                       'type' => 'balanced_braces'
                     },
@@ -45,9 +43,7 @@ $result_trees{'math'} = {
                         }
                       ],
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       },
                       'type' => 'balanced_braces'
                     }
@@ -57,9 +53,7 @@ $result_trees{'math'} = {
               ],
               'cmdname' => 'math',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -103,9 +97,7 @@ $result_trees{'math'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     },
                     {
@@ -124,9 +116,7 @@ $result_trees{'math'} = {
                       ],
                       'cmdname' => 'sub',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     },
                     {
@@ -145,9 +135,7 @@ $result_trees{'math'} = {
                       ],
                       'cmdname' => 'sup',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     }
                   ],
@@ -156,9 +144,7 @@ $result_trees{'math'} = {
               ],
               'cmdname' => 'math',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             },
             {
@@ -205,9 +191,7 @@ $result_trees{'math'} = {
                                     }
                                   ],
                                   'source_info' => {
-                                    'file_name' => '',
-                                    'line_nr' => 8,
-                                    'macro' => ''
+                                    'line_nr' => 8
                                   },
                                   'type' => 'balanced_braces'
                                 }
@@ -217,9 +201,7 @@ $result_trees{'math'} = {
                           ],
                           'cmdname' => 'code',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 8,
-                            'macro' => ''
+                            'line_nr' => 8
                           }
                         },
                         {
@@ -227,9 +209,7 @@ $result_trees{'math'} = {
                         }
                       ],
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 8,
-                        'macro' => ''
+                        'line_nr' => 8
                       },
                       'type' => 'balanced_braces'
                     },
@@ -249,9 +229,7 @@ $result_trees{'math'} = {
                         }
                       ],
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 8,
-                        'macro' => ''
+                        'line_nr' => 8
                       },
                       'type' => 'balanced_braces'
                     },
@@ -267,9 +245,7 @@ $result_trees{'math'} = {
                             }
                           ],
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 8,
-                            'macro' => ''
+                            'line_nr' => 8
                           },
                           'type' => 'balanced_braces'
                         },
@@ -278,9 +254,7 @@ $result_trees{'math'} = {
                         }
                       ],
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 8,
-                        'macro' => ''
+                        'line_nr' => 8
                       },
                       'type' => 'balanced_braces'
                     }
@@ -295,9 +269,7 @@ $result_trees{'math'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             },
             {
@@ -354,9 +326,7 @@ $result_trees{'math'} = {
               ],
               'cmdname' => 'sup',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             },
             {
@@ -375,9 +345,7 @@ $result_trees{'math'} = {
               ],
               'cmdname' => 'sub',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             },
             {
@@ -436,9 +404,7 @@ $result_errors{'math'} = [
   {
     'error_line' => 'warning: @\\ should only appear in math context
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => '@\\ should only appear in math context',
     'type' => 'warning'
   }

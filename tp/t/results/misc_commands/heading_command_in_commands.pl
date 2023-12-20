@@ -48,9 +48,7 @@ $result_trees{'heading_command_in_commands'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       }
                     }
                   ],
@@ -59,9 +57,7 @@ $result_trees{'heading_command_in_commands'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -116,9 +112,7 @@ $result_trees{'heading_command_in_commands'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 7,
-                    'macro' => ''
+                    'line_nr' => 7
                   }
                 }
               ],
@@ -151,16 +145,12 @@ $result_trees{'heading_command_in_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 6,
-            'macro' => ''
+            'line_nr' => 6
           }
         },
         {
@@ -206,9 +196,7 @@ $result_trees{'heading_command_in_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             },
             {
@@ -238,16 +226,12 @@ $result_trees{'heading_command_in_commands'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 10,
-            'macro' => ''
+            'line_nr' => 10
           }
         }
       ],
@@ -283,27 +267,21 @@ $result_errors{'heading_command_in_commands'} = [
   {
     'error_line' => 'warning: @everyheading should not appear in @code
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => '@everyheading should not appear in @code',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: multiple @everyheading
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => 'multiple @everyheading',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: multiple @everyheading
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => 'multiple @everyheading',
     'type' => 'warning'
   }

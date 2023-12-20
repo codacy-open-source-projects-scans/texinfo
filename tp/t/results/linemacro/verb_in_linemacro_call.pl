@@ -81,9 +81,7 @@ $result_trees{'verb_in_linemacro_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
@@ -92,9 +90,7 @@ $result_trees{'verb_in_linemacro_call'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -212,7 +208,6 @@ $result_trees{'verb_in_linemacro_call'} = {
                         'delimiter' => ':'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 9,
                         'macro' => 'mycommand'
                       }
@@ -241,7 +236,6 @@ $result_trees{'verb_in_linemacro_call'} = {
                         'delimiter' => '|'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 9,
                         'macro' => 'mycommand'
                       }
@@ -296,7 +290,6 @@ $result_trees{'verb_in_linemacro_call'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 9,
                         'macro' => 'mycommand'
                       },
@@ -331,7 +324,6 @@ $result_trees{'verb_in_linemacro_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 9,
                 'macro' => 'mycommand'
               },
@@ -364,16 +356,12 @@ $result_trees{'verb_in_linemacro_call'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 8,
-            'macro' => ''
+            'line_nr' => 8
           }
         }
       ],

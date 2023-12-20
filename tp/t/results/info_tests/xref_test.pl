@@ -77,9 +77,7 @@ $result_trees{'xref_test'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             },
             {
@@ -119,9 +117,7 @@ $result_trees{'xref_test'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             },
             {
@@ -166,9 +162,7 @@ $result_trees{'xref_test'} = {
                       ],
                       'cmdname' => 'xref',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     }
                   ],
@@ -177,9 +171,7 @@ $result_trees{'xref_test'} = {
               ],
               'cmdname' => 'code',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             },
             {
@@ -233,9 +225,7 @@ $result_trees{'xref_test'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             },
             {
@@ -276,9 +266,7 @@ $result_trees{'xref_test'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             },
             {
@@ -299,9 +287,7 @@ $result_trees{'xref_test'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     }
   ],
@@ -385,18 +371,14 @@ $result_converted_errors{'info'}->{'xref_test'} = [
   {
     'error_line' => 'warning: @xref node name should not contain `.\'
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => '@xref node name should not contain `.\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: `.\' or `,\' must follow @xref, not !
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => '`.\' or `,\' must follow @xref, not !',
     'type' => 'warning'
   }

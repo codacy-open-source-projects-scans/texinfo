@@ -102,16 +102,12 @@ $result_trees{'ignore_in_xref'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 6,
-                            'macro' => ''
+                            'line_nr' => 6
                           }
                         }
                       ],
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 4,
-                        'macro' => ''
+                        'line_nr' => 4
                       }
                     }
                   ],
@@ -126,9 +122,7 @@ $result_trees{'ignore_in_xref'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -149,9 +143,7 @@ $result_trees{'ignore_in_xref'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     }
   ],
@@ -194,9 +186,7 @@ $result_errors{'ignore_in_xref'} = [
   {
     'error_line' => 'warning: @ignore should not appear anywhere inside @xref
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => '@ignore should not appear anywhere inside @xref',
     'type' => 'warning'
   }

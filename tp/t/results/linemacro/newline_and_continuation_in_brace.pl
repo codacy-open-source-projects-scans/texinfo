@@ -67,9 +67,7 @@ $result_trees{'newline_and_continuation_in_brace'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -78,9 +76,7 @@ $result_trees{'newline_and_continuation_in_brace'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         },
         {
@@ -199,7 +195,6 @@ $result_trees{'newline_and_continuation_in_brace'} = {
                           ],
                           'cmdname' => 'code',
                           'source_info' => {
-                            'file_name' => '',
                             'line_nr' => 9,
                             'macro' => 'mylinecommand'
                           }
@@ -283,7 +278,6 @@ $result_trees{'newline_and_continuation_in_brace'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 9,
                         'macro' => 'mylinecommand'
                       },
@@ -332,7 +326,6 @@ $result_trees{'newline_and_continuation_in_brace'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 9,
                 'macro' => 'mylinecommand'
               },
@@ -365,16 +358,12 @@ $result_trees{'newline_and_continuation_in_brace'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 6,
-            'macro' => ''
+            'line_nr' => 6
           }
         }
       ],

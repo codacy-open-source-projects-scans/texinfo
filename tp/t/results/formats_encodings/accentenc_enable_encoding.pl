@@ -37,9 +37,7 @@ $result_trees{'accentenc_enable_encoding'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -78,9 +76,7 @@ $result_trees{'accentenc_enable_encoding'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -125,9 +121,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '`',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             },
             {
@@ -146,9 +140,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '`',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             },
             {
@@ -181,9 +173,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '\'',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             },
             {
@@ -202,9 +192,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '\'',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             },
             {
@@ -237,9 +225,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '^',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             },
             {
@@ -258,9 +244,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '^',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 10,
-                'macro' => ''
+                'line_nr' => 10
               }
             },
             {
@@ -293,9 +277,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '"',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             },
             {
@@ -314,9 +296,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '"',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 12,
-                'macro' => ''
+                'line_nr' => 12
               }
             },
             {
@@ -349,9 +329,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '`',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               }
             },
             {
@@ -370,9 +348,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '`',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               }
             },
             {
@@ -405,9 +381,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '\'',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             },
             {
@@ -426,9 +400,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '\'',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             },
             {
@@ -461,9 +433,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '^',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 18,
-                'macro' => ''
+                'line_nr' => 18
               }
             },
             {
@@ -482,9 +452,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '^',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 18,
-                'macro' => ''
+                'line_nr' => 18
               }
             },
             {
@@ -517,9 +485,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '"',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               }
             },
             {
@@ -538,9 +504,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '"',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               }
             },
             {
@@ -573,9 +537,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => ',',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 22,
-                'macro' => ''
+                'line_nr' => 22
               }
             },
             {
@@ -594,9 +556,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => ',',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 22,
-                'macro' => ''
+                'line_nr' => 22
               }
             },
             {
@@ -629,9 +589,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '~',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 24,
-                'macro' => ''
+                'line_nr' => 24
               }
             },
             {
@@ -650,9 +608,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '~',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 24,
-                'macro' => ''
+                'line_nr' => 24
               }
             },
             {
@@ -685,9 +641,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '=',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 26,
-                'macro' => ''
+                'line_nr' => 26
               }
             },
             {
@@ -706,9 +660,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '=',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 26,
-                'macro' => ''
+                'line_nr' => 26
               }
             },
             {
@@ -741,9 +693,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'w',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 28,
-                'macro' => ''
+                'line_nr' => 28
               }
             },
             {
@@ -762,9 +712,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'H',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 28,
-                'macro' => ''
+                'line_nr' => 28
               }
             },
             {
@@ -788,9 +736,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 28,
-                'macro' => ''
+                'line_nr' => 28
               }
             },
             {
@@ -823,9 +769,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'dotaccent',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 30,
-                'macro' => ''
+                'line_nr' => 30
               }
             },
             {
@@ -849,9 +793,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 30,
-                'macro' => ''
+                'line_nr' => 30
               }
             },
             {
@@ -884,9 +826,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'ringaccent',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 32,
-                'macro' => ''
+                'line_nr' => 32
               }
             },
             {
@@ -910,9 +850,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 32,
-                'macro' => ''
+                'line_nr' => 32
               }
             },
             {
@@ -945,9 +883,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'tieaccent',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 34,
-                'macro' => ''
+                'line_nr' => 34
               }
             },
             {
@@ -980,9 +916,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'u',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 36,
-                'macro' => ''
+                'line_nr' => 36
               }
             },
             {
@@ -1006,9 +940,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 36,
-                'macro' => ''
+                'line_nr' => 36
               }
             },
             {
@@ -1041,9 +973,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'ubaraccent',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 38,
-                'macro' => ''
+                'line_nr' => 38
               }
             },
             {
@@ -1067,9 +997,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 38,
-                'macro' => ''
+                'line_nr' => 38
               }
             },
             {
@@ -1102,9 +1030,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'udotaccent',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 40,
-                'macro' => ''
+                'line_nr' => 40
               }
             },
             {
@@ -1128,9 +1054,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 40,
-                'macro' => ''
+                'line_nr' => 40
               }
             },
             {
@@ -1163,9 +1087,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'v',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 42,
-                'macro' => ''
+                'line_nr' => 42
               }
             },
             {
@@ -1189,9 +1111,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 42,
-                'macro' => ''
+                'line_nr' => 42
               }
             },
             {
@@ -1224,9 +1144,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'ogonek',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 44,
-                'macro' => ''
+                'line_nr' => 44
               }
             },
             {
@@ -1250,9 +1168,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 44,
-                'macro' => ''
+                'line_nr' => 44
               }
             },
             {
@@ -1285,9 +1201,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'ogonek',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 46,
-                'macro' => ''
+                'line_nr' => 46
               }
             },
             {
@@ -1311,9 +1225,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 46,
-                'macro' => ''
+                'line_nr' => 46
               }
             },
             {
@@ -1341,9 +1253,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'questiondown',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 48,
-                'macro' => ''
+                'line_nr' => 48
               }
             },
             {
@@ -1357,9 +1267,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'exclamdown',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 48,
-                'macro' => ''
+                'line_nr' => 48
               }
             },
             {
@@ -1387,9 +1295,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'aa',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 50,
-                'macro' => ''
+                'line_nr' => 50
               }
             },
             {
@@ -1403,9 +1309,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'AA',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 50,
-                'macro' => ''
+                'line_nr' => 50
               }
             },
             {
@@ -1433,9 +1337,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'ae',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 52,
-                'macro' => ''
+                'line_nr' => 52
               }
             },
             {
@@ -1449,9 +1351,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'AE',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 52,
-                'macro' => ''
+                'line_nr' => 52
               }
             },
             {
@@ -1465,9 +1365,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'oe',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 52,
-                'macro' => ''
+                'line_nr' => 52
               }
             },
             {
@@ -1481,9 +1379,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'OE',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 52,
-                'macro' => ''
+                'line_nr' => 52
               }
             },
             {
@@ -1516,9 +1412,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'dotless',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 54,
-                'macro' => ''
+                'line_nr' => 54
               }
             },
             {
@@ -1537,9 +1431,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'dotless',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 54,
-                'macro' => ''
+                'line_nr' => 54
               }
             },
             {
@@ -1567,9 +1459,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'l',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 56,
-                'macro' => ''
+                'line_nr' => 56
               }
             },
             {
@@ -1583,9 +1473,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'L',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 56,
-                'macro' => ''
+                'line_nr' => 56
               }
             },
             {
@@ -1613,9 +1501,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'o',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 58,
-                'macro' => ''
+                'line_nr' => 58
               }
             },
             {
@@ -1629,9 +1515,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'O',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 58,
-                'macro' => ''
+                'line_nr' => 58
               }
             },
             {
@@ -1659,9 +1543,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'ss',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 60,
-                'macro' => ''
+                'line_nr' => 60
               }
             },
             {
@@ -1689,9 +1571,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => 'pounds',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 62,
-                'macro' => ''
+                'line_nr' => 62
               }
             },
             {
@@ -1738,9 +1618,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                       ],
                       'cmdname' => 'dotless',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 65,
-                        'macro' => ''
+                        'line_nr' => 65
                       }
                     }
                   ],
@@ -1749,9 +1627,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '`',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 65,
-                'macro' => ''
+                'line_nr' => 65
               }
             },
             {
@@ -1788,9 +1664,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                       ],
                       'cmdname' => 'dotless',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 67,
-                        'macro' => ''
+                        'line_nr' => 67
                       }
                     }
                   ],
@@ -1799,9 +1673,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '\'',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 67,
-                'macro' => ''
+                'line_nr' => 67
               }
             },
             {
@@ -1838,9 +1710,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                       ],
                       'cmdname' => 'dotless',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 69,
-                        'macro' => ''
+                        'line_nr' => 69
                       }
                     }
                   ],
@@ -1849,9 +1719,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '^',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 69,
-                'macro' => ''
+                'line_nr' => 69
               }
             },
             {
@@ -1888,9 +1756,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                       ],
                       'cmdname' => 'dotless',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 71,
-                        'macro' => ''
+                        'line_nr' => 71
                       }
                     }
                   ],
@@ -1899,9 +1765,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '"',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 71,
-                'macro' => ''
+                'line_nr' => 71
               }
             },
             {
@@ -1948,9 +1812,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                       ],
                       'cmdname' => 'dotless',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 74,
-                        'macro' => ''
+                        'line_nr' => 74
                       }
                     }
                   ],
@@ -1959,9 +1821,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '`',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 74,
-                'macro' => ''
+                'line_nr' => 74
               }
             },
             {
@@ -1998,9 +1858,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                       ],
                       'cmdname' => 'dotless',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 76,
-                        'macro' => ''
+                        'line_nr' => 76
                       }
                     }
                   ],
@@ -2009,9 +1867,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '\'',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 76,
-                'macro' => ''
+                'line_nr' => 76
               }
             },
             {
@@ -2048,9 +1904,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                       ],
                       'cmdname' => 'dotless',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 78,
-                        'macro' => ''
+                        'line_nr' => 78
                       }
                     }
                   ],
@@ -2059,9 +1913,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '^',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 78,
-                'macro' => ''
+                'line_nr' => 78
               }
             },
             {
@@ -2098,9 +1950,7 @@ $result_trees{'accentenc_enable_encoding'} = {
                       ],
                       'cmdname' => 'dotless',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 80,
-                        'macro' => ''
+                        'line_nr' => 80
                       }
                     }
                   ],
@@ -2109,9 +1959,7 @@ $result_trees{'accentenc_enable_encoding'} = {
               ],
               'cmdname' => '"',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 80,
-                'macro' => ''
+                'line_nr' => 80
               }
             },
             {
@@ -2129,9 +1977,7 @@ $result_trees{'accentenc_enable_encoding'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     }
   ],

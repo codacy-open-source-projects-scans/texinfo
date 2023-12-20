@@ -38,9 +38,7 @@ $result_trees{'nested_footnotes_separate'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -116,9 +114,7 @@ $result_trees{'nested_footnotes_separate'} = {
                           ],
                           'cmdname' => 'footnote',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 6,
-                            'macro' => ''
+                            'line_nr' => 6
                           }
                         },
                         {
@@ -134,9 +130,7 @@ $result_trees{'nested_footnotes_separate'} = {
               ],
               'cmdname' => 'footnote',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             },
             {
@@ -157,9 +151,7 @@ $result_trees{'nested_footnotes_separate'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     }
   ],
@@ -201,9 +193,7 @@ $result_errors{'nested_footnotes_separate'} = [
   {
     'error_line' => 'warning: @footnote should not appear anywhere inside @footnote
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => '@footnote should not appear anywhere inside @footnote',
     'type' => 'warning'
   }

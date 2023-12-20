@@ -88,9 +88,7 @@ $result_trees{'double_part'} = [
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'menu_entry'
             },
@@ -121,16 +119,12 @@ $result_trees{'double_part'} = [
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 4,
-            'macro' => ''
+            'line_nr' => 4
           }
         },
         {
@@ -146,9 +140,7 @@ $result_trees{'double_part'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     'unit_contents' => [
@@ -188,9 +180,7 @@ $result_trees{'double_part'} = [
           }
         },
         'source_info' => {
-          'file_name' => '',
-          'line_nr' => 1,
-          'macro' => ''
+          'line_nr' => 1
         }
       },
       {}
@@ -240,9 +230,7 @@ $result_trees{'double_part'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 8,
-        'macro' => ''
+        'line_nr' => 8
       }
     },
     'unit_contents' => [
@@ -319,9 +307,7 @@ $result_trees{'double_part'} = [
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 11,
-            'macro' => ''
+            'line_nr' => 11
           }
         },
         'section_number' => '1'
@@ -332,9 +318,7 @@ $result_trees{'double_part'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 15,
-        'macro' => ''
+        'line_nr' => 15
       }
     },
     'unit_contents' => [
@@ -367,9 +351,7 @@ $result_trees{'double_part'} = [
           }
         },
         'source_info' => {
-          'file_name' => '',
-          'line_nr' => 14,
-          'macro' => ''
+          'line_nr' => 14
         }
       },
       {}
@@ -817,27 +799,21 @@ $result_errors{'double_part'} = [
   {
     'error_line' => 'warning: no sectioning command associated with @part
 ',
-    'file_name' => '',
     'line_nr' => 8,
-    'macro' => '',
     'text' => 'no sectioning command associated with @part',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @part not empty
 ',
-    'file_name' => '',
     'line_nr' => 8,
-    'macro' => '',
     'text' => '@part not empty',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @part not empty
 ',
-    'file_name' => '',
     'line_nr' => 11,
-    'macro' => '',
     'text' => '@part not empty',
     'type' => 'warning'
   }

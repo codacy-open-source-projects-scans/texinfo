@@ -39,9 +39,7 @@ $result_trees{'unnumbered_before_top_node'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     'unit_contents' => [
@@ -95,9 +93,7 @@ $result_trees{'unnumbered_before_top_node'} = [
             ],
             'cmdname' => 'titlefont',
             'source_info' => {
-              'file_name' => '',
-              'line_nr' => 6,
-              'macro' => ''
+              'line_nr' => 6
             }
           },
           {
@@ -115,9 +111,7 @@ $result_trees{'unnumbered_before_top_node'} = [
           }
         },
         'source_info' => {
-          'file_name' => '',
-          'line_nr' => 3,
-          'macro' => ''
+          'line_nr' => 3
         }
       }
     ],

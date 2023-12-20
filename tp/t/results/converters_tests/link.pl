@@ -38,9 +38,7 @@ $result_trees{'link'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -91,9 +89,7 @@ $result_trees{'link'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -155,9 +151,7 @@ $result_trees{'link'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             }
           ],
@@ -191,9 +185,7 @@ $result_trees{'link'} = {
               ],
               'cmdname' => 'link',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             },
             {
@@ -244,9 +236,7 @@ $result_trees{'link'} = {
               ],
               'cmdname' => 'link',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             },
             {
@@ -296,9 +286,7 @@ $result_trees{'link'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 16,
-                'macro' => ''
+                'line_nr' => 16
               }
             }
           ],
@@ -332,9 +320,7 @@ $result_trees{'link'} = {
               ],
               'cmdname' => 'link',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 18,
-                'macro' => ''
+                'line_nr' => 18
               }
             },
             {
@@ -385,9 +371,7 @@ $result_trees{'link'} = {
               ],
               'cmdname' => 'link',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               }
             },
             {
@@ -449,9 +433,7 @@ $result_trees{'link'} = {
               ],
               'cmdname' => 'link',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 24,
-                'macro' => ''
+                'line_nr' => 24
               }
             },
             {
@@ -504,9 +486,7 @@ $result_trees{'link'} = {
               ],
               'cmdname' => 'link',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 26,
-                'macro' => ''
+                'line_nr' => 26
               }
             },
             {
@@ -527,9 +507,7 @@ $result_trees{'link'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 6,
-        'macro' => ''
+        'line_nr' => 6
       }
     }
   ],
@@ -657,9 +635,7 @@ $result_errors{'link'} = [
   {
     'error_line' => 'warning: node `Two\' unreferenced
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'node `Two\' unreferenced',
     'type' => 'warning'
   }

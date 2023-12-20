@@ -44,9 +44,7 @@ $result_trees{'node_on_index_entry_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           },
           'type' => 'index_entry_command'
         }
@@ -200,9 +198,7 @@ $result_trees{'node_on_index_entry_line'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     }
   ],
@@ -271,27 +267,21 @@ $result_errors{'node_on_index_entry_line'} = [
   {
     'error_line' => 'warning: @node should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@node should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @node should not appear on @cindex line
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => '@node should not appear on @cindex line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `cp\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'entry for index `cp\' outside of any node',
     'type' => 'warning'
   }

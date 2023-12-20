@@ -16,9 +16,7 @@ $result_trees{'text_between_item_itemx'} = {
                 {
                   'cmdname' => 'strong',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'command_as_argument'
                 }
@@ -62,9 +60,7 @@ $result_trees{'text_between_item_itemx'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     },
                     {
@@ -105,9 +101,7 @@ $result_trees{'text_between_item_itemx'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 4,
-                        'macro' => ''
+                        'line_nr' => 4
                       }
                     }
                   ],
@@ -143,9 +137,7 @@ $result_trees{'text_between_item_itemx'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
@@ -158,9 +150,7 @@ $result_trees{'text_between_item_itemx'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -188,9 +178,7 @@ $result_errors{'text_between_item_itemx'} = [
   {
     'error_line' => '@itemx must follow @item
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => '@itemx must follow @item',
     'type' => 'error'
   }

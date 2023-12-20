@@ -29,9 +29,7 @@ $result_trees{'empty_listoffloats'} = {
             'float_type' => ''
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],

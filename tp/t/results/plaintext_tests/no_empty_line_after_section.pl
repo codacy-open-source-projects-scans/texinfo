@@ -62,9 +62,7 @@ $result_trees{'no_empty_line_after_section'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -130,9 +128,7 @@ $result_trees{'no_empty_line_after_section'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     {
@@ -169,9 +165,7 @@ $result_trees{'no_empty_line_after_section'} = {
               ],
               'cmdname' => 'uref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 11,
-                'macro' => ''
+                'line_nr' => 11
               }
             },
             {
@@ -215,9 +209,7 @@ $result_trees{'no_empty_line_after_section'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 13,
-            'macro' => ''
+            'line_nr' => 13
           }
         }
       ],
@@ -230,9 +222,7 @@ $result_trees{'no_empty_line_after_section'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 10,
-        'macro' => ''
+        'line_nr' => 10
       }
     },
     {
@@ -257,9 +247,7 @@ $result_trees{'no_empty_line_after_section'} = {
         {
           'cmdname' => 'indent',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 15,
-            'macro' => ''
+            'line_nr' => 15
           }
         },
         {
@@ -294,9 +282,7 @@ $result_trees{'no_empty_line_after_section'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 14,
-        'macro' => ''
+        'line_nr' => 14
       }
     }
   ],

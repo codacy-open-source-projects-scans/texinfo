@@ -76,9 +76,7 @@ $result_trees{'value_in_macro_body'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
@@ -87,9 +85,7 @@ $result_trees{'value_in_macro_body'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         },
         {
@@ -167,7 +163,6 @@ $result_trees{'value_in_macro_body'} = {
               ],
               'cmdname' => 'emph',
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 7,
                 'macro' => 'testvaluebody'
               },
@@ -212,9 +207,7 @@ $result_errors{'value_in_macro_body'} = [
   {
     'error_line' => '\\ in @testvaluebody expansion followed `@value{bodyarg}\' instead of parameter name or \\
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => '\\ in @testvaluebody expansion followed `@value{bodyarg}\' instead of parameter name or \\',
     'type' => 'error'
   }

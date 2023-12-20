@@ -43,6 +43,7 @@ FIXME add an initialization of translations?
 #include "converter_types.h"
 #include "utils.h"
 #include "builtin_commands.h"
+#include "errors.h"
 #include "document.h"
 #include "output_unit.h"
 #include "convert_to_text.h"
@@ -61,7 +62,7 @@ get_document_or_warn (SV *sv_in, char *key, char *warn_string)
 
   hv_in = (HV *)SvRV (sv_in);
   document_descriptor_sv = hv_fetch (hv_in, key, strlen (key), 0);
-  if (document_descriptor_sv)
+  if (document_descriptor_sv && SvOK (*document_descriptor_sv))
     {
       document_descriptor = SvIV (*document_descriptor_sv);
       document = retrieve_document (document_descriptor);
@@ -173,6 +174,9 @@ add_svav_to_string_list (SV *sv, STRING_LIST *string_list, enum sv_string_type t
 
   dTHX;
 
+  if (!SvOK (sv))
+    return;
+
   AV *av = (AV *)SvRV (sv);
   strings_nr = av_top_index (av) +1;
   for (i = 0; i < strings_nr; i++)
@@ -193,8 +197,75 @@ add_svav_to_string_list (SV *sv, STRING_LIST *string_list, enum sv_string_type t
     }
 }
 
-/* contains get_sv_option (), automatically generated from options_data.txt */
-#include "options_get_perl.c"
+#define FETCH(key) key##_sv = hv_fetch (hv_in, #key, strlen(#key), 0);
+SOURCE_INFO *
+get_source_info (SV *source_info_sv)
+{
+  HV *hv_in;
+  SV **macro_sv;
+  SV **file_name_sv;
+  SV **line_nr_sv;
+
+  dTHX;
+
+  hv_in = (HV *)SvRV (source_info_sv);
+
+  SOURCE_INFO *source_info = (SOURCE_INFO *) malloc (sizeof (SOURCE_INFO));
+  memset (source_info, 0, sizeof (SOURCE_INFO));
+
+  FETCH(macro)
+
+  if (macro_sv)
+    {
+      char *macro = (char *) SvPVutf8_nolen (*macro_sv);
+      source_info->macro = strdup (macro);
+    }
+
+  FETCH(file_name)
+
+  if (file_name_sv && SvOK (*file_name_sv))
+    {
+      char *file_name = (char *) SvPVbyte_nolen (*file_name_sv);
+      source_info->file_name = strdup (file_name);
+    }
+
+  FETCH(line_nr)
+
+  if (line_nr_sv)
+    source_info->line_nr = SvIV (*line_nr_sv);
+
+  return source_info;
+}
+#undef FETCH
+
+void
+get_line_message (CONVERTER *self, enum error_type type, int continuation,
+                  SV *error_location_info, char *message)
+{
+  int do_warn = (self->conf->DEBUG > 1);
+  SOURCE_INFO *source_info = get_source_info (error_location_info);
+  if (source_info->file_name)
+    {
+      char *saved_string = add_string (source_info->file_name,
+                                       self->document->small_strings);
+      free (source_info->file_name);
+      source_info->file_name = saved_string;
+    }
+
+  if (source_info->macro)
+    {
+      char *saved_string = add_string (source_info->macro,
+                                       self->document->small_strings);
+      free (source_info->macro);
+      source_info->macro = saved_string;
+    }
+
+  message_list_line_formatted_message (&self->error_messages,
+                                       type, continuation, source_info,
+                                       message, do_warn);
+
+  free (source_info);
+}
 
 void
 get_sv_options (SV *sv, OPTIONS *options, CONVERTER *converter)
@@ -343,23 +414,64 @@ set_translated_commands (CONVERTER *converter, HV *hv_in)
     }
 }
 
-#define FETCH(key) key##_sv = hv_fetch (hv_in, #key, strlen(#key), 0);
-void
-converter_initialize (SV *converter_sv, CONVERTER *converter)
+/* Texinfo::Convert::Converter generic initialization for all the converters */
+int
+converter_initialize (SV *converter_sv)
 {
   HV *hv_in;
   SV **conf_sv;
   SV **converter_init_conf_sv;
   SV **output_format_sv;
   DOCUMENT *document;
+  int converter_descriptor = 0;
+  CONVERTER *converter;
 
   dTHX;
+
+  converter_descriptor = new_converter ();
+  converter = retrieve_converter (converter_descriptor);
 
   hv_in = (HV *)SvRV (converter_sv);
 
   document = get_sv_document_document (converter_sv, 0);
+  if (!document)
+    {
+      /* happens in tests for PlainTexinfo for example */
+      unregister_converter_descriptor (converter_descriptor);
+      return 0;
+      /*
+      I32 hv_number;
+      I32 i;
+      hv_number = hv_iterinit (hv_in);
+      fprintf (stderr, "REMARK: no document for SV %p HV %p\n", converter_sv,
+                       hv_in);
+      for (i = 0; i < hv_number; i++)
+        {
+          char *key;
+          I32 retlen;
+          SV *value = hv_iternextsv(hv_in, &key, &retlen);
+          if (value && SvOK (value))
+            {
+              fprintf (stderr, "  %s: %p\n", key, value);
+            }
+        }
+       */
+    }
   converter->document = document;
 
+#define FETCH(key) key##_sv = hv_fetch (hv_in, #key, strlen(#key), 0);
+  FETCH(output_format)
+
+  if (output_format_sv && SvOK (*output_format_sv))
+    {
+      converter->output_format
+         = strdup (SvPVutf8_nolen (*output_format_sv));
+    }
+
+   /*
+  fprintf (stderr, "XS|CONVERTER Init: %d; doc %d; %s\n", converter_descriptor,
+                   converter->document->descriptor, converter->output_format);
+    */
   FETCH(conf)
 
   if (conf_sv && SvOK (*conf_sv))
@@ -376,17 +488,39 @@ converter_initialize (SV *converter_sv, CONVERTER *converter)
          = copy_sv_options (*converter_init_conf_sv, converter);
     }
 
-  FETCH(output_format)
-
-  if (output_format_sv && SvOK (*output_format_sv))
-    {
-      converter->output_format
-         = strdup (SvPVutf8_nolen (*output_format_sv));
-    }
-
+#undef FETCH
   set_translated_commands (converter, hv_in);
 
   get_expanded_formats (hv_in, &converter->expanded_formats);
+
+  converter->hv = hv_in;
+
+  /* store converter_descriptor in perl converter */
+  hv_store (hv_in, "converter_descriptor",
+            strlen("converter_descriptor"),
+            newSViv (converter_descriptor), 0);
+
+  return converter_descriptor;
+}
+
+void
+recopy_converter_conf_sv (HV *hv, CONVERTER *converter,
+                          OPTIONS **conf, const char *conf_key)
+{
+  SV **conf_sv;
+
+  dTHX;
+
+  conf_sv = hv_fetch (hv, conf_key, strlen (conf_key), 0);
+
+  if (conf_sv && SvOK(*conf_sv))
+    {
+      if (*conf)
+        free_options (*conf);
+      free (*conf);
+
+      *conf = copy_sv_options (*conf_sv, converter);
+    }
 }
 
 /* initialize an XS converter from a perl converter right before conversion */
@@ -394,8 +528,6 @@ CONVERTER *
 set_output_converter_sv (SV *sv_in, char *warn_string)
 {
   HV *hv_in;
-  SV **conf_sv;
-  SV **output_init_conf_sv;
   CONVERTER *converter = 0;
 
   dTHX;
@@ -404,33 +536,12 @@ set_output_converter_sv (SV *sv_in, char *warn_string)
 
   hv_in = (HV *)SvRV (sv_in);
 
-  FETCH(conf)
+  recopy_converter_conf_sv (hv_in, converter, &converter->conf, "conf");
 
-  if (conf_sv)
-    {
-      if (converter->conf)
-        free_options (converter->conf);
-      free (converter->conf);
-
-      converter->conf
-         = copy_sv_options (*conf_sv, converter);
-    }
-
-  FETCH(output_init_conf)
-
-  if (output_init_conf_sv && SvOK(*output_init_conf_sv))
-    {
-      if (converter->init_conf)
-        free_options (converter->init_conf);
-      free (converter->init_conf);
-
-      converter->init_conf
-         = copy_sv_options (*output_init_conf_sv, converter);
-    }
-
+  recopy_converter_conf_sv (hv_in, converter, &converter->init_conf,
+                            "output_init_conf");
   return converter;
 }
-#undef FETCH
 
 /* code in comments allow to sort the index names to have a fixed order
    in the data structure.  Not clear that it is useful or not, not enabled
@@ -741,25 +852,37 @@ int
 html_get_direction_index (CONVERTER *converter, const char *direction)
 {
   int i;
-  int idx;
-  for (i = 0; i < D_button_FirstInFileNodeUp +1; i++)
+  if (converter && converter->direction_unit_direction_name)
     {
-      if (!strcmp (direction, html_button_direction_names[i]))
-        return i;
-    }
-  idx = D_button_FirstInFileNodeUp +1;
-  if (converter)
-    {
-      for (i = 0; i < converter->special_unit_varieties.number; i++)
+      for (i = 0; converter->direction_unit_direction_name[i]; i++)
         {
-          if (!strcmp(direction,
-                  converter->special_unit_info[SUI_type_direction][i]))
-            return idx;
-          idx++;
+          if (!strcmp (direction, converter->direction_unit_direction_name[i]))
+            return i;
         }
     }
+   /* we could do the following, but there is no point in getting the
+      buttons if not all can be determined */
+   /*
+  else
+    {
+      for (i = 0; i < NON_SPECIAL_DIRECTIONS_NR; i++)
+        {
+          if (!strcmp (direction, html_button_direction_names[i]))
+            return i;
+        }
+    }
+    */
   return -1;
 }
+
+/* should be consistent with enum button_function_type */
+static const char *button_function_type_string[] = {
+  0,
+  "::_default_panel_button_dynamic_direction_section_footer",
+  "::_default_panel_button_dynamic_direction_node_footer",
+  "::_default_panel_button_dynamic_direction",
+  0,
+};
 
 /* HTML specific, but needs to be there for options_get_perl.c */
 BUTTON_SPECIFICATION_LIST *
@@ -771,6 +894,9 @@ html_get_button_specification_list (CONVERTER *converter, SV *buttons_sv)
   SSize_t i;
 
   dTHX;
+
+  if (!SvOK (buttons_sv))
+    return 0;
 
   result = (BUTTON_SPECIFICATION_LIST *)
             malloc (sizeof (BUTTON_SPECIFICATION_LIST));
@@ -785,7 +911,7 @@ html_get_button_specification_list (CONVERTER *converter, SV *buttons_sv)
   result->list = (BUTTON_SPECIFICATION *)
     malloc (result->number * sizeof (BUTTON_SPECIFICATION));
   memset (result->list, 0, result->number * sizeof (BUTTON_SPECIFICATION));
- 
+
   for (i = 0; i < buttons_nr; i++)
     {
       SV** button_sv = av_fetch (buttons_av, i, 0);
@@ -824,8 +950,23 @@ html_get_button_specification_list (CONVERTER *converter, SV *buttons_sv)
                 {
                   if (SvTYPE (SvRV(*button_spec_info_type)) == SVt_PVCV) /* CODE */
                     {
+                      int j;
+                      char *button_fun_name;
+                      enum button_function_type button_fun_type = 0;
                       button_spec->type = BIT_function;
-                      button_spec->sv_reference = *button_spec_info_type;
+                      button_spec->button_function.sv_reference
+                                          = *button_spec_info_type;
+                      button_fun_name
+                       = SvPV_nolen (cv_name ((CV *) SvRV (*button_spec_info_type),
+                                              0, 0));
+                      for (j = 1; button_function_type_string[j]; j++)
+                        if (strstr (button_fun_name,
+                                    button_function_type_string[j]))
+                          {
+                            button_fun_type = j;
+                            break;
+                          }
+                      button_spec->button_function.type = button_fun_type;
                     }
                   else
                     {
@@ -835,10 +976,34 @@ html_get_button_specification_list (CONVERTER *converter, SV *buttons_sv)
                 }
               else
                 {
-                  button_spec->type = BIT_direction_information_type;
-                  button_spec->direction_information_type
-                   = html_get_direction_index (converter,
-                                 SvPVutf8_nolen (*button_spec_info_type));
+                  int j;
+                  char *text_type_string
+                     = SvPVutf8_nolen (*button_spec_info_type);
+                  char *text_type_p;
+                  if (strlen (text_type_string) > 2
+                      && !(memcmp (text_type_string, "->", 2)))
+                    {
+                      button_spec->type
+                        = BIT_selected_direction_information_type;
+                      text_type_p = text_type_string +2;
+                      text_type_p += strspn (text_type_p, whitespace_chars);
+                    }
+                  else
+                    {
+                      text_type_p = text_type_string;
+                      button_spec->type
+                        = BIT_href_direction_information_type;
+                    }
+                  button_spec->direction_information_type = -1;
+                  for (j = 0; j < HTT_section +1; j++)
+                    {
+                      if (!strcmp (html_command_text_type_name[j],
+                                   text_type_p))
+                        {
+                          button_spec->direction_information_type = j;
+                          break;
+                        }
+                    }
                 }
             }
           else
@@ -856,5 +1021,44 @@ html_get_button_specification_list (CONVERTER *converter, SV *buttons_sv)
     }
 
   return result;
+}
+
+/* HTML specific, but needs to be there for options_get_perl.c */
+void
+html_get_direction_icons_sv (CONVERTER *converter,
+                             DIRECTION_ICON_LIST *direction_icons,
+                             SV *icons_sv)
+{
+  HV *icons_hv;
+  int i;
+
+  dTHX;
+
+  if (!SvOK (icons_sv))
+    return;
+
+  if (!converter || !converter->direction_unit_direction_name)
+    return;
+
+  direction_icons->number = converter->special_unit_varieties.number
+                        + NON_SPECIAL_DIRECTIONS_NR;
+  direction_icons->list = (char **) malloc
+           (direction_icons->number * sizeof (char *));
+  memset (direction_icons->list, 0, direction_icons->number * sizeof (char *));
+
+  icons_hv = (HV *)SvRV (icons_sv);
+
+  for (i = 0; converter->direction_unit_direction_name[i] ; i++)
+    {
+      const char *direction_name
+        = converter->direction_unit_direction_name[i];
+      SV **direction_icon_sv = hv_fetch (icons_hv, direction_name,
+                                         strlen (direction_name), 0);
+      if (direction_icon_sv && SvOK (*direction_icon_sv))
+        {
+          direction_icons->list[i]
+            = strdup (SvPVutf8_nolen (*direction_icon_sv));
+        }
+    }
 }
 

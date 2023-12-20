@@ -68,9 +68,7 @@ $result_trees{'not_closed'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               },
               'type' => 'def_line'
             },
@@ -136,9 +134,7 @@ $result_trees{'not_closed'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               },
               'type' => 'def_line'
             },
@@ -221,9 +217,7 @@ $result_trees{'not_closed'} = {
                         'original_def_cmdname' => 'defvar'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       },
                       'type' => 'def_line'
                     }
@@ -234,9 +228,7 @@ $result_trees{'not_closed'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 3,
-                    'macro' => ''
+                    'line_nr' => 3
                   }
                 }
               ],
@@ -249,9 +241,7 @@ $result_trees{'not_closed'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -279,45 +269,35 @@ $result_errors{'not_closed'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `vr\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'entry for index `vr\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'no matching `@end defvar\'
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'no matching `@end defvar\'',
     'type' => 'error'
   },
   {
     'error_line' => 'no matching `@end deffn\'
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'no matching `@end deffn\'',
     'type' => 'error'
   }

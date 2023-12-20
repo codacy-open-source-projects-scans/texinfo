@@ -38,9 +38,7 @@ $result_trees{'empty_last_argument'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -97,9 +95,7 @@ $result_trees{'empty_last_argument'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
@@ -108,9 +104,7 @@ $result_trees{'empty_last_argument'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           }
         },
         {
@@ -208,7 +202,6 @@ $result_trees{'empty_last_argument'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 8,
                     'macro' => 'defbuiltin'
                   },
@@ -270,7 +263,6 @@ $result_trees{'empty_last_argument'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 8,
                 'macro' => 'defbuiltin'
               },
@@ -342,7 +334,6 @@ $result_trees{'empty_last_argument'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 10,
                     'macro' => 'defbuiltin'
                   },
@@ -404,7 +395,6 @@ $result_trees{'empty_last_argument'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 10,
                 'macro' => 'defbuiltin'
               },
@@ -489,7 +479,6 @@ $result_trees{'empty_last_argument'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 12,
                     'macro' => 'defbuiltin'
                   },
@@ -533,7 +522,6 @@ $result_trees{'empty_last_argument'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 12,
                         'macro' => 'defbuiltin'
                       },
@@ -568,7 +556,6 @@ $result_trees{'empty_last_argument'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 12,
                 'macro' => 'defbuiltin'
               },
@@ -601,16 +588,12 @@ $result_trees{'empty_last_argument'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 13,
-                'macro' => ''
+                'line_nr' => 13
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         }
       ],
@@ -654,7 +637,6 @@ $result_errors{'empty_last_argument'} = [
   {
     'error_line' => 'warning: entry for index `BI\' outside of any node (possibly involving @defbuiltin)
 ',
-    'file_name' => '',
     'line_nr' => 8,
     'macro' => 'defbuiltin',
     'text' => 'entry for index `BI\' outside of any node',
@@ -663,7 +645,6 @@ $result_errors{'empty_last_argument'} = [
   {
     'error_line' => 'warning: entry for index `BI\' outside of any node (possibly involving @defbuiltin)
 ',
-    'file_name' => '',
     'line_nr' => 10,
     'macro' => 'defbuiltin',
     'text' => 'entry for index `BI\' outside of any node',
@@ -672,7 +653,6 @@ $result_errors{'empty_last_argument'} = [
   {
     'error_line' => 'warning: entry for index `BI\' outside of any node (possibly involving @defbuiltin)
 ',
-    'file_name' => '',
     'line_nr' => 12,
     'macro' => 'defbuiltin',
     'text' => 'entry for index `BI\' outside of any node',

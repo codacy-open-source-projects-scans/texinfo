@@ -92,9 +92,7 @@ $result_trees{'one_node_explicit_directions_anchor'} = {
                 'normalized' => 'ref'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             },
             {
@@ -135,9 +133,7 @@ $result_trees{'one_node_explicit_directions_anchor'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             },
             {
@@ -158,9 +154,7 @@ $result_trees{'one_node_explicit_directions_anchor'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     }
   ],

@@ -21,9 +21,7 @@ $result_trees{'command_not_closed_in_documentencoding'} = {
                   ],
                   'cmdname' => 'strong',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   }
                 }
               ],
@@ -37,9 +35,7 @@ $result_trees{'command_not_closed_in_documentencoding'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -58,27 +54,21 @@ $result_errors{'command_not_closed_in_documentencoding'} = [
   {
     'error_line' => 'warning: @strong should not appear in @documentencoding
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@strong should not appear in @documentencoding',
     'type' => 'warning'
   },
   {
     'error_line' => '@strong missing closing brace
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@strong missing closing brace',
     'type' => 'error'
   },
   {
     'error_line' => 'bad argument to @documentencoding: @strong{}
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'bad argument to @documentencoding: @strong{}',
     'type' => 'error'
   }

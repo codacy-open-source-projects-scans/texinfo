@@ -34,9 +34,7 @@ $result_trees{'block_not_matching'} = {
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -61,9 +59,7 @@ $result_trees{'block_not_matching'} = {
                         'def_role' => 'category'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       },
                       'type' => 'bracketed_arg'
                     },
@@ -113,9 +109,7 @@ $result_trees{'block_not_matching'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'def_line'
             },
@@ -140,9 +134,7 @@ $result_trees{'block_not_matching'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         },
         {
@@ -157,9 +149,7 @@ $result_trees{'block_not_matching'} = {
                 {
                   'cmdname' => 'asis',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 9,
-                    'macro' => ''
+                    'line_nr' => 9
                   },
                   'type' => 'command_as_argument'
                 }
@@ -203,9 +193,7 @@ $result_trees{'block_not_matching'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 10,
-                        'macro' => ''
+                        'line_nr' => 10
                       }
                     }
                   ],
@@ -238,9 +226,7 @@ $result_trees{'block_not_matching'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 9,
-            'macro' => ''
+            'line_nr' => 9
           }
         },
         {
@@ -255,9 +241,7 @@ $result_trees{'block_not_matching'} = {
                 {
                   'cmdname' => 'emph',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 14,
-                    'macro' => ''
+                    'line_nr' => 14
                   },
                   'type' => 'command_as_argument'
                 }
@@ -301,9 +285,7 @@ $result_trees{'block_not_matching'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       }
                     }
                   ],
@@ -336,9 +318,7 @@ $result_trees{'block_not_matching'} = {
                         }
                       ],
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 16,
-                        'macro' => ''
+                        'line_nr' => 16
                       }
                     }
                   ],
@@ -357,9 +337,7 @@ $result_trees{'block_not_matching'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 14,
-            'macro' => ''
+            'line_nr' => 14
           }
         },
         {
@@ -392,9 +370,7 @@ $result_trees{'block_not_matching'} = {
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 21,
-            'macro' => ''
+            'line_nr' => 21
           }
         },
         {
@@ -427,9 +403,7 @@ $result_trees{'block_not_matching'} = {
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 25,
-            'macro' => ''
+            'line_nr' => 25
           }
         },
         {
@@ -462,9 +436,7 @@ $result_trees{'block_not_matching'} = {
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 29,
-            'macro' => ''
+            'line_nr' => 29
           }
         },
         {
@@ -497,9 +469,7 @@ $result_trees{'block_not_matching'} = {
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 33,
-            'macro' => ''
+            'line_nr' => 33
           }
         }
       ],
@@ -565,171 +535,133 @@ $result_errors{'block_not_matching'} = [
   {
     'error_line' => '`@end\' expected `quotation\', but saw `cartouche\'
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => '`@end\' expected `quotation\', but saw `cartouche\'',
     'type' => 'error'
   },
   {
     'error_line' => 'unmatched `@end cartouche\'
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'unmatched `@end cartouche\'',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => '`@end\' expected `deffn\', but saw `deftypefun\'
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => '`@end\' expected `deffn\', but saw `deftypefun\'',
     'type' => 'error'
   },
   {
     'error_line' => 'unmatched `@end deftypefun\'
 ',
-    'file_name' => '',
     'line_nr' => 7,
-    'macro' => '',
     'text' => 'unmatched `@end deftypefun\'',
     'type' => 'error'
   },
   {
     'error_line' => '`@end\' expected `table\', but saw `vtable\'
 ',
-    'file_name' => '',
     'line_nr' => 12,
-    'macro' => '',
     'text' => '`@end\' expected `table\', but saw `vtable\'',
     'type' => 'error'
   },
   {
     'error_line' => 'unmatched `@end vtable\'
 ',
-    'file_name' => '',
     'line_nr' => 12,
-    'macro' => '',
     'text' => 'unmatched `@end vtable\'',
     'type' => 'error'
   },
   {
     'error_line' => '`@end\' expected `example\', but saw `display\'
 ',
-    'file_name' => '',
     'line_nr' => 18,
-    'macro' => '',
     'text' => '`@end\' expected `example\', but saw `display\'',
     'type' => 'error'
   },
   {
     'error_line' => '`@end\' expected `table\', but saw `display\'
 ',
-    'file_name' => '',
     'line_nr' => 18,
-    'macro' => '',
     'text' => '`@end\' expected `table\', but saw `display\'',
     'type' => 'error'
   },
   {
     'error_line' => 'unmatched `@end display\'
 ',
-    'file_name' => '',
     'line_nr' => 18,
-    'macro' => '',
     'text' => 'unmatched `@end display\'',
     'type' => 'error'
   },
   {
     'error_line' => 'unmatched `@end table\'
 ',
-    'file_name' => '',
     'line_nr' => 19,
-    'macro' => '',
     'text' => 'unmatched `@end table\'',
     'type' => 'error'
   },
   {
     'error_line' => '`@end\' expected `group\', but saw `table\'
 ',
-    'file_name' => '',
     'line_nr' => 23,
-    'macro' => '',
     'text' => '`@end\' expected `group\', but saw `table\'',
     'type' => 'error'
   },
   {
     'error_line' => 'unmatched `@end table\'
 ',
-    'file_name' => '',
     'line_nr' => 23,
-    'macro' => '',
     'text' => 'unmatched `@end table\'',
     'type' => 'error'
   },
   {
     'error_line' => '`@end\' expected `group\', but saw `cartouche\'
 ',
-    'file_name' => '',
     'line_nr' => 27,
-    'macro' => '',
     'text' => '`@end\' expected `group\', but saw `cartouche\'',
     'type' => 'error'
   },
   {
     'error_line' => 'unmatched `@end cartouche\'
 ',
-    'file_name' => '',
     'line_nr' => 27,
-    'macro' => '',
     'text' => 'unmatched `@end cartouche\'',
     'type' => 'error'
   },
   {
     'error_line' => '`@end\' expected `cartouche\', but saw `group\'
 ',
-    'file_name' => '',
     'line_nr' => 31,
-    'macro' => '',
     'text' => '`@end\' expected `cartouche\', but saw `group\'',
     'type' => 'error'
   },
   {
     'error_line' => 'unmatched `@end group\'
 ',
-    'file_name' => '',
     'line_nr' => 31,
-    'macro' => '',
     'text' => 'unmatched `@end group\'',
     'type' => 'error'
   },
   {
     'error_line' => '`@end\' expected `cartouche\', but saw `float\'
 ',
-    'file_name' => '',
     'line_nr' => 35,
-    'macro' => '',
     'text' => '`@end\' expected `cartouche\', but saw `float\'',
     'type' => 'error'
   },
   {
     'error_line' => 'unmatched `@end float\'
 ',
-    'file_name' => '',
     'line_nr' => 35,
-    'macro' => '',
     'text' => 'unmatched `@end float\'',
     'type' => 'error'
   }

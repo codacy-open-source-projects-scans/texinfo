@@ -43,9 +43,7 @@ $result_trees{'vbar_in_index'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           },
           'type' => 'index_entry_command'
         },
@@ -80,9 +78,7 @@ $result_trees{'vbar_in_index'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 2,
-            'macro' => ''
+            'line_nr' => 2
           },
           'type' => 'index_entry_command'
         }
@@ -104,18 +100,14 @@ $result_errors{'vbar_in_index'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'entry for index `fn\' outside of any node',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: entry for index `cp\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 2,
-    'macro' => '',
     'text' => 'entry for index `cp\' outside of any node',
     'type' => 'warning'
   }

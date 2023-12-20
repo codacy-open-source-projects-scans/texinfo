@@ -73,9 +73,7 @@ $result_trees{'on_node_line'} = {
               ],
               'cmdname' => 'ref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             }
           ],
@@ -120,9 +118,7 @@ $result_trees{'on_node_line'} = {
               ],
               'cmdname' => 'pxref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -148,9 +144,7 @@ $result_trees{'on_node_line'} = {
                 'normalized' => 'in-anchor'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -171,9 +165,7 @@ $result_trees{'on_node_line'} = {
               ],
               'cmdname' => 'footnote',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -203,9 +195,7 @@ $result_trees{'on_node_line'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             }
           ],
@@ -244,9 +234,7 @@ $result_trees{'on_node_line'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     }
   ],
@@ -297,54 +285,42 @@ $result_errors{'on_node_line'} = [
   {
     'error_line' => 'warning: @ref should not appear on @node line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@ref should not appear on @node line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @pxref should not appear on @node line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@pxref should not appear on @node line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @anchor should not appear on @node line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@anchor should not appear on @node line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @footnote should not appear on @node line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@footnote should not appear on @node line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should only appear at the beginning of a line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@exdent should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @exdent should not appear on @node line
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => '@exdent should not appear on @node line',
     'type' => 'warning'
   }

@@ -19,9 +19,7 @@ $result_trees{'command_brace_no_arg_punctuation'} = {
               ],
               'cmdname' => 'TeX',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -35,9 +33,7 @@ $result_trees{'command_brace_no_arg_punctuation'} = {
               ],
               'cmdname' => 'LaTeX',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -51,9 +47,7 @@ $result_trees{'command_brace_no_arg_punctuation'} = {
               ],
               'cmdname' => 'copyright',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -67,9 +61,7 @@ $result_trees{'command_brace_no_arg_punctuation'} = {
               ],
               'cmdname' => 'registeredsymbol',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {

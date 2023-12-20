@@ -49,9 +49,7 @@ $result_trees{'ref_in_style_command'} = {
                       ],
                       'cmdname' => 'ref',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 1,
-                        'macro' => ''
+                        'line_nr' => 1
                       }
                     }
                   ],
@@ -60,9 +58,7 @@ $result_trees{'ref_in_style_command'} = {
               ],
               'cmdname' => 'samp',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {

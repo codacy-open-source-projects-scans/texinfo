@@ -43,8 +43,6 @@
 #include "api_to_perl.h"
 #include "utils.h"
 
-#include "options_init_free.c"
-
 #define min_level command_structuring_level[CM_chapter]
 #define max_level command_structuring_level[CM_subsubsection]
 
@@ -128,6 +126,12 @@ const char *html_button_direction_names[] = {
   #define rud_type(name) "FirstInFile" #name,
    RUD_DIRECTIONS_TYPES_LIST
   #undef rud_type
+};
+
+/* keep in sync with enum html_text_type */
+char *html_command_text_type_name[] = {
+  "text", "text_nonumber", "string", "string_nonumber",
+  "href", "target", "node", "section",
 };
 
 /* wrapper for asprintf */
@@ -751,15 +755,19 @@ add_include_directory (char *input_filename, STRING_LIST *include_dirs_list)
   free (filename);
 }
 
-void
+char *
 add_string (const char *string, STRING_LIST *strings_list)
 {
+  char *result;
   if (strings_list->number == strings_list->space)
     {
       strings_list->list = realloc (strings_list->list,
                    sizeof (char *) * (strings_list->space += 5));
     }
-  strings_list->list[strings_list->number++] = strdup (string);
+  strings_list->list[strings_list->number] = strdup (string);
+  result = strings_list->list[strings_list->number];
+  strings_list->number++;
+  return result;
 }
 
 void
@@ -875,6 +883,9 @@ delete_global_info (GLOBAL_INFO *global_info_ref)
   free (global_info.input_encoding_name);
   free (global_info.input_file_name);
   free (global_info.input_directory);
+
+  /* perl specific information */
+  free (global_info.input_perl_encoding);
 }
 
 void
@@ -1332,4 +1343,22 @@ html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons)
   free (buttons->list);
   free (buttons);
 }
+
+void
+html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons)
+{
+  if (!direction_icons)
+    return;
+
+  if (direction_icons->number > 0)
+    {
+      size_t i;
+      for (i = 0; i < direction_icons->number; i++)
+        {
+          free (direction_icons->list[i]);
+        }
+    }
+  free (direction_icons->list);
+}
+
 

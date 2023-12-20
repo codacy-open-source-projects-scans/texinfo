@@ -72,9 +72,7 @@ $result_trees{'comment_on_linemacro_call_out_of_braces'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
@@ -83,9 +81,7 @@ $result_trees{'comment_on_linemacro_call_out_of_braces'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {

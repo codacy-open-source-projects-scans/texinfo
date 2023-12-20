@@ -130,9 +130,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 19,
-                'macro' => ''
+                'line_nr' => 19
               }
             }
           ],
@@ -141,9 +139,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -197,9 +193,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 23,
-            'macro' => ''
+            'line_nr' => 23
           }
         },
         {
@@ -236,7 +230,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     'code' => 1
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 25,
                     'macro' => 'codekbdmacro'
                   },
@@ -282,7 +275,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 25,
                         'macro' => 'codekbdmacro'
                       }
@@ -320,7 +312,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 25,
                 'macro' => 'codekbdmacro'
               }
@@ -336,7 +327,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 25,
             'macro' => 'codekbdmacro'
           }
@@ -361,7 +351,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     'code' => 1
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 25,
                     'macro' => 'codekbdmacro'
                   },
@@ -407,7 +396,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 25,
                         'macro' => 'codekbdmacro'
                       }
@@ -445,7 +433,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 25,
                 'macro' => 'codekbdmacro'
               }
@@ -461,7 +448,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 25,
             'macro' => 'codekbdmacro'
           }
@@ -504,7 +490,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                         'code' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 25,
                         'macro' => 'codekbdmacro'
                       },
@@ -550,7 +535,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
                             'line_nr' => 25,
                             'macro' => 'codekbdmacro'
                           }
@@ -588,7 +572,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 25,
                     'macro' => 'codekbdmacro'
                   }
@@ -604,7 +587,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 25,
                 'macro' => 'codekbdmacro'
               }
@@ -624,7 +606,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                         'code' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 25,
                         'macro' => 'codekbdmacro'
                       },
@@ -670,7 +651,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
                             'line_nr' => 25,
                             'macro' => 'codekbdmacro'
                           }
@@ -708,7 +688,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 25,
                     'macro' => 'codekbdmacro'
                   }
@@ -724,7 +703,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 25,
                 'macro' => 'codekbdmacro'
               }
@@ -764,14 +742,12 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 25,
                 'macro' => 'codekbdmacro'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 25,
             'macro' => 'codekbdmacro'
           }
@@ -827,9 +803,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 29,
-            'macro' => ''
+            'line_nr' => 29
           }
         },
         {
@@ -866,7 +840,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     'code' => 1
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 31,
                     'macro' => 'codekbdmacro'
                   },
@@ -912,7 +885,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 31,
                         'macro' => 'codekbdmacro'
                       }
@@ -950,7 +922,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 31,
                 'macro' => 'codekbdmacro'
               }
@@ -966,7 +937,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 31,
             'macro' => 'codekbdmacro'
           }
@@ -991,7 +961,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     'code' => 1
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 31,
                     'macro' => 'codekbdmacro'
                   },
@@ -1037,7 +1006,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 31,
                         'macro' => 'codekbdmacro'
                       }
@@ -1075,7 +1043,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 31,
                 'macro' => 'codekbdmacro'
               }
@@ -1091,7 +1058,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 31,
             'macro' => 'codekbdmacro'
           }
@@ -1131,7 +1097,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     {
                       'cmdname' => 'kbd',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 31,
                         'macro' => 'codekbdmacro'
                       },
@@ -1177,7 +1142,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
                             'line_nr' => 31,
                             'macro' => 'codekbdmacro'
                           }
@@ -1215,7 +1179,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 31,
                     'macro' => 'codekbdmacro'
                   }
@@ -1230,7 +1193,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 31,
                 'macro' => 'codekbdmacro'
               }
@@ -1247,7 +1209,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                       ],
                       'cmdname' => 'kbd',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 31,
                         'macro' => 'codekbdmacro'
                       },
@@ -1293,7 +1254,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
                             'line_nr' => 31,
                             'macro' => 'codekbdmacro'
                           }
@@ -1331,7 +1291,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 31,
                     'macro' => 'codekbdmacro'
                   }
@@ -1346,7 +1305,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 31,
                 'macro' => 'codekbdmacro'
               }
@@ -1386,14 +1344,12 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 31,
                 'macro' => 'codekbdmacro'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 31,
             'macro' => 'codekbdmacro'
           }
@@ -1449,9 +1405,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 35,
-            'macro' => ''
+            'line_nr' => 35
           }
         },
         {
@@ -1485,7 +1439,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 {
                   'cmdname' => 'kbd',
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 37,
                     'macro' => 'codekbdmacro'
                   },
@@ -1531,7 +1484,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 37,
                         'macro' => 'codekbdmacro'
                       }
@@ -1569,7 +1521,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 37,
                 'macro' => 'codekbdmacro'
               }
@@ -1584,7 +1535,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 37,
             'macro' => 'codekbdmacro'
           }
@@ -1606,7 +1556,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                   ],
                   'cmdname' => 'kbd',
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 37,
                     'macro' => 'codekbdmacro'
                   },
@@ -1652,7 +1601,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 37,
                         'macro' => 'codekbdmacro'
                       }
@@ -1690,7 +1638,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 37,
                 'macro' => 'codekbdmacro'
               }
@@ -1705,7 +1652,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 37,
             'macro' => 'codekbdmacro'
           }
@@ -1745,7 +1691,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     {
                       'cmdname' => 'kbd',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 37,
                         'macro' => 'codekbdmacro'
                       },
@@ -1791,7 +1736,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
                             'line_nr' => 37,
                             'macro' => 'codekbdmacro'
                           }
@@ -1829,7 +1773,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 37,
                     'macro' => 'codekbdmacro'
                   }
@@ -1844,7 +1787,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 37,
                 'macro' => 'codekbdmacro'
               }
@@ -1861,7 +1803,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                       ],
                       'cmdname' => 'kbd',
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 37,
                         'macro' => 'codekbdmacro'
                       },
@@ -1907,7 +1848,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                             }
                           },
                           'source_info' => {
-                            'file_name' => '',
                             'line_nr' => 37,
                             'macro' => 'codekbdmacro'
                           }
@@ -1945,7 +1885,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
                     'line_nr' => 37,
                     'macro' => 'codekbdmacro'
                   }
@@ -1960,7 +1899,6 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 37,
                 'macro' => 'codekbdmacro'
               }
@@ -2000,14 +1938,12 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 37,
                 'macro' => 'codekbdmacro'
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 37,
             'macro' => 'codekbdmacro'
           }

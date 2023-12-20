@@ -16,9 +16,7 @@ $result_trees{'section_in_nested_block_commands'} = {
                 {
                   'cmdname' => 'strong',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'command_as_argument'
                 }
@@ -62,9 +60,7 @@ $result_trees{'section_in_nested_block_commands'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     }
                   ],
@@ -121,9 +117,7 @@ $result_trees{'section_in_nested_block_commands'} = {
                         }
                       ],
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     }
                   ],
@@ -142,9 +136,7 @@ $result_trees{'section_in_nested_block_commands'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -177,9 +169,7 @@ $result_trees{'section_in_nested_block_commands'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 9,
-        'macro' => ''
+        'line_nr' => 9
       }
     }
   ],
@@ -230,18 +220,14 @@ $result_errors{'section_in_nested_block_commands'} = [
   {
     'error_line' => '@section seen before @end quotation
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => '@section seen before @end quotation',
     'type' => 'error'
   },
   {
     'error_line' => '@section seen before @end table
 ',
-    'file_name' => '',
     'line_nr' => 9,
-    'macro' => '',
     'text' => '@section seen before @end table',
     'type' => 'error'
   }

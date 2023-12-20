@@ -102,9 +102,7 @@ $result_trees{'empty_menu_entry_name'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               },
               'type' => 'menu_entry'
             },
@@ -157,9 +155,7 @@ $result_trees{'empty_menu_entry_name'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               },
               'type' => 'menu_entry'
             },
@@ -190,16 +186,12 @@ $result_trees{'empty_menu_entry_name'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         },
         {
@@ -218,9 +210,7 @@ $result_trees{'empty_menu_entry_name'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     {
@@ -251,9 +241,7 @@ $result_trees{'empty_menu_entry_name'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 8,
-        'macro' => ''
+        'line_nr' => 8
       }
     }
   ],
@@ -328,18 +316,14 @@ $result_errors{'empty_menu_entry_name'} = [
   {
     'error_line' => 'warning: empty menu entry name in `* : (vvv). \'
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'empty menu entry name in `* : (vvv). \'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: empty menu entry name in `* :aaa,\'
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => 'empty menu entry name in `* :aaa,\'',
     'type' => 'warning'
   }

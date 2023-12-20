@@ -37,9 +37,7 @@ $result_trees{'brace_opened_no_command'} = {
                 'normalized' => 'truc'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -76,9 +74,7 @@ $result_errors{'brace_opened_no_command'} = [
   {
     'error_line' => 'misplaced {
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'misplaced {',
     'type' => 'error'
   }

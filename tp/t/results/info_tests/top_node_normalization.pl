@@ -57,9 +57,7 @@ $result_trees{'top_node_normalization'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -86,9 +84,7 @@ $result_trees{'top_node_normalization'} = {
               ],
               'cmdname' => 'xref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -159,9 +155,7 @@ $result_trees{'top_node_normalization'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               },
               'type' => 'menu_entry'
             },
@@ -192,16 +186,12 @@ $result_trees{'top_node_normalization'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         }
       ],
@@ -215,9 +205,7 @@ $result_trees{'top_node_normalization'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     }
   ],
@@ -277,27 +265,21 @@ $result_errors{'top_node_normalization'} = [
   {
     'error_line' => 'warning: @xref to `TOP\', different from node name `ToP\'
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => '@xref to `TOP\', different from node name `ToP\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @xref to `tOP\', different from node name `ToP\'
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => '@xref to `tOP\', different from node name `ToP\'',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @menu entry node name `tOP\' different from node name `ToP\'
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => '@menu entry node name `tOP\' different from node name `ToP\'',
     'type' => 'warning'
   }

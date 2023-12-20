@@ -51,9 +51,7 @@ $result_trees{'heading_in_footnote'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       }
                     },
                     {
@@ -87,9 +85,7 @@ $result_trees{'heading_in_footnote'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 4,
-                        'macro' => ''
+                        'line_nr' => 4
                       },
                       'type' => 'index_entry_command'
                     },
@@ -114,9 +110,7 @@ $result_trees{'heading_in_footnote'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -149,9 +143,7 @@ $result_errors{'heading_in_footnote'} = [
   {
     'error_line' => 'warning: entry for index `cp\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 4,
-    'macro' => '',
     'text' => 'entry for index `cp\' outside of any node',
     'type' => 'warning'
   }

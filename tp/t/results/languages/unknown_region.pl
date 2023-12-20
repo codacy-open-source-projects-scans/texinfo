@@ -38,9 +38,7 @@ $result_trees{'unknown_region'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -82,9 +80,7 @@ $result_trees{'unknown_region'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -232,9 +228,7 @@ $result_trees{'unknown_region'} = {
                 'original_def_cmdname' => 'defivar'
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               },
               'type' => 'def_line'
             },
@@ -265,9 +259,7 @@ $result_trees{'unknown_region'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
@@ -277,9 +269,7 @@ $result_trees{'unknown_region'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 6,
-            'macro' => ''
+            'line_nr' => 6
           }
         }
       ],
@@ -293,9 +283,7 @@ $result_trees{'unknown_region'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 4,
-        'macro' => ''
+        'line_nr' => 4
       }
     }
   ],
@@ -358,9 +346,7 @@ $result_errors{'unknown_region'} = [
   {
     'error_line' => 'warning: NOWHERE is not a valid region code
 ',
-    'file_name' => '',
     'line_nr' => 1,
-    'macro' => '',
     'text' => 'NOWHERE is not a valid region code',
     'type' => 'warning'
   }

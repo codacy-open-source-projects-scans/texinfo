@@ -40,9 +40,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             }
           ],
@@ -79,9 +77,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 2,
-        'macro' => ''
+        'line_nr' => 2
       }
     },
     {
@@ -145,9 +141,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
               ],
               'cmdname' => 'footnote',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             },
             {
@@ -199,9 +193,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
               ],
               'cmdname' => 'footnote',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             },
             {
@@ -272,9 +264,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 14,
-                'macro' => ''
+                'line_nr' => 14
               },
               'type' => 'menu_entry'
             },
@@ -305,16 +295,12 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 13,
-            'macro' => ''
+            'line_nr' => 13
           }
         },
         {
@@ -330,9 +316,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 3,
-        'macro' => ''
+        'line_nr' => 3
       }
     },
     {
@@ -363,9 +347,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 17,
-        'macro' => ''
+        'line_nr' => 17
       }
     },
     {
@@ -429,9 +411,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
               ],
               'cmdname' => 'footnote',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 20,
-                'macro' => ''
+                'line_nr' => 20
               }
             },
             {
@@ -483,9 +463,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
               ],
               'cmdname' => 'footnote',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 24,
-                'macro' => ''
+                'line_nr' => 24
               }
             },
             {
@@ -510,9 +488,7 @@ $result_trees{'two_footnotes_in_nodes_separate_no_header'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 18,
-        'macro' => ''
+        'line_nr' => 18
       }
     }
   ],

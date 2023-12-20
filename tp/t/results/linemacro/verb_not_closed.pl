@@ -62,9 +62,7 @@ $result_trees{'verb_not_closed'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -73,9 +71,7 @@ $result_trees{'verb_not_closed'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -150,7 +146,6 @@ $result_trees{'verb_not_closed'} = {
                 'delimiter' => ':'
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 6,
                 'macro' => 'mycommand'
               }
@@ -183,16 +178,13 @@ $result_errors{'verb_not_closed'} = [
   {
     'error_line' => '@mycommand missing closing brace
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => '@mycommand missing closing brace',
     'type' => 'error'
   },
   {
     'error_line' => '@verb missing closing delimiter sequence: :} (possibly involving @mycommand)
 ',
-    'file_name' => '',
     'line_nr' => 6,
     'macro' => 'mycommand',
     'text' => '@verb missing closing delimiter sequence: :}',

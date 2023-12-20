@@ -68,9 +68,7 @@ $result_trees{'protected_spaces_on_line'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             }
           ],
@@ -79,9 +77,7 @@ $result_trees{'protected_spaces_on_line'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -256,7 +252,6 @@ $result_trees{'protected_spaces_on_line'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 8,
                 'macro' => 'test'
               },
@@ -311,7 +306,6 @@ $result_trees{'protected_spaces_on_line'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 8,
                 'macro' => 'test'
               }
@@ -323,7 +317,6 @@ $result_trees{'protected_spaces_on_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 8,
             'macro' => 'test'
           }
@@ -515,7 +508,6 @@ $result_trees{'protected_spaces_on_line'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 10,
                 'macro' => 'test'
               },
@@ -570,7 +562,6 @@ $result_trees{'protected_spaces_on_line'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 10,
                 'macro' => 'test'
               }
@@ -582,7 +573,6 @@ $result_trees{'protected_spaces_on_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 10,
             'macro' => 'test'
           }
@@ -731,7 +721,6 @@ $result_trees{'protected_spaces_on_line'} = {
                 'original_def_cmdname' => 'deffn'
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 12,
                 'macro' => 'test'
               },
@@ -786,7 +775,6 @@ $result_trees{'protected_spaces_on_line'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 12,
                 'macro' => 'test'
               }
@@ -798,7 +786,6 @@ $result_trees{'protected_spaces_on_line'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
             'line_nr' => 12,
             'macro' => 'test'
           }
@@ -870,7 +857,6 @@ $result_errors{'protected_spaces_on_line'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node (possibly involving @test)
 ',
-    'file_name' => '',
     'line_nr' => 8,
     'macro' => 'test',
     'text' => 'entry for index `fn\' outside of any node',
@@ -879,7 +865,6 @@ $result_errors{'protected_spaces_on_line'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node (possibly involving @test)
 ',
-    'file_name' => '',
     'line_nr' => 10,
     'macro' => 'test',
     'text' => 'entry for index `fn\' outside of any node',
@@ -888,7 +873,6 @@ $result_errors{'protected_spaces_on_line'} = [
   {
     'error_line' => 'warning: entry for index `fn\' outside of any node (possibly involving @test)
 ',
-    'file_name' => '',
     'line_nr' => 12,
     'macro' => 'test',
     'text' => 'entry for index `fn\' outside of any node',

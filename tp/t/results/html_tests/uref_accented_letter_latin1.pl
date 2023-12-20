@@ -37,9 +37,7 @@ $result_trees{'uref_accented_letter_latin1'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -69,9 +67,7 @@ $result_trees{'uref_accented_letter_latin1'} = {
                       ],
                       'cmdname' => '"',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       }
                     },
                     {
@@ -87,9 +83,7 @@ $result_trees{'uref_accented_letter_latin1'} = {
                       ],
                       'cmdname' => 'ogonek',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 3,
-                        'macro' => ''
+                        'line_nr' => 3
                       }
                     }
                   ],
@@ -98,9 +92,7 @@ $result_trees{'uref_accented_letter_latin1'} = {
               ],
               'cmdname' => 'uref',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {

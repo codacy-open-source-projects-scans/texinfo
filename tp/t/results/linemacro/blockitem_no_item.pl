@@ -62,9 +62,7 @@ $result_trees{'blockitem_no_item'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -73,9 +71,7 @@ $result_trees{'blockitem_no_item'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -212,7 +208,6 @@ $result_trees{'blockitem_no_item'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
                 'line_nr' => 8,
                 'macro' => 'mycommand'
               }
@@ -222,9 +217,7 @@ $result_trees{'blockitem_no_item'} = {
             'command_as_argument' => {}
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         }
       ],
@@ -254,9 +247,7 @@ $result_errors{'blockitem_no_item'} = [
   {
     'error_line' => 'warning: @itemize has text but no @item
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@itemize has text but no @item',
     'type' => 'warning'
   }

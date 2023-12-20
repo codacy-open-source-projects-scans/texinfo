@@ -99,11 +99,19 @@ enum special_target_type {
   tds_type(example) \
   tds_type(rel)
 
-enum direction_string {
+enum direction_string_type {
   #define tds_type(name) TDS_type_ ## name,
    TDS_TRANSLATED_TYPES_LIST
    TDS_NON_TRANSLATED_TYPES_LIST
   #undef tds_type
+};
+
+#define TDS_TRANSLATED_MAX_NR TDS_type_text +1
+#define TDS_TYPE_MAX_NR TDS_type_rel +1
+
+enum direction_string_context {
+  TDS_context_normal,
+  TDS_context_string,
 };
 
 /* %default_formatting_references in Texinfo::HTML */
@@ -162,11 +170,16 @@ enum html_special_character {
    SC_non_breaking_space,
 };
 
-enum html_command_text_type {
-   HCTT_text,
-   HCTT_text_nonumber,
-   HCTT_string,
-   HCTT_string_nonumber, /* not sure that it is set/used */
+enum html_text_type {
+   HTT_text,
+   HTT_text_nonumber,
+   HTT_string,
+   HTT_string_nonumber, /* not sure that it is set/used */
+   /* not only used for element text, also for direction text */
+   HTT_href,
+   HTT_target,
+   HTT_node,
+   HTT_section,
 };
 
 enum htmlxref_split_type {
@@ -236,7 +249,7 @@ typedef struct HTML_TARGET {
     char *contents_target;
     char *shortcontents_target;
 
-    char *command_text[HCTT_string_nonumber+1];
+    char *command_text[HTT_string_nonumber+1];
     TREE_ADDED_ELEMENTS tree;
     TREE_ADDED_ELEMENTS tree_nonumber;
     FILE_NUMBER_NAME file_number_name;
@@ -267,6 +280,10 @@ typedef struct HTML_SHARED_CONVERSION_STATE {
     int formatted_index_entries; /* formatted_index_entries->{INDEX_ENTRY $index_entry_ref} = 1, ++ */
     int formatted_nodedescriptions; /* formatted_nodedescriptions->{ELEMENT $node_description} = 1, ++ */
     ASSOCIATED_INFO integers;
+    STRING_LIST key_strings; /* used to save the keys used in
+                                ASSOCIATED_INFO integers such that they can be
+                                free'd later.  In general constant strings are
+                                for keys, if not, key_strings should be used */
 } HTML_SHARED_CONVERSION_STATE;
 
 typedef struct MERGED_INDEX {
@@ -297,6 +314,11 @@ typedef struct HTML_COMMAND_CONVERSION {
     char *translated_converted;
     char *translated_to_convert;
 } HTML_COMMAND_CONVERSION;
+
+typedef struct HTML_DIRECTION_STRING_TRANSLATED {
+    char *to_convert;
+    char *converted[TDS_context_string +1];
+} HTML_DIRECTION_STRING_TRANSLATED;
 
 typedef struct COMMAND_ID_LIST {
     size_t number;
@@ -350,8 +372,6 @@ typedef struct FILE_NAME_PATH_COUNTER {
                                    'elements_in_file_count' */
     TEXT body;           /* file body output, used for HTML */
     const OUTPUT_UNIT *first_unit;
-    int counter_changed;  /* indicator to determine if the file has already
-                             been setup for change in counter passed to perl */
 } FILE_NAME_PATH_COUNTER;
 
 typedef struct FILE_NAME_PATH_COUNTER_LIST {
@@ -588,17 +608,6 @@ typedef struct HTMLXREF_MANUAL_LIST {
     HTMLXREF_MANUAL *list;
 } HTMLXREF_MANUAL_LIST;
 
-typedef struct HTMLXREF_MANUAL_ELEMENT_WARNED {
-    const ELEMENT *element;
-    char *manual;
-} HTMLXREF_MANUAL_ELEMENT_WARNED;
-
-typedef struct HTMLXREF_MANUAL_ELEMENT_WARNED_LIST {
-    size_t number;
-    size_t space;
-    HTMLXREF_MANUAL_ELEMENT_WARNED *list;
-} HTMLXREF_MANUAL_ELEMENT_WARNED_LIST;
-
 typedef struct ASSOCIATED_INFO_LIST {
     size_t number;
     ASSOCIATED_INFO *list;
@@ -650,9 +659,6 @@ typedef struct CONVERTER {
   /* API to open, set encoding and register files */
     OUTPUT_FILES_INFORMATION output_files_information;
 
-  /* maybe HTML specific */
-    char *title_titlepage;
-
   /* HTML specific */
     /* set for a converter */
     COMMAND_ID_LIST no_arg_formatted_cmd;
@@ -685,8 +691,11 @@ typedef struct CONVERTER {
     COMMAND_CONVERSION_FUNCTION css_string_command_conversion_function[BUILTIN_CMD_NUMBER];
     OUTPUT_UNIT_CONVERSION_FUNCTION output_unit_conversion_function[OU_special_unit+1];
     SPECIAL_UNIT_BODY_FORMATTING *special_unit_body_formatting;
+    HTML_DIRECTION_STRING_TRANSLATED *translated_direction_strings[TDS_TRANSLATED_MAX_NR];
     /* set for a converter, modified in a document */
     HTML_COMMAND_CONVERSION html_command_conversion[BUILTIN_CMD_NUMBER][HCC_type_css_string+1];
+    char ***directions_strings[TDS_TYPE_MAX_NR];
+    const char **direction_unit_direction_name;
 
     /* set for a document */
     enum htmlxref_split_type document_htmlxref_split_type;
@@ -696,16 +705,20 @@ typedef struct CONVERTER {
     STRING_LIST seen_ids;
     HTML_TARGET_LIST html_targets;
     HTML_TARGET_LIST html_special_targets[ST_footnote_location+1];
-    char **directions_strings[TDS_type_rel+1];
+    JSLICENSE_CATEGORY_LIST jslicenses;
     /* associate cmd and index in special_unit_varieties STRING_LIST */
     /* number in sync with command_special_unit_variety, +1 for trailing 0 */
     COMMAND_ID_INDEX command_special_variety_name_index[4+1];
     size_t *output_unit_file_indices;   /* array of indices in output_unit_files
               each position corresponding to an output unit. */
     size_t *special_unit_file_indices;  /* same for special output units */
+    char *title_titlepage;
     ELEMENT *simpletitle_tree;
     enum command_id simpletitle_cmd;
-    JSLICENSE_CATEGORY_LIST jslicenses;
+    ELEMENT *title_tree;
+    char *title_string;
+    char *documentdescription_string;
+    char *copying_comment;
 
     /* state only in C converter */
     unsigned long modified_state; /* specifies which perl state to rebuild */
@@ -716,8 +729,6 @@ typedef struct CONVERTER {
     ELEMENT_LIST reset_target_commands; /* element targets that should have
                                            their texts reset after language
                                            change */
-    ARRAY_INDEX_LIST file_changed_counter;  /* index of files in
-                                 output_unit_files with changed counter */
     HTML_ADDED_TARGET_LIST added_targets; /* targets added */
     STRING_LIST shared_conversion_state_integer; /* modified */
     /* next 4 allow to switch from normal HTML formatting to css strings
@@ -726,6 +737,8 @@ typedef struct CONVERTER {
     TYPE_CONVERSION_FUNCTION *current_types_conversion_function;
     COMMAND_CONVERSION_FUNCTION *current_commands_conversion_function;
     void (* current_format_protect_text) (const char *text, TEXT *result);
+    int added_title_tree;
+    char *date_in_header;
 
     /* state common with perl converter */
     int document_global_context;
@@ -743,7 +756,7 @@ typedef struct CONVERTER {
     HTML_PENDING_FOOTNOTE_STACK pending_footnotes;
     HTML_ASSOCIATED_INLINE_CONTENT_LIST associated_inline_content;
     PAGES_CSS_LIST page_css;
-    HTMLXREF_MANUAL_ELEMENT_WARNED_LIST check_htmlxref_already_warned;
+    STRING_LIST check_htmlxref_already_warned;
     ASSOCIATED_INFO_LIST html_files_information;
     /* state common with perl converter, not transmitted to perl */
     int use_unicode_text;
@@ -760,19 +773,27 @@ typedef struct TRANSLATED_SUI_ASSOCIATION {
    sometime to have an enum name for a direction */
 /* special units are put after these fixed types, they are dynamically
    determined from perl input */
-enum button_unit_direction {
-  #define hgdt_name(name) D_button_ ## name,
+enum direction_unit_direction {
+  #define hgdt_name(name) D_direction_ ## name,
    HTML_GLOBAL_DIRECTIONS_LIST
   #undef hgdt_name
-   D_button_space,
-  #define rud_type(name) D_button_ ## name,
+   D_direction_Space,
+  #define rud_type(name) D_direction_ ## name,
    RUD_DIRECTIONS_TYPES_LIST
    RUD_FILE_DIRECTIONS_TYPES
   #undef rud_type
-  #define rud_type(name) D_button_FirstInFile## name,
+  #define rud_type(name) D_direction_FirstInFile## name,
    RUD_DIRECTIONS_TYPES_LIST
   #undef rud_type
 };
+
+#define FIRSTINFILE_MIN_IDX D_direction_FirstInFileThis
+#define FIRSTINFILE_MAX_IDX D_direction_FirstInFileNodeBack
+#define FIRSTINFILE_OFFSET (D_direction_This - D_direction_FirstInFileThis)
+#define FIRSTINFILE_NR (FIRSTINFILE_MAX_IDX - FIRSTINFILE_MIN_IDX +1)
+#define NODE_DIRECTIONS_OFFSET (D_direction_NodeNext - D_direction_Next)
+
+#define NON_SPECIAL_DIRECTIONS_NR (FIRSTINFILE_MAX_IDX +1)
 
 enum button_specification_type {
   BST_direction,
@@ -784,17 +805,38 @@ enum button_specification_type {
 enum button_information_type {
   BIT_string,
   BIT_function,
-  BIT_direction_information_type,
+  BIT_selected_direction_information_type,
+  BIT_href_direction_information_type,
 };
+
+/* enum value corresponding to a default button formatting function
+   used later on to select a C function to replace the default function */
+/* longest strings first to avoid ambiguity */
+enum button_function_type {
+  BFT_type_none,
+  /* _default_panel_button_dynamic_direction_section_footer */
+  BFT_type_panel_section_footer,
+  /* _default_panel_button_dynamic_direction_node_footer */
+  BFT_type_panel_node_footer,
+  /* _default_panel_button_dynamic_direction */
+  BFT_type_panel_directions,
+};
+
+typedef struct BUTTON_FUNCTION {
+ /* perl references. This should be SV *sv_*,
+    but we don't want to include the Perl headers everywhere; */
+    void *sv_reference;
+    enum button_function_type type;
+} BUTTON_FUNCTION;
 
 typedef struct BUTTON_SPECIFICATION_INFO {
      /* both global and relative directions index */
     int direction;
     enum button_information_type type;
     union {
+      BUTTON_FUNCTION button_function; /* BIT_function */
   /* perl references. This should be SV *sv_*,
      but we don't want to include the Perl headers everywhere; */
-      void *sv_reference; /* BIT_function */
       void *sv_string; /* BIT_string */
      /* both global and relative directions index */
       int direction_information_type; /* BIT_direction_information_type
@@ -831,5 +873,10 @@ typedef struct FORMATTED_BUTTON_INFO {
     char *passive;
     int need_delimiter;
 } FORMATTED_BUTTON_INFO;
+
+typedef struct DIRECTION_ICON_LIST {
+    size_t number;
+    char **list;
+} DIRECTION_ICON_LIST;
 
 #endif

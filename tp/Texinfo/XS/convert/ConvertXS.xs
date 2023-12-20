@@ -70,15 +70,89 @@ init (...)
         RETVAL
 
 void
-set_conf(SV *converter_in, conf, SV *value)
+converter_initialize (SV *converter_in)
+
+
+void
+set_conf (SV *converter_in, conf, SV *value)
          char *conf = (char *)SvPVbyte_nolen($arg);
       PREINIT:
          CONVERTER *self;
       CODE:
-         /* warn? */
+         /* Warn? Calling code checks 'converter_descriptor' is set */
          self = get_sv_converter (converter_in, 0);
          if (self)
            set_conf (self, conf, value);
+
+void
+converter_line_error (SV *converter_in, text, SV *error_location_info, ...)
+          char *text = (char *)SvPVutf8_nolen($arg);
+      PROTOTYPE: $$$;$
+      PREINIT:
+         CONVERTER *self;
+         int continuation = 0;
+      CODE:
+         self = get_sv_converter (converter_in, 0);
+         if (items > 3 && SvOK(ST(3)))
+           continuation = SvIV (ST(3));
+
+         if (self)
+           {
+             get_line_message (self, MSG_error, continuation,
+                               error_location_info, strdup (text));
+           }
+
+void
+converter_line_warn (SV *converter_in, text, SV *error_location_info, ...)
+          char *text = (char *)SvPVutf8_nolen($arg);
+      PROTOTYPE: $$$;$
+      PREINIT:
+         CONVERTER *self;
+         int continuation = 0;
+      CODE:
+         self = get_sv_converter (converter_in, 0);
+         if (items > 3 && SvOK(ST(3)))
+           continuation = SvIV (ST(3));
+
+         if (self)
+           {
+             get_line_message (self, MSG_warning, continuation,
+                               error_location_info, strdup (text));
+           }
+
+void
+converter_document_error (SV *converter_in, text, ...)
+          char *text = (char *)SvPVutf8_nolen($arg);
+      PROTOTYPE: $$;$
+      PREINIT:
+         CONVERTER *self;
+         int continuation = 0;
+      CODE:
+         self = get_sv_converter (converter_in, 0);
+         if (items > 2 && SvOK(ST(2)))
+           continuation = SvIV (ST(2));
+         if (self)
+           {
+             message_list_document_formatted_message (&self->error_messages,
+               self->conf, MSG_document_error, continuation, strdup (text));
+           }
+
+void
+converter_document_warn (SV *converter_in, text, ...)
+          char *text = (char *)SvPVutf8_nolen($arg);
+      PROTOTYPE: $$;$
+      PREINIT:
+         CONVERTER *self;
+         int continuation = 0;
+      CODE:
+         self = get_sv_converter (converter_in, 0);
+         if (items > 2 && SvOK(ST(2)))
+           continuation = SvIV (ST(2));
+         if (self)
+           {
+             message_list_document_formatted_message (&self->error_messages,
+                      self->conf, MSG_document_warning, continuation, strdup (text));
+           }
 
 void
 get_index_entries_sorted_by_letter (SV *converter_in, SV *index_entries_sorted_by_letter)
@@ -136,8 +210,8 @@ get_converter_errors (SV *converter_in)
          self = get_sv_converter (converter_in, 0);
          if (self && self->error_messages.number)
            {
-             errors_av = get_errors (self->error_messages.list,
-                                     self->error_messages.number);
+             errors_av = build_errors (self->error_messages.list,
+                                       self->error_messages.number);
              wipe_error_message_list (&self->error_messages);
            }
          else
@@ -146,6 +220,21 @@ get_converter_errors (SV *converter_in)
          RETVAL = newRV_noinc ((SV *) errors_av);
     OUTPUT:
          RETVAL
+
+void
+reset_converter (SV *converter_in)
+      PREINIT:
+         CONVERTER *self = 0;
+         HV *stash;
+         char *name;
+      CODE:
+         stash = SvSTASH (SvRV (converter_in));
+         name = HvNAME (stash);
+         if (!strcmp (name, "Texinfo::Convert::HTML"))
+           {
+             self = get_sv_converter (converter_in, "reset html converter");
+             html_reset_converter (self);
+           }
 
 void
 destroy (SV *converter_in)
@@ -219,7 +308,7 @@ text_convert_tree (SV *text_options_in, SV *tree_in, unused=0)
 void
 html_format_init ()
 
-int
+void
 html_converter_initialize_sv (SV *converter_in, SV *default_formatting_references, SV *default_css_string_formatting_references, SV *default_commands_open, SV *default_commands_conversion, SV *default_css_string_commands_conversion, SV *default_types_open, SV *default_types_conversion, SV *default_css_string_types_conversion, SV *default_output_units_conversion, SV *default_special_unit_body)
 
 void
@@ -621,6 +710,38 @@ html_in_align (SV *converter_in)
     OUTPUT:
          RETVAL
 
+SV *
+html_count_elements_in_filename (SV *converter_in, char *spec, filename)
+         char *filename = (char *)SvPVutf8_nolen($arg);
+     PREINIT:
+         IV count = -1;
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_count_elements_in_filename");
+         if (self)
+           {
+             int i;
+             for (i = 0; count_elements_in_filename_type_names[i]; i++)
+               if (!strcmp (spec, count_elements_in_filename_type_names[i]))
+                 break;
+             if (!count_elements_in_filename_type_names[i])
+               {
+                 fprintf (stderr, "ERROR: unknown count type: %s\n", spec);
+               }
+             else
+               {
+                 count = (IV) html_count_elements_in_filename (self, i,
+                                                               filename);
+               }
+           }
+         if (count >= 0)
+           RETVAL = newSViv (count);
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
 void
 html_register_file_information (SV *converter_in, key, int value)
          char *key = (char *)SvPVutf8_nolen($arg);
@@ -822,7 +943,7 @@ html_register_footnote (SV *converter_in, SV *command, footid, docid, int number
                    /*
                  else
                    fprintf (stderr,
-                            "REMARK: footnote %d %s not directly found\n", 
+                            "REMARK: footnote %d %s not directly found\n",
                             number_in_doc, footid);
                     */
                }
@@ -974,6 +1095,29 @@ html_get_associated_formatted_inline_content (SV *converter_in, SV *element_sv)
            }
          else
            RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
+int
+html_check_htmlxref_already_warned (SV *converter_in, manual_name, SV *source_info_sv)
+         char *manual_name = (char *)SvPVutf8_nolen($arg);
+      PREINIT:
+         CONVERTER *self;
+         SOURCE_INFO *source_info = 0;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_check_htmlxref_already_warned");
+         if (SvOK (source_info_sv))
+           source_info = get_source_info (source_info_sv);
+
+         RETVAL = html_check_htmlxref_already_warned (self, manual_name,
+                                                      source_info);
+         if (source_info)
+           {
+             free (source_info->macro);
+             free (source_info->file_name);
+             free (source_info);
+           }
     OUTPUT:
          RETVAL
 
@@ -1147,24 +1291,8 @@ void
 html_translate_names (SV *converter_in)
   PREINIT:
          CONVERTER *self = 0;
-         HV *hv_in;
-         SV **converter_options_sv;
      CODE:
          self = get_sv_converter (converter_in, "html_translate_names");
-         /* that kind of code could be in get_perl_info too */
-         hv_in = (HV *)SvRV (converter_in);
-         converter_options_sv = hv_fetch (hv_in, "conf",
-                                   strlen ("conf"), 0);
-
-         if (converter_options_sv)
-           {
-             if (self->conf)
-               free_options (self->conf);
-             free (self->conf);
-
-             self->conf
-              = copy_sv_options (*converter_options_sv, self);
-           }
 
          html_translate_names (self);
 
@@ -1186,15 +1314,44 @@ html_prepare_simpletitle (SV *converter_in)
              if (self->simpletitle_tree)
                {
                  HV *converter_hv = (HV *) SvRV (converter_in);
-                 hv_store (converter_hv, "simpletitle_tree",
-                           strlen ("simpletitle_tree"),
-                           newRV_inc ((SV *) self->simpletitle_tree->hv), 0);
-                 hv_store (converter_hv, "simpletitle_command_name",
-                           strlen ("simpletitle_command_name"),
-                  newSVpv (builtin_command_name (self->simpletitle_cmd), 0), 0);
+                 build_simpletitle (self, converter_hv);
                }
            }
 
+void
+html_prepare_converted_output_info (SV *converter_in)
+  PREINIT:
+         CONVERTER *self = 0;
+    CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_prepare_converted_output_info");
+         if (self)
+           {
+             HV *converter_hv = (HV *) SvRV (converter_in);
+
+             recopy_converter_conf_sv (converter_hv, self, &self->conf, "conf");
+
+             html_prepare_converted_output_info (self);
+             if (self->added_title_tree)
+               build_texinfo_tree (self->title_tree, 1);
+
+             if (self->simpletitle_tree)
+               build_simpletitle (self, converter_hv);
+
+             hv_store (converter_hv, "title_tree", strlen ("title_tree"),
+                       newRV_inc ((SV *) self->title_tree->hv), 0);
+             hv_store (converter_hv, "title_string", strlen ("title_string"),
+                       newSVpv_utf8 (self->title_string, 0), 0);
+
+             if (self->copying_comment)
+               hv_store (converter_hv, "copying_comment",
+                         strlen ("copying_comment"),
+                         newSVpv_utf8 (self->copying_comment, 0), 0);
+             if (self->documentdescription_string)
+               hv_store (converter_hv, "documentdescription_string",
+                         strlen ("documentdescription_string"),
+                         newSVpv_utf8 (self->documentdescription_string, 0), 0);
+           }
 
 void
 html_prepare_title_titlepage (SV *converter_in, SV *output_units_in, output_file, output_filename)

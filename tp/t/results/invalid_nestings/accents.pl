@@ -27,9 +27,7 @@ $result_trees{'accents'} = {
                       ],
                       'cmdname' => 'TeX',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     }
                   ],
@@ -38,9 +36,7 @@ $result_trees{'accents'} = {
               ],
               'cmdname' => '~',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -59,9 +55,7 @@ $result_trees{'accents'} = {
               ],
               'cmdname' => '~',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -99,9 +93,7 @@ $result_trees{'accents'} = {
                       ],
                       'cmdname' => 'code',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     }
                   ],
@@ -110,9 +102,7 @@ $result_trees{'accents'} = {
               ],
               'cmdname' => '~',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             },
             {
@@ -139,9 +129,7 @@ $result_trees{'accents'} = {
                         'normalized' => 'truc'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 5,
-                        'macro' => ''
+                        'line_nr' => 5
                       }
                     }
                   ],
@@ -150,9 +138,7 @@ $result_trees{'accents'} = {
               ],
               'cmdname' => '^',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 5,
-                'macro' => ''
+                'line_nr' => 5
               }
             },
             {
@@ -188,18 +174,14 @@ $result_errors{'accents'} = [
   {
     'error_line' => 'warning: @code should not appear in @~
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@code should not appear in @~',
     'type' => 'warning'
   },
   {
     'error_line' => 'warning: @anchor should not appear in @^
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@anchor should not appear in @^',
     'type' => 'warning'
   }

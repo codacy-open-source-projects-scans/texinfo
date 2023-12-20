@@ -16,9 +16,7 @@ $result_trees{'item_in_ref'} = {
                 {
                   'cmdname' => 'asis',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'command_as_argument'
                 }
@@ -62,9 +60,7 @@ $result_trees{'item_in_ref'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     }
                   ],
@@ -118,9 +114,7 @@ $result_trees{'item_in_ref'} = {
                           ],
                           'cmdname' => 'ref',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 5,
-                            'macro' => ''
+                            'line_nr' => 5
                           }
                         }
                       ],
@@ -160,9 +154,7 @@ $result_trees{'item_in_ref'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 6,
-                        'macro' => ''
+                        'line_nr' => 6
                       }
                     }
                   ],
@@ -198,9 +190,7 @@ $result_trees{'item_in_ref'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
@@ -213,9 +203,7 @@ $result_trees{'item_in_ref'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -246,18 +234,14 @@ $result_errors{'item_in_ref'} = [
   {
     'error_line' => '@ref missing closing brace
 ',
-    'file_name' => '',
     'line_nr' => 5,
-    'macro' => '',
     'text' => '@ref missing closing brace',
     'type' => 'error'
   },
   {
     'error_line' => 'misplaced }
 ',
-    'file_name' => '',
     'line_nr' => 6,
-    'macro' => '',
     'text' => 'misplaced }',
     'type' => 'error'
   }

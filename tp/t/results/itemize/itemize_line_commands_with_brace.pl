@@ -21,9 +21,7 @@ $result_trees{'itemize_line_commands_with_brace'} = {
                   ],
                   'cmdname' => 'bullet',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'command_as_argument'
                 }
@@ -60,9 +58,7 @@ $result_trees{'itemize_line_commands_with_brace'} = {
                 'item_number' => 1
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 2,
-                'macro' => ''
+                'line_nr' => 2
               }
             },
             {
@@ -92,9 +88,7 @@ $result_trees{'itemize_line_commands_with_brace'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -107,9 +101,7 @@ $result_trees{'itemize_line_commands_with_brace'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -129,9 +121,7 @@ $result_trees{'itemize_line_commands_with_brace'} = {
                   ],
                   'cmdname' => 'minus',
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 5,
-                    'macro' => ''
+                    'line_nr' => 5
                   },
                   'type' => 'command_as_argument'
                 }
@@ -168,9 +158,7 @@ $result_trees{'itemize_line_commands_with_brace'} = {
                 'item_number' => 1
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             },
             {
@@ -200,9 +188,7 @@ $result_trees{'itemize_line_commands_with_brace'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 7,
-                'macro' => ''
+                'line_nr' => 7
               }
             }
           ],
@@ -215,9 +201,7 @@ $result_trees{'itemize_line_commands_with_brace'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 5,
-            'macro' => ''
+            'line_nr' => 5
           }
         }
       ],

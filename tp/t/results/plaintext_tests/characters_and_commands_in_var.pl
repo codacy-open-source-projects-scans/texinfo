@@ -24,9 +24,7 @@ $result_trees{'characters_and_commands_in_var'} = {
               ],
               'cmdname' => 'var',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -45,9 +43,7 @@ $result_trees{'characters_and_commands_in_var'} = {
               ],
               'cmdname' => 'var',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -66,9 +62,7 @@ $result_trees{'characters_and_commands_in_var'} = {
               ],
               'cmdname' => 'var',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -87,9 +81,7 @@ $result_trees{'characters_and_commands_in_var'} = {
               ],
               'cmdname' => 'var',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -132,9 +124,7 @@ $result_trees{'characters_and_commands_in_var'} = {
               ],
               'cmdname' => 'var',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             },
             {
@@ -171,9 +161,7 @@ $result_trees{'characters_and_commands_in_var'} = {
                       ],
                       'cmdname' => ',',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 6,
-                        'macro' => ''
+                        'line_nr' => 6
                       }
                     },
                     {
@@ -192,9 +180,7 @@ $result_trees{'characters_and_commands_in_var'} = {
                       ],
                       'cmdname' => 'u',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 6,
-                        'macro' => ''
+                        'line_nr' => 6
                       }
                     },
                     {
@@ -213,9 +199,7 @@ $result_trees{'characters_and_commands_in_var'} = {
                       ],
                       'cmdname' => '`',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 6,
-                        'macro' => ''
+                        'line_nr' => 6
                       }
                     },
                     {
@@ -229,9 +213,7 @@ $result_trees{'characters_and_commands_in_var'} = {
                       ],
                       'cmdname' => 'aa',
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 6,
-                        'macro' => ''
+                        'line_nr' => 6
                       }
                     }
                   ],
@@ -240,9 +222,7 @@ $result_trees{'characters_and_commands_in_var'} = {
               ],
               'cmdname' => 'var',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             },
             {
@@ -292,9 +272,7 @@ $result_trees{'characters_and_commands_in_var'} = {
                           ],
                           'cmdname' => 'var',
                           'source_info' => {
-                            'file_name' => '',
-                            'line_nr' => 10,
-                            'macro' => ''
+                            'line_nr' => 10
                           }
                         },
                         {
@@ -313,9 +291,7 @@ $result_trees{'characters_and_commands_in_var'} = {
               ],
               'cmdname' => 'footnote',
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 8,
-                'macro' => ''
+                'line_nr' => 8
               }
             },
             {

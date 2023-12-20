@@ -58,9 +58,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 3,
-                'macro' => ''
+                'line_nr' => 3
               }
             }
           ],
@@ -69,9 +67,7 @@ $result_trees{'api_doc_with_linemacro'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         },
         {
@@ -123,9 +119,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 6,
-                'macro' => ''
+                'line_nr' => 6
               }
             }
           ],
@@ -134,9 +128,7 @@ $result_trees{'api_doc_with_linemacro'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 4,
-            'macro' => ''
+            'line_nr' => 4
           }
         },
         {
@@ -184,9 +176,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 9,
-                'macro' => ''
+                'line_nr' => 9
               }
             }
           ],
@@ -195,9 +185,7 @@ $result_trees{'api_doc_with_linemacro'} = {
 '
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         },
         {
@@ -333,9 +321,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       }
                     },
                     {
@@ -374,9 +360,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       }
                     },
                     {
@@ -415,9 +399,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                         'def_role' => 'arg'
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 15,
-                        'macro' => ''
+                        'line_nr' => 15
                       }
                     },
                     {
@@ -450,9 +432,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 15,
-                'macro' => ''
+                'line_nr' => 15
               },
               'type' => 'def_line'
             },
@@ -566,7 +546,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'name'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 19,
                                 'macro' => 'param'
                               }
@@ -594,7 +573,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'arg'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 19,
                                 'macro' => 'param'
                               },
@@ -629,7 +607,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 19,
                         'macro' => 'param'
                       },
@@ -727,7 +704,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'name'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 22,
                                 'macro' => 'param'
                               }
@@ -755,7 +731,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'arg'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 22,
                                 'macro' => 'param'
                               },
@@ -790,7 +765,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 22,
                         'macro' => 'param'
                       },
@@ -820,9 +794,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 24,
-                                'macro' => ''
+                                'line_nr' => 24
                               }
                             },
                             {
@@ -913,7 +885,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'name'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 26,
                                 'macro' => 'param'
                               }
@@ -941,7 +912,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'arg'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 26,
                                 'macro' => 'param'
                               },
@@ -976,7 +946,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 26,
                         'macro' => 'param'
                       },
@@ -1055,7 +1024,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'category'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 29,
                                 'macro' => 'returns'
                               },
@@ -1084,7 +1052,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'name'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 29,
                                 'macro' => 'returns'
                               }
@@ -1112,7 +1079,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'arg'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 29,
                                 'macro' => 'returns'
                               },
@@ -1147,7 +1113,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 29,
                         'macro' => 'returns'
                       },
@@ -1214,7 +1179,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                                 'def_role' => 'category'
                               },
                               'source_info' => {
-                                'file_name' => '',
                                 'line_nr' => 32,
                                 'macro' => 'raises'
                               },
@@ -1264,7 +1228,6 @@ $result_trees{'api_doc_with_linemacro'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
                         'line_nr' => 32,
                         'macro' => 'raises'
                       },
@@ -1290,9 +1253,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 33,
-                                'macro' => ''
+                                'line_nr' => 33
                               }
                             },
                             {
@@ -1311,9 +1272,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                               ],
                               'cmdname' => 'var',
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 33,
-                                'macro' => ''
+                                'line_nr' => 33
                               }
                             },
                             {
@@ -1358,16 +1317,12 @@ $result_trees{'api_doc_with_linemacro'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 35,
-                        'macro' => ''
+                        'line_nr' => 35
                       }
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 18,
-                    'macro' => ''
+                    'line_nr' => 18
                   }
                 },
                 {
@@ -1405,16 +1360,12 @@ $result_trees{'api_doc_with_linemacro'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 37,
-                'macro' => ''
+                'line_nr' => 37
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 14,
-            'macro' => ''
+            'line_nr' => 14
           }
         }
       ],

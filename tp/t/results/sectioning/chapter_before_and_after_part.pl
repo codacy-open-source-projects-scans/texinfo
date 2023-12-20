@@ -41,9 +41,7 @@ $result_trees{'chapter_before_and_after_part'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 1,
-        'macro' => ''
+        'line_nr' => 1
       }
     },
     'unit_contents' => [
@@ -94,9 +92,7 @@ $result_trees{'chapter_before_and_after_part'} = [
           ],
           'cmdname' => 'contents',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 7,
-            'macro' => ''
+            'line_nr' => 7
           }
         }
       ],
@@ -133,9 +129,7 @@ $result_trees{'chapter_before_and_after_part'} = [
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 3,
-            'macro' => ''
+            'line_nr' => 3
           }
         },
         'section_number' => '2'
@@ -146,9 +140,7 @@ $result_trees{'chapter_before_and_after_part'} = [
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 5,
-        'macro' => ''
+        'line_nr' => 5
       }
     },
     'unit_contents' => [

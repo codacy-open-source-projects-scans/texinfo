@@ -629,8 +629,6 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
           STORE("file_name", newSVpv (source_info->file_name, 0),
                 HSH_file_name);
         }
-      else
-        STORE("file_name", newSVpv ("", 0), HSH_file_name);
 
       if (source_info->line_nr)
         {
@@ -641,8 +639,6 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
         {
           STORE("macro", newSVpv_utf8 (source_info->macro, 0), HSH_macro);
         }
-      else
-        STORE("macro", newSVpv ("", 0), HSH_macro);
 #undef STORE
     }
 }
@@ -903,10 +899,13 @@ build_global_info (GLOBAL_INFO *global_info_ref,
   if (global_info.input_directory)
     hv_store (hv, "input_directory", strlen ("input_directory"),
               newSVpv (global_info.input_directory, 0), 0);
+  if (global_info.input_perl_encoding)
+    hv_store (hv, "input_perl_encoding", strlen ("input_perl_encoding"),
+              newSVpv (global_info.input_perl_encoding, 0), 0);
 
-  /* duplicate information to avoid needing to use global_commands and build
-     tree elements, for information useful for structuring and transformation
-     codes */
+  /* duplicate information with global_commands to avoid needing to use
+     global_commands and build tree elements in other codes, for
+     information useful for structuring and transformation codes */
   if (global_commands.novalidate)
     hv_store (hv, "novalidate", strlen ("novalidate"),
               newSViv (1), 0);
@@ -1041,24 +1040,11 @@ build_source_info_hash (SOURCE_INFO source_info, HV *hv)
       hv_store (hv, "file_name", strlen ("file_name"),
                 newSVpv (source_info.file_name, 0), 0);
     }
-   /*
-  else
-    {
-      hv_store (hv, "file_name", strlen ("file_name"),
-                newSVpv ("", 0), 0);
-    }
-    */
 
   if (source_info.line_nr)
     {
       hv_store (hv, "line_nr", strlen ("line_nr"),
                 newSViv (source_info.line_nr), 0);
-      if (!source_info.file_name)
-        hv_store (hv, "file_name", strlen ("file_name"),
-                  newSVpv ("", 0), 0);
-      if (!source_info.macro)
-        hv_store (hv, "macro", strlen ("macro"),
-                newSVpv_utf8 ("", 0), 0);
     }
 
   if (source_info.macro)
@@ -1066,13 +1052,6 @@ build_source_info_hash (SOURCE_INFO source_info, HV *hv)
       hv_store (hv, "macro", strlen ("macro"),
                 newSVpv_utf8 (source_info.macro, 0), 0);
     }
-   /*
-  else
-    {
-      hv_store (hv, "macro", strlen ("macro"),
-                newSVpv_utf8 ("", 0), 0);
-    }
-   */
 }
 
 static SV *
@@ -1109,7 +1088,7 @@ convert_error (ERROR_MESSAGE e)
 
 /* Errors */
 AV *
-get_errors (ERROR_MESSAGE* error_list, size_t error_number)
+build_errors (ERROR_MESSAGE* error_list, size_t error_number)
 {
   AV *av;
   int i;
@@ -1152,12 +1131,12 @@ get_document (size_t document_descriptor)
 
   hv_info = build_global_info (document->global_info, document->global_commands);
 
-  av_errors_list = get_errors (document->error_messages->list,
-                               document->error_messages->number);
+  av_errors_list = build_errors (document->error_messages->list,
+                                 document->error_messages->number);
 
 #define STORE(key, value) hv_store (hv, key, strlen (key), newRV_inc ((SV *) value), 0)
   STORE("tree", hv_tree);
-  STORE("info", hv_info);
+  STORE("global_info", hv_info);
   STORE("errors", av_errors_list);
 #undef STORE
 
@@ -1231,8 +1210,8 @@ build_document (size_t document_descriptor, int no_store)
   av_labels_list = build_target_elements_list (document->labels_list->list,
                                                document->labels_list->number);
 
-  av_errors_list = get_errors (document->error_messages->list,
-                               document->error_messages->number);
+  av_errors_list = build_errors (document->error_messages->list,
+                                 document->error_messages->number);
 
   if (document->nodes_list)
     av_nodes_list = build_elements_list (document->nodes_list);
@@ -1248,7 +1227,7 @@ build_document (size_t document_descriptor, int no_store)
   STORE("listoffloats_list", hv_listoffloats_list);
   STORE("internal_references", av_internal_xref);
   STORE("commands_info", hv_commands_info);
-  STORE("info", hv_info);
+  STORE("global_info", hv_info);
   STORE("identifiers_target", hv_identifiers_target);
   STORE("labels_list", av_labels_list);
   STORE("errors", av_errors_list);
@@ -1313,7 +1292,7 @@ output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
   sv = newRV_noinc ((SV *) directions_hv);
   STORE("directions");
 
-  for (i = 0; i < RUD_type_FirstInFileNodeUp+1; i++)
+  for (i = 0; i < RUD_type_FirstInFileNodeBack+1; i++)
     {
       if (output_unit->directions[i])
         {

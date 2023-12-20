@@ -122,9 +122,7 @@ $result_trees{'float_copying'} = {
                                                 'normalized' => 'caption-copying-footnote-anchor'
                                               },
                                               'source_info' => {
-                                                'file_name' => '',
-                                                'line_nr' => 10,
-                                                'macro' => ''
+                                                'line_nr' => 10
                                               }
                                             },
                                             {
@@ -172,9 +170,7 @@ $result_trees{'float_copying'} = {
                                             }
                                           },
                                           'source_info' => {
-                                            'file_name' => '',
-                                            'line_nr' => 12,
-                                            'macro' => ''
+                                            'line_nr' => 12
                                           },
                                           'type' => 'index_entry_command'
                                         },
@@ -210,9 +206,7 @@ $result_trees{'float_copying'} = {
                                             }
                                           },
                                           'source_info' => {
-                                            'file_name' => '',
-                                            'line_nr' => 13,
-                                            'macro' => ''
+                                            'line_nr' => 13
                                           },
                                           'type' => 'index_entry_command'
                                         },
@@ -247,9 +241,7 @@ $result_trees{'float_copying'} = {
                                               ],
                                               'cmdname' => 'ref',
                                               'source_info' => {
-                                                'file_name' => '',
-                                                'line_nr' => 15,
-                                                'macro' => ''
+                                                'line_nr' => 15
                                               }
                                             },
                                             {
@@ -276,9 +268,7 @@ $result_trees{'float_copying'} = {
                                     }
                                   },
                                   'source_info' => {
-                                    'file_name' => '',
-                                    'line_nr' => 8,
-                                    'macro' => ''
+                                    'line_nr' => 8
                                   }
                                 },
                                 {
@@ -313,9 +303,7 @@ $result_trees{'float_copying'} = {
                                 'normalized' => 'public-domain-anchor'
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 19,
-                                'macro' => ''
+                                'line_nr' => 19
                               }
                             },
                             {
@@ -355,9 +343,7 @@ $result_trees{'float_copying'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 20,
-                                'macro' => ''
+                                'line_nr' => 20
                               },
                               'type' => 'index_entry_command'
                             },
@@ -393,9 +379,7 @@ $result_trees{'float_copying'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 21,
-                                'macro' => ''
+                                'line_nr' => 21
                               },
                               'type' => 'index_entry_command'
                             }
@@ -408,9 +392,7 @@ $result_trees{'float_copying'} = {
                         'float' => {}
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 8,
-                        'macro' => ''
+                        'line_nr' => 8
                       }
                     },
                     {
@@ -445,9 +427,7 @@ $result_trees{'float_copying'} = {
                         }
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 23,
-                        'macro' => ''
+                        'line_nr' => 23
                       }
                     }
                   ],
@@ -463,9 +443,7 @@ $result_trees{'float_copying'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 3,
-                    'macro' => ''
+                    'line_nr' => 3
                   }
                 },
                 {
@@ -495,16 +473,12 @@ $result_trees{'float_copying'} = {
                     }
                   },
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 24,
-                    'macro' => ''
+                    'line_nr' => 24
                   }
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 1,
-                'macro' => ''
+                'line_nr' => 1
               }
             },
             {
@@ -546,9 +520,7 @@ $result_trees{'float_copying'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 26,
-        'macro' => ''
+        'line_nr' => 26
       }
     },
     {
@@ -585,9 +557,7 @@ $result_trees{'float_copying'} = {
           ],
           'cmdname' => 'insertcopying',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 29,
-            'macro' => ''
+            'line_nr' => 29
           }
         },
         {
@@ -651,9 +621,7 @@ $result_trees{'float_copying'} = {
                 }
               ],
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 32,
-                'macro' => ''
+                'line_nr' => 32
               },
               'type' => 'menu_entry'
             },
@@ -684,16 +652,12 @@ $result_trees{'float_copying'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 33,
-                'macro' => ''
+                'line_nr' => 33
               }
             }
           ],
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 31,
-            'macro' => ''
+            'line_nr' => 31
           }
         },
         {
@@ -709,9 +673,7 @@ $result_trees{'float_copying'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 27,
-        'macro' => ''
+        'line_nr' => 27
       }
     },
     {
@@ -743,9 +705,7 @@ $result_trees{'float_copying'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 35,
-        'macro' => ''
+        'line_nr' => 35
       }
     },
     {
@@ -782,9 +742,7 @@ $result_trees{'float_copying'} = {
           ],
           'cmdname' => 'insertcopying',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 38,
-            'macro' => ''
+            'line_nr' => 38
           }
         },
         {
@@ -797,9 +755,7 @@ $result_trees{'float_copying'} = {
           ],
           'cmdname' => 'insertcopying',
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 39,
-            'macro' => ''
+            'line_nr' => 39
           }
         },
         {
@@ -834,9 +790,7 @@ $result_trees{'float_copying'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 41,
-            'macro' => ''
+            'line_nr' => 41
           }
         },
         {
@@ -873,9 +827,7 @@ $result_trees{'float_copying'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 43,
-            'macro' => ''
+            'line_nr' => 43
           }
         },
         {
@@ -907,9 +859,7 @@ $result_trees{'float_copying'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 44,
-            'macro' => ''
+            'line_nr' => 44
           }
         }
       ],
@@ -922,9 +872,7 @@ $result_trees{'float_copying'} = {
         }
       },
       'source_info' => {
-        'file_name' => '',
-        'line_nr' => 36,
-        'macro' => ''
+        'line_nr' => 36
       }
     }
   ],
@@ -1292,54 +1240,42 @@ $result_converted_errors{'info'}->{'float_copying'} = [
   {
     'error_line' => '@float output more than once: public domain
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => '@float output more than once: public domain',
     'type' => 'error'
   },
   {
     'error_line' => '@anchor output more than once: public domain anchor
 ',
-    'file_name' => '',
     'line_nr' => 19,
-    'macro' => '',
     'text' => '@anchor output more than once: public domain anchor',
     'type' => 'error'
   },
   {
     'error_line' => '@float output more than once: public domain
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => '@float output more than once: public domain',
     'type' => 'error'
   },
   {
     'error_line' => '@anchor output more than once: public domain anchor
 ',
-    'file_name' => '',
     'line_nr' => 19,
-    'macro' => '',
     'text' => '@anchor output more than once: public domain anchor',
     'type' => 'error'
   },
   {
     'error_line' => '@anchor output more than once: caption copying footnote anchor
 ',
-    'file_name' => '',
     'line_nr' => 10,
-    'macro' => '',
     'text' => '@anchor output more than once: caption copying footnote anchor',
     'type' => 'error'
   },
   {
     'error_line' => '@anchor output more than once: caption copying footnote anchor
 ',
-    'file_name' => '',
     'line_nr' => 10,
-    'macro' => '',
     'text' => '@anchor output more than once: caption copying footnote anchor',
     'type' => 'error'
   }

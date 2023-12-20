@@ -20,9 +20,7 @@ $result_trees{'tab_in_index'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'bracketed_arg'
                 },
@@ -36,9 +34,7 @@ $result_trees{'tab_in_index'} = {
                     }
                   ],
                   'source_info' => {
-                    'file_name' => '',
-                    'line_nr' => 1,
-                    'macro' => ''
+                    'line_nr' => 1
                   },
                   'type' => 'bracketed_arg'
                 }
@@ -78,9 +74,7 @@ $result_trees{'tab_in_index'} = {
                         'cell_number' => 1
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     },
                     {
@@ -134,9 +128,7 @@ $result_trees{'tab_in_index'} = {
                                 }
                               },
                               'source_info' => {
-                                'file_name' => '',
-                                'line_nr' => 3,
-                                'macro' => ''
+                                'line_nr' => 3
                               },
                               'type' => 'index_entry_command'
                             }
@@ -148,9 +140,7 @@ $result_trees{'tab_in_index'} = {
                         'cell_number' => 2
                       },
                       'source_info' => {
-                        'file_name' => '',
-                        'line_nr' => 2,
-                        'macro' => ''
+                        'line_nr' => 2
                       }
                     }
                   ],
@@ -189,9 +179,7 @@ $result_trees{'tab_in_index'} = {
                 }
               },
               'source_info' => {
-                'file_name' => '',
-                'line_nr' => 4,
-                'macro' => ''
+                'line_nr' => 4
               }
             }
           ],
@@ -204,9 +192,7 @@ $result_trees{'tab_in_index'} = {
             }
           },
           'source_info' => {
-            'file_name' => '',
-            'line_nr' => 1,
-            'macro' => ''
+            'line_nr' => 1
           }
         }
       ],
@@ -230,27 +216,21 @@ $result_errors{'tab_in_index'} = [
   {
     'error_line' => 'warning: @tab should not appear on @vindex line
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => '@tab should not appear on @vindex line',
     'type' => 'warning'
   },
   {
     'error_line' => 'ignoring @tab outside of multitable
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'ignoring @tab outside of multitable',
     'type' => 'error'
   },
   {
     'error_line' => 'warning: entry for index `vr\' outside of any node
 ',
-    'file_name' => '',
     'line_nr' => 3,
-    'macro' => '',
     'text' => 'entry for index `vr\' outside of any node',
     'type' => 'warning'
   }
