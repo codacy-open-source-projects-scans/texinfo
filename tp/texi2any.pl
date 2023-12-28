@@ -128,6 +128,7 @@ use Locale::Messages;
 use Texinfo::Options;
 use Texinfo::Common;
 use Texinfo::Config;
+use Texinfo::Report;
 
 # determine the path separators
 my $path_separator = $Config{'path_sep'};
@@ -909,7 +910,7 @@ the behavior is identical, and does not depend on the installed name.\n")
 ."\n";
   $makeinfo_help .= __("Email bug reports to bug-texinfo\@gnu.org,
 general questions and discussion to help-texinfo\@gnu.org.
-Texinfo home page: http://www.gnu.org/software/texinfo/") ."\n";
+Texinfo home page: https://www.gnu.org/software/texinfo/") ."\n";
   return $makeinfo_help;
 }
 
@@ -1692,18 +1693,17 @@ while(@input_files) {
         ->{'converter'}}($converter_options);
   $converter->output($document);
 
-  # If XS is used, store XS converter errors in perl Texinfo::Report
-  # object associated to the perl converter.
+  my $converter_registrar = Texinfo::Report::new();
   my $converter_errors = $converter->get_converter_errors();
   if (defined($converter_errors)) {
     foreach my $error (@$converter_errors) {
-      $converter->add_formatted_message($error);
+      $converter_registrar->add_formatted_message($error);
     }
   }
 
   push @opened_files, Texinfo::Common::output_files_opened_files(
                               $converter->output_files_information());
-  handle_errors($converter, $error_count, \@opened_files);
+  handle_errors($converter_registrar, $error_count, \@opened_files);
   my $converter_unclosed_files
        = Texinfo::Common::output_files_unclosed_files(
                                $converter->output_files_information());

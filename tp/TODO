@@ -10,6 +10,9 @@ This is the todo list for texi2any
 Before next release
 ===================
 
+do not use TREE_ADDED_ELEMENTS is the tree is to be destroyed
+in the same function
+
 it is not documented that .info or .inf at the end of the @ref file name argument of the source cross reference command is ignored when doing the HTML cross ref.
 in HTML Cross-reference Link Basics:
 Any directory part in the file name argument of the source cross reference command is ignored. Thus, @xref{,,,../foo} and @xref{,,,foo} both use ‘foo’ as the manual name. This is because any such attempted hardwiring of the directory is very unlikely to be useful for all the output formats that use the manual name. 
@@ -17,6 +20,22 @@ Any directory part in the file name argument of the source cross reference comma
 Document that Texinfo::Document::rebuild_document or
 Texinfo::Document::rebuild_tree should be called after tree modifications
 if the parser is XS but converters are perl.
+
+Find perl index element in C:
+$element->{'extra'}->{'index_entry'} = [$index_name, $number];
+in C:
+index[$index_name][number] = { 'index_name'           => $index_name,
+                      'entry_element'        => $element,
+                      'entry_number'         => $number,
+                    };
+(find index j based on index_name, could be a bsearch or a lin search)
+ INDEX_ENTRY *index_entry;
+   index_entry = idx->index_entries[j];
+                  main_entry_element = index_entry->entry_element;
+extra normalized
+root_commands : find through associated output unit or linear search in root
+global commands: add an index
+
 
 Bugs
 ====
@@ -101,6 +120,21 @@ the context command stack.
  @defunx g h j k l m
 
  @end defun
+
+
+For HTML conversion it is possible that the conversion and caching of
+element text (in general for directions href) is done at different
+moments with conversion in perl only and conversion with a mix of perl
+code and C code.  Indeed, if an element text is formatted in C and
+will be needed later on in perl it will be formatted later on in perl
+in that setup compared to the pure perl case.  In general the moment
+of first conversion of element text does not matter much, but it does
+in specific cases, for instance with recursive definitions of sectioning
+commands (with a @ref in sectioning command).  This is tested in test
+30sectioning.t double_recursive_self_section_reference.
+With @ref converted in perl and other parts of the conversions
+in C, an href for a direction differs for this test.  If @ref is also
+converted in C, this issue is invisible.
 
 
 Modules included in tp/maintain/lib/ need to be updated from time to

@@ -45,7 +45,7 @@ void html_open_type_update_context (CONVERTER *self,
                                     enum element_type type);
 void html_convert_type_update_context (CONVERTER *self, enum element_type type);
 void html_new_document_context (CONVERTER *self,
-        char *context_name, char *document_global_context,
+        const char *context_name, const char *document_global_context,
         enum command_id block_command);
 void html_pop_document_context (CONVERTER *self);
 void html_set_code_context (CONVERTER *self, int code);
@@ -82,6 +82,44 @@ void html_register_file_information (CONVERTER *self, const char *key,
 int html_get_file_information (CONVERTER *self, const char *key,
                                const char *filename, int *status);
 
+int html_special_unit_variety_direction_index (CONVERTER *self,
+                                        char *special_unit_variety);
+
+HTML_TARGET *html_get_target (CONVERTER *self, const ELEMENT *element);
+char *html_command_id (CONVERTER *self, const ELEMENT *command);
+char *html_command_contents_target (CONVERTER *self, const ELEMENT *command,
+                                    enum command_id contents_or_shortcontents);
+char *html_footnote_location_target (CONVERTER *self, const ELEMENT *command);
+FILE_NUMBER_NAME *html_command_filename (CONVERTER *self,
+                                         const ELEMENT *command);
+const ELEMENT *html_command_root_element_command (CONVERTER *self,
+                                            const ELEMENT *command);
+const ELEMENT *html_command_node (CONVERTER *self, const ELEMENT *command);
+char *html_internal_command_href (CONVERTER *self, const ELEMENT *command,
+                            const char *source_filename,
+                            const char *specified_target);
+char *html_command_contents_href (CONVERTER *self, const ELEMENT *command,
+                            enum command_id contents_or_shortcontents,
+                            const char *source_filename);
+char *html_footnote_location_href (CONVERTER *self, const ELEMENT *command,
+                             const char *source_filename,
+                             const char *specified_target,
+                             const char *target_filename_in);
+TREE_ADDED_ELEMENTS *html_internal_command_tree (CONVERTER *self,
+                            const ELEMENT *command, int no_number);
+char *html_internal_command_text (CONVERTER *self, const ELEMENT *command,
+                                  const enum html_text_type type);
+
+EXPLAINED_COMMAND_TYPE *find_explained_command_string
+                           (EXPLAINED_COMMAND_TYPE_LIST *type_explanations,
+                               const enum command_id cmd, const char *type);
+void register_explained_command_string (
+               EXPLAINED_COMMAND_TYPE_LIST *type_explanations,
+                    const enum command_id cmd,
+                    const char *type, const char *explanation);
+FOOTNOTE_ID_NUMBER *find_footnote_id_number (CONVERTER *self,
+                                           const char *footnote_id);
+
 void html_register_opened_section_level (CONVERTER *self, int level,
                                          const char *close_string);
 STRING_LIST *html_close_registered_sections_level (CONVERTER *self,
@@ -94,7 +132,7 @@ STRING_LIST *html_get_css_elements_classes (CONVERTER *self,
 
 void html_register_footnote (CONVERTER *self, const ELEMENT *command,
      const char *footid, const char *docid, const int number_in_doc,
-     const char *footnote_location_filename, char *multi_expanded_region);
+     const char *footnote_location_filename, const char *multi_expanded_region);
 HTML_PENDING_FOOTNOTE_STACK *html_get_pending_footnotes (CONVERTER *self);
 void destroy_pending_footnotes (HTML_PENDING_FOOTNOTE_STACK *stack);
 

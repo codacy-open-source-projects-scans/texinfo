@@ -1112,11 +1112,8 @@ sub _align_lines($$$$$$)
       }
     }
 
-    my $orig_line;
     if (!$image) {
       my $chomped = chomp($line);
-      # for debugging.
-      $orig_line = $line;
       $removed_line_bytes_end -= count_bytes($self, $chomped);
       $line =~ s/^(\s*)//;
       $removed_line_bytes_begin -= count_bytes($self, $1);
@@ -1625,7 +1622,6 @@ sub _anchor($$)
 }
 
 my $listoffloat_entry_length = 41;
-my $listoffloat_append = '...';
 
 sub ensure_end_of_line($$)
 {
@@ -1689,6 +1685,74 @@ sub format_image($$)
     return ($result, $lines_count);
   }
   return ('', 0);
+}
+
+my %underline_symbol = (
+  0 => '*',
+  1 => '*',
+  2 => '=',
+  3 => '-',
+  4 => '.'
+);
+
+# Return the text of an underlined heading, possibly indented.
+sub _text_heading($$$;$$)
+{
+  my $self = shift;
+  my $current = shift;
+  my $heading_element = shift;
+  my $numbered = shift;
+  my $indent_length = shift;
+
+  my $number;
+  if ($current->{'extra'}
+      and defined($current->{'extra'}->{'section_number'})
+      and ($numbered or !defined($numbered))) {
+    $number = $current->{'extra'}->{'section_number'};
+  }
+
+  my $heading = $self->convert_line_new_context (
+                         {'type' => 'frenchspacing',
+                          'contents' => [$heading_element]});
+  my ($text, $columns);
+  if (defined($number)) {
+    if ($current->{'cmdname'} eq 'appendix'
+        and $current->{'extra'}->{'section_level'} == 1) {
+      ($text, $columns) = $self->gdt_string_columns(
+                 'Appendix {number} {section_title}',
+                 {'number' => $number, 'section_title' => $heading});
+    } else {
+      ($text, $columns) = $self->gdt_string_columns(
+                 '{number} {section_title}',
+                 {'number' => $number, 'section_title' => $heading});
+    }
+  } else {
+    $text = $heading;
+    $columns = Texinfo::Convert::Unicode::string_width($heading);
+  }
+
+  return '' if ($text !~ /\S/);
+  my $result = $text ."\n";
+  if (defined($indent_length)) {
+    if ($indent_length < 0) {
+      $indent_length = 0;
+    }
+    $result .= (' ' x $indent_length);
+  } else {
+    $indent_length = 0;
+  }
+  my $section_level;
+  if (!defined($current->{'extra'})
+      or !defined($current->{'extra'}->{'section_level'})) {
+    $section_level = Texinfo::Common::section_level($current);
+  } else {
+    $section_level = $current->{'extra'}->{'section_level'};
+  }
+  # $text is indented if indent_length is set, so $indent_length needs to
+  # be subtracted to have the width of the heading only.
+  $result .= ($underline_symbol{$section_level}
+                x ($columns - $indent_length))."\n";
+  return $result;
 }
 
 sub _get_form_feeds($)
@@ -2563,13 +2627,11 @@ sub _convert($$)
         die if ($old_context ne $command);
         return $result;
       } elsif ($command eq 'titlefont') {
-        $result = $self->convert_line_new_context (
-                     {'type' => 'frenchspacing',
-                      'contents' => [$element->{'args'}->[0]]});
-        $result = Texinfo::Convert::Text::text_heading(
+        $result = $self->_text_heading(
                           {'extra' => {'section_level' => 0},
                            'cmdname' => 'titlefont'},
-                            $result, $self, $self->get_conf('NUMBER_SECTIONS'),
+                            $element->{'args'}->[0],
+                            $self->get_conf('NUMBER_SECTIONS'),
           ($self->{'format_context'}->[-1]->{'indent_level'}) *$indent_length);
         $result =~ s/\n$//; # final newline has its own tree element
         $self->{'empty_lines_count'} = 0 unless ($result eq '');
@@ -2801,14 +2863,11 @@ sub _convert($$)
       }
 
       if ($heading_element) {
-        my $heading = $self->convert_line_new_context (
-                        {'type' => 'frenchspacing',
-                         'contents' => [$heading_element]});
         # @* leads to an end of line, underlying appears on the line below
         # over one line
         my $heading_underlined =
-             Texinfo::Convert::Text::text_heading($element, $heading, $self,
-                                             $self->get_conf('NUMBER_SECTIONS'),
+             $self->_text_heading($element, $heading_element,
+                           $self->get_conf('NUMBER_SECTIONS'),
                            ($self->{'format_context'}->[-1]->{'indent_level'})
                                            * $indent_length);
         $result .= _add_newline_if_needed($self);
@@ -2865,9 +2924,9 @@ sub _convert($$)
       }
       $result .= _count_added($self, $line->{'container'},
                       Texinfo::Convert::Paragraph::end($line->{'container'}));
-      pop @{$self->{'formatters'}};
       $self->{'text_element_context'}->[-1]->{'counter'} +=
-         Texinfo::Convert::Unicode::string_width($result);
+         Texinfo::Convert::Paragraph::counter($line->{'container'});
+      pop @{$self->{'formatters'}};
       $self->{'empty_lines_count'} = 0 unless ($result eq '');
     # open a multitable cell
     } elsif ($command eq 'headitem' or $command eq 'item'
@@ -2979,7 +3038,12 @@ sub _convert($$)
           my $float_entry = $self->float_type_number($float);
           next if !defined($float_entry);
 
-          my $formatter = $self->new_formatter('line');
+          my $formatter = $self->new_formatter('paragraph',
+            {
+              'indent_length' => 0,
+              'indent_length_next' => $listoffloat_entry_length,
+              'max' => $self->{'text_element_context'}->[-1]->{'max'},
+            });
           my $container = $formatter->{'container'};
           push @{$self->{'formatters'}}, $formatter;
 
@@ -2999,7 +3063,7 @@ sub _convert($$)
           $result .= _count_added($self, $container,
                                   add_next($container, '.'));
           $result .= _count_added($self, $container,
-            Texinfo::Convert::Paragraph::end($container));
+            Texinfo::Convert::Paragraph::add_pending_word($container));
 
           # NB we trust that only $container was used to format text
           # inside the call to convert_line so that all output text is
@@ -3007,17 +3071,15 @@ sub _convert($$)
           my $line_width
              = Texinfo::Convert::Paragraph::counter($formatter->{'container'});
 
-          pop @{$self->{'formatters'}};
-
           if ($line_width > $listoffloat_entry_length) {
-            $result .= "\n" . ' ' x $listoffloat_entry_length;
+            $result .= _count_added($self, $container,
+              Texinfo::Convert::Paragraph::end_line($container));
             $lines_count++;
           } else {
-            $result .= ' ' x ($listoffloat_entry_length - $line_width);
+            $result .= _count_added($self, $container, add_next($container,
+                         ' ' x ($listoffloat_entry_length - $line_width)));
           }
-          $line_width = $listoffloat_entry_length;
 
-          my $float_line = '';
           my $caption;
           if ($float->{'extra'}->{'shortcaption'}) {
             $caption = $float->{'extra'}->{'shortcaption'};
@@ -3026,29 +3088,35 @@ sub _convert($$)
           }
           if ($caption and $caption->{'args'}->[0]
               and $caption->{'args'}->[0]->{'contents'}) {
-            $self->{'multiple_pass'} = 1;
             push @{$self->{'context'}}, 'listoffloats';
-            my $caption_text = _convert($self, $caption->{'args'}->[0]);
-            my $old_context = pop @{$self->{'context'}};
-            delete $self->{'multiple_pass'};
-            die if ($old_context ne 'listoffloats');
-            while ($caption_text
-                     =~ s/^\s*(\p{Unicode::EastAsianWidth::InFullwidth}\s*|\S+\s*)//) {
-              my $new_word = $1;
-              $new_word =~ s/\n//g;
-              if ((Texinfo::Convert::Unicode::string_width($new_word) +
-                   $line_width) >
-                       ($self->{'text_element_context'}->[-1]->{'max'} - 3)) {
-                $float_line .= $listoffloat_append;
+            $self->{'multiple_pass'} = 1;
+            my $caption_arg = $caption->{'args'}->[0];
+
+            # we do not want to start a new paragraph formatter so
+            # we iterate over the contents of a paragraph rather than
+            # converting the paragraph itself.
+            for my $element (@{$caption_arg->{'contents'}}) {
+              if (defined($element->{'type'})
+                    and $element->{'type'} eq 'paragraph'
+                    and defined($element->{'contents'})) {
+                for my $subelement (@{$element->{'contents'}}) {
+                  $result .= _convert($self, $subelement);
+                }
                 last;
               } else {
-                $float_line .= $new_word;
-                $line_width +=
-                  Texinfo::Convert::Unicode::string_width($new_word);
+                $result .= _convert($self, $element);
+                last;
               }
             }
+            delete $self->{'multiple_pass'};
+            my $old_context = pop @{$self->{'context'}};
           }
-          $result .= $float_line. "\n";
+          # flush
+          $result .= _count_added($self, $container,
+            Texinfo::Convert::Paragraph::end($container));
+
+          pop @{$self->{'formatters'}};
+
           $lines_count++;
         }
         $result .= "\n";

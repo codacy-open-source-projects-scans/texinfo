@@ -63,6 +63,7 @@ use Texinfo::Options;
 use Texinfo::Common;
 use Texinfo::Convert::Texinfo;
 use Texinfo::Config;
+use Texinfo::Report;
 use Texinfo::Parser;
 use Texinfo::Convert::Text;
 use Texinfo::Document;
@@ -393,7 +394,9 @@ sub new_test($;$$$)
 my @contents_keys = ('contents', 'args', 'parent', 'source_info',
   'node_content', 'invalid_nesting', 'info', 'text_arg',
   'node_description', 'node_long_description', 'is_target',
-  'tree_document_descriptor', 'unit_contents', 'output_units_descriptor');
+  'unit_contents', 'global_command_number',
+  # only set with the XS parser
+  'tree_document_descriptor', 'output_units_descriptor');
 my @menus_keys = ('menu_directions', 'menus', 'menu_up_hash');
 # 'section_number' is kept in other results as it may be the only clue
 # to know which section element it is.
@@ -411,7 +414,7 @@ my %avoided_keys_tree;
 my @avoided_keys_tree = (@sections_keys, @menus_keys, @node_keys,
     'float_number', 'tree_unit_directions', 'directions',
     'associated_unit',
-    'parent',
+    'parent', 'global_command_number',
     # only set with the XS parser
     'tree_document_descriptor', 'output_units_descriptor');
 foreach my $avoided_key(@avoided_keys_tree) {
@@ -518,6 +521,14 @@ sub convert_to_plaintext($$$$$$;$)
     }
   }
 
+  # If not outputing to a file, do not do any encoding.  Return value from
+  # 'output' is an unencoded character string.  This will be encoded to
+  # UTF-8 in the results file.
+  if (defined($converter_options->{'OUTFILE'})
+      and $converter_options->{'OUTFILE'} eq '') {
+    $converter_options->{'OUTPUT_PERL_ENCODING'} = '';
+  }
+
   my $converter =
      Texinfo::Convert::Plaintext->converter({'DEBUG' => $self->{'DEBUG'},
                                              'document' => $document,
@@ -534,11 +545,12 @@ sub convert_to_plaintext($$$$$$;$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
+  my $registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $converter->add_formatted_message($error);
+    $registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $converter->errors();
+  my ($errors, $error_nrs) = $registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -565,11 +577,12 @@ sub convert_to_info($$$$$;$)
   die if (!defined($converter_options->{'SUBDIR'}) and !defined($result));
 
   my $converter_errors = $converter->get_converter_errors();
+  my $registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $converter->add_formatted_message($error);
+    $registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $converter->errors();
+  my ($errors, $error_nrs) = $registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -602,12 +615,13 @@ sub convert_to_html($$$$$$;$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
+  my $registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $converter->add_formatted_message($error);
+    $registrar->add_formatted_message($error);
   }
 
   die if (!defined($converter_options->{'SUBDIR'}) and !defined($result));
-  my ($errors, $error_nrs) = $converter->errors();
+  my ($errors, $error_nrs) = $registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -640,11 +654,12 @@ sub convert_to_xml($$$$$$;$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
+  my $registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $converter->add_formatted_message($error);
+    $registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $converter->errors();
+  my ($errors, $error_nrs) = $registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -696,11 +711,12 @@ sub convert_to_docbook($$$$$$;$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
+  my $registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $converter->add_formatted_message($error);
+    $registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $converter->errors();
+  my ($errors, $error_nrs) = $registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -731,11 +747,12 @@ sub convert_to_latex($$$$$$;$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
+  my $registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $converter->add_formatted_message($error);
+    $registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $converter->errors();
+  my ($errors, $error_nrs) = $registrar->errors();
   return ($errors, $result, $converter);
 }
 

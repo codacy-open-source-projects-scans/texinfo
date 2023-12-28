@@ -230,6 +230,21 @@ typedef struct ELEMENT_STACK {
     size_t space;
 } ELEMENT_STACK;
 
+/* an element in C, and/or a reference to an external language (perl)
+   for stack functions called from outside of the C converter */
+typedef struct ELEMENT_REFERENCE {
+    const ELEMENT *element;
+  /* perl element. This should be HV *hv,
+     but we don't want to include the Perl headers everywhere; */
+    const void *hv;
+} ELEMENT_REFERENCE;
+
+typedef struct ELEMENT_REFERENCE_STACK {
+    ELEMENT_REFERENCE *stack;
+    size_t top;
+    size_t space;
+} ELEMENT_REFERENCE_STACK;
+
 typedef struct FILE_NUMBER_NAME {
     size_t file_number;
     char *filename;
@@ -254,11 +269,12 @@ typedef struct HTML_TARGET {
     TREE_ADDED_ELEMENTS tree_nonumber;
     FILE_NUMBER_NAME file_number_name;
     int filename_set;
-    ELEMENT *root_element_command;
+    const ELEMENT *root_element_command;
     int root_element_command_set;
-    /*
-    ELEMENT *node_command;
-    */
+    const ELEMENT *node_command;
+    int node_command_set;
+
+    int formatted_nodedescription_nr;
 } HTML_TARGET;
 
 typedef struct HTML_TARGET_LIST {
@@ -267,23 +283,34 @@ typedef struct HTML_TARGET_LIST {
     HTML_TARGET *list;
 } HTML_TARGET_LIST;
 
+typedef struct EXPLAINED_COMMAND_TYPE {
+    enum command_id cmd;
+    char *type;
+    char *explanation;
+} EXPLAINED_COMMAND_TYPE;
+
+typedef struct EXPLAINED_COMMAND_TYPE_LIST {
+    size_t number;
+    size_t space;
+    EXPLAINED_COMMAND_TYPE *list;
+} EXPLAINED_COMMAND_TYPE_LIST;
+
+typedef struct FOOTNOTE_ID_NUMBER {
+    const char *footnote_id;
+    int number;
+} FOOTNOTE_ID_NUMBER;
+
 typedef struct HTML_SHARED_CONVERSION_STATE {
-    int explained_commands; /* explained_commands->{char $cmdname}->{char $normalized_type}
-                               = ELEMENT */
-    int element_explanation_content; /* element_explanation_content->{ELEMENT $command}
-                                = ELEMENT */
-    int footnote_id_numbers; /* footnote_id_numbers->{char $footid} = int */
-    /* Not useful, directly use expanded formats in the converter.
-       Needed in perl as expanded formats are accessed per format in the API
-    int expanded_format_raw;
-     */
-    int formatted_index_entries; /* formatted_index_entries->{INDEX_ENTRY $index_entry_ref} = 1, ++ */
-    int formatted_nodedescriptions; /* formatted_nodedescriptions->{ELEMENT $node_description} = 1, ++ */
-    ASSOCIATED_INFO integers;
-    STRING_LIST key_strings; /* used to save the keys used in
-                                ASSOCIATED_INFO integers such that they can be
-                                free'd later.  In general constant strings are
-                                for keys, if not, key_strings should be used */
+    int in_skipped_node_top;
+    EXPLAINED_COMMAND_TYPE_LIST explained_commands;
+        /* explained_commands->{char $cmdname}->{char $normalized_type}
+                               = explanation */
+    int footnote_number;
+    FOOTNOTE_ID_NUMBER *footnote_id_numbers; /* footnote_id_numbers->{char $footid} = int */
+    int html_menu_entry_index;
+    int **formatted_index_entries; /* formatted_index_entries->{INDEX_ENTRY $index_entry_ref} = 1, ++ */
+    /* stored in HTML_TARGET formatted_nodedescription_nr */
+    /* formatted_nodedescriptions */
 } HTML_SHARED_CONVERSION_STATE;
 
 typedef struct MERGED_INDEX {
@@ -450,12 +477,6 @@ typedef struct STRING_WITH_LEN {
     char *string;
     size_t len;
 } STRING_WITH_LEN;
-
-typedef struct HTML_ADDED_TARGET_LIST {
-    size_t space;
-    size_t number;
-    HTML_TARGET **list;
-} HTML_ADDED_TARGET_LIST;
 
 typedef struct CSS_SELECTOR_STYLE {
     char *selector;
@@ -631,6 +652,16 @@ typedef struct JSLICENSE_CATEGORY_LIST {
     JSLICENSE_FILE_INFO_LIST *list;
 } JSLICENSE_CATEGORY_LIST;
 
+typedef struct INDEX_NUMBER {
+    size_t number;
+    INDEX *index;
+} INDEX_NUMBER;
+
+typedef struct SORTED_INDEX_NAMES {
+    size_t number;
+    INDEX_NUMBER *list;
+} SORTED_INDEX_NAMES;
+
 typedef struct CONVERTER {
     int converter_descriptor;
   /* perl converter. This should be HV *hv,
@@ -662,6 +693,7 @@ typedef struct CONVERTER {
   /* HTML specific */
     /* set for a converter */
     COMMAND_ID_LIST no_arg_formatted_cmd;
+    COMMAND_ID_LIST style_formatted_cmd;
     int code_types[TXI_TREE_TYPES_NUMBER];
     char *pre_class_types[TXI_TREE_TYPES_NUMBER];
     int upper_case[BUILTIN_CMD_NUMBER];
@@ -702,8 +734,11 @@ typedef struct CONVERTER {
     const OUTPUT_UNIT **global_units_directions;
     SPECIAL_UNIT_DIRECTION *special_units_direction_name;
     ELEMENT **special_unit_info_tree[SUIT_type_heading+1];
+    SORTED_INDEX_NAMES sorted_index_names;
     STRING_LIST seen_ids;
-    HTML_TARGET_LIST html_targets;
+    /* potentially one target list per command (only for some actually) */
+    /* TODO list with commands possibly associated to targets only? */
+    HTML_TARGET_LIST html_targets[BUILTIN_CMD_NUMBER];
     HTML_TARGET_LIST html_special_targets[ST_footnote_location+1];
     JSLICENSE_CATEGORY_LIST jslicenses;
     /* associate cmd and index in special_unit_varieties STRING_LIST */
@@ -726,11 +761,6 @@ typedef struct CONVERTER {
                                before calling perl functions on it */
     COMMAND_ID_LIST no_arg_formatted_cmd_translated; /* list of commands that
                          were translated and need to be passed back to perl */
-    ELEMENT_LIST reset_target_commands; /* element targets that should have
-                                           their texts reset after language
-                                           change */
-    HTML_ADDED_TARGET_LIST added_targets; /* targets added */
-    STRING_LIST shared_conversion_state_integer; /* modified */
     /* next 4 allow to switch from normal HTML formatting to css strings
        formatting */
     FORMATTING_REFERENCE *current_formatting_references;
@@ -750,7 +780,7 @@ typedef struct CONVERTER {
     STRING_STACK multiple_pass;
     STRING_STACK pending_closes;
     FILE_NUMBER_NAME current_filename;
-    ELEMENT_STACK referred_command_stack;
+    ELEMENT_REFERENCE_STACK referred_command_stack;
     HTML_SHARED_CONVERSION_STATE shared_conversion_state;
     HTML_INLINE_CONTENT_STACK pending_inline_content;
     HTML_PENDING_FOOTNOTE_STACK pending_footnotes;

@@ -56,7 +56,7 @@ use Texinfo::Translations;
 
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
-@ISA = qw(Exporter Texinfo::Report Texinfo::Translations);
+@ISA = qw(Exporter Texinfo::Translations);
 
 %EXPORT_TAGS = ( 'all' => [ qw(
 xml_protect_text
@@ -310,7 +310,6 @@ sub converter($;$)
   # and not closed files.  Accessed through output_files_information()
   $converter->{'output_files'} = Texinfo::Common::output_files_initialize();
 
-  $converter->Texinfo::Report::new();
   $converter->{'error_warning_messages'} = [];
 
   # XS converter initialization
@@ -2068,8 +2067,7 @@ in HTML converter, either through $converter-E<gt>get_info() or label_command())
 
 The C<converter> function returns a converter object (a blessed hash
 reference) after checking the options and performing some initializations,
-especially when a document is given among the options.  The converter is
-also initialized as a L<Texinfo::Report>.
+especially when a document is given among the options.
 
 =back
 
@@ -2122,6 +2120,54 @@ X<C<set_conf>>
 Set the Texinfo customization option I<$variable_name> to I<$variable_value> if
 not set as a converter option.  Returns false if the customization options
 was not set.
+
+=back
+
+=head2 Registering error and warning messages
+
+C<Texinfo::Convert::Converter> implements an interface to register error and
+warning messages in the converter, that can be retrieved later on, in general
+to be given to C<Texinfo::Report::add_formatted_message>.  Underneath,
+C<Texinfo::Report> is used to setup the messages data structure.
+
+=over
+
+=item $converter->converter_document_error($text, $continuation)
+
+=item $converter->converter_document_warn($text, $continuation)
+X<C<converter_document_error>>X<C<converter_document_warn>>
+
+Register a warning or an error.  The I<$text> is the text of the error or
+warning.
+
+The I<$continuation> optional arguments, if true, conveys that the line is a
+continuation line of a message.
+
+=item $converter->converter_line_error($text, $error_location_info, $continuation)
+
+=item $converter->converter_line_warn($text, $error_location_info, $continuation)
+X<C<converter_line_error>>X<C<converter_line_warn>>
+
+Register a warning or an error with a line information.  The I<$text> is the
+text of the error or warning.  The I<$error_location_info> argument holds the
+information on the error or warning location.  The I<$error_location_info>
+reference on hash may be obtained from Texinfo elements I<source_info> keys.
+It may also be setup to point to a file name, using the C<file_name> key and to
+a line number, using the C<line_nr> key.  The C<file_name> key value should be
+a binary string.
+
+The I<$continuation> optional arguments, if true, conveys that
+the line is a continuation line of a message.
+
+=item \@error_warning_messages = $converter->get_converter_errors()
+X<C<get_converter_errors>>
+
+Return a reference on an array containing the error or warning messages
+registered in the converter.  Error and warning messages are hash references as
+described in L<Texinfo::Report::errors|Texinfo::Report/($error_warnings_list,
+$error_count) = errors($registrar)> and can be used in input of L<<
+Texinfo::Report::add_formatted_message|Texinfo::Report/$registrar->add_formatted_message
+($msg) >>.
 
 =back
 

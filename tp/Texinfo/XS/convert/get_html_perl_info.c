@@ -38,11 +38,19 @@ FIXME add an initialization of translations?
 #endif
 */
 
+#include "command_ids.h"
 #include "converter_types.h"
 #include "utils.h"
+#include "targets.h"
+#include "builtin_commands.h"
+#include "debug.h"
+#include "convert_to_texinfo.h"
+#include "output_unit.h"
 #include "converter.h"
 #include "convert_html.h"
 #include "get_perl_info.h"
+/* for newSVpv_utf8 */
+#include "build_perl_info.h"
 #include "get_html_perl_info.h"
 
 /* Following is HTML specific */
@@ -301,7 +309,7 @@ html_converter_initialize_sv (SV *converter_sv,
 
   for (i = 0; i < BUILTIN_CMD_NUMBER; i++)
     {
-      char *ref_name;
+      const char *ref_name;
       if (i == 0)
         ref_name = "";
       else
@@ -330,7 +338,7 @@ html_converter_initialize_sv (SV *converter_sv,
 
   for (i = 0; i < BUILTIN_CMD_NUMBER; i++)
     {
-      char *ref_name;
+      const char *ref_name;
       if (i == 0)
         ref_name = "";
       else
@@ -355,7 +363,7 @@ html_converter_initialize_sv (SV *converter_sv,
 
   for (i = 0; i < TXI_TREE_TYPES_NUMBER; i++)
     {
-      char *ref_name;
+      const char *ref_name;
       if (i == 0)
         ref_name = "";
       else
@@ -630,7 +638,7 @@ html_converter_initialize_sv (SV *converter_sv,
 
       converter->no_arg_formatted_cmd.list = (enum command_id *)
         malloc (hv_number * sizeof (enum command_id));
-      converter->no_arg_formatted_cmd.number = hv_number;
+      converter->no_arg_formatted_cmd.number = 0;
 
       for (i = 0; i < hv_number; i++)
         {
@@ -643,14 +651,16 @@ html_converter_initialize_sv (SV *converter_sv,
               HV *context_hv = (HV *)SvRV (context_sv);
               enum command_id cmd = lookup_builtin_command (cmdname);
 
-              converter->no_arg_formatted_cmd.list[i] = cmd;
-
               if (!cmd)
                 fprintf (stderr, "ERROR: %s: no no arg command\n", cmdname);
               else
                 {
                   I32 context_nr;
                   I32 j;
+
+                  converter->no_arg_formatted_cmd.list[
+                               converter->no_arg_formatted_cmd.number] = cmd;
+                  converter->no_arg_formatted_cmd.number++;
 
                   context_nr = hv_iterinit (context_hv);
                   for (j = 0; j < context_nr; j++)
@@ -746,6 +756,10 @@ html_converter_initialize_sv (SV *converter_sv,
         = (HV *)SvRV (*style_commands_formatting_sv);
 
       hv_number = hv_iterinit (style_commands_formatting_hv);
+      converter->style_formatted_cmd.list = (enum command_id *)
+        malloc (hv_number * sizeof (enum command_id));
+      converter->style_formatted_cmd.number = 0;
+
       for (i = 0; i < hv_number; i++)
         {
           char *cmdname;
@@ -762,6 +776,10 @@ html_converter_initialize_sv (SV *converter_sv,
                 {
                   I32 context_nr;
                   I32 j;
+
+                  converter->style_formatted_cmd.list[
+                                 converter->style_formatted_cmd.number] = cmd;
+                  converter->style_formatted_cmd.number++;
 
                   context_nr = hv_iterinit (context_hv);
                   for (j = 0; j < context_nr; j++)
@@ -809,15 +827,16 @@ html_converter_initialize_sv (SV *converter_sv,
                                                            &key, &retlen);
                               if (!strcmp (key, "element"))
                                 {
-                                   /* TODO add when it is used, and free
                                   char *tmp_spec
                                     = (char *) SvPVutf8_nolen (spec_sv);
                                   format_spec->element = strdup (tmp_spec);
-                                    */
                                 }
                               else if (!strcmp (key, "quote"))
                                 format_spec->quote = SvIV (spec_sv);
                             }
+                            /*
+                          fprintf (stderr, "HHH %d %d %s %d %d %s %d %s\n", i, cmd, cmdname, j, context_idx, context_name, format_spec->quote, format_spec->element);
+                             */
                         }
                     }
                 }
@@ -1117,3 +1136,505 @@ html_converter_prepare_output_sv (SV *converter_sv, CONVERTER *converter)
 
 #undef FETCH
 
+/* find from an extra element index entry */
+int
+find_index_entry_numbers_extra_index_entry_sv (CONVERTER *converter,
+                            SV *extra_index_entry_sv, size_t *index_nr)
+{
+  AV *extra_index_entry_av;
+  SV **index_name_sv;
+  char *index_name = 0;
+
+  dTHX;
+
+  if (!converter->document->index_names)
+    return 0;
+
+  extra_index_entry_av = (AV *) SvRV (extra_index_entry_sv);
+
+  index_name_sv = av_fetch (extra_index_entry_av, 0, 0);
+  if (index_name_sv)
+    {
+      index_name = SvPVutf8_nolen (*index_name_sv);
+    }
+
+  if (index_name)
+    {
+      SV **number_sv = av_fetch (extra_index_entry_av, 1, 0);
+      if (number_sv)
+        {
+          int entry_number = SvIV (*number_sv);
+
+          *index_nr
+            = index_number_index_by_name (&converter->sorted_index_names,
+                                          index_name);
+          return entry_number;
+        }
+    }
+  return 0;
+}
+
+INDEX_ENTRY *
+find_index_entry_extra_index_entry_sv (CONVERTER *converter,
+                                       SV *extra_index_entry_sv)
+{
+  size_t index_nr;
+
+  int entry_number
+    = find_index_entry_numbers_extra_index_entry_sv (converter,
+                                                     extra_index_entry_sv,
+                                                     &index_nr);
+
+  if (entry_number)
+    return &converter->sorted_index_names.list[index_nr -1].index
+              ->index_entries[entry_number -1];
+
+  return 0;
+}
+
+ELEMENT *
+find_element_extra_index_entry_sv (CONVERTER *converter,
+                                   SV *extra_index_entry_sv)
+{
+  INDEX_ENTRY *index_entry = find_index_entry_extra_index_entry_sv
+                                        (converter, extra_index_entry_sv);
+  if (index_entry)
+    {
+      if (index_entry->entry_associated_element)
+        return index_entry->entry_associated_element;
+      else if (index_entry->entry_element)
+        return index_entry->entry_element;
+    }
+  return 0;
+}
+
+
+#define FETCH(key) key##_sv = hv_fetch (element_hv, #key, strlen(#key), 0);
+/* find C tree root element corresponding to perl tree element element_hv */
+ELEMENT *find_root_command (CONVERTER *converter, HV *element_hv,
+                            int output_units_descriptor)
+{
+  SV **associated_unit_sv;
+  ELEMENT *root;
+  size_t i;
+
+  dTHX;
+
+  FETCH(associated_unit)
+
+  if (associated_unit_sv)
+    {
+      /* find the associated ouput unit and then find the element
+         in unit contents */
+      HV *associated_unit_hv = (HV *) SvRV (*associated_unit_sv);
+      SV **unit_index_sv = hv_fetch (associated_unit_hv, "unit_index",
+                                     strlen ("unit_index"), 0);
+
+      if (unit_index_sv)
+        {
+          int unit_index = SvIV (*unit_index_sv);
+          const OUTPUT_UNIT_LIST *output_units
+           = retrieve_output_units (output_units_descriptor);
+
+          if (output_units && unit_index < output_units->number)
+            {
+              OUTPUT_UNIT *output_unit = output_units->list[unit_index];
+              size_t i;
+              for (i = 0; i < output_unit->unit_contents.number; i++)
+                {
+                  ELEMENT *content = output_unit->unit_contents.list[i];
+                  if (content->hv == element_hv)
+                    return content;
+                }
+            }
+        }
+    }
+
+  /* if there are no output units go through the root element children */
+  root = converter->document->tree;
+  for (i = 0; i < root->contents.number; i++)
+    {
+      ELEMENT *content = root->contents.list[i];
+      if (content->hv == element_hv)
+        return content;
+    }
+  return 0;
+}
+
+/* TODO nodedescription using the extra element_node and the
+ * node extra node_description? */
+
+/* find C Texinfo tree element based on element_sv perl tree element.
+   Only for elements that can be targets of links. */
+ELEMENT *
+find_element_from_sv (CONVERTER *converter, SV *element_sv,
+                      int output_units_descriptor)
+{
+  enum command_id cmd = 0;
+  HV *element_hv;
+  SV **cmdname_sv;
+  SV **extra_sv;
+  SV **type_sv;
+
+  dTHX;
+
+  element_hv = (HV *) SvRV (element_sv);
+
+  FETCH(cmdname)
+
+  if (cmdname_sv && output_units_descriptor)
+    {
+      char *cmdname = SvPVutf8_nolen (*cmdname_sv);
+      cmd = lookup_builtin_command (cmdname);
+
+      if (builtin_command_data[cmd].flags & CF_root
+          && cmd != CM_node)
+        {
+          ELEMENT *element = find_root_command (converter, element_hv,
+                                                output_units_descriptor);
+          if (element)
+            return element;
+        }
+    }
+
+  FETCH(extra)
+
+#define EXTRA(key) key##_sv = hv_fetch (extra_hv, #key, strlen(#key), 0);
+  if (extra_sv)
+    {
+      HV *extra_hv = (HV *) SvRV (*extra_sv);
+      SV **normalized_sv;
+      SV **global_command_number_sv;
+      SV **index_entry_sv;
+      SV **associated_index_entry_sv;
+
+      EXTRA(normalized)
+      if (normalized_sv)
+        {
+          char *normalized = SvPVutf8_nolen (*normalized_sv);
+          if (converter->document->identifiers_target)
+            {
+              ELEMENT *element_found
+                = find_identifier_target
+                      (converter->document->identifiers_target, normalized);
+         /* check the element found in case of multiple defined identifier */
+              if (element_found && element_hv == element_found->hv)
+                return element_found;
+            }
+        }
+
+      EXTRA(global_command_number)
+      if (global_command_number_sv)
+        {
+          int global_command_number = SvIV (*global_command_number_sv);
+          ELEMENT_LIST *global_cmd_list
+            = get_cmd_global_multi_command (
+                          converter->document->global_commands, cmd);
+
+          if (global_command_number > 0
+              && global_command_number - 1 < global_cmd_list->number)
+            return global_cmd_list->list[global_command_number - 1];
+        }
+
+      EXTRA(associated_index_entry)
+      if (associated_index_entry_sv)
+        {
+          ELEMENT *index_element = find_element_extra_index_entry_sv (converter,
+                                               *associated_index_entry_sv);
+          /* there should be no ambiguity, but we check nevertheless */
+          if (index_element && index_element->hv == element_hv)
+            return (index_element);
+        }
+
+      EXTRA(index_entry)
+      if (index_entry_sv)
+        {
+          ELEMENT *index_element = find_element_extra_index_entry_sv(converter,
+                                                          *index_entry_sv);
+          /* it is important to check if the index entry was reassociated */
+          if (index_element && index_element->hv == element_hv)
+            return (index_element);
+        }
+    }
+
+  FETCH(type)
+
+  if (type_sv)
+    {
+      char *type_name = SvPVutf8_nolen (*type_sv);
+      if (!strcmp (type_name, "special_unit_element"))
+        {
+          SV **associated_unit_sv;
+          FETCH(associated_unit)
+          if (associated_unit_sv)
+            {
+              HV *associated_unit_hv = (HV *) SvRV (*associated_unit_sv);
+              SV **special_unit_variety_hv
+                = hv_fetch (associated_unit_hv, "special_unit_variety",
+                            strlen ("special_unit_variety"), 0);
+              if (special_unit_variety_hv)
+                {
+                  char *special_unit_variety
+                    = SvPVutf8_nolen (*special_unit_variety_hv);
+                  int special_unit_direction_index
+                    = html_special_unit_variety_direction_index (converter,
+                                                special_unit_variety);
+                  const OUTPUT_UNIT *special_unit
+            = converter->global_units_directions[special_unit_direction_index];
+                  if (special_unit)
+                    return special_unit->unit_command;
+                }
+            }
+        }
+    }
+
+  return 0;
+}
+
+#undef EXTRA
+
+#undef FETCH
+
+/* Not sure if it is generic or HTML specific */
+int
+get_output_units_descriptor_converter_sv (SV *converter_in)
+{
+  HV *converter_hv;
+  SV **output_units_sv;
+
+  dTHX;
+
+  int output_units_descriptor = 0;
+
+  converter_hv = (HV *) SvRV (converter_in);
+
+  output_units_sv = hv_fetch (converter_hv, "document_units",
+                              strlen ("document_units"), 0);
+  if (output_units_sv && SvOK (*output_units_sv))
+    output_units_descriptor
+        = get_sv_output_units_descriptor (*output_units_sv,
+                     "html_command_id output units");
+
+  return output_units_descriptor;
+}
+
+/* find converter and element */
+ELEMENT *
+element_converter_from_sv (SV *converter_in, SV *element_sv,
+                           const char *warn_string, CONVERTER **converter_out)
+{
+  int output_units_descriptor;
+
+  *converter_out = get_sv_converter (converter_in, warn_string);
+
+  if (!*converter_out)
+    return 0;
+
+  output_units_descriptor
+    = get_output_units_descriptor_converter_sv (converter_in);
+
+  return find_element_from_sv (*converter_out, element_sv,
+                               output_units_descriptor);
+}
+
+/* find from an index entry in index data */
+int
+find_index_entry_numbers_index_entry_sv (CONVERTER *converter,
+                            SV *index_entry_sv, size_t *index_nr)
+{
+  HV *index_entry_hv;
+  SV **index_name_sv;
+  char *index_name = 0;
+
+  dTHX;
+
+  if (!converter->document->index_names)
+    return 0;
+
+  index_entry_hv = (HV *) SvRV (index_entry_sv);
+
+  index_name_sv = hv_fetch (index_entry_hv, "index_name",
+                            strlen("index_name") ,0);
+  if (index_name_sv)
+    {
+      index_name = SvPVutf8_nolen (*index_name_sv);
+    }
+
+  if (index_name)
+    {
+      SV **number_sv = hv_fetch (index_entry_hv, "entry_number",
+                                 strlen("entry_number") ,0);
+
+      if (number_sv)
+        {
+          int entry_number = SvIV (*number_sv);
+
+          *index_nr
+            = index_number_index_by_name (&converter->sorted_index_names,
+                                          index_name);
+          return entry_number;
+        }
+    }
+  return 0;
+}
+
+HTML_TARGET *
+find_node_target_info_nodedescription_sv (CONVERTER *converter,
+                                          SV *element_sv)
+{
+  HV *element_hv;
+  SV **extra_sv;
+
+  dTHX;
+
+  element_hv = (HV *)SvRV (element_sv);
+  extra_sv = hv_fetch (element_hv, "extra", strlen ("extra"), 0);
+  if (extra_sv)
+    {
+      HV *extra_hv = (HV *)SvRV (*extra_sv);
+      SV **element_node_sv = hv_fetch (extra_hv, "element_node",
+                                       strlen ("element_node"), 0);
+      if (element_node_sv)
+        {
+          ELEMENT *node = find_element_from_sv (converter,
+                                                *element_node_sv, 0);
+          if (node)
+            {
+              HTML_TARGET *target_info = html_get_target (converter, node);
+              return target_info;
+            }
+        }
+    }
+  return 0;
+}
+
+/* This function could be in a build* file as it builds perl data.
+   However, since it has a lot of code and logic in common with the
+   associated get function below, it is kept here. */
+void
+html_set_shared_conversion_state (CONVERTER *converter, SV *converter_in,
+                               const char *cmdname, const char *state_name,
+                               const int args_nr, SV **args_sv)
+{
+  dTHX;
+
+  if (!strcmp (state_name, "formatted_index_entries"))
+    {
+      int formatted_nr = SvIV (args_sv[1]);
+      size_t index_nr;
+
+      int entry_number
+        = find_index_entry_numbers_index_entry_sv (converter,
+                                                args_sv[0], &index_nr);
+
+      converter->shared_conversion_state
+         .formatted_index_entries[index_nr-1][entry_number-1] = formatted_nr;
+    }
+  else if (!strcmp (state_name, "html_menu_entry_index"))
+    {
+      int html_menu_entry_index = SvIV (args_sv[0]);
+      converter->shared_conversion_state.html_menu_entry_index
+        = html_menu_entry_index;
+    }
+  else if (!strcmp (state_name, "footnote_number"))
+    {
+      int footnote_number = SvIV (args_sv[0]);
+      converter->shared_conversion_state.footnote_number
+        = footnote_number;
+    }
+  else if (!strcmp (state_name, "footnote_id_numbers"))
+    {
+      char *footnote_id = (char *)SvPVutf8_nolen(args_sv[0]);
+      int number = SvIV (args_sv[1]);
+      FOOTNOTE_ID_NUMBER *footnote_id_number
+       = find_footnote_id_number (converter, footnote_id);
+      if (footnote_id_number)
+        {
+          footnote_id_number->number = number;
+        }
+    }
+  else if (!strcmp (state_name, "explained_commands"))
+    {
+      EXPLAINED_COMMAND_TYPE_LIST *type_explanations
+       = &converter->shared_conversion_state.explained_commands;
+      enum command_id cmd = lookup_builtin_command (cmdname);
+      char *type = (char *)SvPVutf8_nolen(args_sv[0]);
+      char *explanation = (char *)SvPVutf8_nolen(args_sv[1]);
+      register_explained_command_string (type_explanations,
+                                         cmd, type, explanation);
+    }
+  else if (!strcmp (state_name, "formatted_nodedescriptions"))
+    {
+      HTML_TARGET *target_info
+        = find_node_target_info_nodedescription_sv (converter, args_sv[0]);
+      int number = SvIV (args_sv[1]);
+
+      if (target_info)
+        target_info->formatted_nodedescription_nr = number;
+    }
+  else if (!strcmp (state_name, "in_skipped_node_top"))
+    {
+      int in_skipped_node_top = SvIV (args_sv[0]);
+      converter->shared_conversion_state.in_skipped_node_top
+        = in_skipped_node_top;
+    }
+}
+
+SV *
+html_get_shared_conversion_state (CONVERTER *converter, SV *converter_in,
+                               const char *cmdname, const char *state_name,
+                               const int args_nr, SV **args_sv)
+{
+  dTHX;
+
+  if (!strcmp (state_name, "formatted_index_entries"))
+    {
+      size_t index_nr;
+
+      int entry_number
+        = find_index_entry_numbers_index_entry_sv (converter,
+                                                args_sv[0], &index_nr);
+      if (entry_number <= 0)
+        fatal ("index entry not found");
+
+      return newSViv(converter->shared_conversion_state
+         .formatted_index_entries[index_nr-1][entry_number-1]);
+    }
+  else if (!strcmp (state_name, "html_menu_entry_index"))
+    return newSViv(converter->shared_conversion_state.html_menu_entry_index);
+  else if (!strcmp (state_name, "footnote_number"))
+    return newSViv(converter->shared_conversion_state.footnote_number);
+  else if (!strcmp (state_name, "footnote_id_numbers"))
+    {
+      char *footnote_id = (char *)SvPVutf8_nolen(args_sv[0]);
+      FOOTNOTE_ID_NUMBER *footnote_id_number
+       = find_footnote_id_number (converter, footnote_id);
+      if (footnote_id_number->number > 0)
+        return newSViv(footnote_id_number->number);
+    }
+  else if (!strcmp (state_name, "explained_commands"))
+    {
+      char *type = (char *)SvPVutf8_nolen(args_sv[0]);
+      enum command_id cmd = lookup_builtin_command (cmdname);
+      EXPLAINED_COMMAND_TYPE_LIST *type_explanations
+       = &converter->shared_conversion_state.explained_commands;
+      EXPLAINED_COMMAND_TYPE *type_explanation
+         = find_explained_command_string(type_explanations, cmd, type);
+      if (type_explanation)
+        {
+          char *explanation_string = type_explanation->explanation;
+          return newSVpv_utf8 (explanation_string, 0);
+        }
+    }
+  else if (!strcmp (state_name, "formatted_nodedescriptions"))
+    {
+      HTML_TARGET *target_info
+        = find_node_target_info_nodedescription_sv (converter, args_sv[0]);
+
+      if (target_info && target_info->formatted_nodedescription_nr > 0)
+        return newSViv (target_info->formatted_nodedescription_nr);
+    }
+  else if (!strcmp (state_name, "in_skipped_node_top"))
+    return newSViv(converter->shared_conversion_state.in_skipped_node_top);
+  return newSV (0);
+}

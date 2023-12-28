@@ -42,6 +42,8 @@ use Texinfo::Parser;
 
 use Texinfo::DocumentXS;
 
+use Texinfo::Convert::Unicode;
+
 # we want a reliable way to switch locale for the document
 # strings translations so we don't use the system gettext.
 Locale::Messages->select_package ('gettext_pp');
@@ -338,6 +340,21 @@ sub gdt_string($$;$$$)
                              $replaced_substrings);
 }
 
+# Like gdt_string, but additionally return the width of the result in
+# screen columns.
+# TODO: In the future, this function may return an encoded string, and
+# take encoded arguments.  The plan is to save the width in columns before
+# encoding the string.
+sub gdt_string_columns($$;$$$)
+{
+  my ($customization_information, $string, $replaced_substrings,
+      $translation_context, $lang) = @_;
+
+  my $result = gdt_string($customization_information, $string,
+                          $replaced_substrings, $translation_context, $lang);
+  return ($result, Texinfo::Convert::Unicode::string_width($result));
+}
+
 sub replace_substrings($$;$)
 {
   my $customization_information = shift;
@@ -348,7 +365,6 @@ sub replace_substrings($$;$)
 
   if (defined($replaced_substrings) and ref($replaced_substrings)) {
     my $re = join '|', map { quotemeta $_ } keys %$replaced_substrings;
-    # next line taken from libintl perl, copyright Guido. sub __expand
     $translation_result
   =~ s/\{($re)\}/defined $replaced_substrings->{$1} ? $replaced_substrings->{$1} : "{$1}"/ge;
   }
@@ -373,7 +389,6 @@ sub replace_convert_substrings($$;$)
   # with @-commands used in translations.
   if (defined($replaced_substrings) and ref($replaced_substrings)) {
     my $re = join '|', map { quotemeta $_ } keys %$replaced_substrings;
-    # next line taken from libintl perl, copyright Guido. sub __expand
     $texinfo_line =~ s/\{($re)\}/\@txiinternalvalue\{$1\}/g;
   }
 

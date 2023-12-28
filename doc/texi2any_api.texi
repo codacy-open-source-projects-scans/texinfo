@@ -67,14 +67,14 @@ available for HTML.
 
 The conversion of Texinfo to HTML is done in two steps.  After reading
 command-line options and init files, input Texinfo code is parsed
-into a Texinfo Perl tree and information is gathered on the document
+into a Texinfo tree and information is gathered on the document
 structure.  This first step can only be customized to a certain extent, by
 using the command-line options and setting customization variables.  The
-Texinfo Perl tree describes a Texinfo document in a structured way which makes
+Texinfo tree describes a Texinfo document in a structured way which makes
 it easy to go through the tree and format @@-commands and other containers.
 
 The second step is the @dfn{conversion} step done in a converter.  The HTML
-converter takes a Texinfo Perl tree as input and transforms it to HTML@.  The
+converter takes a Texinfo tree as input and transforms it to HTML@.  The
 code that is used to go through the tree cannot be customized, but the
 conversion of tree elements can be fully customized.
 
@@ -506,7 +506,7 @@ for @code{@@-} in normal, preformatted (and math) and string context, call
 texinfo_register_no_arg_command_formatting('-', undef, '&shy;');
 @end example
 
-If you want @code{<small>...</small>} to be output for @code{@@enddots}
+If you want ``@code{<small>...</small>}'' to be output for @code{@@enddots}
 in normal context and @code{...} to be output in other contexts, call
 @example
 texinfo_register_no_arg_command_formatting('enddots',
@@ -515,7 +515,7 @@ texinfo_register_no_arg_command_formatting('enddots',
                                            'preformatted', '...');
 @end example
 
-If you want @code{error--&gt;} to be used for @code{@@error} in every context,
+If you want ``@code{error--&gt;}'' to be used for @code{@@error} in every context,
 with a translation when the document language changes, call
 
 @example
@@ -523,7 +523,7 @@ texinfo_register_no_arg_command_formatting('error', undef, undef, undef,
                                            'error--&gt;');
 @end example
 
-If you want @code{is the @strong{same} as} to be used for @code{@@equiv},
+If you want ``@code{is the @strong{same} as}'' to be used for @code{@@equiv},
 translated when the document language changes, and converted from Texinfo to
 HTML in the context of the translation, call
 @example
@@ -1322,11 +1322,12 @@ to a hash and @code{\&function} for a reference on a function.
 To illustrate these conventions, here is the prototype for the
 function associated with @samp{format_thing}:
 
-@deftypefn {Function Reference} @var{$text} format_thing (@var{$arg1}, @var{\@@arg2})
+@defblock
+@defline {Function Reference} @var{$text} format_thing (@var{$arg1}, @var{\@@arg2})
 A function reference associated with @samp{format_thing} has a first argument
 @var{$arg1}, a second argument a reference to an array @var{\@@arg2}, and
 returns the formatted text @var{$text}.
-@end deftypefn
+@end defblock
 
 
 @node Converter Object and Conversion Functions
@@ -1337,12 +1338,12 @@ object.  This object gives access to methods to get information on the
 conversion context and to methods useful for the conversion, both as an HTML
 converter and as a generic @code{Texinfo::Convert::Converter}
 (@pxref{Texinfo::Convert::Converter Helper methods,,,texi2any_internals}).  The
-converter can also be used for error reporting as it is also a
-@code{Texinfo::Report} object (@pxref{Texinfo::Report,,,texi2any_internals}),
-and for in-document strings translation as it is also a
-@code{Texinfo::Translations} object (@pxref{Texinfo::Translations,,,
-texi2any_internals}).  @xref{Error Reporting in User Defined Functions} on
-error reporting.
+converter can be used for error reporting by using
+@code{Texinfo::Convert::Converter} methods. @xref{Error
+Reporting in User Defined Functions} on error reporting.
+The converter can also be used for
+in-document strings translation as it is also a @code{Texinfo::Translations}
+object (@pxref{Texinfo::Translations,,, texi2any_internals}).
 
 
 @node Texinfo Tree Conversion Functions
@@ -1401,49 +1402,38 @@ a Texinfo tree conversion.
 @subsection Error Reporting in User Defined Functions
 
 @cindex Error reporting @subentry conversion
-@cindex @code{Texinfo::Report}
+@cindex @code{Texinfo::Convert::Converter} @subentry error reporting
 
 To report an error or a warning in a user defined function, use the methods
-of @code{Texinfo::Report} through a converter object
+of @code{Texinfo::Convert::Converter} through a converter object
 (@pxref{Converter Object and Conversion Functions}).
 
 To report a warning or an error not specific of an element conversion,
-use @code{document_warn} or @code{document_error}:
+use @code{converter_document_warn} or @code{converter_document_error}:
 
-@defun @var{$converter}->document_error ($text, $converter)
-@defunx @var{$converter}->document_warn ($text, $converter)
+@defun @var{$converter}->converter_document_error ($text, $continuation)
+@defunx @var{$converter}->converter_document_warn ($text, $continuation)
 Register a document-wide error or warning.  @var{$text} is the error
-or warning message.  The @var{$converter} object should be given
-as the second argument.
+or warning message.
+
+The optional @var{$continuation} argument, if set, conveys that the message
+is a continuation of the previous registered message.
 @end defun
 
 To report a warning or an error in element conversion, use
-@code{line_warn} or @code{line_error}
-@defun @var{$converter}->line_error ($text, $converter, $location_info, $continuation, $silent)
-@defunx @var{$converter}->line_warn ($text, $converter, $location_info, $continuation, $silent)
+@code{converter_line_warn} or @code{converter_line_error}
+@defun @var{$converter}->converter_line_error ($text, $location_info, $continuation)
+@defunx @var{$converter}->converter_line_warn ($text, $location_info, $continuation)
 Register a warning or an error.  @var{$text} is the text of the
-error or warning.  The @var{$converter} object should be given
-as the second argument.  The optional
-@var{$location_info} holds the information on the error or
-warning location.  The @var{$location_info} reference on hash may be
+error or warning.  The @var{$location_info} holds the information on the
+error or warning location.  The @var{$location_info} reference on hash may be
 obtained from Texinfo elements @code{source_info} keys.
 
 The optional @var{$continuation} argument, if set, conveys that the message
-is a continuation of the previous registered message.  The optional
-@var{$silent} argument, if set, suppresses the immediate output of a message
-if the @code{DEBUG} customization variable is set.
+is a continuation of the previous registered message.
 @end defun
 
-In general, registering an error does not stop the processing, in
-particular it does not stop the main conversion of the Texinfo tree.
-Write initialization files as if the conversion always continued
-after registering the error.
-
-@xref{Texinfo::Report,,,texi2any_internals} for more on
-@code{Texinfo::Report}.
-@c @xref{Init File Calling at Different Stages} for information on how
-@c to stop the processing from user defined functions called at different
-@c stages.
+Note that registering an error does not stop the processing of the Texinfo tree.
 
 
 @node Texinfo Tree Elements in User Defined Functions
@@ -1690,10 +1680,10 @@ used in functions, but should be used out of functions in init files
 To get the value of a variable in a converter @code{$converter},
 the function is @code{get_conf}:
 
-@defun @var{$converter}->get_conf ($variable_name)
+@deftypefun {@var{$result} =} @var{$converter}->get_conf (@var{$variable_name})
 @var{$variable_name} is the name of the variable; its value in the converter
 @var{$converter} (possibly @code{undef}) is returned.
-@end defun
+@end deftypefun
 
 For example:
 
@@ -1784,6 +1774,13 @@ string needs to be encoded.  @xref{Encoding File Path Strings}.
 @code{@@documentdescription} argument converted in a string context
 (@pxref{@code{@@documentdescription},,, texinfo, Texinfo}).  @xref{Init File
 Expansion Contexts}.
+
+@item expanded_formats
+Information on output formats such as @samp{html} or @samp{tex}
+expansion (@pxref{Conditional Commands,,, texinfo, Texinfo}).  An
+hash reference with format names as key and a true value as value if
+the format is expanded, according to command-line and init file
+information.
 
 @item floats
 Information on floats. Gathered from the Texinfo parsing result.
@@ -3094,32 +3091,135 @@ Return the value associated to the key @var{$key} and file name @var{$file_name}
 @node Shared Conversion State
 @section Shared Conversion State
 
-For information shared among formatting functions without involving the
-converter, the function @code{shared_conversion_state} can be used both for
-initialization of shared information and to share information:
+An interface is provided for information shared among formatting functions.
+It is required to use that interface when sharing information with the default
+formatting functions.  Each data piece is associated to an @@-command name, has
+a name, and a list of selectors.
 
-@deftypefun {@var{$reference} =} @var{$converter}->shared_conversion_state (@var{$name}, @var{$initialization})
-Return the reference @var{$reference} associated with @var{$name}.
-@var{$initialization} is only read the first time @var{$name} is seen and sets
-up the reference that will be reused afterwards.  If @var{$initialization} is a
-scalar (string or integer, for example), a reference on a scalar is returned,
-the associated value being set to @var{$initialization}.  Otherwise,
-@var{$initialization} should be a reference on a hash or on an array.
+@node Define Get and Set Shared Conversion State
+@subsection Define, Get and Set Shared Conversion State
+
+Four types for selectors and value are currently considered:
+
+@table @code
+@item string
+A string.
+@item integer
+An integer
+@item element
+A Texinfo tree element.
+@item index_entry.
+An index entry reference as appearing in index data structures.
+@xref{Texinfo@asis{::}Document index_entries,,,texi2any_internals}.
+@end table
+
+New shared infomation is defined with @code{define_shared_conversion_state}:
+
+@defun @var{$converter}->define_shared_conversion_state ($cmdname, $name, \@@specification)
+@var{$cmdname} is an @@-command name, with leading @@. @var{name} is the name
+associated to the data.  The @code{top} command name is conventionally used if
+there is no natural association with another @@-command.
+@var{\@@specification} array reference specifies the types of the selectors
+and the type of the value as strings.  The last string of the array specifies
+the type of the value.  The preceding strings specify the number and types of
+selectors@footnote{The number of strings in the specification is the only
+information actually used, to determine the number of selectors. However, it is
+advised to use the specified types for consistency and compatibility with
+future changes.}.
+
+For example, @code{['integer', 'element', 'string']} specifies a @samp{string}
+type for the value, and two selectors, the first with @samp{integer} type,
+and the second with @samp{element} type.  @code{['integer']} specifies
+and integer for the value and no selector.
+@end defun
+
+For example, the following defines a @samp{color} shared conversion state
+formally associated to @code{@@quotation}, with an integer value and
+a string selector.
+@example
+$converter->define_shared_conversion_state ('quotation', 'color',
+                                            ['string', 'integer']);
+@end example
+
+The association with an @@-command is provided for a semantic classification of
+shared conversion information, but has no practical effect.  In
+particular, nothing prevents using shared conversion state information
+associated to an @@-command in the formatting of another @@-command.
+
+The function @code{get_shared_conversion_state} is used to get information:
+
+@deftypefun {@var{$value} =} @var{$converter}->get_shared_conversion_state (@var{$cmdname}, @var{$name}, [@var{$selector} @dots{}])
+Return the reference @var{$value} associated with @var{$cmdname}
+and @var{$name}. The number of selectors given in argument should match
+the number of selectors in the definition (possible none).
 @end deftypefun
+
+For example, continuing with the @samp{color} shared information data
+defined above, with one selector variable:
+@example
+my $number = $converter->get_shared_conversion_state('quotation',
+                                               'color', $element);
+@end example
+
+The function @code{set_shared_conversion_state} is used to set
+shared information:
+
+@defun @var{$converter}->define_shared_conversion_state (@var{$cmmdname}, @var{$name}, [@var{$selector} @dots{}], @var{$value})
+Sets @var{$value} associated with @var{$cmdname}
+and @var{$name}. The number of selectors given in argument should match
+the number of selectors in the definition (possible none).
+@end defun
+
+For example:
+@example
+$converter->set_shared_conversion_state('quotation', 'color',
+                                        $selector_element, 42);
+@end example
 
 The converter is used to hold the information, but does not use nor write.
 
-Examples of use:
-@example
-my $explained_commands_hash
-    = $converter->shared_conversion_state('explained_commands', @{@});
-$explained_commands_hash->@{'key'@} = 'value';
+@node Shared Conversion State in Defaut Formatting
+@subsection Shared Conversion State in Defaut Formatting
 
-my $foot_num_reference
-     = $converter->shared_conversion_state('footnote_number', 0);
-$@{$foot_num_reference@}++;
-@end example
+The following shared conversion state information is defined in the
+default formatting functions:
 
+@multitable {@code{nodedescription}} {@code{formatted_index_entries}} {(@code{@@nodedescription} tree} {integer}
+@headitem Command @tab Name @tab Selectors @tab Value
+@item @code{abbr} @tab @code{explained_commands} @tab string (first argument) @tab string
+@item @code{acronym} @tab @code{explained_commands} @tab string (first argument) @tab string
+@item @code{footnote} @tab @code{footnote_number} @tab @tab integer
+@item @code{footnote} @tab @code{footnote_id_numbers} @tab string (footnote id) @tab integer
+@item @code{menu} @tab @code{html_menu_entry_index} @tab @tab integer
+@item @code{printindex} @tab @code{formatted_index_entries} @tab index_entry (index entry hash) @tab integer
+@item @code{top} @tab @code{in_skipped_node_top} @tab @tab integer
+@item @code{nodedescription} @tab @code{formatted_nodedescriptions} @tab element (@code{@@nodedescription} tree element) @tab integer
+@end multitable
+
+These shared information data correspond to:
+@vtable @code
+@item explained_commands
+Associate the explanation given in a previous @code{@@abbr} or
+@code{@@acronym} second argument to first @code{@@abbr} or 
+@code{@@acronym} arguments.
+@item footnote_number
+The current number of footnotes formatted in document.
+@item footnote_id_numbers
+Associate a footnote identifier, typically used in hyperlink reference,
+to the number of time the corresponding footnote was formatted.  More than
+one corresponds to very rare cases, for instance a footnote in @code{@@copying}
+and multiple @code{@@insertcopying}.
+@item html_menu_entry_index
+Current number of menu entries in a menu. Reset to 0 at @code{@@menu} beginning.
+@item formatted_index_entries
+Associate an index entry to the number of time it was formatted.
+@item in_skipped_node_top
+Set to 1 in a @code{Top} node being skipped, in case
+@code{NO_TOP_NODE_OUTPUT} is set.
+@item formatted_nodedescriptions
+Associate a @code{@@nodedescription} tree element to the number of time
+it was formatted.
+@end vtable
 
 @node Translations Output and Customization
 @chapter Translations Output and Customization
@@ -3397,7 +3497,8 @@ Returns the file name of the @var{\%target_element} tree element.
 
 @deftypefun {@var{$href} =} @var{$converter}->command_href (@var{\%target_element}, @
        @var{$source_filename}, @var{$source_command}, @var{$specified_target})
-Return string for linking to @var{\%target_element} with @code{<a href>}.
+Return string for linking to @var{\%target_element} with @code{<a href>}
+or @code{undef} if not found or empty.
 @var{$source_filename} is the file the link comes from. If not set, the current
 file name is used.  @var{$source_command} is an optional argument, the
 @@-command the link comes from.  It is only used for messages.
@@ -3508,6 +3609,7 @@ location in the table of contents, if @var{$contents_or_shortcontents} is
 @var{$contents_or_shortcontents} is set to @samp{shortcontents} or
 @samp{summarycontents}.  @var{$source_filename} is the file the link comes
 from. If not set, the current file name is used.
+Returns @code{undef} if no string is found or the string is empty.
 @end deftypefun
 
 To determine if a output unit is associated to the top output unit, use

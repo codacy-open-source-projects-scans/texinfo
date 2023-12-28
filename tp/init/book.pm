@@ -242,7 +242,7 @@ sub book_convert_heading_command($$$$$)
   if ($self->get_conf('NO_TOP_NODE_OUTPUT')
       and $Texinfo::Commands::root_commands{$cmdname}) {
     my $in_skipped_node_top
-      = $self->shared_conversion_state('in_skipped_node_top', 0);
+      = $self->get_shared_conversion_state('top', 'in_skipped_node_top');
     my $node_element;
     if ($cmdname eq 'node') {
       $node_element = $element;
@@ -254,12 +254,16 @@ sub book_convert_heading_command($$$$$)
       if ($node_element and $node_element->{'extra'}
           and $node_element->{'extra'}->{'normalized'}
           and $node_element->{'extra'}->{'normalized'} eq 'Top') {
-        $$in_skipped_node_top = 1;
-      } elsif ($$in_skipped_node_top == 1) {
-        $$in_skipped_node_top = -1;
+        $in_skipped_node_top = 1;
+        $self->set_shared_conversion_state('top', 'in_skipped_node_top',
+                                           $in_skipped_node_top);
+      } elsif ($in_skipped_node_top == 1) {
+        $in_skipped_node_top = -1;
+        $self->set_shared_conversion_state('top', 'in_skipped_node_top',
+                                           $in_skipped_node_top);
       }
     }
-    if ($$in_skipped_node_top == 1) {
+    if ($in_skipped_node_top == 1) {
       my $id_class = $cmdname;
       $result .= &{$self->formatting_function('format_separate_anchor')}($self,
                                                         $element_id, $id_class);
@@ -327,21 +331,9 @@ sub book_convert_heading_command($$$$$)
       } else {
         my $use_next_heading = 0;
         if ($self->get_conf('USE_NEXT_HEADING_FOR_LONE_NODE')) {
-          my $expanded_format_raw
-             = $self->shared_conversion_state('expanded_format_raw', {});
-          # if no format is expanded, the formats will be checked each time
-          # but this is very unlikely, as html is always expanded.
-          if (length(keys(%$expanded_format_raw)) == 0) {
-            foreach my $output_format_command
-                (keys(%Texinfo::Comon::texinfo_output_formats)) {
-              if ($self->is_format_expanded($output_format_command)) {
-                $expanded_format_raw->{$output_format_command} = 1;
-              }
-            }
-          }
           my $next_heading
             = Texinfo::Convert::Utils::find_root_command_next_heading_command(
-                     $element, $expanded_format_raw,
+                     $element, $self->get_info('expanded_formats'),
                      ($self->get_conf('CONTENTS_OUTPUT_LOCATION') eq 'inline'));
           if ($next_heading) {
             $use_next_heading = 1;

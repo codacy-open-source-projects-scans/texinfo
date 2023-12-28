@@ -12,14 +12,8 @@
 /* for NAMED_STRING_ELEMENT_LIST */
 #include "translations.h"
 
-void pass_html_element_targets (SV *converter_sv,
-                                HTML_TARGET_LIST *html_targets);
-void pass_html_special_targets (SV *converter_sv,
-                                HTML_TARGET_LIST *html_special_targets);
-void pass_html_seen_ids (SV *converter_sv, STRING_LIST *seen_ids);
-
-void pass_converter_errors (ERROR_MESSAGE_LIST *error_messages,
-                            HV *converter_hv);
+HV *build_html_target (HTML_TARGET *html_target);
+void build_html_translated_names (HV *hv, CONVERTER *converter);
 
 SV *build_html_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info);
 void pass_html_global_units_directions (SV *converter_sv,
@@ -37,5 +31,7 @@ SV *build_replaced_substrings (NAMED_STRING_ELEMENT_LIST *replaced_substrings);
 void build_pending_footnotes (AV *av, HTML_PENDING_FOOTNOTE_STACK *stack);
 
 void build_simpletitle (CONVERTER *converter, HV *converter_hv);
+
+void build_tree_to_build (ELEMENT_LIST *tree_to_build);
 
 #endif

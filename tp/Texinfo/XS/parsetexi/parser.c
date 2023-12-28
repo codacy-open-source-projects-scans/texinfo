@@ -364,14 +364,20 @@ register_global_command (ELEMENT *current)
 #define GLOBAL_CASE(cmx) \
         case CM_##cmx:   \
           add_to_element_list (&global_commands.cmx, current); \
+          add_extra_integer (current, "global_command_number", \
+                             global_commands.cmx.number); \
           break
 
         case CM_footnote:
           add_to_element_list (&global_commands.footnotes, current);
+          add_extra_integer (current, "global_command_number",
+                             global_commands.footnotes.number);
           break;
 
         case CM_float:
           add_to_element_list (&global_commands.floats, current);
+          add_extra_integer (current, "global_command_number",
+                             global_commands.floats.number);
           break;
 
 #include "global_multi_commands_case.c"
@@ -1937,7 +1943,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
            */
       || (command_data(cmd).flags & CF_ALIAS))
     {
-      char *unknown_cmd;
+      const char *unknown_cmd;
 
       if (cmd)
         {

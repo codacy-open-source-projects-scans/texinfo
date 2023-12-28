@@ -763,6 +763,7 @@ $result_trees{'complex_float'} = {
                     }
                   ],
                   'cmdname' => 'footnote',
+                  'extra' => {},
                   'source_info' => {
                     'line_nr' => 47
                   }
@@ -1658,6 +1659,7 @@ $result_trees{'complex_float'} = {
                             }
                           ],
                           'cmdname' => 'footnote',
+                          'extra' => {},
                           'source_info' => {
                             'line_nr' => 82
                           }
@@ -2958,6 +2960,7 @@ $result_trees{'complex_float'} = {
                             }
                           ],
                           'cmdname' => 'footnote',
+                          'extra' => {},
                           'source_info' => {
                             'line_nr' => 129
                           }
@@ -3677,9 +3680,11 @@ A list of floats at the beginning.
 
 * Menu:
 
-* Text 1: text with a lot of features.   TeX and _téî<an_url>_ AND ...
+* Text 1: text with a lot of features.   TeX and _téî<an_url>_ AND
+                                         it is @verb  a word !@ Æ.
 * Text 1.1: float with a lot of features and no shortcaption.
-                                         An example of float ...
+                                         An example of float caption...
+                                         2 An example 2.
 
    After the listoffloats.
 
