@@ -43,8 +43,12 @@
 #include "cmd_symbol.c"
 #include "cmd_text.c"
 
+
+/* the CONVERTER argument is not used, it is there solely to match the
+   calling prototype in accent formatting commands */
 char *
-ascii_accent (const char *text, const ELEMENT *command, int set_case)
+ascii_accent (CONVERTER *self, const char *text,
+              const ELEMENT *command, int set_case)
 {
   const enum command_id cmd = command->cmd;
   TEXT accent_text;
@@ -96,7 +100,8 @@ ascii_accents_internal (const char *text, const ELEMENT_STACK *stack,
   for (i = stack->top - 1; i >= 0; i--)
     {
       const ELEMENT *accent_command = stack->stack[i];
-      char *formatted_accent = ascii_accent (result, accent_command, set_case);
+      char *formatted_accent = ascii_accent (0, result, accent_command,
+                                             set_case);
       free (result);
       result = formatted_accent;
     }
@@ -147,17 +152,17 @@ copy_options_for_convert_text (CONVERTER *self,
   TEXT_OPTIONS *options = new_text_options ();
   int text_indicator_option;
 
-  if ((self->conf->ENABLE_ENCODING > 0
-       && self->conf->OUTPUT_ENCODING_NAME)
+  if ((self->conf->ENABLE_ENCODING.integer > 0
+       && self->conf->OUTPUT_ENCODING_NAME.string)
       || (enable_encoding_if_not_ascii
-          && self->conf->OUTPUT_ENCODING_NAME
-          && strcmp (self->conf->OUTPUT_ENCODING_NAME, "us-ascii")))
+          && self->conf->OUTPUT_ENCODING_NAME.string
+          && strcmp (self->conf->OUTPUT_ENCODING_NAME.string, "us-ascii")))
     {
-      options->encoding = self->conf->OUTPUT_ENCODING_NAME;
+      options->encoding = self->conf->OUTPUT_ENCODING_NAME.string;
     }
 
   #define tico_option_name(name) \
-  text_indicator_option = self->conf->name; \
+  text_indicator_option = self->conf->name.integer; \
   if (text_indicator_option > 0) { options->name = 1; } \
   else if (text_indicator_option >= 0) { options->name = 0; }
    TEXT_INDICATOR_CONVERTER_OPTIONS
@@ -166,7 +171,8 @@ copy_options_for_convert_text (CONVERTER *self,
   free (options->expanded_formats);
   options->expanded_formats = self->expanded_formats;
 
-  memcpy (&options->include_directories, &self->conf->INCLUDE_DIRECTORIES,
+  memcpy (&options->include_directories,
+          &self->conf->INCLUDE_DIRECTORIES.strlist,
           sizeof (STRING_LIST));
 
   options->other_converter_options = self->conf;
@@ -180,7 +186,7 @@ char *
 text_accents (const ELEMENT *accent, char *encoding, int set_case)
 {
   ACCENTS_STACK *accent_stack = find_innermost_accent_contents (accent);
-  char *text;
+  char *arg_text;
   char *result;
   TEXT_OPTIONS *text_options = new_text_options ();
 
@@ -189,16 +195,16 @@ text_accents (const ELEMENT *accent, char *encoding, int set_case)
   text_options->set_case = set_case;
 
   if (accent_stack->argument)
-    text = convert_to_text (accent_stack->argument, text_options);
+    arg_text = convert_to_text (accent_stack->argument, text_options);
   else
-    text = strdup ("");
+    arg_text = strdup ("");
 
-  result = encoded_accents (text, &accent_stack->stack, encoding,
+  result = encoded_accents (0, arg_text, &accent_stack->stack, encoding,
                             ascii_accent, set_case);
 
   if (!result)
-    result = ascii_accents_internal (text, &accent_stack->stack, set_case);
-  free (text);
+    result = ascii_accents_internal (arg_text, &accent_stack->stack, set_case);
+  free (arg_text);
   destroy_accent_stack (accent_stack);
   destroy_text_options (text_options);
   return result;

@@ -30,6 +30,13 @@
 /* for interdependency with options_types.h */
 struct OPTIONS;
 
+/* for string information passing to/from perl */
+enum sv_string_type {
+  svt_byte,
+  svt_dir,
+  svt_char,
+};
+
 enum formatting_reference_status {
    FRS_status_none,
    FRS_status_default_set,        /* default is set, no customization (or
@@ -189,6 +196,18 @@ enum htmlxref_split_type {
    htmlxref_split_type_node,
    htmlxref_split_type_section,
    htmlxref_split_type_chapter,
+};
+
+enum global_option_type {
+   GO_NONE,
+   GO_integer,
+   GO_char,
+   GO_bytes,
+   GO_icons,
+   GO_buttons,
+   GO_bytes_string_list,
+   GO_file_string_list,
+   GO_char_string_list,
 };
 
 typedef struct {
@@ -464,7 +483,7 @@ typedef struct HTML_DOCUMENT_CONTEXT {
     COMMAND_OR_TYPE_STACK composition_context;
     COMMAND_STACK block_commands;
     HTML_FORMATTING_CONTEXT_STACK formatting_context;
-    STRING_STACK preformatted_classes;
+    COMMAND_OR_TYPE_STACK preformatted_classes;
 } HTML_DOCUMENT_CONTEXT;
 
 typedef struct HTML_DOCUMENT_CONTEXT_STACK {
@@ -524,6 +543,11 @@ typedef struct HTML_ARGS_FORMATTED {
     size_t number;
     HTML_ARG_FORMATTED *args;
 } HTML_ARGS_FORMATTED;
+
+typedef struct ACCENT_ENTITY_INFO {
+    char *entity;
+    char *characters;
+} ACCENT_ENTITY_INFO;
 
 typedef struct COMMAND_CONVERSION_FUNCTION {
     enum formatting_reference_status status;
@@ -694,9 +718,11 @@ typedef struct CONVERTER {
     /* set for a converter */
     COMMAND_ID_LIST no_arg_formatted_cmd;
     COMMAND_ID_LIST style_formatted_cmd;
+    COMMAND_ID_LIST accent_cmd;
     int code_types[TXI_TREE_TYPES_NUMBER];
     char *pre_class_types[TXI_TREE_TYPES_NUMBER];
     int upper_case[BUILTIN_CMD_NUMBER];
+    ACCENT_ENTITY_INFO accent_entities[BUILTIN_CMD_NUMBER];
     STRING_WITH_LEN special_character[SC_non_breaking_space+1];
     STRING_WITH_LEN line_break_element;
     CSS_SELECTOR_STYLE_LIST css_element_class_styles;
@@ -740,6 +766,7 @@ typedef struct CONVERTER {
     /* TODO list with commands possibly associated to targets only? */
     HTML_TARGET_LIST html_targets[BUILTIN_CMD_NUMBER];
     HTML_TARGET_LIST html_special_targets[ST_footnote_location+1];
+    COMMAND_STACK html_target_cmds; /* list of cmd with targets */
     JSLICENSE_CATEGORY_LIST jslicenses;
     /* associate cmd and index in special_unit_varieties STRING_LIST */
     /* number in sync with command_special_unit_variety, +1 for trailing 0 */
@@ -908,5 +935,17 @@ typedef struct DIRECTION_ICON_LIST {
     size_t number;
     char **list;
 } DIRECTION_ICON_LIST;
+
+typedef struct OPTION {
+    enum global_option_type type;
+    int set;
+    union {
+      int integer;
+      char *string;
+      STRING_LIST *strlist;
+      BUTTON_SPECIFICATION_LIST *buttons;
+      DIRECTION_ICON_LIST *icons;
+    };
+} OPTION;
 
 #endif

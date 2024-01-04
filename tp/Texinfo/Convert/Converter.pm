@@ -85,15 +85,19 @@ $XS_convert = 1 if ($XS_structuring
 our $module_loaded = 0;
 
 my %XS_overrides = (
+  # XS only called if there is an associated XS converter
   "Texinfo::Convert::Converter::_XS_converter_initialize",
    => "Texinfo::Convert::ConvertXS::converter_initialize",
   "Texinfo::Convert::Converter::_XS_set_conf"
    => "Texinfo::Convert::ConvertXS::set_conf",
-  "Texinfo::Convert::Converter::_XS_get_unclosed_stream"
-   => "Texinfo::Convert::ConvertXS::get_unclosed_stream",
+  "Texinfo::Convert::Converter::_XS_force_conf"
+   => "Texinfo::Convert::ConvertXS::force_conf",
+  "Texinfo::Convert::Converter::_XS_get_conf"
+   => "Texinfo::Convert::ConvertXS::get_conf",
+
+  # fully overriden for all the converters
   "Texinfo::Convert::Converter::get_converter_errors"
    => "Texinfo::Convert::ConvertXS::get_converter_errors",
-
   "Texinfo::Convert::Converter::converter_line_error"
    => "Texinfo::Convert::ConvertXS::converter_line_error",
   "Texinfo::Convert::Converter::converter_line_warn"
@@ -103,10 +107,14 @@ my %XS_overrides = (
   "Texinfo::Convert::Converter::converter_document_warn"
    => "Texinfo::Convert::ConvertXS::converter_document_warn",
 
+  # XS only
   "Texinfo::Convert::Converter::reset_converter"
    => "Texinfo::Convert::ConvertXS::reset_converter",
   "Texinfo::Convert::Converter::destroy"
    => "Texinfo::Convert::ConvertXS::destroy",
+
+  "Texinfo::Convert::Converter::_XS_get_unclosed_stream"
+   => "Texinfo::Convert::ConvertXS::get_unclosed_stream",
 );
 
 sub import {
@@ -294,14 +302,11 @@ sub converter($;$)
     }
   }
 
-  Texinfo::Common::set_output_encodings($converter,
-                                        $converter->{'document_info'});
-
   # turn the array to a hash.
-  my $expanded_formats = $converter->get_conf('EXPANDED_FORMATS');
+  my $expanded_formats = $converter->{'conf'}->{'EXPANDED_FORMATS'};
   $converter->{'expanded_formats'} = {};
   if (defined($expanded_formats)) {
-    foreach my $expanded_format (@{$converter->get_conf('EXPANDED_FORMATS')}) {
+    foreach my $expanded_format (@$expanded_formats) {
       $converter->{'expanded_formats'}->{$expanded_format} = 1;
     }
   }
@@ -312,8 +317,17 @@ sub converter($;$)
 
   $converter->{'error_warning_messages'} = [];
 
-  # XS converter initialization
+  # XS converter initialization.
+  # NOTE get_conf should not be used before that point, such that the conf is
+  # initialized before it is called for the first time.
+  # NOTE format specific information is not available at this point, such that
+  # some options may not be obtained.  This is the case for HTML for instance.
+  # In particular the special units information need to be known before buttons
+  # information can be passed to C.
   _XS_converter_initialize($converter);
+
+  Texinfo::Common::set_output_encodings($converter,
+                                        $converter->{'document_info'});
 
   $converter->converter_initialize();
 
@@ -581,6 +595,13 @@ sub get_converter_errors($)
 # Implementation of the customization API that is used in many
 # Texinfo modules
 
+# Those functions are not overriden when XS is used as it is possible
+# that some converters do not use XS.
+
+sub _XS_get_conf($$)
+{
+}
+
 sub get_conf($$)
 {
   my $self = shift;
@@ -589,6 +610,11 @@ sub get_conf($$)
     confess("CBUG: unknown option $conf\n");
     #return undef;
   }
+
+  if ($self->{'converter_descriptor'} and $XS_convert) {
+    return _XS_get_conf($self, $conf);
+  }
+
   return $self->{'conf'}->{$conf};
 }
 
@@ -616,6 +642,10 @@ sub set_conf($$$)
   }
 }
 
+sub _XS_force_conf($$$)
+{
+}
+
 sub force_conf($$$)
 {
   my $self = shift;
@@ -626,7 +656,7 @@ sub force_conf($$$)
     return undef;
   }
   if ($self->{'converter_descriptor'} and $XS_convert) {
-    _XS_set_conf($self, $conf, $value);
+    _XS_force_conf($self, $conf, $value);
   }
   $self->{'conf'}->{$conf} = $value;
   return 1;
@@ -1384,63 +1414,56 @@ sub float_name_caption($$)
   my $self = shift;
   my $element = shift;
 
-  my $caption;
+  my $caption_element;
   if ($element->{'extra'} and $element->{'extra'}->{'caption'}) {
-    $caption = $element->{'extra'}->{'caption'};
+    $caption_element = $element->{'extra'}->{'caption'};
   } elsif ($element->{'extra'} and $element->{'extra'}->{'shortcaption'}) {
-    $caption = $element->{'extra'}->{'shortcaption'};
+    $caption_element = $element->{'extra'}->{'shortcaption'};
   }
   #if ($self->get_conf('DEBUG')) {
   #  my $caption_texi =
-  #    Texinfo::Convert::Texinfo::convert_to_texinfo({ 'contents' => $caption->{'contents'}});
+  #    Texinfo::Convert::Texinfo::convert_to_texinfo(
+  #       { 'contents' => $caption_element->{'contents'}});
   #  print STDERR "  CAPTION: $caption_texi\n";
   #}
-  my $type_element;
-  if ($element->{'extra'}->{'float_type'} ne '') {
-    $type_element = $element->{'args'}->[0];
+
+  my $substrings = {};
+
+  my $float_number_element;
+  if ($element->{'extra'}
+      and defined($element->{'extra'}->{'float_number'})) {
+    $float_number_element = {'text' => $element->{'extra'}->{'float_number'}};
+    $substrings->{'float_number'} = $float_number_element;
   }
 
   my $prepended;
-  if ($type_element) {
-    if ($caption) {
-      if ($element->{'extra'}
-          and defined($element->{'extra'}->{'float_number'})) {
+  if ($element->{'extra'} and defined($element->{'extra'}->{'float_type'})
+      and $element->{'extra'}->{'float_type'} ne '') {
+    $substrings->{'float_type'} = $element->{'args'}->[0];
+    if ($caption_element) {
+      if ($float_number_element) {
         # TRANSLATORS: added before caption
-        $prepended = $self->gdt('{float_type} {float_number}: ',
-            {'float_type' => $type_element,
-             'float_number'
-                => {'text' => $element->{'extra'}->{'float_number'}}});
+        $prepended = $self->gdt('{float_type} {float_number}: ', $substrings);
       } else {
         # TRANSLATORS: added before caption, no float label
-        $prepended = $self->gdt('{float_type}: ',
-          {'float_type' => $type_element});
+        $prepended = $self->gdt('{float_type}: ', $substrings);
       }
     } else {
-      if ($element->{'extra'}
-          and defined($element->{'extra'}->{'float_number'})) {
-        $prepended = $self->gdt("{float_type} {float_number}",
-            {'float_type' => $type_element,
-              'float_number'
-                 => {'text' => $element->{'extra'}->{'float_number'}}});
+      if ($float_number_element) {
+        $prepended = $self->gdt("{float_type} {float_number}", $substrings);
       } else {
-        $prepended = $self->gdt("{float_type}",
-            {'float_type' => $type_element});
+        $prepended = $self->gdt("{float_type}", $substrings);
       }
     }
-  } elsif ($element->{'extra'}
-           and defined($element->{'extra'}->{'float_number'})) {
-    if ($caption) {
+  } elsif ($float_number_element) {
+    if ($caption_element) {
       # TRANSLATORS: added before caption, no float type
-      $prepended = $self->gdt('{float_number}: ',
-          {'float_number'
-                => {'text' => $element->{'extra'}->{'float_number'}}});
+      $prepended = $self->gdt('{float_number}: ', $substrings);
     } else {
-      $prepended = $self->gdt("{float_number}",
-           {'float_number'
-                => {'text' => $element->{'extra'}->{'float_number'}}});
+      $prepended = $self->gdt("{float_number}", $substrings);
     }
   }
-  return ($caption, $prepended);
+  return ($caption_element, $prepended);
 }
 
 # This is used when the formatted text has no comment nor new line, but
@@ -1472,28 +1495,21 @@ sub format_comment_or_return_end_line($$)
   return $end_line;
 }
 
-sub table_item_content_tree($$$)
+sub table_item_content_tree($$)
 {
   my $self = shift;
   my $element = shift;
-  my $contents = shift;
-
-  my $table_item_tree = {'parent' => $element};
-
-  return $table_item_tree
-    if (!defined($contents));
 
   my $table_command = $element->{'parent'}->{'parent'}->{'parent'};
-  if ($table_command->{'extra'}
-     and $table_command->{'extra'}->{'command_as_argument'}) {
+  if (defined($element->{'args'}) and scalar(@{$element->{'args'}})
+      and $table_command->{'extra'}
+      and $table_command->{'extra'}->{'command_as_argument'}) {
     my $command_as_argument
       = $table_command->{'extra'}->{'command_as_argument'};
     my $command = {'cmdname' => $command_as_argument->{'cmdname'},
-               'source_info' => $element->{'source_info'},
-               'parent' => $table_item_tree };
+                   'source_info' => $element->{'source_info'},};
     if ($table_command->{'extra'}->{'command_as_argument_kbd_code'}) {
-      $command->{'extra'} = {} if (!$command->{'extra'});
-      $command->{'extra'}->{'code'} = 1;
+      $command->{'extra'} = {'code' => 1};
     }
     if ($command_as_argument->{'type'} eq 'definfoenclose_command') {
       $command->{'type'} = $command_as_argument->{'type'};
@@ -1502,13 +1518,12 @@ sub table_item_content_tree($$$)
       $command->{'extra'}->{'end'} = $command_as_argument->{'extra'}->{'end'};
     }
     my $arg = {'type' => 'brace_command_arg',
-               'contents' => $contents,
+               'contents' => [$element->{'args'}->[0]],
                'parent' => $command,};
     $command->{'args'} = [$arg];
-    $contents = [$command];
+    return $command;
   }
-  $table_item_tree->{'contents'} = $contents;
-  return $table_item_tree;
+  return undef;
 }
 
 sub convert_accents($$$;$$)
@@ -1521,24 +1536,24 @@ sub convert_accents($$$;$$)
 
   my ($contents_element, $stack)
       = Texinfo::Convert::Utils::find_innermost_accent_contents($accent);
-  my $result = $self->convert_tree($contents_element);
+  my $arg_text = $self->convert_tree($contents_element);
 
-  my $encoded;
   if ($output_encoded_characters) {
-    $encoded = Texinfo::Convert::Unicode::encoded_accents($self, $result, $stack,
+    my $encoded = Texinfo::Convert::Unicode::encoded_accents($self,
+                                       $arg_text, $stack,
                                        $self->get_conf('OUTPUT_ENCODING_NAME'),
                                        $format_accents,
                                        $in_upper_case);
-  }
-  if (!defined($encoded)) {
-    foreach my $accent_command (reverse(@$stack)) {
-      $result = &$format_accents ($self, $result, $accent_command,
-                                  $in_upper_case);
+    if (defined($encoded)) {
+      return $encoded;
     }
-    return $result;
-  } else {
-    return $encoded;
   }
+  my $result = $arg_text;
+  foreach my $accent_command (reverse(@$stack)) {
+    $result = &$format_accents ($self, $result, $accent_command,
+                                $in_upper_case);
+  }
+  return $result;
 }
 
 # index sub-entries specified with @subentry, separated by commas, or by
@@ -2389,13 +2404,13 @@ variables are set.
 For more information on the function used to set the value for each of the command, see
 L<Texinfo::Common set_global_document_command|Texinfo::Common/$element = set_global_document_command($customization_information, $global_commands_information, $cmdname, $command_location)>.
 
-=item $table_item_tree = $converter->table_item_content_tree($element, $contents)
+=item $table_item_tree = $converter->table_item_content_tree($element)
 X<C<table_item_content_tree>>
 
-I<$element> should be an C<@item> or C<@itemx> tree element,
-I<$contents> should be corresponding texinfo tree contents.
+I<$element> should be an C<@item> or C<@itemx> tree element.
 Returns a tree in which the @-command in argument of C<@*table>
-of the I<$element> has been applied to I<$contents>.
+of the I<$element> has been applied to the I<$element> line argument,
+or C<undef>.
 
 =item $result = $converter->top_node_filename($document_name)
 X<C<top_node_filename>>

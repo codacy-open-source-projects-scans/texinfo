@@ -1062,14 +1062,15 @@ File: ,  Node: chapter,  Prev: Top,  Up: Top
 
 
 Tag Table:
-Node: Top84
-Node: chapter181
+Node: Top81
+Node: chapter178
 
 End Tag Table
 
 
 Local Variables:
 coding: utf-8
+Info-documentlanguage: de
 End:
 ';
 

@@ -1205,14 +1205,15 @@ File: ,  Node: chap,  Prev: Top,  Up: Top
 
 
 Tag Table:
-Node: Top84
-Node: chap159
+Node: Top82
+Node: chap157
 
 End Tag Table
 
 
 Local Variables:
 coding: utf-8
+Info-documentlanguage: hr
 End:
 ';
 

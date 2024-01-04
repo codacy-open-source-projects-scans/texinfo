@@ -79,10 +79,35 @@ set_conf (SV *converter_in, conf, SV *value)
       PREINIT:
          CONVERTER *self;
       CODE:
-         /* Warn? Calling code checks 'converter_descriptor' is set */
+         /* Calling code checks 'converter_descriptor' is set */
          self = get_sv_converter (converter_in, 0);
          if (self)
            set_conf (self, conf, value);
+
+void
+force_conf (SV *converter_in, conf, SV *value)
+         char *conf = (char *)SvPVbyte_nolen($arg);
+      PREINIT:
+         CONVERTER *self;
+      CODE:
+         /* Calling code checks 'converter_descriptor' is set */
+         self = get_sv_converter (converter_in, 0);
+         if (self)
+           force_conf (self, conf, value);
+
+SV *
+get_conf (SV *converter_in, conf)
+         char *conf = (char *)SvPVbyte_nolen($arg);
+      PREINIT:
+         CONVERTER *self;
+      CODE:
+         self = get_sv_converter (converter_in, 0);
+         if (self)
+           RETVAL = get_conf (self, conf);
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+        RETVAL
 
 void
 converter_line_error (SV *converter_in, text, SV *error_location_info, ...)
@@ -679,7 +704,7 @@ SV *
 html_preformatted_classes_stack (SV *converter_in)
      PREINIT:
          CONVERTER *self;
-         STRING_STACK *preformatted_classes_stack;
+         COMMAND_OR_TYPE_STACK *preformatted_classes_stack;
          AV *preformatted_classes_av;
          size_t i;
      CODE:
@@ -689,8 +714,15 @@ html_preformatted_classes_stack (SV *converter_in)
          preformatted_classes_av = newAV();
          for (i = 0; i < preformatted_classes_stack->top; i++)
            {
+             COMMAND_OR_TYPE *cmd_or_type
+               = &preformatted_classes_stack->stack[i];
+             char *pre_class = 0;
+             if (cmd_or_type->variety == CTV_type_command)
+               pre_class = builtin_command_data[cmd_or_type->cmd].cmdname;
+             else if (cmd_or_type->variety == CTV_type_type)
+               pre_class = self->pre_class_types[cmd_or_type->type];
              SV *class_sv
-               = newSVpv_utf8 (preformatted_classes_stack->stack[i], 0);
+               = newSVpv_utf8 (pre_class, 0);
              av_push (preformatted_classes_av, class_sv);
            }
          RETVAL = newRV_noinc ((SV *)preformatted_classes_av);
@@ -1583,6 +1615,10 @@ html_merge_index_entries (SV *converter_in)
          if (self)
            html_merge_index_entries (self);
 
+void
+reset_output_init_conf (SV *sv_in, warn_string)
+         char *warn_string = (char *)SvPVutf8_nolen($arg);
+
 #  my ($output_units, $special_units, $associated_special_units)
 #    = $self->_prepare_conversion_units($root, $document_name);
 void
@@ -1603,13 +1639,13 @@ html_prepare_conversion_units (SV *converter_in, ...)
          if (items > 2 && SvOK(ST(2)))
            document_name = SvPVutf8_nolen (ST(2));
 
-         self = set_output_converter_sv (converter_in,
-                                         "html_prepare_conversion_units");
+         self = get_sv_converter (converter_in,
+                                  "html_prepare_conversion_units");
 
-         if (self->conf->OUTPUT_CHARACTERS > 0
-             && self->conf->OUTPUT_ENCODING_NAME
+         if (self->conf->OUTPUT_CHARACTERS.integer > 0
+             && self->conf->OUTPUT_ENCODING_NAME.string
              /* not sure if strcasecmp is needed or not */
-             && !strcasecmp (self->conf->OUTPUT_ENCODING_NAME, "utf-8"))
+             && !strcasecmp (self->conf->OUTPUT_ENCODING_NAME.string, "utf-8"))
            self->use_unicode_text = 1;
 
          html_prepare_conversion_units (self,

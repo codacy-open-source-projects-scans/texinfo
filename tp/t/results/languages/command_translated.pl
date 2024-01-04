@@ -390,13 +390,14 @@ File: ,  Node: chapter erreur→,  Prev: Top,  Up: Top
 
 Tag Table:
 Node: Top27
-Node: chapter erreur→157
+Node: chapter erreur→149
 
 End Tag Table
 
 
 Local Variables:
 coding: utf-8
+Info-documentlanguage: fr
 End:
 ';
 

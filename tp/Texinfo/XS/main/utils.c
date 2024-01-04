@@ -28,6 +28,7 @@
 #include "unistr.h"
 #include "unicase.h"
 #include "uniwidth.h"
+#include <unictype.h>
 
 #include "global_commands_types.h"
 #include "options_types.h"
@@ -224,12 +225,16 @@ to_upper_or_lower_multibyte (const char *text, int lower_or_upper)
   return result;
 }
 
+/* end of line resets the count, same as in perl */
 int
 width_multibyte (const char *text)
 {
   int result;
+  const char *p = strrchr (text, '\n');
+  if (!p)
+    p = text;
   /* FIXME error checking? */
-  uint8_t *u8_text = u8_strconv_from_encoding (text, "UTF-8",
+  uint8_t *u8_text = u8_strconv_from_encoding (p, "UTF-8",
                                                  iconveh_question_mark);
   /* FIXME the libunistring documentation described encoding as
      The encoding argument identifies the encoding (e.g. "ISO-8859-2"
@@ -240,6 +245,42 @@ width_multibyte (const char *text)
   result = u8_strwidth (u8_text, "UTF-8");
   free (u8_text);
   return result;
+}
+
+/* length of next word in multibyte setting.  Should correspond to \w or
+   \p{Word} in perl */
+int
+word_bytes_len_multibyte (const char *text)
+{
+  uint8_t *encoded_u8 = u8_strconv_from_encoding (text, "UTF-8",
+                                                  iconveh_question_mark);
+  uint8_t *current_u8 = encoded_u8;
+  int len = 0;
+  while (1)
+    {
+      ucs4_t next_char;
+      int new_len = u8_strmbtouc (&next_char, current_u8);
+      if (!new_len)
+        {
+          break;
+        }
+      /* (\p{Alnum} = \p{Alphabetic} + \p{Nd}) + \pM + \p{Pc}
+                                              + \p{Join_Control} */
+      if (uc_is_general_category (next_char, UC_CATEGORY_M)
+          || uc_is_general_category (next_char, UC_CATEGORY_Nd)
+          || uc_is_property (next_char, UC_PROPERTY_ALPHABETIC)
+          || uc_is_property (next_char, UC_PROPERTY_JOIN_CONTROL))
+        {
+          len += new_len;
+          current_u8 += new_len;
+        }
+      else
+        {
+          break;
+        }
+    }
+  free (encoded_u8);
+  return len;
 }
 
 
@@ -1034,17 +1075,16 @@ set_informative_command_value (OPTIONS *options, const ELEMENT *element)
 
   if (value)
     {
-      COMMAND_OPTION_REF *option_ref = get_command_option (options, cmd);
-      if (option_ref)
+      OPTION *option = get_command_option (options, cmd);
+      if (option && option->set <= 0)
         {
-          if (option_ref->type == GO_int)
-            *(option_ref->int_ref) = strtoul (value, NULL, 10);
+          if (option->type == GO_integer)
+            option->integer = strtoul (value, NULL, 10);
           else
             {
-              free (*(option_ref->char_ref));
-              *(option_ref->char_ref) = strdup (value);
+              free (option->string);
+              option->string = strdup (value);
             }
-          free (option_ref);
         }
     }
 }
@@ -1143,16 +1183,6 @@ set_global_document_command (GLOBAL_COMMANDS *global_commands, OPTIONS *options,
   if (element)
     set_informative_command_value (options, element);
   return element;
-}
-
-
-/* options and converters */
-OPTIONS *
-new_options (void)
-{
-  OPTIONS *options = (OPTIONS *) malloc (sizeof (OPTIONS));
-  initialize_options (options);
-  return options;
 }
 
 
@@ -1384,4 +1414,79 @@ html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons)
   free (direction_icons->list);
 }
 
+
+/* options and converters */
+OPTIONS *
+new_options (void)
+{
+  OPTIONS *options = (OPTIONS *) malloc (sizeof (OPTIONS));
+  memset (options, 0, sizeof (OPTIONS));
+  initialize_options (options);
+  return options;
+}
+
+void
+free_option (OPTION *option)
+{
+  switch (option->type)
+    {
+      case GO_char:
+      case GO_bytes:
+        free (option->string);
+        break;
+
+      case GO_bytes_string_list:
+      case GO_file_string_list:
+      case GO_char_string_list:
+        free_strings_list (option->strlist);
+        break;
+
+      case GO_buttons:
+        html_free_button_specification_list (option->buttons);
+        break;
+
+      case GO_icons:
+        html_free_direction_icons (option->icons);
+        break;
+
+      case GO_integer:
+      default:
+    }
+}
+
+void
+initialize_option (OPTION *option, enum global_option_type type)
+{
+  option->type = type;
+  switch (type)
+    {
+      case GO_integer:
+        option->integer = -1;
+        break;
+
+      case GO_bytes_string_list:
+      case GO_file_string_list:
+      case GO_char_string_list:
+        option->strlist = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+        memset (option->strlist, 0, sizeof (STRING_LIST));
+        break;
+
+      case GO_char:
+      case GO_bytes:
+        option->string = 0;
+        break;
+
+      case GO_buttons:
+        option->buttons = 0;
+        break;
+
+      case GO_icons:
+        option->icons = (DIRECTION_ICON_LIST *)
+                          malloc (sizeof (DIRECTION_ICON_LIST));
+        memset (option->icons, 0, sizeof (DIRECTION_ICON_LIST));
+        break;
+
+      default:
+    }
+}
 

@@ -91,7 +91,7 @@ unicode_accent (const char *text, const ELEMENT *e)
   if (e->cmd == CM_dotless)
     {
       if (!e->parent || !e->parent->parent || !e->parent->parent->cmd
-          || !unicode_diacritics[e->parent->parent->cmd])
+          || !unicode_diacritics[e->parent->parent->cmd].text)
         {
           if (!strcmp (text, "i"))
             /* dotless i in UTF-8 */
@@ -103,7 +103,7 @@ unicode_accent (const char *text, const ELEMENT *e)
       return strdup(text);
     }
 
-  if (unicode_diacritics[e->cmd])
+  if (unicode_diacritics[e->cmd].text)
     {
       static TEXT accented_text;
       if (e->cmd == CM_tieaccent)
@@ -139,7 +139,7 @@ unicode_accent (const char *text, const ELEMENT *e)
                   text_init (&accented_text);
                   text_append (&accented_text, first_char_text);
                   free (first_char_text);
-                  text_append (&accented_text, unicode_diacritics[e->cmd]);
+                  text_append (&accented_text, unicode_diacritics[e->cmd].text);
                   next_text = u8_strconv_to_encoding (next, "UTF-8",
                                                       iconveh_question_mark);
                   text_append (&accented_text, next_text);
@@ -154,7 +154,7 @@ unicode_accent (const char *text, const ELEMENT *e)
         }
       text_init (&accented_text);
       text_append (&accented_text, text);
-      text_append (&accented_text, unicode_diacritics[e->cmd]);
+      text_append (&accented_text, unicode_diacritics[e->cmd].text);
       result = normalize_NFC (accented_text.text);
       free (accented_text.text);
     }
@@ -172,9 +172,10 @@ compare_strings (const void *a, const void *b)
 }
 
 char *
-format_eight_bit_accents_stack (const char *text, const ELEMENT_STACK *stack,
-  int encoding_index,
-  char *(*format_accent)(const char *text, const ELEMENT *element, int set_case),
+format_eight_bit_accents_stack (CONVERTER *self, const char *text,
+                      const ELEMENT_STACK *stack, int encoding_index,
+  char *(*format_accent)(CONVERTER *self, const char *text,
+                         const ELEMENT *element, int set_case),
   int set_case)
 {
   int i, j, k;
@@ -195,7 +196,10 @@ format_eight_bit_accents_stack (const char *text, const ELEMENT_STACK *stack,
       results_stack[i] = unicode_accent (results_stack[i+1],
                                          accent_command);
       if (!results_stack[i])
-        break;
+        {
+          i--;
+          break;
+        }
       else if (set_case)
         {
           char *cased = to_upper_or_lower_multibyte (results_stack[i], set_case);
@@ -203,6 +207,8 @@ format_eight_bit_accents_stack (const char *text, const ELEMENT_STACK *stack,
           results_stack[i] = cased;
         }
     }
+  /* undo the last decrease of i */
+  i++;
 
   /*
     At this point we have the unicode character results for the accent
@@ -212,7 +218,7 @@ format_eight_bit_accents_stack (const char *text, const ELEMENT_STACK *stack,
     to the character.
    */
 
-  prev_eight_bit = strdup("");
+  prev_eight_bit = strdup ("");
 
   for (j = stack_nr; j >= i; j--)
     {
@@ -225,20 +231,15 @@ format_eight_bit_accents_stack (const char *text, const ELEMENT_STACK *stack,
                                                iconveh_question_mark);
       ucs4_t first_char;
       u8_next (&first_char, encoded_u8);
+      free (encoded_u8);
       if (first_char < 127)
-        xasprintf(&new_eight_bit, "%02lx", first_char);
+        xasprintf(&new_eight_bit, "%02lX", first_char);
       else
         {
           char *codepoint;
           if (first_char <= 0xFFFF)
             {
-              char *p;
-              xasprintf (&codepoint, "%04lx", first_char);
-              for (p = codepoint; *p; p++)
-                {
-                  if (isascii_lower (*p))
-                    *p = toupper (*p);
-                }
+              xasprintf (&codepoint, "%04lX", first_char);
               char *found = (char *)bsearch (&codepoint,
                              unicode_to_eight_bit[encoding_index].codepoints,
                              unicode_to_eight_bit[encoding_index].number,
@@ -274,15 +275,18 @@ format_eight_bit_accents_stack (const char *text, const ELEMENT_STACK *stack,
       if (!strcmp (new_eight_bit, prev_eight_bit)
           && !(stack->stack[j]->cmd == CM_dotless
                && !strcmp (results_stack[j], "i")))
-        break;
+        {
+          free (new_eight_bit);
+          break;
+        }
       free (result);
       result = strdup (results_stack[j]);
+      free (prev_eight_bit);
       prev_eight_bit = strdup (new_eight_bit);
       free (new_eight_bit);
     }
 
   free (prev_eight_bit);
-  free (new_eight_bit);
 
   /*
     handle the remaining accents, that have not been converted to 8bit
@@ -292,7 +296,7 @@ format_eight_bit_accents_stack (const char *text, const ELEMENT_STACK *stack,
     {
       const ELEMENT *accent_command = stack->stack[j];
       char *formatted_result
-          = (*format_accent) (result, accent_command, set_case);
+          = (*format_accent) (self, result, accent_command, set_case);
       free (result);
       result = formatted_result;
     }
@@ -306,11 +310,11 @@ format_eight_bit_accents_stack (const char *text, const ELEMENT_STACK *stack,
   return result;
 }
 
-/* FIXME converter in perl for (*format_accent), see encoded_accents comment*/
 char *
-format_unicode_accents_stack_internal (const char *text,
+format_unicode_accents_stack_internal (CONVERTER *self, const char *text,
   const ELEMENT_STACK *stack,
-  char *(*format_accent)(const char *text, const ELEMENT *element, int set_case),
+  char *(*format_accent)(CONVERTER *self, const char *text,
+                         const ELEMENT *element, int set_case),
   int set_case)
 {
   int i;
@@ -340,20 +344,18 @@ format_unicode_accents_stack_internal (const char *text,
     {
       const ELEMENT *accent_command = stack->stack[i];
       char *formatted_result
-          = (*format_accent) (result, accent_command, set_case);
+          = (*format_accent) (self, result, accent_command, set_case);
       free (result);
       result = formatted_result;
     }
   return result;
 }
 
-/* FIXME a converter is passed in perl to (*format_accent), both
-   directly and through functions.  It is not clear whether it is
-   actually used in perl, nor if it could be useful in C */
 char *
-encoded_accents (const char *text, const ELEMENT_STACK *stack,
+encoded_accents (CONVERTER *self, const char *text, const ELEMENT_STACK *stack,
   const char *encoding,
-  char *(*format_accent)(const char *text, const ELEMENT *element, int set_case),
+  char *(*format_accent)(CONVERTER *self, const char *text,
+                         const ELEMENT *element, int set_case),
   int set_case)
 {
   if (encoding)
@@ -374,7 +376,7 @@ encoded_accents (const char *text, const ELEMENT_STACK *stack,
           if (!strcmp (normalized_encoding, "utf-8"))
             {
               free (normalized_encoding);
-              return format_unicode_accents_stack_internal (text, stack,
+              return format_unicode_accents_stack_internal (self, text, stack,
                                                 format_accent, set_case);
             }
           for (i = 0; i < sizeof (unicode_to_eight_bit)
@@ -390,8 +392,8 @@ encoded_accents (const char *text, const ELEMENT_STACK *stack,
           if (encoding_index >= 0)
             {
               free (normalized_encoding);
-              return format_eight_bit_accents_stack (text, stack, encoding_index,
-                                                     format_accent, set_case);
+              return format_eight_bit_accents_stack (self, text, stack,
+                                     encoding_index, format_accent, set_case);
             }
         }
       free (normalized_encoding);

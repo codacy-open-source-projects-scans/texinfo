@@ -1627,15 +1627,12 @@ sub ensure_end_of_line($$)
 {
   my ($self, $text) = @_;
 
-  my $chomped = chomp ($text);
-  if ($chomped) {
-    $self->{'count_context'}->[-1]->{'bytes'} -= count_bytes($self, $chomped);
-    $self->{'count_context'}->[-1]->{'lines'} -= 1;
+  if (substr($text, -1) ne "\n") {
+    $text .= "\n";
+    add_text_to_count($self, "\n");
+    _add_lines_count($self, 1);
+    $self->{'text_element_context'}->[-1]->{'counter'} = 0;
   }
-  $text .= "\n";
-  $self->{'text_element_context'}->[-1]->{'counter'} = 0;
-  add_text_to_count($self, "\n");
-  _add_lines_count($self, 1);
   return $text;
 }
 
@@ -1714,22 +1711,28 @@ sub _text_heading($$$;$$)
   my $heading = $self->convert_line_new_context (
                          {'type' => 'frenchspacing',
                           'contents' => [$heading_element]});
-  my ($text, $columns);
+
+  my $heading_width = Texinfo::Convert::Unicode::string_width($heading);
+
+  my ($text, $number_width, $gdt_width);
   if (defined($number)) {
+    $number_width = length($number);
     if ($current->{'cmdname'} eq 'appendix'
         and $current->{'extra'}->{'section_level'} == 1) {
-      ($text, $columns) = $self->gdt_string_columns(
+      ($text, $gdt_width) = $self->gdt_string_columns(
                  'Appendix {number} {section_title}',
                  {'number' => $number, 'section_title' => $heading});
     } else {
-      ($text, $columns) = $self->gdt_string_columns(
+      ($text, $gdt_width) = $self->gdt_string_columns(
                  '{number} {section_title}',
                  {'number' => $number, 'section_title' => $heading});
     }
   } else {
     $text = $heading;
-    $columns = Texinfo::Convert::Unicode::string_width($heading);
+    $number_width = 0;
+    $gdt_width = 0;
   }
+  my $columns = $heading_width + $number_width + $gdt_width;
 
   return '' if ($text !~ /\S/);
   my $result = $text ."\n";
@@ -2884,14 +2887,14 @@ sub _convert($$)
             and $element->{'args'} and $element->{'args'}->[0]
             and $element->{'args'}->[0]->{'type'}
             and $element->{'args'}->[0]->{'type'} eq 'line_arg') {
-      if ($element->{'args'} and @{$element->{'args'}}
+      if ($element->{'args'} and scalar(@{$element->{'args'}})
           and $element->{'args'}->[0]->{'contents'}) {
-
-        my $table_item_tree = $self->table_item_content_tree($element,
-                                         $element->{'args'}->[0]->{'contents'});
-
-        $table_item_tree->{'type'} = 'frenchspacing';
-        $result = $self->convert_line($table_item_tree,
+        my $table_item_tree = $self->table_item_content_tree($element);
+        $table_item_tree = $element->{'args'}->[0]
+          if (!defined($table_item_tree));
+        my $frenchspacing_element = {'type' => 'frenchspacing',
+                                     'contents' => [$table_item_tree]};
+        $result = $self->convert_line($frenchspacing_element,
              {'indent_length' =>
                  ($self->{'format_context'}->[-1]->{'indent_level'} -1)
                    * $indent_length});
@@ -3466,18 +3469,23 @@ sub _convert($$)
       my $entry_name_seen = 0;
       my $menu_entry_node;
       foreach my $content (@{$element->{'contents'}}) {
-        if ($content->{'type'} eq 'menu_entry_node') {
+        if ($content->{'type'} eq 'menu_entry_leading_text') {
+          if (defined($content->{'text'})) {
+            $result .= _count_added($self, $formatter->{'container'},
+                   add_next($formatter->{'container'}, $content->{'text'}));
+          }
+        } elsif ($content->{'type'} eq 'menu_entry_node') {
+          # Flush output so not to include in node text.
+          $result .= _count_added($self, $formatter->{'container'},
+                           add_pending_word($formatter->{'container'}, 1));
+
           $menu_entry_node = $content;
           my ($pre_quote, $post_quote);
           $self->{'formatters'}->[-1]->{'suppress_styles'} = 1;
           $self->{'formatters'}->[-1]->{'no_added_eol'} = 1;
 
-          # Flush a leading space
-          $result .= _count_added($self, $formatter->{'container'},
-                           add_pending_word($formatter->{'container'}, 1));
-
-          # note that $content->{'contents'} may be undefined in rare case
-          # such as in sectionning in_menu_only_special_ascii_spaces_node
+          # note that $content->{'contents'} may be undefined in rare cases,
+          # such as in 30sectioning.t in_menu_only_special_ascii_spaces_node
           # test
           my $node_text = _convert($self, {'type' => '_code',
                                       'contents' => $content->{'contents'}});
@@ -3511,7 +3519,12 @@ sub _convert($$)
             }
           }
           $result .= $pre_quote . $node_text . $post_quote;
+          $self->{'count_context'}->[-1]->{'bytes'} += 2 if $pre_quote;
         } elsif ($content->{'type'} eq 'menu_entry_name') {
+          # Flush output so not to include in name text
+          $result .= _count_added($self, $formatter->{'container'},
+                           add_pending_word($formatter->{'container'}, 1));
+
           my ($pre_quote, $post_quote);
           $self->{'formatters'}->[-1]->{'no_added_eol'} = 1;
           my $entry_name = _convert($self, $content);
@@ -3533,7 +3546,7 @@ sub _convert($$)
             }
           }
           $result .= $pre_quote . $entry_name . $post_quote;
-
+          $self->{'count_context'}->[-1]->{'bytes'} += 2 if $pre_quote;
         # empty description
         } elsif ($content->{'type'} eq 'menu_entry_description'
                  and (not $content->{'contents'}

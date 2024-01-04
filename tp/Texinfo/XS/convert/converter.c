@@ -20,6 +20,10 @@
 #include <string.h>
 #include <stdio.h>
 #include <stddef.h>
+#include <inttypes.h>
+#include <unistr.h>
+#include <uniconv.h>
+#include <unictype.h>
 
 #include "command_ids.h"
 #include "tree_types.h"
@@ -32,6 +36,7 @@
 #include "convert_utils.h"
 #include "translations.h"
 #include "manipulate_tree.h"
+#include "unicode.h"
 #include "converter.h"
 
 static CONVERTER **converter_list;
@@ -100,60 +105,64 @@ unregister_converter_descriptor (int converter_descriptor)
     }
 }
 
-/* freed by caller */
-static COMMAND_OPTION_VALUE *
-new_option_value (int type, int int_value, char *char_value)
+static void
+copy_option (OPTION *destination, OPTION *source)
 {
-  COMMAND_OPTION_VALUE *result
-    = (COMMAND_OPTION_VALUE *) malloc (sizeof (COMMAND_OPTION_VALUE));
-  result->type = type;
-  if (type == GO_int)
-    result->int_value = int_value;
-  else
-    result->char_value = char_value;
-  return result;
+  switch (source->type)
+   {
+     case GO_integer:
+       destination->integer = source->integer;
+       break;
+
+     case GO_char:
+     case GO_bytes:
+       free (destination->string);
+       destination->string = strdup (source->string);
+       break;
+
+     default:
+       fprintf (stderr, "BUG: copy_option type not handled: %d\n",
+                source->type);
+   }
 }
 
 /* freed by caller */
-static COMMAND_OPTION_VALUE *
+static OPTION *
+new_option_value (enum global_option_type type, int int_value, char *char_value)
+{
+  OPTION *result = (OPTION *) malloc (sizeof (OPTION));
+  memset (result, 0, sizeof (OPTION));
+  result->type = type;
+  if (type == GO_integer)
+    result->integer = int_value;
+  else
+    result->string = char_value;
+  return result;
+}
+
+/* freed by caller.  Information in structure refers to other data, so
+   should not be freed */
+static OPTION *
 command_init (enum command_id cmd, OPTIONS *init_conf)
 {
-  COMMAND_OPTION_REF *init_conf_ref;
+  OPTION *init_conf_ref;
   COMMAND_OPTION_DEFAULT *option_default;
-  COMMAND_OPTION_VALUE *option_value = 0;
+  OPTION *option_value = 0;
   if (init_conf)
     {
       init_conf_ref = get_command_option (init_conf, cmd);
       if (init_conf_ref)
         {
-          if (init_conf_ref->type == GO_int)
-            {
-              if (*(init_conf_ref->int_ref) >= 0)
-                {
-                  option_value
-                    = new_option_value (GO_int, *(init_conf_ref->int_ref), 0);
-                  free (init_conf_ref);
-                  return option_value;
-                }
-            }
-          else
-            {
-              if (*(init_conf_ref->char_ref))
-                {
-                  option_value
-                    = new_option_value (GO_char, -1, *(init_conf_ref->char_ref));
-                  free (init_conf_ref);
-                  return option_value;
-                }
-            }
+          option_value = (OPTION *) malloc (sizeof (OPTION));
+          memcpy (option_value, init_conf_ref, sizeof (OPTION));
+          return option_value;
         }
-      free (init_conf_ref);
     }
   option_default = &command_option_default_table[cmd];
-  if (option_default->type == GO_int)
+  if (option_default->type == GO_integer)
     {
       if (option_default->value >= 0)
-        option_value = new_option_value (GO_int, option_default->value, 0);
+        option_value = new_option_value (GO_integer, option_default->value, 0);
     }
   else if (option_default->type == GO_char)
     {
@@ -174,20 +183,14 @@ set_global_document_commands (CONVERTER *converter,
       for (i = 0; cmd_list[i] > 0; i++)
         {
           enum command_id cmd = cmd_list[i];
-          COMMAND_OPTION_VALUE *option_value = command_init (cmd,
-                                                converter->init_conf);
+          OPTION *option_value = command_init (cmd,
+                                               converter->init_conf);
           if (option_value)
             {
-              COMMAND_OPTION_REF *option_ref
+              OPTION *option_ref
                = get_command_option (converter->conf, cmd);
-              if (option_value->type == GO_int)
-                *(option_ref->int_ref) = option_value->int_value;
-              else
-                {
-                  free (*(option_ref->char_ref));
-                  *(option_ref->char_ref) = strdup (option_value->char_value);
-                }
-              free (option_ref);
+              if (option_ref->set <= 0)
+                copy_option (option_ref, option_value);
               free (option_value);
             }
         }
@@ -199,7 +202,7 @@ set_global_document_commands (CONVERTER *converter,
         {
           ELEMENT *element;
           enum command_id cmd = cmd_list[i];
-          if (converter->conf->DEBUG > 0)
+          if (converter->conf->DEBUG.integer > 0)
             {
               fprintf (stderr, "XS|SET_global(%s) %s\n",
                        command_location_names[location],
@@ -211,22 +214,14 @@ set_global_document_commands (CONVERTER *converter,
                                            cmd, location);
           if (!element)
             {
-              COMMAND_OPTION_VALUE *option_value = command_init (cmd,
-                                                      converter->init_conf);
+              OPTION *option_value = command_init (cmd,
+                                                   converter->init_conf);
               if (option_value)
                 {
-                  COMMAND_OPTION_REF *option_ref
+                  OPTION *option_ref
                     = get_command_option (converter->conf, cmd);
-                  if (option_value->type == GO_int)
-                    *(option_ref->int_ref) = option_value->int_value;
-                  else
-                    {
-                      free (*(option_ref->char_ref));
-                      *(option_ref->char_ref)
-                        = strdup (option_value->char_value);
-                    }
-
-                  free (option_ref);
+                  if (option_ref->set <= 0)
+                    copy_option (option_ref, option_value);
                   free (option_value);
                 }
             }
@@ -237,12 +232,12 @@ set_global_document_commands (CONVERTER *converter,
 static void
 id_to_filename (CONVERTER *self, char **id_ref)
 {
-  if (self->conf->BASEFILENAME_LENGTH < 0)
+  if (self->conf->BASEFILENAME_LENGTH.integer < 0)
     return;
   char *id = *id_ref;
-  if (strlen (id) > self->conf->BASEFILENAME_LENGTH)
+  if (strlen (id) > self->conf->BASEFILENAME_LENGTH.integer)
     {
-      id[self->conf->BASEFILENAME_LENGTH] = '\0';
+      id[self->conf->BASEFILENAME_LENGTH.integer] = '\0';
     }
 }
 
@@ -255,16 +250,16 @@ normalized_sectioning_command_filename (CONVERTER *self, const ELEMENT *command)
   char *normalized_file_name;
   char *normalized_name
     = normalize_transliterate_texinfo_contents (command->args.list[0],
-                                                (self->conf->TEST > 0));
+                                                (self->conf->TEST.integer > 0));
   normalized_file_name = strdup (normalized_name);
   id_to_filename (self, &normalized_file_name);
 
   text_init (&filename);
   text_append (&filename, normalized_file_name);
-  if (self->conf->EXTENSION && strlen (self->conf->EXTENSION))
+  if (self->conf->EXTENSION.string && strlen (self->conf->EXTENSION.string))
     {
       text_append (&filename, ".");
-      text_append (&filename, self->conf->EXTENSION);
+      text_append (&filename, self->conf->EXTENSION.string);
     }
 
   free (normalized_file_name);
@@ -283,10 +278,10 @@ node_information_filename (CONVERTER *self, char *normalized,
 
   if (normalized)
     {
-      if (self->conf->TRANSLITERATE_FILE_NAMES > 0)
+      if (self->conf->TRANSLITERATE_FILE_NAMES.integer > 0)
         {
           filename = normalize_transliterate_texinfo_contents (label_element,
-                                                       (self->conf->TEST > 0));
+                                                       (self->conf->TEST.integer > 0));
         }
       else
         filename = strdup (normalized);
@@ -300,6 +295,284 @@ node_information_filename (CONVERTER *self, char *normalized,
 
   id_to_filename (self, &filename);
   return filename;
+}
+
+ELEMENT *
+float_type_number (CONVERTER *self, const ELEMENT *float_e)
+{
+  ELEMENT *tree = 0;
+  ELEMENT *type_element = 0;
+  NAMED_STRING_ELEMENT_LIST *replaced_substrings
+     = new_named_string_element_list ();
+  char *float_type = lookup_extra_string (float_e, "float_type");
+  char *float_number = lookup_extra_string (float_e, "float_number");
+
+  if (float_type && strlen (float_type))
+    type_element = float_e->args.list[0];
+
+  if (float_number)
+    {
+      ELEMENT *e_number = new_element (ET_NONE);
+      text_append (&e_number->text, float_number);
+      add_element_to_named_string_element_list (replaced_substrings,
+                                     "float_number", e_number);
+    }
+
+  if (type_element)
+    {
+      ELEMENT *type_element_copy = copy_tree (type_element);
+      add_element_to_named_string_element_list (replaced_substrings,
+                                     "float_type", type_element_copy);
+      if (float_number)
+        tree = gdt_tree ("{float_type} {float_number}", self->document,
+                         self->conf, replaced_substrings, 0, 0);
+      else
+        tree = gdt_tree ("{float_type}", self->document, self->conf,
+                         replaced_substrings, 0, 0);
+    }
+  else if (float_number)
+    tree = gdt_tree ("{float_number}", self->document, self->conf,
+                     replaced_substrings, 0, 0);
+
+  destroy_named_string_element_list (replaced_substrings);
+
+  return tree;
+}
+
+FLOAT_CAPTION_PREPENDED_ELEMENT *
+float_name_caption (CONVERTER *self, const ELEMENT *float_e)
+{
+  ELEMENT *prepended = 0;
+  ELEMENT *type_element = 0;
+  FLOAT_CAPTION_PREPENDED_ELEMENT *result = (FLOAT_CAPTION_PREPENDED_ELEMENT *)
+    malloc (sizeof (FLOAT_CAPTION_PREPENDED_ELEMENT));
+  NAMED_STRING_ELEMENT_LIST *replaced_substrings
+     = new_named_string_element_list ();
+
+  char *float_type = lookup_extra_string (float_e, "float_type");
+  char *float_number = lookup_extra_string (float_e, "float_number");
+
+  ELEMENT *caption_element = lookup_extra_element (float_e, "caption");
+  if (!caption_element)
+    caption_element = lookup_extra_element (float_e, "shortcaption");
+
+  if (float_type && strlen (float_type))
+    type_element = float_e->args.list[0];
+
+  if (float_number)
+    {
+      ELEMENT *e_number = new_element (ET_NONE);
+      text_append (&e_number->text, float_number);
+      add_element_to_named_string_element_list (replaced_substrings,
+                                     "float_number", e_number);
+    }
+
+  if (type_element)
+    {
+      ELEMENT *type_element_copy = copy_tree (type_element);
+      add_element_to_named_string_element_list (replaced_substrings,
+                                     "float_type", type_element_copy);
+      if (caption_element)
+        {
+          if (float_number)
+            /* TRANSLATORS: added before caption */
+            prepended = gdt_tree ("{float_type} {float_number}: ",
+                                  self->document,
+                                  self->conf, replaced_substrings, 0, 0);
+          else
+            /* TRANSLATORS: added before caption, no float label */
+            prepended = gdt_tree ("{float_type}: ", self->document, self->conf,
+                                 replaced_substrings, 0, 0);
+        }
+      else
+        {
+          if (float_number)
+            prepended = gdt_tree ("{float_type} {float_number}",
+                                  self->document,
+                                  self->conf, replaced_substrings, 0, 0);
+          else
+            prepended = gdt_tree ("{float_type}", self->document, self->conf,
+                                 replaced_substrings, 0, 0);
+        }
+    }
+  else if (float_number)
+    {
+      if (caption_element)
+      /* TRANSLATORS: added before caption, no float type */
+        prepended = gdt_tree ("{float_number}: ", self->document, self->conf,
+                              replaced_substrings, 0, 0);
+      else
+        prepended = gdt_tree ("{float_number}", self->document, self->conf,
+                              replaced_substrings, 0, 0);
+    }
+
+  result->caption = caption_element;
+  result->prepended = prepended;
+
+  destroy_named_string_element_list (replaced_substrings);
+
+  return result;
+}
+
+TREE_ADDED_ELEMENTS *
+new_tree_added_elements (enum tree_added_elements_status status)
+{
+  TREE_ADDED_ELEMENTS *new
+    = (TREE_ADDED_ELEMENTS *) malloc (sizeof (TREE_ADDED_ELEMENTS));
+  memset (new, 0, sizeof (TREE_ADDED_ELEMENTS));
+  new->status = status;
+  return new;
+}
+
+/* NOTE in addition to freeing memory, the tree root is removed from
+   tree_to_build if relevant. */
+void
+clear_tree_added_elements (CONVERTER *self, TREE_ADDED_ELEMENTS *tree_elements)
+{
+  /*
+   HTML targets have all associated tree added elements structures that can be
+   left as 0, in particular with tree_added_status_none if nothing refers to
+   them, and are always cleared in the end.  So it is normal to have cleared
+   tree added elements with status none, but they also should not have any
+   added elements.
+   */
+   /*
+  if (tree_elements->status == tree_added_status_none)
+    {
+      fprintf (stderr, "CTAE: %p no status (%zu)\n", tree_elements, tree_elements->added.number);
+    }
+   */
+
+  if (tree_elements->tree
+      && tree_elements->status != tree_added_status_reused_tree)
+    remove_element_from_list (&self->tree_to_build, tree_elements->tree);
+
+  if (tree_elements->status == tree_added_status_new_tree)
+    destroy_element_and_children (tree_elements->tree);
+  else if (tree_elements->status == tree_added_status_elements_added)
+    {
+      size_t i;
+      for (i = 0; i < tree_elements->added.number; i++)
+        {
+          ELEMENT *added_e = tree_elements->added.list[i];
+          destroy_element (added_e);
+        }
+      tree_elements->added.number = 0;
+    }
+  tree_elements->tree = 0;
+  tree_elements->status = 0;
+}
+
+void
+free_tree_added_elements (CONVERTER *self, TREE_ADDED_ELEMENTS *tree_elements)
+{
+  clear_tree_added_elements (self, tree_elements);
+  free (tree_elements->added.list);
+}
+
+void
+destroy_tree_added_elements (CONVERTER *self, TREE_ADDED_ELEMENTS *tree_elements)
+{
+  free_tree_added_elements (self, tree_elements);
+  free (tree_elements);
+}
+
+ELEMENT *
+new_element_added (TREE_ADDED_ELEMENTS *added_elements, enum element_type type)
+{
+  ELEMENT *new = new_element (type);
+  add_to_element_list (&added_elements->added, new);
+  return new;
+}
+
+TREE_ADDED_ELEMENTS *
+table_item_content_tree (CONVERTER *self, const ELEMENT *element)
+{
+  ELEMENT *table_command = element->parent->parent->parent;
+  ELEMENT *command_as_argument = lookup_extra_element (table_command,
+                                               "command_as_argument");
+
+  if (element->args.number > 0 && command_as_argument)
+    {
+      TREE_ADDED_ELEMENTS *tree
+        = new_tree_added_elements (tree_added_status_elements_added);
+      int status;
+      int command_as_argument_kbd_code;
+      ELEMENT *command = new_element_added (tree, ET_NONE);
+      ELEMENT *arg = new_element_added (tree, ET_brace_command_arg);
+      enum command_id cmd = element_builtin_cmd (command_as_argument);
+
+      tree->tree = command;
+
+      command->cmd = cmd;
+      command->source_info = element->source_info;
+      command_as_argument_kbd_code = lookup_extra_integer (table_command,
+                                 "command_as_argument_kbd_code", &status);
+      if (command_as_argument_kbd_code > 0)
+        add_extra_integer (command, "code", 1);
+
+      if (command_as_argument->type == ET_definfoenclose_command)
+        {
+          char *begin = lookup_extra_string (command_as_argument, "begin");
+          char *end = lookup_extra_string (command_as_argument, "end");
+          command->type = command_as_argument->type;
+          if (begin)
+            add_extra_string_dup (command, "begin", begin);
+          if (end)
+            add_extra_string_dup (command, "end", end);
+        }
+      add_to_element_args (command, arg);
+      add_to_contents_as_array (arg, element->args.list[0]);
+      return tree;
+    }
+
+  return 0;
+}
+
+char *
+convert_accents (CONVERTER *self, const ELEMENT *accent,
+ char *(*convert_tree)(CONVERTER *self, const ELEMENT *tree, char *explanation),
+ char *(*format_accent)(CONVERTER *self, const char *text, const ELEMENT *element,
+                        int set_case),
+  int output_encoded_characters,
+  int set_case)
+{
+  ACCENTS_STACK *accent_stack = find_innermost_accent_contents (accent);
+  const ELEMENT_STACK *stack;
+  char *arg_text;
+  char *result;
+  int i;
+
+  if (accent_stack->argument)
+    arg_text = (*convert_tree) (self, accent_stack->argument, 0);
+  else
+    arg_text = strdup ("");
+
+  if (output_encoded_characters)
+    {
+      char *encoded = encoded_accents (self, arg_text, &accent_stack->stack,
+                                 self->conf->OUTPUT_ENCODING_NAME.string,
+                                 format_accent, set_case);
+      if (encoded)
+        {
+          free (arg_text);
+          destroy_accent_stack (accent_stack);
+          return encoded;
+        }
+    }
+
+  stack = &accent_stack->stack;
+  result = arg_text;
+  for (i = stack->top - 1; i >= 0; i--)
+    {
+      const ELEMENT *accent_command = stack->stack[i];
+      char *formatted_accent = (*format_accent) (self, result, accent_command,
+                                                 set_case);
+      free (result);
+      result = formatted_accent;
+    }
+  destroy_accent_stack (accent_stack);
+  return result;
 }
 
 ELEMENT_LIST *
@@ -355,19 +628,19 @@ top_node_filename (CONVERTER *self, char *document_name)
 {
   TEXT top_node_filename;
 
-  if (self->conf->TOP_FILE && strlen (self->conf->TOP_FILE))
+  if (self->conf->TOP_FILE.string && strlen (self->conf->TOP_FILE.string))
     {
-      return strdup (self->conf->TOP_FILE);
+      return strdup (self->conf->TOP_FILE.string);
     }
 
   if (document_name)
     {
       text_init (&top_node_filename);
       text_append (&top_node_filename, document_name);
-      if (self->conf->EXTENSION && strlen (self->conf->EXTENSION))
+      if (self->conf->EXTENSION.string && strlen (self->conf->EXTENSION.string))
         {
           text_append (&top_node_filename, ".");
-          text_append (&top_node_filename, self->conf->EXTENSION);
+          text_append (&top_node_filename, self->conf->EXTENSION.string);
         }
       return top_node_filename.text;
     }
@@ -439,14 +712,14 @@ static size_t
 register_normalize_case_filename (CONVERTER *self, char *filename)
 {
   size_t output_unit_file_idx;
-  if (self->conf->CASE_INSENSITIVE_FILENAMES > 0)
+  if (self->conf->CASE_INSENSITIVE_FILENAMES.integer > 0)
     {
       char *lc_filename = to_upper_or_lower_multibyte (filename, -1);
       int status;
       output_unit_file_idx = find_output_unit_file (self, lc_filename, &status);
       if (status)
         {
-          if (self->conf->DEBUG > 0)
+          if (self->conf->DEBUG.integer > 0)
             {
               FILE_NAME_PATH_COUNTER *output_unit_file
                 = &self->output_unit_files.list[output_unit_file_idx];
@@ -469,7 +742,7 @@ register_normalize_case_filename (CONVERTER *self, char *filename)
       output_unit_file_idx = find_output_unit_file (self, filename, &status);
       if (status)
         {
-          if (self->conf->DEBUG > 0)
+          if (self->conf->DEBUG.integer > 0)
             {
               FILE_NAME_PATH_COUNTER *output_unit_file
                 = &self->output_unit_files.list[output_unit_file_idx];
@@ -525,13 +798,13 @@ set_file_path (CONVERTER *self, char *filename, char *filepath,
     {
       if (!strcmp (output_unit_file->filepath, filepath_str))
         {
-          if (self->conf->DEBUG > 0)
+          if (self->conf->DEBUG.integer > 0)
             fprintf (stderr, "set_file_path: filepath set: %s\n",
                              filepath_str);
         }
       else
         {
-          if (self->conf->DEBUG > 0)
+          if (self->conf->DEBUG.integer > 0)
             fprintf (stderr, "set_file_path: filepath reset: %s, %s\n",
                              output_unit_file->filepath, filepath_str);
           free (output_unit_file->filepath);
@@ -652,44 +925,201 @@ xml_protect_text (const char *text, TEXT *result)
     }
 }
 
-ELEMENT *
-float_type_number (CONVERTER *self, const ELEMENT *float_e)
+static char *
+next_for_tieaccent (const char *text, const char **next)
 {
-  ELEMENT *tree = 0;
-  ELEMENT *type_element = 0;
-  NAMED_STRING_ELEMENT_LIST *replaced_substrings
-     = new_named_string_element_list ();
-  char *float_type = lookup_extra_string (float_e, "float_type");
-  char *float_number = lookup_extra_string (float_e, "float_number");
-
-  if (float_type && strlen (float_type))
-    type_element = float_e->args.list[0];
-
-  if (float_number)
+  const char *p;
+  if (!strlen (text))
     {
-      ELEMENT *e_number = new_element (ET_NONE);
-      text_append (&e_number->text, float_number);
-      add_element_to_named_string_element_list (replaced_substrings,
-                                     "float_number", e_number);
+      return 0;
+    }
+  if (text[0] == '&')
+    {
+      if (strlen (text) > 3 && isascii_alnum(*(text+1)))
+        {
+          p = text +2;
+          while (*p)
+            {
+              if (*p == ';')
+                {
+                  p++;
+                  *next = p;
+                  return strndup (text, p - text);
+                }
+              else if (isascii_alnum (*p))
+                {
+                  p++;
+                }
+              else
+                break;
+            }
+        }
+      return 0;
+    }
+  else
+    {
+      uint8_t *encoded_u8 = u8_strconv_from_encoding (text, "UTF-8",
+                                                  iconveh_question_mark);
+      ucs4_t first_char;
+      u8_next (&first_char, encoded_u8);
+      free (encoded_u8);
+      if (uc_is_general_category (first_char, UC_CATEGORY_L)
+          /* ASCII digits */
+          || (first_char >= 0x0030 && first_char <= 0x0039))
+        {
+          char *first_char_text;
+          uint8_t *first_char_u8 = malloc (7 * sizeof(uint8_t));
+          int first_char_len = u8_uctomb (first_char_u8, first_char, 6);
+          if (first_char_len < 0)
+            fatal ("u8_uctomb returns negative value");
+          first_char_u8[first_char_len] = 0;
+          first_char_text = u8_strconv_to_encoding (first_char_u8, "UTF-8",
+                                                    iconveh_question_mark);
+          free (first_char_u8);
+          p = text + strlen (first_char_text);
+          *next = p;
+          return first_char_text;
+        }
+      return 0;
+    }
+}
+
+typedef struct UNICODE_ACCENT_LETTER {
+    enum command_id cmd;
+    char *letter;
+    char *numerical_entity;
+} UNICODE_ACCENT_LETTER;
+
+/* only those that are not obtained through diacritic + normalization */
+static UNICODE_ACCENT_LETTER unicode_accented_letters[] = {
+{CM_dotless, "i", "305"},
+{CM_dotless, "j", "567"},
+{0, 0, 0}
+};
+
+char *
+xml_numeric_entity_accent (enum command_id cmd, const char *text)
+{
+  char *result;
+  if (! builtin_command_data[cmd].flags & CF_accent)
+    {
+      return 0;
     }
 
-  if (type_element)
+  if (strlen (text) == 1 && isascii_alpha (*text))
     {
-      ELEMENT *type_element_copy = copy_tree (type_element);
-      add_element_to_named_string_element_list (replaced_substrings,
-                                     "float_type", type_element_copy);
-      if (float_number)
-        tree = gdt_tree ("{float_type} {float_number}", self->document,
-                         self->conf, replaced_substrings, 0, 0);
+      int i;
+      for (i = 0; unicode_accented_letters[i].cmd; i++)
+        {
+          UNICODE_ACCENT_LETTER *letter = &unicode_accented_letters[i];
+          if (cmd == letter->cmd && ! strcmp (text, letter->letter))
+            {
+              xasprintf (&result, "&#%s;", letter->numerical_entity);
+              return result;
+            }
+        }
+    }
+
+  if (unicode_diacritics[cmd].text)
+    {
+      if (cmd != CM_tieaccent)
+        {
+          if (strlen (text) == 1 && isascii_alpha (*text))
+            {
+              char *accented_char;
+              char *normalized_char;
+              uint8_t *encoded_u8;
+              ucs4_t first_char;
+              const uint8_t *next;
+
+              xasprintf (&accented_char, "%s%s", text,
+                         unicode_diacritics[cmd].text);
+              normalized_char = normalize_NFC (accented_char);
+              encoded_u8 = u8_strconv_from_encoding (normalized_char, "UTF-8",
+                                                     iconveh_question_mark);
+              next = u8_next (&first_char, encoded_u8);
+              if (next)
+                {
+                  ucs4_t other_char;
+                  const uint8_t *after = u8_next (&other_char, next);
+                  next = after;
+                }
+              free (encoded_u8);
+              free (accented_char);
+              free (normalized_char);
+              if (!next)
+                {
+                  char *entity;
+              /* hex entity
+                 xasprintf (&entity, "&#%04lX;", first_char); */
+        /* seems to be the way for portable uint32_t unsigned integer format */
+                  xasprintf (&entity, "&#%" PRIu32 ";", first_char);
+                  return entity;
+                }
+            }
+          xasprintf (&result, "%s&#%s;", text, unicode_diacritics[cmd].codepoint);
+          return result;
+        }
       else
-        tree = gdt_tree ("{float_type}", self->document, self->conf,
-                         replaced_substrings, 0, 0);
+        {
+          char *result;
+          const char *p = 0;
+          const char *remaining = 0;
+          char *first = next_for_tieaccent (text, &p);
+          char *second;
+          if (!first)
+            goto invalid;
+          second = next_for_tieaccent (p, &remaining);
+          if (second)
+            {
+              xasprintf (&result, "%s&#%s;%s%s", first,
+                         unicode_diacritics[cmd].codepoint, second, remaining);
+              free (first);
+              free (second);
+              return result;
+            }
+          else
+            free (first);
+
+         invalid:
+          xasprintf (&result, "%s&#%s;", text,
+                     unicode_diacritics[cmd].codepoint);
+          return result;
+        }
     }
-  else if (float_number)
-    tree = gdt_tree ("{float_number}", self->document, self->conf,
-                     replaced_substrings, 0, 0);
+  return 0;
+}
 
-  destroy_named_string_element_list (replaced_substrings);
+/* return to be freed by the caller */
+char *
+xml_comment (CONVERTER *converter, const char *text)
+{
+  const char *p = text;
 
-  return tree;
+  TEXT result;
+
+  text_init (&result);
+  text_append_n (&result, "<!--", 4);
+  while (*p)
+    {
+      char *q = strchr (p, '-');
+      if (q)
+        {
+          if (q - p)
+            text_append_n (&result, p, q +1 - p);
+          p = q + 1;
+          p += strspn (p, "-");
+        }
+      else
+        {
+          text_append (&result, p);
+          break;
+        }
+    }
+  if (result.end > 0 && result.text[result.end - 1] == '\n')
+    {
+      result.end--;
+    }
+  text_append_n (&result, " -->\n", 5);
+  return result.text;
 }

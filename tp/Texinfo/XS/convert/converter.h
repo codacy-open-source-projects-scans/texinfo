@@ -68,6 +68,11 @@
             } \
           break;
 
+typedef struct FLOAT_CAPTION_PREPENDED_ELEMENT {
+    ELEMENT *caption;
+    ELEMENT *prepended;
+} FLOAT_CAPTION_PREPENDED_ELEMENT;
+
 
 CONVERTER *retrieve_converter (int converter_descriptor);
 size_t new_converter(void);
@@ -80,8 +85,29 @@ void set_global_document_commands (CONVERTER *converter,
 char *node_information_filename (CONVERTER *self, char *normalized,
                                  const ELEMENT *label_element);
 
+TREE_ADDED_ELEMENTS *new_tree_added_elements
+                      (enum tree_added_elements_status status);
+ELEMENT *new_element_added (TREE_ADDED_ELEMENTS *added_elements,
+                            enum element_type type);
+void clear_tree_added_elements (CONVERTER *self,
+                                TREE_ADDED_ELEMENTS *tree_elements);
+void free_tree_added_elements (CONVERTER *self,
+                               TREE_ADDED_ELEMENTS *tree_elements);
+void destroy_tree_added_elements (CONVERTER *self,
+                                  TREE_ADDED_ELEMENTS *tree_elements);
+
+TREE_ADDED_ELEMENTS *table_item_content_tree (CONVERTER *self,
+                                              const ELEMENT *element);
+
 TARGET_FILENAME *normalized_sectioning_command_filename (CONVERTER *self,
                                                    const ELEMENT *command);
+
+char *convert_accents (CONVERTER *self, const ELEMENT *accent,
+ char *(*convert_tree)(CONVERTER *self, const ELEMENT *tree, char *explanation),
+ char *(*format_accent)(CONVERTER *self, const char *text, const ELEMENT *element,
+                        int set_case),
+  int output_encoded_characters,
+  int set_case);
 
 ELEMENT_LIST *comma_index_subentries_tree (const ELEMENT *current_entry,
                                            char *separator);
@@ -90,6 +116,8 @@ void free_comma_index_subentries_tree (ELEMENT_LIST *element);
 char *top_node_filename (CONVERTER *self, char *document_name);
 
 ELEMENT *float_type_number (CONVERTER *self, const ELEMENT *float_e);
+FLOAT_CAPTION_PREPENDED_ELEMENT *float_name_caption (CONVERTER *self,
+                                                 const ELEMENT *float_e);
 
 void initialize_output_units_files (CONVERTER *self);
 size_t set_output_unit_file (CONVERTER *self, OUTPUT_UNIT *output_unit,
@@ -103,4 +131,6 @@ void free_generic_converter (CONVERTER *self);
 
 
 void xml_format_text_with_numeric_entities (const char *text, TEXT *result);
+char *xml_numeric_entity_accent (enum command_id cmd, const char *text);
+char *xml_comment (CONVERTER *converter, const char *text);
 #endif
