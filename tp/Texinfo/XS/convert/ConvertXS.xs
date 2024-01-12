@@ -303,16 +303,15 @@ plain_texinfo_convert_tree (SV *tree_in)
     OUTPUT:
         RETVAL
 
-# unused argument is used in the overriden function if XS is not used
 SV *
-text_convert_tree (SV *text_options_in, SV *tree_in, unused=0)
+text_convert_tree (SV *options_in, SV *tree_in)
     PREINIT:
         DOCUMENT *document = 0;
         TEXT_OPTIONS *text_options = 0;
     CODE:
-        /* FIXME warning/error if not found? */
-        document = get_sv_tree_document (tree_in, 0);
-        text_options = copy_sv_options_for_convert_text (text_options_in);
+        /* The caller checks that there is a descriptor */
+        document = get_sv_tree_document (tree_in, "text_convert_tree");
+        text_options = copy_sv_options_for_convert_text (options_in);
         if (document)
           {
             /* text_options is destroyed in text_convert */
@@ -839,8 +838,8 @@ html_get_target (SV *converter_in, SV *element_sv)
              int output_units_descriptor
                = get_output_units_descriptor_converter_sv (converter_in);
              ELEMENT *element;
-             element = find_element_from_sv (self, element_sv,
-                                             output_units_descriptor);
+             element = html_find_element_from_sv (self, element_sv,
+                                                  output_units_descriptor);
              if (element)
                {
                  HTML_TARGET *target_info = html_get_target (self, element);
@@ -924,7 +923,7 @@ SV *
 html_command_filename (SV *converter_in, SV *element_sv)
      PREINIT:
          CONVERTER *self;
-         char *filename = 0;
+         const char *filename = 0;
          ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
@@ -1326,6 +1325,79 @@ html_get_css_elements_classes (SV *converter_in, ...)
          RETVAL
 
 void
+html_css_add_info (SV *converter_in, char *spec, css_info)
+         char *css_info = (char *)SvPVutf8_nolen($arg);
+    PREINIT:
+         CONVERTER *self;
+    CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_css_add_info");
+         if (self)
+           {
+             enum css_info_type type = html_get_css_info_spec (spec);
+             html_css_add_info (self, type, css_info);
+           }
+
+void
+html_css_set_selector_style (SV *converter_in, css_info, SV *css_style_sv)
+         char *css_info = (char *)SvPVutf8_nolen($arg);
+    PREINIT:
+         CONVERTER *self;
+    CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_css_set_selector_style");
+         if (self)
+           {
+             char *css_style = 0;
+             if (SvOK (css_style_sv))
+               css_style = (char *)SvPVutf8_nolen (css_style_sv);
+
+             html_css_set_selector_style (self, css_info, css_style);
+           }
+
+SV *
+html_css_get_info (SV *converter_in, char *spec)
+    PREINIT:
+         CONVERTER *self;
+         AV *result_av = 0;
+    CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_css_add_info");
+         if (self)
+           {
+             STRING_LIST *result;
+             enum css_info_type type = html_get_css_info_spec (spec);
+             result = html_css_get_info (self, type);
+             if (result)
+               result_av = build_string_list (result, svt_char);
+            }
+         if (!result_av)
+           result_av = newAV ();
+         RETVAL = newRV_noinc ((SV *) result_av);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_css_get_selector_style (SV *converter_in, css_info)
+         char *css_info = (char *)SvPVutf8_nolen($arg);
+    PREINIT:
+         CONVERTER *self;
+         const char *css_style = 0;
+    CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_css_get_selector_style");
+         if (self)
+           {
+             css_style = html_css_get_selector_style (self, css_info);
+           }
+         if (css_style)
+           RETVAL = newSVpv_utf8 (css_style, 0);
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
+void
 html_register_footnote (SV *converter_in, SV *command, footid, docid, int number_in_doc, footnote_location_filename, ...)
          char *footid = (char *)SvPVutf8_nolen($arg);
          char *docid = (char *)SvPVutf8_nolen($arg);
@@ -1616,8 +1688,7 @@ html_merge_index_entries (SV *converter_in)
            html_merge_index_entries (self);
 
 void
-reset_output_init_conf (SV *sv_in, warn_string)
-         char *warn_string = (char *)SvPVutf8_nolen($arg);
+reset_output_init_conf (SV *sv_in)
 
 #  my ($output_units, $special_units, $associated_special_units)
 #    = $self->_prepare_conversion_units($root, $document_name);
@@ -1814,8 +1885,6 @@ html_prepare_converted_output_info (SV *converter_in)
            {
              HV *converter_hv = (HV *) SvRV (converter_in);
 
-             recopy_converter_conf_sv (converter_hv, self, &self->conf, "conf");
-
              html_prepare_converted_output_info (self);
              if (self->added_title_tree)
                build_texinfo_tree (self->title_tree, 1);
@@ -1991,3 +2060,30 @@ html_convert_output (SV *converter_in, SV *tree_in, SV *output_units_in, SV *spe
            RETVAL = newSV (0);
     OUTPUT:
         RETVAL
+
+SV *
+html_prepare_node_redirection_page (SV *converter_in, SV *element_sv, redirection_filename)
+         char *redirection_filename = (char *)SvPVutf8_nolen($arg);
+     PREINIT:
+         CONVERTER *self;
+         char *redirection_page = 0;
+         ELEMENT *element;
+     CODE:
+         element = element_converter_from_sv (converter_in, element_sv,
+                              "html_prepare_node_redirection_page", &self);
+         if (element)
+           redirection_page
+                 = html_prepare_node_redirection_page (self, element,
+                                                       redirection_filename);
+
+         if (redirection_page)
+           {
+             RETVAL = newSVpv_utf8 (redirection_page, 0);
+             free (redirection_page);
+           }
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
+

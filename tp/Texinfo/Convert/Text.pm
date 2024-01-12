@@ -49,7 +49,6 @@ use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 
 %EXPORT_TAGS = ( 'all' => [ qw(
   convert_to_text
-  ascii_accent
   text_accents
 ) ] );
 
@@ -209,7 +208,101 @@ foreach my $type ('ignorable_spaces_after_command',
 }
 
 
-sub ascii_accent($$)
+my @text_indicator_converter_options = ('NUMBER_SECTIONS', 'ASCII_GLYPH', 'TEST');
+
+# TODO not documented.  Document?
+# $SELF is an object implementing get_conf, in general a converter.
+# Setup options as used by Texinfo::Convert::Text::convert_to_text
+# based on the converter information.
+# This is relevant for file names, for instance.
+# $OPTIONS_IN can be used to pass additional options.
+sub copy_options_for_convert_text($;$)
+{
+  my $self = shift;
+  my $options_in = shift;
+  my %options;
+  if ($self->get_conf('ENABLE_ENCODING')
+       and $self->get_conf('OUTPUT_ENCODING_NAME')) {
+    $options{'enabled_encoding'} = $self->get_conf('OUTPUT_ENCODING_NAME');
+  }
+
+  foreach my $option (@text_indicator_converter_options) {
+    my $conf = $self->get_conf($option);
+    if ($conf) {
+      $options{$option} = 1;
+    } elsif (defined($conf)) {
+      $options{$option} = 0;
+    }
+  }
+  $options{'expanded_formats'} = $self->{'expanded_formats'};
+  # for locate_include_file
+  $options{'INCLUDE_DIRECTORIES'} = $self->get_conf('INCLUDE_DIRECTORIES');
+
+  $options{'converter'} = $self;
+
+  if ($options_in) {
+    foreach my $option (keys(%$options_in)) {
+      $options{$option} = $options_in->{$option};
+    }
+  }
+  return \%options;
+}
+
+sub set_options_code($)
+{
+  my $options = shift;
+  $options->{'_code_state'}++;
+}
+
+sub reset_options_code($)
+{
+  my $options = shift;
+  $options->{'_code_state'}--;
+}
+
+# set enabled_encoding unless the encoding is ascii, even if
+# ENABLE_ENCODING is not set.
+sub set_options_encoding_if_not_ascii($$)
+{
+  my $self = shift;
+  my $options = shift;
+  my $output_encoding_name = $self->get_conf('OUTPUT_ENCODING_NAME');
+  if (defined($output_encoding_name) and $output_encoding_name ne 'us-ascii') {
+    if (defined($options->{'_saved_enabled_encoding'})) {
+       print STDERR "BUG: if_not_ascii _saved_enabled_encoding set: "
+                            .$options->{'_saved_enabled_encoding'}." / ".
+                     $output_encoding_name ."\n";
+      #cluck();
+    }
+    $options->{'_saved_enabled_encoding'} = $options->{'enabled_encoding'};
+    $options->{'enabled_encoding'} = $output_encoding_name;
+  }
+}
+
+sub set_options_encoding($$)
+{
+  my $options = shift;
+  my $encoding = shift;
+  if (defined($options->{'_saved_enabled_encoding'})) {
+     print STDERR "BUG: _saved_enabled_encoding set: "
+                          .$options->{'_saved_enabled_encoding'}." / ".
+                            $encoding."\n";
+  }
+  $options->{'_saved_enabled_encoding'} = $options->{'enabled_encoding'};
+  $options->{'enabled_encoding'} = $encoding;
+}
+
+sub reset_options_encoding($)
+{
+  my $options = shift;
+  if (defined($options->{'_saved_enabled_encoding'})) {
+    $options->{'enabled_encoding'} = $options->{'_saved_enabled_encoding'};
+    delete $options->{'_saved_enabled_encoding'};
+  }
+}
+
+
+sub _ascii_accent($$)
 {
   my $text = shift;
   my $command = shift;
@@ -242,12 +335,12 @@ sub _ascii_accents($$;$)
     }
   }
   foreach my $accent_command (reverse(@$stack)) {
-    $result = ascii_accent($result, $accent_command);
+    $result = _ascii_accent($result, $accent_command);
   }
   return $result;
 }
 
-# Same as ascii_accent, but with a converter as first argument to be consistent
+# Same as _ascii_accent, but with a converter as first argument to be consistent
 # with calling conventions of fallback accent formatting functions given
 # to Convert::Converter::convert_accents()
 # or Convert::Unicode::encoded_accents()
@@ -257,7 +350,7 @@ sub ascii_accent_fallback($$$)
   my $text = shift;
   my $command = shift;
 
-  return ascii_accent($text, $command);
+  return _ascii_accent($text, $command);
 }
 
 # format an accent command and nested accents within as Text.
@@ -269,10 +362,9 @@ sub text_accents($;$$)
 
   my ($contents_element, $stack)
       = Texinfo::Convert::Utils::find_innermost_accent_contents($accent);
-
   my $options = {};
   $options->{'enabled_encoding'} = $encoding if (defined($encoding));
-  $options->{'sc'} = $set_case if (defined($set_case));
+  $options->{'set_case'} = $set_case if (defined($set_case));
   my $text = convert_to_text($contents_element, $options);
 
   my $result = Texinfo::Convert::Unicode::encoded_accents(undef, $text,
@@ -284,13 +376,14 @@ sub text_accents($;$$)
   }
 }
 
+# TODO document?  Used in other converters.
 sub brace_no_arg_command($;$)
 {
   my $element = shift;
   my $options = shift;
   my $encoding;
   $encoding = $options->{'enabled_encoding'}
-    if ($options and $options->{'enabled_encoding'});
+    if ($options and defined($options->{'enabled_encoding'}));
 
   my $command = $element->{'cmdname'};
   $command = $element->{'extra'}->{'clickstyle'}
@@ -321,13 +414,14 @@ sub brace_no_arg_command($;$)
     }
   }
   if ($options and $Texinfo::Commands::letter_no_arg_commands{$command}) {
-    if ($options->{'sc'}) {
-      $result = uc($result);
-    # NOTE does not seems to be set anywhere.  Not a big deal to keep it,
-    # but if it become used, it should be checked whether code elsewhere
-    # should be changed to look for lc too.  XS should be ok.
-    } elsif ($options->{'lc'}) {
-      $result = lc($result);
+    if ($options->{'set_case'}) {
+      if ($options->{'set_case'} > 0) {
+        $result = uc($result);
+      # NOTE does not seems to be decreased/set to negative anywhere, but
+      # should work ok if it is.
+      } else {
+        $result = lc($result);
+      }
     }
   }
   return $result;
@@ -380,120 +474,10 @@ sub _text_heading($$$;$$)
   return $result;
 }
 
-my @text_indicator_converter_options = ('NUMBER_SECTIONS', 'ASCII_GLYPH', 'TEST',
-    # FIXME not used directly in the module code.  It is unlikely for that variable
-    # to be used elsewhere from text options and not converter options.
-    # for error registering,
-    'DEBUG');
 
-# TODO not documented, used in many converters
-# $SELF is typically a converter object.
-# Setup options as used by Texinfo::Convert::Text::convert_to_text
-# based on the converter information.
-# if $ENABLE_ENCODING_IF_NOT_ASCII is set, enabled_encoding is set
-# unless the encoding is ascii, even if ENABLE_ENCODING is not set.
-# This is relevant for file names, for instance.
-sub copy_options_for_convert_text($;$)
+# Will never be called, used for the override.
+sub _convert_tree_with_XS($$)
 {
-  my $self = shift;
-  my $enable_encoding_if_not_ascii = shift;
-  my %options;
-  if (($self->get_conf('ENABLE_ENCODING')
-       and $self->get_conf('OUTPUT_ENCODING_NAME'))
-      or ($enable_encoding_if_not_ascii
-          and $self->get_conf('OUTPUT_ENCODING_NAME')
-          and $self->get_conf('OUTPUT_ENCODING_NAME') ne 'us-ascii')) {
-    $options{'enabled_encoding'} = $self->get_conf('OUTPUT_ENCODING_NAME');
-  }
-
-  foreach my $option (@text_indicator_converter_options) {
-    my $conf = $self->get_conf($option);
-    if ($conf) {
-      $options{$option} = 1;
-    } elsif (defined($conf)) {
-      $options{$option} = 0;
-    }
-  }
-  $options{'expanded_formats'} = $self->{'expanded_formats'};
-  # for locate_include_file
-  $options{'INCLUDE_DIRECTORIES'} = $self->get_conf('INCLUDE_DIRECTORIES');
-
-  $options{'converter'} = $self;
-  return %options;
-}
-
-# select converter options passed.
-sub select_text_options($)
-{
-  my $options = shift;
-  my $selected_options = {};
-
-  foreach my $option (@text_indicator_converter_options,
-                      'INCLUDE_DIRECTORIES',
-                      'expanded_formats',
-                      # non-converter indicator options
-       'enabled_encoding', 'sc', 'code', 'sort_string') {
-    if (defined($options->{$option})) {
-      $selected_options->{$option} = $options->{$option};
-    }
-  }
-
-  # called through convert_to_text with a converter in text options
-  if ($options->{'converter'}
-      and $options->{'converter'}->{'conf'}) {
-    $selected_options->{'other_converter_options'}
-       = $options->{'converter'}->{'conf'};
-  }
-
-  $selected_options->{'self_converter_options'} = $options;
-
-  return $selected_options;
-}
-
-# This is used if the document is available for XS, but XS is not
-# used (most likely $TEXINFO_XS_CONVERT is 0).
-sub _convert_tree_with_XS($$;$)
-{
-}
-
-sub convert_to_text($;$)
-{
-  my $root = shift;
-  my $options = shift;
-
-  if (ref($root) ne 'HASH') {
-    confess "root not a hash";
-  }
-
-  #print STDERR "CONVERT\n";
-  # this is needed for locate_include_file which uses
-  # $configurations_information->get_conf() and thus requires a blessed
-  # reference.
-  $options = {} if (!defined($options));
-  if (defined($options)) {
-    if (!ref($options)) {
-      confess("convert_to_text options not a ref\n");
-    }
-    bless $options;
-    if ($options->{'code'}) {
-      $options->{'_code_state'} = 1;
-    }
-  }
-
-  # Interface with XS converter.
-  if ($XS_convert and defined($root->{'tree_document_descriptor'})) {
-    my $selected_options = select_text_options($options);
-    my $XS_result = _convert_tree_with_XS($selected_options, $root, $options);
-    if (defined ($XS_result)) {
-      return $XS_result;
-    } else {
-      my $result = _convert($root, $options);
-      print STDERR "NO XS Text: $root->{'tree_document_descriptor'}\n";
-      cluck();
-    }
-  }
-
-  return _convert($root, $options);
 }
 
 sub _convert($;$);
@@ -568,8 +552,12 @@ sub _convert($;$)
       if ((! defined($element->{'type'})
            or $element->{'type'} ne 'raw')
           and !$options->{'_raw_state'}) {
-        if ($options->{'sc'}) {
-          $result = uc($result);
+        if ($options->{'set_case'}) {
+          if ($options->{'set_case'} > 0) {
+            $result = uc($result);
+          } else {
+            $result = lc($result);
+          }
         }
         if (!$options->{'_code_state'}) {
           $result =~ s/``/"/g;
@@ -606,7 +594,7 @@ sub _convert($;$)
     # commands with braces
     } elsif ($accent_commands{$element->{'cmdname'}}) {
       my $result = text_accents($element, $options->{'enabled_encoding'},
-                                $options->{'sc'});
+                                $options->{'set_case'});
       return $result;
     } elsif ($element->{'cmdname'} eq 'image') {
       $options->{'_code_state'}++;
@@ -675,7 +663,7 @@ sub _convert($;$)
                                                   $element->{'cmdname'}})))) {
       my $result;
       my $in_code;
-      $options->{'sc'}++ if ($element->{'cmdname'} eq 'sc');
+      $options->{'set_case'}++ if ($element->{'cmdname'} eq 'sc');
       if ($Texinfo::Commands::brace_code_commands{$element->{'cmdname'}}
                or $Texinfo::Commands::math_commands{$element->{'cmdname'}}) {
         $in_code = 1;
@@ -683,7 +671,7 @@ sub _convert($;$)
       $options->{'_code_state'}++ if ($in_code);
       $result = _convert($element->{'args'}->[0], $options);
       $options->{'_code_state'}-- if ($in_code);
-      $options->{'sc'}-- if ($element->{'cmdname'} eq 'sc');
+      $options->{'set_case'}-- if ($element->{'cmdname'} eq 'sc');
       return $result;
     # block commands
     } elsif ($element->{'cmdname'} eq 'quotation'
@@ -822,6 +810,35 @@ sub _convert($;$)
   return $result;
 }
 
+# the main entry point
+sub convert_to_text($;$)
+{
+  my $root = shift;
+  my $options = shift;
+
+  if (ref($root) ne 'HASH') {
+    confess "root not a hash";
+  }
+
+  #print STDERR "CONVERT\n";
+  # this is needed for locate_include_file which uses
+  # $configurations_information->get_conf() and thus requires a blessed
+  # reference.
+  $options = {} if (!defined($options));
+  if (defined($options)) {
+    if (!ref($options)) {
+      confess("convert_to_text options not a ref\n");
+    }
+    bless $options;
+  }
+
+  # Interface with XS converter.
+  if ($XS_convert and defined($root->{'tree_document_descriptor'})) {
+    return _convert_tree_with_XS($options, $root);
+  }
+
+  return _convert($root, $options);
+}
 
 
 # Implement the converters API, but as simply as possible
@@ -861,6 +878,9 @@ sub converter($;$)
   return $converter;
 }
 
+# This function is not called in anywhere in Texinfo code, it is implemented
+# to be in line with Texinfo::Convert::Converter documentation on functions
+# defined for a converter.
 sub convert_tree($$)
 {
   my $self = shift;
@@ -871,7 +891,10 @@ sub convert_tree($$)
   return _convert($element, $options);
 }
 
-# FIXME set options with $self if defined?
+# This function is not called in anywhere in Texinfo code, it is implemented
+# to be in line with Texinfo::Convert::Converter documentation on functions
+# defined for a converter.
+# TODO set options with $self if defined?
 sub convert($$)
 {
   my $self = shift;
@@ -979,25 +1002,18 @@ sub output($$)
     }
   }
   # mostly relevant for 'enabled_encoding', other options should be the same.
-  my %options = copy_options_for_convert_text($self);
+  my $options = copy_options_for_convert_text($self);
   # remove $self Text converter without translation nor error reporting.
-  delete $options{'converter'};
+  delete $options->{'converter'};
   # Some functions call $self->get_conf(), so the options need to be a blessed
   # reference, merge specific Text options with $self (possibly
   # overwriting/ignoring but values should be the same).
-  %$self = (%$self, %options);
+  %$self = (%$self, %$options);
 
   my $result;
   # Interface with XS converter.
   if ($XS_convert and defined($root->{'tree_document_descriptor'})) {
-    my $selected_options = select_text_options($self);
-    my $XS_result = _convert_tree_with_XS($selected_options, $root, $self);
-    if (defined ($XS_result)) {
-      $result = $XS_result;
-    } else {
-      print STDERR "NO XS Text: $root->{'tree_document_descriptor'}\n";
-      cluck();
-    }
+    $result = _convert_tree_with_XS($self, $root);
   } else {
     $result = _convert($root, $self);
   }
@@ -1045,11 +1061,6 @@ sub converter_document_warn()
 {
 }
 
-sub errors()
-{
-  return undef;
-}
-
 sub get_converter_errors($)
 {
   return undef;
@@ -1076,16 +1087,19 @@ Texinfo::Convert::Text - Convert Texinfo tree to simple text
 
 =head1 SYNOPSIS
 
-  use Texinfo::Convert::Text qw(convert_to_text ascii_accent text_accents);
+  use Texinfo::Convert::Text qw(convert_to_text text_accents);
 
   my $result = convert_to_text($tree);
-  my $result_encoded = convert_to_text($tree,
-             {'enabled_encoding' => 'utf-8'});
-  my $result_converter = convert_to_text($tree,
-             {'converter' => $converter});
 
-  my $result_accent_text = ascii_accent('e', $accent_command);
   my $accents_text = text_accents($accents, 'utf-8');
+
+  # using text conversion options set in $converter derived from
+  # Texinfo::Convert::Converter
+  my $text_options = $converter->{'convert_text_options'};
+
+  set_options_code($text options);
+  my $result_with_converter = convert_to_text($tree, $text_options);
+  reset_options_code($text options);
 
 =head1 NOTES
 
@@ -1096,17 +1110,24 @@ Texinfo to other formats.  There is no promise of API stability.
 
 C<Texinfo::Convert::Text> is a simple backend that converts a Texinfo tree
 to simple text.  It is used in converters, especially for file names.
-The converter is very simple, and, in the default case, cannot handle
+The conversion is very simple, and, in the default case, cannot handle
 output strings translation or error handling.
+
+Converters derived from L<Texinfo::Convert::Converter> should have conversion
+text options associated to the C<convert_text_options> key.
+
+The main function is C<convert_to_text>.  The text conversion options
+can be modified with the C<set_*> functions before calling C<convert_to_text>,
+and reset aterwards with the corresponding C<reset_*> functions.
 
 =head1 METHODS
 
 =over
 
-=item $result = convert_to_text($tree, $options)
+=item $result = convert_to_text($tree, $text_options)
 X<C<convert_to_text>>
 
-Convert a Texinfo tree to simple text.  I<$options> is a hash reference of
+Convert a Texinfo tree to simple text.  I<$text_options> is a hash reference of
 options.  The converter is very simple, and has almost no internal state
 besides the options.  It cannot handle as is output strings translation or
 error storing.
@@ -1115,7 +1136,9 @@ If the I<converter> option is set, some additional features may be available
 for the conversion of some @-commands, like output strings translation or
 error reporting.
 
-The following options may be set:
+The C<NUMBER_SECTIONS>, C<ASCII_GLYPH> and C<TEST> options corresponding to
+customization variables may be set in I<$text_options>.  The following options
+may also be set:
 
 =over
 
@@ -1128,18 +1151,9 @@ variable for Info and Plaintext and for some conversion to text in other
 formats.  For file names in HTML and LaTeX, and for DocBook or Texinfo XML,
 this variable should in general be set unless the output encoding is US-ASCII.
 
-=item sc
+=item set_case
 
-If set, the text is upper-cased.
-
-=item code
-
-If set the text is in code style.  (mostly C<-->, C<--->, C<''> and C<``> are
-kept as is).
-
-=item NUMBER_SECTIONS
-
-If set, sections are numbered when output.
+If positive, the text is upper-cased, if negative, the text is lower-cased.
 
 =item sort_string
 
@@ -1150,8 +1164,7 @@ sorting rather than presentation.
 
 If this converter object is passed to the function, some features of this
 object may be used during conversion.  Mostly error reporting and strings
-translation, as the converter object is also supposed to be a
-L<Texinfo::Report> objet.  See also L<Texinfo::Convert::Converter>.
+translation.  See also L<Texinfo::Convert::Converter>.
 
 =item expanded_formats
 
@@ -1160,21 +1173,44 @@ C<tex>), and if the corresponding value is set, the format is expanded.
 
 =back
 
-=item $result_accent_text = ascii_accent($text, $accent_command)
-X<C<ascii_accent>>
+=item $result_accent_text = ascii_accent_fallback($converter, $text, $accent_command)
+X<C<ascii_accent_fallback>>
 
 I<$text> is the text appearing within an accent command.  I<$accent_command>
 should be a Texinfo tree element corresponding to an accent command taking
 an argument.  The function returns a transliteration of the accented
-character.
-
-=item $result_accent_text = ascii_accent_fallback($converter, $text, $accent_command)
-X<C<ascii_accent_fallback>>
-
-Same as C<ascii_accent> but  with an additional first argument
-converter, which is ignored, but needed if this function is to
-be in argument of functions that need a fallback for accents
+character.  The I<$converter> argument is ignored, but needed for this
+function to be in argument of functions that need a fallback for accents
 conversion.
+
+=item set_options_code($text_options)
+
+=item reset_options_code($text_options)
+X<C<set_options_code>>X<C<reset_options_code>>
+
+C<set_options_code> sets I<$text_options> to be in code style.
+(mostly C<-->, C<--->, C<''> and C<``> are kept as is).  C<reset_options_code>
+undo the effect of C<set_options_code>.
+
+C<reset_options_code> should always be called after C<set_options_code>.
+
+=item set_options_encoding($text_options, $encoding)
+
+=item set_options_encoding_if_not_ascii($customization_information, $text_options)
+
+=item reset_options_encoding($text_options)
+X<C<set_options_encoding>>X<C<set_options_encoding_if_not_ascii>>
+X<C<reset_options_encoding>>
+
+C<set_options_encoding> sets C<enabled_encoding> in I<$text_options>
+to I<$encoding>.  C<set_options_encoding_if_not_ascii> sets C<enabled_encoding>
+in I<$text_options> based on customization options associated to
+I<$customization_information>.  In that case, C<enabled_encoding> is set unless
+the output encoding is US-ASCII even if C<ENABLE_ENCODING> is not set.
+
+C<reset_options_encoding> undo the effect of C<set_options_encoding> and
+C<set_options_encoding_if_not_ascii> and should always be called after these
+functions.
 
 =item $accents_text = text_accents($accents, $encoding, $set_case)
 X<C<text_accents>>

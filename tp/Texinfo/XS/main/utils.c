@@ -518,7 +518,7 @@ clear_expanded_formats (EXPANDED_FORMAT *formats)
 }
 
 void
-add_expanded_format (EXPANDED_FORMAT *formats, char *format)
+add_expanded_format (EXPANDED_FORMAT *formats, const char *format)
 {
   int i;
   for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
@@ -563,6 +563,22 @@ expanded_formats_number (void)
   return sizeof (expanded_formats)/sizeof (*expanded_formats);
 }
 
+void
+set_expanded_formats_from_options (EXPANDED_FORMAT *formats,
+                                   const OPTIONS *options)
+{
+  if (options->EXPANDED_FORMATS.strlist
+      && (options->EXPANDED_FORMATS.strlist->number))
+    {
+      size_t i;
+      for (i = 0; i < options->EXPANDED_FORMATS.strlist->number; i++)
+        {
+          add_expanded_format (formats,
+                               options->EXPANDED_FORMATS.strlist->list[i]);
+        }
+    }
+}
+
 
 /* Return the parent if in an item_line command, @*table */
 ELEMENT *
@@ -594,9 +610,10 @@ get_label_element (const ELEMENT *e)
 /* index related code used both in parsing and conversion */
 /* NAME is the name of an index, e.g. "cp" */
 INDEX *
-indices_info_index_by_name (INDEX **indices_information, char *name)
+indices_info_index_by_name (INDEX **indices_information, const char *name)
 {
-  INDEX **i, *idx;
+  INDEX **i;
+  INDEX *idx;
 
   for (i = indices_information; (idx = *i); i++)
     if (!strcmp (idx->name, name))
@@ -851,6 +868,22 @@ merge_strings (STRING_LIST *strings_list, STRING_LIST *merged_strings)
   strings_list->number += merged_strings->number;
 }
 
+void
+copy_strings (STRING_LIST *dest_list, STRING_LIST *source_list)
+{
+  int i;
+  if (dest_list->number + source_list->number > dest_list->space)
+    {
+      dest_list->space = dest_list->number + source_list->number +5;
+      dest_list->list = realloc (dest_list->list,
+                                  sizeof (char *) * dest_list->space);
+    }
+  for (i = 0; i < source_list->number; i++)
+    {
+      add_string (source_list->list[i], dest_list);
+    }
+}
+
 /* return the index +1, to return 0 if not found */
 size_t
 find_string (STRING_LIST *strings_list, const char *target)
@@ -933,6 +966,34 @@ destroy_strings_list (STRING_LIST *strings)
 {
   free_strings_list (strings);
   free (strings);
+}
+
+
+
+void
+set_conf_string (OPTION *option, const char *value)
+{
+  if (option->type != GO_char && option->type != GO_bytes)
+    fatal ("set_conf_string bad option type\n");
+
+  if (option->configured > 0)
+    return;
+
+  free (option->string);
+  option->string = strdup (value);
+}
+
+/* In perl, OUTPUT_PERL_ENCODING is set too.  Note that if the perl
+   version is called later on, the OUTPUT_PERL_ENCODING value will be re-set */
+void
+set_output_encoding (OPTIONS *customization_information, DOCUMENT *document)
+{
+  if (customization_information
+      && document && document->global_info
+      && document->global_info->input_encoding_name) {
+    set_conf_string (&customization_information->OUTPUT_ENCODING_NAME,
+                      document->global_info->input_encoding_name);
+  }
 }
 
 
@@ -1067,24 +1128,26 @@ void
 set_informative_command_value (OPTIONS *options, const ELEMENT *element)
 {
   char *value = 0;
-  enum command_id cmd = element_builtin_cmd (element);
-  if (cmd == CM_summarycontents)
-    cmd = CM_shortcontents;
 
   value = informative_command_value (element);
 
   if (value)
     {
-      OPTION *option = get_command_option (options, cmd);
-      if (option && option->set <= 0)
+      OPTION *option;
+      enum command_id cmd = element_builtin_cmd (element);
+      if (cmd == CM_summarycontents)
+        cmd = CM_shortcontents;
+
+      option = get_command_option (options, cmd);
+      if (option)
         {
           if (option->type == GO_integer)
-            option->integer = strtoul (value, NULL, 10);
-          else
             {
-              free (option->string);
-              option->string = strdup (value);
+              if (option->configured <= 0)
+                option->integer = strtoul (value, NULL, 10);
             }
+          else
+            set_conf_string (option, value);
         }
     }
 }
@@ -1397,8 +1460,7 @@ html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons)
   free (buttons);
 }
 
-void
-html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons)
+void html_clear_direction_icons (DIRECTION_ICON_LIST *direction_icons)
 {
   if (!direction_icons)
     return;
@@ -1409,8 +1471,18 @@ html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons)
       for (i = 0; i < direction_icons->number; i++)
         {
           free (direction_icons->list[i]);
+          direction_icons->list[i] = 0;
         }
     }
+}
+
+void
+html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons)
+{
+  if (!direction_icons)
+    return;
+
+  html_clear_direction_icons (direction_icons);
   free (direction_icons->list);
 }
 
@@ -1426,6 +1498,40 @@ new_options (void)
 }
 
 void
+clear_option (OPTION *option)
+{
+  switch (option->type)
+    {
+      case GO_char:
+      case GO_bytes:
+        free (option->string);
+        option->string = 0;
+        break;
+
+      case GO_bytes_string_list:
+      case GO_file_string_list:
+      case GO_char_string_list:
+        clear_strings_list (option->strlist);
+        break;
+
+      case GO_buttons:
+        html_free_button_specification_list (option->buttons);
+        option->buttons = 0;
+        break;
+
+      case GO_icons:
+        html_clear_direction_icons (option->icons);
+        break;
+
+      case GO_integer:
+        option->integer = -1;
+
+      default:
+    }
+}
+
+/* option is not supposed to be accessed again */
+void
 free_option (OPTION *option)
 {
   switch (option->type)
@@ -1438,7 +1544,7 @@ free_option (OPTION *option)
       case GO_bytes_string_list:
       case GO_file_string_list:
       case GO_char_string_list:
-        free_strings_list (option->strlist);
+        destroy_strings_list (option->strlist);
         break;
 
       case GO_buttons:
@@ -1447,6 +1553,7 @@ free_option (OPTION *option)
 
       case GO_icons:
         html_free_direction_icons (option->icons);
+        free (option->icons);
         break;
 
       case GO_integer:
@@ -1489,4 +1596,3 @@ initialize_option (OPTION *option, enum global_option_type type)
       default:
     }
 }
-

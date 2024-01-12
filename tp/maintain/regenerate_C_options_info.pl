@@ -153,6 +153,36 @@ foreach my $category (sort(keys(%option_categories))) {
 }
 print CODE "};\n\n";
 
+print CODE "void\nclear_options (OPTIONS *options)\n{\n";
+foreach my $category (sort(keys(%option_categories))) {
+  print CODE "\n/* ${category} */\n\n";
+  foreach my $option_info (@{$option_categories{$category}}) {
+    my ($option, $value, $type) = @$option_info;
+    print CODE "  clear_option (&options->$option);\n";
+  }
+}
+print CODE "};\n\n";
+
+# set configured based on the name
+print CODE 'void
+set_option_key_configured (OPTIONS *options, const char *key, int configured)
+{
+  if (0) {}
+';
+foreach my $category (sort(keys(%option_categories))) {
+  print CODE "\n/* ${category} */\n\n";
+  foreach my $option_info (@{$option_categories{$category}}) {
+    my ($option, $value, $type) = @$option_info;
+    print CODE "  else if (!strcmp (key, \"$option\"))
+    {
+      if (configured > 0)
+        options->$option.configured = configured;
+    }\n";
+  }
+}
+
+print CODE "}\n\n";
+
 # associate commands to options
 print CODE "#include \"command_ids.h\"\n\n";
 print CODE 'OPTION *
@@ -250,21 +280,12 @@ print GET '#include "get_perl_info.h"'."\n";
 print GET '#include "build_perl_info.h"'."\n\n";
 
 print GET 'void
-get_sv_option (OPTIONS *options, const char *key, SV *value, int set, CONVERTER *converter)
+get_sv_option (OPTIONS *options, const char *key, SV *value, int force, CONVERTER *converter)
 {
   dTHX;
 
   if (0) {}
 ';
-
-#my %non_decoded_customization_variables
-#   = %Texinfo::Common::non_decoded_customization_variables;
-
-# duplicated from Texinfo::Common to avoid depending on Texinfo::Common
-my %non_decoded_customization_variables;
-foreach my $variable_name ('MACRO_EXPAND', 'INTERNAL_LINKS') {
-  $non_decoded_customization_variables{$variable_name} = 1;
-}
 
 foreach my $category (sort(keys(%option_categories))) {
   print GET "\n/* ${category} */\n\n";
@@ -272,9 +293,7 @@ foreach my $category (sort(keys(%option_categories))) {
     my ($option, $value, $type) = @$option_info;
     print GET "  else if (!strcmp (key, \"$option\"))
     {
-      if (set > 0)
-        options->$option.set = set;
-      else if (set < 0 && options->$option.set > 0)
+      if (force <= 0 && options->$option.configured > 0)
         return;\n\n";
     if ($type eq 'char' or $type eq 'bytes') {
       my $SV_function_type = 'utf8';
@@ -297,7 +316,7 @@ foreach my $category (sort(keys(%option_categories))) {
       my $dir_string_arg = 'svt_byte';
       if ($type eq 'file_string_list') {
         $dir_string_arg = 'svt_dir';
-      } elsif ($type eq 'file_string_char') {
+      } elsif ($type eq 'char_string_list') {
         $dir_string_arg = 'svt_char';
       }
       print GET "      clear_strings_list (options->$option.strlist);
@@ -354,7 +373,7 @@ foreach my $category (sort(keys(%option_categories))) {
       my $dir_string_arg = 'svt_byte';
       if ($type eq 'file_string_list') {
         $dir_string_arg = 'svt_dir';
-      } elsif ($type eq 'file_string_char') {
+      } elsif ($type eq 'char_string_list') {
         $dir_string_arg = 'svt_char';
       }
       print GET "    {
@@ -367,7 +386,7 @@ foreach my $category (sort(keys(%option_categories))) {
     }\n";
     } elsif ($type eq 'icons') {
       print GET "    {
-      html_build_direction_icons (converter, options->$option.icons);
+      return html_build_direction_icons (converter, options->$option.icons);
     }\n";
     } else {
       print GET "    {return newSV (0);}\n";

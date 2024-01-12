@@ -528,9 +528,6 @@ sub converter_initialize($)
   $self->{'output_encoding_name'} = $self->get_conf('OUTPUT_ENCODING_NAME');
   $self->{'debug'} = $self->get_conf('DEBUG');
 
-  $self->{'convert_text_options'}
-      = {Texinfo::Convert::Text::copy_options_for_convert_text($self)};
-
   return $self;
 }
 
@@ -1664,9 +1661,13 @@ sub format_image($$)
   if (defined($element->{'args'}->[0])
       and $element->{'args'}->[0]->{'contents'}
       and @{$element->{'args'}->[0]->{'contents'}}) {
+    Texinfo::Convert::Text::set_options_code(
+                                 $self->{'convert_text_options'});
     my $basefile = Texinfo::Convert::Text::convert_to_text(
-       $element->{'args'}->[0],
-     {'code' => 1, %{$self->{'convert_text_options'}}});
+                      $element->{'args'}->[0],
+                     $self->{'convert_text_options'});
+    Texinfo::Convert::Text::reset_options_code(
+                                 $self->{'convert_text_options'});
     my ($text, $width) = $self->txt_image_text($element, $basefile);
     # remove last end of line
     chomp($text) if (defined($text));
@@ -3468,6 +3469,7 @@ sub _convert($$)
     } elsif ($type eq 'menu_entry') {
       my $entry_name_seen = 0;
       my $menu_entry_node;
+      $self->{'empty_lines_count'} = 0;
       foreach my $content (@{$element->{'contents'}}) {
         if ($content->{'type'} eq 'menu_entry_leading_text') {
           if (defined($content->{'text'})) {
@@ -3703,8 +3705,6 @@ sub _convert($$)
 
     for my $content (@$contents) {
       my $text = _convert($self, $content);
-      $self->{'empty_lines_count'} = 0
-        if ($preformatted and $text =~ /\S/);
       $result .= $text;
     }
     pop @{$self->{'current_contents'}};
@@ -3856,6 +3856,20 @@ sub _convert($$)
   } elsif ($preformatted) {
     $result .= _count_added($self, $preformatted->{'container'},
                Texinfo::Convert::Paragraph::end($preformatted->{'container'}));
+    if (defined($type) and ($type eq 'preformatted'
+           or $type eq 'rawpreformatted')) {
+      if ($element->{'contents'}
+          and $element->{'contents'}->[-1]) {
+        my $last_child = $element->{'contents'}->[-1];
+        if (!defined($last_child->{'type'})
+                       or $last_child->{'type'} ne 'empty_line') {
+          if (!defined($last_child->{'text'})
+                       or $last_child->{'text'} =~ /\S/) {
+            $self->{'empty_lines_count'} = 0;
+          }
+        }
+      }
+    }
     if ($result ne '') {
       $result = $self->ensure_end_of_line($result);
     }

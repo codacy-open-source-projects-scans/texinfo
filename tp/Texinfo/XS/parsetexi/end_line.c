@@ -367,7 +367,8 @@ parse_line_command_args (ELEMENT *line_command)
       {
         /* synindex FROM TO */
         char *index_name_from = 0, *index_name_to = 0;
-        INDEX *from_index, *to_index;
+        INDEX *from_index;
+        INDEX *to_index;
         char *p = line;
 
         if (!isascii_alnum (*p))
@@ -386,8 +387,8 @@ parse_line_command_args (ELEMENT *line_command)
         if (*p)
           goto synindex_invalid; /* More at end of line. */
 
-        from_index = indices_info_index_by_name (index_names,index_name_from);
-        to_index = indices_info_index_by_name (index_names,index_name_to);
+        from_index = indices_info_index_by_name (index_names, index_name_from);
+        to_index = indices_info_index_by_name (index_names, index_name_to);
         if (!from_index)
           line_error ("unknown source index in @%s: %s",
                       command_name(cmd), index_name_from);
@@ -1574,10 +1575,8 @@ end_line_misc_line (ELEMENT *current)
           if ((command_flags(current) & CF_index_entry_command
                 || current->cmd == CM_subentry))
             {
-              if (lookup_extra_string (current, "sortas")
-                   || lookup_extra_element (current, "seealso")
-                   || lookup_extra_element (current, "seeentry"))
-                set_non_ignored_space_in_index_before_command(current->args.list[0]);
+              set_non_ignored_space_in_index_before_command(
+                                                     current->args.list[0]);
             }
         }
     }

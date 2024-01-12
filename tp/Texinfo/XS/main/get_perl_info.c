@@ -41,14 +41,75 @@ FIXME add an initialization of translations?
 #include "options_types.h"
 #include "document_types.h"
 #include "converter_types.h"
+#include "text.h"
+#include "extra.h"
+#include "debug.h"
 #include "utils.h"
 #include "builtin_commands.h"
 #include "errors.h"
+#include "targets.h"
 #include "document.h"
 #include "output_unit.h"
 #include "convert_to_text.h"
 #include "converter.h"
 #include "get_perl_info.h"
+
+#define FETCH(key) key##_sv = hv_fetch (element_hv, #key, strlen(#key), 0);
+
+static void
+debug_print_element_hv (HV *element_hv)
+{
+  SV **cmdname_sv;
+  SV **type_sv;
+  SV **text_sv;
+  TEXT msg;
+
+  dTHX;
+
+  text_init (&msg);
+  text_append (&msg, "");
+
+  FETCH(cmdname)
+  if (cmdname_sv)
+    {
+      text_printf (&msg, "@%s", SvPVutf8_nolen (*cmdname_sv));
+    }
+  FETCH(type)
+  if (type_sv)
+    {
+      text_printf (&msg, "(%s)", SvPVutf8_nolen (*type_sv));
+    }
+  FETCH(text)
+  if (text_sv)
+    {
+      int allocated = 0;
+      char *text = SvPVutf8_nolen (*text_sv);
+      char *protected_text = debug_protect_eol (text,
+                                              &allocated);
+      text_printf (&msg, "[T: %s]", protected_text);
+      if (allocated)
+        free (protected_text);
+    }
+  fprintf (stderr, "ELT_sv: %s\n", msg.text);
+  free (msg.text);
+}
+
+void
+debug_print_element_sv (SV *element_sv)
+{
+  dTHX;
+
+  if (SvOK (element_sv))
+    {
+      HV *element_hv = (HV *) SvRV (element_sv);
+      debug_print_element_hv (element_hv);
+    }
+  else
+    {
+      fprintf(stderr, "debug_print_element_sv: NUL\n");
+    }
+}
+#undef FETCH
 
 DOCUMENT *
 get_document_or_warn (SV *sv_in, char *key, char *warn_string)
@@ -268,47 +329,61 @@ get_line_message (CONVERTER *self, enum error_type type, int continuation,
 }
 
 void
-get_sv_options (SV *sv, OPTIONS *options, CONVERTER *converter, SV *set_sv_in)
+get_sv_options (SV *sv, OPTIONS *options, CONVERTER *converter,
+                int force)
 {
   I32 hv_number;
   I32 i;
   HV *hv;
-  HV *set_hv = 0;
 
   dTHX;
 
   hv = (HV *)SvRV (sv);
 
-  if (set_sv_in)
-    set_hv = (HV *)SvRV (set_sv_in);
-
   hv_number = hv_iterinit (hv);
   for (i = 0; i < hv_number; i++)
     {
-      int set = 0;
       char *key;
       I32 retlen;
       SV *value = hv_iternextsv(hv, &key, &retlen);
       if (value && SvOK (value))
         {
-          if (set_hv)
-            {
-              SV **value_set_sv = hv_fetch (set_hv, key, strlen (key), 0);
-              if (value_set_sv && SvOK (*value_set_sv)
-                  && SvIV (*value_set_sv))
-                set = 1;
-            }
-          get_sv_option (options, key, value, set, converter);
+          get_sv_option (options, key, value, force, converter);
+        }
+    }
+}
+
+void
+get_sv_configured_options (SV *configured_sv_in, OPTIONS *options)
+{
+  I32 hv_number;
+  I32 i;
+  HV *configured_hv;
+
+  dTHX;
+
+  configured_hv = (HV *)SvRV (configured_sv_in);
+
+  hv_number = hv_iterinit (configured_hv);
+  for (i = 0; i < hv_number; i++)
+    {
+      char *key;
+      I32 retlen;
+      SV *value = hv_iternextsv(configured_hv, &key, &retlen);
+      if (value && SvOK (value))
+        {
+          int configured = SvIV (value);
+          set_option_key_configured (options, key, configured);
         }
     }
 }
 
 
 OPTIONS *
-copy_sv_options (SV *sv_in, CONVERTER *converter, SV *set_sv_in)
+init_copy_sv_options (SV *sv_in, CONVERTER *converter, int force)
 {
   OPTIONS *options = new_options ();
-  get_sv_options (sv_in, options, converter, set_sv_in);
+  get_sv_options (sv_in, options, converter, force);
   return options;
 }
 
@@ -321,7 +396,7 @@ get_expanded_formats (HV *hv, EXPANDED_FORMAT **expanded_formats)
 
   expanded_formats_sv = hv_fetch (hv, "expanded_formats",
                                   strlen ("expanded_formats"), 0);
-  if (expanded_formats_sv)
+  if (expanded_formats_sv && SvOK (*expanded_formats_sv))
     {
       I32 i;
       I32 formats_nr;
@@ -427,6 +502,27 @@ set_translated_commands (CONVERTER *converter, HV *hv_in)
     }
 }
 
+void
+copy_converter_conf_sv (HV *hv, CONVERTER *converter,
+                        OPTIONS **conf, const char *conf_key, int force)
+{
+  SV **conf_sv;
+
+  dTHX;
+
+  conf_sv = hv_fetch (hv, conf_key, strlen (conf_key), 0);
+
+  if (conf_sv && SvOK(*conf_sv))
+    {
+      if (*conf)
+        clear_options (*conf);
+      else
+        *conf = new_options ();
+
+      get_sv_options (*conf_sv, *conf, converter, force);
+    }
+}
+
 /* Texinfo::Convert::Converter generic initialization for all the converters */
 /* Called early, in particuliar before any format specific code has been
    called */
@@ -434,8 +530,7 @@ int
 converter_initialize (SV *converter_sv)
 {
   HV *hv_in;
-  SV **conf_sv;
-  SV **converter_init_conf_sv;
+  SV **configured_sv;
   SV **output_format_sv;
   DOCUMENT *document;
   int converter_descriptor = 0;
@@ -487,33 +582,32 @@ converter_initialize (SV *converter_sv)
   fprintf (stderr, "XS|CONVERTER Init: %d; doc %d; %s\n", converter_descriptor,
                    converter->document->descriptor, converter->output_format);
     */
-  FETCH(conf)
 
-  if (conf_sv && SvOK (*conf_sv))
+  converter->conf = new_options ();
+  /* force is not set, but at this point, the configured field should not
+     be set, so it would not have an effect anyway */
+  copy_converter_conf_sv (hv_in, converter, &converter->conf, "conf", 0);
+
+  converter->init_conf = new_options ();
+  copy_converter_conf_sv (hv_in, converter, &converter->init_conf,
+                                              "converter_init_conf", 1);
+
+  FETCH(configured);
+
+  if (configured_sv && SvOK (*configured_sv))
     {
-      SV **set_sv;
-      SV *set_arg = 0;
-
-      FETCH(set);
-
-      if (set_sv && SvOK (*set_sv))
-        set_arg = *set_sv;
-      converter->conf
-         = copy_sv_options (*conf_sv, converter, set_arg);
-    }
-
-  FETCH(converter_init_conf)
-
-  if (converter_init_conf_sv && SvOK (*converter_init_conf_sv))
-    {
-      converter->init_conf
-         = copy_sv_options (*converter_init_conf_sv, converter, 0);
+      get_sv_configured_options (*configured_sv, converter->conf);
     }
 
 #undef FETCH
   set_translated_commands (converter, hv_in);
 
   get_expanded_formats (hv_in, &converter->expanded_formats);
+
+  set_output_encoding (converter->conf, converter->document);
+
+  converter->convert_text_options
+    = copy_converter_options_for_convert_text (converter);
 
   converter->hv = hv_in;
 
@@ -525,50 +619,70 @@ converter_initialize (SV *converter_sv)
   return converter_descriptor;
 }
 
+/* reset output_init_conf.  Can be called after it has been modified */
 void
-recopy_converter_conf_sv (HV *hv, CONVERTER *converter,
-                          OPTIONS **conf, const char *conf_key)
+reset_output_init_conf (SV *sv_in)
 {
-  SV **conf_sv;
+  CONVERTER *converter;
 
   dTHX;
 
-  conf_sv = hv_fetch (hv, conf_key, strlen (conf_key), 0);
+  converter = get_sv_converter (sv_in, "reset_output_init_conf");
 
-  if (conf_sv && SvOK(*conf_sv))
+  if (converter)
     {
-      SV **set_sv;
-      SV *set_arg = 0;
+      HV *hv_in = (HV *)SvRV (sv_in);
 
-      if (*conf)
-        free_options (*conf);
-      free (*conf);
-
-      set_sv = hv_fetch (hv, "set", strlen ("set"), 0);
-
-      if (set_sv && SvOK (*set_sv))
-        set_arg = *set_sv;
-
-      *conf = copy_sv_options (*conf_sv, converter, set_arg);
+      copy_converter_conf_sv (hv_in, converter, &converter->init_conf,
+                             "output_init_conf", 1);
     }
 }
 
-/* reset output_init_conf.  Can be called after it has been modified */
-void
-reset_output_init_conf (SV *sv_in, const char *warn_string)
+INDEX_ENTRY *
+find_index_entry_sv (const SV *index_entry_sv, INDEX **index_names,
+                     const char *warn_string, const INDEX **entry_idx,
+                     int *entry_number)
 {
-  HV *hv_in;
-  CONVERTER *converter = 0;
+  HV *index_entry_hv;
+  SV **index_name_sv;
+  SV **entry_number_sv;
+  int entry_idx_in_index;
+  char *entry_index_name = 0;
+  const INDEX *idx;
 
   dTHX;
 
-  converter = get_sv_converter (sv_in, warn_string);
+  index_entry_hv = (HV *) SvRV (index_entry_sv);
+  index_name_sv = hv_fetch (index_entry_hv, "index_name",
+                            strlen ("index_name"), 0);
+  entry_number_sv = hv_fetch (index_entry_hv, "entry_number",
+                              strlen ("entry_number"), 0);
 
-  hv_in = (HV *)SvRV (sv_in);
+  if (!index_name_sv || !entry_number_sv)
+    {
+      char *msg;
+      const char *warn_str = warn_string;
+      if (!warn_str)
+        warn_str = "find_index_entry_sv";
+      xasprintf (&msg, "%s: no entry info\n", warn_str);
+      fatal (msg);
+    }
+  entry_index_name = (char *) SvPVutf8_nolen (*index_name_sv);
+  *entry_number = SvIV (*entry_number_sv);
+  entry_idx_in_index = *entry_number - 1;
 
-  recopy_converter_conf_sv (hv_in, converter, &converter->init_conf,
-                            "output_init_conf");
+  idx = indices_info_index_by_name (index_names,
+                                    entry_index_name);
+  *entry_idx = idx;
+  if (idx)
+    {
+      if (entry_idx_in_index < idx->entries_number)
+        return &idx->index_entries[entry_idx_in_index];
+    }
+
+  return 0;
 }
+
 
 /* code in comments allow to sort the index names to have a fixed order
    in the data structure.  Not clear that it is useful or not, not enabled
@@ -733,15 +847,10 @@ get_sv_index_entries_sorted_by_letter (INDEX **index_names,
               for (k = 0; k < entries_nr; k++)
                 {
                   SV** index_entry_sv = av_fetch (entries_av, k, 0);
-                  HV *index_entry_hv;
-                  SV** index_name_sv;
-                  SV** entry_number_sv;
-                  INDEX *idx;
-                  char *entry_index_name;
+                  const INDEX *entry_idx = 0;
                   int entry_number;
-                  int entry_idx_in_index;
-
-                  letter_entries->entries[k] = 0;
+                  char *warn_string;
+                  INDEX_ENTRY *index_entry = 0;
 
                   if (!index_entry_sv)
                     {
@@ -751,35 +860,22 @@ get_sv_index_entries_sorted_by_letter (INDEX **index_names,
                              idx_name, i, letter_entries->letter, k);
                       fatal (msg);
                     }
-                  index_entry_hv = (HV *) SvRV (*index_entry_sv);
-                  index_name_sv = hv_fetch (index_entry_hv, "index_name",
-                                            strlen ("index_name"), 0);
-                  entry_number_sv = hv_fetch (index_entry_hv, "entry_number",
-                                              strlen ("entry_number"), 0);
-                  if (!index_name_sv || !entry_number_sv)
-                    {
-                      char *msg;
-                      xasprintf (&msg,
-  "get_sv_index_entries_sorted_by_letter: %s: %d: %s: %d: no entry info\n",
-                             idx_name, i, letter_entries->letter, k);
-                      fatal (msg);
-                    }
-                  entry_index_name = (char *) SvPVutf8_nolen (*index_name_sv);
-                  entry_number = SvIV (*entry_number_sv);
-                  entry_idx_in_index = entry_number - 1;
+                  xasprintf (&warn_string,
+                         "get_sv_index_entries_sorted_by_letter: %s: %d: %s: %d",
+                         idx_name, i, letter_entries->letter, k);
+                  index_entry = find_index_entry_sv (*index_entry_sv, index_names,
+                                                     warn_string, &entry_idx,
+                                                     &entry_number);
+                  free (warn_string);
 
-                  idx = indices_info_index_by_name (index_names,
-                                                    entry_index_name);
+                  letter_entries->entries[k] = index_entry;
 
-                  if (idx)
-                    {
-                      if (entry_idx_in_index < idx->entries_number)
-                        letter_entries->entries[k]
-                          = &idx->index_entries[entry_idx_in_index];
-                    }
                   if (!letter_entries->entries[k])
                     {
                       char *msg;
+                      char *entry_index_name = 0;
+                      if (entry_idx)
+                        entry_index_name = entry_idx->name;
                       xasprintf (&msg,
           "BUG: index %s letter %s position %d: %s entry %d not found\n",
                                  idx_name, letter_string, k,
@@ -804,7 +900,7 @@ void
 set_conf (CONVERTER *converter, const char *conf, SV *value)
 {
   if (converter->conf)
-    get_sv_option (converter->conf, conf, value, -1, converter);
+    get_sv_option (converter->conf, conf, value, 0, converter);
    /* Too early to have options set
   else
     fprintf (stderr, "HHH no converter conf %s\n", conf);
@@ -815,72 +911,81 @@ void
 force_conf (CONVERTER *converter, const char *conf, SV *value)
 {
   if (converter->conf)
-    get_sv_option (converter->conf, conf, value, 0, converter);
+    get_sv_option (converter->conf, conf, value, 1, converter);
 }
 
 /* output format specific */
 
 /* map hash reference of Convert::Text options to TEXT_OPTIONS */
-/* TODO more to do */
+/* TODO more to do? set_case? */
+#define FETCH(key) key##_sv = hv_fetch (hv_in, #key, strlen(#key), 0);
 TEXT_OPTIONS *
 copy_sv_options_for_convert_text (SV *sv_in)
 {
   HV *hv_in;
-  SV **test_option_sv;
-  SV **include_directories_sv;
-  SV **other_converter_options_sv;
-  SV **self_converter_options_sv;
+  SV **_code_state_sv;
+  SV **TEST_sv;
+  SV **INCLUDE_DIRECTORIES_sv;
+  SV **converter_sv;
   SV **enabled_encoding_sv;
-  SV **sort_string_option_sv;
+  SV **sort_string_sv;
   TEXT_OPTIONS *text_options = new_text_options ();
 
   dTHX;
 
   hv_in = (HV *)SvRV (sv_in);
 
-  test_option_sv = hv_fetch (hv_in, "TEST", strlen ("TEST"), 0);
-  if (test_option_sv)
-    text_options->TEST = SvIV (*test_option_sv);
+  FETCH(TEST)
+  if (TEST_sv)
+    text_options->TEST = SvIV (*TEST_sv);
 
-  sort_string_option_sv = hv_fetch (hv_in, "sort_string",
-                                    strlen ("sort_string"), 0);
-  if (sort_string_option_sv)
-    text_options->sort_string = SvIV (*sort_string_option_sv);
+  FETCH(sort_string)
+  if (sort_string_sv)
+    text_options->sort_string = SvIV (*sort_string_sv);
 
-  enabled_encoding_sv = hv_fetch (hv_in, "enabled_encoding",
-                                  strlen ("enabled_encoding"), 0);
+  FETCH(enabled_encoding)
   if (enabled_encoding_sv)
     text_options->encoding = strdup (SvPVutf8_nolen (*enabled_encoding_sv));
 
-  include_directories_sv = hv_fetch (hv_in, "INCLUDE_DIRECTORIES",
-                                     strlen ("INCLUDE_DIRECTORIES"), 0);
+  FETCH(_code_state)
+  if (_code_state_sv)
+    text_options->code_state = SvIV (*_code_state_sv);
 
-  if (include_directories_sv)
-    add_svav_to_string_list (*include_directories_sv,
+  FETCH(INCLUDE_DIRECTORIES)
+  if (INCLUDE_DIRECTORIES_sv)
+    add_svav_to_string_list (*INCLUDE_DIRECTORIES_sv,
                              &text_options->include_directories, svt_dir);
 
   get_expanded_formats (hv_in, &text_options->expanded_formats);
 
-  other_converter_options_sv = hv_fetch (hv_in, "other_converter_options",
-                                         strlen ("other_converter_options"), 0);
-
-  if (other_converter_options_sv)
+  FETCH(converter)
+  if (converter_sv)
     {
-      text_options->other_converter_options
-         = copy_sv_options (*other_converter_options_sv, 0, 0);
+      CONVERTER *converter = get_sv_converter (*converter_sv, 0);
+      if (converter)
+        {
+          text_options->other_converter_options
+            = converter->conf;
+          text_options->converter = converter;
+        }
+      else
+        {
+          HV *converter_hv = (HV *) SvRV (*converter_sv);
+          SV **conf_sv = hv_fetch (converter_hv, "conf", strlen ("conf"), 0);
+          if (conf_sv)
+            text_options->other_converter_options
+              = init_copy_sv_options (*conf_sv, 0, 1);
+        }
     }
-
-  self_converter_options_sv = hv_fetch (hv_in, "self_converter_options",
-                                         strlen ("self_converter_options"), 0);
-
-  if (self_converter_options_sv)
+  else
     {
       text_options->self_converter_options
-         = copy_sv_options (*self_converter_options_sv, 0, 0);
+       = init_copy_sv_options (sv_in, 0, 1);
     }
 
   return text_options;
 }
+#undef FETCH
 
 int
 html_get_direction_index (CONVERTER *converter, const char *direction)
@@ -1071,14 +1176,20 @@ html_get_direction_icons_sv (CONVERTER *converter,
   if (!SvOK (icons_sv))
     return;
 
-  if (!converter || !converter->direction_unit_direction_name)
+  if (!converter || !converter->direction_unit_direction_name
+       /* the following is for consistency, but is not possible */
+      || converter->special_unit_varieties.number
+          + NON_SPECIAL_DIRECTIONS_NR <= 0)
     return;
 
-  direction_icons->number = converter->special_unit_varieties.number
-                        + NON_SPECIAL_DIRECTIONS_NR;
-  direction_icons->list = (char **) malloc
+  if (direction_icons->number == 0)
+    {
+      /* consistent with direction_unit_direction_name size */
+      direction_icons->number = converter->special_unit_varieties.number
+                                 + NON_SPECIAL_DIRECTIONS_NR;
+      direction_icons->list = (char **) malloc
            (direction_icons->number * sizeof (char *));
-  memset (direction_icons->list, 0, direction_icons->number * sizeof (char *));
+    }
 
   icons_hv = (HV *)SvRV (icons_sv);
 
@@ -1093,6 +1204,405 @@ html_get_direction_icons_sv (CONVERTER *converter,
           direction_icons->list[i]
             = strdup (SvPVutf8_nolen (*direction_icon_sv));
         }
+      else
+        direction_icons->list[i] = 0;
     }
 }
 
+INDEX_ENTRY *
+find_sorted_index_names_index_entry_extra_index_entry_sv (
+                                       SORTED_INDEX_NAMES *sorted_index_names,
+                                       SV *extra_index_entry_sv)
+{
+  AV *extra_index_entry_av;
+  SV **index_name_sv;
+  char *index_name = 0;
+
+  dTHX;
+
+
+  extra_index_entry_av = (AV *) SvRV (extra_index_entry_sv);
+
+  index_name_sv = av_fetch (extra_index_entry_av, 0, 0);
+  if (index_name_sv)
+    {
+      index_name = SvPVutf8_nolen (*index_name_sv);
+    }
+
+  if (index_name)
+    {
+      SV **number_sv = av_fetch (extra_index_entry_av, 1, 0);
+      if (number_sv)
+        {
+          int entry_number = SvIV (*number_sv);
+          if (entry_number)
+            {
+              size_t index_nr
+                = index_number_index_by_name (sorted_index_names,
+                                              index_name);
+              return &sorted_index_names->list[index_nr -1].index
+                 ->index_entries[entry_number -1];
+            }
+        }
+    }
+  return 0;
+}
+
+INDEX_ENTRY *
+find_document_index_entry_extra_index_entry_sv (DOCUMENT *document,
+                                               SV *extra_index_entry_sv)
+{
+  AV *extra_index_entry_av;
+  SV **index_name_sv;
+  char *index_name = 0;
+  const INDEX *idx = 0;
+
+  dTHX;
+
+  if (!document->index_names)
+    return 0;
+
+  extra_index_entry_av = (AV *) SvRV (extra_index_entry_sv);
+
+  index_name_sv = av_fetch (extra_index_entry_av, 0, 0);
+  if (index_name_sv)
+    {
+      index_name = SvPVutf8_nolen (*index_name_sv);
+      idx = indices_info_index_by_name (document->index_names,
+                                        index_name);
+    }
+
+  if (idx)
+    {
+      SV **number_sv = av_fetch (extra_index_entry_av, 1, 0);
+      if (number_sv)
+        {
+          int entry_number = SvIV (*number_sv);
+          if (entry_number)
+            return &idx->index_entries[entry_number -1];
+        }
+    }
+  return 0;
+}
+
+/* if there is a converter with sorted index names, use the
+   sorted index names, otherwise use the index information from
+   a document */
+static INDEX_ENTRY *
+find_element_extra_index_entry_sv (DOCUMENT *document,
+                                   CONVERTER *converter,
+                                   SV *extra_index_entry_sv)
+{
+  INDEX_ENTRY *index_entry;
+  if (!converter || !converter->document->index_names)
+    {
+      if (document)
+        index_entry
+          = find_document_index_entry_extra_index_entry_sv (document,
+                                                 extra_index_entry_sv);
+      else
+        return 0;
+    }
+  else
+   index_entry = find_sorted_index_names_index_entry_extra_index_entry_sv (
+                    &converter->sorted_index_names, extra_index_entry_sv);
+
+  return index_entry;
+}
+
+#define FETCH(key) key##_sv = hv_fetch (element_hv, #key, strlen(#key), 0);
+/* find C tree root element corresponding to perl tree element element_hv */
+ELEMENT *find_root_command (DOCUMENT *document, HV *element_hv,
+                            int output_units_descriptor)
+{
+  SV **associated_unit_sv;
+  ELEMENT *root;
+  size_t i;
+
+  dTHX;
+
+  if (output_units_descriptor)
+    {
+      FETCH(associated_unit)
+
+      if (associated_unit_sv)
+        {
+          /* find the associated output unit and then find the element
+             in unit contents */
+          HV *associated_unit_hv = (HV *) SvRV (*associated_unit_sv);
+          SV **unit_index_sv = hv_fetch (associated_unit_hv, "unit_index",
+                                         strlen ("unit_index"), 0);
+
+          if (unit_index_sv)
+            {
+              int unit_index = SvIV (*unit_index_sv);
+              const OUTPUT_UNIT_LIST *output_units
+               = retrieve_output_units (output_units_descriptor);
+
+              if (output_units && unit_index < output_units->number)
+                {
+                  OUTPUT_UNIT *output_unit = output_units->list[unit_index];
+                  size_t i;
+                  for (i = 0; i < output_unit->unit_contents.number; i++)
+                    {
+                      ELEMENT *content = output_unit->unit_contents.list[i];
+                      if (content->hv == element_hv)
+                        return content;
+                    }
+                }
+            }
+        }
+    }
+
+  /* if there are no output units go through the root element children */
+  root = document->tree;
+  for (i = 0; i < root->contents.number; i++)
+    {
+      ELEMENT *content = root->contents.list[i];
+      if (content->hv == element_hv)
+        return content;
+    }
+  return 0;
+}
+
+/* find the subentry matching ELEMENT_HV */
+static ELEMENT *
+find_index_entry_subentry (ELEMENT *index_element, HV *element_hv)
+{
+  ELEMENT *current_element = index_element;
+
+  while (1)
+    {
+      ELEMENT *subentry = lookup_extra_element (current_element,
+                                                "subentry");
+      if (subentry)
+        {
+          if (subentry->hv == element_hv)
+            return subentry;
+          current_element = subentry;
+        }
+      else
+        return 0;
+    }
+}
+
+#define EXTRA(key) key##_sv = hv_fetch (extra_hv, #key, strlen(#key), 0);
+
+/* returns the subentry direct parent based on "subentry_parent" */
+static SV *
+subentry_hv_parent (HV *element_hv)
+{
+  SV **extra_sv;
+
+  dTHX;
+
+  FETCH(extra)
+
+  if (extra_sv)
+    {
+      SV **subentry_parent_sv;
+      HV *extra_hv = (HV *) SvRV (*extra_sv);
+
+      EXTRA(subentry_parent)
+      if (subentry_parent_sv)
+        {
+          return *subentry_parent_sv;
+        }
+    }
+  return 0;
+}
+
+/* Find the index entry parent of a subentry going through
+   "subentry_parent" until finding the index element hash */
+ELEMENT *
+find_subentry_index_command_sv (DOCUMENT *document, HV *element_hv)
+{
+  HV *current_parent = element_hv;
+  SV *current_sv = 0;
+
+  dTHX;
+
+  while (1)
+    {
+      SV *subentry_parent_sv = subentry_hv_parent (current_parent);
+      if (subentry_parent_sv)
+        {
+          current_parent = (HV *) SvRV (subentry_parent_sv);
+          current_sv = subentry_parent_sv;
+        }
+      else
+        {
+          if (!current_sv)
+            return 0;
+          return find_element_from_sv (0, document, current_sv, 0);
+        }
+    }
+}
+
+/* find the INDEX_ENTRY associated element matching ELEMENT_HV.
+
+   If the index entry was reassociated, the tree element the
+   index entry is reassociated to is not index_entry->entry_element
+   but index_entry->entry_associated_element.  The original
+   tree element that was associated is index_entry->entry_element.
+   Depending on the situation one or the other may be looked for
+   and the code tries both.
+
+   The reassociated tree element, for example, would be used
+   when doing a link to the tree from the index entry.  But it may
+   also be the original tree element that is used, for example
+   to get the index entry tree element content, for instance
+   when going through the elements associated to indices to setup
+   index entries sort strings.
+ */
+ELEMENT *find_index_entry_associated_hv (INDEX_ENTRY *index_entry,
+                                         HV *element_hv)
+{
+  if (index_entry->entry_associated_element
+      && index_entry->entry_associated_element->hv == element_hv)
+    return index_entry->entry_associated_element;
+
+  if (index_entry->entry_element
+  /* if the index entry was reassociated it is important to check */
+      && index_entry->entry_element->hv == element_hv)
+    return index_entry->entry_element;
+
+  return 0;
+}
+
+/* TODO nodedescription using the extra element_node and the
+ * node extra node_description? */
+
+/* find C Texinfo tree element based on element_sv perl tree element.
+   Both DOCUMENT_IN and CONVERTER are optional, but if there is no
+   document coming from one or the other, elements will not be found.
+   If a DOCUMENT_IN argument is given, the corresponding document is
+   used.  If there is no DOCUMENT_IN and there is a CONVERTER argument,
+   the CONVERTER document is used.
+   OUTPUT_UNIT_DESCRIPTOR is optional, it should allow to find sectioning
+   commands faster.
+   Only for global commands, commands with indices, and sectioning root
+   commands */
+ELEMENT *
+find_element_from_sv (CONVERTER *converter, DOCUMENT *document_in,
+                      SV *element_sv, int output_units_descriptor)
+{
+  enum command_id cmd = 0;
+  HV *element_hv;
+  SV **cmdname_sv;
+  SV **extra_sv;
+  DOCUMENT *document = document_in;
+
+  dTHX;
+
+  element_hv = (HV *) SvRV (element_sv);
+
+  if (!document && converter && converter->document)
+    document = converter->document;
+
+  FETCH(cmdname)
+
+  if (cmdname_sv && (output_units_descriptor || document))
+    {
+      char *cmdname = SvPVutf8_nolen (*cmdname_sv);
+      cmd = lookup_builtin_command (cmdname);
+
+      if (builtin_command_data[cmd].flags & CF_root
+          && cmd != CM_node)
+        {
+          ELEMENT *element = find_root_command (document,
+                                                element_hv,
+                                                output_units_descriptor);
+          if (element)
+            return element;
+        }
+      else if (cmd == CM_subentry)
+        {
+          ELEMENT *index_element = find_subentry_index_command_sv (document,
+                                                                   element_hv);
+          if (index_element)
+            {
+              ELEMENT *element = find_index_entry_subentry (index_element,
+                                                            element_hv);
+              if (element)
+                return element;
+            }
+        }
+    }
+
+  FETCH(extra)
+
+  if (extra_sv)
+    {
+      HV *extra_hv = (HV *) SvRV (*extra_sv);
+      SV **index_entry_sv;
+      SV **associated_index_entry_sv;
+
+      if (document)
+        {
+          SV **global_command_number_sv;
+          EXTRA(global_command_number)
+          if (global_command_number_sv)
+            {
+              int global_command_number = SvIV (*global_command_number_sv);
+              ELEMENT_LIST *global_cmd_list
+                = get_cmd_global_multi_command (
+                              document->global_commands, cmd);
+
+              if (global_command_number > 0
+                  && global_command_number - 1 < global_cmd_list->number)
+                return global_cmd_list->list[global_command_number - 1];
+            }
+        }
+
+      if (document && document->identifiers_target)
+        {
+          SV **normalized_sv;
+          EXTRA(normalized)
+          if (normalized_sv)
+            {
+              char *normalized = SvPVutf8_nolen (*normalized_sv);
+              ELEMENT *element_found
+                = find_identifier_target
+                      (document->identifiers_target, normalized);
+         /* check the element found in case of multiple defined identifier */
+              if (element_found && element_hv == element_found->hv)
+                return element_found;
+            }
+        }
+
+      EXTRA(associated_index_entry)
+      if (associated_index_entry_sv)
+        {
+          INDEX_ENTRY *index_entry
+               = find_element_extra_index_entry_sv (document,
+                                                    converter,
+                                              *associated_index_entry_sv);
+          if (index_entry)
+            {
+              ELEMENT *index_element
+                = find_index_entry_associated_hv (index_entry, element_hv);
+              if (index_element)
+                return (index_element);
+            }
+        }
+
+      EXTRA(index_entry)
+      if (index_entry_sv)
+        {
+          INDEX_ENTRY *index_entry
+                     = find_element_extra_index_entry_sv (document,
+                                                          converter,
+                                                          *index_entry_sv);
+          if (index_entry)
+            {
+              ELEMENT *index_element
+                = find_index_entry_associated_hv (index_entry, element_hv);
+              if (index_element)
+                return (index_element);
+            }
+        }
+    }
+  return 0;
+}
+#undef FETCH

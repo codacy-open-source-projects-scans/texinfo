@@ -2885,21 +2885,21 @@ sub _expand_macro_body($$$$) {
 # @seeentry{} back to regular spaces if there is content after the @-command
 sub _set_non_ignored_space_in_index_before_command($)
 {
-  my $contents = shift;
+  my $content = shift;
   my $pending_spaces_element = 0;
-  foreach my $content (@$contents) {
-    if ($content->{'type'}
-        and $content->{'type'} eq 'internal_spaces_before_brace_in_index') {
+  foreach my $element (@{$content->{'contents'}}) {
+    if ($element->{'type'}
+        and $element->{'type'} eq 'internal_spaces_before_brace_in_index') {
       # set to "spaces_at_end" in case there are only spaces after
-      $content->{'type'} = 'spaces_at_end';
-      $pending_spaces_element = $content;
+      $element->{'type'} = 'spaces_at_end';
+      $pending_spaces_element = $element;
     } elsif ($pending_spaces_element
-             and not (($content->{'cmdname'}
-                       and $in_index_commands{$content->{'cmdname'}}
-                       and defined($brace_commands{$content->{'cmdname'}}))
-                      or ($content->{'type'}
-                   and $content->{'type'} eq 'spaces_after_close_brace'))
-             and (! _check_empty_expansion([$content]))) {
+             and not (($element->{'cmdname'}
+                       and $in_index_commands{$element->{'cmdname'}}
+                       and defined($brace_commands{$element->{'cmdname'}}))
+                      or ($element->{'type'}
+                   and $element->{'type'} eq 'spaces_after_close_brace'))
+             and (! _check_empty_expansion([$element]))) {
       delete $pending_spaces_element->{'type'};
       $pending_spaces_element = 0;
     }
@@ -3747,12 +3747,8 @@ sub _end_line_misc_line($$$)
       # text type with its final type depending on whether there is
       # text after the brace command.
       if (_is_index_element($self, $current)) {
-        if (defined($current->{'extra'}->{'sortas'})
-            or defined($current->{'extra'}->{'seealso'})
-            or defined($current->{'extra'}->{'seeentry'})) {
-          _set_non_ignored_space_in_index_before_command(
-                         $current->{'args'}->[0]->{'contents'});
-        }
+        _set_non_ignored_space_in_index_before_command(
+                                          $current->{'args'}->[0]);
       }
     }
   }
@@ -5630,7 +5626,8 @@ sub _handle_line_command($$$$$$)
         if ($parent->{'cmdname'} eq 'subentry') {
           $subentry_level = $parent->{'extra'}->{'level'} + 1;
         }
-        $command_e->{'extra'} = {'level' => $subentry_level};
+        $command_e->{'extra'} = {'level' => $subentry_level,
+                                 'subentry_parent' => $parent};
         if ($subentry_level > 2) {
           $self->_line_error(__(
       "no more than two levels of index subentry are allowed"),
@@ -6356,20 +6353,33 @@ sub _handle_close_brace($$$)
     } elsif ($in_index_commands{$current->{'parent'}->{'cmdname'}}) {
       my $command = $current->{'parent'}->{'cmdname'};
 
-      my $index_element = $current->{'parent'}->{'parent'}->{'parent'};
-      if ($index_element
-          and _is_index_element($self, $index_element)) {
+      my $subindex_element = $current->{'parent'}->{'parent'}->{'parent'};
+      if ($subindex_element
+          and _is_index_element($self, $subindex_element)) {
         if ($command eq 'sortas') {
           my ($arg, $superfluous_arg) = _text_contents_to_plain_text($current);
           if (defined($arg)) {
-            $index_element->{'extra'} = {}
-              if (!defined($index_element->{'extra'}));
-            $index_element->{'extra'}->{$command} = $arg;
+            $subindex_element->{'extra'} = {}
+              if (!defined($subindex_element->{'extra'}));
+            $subindex_element->{'extra'}->{$command} = $arg;
           }
         } else {
+          my $index_element = $subindex_element;
+          while ($index_element->{'cmdname'} eq 'subentry'
+                 and $index_element->{'extra'}
+                 and $index_element->{'extra'}->{'subentry_parent'}) {
+            $index_element = $index_element->{'extra'}->{'subentry_parent'};
+          }
           $index_element->{'extra'} = {}
             if (!defined($index_element->{'extra'}));
           $index_element->{'extra'}->{$command} = $current->{'parent'};
+          # Following should be uncommented association to the subentry is
+          # wanted
+          #if ($index_element ne $subindex_element) {
+          #  $subindex_element->{'extra'} = {}
+          #    if (!defined($subindex_element->{'extra'}));
+          #  $subindex_element->{'extra'}->{$command} = $current->{'parent'};
+          #}
         }
       }
     }
@@ -8809,7 +8819,8 @@ If an index entry @-command, such as C<@cindex>, or a C<@subentry> contains
 a C<@sortas> command, I<sortas> holds the C<@sortas> command content
 formatted as plain text.
 
-I<subentry> links to the next level C<@subentry> element.
+I<subentry> links to the next level C<@subentry> element.  I<subentry_parent>
+links to the previous level element.
 
 Index entry @-command (but not C<@subentry>) can also have I<seentry>
 and I<seealso> keys that link to the corresponding @-commands elements.

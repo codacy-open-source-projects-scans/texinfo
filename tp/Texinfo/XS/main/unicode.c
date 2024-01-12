@@ -91,7 +91,7 @@ unicode_accent (const char *text, const ELEMENT *e)
   if (e->cmd == CM_dotless)
     {
       if (!e->parent || !e->parent->parent || !e->parent->parent->cmd
-          || !unicode_diacritics[e->parent->parent->cmd].text)
+          || !unicode_diacritics[element_builtin_cmd (e->parent->parent)].text)
         {
           if (!strcmp (text, "i"))
             /* dotless i in UTF-8 */
@@ -405,7 +405,7 @@ encoded_accents (CONVERTER *self, const char *text, const ELEMENT_STACK *stack,
 /* UNICODE_POINT is a string describing an hexadecimal number with
    letters in upper case */
 /* returns the index in unicode_to_eight_bit +1 if > 0 */
-int unicode_point_decoded_in_encoding (char *encoding, char *codepoint)
+int unicode_point_decoded_in_encoding (const char *encoding, char *codepoint)
 {
   if (encoding)
     {
@@ -452,7 +452,7 @@ int unicode_point_decoded_in_encoding (char *encoding, char *codepoint)
 }
 
 char *
-unicode_brace_no_arg_command (enum command_id cmd, char *encoding)
+unicode_brace_no_arg_command (enum command_id cmd, const char *encoding)
 {
   if (unicode_character_brace_no_arg_commands[cmd].text
       && unicode_point_decoded_in_encoding (encoding,

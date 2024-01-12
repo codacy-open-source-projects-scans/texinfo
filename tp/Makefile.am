@@ -173,6 +173,7 @@ test_files = \
  t/include/section_file_no_node.texi \
  t/include/section_file_no_node_include.texi \
  t/init/command_translation_modified.init \
+ t/init/css_in_node_redirection_page.pm \
  t/init/cvs.init \
  t/init/icons.init \
  t/init/ignore_and_comments_output.init \
@@ -185,6 +186,7 @@ test_files = \
  t/init/redirection_file_collision_with_user_def.init \
  t/init/special_element_customization.pm \
  t/init/t2h_singular.init \
+ t/init/test_css_info_functions.pm \
  t/init/test_directions.init \
  t/init/test_renamed_nodes.init \
  t/init/translate_txiinternalvalue_macro.init \

@@ -5,6 +5,8 @@
 #include "EXTERN.h"
 #include "perl.h"
 
+#include "convert_html.h"
+
 int get_output_units_descriptor_converter_sv (SV *converter_in);
 
 void html_converter_initialize_sv (SV *converter_sv,
@@ -21,8 +23,8 @@ void html_converter_initialize_sv (SV *converter_sv,
 
 void html_converter_prepare_output_sv (SV *converter_sv, CONVERTER *converter);
 
-ELEMENT *find_element_from_sv (CONVERTER *converter, SV *element_sv,
-                               int output_units_descriptor);
+ELEMENT *html_find_element_from_sv (CONVERTER *converter, SV *element_sv,
+                                    int output_units_descriptor);
 
 ELEMENT *element_converter_from_sv (SV *converter_in, SV *element_sv,
                        const char *warn_string, CONVERTER **converter_out);
@@ -33,4 +35,7 @@ void html_set_shared_conversion_state (CONVERTER *converter, SV *converter_in,
 SV *html_get_shared_conversion_state (CONVERTER *converter, SV *converter_in,
                                const char *cmdname, const char *state_name,
                                const int args_nr, SV **args_sv);
+
+enum css_info_type html_get_css_info_spec (const char *spec);
+
 #endif

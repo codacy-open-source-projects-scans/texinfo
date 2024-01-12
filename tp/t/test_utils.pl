@@ -1177,6 +1177,8 @@ sub test($$)
   my ($sorted_index_entries, $index_entries_sort_strings);
   my $indices_sorted_sort_strings;
   if ($merged_index_entries) {
+    $main_configuration->{'document_descriptor'}
+      = $document->document_descriptor();
     ($sorted_index_entries, $index_entries_sort_strings)
       = Texinfo::Structuring::sort_indices_by_index($registrar,
                                    $main_configuration,
@@ -1211,7 +1213,17 @@ sub test($$)
 
   my %converted;
   my %converted_errors;
+
   $converter_options = {} if (!defined($converter_options));
+  if (defined($ENV{TEXINFO_XS_EXTERNAL_CONVERSION})
+      and $ENV{TEXINFO_XS_EXTERNAL_CONVERSION}) {
+    $converter_options->{'XS_EXTERNAL_CONVERSION'} = 1;
+  }
+  if (defined($ENV{TEXINFO_XS_EXTERNAL_FORMATTING})
+      and $ENV{TEXINFO_XS_EXTERNAL_FORMATTING}) {
+    $converter_options->{'XS_EXTERNAL_FORMATTING'} = 1;
+  }
+
   foreach my $format (@tested_formats) {
     if (defined($formats{$format})) {
       my $format_converter_options = {%$converter_options};

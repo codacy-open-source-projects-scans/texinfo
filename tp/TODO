@@ -10,8 +10,7 @@ This is the todo list for texi2any
 Before next release
 ===================
 
-add test of 
-@enumerate 0
+Keep/document *XS_EXTERNAL_FORMATTING *XS_EXTERNAL_CONVERSION?
 
 it is not documented that .info or .inf at the end of the @ref file name argument of the source cross reference command is ignored when doing the HTML cross ref.
 in HTML Cross-reference Link Basics:
@@ -20,21 +19,10 @@ Any directory part in the file name argument of the source cross reference comma
 Document that Texinfo::Document::rebuild_document or
 Texinfo::Document::rebuild_tree should be called after tree modifications
 if the parser is XS but converters are perl.
-
-Find perl index element in C:
-$element->{'extra'}->{'index_entry'} = [$index_name, $number];
-in C:
-index[$index_name][number] = { 'index_name'           => $index_name,
-                      'entry_element'        => $element,
-                      'entry_number'         => $number,
-                    };
-(find index j based on index_name, could be a bsearch or a lin search)
- INDEX_ENTRY *index_entry;
-   index_entry = idx->index_entries[j];
-                  main_entry_element = index_entry->entry_element;
-extra normalized
-root_commands : find through associated output unit or linear search in root
-global commands: add an index
+Also if conversion with XS, and there is a MainConfig, the configuration
+should be registered in the document if it is needed in structuring and
+indices sorting.
+$main_configuration->register_XS_document_main_configuration($document);
 
 
 Bugs
@@ -120,21 +108,6 @@ the context command stack.
  @defunx g h j k l m
 
  @end defun
-
-
-For HTML conversion it is possible that the conversion and caching of
-element text (in general for directions href) is done at different
-moments with conversion in perl only and conversion with a mix of perl
-code and C code.  Indeed, if an element text is formatted in C and
-will be needed later on in perl it will be formatted later on in perl
-in that setup compared to the pure perl case.  In general the moment
-of first conversion of element text does not matter much, but it does
-in specific cases, for instance with recursive definitions of sectioning
-commands (with a @ref in sectioning command).  This is tested in test
-30sectioning.t double_recursive_self_section_reference.
-With @ref converted in perl and other parts of the conversions
-in C, an href for a direction differs for this test.  If @ref is also
-converted in C, this issue is invisible.
 
 
 Modules included in tp/maintain/lib/ need to be updated from time to
@@ -673,6 +646,7 @@ tidy -qe *.html
 profiling: package on debian:
 libdevel-nytprof-perl
 In doc:
+perl -d:NYTProf ../tp/texi2any.pl texinfo.texi --html
 perl -d:NYTProf ../tp/texi2any.pl texinfo.texi
 nytprofhtml
 # firefox nytprof/index.html

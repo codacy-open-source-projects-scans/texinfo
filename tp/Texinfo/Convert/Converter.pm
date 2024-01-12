@@ -240,7 +240,7 @@ sub converter($;$)
   my $class = shift;
   my $conf = shift;
 
-  my $converter = { 'set' => {} };
+  my $converter = { 'configured' => {} };
 
   bless $converter, $class;
 
@@ -257,7 +257,6 @@ sub converter($;$)
       $converter->{$key} = $defaults{$key};
     }
   }
-  #$converter->{'converter_pre_conf'} = \%defaults;
   if (defined($conf)) {
     if ($conf->{'document'}) {
       $converter->{'global_commands'}
@@ -287,9 +286,10 @@ sub converter($;$)
       } else {
         $converter->{$key} = $conf->{$key};
       }
-      # configuration set here, in general coming from command-line
-      # will not be reset by set_conf.
-      $converter->{'set'}->{$key} = 1;
+      # configuration set here, from the argument of the converter,
+      # in general coming from command-line or from init files will not
+      # be reset by set_conf.
+      $converter->{'configured'}->{$key} = 1;
     }
   }
   # set $converter->{'converter_init_conf'} to the customization
@@ -330,6 +330,10 @@ sub converter($;$)
                                         $converter->{'document_info'});
 
   $converter->converter_initialize();
+
+  $converter->{'convert_text_options'}
+      = Texinfo::Convert::Text::copy_options_for_convert_text($converter);
+
 
   return $converter;
 }
@@ -612,7 +616,8 @@ sub get_conf($$)
   }
 
   if ($self->{'converter_descriptor'} and $XS_convert) {
-    return _XS_get_conf($self, $conf);
+    my $result = _XS_get_conf($self, $conf);
+    return $result;
   }
 
   return $self->{'conf'}->{$conf};
@@ -631,7 +636,7 @@ sub set_conf($$$)
     die "BUG: set_conf: unknown option $conf\n";
     return undef;
   }
-  if ($self->{'set'}->{$conf}) {
+  if ($self->{'configured'}->{$conf}) {
     return 0;
   } else {
     if ($self->{'converter_descriptor'} and $XS_convert) {
@@ -1900,14 +1905,9 @@ sub xml_accent($$$;$$$)
     }
   }
 
-  # REMARK this code should never be run as there are diacritics for every
-  # accent command.
-  #
-  # TODO it is not possible to call xml_protect_text since what is in $text
-  # may already be xml.  But this means that each time ascii_accent changes
-  # it should be changed here too ii ascii_accent returns invalid xml.
-  return $text . '&lt;' if ($accent eq 'v');
-  return Texinfo::Convert::Text::ascii_accent($text, $command);
+  # There are diacritics for every accent command except for dotless.
+  # We should only get there with dotless if the argument is not recognized.
+  return $text;
 }
 
 sub _xml_numeric_entities_accent($$$;$)

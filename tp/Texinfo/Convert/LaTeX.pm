@@ -843,12 +843,6 @@ sub converter_initialize($)
   }
 
   %{$self->{'quotes_map'}} = %quotes_map;
-  # for file names
-  $self->{'convert_encoded_text_options'}
-      = {Texinfo::Convert::Text::copy_options_for_convert_text($self, 1)};
-  # for other conversions to text
-  $self->{'convert_text_options'}
-      = {Texinfo::Convert::Text::copy_options_for_convert_text($self)};
 
   # this condition means that there is no way to turn off
   # @U expansion to utf-8 characters even though this
@@ -940,6 +934,8 @@ sub _prepare_indices($)
 
   my $index_names = $self->{'indices_information'};
   if ($index_names) {
+    $self->{'index_formatting_text_options'}
+      = Texinfo::Structuring::setup_index_entry_keys_formatting($self);
     my $merged_index_entries
         = Texinfo::Structuring::merge_indices($index_names);
     # select non empty indices
@@ -2429,53 +2425,47 @@ sub _index_entry($$)
     if ($index_info->{'in_code'}) {
       $in_code = 1;
     }
-    my $options
-      = Texinfo::Structuring::setup_index_entry_keys_formatting($self);
-    my $current_entry = $element;
-    my $current_sortas;
-    my $subentry_commands = [$element];
-    if (exists($element->{'extra'}->{'sortas'})) {
-      $current_sortas = $element->{'extra'}->{'sortas'};
-    }
-    my $subentries = [[Texinfo::Common::index_content_element($element, 1),
-                         $current_sortas]];
-    while ($current_entry->{'extra'}
-      and $current_entry->{'extra'}->{'subentry'}) {
-      $current_entry = $current_entry->{'extra'}->{'subentry'};
-      my $current_sortas;
-      if (exists($current_entry->{'extra'}->{'sortas'})) {
-        $current_sortas = $current_entry->{'extra'}->{'sortas'};
-      }
-      push @$subentries, [$current_entry->{'args'}->[0], $current_sortas];
-      push @$subentry_commands, $current_entry;
+    my @subindex_commands = ($element);
+    my $current_element = $element;
+    while ($current_element->{'extra'}
+      and $current_element->{'extra'}->{'subentry'}) {
+      $current_element = $current_element->{'extra'}->{'subentry'};
+      push @subindex_commands, $current_element;
     }
     _push_new_context($self, 'index_entry');
     $self->{'formatting_context'}->[-1]->{'index'} = 1;
     my @result;
-    foreach my $subentry_entry_and_sortas (@$subentries) {
-      my ($subentry, $subentry_sortas) = @$subentry_entry_and_sortas;
+    foreach my $subindex_command (@subindex_commands) {
+      my $content
+         = Texinfo::Common::index_content_element($subindex_command, 1);
       if ($in_code) {
         push @{$self->{'formatting_context'}->[-1]->{'code'}}, 1;
       }
-      my $index_entry = _convert($self, $subentry);
+      my $index_entry = _convert($self, $content);
       if ($in_code) {
         pop @{$self->{'formatting_context'}->[-1]->{'code'}};
       }
       # always setup a string to sort with as we may use commands
-      my $convert_to_text_options = {%$options, 'code' => $in_code};
-      my ($sortas, $sort_string)
-           = Texinfo::Structuring::index_entry_sort_string($entry,
-                                          $subentry, $subentry_sortas,
-                                          $convert_to_text_options);
+      if ($in_code) {
+        Texinfo::Convert::Text::set_options_code(
+          $self->{'index_formatting_text_options'});
+      }
+      my $sort_string
+           = Texinfo::Structuring::index_entry_element_sort_string(
+                                          $self, $entry,
+                                          $subindex_command,
+                            $self->{'index_formatting_text_options'}, 1);
       my $result = '';
-      if (defined($sortas)) {
+      if (defined($sort_string)) {
         # | in sort key breaks with hyperref
-        $sortas =~ s/\|//g;
-        $result = _protect_text($self, $sortas);
+        $sort_string =~ s/\|//g;
+        $result = _protect_text($self, $sort_string);
         $result =~ s/\\[{}]//g; # cannot have unmatched braces in index entry
         $result = _protect_index_text($result).'@';
       }
       if ($in_code) {
+        Texinfo::Convert::Text::reset_options_code(
+                                 $self->{'index_formatting_text_options'});
         $result .= "\\texttt{" . _protect_index_text($index_entry) . "}";
       } else {
         $result .= _protect_index_text($index_entry);
@@ -2483,17 +2473,14 @@ sub _index_entry($$)
       push @result, $result;
     }
     my $seeresult = '';
-   SEEENTRY:
-    foreach my $subentry_command (@$subentry_commands) {
-      foreach my $seecommand (('seeentry', 'seealso')) {
-        if ($subentry_command->{'extra'}->{$seecommand}
-            and $subentry_command->{'extra'}->{$seecommand}->{'args'}->[0]) {
-          my $seeconverted = _convert($self,
-                   $subentry_command->{'extra'}->{$seecommand}->{'args'}->[0]);
-          $seeresult = '|'.$LaTeX_see_index_commands_text{$seecommand}.'{'
-                     .$seeconverted.'}';
-          last SEEENTRY;
-        }
+    foreach my $seecommand (('seeentry', 'seealso')) {
+      if ($element->{'extra'}->{$seecommand}
+          and $element->{'extra'}->{$seecommand}->{'args'}->[0]) {
+        my $seeconverted = _convert($self,
+                 $element->{'extra'}->{$seecommand}->{'args'}->[0]);
+        $seeresult = '|'.$LaTeX_see_index_commands_text{$seecommand}.'{'
+                   .$seeconverted.'}';
+         last;
       }
     }
     _pop_context($self);
@@ -2974,9 +2961,17 @@ sub _convert($$)
           and @{$element->{'args'}->[0]->{'contents'}}) {
         # distinguish text basefile used to find the file and
         # converted basefile with special characters escaped
+        Texinfo::Convert::Text::set_options_code(
+                                 $self->{'convert_text_options'});
+        Texinfo::Convert::Text::set_options_encoding_if_not_ascii($self,
+                                  $self->{'convert_text_options'});
         my $basefile = Texinfo::Convert::Text::convert_to_text(
-         {'contents' => $element->{'args'}->[0]->{'contents'}},
-         {'code' => 1, %{$self->{'convert_encoded_text_options'}}});
+                                        $element->{'args'}->[0],
+                                    $self->{'convert_text_options'});
+        Texinfo::Convert::Text::reset_options_code(
+                                 $self->{'convert_text_options'});
+        Texinfo::Convert::Text::reset_options_encoding(
+                                 $self->{'convert_text_options'});
 
         # warn if no file is found, even though the basefile is used
         # in any case.
@@ -3062,7 +3057,7 @@ sub _convert($$)
       if ($element->{'args'}) {
         my $name;
         my $converted_name;
-        my $email;
+        my $email_arg;
         my $email_text;
         if (scalar (@{$element->{'args'}}) == 2
             and defined($element->{'args'}->[1])
@@ -3074,15 +3069,19 @@ sub _convert($$)
         if (defined($element->{'args'}->[0])
             and $element->{'args'}->[0]->{'contents'}
             and @{$element->{'args'}->[0]->{'contents'}}) {
-          $email = $element->{'args'}->[0]->{'contents'};
+          $email_arg = $element->{'args'}->[0];
+          Texinfo::Convert::Text::set_options_code(
+                          $self->{'convert_text_options'});
           $email_text
             = $self->_protect_url(Texinfo::Convert::Text::convert_to_text(
-                {'contents' => $email},
-                {'code' => 1, %{$self->{'convert_text_options'}}}));
+                                                    $email_arg,
+                                       $self->{'convert_text_options'}));
+          Texinfo::Convert::Text::reset_options_code(
+                                         $self->{'convert_text_options'});
         }
-        if ($name and $email) {
+        if ($name and $email_arg) {
           $result .= "\\href{mailto:$email_text}{$converted_name}";
-        } elsif ($email) {
+        } elsif ($email_arg) {
           $result .= "\\href{mailto:$email_text}{\\nolinkurl{$email_text}}";
         } elsif ($name) {
           $result .= $converted_name;
@@ -3100,17 +3099,19 @@ sub _convert($$)
         } elsif ($element->{'args'}->[0]
                  and $element->{'args'}->[0]->{'contents'}
                  and @{$element->{'args'}->[0]->{'contents'}}) {
-          my $url_content = $element->{'args'}->[0]->{'contents'};
+          my $url_content = $element->{'args'}->[0];
+          Texinfo::Convert::Text::set_options_code(
+                                   $self->{'convert_text_options'});
           my $url_text = $self->_protect_url(
-            Texinfo::Convert::Text::convert_to_text(
-               {'contents' => $url_content},
-               {'code' => 1, %{$self->{'convert_text_options'}}}));
+            Texinfo::Convert::Text::convert_to_text($url_content,
+                                 $self->{'convert_text_options'}));
+          Texinfo::Convert::Text::reset_options_code(
+                                   $self->{'convert_text_options'});
           if (scalar(@{$element->{'args'}}) == 2
               and defined($element->{'args'}->[1])
               and $element->{'args'}->[1]->{'contents'}
               and @{$element->{'args'}->[1]->{'contents'}}) {
-            my $description = _convert($self, {'contents',
-                                   $element->{'args'}->[1]->{'contents'}});
+            my $description = _convert($self, $element->{'args'}->[1]);
             my $text = $self->gdt_string('{text} ({url})',
                 {'text' => $description, 'url' => "\\nolinkurl{$url_text}"});
             $result .= "\\href{$url_text}{$text}";

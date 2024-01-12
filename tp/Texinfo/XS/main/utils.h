@@ -166,7 +166,8 @@ void delete_global_commands (GLOBAL_COMMANDS *global_commands_ref);
 char *normalize_encoding_name (const char *text, int *possible_encoding);
 ELEMENT *item_line_parent (ELEMENT *current);
 ELEMENT *get_label_element (const ELEMENT *e);
-INDEX *indices_info_index_by_name (INDEX **indices_information, char *name);
+INDEX *indices_info_index_by_name (INDEX **indices_information,
+                                   const char *name);
 INDEX *ultimate_index (INDEX *index);
 size_t index_number_index_by_name (const SORTED_INDEX_NAMES *sorted_indices,
                                    const char *name);
@@ -182,6 +183,7 @@ void free_strings_list (STRING_LIST *strings);
 void destroy_strings_list (STRING_LIST *strings);
 char *add_string (const char *string, STRING_LIST *strings_list);
 void merge_strings (STRING_LIST *strings_list, STRING_LIST *merged_strings);
+void copy_strings (STRING_LIST *dest_list, STRING_LIST *source_list);
 size_t find_string (STRING_LIST *strings_list, const char *string);
 
 void destroy_accent_stack (ACCENTS_STACK *accent_stack);
@@ -191,9 +193,12 @@ void wipe_index_names (INDEX **index_names);
 
 /* in options_init_free.c */
 void initialize_options (OPTIONS *options);
+void clear_options (OPTIONS *options);
 void free_options (OPTIONS *options);
 
 OPTIONS *new_options (void);
+void set_output_encoding (OPTIONS *customization_information,
+                          DOCUMENT *document);
 OPTION *get_command_option (OPTIONS *options, enum command_id cmd);
 
 void add_include_directory (char *filename, STRING_LIST *include_dirs_list);
@@ -211,9 +216,11 @@ char *encode_string (char *input_string, char *encoding, int *status,
 
 EXPANDED_FORMAT *new_expanded_formats (void);
 void clear_expanded_formats (EXPANDED_FORMAT *formats);
-void add_expanded_format (EXPANDED_FORMAT *formats, char *format);
+void add_expanded_format (EXPANDED_FORMAT *formats, const char *format);
 int format_expanded_p (EXPANDED_FORMAT *formats, const char *format);
 int expanded_formats_number (void);
+void set_expanded_formats_from_options (EXPANDED_FORMAT *formats,
+                                        const OPTIONS *options);
 
 char *enumerate_item_representation (char *specification, int number);
 
@@ -231,9 +238,11 @@ ELEMENT *get_cmd_global_uniq_command (GLOBAL_COMMANDS *global_commands_ref,
                                       enum command_id cmd);
 
 void html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons);
+void html_clear_direction_icons (DIRECTION_ICON_LIST *direction_icons);
 void html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons);
 
-void free_option (OPTION *option);
 void initialize_option (OPTION *option, enum global_option_type type);
+void clear_option (OPTION *option);
+void free_option (OPTION *option);
 
 #endif

@@ -30,6 +30,9 @@
 /* for interdependency with options_types.h */
 struct OPTIONS;
 
+/* for interdependency with convert_to_text.h */
+struct TEXT_OPTIONS;
+
 /* for string information passing to/from perl */
 enum sv_string_type {
   svt_byte,
@@ -266,7 +269,7 @@ typedef struct ELEMENT_REFERENCE_STACK {
 
 typedef struct FILE_NUMBER_NAME {
     size_t file_number;
-    char *filename;
+    const char *filename;
 } FILE_NUMBER_NAME;
 
 typedef struct VARIETY_DIRECTION_INDEX {
@@ -387,6 +390,7 @@ typedef struct PAGE_NAME_NUMBER_LIST {
 } PAGE_NAME_NUMBER_LIST;
 
 typedef struct CSS_LIST {
+  /* 0 if associated to output units and found by number */
     char *page_name;
     size_t number;
     size_t space;
@@ -395,6 +399,7 @@ typedef struct CSS_LIST {
 
 typedef struct PAGES_CSS_LIST {
     size_t number;
+    size_t space;
     CSS_LIST *list; /* index 0 is for document_global_context_css
                        others for the output files */
 } PAGES_CSS_LIST;
@@ -504,6 +509,7 @@ typedef struct CSS_SELECTOR_STYLE {
 
 typedef struct CSS_SELECTOR_STYLE_LIST {
     size_t number;
+    size_t space;
     CSS_SELECTOR_STYLE *list;
 } CSS_SELECTOR_STYLE_LIST;
 
@@ -705,6 +711,9 @@ typedef struct CONVERTER {
     INDEX_SORTED_BY_LETTER *index_entries_by_letter;
     int document_units_descriptor;
 
+    struct TEXT_OPTIONS *convert_text_options;
+    struct TEXT_OPTIONS *convert_index_text_options;
+
   /* output unit files API */
     FILE_NAME_PATH_COUNTER_LIST output_unit_files;
 
@@ -726,6 +735,10 @@ typedef struct CONVERTER {
     STRING_WITH_LEN special_character[SC_non_breaking_space+1];
     STRING_WITH_LEN line_break_element;
     CSS_SELECTOR_STYLE_LIST css_element_class_styles;
+    STRING_LIST css_rule_lines;
+    STRING_LIST css_import_lines;
+    /* filled based on css_element_class_styles when needed */
+    STRING_LIST css_element_class_list;
     FORMATTING_REFERENCE
        formatting_references[FR_format_translate_message+1];
     FORMATTING_REFERENCE
@@ -938,7 +951,7 @@ typedef struct DIRECTION_ICON_LIST {
 
 typedef struct OPTION {
     enum global_option_type type;
-    int set;
+    int configured;
     union {
       int integer;
       char *string;

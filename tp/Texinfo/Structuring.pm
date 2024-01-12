@@ -92,7 +92,12 @@ my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
                        and (not defined($ENV{TEXINFO_XS_STRUCTURE})
                             or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
 
-our %XS_overrides = (
+my $XS_convert = 0;
+$XS_convert = 1 if ($XS_structuring
+                    and defined $ENV{TEXINFO_XS_CONVERT}
+                    and $ENV{TEXINFO_XS_CONVERT} eq '1');
+
+my %XS_overrides = (
   "Texinfo::Structuring::associate_internal_references"
     => "Texinfo::StructTransfXS::associate_internal_references",
   "Texinfo::Structuring::sectioning_structure"
@@ -113,6 +118,15 @@ our %XS_overrides = (
     => "Texinfo::StructTransfXS::rebuild_output_units",
   "Texinfo::Structuring::_XS_unsplit"
     => "Texinfo::StructTransfXS::unsplit",
+);
+
+# used in conversion only, and should only be loaded with XS converters
+my %XS_convert_overrides = (
+
+  "Texinfo::Structuring::index_entry_element_sort_string"
+    => "Texinfo::StructTransfXS::index_entry_element_sort_string",
+  "Texinfo::Structuring::setup_index_entry_keys_formatting",
+    => "Texinfo::StructTransfXS::setup_index_entry_keys_formatting",
 
   # Not useful for HTML as functions, as the calling functions are
   # already overriden
@@ -131,6 +145,11 @@ sub import {
     if ($XS_structuring) {
       for my $sub (keys %XS_overrides) {
         Texinfo::XSLoader::override ($sub, $XS_overrides{$sub});
+      }
+    }
+    if ($XS_convert) {
+      for my $sub (keys %XS_convert_overrides) {
+        Texinfo::XSLoader::override ($sub, $XS_convert_overrides{$sub});
       }
     }
     $module_loaded = 1;
@@ -2267,54 +2286,77 @@ sub setup_index_entry_keys_formatting($)
 {
   my $customization_info = shift;
 
-  my $options = {'ascii_punctuation' => 1,
-     Texinfo::Convert::Text::copy_options_for_convert_text(
-                                  $customization_info)};
+  my $additional_options = {};
+
   if (not $customization_info->get_conf('ENABLE_ENCODING')
       or lc($customization_info->get_conf('OUTPUT_ENCODING_NAME')) ne 'utf-8') {
-    $options->{'sort_string'} = 1;
+    $additional_options->{'sort_string'} = 1;
   }
 
-  return $options;
+  my $text_options
+    = Texinfo::Convert::Text::copy_options_for_convert_text($customization_info,
+                                                           $additional_options);
+  return $text_options;
 }
 
-# can be used for subentries
-sub index_entry_sort_string($$$$;$)
+# can be used for subentries.
+# $DOCUMENT_INFO is used in XS to retrieve the document.
+sub index_entry_element_sort_string($$$$;$)
 {
+  my $document_info = shift;
   my $main_entry = shift;
-  my $entry_tree_element = shift;
-  my $sortas = shift;
+  my $index_entry_element = shift;
   my $options = shift;
-  my $collator = shift;
+  my $prefer_reference_element = shift;
 
-  my $entry_key;
-  if (defined($sortas)) {
-    $entry_key = $sortas;
+  my $sort_string;
+  if ($index_entry_element->{'extra'}
+      and defined($index_entry_element->{'extra'}->{'sortas'})) {
+    $sort_string = $index_entry_element->{'extra'}->{'sortas'};
   } else {
-    $entry_key = Texinfo::Convert::Text::convert_to_text(
-                          $entry_tree_element, $options);
+    my $entry_tree_element
+      = Texinfo::Common::index_content_element($index_entry_element,
+                                               $prefer_reference_element);
+    $sort_string = Texinfo::Convert::Text::convert_to_text(
+                              $entry_tree_element, $options);
     # FIXME do that for sortas too?
     if (defined($main_entry->{'entry_element'}
                        ->{'extra'}->{'index_ignore_chars'})) {
       my $ignore_chars = quotemeta($main_entry->{'entry_element'}
                                   ->{'extra'}->{'index_ignore_chars'});
       if ($ignore_chars ne '') {
-        $entry_key =~ s/[$ignore_chars]//g;
+        $sort_string =~ s/[$ignore_chars]//g;
       }
     }
   }
+  return $sort_string;
+}
+
+sub _index_entry_element_sort_string_key($$$$$;$)
+{
+  my $document_info = shift;
+  my $main_entry = shift;
+  my $index_entry_element = shift;
+  my $options = shift;
+  my $collator = shift;
+  my $prefer_reference_element = shift;
+
+  my $sort_string = index_entry_element_sort_string ($document_info,
+                               $main_entry, $index_entry_element,
+                               $options, $prefer_reference_element);
+
   # This avoids varying results depending on whether the string is
-  # represented internally in UTF-8.  See "the Unicode bug" in the
+  # represented internally in UTF-8.  See 'the "Unicode bug"' in the
   # "perlunicode" man page.
-  utf8::upgrade($entry_key);
-  my $sort_entry_key;
+  utf8::upgrade($sort_string);
+  my $sort_key;
   if ($collator) {
-    $sort_entry_key = $collator->getSortKey(uc($entry_key));
+    $sort_key = $collator->getSortKey(uc($sort_string));
   } else {
-    $sort_entry_key = uc($entry_key);
+    $sort_key = uc($sort_string);
   }
 
-  return ($entry_key, $sort_entry_key);
+  return ($sort_string, $sort_key);
 }
 
 # This is a stub for the Unicode::Collate module.  Although this module is
@@ -2376,14 +2418,25 @@ sub _converter_or_registrar_line_warn($$$$)
   }
 }
 
-sub setup_sortable_index_entries($$$$$;$)
+# There is no neeed for document information in Perl, however, in XS
+# it is needed to retrieve the Tree elements in the C structures.
+# $CUSTOMIZATION_INFORMATION is used as the source of document
+# information.  It should already be set if it is a converter based
+# on Texinfo::Convert::Converter, but otherwise it should be set by
+# the caller, setting 'document_descriptor' to document->document_descriptor().
+# If $PRESET_KEYS is set, the entries sort keys are set with a collator help
+# and the default sort function can be directly used.  If unset, no collator
+# is passed to the functions setting the sort key, but a collator is used for
+# sorting.  In practice $PRESET_KEYS is always set, as the default
+# $default_preset_keys, which set to 1 is always used in calling functions
+# to determine the value of $PRESET_KEYS.
+sub setup_sortable_index_entries($$$$$)
 {
   my $registrar = shift;
   my $customization_information = shift;
   my $index_entries = shift;
   my $indices_information = shift;
   my $preset_keys = shift;
-  my $silent = shift;
 
   # The 'Non-Ignorable' for variable collation elements means that they are
   # treated as normal characters.   This allows to have spaces and punctuation
@@ -2438,23 +2491,22 @@ sub setup_sortable_index_entries($$$$$;$)
   return $index_sortable_index_entries, $collator, $index_entries_sort_strings
     unless ($index_entries);
 
-  my $options = setup_index_entry_keys_formatting($customization_information);
+  my $convert_text_options
+    = setup_index_entry_keys_formatting($customization_information);
   $index_sortable_index_entries = {};
   foreach my $index_name (keys(%$index_entries)) {
     my $sortable_index_entries = [];
     foreach my $index_entry (@{$index_entries->{$index_name}}) {
       my $entry_index_name = $index_entry->{'index_name'};
       my $main_entry_element = $index_entry->{'entry_element'};
-      my $main_entry_sortas;
-      my $convert_to_text_options = {%$options,
-        'code' => $indices_information->{$entry_index_name}->{'in_code'}};
-      $main_entry_sortas = $main_entry_element->{'extra'}->{'sortas'}
-         if ($main_entry_element->{'extra'});
+      my $in_code = $indices_information->{$entry_index_name}->{'in_code'};
+      if ($in_code) {
+        Texinfo::Convert::Text::set_options_code($convert_text_options);
+      }
       my ($entry_key, $sort_entry_key)
-        = index_entry_sort_string($index_entry,
-                   Texinfo::Common::index_content_element($main_entry_element),
-                                  $main_entry_sortas,
-                                  $convert_to_text_options, $entries_collator);
+        = _index_entry_element_sort_string_key($customization_information,
+                                   $index_entry, $main_entry_element,
+                                   $convert_text_options, $entries_collator);
       my @entry_keys;
       my @sort_entry_keys;
       if ($entry_key !~ /\S/) {
@@ -2462,13 +2514,11 @@ sub setup_sortable_index_entries($$$$$;$)
         $entry_cmdname
           = $main_entry_element->{'extra'}->{'original_def_cmdname'}
            if (!defined($entry_cmdname));
-        if (!$silent) {
-          _converter_or_registrar_line_warn($registrar,
+        _converter_or_registrar_line_warn($registrar,
                                    $customization_information,
                        sprintf(__("empty index key in \@%s"),
                                   $entry_cmdname),
                                $main_entry_element->{'source_info'});
-        }
         push @entry_keys, '';
         push @sort_entry_keys, '';
       } else {
@@ -2481,23 +2531,19 @@ sub setup_sortable_index_entries($$$$$;$)
         $subentry_nr ++;
         $subentry = $subentry->{'extra'}->{'subentry'};
         my ($subentry_key, $sort_subentry_key)
-              = index_entry_sort_string($index_entry,
-                        {'contents' => $subentry->{'args'}->[0]->{'contents'}},
-                        $subentry->{'extra'}->{'sortas'},
-                        $convert_to_text_options,
-                        $entries_collator);
+              = _index_entry_element_sort_string_key($customization_information,
+                             $index_entry, $subentry, $convert_text_options,
+                                $entries_collator);
         if ($subentry_key !~ /\S/) {
           my $entry_cmdname = $main_entry_element->{'cmdname'};
           $entry_cmdname
             = $main_entry_element->{'extra'}->{'original_def_cmdname'}
               if (!defined($entry_cmdname));
-          if (!$silent) {
-            _converter_or_registrar_line_warn($registrar,
+          _converter_or_registrar_line_warn($registrar,
                                 $customization_information,
                          sprintf(__("empty index sub entry %d key in \@%s"),
                                     $subentry_nr, $entry_cmdname),
                                   $main_entry_element->{'source_info'});
-          }
           push @entry_keys, '';
           push @sort_entry_keys, '';
         } else {
@@ -2523,6 +2569,9 @@ sub setup_sortable_index_entries($$$$$;$)
           push @{$sortable_index_entries}, $sortable_entry;
           last;
         }
+      }
+      if ($in_code) {
+        Texinfo::Convert::Text::reset_options_code($convert_text_options);
       }
       $index_entries_sort_strings->{$index_entry} = join(', ', @entry_keys);
     }
@@ -2864,17 +2913,22 @@ I<$node> is a node tree element.  Find the node I<$node> children based
 on the sectioning structure.  For the node associated with C<@top>
 sectioning command, the sections associated with parts are considered.
 
-=item $entry_key = index_entry_sort_string($main_entry, $entry_tree_element, $sortas, $options)
-X<C<index_entry_sort_string>>
+=item $sort_string = index_entry_element_sort_string($document_info, $main_entry, $index_entry_element, $options, $prefer_reference_element)
+X<C<index_entry_element_sort_string>>
 
 Return a string suitable as a sort string, for index entries.
-The index entry processed is I<$entry_tree_element>, and can be a
-C<@subentry>.  I<$main_entry> is the main index entry tree element
-that can be used to gather information.  I<$sortas> can be given to
-override the sort string (typically obtained from C<@sortas>).   The
-I<$options> are options used for Texinfo to text conversion for
-the generation of the sort string, typically obtained from
+I<$document_info> is used by C code to retrieve the document data,
+using the C<document_descriptor> key.  I<$document_info> can be a
+converter based on L<Texinfo::Convert::Converter>, otherwise
+C<document_descriptor> need, in general, to be set up explicitely.
+The tree element index entry processed is I<$index_entry_element>,
+and can be a C<@subentry>.  I<$main_entry> is the main index entry
+that can be used to gather information.  The I<$options> are options
+used for Texinfo to text conversion for the generation of the sort
+string, typically obtained from
 L<setup_index_entry_keys_formatting|/$option = setup_index_entry_keys_formatting($customization_information)>.
+If I<$prefer_reference_element> is set, prefer an untranslated
+element for the formatting as sort string.
 
 =item $merged_entries = merge_indices($indices_information)
 X<C<merge_indices>>

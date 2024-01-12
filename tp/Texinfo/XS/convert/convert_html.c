@@ -166,6 +166,11 @@ const char *htmlxref_split_type_names[htmlxref_split_type_chapter + 1] =
   "mono", "node", "section", "chapter"
 };
 
+const char *css_info_type_names[] =
+{
+  "element_classes", "imports", "rules"
+};
+
 enum htmlxref_split_type htmlxref_entries[htmlxref_split_type_chapter + 1][htmlxref_split_type_chapter + 1] = {
  { htmlxref_split_type_mono, htmlxref_split_type_chapter, htmlxref_split_type_section, htmlxref_split_type_node },
  { htmlxref_split_type_node, htmlxref_split_type_section, htmlxref_split_type_chapter, htmlxref_split_type_mono },
@@ -901,6 +906,7 @@ find_page_name_number
 {
   PAGE_NAME_NUMBER *result = 0;
   static PAGE_NAME_NUMBER searched_page_name;
+
   searched_page_name.page_name = page_name;
   if (page_name_number->number == 0)
     {
@@ -2539,6 +2545,7 @@ format_comment (CONVERTER *self, const char *text)
 
 static const char *reserved_unreserved_percent = "-_.!~*'()$&+,/:;=?@[]#%";
 
+/* NOTE the input string should be UTF-8 encoded */
 static char *
 url_protect_url_text (CONVERTER *self, const char *input_string)
 {
@@ -3076,12 +3083,11 @@ external_node_href (CONVERTER *self, const ELEMENT *external_node,
       enum htmlxref_split_type split_found = htmlxref_split_type_none;
       int manual_len;
       HTMLXREF_MANUAL *htmlxref_manual;
-      TEXT_OPTIONS *text_conv_options = copy_options_for_convert_text (self, 0);
-      text_conv_options->code_state = 1;
 
-      manual_name = convert_to_text (manual_content, text_conv_options);
-
-      free (text_conv_options);
+      self->convert_text_options->code_state++;
+      manual_name = convert_to_text (manual_content,
+                                     self->convert_text_options);
+      self->convert_text_options->code_state--;
 
       if (self->conf->IGNORE_REF_TO_TOP_NODE_UP.integer > 0 && !strlen (target))
         {
@@ -4188,6 +4194,14 @@ compare_selector_style (const void *a, const void *b)
   return strcmp (css_a->selector, css_b->selector);
 }
 
+static void
+sort_css_element_class_styles (CONVERTER* self)
+{
+  qsort (self->css_element_class_styles.list,
+         self->css_element_class_styles.number,
+         sizeof (CSS_SELECTOR_STYLE), compare_selector_style);
+}
+
 CSS_SELECTOR_STYLE *
 find_css_selector_style
      (const CSS_SELECTOR_STYLE_LIST *css_element_class_styles,
@@ -4204,6 +4218,73 @@ find_css_selector_style
                 compare_selector_style);
 
   return result;
+}
+
+void
+html_css_set_selector_style (CONVERTER* self, const char *css_info,
+                             const char *css_style)
+{
+  CSS_SELECTOR_STYLE *selector_style
+   = find_css_selector_style (&self->css_element_class_styles, css_info);
+
+  if (selector_style)
+    {
+      free (selector_style->style);
+      selector_style->style = 0;
+      if (css_style)
+        selector_style->style = strdup (css_style);
+    }
+  else
+    {
+      CSS_SELECTOR_STYLE_LIST *elt_class_styles
+        = &self->css_element_class_styles;
+      if (elt_class_styles->space <= elt_class_styles->number)
+        {
+          elt_class_styles->list = realloc (elt_class_styles->list,
+             (elt_class_styles->space += 10) * sizeof (CSS_SELECTOR_STYLE));
+        }
+
+      selector_style
+        = &elt_class_styles->list[elt_class_styles->number];
+      selector_style->selector = strdup (css_info);
+      if (css_style)
+        selector_style->style = strdup (css_style);
+      else
+        selector_style->style = 0;
+
+      elt_class_styles->number++;
+
+      sort_css_element_class_styles (self);
+    }
+}
+
+const char *
+html_css_get_selector_style (CONVERTER* self, const char *css_info)
+{
+  CSS_SELECTOR_STYLE *selector_style
+   = find_css_selector_style (&self->css_element_class_styles, css_info);
+
+  if (selector_style)
+    return selector_style->style;
+
+  return 0;
+}
+
+static void
+add_new_css_page (PAGES_CSS_LIST *css_pages, const char *page_name)
+{
+  CSS_LIST *page_css_list;
+  if (css_pages->space <= css_pages->number)
+    {
+      css_pages->list = realloc (css_pages->list,
+          (css_pages->space += 10) * sizeof (CSS_LIST));
+    }
+
+  page_css_list = &css_pages->list[css_pages->number];
+  memset (page_css_list, 0, sizeof (CSS_LIST));
+  page_css_list->page_name = strdup (page_name);
+
+  css_pages->number++;
 }
 
 static void
@@ -4223,6 +4304,36 @@ collect_css_element_class (CONVERTER *self, const char *selector)
       else
         {
           css_files_index = self->current_filename.file_number;
+          /* files not associated to output units.  Only try the
+             last one, as the files should be processed sequentially */
+          if (css_files_index == 0)
+            {
+              if (self->current_filename.filename)
+                {
+                  if (self->page_css.number > 1)
+                    {
+                      CSS_LIST *last_css_page
+                       = &self->page_css.list[self->page_css.number -1];
+                      if (last_css_page->page_name
+                          && !strcmp (self->current_filename.filename,
+                                   last_css_page->page_name))
+                        {
+                          css_files_index = self->page_css.number -1;
+                        }
+                    }
+                  if (css_files_index == 0)
+                    {
+                      add_new_css_page (&self->page_css,
+                                        self->current_filename.filename);
+                      css_files_index = self->page_css.number -1;
+                    }
+                }
+            }
+          if (css_files_index == 0)
+            {
+              fprintf (stderr, "BUG: %s: CSS no current file\n", selector);
+              return;
+            }
         }
       page_css_list = &self->page_css.list[css_files_index];
       for (i = 0; i < page_css_list->number; i++)
@@ -4270,17 +4381,43 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
       page_number = find_page_name_number (&self->page_name_number,
                                            filename);
       if (!page_number)
-        fatal ("Could not find page number of file name");
-
-      css_list = &self->page_css.list[page_number];
-      if (css_list->number)
         {
-          /* +1 for 'span:hover a.copiable-link' */
-          size_t space = css_list->number + global_context_css_list->number +1;
-          selectors = (const char **) malloc (sizeof (char *) * space);
-          memcpy (selectors, css_list->list,
-                  css_list->number * sizeof (char *));
-          selector_nr = css_list->number;
+          if (self->page_css.number > 1)
+            {
+              CSS_LIST *last_css_page
+               = &self->page_css.list[self->page_css.number -1];
+              if (last_css_page->page_name
+                  && !strcmp (filename, last_css_page->page_name))
+                {
+                  page_number = self->page_css.number -1;
+                }
+             }
+          if (!page_number)
+            {
+             /* this happens legitimately in case of an output file not
+                associated to an output unit and not having registered
+                any CSS selector */
+              char *msg;
+              xasprintf (&msg, "%s: get CSS could not find page number",
+                         filename);
+              if (self->conf->DEBUG.integer > 0)
+                fprintf (stderr, "XS|css: %s\n", msg);
+              free (msg);
+            }
+        }
+      if (page_number)
+        {
+          css_list = &self->page_css.list[page_number];
+          if (css_list->number)
+            {
+              /* +1 for 'span:hover a.copiable-link' */
+              size_t space
+               = css_list->number + global_context_css_list->number +1;
+              selectors = (const char **) malloc (sizeof (char *) * space);
+              memcpy (selectors, css_list->list,
+                      css_list->number * sizeof (char *));
+              selector_nr = css_list->number;
+            }
         }
     }
 
@@ -4341,6 +4478,44 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
   free (selectors);
 
   return result;
+}
+
+void
+html_css_add_info (CONVERTER *self, enum css_info_type type,
+                   const char *css_info)
+{
+  if (type == CI_css_info_rules)
+    add_string (css_info, &self->css_rule_lines);
+  else if (type == CI_css_info_imports)
+    add_string (css_info, &self->css_import_lines);
+}
+
+STRING_LIST *
+html_css_get_info (CONVERTER *self, enum css_info_type type)
+{
+  if (type == CI_css_info_rules)
+    return &self->css_rule_lines;
+  else if (type == CI_css_info_imports)
+    return &self->css_import_lines;
+  else
+    {
+      size_t i;
+      if (self->css_element_class_styles.number > 0)
+        {
+          if (self->css_element_class_list.number == 0)
+            {
+              for (i = 0; i < self->css_element_class_styles.number; i++)
+                {
+                  CSS_SELECTOR_STYLE *selector_style
+                    = &self->css_element_class_styles.list[i];
+                  if (selector_style->selector)
+                    add_string (selector_style->selector,
+                                &self->css_element_class_list);
+                }
+            }
+        }
+      return &self->css_element_class_list;
+    }
 }
 
 void
@@ -4568,8 +4743,8 @@ prepare_index_entries_targets (CONVERTER *self)
         /* construct element to convert to a normalized identifier to use as
            hrefs target */
                   normalize_index_element = new_element (ET_NONE);
-                  add_to_element_contents (normalize_index_element,
-                                           entry_reference_content_element);
+                  add_to_contents_as_array (normalize_index_element,
+                                            entry_reference_content_element);
 
                   subentries_tree
                    = comma_index_subentries_tree (main_entry_element, " ");
@@ -5474,8 +5649,9 @@ html_set_pages_files (CONVERTER *self, OUTPUT_UNIT_LIST *output_units,
   /* 0 is for document_global_context_css, the remaining indices
      for the output unit files */
   self->page_css.number = self->output_unit_files.number +1;
+  self->page_css.space = self->page_css.number;
   self->page_css.list = (CSS_LIST *)
-       malloc (self->page_css.number * sizeof (CSS_LIST));
+       malloc (self->page_css.space * sizeof (CSS_LIST));
   memset (self->page_css.list, 0,
           self->page_css.number * sizeof (CSS_LIST));
 
@@ -5495,8 +5671,9 @@ setup_output_simple_page (CONVERTER *self, const char *output_filename)
 {
   PAGE_NAME_NUMBER *page_name_number;
   self->page_css.number = 1+1;
+  self->page_css.space = self->page_css.number;
   self->page_css.list = (CSS_LIST *)
-       malloc (self->page_css.number * sizeof (CSS_LIST));
+       malloc (self->page_css.space * sizeof (CSS_LIST));
   memset (self->page_css.list, 0,
           self->page_css.number * sizeof (CSS_LIST));
 
@@ -6116,33 +6293,205 @@ format_heading_text (CONVERTER *self, const enum command_id cmd,
     }
 }
 
+static char *foot_body_heading_array[] = {"footnote-body-heading"};
+static const STRING_LIST foot_body_heading_classes
+   = {foot_body_heading_array, 1, 1};
+
 void
-format_element_footer (CONVERTER *self,
-                              const enum output_unit_type unit_type,
-                              const OUTPUT_UNIT *output_unit,
-                              const char *content, ELEMENT *element,
-                              TEXT *result)
+html_default_format_footnotes_sequence (CONVERTER *self, TEXT *result)
+{
+  size_t i;
+  HTML_PENDING_FOOTNOTE_STACK *pending_footnotes
+   = html_get_pending_footnotes (self);
+
+  if (pending_footnotes->top > 0)
+    {
+      for (i = 0; i < pending_footnotes->top; i++)
+        {
+          const HTML_PENDING_FOOTNOTE *pending_footnote_info
+           = pending_footnotes->stack[i];
+          const ELEMENT *command = pending_footnote_info->command;
+          const char *footid = pending_footnote_info->footid;
+          int number_in_doc = pending_footnote_info->number_in_doc;
+          size_t footnote_text_len;
+          char *footnote_text;
+          char *context_str;
+          char *footnote_text_with_eol;
+          char *attribute_class;
+          char *footnote_mark;
+          char *footnote_location_href
+           = html_footnote_location_href (self, command, 0,
+                                     pending_footnote_info->docid,
+                    pending_footnote_info->footnote_location_filename);
+   /*
+      NOTE the @-commands in @footnote that are formatted differently depending
+      on in_multi_expanded($self) cannot know that the original context
+      of the @footnote in the main document was $multi_expanded_region.
+      We do not want to set multi_expanded in customizable code.  However, it
+      could be possible to set a shared_conversion_state based on $multi_expanded_region
+      and have all the conversion functions calling in_multi_expanded($self)
+      also check the shared_conversion_state.  The special situations
+      with those @-commands in @footnote in multi expanded
+      region do not justify this additional code and complexity.  The consequences
+      should only be redundant anchors HTML elements.
+    */
+          xasprintf (&context_str, "%s %d %s", element_command_name (command),
+                                   number_in_doc, footid);
+          footnote_text
+            = convert_tree_new_formatting_context (self, command->args.list[0],
+                                                         context_str, 0, 0, 0);
+          free (context_str);
+
+          footnote_text_len = strlen (footnote_text);
+          if (footnote_text_len <= 0
+              || footnote_text[footnote_text_len -1] != '\n')
+            {
+              xasprintf (&footnote_text_with_eol, "%s\n", footnote_text);
+              free (footnote_text);
+            }
+          else
+            footnote_text_with_eol = footnote_text;
+
+          if (self->conf->NUMBER_FOOTNOTES.integer > 0)
+            xasprintf (&footnote_mark, "%d", number_in_doc);
+          else
+            footnote_mark
+              = strdup (self->conf->NO_NUMBER_FOOTNOTE_SYMBOL.string);
+
+          attribute_class = html_attribute_class (self, "h5",
+                            &foot_body_heading_classes);
+          text_append (result, attribute_class);
+          free (attribute_class);
+
+          text_printf (result, "><a id=\"%s\" href=\"%s\">(%s)</a></h5>\n",
+                       footid, footnote_location_href, footnote_mark);
+
+          free (footnote_mark);
+          free (footnote_location_href);
+
+          text_append (result, footnote_text_with_eol);
+          free (footnote_text_with_eol);
+        }
+    }
+  destroy_pending_footnotes (pending_footnotes);
+}
+
+void
+format_footnotes_sequence (CONVERTER *self, TEXT *result)
 {
   FORMATTING_REFERENCE *formatting_reference
-   = &self->current_formatting_references[FR_format_element_footer];
-
-/*
+   = &self->current_formatting_references[FR_format_footnotes_sequence];
   if (formatting_reference->status == FRS_status_default_set)
     {
-      html_default_format_element_footer (self, unit_type, output_unit,
-                                          content, element, result);
+      html_default_format_footnotes_sequence (self, result);
     }
   else
-*/
-   {
-     char *formatted_footer
-       = call_formatting_function_format_element_footer (self,
-                                         formatting_reference,
-                                         unit_type,
-                                         output_unit, content, element);
-     text_append (result, formatted_footer);
-     free (formatted_footer);
-   }
+    {
+      char *footnotes_sequence
+        = call_formatting_function_format_footnotes_sequence (self,
+                                                formatting_reference);
+      text_append (result, footnotes_sequence);
+      free (footnotes_sequence);
+    }
+}
+
+void
+default_format_footnotes_segment (CONVERTER *self, TEXT *result)
+{
+  char *class_base;
+  char *attribute_class;
+  char *class;
+  STRING_LIST *classes;
+  ELEMENT *footnote_heading_tree;
+  char *footnote_heading;
+  int level;
+  TEXT foot_lines;
+
+  text_init (&foot_lines);
+  format_footnotes_sequence (self, &foot_lines);
+
+  if (foot_lines.end <= 0)
+    {
+      free (foot_lines.text);
+      return;
+    }
+
+  classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+  memset (classes, 0, sizeof (STRING_LIST));
+
+  class_base = special_unit_info (self, SUI_type_class,
+                                  "footnotes");
+  xasprintf (&class, "%s-segment", class_base);
+
+  add_string (class, classes);
+  free (class);
+  attribute_class = html_attribute_class (self, "div", classes);
+  clear_strings_list (classes);
+
+  text_append (result, attribute_class);
+  free (attribute_class);
+
+  text_append_n (result, ">\n", 2);
+
+  if (self->conf->DEFAULT_RULE.string
+      && strlen (self->conf->DEFAULT_RULE.string))
+    {
+      text_append (result, self->conf->DEFAULT_RULE.string);
+      text_append_n (result, "\n", 1);
+    }
+
+  footnote_heading_tree = special_unit_info_tree (self,
+                              SUIT_type_heading, "footnotes");
+  if (footnote_heading_tree)
+    {
+      footnote_heading = html_convert_tree (self, footnote_heading_tree,
+                                    "convert footnotes special heading");
+    }
+  else
+    {
+      footnote_heading = "";
+    }
+
+  level = self->conf->FOOTNOTE_END_HEADER_LEVEL.integer;
+
+  xasprintf (&class, "%s-heading", class_base);
+
+  add_string (class, classes);
+  free (class);
+
+  format_heading_text (self, 0, classes, footnote_heading, level, 0, 0, 0,
+                       result);
+  destroy_strings_list (classes);
+  text_append_n (result, "\n", 1);
+
+  if (footnote_heading_tree)
+    free (footnote_heading);
+
+  text_append (result, foot_lines.text);
+  free (foot_lines.text);
+  text_append (result, "</div>\n");
+}
+
+void
+format_footnotes_segment (CONVERTER *self, TEXT *result)
+{
+  FORMATTING_REFERENCE *formatting_reference
+   = &self->current_formatting_references[FR_format_footnotes_segment];
+  if (formatting_reference->status == FRS_status_default_set)
+    {
+      default_format_footnotes_segment (self, result);
+    }
+  else
+    {
+      char *footnotes_segment
+        = call_formatting_function_format_footnotes_segment (self,
+                                             formatting_reference);
+      if (footnotes_segment)
+        {
+          text_append (result, footnotes_segment);
+          free (footnotes_segment);
+        }
+    }
 }
 
 void
@@ -6361,17 +6710,97 @@ convert_string_tree_new_formatting_context (CONVERTER *self,
 }
 
 void
+html_default_format_css_lines (CONVERTER *self, const char *filename,
+                               TEXT *result)
+{
+  STRING_LIST *css_refs;
+  STRING_LIST *css_element_classes;
+  STRING_LIST *css_import_lines;
+  STRING_LIST *css_rule_lines;
+  size_t i;
+
+  if (self->conf->NO_CSS.integer > 0)
+    return;
+
+  css_refs = self->conf->CSS_REFS.strlist;
+  css_element_classes = html_get_css_elements_classes (self, filename);
+  css_import_lines = html_css_get_info (self, CI_css_info_imports);
+  css_rule_lines = html_css_get_info (self, CI_css_info_rules);
+
+  if (css_import_lines->number <= 0
+      && (!css_element_classes || css_element_classes->number <= 0)
+      && css_rule_lines->number <= 0
+      && (!css_refs || css_refs->number <= 0))
+    {
+      if (css_element_classes)
+        destroy_strings_list (css_element_classes);
+      return;
+    }
+
+  text_append (result, "<style type=\"text/css\">\n<!--\n");
+
+  if (css_import_lines->number > 0)
+    {
+      for (i = 0; i < css_import_lines->number; i++)
+        text_append (result, css_import_lines->list[i]);
+      text_append_n (result, "\n", 1);
+    }
+
+  if (css_element_classes)
+    {
+      if (css_element_classes->number > 0)
+        {
+          for (i = 0; i < css_element_classes->number; i++)
+            {
+              const char *selector = css_element_classes->list[i];
+              CSS_SELECTOR_STYLE *selector_style
+               = find_css_selector_style (&self->css_element_class_styles,
+                                          selector);
+              if (selector_style->style)
+                text_printf (result, "%s {%s}\n", selector,
+                                                  selector_style->style);
+            }
+        }
+      destroy_strings_list (css_element_classes);
+    }
+
+  if (css_rule_lines->number > 0)
+    {
+      for (i = 0; i < css_rule_lines->number; i++)
+        text_append (result, css_rule_lines->list[i]);
+      text_append_n (result, "\n", 1);
+    }
+
+  text_append (result, "-->\n</style>\n");
+
+  if (css_refs)
+    {
+      for (i = 0; i < css_refs->number; i++)
+        {
+          char *protected_ref = url_protect_url_text (self,
+                                                css_refs->list[i]);
+          text_printf (result,
+               "<link rel=\"stylesheet\" type=\"text/css\" href=\"%s\"",
+                       protected_ref);
+          free (protected_ref);
+
+          close_html_lone_element (self, result);
+          text_append_n (result, "\n", 1);
+        }
+    }
+}
+
+void
 format_css_lines (CONVERTER *self, const char *filename, TEXT *result)
 {
   FORMATTING_REFERENCE *formatting_reference
    = &self->current_formatting_references[FR_format_css_lines];
-  /*
+
   if (formatting_reference->status == FRS_status_default_set)
     {
       html_default_format_css_lines (self, filename, result);
     }
   else
-   */
     {
       char *css_lines
         = call_formatting_function_format_css_lines (self,
@@ -6398,7 +6827,7 @@ static char *root_html_element_attributes_string (CONVERTER *self)
    redirection file headers.  $COMMAND is the tree element for
    a @node that is being output in the file. */
 static BEGIN_FILE_INFORMATION *
-file_header_information (CONVERTER *self, ELEMENT *command,
+file_header_information (CONVERTER *self, const ELEMENT *command,
                          const char *filename)
 {
   BEGIN_FILE_INFORMATION *begin_info = (BEGIN_FILE_INFORMATION *)
@@ -7032,8 +7461,10 @@ html_default_format_button (CONVERTER *self,
                   && self->conf->ACTIVE_ICONS.icons->list[button->direction]
                   && strlen (self->conf->ACTIVE_ICONS.icons
                                                 ->list[button->direction]))
-                active_icon = self->conf->ACTIVE_ICONS.icons
+                {
+                  active_icon = self->conf->ACTIVE_ICONS.icons
                                                   ->list[button->direction];
+                }
 
               text_init (&active_text);
               if (!active_icon)
@@ -7474,613 +7905,343 @@ format_element_header (CONVERTER *self,
     }
 }
 
-static char *foot_body_heading_array[] = {"footnote-body-heading"};
-static const STRING_LIST foot_body_heading_classes
-   = {foot_body_heading_array, 1, 1};
-
-void
-html_default_format_footnotes_sequence (CONVERTER *self, TEXT *result)
+static int
+word_number_more_than_level (const char *text, int level)
 {
-  size_t i;
-  HTML_PENDING_FOOTNOTE_STACK *pending_footnotes
-   = html_get_pending_footnotes (self);
+  const char *p = text;
+  int count = 0;
 
-  if (pending_footnotes->top > 0)
+  while (*p)
     {
-      for (i = 0; i < pending_footnotes->top; i++)
+      int n = strspn (p, whitespace_chars);
+      if (n)
         {
-          const HTML_PENDING_FOOTNOTE *pending_footnote_info
-           = pending_footnotes->stack[i];
-          const ELEMENT *command = pending_footnote_info->command;
-          const char *footid = pending_footnote_info->footid;
-          int number_in_doc = pending_footnote_info->number_in_doc;
-          size_t footnote_text_len;
-          char *footnote_text;
-          char *context_str;
-          char *footnote_text_with_eol;
-          char *attribute_class;
-          char *footnote_mark;
-          char *footnote_location_href
-           = html_footnote_location_href (self, command, 0,
-                                     pending_footnote_info->docid,
-                    pending_footnote_info->footnote_location_filename);
-   /*
-      NOTE the @-commands in @footnote that are formatted differently depending
-      on in_multi_expanded($self) cannot know that the original context
-      of the @footnote in the main document was $multi_expanded_region.
-      We do not want to set multi_expanded in customizable code.  However, it
-      could be possible to set a shared_conversion_state based on $multi_expanded_region
-      and have all the conversion functions calling in_multi_expanded($self)
-      also check the shared_conversion_state.  The special situations
-      with those @-commands in @footnote in multi expanded
-      region do not justify this additional code and complexity.  The consequences
-      should only be redundant anchors HTML elements.
-    */
-          xasprintf (&context_str, "%s %d %s", element_command_name (command),
-                                   number_in_doc, footid);
-          footnote_text
-            = convert_tree_new_formatting_context (self, command->args.list[0],
-                                                         context_str, 0, 0, 0);
-          free (context_str);
-
-          footnote_text_len = strlen (footnote_text);
-          if (footnote_text_len <= 0
-              || footnote_text[footnote_text_len -1] != '\n')
-            {
-              xasprintf (&footnote_text_with_eol, "%s\n", footnote_text);
-              free (footnote_text);
-            }
-          else
-            footnote_text_with_eol = footnote_text;
-
-          if (self->conf->NUMBER_FOOTNOTES.integer > 0)
-            xasprintf (&footnote_mark, "%d", number_in_doc);
-          else
-            footnote_mark
-              = strdup (self->conf->NO_NUMBER_FOOTNOTE_SYMBOL.string);
-
-          attribute_class = html_attribute_class (self, "h5",
-                            &foot_body_heading_classes);
-          text_append (result, attribute_class);
-          free (attribute_class);
-
-          text_printf (result, "><a id=\"%s\" href=\"%s\">(%s)</a></h5>\n",
-                       footid, footnote_location_href, footnote_mark);
-
-          free (footnote_mark);
-          free (footnote_location_href);
-
-          text_append (result, footnote_text_with_eol);
-          free (footnote_text_with_eol);
+          count++;
+          if (count > level)
+            return 1;
+          p += n;
+        }
+      if (*p)
+        {
+          /* skip a character */
+          int char_len = 1;
+          while ((p[char_len] & 0xC0) == 0x80)
+            char_len++;
+          p += char_len;
         }
     }
-  destroy_pending_footnotes (pending_footnotes);
+  return 0;
 }
 
 void
-format_footnotes_sequence (CONVERTER *self, TEXT *result)
+html_default_format_element_footer (CONVERTER *self,
+                              const enum output_unit_type unit_type,
+                              const OUTPUT_UNIT *output_unit,
+                              const char *content, const ELEMENT *element,
+                              TEXT *result)
+{
+  int is_top = unit_is_top_output_unit (self, output_unit);
+  int next_is_top = 0;
+  int next_is_special = 0;
+  int end_page = 0;
+  const BUTTON_SPECIFICATION_LIST *buttons = 0;
+
+  if (output_unit->tree_unit_directions[D_next]
+          && unit_is_top_output_unit (self,
+                               output_unit->tree_unit_directions[D_next]))
+    next_is_top = 1;
+
+  if (output_unit->tree_unit_directions[D_next]
+      && output_unit->tree_unit_directions[D_next]->unit_type
+                                               == OU_special_unit)
+    next_is_special = 1;
+
+  if (!output_unit->tree_unit_directions[D_next])
+    end_page = 1;
+  else if (output_unit->unit_filename
+           && strcmp (output_unit->unit_filename,
+              output_unit->tree_unit_directions[D_next]->unit_filename))
+    {
+      size_t file_index;
+      size_t count_in_file;
+
+      if (unit_type == OU_special_unit)
+        file_index = self->special_unit_file_indices[output_unit->index];
+      else
+        file_index = self->output_unit_file_indices[output_unit->index];
+      count_in_file
+        = count_elements_in_file_number (self, CEFT_remaining, file_index +1);
+
+      if (count_in_file == 1)
+        end_page = 1;
+    }
+
+  if ((end_page || next_is_top || next_is_special || is_top)
+      && self->conf->VERTICAL_HEAD_NAVIGATION.integer > 0
+      && (strcmp (self->conf->SPLIT.string, "node")
+          || self->conf->HEADERS.integer > 0 || unit_type == OU_special_unit
+          || is_top))
+    {
+      text_append_n (result, "</td>\n</tr>\n</table>\n", 21);
+    }
+
+  if (end_page)
+    {
+      STRING_LIST *closed_strings;
+      closed_strings = html_close_registered_sections_level (self, 0);
+
+      if (closed_strings->number)
+        {
+          int i;
+          for (i = 0; i < closed_strings->number; i++)
+            {
+              text_append (result, closed_strings->list[i]);
+              free (closed_strings->list[i]);
+            }
+        }
+      free (closed_strings->list);
+      free (closed_strings);
+
+      /* setup buttons for navigation footer */
+      if ((is_top || unit_type == OU_special_unit)
+           && ((self->conf->SPLIT.string
+                && strcmp (self->conf->SPLIT.string, ""))
+               || self->conf->MONOLITHIC.integer <= 0)
+           && (self->conf->HEADERS.integer > 0
+               || (self->conf->SPLIT.string
+                   && strcmp (self->conf->SPLIT.string, "")
+                   && strcmp (self->conf->SPLIT.string, "node"))))
+         {
+           if (is_top)
+             buttons = self->conf->TOP_BUTTONS.buttons;
+           else
+             buttons = self->conf->MISC_BUTTONS.buttons;
+         }
+      else if (self->conf->SPLIT.string
+                && !strcmp (self->conf->SPLIT.string, "section"))
+        buttons = self->conf->SECTION_FOOTER_BUTTONS.buttons;
+      else if (self->conf->SPLIT.string
+                && !strcmp (self->conf->SPLIT.string, "chapter"))
+        buttons = self->conf->CHAPTER_FOOTER_BUTTONS.buttons;
+      else if (self->conf->SPLIT.string
+                && !strcmp (self->conf->SPLIT.string, "node"))
+        {
+          if (self->conf->HEADERS.integer > 0)
+            {
+              if (self->conf->WORDS_IN_PAGE.integer > 0)
+                {
+                  if (content
+                      && word_number_more_than_level (content,
+                                        self->conf->WORDS_IN_PAGE.integer))
+                    {
+                      buttons = self->conf->NODE_FOOTER_BUTTONS.buttons;
+                    }
+                }
+              else
+                buttons = self->conf->NODE_FOOTER_BUTTONS.buttons;
+            }
+        }
+    }
+
+  if ((!output_unit->tree_unit_directions[D_next]
+       || (output_unit->unit_filename
+           && strcmp (output_unit->unit_filename,
+              output_unit->tree_unit_directions[D_next]->unit_filename)))
+      && !strcmp (self->conf->footnotestyle.string, "end"))
+    {
+      format_footnotes_segment (self, result);
+    }
+
+  if (buttons || !end_page || self->conf->PROGRAM_NAME_IN_FOOTER.integer > 0)
+    {
+      char *rule = 0;
+
+      if (!end_page && (is_top || next_is_top || (next_is_special
+                                       && unit_type != OU_special_unit)))
+        {
+          rule = self->conf->BIG_RULE.string;
+        }
+      else if (!buttons || is_top || unit_type == OU_special_unit
+               || (end_page && self->conf->SPLIT.string
+                   && (!strcmp (self->conf->SPLIT.string, "section")
+                       || !strcmp (self->conf->SPLIT.string, "chapter")))
+               || (self->conf->SPLIT.string
+                   && !strcmp (self->conf->SPLIT.string, "node")
+                   && self->conf->HEADERS.integer > 0))
+        {
+          rule = self->conf->DEFAULT_RULE.string;
+        }
+      if (rule && strlen (rule))
+        {
+          text_append (result, rule);
+          text_append_n (result, "\n", 1);
+        }
+    }
+
+  if (buttons)
+    {
+      const char *cmdname = 0;
+      if (element)
+        cmdname = element_command_name (element);
+
+      format_navigation_panel (self, buttons, cmdname, element, 0, result);
+    }
+}
+
+void
+format_element_footer (CONVERTER *self,
+                              const enum output_unit_type unit_type,
+                              const OUTPUT_UNIT *output_unit,
+                              const char *content, const ELEMENT *element,
+                              TEXT *result)
 {
   FORMATTING_REFERENCE *formatting_reference
-   = &self->current_formatting_references[FR_format_footnotes_sequence];
+   = &self->current_formatting_references[FR_format_element_footer];
+
   if (formatting_reference->status == FRS_status_default_set)
     {
-      html_default_format_footnotes_sequence (self, result);
+      html_default_format_element_footer (self, unit_type, output_unit,
+                                          content, element, result);
     }
   else
-    {
-      char *footnotes_sequence
-        = call_formatting_function_format_footnotes_sequence (self,
-                                                formatting_reference);
-      text_append (result, footnotes_sequence);
-      free (footnotes_sequence);
-    }
+   {
+     char *formatted_footer
+       = call_formatting_function_format_element_footer (self,
+                                         formatting_reference,
+                                         unit_type,
+                                         output_unit, content, element);
+     text_append (result, formatted_footer);
+     free (formatted_footer);
+   }
 }
 
-void
-default_format_footnotes_segment (CONVERTER *self, TEXT *result)
+char *
+html_default_format_node_redirection_page (CONVERTER *self,
+                                           const ELEMENT *element,
+                                           const char *filename)
 {
-  char *class_base;
-  char *attribute_class;
-  char *class;
-  STRING_LIST *classes;
-  ELEMENT *footnote_heading_tree;
-  char *footnote_heading;
-  int level;
-  TEXT foot_lines;
+  TEXT result;
+  TEXT body;
+  BEGIN_FILE_INFORMATION *begin_info;
+  char *href = html_command_href (self, element, filename, 0, 0);
+  char *name = html_command_text (self, element, 0);
+  ELEMENT *direction_element = new_element (ET__converted);
+  NAMED_STRING_ELEMENT_LIST *substrings = new_named_string_element_list ();
 
-  text_init (&foot_lines);
-  format_footnotes_sequence (self, &foot_lines);
+  text_printf (&direction_element->text, "<a href=\"%s\">%s</a>", href, name);
+  free (name);
 
-  if (foot_lines.end <= 0)
-    {
-      free (foot_lines.text);
-      return;
-    }
+  add_element_to_named_string_element_list (substrings,
+                                            "href", direction_element);
 
-  classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
-  memset (classes, 0, sizeof (STRING_LIST));
+  /* do it before in case there is CSS */
 
-  class_base = special_unit_info (self, SUI_type_class,
-                                  "footnotes");
-  xasprintf (&class, "%s-segment", class_base);
+  text_init (&body);
+  translate_convert_to_html_internal (
+          "The node you are looking for is at {href}.", self->document,
+           self, substrings, 0, 0, &body, 0);
 
-  add_string (class, classes);
-  free (class);
-  attribute_class = html_attribute_class (self, "div", classes);
-  clear_strings_list (classes);
+  begin_info = file_header_information (self, element, filename);
 
-  text_append (result, attribute_class);
-  free (attribute_class);
+  text_init (&result);
 
-  text_append_n (result, ">\n", 2);
+  text_append (&result, self->conf->DOCTYPE.string);
+  text_append_n (&result, "\n", 1);
+  text_printf (&result, "<html%s>\n", begin_info->root_html_element_attributes);
+  text_printf (&result, "<!-- Created by %s, %s -->\n"
+       "<!-- This file redirects to the location of a node or anchor -->\n"
+       "<head>\n",
+                        self->conf->PACKAGE_AND_VERSION_OPTION.string,
+                        self->conf->PACKAGE_URL_OPTION.string);
+  if (begin_info->encoding)
+    text_append (&result, begin_info->encoding);
+  text_append_n (&result, "\n", 1);
+  if (self->copying_comment)
+    text_append (&result, self->copying_comment);
+  text_printf (&result, "<title>%s</title>\n\n", begin_info->title);
+  if (begin_info->description)
+    text_append (&result, begin_info->description);
+  text_append_n (&result, "\n", 1);
+  text_printf (&result, "<meta name=\"keywords\" content=\"%s\"",
+               begin_info->title);
+  close_html_lone_element (self, &result);
+  text_append_n (&result, "\n", 1);
+  text_append (&result, "<meta name=\"resource-type\" content=\"document\"");
+  close_html_lone_element (self, &result);
+  text_append_n (&result, "\n", 1);
+  text_append (&result, "<meta name=\"distribution\" content=\"global\"");
+  close_html_lone_element (self, &result);
+  text_append_n (&result, "\n", 1);
+  if (begin_info->generator)
+    text_append (&result, begin_info->generator);
+  if (self->date_in_header)
+    text_append (&result, self->date_in_header);
+  text_append (&result, begin_info->css_lines);
+  text_append_n (&result, "\n", 1);
+  text_printf (&result, "<meta http-equiv=\"Refresh\" content=\"0; url=%s\"",
+               href);
+  close_html_lone_element (self, &result);
+  text_append_n (&result, "\n", 1);
+  text_append (&result,
+    "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"");
+  close_html_lone_element (self, &result);
+  text_append_n (&result, "\n", 1);
 
-  if (self->conf->DEFAULT_RULE.string
-      && strlen (self->conf->DEFAULT_RULE.string))
-    {
-      text_append (result, self->conf->DEFAULT_RULE.string);
-      text_append_n (result, "\n", 1);
-    }
+  if (begin_info->extra_head)
+    text_append (&result, begin_info->extra_head);
+  text_append_n (&result, "\n</head>\n\n", 10);
+  text_printf (&result, "<body %s>\n", begin_info->bodytext);
+  if (self->conf->AFTER_BODY_OPEN.string)
+    text_append (&result, self->conf->AFTER_BODY_OPEN.string);
 
-  footnote_heading_tree = special_unit_info_tree (self,
-                              SUIT_type_heading, "footnotes");
-  if (footnote_heading_tree)
-    {
-      footnote_heading = html_convert_tree (self, footnote_heading_tree,
-                                    "convert footnotes special heading");
-    }
-  else
-    {
-      footnote_heading = "";
-    }
+  text_append_n (&result, "\n<p>", 4);
+  text_append (&result, body.text);
+  free (body.text);
+  text_append_n (&result, "</p>\n</body>\n", 13);
 
-  level = self->conf->FOOTNOTE_END_HEADER_LEVEL.integer;
+  destroy_named_string_element_list (substrings);
+  free (href);
 
-  xasprintf (&class, "%s-heading", class_base);
+  destroy_begin_file_information (begin_info);
 
-  add_string (class, classes);
-  free (class);
-
-  format_heading_text (self, 0, classes, footnote_heading, level, 0, 0, 0,
-                       result);
-  destroy_strings_list (classes);
-  text_append_n (result, "\n", 1);
-
-  if (footnote_heading_tree)
-    free (footnote_heading);
-
-  text_append (result, foot_lines.text);
-  free (foot_lines.text);
-  text_append (result, "</div>\n");
+  return result.text;
 }
 
-void
-format_footnotes_segment (CONVERTER *self, TEXT *result)
+char *format_node_redirection_page (CONVERTER *self, const ELEMENT *element,
+                                   const char *filename)
 {
   FORMATTING_REFERENCE *formatting_reference
-   = &self->current_formatting_references[FR_format_footnotes_segment];
+   = &self->current_formatting_references[FR_format_node_redirection_page];
+
   if (formatting_reference->status == FRS_status_default_set)
     {
-      default_format_footnotes_segment (self, result);
+      return html_default_format_node_redirection_page (self, element,
+                                                             filename);
     }
   else
-    {
-      char *footnotes_segment
-        = call_formatting_function_format_footnotes_segment (self,
-                                             formatting_reference);
-      if (footnotes_segment)
-        {
-          text_append (result, footnotes_segment);
-          free (footnotes_segment);
-        }
-    }
+   {
+     return call_formatting_function_format_node_redirection_page (self,
+                                                  formatting_reference,
+                                                   element, filename);
+   }
 }
 
-#define static_class(name, class) \
-static char * name ##_array[] = {#class}; \
-static const STRING_LIST name ##_classes = {name ##_array, 1, 1};
-
-static_class(def_type, def-type)
-static_class(def_name, def-name)
-static_class(def_code_arguments, def-code-arguments)
-static_class(def_var_arguments, def-var-arguments)
-static_class(call_def, call-def)
-static_class(category_def, category-def)
-
-void
-convert_def_line_type (CONVERTER *self, const enum element_type type,
-                       const ELEMENT *element, const char *content,
-                       TEXT *result)
+char *
+html_prepare_node_redirection_page (CONVERTER *self, const ELEMENT *element,
+                                    const char *filename)
 {
-  char *index_id;
-  PARSED_DEF *parsed_def;
-  STRING_LIST *classes;
-  char *attribute_class;
-  char *alias_class = 0;
-  enum command_id original_def_cmd;
-  enum command_id def_cmd;
-  enum command_id original_cmd = 0;
-  enum command_id base_cmd = 0;
-  TEXT def_call;
-  char *anchor;
+  char *result;
 
-  if (html_in_string (self))
-    {
-      /* should probably never happen */
-      char *text;
-      TEXT_OPTIONS *text_conv_options
-         = copy_options_for_convert_text (self, 0);
-      text = convert_to_text (element, text_conv_options);
-      free (text_conv_options);
-      format_protect_text (self, text, result);
-    }
+  self->current_filename.filename = filename;
+  self->current_filename.file_number = 0;
+  self->modified_state |= HMSF_current_filename;
 
-  index_id = html_command_id (self, element);
+  result = format_node_redirection_page (self, element, filename);
 
-  parsed_def = definition_arguments_content (element);
+  self->current_filename.filename = 0;
+  self->modified_state |= HMSF_current_filename;
 
-  if (element->cmd)
-    original_def_cmd = element->cmd;
-  else
-    original_def_cmd = element->parent->cmd;
-
-  if (builtin_command_data[original_def_cmd].flags & CF_def_alias)
-    {
-      int i;
-      for (i = 0; def_aliases[i].alias ; i++)
-        {
-          if (def_aliases[i].alias == original_def_cmd)
-            {
-              original_cmd = def_aliases[i].command;
-              break;
-            }
-        }
-
-      xasprintf (&alias_class, "%s-alias-%s",
-                    builtin_command_name(original_def_cmd),
-                    builtin_command_name(original_cmd));
-    }
-  else
-    original_cmd = original_def_cmd;
-
-  /* parent is defblock, we do not put it in class */
-  if (element->cmd == CM_defline || element->cmd == CM_deftypeline)
-    def_cmd = element->cmd;
-  else
-  /* the parent is the def both for def* def_line and def*x */
-    def_cmd = element->parent->cmd;
-
-  if (builtin_command_data[def_cmd].flags & CF_def_alias)
-    {
-      int i;
-      for (i = 0; def_aliases[i].alias ; i++)
-        {
-          if (def_aliases[i].alias == def_cmd)
-            {
-              base_cmd = def_aliases[i].command;
-              break;
-            }
-        }
-    }
-  else
-    base_cmd = def_cmd;
-
-  classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
-  memset (classes, 0, sizeof (STRING_LIST));
-
-  add_string (builtin_command_name(original_cmd), classes);
-  if (alias_class)
-    {
-      add_string (alias_class, classes);
-      free (alias_class);
-    }
-  if (base_cmd != original_cmd)
-    {
-      char *class;
-      xasprintf (&class, "def-cmd-%s", builtin_command_name(base_cmd));
-      add_string (class, classes);
-      free (class);
-    }
-
-  text_init (&def_call);
-  text_append (&def_call, "");
-  if (parsed_def->type)
-    {
-      char *type_text;
-      size_t type_text_len;
-      ELEMENT *root_code = new_element (ET__code);
-
-      add_to_contents_as_array (root_code, parsed_def->type);
-
-      add_to_element_list (&self->tree_to_build, root_code);
-
-      type_text = html_convert_tree (self, root_code, 0);
-
-      remove_element_from_list (&self->tree_to_build, root_code);
-
-      destroy_element (root_code);
-      type_text_len = strlen (type_text);
-
-      if (type_text_len > 0)
-        {
-          char *attribute_class = html_attribute_class (self, "code",
-                                                        &def_type_classes);
-          text_append (&def_call, attribute_class);
-          free (attribute_class);
-          text_append_n (&def_call, ">", 1);
-          text_append_n (&def_call, type_text, type_text_len);
-          text_append_n (&def_call, "</code>", 7);
-        }
-      if ((base_cmd == CM_deftypefn || base_cmd == CM_deftypeop)
-          && !strcmp (self->conf->deftypefnnewline.string, "on"))
-        {
-          text_append_n (&def_call, self->line_break_element.string,
-                                    self->line_break_element.len);
-          text_append_n (&def_call, " ", 1);
-        }
-      else if (type_text_len > 0)
-        text_append_n (&def_call, " ", 1);
-      free (type_text);
-    }
-
-  if (parsed_def->name)
-    {
-      char *attribute_class = html_attribute_class (self, "strong",
-                                                    &def_name_classes);
-      ELEMENT *root_code = new_element (ET__code);
-
-      add_to_contents_as_array (root_code, parsed_def->name);
-
-      add_to_element_list (&self->tree_to_build, root_code);
-
-      text_append (&def_call, attribute_class);
-      free (attribute_class);
-      text_append_n (&def_call, ">", 1);
-
-      convert_to_html_internal (self, root_code, &def_call, 0);
-
-      remove_element_from_list (&self->tree_to_build, root_code);
-      destroy_element (root_code);
-
-      text_append_n (&def_call, "</strong>", 9);
-    }
-
-  if (parsed_def->args)
-    {
-      char *args_formatted;
-   /* arguments not only metasyntactic variables
-      (deftypefn, deftypevr, deftypeop, deftypecv) */
-      /* Texinfo::Common::def_no_var_arg_commands{$base_command_name} */
-      if (strlen (builtin_command_name(base_cmd)) >= 7
-          && !memcmp (builtin_command_name(base_cmd), "deftype", 7))
-        {
-          ELEMENT *root_code = new_element (ET__code);
-
-          add_to_contents_as_array (root_code, parsed_def->args);
-
-          add_to_element_list (&self->tree_to_build, root_code);
-
-          args_formatted = html_convert_tree (self, root_code, 0);
-
-          remove_element_from_list (&self->tree_to_build, root_code);
-          destroy_element (root_code);
-
-          if (args_formatted[strspn (args_formatted, whitespace_chars)] != '\0')
-            {
-              char *attribute_class = html_attribute_class (self, "code",
-                                              &def_code_arguments_classes);
-              int status;
-              int omit_def_name_space = lookup_extra_integer (element,
-                                              "omit_def_name_space", &status);
-              if (omit_def_name_space <= 0)
-                text_append_n (&def_call, " ", 1);
-              text_append (&def_call, attribute_class);
-              free (attribute_class);
-              text_append_n (&def_call, ">", 1);
-              text_append (&def_call, args_formatted);
-              text_append_n (&def_call, "</code>", 7);
-            }
-        }
-      else
-        {
-          html_set_code_context (self, 0);
-          args_formatted = html_convert_tree (self, parsed_def->args, 0);
-          html_pop_code_context (self);
-          if (args_formatted[strspn (args_formatted, whitespace_chars)] != '\0')
-            {
-              char *attribute_class = html_attribute_class (self, "var",
-                                              &def_var_arguments_classes);
-              int status;
-              int omit_def_name_space = lookup_extra_integer (element,
-                                              "omit_def_name_space", &status);
-              if (omit_def_name_space <= 0)
-                text_append_n (&def_call, " ", 1);
-              text_append (&def_call, attribute_class);
-              free (attribute_class);
-              text_append_n (&def_call, ">", 1);
-              text_append (&def_call, args_formatted);
-              text_append_n (&def_call, "</var>", 6);
-            }
-        }
-      free (args_formatted);
-    }
-
-  if (self->conf->DEF_TABLE.integer > 0)
-    {
-      ELEMENT *category_tree
-         = definition_category_tree (self->conf, element);
-
-      attribute_class = html_attribute_class (self, "tr", classes);
-      destroy_strings_list (classes);
-      text_append (result, attribute_class);
-      free (attribute_class);
-      if (index_id && strlen (index_id) && !html_in_multi_expanded (self))
-        text_printf (result, " id=\"%s\"", index_id);
-      text_append_n (result, ">", 1);
-
-      attribute_class = html_attribute_class (self, "td",
-                                               &call_def_classes);
-      text_append (result, attribute_class);
-      free (attribute_class);
-      text_append_n (result, ">", 1);
-      text_append_n (result, def_call.text, def_call.end);
-      free (def_call.text);
-      text_append_n (result, "</td>", 5);
-
-      attribute_class = html_attribute_class (self, "td",
-                                              &category_def_classes);
-      text_append (result, attribute_class);
-      free (attribute_class);
-      text_append_n (result, ">[", 2);
-
-      if (category_tree)
-        {
-          add_to_element_list (&self->tree_to_build, category_tree);
-          convert_to_html_internal (self, category_tree, result, 0);
-          remove_element_from_list (&self->tree_to_build, category_tree);
-          destroy_element_and_children (category_tree);
-        }
-      text_append_n (result, "]</td></tr>\n", 12);
-      return;
-    }
-
-  attribute_class = html_attribute_class (self, "dt", classes);
-  destroy_strings_list (classes);
-  text_append (result, attribute_class);
-  free (attribute_class);
-  if (index_id && strlen (index_id) && !html_in_multi_expanded (self))
-    text_printf (result, " id=\"%s\"", index_id);
-  text_append_n (result, ">", 1);
-
-  if (parsed_def->category)
-    {
-      ELEMENT *category_tree = 0;
-      NAMED_STRING_ELEMENT_LIST *substrings
-                                   = new_named_string_element_list ();
-      ELEMENT *category_copy = copy_tree (parsed_def->category);
-
-      add_element_to_named_string_element_list (substrings,
-                                            "category", category_copy);
-      if (parsed_def->class)
-        {
-          ELEMENT *class_copy = copy_tree (parsed_def->class);
-          add_element_to_named_string_element_list (substrings,
-                                            "class", class_copy);
-
-          if (base_cmd == CM_deftypeop && parsed_def->type
-              && !strcmp (self->conf->deftypefnnewline.string, "on"))
-            {
-               category_tree
-                  = html_gdt_tree ("{category} on @code{{class}}:@* ",
-                                   self->document, self, substrings, 0, 0);
-            }
-          else if (base_cmd == CM_defop || base_cmd == CM_deftypeop)
-            {
-               category_tree
-                  = html_gdt_tree ("{category} on @code{{class}}: ",
-                                   self->document, self, substrings, 0, 0);
-            }
-          else if (base_cmd == CM_defcv || base_cmd == CM_deftypecv)
-            {
-               category_tree
-                  = html_gdt_tree ("{category} of @code{{class}}: ",
-                                   self->document, self, substrings, 0, 0);
-            }
-        }
-      else
-        {
-          if ((base_cmd == CM_deftypefn || base_cmd == CM_deftypeop)
-              && parsed_def->type
-              && !strcmp (self->conf->deftypefnnewline.string, "on"))
-            {
-              category_tree
-                  = html_gdt_tree ("{category}:@* ",
-                                   self->document, self, substrings, 0, 0);
-            }
-          else
-            {
-              category_tree
-                  = html_gdt_tree ("{category}: ",
-                                   self->document, self, substrings, 0, 0);
-            }
-        }
-      destroy_named_string_element_list (substrings);
-
-      if (category_tree)
-        {
-          char *attribute_open = html_attribute_class (self, "span",
-                                             &category_def_classes);
-          size_t open_len = strlen (attribute_open);
-          if (open_len)
-            {
-              text_append_n (result, attribute_open, open_len);
-              text_append_n (result, ">", 1);
-            }
-          free (attribute_open);
-          add_to_element_list (&self->tree_to_build, category_tree);
-          convert_to_html_internal (self, category_tree, result, 0);
-          remove_element_from_list (&self->tree_to_build, category_tree);
-          destroy_element_and_children (category_tree);
-          if (open_len)
-            text_append_n (result, "</span>", 7);
-        }
-    }
-
-  destroy_parsed_def (parsed_def);
-
-  anchor = get_copiable_anchor (self, index_id);
-
-  if (anchor)
-    text_append_n (result, "<span>", 6);
-
-  text_append_n (result, def_call.text, def_call.end);
-  free (def_call.text);
-  if (anchor)
-    {
-      text_append (result, anchor);
-      text_append_n (result, "</span>", 7);
-    }
-
-  text_append_n (result, "</dt>\n", 6);
-
-  free (anchor);
-}
-
-void
-convert_table_term_type (CONVERTER *self, const enum element_type type,
-                        const ELEMENT *element, const char *content,
-                        TEXT *result)
-{
-  if (content)
-    {
-      text_append (result, "<dt>");
-      text_append (result, content);
-    }
-}
-
-void
-convert_row_type (CONVERTER *self, const enum element_type type,
-                  const ELEMENT *element, const char *content,
-                  TEXT *result)
-{
-  if (html_in_string (self))
-    {
-      if (content)
-        text_append (result, content);
-    }
-
-  if (!content || content[strspn (content, whitespace_chars)] == '\0')
-    return;
-  else
-    {
-      text_append (result, "<tr>");
-      text_append (result, content);
-      text_append (result, "</tr>");
-
-      if (element->contents.number > 0
-          && element->contents.list[0]->cmd != CM_headitem)
-      /* if headitem, end of line added in _convert_multitable_head_type */
-        text_append (result, "\n");
-    }
+  return result;
 }
 
 static void
@@ -8310,8 +8471,10 @@ convert_style_command (CONVERTER *self, const enum command_id cmd,
         {
           text_append (result, open);
           text_append_n (result, ">", 1);
-          free (open);
         }
+
+      if (open)
+        free (open);
 
       text_append (result, args_formatted->args[0].formatted[AFT_type_normal]);
 
@@ -9070,6 +9233,7 @@ html_accent_entities_html_accent_internal (CONVERTER *self, const char *text,
       if (str_len != 1 || !isascii_alnum (*text))
         {
           int w_len = word_bytes_len_multibyte (text);
+          /* not only alphanumeric characters, do not change case */
           if (w_len != str_len)
             set_case = 0;
         }
@@ -9083,12 +9247,14 @@ html_accent_entities_html_accent_internal (CONVERTER *self, const char *text,
   /* do not return a dotless i or j as such if it is further composed
      with an accented letter, return the letter as is */
   if (element->cmd == CM_dotless
+  /* corresponds to perl exists unicode_accented_letters{accent}->{text} */
       && (!strcmp (text_set, "i") || !strcmp (text_set, "j")))
     {
       if (element->parent && element->parent->parent
           && element->parent->parent->cmd)
         {
-          enum command_id p_cmd = element->parent->parent->cmd;
+          enum command_id p_cmd
+            = element_builtin_cmd (element->parent->parent);
           if (builtin_command_data[p_cmd].flags & CF_accent
               && p_cmd != CM_tieaccent)
             {
@@ -9859,9 +10025,6 @@ convert_raw_command (CONVERTER *self, const enum command_id cmd,
       return;
     }
 
-  /* TODO the message is not marked as a translatable message.  Not
-     such an issue since the perl message is, but it could be problematic
-     if the perl code is removed. */
   noticed_line_warn (self, element, "raw format %s is not converted",
                      element_command_name (element));
                 //builtin_command_name (cmd));
@@ -10758,6 +10921,8 @@ convert_float_command (CONVERTER *self, const enum command_id cmd,
                   free (prepended_text);
                   prepended_text = 0;
                 }
+              else
+                free (cancelled_prepended);
             }
         }
       if (prepended_text && strlen (prepended_text))
@@ -10814,8 +10979,10 @@ convert_quotation_command (CONVERTER *self, const enum command_id cmd,
 {
   ELEMENT_LIST *authors;
 
-  html_cancel_pending_formatted_inline_content (self,
+  char *cancelled = html_cancel_pending_formatted_inline_content (self,
                                             builtin_command_name (cmd));
+  if (cancelled)
+    free (cancelled);
 
   if (!html_in_string (self))
     {
@@ -11267,7 +11434,7 @@ convert_item_command (CONVERTER *self, const enum command_id cmd,
       return;
     }
 
- if (element->parent && element->parent->cmd == CM_itemize)
+ if (element->parent && element_builtin_cmd (element->parent) == CM_itemize)
     {
       if (content
           && content[strspn (content, whitespace_chars)] != '\0')
@@ -11275,7 +11442,8 @@ convert_item_command (CONVERTER *self, const enum command_id cmd,
           text_printf (result, "<li>%s</li>", content);
         }
     }
-  else if (element->parent && element->parent->cmd == CM_enumerate)
+  else if (element->parent
+           && element_builtin_cmd (element->parent) == CM_enumerate)
     {
       if (content
           && content[strspn (content, whitespace_chars)] != '\0')
@@ -11355,6 +11523,7 @@ convert_item_command (CONVERTER *self, const enum command_id cmd,
             {
               text_append (result, anchor);
               text_append_n (result, "</span>", 7);
+              free (anchor);
             }
 
           text_append_n (result, "</dt>\n", 6);
@@ -11372,6 +11541,27 @@ convert_item_command (CONVERTER *self, const enum command_id cmd,
     }
 }
 
+static char *
+trim_trailing_content (const char *content)
+{
+  char *trimmed_content = strdup (content);
+  size_t str_len = strlen (trimmed_content);
+  if (str_len > 0)
+    {
+      char *q = trimmed_content + str_len - 1;
+      while (q > trimmed_content)
+        {
+          if (!strchr (whitespace_chars, *q))
+            {
+              break;
+            }
+          q--;
+        }
+      *(q +1) = '\0';
+    }
+  return trimmed_content;
+}
+
 void
 convert_tab_command (CONVERTER *self, const enum command_id cmd,
                     const ELEMENT *element,
@@ -11384,28 +11574,14 @@ convert_tab_command (CONVERTER *self, const enum command_id cmd,
   ELEMENT *row;
   ELEMENT *multitable;
   ELEMENT *columnfractions;
+  enum command_id first_row_cmd;
   const char *html_element = "td";
 
   if (content)
     {
       const char *p = content;
-      size_t str_len;
       p += strspn (p, whitespace_chars);
-      trimmed_content = strdup (p);
-      str_len = strlen (trimmed_content);
-      if (str_len > 0)
-        {
-          char *q = trimmed_content + str_len - 1;
-          while (q > trimmed_content)
-            {
-              if (!strchr (whitespace_chars, *q))
-                {
-                  break;
-                }
-              q--;
-            }
-          *(q +1) = '\0';
-        }
+      trimmed_content = trim_trailing_content (p);
     }
   else
     trimmed_content = strdup ("");
@@ -11418,7 +11594,8 @@ convert_tab_command (CONVERTER *self, const enum command_id cmd,
     }
 
   row = element->parent;
-  if (row->contents.list[0]->cmd == CM_headitem)
+  first_row_cmd = element_builtin_cmd (row->contents.list[0]);
+  if (first_row_cmd == CM_headitem)
     html_element = "th";
 
   text_append_n (result, "<", 1);
@@ -12065,6 +12242,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
       if (!index_element_id)
     /* to avoid duplicate names, use a prefix that cannot happen in anchors */
         index_element_id = "t_i";
+      free (root_unit);
     }
 
   letter_id = (char **) malloc (index_sorted->letter_number * sizeof (char *));
@@ -12165,7 +12343,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
           ELEMENT_LIST *other_subentries_tree = 0;
           int subentry_level = 1;
           ELEMENT *entry_content_element;
-          ELEMENT *entry_ref_tree = new_element (ET_NONE);
+          ELEMENT *entry_ref_tree;
           INDEX_ENTRY *index_entry_ref = letter_entry->entries[j];
           ELEMENT *main_entry_element = index_entry_ref->entry_element;
           ELEMENT *index_entry_info = lookup_extra_element (main_entry_element,
@@ -12187,6 +12365,8 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                     continue;
                 }
             }
+
+          entry_ref_tree = new_element (ET_NONE);
 
           memset (new_normalized_entry_levels, 0,
                   sizeof (char *) * (SUBENTRIES_MAX_LEVEL +1));
@@ -12218,174 +12398,6 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
           /* index entry with @seeentry or @seealso */
           seeentry = lookup_extra_element (main_entry_element, "seeentry");
           seealso = lookup_extra_element (main_entry_element, "seealso");
-          if (seeentry || seealso)
-            {
-              NAMED_STRING_ELEMENT_LIST *substrings
-                                       = new_named_string_element_list ();
-              ELEMENT *referred_tree;
-              ELEMENT *referred_entry;
-              char *entry;
-              char *reference = 0;
-
-              if (seeentry)
-                referred_entry = seeentry;
-              else
-                referred_entry = seealso;
-
-              if (in_code)
-                referred_tree = new_element (ET__code);
-              else
-                referred_tree = new_element (ET_NONE);
-
-              if (referred_entry->args.number > 0
-                  && referred_entry->args.list[0]->contents.number > 0)
-                {
-                  ELEMENT *referred_copy
-                     = copy_tree (referred_entry->args.list[0]);
-                  add_to_contents_as_array (referred_tree, referred_copy);
-                }
-
-              if (seeentry)
-                {
-                  char *convert_info;
-                  ELEMENT *result_tree;
-                  ELEMENT *entry_ref_tree_copy = copy_tree (entry_ref_tree);
-                  add_element_to_named_string_element_list (substrings,
-                                    "main_index_entry", entry_ref_tree_copy);
-                  add_element_to_named_string_element_list (substrings,
-                                             "seeentry", referred_tree);
-                  if (in_code)
-                    {
-       /* TRANSLATORS: redirect to another index entry */
-       /* TRANSLATORS: @: is discardable and is used to avoid a msgfmt error */
-                      result_tree = html_gdt_tree (
-       "@code{{main_index_entry}}, @emph{See@:} @code{{seeentry}}",
-                                      self->document, self, substrings, 0, 0);
-                    }
-                  else
-                    {
-        /* TRANSLATORS: redirect to another index entry */
-        /* TRANSLATORS: @: is discardable and used to avoid a msgfmt error */
-                      result_tree = html_gdt_tree (
-                    "{main_index_entry}, @emph{See@:} {seeentry}",
-                                      self->document, self, substrings, 0, 0);
-                    }
-                  xasprintf (&convert_info,
-                             "index %s l %s index entry %zu seeentry",
-                             index_name, letter, entry_nr -1);
-                  add_to_element_list (&self->tree_to_build, result_tree);
-                  if (*formatted_index_entry_nr > 1)
-                    {
-                      /* call with multiple_pass argument */
-                      entry = convert_tree_new_formatting_context (self,
-                             result_tree, convert_info, multiple_pass_str, 0, 0);
-                    }
-                  else
-                    {
-                      entry = html_convert_tree (self, result_tree,
-                                                 convert_info);
-                    }
-                  remove_element_from_list (&self->tree_to_build, result_tree);
-                  destroy_element_and_children (result_tree);
-                  free (convert_info);
-
-                  add_string (entry_class_seeentry, entry_classes);
-                  add_string (section_class_seeentry, section_classes);
-                }
-              else
-                {
-                  /* TRANSLATORS: refer to another index entry */
-                  ELEMENT *reference_tree;
-                  char *conv_str_entry;
-                  char *conv_str_reference;
-
-                  add_element_to_named_string_element_list (substrings,
-                                             "see_also_entry", referred_tree);
-                  reference_tree = html_gdt_tree (
-                                  "@emph{See also} {see_also_entry}",
-                                      self->document, self, substrings, 0, 0);
-
-                  xasprintf (&conv_str_entry,
-                             "index %s l %s index entry %zu (with seealso)",
-                             index_name, letter, entry_nr -1);
-                  xasprintf (&conv_str_reference,
-                             "index %s l %s index entry %zu seealso",
-                             index_name, letter, entry_nr -1);
-
-                  add_to_element_list (&self->tree_to_build, entry_ref_tree);
-                  add_to_element_list (&self->tree_to_build, reference_tree);
-                  if (*formatted_index_entry_nr > 1)
-                    {
-                      /* call with multiple_pass argument */
-                      entry = convert_tree_new_formatting_context (self,
-                                          entry_ref_tree, conv_str_entry,
-                                          multiple_pass_str, 0, 0);
-                      reference = convert_tree_new_formatting_context (self,
-                                          reference_tree, conv_str_reference,
-                                          multiple_pass_str, 0, 0);
-                    }
-                  else
-                    {
-                      entry = html_convert_tree (self, entry_ref_tree,
-                                                 conv_str_entry);
-                      reference = html_convert_tree (self, reference_tree,
-                                                    conv_str_reference);
-                    }
-                  remove_element_from_list (&self->tree_to_build,
-                                            reference_tree);
-                  remove_element_from_list (&self->tree_to_build,
-                                            entry_ref_tree);
-                  destroy_element_and_children (reference_tree);
-
-                  free (conv_str_entry);
-                  free (conv_str_reference);
-
-                  add_string (cmd_index_entry_class, entry_classes);
-                  add_string (section_class_seealso, section_classes);
-                }
-
-              destroy_named_string_element_list (substrings);
-
-              text_append_n (&entries_text, "<tr><td></td>", 13);
-              attribute_class = html_attribute_class (self, "td", entry_classes);
-              text_append (&entries_text, attribute_class);
-              clear_strings_list (entry_classes);
-              free (attribute_class);
-              text_append_n (&entries_text, ">", 1);
-
-              if (!seeentry && in_code)
-                text_append_n (&entries_text, "<code>", 6);
-              text_append (&entries_text, entry);
-              free (entry);
-              if (!seeentry)
-                {
-                  if (in_code)
-                    text_append_n (&entries_text, "</code>", 7);
-                  text_append (&entries_text,
-                               self->conf->INDEX_ENTRY_COLON.string);
-                }
-              text_append_n (&entries_text, "</td>", 5);
-
-              attribute_class
-                 = html_attribute_class (self, "td", section_classes);
-              text_append (&entries_text, attribute_class);
-              clear_strings_list (section_classes);
-              free (attribute_class);
-              text_append_n (&entries_text, ">", 1);
-              if (reference)
-                {
-                  text_append (&entries_text, reference);
-                  free (reference);
-                }
-              text_append_n (&entries_text, "</td></tr>\n", 11);
-              destroy_element (entry_ref_tree);
-              if (*formatted_index_entry_nr > 1)
-                free (multiple_pass_str);
-
-              clear_normalized_entry_levels (prev_normalized_entry_levels);
-
-              continue;
-            }
 
           memset (entry_trees, 0, sizeof (ELEMENT *) * SUBENTRIES_MAX_LEVEL);
 
@@ -12452,11 +12464,16 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                 {
                   char *convert_info;
                   char *entry;
+
                   if (!with_new_formatted_entry
                       && prev_normalized_entry_levels[level]
                       && !strcmp (prev_normalized_entry_levels[level],
                                   new_normalized_entry_levels[level]))
-                    continue;
+                    {
+                      if (level > 0)
+                        destroy_element (entry_trees[level]);
+                      continue;
+                    }
 
                   with_new_formatted_entry = 1;
                   xasprintf (&convert_info,
@@ -12468,8 +12485,6 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                   if (*formatted_index_entry_nr > 1)
                     {
                       /* call with multiple_pass argument */
-                      xasprintf (&multiple_pass_str, "index-formatted-%d",
-                                                    *formatted_index_entry_nr);
                       entry = convert_tree_new_formatting_context (self,
                                            entry_trees[level], convert_info,
                                            multiple_pass_str, 0, 0);
@@ -12480,8 +12495,11 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                                                  convert_info);
                     }
                   if (level > 0)
-                    remove_element_from_list (&self->tree_to_build,
-                                              entry_trees[level]);
+                    {
+                      remove_element_from_list (&self->tree_to_build,
+                                                entry_trees[level]);
+                      destroy_element (entry_trees[level]);
+                    }
                   free (convert_info);
 
                   add_string (cmd_index_entry_class, entry_classes);
@@ -12514,123 +12532,294 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                 }
             }
       /* last entry, always converted, associated to chapter/node and
-         with an hyperlink */
+         with an hyperlink or to seeentry/seealso */
           entry_tree = entry_trees[last_entry_level];
-          xasprintf (&convert_info, "index %s l %s index entry %zu",
-                     index_name, letter, entry_nr -1);
 
-          if (last_entry_level > 0)
-             add_to_element_list (&self->tree_to_build, entry_tree);
-          if (*formatted_index_entry_nr > 1)
+          if (seeentry || seealso)
             {
-              /* call with multiple_pass argument */
-              entry = convert_tree_new_formatting_context (self,
-                                   entry_tree, convert_info,
-                                   multiple_pass_str, 0, 0);
+              NAMED_STRING_ELEMENT_LIST *substrings
+                                       = new_named_string_element_list ();
+              ELEMENT *referred_tree;
+              ELEMENT *referred_entry;
+              char *entry;
+              char *reference = 0;
 
-              free (multiple_pass_str);
-            }
-          else
-            {
-              entry = html_convert_tree (self, entry_tree,
-                                         convert_info);
-            }
-          if (last_entry_level > 0)
-            remove_element_from_list (&self->tree_to_build, entry_tree);
-          free (convert_info);
+              if (seeentry)
+                referred_entry = seeentry;
+              else
+                referred_entry = seealso;
 
-          if (other_subentries_tree)
-            free_comma_index_subentries_tree (other_subentries_tree);
-          destroy_element (entry_ref_tree);
+              if (in_code)
+                referred_tree = new_element (ET__code);
+              else
+                referred_tree = new_element (ET_NONE);
 
-          if (last_entry_level == 0
-              && (!entry || entry[strspn (entry, whitespace_chars)] == '\0'))
-            {
-              free (new_normalized_entry_levels[0]);
-              continue;
-            }
+              if (referred_entry->args.number > 0
+                  && referred_entry->args.list[0]->contents.number > 0)
+                {
+                  ELEMENT *referred_copy
+                     = copy_tree (referred_entry->args.list[0]);
+                  add_to_contents_as_array (referred_tree, referred_copy);
+                }
 
-          for (level = 0; level < SUBENTRIES_MAX_LEVEL; level++)
-            {
-              free (prev_normalized_entry_levels[level]);
-              prev_normalized_entry_levels[level]
-                = new_normalized_entry_levels[level];
-            }
+              if (seeentry)
+                {
+                  char *convert_info;
+                  ELEMENT *result_tree;
+                  ELEMENT *entry_tree_copy = copy_tree (entry_tree);
+                  add_element_to_named_string_element_list (substrings,
+                                    "main_index_entry", entry_tree_copy);
+                  add_element_to_named_string_element_list (substrings,
+                                             "seeentry", referred_tree);
+                  if (in_code)
+                    {
+       /* TRANSLATORS: redirect to another index entry */
+       /* TRANSLATORS: @: is discardable and is used to avoid a msgfmt error */
+                      result_tree = html_gdt_tree (
+       "@code{{main_index_entry}}, @emph{See@:} @code{{seeentry}}",
+                                      self->document, self, substrings, 0, 0);
+                    }
+                  else
+                    {
+        /* TRANSLATORS: redirect to another index entry */
+        /* TRANSLATORS: @: is discardable and used to avoid a msgfmt error */
+                      result_tree = html_gdt_tree (
+                    "{main_index_entry}, @emph{See@:} {seeentry}",
+                                      self->document, self, substrings, 0, 0);
+                    }
+                  xasprintf (&convert_info,
+                             "index %s l %s index entry %zu seeentry",
+                             index_name, letter, entry_nr -1);
+                  add_to_element_list (&self->tree_to_build, result_tree);
+                  if (*formatted_index_entry_nr > 1)
+                    {
+                      /* call with multiple_pass argument */
+                      entry = convert_tree_new_formatting_context (self,
+                             result_tree, convert_info, multiple_pass_str, 0, 0);
+                    }
+                  else
+                    {
+                      entry = html_convert_tree (self, result_tree,
+                                                 convert_info);
+                    }
+                  remove_element_from_list (&self->tree_to_build, result_tree);
+                  destroy_element_and_children (result_tree);
+                  free (convert_info);
 
-          if (index_entry_ref->entry_associated_element)
-            target_element = index_entry_ref->entry_associated_element;
-          else
-            target_element = main_entry_element;
+                  add_string (entry_class_seeentry, entry_classes);
+                  add_string (section_class_seeentry, section_classes);
+                }
+              else
+                {
+                  /* TRANSLATORS: refer to another index entry */
+                  ELEMENT *reference_tree;
+                  char *conv_str_entry;
+                  char *conv_str_reference;
 
-          entry_href = html_command_href (self, target_element, 0, 0, 0);
+                  add_element_to_named_string_element_list (substrings,
+                                             "see_also_entry", referred_tree);
+                  reference_tree = html_gdt_tree (
+                                  "@emph{See also} {see_also_entry}",
+                                      self->document, self, substrings, 0, 0);
 
-          add_string (cmd_index_entry_class, entry_classes);
-          if (last_entry_level > 0)
-            {
-              char *index_entry_level;
-              xasprintf (&index_entry_level, "index-entry-level-%d",
-                                             last_entry_level);
-              add_string (index_entry_level, entry_classes);
-              free (index_entry_level);
-            }
-          text_append_n (&entries_text, "<tr><td></td>", 13);
-          attribute_class = html_attribute_class (self, "td",
-                                                  entry_classes);
-          text_append (&entries_text, attribute_class);
-          clear_strings_list (entry_classes);
-          free (attribute_class);
-          text_append_n (&entries_text, ">", 1);
+                  xasprintf (&conv_str_entry,
+                             "index %s l %s index entry %zu (with seealso)",
+                             index_name, letter, entry_nr -1);
+                  xasprintf (&conv_str_reference,
+                             "index %s l %s index entry %zu seealso",
+                             index_name, letter, entry_nr -1);
 
-          text_printf (&entries_text, "<a href=\"%s\">", entry_href);
-          free (entry_href);
-          if (in_code)
-            text_append_n (&entries_text, "<code>", 6);
-          if (entry)
-            {
+                  add_to_element_list (&self->tree_to_build, entry_tree);
+                  add_to_element_list (&self->tree_to_build, reference_tree);
+                  if (*formatted_index_entry_nr > 1)
+                    {
+                      /* call with multiple_pass argument */
+                      entry = convert_tree_new_formatting_context (self,
+                                          entry_tree, conv_str_entry,
+                                          multiple_pass_str, 0, 0);
+                      reference = convert_tree_new_formatting_context (self,
+                                          reference_tree, conv_str_reference,
+                                          multiple_pass_str, 0, 0);
+                    }
+                  else
+                    {
+                      entry = html_convert_tree (self, entry_tree,
+                                                 conv_str_entry);
+                      reference = html_convert_tree (self, reference_tree,
+                                                    conv_str_reference);
+                    }
+                  remove_element_from_list (&self->tree_to_build,
+                                            reference_tree);
+                  remove_element_from_list (&self->tree_to_build,
+                                            entry_tree);
+                  destroy_element_and_children (reference_tree);
+
+                  free (conv_str_entry);
+                  free (conv_str_reference);
+
+                  add_string (cmd_index_entry_class, entry_classes);
+                  add_string (section_class_seealso, section_classes);
+                }
+
+              destroy_named_string_element_list (substrings);
+
+              text_append_n (&entries_text, "<tr><td></td>", 13);
+              if (last_entry_level > 0)
+                {
+                  char *index_entry_level;
+                  xasprintf (&index_entry_level, "index-entry-level-%d",
+                                                 last_entry_level);
+                  add_string (index_entry_level, entry_classes);
+                  free (index_entry_level);
+                }
+              attribute_class = html_attribute_class (self, "td", entry_classes);
+              text_append (&entries_text, attribute_class);
+              clear_strings_list (entry_classes);
+              free (attribute_class);
+              text_append_n (&entries_text, ">", 1);
+
+              if (!seeentry && in_code)
+                text_append_n (&entries_text, "<code>", 6);
               text_append (&entries_text, entry);
               free (entry);
-            }
-          if (in_code)
-            text_append_n (&entries_text, "</code>", 7);
-          text_append_n (&entries_text, "</a>", 4);
-          text_append (&entries_text, self->conf->INDEX_ENTRY_COLON.string);
-          text_append_n (&entries_text, "</td>", 5);
-
-          if (self->conf->NODE_NAME_IN_INDEX.integer > 0)
-            {
-              associated_command = lookup_extra_element (main_entry_element,
-                                                        "element_node");
-              if (!associated_command)
-                associated_command = html_command_node (self, target_element);
-
-              if (!associated_command && *formatted_index_entry_nr == 1)
+              if (!seeentry)
                 {
-                  char *element_region
-                   = lookup_extra_string (main_entry_element, "element_region");
-        /* do not warn if the entry is in a special region, like titlepage */
-                  if (!element_region)
+                  if (in_code)
+                    text_append_n (&entries_text, "</code>", 7);
+                  text_append (&entries_text,
+                               self->conf->INDEX_ENTRY_COLON.string);
+                }
+              text_append_n (&entries_text, "</td>", 5);
+
+              attribute_class
+                 = html_attribute_class (self, "td", section_classes);
+              text_append (&entries_text, attribute_class);
+              clear_strings_list (section_classes);
+              free (attribute_class);
+              text_append_n (&entries_text, ">", 1);
+              if (reference)
+                {
+                  text_append (&entries_text, reference);
+                  free (reference);
+                }
+              text_append_n (&entries_text, "</td></tr>\n", 11);
+
+            }
+          else
+            {
+              xasprintf (&convert_info, "index %s l %s index entry %zu",
+                         index_name, letter, entry_nr -1);
+
+              if (last_entry_level > 0)
+                 add_to_element_list (&self->tree_to_build, entry_tree);
+              if (*formatted_index_entry_nr > 1)
+                {
+                  /* call with multiple_pass argument */
+                  entry = convert_tree_new_formatting_context (self,
+                                       entry_tree, convert_info,
+                                       multiple_pass_str, 0, 0);
+                }
+              else
+                {
+                  entry = html_convert_tree (self, entry_tree,
+                                             convert_info);
+                }
+              if (last_entry_level > 0)
+                {
+                  remove_element_from_list (&self->tree_to_build, entry_tree);
+                }
+              free (convert_info);
+
+              if (last_entry_level == 0
+                  && (!entry
+                      || entry[strspn (entry, whitespace_chars)] == '\0'))
+                {
+                  free (entry);
+                  free (new_normalized_entry_levels[0]);
+                  new_normalized_entry_levels[0] = 0;
+                }
+              else
+                {
+                  if (index_entry_ref->entry_associated_element)
+                    target_element = index_entry_ref->entry_associated_element;
+                  else
+                    target_element = main_entry_element;
+
+                  entry_href
+                    = html_command_href (self, target_element, 0, 0, 0);
+
+                  add_string (cmd_index_entry_class, entry_classes);
+                  if (last_entry_level > 0)
                     {
+                      char *index_entry_level;
+                      xasprintf (&index_entry_level, "index-entry-level-%d",
+                                                     last_entry_level);
+                      add_string (index_entry_level, entry_classes);
+                      free (index_entry_level);
+                    }
+                  text_append_n (&entries_text, "<tr><td></td>", 13);
+                  attribute_class = html_attribute_class (self, "td",
+                                                          entry_classes);
+                  text_append (&entries_text, attribute_class);
+                  clear_strings_list (entry_classes);
+                  free (attribute_class);
+                  text_append_n (&entries_text, ">", 1);
+
+                  text_printf (&entries_text, "<a href=\"%s\">", entry_href);
+                  free (entry_href);
+                  if (in_code)
+                    text_append_n (&entries_text, "<code>", 6);
+                  if (entry)
+                    {
+                      text_append (&entries_text, entry);
+                      free (entry);
+                    }
+                  if (in_code)
+                    text_append_n (&entries_text, "</code>", 7);
+                  text_append_n (&entries_text, "</a>", 4);
+                  text_append (&entries_text,
+                               self->conf->INDEX_ENTRY_COLON.string);
+                  text_append_n (&entries_text, "</td>", 5);
+
+                  if (self->conf->NODE_NAME_IN_INDEX.integer > 0)
+                    {
+                      associated_command
+                          = lookup_extra_element (main_entry_element,
+                                                         "element_node");
+                      if (!associated_command)
+                        associated_command
+                          = html_command_node (self, target_element);
+
+                      if (!associated_command
+                          && *formatted_index_entry_nr == 1)
+                        {
+                          char *element_region
+                           = lookup_extra_string (main_entry_element,
+                                                  "element_region");
+        /* do not warn if the entry is in a special region, like titlepage */
+                          if (!element_region)
+                            {
      /* NOTE _noticed_line_warn is not used as printindex should not
         happen in multiple tree parsing that lead to ignore_notice being set,
         but the error message is printed only for the first entry formatting. */
-                      message_list_command_warn (&self->error_messages,
-                              self->conf,
-                              main_entry_element,
+                              message_list_command_warn (&self->error_messages,
+                                      self->conf,
+                                      main_entry_element,
                 "entry for index `%s' for @printindex %s outside of any node",
-                          entry_index->name, index_name);
-
+                                  entry_index->name, index_name);
+                            }
+                        }
                     }
-                }
-            }
 
-          if (!associated_command)
-            {
-              associated_command = html_command_root_element_command (self,
+                  if (!associated_command)
+                    {
+                      associated_command
+                         = html_command_root_element_command (self,
                                                               target_element);
-              if (!associated_command)
-                {
-                  associated_command
-                    = self->global_units_directions[D_Top]->unit_command;
+                      if (!associated_command)
+                        {
+                          associated_command
+                           = self->global_units_directions[D_Top]->unit_command;
 
          /* NOTE the warning here catches the most relevant cases of
             index entry that is not associated to the right command, which
@@ -12640,58 +12829,81 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
             NODE_NAME_IN_INDEX may be undef even with USE_NODES set if the
             converter is called as convert() as in the test suite */
 
-                  if (self->conf->NODE_NAME_IN_INDEX.integer == 0
-                      && *formatted_index_entry_nr == 1)
-                    {
-                      char *element_region
-                       = lookup_extra_string (main_entry_element,
-                                              "element_region");
+                          if (self->conf->NODE_NAME_IN_INDEX.integer == 0
+                              && *formatted_index_entry_nr == 1)
+                            {
+                              char *element_region
+                               = lookup_extra_string (main_entry_element,
+                                                      "element_region");
         /* do not warn if the entry is in a special region, like titlepage */
-                      if (!element_region)
-                        {
+                              if (!element_region)
+                                {
       /* NOTE _noticed_line_warn is not used as printindex should not
          happen in multiple tree parsing that lead to ignore_notice being set,
          but the error message is printed only for the first entry formatting.
          NOTE the index entry may be associated to a node in that case. */
-                      message_list_command_warn (&self->error_messages,
-                              self->conf,
-                              main_entry_element,
+                              message_list_command_warn (&self->error_messages,
+                                      self->conf,
+                                      main_entry_element,
              "entry for index `%s' for @printindex %s outside of any section",
-                          entry_index->name, index_name);
+                                  entry_index->name, index_name);
+                                }
+                            }
                         }
                     }
+
+                  add_string (cmd_index_section_class, section_classes);
+                  attribute_class
+                     = html_attribute_class (self, "td", section_classes);
+                  text_append (&entries_text, attribute_class);
+                  free (attribute_class);
+                  clear_strings_list (section_classes);
+                  text_append_n (&entries_text, ">", 1);
+
+                  if (associated_command)
+                    {
+                      char *associated_command_href
+                       = html_command_href (self, associated_command, 0, 0, 0);
+                      char *associated_command_text
+                       = html_command_text (self, associated_command, 0);
+
+                      if (associated_command_href)
+                        {
+                          text_printf (&entries_text, "<a href=\"%s\">%s</a>",
+                            associated_command_href, associated_command_text);
+                        }
+                      else
+                        {
+                          text_append (&entries_text, associated_command_text);
+                        }
+
+                      free (associated_command_text);
+                      free (associated_command_href);
+                    }
+                  text_append_n (&entries_text, "</td></tr>\n", 11);
                 }
             }
 
-          add_string (cmd_index_section_class, section_classes);
-          attribute_class
-             = html_attribute_class (self, "td", section_classes);
-          text_append (&entries_text, attribute_class);
-          free (attribute_class);
-          clear_strings_list (section_classes);
-          text_append_n (&entries_text, ">", 1);
-
-          if (associated_command)
+          if (new_normalized_entry_levels[0] != 0)
             {
-              char *associated_command_href
-                 = html_command_href (self, associated_command, 0, 0, 0);
-              char *associated_command_text
-                 = html_command_text (self, associated_command, 0);
-
-              if (associated_command_href)
+              for (level = 0; level < SUBENTRIES_MAX_LEVEL; level++)
                 {
-                  text_printf (&entries_text, "<a href=\"%s\">%s</a>",
-                          associated_command_href, associated_command_text);
+                  free (prev_normalized_entry_levels[level]);
+                  prev_normalized_entry_levels[level]
+                    = new_normalized_entry_levels[level];
                 }
-              else
-                {
-                  text_append (&entries_text, associated_command_text);
-                }
-
-              free (associated_command_text);
-              free (associated_command_href);
             }
-          text_append_n (&entries_text, "</td></tr>\n", 11);
+
+          if (last_entry_level > 0)
+            destroy_element (entry_tree);
+
+          if (other_subentries_tree)
+            free_comma_index_subentries_tree (other_subentries_tree);
+
+          destroy_element (entry_ref_tree);
+
+          if (*formatted_index_entry_nr > 1)
+            free (multiple_pass_str);
         }
       clear_normalized_entry_levels (prev_normalized_entry_levels);
 
@@ -12918,148 +13130,6 @@ convert_informative_command (CONVERTER *self, const enum command_id cmd,
 }
 
 void
-contents_shortcontents_in_title (CONVERTER *self, TEXT *result)
-{
-  if (self->document->sections_list
-      && self->document->sections_list->number > 0
-      && !strcmp (self->conf->CONTENTS_OUTPUT_LOCATION.string, "after_title"))
-    {
-      enum command_id contents_cmds[2] = {CM_shortcontents, CM_contents};
-      int i;
-      for (i = 0; i < 2; i++)
-        {
-          int contents_set = 0;
-          enum command_id cmd = contents_cmds[i];
-          OPTION *contents_option_ref = get_command_option (self->conf, cmd);
-          if (contents_option_ref->integer > 0)
-            contents_set = 1;
-          if (contents_set)
-            {
-              char *contents_text
-                = contents_inline_element (self, cmd, 0);
-              if (contents_text)
-                {
-                  text_append (result, contents_text);
-                  text_append (result, self->conf->DEFAULT_RULE.string);
-                  text_append_n (result, "\n", 1);
-                  free (contents_text);
-                }
-            }
-        }
-    }
-}
-
-static void
-format_simpletitle (CONVERTER *self, TEXT *result)
-{
-  char *title_text;
-  char *context_str;
-  STRING_LIST *classes;
-  enum command_id cmd = self->simpletitle_cmd;
-  classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
-  memset (classes, 0, sizeof (STRING_LIST));
-  add_string (builtin_command_name (cmd), classes);
-  xasprintf (&context_str, "%s simpletitle",
-             builtin_command_name (cmd));
-  title_text
-    = convert_tree_new_formatting_context (self,
-        self->simpletitle_tree, context_str, 0, 0, 0);
-  free (context_str);
-  format_heading_text (self, cmd, classes, title_text,
-                                    0, 0, 0, 0, result);
-  destroy_strings_list (classes);
-  free (title_text);
-}
-
-/* Convert @titlepage.  Falls back to simpletitle. */
-char *
-html_default_format_titlepage (CONVERTER *self)
-{
-  int titlepage_text = 0;
-  TEXT result;
-  text_init (&result);
-  text_append (&result, "");
-  if (self->document->global_commands->titlepage)
-    {
-      ELEMENT *tmp = new_element (ET_NONE);
-      tmp->contents = self->document->global_commands->titlepage->contents;
-      convert_to_html_internal (self, tmp, &result, "convert titlepage");
-      tmp->contents.list = 0;
-      destroy_element (tmp);
-      titlepage_text = 1;
-    }
-  else if (self->simpletitle_tree)
-    {
-      format_simpletitle (self, &result);
-      titlepage_text = 1;
-    }
-  if (titlepage_text)
-    {
-      text_append (&result, self->conf->DEFAULT_RULE.string);
-      text_append_n (&result, "\n", 1);
-    }
-  contents_shortcontents_in_title (self, &result);
-  return result.text;
-}
-
-char *
-format_titlepage (CONVERTER *self)
-{
-  FORMATTING_REFERENCE *formatting_reference
-   = &self->current_formatting_references[FR_format_titlepage];
-  if (formatting_reference->status == FRS_status_default_set)
-    {
-      return html_default_format_titlepage (self);
-    }
-  else
-    {
-      return call_formatting_function_format_titlepage (self,
-                                               formatting_reference);
-    }
-}
-
-char *
-html_default_format_title_titlepage (CONVERTER *self)
-{
-  if (self->conf->SHOW_TITLE.integer > 0)
-    {
-      if (self->conf->USE_TITLEPAGE_FOR_TITLE.integer)
-        {
-          return format_titlepage (self);
-        }
-      else
-        {
-          TEXT result;
-          text_init (&result);
-          text_append (&result, "");
-
-          if (self->simpletitle_tree)
-            format_simpletitle (self, &result);
-
-          contents_shortcontents_in_title (self, &result);
-          return result.text;
-        }
-    }
-  return strdup ("");
-}
-
-char *
-format_title_titlepage (CONVERTER *self)
-{
-  FORMATTING_REFERENCE *formatting_reference
-   = &self->current_formatting_references[FR_format_title_titlepage];
-  if (formatting_reference->status == FRS_status_default_set)
-    {
-      return html_default_format_title_titlepage (self);
-    }
-  else
-    {
-      return call_formatting_function_format_title_titlepage (self,
-                                                      formatting_reference);
-    }
-}
-
-void
 convert_contents_command (CONVERTER *self, const enum command_id cmd,
                     const ELEMENT *element,
                     const HTML_ARGS_FORMATTED *args_formatted,
@@ -13091,6 +13161,75 @@ convert_contents_command (CONVERTER *self, const enum command_id cmd,
           free (contents);
         }
     }
+}
+
+void
+convert_def_command (CONVERTER *self, const enum command_id cmd,
+                    const ELEMENT *element,
+                    const HTML_ARGS_FORMATTED *args_formatted,
+                    const char *content, TEXT *result)
+{
+  char *attribute_class;
+  STRING_LIST *classes;
+  enum command_id original_cmd = cmd;
+  char *class;
+
+  if (html_in_string (self))
+    {
+      if (content)
+        text_append (result, content);
+      return;
+    }
+
+  classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+  memset (classes, 0, sizeof (STRING_LIST));
+
+  if (builtin_command_data[cmd].flags & CF_def_alias)
+    {
+      int i;
+      for (i = 0; def_aliases[i].alias ; i++)
+        {
+          if (def_aliases[i].alias == cmd)
+            {
+              original_cmd = def_aliases[i].command;
+              break;
+            }
+        }
+    }
+
+  xasprintf (&class, "first-%s", builtin_command_name (original_cmd));
+  add_string (class, classes);
+  free (class);
+
+  if (cmd != original_cmd)
+    {
+      xasprintf (&class, "first-%s-alias-first-%s", builtin_command_name (cmd),
+                         builtin_command_name (original_cmd));
+      add_string (class, classes);
+      free (class);
+    }
+
+  if (self->conf->DEF_TABLE.integer <= 0)
+    {
+      attribute_class = html_attribute_class (self, "dl", classes);
+      text_append (result, attribute_class);
+      text_append_n (result, ">\n", 2);
+      if (content)
+        text_append (result, content);
+      text_append_n (result, "</dl>\n", 6);
+    }
+  else
+    {
+      attribute_class = html_attribute_class (self, "table", classes);
+      text_append (result, attribute_class);
+      text_append_n (result, " width=\"100%\">\n", 15);
+      if (content)
+        text_append (result, content);
+      text_append_n (result, "</table>\n", 9);
+    }
+
+  free (attribute_class);
+  destroy_strings_list (classes);
 }
 
 
@@ -13141,6 +13280,8 @@ static COMMAND_INTERNAL_CONVERSION commands_internal_conversion_table[] = {
   {CM_table, &convert_xtable_command},
   {CM_ftable, &convert_xtable_command},
   {CM_vtable, &convert_xtable_command},
+  /* other @def* commands are handled together */
+  {CM_defblock, &convert_def_command},
 
   {CM_verbatiminclude, &convert_verbatiminclude_command},
   {CM_sp, &convert_sp_command},
@@ -13256,19 +13397,1370 @@ static COMMAND_INTERNAL_OPEN commands_internal_open_table[] = {
   {0, 0},
 };
 
-/* associate type to the C function implementing the conversion */
-static TYPE_INTERNAL_CONVERSION types_internal_conversion_table[] = {
-  {ET_table_term, &convert_table_term_type},
-  {ET_text, &convert_text},
-  {ET_row, &convert_row_type},
-  {ET_def_line, &convert_def_line_type},
-  {0, 0},
-};
-
 /* associate type to the C function implementing the opening */
 static TYPE_INTERNAL_OPEN types_internal_open_table[] = {
   {ET_paragraph, &open_inline_container_type},
   {ET_preformatted, &open_inline_container_type},
+  {0, 0},
+};
+
+void
+convert_paragraph_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  TEXT content_text;
+  enum command_id align_cmd;
+  char *associated_content
+   = html_get_associated_formatted_inline_content (self, element, 0);
+
+  text_init (&content_text);
+
+  if (associated_content)
+    {
+      text_append (&content_text, associated_content);
+      free (associated_content);
+    }
+  if (content)
+    text_append (&content_text, content);
+
+  if (content_text.end <= 0)
+    {
+      free (content_text.text);
+      return;
+    }
+
+  if (html_paragraph_number (self) == 1)
+    {
+      enum command_id in_format_cmd = html_top_block_command (self);
+      if (in_format_cmd)
+        {
+          /* no first paragraph in those environment to avoid extra spacing */
+          if (in_format_cmd == CM_itemize
+              || in_format_cmd == CM_enumerate
+              || in_format_cmd == CM_multitable
+          /* this should only happen if in @nodedescriptionblock, otherwise
+             there are no paragraphs, but preformatted */
+              || in_format_cmd == CM_menu)
+            {
+              text_append (result, content_text.text);
+              free (content_text.text);
+              return;
+            }
+        }
+    }
+
+  if (html_in_string (self))
+    {
+      text_append (result, content_text.text);
+      free (content_text.text);
+      return;
+    }
+
+  if (content_text.text[strspn (content_text.text, whitespace_chars)] == '\0')
+    {
+      free (content_text.text);
+      return;
+    }
+
+  align_cmd = html_in_align (self);
+
+  if (align_cmd)
+    {
+      char *attribute_class;
+      char *class;
+      STRING_LIST *classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+      memset (classes, 0, sizeof (STRING_LIST));
+
+      xasprintf (&class, "%s-paragraph", builtin_command_name (align_cmd));
+      add_string (class, classes);
+      free (class);
+
+      attribute_class = html_attribute_class (self, "p", classes);
+      text_append (result, attribute_class);
+      text_append_n (result, ">", 1);
+      free (attribute_class);
+      destroy_strings_list (classes);
+    }
+  else
+    text_append_n (result, "<p>", 3);
+
+  text_append (result, content_text.text);
+  free (content_text.text);
+
+  text_append_n (result, "</p>", 4);
+}
+
+static char *
+preformatted_class (CONVERTER *self)
+{
+  COMMAND_OR_TYPE *cur_pre_class = 0;
+  COMMAND_OR_TYPE_STACK *pre_classes
+        = html_preformatted_classes_stack (self);
+  size_t i;
+  for (i = 0; i < pre_classes->top; i++)
+    {
+      COMMAND_OR_TYPE *cmd_or_type = &pre_classes->stack[i];
+      if (!(cur_pre_class
+            && (cur_pre_class->variety == CTV_type_command
+                && builtin_command_data[cur_pre_class->cmd].flags
+                                   & CF_preformatted_code)
+            && (!((cmd_or_type->variety == CTV_type_command
+                   && builtin_command_data[cmd_or_type->cmd].flags
+                                     & CF_preformatted_code)
+                  || cmd_or_type->cmd == CM_menu))))
+         cur_pre_class = cmd_or_type;
+    }
+  if (cur_pre_class)
+    {
+      char *pre_class = 0;
+      if (cur_pre_class->variety == CTV_type_command)
+        {
+          xasprintf (&pre_class, "%s-preformatted",
+                     builtin_command_name (cur_pre_class->cmd));
+        }
+      else if (cur_pre_class->variety == CTV_type_type)
+
+        {
+          xasprintf (&pre_class, "%s-preformatted",
+                     self->pre_class_types[cur_pre_class->type]);
+        }
+      if (pre_class)
+        return pre_class;
+    }
+  /* shold not happen */
+  return 0;
+}
+
+void
+convert_preformatted_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  TEXT content_text;
+  char *trimmed_content;
+  enum command_id in_format_cmd;
+  char *pre_class = 0;
+  int in_def = 0;
+  char *attribute_class;
+  STRING_LIST *classes;
+
+  char *associated_content
+   = html_get_associated_formatted_inline_content (self, element, 0);
+
+  text_init (&content_text);
+
+  if (associated_content)
+    {
+      text_append (&content_text, associated_content);
+      free (associated_content);
+    }
+  if (content)
+    text_append (&content_text, content);
+
+  if (content_text.end <= 0)
+    {
+      free (content_text.text);
+      return;
+    }
+
+  in_format_cmd = html_top_block_command (self);
+  if (in_format_cmd == CM_multitable)
+    {
+      const char *p = content_text.text;
+      p += strspn (p, whitespace_chars);
+      trimmed_content = trim_trailing_content (p);
+      free (content_text.text);
+    }
+  else
+    trimmed_content = content_text.text;
+
+  if (html_in_string (self))
+    {
+      text_append (result, trimmed_content);
+      free (trimmed_content);
+      return;
+    }
+
+  /* menu_entry_description is always in a preformatted container
+     in the tree, as the whole menu is meant to be an
+     environment where spaces and newlines are preserved. */
+  if (element->parent && element->parent->type == ET_menu_entry_description)
+    {
+      if (!html_inside_preformatted (self))
+        {
+ /* If not in preformatted block command,
+    we don't preserve spaces and newlines in menu_entry_description,
+    instead the whole menu_entry is in a table, so no <pre> in that situation
+  */
+          text_append (result, trimmed_content);
+          free (trimmed_content);
+          return;
+        }
+      else
+        {
+     /* if directly in description, we want to avoid the linebreak that
+        comes with pre being a block level element, so set a special class */
+          pre_class = strdup ("menu-entry-description-preformatted");
+        }
+    }
+
+  if (!pre_class)
+    pre_class = preformatted_class (self);
+
+  /* this may happen with lines without textual content
+     between a def* and def*x. */
+  if (element->parent)
+    {
+      enum command_id p_cmd = element_builtin_cmd (element->parent);
+      if (builtin_command_data[p_cmd].flags & CF_def || p_cmd == CM_defblock)
+        {
+          in_def = 1;
+          text_append_n (result, "<dd>", 4);
+        }
+    }
+
+  classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+  memset (classes, 0, sizeof (STRING_LIST));
+  if (pre_class)
+    {
+      add_string (pre_class, classes);
+      free (pre_class);
+    }
+  attribute_class = html_attribute_class (self, "pre", classes);
+  text_append (result, attribute_class);
+  text_append_n (result, ">", 1);
+  free (attribute_class);
+  destroy_strings_list (classes);
+
+  /* a newline immediately after a <pre> is ignored. */
+  if (trimmed_content[0] == '\n')
+    text_append_n (result, "\n", 1);
+  text_append (result, trimmed_content);
+  free (trimmed_content);
+
+  text_append_n (result, "</pre>", 6);
+
+  if (in_def)
+    text_append_n (result, "</dd>", 5);
+}
+
+void
+convert_balanced_braces_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  if (content)
+    text_append (result, content);
+}
+
+void
+convert_index_entry_command_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  char *index_id;
+
+  if (html_in_string (self) || html_in_multi_expanded (self))
+    return;
+
+  index_id = html_command_id (self, element);
+
+  if (index_id && strlen (index_id))
+    {
+      format_separate_anchor (self, index_id, "index-entry-id", result);
+      if (!html_in_preformatted_context (self))
+        text_append_n (result, "\n", 1);
+    }
+}
+
+void
+convert_definfoenclose_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  /* FIXME add a span to mark the original command as a class? */
+  char *begin = lookup_extra_string (element, "begin");
+  char *end = lookup_extra_string (element, "end");
+
+  if (begin)
+    format_protect_text (self, begin, result);
+  if (content)
+    text_append (result, content);
+  if (end)
+    format_protect_text (self, end, result);
+}
+
+void
+convert_row_type (CONVERTER *self, const enum element_type type,
+                  const ELEMENT *element, const char *content,
+                  TEXT *result)
+{
+  if (html_in_string (self))
+    {
+      if (content)
+        text_append (result, content);
+    }
+
+  if (!content || content[strspn (content, whitespace_chars)] == '\0')
+    return;
+  else
+    {
+      text_append_n (result, "<tr>", 4);
+      text_append (result, content);
+      text_append_n (result, "</tr>", 5);
+
+      if (element->contents.number > 0)
+        {
+          enum command_id first_cmd
+            = element_builtin_cmd (element->contents.list[0]);
+          if (first_cmd != CM_headitem)
+      /* if headitem, end of line added in _convert_multitable_head_type */
+            text_append (result, "\n");
+        }
+    }
+}
+
+void
+convert_multitable_head_type (CONVERTER *self, const enum element_type type,
+                  const ELEMENT *element, const char *content,
+                  TEXT *result)
+{
+  if (html_in_string (self))
+    {
+      if (content)
+        text_append (result, content);
+    }
+
+  if (!content || content[strspn (content, whitespace_chars)] == '\0')
+    return;
+  else
+    {
+      text_append_n (result, "<thead>", 7);
+      text_append (result, content);
+      text_append_n (result, "</thead>\n", 9);
+    }
+}
+
+void
+convert_multitable_body_type (CONVERTER *self, const enum element_type type,
+                  const ELEMENT *element, const char *content,
+                  TEXT *result)
+{
+  if (html_in_string (self))
+    {
+      if (content)
+        text_append (result, content);
+    }
+
+  if (!content || content[strspn (content, whitespace_chars)] == '\0')
+    return;
+  else
+    {
+      text_append_n (result, "<tbody>", 7);
+      text_append (result, content);
+      text_append_n (result, "</tbody>\n", 9);
+    }
+}
+
+static char *menu_entry_destination_array[] = {"menu-entry-destination"};
+static const STRING_LIST menu_entry_destination_classes
+  = {menu_entry_destination_array, 1, 1};
+static char *menu_entry_description_array[] = {"menu-entry-description"};
+static const STRING_LIST menu_entry_description_classes
+  = {menu_entry_description_array, 1, 1};
+
+static void
+menu_entry_a (CONVERTER *self, char *href, int isindex,
+              int html_menu_entry_index, TEXT *result)
+{
+  text_printf (result, "<a href=\"%s\"", href);
+  if (isindex)
+    text_append_n (result, " rel=\"index\"", 12);
+  if (self->conf->USE_ACCESSKEY.integer > 0 && html_menu_entry_index < 10)
+    text_printf (result, " accesskey=\"%d\"", html_menu_entry_index);
+  text_append_n (result, ">", 1);
+}
+
+static char *
+simplify_text_for_comparison (const char *text)
+{
+  TEXT result;
+  text_init (&result);
+  text_append (&result, "");
+
+  const char *p = text;
+
+  while (*p)
+    {
+      int w_len = word_bytes_len_multibyte (p);
+      if (w_len)
+        {
+          text_append_n (&result, p, w_len);
+          p += w_len;
+        }
+      else if (*p)
+        {
+          /* skip a character */
+          int char_len = 1;
+          while ((p[char_len] & 0xC0) == 0x80)
+            char_len++;
+          p += char_len;
+        }
+    }
+
+  return result.text;
+}
+
+void
+convert_menu_entry_type (CONVERTER *self, const enum element_type type,
+                  const ELEMENT *element, const char *content,
+                  TEXT *result)
+{
+  ELEMENT *name_entry = 0;
+  ELEMENT *menu_description = 0;
+  ELEMENT *menu_entry_node = 0;
+  ELEMENT *menu_entry_leading_text = 0;
+  ELEMENT *menu_entry_separators[2];
+  ELEMENT *manual_content;
+  ELEMENT *node_description = 0;
+  ELEMENT *section = 0;
+  size_t i;
+  int entry_separators_nr = 0;
+  int entry_separators_idx = 0;
+  char *href = 0;
+  int isindex = 0;
+  int formatted_nodedescription_nr = 0;
+  int in_string = html_in_string (self);
+  int html_menu_entry_index;
+
+  memset (menu_entry_separators, 0, 2 * sizeof (ELEMENT *));
+
+  for (i = 0; i < element->contents.number; i++)
+    {
+      ELEMENT *arg = element->contents.list[i];
+      if (arg->type == ET_menu_entry_leading_text)
+        menu_entry_leading_text = arg;
+      else if (arg->type == ET_menu_entry_name)
+        name_entry = arg;
+      else if (arg->type == ET_menu_entry_description)
+        menu_description = arg;
+      else if (arg->type == ET_menu_entry_separator)
+        {
+          menu_entry_separators[entry_separators_nr] = arg;
+          entry_separators_nr++;
+        }
+      else if (arg->type == ET_menu_entry_node)
+        menu_entry_node = arg;
+    }
+
+  manual_content = lookup_extra_element (menu_entry_node, "manual_content");
+
+  if (manual_content)
+    href = html_command_href (self, menu_entry_node, 0, element, 0);
+  else
+    {
+  /* may not be defined in case of menu entry node consisting only of spaces */
+      char *normalized = lookup_extra_string (menu_entry_node, "normalized");
+      if (normalized)
+        {
+          ELEMENT *node
+           = find_identifier_target (self->document->identifiers_target,
+                                     normalized);
+          if (node)
+            {
+              int status;
+              node_description
+                 = lookup_extra_element (node, "node_description");
+
+   /* if !NODE_NAME_IN_MENU, we pick the associated section, except if
+      the node is the element command */
+              if (self->conf->NODE_NAME_IN_MENU.integer <= 0)
+                {
+                  ELEMENT *associated_section = lookup_extra_element (node,
+                                                       "associated_section");
+                  if (associated_section)
+                    {
+                      const ELEMENT *associated_command
+                       = html_command_root_element_command (self, node);
+                      if (associated_command != node)
+                        {
+                          section = associated_section;
+                          href = html_command_href (self, section,
+                                                    0, element, 0);
+                        }
+                    }
+                }
+              if (!href)
+                href = html_command_href (self, node, 0, element, 0);
+
+          /* will mark the target as an index with rel index.  See
+  http://microformats.org/wiki/existing-rel-values#HTML5_link_type_extensions
+           */
+              isindex = lookup_extra_integer (node, "isindex", &status);
+
+              if (node_description
+                  /* not menu_description probably cannot happen */
+                  && (!menu_description
+                         /* empty description */
+           || (menu_description->contents.number <= 0
+               || (menu_description->contents.number == 1
+                   && (menu_description->contents.list[0]->contents.number <= 0
+                       || (menu_description->contents.list[0]->contents.number == 1
+                           && menu_description->contents.list[0]->contents.list[0]->text.space > 0
+   && menu_description->contents.list[0]->contents.list[0]->text.text[
+       strspn (menu_description->contents.list[0]->contents.list[0]->text.text,
+             whitespace_chars)] == '\0'))))))
+                {
+        /* update the number of time the node description was formatted */
+                  HTML_TARGET *target_info
+                     = find_element_target (self->html_targets, node);
+                  target_info->formatted_nodedescription_nr++;
+                  formatted_nodedescription_nr
+                    = target_info->formatted_nodedescription_nr;
+                }
+            }
+        }
+    }
+  self->shared_conversion_state.html_menu_entry_index++;
+  html_menu_entry_index = self->shared_conversion_state.html_menu_entry_index;
+
+  if (html_inside_preformatted (self) || in_string)
+    {
+      const char *leading_text = menu_entry_leading_text->text.text;
+      char *menu_symbol;
+      if (!in_string)
+        {
+          char *pre_class = preformatted_class (self);
+          char *attribute_class;
+          STRING_LIST *classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+          memset (classes, 0, sizeof (STRING_LIST));
+          if (pre_class)
+            {
+              add_string (pre_class, classes);
+              free (pre_class);
+            }
+          attribute_class = html_attribute_class (self, "pre", classes);
+          text_append (result, attribute_class);
+          text_append_n (result, ">", 1);
+          free (attribute_class);
+          destroy_strings_list (classes);
+        }
+
+      /* add leading text, replacing "*" by MENU_SYMBOL */
+      menu_symbol = strchr (leading_text, '*');
+      if (menu_symbol - leading_text > 0)
+        {
+          text_append_n (result, leading_text, menu_symbol - leading_text);
+          leading_text = menu_symbol;
+        }
+      text_append (result, self->conf->MENU_SYMBOL.string);
+      /* past "*" */
+      leading_text++;
+      text_append (result, leading_text);
+
+      if (name_entry)
+        {
+          convert_to_html_internal (self, name_entry, result,
+                                  "menu_arg menu_entry_name preformatted");
+          convert_to_html_internal (self,
+                     menu_entry_separators[entry_separators_idx],
+                     result, "menu_arg name separator preformatted");
+          entry_separators_idx++;
+        }
+
+      if (menu_entry_node)
+        {
+          ELEMENT *root_code = new_element (ET__code);
+          if (!in_string && href)
+            {
+              menu_entry_a (self, href, isindex, html_menu_entry_index,
+                            result);
+            }
+
+          add_to_contents_as_array (root_code, menu_entry_node);
+
+          add_to_element_list (&self->tree_to_build, root_code);
+
+          convert_to_html_internal (self, root_code, result,
+                               "menu_arg menu_entry_node preformatted");
+
+          remove_element_from_list (&self->tree_to_build, root_code);
+
+          destroy_element (root_code);
+
+          if (!in_string && href)
+            text_append_n (result, "</a>", 4);
+        }
+
+      if (entry_separators_idx < entry_separators_nr)
+        {
+          convert_to_html_internal (self,
+                     menu_entry_separators[entry_separators_idx],
+                     result, "menu_arg node separator preformatted");
+          entry_separators_idx++;
+        }
+
+      if (!in_string)
+        text_append_n (result, "</pre>", 6);
+
+      if (formatted_nodedescription_nr > 0)
+        {
+          char *multiple_formatted = 0;
+          char *description;
+          ELEMENT *description_element;
+          if (formatted_nodedescription_nr > 1)
+            {
+              xasprintf (&multiple_formatted,
+                         "preformatted-node-description-%d",
+                         formatted_nodedescription_nr);
+            }
+
+          if (node_description->cmd == CM_nodedescription)
+            description_element = node_description->args.list[0];
+          else
+            {
+              description_element = new_element (ET_NONE);
+              description_element->contents = node_description->contents;
+              add_to_element_list (&self->tree_to_build, description_element);
+            }
+
+          description
+            = convert_tree_new_formatting_context (self, description_element,
+                 "menu_arg node description preformatted", multiple_formatted,
+                 0, CM_menu);
+
+          if (description)
+            {
+              text_append (result, description);
+              free (description);
+            }
+
+          if (formatted_nodedescription_nr > 1)
+            free (multiple_formatted);
+          if (node_description->cmd != CM_nodedescription)
+            {
+              remove_element_from_list (&self->tree_to_build,
+                                        description_element);
+              description_element->contents.list = 0;
+              destroy_element (description_element);
+            }
+        }
+      else if (menu_description)
+        {
+          convert_to_html_internal (self, menu_description, result,
+                                    "menu_arg description preformatted");
+        }
+    }
+  else
+    {
+      char *attribute_class;
+      char *description = 0;
+      char *name_no_number = 0;
+      text_append_n (result, "<tr>", 4);
+      attribute_class = html_attribute_class (self, "td",
+                             &menu_entry_destination_classes);
+      text_append (result, attribute_class);
+      free (attribute_class);
+      text_append_n (result, ">", 1);
+
+      if (section && href)
+        {
+          char *name = html_command_text (self, section, 0);
+          if (name && strlen (name))
+            {
+              name_no_number = html_command_text (self, section,
+                                                  HTT_text_nonumber);
+              menu_entry_a (self, href, isindex, html_menu_entry_index,
+                            result);
+              text_append (result, name);
+              text_append_n (result, "</a>", 4);
+            }
+          free (name);
+        }
+      if (!name_no_number)
+        {
+          char *name = 0;
+          if (name_entry)
+            {
+              name = html_convert_tree (self, name_entry,
+                                        "convert menu_entry_name");
+              if (name)
+                {
+                  if (!strlen (name))
+                    {
+                      free (name);
+                      name = 0;
+                    }
+                }
+            }
+          if (!name)
+            {
+              ELEMENT *manual_content = lookup_extra_element (menu_entry_node,
+                                                            "manual_content");
+              ELEMENT *node_content = lookup_extra_element (menu_entry_node,
+                                                             "node_content");
+              if (manual_content)
+                {
+                  name = html_command_text (self, menu_entry_node, 0);
+                }
+              else if (node_content)
+                {
+                  ELEMENT *root_code = new_element (ET__code);
+
+                  add_to_contents_as_array (root_code, node_content);
+
+                  add_to_element_list (&self->tree_to_build, root_code);
+
+                  name = html_convert_tree (self, root_code,
+                                            "menu_arg name");
+
+                  remove_element_from_list (&self->tree_to_build, root_code);
+
+                  destroy_element (root_code);
+                }
+            }
+
+          text_append (result, self->conf->MENU_SYMBOL.string);
+          text_append_n (result, " ", 1);
+
+          if (href)
+            {
+              menu_entry_a (self, href, isindex, html_menu_entry_index,
+                            result);
+            }
+
+          if (name)
+            {
+              int n = strspn (name, whitespace_chars);
+              if (n)
+                {
+                  name_no_number = strdup (name + n);
+                  free (name);
+                }
+              else
+                name_no_number = name;
+
+              text_append (result, name_no_number);
+            }
+
+          if (href)
+            text_append_n (result, "</a>", 4);
+        }
+
+      text_append (result, self->conf->MENU_ENTRY_COLON.string);
+      text_append_n (result, "</td><td>", 9);
+      text_append_n (result,
+                self->special_character[SC_non_breaking_space].string,
+                self->special_character[SC_non_breaking_space].len);
+      text_append_n (result,
+                self->special_character[SC_non_breaking_space].string,
+                self->special_character[SC_non_breaking_space].len);
+      text_append_n (result, "</td>", 5);
+
+      attribute_class = html_attribute_class (self, "td",
+                             &menu_entry_description_classes);
+      text_append (result, attribute_class);
+      free (attribute_class);
+      text_append_n (result, ">", 1);
+
+      if (formatted_nodedescription_nr > 0)
+        {
+          char *multiple_formatted = 0;
+          ELEMENT *description_element;
+          if (formatted_nodedescription_nr > 1)
+            {
+              xasprintf (&multiple_formatted,
+                         "node-description-%d",
+                         formatted_nodedescription_nr);
+            }
+
+          if (node_description->cmd == CM_nodedescription)
+            description_element = node_description->args.list[0];
+          else
+            {
+              description_element = new_element (ET_NONE);
+              description_element->contents = node_description->contents;
+              add_to_element_list (&self->tree_to_build, description_element);
+            }
+
+          description
+            = convert_tree_new_formatting_context (self, description_element,
+                 "menu_arg node description", multiple_formatted,
+                 0, CM_menu);
+
+          if (formatted_nodedescription_nr > 1)
+            free (multiple_formatted);
+          if (node_description->cmd != CM_nodedescription)
+            {
+              remove_element_from_list (&self->tree_to_build,
+                                        description_element);
+              description_element->contents.list = 0;
+              destroy_element (description_element);
+            }
+        }
+      else if (menu_description)
+        {
+          description = html_convert_tree (self, menu_description,
+                                           "menu_arg description");
+        }
+
+      if (description)
+        {
+          if (strlen (description)
+              && self->conf->AVOID_MENU_REDUNDANCY.integer > 0)
+            {
+              char *simplified_name_no_number
+               = simplify_text_for_comparison (name_no_number);
+              char *simplified_description
+               = simplify_text_for_comparison (description);
+              if (!strcmp (simplified_name_no_number, simplified_description))
+                {
+                  free (description);
+                  description = 0;
+                }
+              free (simplified_name_no_number);
+              free (simplified_description);
+            }
+          if (description)
+            {
+              text_append (result, description);
+              free (description);
+            }
+        }
+
+      free (name_no_number);
+      text_append_n (result, "</td></tr>\n", 11);
+    }
+
+  free (href);
+}
+
+static char *menu_comment_array[] = {"menu-comment"};
+static const STRING_LIST menu_comment_classes = {menu_comment_array, 1, 1};
+
+void
+convert_menu_comment_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  char *attribute_class;
+
+  if (html_inside_preformatted (self) || html_in_string (self))
+    {
+      if (content)
+        text_append (result, content);
+      return;
+    }
+
+  text_append_n (result, "<tr>", 4);
+  attribute_class = html_attribute_class (self, "th",
+                                &menu_comment_classes);
+  text_append (result, attribute_class);
+  free (attribute_class);
+  text_append_n (result, " colspan=\"3\">", 13);
+
+  if (content)
+    text_append (result, content);
+
+  text_append_n (result, "</th></tr>", 10);
+}
+
+void
+convert_before_item_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  enum command_id in_format_cmd;
+
+  if (!content || content[strspn (content, whitespace_chars)] == '\0')
+    return;
+
+  if (html_in_string (self))
+    {
+      text_append (result, content);
+      return;
+    }
+
+  in_format_cmd = html_top_block_command (self);
+
+  if (in_format_cmd == CM_itemize || in_format_cmd == CM_enumerate)
+    {
+      text_append_n (result, "<li>", 4);
+      text_append (result, content);
+      text_append_n (result, "</li>", 5);
+    }
+  else if (in_format_cmd == CM_table || in_format_cmd == CM_vtable
+           || in_format_cmd == CM_ftable)
+    {
+      text_append_n (result, "<dd>", 4);
+      text_append (result, content);
+      text_append_n (result, "</dd>\n", 6);
+    }
+  else if (in_format_cmd == CM_multitable)
+    {
+      char *trimmed_content;
+      const char *p = content;
+      p += strspn (p, whitespace_chars);
+      trimmed_content = trim_trailing_content (p);
+
+      text_append_n (result, "<tr><td>", 8);
+      text_append (result, trimmed_content);
+      free (trimmed_content);
+      text_append_n (result, "</td></tr>\n", 11);
+    }
+}
+
+void
+convert_table_term_type (CONVERTER *self, const enum element_type type,
+                        const ELEMENT *element, const char *content,
+                        TEXT *result)
+{
+  if (content)
+    {
+      text_append (result, "<dt>");
+      text_append (result, content);
+    }
+}
+
+#define static_class(name, class) \
+static char * name ##_array[] = {#class}; \
+static const STRING_LIST name ##_classes = {name ##_array, 1, 1};
+
+static_class(def_type, def-type)
+static_class(def_name, def-name)
+static_class(def_code_arguments, def-code-arguments)
+static_class(def_var_arguments, def-var-arguments)
+static_class(call_def, call-def)
+static_class(category_def, category-def)
+
+#undef static_class
+
+void
+convert_def_line_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  char *index_id;
+  PARSED_DEF *parsed_def;
+  STRING_LIST *classes;
+  char *attribute_class;
+  char *alias_class = 0;
+  enum command_id original_def_cmd;
+  enum command_id def_cmd;
+  enum command_id original_cmd = 0;
+  enum command_id base_cmd = 0;
+  TEXT def_call;
+  char *anchor;
+
+  if (html_in_string (self))
+    {
+      /* should probably never happen */
+      char *text;
+      text = convert_to_text (element, self->convert_text_options);
+      format_protect_text (self, text, result);
+    }
+
+  index_id = html_command_id (self, element);
+
+  parsed_def = definition_arguments_content (element);
+
+  if (element->cmd)
+    original_def_cmd = element->cmd;
+  else
+    original_def_cmd = element->parent->cmd;
+
+  if (builtin_command_data[original_def_cmd].flags & CF_def_alias)
+    {
+      int i;
+      for (i = 0; def_aliases[i].alias ; i++)
+        {
+          if (def_aliases[i].alias == original_def_cmd)
+            {
+              original_cmd = def_aliases[i].command;
+              break;
+            }
+        }
+
+      xasprintf (&alias_class, "%s-alias-%s",
+                    builtin_command_name(original_def_cmd),
+                    builtin_command_name(original_cmd));
+    }
+  else
+    original_cmd = original_def_cmd;
+
+  /* parent is defblock, we do not put it in class */
+  if (element->cmd == CM_defline || element->cmd == CM_deftypeline)
+    def_cmd = element->cmd;
+  else
+  /* the parent is the def both for def* def_line and def*x */
+    def_cmd = element->parent->cmd;
+
+  if (builtin_command_data[def_cmd].flags & CF_def_alias)
+    {
+      int i;
+      for (i = 0; def_aliases[i].alias ; i++)
+        {
+          if (def_aliases[i].alias == def_cmd)
+            {
+              base_cmd = def_aliases[i].command;
+              break;
+            }
+        }
+    }
+  else
+    base_cmd = def_cmd;
+
+  classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+  memset (classes, 0, sizeof (STRING_LIST));
+
+  add_string (builtin_command_name(original_cmd), classes);
+  if (alias_class)
+    {
+      add_string (alias_class, classes);
+      free (alias_class);
+    }
+  if (base_cmd != original_cmd)
+    {
+      char *class;
+      xasprintf (&class, "def-cmd-%s", builtin_command_name(base_cmd));
+      add_string (class, classes);
+      free (class);
+    }
+
+  text_init (&def_call);
+  text_append (&def_call, "");
+  if (parsed_def->type)
+    {
+      char *type_text;
+      size_t type_text_len;
+      ELEMENT *root_code = new_element (ET__code);
+
+      add_to_contents_as_array (root_code, parsed_def->type);
+
+      add_to_element_list (&self->tree_to_build, root_code);
+
+      type_text = html_convert_tree (self, root_code, 0);
+
+      remove_element_from_list (&self->tree_to_build, root_code);
+
+      destroy_element (root_code);
+      type_text_len = strlen (type_text);
+
+      if (type_text_len > 0)
+        {
+          char *attribute_class = html_attribute_class (self, "code",
+                                                        &def_type_classes);
+          text_append (&def_call, attribute_class);
+          free (attribute_class);
+          text_append_n (&def_call, ">", 1);
+          text_append_n (&def_call, type_text, type_text_len);
+          text_append_n (&def_call, "</code>", 7);
+        }
+      if ((base_cmd == CM_deftypefn || base_cmd == CM_deftypeop)
+          && !strcmp (self->conf->deftypefnnewline.string, "on"))
+        {
+          text_append_n (&def_call, self->line_break_element.string,
+                                    self->line_break_element.len);
+          text_append_n (&def_call, " ", 1);
+        }
+      else if (type_text_len > 0)
+        text_append_n (&def_call, " ", 1);
+      free (type_text);
+    }
+
+  if (parsed_def->name)
+    {
+      char *attribute_class = html_attribute_class (self, "strong",
+                                                    &def_name_classes);
+      ELEMENT *root_code = new_element (ET__code);
+
+      add_to_contents_as_array (root_code, parsed_def->name);
+
+      add_to_element_list (&self->tree_to_build, root_code);
+
+      text_append (&def_call, attribute_class);
+      free (attribute_class);
+      text_append_n (&def_call, ">", 1);
+
+      convert_to_html_internal (self, root_code, &def_call, 0);
+
+      remove_element_from_list (&self->tree_to_build, root_code);
+      destroy_element (root_code);
+
+      text_append_n (&def_call, "</strong>", 9);
+    }
+
+  if (parsed_def->args)
+    {
+      char *args_formatted;
+   /* arguments not only metasyntactic variables
+      (deftypefn, deftypevr, deftypeop, deftypecv) */
+      /* Texinfo::Common::def_no_var_arg_commands{$base_command_name} */
+      if (strlen (builtin_command_name(base_cmd)) >= 7
+          && !memcmp (builtin_command_name(base_cmd), "deftype", 7))
+        {
+          ELEMENT *root_code = new_element (ET__code);
+
+          add_to_contents_as_array (root_code, parsed_def->args);
+
+          add_to_element_list (&self->tree_to_build, root_code);
+
+          args_formatted = html_convert_tree (self, root_code, 0);
+
+          remove_element_from_list (&self->tree_to_build, root_code);
+          destroy_element (root_code);
+
+          if (args_formatted[strspn (args_formatted, whitespace_chars)] != '\0')
+            {
+              char *attribute_class = html_attribute_class (self, "code",
+                                              &def_code_arguments_classes);
+              int status;
+              int omit_def_name_space = lookup_extra_integer (element,
+                                              "omit_def_name_space", &status);
+              if (omit_def_name_space <= 0)
+                text_append_n (&def_call, " ", 1);
+              text_append (&def_call, attribute_class);
+              free (attribute_class);
+              text_append_n (&def_call, ">", 1);
+              text_append (&def_call, args_formatted);
+              text_append_n (&def_call, "</code>", 7);
+            }
+        }
+      else
+        {
+          html_set_code_context (self, 0);
+          args_formatted = html_convert_tree (self, parsed_def->args, 0);
+          html_pop_code_context (self);
+          if (args_formatted[strspn (args_formatted, whitespace_chars)] != '\0')
+            {
+              char *attribute_class = html_attribute_class (self, "var",
+                                              &def_var_arguments_classes);
+              int status;
+              int omit_def_name_space = lookup_extra_integer (element,
+                                              "omit_def_name_space", &status);
+              if (omit_def_name_space <= 0)
+                text_append_n (&def_call, " ", 1);
+              text_append (&def_call, attribute_class);
+              free (attribute_class);
+              text_append_n (&def_call, ">", 1);
+              text_append (&def_call, args_formatted);
+              text_append_n (&def_call, "</var>", 6);
+            }
+        }
+      free (args_formatted);
+    }
+
+  if (self->conf->DEF_TABLE.integer > 0)
+    {
+      ELEMENT *category_tree
+         = definition_category_tree (self->conf, element);
+
+      attribute_class = html_attribute_class (self, "tr", classes);
+      destroy_strings_list (classes);
+      text_append (result, attribute_class);
+      free (attribute_class);
+      if (index_id && strlen (index_id) && !html_in_multi_expanded (self))
+        text_printf (result, " id=\"%s\"", index_id);
+      text_append_n (result, ">", 1);
+
+      attribute_class = html_attribute_class (self, "td",
+                                               &call_def_classes);
+      text_append (result, attribute_class);
+      free (attribute_class);
+      text_append_n (result, ">", 1);
+      text_append_n (result, def_call.text, def_call.end);
+      free (def_call.text);
+      text_append_n (result, "</td>", 5);
+
+      attribute_class = html_attribute_class (self, "td",
+                                              &category_def_classes);
+      text_append (result, attribute_class);
+      free (attribute_class);
+      text_append_n (result, ">[", 2);
+
+      if (category_tree)
+        {
+          add_to_element_list (&self->tree_to_build, category_tree);
+          convert_to_html_internal (self, category_tree, result, 0);
+          remove_element_from_list (&self->tree_to_build, category_tree);
+          destroy_element_and_children (category_tree);
+        }
+      text_append_n (result, "]</td></tr>\n", 12);
+
+      destroy_parsed_def (parsed_def);
+      return;
+    }
+
+  attribute_class = html_attribute_class (self, "dt", classes);
+  destroy_strings_list (classes);
+  text_append (result, attribute_class);
+  free (attribute_class);
+  if (index_id && strlen (index_id) && !html_in_multi_expanded (self))
+    text_printf (result, " id=\"%s\"", index_id);
+  text_append_n (result, ">", 1);
+
+  if (parsed_def->category)
+    {
+      ELEMENT *category_tree = 0;
+      NAMED_STRING_ELEMENT_LIST *substrings
+                                   = new_named_string_element_list ();
+      ELEMENT *category_copy = copy_tree (parsed_def->category);
+
+      add_element_to_named_string_element_list (substrings,
+                                            "category", category_copy);
+      if (parsed_def->class)
+        {
+          ELEMENT *class_copy = copy_tree (parsed_def->class);
+          add_element_to_named_string_element_list (substrings,
+                                            "class", class_copy);
+
+          if (base_cmd == CM_deftypeop && parsed_def->type
+              && !strcmp (self->conf->deftypefnnewline.string, "on"))
+            {
+               category_tree
+                  = html_gdt_tree ("{category} on @code{{class}}:@* ",
+                                   self->document, self, substrings, 0, 0);
+            }
+          else if (base_cmd == CM_defop || base_cmd == CM_deftypeop)
+            {
+               category_tree
+                  = html_gdt_tree ("{category} on @code{{class}}: ",
+                                   self->document, self, substrings, 0, 0);
+            }
+          else if (base_cmd == CM_defcv || base_cmd == CM_deftypecv)
+            {
+               category_tree
+                  = html_gdt_tree ("{category} of @code{{class}}: ",
+                                   self->document, self, substrings, 0, 0);
+            }
+        }
+      else
+        {
+          if ((base_cmd == CM_deftypefn || base_cmd == CM_deftypeop)
+              && parsed_def->type
+              && !strcmp (self->conf->deftypefnnewline.string, "on"))
+            {
+              category_tree
+                  = html_gdt_tree ("{category}:@* ",
+                                   self->document, self, substrings, 0, 0);
+            }
+          else
+            {
+              category_tree
+                  = html_gdt_tree ("{category}: ",
+                                   self->document, self, substrings, 0, 0);
+            }
+        }
+      destroy_named_string_element_list (substrings);
+
+      if (category_tree)
+        {
+          char *attribute_open = html_attribute_class (self, "span",
+                                             &category_def_classes);
+          size_t open_len = strlen (attribute_open);
+          if (open_len)
+            {
+              text_append_n (result, attribute_open, open_len);
+              text_append_n (result, ">", 1);
+            }
+          free (attribute_open);
+          add_to_element_list (&self->tree_to_build, category_tree);
+          convert_to_html_internal (self, category_tree, result, 0);
+          remove_element_from_list (&self->tree_to_build, category_tree);
+          destroy_element_and_children (category_tree);
+          if (open_len)
+            text_append_n (result, "</span>", 7);
+        }
+    }
+
+  destroy_parsed_def (parsed_def);
+
+  anchor = get_copiable_anchor (self, index_id);
+
+  if (anchor)
+    text_append_n (result, "<span>", 6);
+
+  text_append_n (result, def_call.text, def_call.end);
+  free (def_call.text);
+  if (anchor)
+    {
+      text_append (result, anchor);
+      text_append_n (result, "</span>", 7);
+    }
+
+  text_append_n (result, "</dt>\n", 6);
+
+  free (anchor);
+}
+
+void
+convert_def_item_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  if (!content)
+    return;
+
+  if (html_in_string (self))
+    text_append (result, content);
+
+  if (content[strspn (content, whitespace_chars)] == '\0')
+    return;
+
+  if (self->conf->DEF_TABLE.integer <= 0)
+    {
+      text_append_n (result, "<dd>", 4);
+      text_append (result, content);
+      text_append_n (result, "</dd>", 5);
+    }
+  else
+    {
+      text_append_n (result, "<tr><td colspan=\"2\">", 20);
+      text_append (result, content);
+      text_append_n (result, "</td></tr>", 10);
+    }
+}
+
+void
+convert_table_definition_type (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  if (!content)
+    return;
+
+  if (html_in_string (self))
+    text_append (result, content);
+
+  if (content[strspn (content, whitespace_chars)] == '\0')
+    return;
+
+  text_append_n (result, "<dd>", 4);
+  text_append (result, content);
+  text_append_n (result, "</dd>\n", 6);
+}
+
+/* associate type to the C function implementing the conversion */
+static TYPE_INTERNAL_CONVERSION types_internal_conversion_table[] = {
+  {ET_balanced_braces, &convert_balanced_braces_type},
+  {ET_before_item, convert_before_item_type},
+  {ET_def_item, &convert_def_item_type},
+  {ET_inter_def_item, &convert_def_item_type},
+  {ET_def_line, &convert_def_line_type},
+  {ET_definfoenclose_command, &convert_definfoenclose_type},
+  {ET_index_entry_command, &convert_index_entry_command_type},
+  {ET_table_definition, &convert_table_definition_type},
+  {ET_inter_item, &convert_table_definition_type},
+  {ET_menu_comment, &convert_menu_comment_type},
+  {ET_menu_entry, convert_menu_entry_type},
+  {ET_multitable_body, &convert_multitable_body_type},
+  {ET_multitable_head, &convert_multitable_head_type},
+  {ET_paragraph, &convert_paragraph_type},
+  {ET_preformatted, &convert_preformatted_type},
+  {ET_row, &convert_row_type},
+  {ET_table_term, &convert_table_term_type},
+  {ET_text, &convert_text},
   {0, 0},
 };
 
@@ -13450,6 +14942,148 @@ static OUTPUT_UNIT_INTERNAL_CONVERSION output_units_internal_conversion_table[] 
   {OU_unit, &convert_unit_type},
   {0, 0},
 };
+
+void
+contents_shortcontents_in_title (CONVERTER *self, TEXT *result)
+{
+  if (self->document->sections_list
+      && self->document->sections_list->number > 0
+      && !strcmp (self->conf->CONTENTS_OUTPUT_LOCATION.string, "after_title"))
+    {
+      enum command_id contents_cmds[2] = {CM_shortcontents, CM_contents};
+      int i;
+      for (i = 0; i < 2; i++)
+        {
+          int contents_set = 0;
+          enum command_id cmd = contents_cmds[i];
+          OPTION *contents_option_ref = get_command_option (self->conf, cmd);
+          if (contents_option_ref->integer > 0)
+            contents_set = 1;
+          if (contents_set)
+            {
+              char *contents_text
+                = contents_inline_element (self, cmd, 0);
+              if (contents_text)
+                {
+                  text_append (result, contents_text);
+                  text_append (result, self->conf->DEFAULT_RULE.string);
+                  text_append_n (result, "\n", 1);
+                  free (contents_text);
+                }
+            }
+        }
+    }
+}
+
+static void
+format_simpletitle (CONVERTER *self, TEXT *result)
+{
+  char *title_text;
+  char *context_str;
+  STRING_LIST *classes;
+  enum command_id cmd = self->simpletitle_cmd;
+  classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+  memset (classes, 0, sizeof (STRING_LIST));
+  add_string (builtin_command_name (cmd), classes);
+  xasprintf (&context_str, "%s simpletitle",
+             builtin_command_name (cmd));
+  title_text
+    = convert_tree_new_formatting_context (self,
+        self->simpletitle_tree, context_str, 0, 0, 0);
+  free (context_str);
+  format_heading_text (self, cmd, classes, title_text,
+                                    0, 0, 0, 0, result);
+  destroy_strings_list (classes);
+  free (title_text);
+}
+
+/* Convert @titlepage.  Falls back to simpletitle. */
+char *
+html_default_format_titlepage (CONVERTER *self)
+{
+  int titlepage_text = 0;
+  TEXT result;
+  text_init (&result);
+  text_append (&result, "");
+  if (self->document->global_commands->titlepage)
+    {
+      ELEMENT *tmp = new_element (ET_NONE);
+      tmp->contents = self->document->global_commands->titlepage->contents;
+      convert_to_html_internal (self, tmp, &result, "convert titlepage");
+      tmp->contents.list = 0;
+      destroy_element (tmp);
+      titlepage_text = 1;
+    }
+  else if (self->simpletitle_tree)
+    {
+      format_simpletitle (self, &result);
+      titlepage_text = 1;
+    }
+  if (titlepage_text)
+    {
+      text_append (&result, self->conf->DEFAULT_RULE.string);
+      text_append_n (&result, "\n", 1);
+    }
+  contents_shortcontents_in_title (self, &result);
+  return result.text;
+}
+
+char *
+format_titlepage (CONVERTER *self)
+{
+  FORMATTING_REFERENCE *formatting_reference
+   = &self->current_formatting_references[FR_format_titlepage];
+  if (formatting_reference->status == FRS_status_default_set)
+    {
+      return html_default_format_titlepage (self);
+    }
+  else
+    {
+      return call_formatting_function_format_titlepage (self,
+                                               formatting_reference);
+    }
+}
+
+char *
+html_default_format_title_titlepage (CONVERTER *self)
+{
+  if (self->conf->SHOW_TITLE.integer > 0)
+    {
+      if (self->conf->USE_TITLEPAGE_FOR_TITLE.integer)
+        {
+          return format_titlepage (self);
+        }
+      else
+        {
+          TEXT result;
+          text_init (&result);
+          text_append (&result, "");
+
+          if (self->simpletitle_tree)
+            format_simpletitle (self, &result);
+
+          contents_shortcontents_in_title (self, &result);
+          return result.text;
+        }
+    }
+  return strdup ("");
+}
+
+char *
+format_title_titlepage (CONVERTER *self)
+{
+  FORMATTING_REFERENCE *formatting_reference
+   = &self->current_formatting_references[FR_format_title_titlepage];
+  if (formatting_reference->status == FRS_status_default_set)
+    {
+      return html_default_format_title_titlepage (self);
+    }
+  else
+    {
+      return call_formatting_function_format_title_titlepage (self,
+                                                      formatting_reference);
+    }
+}
 
 void
 default_format_special_body_contents (CONVERTER *self,
@@ -13819,10 +15453,9 @@ html_prepare_converted_output_info (CONVERTER *self)
 
       self->added_title_tree = 1;
 
+      /* setup a source info with file only */
       memset (&cmd_source_info, 0, sizeof (SOURCE_INFO));
       cmd_source_info.file_name = self->document->global_info->input_file_name;
-      /* TODO the message is not registered for gettext.  In perl source,
-         it is registered */
       message_list_line_error_ext(&self->error_messages, self->conf,
                                   MSG_warning, 0, &cmd_source_info,
                       "must specify a title with a title command or @top");
@@ -13836,16 +15469,13 @@ html_prepare_converted_output_info (CONVERTER *self)
     {
       char *copying_comment;
       ELEMENT *tmp = new_element (ET_NONE);
-      TEXT_OPTIONS *text_conv_options
-         = copy_options_for_convert_text (self, 0);
 
       tmp->contents = self->document->global_commands->copying->contents;
 
-      copying_comment = convert_to_text (tmp, text_conv_options);
+      copying_comment = convert_to_text (tmp, self->convert_text_options);
 
       tmp->contents.list = 0;
       destroy_element (tmp);
-      free (text_conv_options);
 
       if (copying_comment && strlen (copying_comment) > 0)
         {
@@ -13909,7 +15539,8 @@ reset_translated_special_unit_info_tree (CONVERTER *self)
     }
 }
 
-static COMMAND_ID_LIST preformatted_cmd;
+static COMMAND_STACK preformatted_cmd_list;
+static COMMAND_STACK def_cmd_list;
 
 /* set information that is independent of customization, only called once */
 void
@@ -13919,8 +15550,6 @@ html_format_init (void)
   int nr_default_commands
     = sizeof (default_commands_args) / sizeof (default_commands_args[0]);
   int max_args = MAX_COMMAND_ARGS_NR;
-  /* approximate number, used to allocate enough memory */
-  int nr_preformatted_cmd = 0;
 
   enum command_id indented_format[] = {
     CM_example, CM_display, CM_lisp, 0
@@ -13950,17 +15579,11 @@ html_format_init (void)
       if (builtin_command_data[cmd].flags & CF_preformatted)
         {
           register_pre_class_command (small_cmd, cmd);
-          nr_preformatted_cmd += 2;
         }
       html_commands_data[small_cmd].flags |= HF_small_block_command;
       if (html_commands_data[cmd].flags & HF_indented_preformatted)
         html_commands_data[small_cmd].flags |= HF_indented_preformatted;
     }
-
-  /* since the number is approximate, * 2 to be safe */
-  preformatted_cmd.list = (enum command_id *)
-    malloc (nr_preformatted_cmd * 2 * sizeof (enum command_id));
-  preformatted_cmd.number = 0;
 
   for (i = 1; i < BUILTIN_CMD_NUMBER; i++)
     {
@@ -13984,9 +15607,11 @@ html_format_init (void)
         {
           if (!(html_commands_data[i].flags & HF_pre_class))
             register_pre_class_command (i, 0);
-          preformatted_cmd.list[preformatted_cmd.number] = i;
-          preformatted_cmd.number++;
+          push_command (&preformatted_cmd_list, i);
         }
+
+      if (builtin_command_data[i].flags & CF_def)
+        push_command (&def_cmd_list, i);
     }
   register_pre_class_command (CM_verbatim, 0);
   register_pre_class_command (CM_menu, 0);
@@ -14246,12 +15871,21 @@ html_converter_initialize (CONVERTER *self)
   qsort (self->htmlxref.list, self->htmlxref.number,
          sizeof (HTMLXREF_MANUAL), compare_htmlxref_manual);
 
+  sort_css_element_class_styles (self);
+
+  /* set to customization such that it is not replaced by C functions */
+  if (self->conf->XS_EXTERNAL_FORMATTING.integer > 0)
+    {
+      for (i = 0; i < FR_format_translate_message+1; i++)
+        if (self->formatting_references[i].status == FRS_status_default_set)
+          self->formatting_references[i].status = FRS_status_customization_set;
+    }
 
   /* remaining of the file is for the replacement of call to external
-     functions by internal functions in C.  Uncomment the next line
-     to prevent internal functions being used
-  return;
+     functions by internal functions in C.
    */
+  if (self->conf->XS_EXTERNAL_CONVERSION.integer > 0)
+    return;
 
   for (i = 0; types_internal_conversion_table[i].type_conversion; i++)
     {
@@ -14304,9 +15938,6 @@ html_converter_initialize (CONVERTER *self)
           command_conversion->command_conversion
               = commands_internal_conversion_table[i].command_conversion;
         }
-      /* NOTE when accent commands are implemented for HTML in C,
-         if they aren't implemented for CSS, here there should be
-         an exception */
       css_string_command_conversion->formatting_reference = 0;
       css_string_command_conversion->status = FRS_status_internal;
       css_string_command_conversion->command_conversion
@@ -14385,11 +16016,11 @@ html_converter_initialize (CONVERTER *self)
     }
 
   /* preformatted commands are implemented in C */
-  if (preformatted_cmd.number)
+  if (preformatted_cmd_list.top > 0)
     {
-      for (i = 0; i < preformatted_cmd.number; i++)
+      for (i = 0; i < preformatted_cmd_list.top; i++)
         {
-          enum command_id cmd = preformatted_cmd.list[i];
+          enum command_id cmd = preformatted_cmd_list.stack[i];
           COMMAND_CONVERSION_FUNCTION *command_conversion
                = &self->command_conversion_function[cmd];
           COMMAND_CONVERSION_FUNCTION *css_string_command_conversion
@@ -14407,6 +16038,31 @@ html_converter_initialize (CONVERTER *self)
           css_string_command_conversion->status = FRS_status_internal;
           css_string_command_conversion->command_conversion
             = &convert_preformatted_command;
+        }
+    }
+  /* def commands are implemented in C */
+  if (def_cmd_list.top > 0)
+    {
+      for (i = 0; i < def_cmd_list.top; i++)
+        {
+          enum command_id cmd = def_cmd_list.stack[i];
+          COMMAND_CONVERSION_FUNCTION *command_conversion
+               = &self->command_conversion_function[cmd];
+          COMMAND_CONVERSION_FUNCTION *css_string_command_conversion
+               = &self->css_string_command_conversion_function[cmd];
+
+          if (command_conversion->status == FRS_status_default_set)
+            {
+              command_conversion->formatting_reference = 0;
+              command_conversion->status = FRS_status_internal;
+              command_conversion->command_conversion
+                = &convert_def_command;
+            }
+
+          css_string_command_conversion->formatting_reference = 0;
+          css_string_command_conversion->status = FRS_status_internal;
+          css_string_command_conversion->command_conversion
+            = &convert_def_command;
         }
     }
 
@@ -14468,9 +16124,6 @@ html_converter_initialize (CONVERTER *self)
 void
 html_converter_prepare_output (CONVERTER* self)
 {
-  qsort (self->css_element_class_styles.list,
-         self->css_element_class_styles.number,
-         sizeof (CSS_SELECTOR_STYLE), compare_selector_style);
 }
 
 void
@@ -14770,6 +16423,7 @@ html_reset_converter (CONVERTER *self)
       for (j = 0; j < page_css_list->number; j++)
         free (page_css_list->list[j]);
       free (page_css_list->list);
+      free (page_css_list->page_name);
     }
   free (self->page_css.list);
 
@@ -14883,6 +16537,10 @@ html_free_converter (CONVERTER *self)
     }
   free (self->css_element_class_styles.list);
 
+  free_strings_list (&self->css_element_class_list);
+  free_strings_list (&self->css_rule_lines);
+  free_strings_list (&self->css_import_lines);
+
   for (i = 0; i < self->no_arg_formatted_cmd.number; i++)
     {
       enum command_id cmd = self->no_arg_formatted_cmd.list[i];
@@ -14976,8 +16634,9 @@ html_free_converter (CONVERTER *self)
 
   free (self->accent_cmd.list);
 
-/* should be freed at exit.
-  free (preformatted_cmd.list);
+/* should be freed on exit.
+  free (preformatted_cmd_list.stack);
+  free (def_cmd_list.stack);
  */
 
   free (self->style_formatted_cmd.list);
@@ -15168,25 +16827,25 @@ html_translate_names (CONVERTER *self)
           const OUTPUT_UNIT *special_unit
            = self->global_units_directions[special_unit_direction_index];
           if (special_unit)
-             {
-               ELEMENT *command = special_unit->unit_command;
-               if (command)
-                 {
-                   HTML_TARGET *target_info
-                     = find_element_target (self->html_targets, command);
-                   if (target_info)
-                     {
+            {
+              ELEMENT *command = special_unit->unit_command;
+              if (command)
+                {
+                  HTML_TARGET *target_info
+                    = find_element_target (self->html_targets, command);
+                  if (target_info)
+                    {
        /* the tree is a reference to special_unit_info_tree, so it should
           not be freed, but need to be reset to trigger the creation of the
           special_unit_info_tree tree when needed */
-                       clear_tree_added_elements (self, &target_info->tree);
-                       free (target_info->command_text[HTT_string]);
-                       target_info->command_text[HTT_string] = 0;
-                       free (target_info->command_text[HTT_text]);
-                       target_info->command_text[HTT_text] = 0;
-                     }
-                 }
-             }
+                      clear_tree_added_elements (self, &target_info->tree);
+                      free (target_info->command_text[HTT_string]);
+                      target_info->command_text[HTT_string] = 0;
+                      free (target_info->command_text[HTT_text]);
+                      target_info->command_text[HTT_text] = 0;
+                    }
+                }
+            }
         }
     }
 
@@ -15599,8 +17258,11 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
     {
       TEXT debug_str;
       char *contexts_str = debug_print_html_contexts (self);
+      char *explanation_str = explanation;
+      if (!explanation)
+        explanation_str = "NO EXPLANATION";
       text_init (&debug_str);
-      text_printf (&debug_str, "XS|ELEMENT(%s) %s, ->", explanation,
+      text_printf (&debug_str, "XS|ELEMENT(%s) %s, ->", explanation_str,
                                                         contexts_str);
       free (contexts_str);
       if (command_name)
@@ -15897,13 +17559,11 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
                       if (arg_flags & F_AFT_monospacetext)
                         {
                           char *text;
-                          TEXT_OPTIONS *text_conv_options
-                            = copy_options_for_convert_text (self, 0);
-                          text_conv_options->code_state = 1;
 
-                          text = convert_to_text (arg, text_conv_options);
-
-                          free (text_conv_options);
+                          self->convert_text_options->code_state++;
+                          text = convert_to_text (arg,
+                                                  self->convert_text_options);
+                          self->convert_text_options->code_state--;
 
                           arg_formatted->formatted[AFT_type_monospacetext]
                             = text;
@@ -15911,30 +17571,31 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
                       if (arg_flags & F_AFT_filenametext)
                         {
                           char *text;
+                          self->convert_text_options->code_state++;
                           /* Always use encoded characters for file names */
-                          TEXT_OPTIONS *text_conv_options
-                            = copy_options_for_convert_text (self, 1);
-                          text_conv_options->code_state = 1;
-
-                          text = convert_to_text (arg, text_conv_options);
-
-                          free (text_conv_options);
+                          text_set_options_encoding_if_not_ascii (self,
+                                              self->convert_text_options);
+                          text = convert_to_text (arg,
+                                                 self->convert_text_options);
+                          text_reset_options_encoding
+                                                (self->convert_text_options);
+                          self->convert_text_options->code_state--;
 
                           arg_formatted->formatted[AFT_type_filenametext] = text;
                         }
                       if (arg_flags & F_AFT_url)
                         {
                           char *text;
+                          self->convert_text_options->code_state++;
            /* set the encoding to UTF-8 to always have a string that is suitable
               for percent encoding. */
-                          TEXT_OPTIONS *text_conv_options
-                            = copy_options_for_convert_text (self, 1);
-                          text_conv_options->code_state = 1;
-                          text_conv_options->encoding = "utf-8";
-
-                          text = convert_to_text (arg, text_conv_options);
-
-                          free (text_conv_options);
+                          text_set_options_encoding (
+                               self->convert_text_options, "utf-8");
+                          text = convert_to_text (arg,
+                                                 self->convert_text_options);
+                          text_reset_options_encoding
+                                                (self->convert_text_options);
+                          self->convert_text_options->code_state--;
 
                           arg_formatted->formatted[AFT_type_url] = text;
                         }
@@ -16087,8 +17748,7 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
         {
           const ELEMENT *content = element->contents.list[content_idx];
           char *explanation;
-          xasprintf (&explanation, "%s c[%d]", command_type.text,
-                     content_idx);
+          xasprintf (&explanation, " C[%d]", content_idx);
           convert_to_html_internal (self, content, &content_formatted,
                                     explanation);
           free (explanation);
@@ -16424,7 +18084,8 @@ convert_output_output_unit_internal (CONVERTER *self,
 
 void
 html_prepare_title_titlepage (CONVERTER *self, int output_units_descriptor,
-                              char *output_file, char *output_filename)
+                              const char *output_file,
+                              const char *output_filename)
 {
   OUTPUT_UNIT_LIST *output_units
     = retrieve_output_units (output_units_descriptor);
