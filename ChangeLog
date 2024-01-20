@@ -1,3 +1,630 @@
+2024-01-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm: update POD documentation.
+
+2024-01-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm, tp/maintain/template.pod: remove
+	document from converter argument.  Add conversion_initialization,
+	conversion_finalization and set_document documentation.
+
+2024-01-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (set_document),
+	tp/Texinfo/Convert/DocBook.pm (_index_entry),
+	tp/Texinfo/Convert/HTML.pm (_convert_printindex_command)
+	(_sort_index_entries, _prepare_index_entries_targets)
+	(output_internal_links), tp/Texinfo/Convert/IXIN.pm,
+	tp/Texinfo/Convert/LaTeX.pm (_prepare_indices, _index_entry),
+	tp/Texinfo/Convert/Plaintext.pm (process_printindex),
+	tp/Texinfo/Convert/TexinfoMarkup.pm (_index_entry, _convert),
+	tp/init/chm.pm): do not set 'indices_information', instead use
+	document indices_information to get indices information.
+
+2024-01-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (set_document)
+	(_set_output_units_files), tp/Texinfo/Convert/HTML.pm (label_command)
+	(_get_top_unit, _convert_heading_command)
+	(_set_root_commands_targets_node_files, _html_set_pages_files)
+	(_prepare_units_directions_files, output), tp/Texinfo/Convert/IXIN.pm,
+	tp/Texinfo/Convert/Info.pm (output), tp/Texinfo/Convert/LaTeX.pm
+	(_convert), tp/Texinfo/Convert/Plaintext.pm (_convert): do not set
+	'identifiers_target', instead use document labels_information to get
+	document labels information identifiers_target.
+
+2024-01-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (set_document),
+	tp/Texinfo/Convert/HTML.pm (_convert_heading_command)
+	(_convert_contents_command, _contents_shortcontents_in_title)
+	(_set_root_commands_targets_node_files, _prepare_special_units)
+	(_default_format_contents), tp/Texinfo/Convert/IXIN.pm,
+	tp/Texinfo/Convert/LaTeX.pm (_begin_document, _convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert), tp/ext/epub3.pm,
+	tp/init/book.pm (book_convert_heading_command), tp/init/chm.pm
+	(chm_init): do not set 'sections_list', instead use document
+	sections_list to get document sections list.
+
+2024-01-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (set_document),
+	tp/Texinfo/Convert/HTML.pm (get_value): do not set
+	'document_descriptor' nor 'document_values'.
+
+	* tp/Texinfo/Convert/Converter.pm (set_document),
+	tp/Texinfo/Convert/HTML.pm (_convert_listoffloats_command),
+	tp/Texinfo/Convert/IXIN.pm, tp/Texinfo/Convert/LaTeX.pm
+	(_prepare_floats, _latex_header, _convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert): do not set 'floats',
+	instead use document floats_information to get document floats
+	information.
+
+2024-01-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (set_output_encodings): use document in input
+	argument.  Update callers.
+
+	* tp/Texinfo/Convert/Converter.pm (set_document)
+	(determine_files_and_directory), tp/Texinfo/Convert/HTML.pm
+	(_prepare_converted_output_info), tp/Texinfo/Convert/IXIN.pm,
+	tp/Texinfo/Convert/Info.pm (output, _info_header),
+	tp/Texinfo/Convert/Utils.pm (encoded_output_file_name)
+	(encoded_input_file_name): do not set 'document_info', instead use
+	document global_information to get document information.
+
+2024-01-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (find_parent_root_command),
+	tp/Texinfo/Convert/Converter.pm (set_document)
+	(determine_files_and_directory, set_global_document_commands),
+	tp/Texinfo/Convert/DocBook.pm (output, _convert),
+	tp/Texinfo/Convert/HTML.pm (_get_top_unit, get_file_information)
+	(%available_converter_info, _convert_insertcopying_command)
+	(_default_format_titlepage, _set_heading_commands_targets)
+	(_html_get_tree_root_element, _prepare_special_units)
+	(_prepare_output_units_global_targets, _prepare_footnotes_targets)
+	(_has_contents_or_shortcontents, _prepare_simpletitle)
+	(_prepare_converted_output_info), tp/Texinfo/Convert/IXIN.pm,
+	tp/Texinfo/Convert/Info.pm (_info_header), tp/Texinfo/Convert/LaTeX.pm
+	(_prepare_conversion, _begin_document, _convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert): remove 'global_commands'
+	from converter.  The 'document' is used instead to get the global
+	commands information.  in HTML.pm, remove 'global_commands' from
+	%available_converter_info and add 'document'.
+
+	* tp/Texinfo/Common.pm (get_global_document_command): change order of
+	ifs.
+
+2024-01-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Use foreach loop for Info output
+
+	* tp/Texinfo/Convert/Info.pm (output): Move block of code
+	dealing with split output from the end to the beginning of
+	a loop, but do not execute it the first time around by checking
+	a variable.  This allows changing the loop to a simple foreach
+	loop rather than popping from an array each time round.
+
+2024-01-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Change handling of blank lines between Info nodes
+
+	* tp/Texinfo/Convert/Info.pm (format_node): Do not check
+	'empty_lines_count' or add a newline at the beginning of the node
+	if it is zero.  This makes the conversion of the node more independent
+	of other nodes and sections of the Info file.
+	(output): Each time after calling 'convert_output_unit', add
+	an extra newline to the output if the result did not end in
+	an empty line.	This compensates for not adding a line at the
+	beginning in format_node.  Do not output an extra newline before
+	the tag table, just after the last node.
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): Ensure that
+	the 'before_node_section' ends in a newline by calling
+	ensure_end_of_line, as it is no longer altered in format_node.
+
+	This is aimed towards eliminating 'empty_lines_count' counting with
+	simplicity and performance benefits.
+
+2024-01-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Common.pm (debug_print_tree): Also print 'unit_contents'
+	keys to allow printing an "output unit".
+
+2024-01-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (sort_element_counts): call
+	conversion_initialization and conversion_finalization.
+
+	* tp/Texinfo/Convert/TexinfoMarkup.pm (output, convert): give document
+	argument to conversion_initialization.
+
+	* tp/Texinfo/Convert/Converter.pm (conversion_initialization)
+	(converter), tp/Texinfo/Convert/DocBook.pm
+	(conversion_initialization), tp/Texinfo/Convert/HTML.pm
+	(conversion_initialization), tp/Texinfo/Convert/LaTeX.pm
+	(conversion_initialization), tp/Texinfo/Convert/Plaintext.pm
+	(conversion_initialization), tp/Texinfo/Convert/TexinfoMarkup.pm
+	(conversion_initialization), tp/t/test_utils.pl (convert_to_*),
+	tp/texi2any.pl: call set_document in conversion_initialization, do not
+	pass a document to converter initialization.
+
+	* tp/Texinfo/Convert/Text.pm (converter, output): get document in
+	output.  Do not st global_information and global_commands_information
+	in converter state, they are only used in output().
+
+	* tp/t/convert_to_text.t: call set_document to set converter
+	document.
+
+2024-01-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Find menu with hide-note-references=On
+
+	* info/session.c (info_find_menu): If "*Menu:" marker not
+	found, try to move cursor to the first menu entry in the node.
+
+	Report from Bugsy Abatantuono <bugsyabatantuono@proton.me>.
+
+2024-01-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Reporting Bugs): Change reference to "Change Log"
+	node in "standards" manual to "Change Logs" as the latter is the
+	name that is used in that manual.
+
+2024-01-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix info 'invalid' key mapping segfault
+
+	* info/infodoc.c (dump_map_to_text_buffer): Check for "invalid"
+	entry in key map by checking if a function pointer is null.  This
+	prevents a crash in 'function_documentation' from dereferencing
+	a null pointer if an "invalid" entry was provided in the infokey
+	file.
+
+	Report from Bugsy Abatantuono <bugsyabatantuono@proton.me>.
+
+2024-01-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_load_htmlxref_files): use
+	$Texinfo::ModulePath::top_srcdir to setup search directory with TEST
+	to avoid using the document information before calling output or
+	convert.
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize): use
+	converter_descriptor and not document_descriptor to verify if the
+	converter will be found in XS.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_converter_initialize)
+	(html_initialize_output_state): move code needing information in
+	document to html_initialize_output_state.
+
+	* tp/Texinfo/XS/convert/converter.c (free_generic_converter),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER),
+	tp/Texinfo/XS/main/get_perl_info.c (get_line_message): add
+	small_strings in converter to store small strings from
+	get_line_message.
+
+	* tp/Texinfo/Convert/Converter.pm (set_document, converter): call
+	set_document after converter_initialize.  Set convert_text_options in
+	set_document.
+
+2024-01-17  Patrice Dumas  <pertusus@free.fr>
+
+	Add initialization and finalization of conversion, separate document
+	from converter
+
+	* tp/Texinfo/Convert/Converter.pm (conversion_initialization)
+	(conversion_finalization, output), tp/Texinfo/Convert/DocBook.pm
+	(converter_initialize, conversion_initialization, convert)
+	(conversion_initialization, output), tp/Texinfo/Convert/HTML.pm
+	(%XS_conversion_overrides, _XS_html_converter_initialize)
+	(converter_initialize, conversion_initialization)
+	(conversion_finalization, convert, output), tp/Texinfo/Convert/IXIN.pm
+	(output_ixin), tp/Texinfo/Convert/Info.pm (output),
+	tp/Texinfo/Convert/LaTeX.pm (conversion_initialization, output)
+	(convert, convert_to_latex_math), tp/Texinfo/Convert/Plaintext.pm
+	(conversion_initialization, converter_initialize, convert_output_unit)
+	(convert), tp/Texinfo/Convert/TexinfoMarkup.pm (converter_initialize)
+	(conversion_initialization, output, convert),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_converter_initialize_sv)
+	(html_initialize_output_state, html_conversion_finalization),
+	tp/Texinfo/XS/convert/convert_html.c (html_initialize_output_state),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv, html_conversion_initialization_sv),
+	tp/t/accents.t: use systematically conversion_initialization and
+	conversion_finalization at the beginning and end of output and convert
+	to initialize and finalize the conversion of one document.  Keep in
+	converter_initialize only the code that do not depend on a document.
+	In HTML.pm rename existing functions,
+	_initialize_XS_NonXS_output_state as conversion_initialization and
+	_finalize_output_state as conversion_finalization, and move code from
+	converter_initialize.  In Plaintext.pm, this replaces
+	_initialize_converter_state.
+
+	* tp/Texinfo/Convert/Converter.pm (set_document),
+	tp/Texinfo/Convert/HTML.pm (get_value): rename 'value' key in
+	converter as 'document_values'.
+
+	* tp/Texinfo/Convert/Converter.pm (%XS_overrides, set_document)
+	(_XS_set_document, converter), tp/Texinfo/XS/convert/ConvertXS.xs
+	(converter_set_document), tp/Texinfo/XS/main/get_perl_info.c
+	(converter_set_document, converter_initialize): move setting the
+	document of a converter to a separate function, for now called from
+	converter.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_initialize_output_state),
+	tp/Texinfo/XS/main/get_perl_info.c
+	(find_element_extra_index_entry_sv): handle NUL document.
+
+	* tp/Texinfo/Convert/Plaintext.pm (pop_top_formatter)
+	(process_footnotes, conversion_finalization): add a function to pop
+	the top formatter and use it in conversion_finalization.
+
+	* tp/Texinfo/Convert/DocBook.pm (convert_tree): minor change in code.
+
+	* tp/Texinfo/Convert/IXINSXML.pm (converter_initialize): pass
+	document, not tree.
+
+2024-01-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (determine_files_and_directory):
+	make $output_format non-optional.  Update callers.
+
+2024-01-16  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Prevent M-x visit-menu segfault
+
+	* info/session.c (info_visit_menu): Copy the node structure from the
+	current window before calling info_follow_reference, similarly to
+	code in info_split_window.  This prevents a shared node in the
+	window history, leading to possible memory problems.
+
+	Segmentation fault following 'M-x visit-menu' and 'M-x delete-window'
+	reported by Bugsy Abatantuono <bugsyabatantuono@proton.me>.
+
+2024-01-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (text_convert_tree): handle an
+	undefined options_in.
+
+	* tp/Texinfo/Convert/Text.pm (_initialize_options_encoding)
+	(copy_options_for_convert_text, converter): do not use
+	copy_options_for_convert_text in converter to setup text options, as
+	the options are very similar to converter options, even if they are of
+	a different nature.  Add _initialize_options_encoding to setup
+	enable_encoding both for converter and in
+	copy_options_for_convert_text.
+
+2024-01-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Info.pm (output): Rename a variable
+	to be less confusing.  Explain in comment that setting
+	'text_before_first_node' was a side-effect of calling
+	convert_output_unit, and explain the purpose of saving it.  Reorder
+	code slightly for clarity.  No functional changes intended.
+
+2024-01-15  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/tp_api/Makefile.am (texi2any_internals_dependencies):
+	add Indices.pm.
+
+2024-01-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (dist_modules_DATA), tp/Texinfo/Indices.pm,
+	tp/Texinfo/IndicesXS.pm, tp/Texinfo/XS/Makefile.am
+	(StructuringTransfoXS_la_SOURCES, StructuringTransfoXS_la_CPPFLAGS),
+	(xs_LTLIBRARIES, IndicesXS_la_*), tp/Texinfo/XS/convert/IndicesXS.xs,
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs: move code
+	related to indices to a new XS file convert/IndicesXS.xs out of
+	StructuringTransfoXS.xs.
+
+2024-01-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Indices.pm, tp/Texinfo/Structuring.pm, tp/Makefile.am
+	(dist_modules_DATA): move code related to indices to a new file,
+	Indices.pm out of Structuring.pm.
+
+2024-01-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_set_heading_commands_targets),
+	tp/Texinfo/XS/convert/convert_html.c (heading_commands_list): sort in
+	perl and setup heading_commands_list order such as to have the same
+	order in perl and XS and obtain the same disambiguation of targets.
+
+	* tp/Texinfo/Convert/Converter.pm (converter),
+	tp/Texinfo/Convert/HTML.pm (_set_root_commands_targets_node_files):
+	use 'labels_list' instead of 'identifiers_target' for efficiency and
+	to be more like XS code.
+
+2024-01-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_get_css_elements_classes): set the values based on global
+	selectors when there are only global selectors.
+
+	* tp/Makefile.tres, tp/t/html_tests.t (command_in_node_redirection*):
+	add test of commands in node redirection @-commands and in documment
+	@top, to test CSS rules output.
+
+2024-01-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): map gb2312
+	to euc-cn to get the same output as with perl Encode mime_name.  Note
+	that this mapping looks wrong, as GB2312 seems to be the preferred
+	mime name in IANA encoding registry
+	https://www.iana.org/assignments/character-sets/character-sets.xhtml
+	but we still do it to match with the Perl output.
+
+2024-01-14  Patrice Dumas  <pertusus@free.fr>
+
+	* contrib/mass_test/check_perlVSC.sh: do only the manual given in
+	argument if an argument is given.
+
+2024-01-14  Patrice Dumas  <pertusus@free.fr>
+
+	* contrib/mass_test/*.sh: add copyright notices.
+
+	* contrib/mass_test/extract_manuals.sh: call sed portably.
+
+2024-01-14  Patrice Dumas  <pertusus@free.fr>
+
+	contrib/mass_test for tests on manuals found on GNU website
+
+	* contrib/mass_test/get_manuals.sh,
+	contrib/mass_test/extract_manuals.sh: scripts to download and
+	extract manuals found on the GNU website in software/*/manual/*.texi*.
+
+	* contrib/mass_test/setup_reference_perlVSC.sh,
+	contrib/mass_test/check_perlVSC.sh: check C against perl HTML output.
+
+2024-01-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/t/21multitable.t (fullwidth_in_prototype): New test.
+	* tp/t/21multitable.t: add "use utf8;" declaration in order to
+	use UTF-8 in test case.
+
+2024-01-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (add_text_to_count):
+	Remove function, replacing all calls with calls to _stream_output
+	or _stream_output_encoded.
+
+2024-01-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Encode output and count bytes in Plaintext.pm
+
+	* tp/Texinfo/Convert/Plaintext.pm (_stream_output, _stream_result)
+	(_stream_output_encoded, _stream_byte_count, _stream_encode):
+	New functions.	Convert results of conversion to output
+	encoding as the conversion is done, accumulating the result.
+	This simplifies keeping track of byte offsets in files (for nodes
+	and anchors in the tag table), and potentially has performance
+	benefits as output text does not need to be converted an extra
+	time for the sole purpose of counting bytes.  It is potentially
+	more reliable as byte offsets will be correct automatically
+	rather than having to be kept up-to-date separately from the
+	conversion result.
+
+	(converter_initialize): Initialise result string in count context.
+	(_count_added, _count_bytes): Remove.
+	(add_text_to_count): Make this a simple wrapper around _stream_output
+	with comment to remove in future.
+	(update_count_context): Remove function.  Callers updated.
+	(add_location, _update_locations_counts): Call _stream_byte_count
+	to get byte count, rather than accessing count context hash
+	directly.
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert_output_unit): Update.
+	Clear current result string before converting.
+	(_convert_tree): Update.  Use a new count context to capture
+	conversion result.
+	(_convert_line_new_context): Return encoded text.  Return display
+	width as well as end line count of result.  Callers updated.
+	(_string_width_encoded): New.
+	(_convert) <multitable row>,
+	(process_printindex, _text_heading): Use _string_width_encoded
+	to get display width of already-encoded text.
+	(convert_new_context): New.
+	(_convert) <menu_entry_node, menu_entry_name>:
+	Use convert_new_context to capture result of conversion.
+
+	* tp/Texinfo/Convert/Plaintext.pm (ensure_end_of_line): Do not
+	take a string argument; instead, check the output stream for an
+	end of line.
+	(_align_lines): Take a text argument that is already encoded.
+	(_align_environment): Do not update byte count, as it is done in
+	calling code.
+	(node_name): Encode the returned node name.  Return column
+	width of result, rather than byte count.  Callers updated.
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert, convert_line)
+	(_add_newline_if_needed, process_footnotes, format_contents)
+	(_menu, process_printindex, format_node, _anchor)
+	(ensure_end_of_line, _text_heading),
+	* tp/Texinfo/Convert/Info.pm (format_node): Do not return any
+	return value.  Call _stream_output or _stream_output_encoded
+	with text to be added to the result of the conversion.
+
+	* tp/Texinfo/Convert/Info.pm (output): Update to use new
+	_stream_output interface.
+	(_info_header): Return an encoded string and do not change
+	the current count context.
+
+	* tp/Texinfo/Convert/Plaintext.pm (_decode): New function.
+	* tp/Texinfo/Convert/Info.pm (format_node): Use _decode for
+	printing an error message using an already encoded node name.
+
+	* tp/Texinfo/Translations.pm (gdt_string_columns, gdt_string_encoded):
+	Rename to gdt_string_encoded, and encode the returned string.
+
+	* tp/Texinfo/Common.pm (output_files_disable_encoding):
+	Add function to disable encoding of output, as the output from
+	the converter is already encoded.
+	(output_files_open_out): Obey this setting.
+	* tp/Texinfo/Convert/Plaintext.pm (converter_initialize):
+	Call output_files_disable_encoding.
+
+2024-01-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.c (item_line_parent): use
+	element_builtin_cmd.
+
+	* tp/Texinfo/XS/main/utils.c (informative_command_value): if there is
+	only one rawline argument, returns it.  Return a newly allocated
+	text only if there is more than one argument.  In that case, the
+	returned text won't be freed, but this is not an issue as it could
+	only happen with @set, which is ignored.
+
+	Add, modify, change status of TODO/FIXME.
+
+2024-01-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs: add warn
+	strings fior all the functions that are fully overriden, and modify
+	comments for the other functions.
+
+2024-01-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Transformations.pm (_new_node): if $XS_structuring, abort
+	as the output cannot be correct.
+
+	* tp/t/automatic_nodes.t ($XS_structuring): set $XS_structuring
+	instead of $with_XS and skip tests calling _new_node if
+	$XS_structuring is set.  Update comment on _new_node.
+
+2024-01-14  Patrice Dumas  <pertusus@free.fr>
+
+	* Texinfo/Convert/Converter.pm, Texinfo/Structuring.pm: add explicit
+	scalar().
+
+2024-01-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (_convert): switch arguments and make
+	options argument non optional.
+
+2024-01-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_la_SOURCES),
+	tp/Texinfo/XS/main/option_types.h (enum direction_unit_direction)
+	(FIRSTINFILE_*, NODE_DIRECTIONS_OFFSET, NON_SPECIAL_DIRECTIONS_NR)
+	(enum button_specification_type, enum button_information_type)
+	(enum button_function_type, BUTTON_SPECIFICATION_LIST)
+	(BUTTON_SPECIFICATION_INFO, BUTTON_SPECIFICATION, BUTTON_FUNCTION)
+	(FORMATTED_BUTTON_INFO, DIRECTION_ICON_LIST, OPTION),
+	tp/maintain/regenerate_C_options_info.pl: move definitions related to
+	an option to a separate header file, option_types.h.  Update users.
+
+2024-01-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/call_perl_function.c
+	(call_nodenamenormalization_unicode_to_transliterate)
+	(call_latex_convert_to_latex_math): convert returned strings to UTF-8.
+	Use strndup instead of strdup using the len set by SvPV* functions.
+
+	* tp/Texinfo/Convert/Texinfo.pm: move functions around.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (plain_texinfo_convert_tree): set
+	warning string get_sv_tree_document argument.
+
+2024-01-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (ConvertXS_la_SOURCES),
+	tp/Texinfo/XS/convert/ConvertXS.xs (text_convert_tree): call directly
+	convert_to_text. remove convert/convert_text.c.
+
+	* tp/Texinfo/XS/main/convert_utils.c (encoded_input_file_name),
+	tp/Texinfo/XS/main/utils.c (get_encoding_conversion, decode_string)
+	(encode_string): add some const.
+
+2024-01-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (ConvertXS_la_SOURCES),
+	tp/Texinfo/XS/convert/ConvertXS.xs (plain_texinfo_convert_tree):
+	remove convert/convert_plain_texinfo.c, call convert_to_texinfo
+	directly.
+
+2024-01-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c: use strndup instead
+	of strdup and text_append_n instead of text_append using the len
+	set by SvPV* functions.
+
+2024-01-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_file_id_setting*): use newSVpv_utf8 to pass strings if they
+	could be encoded, and convert returned strings to UTF-8.
+
+2024-01-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/targets.c (set_labels_identifiers_target)
+	tp/Texinfo/XS/main/tree_types (LABEL),
+	tp/Texinfo/XS/parsetexi/labels.c (register_label): if a label element
+	is a duplicate, add a reference to the element used in the LABEL
+	structure used in labels_lists.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(set_root_commands_targets_node_files): use labels_lists instead of
+	identifiers_target to set up targets to process in the document order,
+	to have less sorting to do later on in sort_cmd_targets.
+
+2024-01-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_no_arg_command): use
+	letter_no_arg_commands to determine if the command name upper-cased
+	string is a command name too.
+
+	* tp/Texinfo/XS/convert/converter.c
+	(no_brace_command_accent_upper_case): mapping of lower case letter no
+	arg commands to the corresponding upper case commands.
+
+	* tp/Texinfo/XS/convert/convert_html.c (HTML_COMMAND_STRUCT)
+	(convert_no_arg_command, css_string_convert_no_arg_command)
+	(html_format_init): add upper case command information in
+	HTML_COMMAND_STRUCT based on no_brace_command_accent_upper_case.
+
+2024-01-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document.c
+	(register_document_convert_index_text_options),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(setup_index_entry_keys_formatting): free previously set
+	convert_index_text_options before replacing.
+
+	* tp/Texinfo/XS/convert/convert_html.c (add_to_unit_file_name_paths):
+	simplify.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_set_pages_files): use
+	unit_file_name_paths entry directly as filename.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_convert_output): call
+	text_reset only if needed.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_convert_output): setup
+	conversion to output encoding only if it is not utf-8.
+
+2024-01-12  Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS: add the converters in C and use of TEXINFO_XS_CONVERT
+	environment variable to NEWS, now that the HTML C conversion code is
+	complete.
+
+2024-01-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/unicode.h (DIACRITIC_UNICODE),
+	tp/maintain/setup_converters_code_tables.pl (unicode_diacritics): add
+	hexadecimal representation of diacritics to the unicode_diacritics
+	table.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(set_case_if_only_word_characters)
+	(html_accent_entities_html_accent_internal)
+	(after_escaped_characters, css_string_accent)
+	(css_string_convert_accent_command, html_converter_initialize):
+	implement css_string_convert_accent_command in C.  Create
+	set_case_if_only_word_characters based on
+	html_accent_entities_html_accent_internal tu use common code.
+
 2024-01-11  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/XS/main/convert_to_text.c: make two functions static.

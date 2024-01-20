@@ -20,11 +20,13 @@
 #include <stddef.h>
 #include <iconv.h>
 
-#include "options_types.h"
 #include "global_commands_types.h"
-#include "tree_types.h"
 #include "command_ids.h"
+#include "tree_types.h"
+#include "option_types.h"
+#include "options_types.h"
 #include "document_types.h"
+#include "converter_types.h"
 #include "builtin_commands.h"
 
 extern const char *whitespace_chars;
@@ -204,14 +206,14 @@ OPTION *get_command_option (OPTIONS *options, enum command_id cmd);
 void add_include_directory (char *filename, STRING_LIST *include_dirs_list);
 char *locate_include_file (char *filename, STRING_LIST *include_dirs_list);
 
-ENCODING_CONVERSION *get_encoding_conversion (char *encoding,
+ENCODING_CONVERSION *get_encoding_conversion (const char *encoding,
                                     ENCODING_CONVERSION_LIST *encodings_list);
 char *encode_with_iconv (iconv_t our_iconv,  char *s,
                          const SOURCE_INFO *source_info);
 void reset_encoding_list (ENCODING_CONVERSION_LIST *encodings_list);
-char *decode_string (char *input_string, char *encoding, int *status,
+char *decode_string (char *input_string, const char *encoding, int *status,
                      const SOURCE_INFO *source_info);
-char *encode_string (char *input_string, char *encoding, int *status,
+char *encode_string (char *input_string, const char *encoding, int *status,
                      const SOURCE_INFO *source_info);
 
 EXPANDED_FORMAT *new_expanded_formats (void);

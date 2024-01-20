@@ -37,6 +37,7 @@ use strict;
 
 use Texinfo::Commands;
 use Texinfo::Common;
+use Texinfo::Structuring;
 use Texinfo::Convert::Converter;
 use Texinfo::Convert::Unicode;
 # for debugging and adding the original line for some commands
@@ -270,7 +271,6 @@ sub converter_initialize($)
 {
   my $self = shift;
 
-  $self->{'document_context'} = [{'monospace' => [0]}];
   $self->{'context_block_commands'} = {%default_context_block_commands};
   foreach my $raw (grep {$Texinfo::Commands::block_commands{$_} eq 'format_raw'}
                         keys(%Texinfo::Commands::block_commands)) {
@@ -279,16 +279,30 @@ sub converter_initialize($)
   }
 }
 
+sub conversion_initialization($;$)
+{
+  my $self = shift;
+  my $document = shift;
+
+  if ($document) {
+    $self->set_document($document);
+  }
+
+  $self->{'document_context'} = [{'monospace' => [0]}];
+}
+
 # Main output function for the Texinfo language markup output files.
 sub output($$)
 {
   my $self = shift;
   my $document = shift;
 
+  $self->conversion_initialization($document);
+
   my $root = $document->tree();
 
   my ($output_file, $destination_directory, $output_filename)
-       = $self->determine_files_and_directory();
+       = $self->determine_files_and_directory($self->{'output_format'});
 
   my ($encoded_destination_directory, $dir_encoding)
     = $self->encoded_output_file_name($destination_directory);
@@ -296,7 +310,6 @@ sub output($$)
     = $self->create_destination_directory($encoded_destination_directory,
                                           $destination_directory);
   return undef unless $succeeded;
-
 
   my $fh;
   my $encoded_output_file;
@@ -372,9 +385,14 @@ sub _index_entry($$)
   my $self = shift;
   my $element = shift;
   if ($element->{'extra'} and $element->{'extra'}->{'index_entry'}) {
+    my $indices_information;
+    if ($self->{'document'}) {
+      $indices_information = $self->{'document'}->indices_information();
+    }
+
     my ($index_entry, $index_info)
      = Texinfo::Common::lookup_index_entry($element->{'extra'}->{'index_entry'},
-                                           $self->{'indices_information'});
+                                           $indices_information);
     my $attribute = [['index', $index_entry->{'index_name'}]];
     push @$attribute, ['number', $index_entry->{'entry_number'}]
         if (defined($index_entry->{'entry_number'}));
@@ -433,6 +451,8 @@ sub convert($$)
 {
   my $self = shift;
   my $document = shift;
+
+  $self->conversion_initialization($document);
 
   my $root = $document->tree();
 
@@ -757,9 +777,14 @@ sub _convert($$;$)
         # out of block commands @item, @itemx in enumerate or multitable...
     } elsif ($element->{'type'} and $element->{'type'} eq 'index_entry_command'
              and $element->{'extra'} and $element->{'extra'}->{'index_entry'}) {
+      my $indices_information;
+      if ($self->{'document'}) {
+        $indices_information = $self->{'document'}->indices_information();
+      }
+
       my ($index_entry, $index_info)
         = Texinfo::Common::lookup_index_entry($element->{'extra'}->{'index_entry'},
-                                              $self->{'indices_information'});
+                                              $indices_information);
       my $format_element;
       my $attribute = [];
       if (exists $line_commands{$element->{'cmdname'}}) {

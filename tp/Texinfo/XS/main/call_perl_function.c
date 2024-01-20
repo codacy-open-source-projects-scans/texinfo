@@ -37,6 +37,11 @@
 #include "build_perl_info.h"
 #include "call_perl_function.h"
 
+ /* The NOTE in build_perl_info.c about not using malloc/free should
+    be relevant for this file
+    TODO there are calls to strndup.  Is it ok?
+  */
+
 char *
 call_nodenamenormalization_unicode_to_transliterate (char *text)
 {
@@ -69,9 +74,8 @@ call_nodenamenormalization_unicode_to_transliterate (char *text)
     croak("_unicode_to_transliterate should return 1 item\n");
 
   result_sv = POPs;
-  /* FIXME encoding */
-  result_ret = SvPV (result_sv, len);
-  result = strdup (result_ret);
+  result_ret = SvPVutf8 (result_sv, len);
+  result = strndup (result_ret, len);
 
   PUTBACK;
 
@@ -142,7 +146,7 @@ call_latex_convert_to_latex_math (CONVERTER *self, ELEMENT *element)
 
   result_sv = POPs;
   result_ret = SvPVutf8 (result_sv, len);
-  result = strdup (result_ret);
+  result = strndup (result_ret, len);
 
   PUTBACK;
 

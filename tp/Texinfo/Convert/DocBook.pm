@@ -31,6 +31,8 @@ use Texinfo::Common;
 # for debugging
 use Texinfo::Convert::Texinfo;
 
+use Texinfo::Structuring;
+
 use Texinfo::Convert::Unicode;
 use Texinfo::Convert::Utils;
 use Texinfo::Convert::Text;
@@ -282,8 +284,6 @@ sub converter_initialize($)
 {
   my $self = shift;
 
-  $self->{'document_context'} = [];
-  $self->_new_document_context();
   $self->{'context_block_commands'} = {%default_context_block_commands};
   foreach my $raw (grep {$Texinfo::Commands::block_commands{$_} eq 'format_raw'}
                         keys(%Texinfo::Commands::block_commands)) {
@@ -292,22 +292,45 @@ sub converter_initialize($)
   }
 }
 
+sub conversion_initialization($;$)
+{
+  my $self = shift;
+  my $document = shift;
+
+  if ($document) {
+    $self->set_document($document);
+  }
+
+  $self->{'document_context'} = [];
+  $self->_new_document_context();
+  $self->{'lang_stack'} = [];
+  $self->{'in_skipped_node_top'} = 0;
+  %sectioning_commands_done = ();
+}
+
+sub conversion_finalization($)
+{
+  my $self = shift;
+
+  pop @{$self->{'document_context'}};
+}
+
 sub convert($$)
 {
   my $self = shift;
   my $document = shift;
 
+  $self->conversion_initialization($document);
+
   my $root = $document->tree();
 
-  if (! defined($self->{'lang_stack'})) {
-    $self->{'lang_stack'} = [''];
-  }
-  # could even set to 0 if defined?
-  $self->{'in_skipped_node_top'} = 0
-    if (! defined($self->{'in_skipped_node_top'}));
+  push @{$self->{'lang_stack'}}, '';
 
-  %sectioning_commands_done = ();
-  return $self->convert_tree($root);
+  my $result = $self->convert_tree($root);
+
+  $self->conversion_finalization();
+
+  return $result;
 }
 
 sub convert_tree($$)
@@ -315,8 +338,8 @@ sub convert_tree($$)
   my $self = shift;
   my $root = shift;
 
-  if (! defined($self->{'lang_stack'})) {
-    $self->{'lang_stack'} = [''];
+  if (scalar(@{$self->{'lang_stack'}}) == 0) {
+    push @{$self->{'lang_stack'}}, '';
   }
   return $self->_convert($root);
 }
@@ -330,17 +353,22 @@ sub output($$)
   my $self = shift;
   my $document = shift;
 
+  $self->conversion_initialization($document);
+
   my $root = $document->tree();
 
   my ($output_file, $destination_directory, $output_filename)
-    = $self->determine_files_and_directory();
+    = $self->determine_files_and_directory($self->{'output_format'});
 
   my ($encoded_destination_directory, $dir_encoding)
     = $self->encoded_output_file_name($destination_directory);
   my $succeeded
     = $self->create_destination_directory($encoded_destination_directory,
                                           $destination_directory);
-  return undef unless $succeeded;
+  unless ($succeeded) {
+    $self->conversion_finalization();
+    return undef;
+  }
 
   my $fh;
   my $encoded_output_file;
@@ -356,6 +384,7 @@ sub output($$)
       $self->converter_document_error(
            sprintf(__("could not open %s for writing: %s"),
                                     $output_file, $error_message));
+      $self->conversion_finalization();
       return undef;
     }
   }
@@ -373,8 +402,6 @@ sub output($$)
     $id = '';
   }
 
-  $self->{'lang_stack'} = [];
-  $self->{'in_skipped_node_top'} = 0;
   my $lang = $DEFAULT_LANG;
   $self->set_global_document_commands('preamble', ['documentlanguage']);
   if (defined($self->get_conf('documentlanguage'))) {
@@ -391,8 +418,12 @@ sub output($$)
 '. "<book${id} lang=\"$lang\">\n";
 
   my $legalnotice;
-  if ($self->{'global_commands'}->{'copying'}) {
-    my $copying_element = $self->{'global_commands'}->{'copying'};
+  my $global_commands;
+  if ($self->{'document'}) {
+    $global_commands = $self->{'document'}->global_commands_information();
+  }
+  if ($global_commands and $global_commands->{'copying'}) {
+    my $copying_element = $global_commands->{'copying'};
     my $copying_result
      = $self->convert_tree({'contents' => $copying_element->{'contents'}});
     if ($copying_result ne '') {
@@ -401,13 +432,15 @@ sub output($$)
   }
 
   my $fulltitle_command;
-  foreach my $title_cmdname ('title', 'shorttitlepage', 'titlefont') {
-    if ($self->{'global_commands'}->{$title_cmdname}) {
-      my $command = $self->{'global_commands'}->{$title_cmdname};
-      next if (!$command->{'args'} or !$command->{'args'}->[0]
-               or !$command->{'args'}->[0]->{'contents'});
-      $fulltitle_command = $command;
-      last;
+  if ($global_commands) {
+    foreach my $title_cmdname ('title', 'shorttitlepage', 'titlefont') {
+      if ($global_commands->{$title_cmdname}) {
+        my $command = $global_commands->{$title_cmdname};
+        next if (!$command->{'args'} or !$command->{'args'}->[0]
+                 or !$command->{'args'}->[0]->{'contents'});
+        $fulltitle_command = $command;
+        last;
+      }
     }
   }
 
@@ -415,9 +448,9 @@ sub output($$)
   # independently, only author and subtitle are gathered here.
   my $subtitle_info = '';
   my $authors_info = '';
-  if ($self->{'global_commands'}->{'titlepage'}) {
+  if ($global_commands and $global_commands->{'titlepage'}) {
     my $collected_commands = Texinfo::Common::collect_commands_list_in_tree(
-            $self->{'global_commands'}->{'titlepage'}, ['author', 'subtitle']);
+            $global_commands->{'titlepage'}, ['author', 'subtitle']);
 
     my @authors_elements;
     my $subtitle_text = '';
@@ -455,8 +488,8 @@ sub output($$)
   }
 
   my $settitle_command;
-  if ($self->{'global_commands'}->{'settitle'}) {
-    my $command = $self->{'global_commands'}->{'settitle'};
+  if ($global_commands and $global_commands->{'settitle'}) {
+    my $command = $global_commands->{'settitle'};
     $settitle_command = $command
       unless (!$command->{'args'} or !$command->{'args'}->[0]
               or !$command->{'args'}->[0]->{'contents'});
@@ -467,10 +500,11 @@ sub output($$)
     $titleabbrev_command = $settitle_command;
   } elsif ($settitle_command) {
     $fulltitle_command = $settitle_command;
-  } elsif (defined($legalnotice) and $self->{'global_commands'}->{'top'}) {
+  } elsif (defined($legalnotice) and $global_commands
+           and $global_commands->{'top'}) {
     # if there is a legalnotice, we really want to have a title
     # preceding it, so we also use @top
-    my $command = $self->{'global_commands'}->{'top'};
+    my $command = $global_commands->{'top'};
     $fulltitle_command = $command
       unless (!$command->{'args'} or !$command->{'args'}->[0]
               or !$command->{'args'}->[0]->{'contents'});
@@ -509,7 +543,6 @@ sub output($$)
     $header .= "<bookinfo>$document_info</bookinfo>\n";
   }
 
-  %sectioning_commands_done = ();
   my $result = '';
   $result .= $self->write_or_return($header, $fh);
   $result .= $self->write_or_return($self->convert_tree($root), $fh);
@@ -523,6 +556,7 @@ sub output($$)
                                     $output_file, $!));
     }
   }
+  $self->conversion_finalization();
   return $result;
 }
 
@@ -582,9 +616,15 @@ sub _index_entry($$)
   my $self = shift;
   my $element = shift;
   if ($element->{'extra'} and $element->{'extra'}->{'index_entry'}) {
+
+    my $indices_information;
+    if ($self->{'document'}) {
+      $indices_information = $self->{'document'}->indices_information();
+    }
+
     my ($index_entry, $index_info)
      = Texinfo::Common::lookup_index_entry($element->{'extra'}->{'index_entry'},
-                                           $self->{'indices_information'});
+                                           $indices_information);
     # FIXME DocBook 5 role->type
     my $result = "<indexterm role=\"$index_entry->{'index_name'}\">";
 
@@ -973,13 +1013,16 @@ sub _convert($$;$)
         $result .= "\n";
         return $result;
       } elsif ($element->{'cmdname'} eq 'insertcopying') {
-        if ($self->{'global_commands'}
-           and $self->{'global_commands'}->{'copying'}) {
-         return $self->_convert({'contents'
-            => $self->{'global_commands'}->{'copying'}->{'contents'}});
-        } else {
-          return '';
+        if ($self->{'document'}) {
+          my $global_commands
+            = $self->{'document'}->global_commands_information();
+          if ($global_commands and $global_commands->{'copying'}) {
+            return $self->_convert({'contents'
+              => $global_commands->{'copying'}->{'contents'}});
+          }
         }
+
+        return '';
       } elsif ($element->{'cmdname'} eq 'verbatiminclude') {
         my $verbatim_include_verbatim
           = Texinfo::Convert::Utils::expand_verbatiminclude($self, $element);
@@ -1839,7 +1882,7 @@ Texinfo::Convert::DocBook - Convert Texinfo tree to DocBook
 =head1 SYNOPSIS
 
   my $converter
-    = Texinfo::Convert::DocBook->converter({'document' => $document});
+    = Texinfo::Convert::DocBook->converter({'NUMBER_SECTIONS' => 0});
 
   $converter->output($document);
   $converter->convert($document);
@@ -1862,15 +1905,11 @@ Texinfo::Convert::DocBook converts a Texinfo tree to DocBook.
 
 Initialize converter from Texinfo to DocBook.
 
-The I<$options> hash reference holds options for the converter.  In
-this option hash reference a L<document|Texinfo::Document>
-may be associated with the I<document> key.  The document should not
-be available directly anymore after getting the associated information.
-
-The other options are Texinfo customization options and a few other options
-that can be passed to the converter. Most of the customization options are
-described in the Texinfo manual.  Those customization options, when
-appropriate, override the document content.
+The I<$options> hash reference holds Texinfo customization options for the
+converter.  These options should be Texinfo customization options
+that can be passed to the converter.  Most of the customization options are
+described in the Texinfo manual or in the customization API manual.  Those
+customization options, when appropriate, override the document content.
 
 See L<Texinfo::Convert::Converter> for more information.
 
@@ -1888,6 +1927,9 @@ Convert a Texinfo parsed document I<$document> and return the resulting output.
 Convert a Texinfo tree portion I<$tree> and return the resulting
 output.  This function does not try to output a full document but only
 portions.  For a full document use C<convert>.
+
+In general, this function should be called after the converter has been
+associated to a document by a call to C<output> or C<convert>.
 
 =back
 

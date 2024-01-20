@@ -67,8 +67,9 @@ use Texinfo::Report;
 use Texinfo::Parser;
 use Texinfo::Convert::Text;
 use Texinfo::Document;
-use Texinfo::Structuring;
 use Texinfo::Convert::PlainTexinfo;
+use Texinfo::Structuring;
+use Texinfo::Indices;
 use Texinfo::Translations;
 use Texinfo::Convert::Plaintext;
 use Texinfo::Convert::Info;
@@ -531,7 +532,6 @@ sub convert_to_plaintext($$$$$$;$)
 
   my $converter =
      Texinfo::Convert::Plaintext->converter({'DEBUG' => $self->{'DEBUG'},
-                                             'document' => $document,
                                              'converted_format' => 'plaintext',
                                              %$converter_options });
   my $result;
@@ -579,7 +579,6 @@ sub convert_to_info($$$$$;$)
 
   my $converter =
      Texinfo::Convert::Info->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'document' => $document,
                                          'converted_format' => 'info',
                                           %$converter_options });
   my $result = $converter->output($document);
@@ -613,7 +612,6 @@ sub convert_to_html($$$$$$;$)
         and !defined($converter_options->{'SPLIT'}));
   my $converter =
      Texinfo::Convert::HTML->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'document' => $document,
                                          'converted_format' => 'html',
                                           %$converter_options });
   my $result;
@@ -649,7 +647,6 @@ sub convert_to_xml($$$$$$;$)
 
   my $converter =
      Texinfo::Convert::TexinfoXML->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'document' => $document,
                                          'converted_format' => 'texinfoxml',
                                           %$converter_options });
 
@@ -687,7 +684,6 @@ sub convert_to_docbook($$$$$$;$)
 
   my $converter =
      Texinfo::Convert::DocBook->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'document' => $document,
                                          'converted_format' => 'docbook',
                                           %$converter_options });
   my $result;
@@ -744,7 +740,6 @@ sub convert_to_latex($$$$$$;$)
 
   my $converter =
      Texinfo::Convert::LaTeX->converter ({'DEBUG' => $self->{'DEBUG'},
-                                         'document' => $document,
                                          'converted_format' => 'latex',
                                           %$converter_options });
   my $result;
@@ -1066,7 +1061,7 @@ sub test($$)
   my $document_information = $document->global_information();
 
   Texinfo::Common::set_output_encodings($main_configuration,
-                                        $document_information);
+                                        $document);
 
   my $global_commands = $document->global_commands_information();
   if ($document_information->{'novalidate'}) {
@@ -1165,7 +1160,7 @@ sub test($$)
   my $indices_information = $document->indices_information();
   # FIXME maybe it would be good to compare $merged_index_entries?
   my $merged_index_entries
-     = Texinfo::Structuring::merge_indices($indices_information);
+     = Texinfo::Indices::merge_indices($indices_information);
 
   # only print indices information if it differs from the default
   # indices
@@ -1180,7 +1175,7 @@ sub test($$)
     $main_configuration->{'document_descriptor'}
       = $document->document_descriptor();
     ($sorted_index_entries, $index_entries_sort_strings)
-      = Texinfo::Structuring::sort_indices_by_index($registrar,
+      = Texinfo::Indices::sort_indices_by_index($registrar,
                                    $main_configuration,
                                    $merged_index_entries,
                                    $indices_information);

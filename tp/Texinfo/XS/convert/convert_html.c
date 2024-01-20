@@ -30,6 +30,7 @@
 #include "tree_types.h"
 #include "element_types.h"
 #include "converter_types.h"
+#include "option_types.h"
 #include "tree.h"
 #include "builtin_commands.h"
 #include "command_stack.h"
@@ -218,6 +219,7 @@ CMD_VARIETY command_special_unit_variety[] = {
 typedef struct HTML_COMMAND_STRUCT {
     unsigned long flags;
     enum command_id pre_class_cmd;
+    enum command_id upper_case_cmd;
 } HTML_COMMAND_STRUCT;
 
 static HTML_COMMAND_STRUCT html_commands_data[BUILTIN_CMD_NUMBER];
@@ -651,7 +653,6 @@ html_gdt_string (const char *string, CONVERTER *self,
                  NAMED_STRING_ELEMENT_LIST *replaced_substrings,
                  const char *translation_context, const char *in_lang)
 {
-  /* FIXME */
   char *translated_string = html_translate_string (self, string,
                                       translation_context, in_lang);
 
@@ -1612,7 +1613,6 @@ static enum command_id HTML_align_cmd[] = {
    CM_raggedright, CM_flushleft, CM_flushright, CM_center, 0
 };
 
-/* TODO free? It should be freed at exit? */
 void
 register_format_context_command (enum command_id cmd)
 {
@@ -2079,7 +2079,9 @@ set_root_commands_targets_node_files (CONVERTER *self)
 
       if (self->conf->EXTENSION.string)
         extension = self->conf->EXTENSION.string;
-      LABEL_LIST *label_targets = self->document->identifiers_target;
+      /* use labels_list and not identifiers_target to process in the
+         document order */
+      LABEL_LIST *label_targets = self->document->labels_list;
       int i;
       for (i = 0; i < label_targets->number; i++)
         {
@@ -2087,9 +2089,15 @@ set_root_commands_targets_node_files (CONVERTER *self)
           char *target;
           char *node_filename;
           char *user_node_filename;
+          const ELEMENT *label_element;
+          const ELEMENT *target_element;
           LABEL *label = &label_targets->list[i];
-          const ELEMENT *target_element = label->element;
-          const ELEMENT *label_element = get_label_element (target_element);
+
+          if (!label->identifier || label->reference)
+            continue;
+
+          target_element = label->element;
+          label_element = get_label_element (target_element);
 
           TARGET_FILENAME *target_filename =
            normalized_label_id_file (self, label->identifier, label_element);
@@ -3809,7 +3817,6 @@ html_internal_command_tree (CONVERTER *self, const ELEMENT *command,
           else if (command->args.number <= 0
                    || command->args.list[0]->contents.number <= 0)
             { /* no argument, nothing to do */
-              /* TODO check if possible */
               tree->status = tree_added_status_no_tree;
             }
           else
@@ -4377,7 +4384,6 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
 
   if (filename)
     {
-      CSS_LIST *css_list;
       page_number = find_page_name_number (&self->page_name_number,
                                            filename);
       if (!page_number)
@@ -4396,7 +4402,9 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
             {
              /* this happens legitimately in case of an output file not
                 associated to an output unit and not having registered
-                any CSS selector */
+                any CSS selector.  Also the formatting of the node or
+                similar command is in general done in global context
+                so no file is added */
               char *msg;
               xasprintf (&msg, "%s: get CSS could not find page number",
                          filename);
@@ -4407,6 +4415,7 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
         }
       if (page_number)
         {
+          CSS_LIST *css_list;
           css_list = &self->page_css.list[page_number];
           if (css_list->number)
             {
@@ -4428,6 +4437,8 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
           /* +1 for 'span:hover a.copiable-link' */
           size_t space = global_context_css_list->number +1;
           selectors = (const char **) malloc (sizeof (char *) * space);
+          memcpy (selectors, global_context_css_list->list,
+                  global_context_css_list->number * sizeof (char *));
           selector_nr = global_context_css_list->number;
         }
       else
@@ -4458,6 +4469,7 @@ html_get_css_elements_classes (CONVERTER *self, const char *filename)
             }
         }
     }
+
   for (j = 0; j < selector_nr; j++)
     {
       if (!strcmp ("a.copiable-link", selectors[j]))
@@ -4891,9 +4903,10 @@ prepare_footnotes_targets (CONVERTER *self)
     }
 }
 
+/* keep the command names sorted alphabetically to match order in perl */
 static enum command_id heading_commands_list[] = {
-  CM_chapheading, CM_heading, CM_subheading, CM_subsubheading,
-  CM_majorheading, 0,
+  CM_chapheading, CM_heading, CM_majorheading, CM_subheading, CM_subsubheading,
+  0,
 };
 
 void
@@ -4918,12 +4931,50 @@ set_heading_commands_targets (CONVERTER *self)
     }
 }
 
-/* It may not be efficient to sort and find back with bsearch
-   if there is a small number of elements.  However, some target
-   elements should already be ordered when they are accessed in
-   their order of appearance in the document.
-   TODO check in which case it is not true and use another data
-   source if possible  */
+/* For debug/check/optimization
+   used to check to what extent the targets are already ordered.
+   Return the number of elements ordered ok with respect to the
+   previous element
+ */
+size_t
+check_targets_order (enum command_id cmd, HTML_TARGET_LIST *element_targets)
+{
+  size_t i;
+  size_t result = 0;
+  if (element_targets->number <= 1)
+    return result;
+  for (i = 1; i < element_targets->number; i++)
+    {
+      if (compare_element_target (&element_targets->list[i-1],
+                                  &element_targets->list[i]) > 0)
+        {
+          fprintf (stderr, "no %s %zu %ld %p %s %zu %ld %p %s\n",
+           builtin_command_name (cmd), i-1,
+           (uintptr_t)element_targets->list[i-1].element,
+           element_targets->list[i-1].element, element_targets->list[i-1].target,
+           i, (uintptr_t)element_targets->list[i].element,
+           element_targets->list[i].element, element_targets->list[i].target);
+        }
+      else
+        result++;
+    }
+  return result;
+}
+
+/* It may not be efficient to sort and find back with bsearch if there is
+   a small number of elements.  However, some target elements are more
+   likely to already be ordered when they are accessed in their order of
+   appearance in the document.  There is no guarantee, as it is only in the
+   same array that adresses are guaranteed to be increasing.  A check done
+   in 2024 with gcc, using check_targets_order, and also looking at the
+   address of newly allocated elements shows that elements are
+   not that much allocated in order.  However, overall, the addresses are
+   more in order when elements are accessed in the document order.
+   For indices, it is not really possible to get them in document order,
+   within an index they are in document order, but not across indices.
+   The other data are in document order, for nodes and similar because
+   the labels list is used instead of identifiers_target on purpose.
+ */
 void
 sort_cmd_targets (CONVERTER *self)
 {
@@ -4935,6 +4986,11 @@ sort_cmd_targets (CONVERTER *self)
       if (self->html_targets[cmd].number > 0)
         {
           HTML_TARGET_LIST *element_targets = &self->html_targets[cmd];
+           /* to check the order
+          size_t ordered_items = check_targets_order (cmd, element_targets);
+          fprintf (stderr, "ORDER %s %zu / %zu\n", builtin_command_name (cmd),
+                   ordered_items, element_targets->number -1);
+            */
           qsort (element_targets->list,
                  element_targets->number,
                  sizeof (HTML_TARGET), compare_element_target);
@@ -5192,12 +5248,9 @@ static char *
 add_to_unit_file_name_paths (char **unit_file_name_paths,
                              char *filename, OUTPUT_UNIT *output_unit)
 {
-  /* FIXME simplify */
-  char **new_output_unit_file_name
-                  = &unit_file_name_paths[output_unit->index];
-  *new_output_unit_file_name = strdup (filename);
+  unit_file_name_paths[output_unit->index] = strdup (filename);
 
-  return *new_output_unit_file_name;
+  return unit_file_name_paths[output_unit->index];
 }
 
 static FILE_SOURCE_INFO_LIST *
@@ -5497,15 +5550,14 @@ html_set_pages_files (CONVERTER *self, OUTPUT_UNIT_LIST *output_units,
       size_t output_unit_file_idx = 0;
       FILE_NAME_PATH_COUNTER *output_unit_file;
       OUTPUT_UNIT *output_unit = output_units->list[i];
-      char *output_unit_file_name = unit_file_name_paths[i];
-      char *filename = strdup (output_unit_file_name);
+      char *filename = unit_file_name_paths[i];
       FILE_SOURCE_INFO *file_source_info
-        = find_file_source_info (files_source_info, output_unit_file_name);
+        = find_file_source_info (files_source_info, filename);
       char *filepath = file_source_info->path;
 
       FILE_NAME_PATH *file_name_path
         = call_file_id_setting_unit_file_name (self, output_unit,
-                                         output_unit_file_name, filepath);
+                                               filename, filepath);
       if (file_name_path)
         {
           if (file_name_path->filename)
@@ -5548,7 +5600,6 @@ html_set_pages_files (CONVERTER *self, OUTPUT_UNIT_LIST *output_units,
                  output_unit_texi (output_unit),
                  output_unit->unit_filename, output_unit_file->counter);
       free (filename);
-      free (output_unit_file_name);
     }
 
   free (unit_file_name_paths);
@@ -7912,7 +7963,7 @@ word_number_more_than_level (const char *text, int level)
   int count = 0;
 
   while (*p)
-    {
+    {/* FIXME in perl unicode spaces are also matched */
       int n = strspn (p, whitespace_chars);
       if (n)
         {
@@ -8312,26 +8363,9 @@ convert_no_arg_command (CONVERTER *self, const enum command_id cmd,
     }
 
   if (html_in_upper_case (self)
-      && (builtin_command_data[formatted_cmd].other_flags & CF_letter_no_arg))
+      && html_commands_data[formatted_cmd].upper_case_cmd)
     {
-      const char *command = builtin_command_name (formatted_cmd);
-      char *upper_case_command = strdup (command);
-      char *p;
-      enum command_id upper_case_cmd;
-      for (p = upper_case_command; *p; p++)
-        {
-          *p = toupper (*p);
-        }
-      /* TODO the mapping could be done once for all */
-      upper_case_cmd = lookup_builtin_command (upper_case_command);
-      if (upper_case_cmd)
-        {
-          HTML_COMMAND_CONVERSION *conv_context
-            = self->html_command_conversion[upper_case_cmd];
-          if (conv_context[context].text || conv_context[context].element)
-            formatted_cmd = upper_case_cmd;
-        }
-      free (upper_case_command);
+      formatted_cmd = html_commands_data[formatted_cmd].upper_case_cmd;
     }
 
   specification
@@ -8363,26 +8397,9 @@ css_string_convert_no_arg_command (CONVERTER *self,
     }
 
   if (html_in_upper_case (self)
-      && (builtin_command_data[formatted_cmd].other_flags & CF_letter_no_arg))
+      && html_commands_data[formatted_cmd].upper_case_cmd)
     {
-      const char *command = builtin_command_name (formatted_cmd);
-      char *upper_case_command = strdup (command);
-      char *p;
-      enum command_id upper_case_cmd;
-      for (p = upper_case_command; *p; p++)
-        {
-          *p = toupper (*p);
-        }
-      /* TODO the mapping could be done once for all */
-      upper_case_cmd = lookup_builtin_command (upper_case_command);
-      free (upper_case_command);
-      if (upper_case_cmd)
-        {
-          HTML_COMMAND_CONVERSION *conv_context
-            = self->html_command_conversion[upper_case_cmd];
-          if (conv_context[HCC_type_css_string].text)
-            formatted_cmd = upper_case_cmd;
-        }
+      formatted_cmd = html_commands_data[formatted_cmd].upper_case_cmd;
     }
 
   text_append (result,
@@ -8565,7 +8582,7 @@ convert_email_command (CONVERTER *self, const enum command_id cmd,
       text = mail_string;
     }
 
-  /* FIXME match unicode spaces in perl */
+  /* FIXME in perl unicode spaces are also matched */
   if (!mail || mail[strspn (mail, whitespace_chars)] == '\0')
     {
       if (text)
@@ -9220,10 +9237,8 @@ convert_math_command (CONVERTER *self, const enum command_id cmd,
   free (attribute_class);
 }
 
-char *
-html_accent_entities_html_accent_internal (CONVERTER *self, const char *text,
-                         const ELEMENT *element, int set_case,
-                         int use_numeric_entities)
+static char *
+set_case_if_only_word_characters (const char *text, int set_case)
 {
   char *text_set;
 
@@ -9243,6 +9258,16 @@ html_accent_entities_html_accent_internal (CONVERTER *self, const char *text,
     text_set = to_upper_or_lower_multibyte (text, set_case);
   else
     text_set = strdup (text);
+
+  return text_set;
+}
+
+char *
+html_accent_entities_html_accent_internal (CONVERTER *self, const char *text,
+                         const ELEMENT *element, int set_case,
+                         int use_numeric_entities)
+{
+  char *text_set = set_case_if_only_word_characters (text, set_case);
 
   /* do not return a dotless i or j as such if it is further composed
      with an accented letter, return the letter as is */
@@ -9322,6 +9347,7 @@ convert_accent_command (CONVERTER *self, const enum command_id cmd,
                     const HTML_ARGS_FORMATTED *args_formatted,
                     const char *content, TEXT *result)
 {
+  char *accent_text;
   char *(*format_accents)(CONVERTER *self, const char *text,
                          const ELEMENT *element, int set_case);
 
@@ -9332,13 +9358,232 @@ convert_accent_command (CONVERTER *self, const enum command_id cmd,
   else
     format_accents = &html_accent_entities_html_accent;
 
-  char *accent_text = convert_accents (self, element, &html_convert_tree,
+  accent_text = convert_accents (self, element, &html_convert_tree,
                           format_accents, output_encoded_characters,
                           html_in_upper_case (self));
 
   text_append (result, accent_text);
   free (accent_text);
 }
+
+/* same as matching the regex /^\\[a-zA-Z0-9]+ /
+ */
+static char *
+after_escaped_characters (char *text)
+{
+  char *p = text;
+  if (*p != '\\')
+    return 0;
+
+  p++;
+
+  if (!isascii_alnum (*p))
+    return 0;
+
+  while (isascii_alnum (*p))
+    p++;
+
+  if (*p == ' ')
+    return p+1;
+
+  return 0;
+}
+
+char *
+css_string_accent (CONVERTER *self, const char *text,
+                         const ELEMENT *element, int set_case)
+{
+  char *text_set = set_case_if_only_word_characters (text, set_case);
+
+  if (element->cmd == CM_dotless)
+    {
+      /* corresponds in perl, and for dotless, to
+ Texinfo::Convert::Unicode::unicode_accented_letters{$accent}->{$text} */
+      if (!strcmp (text_set, "i"))
+        {
+          free (text_set);
+          return strdup ("\\" "0131" " ");
+        }
+      else if (!strcmp (text_set, "j"))
+        {
+          free (text_set);
+          return strdup ("\\" "0237" " ");
+        }
+    }
+
+  if (unicode_diacritics[element->cmd].text)
+    {
+      char *accent_and_diacritic;
+      char *normalized_accent_text;
+      static TEXT accented_text;
+      if (element->cmd == CM_tieaccent)
+        {
+          /* tieaccent diacritic is naturally and correctly composed
+             between two characters */
+          /* we consider that letters are either characters or
+             escaped characters as they appear in CSS strings */
+          /* p non NUL corresponds to escaped characters */
+          char *p = after_escaped_characters (text_set);
+          char *next_text = 0;
+          ucs4_t first_char;
+          const uint8_t *next = 0;
+          uint8_t *encoded_u8 = 0;
+
+          if (!p)
+            {
+              /* check if a character matches */
+              encoded_u8 = u8_strconv_from_encoding (text, "UTF-8",
+                                                  iconveh_question_mark);
+              next = u8_next (&first_char, encoded_u8);
+              if (next && (uc_is_general_category (first_char, UC_CATEGORY_L)
+                          /* ASCII digits */
+                          || (first_char >= 0x0030 && first_char <= 0x0039)))
+                {
+                  next_text = u8_strconv_to_encoding (next, "UTF-8",
+                                                      iconveh_question_mark);
+                }
+            }
+          else
+            {
+              next_text = p;
+            }
+
+          if (next_text)
+            {
+              ucs4_t second_char;
+              const char *q = after_escaped_characters (next_text);
+
+              if (!q)
+                {
+                  const uint8_t *remaining;
+                  if (!next)
+                    {
+                      encoded_u8 = u8_strconv_from_encoding (text, "UTF-8",
+                                                  iconveh_question_mark);
+                      next = encoded_u8;
+                    }
+                  remaining = u8_next (&second_char, next);
+                  if (remaining
+                      && (uc_is_general_category (second_char, UC_CATEGORY_L)
+                            /* ASCII digits */
+                          || (second_char >= 0x0030 && second_char <= 0x0039)))
+                    {
+                      /* next_text remains as the text to add after
+                         the diacritic */
+                    }
+                  else
+                    next_text = 0;
+                }
+
+              if (next_text)
+                {
+                  /* add the first character or escaped text */
+                  text_init (&accented_text);
+                  if (!p)
+                    {
+                      char *first_char_text;
+                      uint8_t *first_char_u8 = malloc (7 * sizeof(uint8_t));
+                      int first_char_len
+                        = u8_uctomb (first_char_u8, first_char, 6);
+                      if (first_char_len < 0)
+                        fatal ("u8_uctomb returns negative value");
+                      first_char_u8[first_char_len] = 0;
+                      first_char_text = u8_strconv_to_encoding (first_char_u8,
+                                              "UTF-8", iconveh_question_mark);
+                      free (first_char_u8);
+                      text_append (&accented_text, first_char_text);
+                      free (first_char_text);
+                    }
+                  else
+                    text_append_n (&accented_text, p, p - text_set);
+
+                  /* add the tie accent */
+                  text_printf (&accented_text, "\\%s ",
+                               unicode_diacritics[element->cmd].hex_codepoint);
+                  /* add the remaining, second character or escaped text
+                     and everything else after (which is in general invalid
+                     but we do not care) */
+                  text_append (&accented_text, next_text);
+                  if (!p)
+                    free (next_text);
+                }
+            }
+          free (encoded_u8);
+          if (next_text)
+            return accented_text.text;
+        }
+
+      /* case of text and diacritic (including fallback for invalid tie
+         accent) */
+      text_init (&accented_text);
+      /* check if the normalization leads to merging text and diacritic,
+         if yes use the merged character, if not output text and diacitic
+         to be set up for composition */
+      xasprintf (&accent_and_diacritic, "%s%s",
+                 text, unicode_diacritics[element->cmd].text);
+      normalized_accent_text = normalize_NFC (accent_and_diacritic);
+      free (accent_and_diacritic);
+      /* check if the normalization led to merging text and diacritic
+         as one character.  If not, the leading text remains, this
+         is what the comparison checks */
+      if (!strncmp (normalized_accent_text, text, strlen (text)))
+        {
+          /* no normalization as one character, output text and diacritic
+             such that they could be composed */
+          text_append (&accented_text, text);
+          text_printf (&accented_text, "\\%s ",
+                   unicode_diacritics[element->cmd].hex_codepoint);
+        }
+      else
+        {
+          /* determine the hexadecimal unicode point of the normalized
+             character to output in the format expected in CSS strings */
+          char *next_text;
+          uint8_t *encoded_u8 = u8_strconv_from_encoding (
+                                 normalized_accent_text, "UTF-8",
+                                               iconveh_question_mark);
+          ucs4_t first_char;
+          const uint8_t *next = u8_next (&first_char, encoded_u8);
+          text_printf (&accented_text, "\\%04lX ", first_char);
+          next_text = u8_strconv_to_encoding (next, "UTF-8",
+                                              iconveh_question_mark);
+          free (encoded_u8);
+          text_append (&accented_text, next_text);
+          free (next_text);
+        }
+      free (normalized_accent_text);
+      free (text_set);
+      return accented_text.text;
+    }
+
+ /* There are diacritics for every accent command except for dotless.
+    We should only get there with dotless if the argument is not recognized.
+  */
+  return text_set;
+}
+
+void
+css_string_convert_accent_command (CONVERTER *self, const enum command_id cmd,
+                    const ELEMENT *element,
+                    const HTML_ARGS_FORMATTED *args_formatted,
+                    const char *content, TEXT *result)
+{
+  char *accent_text;
+  char *(*format_accents)(CONVERTER *self, const char *text,
+                         const ELEMENT *element, int set_case);
+
+  int output_encoded_characters = (self->conf->OUTPUT_CHARACTERS.integer > 0);
+
+  format_accents = &css_string_accent;
+
+  accent_text = convert_accents (self, element, &html_convert_tree,
+                          format_accents, output_encoded_characters,
+                          html_in_upper_case (self));
+
+  text_append (result, accent_text);
+  free (accent_text);
+}
+
 
 void
 convert_indicateurl_command (CONVERTER *self, const enum command_id cmd,
@@ -15547,7 +15792,7 @@ void
 html_format_init (void)
 {
   int i;
-  int nr_default_commands
+  int nr_default_commands_args
     = sizeof (default_commands_args) / sizeof (default_commands_args[0]);
   int max_args = MAX_COMMAND_ARGS_NR;
 
@@ -15555,7 +15800,7 @@ html_format_init (void)
     CM_example, CM_display, CM_lisp, 0
   };
 
-  for (i = 0; i < nr_default_commands; i++)
+  for (i = 0; i < nr_default_commands_args; i++)
     {
       /* we file the status for specified commands, to distinguish them
          but it is not actually used in the code, as we default to
@@ -15583,6 +15828,13 @@ html_format_init (void)
       html_commands_data[small_cmd].flags |= HF_small_block_command;
       if (html_commands_data[cmd].flags & HF_indented_preformatted)
         html_commands_data[small_cmd].flags |= HF_indented_preformatted;
+    }
+
+  for (i = 0; no_brace_command_accent_upper_case[i][0]; i++)
+    {
+      enum command_id cmd = no_brace_command_accent_upper_case[i][0];
+      enum command_id upper_case_cmd = no_brace_command_accent_upper_case[i][1];
+      html_commands_data[cmd].upper_case_cmd = upper_case_cmd;
     }
 
   for (i = 1; i < BUILTIN_CMD_NUMBER; i++)
@@ -15735,43 +15987,7 @@ html_converter_initialize (CONVERTER *self)
 {
   int i;
   int nr_special_units;
-  char *output_encoding;
-  char *line_break_element;
   /* initialization needing some information from perl */
-
-  output_encoding = self->conf->OUTPUT_ENCODING_NAME.string;
-
-  for (i = 0; i < SC_non_breaking_space+1; i++)
-    {
-      char *unicode_point = special_characters_formatting[i][2];
-      char *entity = special_characters_formatting[i][0];
-      char *encoded_string = special_characters_formatting[i][1];
-      char *numeric_entity = special_characters_formatting[i][3];
-      char *special_character_string;
-
-      if (self->conf->OUTPUT_CHARACTERS.integer > 0
-          && unicode_point_decoded_in_encoding (output_encoding,
-                                                unicode_point))
-        special_character_string = encoded_string;
-      else if (self->conf->USE_NUMERIC_ENTITY.integer > 0)
-        special_character_string = numeric_entity;
-      else
-        special_character_string = entity;
-
-      self->special_character[i].string = special_character_string;
-      self->special_character[i].len = strlen (special_character_string);
-    }
-
-  if (self->conf->USE_XML_SYNTAX.integer > 0)
-    {
-      /* here in perl something for rules but we already get that from perl */
-      line_break_element = "<br/>";
-    }
-  else
-    line_break_element = "<br>";
-
-  self->line_break_element.string = line_break_element;
-  self->line_break_element.len = strlen(line_break_element);
 
   nr_special_units = self->special_unit_varieties.number;
 
@@ -15871,8 +16087,6 @@ html_converter_initialize (CONVERTER *self)
   qsort (self->htmlxref.list, self->htmlxref.number,
          sizeof (HTMLXREF_MANUAL), compare_htmlxref_manual);
 
-  sort_css_element_class_styles (self);
-
   /* set to customization such that it is not replaced by C functions */
   if (self->conf->XS_EXTERNAL_FORMATTING.integer > 0)
     {
@@ -15969,7 +16183,7 @@ html_converter_initialize (CONVERTER *self)
         }
     }
 
-  /* accents commands implemented in C, but not css strings accents */
+  /* accents commands implemented in C */
   if (self->accent_cmd.number)
     {
       for (i = 0; i < self->accent_cmd.number; i++)
@@ -15977,6 +16191,8 @@ html_converter_initialize (CONVERTER *self)
           enum command_id cmd = self->accent_cmd.list[i];
           COMMAND_CONVERSION_FUNCTION *command_conversion
                = &self->command_conversion_function[cmd];
+          COMMAND_CONVERSION_FUNCTION *css_string_command_conversion
+               = &self->css_string_command_conversion_function[cmd];
           if (command_conversion->status == FRS_status_default_set)
             {
               command_conversion->formatting_reference = 0;
@@ -15984,6 +16200,10 @@ html_converter_initialize (CONVERTER *self)
               command_conversion->command_conversion
                 = &convert_accent_command;
             }
+          css_string_command_conversion->formatting_reference = 0;
+          css_string_command_conversion->status = FRS_status_internal;
+          css_string_command_conversion->command_conversion
+            = &css_string_convert_accent_command;
         }
     }
 
@@ -16174,6 +16394,51 @@ reset_html_targets (CONVERTER *self, HTML_TARGET_LIST *targets)
 void
 html_initialize_output_state (CONVERTER *self, char *context)
 {
+  int i;
+  char *output_encoding;
+  char *line_break_element;
+
+  if (!self->document && self->conf->DEBUG.integer > 0)
+    {
+      fprintf (stderr, "REMARK: html_initialize_output_state: no document");
+    }
+
+  output_encoding = self->conf->OUTPUT_ENCODING_NAME.string;
+
+  for (i = 0; i < SC_non_breaking_space+1; i++)
+    {
+      char *unicode_point = special_characters_formatting[i][2];
+      char *entity = special_characters_formatting[i][0];
+      char *encoded_string = special_characters_formatting[i][1];
+      char *numeric_entity = special_characters_formatting[i][3];
+      char *special_character_string;
+
+      if (self->conf->OUTPUT_CHARACTERS.integer > 0
+          && unicode_point_decoded_in_encoding (output_encoding,
+                                                unicode_point))
+        special_character_string = encoded_string;
+      else if (self->conf->USE_NUMERIC_ENTITY.integer > 0)
+        special_character_string = numeric_entity;
+      else
+        special_character_string = entity;
+
+      self->special_character[i].string = special_character_string;
+      self->special_character[i].len = strlen (special_character_string);
+    }
+
+  if (self->conf->USE_XML_SYNTAX.integer > 0)
+    {
+      /* here in perl something for rules but we already get that from perl */
+      line_break_element = "<br/>";
+    }
+  else
+    line_break_element = "<br>";
+
+  self->line_break_element.string = line_break_element;
+  self->line_break_element.len = strlen(line_break_element);
+
+  sort_css_element_class_styles (self);
+
   /* set the htmlxref type split of the document */
   self->document_htmlxref_split_type = htmlxref_split_type_mono;
 
@@ -16203,7 +16468,7 @@ html_initialize_output_state (CONVERTER *self, char *context)
 
   html_new_document_context (self, context, 0, 0);
 
-  if (self->document->index_names)
+  if (self->document && self->document->index_names)
     {
       INDEX **i, *idx;
       size_t j;
@@ -16233,7 +16498,7 @@ html_initialize_output_state (CONVERTER *self, char *context)
 }
 
 void
-html_finalize_output_state (CONVERTER *self)
+html_conversion_finalization (CONVERTER *self)
 {
   int i;
   for (i = 0; i < self->html_files_information.number; i++)
@@ -18150,9 +18415,8 @@ html_convert_output (CONVERTER *self, const ELEMENT *root,
       close_html_lone_element (self, &text);
       text_append_n (&text, "\n", 1);
       self->date_in_header = strdup (text.text);
+      text_reset (&text);
     }
-
-  text_reset (&text);
 
   text_append (&result, "");
 
@@ -18228,7 +18492,8 @@ html_convert_output (CONVERTER *self, const ELEMENT *root,
       int i;
       ENCODING_CONVERSION *conversion = 0;
 
-      if (self->conf->OUTPUT_ENCODING_NAME.string)
+      if (self->conf->OUTPUT_ENCODING_NAME.string
+          && strcmp (self->conf->OUTPUT_ENCODING_NAME.string, "utf-8"))
         {
           conversion
              = get_encoding_conversion (self->conf->OUTPUT_ENCODING_NAME.string,

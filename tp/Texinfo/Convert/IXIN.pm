@@ -75,6 +75,10 @@ use Carp qw(cluck);
 use Texinfo::Commands;
 use Texinfo::Options;
 use Texinfo::Common;
+
+use Texinfo::Structuring;
+use Texinfo::Indices;
+
 use Texinfo::Convert::TexinfoSXML;
 
 use vars qw($VERSION @ISA);
@@ -317,16 +321,24 @@ my @node_directions = ('Next', 'Prev', 'Up');
 sub output_ixin($$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
 
-  my ($output_file, $destination_directory) = $self->determine_files_and_directory();
+  $self->conversion_initialization($document);
+
+  my $root = $document->tree();
+
+  my ($output_file, $destination_directory, $output_filename)
+    = $self->determine_files_and_directory($self->{'output_format'});
 
   my ($encoded_destination_directory, $dir_encoding)
     = $self->encoded_output_file_name($destination_directory);
   my $succeeded
     = $self->create_destination_directory($encoded_destination_directory,
                                           $destination_directory);
-  return undef unless $succeeded;
+  unless ($succeeded) {
+    $self->conversion_finalization();
+    return undef;
+  }
 
   my $fh;
   my $encoded_output_file;
@@ -342,6 +354,7 @@ sub output_ixin($$)
       $self->converter_document_error(
                 sprintf(__("could not open %s for writing: %s"),
                                     $output_file, $error_message));
+      $self->conversion_finalization();
       return undef;
     }
   }
@@ -367,10 +380,23 @@ sub output_ixin($$)
   $result .= $self->ixin_list_element('lang', [['name', $lang]]);
   # FIXME title: use simpletitle or fulltitle
 
-  if ($self->{'document_info'}->{'dircategory_direntry'}) {
+  my $document_info;
+  my $floats;
+  my $sections_list;
+  my $identifiers_target;
+  my $indices_information;
+  if ($self->->{'document'}) {
+    $document_info = $self->{'document'}->global_information();
+    $floats = $self->{'document'}->floats_information();
+    $sections_list = $self->{'document'}->sections_list();
+    $identifiers_target = $self->{'document'}->labels_information();
+    $indices_information = $self->{'document'}->indices_information();
+  }
+
+  if ($document_info and $document_info->{'dircategory_direntry'}) {
     my $current_category;
     foreach my $dircategory_direntry
-                  (@{$self->{'document_info'}->{'dircategory_direntry'}}) {
+                  (@{$document_info->{'dircategory_direntry'}}) {
       if ($dircategory_direntry->{'cmdname'}
           and $dircategory_direntry->{'cmdname'} eq 'dircategory') {
         if ($current_category) {
@@ -402,17 +428,21 @@ sub output_ixin($$)
   my %setting_commands_defaults;
   # FIXME this code is unclear and probably needs to be fixed if developemnt
   # resumes.  Maybe could be replaced by set_global_document_commands.
-  foreach my $global_command (keys(%{$self->{'global_commands'}})) {
+  my $global_commands;
+  if ($self->{'document'}) {
+    $global_commands = $self->{'document'}->global_commands_information();
+  }
+  foreach my $global_command (keys(%{$global_commands})) {
     if ((($Texinfo::Commands::line_commands{$global_command}
           and $Texinfo::Commands::line_commands{$global_command} eq 'specific')
          or $additional_setting_commands{$global_command})
         and !$global_line_not_setting_commands{$global_command}) {
-      if (ref($self->{'global_commands'}->{$global_command}) eq 'ARRAY') {
+      if (ref($global_commands->{$global_command}) eq 'ARRAY') {
         if (defined($Texinfo::Options::multiple_at_command_options{$global_command})) {
           $setting_commands_defaults{$global_command}
             = $Texinfo::Options::multiple_at_command_options{$global_command};
         }
-        foreach my $command (@{$self->{'global_commands'}->{$global_command}}) {
+        foreach my $command (@{$global_commands->{$global_command}}) {
           my ($element, $root_command) = _get_element($self, $command);
           # before first node
           if (not $root_command
@@ -427,7 +457,7 @@ sub output_ixin($$)
           #print STDERR "$element $root_command->{'extra'} $global_command\n";
         }
       } else {
-        $setting_commands{$global_command} = $self->{'global_commands'}->{$global_command};
+        $setting_commands{$global_command} = $global_commands->{$global_command};
       }
     }
   }
@@ -436,10 +466,9 @@ sub output_ixin($$)
     my $setting_command = $setting_commands{$setting_command_name};
     $setting_command_name = 'shortcontents'
         if ($setting_command_name eq 'summarycontents');
-    # FIXME should use get_conf instead?
-    my $value = Texinfo::Common::_informative_command_value($setting_command);
+    my $value = Texinfo::Common::informative_command_value($setting_command);
     #print STDERR "$setting_command_name $value\n";
-    # do not register settings if sete at the default value.
+    # do not register settings if set at the default value.
     if (defined($value)
         and !(defined($setting_commands_defaults{$setting_command_name})
               and $setting_commands_defaults{$setting_command_name} eq $value)) {
@@ -468,8 +497,8 @@ sub output_ixin($$)
   $result .= $self->ixin_close_element('settings');
 
   foreach my $region ('copying', 'titlepage') {
-    if ($self->{'global_commands'}->{$region}) {
-      $result .= $self->convert_tree($self->{'global_commands'}->{$region});
+    if ($global_commands->{$region}) {
+      $result .= $self->convert_tree($global_commands->{$region});
     } else {
       $result .= $self->ixin_none_element($region);
     }
@@ -583,8 +612,8 @@ sub output_ixin($$)
   # do sectioning tree
   my $sectioning_tree = '';
   $sectioning_tree  .= $self->ixin_open_element('sectioningtree');
-  if ($self->{'sections_list'}) {
-    my $section_root = $self->{'sections_list'}->[0]
+  if ($sections_list) {
+    my $section_root = $sections_list->[0]
                                    ->{'extra'}->{'sectioning_root'};
     foreach my $top_section (@{$section_root->{'extra'}->{'section_childs'}}) {
       my $section = $top_section;
@@ -646,9 +675,9 @@ sub output_ixin($$)
   my $non_node_labels_text = '';
   my $labels_nr = 0;
   my %floats_associated_node_id;
-  if ($self->{'identifiers_target'}) {
-    foreach my $label (sort(keys(%{$self->{'identifiers_target'}}))) {
-      my $command = $self->{'identifiers_target'}->{$label};
+  if ($identifiers_target) {
+    foreach my $label (sort(keys(%{$identifiers_target}))) {
+      my $command = $identifiers_target->{$label};
       next if ($command->{'cmdname'} eq 'node');
       $labels_nr++;
       my $associated_node_id = $self->_associated_node_id($command,
@@ -677,12 +706,11 @@ sub output_ixin($$)
 
   my %dts_information;
 
-  my $indices_information = $self->{'indices_information'};
   if ($indices_information) {
     my $merged_index_entries
-        = Texinfo::Structuring::merge_indices($indices_information);
+        = Texinfo::Indices::merge_indices($indices_information);
     my ($entries, $index_entries_sort_strings)
-      = Texinfo::Structuring::sort_indices_by_index(undef, $self,
+      = Texinfo::Indices::sort_indices_by_index(undef, $self,
                                            $merged_index_entries,
                                            $indices_information);
     # first do the dts_text as the counts are needed for the dts index
@@ -721,8 +749,8 @@ sub output_ixin($$)
   }
 
   # Gather information on printindex @-commands associated node id
-  if ($self->{'global_commands'}->{'printindex'}) {
-    foreach my $command (@{$self->{'global_commands'}->{'printindex'}}) {
+  if ($global_commands->{'printindex'}) {
+    foreach my $command (@{$global_commands->{'printindex'}}) {
       my $associated_node_id = $self->_associated_node_id($command,
                                                    \%node_label_number);
       if ($command->{'extra'} and $command->{'extra'}->{'misc_args'}
@@ -769,15 +797,15 @@ sub output_ixin($$)
   my %floats_information;
 
   # collect all float types corresponding to float commands
-  if ($self->{'floats'}) {
-    foreach my $float_type (keys(%{$self->{'floats'}})) {
+  if ($floats) {
+    foreach my $float_type (keys(%{$floats})) {
       $floats_information{$float_type} = {};
     }
   }
 
   # collect listoffloats information
-  if ($self->{'global_commands'}->{'listoffloats'}) {
-    foreach my $listoffloats_element (@{$self->{'global_commands'}->{'listoffloats'}}) {
+  if ($global_commands and $global_commands->{'listoffloats'}) {
+    foreach my $listoffloats_element (@{$global_commands->{'listoffloats'}}) {
       my $associated_node_id = $self->_associated_node_id($listoffloats_element,
                                                      \%node_label_number);
       my $float_type = $listoffloats_element->{'extra'}->{'float_type'};
@@ -794,10 +822,10 @@ sub output_ixin($$)
   my $floats_index = '';
   foreach my $type (sort(keys(%floats_information))) {
     my $float_text_len = 0;
-    if ($self->{'floats'}->{$type}) {
+    if ($floats->{$type}) {
       my $float_nr = 0;
       my $float_text = '';
-      foreach my $float (@{$self->{'floats'}->{$type}}) {
+      foreach my $float (@{$floats->{$type}}) {
         $float_nr++;
         my $associated_node_id;
         # associated node already found when collecting labels
@@ -842,7 +870,7 @@ sub output_ixin($$)
       # determine type expandable string from first float if it was not
       # already determined from listoffloats
       if (!defined($floats_information{$type}->{'type'})) {
-        my $float_element = $self->{'floats'}->{$type}->[0];
+        my $float_element = $floats->{$type}->[0];
         if ($float_element->{'extra'}->{'float_type'} ne '') {
           $floats_information{$type}->{'type'}
             = $self->convert_tree($float_element->{'args'}->[0]);
@@ -1001,6 +1029,7 @@ sub output_ixin($$)
                                     $output_file, $!));
     }
   }
+  $self->conversion_finalization();
   return $output;
 }
 

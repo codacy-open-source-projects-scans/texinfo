@@ -210,6 +210,17 @@ foreach my $type ('ignorable_spaces_after_command',
 
 my @text_indicator_converter_options = ('NUMBER_SECTIONS', 'ASCII_GLYPH', 'TEST');
 
+sub _initialize_options_encoding($$)
+{
+  my $self = shift;
+  my $options = shift;
+
+  if ($self->get_conf('ENABLE_ENCODING')
+       and defined($self->get_conf('OUTPUT_ENCODING_NAME'))) {
+    $options->{'enabled_encoding'} = $self->get_conf('OUTPUT_ENCODING_NAME');
+  }
+}
+
 # TODO not documented.  Document?
 # $SELF is an object implementing get_conf, in general a converter.
 # Setup options as used by Texinfo::Convert::Text::convert_to_text
@@ -221,10 +232,8 @@ sub copy_options_for_convert_text($;$)
   my $self = shift;
   my $options_in = shift;
   my %options;
-  if ($self->get_conf('ENABLE_ENCODING')
-       and $self->get_conf('OUTPUT_ENCODING_NAME')) {
-    $options{'enabled_encoding'} = $self->get_conf('OUTPUT_ENCODING_NAME');
-  }
+
+  _initialize_options_encoding($self, \%options);
 
   foreach my $option (@text_indicator_converter_options) {
     my $conf = $self->get_conf($option);
@@ -234,7 +243,13 @@ sub copy_options_for_convert_text($;$)
       $options{$option} = 0;
     }
   }
-  $options{'expanded_formats'} = $self->{'expanded_formats'};
+  my $expanded_formats = $self->get_conf('EXPANDED_FORMATS');
+  if ($expanded_formats) {
+    $options{'expanded_formats'} = {};
+    foreach my $expanded_format(@$expanded_formats) {
+      $options{'expanded_formats'}->{$expanded_format} = 1;
+    }
+  }
   # for locate_include_file
   $options{'INCLUDE_DIRECTORIES'} = $self->get_conf('INCLUDE_DIRECTORIES');
 
@@ -260,6 +275,7 @@ sub reset_options_code($)
   $options->{'_code_state'}--;
 }
 
+# $SELF is an object implementing get_conf, in general a converter.
 # set enabled_encoding unless the encoding is ascii, even if
 # ENABLE_ENCODING is not set.
 sub set_options_encoding_if_not_ascii($$)
@@ -376,6 +392,8 @@ sub text_accents($;$$)
   }
 }
 
+sub _convert($$);
+
 # TODO document?  Used in other converters.
 sub brace_no_arg_command($;$)
 {
@@ -402,7 +420,7 @@ sub brace_no_arg_command($;$)
      = Texinfo::Convert::Utils::translated_command_tree($options->{'converter'},
                                                         $command);
     if ($tree) {
-      $result = _convert($tree, $options);
+      $result = _convert($options, $tree);
     }
   }
   if (!defined($result)) {
@@ -480,12 +498,10 @@ sub _convert_tree_with_XS($$)
 {
 }
 
-sub _convert($;$);
-
-sub _convert($;$)
+sub _convert($$)
 {
-  my $element = shift;
   my $options = shift;
+  my $element = shift;
 
   #print STDERR "E: c: ".(defined($options->{'_code_state'})
   #                         ? $options->{'_code_state'} : 'UNDEF')
@@ -546,7 +562,7 @@ sub _convert($;$)
       } else {
         $tree = $options->{'converter'}->gdt($element->{'text'});
       }
-      $result = _convert($tree, $options);
+      $result = _convert($options, $tree);
     } else {
       $result = $element->{'text'};
       if ((! defined($element->{'type'})
@@ -578,9 +594,9 @@ sub _convert($;$)
           and $sort_brace_no_arg_commands{$element->{'cmdname'}}) {
         return $sort_brace_no_arg_commands{$element->{'cmdname'}};
       } elsif ($options->{'converter'}) {
-        return _convert(Texinfo::Convert::Utils::expand_today(
-                                         $options->{'converter'}),
-                        $options);
+        return _convert($options,
+                        Texinfo::Convert::Utils::expand_today(
+                                         $options->{'converter'}));
       } elsif ($options->{'TEST'}) {
         return 'a sunny day';
       } else {
@@ -598,28 +614,28 @@ sub _convert($;$)
       return $result;
     } elsif ($element->{'cmdname'} eq 'image') {
       $options->{'_code_state'}++;
-      my $text = _convert($element->{'args'}->[0], $options);
+      my $text = _convert($options, $element->{'args'}->[0]);
       $options->{'_code_state'}--;
       return $text;
     } elsif ($element->{'cmdname'} eq 'email') {
       my $text;
-      $text = _convert($element->{'args'}->[1], $options)
+      $text = _convert($options, $element->{'args'}->[1])
          if (defined($element->{'args'}->[1]));
       return $text if (defined($text) and ($text ne ''));
       $options->{'_code_state'}++;
-      my $mail = _convert($element->{'args'}->[0], $options);
+      my $mail = _convert($options, $element->{'args'}->[0]);
       $options->{'_code_state'}--;
       return $mail;
     } elsif ($element->{'cmdname'} eq 'uref' or $element->{'cmdname'} eq 'url') {
       my $replacement;
-      $replacement = _convert($element->{'args'}->[2], $options)
+      $replacement = _convert($options, $element->{'args'}->[2])
         if (defined($element->{'args'}->[2]));
       return $replacement if (defined($replacement) and $replacement ne '');
       my $text;
-      $text = _convert($element->{'args'}->[1], $options)
+      $text = _convert($options, $element->{'args'}->[1])
         if (defined($element->{'args'}->[1]));
       $options->{'_code_state'}++;
-      my $url = _convert($element->{'args'}->[0], $options);
+      my $url = _convert($options, $element->{'args'}->[0]);
       $options->{'_code_state'}--;
       if (defined($text) and $text ne '') {
         return "$url ($text)";
@@ -628,11 +644,11 @@ sub _convert($;$)
       }
     } elsif ($Texinfo::Commands::explained_commands{$element->{'cmdname'}}
              and $element->{'args'} and $element->{'args'}->[1]) {
-      my $explanation = _convert($element->{'args'}->[1], $options);
+      my $explanation = _convert($options, $element->{'args'}->[1]);
       if ($explanation ne '') {
-        return _convert($element->{'args'}->[0], $options) ." ($explanation)";
+        return _convert($options, $element->{'args'}->[0]) ." ($explanation)";
       } else {
-        return _convert($element->{'args'}->[0], $options);
+        return _convert($options, $element->{'args'}->[0]);
       }
     } elsif ($Texinfo::Commands::brace_commands{$element->{'cmdname'}}
              and $Texinfo::Commands::brace_commands{$element->{'cmdname'}} eq 'inline') {
@@ -649,7 +665,7 @@ sub _convert($;$)
       }
       my $result = '';
       if (scalar(@{$element->{'args'}}) > $arg_index) {
-        $result = _convert($element->{'args'}->[$arg_index], $options);
+        $result = _convert($options, $element->{'args'}->[$arg_index]);
       }
       if ($element->{'cmdname'} eq 'inlineraw') {
         $options->{'_raw_state'}--;
@@ -669,7 +685,7 @@ sub _convert($;$)
         $in_code = 1;
       }
       $options->{'_code_state'}++ if ($in_code);
-      $result = _convert($element->{'args'}->[0], $options);
+      $result = _convert($options, $element->{'args'}->[0]);
       $options->{'_code_state'}-- if ($in_code);
       $options->{'set_case'}-- if ($element->{'cmdname'} eq 'sc');
       return $result;
@@ -680,7 +696,7 @@ sub _convert($;$)
              or $element->{'cmdname'} eq 'cartouche') {
       if ($element->{'args'}) {
         foreach my $arg (@{$element->{'args'}}) {
-          my $converted_arg = _convert($arg, $options);
+          my $converted_arg = _convert($options, $arg);
           if ($converted_arg =~ /\S/) {
             $result .= $converted_arg.", ";
           }
@@ -695,7 +711,7 @@ sub _convert($;$)
         if ($element->{'cmdname'} eq 'page') {
           $result = '';
         } else {
-          $result = _convert($element->{'args'}->[0], $options);
+          $result = _convert($options, $element->{'args'}->[0]);
         }
         if ($Texinfo::Commands::sectioning_heading_commands{
                                                     $element->{'cmdname'}}) {
@@ -730,7 +746,7 @@ sub _convert($;$)
             = Texinfo::Convert::Utils::expand_verbatiminclude($options, $element);
         }
         if (defined($verbatim_include_verbatim)) {
-          $result .= _convert($verbatim_include_verbatim, $options);
+          $result .= _convert($options, $verbatim_include_verbatim);
         }
       }
     } elsif ($element->{'cmdname'} eq 'item'
@@ -751,22 +767,22 @@ sub _convert($;$)
       = Texinfo::Convert::Utils::definition_category_tree(
                                             $options->{'converter'}, $element);
     if (defined($parsed_definition_category)) {
-      my @contents = ($parsed_definition_category, {'text' => ': '});
+      my $converted_element = {'contents' => 
+                        [$parsed_definition_category, {'text' => ': '}]};
+      my $contents = $converted_element->{'contents'};
       if ($type_element) {
-        push @contents, ($type_element,
-                         {'text' => ' '});
+        push @$contents, ($type_element, {'text' => ' '});
       }
       if ($name_element) {
-        push @contents, $name_element;
+        push @$contents, $name_element;
       }
 
       if ($arguments) {
-        push @contents, {'text' => ' '};
-        push @contents, $arguments;
+        push @$contents, ({'text' => ' '}, $arguments);
       }
-      push @contents, {'text' => "\n"};
+      push @$contents, {'text' => "\n"};
       $options->{'_code_state'}++;
-      $result = _convert({'contents' => \@contents}, $options);
+      $result = _convert($options, $converted_element);
       $options->{'_code_state'}--;
     }
   }
@@ -794,7 +810,7 @@ sub _convert($;$)
     $options->{'_code_state'}++ if ($in_code);
     $options->{'_raw_state'}++ if ($in_raw);
     foreach my $content (@{$element->{'contents'}}) {
-      $result .= _convert($content, $options);
+      $result .= _convert($options, $content);
     }
     $options->{'_raw_state'}-- if ($in_raw);
     $options->{'_code_state'}-- if ($in_code);
@@ -821,23 +837,22 @@ sub convert_to_text($;$)
   }
 
   #print STDERR "CONVERT\n";
+  if (!defined($options)) {
+    $options = {};
+  } elsif (!ref($options)) {
+    confess("convert_to_text options not a ref\n");
+  }
   # this is needed for locate_include_file which uses
   # $configurations_information->get_conf() and thus requires a blessed
   # reference.
-  $options = {} if (!defined($options));
-  if (defined($options)) {
-    if (!ref($options)) {
-      confess("convert_to_text options not a ref\n");
-    }
-    bless $options;
-  }
+  bless $options, "Texinfo::Convert::Text";
 
   # Interface with XS converter.
   if ($XS_convert and defined($root->{'tree_document_descriptor'})) {
     return _convert_tree_with_XS($options, $root);
   }
 
-  return _convert($root, $options);
+  return _convert($options, $root);
 }
 
 
@@ -857,13 +872,6 @@ sub converter($;$)
   }
 
   my $expanded_formats = $converter->{'EXPANDED_FORMATS'};
-  if ($converter->{'document'}) {
-    $converter->{'document_info'}
-       = $converter->{'document'}->global_information();
-    $converter->{'global_commands'}
-       = $converter->{'document'}->global_commands_information();
-    delete $converter->{'document'};
-  }
   if ($expanded_formats) {
     $converter->{'expanded_formats'} = {};
     foreach my $expanded_format(@$expanded_formats) {
@@ -871,16 +879,13 @@ sub converter($;$)
     }
   }
 
-  Texinfo::Common::set_output_encodings($converter,
-                                        $converter->{'document_info'})
-    if ($converter->{'document_info'});
-
   return $converter;
 }
 
 # This function is not called in anywhere in Texinfo code, it is implemented
 # to be in line with Texinfo::Convert::Converter documentation on functions
 # defined for a converter.
+# TODO set options with $self if defined?
 sub convert_tree($$)
 {
   my $self = shift;
@@ -888,7 +893,7 @@ sub convert_tree($$)
 
   my $options = {};
 
-  return _convert($element, $options);
+  return _convert($options, $element);
 }
 
 # This function is not called in anywhere in Texinfo code, it is implemented
@@ -904,7 +909,7 @@ sub convert($$)
 
   my $options = {};
 
-  return _convert($root, $options);
+  return _convert($options, $root);
 }
 
 # determine outfile and output to that file
@@ -914,12 +919,33 @@ sub output($$)
   my $self = shift;
   my $document = shift;
 
+  my $document_info;
+  my $global_commands;
+  if ($document) {
+    $document_info = $document->global_information();
+    $global_commands = $document->global_commands_information();
+  }
+
+  Texinfo::Common::set_output_encodings($self, $document);
+
+  # Text options and converter are of different nature.
+  # It could have been possible to set up the options by calling
+  # copy_options_for_convert_text on $self.
+  # However, since the option keys are very similar between the converter
+  # and text options and expanded_formats is already set in the converter,
+  # we use the converter object as text options and we call
+  # _initialize_options_encoding for the only option that is set up
+  # based on other customization options.
+  # Also, we need a blessed reference as get_conf can be called on the options,
+  # using the converter brings that too.
+  _initialize_options_encoding($self, $self);
+
   my $root = $document->tree();
 
   #print STDERR "OUTPUT\n";
   my $input_basename;
-  if (defined($self->{'document_info'}->{'input_file_name'})) {
-    my $input_file_name = $self->{'document_info'}->{'input_file_name'};
+  if ($document_info and defined($document_info->{'input_file_name'})) {
+    my $input_file_name = $document_info->{'input_file_name'};
     my $encoding = $self->{'COMMAND_LINE_ENCODING'};
     if (defined($encoding)) {
       $input_file_name = decode($encoding, $input_file_name);
@@ -935,12 +961,12 @@ sub output($$)
 
   my $setfilename;
   $setfilename
-   = $self->{'global_commands'}->{'setfilename'}->{'extra'}->{'text_arg'}
-    if ($self->{'global_commands'}
-        and $self->{'global_commands'}->{'setfilename'}
-        and $self->{'global_commands'}->{'setfilename'}->{'extra'}
-        and defined($self->{'global_commands'}->{'setfilename'}
-                                                   ->{'extra'}->{'text_arg'}));
+   = $global_commands->{'setfilename'}->{'extra'}->{'text_arg'}
+    if ($global_commands
+        and $global_commands->{'setfilename'}
+        and $global_commands->{'setfilename'}->{'extra'}
+        and defined($global_commands->{'setfilename'}
+                                              ->{'extra'}->{'text_arg'}));
   my $outfile;
   if (!defined($self->{'OUTFILE'})) {
     if (defined($setfilename)) {
@@ -1001,21 +1027,15 @@ sub output($$)
       return undef;
     }
   }
-  # mostly relevant for 'enabled_encoding', other options should be the same.
-  my $options = copy_options_for_convert_text($self);
-  # remove $self Text converter without translation nor error reporting.
-  delete $options->{'converter'};
-  # Some functions call $self->get_conf(), so the options need to be a blessed
-  # reference, merge specific Text options with $self (possibly
-  # overwriting/ignoring but values should be the same).
-  %$self = (%$self, %$options);
+
+  # We use $self as text options, see the comment in converter.
 
   my $result;
   # Interface with XS converter.
   if ($XS_convert and defined($root->{'tree_document_descriptor'})) {
     $result = _convert_tree_with_XS($self, $root);
   } else {
-    $result = _convert($root, $self);
+    $result = _convert($self, $root);
   }
 
   if ($fh) {
@@ -1118,7 +1138,7 @@ text options associated to the C<convert_text_options> key.
 
 The main function is C<convert_to_text>.  The text conversion options
 can be modified with the C<set_*> functions before calling C<convert_to_text>,
-and reset aterwards with the corresponding C<reset_*> functions.
+and reset afterwards with the corresponding C<reset_*> functions.
 
 =head1 METHODS
 

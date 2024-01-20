@@ -5,9 +5,10 @@
 #include "EXTERN.h"
 #include "perl.h"
 
-#include "options_types.h"
 #include "tree_types.h"
 #include "document_types.h"
+#include "option_types.h"
+#include "options_types.h"
 #include "converter_types.h"
 #include "convert_to_text.h"
 
@@ -41,6 +42,7 @@ void force_conf (CONVERTER *converter, const char *conf, SV *value);
 CONVERTER *get_sv_converter (SV *sv_in, const char *warn_string);
 int converter_initialize (SV *converter_sv);
 void reset_output_init_conf (SV *sv_in);
+void converter_set_document (SV *converter_in, SV *document_in);
 
 INDEX_ENTRY *find_index_entry_sv (const SV *index_entry_sv, INDEX **index_names,
                      const char *warn_string, const INDEX **entry_idx,

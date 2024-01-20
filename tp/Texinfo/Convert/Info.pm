@@ -67,18 +67,24 @@ sub output($$)
   my $self = shift;
   my $document = shift;
 
+  $self->conversion_initialization($document);
+
   my $root = $document->tree();
 
   my $result;
 
   my ($output_file, $destination_directory, $output_filename,
-     $document_name, $input_basefile) = $self->determine_files_and_directory();
+      $document_name, $input_basefile)
+        = $self->determine_files_and_directory($self->{'output_format'});
   my ($encoded_destination_directory, $dir_encoding)
     = $self->encoded_output_file_name($destination_directory);
   my ($succeeded, $created_directory)
     = $self->create_destination_directory($encoded_destination_directory,
                                           $destination_directory);
-  return undef unless $succeeded;
+  unless ($succeeded) {
+    $self->conversion_finalization();
+    return undef;
+  }
 
   # for format_node
   $self->{'output_filename'} = $output_filename;
@@ -91,15 +97,11 @@ sub output($$)
     $self->force_conf('SPLIT_SIZE', undef);
   }
 
-  push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0,
-                                     'locations' => []};
   my $header = $self->_info_header($input_basefile, $output_filename);
   # header + text between setfilename and first node
   my $complete_header = $header;
 
-  pop @{$self->{'count_context'}};
-
-  my $header_bytes = Texinfo::Convert::Plaintext::count_bytes($self, $header);
+  my $header_bytes = length($header);
   my $complete_header_bytes = $header_bytes;
   my $tree_units = Texinfo::Structuring::split_by_node($root);
 
@@ -110,6 +112,7 @@ sub output($$)
     }
     $fh = _open_info_file($self, $output_file);
     if (!$fh) {
+      $self->conversion_finalization();
       return undef;
     }
   }
@@ -118,67 +121,82 @@ sub output($$)
   my @indirect_files;
   if (!defined($tree_units) or not defined($tree_units->[0])
       or not defined($tree_units->[0]->{'unit_command'})) {
-    $self->converter_line_warn(__("document without nodes"),
-             {'file_name' => $self->{'document_info'}->{'input_file_name'}});
-    my $output = $header.$self->convert_tree($root);
-    $self->count_context_bug_message('no element ');
+    my $input_file_name;
+    if ($self->{'document'}) {
+      my $document_info = $self->{'document'}->global_information();
+      if ($document_info) {
+        $input_file_name = $document_info->{'input_file_name'};
+      }
+    }
+    if (defined($input_file_name)) {
+      $self->converter_line_warn(__("document without nodes"),
+             {'file_name' => $input_file_name});
+    } else {
+      $self->converter_document_warn(__("document without nodes"));
+    }
+    my $old_context = $self->{'count_context'}->[-1];
+    my $new_context =
+      {'lines' => $old_context->{'lines'}, 'bytes' => $old_context->{'bytes'},
+       'locations' => [], 'result' => '' };
+    push @{$self->{'count_context'}}, $new_context;
+    $self->_convert($root);
+    $self->process_footnotes();
+    my $output = $self->_stream_result();
+    pop @{$self->{'count_context'}};
 
-    my $footnotes = $self->process_footnotes();
-    $self->count_context_bug_message('no element footnotes ');
+    @{$old_context->{'locations'}}
+      = ( @{$old_context->{'locations'}}, @{$new_context->{'locations'}} );
+    $old_context->{'lines'} += $new_context->{'lines'};
 
-    $output .= $footnotes;
+    $output = $header.$output;
     if ($fh) {
       print $fh $output;
     } else {
       $result = $output;
     }
   } else {
-    unless ($self->{'identifiers_target'}
-            and $self->{'identifiers_target'}->{'Top'}) {
-      $self->converter_line_warn(__("document without Top node"),
-             {'file_name' => $self->{'document_info'}->{'input_file_name'}});
+    my $identifiers_target;
+    if ($self->{'document'}) {
+      $identifiers_target = $self->{'document'}->labels_information();
+    }
+    unless ($identifiers_target
+            and $identifiers_target->{'Top'}) {
+      my $input_file_name;
+      if ($self->{'document'}) {
+        my $document_info = $self->{'document'}->global_information();
+        if ($document_info) {
+          $input_file_name = $document_info->{'input_file_name'};
+        }
+      }
+      if (defined($input_file_name)) {
+        $self->converter_line_warn(__("document without Top node"),
+             {'file_name' => $input_file_name});
+      } else {
+        $self->converter_document_warn(__("document without Top node"));
+      }
     }
     $out_file_nr = 1;
-    my $first_node = 0;
+    my $first_node_seen = 0;
     $self->{'count_context'}->[-1]->{'bytes'} += $header_bytes;
-    # FIXME use a simple foreach
-    my @nodes_root_elements = @$tree_units;
-    while (@nodes_root_elements) {
-      my $node_root_element = shift @nodes_root_elements;
-      my $node_text = $self->convert_output_unit($node_root_element);
-      if (!$first_node) {
-        $first_node = 1;
-        if (defined($self->{'text_before_first_node'})) {
-          $complete_header .= $self->{'text_before_first_node'};
-          $complete_header_bytes +=
-            Texinfo::Convert::Plaintext::count_bytes($self,
-                                   $self->{'text_before_first_node'});
-        }
-        # for the first node, header is prepended, not complete_header
-        # as 'text_before_first_node' is already part of the node
-        # text
-        $node_text = $header . $node_text;
-      }
-      if ($fh) {
-        print $fh $node_text;
-      } else {
-        $result .= $node_text;
-      }
-      $self->update_count_context();
-      if (defined($self->get_conf('SPLIT_SIZE'))
+    foreach my $node_root_element (@$tree_units) {
+      if ($first_node_seen
+          and defined($self->get_conf('SPLIT_SIZE'))
           and $self->{'count_context'}->[-1]->{'bytes'} >
                   $out_file_nr * $self->get_conf('SPLIT_SIZE')
-          and @nodes_root_elements and $fh) {
+          and $fh) {
+        # Split the output into an additional output file.
         my $close_error;
         if (!close ($fh)) {
           $close_error = $!;
         }
         if ($out_file_nr == 1) {
+          # Switch to split output.
           $self->_register_closed_info_file($output_file);
           if (defined($close_error)) {
             $self->converter_document_error(
                   sprintf(__("error on closing %s: %s"),
                                   $output_file, $close_error));
+            $self->conversion_finalization();
             return undef;
           }
           if ($self->get_conf('VERBOSE')) {
@@ -189,6 +207,7 @@ sub output($$)
             $self->converter_document_error(
                   sprintf(__("rename %s failed: %s"),
                                          $output_file, $!));
+            $self->conversion_finalization();
             return undef;
           }
           # remove the main file from opened files since it was renamed
@@ -207,6 +226,7 @@ sub output($$)
                   sprintf(__("error on closing %s: %s"),
                                   $output_file.'-'.$out_file_nr,
                                   $close_error));
+            $self->conversion_finalization();
             return undef;
           }
         }
@@ -217,14 +237,39 @@ sub output($$)
         }
         $fh = _open_info_file($self, $output_file.'-'.$out_file_nr);
         if (!$fh) {
+          $self->conversion_finalization();
           return undef;
         }
         print $fh $complete_header;
-        $self->update_count_context();
         $self->{'count_context'}->[-1]->{'bytes'} += $complete_header_bytes;
         push @indirect_files, [$output_filename.'-'.$out_file_nr,
                                $self->{'count_context'}->[-1]->{'bytes'}];
         #print STDERR join(' --> ', @{$indirect_files[-1]}) ."\n";
+      }
+
+      my $node_text = $self->convert_output_unit($node_root_element);
+      if ($node_text !~ /\n\n$/) {
+        $node_text .= "\n";
+        $self->{'count_context'}->[-1]->{'bytes'}++;
+      }
+      if (!$first_node_seen) {
+        # We are outputting the first node.
+        $first_node_seen = 1;
+        $node_text = $header . $node_text;
+
+        # When the first node was converted in convert_output_unit above, the
+        # text before the first node (type 'before_node_section') was saved in
+        # 'text_before_first_node'.  Save this text for subsequent use in
+        # case of split Info output.
+        if (defined($self->{'text_before_first_node'})) {
+          $complete_header .= $self->{'text_before_first_node'};
+          $complete_header_bytes += length($self->{'text_before_first_node'});
+        }
+      }
+      if ($fh) {
+        print $fh $node_text;
+      } else {
+        $result .= $node_text;
       }
     }
   }
@@ -235,6 +280,7 @@ sub output($$)
       $self->converter_document_error(
                sprintf(__("error on closing %s: %s"),
                             $output_file.'-'.$out_file_nr, $!));
+      $self->conversion_finalization();
       return undef;
     }
     if ($self->get_conf('VERBOSE')) {
@@ -242,16 +288,17 @@ sub output($$)
     }
     $fh = _open_info_file($self, $output_file);
     if (!$fh) {
+      $self->conversion_finalization();
       return undef;
     }
     $tag_text = $complete_header;
-    $tag_text .= "\x{1F}\nIndirect:";
+    $tag_text .= "\x{1F}\nIndirect:\n";
     foreach my $indirect (@indirect_files) {
-      $tag_text .= "\n$indirect->[0]: $indirect->[1]";
+      $tag_text .= "$indirect->[0]: $indirect->[1]\n";
     }
   }
 
-  $tag_text .= "\n\x{1F}\nTag Table:\n";
+  $tag_text .= "\x{1F}\nTag Table:\n";
   if ($out_file_nr > 1) {
     $tag_text .=  "(Indirect)\n";
   }
@@ -268,7 +315,7 @@ sub output($$)
     } else {
       $prefix = 'Ref';
     }
-    my ($label_text, $byte_count) = $self->node_name($label->{'root'});
+    my ($label_text, undef) = $self->node_name($label->{'root'});
 
     if ($seen_anchors{$label_text}) {
       $self->plaintext_line_error($self,
@@ -315,6 +362,7 @@ sub output($$)
   } else {
     $result .= $tag_text;
   }
+  $self->conversion_finalization();
   return $result;
 }
 
@@ -353,11 +401,15 @@ sub _register_closed_info_file($$)
              $self->output_files_information(), $encoded_filename)
 }
 
+# Return (encoded) info header
 sub _info_header($$$)
 {
   my $self = shift;
   my $input_basefile = shift;
   my $output_filename = shift;
+
+  push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0,
+                                     'locations' => []};
 
   my $paragraph = Texinfo::Convert::Paragraph->new();
   my $result = add_text($paragraph, "This is ");
@@ -376,42 +428,55 @@ sub _info_header($$$)
   $result .= Texinfo::Convert::Paragraph::end($paragraph);
   $result .= "\n";
   $self->{'empty_lines_count'} = 1;
+  $self->_stream_output($paragraph, $result);
 
+  my $global_commands;
+  my $document_info;
+  if ($self->{'document'}) {
+    $global_commands = $self->{'document'}->global_commands_information();
+    $document_info = $self->{'document'}->global_information();
+  }
   # format @copying using the last value of the preamble.
   my @informative_global_commands = $self->get_informative_global_commands();
   $self->set_global_document_commands('preamble', \@informative_global_commands);
-  if ($self->{'global_commands'} and $self->{'global_commands'}->{'copying'}) {
+  if ($global_commands and $global_commands->{'copying'}) {
     print STDERR "COPYING HEADER\n" if ($self->get_conf('DEBUG'));
     $self->{'in_copying_header'} = 1;
     my $copying = $self->convert_tree({'contents' =>
-          $self->{'global_commands'}->{'copying'}->{'contents'}});
-    $result .= $copying;
-    $result .= $self->process_footnotes();
+          $global_commands->{'copying'}->{'contents'}});
+    $self->_stream_output_encoded($copying);
+    $self->process_footnotes();
     delete $self->{'in_copying_header'};
   }
   $self->set_global_document_commands('before', \@informative_global_commands);
 
-  if ($self->{'document_info'}->{'dircategory_direntry'}) {
+  if ($document_info->{'dircategory_direntry'}) {
+    my $dir_section = '';
     $self->{'ignored_commands'}->{'direntry'} = 0;
-    foreach my $command (@{$self->{'document_info'}->{'dircategory_direntry'}}) {
+    foreach my $command (@{$document_info->{'dircategory_direntry'}}) {
       if ($command->{'cmdname'} eq 'dircategory') {
         if ($command->{'args'} and @{$command->{'args'}}
             and defined($command->{'args'}->[0]->{'contents'})) {
-          my $dircategory = "INFO-DIR-SECTION ".$self->convert_line(
+          my ($converted, undef) = $self->convert_line_new_context(
              {'contents' => $command->{'args'}->[0]->{'contents'}});
-          $result .= $self->ensure_end_of_line($dircategory);
+          my $dircategory = "INFO-DIR-SECTION " . $converted;
+          $dir_section .= $dircategory;
+          $dir_section .= "\n";
         }
         $self->{'empty_lines_count'} = 0;
       } elsif ($command->{'cmdname'} eq 'direntry') {
-        $result .= "START-INFO-DIR-ENTRY\n";
+        $dir_section .= "START-INFO-DIR-ENTRY\n";
         my $direntry = $self->convert_tree($command);
-        $result .= $direntry;
-        $result .= "END-INFO-DIR-ENTRY\n\n";
+        $dir_section .= $direntry;
+        $dir_section .= "END-INFO-DIR-ENTRY\n\n";
         $self->{'empty_lines_count'} = 1;
       }
     }
     $self->{'ignored_commands'}->{'direntry'} = 1;
+    $self->_stream_output_encoded($dir_section);
   }
+  $result = $self->_stream_result();
+  pop @{$self->{'count_context'}};
   return $result;
 }
 
@@ -448,25 +513,12 @@ sub format_node($$)
   my $self = shift;
   my $node = shift;
 
-  my $result = '';
   return '' if (not $node->{'extra'}
                 or not $node->{'extra'}->{'is_target'});
 
-  my ($node_text, $byte_count) = $self->node_name($node);
+  my ($node_text, undef) = $self->node_name($node);
   # check not needed most probably because of the test of 'normalized'.
   #return '' if ($node_text eq '');
-
-  if (!$self->{'empty_lines_count'}) {
-    $result .= "\n";
-    $self->add_text_to_count("\n");
-    # if in the first node, complete the 'text_before_first_node' too.
-    if (!$self->{'first_node_done'}) {
-      $self->{'text_before_first_node'} .= "\n";
-    }
-  }
-  if (!$self->{'first_node_done'}) {
-    $self->{'first_node_done'} = 1;
-  }
 
   my $output_filename;
   if (defined($self->{'output_filename'})) {
@@ -478,34 +530,30 @@ sub format_node($$)
 
   $self->add_location($node);
   my $node_begin = "\x{1F}\nFile: $output_filename,  Node: ";
-  $result .= $node_begin;
-  $self->add_text_to_count($node_begin);
+  $self->_stream_output(undef, $node_begin);
+
   my $pre_quote = '';
   my $post_quote = '';
   if ($node_text =~ /,/) {
     if ($self->{'info_special_chars_warning'}) {
       $self->plaintext_line_warn($self, sprintf(__(
-                 "\@node name should not contain `,': %s"), $node_text),
-                               $node->{'source_info'});
+                 "\@node name should not contain `,': %s"),
+                     $self->_decode($node_text)), $node->{'source_info'});
     }
     if ($self->{'info_special_chars_quote'}) {
       $pre_quote = "\x{7f}";
       $post_quote = $pre_quote;
-      $self->{'count_context'}->[-1]->{'bytes'} += 2;
     }
   }
-  $self->{'count_context'}->[-1]->{'bytes'} += $byte_count;
-  $result .= $pre_quote . $node_text . $post_quote;
+  $self->_stream_output_encoded($pre_quote . $node_text . $post_quote);
   foreach my $direction (@directions) {
     if ($node->{'extra'}->{'node_directions'}
         and $node->{'extra'}->{'node_directions'}->{lc($direction)}) {
       my $node_direction
           = $node->{'extra'}->{'node_directions'}->{lc($direction)};
-      my $text = ",  $direction: ";
-      $self->add_text_to_count($text);
-      $result .= $text;
+      $self->_stream_output(undef, ",  $direction: ");
       if ($node_direction->{'extra'}->{'manual_content'}) {
-        $result .= $self->convert_line({'type' => '_code',
+        $self->convert_line({'type' => '_code',
                           'contents' => [{'text' => '('},
                              $node_direction->{'extra'}->{'manual_content'},
                                           {'text' => ')'}]});
@@ -513,8 +561,7 @@ sub format_node($$)
       if (defined($node_direction->{'extra'}->{'normalized'})) {
         my $pre_quote = '';
         my $post_quote = '';
-        my ($node_text, $byte_count) = $self->node_name($node_direction);
-        $self->{'count_context'}->[-1]->{'bytes'} += $byte_count;
+        my ($node_text, undef) = $self->node_name($node_direction);
         # Up may not strictly need protection, as it is the last direction,
         # but we protect consistently
         if ($node_text =~ /,/) {
@@ -530,25 +577,22 @@ sub format_node($$)
           if ($self->{'info_special_chars_quote'}) {
             $pre_quote = "\x{7f}";
             $post_quote = $pre_quote;
-            $self->{'count_context'}->[-1]->{'bytes'} += 2;
           }
         }
-        $result .= $pre_quote . $node_text . $post_quote;
+        $self->_stream_output_encoded($pre_quote . $node_text . $post_quote);
       }
     } elsif ($direction eq 'Up'
              and $node->{'extra'}->{'normalized'} eq 'Top') {
       # add an up direction for Top node
-      my $text = ",  $direction: ".$self->get_conf('TOP_NODE_UP');
-      $self->add_text_to_count($text);
-      $result .= $text;
+      $self->_stream_output(undef,
+                   ",  $direction: ".$self->get_conf('TOP_NODE_UP'));
     }
   }
-  $result .="\n\n";
-  $self->add_text_to_count("\n\n");
+  $self->_stream_output(undef, "\n\n");
   $self->{'count_context'}->[-1]->{'lines'} = 3;
   $self->{'empty_lines_count'} = 1;
 
-  return $result;
+  return;
 }
 
 my @image_files_extensions = ('.png', '.jpg');
@@ -658,7 +702,7 @@ Texinfo::Convert::Info - Convert Texinfo tree to Info
 =head1 SYNOPSIS
 
   my $converter
-    = Texinfo::Convert::Info->converter({'document' => $document});
+    = Texinfo::Convert::Info->converter({'NUMBER_SECTIONS' => 0});
 
   $converter->output($document);
   $converter->convert($document);
@@ -681,15 +725,11 @@ Texinfo::Convert::Info converts a Texinfo tree to Info.
 
 Initialize converter from Texinfo to Info.
 
-The I<$options> hash reference holds options for the converter.  In
-this option hash reference a L<document|Texinfo::Document>
-may be associated with the I<document> key.  The document should not
-be available directly anymore after getting the associated information.
-
-The other options are Texinfo customization options and a few other options
-that can be passed to the converter. Most of the customization options are
-described in the Texinfo manual.  Those customization options, when
-appropriate, override the document content.
+The I<$options> hash reference holds Texinfo customization options for the
+converter.  These options should be Texinfo customization options
+that can be passed to the converter.  Most of the customization options are
+described in the Texinfo manual or in the customization API manual.  Those
+customization options, when appropriate, override the document content.
 
 See L<Texinfo::Convert::Converter> for more information.
 
@@ -707,6 +747,9 @@ Convert a Texinfo parsed document I<$document> and return the resulting output.
 Convert a Texinfo tree portion I<$tree> and return the resulting
 output.  This function does not try to output a full document but only
 portions.  For a full document use C<convert>.
+
+In general, this function should be called after the converter has been
+associated to a document by a call to C<output> or C<convert>.
 
 =back
 

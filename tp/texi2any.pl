@@ -1507,7 +1507,7 @@ while(@input_files) {
   my $document_information = $document->global_information();
   # encoding is needed for output files
   # encoding and documentlanguage are needed for gdt() in regenerate_master_menu
-  Texinfo::Common::set_output_encodings($main_configuration, $document_information);
+  Texinfo::Common::set_output_encodings($main_configuration, $document);
   if (not defined($main_configuration->get_conf('documentlanguage'))
       and defined ($document_information->{'documentlanguage'})) {
     $main_configuration->set_conf('documentlanguage',
@@ -1691,7 +1691,6 @@ while(@input_files) {
   # It could be possible to pass some information if it allows
   # for instance to have some consistent information for Structuring
   # and Converters.
-  $converter_options->{'document'} = $document;
   $converter_options->{'output_format'} = $format;
   $converter_options->{'converted_format'} = $converted_format;
   $converter_options->{'language_config_dirs'} = \@language_config_dirs;
@@ -1790,7 +1789,6 @@ while(@input_files) {
                                            %$file_cmdline_options,
                                          };
 
-    $sort_element_converter_options->{'document'} = $document;
     # This is not clear that this is correct.  On the one hand it could
     # be more consistent with the formatting to have nothing here or a
     # format corresponding to Texinfo::Convert::TextContent.  On the other

@@ -550,17 +550,25 @@ sub locate_init_file($$$)
   return undef;
 }
 
-
+
 # API to open, set encoding and register files.
 # In general $SELF is stored as $converter->{'output_files'}
 # and should be accessed through $converter->output_files_information();
 
-# TODO next three functions not documented anywhere, probably relevant to document
-# both in POD and in HTML Customization API.
+# TODO next four functions not documented anywhere, probably relevant to
+# document both in POD and in HTML Customization API.
 sub output_files_initialize
 {
   return {'unclosed_files' => {}, 'opened_files' => []};
 }
+
+sub output_files_disable_output_encoding($$)
+{
+  my ($self, $no_output_encoding) = @_;
+
+  $self->{'output_encoding_disabled'} = $no_output_encoding;
+}
+
 #
 # All the opened files are registered, except for stdout,
 # and the closing of files should be registered too with
@@ -587,7 +595,9 @@ sub output_files_open_out($$$;$$)
   #}
 
   my $encoding;
-  if (defined($output_encoding)) {
+  if ($self->{'output_encoding_disabled'}) {
+   # leave $encoding undefined
+  } elsif (defined($output_encoding)) {
     $encoding = $output_encoding;
   } elsif (defined($customization_information->get_conf('OUTPUT_PERL_ENCODING'))) {
     $encoding = $customization_information->get_conf('OUTPUT_PERL_ENCODING');
@@ -667,7 +677,7 @@ sub output_files_unclosed_files($)
 }
 # end of output_files API
 
-
+
 # functions used in main program, Parser and/or Texinfo::Structuring.
 # Not supposed to be called in user-defined code.
 
@@ -786,8 +796,8 @@ sub warn_unknown_language($) {
   return @messages;
 }
 
-# next functions are for code used in Structuring in addition to Parser.
-# also possibly used in Texinfo::Transformations.
+# next functions are for code used in Structuring or Indices in addition
+# to Parser.  Also possibly used in Texinfo::Transformations.
 
 sub _find_end_brace($$)
 {
@@ -1272,29 +1282,29 @@ sub get_global_document_command($$$)
 
   my $element;
   if ($global_commands_information
-      and defined($global_commands_information->{$global_command})
-      and ref($global_commands_information->{$global_command}) eq 'ARRAY') {
-    if ($command_location eq 'last') {
-      $element = $global_commands_information->{$global_command}->[-1];
-    } else {
-      if ($command_location eq 'preamble_or_first'
-          and not _in_preamble($global_commands_information->{$global_command}->[0])) {
-        $element =
-          $global_commands_information->{$global_command}->[0];
+      and $global_commands_information->{$global_command}) {
+    if (ref($global_commands_information->{$global_command}) eq 'ARRAY') {
+      if ($command_location eq 'last') {
+        $element = $global_commands_information->{$global_command}->[-1];
       } else {
-        foreach my $command_element (@{$global_commands_information->{$global_command}}) {
-          if (_in_preamble($command_element)) {
-            $element = $command_element;
-          } else {
-            last;
+        if ($command_location eq 'preamble_or_first'
+            and not _in_preamble($global_commands_information->{$global_command}->[0])) {
+          $element =
+            $global_commands_information->{$global_command}->[0];
+        } else {
+          foreach my $command_element (@{$global_commands_information->{$global_command}}) {
+            if (_in_preamble($command_element)) {
+              $element = $command_element;
+            } else {
+              last;
+            }
           }
         }
       }
+    } else {
+      # unique command, first, preamble and last are the same
+      $element = $global_commands_information->{$global_command};
     }
-  } elsif ($global_commands_information
-           and defined($global_commands_information->{$global_command})) {
-    # unique command, first, preamble and last are the same
-    $element = $global_commands_information->{$global_command};
   }
   return $element;
 }
@@ -1343,8 +1353,12 @@ sub lookup_index_entry($$)
 sub set_output_encodings($$)
 {
   my $customization_information = shift;
-  my $document_information = shift;
+  my $document = shift;
 
+  my $document_information;
+  if ($document) {
+    $document_information = $document->global_information();
+  }
   $customization_information->set_conf('OUTPUT_ENCODING_NAME',
                $document_information->{'input_encoding_name'})
      if ($document_information
@@ -1660,13 +1674,14 @@ sub find_parent_root_command($$)
         return $current;
       } elsif ($Texinfo::Commands::block_commands{$current->{'cmdname'}}
                and $Texinfo::Commands::block_commands{$current->{'cmdname'}} eq 'region') {
-        if ($current->{'cmdname'} eq 'copying' and $self
-            and $self->{'global_commands'}
-            and $self->{'global_commands'}->{'insertcopying'}) {
-          foreach my $insertcopying(@{$self->{'global_commands'}->{'insertcopying'}}) {
-            my $root_command
-              = find_parent_root_command($self, $insertcopying);
-            return $root_command if (defined($root_command));
+        if ($current->{'cmdname'} eq 'copying' and $self and $self->{'document'}) {
+          my $global_commands = $self->{'document'}->global_commands_information();
+          if ($global_commands and $global_commands->{'insertcopying'}) {
+            foreach my $insertcopying(@{$global_commands->{'insertcopying'}}) {
+              my $root_command
+                = find_parent_root_command($self, $insertcopying);
+              return $root_command if (defined($root_command));
+            }
           }
         } else {
           return undef;
@@ -2676,6 +2691,10 @@ my %kept_keys;
 foreach my $key (@kept_keys) {
   $kept_keys{$key} = 1;
 }
+my @kept_keys_output_unit = ('unit_contents');
+foreach my $key (@kept_keys_output_unit) {
+  $kept_keys{$key} = 1;
+}
 sub _filter_print_keys { [grep {$kept_keys{$_}} ( sort keys %{$_[0]} )] };
 sub debug_print_tree($)
 {
@@ -3003,7 +3022,7 @@ a command that sets some information, such as C<@documentlanguage>,
 C<@contents> or C<@footnotestyle> for example.  Return true if the command
 argument was found and the customization variable was set.
 
-=item set_output_encodings($customization_information, $document_information)
+=item set_output_encodings($customization_information, $document)
 X<C<set_output_encodings>>
 
 If not already set, set C<OUTPUT_ENCODING_NAME> based on input file

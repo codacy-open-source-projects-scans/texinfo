@@ -2504,7 +2504,23 @@ DECLARE_INFO_COMMAND (info_find_menu, _("Move to the start of this node's menu")
       window->flags |= W_UpdateWindow;
     }
   else
-    info_error ("%s", msg_no_menu_node);
+    {
+      /* If not found, it could be because the menu label was removed from
+         the node with hide-note-references.  Move to the first menu entry
+         in the node if there is one. */
+      REFERENCE **ref;
+      for (ref = window->node->references; *ref != 0; ref++)
+        {
+          if ((*ref)->type == REFERENCE_MENU_ITEM)
+            {
+              window->point = (*ref)->start;
+              window_adjust_pagetop (window);
+              window->flags |= W_UpdateWindow;
+              return;
+            }
+        }
+    }
+  info_error ("%s", msg_no_menu_node);
 }
 
 /* Visit as many menu items as is possible, each in a separate window. */
@@ -2513,6 +2529,7 @@ DECLARE_INFO_COMMAND (info_visit_menu,
 {
   register int i;
   REFERENCE *entry, **menu;
+  NODE *copy;
 
   menu = window->node->references;
 
@@ -2528,8 +2545,10 @@ DECLARE_INFO_COMMAND (info_visit_menu,
 
       if (entry->type != REFERENCE_MENU_ITEM) continue;
 
+      copy = xmalloc (sizeof (NODE));
+      *copy = *window->node; /* Field-by-field copy of structure. */
       new = window_make_window ();
-      info_set_node_of_window (new, window->node);
+      info_set_node_of_window (new, copy);
       window_tile_windows (TILE_INTERNALS);
 
       if (!new)

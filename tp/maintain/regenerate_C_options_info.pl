@@ -99,10 +99,9 @@ open (HEADER, '>', $header_file)
       or die "Open $header_file: $!\n";
 print HEADER "/* Automatically generated from $0 */\n\n";
 
-print HEADER "#ifndef OPTIONS_TYPE_H\n#define OPTIONS_TYPE_H\n\n";
+print HEADER "#ifndef OPTIONS_TYPES_H\n#define OPTIONS_TYPES_H\n\n";
 
-print HEADER "#include \"tree_types.h\"\n";
-print HEADER "#include \"converter_types.h\"\n\n";
+print HEADER "#include \"main/option_types.h\"\n\n";
 
 print HEADER "typedef struct OPTIONS {\n";
 
@@ -300,6 +299,9 @@ foreach my $category (sort(keys(%option_categories))) {
       if ($type eq 'bytes') {
         $SV_function_type = 'byte';
       }
+      # TODO the generated file includes perl headers.  The NOTE in
+      # build_perl_info.c about not using malloc/free should be relevant for
+      # the generated file.
       print GET "      free (options->$option.string);
       if (SvOK (value))
         options->$option.string = strdup (SvPV${SV_function_type}_nolen (value));

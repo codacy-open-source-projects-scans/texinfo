@@ -37,8 +37,6 @@
 #include "converter_types.h"
 #include "builtin_commands.h"
 #include "errors.h"
-#include "convert_plain_texinfo.h"
-#include "convert_text.h"
 #include "convert_to_text.h"
 #include "convert_to_texinfo.h"
 #include "indices_in_conversion.h"
@@ -71,6 +69,9 @@ init (...)
 
 void
 converter_initialize (SV *converter_in)
+
+void
+converter_set_document (SV *converter_in, SV *document_in)
 
 
 void
@@ -290,11 +291,11 @@ plain_texinfo_convert_tree (SV *tree_in)
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
-        /* FIXME warning/error if not found? */
-        document = get_sv_tree_document (tree_in, 0);
+        /* caller checks that there is a descriptor */
+        document = get_sv_tree_document (tree_in, "plain_texinfo_convert_tree");
         if (document)
           {
-            char *result = plain_texinfo_convert (document);
+            char *result = convert_to_texinfo (document->tree);
             RETVAL = newSVpv_utf8 (result, 0);
             free (result);
           }
@@ -307,21 +308,29 @@ SV *
 text_convert_tree (SV *options_in, SV *tree_in)
     PREINIT:
         DOCUMENT *document = 0;
-        TEXT_OPTIONS *text_options = 0;
     CODE:
         /* The caller checks that there is a descriptor */
         document = get_sv_tree_document (tree_in, "text_convert_tree");
-        text_options = copy_sv_options_for_convert_text (options_in);
         if (document)
           {
-            /* text_options is destroyed in text_convert */
-            char *result = text_convert (document, text_options);
+            char *result;
+            TEXT_OPTIONS *text_options;
+
+            if (SvOK (options_in))
+              text_options = copy_sv_options_for_convert_text (options_in);
+            else
+              text_options = new_text_options ();
+
+            text_options->document_descriptor = document->descriptor;
+
+            result = convert_to_text (document->tree, text_options);
+
+            destroy_text_options (text_options);
             RETVAL = newSVpv_utf8 (result, 0);
             free (result);
           }
         else
           {
-            destroy_text_options (text_options);
             RETVAL = newSV(0);
           }
     OUTPUT:
@@ -333,7 +342,7 @@ void
 html_format_init ()
 
 void
-html_converter_initialize_sv (SV *converter_in, SV *default_formatting_references, SV *default_css_string_formatting_references, SV *default_commands_open, SV *default_commands_conversion, SV *default_css_string_commands_conversion, SV *default_types_open, SV *default_types_conversion, SV *default_css_string_types_conversion, SV *default_output_units_conversion, SV *default_special_unit_body)
+html_converter_initialize_sv (SV *converter_in, SV *default_formatting_references, SV *default_css_string_formatting_references, SV *default_commands_open, SV *default_commands_conversion, SV *default_css_string_commands_conversion, SV *default_types_open, SV *default_types_conversion, SV *default_css_string_types_conversion, SV *default_output_units_conversion, SV *default_no_arg_commands_formatting, SV *default_special_unit_body)
 
 void
 html_initialize_output_state (SV *converter_in, char *context)
@@ -342,17 +351,20 @@ html_initialize_output_state (SV *converter_in, char *context)
       CODE:
          self = get_sv_converter (converter_in, "html_initialize_output_state");
          if (self)
-           html_initialize_output_state (self, context);
+           {
+             html_conversion_initialization_sv (converter_in, self);
+             html_initialize_output_state (self, context);
+           }
 
 void
-html_finalize_output_state (SV *converter_in)
+html_conversion_finalization (SV *converter_in)
       PREINIT:
          CONVERTER *self;
       CODE:
-         self = get_sv_converter (converter_in, "html_finalize_output_state");
+         self = get_sv_converter (converter_in, "html_conversion_finalization");
          if (self)
            {
-             html_finalize_output_state (self);
+             html_conversion_finalization (self);
 
              if (self->modified_state)
                {
