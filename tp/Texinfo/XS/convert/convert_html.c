@@ -1449,7 +1449,7 @@ prepare_special_units (CONVERTER *self, int output_units_descriptor,
      = associated_special_units_descriptor;
 
   if (self->document->sections_list
-      && self->document->sections_list->number > 0)
+      && self->document->sections_list->number > 1)
     {
       enum command_id contents_cmds[2] = {CM_shortcontents, CM_contents};
       int i;
@@ -2596,7 +2596,7 @@ url_protect_url_text (CONVERTER *self, const char *input_string)
             /* the reason for forcing (unsigned char) is that the %x modifier
                expects an unsigned int parameter and a char will usually be
                promoted to an int when passed to a varargs function */
-                  text_printf (&text, "%%%2x", (unsigned char)*p);
+                  text_printf (&text, "%%%02x", (unsigned char)*p);
                   p += 1;
                 }
             }
@@ -2655,7 +2655,7 @@ url_protect_file_text (CONVERTER *self, const char *input_string)
             /* the reason for forcing (unsigned char) is that the %x modifier
                expects an unsigned int parameter and a char will usually be
                promoted to an int when passed to a varargs function */
-                  text_printf (&text, "%%%2x", (unsigned char)*p);
+                  text_printf (&text, "%%%02x", (unsigned char)*p);
                   p += 1;
                 }
             }
@@ -3085,11 +3085,8 @@ external_node_href (CONVERTER *self, const ELEMENT *external_node,
       char *manual_name;
       char *manual_base = 0;
       char *p;
-      char *q = 0;
       char *htmlxref_href = 0;
-      char saved;
       enum htmlxref_split_type split_found = htmlxref_split_type_none;
-      int manual_len;
       HTMLXREF_MANUAL *htmlxref_manual;
 
       self->convert_text_options->code_state++;
@@ -3120,21 +3117,7 @@ external_node_href (CONVERTER *self, const ELEMENT *external_node,
         p = manual_name;
       else
         p++;
-      manual_len = strlen (manual_name);
-      if (manual_len >= 5
-          && !memcmp (manual_name +manual_len - 5, ".info", 5))
-        q = manual_name +manual_len - 5;
-      else if (manual_len >= 4
-               && !memcmp (manual_name +manual_len - 4, ".inf", 4))
-        q = manual_name +manual_len - 4;
-      if (q)
-        {
-          saved = *q;
-          *q = '\0';
-        }
       manual_base = strdup (p);
-      if (q)
-        *q = saved;
 
       htmlxref_manual = find_htmlxref_manual (&self->htmlxref, manual_base);
 
@@ -3779,6 +3762,9 @@ html_footnote_location_href (CONVERTER *self, const ELEMENT *command,
   return href.text;
 }
 
+/* the returned TREE_ADDED_ELEMENTS may not be NUL but have a NUL tree
+   field, for instance in the case of an empty sectioning element
+ */
 TREE_ADDED_ELEMENTS *
 html_internal_command_tree (CONVERTER *self, const ELEMENT *command,
                             int no_number)
@@ -6918,6 +6904,7 @@ file_header_information (CONVERTER *self, const ELEMENT *command,
 
           if (!command_tree)
             {
+    /* this should not happen, as the command_string should be empty already */
               TREE_ADDED_ELEMENTS *element_tree
                   = html_command_tree (self, command, 0);
               command_tree = element_tree->tree;
@@ -7957,29 +7944,37 @@ format_element_header (CONVERTER *self,
 }
 
 static int
-word_number_more_than_level (const char *text, int level)
+word_number_more_than_level (const char *text, int level, int *count)
 {
   const char *p = text;
-  int count = 0;
+
+  p += strspn (p, whitespace_chars);
+
+  if (*p)
+    *count = 1;
 
   while (*p)
     {/* FIXME in perl unicode spaces are also matched */
       int n = strspn (p, whitespace_chars);
       if (n)
         {
-          count++;
-          if (count > level)
-            return 1;
           p += n;
+          /* if not followed by anything, ie at the end of the string,
+             do not count the space */
+          if (*p)
+            {
+              (*count)++;
+              if (*count >= level)
+                return 1;
+            }
+          else
+            return 0;
         }
-      if (*p)
-        {
-          /* skip a character */
-          int char_len = 1;
-          while ((p[char_len] & 0xC0) == 0x80)
-            char_len++;
-          p += char_len;
-        }
+      /* skip a character */
+      int char_len = 1;
+      while ((p[char_len] & 0xC0) == 0x80)
+        char_len++;
+      p += char_len;
     }
   return 0;
 }
@@ -8081,9 +8076,10 @@ html_default_format_element_footer (CONVERTER *self,
             {
               if (self->conf->WORDS_IN_PAGE.integer > 0)
                 {
-                  if (content
-                      && word_number_more_than_level (content,
-                                        self->conf->WORDS_IN_PAGE.integer))
+                  int count;
+                  int more_than_level = word_number_more_than_level (content,
+                                    self->conf->WORDS_IN_PAGE.integer, &count);
+                  if (content && more_than_level)
                     {
                       buttons = self->conf->NODE_FOOTER_BUTTONS.buttons;
                     }
@@ -9800,6 +9796,10 @@ mini_toc_internal (CONVERTER *self, const ELEMENT *element, TEXT *result)
           char *accesskey;
           char *text;
           char *href = html_command_href (self, section, 0, 0, 0);
+
+          /* happens with empty sectioning command */
+          if (!command_tree->tree)
+            continue;
 
           xasprintf (&explanation, "mini_toc @%s",
                      element_command_name (section));

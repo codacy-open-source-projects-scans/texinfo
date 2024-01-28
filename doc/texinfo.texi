@@ -15151,6 +15151,15 @@ Keep Info files to at most @var{num} characters if possible; default
 is 300,000.  (However, a single node will never be split across Info
 files.)
 
+@item --trace-includes
+@opindex --trace-includes
+@vindex TRACE_INCLUDES
+Print the name of each included file to standard output, including any
+indrectly included files.  An include file is printed only if it was
+actually found.  When this option is given, @command{texi2any} does not
+output in any output format.  (The purpose of this option is to make it
+easier to collect the sources of a Texinfo manual.)
+
 @item --transliterate-file-names
 @opindex --transliterate-file-names
 @vindex TRANSLITERATE_FILE_NAMES
@@ -15451,6 +15460,8 @@ meaning of the options.
 @option{--split}             @tab @code{SPLIT}
 @item
 @option{--split-size}        @tab @code{SPLIT_SIZE}
+@item
+@option{--trace-includes}    @tab @code{TRACE_INCLUDES}
 @item
 @option{--transliterate-file-names} @tab @code{TRANSLITERATE_FILE_NAMES}
 @item

@@ -116,7 +116,6 @@ sub import {
     parse_texi_line
     parse_texi_piece
     parse_texi_text
-
 ) ] );
 
 @EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
@@ -3584,6 +3583,7 @@ sub _end_line_misc_line($$$)
             $include_source_mark = {'sourcemark_type' => $command,
                                     'status' => 'start'};
             $self->{'input'}->[0]->{'input_source_mark'} = $include_source_mark;
+            push @{$self->{'global_info'}->{'included_files'}}, $included_file_path;
           } else {
             my $decoded_file_path
                 = Encode::decode($file_name_encoding, $included_file_path);
@@ -7989,7 +7989,7 @@ The following method is used to construct a new C<Texinfo::Parser> object:
 
 =over
 
-=item $parser = Texinfo::Parser::parser($options);
+=item $parser = Texinfo::Parser::parser($options)
 X<C<Texinfo::Parser::parser>>
 X<Parser initialization>
 

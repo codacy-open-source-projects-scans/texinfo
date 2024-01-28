@@ -348,46 +348,11 @@ sub convert_tree($$)
 # is used in the lang attribute, but if there is no @documentlanguag,
 # the lang_stack will start with an empty string, not with $DEFAULT_LANG.
 my $DEFAULT_LANG = 'en';
-sub output($$)
+sub conversion_output_begin($;$$)
 {
   my $self = shift;
-  my $document = shift;
-
-  $self->conversion_initialization($document);
-
-  my $root = $document->tree();
-
-  my ($output_file, $destination_directory, $output_filename)
-    = $self->determine_files_and_directory($self->{'output_format'});
-
-  my ($encoded_destination_directory, $dir_encoding)
-    = $self->encoded_output_file_name($destination_directory);
-  my $succeeded
-    = $self->create_destination_directory($encoded_destination_directory,
-                                          $destination_directory);
-  unless ($succeeded) {
-    $self->conversion_finalization();
-    return undef;
-  }
-
-  my $fh;
-  my $encoded_output_file;
-  if (! $output_file eq '') {
-    my $path_encoding;
-    ($encoded_output_file, $path_encoding)
-      = $self->encoded_output_file_name($output_file);
-    my $error_message;
-    ($fh, $error_message) = Texinfo::Common::output_files_open_out(
-                              $self->output_files_information(), $self,
-                              $encoded_output_file);
-    if (!$fh) {
-      $self->converter_document_error(
-           sprintf(__("could not open %s for writing: %s"),
-                                    $output_file, $error_message));
-      $self->conversion_finalization();
-      return undef;
-    }
-  }
+  my $output_file = shift;
+  my $output_filename = shift;
 
   my $encoding = '';
   if ($self->get_conf('OUTPUT_ENCODING_NAME')
@@ -397,6 +362,7 @@ sub output($$)
 
   my $id;
   if ($output_file ne '') {
+    # FIXME DocBook 5 id -> xml:id
     $id = " id=\"".$self->xml_protect_text($output_filename)."\"";
   } else {
     $id = '';
@@ -410,7 +376,7 @@ sub output($$)
   } else {
     push @{$self->{'lang_stack'}}, '';
   }
-  my $header =  "<?xml version=\"1.0\"${encoding}?>".'
+  my $result =  "<?xml version=\"1.0\"${encoding}?>".'
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
   <!ENTITY tex "TeX">
   <!ENTITY latex "LaTeX">
@@ -478,6 +444,15 @@ sub output($$)
       $authors_info .= "<authorgroup>\n";
       foreach my $element (@authors_elements) {
         my ($arg, $end_line) = $self->_convert_argument_and_end_line($element);
+        # FIXME DocBook 5 no more collabname, merged with other elements in
+        # orgname, which is much more specific than collabname, it is for an
+        # organisation and therefore not suitable here.
+        # https://tdg.docbook.org/tdg/5.0/ch01#introduction-whats-new
+        # person/personname is not suitable either, because in Texinfo @author
+        # may correspond to more than one author, and also because we do not
+        # have the information in Texinfo needed for <person>, which requires
+        # a split of the name in honorific, firstname, surname...
+        # https://tdg.docbook.org/tdg/5.0/personname
         my $result = "<collab><collabname>$arg</collabname></collab>$end_line";
         chomp ($result);
         $result .= "\n";
@@ -536,28 +511,28 @@ sub output($$)
 
   # we duplicate title info, as it is explicitly said in the DocBook manual
   # that it can be duplicated if exactly the same
-  $header .= $title_info;
+  $result .= $title_info;
 
   if ($document_info ne '') {
     # FIXME DocBook 5 bookinfo->info
-    $header .= "<bookinfo>$document_info</bookinfo>\n";
+    $result .= "<bookinfo>$document_info</bookinfo>\n";
   }
 
-  my $result = '';
-  $result .= $self->write_or_return($header, $fh);
-  $result .= $self->write_or_return($self->convert_tree($root), $fh);
-  $result .= $self->write_or_return("</book>\n", $fh);
-  if ($fh and $output_file ne '-') {
-    Texinfo::Common::output_files_register_closed(
-                  $self->output_files_information(), $encoded_output_file);
-    if (!close ($fh)) {
-      $self->converter_document_error(
-            sprintf(__("error on closing %s: %s"),
-                                    $output_file, $!));
-    }
-  }
-  $self->conversion_finalization();
   return $result;
+}
+
+sub conversion_output_end($)
+{
+  my $self = shift;
+  return "</book>\n";
+}
+
+sub output($$)
+{
+  my $self = shift;
+  my $document = shift;
+
+  return $self->output_tree($document);
 }
 
 my %docbook_sections = (
@@ -703,6 +678,7 @@ sub _output_anchor($)
   my $element = shift;
 
   if ($element->{'extra'} and $element->{'extra'}->{'is_target'}) {
+    # FIXME DocBook 5 id -> xml:id
     return "<anchor id=\"$element->{'extra'}->{'normalized'}\"/>";
   } else {
     return '';
@@ -928,62 +904,58 @@ sub _convert($$;$)
             }
           }
           foreach my $opened_element (@opened_elements) {
-            if (not (defined($self->{'in_skipped_node_top'})
-                     and $self->{'in_skipped_node_top'} == 1)) {
-              if ($section_element and $opened_element eq $section_element) {
-                $sectioning_commands_done{$section_element} = 1;
+            if ($section_element and $opened_element eq $section_element) {
+              $sectioning_commands_done{$section_element} = 1;
+            }
+            my $section_attribute = '';
+            # FIXME it is not clear that a label should be set for
+            # @appendix* or @chapter/@*section as the formatter should be
+            # able to figure it out.  For @unnumbered or if ! NUMBER_SECTIONS
+            # having a label (empty) is important.
+            my $label = '';
+            if (defined($opened_element->{'extra'}->{'section_number'})
+              and ($self->get_conf('NUMBER_SECTIONS')
+                   or !defined($self->get_conf('NUMBER_SECTIONS')))) {
+              # Looking at docbook2html output, Appendix is appended in the
+              # section title, so only the letter is used.
+              $label = $opened_element->{'extra'}->{'section_number'};
+            }
+            my $docbook_sectioning_element
+               = $self->_docbook_section_element($opened_element);
+            if (! $docbook_special_unnumbered{$docbook_sectioning_element}) {
+              $section_attribute .= " label=\"$label\"";
+            }
+            if ($opened_element->{'extra'}
+                and $opened_element->{'extra'}->{'associated_node'}
+                and $opened_element->{'extra'}->{'associated_node'}->{'extra'}
+                and defined($opened_element->{'extra'}->{'associated_node'}->{'extra'}->{'normalized'})) {
+              # FIXME DocBook 5 id -> xml:id
+              $section_attribute
+               .= " id=\"$opened_element->{'extra'}->{'associated_node'}->{'extra'}->{'normalized'}\"";
+            }
+            my $language = '';
+            if (defined($self->get_conf('documentlanguage'))) {
+              $language = $self->get_conf('documentlanguage');
+              if ($self->{'lang_stack'}->[-1] ne $language) {
+                $section_attribute .= ' lang="'.$language.'"';
               }
-              my $section_attribute = '';
-              # FIXME it is not clear that a label should be set for
-              # @appendix* or @chapter/@*section as the formatter should be
-              # able to figure it out.  For @unnumbered or if ! NUMBER_SECTIONS
-              # having a label (empty) is important.
-              my $label = '';
-              if (defined($opened_element->{'extra'}->{'section_number'})
-                and ($self->get_conf('NUMBER_SECTIONS')
-                     or !defined($self->get_conf('NUMBER_SECTIONS')))) {
-                # Looking at docbook2html output, Appendix is appended in the
-                # section title, so only the letter is used.
-                $label = $opened_element->{'extra'}->{'section_number'};
-              }
-              my $docbook_sectioning_element
-                 = $self->_docbook_section_element($opened_element);
-              if (! $docbook_special_unnumbered{$docbook_sectioning_element}) {
-                $section_attribute .= " label=\"$label\"";
-              }
-              if ($opened_element->{'extra'}
-                  and $opened_element->{'extra'}->{'associated_node'}
-                  and $opened_element->{'extra'}->{'associated_node'}->{'extra'}
-                  and defined($opened_element->{'extra'}->{'associated_node'}->{'extra'}->{'normalized'})) {
-                $section_attribute
-                 .= " id=\"$opened_element->{'extra'}->{'associated_node'}->{'extra'}->{'normalized'}\"";
-              }
-              my $language = '';
-              if (defined($self->get_conf('documentlanguage'))) {
-                $language = $self->get_conf('documentlanguage');
-                if ($self->{'lang_stack'}->[-1] ne $language) {
-                  $section_attribute .= ' lang="'.$language.'"';
-                }
-              }
-              push @{$self->{'lang_stack'}}, $language;
-              $result .= "<$docbook_sectioning_element${section_attribute}>\n";
-              if ($opened_element->{'args'} and $opened_element->{'args'}->[0]) {
-                my ($arg, $end_line) = $self->_convert_argument_and_end_line($opened_element);
-                $result .= "<title>$arg</title>$end_line";
-                chomp ($result);
-                $result .= "\n";
-              }
-              # if associated with a sectioning element, the part is opened before the
-              # sectioning element, such that the part content appears after the sectioning
-              # command opening, no need for partintro.
-              if ($docbook_sectioning_element eq 'part'
-                  and not ($opened_element->{'extra'}
-                           and $opened_element->{'extra'}->{'part_associated_section'})
-                  and !Texinfo::Common::is_content_empty($opened_element)) {
-                $result .= "<partintro>\n";
-              }
-            } else {
-              push @{$self->{'lang_stack'}}, $self->{'lang_stack'}->[-1];
+            }
+            push @{$self->{'lang_stack'}}, $language;
+            $result .= "<$docbook_sectioning_element${section_attribute}>\n";
+            if ($opened_element->{'args'} and $opened_element->{'args'}->[0]) {
+              my ($arg, $end_line) = $self->_convert_argument_and_end_line($opened_element);
+              $result .= "<title>$arg</title>$end_line";
+              chomp ($result);
+              $result .= "\n";
+            }
+            # if associated with a sectioning element, the part is opened before the
+            # sectioning element, such that the part content appears after the sectioning
+            # command opening, no need for partintro.
+            if ($docbook_sectioning_element eq 'part'
+                and not ($opened_element->{'extra'}
+                         and $opened_element->{'extra'}->{'part_associated_section'})
+                and !Texinfo::Common::is_content_empty($opened_element)) {
+              $result .= "<partintro>\n";
             }
           }
         }
@@ -1391,6 +1363,10 @@ sub _convert($$;$)
                                  $self->{'convert_text_options'});
           }
           if ($name and $email) {
+            # FIXME DocBook 5 ulink -> link
+            # There is no possibility to do something similar in DocBook 5.
+            # The best is probably either to forget about the name, or
+            # follow <email> by the name in parentheses
             return "<ulink url=\"mailto:$email_text\">"
               .$self->_convert({'contents' => $name}).'</ulink>';
           } elsif ($email) {
@@ -1443,6 +1419,8 @@ sub _convert($$;$)
           }
           return "<ulink url=\"$url_text\">$replacement</ulink>";
           # FIXME DocBook 5
+          # need to add in the preamble
+          #    xmlns:xlink="http://www.w3.org/1999/xlink"
           # return "<link xlink:href=\"$url_text\">$replacement</link>";
         }
 

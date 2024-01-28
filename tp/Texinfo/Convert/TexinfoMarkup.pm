@@ -291,71 +291,39 @@ sub conversion_initialization($;$)
   $self->{'document_context'} = [{'monospace' => [0]}];
 }
 
+sub conversion_output_begin($;$$)
+{
+  my $self = shift;
+  my $output_file = shift;
+  my $output_filename = shift;
+
+
+  my $result = $self->txi_markup_header();
+  $result .= $self->txi_markup_open_element('texinfo')."\n";
+  if ($output_file ne '') {
+    my $filename_element = $self->txi_markup_open_element('filename',
+                                                  [['file', $output_filename]])
+             .$self->txi_markup_close_element('filename')."\n";
+    $result .= $filename_element;
+  }
+  return $result;
+}
+
+sub conversion_output_end($)
+{
+  my $self = shift;
+
+  # FIXME add txi_markup_footer() to format a footer for the file?
+  return $self->txi_markup_close_element('texinfo')."\n";
+}
+
 # Main output function for the Texinfo language markup output files.
 sub output($$)
 {
   my $self = shift;
   my $document = shift;
 
-  $self->conversion_initialization($document);
-
-  my $root = $document->tree();
-
-  my ($output_file, $destination_directory, $output_filename)
-       = $self->determine_files_and_directory($self->{'output_format'});
-
-  my ($encoded_destination_directory, $dir_encoding)
-    = $self->encoded_output_file_name($destination_directory);
-  my $succeeded
-    = $self->create_destination_directory($encoded_destination_directory,
-                                          $destination_directory);
-  return undef unless $succeeded;
-
-  my $fh;
-  my $encoded_output_file;
-  if (! $output_file eq '') {
-    my $path_encoding;
-    ($encoded_output_file, $path_encoding)
-      = $self->encoded_output_file_name($output_file);
-    my $error_message;
-    ($fh, $error_message) = Texinfo::Common::output_files_open_out(
-                             $self->output_files_information(), $self,
-                             $encoded_output_file);
-    if (!$fh) {
-      $self->converter_document_error(
-                 sprintf(__("could not open %s for writing: %s"),
-                                    $output_file, $error_message));
-      return undef;
-    }
-  }
-
-  my $result = '';
-  $result .= $self->write_or_return($self->txi_markup_header(), $fh);
-  $result
-    .= $self->write_or_return($self->txi_markup_open_element('texinfo')."\n",
-                              $fh);
-  if ($output_file ne '') {
-    my $filename_element = $self->txi_markup_open_element('filename',
-                                                  [['file', $output_filename]])
-             .$self->txi_markup_close_element('filename')."\n";
-    $result .= $self->write_or_return($filename_element, $fh);
-  }
-  $result .= $self->write_or_return($self->convert_tree($root), $fh);
-  $result
-    .= $self->write_or_return($self->txi_markup_close_element('texinfo')."\n",
-                              $fh);
-  # FIXME add txi_markup_footer() to format a footer for the file?
-  if ($fh and $output_file ne '-') {
-    Texinfo::Common::output_files_register_closed(
-                  $self->output_files_information(), $encoded_output_file);
-    if (!close ($fh)) {
-      $self->converter_document_error(
-                  sprintf(__("error on closing %s: %s"),
-                                    $output_file, $!));
-    }
-  }
-
-  return $result;
+  return $self->output_tree($document);
 }
 
 # API for markup formatting subclasses

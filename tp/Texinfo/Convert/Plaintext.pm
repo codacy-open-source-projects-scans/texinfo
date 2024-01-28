@@ -433,7 +433,6 @@ sub conversion_initialization($;$)
 
   $self->{'context'} = [];
   $self->{'format_context'} = [];
-  $self->{'empty_lines_count'} = undef;
   push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0,
                                      'locations' => [],
                                      'result' => ''
@@ -441,7 +440,6 @@ sub conversion_initialization($;$)
 
   # setting to 1 ensures that nothing is done, as there is
   # something done (a newline added) if equal to 0.
-  $self->{'empty_lines_count'} = 1;
   $self->{'seenmenus'} = {};
   $self->{'index_entries_line_location'} = {};
 
@@ -839,8 +837,9 @@ sub convert_line($$;$)
   my $formatter = $self->new_formatter('line', $conf);
   push @{$self->{'formatters'}}, $formatter;
   $self->_convert($converted);
-  _stream_output($self, $formatter->{'container'},
-                Texinfo::Convert::Paragraph::end($formatter->{'container'}));
+  _stream_output($self,
+                 Texinfo::Convert::Paragraph::end($formatter->{'container'}),
+                 $formatter->{'container'});
   pop @{$self->{'formatters'}};
   return;
 }
@@ -851,12 +850,14 @@ sub convert_line_new_context($$;$)
 {
   my ($self, $converted, $conf) = @_;
 
-  push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
+  push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0,
+                                     'encoding_disabled' => 1};
   my $formatter = $self->new_formatter('line', $conf);
   push @{$self->{'formatters'}}, $formatter;
   $self->_convert($converted);
-  _stream_output($self, $formatter->{'container'},
-                Texinfo::Convert::Paragraph::end($formatter->{'container'}));
+  _stream_output($self,
+                 Texinfo::Convert::Paragraph::end($formatter->{'container'}),
+                 $formatter->{'container'});
   my $result = _stream_result($self);
   my $count = Texinfo::Convert::Paragraph::counter($formatter->{'container'});
 
@@ -868,31 +869,6 @@ sub convert_line_new_context($$;$)
   die if (!scalar(@{$self->{'count_context'}}));
 
   return ($result, $count, $end_line_count);
-}
-
-# Convert in a new count context, without adding a new paragraph formatter.
-# Used to capture part of the result of a conversion.  Returned string can
-# be passed to _stream_output_encoded.
-sub convert_new_context($$;$)
-{
-  my ($self, $converted, $conf) = @_;
-
-  my $result;
-
-  my $formatter = $self->{'formatters'}->[-1];
-
-  die if !defined($formatter);
-
-  push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
-  $self->_convert($converted);
-  _stream_output($self, $formatter->{'container'},
-                Texinfo::Convert::Paragraph::add_pending_word($formatter->{'container'}, 1));
-  $result = _stream_result($self);
-  pop @{$self->{'count_context'}};
-
-  die if (!scalar(@{$self->{'count_context'}}));
-
-  return $result;
 }
 
 sub _add_lines_count($$)
@@ -928,9 +904,9 @@ sub add_image($$$$;$)
   };
 }
 
-sub _stream_output($$$)
+sub _stream_output($$;$)
 {
-  my ($self, $container, $text) = @_;
+  my ($self, $text, $container) = @_;
   my $count_context = $self->{'count_context'}->[-1];
 
   if (defined($container)) {
@@ -1007,10 +983,17 @@ sub _stream_byte_count($)
 
   if (defined($count_context->{'pending_text'})
         and $count_context->{'pending_text'} ne '') {
-    my $new_encoded = _stream_encode($self, $count_context->{'pending_text'});
-    $count_context->{'pending_text'} = '';
-    $count_context->{'result'} .= $new_encoded;
-    $count_context->{'bytes'} += length($new_encoded);
+    if (!$count_context->{'encoding_disabled'}) {
+      my $new_encoded
+        = _stream_encode($self, $count_context->{'pending_text'});
+      $count_context->{'pending_text'} = '';
+      $count_context->{'result'} .= $new_encoded;
+      $count_context->{'bytes'} += length($new_encoded);
+    } else {
+      $count_context->{'result'} .= $count_context->{'pending_text'};
+      $count_context->{'pending_text'} = '';
+      $count_context->{'bytes'} = -1;
+    }
   }
   return $count_context->{'bytes'};
 }
@@ -1057,14 +1040,32 @@ sub _update_locations_counts($$)
   }
 }
 
+# Called at the beginning of a line.  Add a blank line if the output does
+# not already end in one.
 sub _add_newline_if_needed($) {
   my $self = shift;
-  if (defined($self->{'empty_lines_count'})
-       and $self->{'empty_lines_count'} == 0) {
-    _stream_output_encoded($self, "\n");
+
+  # The "bytes" pragma makes length and substr quicker for Perl strings that
+  # may possibly contain UTF-8 sequences.  Since we are only checking for
+  # ASCII newline at the end of the string, this does not change the result.
+  use bytes;
+
+  if (defined($self->{'count_context'}->[-1]->{'pending_text'})
+    and length($self->{'count_context'}->[-1]->{'pending_text'}) >= 2
+    and substr($self->{'count_context'}->[-1]->{'pending_text'}, -2)
+          ne "\n\n") {
+    _stream_output($self, "\n");
     _add_lines_count($self, 1);
-    $self->{'empty_lines_count'} = 1;
+  } else {
+    my $result = _stream_result($self);
+    # NB \z matches end of string, whereas $ can match *before* a newline
+    # at the end of a string.
+    if ($result ne '' and $result ne "\n" and $result !~ /\n\n\z/) {
+      _stream_output($self, "\n");
+      _add_lines_count($self, 1);
+    }
   }
+
   return;
 }
 
@@ -1123,9 +1124,8 @@ sub process_footnotes($;$)
         # a @footnote in @copying and @insertcopying (and USE_NODES=0?)
         or !$label_element) {
       my $footnotes_header = "   ---------- Footnotes ----------\n\n";
-      _stream_output_encoded($self, $footnotes_header);
+      _stream_output($self, $footnotes_header);
       _add_lines_count($self, 2);
-      $self->{'empty_lines_count'} = 1;
     } else {
       my $footnotes_node_arg
             = {'contents' => [$label_element, {'text' => '-Footnotes'}]};
@@ -1174,8 +1174,7 @@ sub process_footnotes($;$)
                . "($formatted_footnote_number) ";
       $self->{'text_element_context'}->[-1]->{'counter'} +=
          Texinfo::Convert::Unicode::string_width($footnote_text);
-      _stream_output($self, undef, $footnote_text);
-      $self->{'empty_lines_count'} = 0;
+      _stream_output($self, $footnote_text);
 
       $self->_convert($footnote->{'root'}->{'args'}->[0]);
       _add_newline_if_needed($self);
@@ -1186,8 +1185,9 @@ sub process_footnotes($;$)
   }
   $self->{'footnote_index'} = 0;
 
-  _stream_output($self, $formatter->{'container'},
-                Texinfo::Convert::Paragraph::end($formatter->{'container'}));
+  _stream_output($self,
+                 Texinfo::Convert::Paragraph::end($formatter->{'container'}),
+                 $formatter->{'container'});
   pop @{$self->{'formatters'}};
 
   return;
@@ -1389,14 +1389,13 @@ sub format_contents($$$)
         = 2 * ($section->{'extra'}->{'section_level'} - ($root_level+1));
 
       if ($repeat_count > 0) {
-        _stream_output_encoded($self, ' ' x $repeat_count);
+        _stream_output($self, ' ' x $repeat_count);
       }
       my ($text, undef) = $self->convert_line_new_context(
-            {'contents' => [$section_title_tree],
-             'type' => 'frenchspacing'});
+            {'contents' => [$section_title_tree], 'type' => 'frenchspacing'});
       chomp ($text);
       $text .= "\n";
-      _stream_output_encoded($self, $text);
+      _stream_output($self, $text);
       $lines_count++;
       if ($section->{'extra'}->{'section_childs'}
           and ($contents
@@ -1430,7 +1429,7 @@ sub _menu($$)
   my ($self, $menu_command) = @_;
 
   if ($menu_command->{'cmdname'} eq 'menu') {
-    _stream_output_encoded($self, "* Menu:\n\n");
+    _stream_output($self, "* Menu:\n\n");
     _add_lines_count($self, 2);
     if ($self->{'current_node'}) {
       $self->{'seenmenus'}->{$self->{'current_node'}} = 1;
@@ -1469,6 +1468,7 @@ sub node_name($$)
     my ($result, $width) = $self->convert_line_new_context($node_text,
                                     {'suppress_styles' => 1,
                                      'no_added_eol' => 1,});
+    $result = $self->_stream_encode($result);
     $self->{'node_names_text'}->{$node}
       = {'text' => _normalize_top_node($result),
          'width' => $width };
@@ -1573,12 +1573,12 @@ sub process_printindex($$;$)
   _add_newline_if_needed($self);
   if ($in_info) {
     my $info_printindex_magic = "\x{00}\x{08}[index\x{00}\x{08}]\n";
-    _stream_output_encoded($self, $info_printindex_magic);
+    _stream_output($self, $info_printindex_magic);
     _add_lines_count($self, 1);
   }
   my $heading = "* Menu:\n\n";
 
-  _stream_output_encoded($self, $heading);
+  _stream_output($self, $heading);
   _add_lines_count($self, 2);
 
   # this is used to count entries that are the same
@@ -1614,11 +1614,13 @@ sub process_printindex($$;$)
 
     # Convert entry text in a new context in order to capture result.
     push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0};
+    $self->{'count_context'}->[-1]->{'encoding_disabled'} = 1;
     $self->_convert($entry_tree);
     $self->_convert($subentries_tree)
       if (defined($subentries_tree));
-    _stream_output($self, $formatter->{'container'},
-                  Texinfo::Convert::Paragraph::end($formatter->{'container'}));
+    _stream_output($self,
+                   Texinfo::Convert::Paragraph::end($formatter->{'container'}),
+                   $formatter->{'container'});
     $entry_text = _stream_result($self);
     pop @{$self->{'count_context'}};
 
@@ -1648,13 +1650,12 @@ sub process_printindex($$;$)
       $entry_nr = ' <'.$entry_counts{$entry_text}.'>';
     }
     my $entry_line = "* $entry_text${entry_nr}: ";
-    _stream_output_encoded($self, $entry_line);
+    _stream_output($self, $entry_line);
 
-    my $line_width = _string_width_encoded($self, $entry_line);
-
+    my $line_width = Texinfo::Convert::Unicode::string_width($entry_line);
     if ($line_width < $index_length_to_node) {
       my $spaces = ' ' x ($index_length_to_node - $line_width);
-      _stream_output_encoded($self, $spaces);
+      _stream_output($self, $spaces);
       $line_width += length($spaces);
     }
     my $node = $entry_nodes{$entry};
@@ -1663,13 +1664,13 @@ sub process_printindex($$;$)
       # cache the transformation to text and byte counting, as
       # it is likely that there is more than one such entry
        if (!$self->{'outside_of_any_node_text'}) {
-          my $node_text = $self->gdt('(outside of any node)');
-          my ($node_text_encoded, $width)
-            = $self->convert_line_new_context($node_text);
-          $self->{'outside_of_any_node_text'} = $node_text_encoded;
+          my $tree = $self->gdt('(outside of any node)');
+          my ($node_text, $width)
+            = $self->convert_line_new_context($tree);
+          $self->{'outside_of_any_node_text'} = $node_text;
           $self->{'outside_of_any_node_text_width'} = $width;
        }
-      _stream_output_encoded($self, $self->{'outside_of_any_node_text'});
+      _stream_output($self, $self->{'outside_of_any_node_text'});
       $line_width += $self->{'outside_of_any_node_text_width'};
 
       # FIXME when outside of sectioning commands this message was already
@@ -1702,14 +1703,13 @@ sub process_printindex($$;$)
         if ($self->{'info_special_chars_quote'}) {
           my $pre_quote = "\x{7f}";
           my $post_quote = $pre_quote;
-          $self->{'count_context'}->[-1]->{'bytes'} += 2;
           $node_name = $pre_quote . $node_name . $post_quote;
         }
       }
       _stream_output_encoded($self, $node_name);
       $line_width += $width;
     }
-    _stream_output_encoded($self, '.');
+    _stream_output($self, '.');
     $line_width++;
 
     my $line_nr = $line_nrs{$entry};
@@ -1728,11 +1728,11 @@ sub process_printindex($$;$)
            . "$line_part\n";
     }
     _add_lines_count($self, 1);
-    _stream_output($self, undef, $line_part);
+    _stream_output($self, $line_part);
   }
   pop @{$self->{'formatters'}};
 
-  _stream_output_encoded($self, "\n");
+  _stream_output($self, "\n");
   _add_lines_count($self, 1);
 }
 
@@ -1772,7 +1772,7 @@ sub ensure_end_of_line($)
   return if !defined($result) or $result eq '';
 
   if (substr($result, -1) ne "\n") {
-    _stream_output_encoded($self, "\n");
+    _stream_output($self, "\n");
     _add_lines_count($self, 1);
     $self->{'text_element_context'}->[-1]->{'counter'} = 0;
   }
@@ -1858,28 +1858,23 @@ sub _text_heading($$$;$$)
   my ($heading, undef) = $self->convert_line_new_context (
                               {'type' => 'frenchspacing',
                                'contents' => [$heading_element]});
-  my $heading_width = _string_width_encoded($self, $heading);
-  # TODO could use the returned width from convert_line_new_context instead
 
-  my ($text, $number_width, $gdt_width);
+  my $text;
   if (defined($number)) {
-    $number_width = length($number);
     if ($current->{'cmdname'} eq 'appendix'
         and $current->{'extra'}->{'section_level'} == 1) {
-      ($text, $gdt_width) = $self->gdt_string_encoded(
+      $text = $self->gdt_string(
                  'Appendix {number} {section_title}',
                  {'number' => $number, 'section_title' => $heading});
     } else {
-      ($text, $gdt_width) = $self->gdt_string_encoded(
+      $text = $self->gdt_string(
                  '{number} {section_title}',
                  {'number' => $number, 'section_title' => $heading});
     }
   } else {
     $text = $heading;
-    $number_width = 0;
-    $gdt_width = 0;
   }
-  my $columns = $heading_width + $number_width + $gdt_width;
+  my $columns = Texinfo::Convert::Unicode::string_width($text);
 
   return '' if ($text !~ /\S/);
   my $result = $text ."\n";
@@ -1953,19 +1948,32 @@ sub _convert($$)
   # especially
   if ($type and ($type eq 'empty_line'
                  or $type eq 'after_menu_description_line')) {
-    #if (!$self->{'text_element_context'}) {
-    #  cluck;
-    #}
     delete $self->{'text_element_context'}->[-1]->{'counter'};
-    $self->{'empty_lines_count'}++;
-    if ($self->{'empty_lines_count'} <= 1
-        or $self->{'preformatted_context_commands'}->{$self->{'context'}->[-1]}) {
-      if ($element->{'text'} =~ /\f/) {
-        my $result = _get_form_feeds($element->{'text'});
-        _stream_output($self, undef, $result);
+    if ($element->{'text'} =~ /\f/) {
+      my $result = _get_form_feeds($element->{'text'});
+      _stream_output($self, $result);
+    }
+    if ($self->{'preformatted_context_commands'}->{$self->{'context'}->[-1]}) {
+      _stream_output($self, add_text($formatter->{'container'}, "\n"),
+                     $formatter->{'container'});
+    } else {
+      # inlined below for efficiency
+      #$self->_add_newline_if_needed();
+
+      use bytes;
+      if (defined($self->{'count_context'}->[-1]->{'pending_text'})
+        and length($self->{'count_context'}->[-1]->{'pending_text'}) >= 2
+        and substr($self->{'count_context'}->[-1]->{'pending_text'}, -2)
+              ne "\n\n") {
+        _stream_output($self, "\n");
+        _add_lines_count($self, 1);
+      } else {
+        my $result = _stream_result($self);
+        if ($result ne '' and $result ne "\n" and $result !~ /\n\n\z/) {
+          _stream_output($self, "\n");
+          _add_lines_count($self, 1);
+        }
       }
-      _stream_output($self, $formatter->{'container'},
-                add_text($formatter->{'container'}, "\n"));
     }
     return;
   }
@@ -1981,7 +1989,7 @@ sub _convert($$)
       # relevant to keep form feeds in other ignorable spaces.
       $result = _get_form_feeds($element->{'text'});
     }
-    _stream_output($self, undef, $result);
+    _stream_output($self, $result);
     return;
   }
 
@@ -1990,8 +1998,9 @@ sub _convert($$)
     if (!$type or $type ne 'untranslated') {
       if (!$formatter->{'_top_formatter'}) {
         if ($type and $type eq 'raw') {
-          _stream_output($self, $formatter->{'container'},
-            add_next($formatter->{'container'}, $element->{'text'}));
+          _stream_output($self,
+            add_next($formatter->{'container'}, $element->{'text'}),
+            $formatter->{'container'});
         } else {
           # Convert ``, '', `, ', ---, -- in $COMMAND->{'text'} to their
           # output, possibly coverting to upper case as well.
@@ -2009,8 +2018,9 @@ sub _convert($$)
           }
 
           # inlined below for efficiency
-          #_stream_output($self, $formatter->{'container'},
-          #                       add_text ($formatter->{'container'}, $text));
+          #_stream_output($self,
+          #               add_text ($formatter->{'container'}, $text),
+          #               $formatter->{'container'});
 
           my $added_text = add_text ($formatter->{'container'}, $text);
 
@@ -2032,7 +2042,7 @@ sub _convert($$)
         return;
       # the following is only possible if paragraphindent is set to asis
       } elsif ($type and $type eq 'spaces_before_paragraph') {
-        _stream_output($self, undef, $element->{'text'});
+        _stream_output($self, $element->{'text'});
         return;
       # ignore text outside of any format, but warn if ignored text not empty
       } elsif ($element->{'text'} =~ /\S/) {
@@ -2041,8 +2051,9 @@ sub _convert($$)
         return;
       } else {
         # miscellaneous top-level whitespace - possibly after an @image
-        _stream_output($self, $formatter->{'container'},
-                  add_text($formatter->{'container'}, $element->{'text'}));
+        _stream_output($self,
+                       add_text($formatter->{'container'}, $element->{'text'}),
+                       $formatter->{'container'});
         return;
       }
     } else {
@@ -2132,8 +2143,9 @@ sub _convert($$)
       }
       my $accented_text
          = Texinfo::Convert::Text::text_accents($element, $encoding, $sc);
-      _stream_output($self, $formatter->{'container'},
-         add_text($formatter->{'container'}, $accented_text));
+      _stream_output($self,
+                     add_text($formatter->{'container'}, $accented_text),
+                     $formatter->{'container'});
 
       my $accented_text_original;
       if ($formatter->{'upper_case_stack'}->[-1]->{'upper_case'}) {
@@ -2210,8 +2222,9 @@ sub _convert($$)
         if ($non_quoted_commands_when_nested{$command}) {
           $formatter->{'font_type_stack'}->[-1]->{'code_command'}++;
         }
-        _stream_output($self, $formatter->{'container'},
-                       add_next($formatter->{'container'}, $text_before, 1))
+        _stream_output($self,
+                       add_next($formatter->{'container'}, $text_before, 1),
+                       $formatter->{'container'})
            if ($text_before ne '');
         if ($element->{'args'}) {
           _convert($self, $element->{'args'}->[0]);
@@ -2228,8 +2241,9 @@ sub _convert($$)
                              $element->{'source_info'});
           }
         }
-        _stream_output($self, $formatter->{'container'},
-                       add_next($formatter->{'container'}, $text_after, 1))
+        _stream_output($self,
+                       add_next($formatter->{'container'}, $text_after, 1),
+                       $formatter->{'container'})
            if ($text_after ne '');
         if ($command eq 'w') {
           $formatter->{'w'}--;
@@ -2407,8 +2421,9 @@ sub _convert($$)
             my $pre_quote = $quoting_required ? "\x{7f}" : '';
             my $post_quote = $pre_quote;
 
-            _stream_output($self, $formatter->{'container'},
-                         add_text($formatter->{'container'}, "$post_quote: "));
+            _stream_output($self,
+                     add_text($formatter->{'container'}, "$post_quote: "),
+                     $formatter->{'container'});
             my $result = _stream_result($self);
 
             # Note post_quote has to be added first to flush output
@@ -2424,7 +2439,7 @@ sub _convert($$)
             _convert($self, $file);
           }
 
-          my $node_line_name;
+          my $node_name;
 
           # Get the node name to be output.
           # Due to the paragraph formatter holding pending text, converting
@@ -2437,14 +2452,12 @@ sub _convert($$)
           if ($label_element and $label_element->{'contents'}
               and scalar(@{$label_element->{'contents'}}) == 1
               and defined($label_element->{'contents'}->[0]->{'text'})) {
-            $node_line_name = $label_element->{'contents'}->[0]->{'text'};
-            # NB $node_line_name here is unencoded string, but we only use it
-            # currently for checking for special characters, not for output.
+            $node_name = $label_element->{'contents'}->[0]->{'text'};
           } else {
             $self->{'silent'} = 0 if (!defined($self->{'silent'}));
             $self->{'silent'}++;
 
-            ($node_line_name, undef) = $self->convert_line_new_context(
+            ($node_name, undef) = $self->convert_line_new_context(
                                           {'type' => '_code',
                                            'contents' => [$label_element]},
                                           {'suppress_styles' => 1,
@@ -2460,7 +2473,7 @@ sub _convert($$)
           }
 
           my $quoting_required = 0;
-          if ($node_line_name =~ /([$check_chars])/m) {
+          if ($node_name =~ /([$check_chars])/m) {
             if ($self->{'info_special_chars_warning'}) {
               $self->plaintext_line_warn($self, sprintf(__(
                  "\@%s node name should not contain `%s'"), $command, $1),
@@ -2476,8 +2489,8 @@ sub _convert($$)
 
           # node name
           _stream_output($self,
-            $self->{'formatters'}[-1]{'container'},
-            add_next($self->{'formatters'}->[-1]->{'container'}, $pre_quote))
+            add_next($self->{'formatters'}->[-1]->{'container'}, $pre_quote),
+            $self->{'formatters'}[-1]{'container'})
                  if $pre_quote;
 
           $self->{'formatters'}->[-1]->{'suppress_styles'} = 1;
@@ -2488,14 +2501,14 @@ sub _convert($$)
           delete $self->{'formatters'}->[-1]->{'suppress_styles'};
 
           _stream_output($self,
-            $self->{'formatters'}[-1]{'container'},
-            add_next($self->{'formatters'}->[-1]->{'container'}, $post_quote))
+            add_next($self->{'formatters'}->[-1]->{'container'}, $post_quote),
+            $self->{'formatters'}[-1]{'container'})
                  if $post_quote;
 
           if (!$name) {
             _stream_output($self,
-              $self->{'formatters'}[-1]{'container'},
-              add_next($self->{'formatters'}->[-1]->{'container'}, '::'));
+              add_next($self->{'formatters'}->[-1]->{'container'}, '::'),
+              $self->{'formatters'}[-1]{'container'});
           }
 
           # Check if punctuation follows the ref command.
@@ -2557,16 +2570,14 @@ sub _convert($$)
         }
         return;
       } elsif ($command eq 'image') {
-        _stream_output($self, $formatter->{'container'},
-           add_pending_word($formatter->{'container'}, 1));
+        _stream_output($self,
+                       add_pending_word($formatter->{'container'}, 1),
+                       $formatter->{'container'});
         # add an empty word so that following spaces aren't lost
         add_next($formatter->{'container'},'');
         my ($image, $lines_count) = $self->format_image($element);
         _add_lines_count($self, $lines_count);
-        _stream_output($self, undef, $image);
-        if ($image ne '') {
-          $self->{'empty_lines_count'} = 0;
-        }
+        _stream_output($self, $image);
         return;
       } elsif ($command eq 'today') {
         my $today = $self->Texinfo::Convert::Utils::expand_today();
@@ -2584,12 +2595,14 @@ sub _convert($$)
         }
 
         if ($punctuation_no_arg_commands{$command}) {
-          _stream_output($self, $formatter->{'container'},
-                      add_next($formatter->{'container'}, $text));
+          _stream_output($self,
+                         add_next($formatter->{'container'}, $text),
+                         $formatter->{'container'});
           add_end_sentence($formatter->{'container'}, 1);
         } elsif ($command eq 'tie') {
-          _stream_output($self, $formatter->{'container'},
-                         add_next($formatter->{'container'}, $text));
+          _stream_output($self,
+                         add_next($formatter->{'container'}, $text),
+                         $formatter->{'container'});
         } else {
           # @AA{} should suppress an end sentence, @aa{} shouldn't.  This
           # is the case whether we are in @sc or not.
@@ -2599,8 +2612,9 @@ sub _convert($$)
             $text = uc($text);
           }
 
-          _stream_output($self, $formatter->{'container'},
-                         add_text($formatter->{'container'}, $text));
+          _stream_output($self,
+                         add_text($formatter->{'container'}, $text),
+                         $formatter->{'container'});
 
           # This is to have @TeX{}, for example, not to prevent end sentences.
           if (!$letter_no_arg_commands{$command}) {
@@ -2700,9 +2714,10 @@ sub _convert($$)
         if (!$self->{'in_copying_header'}) {
           $self->format_error_outside_of_any_node($element);
         }
-        _stream_output($self, $formatter->{'container'},
+        _stream_output($self,
              add_next($formatter->{'container'},
-                      "($formatted_footnote_number)", 1));
+                      "($formatted_footnote_number)", 1),
+             $formatter->{'container'});
         if ($self->get_conf('footnotestyle') eq 'separate'
             and $self->{'current_node'}) {
           _convert($self, {'contents' =>
@@ -2722,8 +2737,8 @@ sub _convert($$)
         }
         return;
       } elsif ($command eq 'anchor') {
-        _stream_output($self, $formatter->{'container'},
-            add_pending_word($formatter->{'container'}));
+        _stream_output($self, add_pending_word($formatter->{'container'}),
+                       $formatter->{'container'});
         $self->_anchor($element);
         return;
       } elsif ($explained_commands{$command}) {
@@ -2801,8 +2816,7 @@ sub _convert($$)
                             $self->get_conf('NUMBER_SECTIONS'),
           ($self->{'format_context'}->[-1]->{'indent_level'}) *$indent_length);
         $result =~ s/\n$//; # final newline has its own tree element
-        $self->{'empty_lines_count'} = 0 unless ($result eq '');
-        _stream_output_encoded($self, $result);
+        _stream_output($self, $result);
         _add_lines_count($self, 1);
         return;
       } elsif ($command eq 'U') {
@@ -2833,8 +2847,8 @@ sub _convert($$)
           } else {
             $res = "U+$arg";  # not outputting UTF-8
           }
-          _stream_output($self, $formatter->{'container'},
-                     add_text($formatter->{'container'}, $res));
+          _stream_output($self, add_text($formatter->{'container'}, $res),
+                         $formatter->{'container'});
         }
         return;
       } elsif ($command eq 'value') {
@@ -2855,28 +2869,36 @@ sub _convert($$)
         remove_end_sentence($formatter->{'container'});
         return '';
       } elsif ($command eq '*') {
-        _stream_output($self, $formatter->{'container'},
-                     add_pending_word($formatter->{'container'}));
+        _stream_output($self,
+                       add_pending_word($formatter->{'container'}),
+                       $formatter->{'container'});
         # added eol in some line oriented constructs, such as @node, menu
         # entry and therefore index entry would lead to end of line on
         # node pointers line, in tag table, or on menu, all being invalid.
         if ($formatter->{'no_added_eol'}) {
-          _stream_output($self, $formatter->{'container'},
-                                 add_text($formatter->{'container'}, ' '));
+          _stream_output($self,
+                         add_text($formatter->{'container'}, ' '),
+                         $formatter->{'container'});
         } else {
-          _stream_output($self, $formatter->{'container'},
-                                 end_line($formatter->{'container'}));
+          _stream_output($self,
+                         end_line($formatter->{'container'}),
+                         $formatter->{'container'});
         }
       } elsif ($command eq '.' or $command eq '?' or $command eq '!') {
-        _stream_output($self, $formatter->{'container'},
-            add_next($formatter->{'container'}, $command));
+        _stream_output($self,
+                       add_next($formatter->{'container'}, $command),
+                       $formatter->{'container'});
         add_end_sentence($formatter->{'container'}, 1);
       } elsif ($command eq ' ' or $command eq "\n" or $command eq "\t") {
-        _stream_output($self, $formatter->{'container'},
-          add_next($formatter->{'container'}, $nobrace_symbol_text{$command}));
+        _stream_output($self,
+                       add_next($formatter->{'container'},
+                                $nobrace_symbol_text{$command}),
+                       $formatter->{'container'});
       } else {
-        _stream_output($self, $formatter->{'container'},
-          add_text($formatter->{'container'}, $nobrace_symbol_text{$command}));
+        _stream_output($self,
+                       add_text($formatter->{'container'},
+                                $nobrace_symbol_text{$command}),
+                       $formatter->{'container'});
       }
       return;
     # block commands
@@ -2891,8 +2913,9 @@ sub _convert($$)
       if ($self->{'preformatted_context_commands'}->{$command}
           or $command eq 'float') {
         if ($format_raw_commands{$command}) {
-          _stream_output($self, $formatter->{'container'},
-                              add_pending_word($formatter->{'container'}, 1));
+          _stream_output($self,
+                         add_pending_word($formatter->{'container'}, 1),
+                         $formatter->{'container'});
         }
         push @{$self->{'context'}}, $command;
       } elsif ($flush_commands{$command}) {
@@ -2901,10 +2924,12 @@ sub _convert($$)
                or $block_math_commands{$command}) {
         if (!$self->{'formatters'}->[-1]->{'_top_formatter'}) {
           # reuse the current formatter if not in top level
-          _stream_output($self, $formatter->{'container'},
-                              add_pending_word($formatter->{'container'}, 1));
-          _stream_output($self, $formatter->{'container'},
-                              end_line($formatter->{'container'}));
+          _stream_output($self,
+                         add_pending_word($formatter->{'container'}, 1),
+                         $formatter->{'container'});
+          _stream_output($self,
+                         end_line($formatter->{'container'}),
+                         $formatter->{'container'});
         } else {
           # if in top level, the raw block command is turned into a
           # simple preformatted command (alike @verbatim), to have a
@@ -2946,11 +2971,10 @@ sub _convert($$)
           #_convert($self, $prepended);
           my ($converted, $width, $extra_lines)
             = $self->convert_line_new_context($prepended);
-          _stream_output_encoded($self, $converted);
+          _stream_output($self, $converted);
           $self->{'count_context'}->[-1]->{'lines'} += $extra_lines;
 
           $self->{'text_element_context'}->[-1]->{'counter'} += $width;
-          $self->{'empty_lines_count'} = 0 unless ($converted eq '');
         }
       } elsif ($menu_commands{$command}) {
         $self->_menu($element);
@@ -2970,8 +2994,8 @@ sub _convert($$)
               my $column_size = 0;
               if ($content->{'contents'}) {
                 my ($formatted_prototype, $width)
-                    = $self->convert_line_new_context($content,
-                                                      {'indent_length' => 0});
+                    = $self->convert_line_new_context
+                        ($content, {'indent_length' => 0});
                 $column_size = $width;
               }
               push @$columnsize, 2+$column_size;
@@ -2979,8 +3003,6 @@ sub _convert($$)
           }
         }
         $self->{'format_context'}->[-1]->{'columns_size'} = $columnsize;
-        $self->{'format_context'}->[-1]->{'row_empty_lines_count'}
-          = $self->{'empty_lines_count'};
         $self->{'document_context'}->[-1]->{'in_multitable'}++;
       } elsif ($command eq 'float') {
         _add_newline_if_needed($self);
@@ -3001,7 +3023,6 @@ sub _convert($$)
           my $previous_paragraph_count
               = $self->{'format_context'}->[-1]->{'paragraph_count'};
           $self->convert_line($prepended);
-          $self->{'empty_lines_count'} = 0; # unless ($result eq '');
           $self->{'format_context'}->[-1]->{'paragraph_count'}
               = $previous_paragraph_count;
         }
@@ -3044,8 +3065,7 @@ sub _convert($$)
                            ($self->{'format_context'}->[-1]->{'indent_level'})
                                            * $indent_length);
         _add_newline_if_needed($self);
-        $self->{'empty_lines_count'} = 0 unless ($heading_underlined eq '');
-        _stream_output_encoded($self, $heading_underlined);
+        _stream_output($self, $heading_underlined);
         if ($heading_underlined ne '') {
           _add_lines_count($self, 2);
           _add_newline_if_needed($self);
@@ -3068,7 +3088,6 @@ sub _convert($$)
                  ($self->{'format_context'}->[-1]->{'indent_level'} -1)
                    * $indent_length});
         $self->ensure_end_of_line();
-        $self->{'empty_lines_count'} = 0;
       }
     } elsif ($command eq 'item' and $element->{'parent'}->{'cmdname'}
              and $block_commands{$element->{'parent'}->{'cmdname'}}
@@ -3081,23 +3100,24 @@ sub _convert($$)
                  + $item_indent_format_length{$element->{'parent'}->{'cmdname'}}});
       push @{$self->{'formatters'}}, $line;
       if ($element->{'parent'}->{'cmdname'} eq 'enumerate') {
-        _stream_output($self, $line->{'container'},
+        _stream_output($self,
             add_next($line->{'container'},
                Texinfo::Common::enumerate_item_representation(
                  $element->{'parent'}->{'extra'}->{'enumerate_specification'},
-                 $element->{'extra'}->{'item_number'}) . '. '));
+                 $element->{'extra'}->{'item_number'}) . '. '),
+            $line->{'container'});
       } elsif ($element->{'parent'}->{'args'}
           and $element->{'parent'}->{'args'}->[0]) {
         # this is the text prepended to items.
         _convert($self, $element->{'parent'}->{'args'}->[0]);
         _convert($self, { 'text' => ' ' });
       }
-      _stream_output($self, $line->{'container'},
-                      Texinfo::Convert::Paragraph::end($line->{'container'}));
+      _stream_output($self,
+                     Texinfo::Convert::Paragraph::end($line->{'container'}),
+                     $line->{'container'});
       $self->{'text_element_context'}->[-1]->{'counter'} +=
          Texinfo::Convert::Paragraph::counter($line->{'container'});
       pop @{$self->{'formatters'}};
-      $self->{'empty_lines_count'} = 0; # unless ($result eq '');
     # open a multitable cell
     } elsif ($command eq 'headitem' or $command eq 'item'
              or $command eq 'tab') {
@@ -3109,8 +3129,6 @@ sub _convert($$)
       #die if (!defined($cell_width));
       # happens with bogus multitables
       $cell_width = 2 if (!defined ($cell_width));
-      $self->{'empty_lines_count'}
-         = $self->{'format_context'}->[-1]->{'row_empty_lines_count'};
 
       push @{$self->{'format_context'}},
            { 'cmdname' => $command,
@@ -3138,7 +3156,6 @@ sub _convert($$)
         $result = $self->_align_environment ($result,
                       $self->{'text_element_context'}->[-1]->{'max'}, 'center');
         _stream_output_encoded($self, $result);
-        $self->{'empty_lines_count'} = 0;
       } else {
         # it has to be done here, as it is done in _align_environment above
         pop @{$self->{'count_context'}};
@@ -3156,8 +3173,9 @@ sub _convert($$)
           $formatter->{'font_type_stack'}->[-1]->{'monospace'} = 1;
           push @{$self->{'formatters'}}, $formatter;
           $self->_convert($element->{'args'}->[0]);
-          _stream_output($self, $formatter->{'container'},
-              Texinfo::Convert::Paragraph::end($formatter->{'container'}));
+          _stream_output($self,
+            Texinfo::Convert::Paragraph::end($formatter->{'container'}),
+            $formatter->{'container'});
           pop @{$self->{'formatters'}};
         } else {
           $self->convert_line($element->{'args'}->[0],
@@ -3167,7 +3185,6 @@ sub _convert($$)
         }
       }
       $self->ensure_end_of_line();
-      $self->{'empty_lines_count'} = 0;
       return;
     } elsif ($command eq 'verbatiminclude') {
       my $expansion = Texinfo::Convert::Utils::expand_verbatiminclude(
@@ -3198,11 +3215,8 @@ sub _convert($$)
       if ($floats
           and $floats->{$float_type}
           and scalar(@{$floats->{$float_type}})) {
-        if (!$self->{'empty_lines_count'}) {
-          _stream_output($self, undef, "\n");
-          $lines_count++;
-        }
-        _stream_output($self, undef, "* Menu:\n\n");
+        $self->_add_newline_if_needed();
+        _stream_output($self, "* Menu:\n\n");
         $lines_count += 2;
         foreach my $float (@{$floats->{$float_type}}) {
           next if !$float->{'args'} or !$float->{'args'}->[1]
@@ -3223,18 +3237,19 @@ sub _convert($$)
 
           # Output in format "* $float_entry_text: $float_label_text.".
 
-          _stream_output($self, $container, add_next($container, '* '));
+          _stream_output($self, add_next($container, '* '), $container);
 
           $float_entry->{'type'} = 'frenchspacing';
           $self->_convert($float_entry);
 
-          _stream_output($self, $container, add_next($container, ': '));
+          _stream_output($self, add_next($container, ': '), $container);
 
           $self->_convert({'type' => '_code',
                           'contents' => [$float->{'args'}->[1]]});
-          _stream_output($self, $container, add_next($container, '.'));
-          _stream_output($self, $container,
-            Texinfo::Convert::Paragraph::add_pending_word($container));
+          _stream_output($self, add_next($container, '.'), $container);
+          _stream_output($self,
+                   Texinfo::Convert::Paragraph::add_pending_word($container),
+                   $container);
 
           # NB we trust that only $container was used to format text
           # inside the call to convert_line so that all output text is
@@ -3243,11 +3258,13 @@ sub _convert($$)
              = Texinfo::Convert::Paragraph::counter($formatter->{'container'});
 
           if ($line_width > $listoffloat_entry_length) {
-            _stream_output($self, $container,
-              Texinfo::Convert::Paragraph::end_line($container));
+            _stream_output($self,
+                           Texinfo::Convert::Paragraph::end_line($container),
+                           $container);
           } else {
-            _stream_output($self, $container, add_next($container,
-                         ' ' x ($listoffloat_entry_length - $line_width)));
+            _stream_output($self, add_next($container,
+                         ' ' x ($listoffloat_entry_length - $line_width)),
+                           $container);
           }
 
           my $caption;
@@ -3282,14 +3299,13 @@ sub _convert($$)
             my $old_context = pop @{$self->{'context'}};
           }
           # flush and add newline
-          _stream_output($self, $container,
-            Texinfo::Convert::Paragraph::end($container));
+          _stream_output($self,
+            Texinfo::Convert::Paragraph::end($container), $container);
 
           pop @{$self->{'formatters'}};
         }
-        _stream_output($self, undef, "\n");
+        _stream_output($self, "\n");
         $lines_count++;
-        $self->{'empty_lines_count'} = 1;
       }
       $self->{'format_context'}->[-1]->{'paragraph_count'}++;
       _add_lines_count($self, $lines_count);
@@ -3299,15 +3315,16 @@ sub _convert($$)
       if ($element->{'extra'}
           and $element->{'extra'}->{'misc_args'}
           and $element->{'extra'}->{'misc_args'}->[0]) {
-        _stream_output($self, $formatter->{'container'},
-                    add_pending_word($formatter->{'container'}));
+        _stream_output($self,
+                    add_pending_word($formatter->{'container'}),
+                    $formatter->{'container'});
         # this useless copy avoids perl changing the type to integer!
         my $sp_nr = $element->{'extra'}->{'misc_args'}->[0];
         for (my $i = 0; $i < $sp_nr; $i++) {
-          _stream_output($self, $formatter->{'container'},
-                end_line($formatter->{'container'}));
+          _stream_output($self,
+                         end_line($formatter->{'container'}),
+                         $formatter->{'container'});
         }
-        $self->{'empty_lines_count'} += $sp_nr;
         delete $self->{'text_element_context'}->[-1]->{'counter'};
       }
       return;
@@ -3355,7 +3372,7 @@ sub _convert($$)
               and ($command eq 'defline' or $command eq 'deftypeline'
                     or $command =~ /x$/))) {
       warn "Unhandled $command\n";
-      _stream_output($self, undef, "!!!!!!!!! Unhandled $command !!!!!!!!!\n");
+      _stream_output($self, "!!!!!!!!! Unhandled $command !!!!!!!!!\n");
       _add_lines_count($self, 1)
     }
   }
@@ -3364,7 +3381,6 @@ sub _convert($$)
   my $paragraph;
   if ($type) {
     if ($type eq 'paragraph') {
-      $self->{'empty_lines_count'} = 0;
       my $conf = {};
       # indent. Not first paragraph.
       if ($self->{'format_context'}->[-1]->{'cmdname'} eq '_top_format'
@@ -3622,38 +3638,48 @@ sub _convert($$)
         # FIXME the whole line is formatted in code here.  In other formats,
         # the category is normal text
         _convert($self, {'type' => '_code', 'contents' => [$tree]});
-        _stream_output($self, $def_paragraph->{'container'},
-              Texinfo::Convert::Paragraph::end($def_paragraph->{'container'}));
+        _stream_output($self,
+          Texinfo::Convert::Paragraph::end($def_paragraph->{'container'}),
+          $def_paragraph->{'container'});
 
         pop @{$self->{'formatters'}};
         delete $self->{'text_element_context'}->[-1]->{'counter'};
-        $self->{'empty_lines_count'} = 0;
       }
     } elsif ($type eq 'menu_entry') {
       my $entry_name_seen = 0;
       my $menu_entry_node;
-      $self->{'empty_lines_count'} = 0;
       foreach my $content (@{$element->{'contents'}}) {
         if ($content->{'type'} eq 'menu_entry_leading_text') {
           if (defined($content->{'text'})) {
-            _stream_output($self, $formatter->{'container'},
-                   add_next($formatter->{'container'}, $content->{'text'}));
+            _stream_output($self,
+                   add_next($formatter->{'container'}, $content->{'text'}),
+                   $formatter->{'container'});
           }
         } elsif ($content->{'type'} eq 'menu_entry_node') {
           # Flush output so not to include in node text.
-          _stream_output($self, $formatter->{'container'},
-                           add_pending_word($formatter->{'container'}, 1));
+          _stream_output($self,
+                         add_pending_word($formatter->{'container'}, 1),
+                         $formatter->{'container'});
 
           $menu_entry_node = $content;
           my ($pre_quote, $post_quote);
           $self->{'formatters'}->[-1]->{'suppress_styles'} = 1;
           $self->{'formatters'}->[-1]->{'no_added_eol'} = 1;
 
+          push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0,
+                                             'encoding_disabled' => 1};
+          $self->_convert({'type' => '_code',
+                          'contents' => $content->{'contents'}});
           # note that $content->{'contents'} may be undefined in rare cases,
           # such as in 30sectioning.t in_menu_only_special_ascii_spaces_node
           # test
-          my ($node_text) = convert_new_context($self,
-            {'type' => '_code', 'contents' => $content->{'contents'}});
+
+          _stream_output($self,
+                        Texinfo::Convert::Paragraph::add_pending_word
+                          ($formatter->{'container'}, 1),
+                        $formatter->{'container'});
+          my $node_text = _stream_result($self);
+          pop @{$self->{'count_context'}};
 
           delete $self->{'formatters'}->[-1]->{'suppress_styles'};
           delete $self->{'formatters'}->[-1]->{'no_added_eol'};
@@ -3681,15 +3707,26 @@ sub _convert($$)
               }
             }
           }
-          _stream_output_encoded($self, $pre_quote.$node_text.$post_quote);
+          _stream_output($self, $pre_quote.$node_text.$post_quote);
         } elsif ($content->{'type'} eq 'menu_entry_name') {
           # Flush output so not to include in name text
-          _stream_output($self, $formatter->{'container'},
-                           add_pending_word($formatter->{'container'}, 1));
+          _stream_output($self,
+                         add_pending_word($formatter->{'container'}, 1),
+                         $formatter->{'container'});
 
           my ($pre_quote, $post_quote);
           $self->{'formatters'}->[-1]->{'no_added_eol'} = 1;
-          my ($entry_name, undef) = convert_new_context($self, $content);
+
+          push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0,
+                                             'encoding_disabled' => 1};
+          $self->_convert($content);
+          _stream_output($self,
+                        Texinfo::Convert::Paragraph::add_pending_word
+                          ($formatter->{'container'}, 1),
+                        $formatter->{'container'});
+          my $entry_name = _stream_result($self);
+          pop @{$self->{'count_context'}};
+
           delete $self->{'formatters'}->[-1]->{'no_added_eol'};
           my $formatter = $self->{'formatters'}->[-1];
           $entry_name_seen = 1;
@@ -3704,7 +3741,7 @@ sub _convert($$)
               $pre_quote = $post_quote = "\x{7f}";
             }
           }
-          _stream_output_encoded($self, $pre_quote.$entry_name.$post_quote);
+          _stream_output($self, $pre_quote.$entry_name.$post_quote);
         # empty description
         } elsif ($content->{'type'} eq 'menu_entry_description'
                  and (not $content->{'contents'}
@@ -3753,20 +3790,21 @@ sub _convert($$)
 
             # flush the current unfilled container
             _stream_output($self,
-                         $formatter->{'container'},
-                         add_pending_word($formatter->{'container'}, 1));
+                           add_pending_word($formatter->{'container'}, 1),
+                           $formatter->{'container'});
             my $formatted_elt;
             my $description_para;
             my $text_count = Texinfo::Convert::Paragraph::counter($formatter->{'container'});
 
             if ($text_count >= $description_indent_length) {
               my $inserted_space = '  ';
-              _stream_output($self, $formatter->{'container'},
-                               add_text($formatter->{'container'},
-                                        $inserted_space));
               _stream_output($self,
-                             $formatter->{'container'},
-                             add_pending_word($formatter->{'container'}, 1));
+                             add_text($formatter->{'container'},
+                                      $inserted_space),
+                             $formatter->{'container'});
+              _stream_output($self,
+                             add_pending_word($formatter->{'container'}, 1),
+                             $formatter->{'container'});
               $text_count += length($inserted_space);
             }
 
@@ -3811,8 +3849,9 @@ sub _convert($$)
             }
             _convert($self, $formatted_elt);
             if ($description_element->{'cmdname'} eq 'nodedescription') {
-              _stream_output($self, $description_para->{'container'},
-                 Texinfo::Convert::Paragraph::end($description_para->{'container'}));
+              _stream_output($self,
+                 Texinfo::Convert::Paragraph::end($description_para->{'container'}),
+                 $description_para->{'container'});
               pop @{$self->{'formatters'}};
             } else {
               pop @{$self->{'format_context'}};
@@ -3835,12 +3874,12 @@ sub _convert($$)
       if ($element->{'parent'}->{'type'}
               and $element->{'parent'}->{'type'} eq 'preformatted') {
         _stream_output($self,
-                         $formatter->{'container'},
-                         add_pending_word($formatter->{'container'}, 1));
+                       add_pending_word($formatter->{'container'}, 1),
+                       $formatter->{'container'});
       } else {
         _stream_output($self,
-                         $formatter->{'container'},
-                         add_pending_word($formatter->{'container'}));
+                       add_pending_word($formatter->{'container'}),
+                       $formatter->{'container'});
         end_line($formatter->{'container'});
         $self->ensure_end_of_line();
       }
@@ -3982,23 +4021,13 @@ sub _convert($$)
         my $line = (' ' x $indent_len) . ('-' x $cell_beginning) . "\n";
         $bytes_count += length($line);
         $result .= $line;
-        $self->{'empty_lines_count'} = 0;
         $max_lines++;
-      # there may be empty lines, in that case $line is undef, $max_lines == 0
-      } elsif ($max_lines) {
-        if ($line eq "\n") {
-          $self->{'empty_lines_count'} = 1;
-        } else {
-          $self->{'empty_lines_count'} = 0;
-        }
       }
       $self->_update_locations_counts(\@row_locations);
       push @{$self->{'count_context'}->[-1]->{'locations'}}, @row_locations;
       $self->{'count_context'}->[-1]->{'lines'} += $max_lines;
       $self->{'format_context'}->[-1]->{'row'} = [];
       $self->{'format_context'}->[-1]->{'row_counts'} = [];
-      $self->{'format_context'}->[-1]->{'row_empty_lines_count'}
-        = $self->{'empty_lines_count'};
       _stream_output_encoded($self, $result);
     } elsif ($type eq 'before_node_section') {
       ensure_end_of_line($self);
@@ -4007,8 +4036,9 @@ sub _convert($$)
   }
   # close paragraphs and preformatted
   if ($paragraph) {
-    _stream_output($self, $paragraph->{'container'},
-               Texinfo::Convert::Paragraph::end($paragraph->{'container'}));
+    _stream_output($self,
+               Texinfo::Convert::Paragraph::end($paragraph->{'container'}),
+               $paragraph->{'container'});
     if ($self->{'context'}->[-1] eq 'flushright') {
       my $result = _stream_result($self);
       $result = $self->_align_environment($result,
@@ -4018,22 +4048,9 @@ sub _convert($$)
     pop @{$self->{'formatters'}};
     delete $self->{'text_element_context'}->[-1]->{'counter'};
   } elsif ($preformatted) {
-    _stream_output($self, $preformatted->{'container'},
-               Texinfo::Convert::Paragraph::end($preformatted->{'container'}));
-    if (defined($type) and ($type eq 'preformatted'
-           or $type eq 'rawpreformatted')) {
-      if ($element->{'contents'}
-          and $element->{'contents'}->[-1]) {
-        my $last_child = $element->{'contents'}->[-1];
-        if (!defined($last_child->{'type'})
-                       or $last_child->{'type'} ne 'empty_line') {
-          if (!defined($last_child->{'text'})
-                       or $last_child->{'text'} =~ /\S/) {
-            $self->{'empty_lines_count'} = 0;
-          }
-        }
-      }
-    }
+    _stream_output($self,
+               Texinfo::Convert::Paragraph::end($preformatted->{'container'}),
+               $preformatted->{'container'});
     $self->ensure_end_of_line();
 
     if ($self->{'context'}->[-1] eq 'flushright') {
@@ -4063,11 +4080,10 @@ sub _convert($$)
         if ($prepended) {
           $prepended->{'type'} = 'frenchspacing';
           my ($float_number, $columns)
-            = $self->convert_line_new_context ($prepended);
-          _stream_output_encoded($self, $float_number);
+            = $self->convert_line_new_context($prepended);
+          _stream_output($self, $float_number);
 
           $self->{'text_element_context'}->[-1]->{'counter'} += $columns;
-          $self->{'empty_lines_count'} = 0;
         }
         if ($caption) {
           $self->{'format_context'}->[-1]->{'paragraph_count'} = 0;
@@ -4121,9 +4137,6 @@ sub _convert($$)
       die "Not a preformatted context: $old_context"
         if (!$self->{'preformatted_context_commands'}->{$old_context}
             and $old_context ne 'float');
-      if ($old_context ne 'float' and !$menu_commands{$old_context}) {
-        $self->{'empty_lines_count'} = 0;
-      }
       delete ($self->{'preformatted_context_commands'}->{$command})
        unless ($default_preformatted_context_commands{$command});
     } elsif ($flush_commands{$command}) {

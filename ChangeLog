@@ -1,3 +1,458 @@
+2024-01-27  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Invoking texi2any),
+	* tp/texi2any.pl (makeinfo_help): Reword description of
+	--trace-includes option.
+
+2024-01-27  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Invoking @command{texi2any})
+	(Customization Variables and Options), tp/Texinfo/options_data.txt,
+	tp/texi2any.pl: rename SHOW_INCLUDE_FILE_PATHS as TRACE_INCLUDES
+	and add --trace-includes command-line option.  Name from Gavin.
+
+2024-01-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl: avoid \n in translated strings, split each option in
+	a translatable string.  Report from Benno Schulenberg.
+
+2024-01-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/init/redefine_need.init (my_need_formatting): get PACKAGE
+	instead of PACKAGE_AND_VERSION to have a string independent of the
+	Texinfo package version.
+
+2024-01-26  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/Makefile.am (gendocs_envvars, wwwdoc-build): link texinfo.tex
+	and add environnement variables to gendocs_envvars to build with
+	in-source commands.
+
+2024-01-26  Patrice Dumas  <pertusus@free.fr>
+
+	* TODO: update.
+
+2024-01-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/options_data.txt: set CHECK_NORMAL_MENU_STRUCTURE to 1
+	in the default case.
+
+	* NEWS: update.
+
+2024-01-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/options_data.txt, tp/texi2any.pl: add customization
+	variable SHOW_INCLUDE_FILE_PATHS with which included file paths are
+	output.
+
+	* tp/texi2any.pl: remove document even when there is no conversion, but
+	parse, structure, dump or similar.
+
+2024-01-26  Patrice Dumas  <pertusus@free.fr>
+
+	Gather include file paths in document global information
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line),
+	tp/Texinfo/XS/main/build_perl_info.c (build_global_info),
+	tp/Texinfo/XS/main/document_types.h (GLOBAL_INFO),
+	tp/Texinfo/XS/main/utils.c (delete_global_info),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/parser.c (store_document): store include file
+	paths in included_files global information new field.
+
+2024-01-26  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Getting Constants), tp/Texinfo/Common.pm
+	(set_constant, get_constant): add setting/getting constants.
+
+	* tp/texi2any.pl: set PACKAGE* as constants.
+
+	* tp/t/init/redefine_need.init (my_need_formatting): use constants by
+	get_constant.
+
+2024-01-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/extra.c (add_associated_info_string_dup): add.
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (set_document_global_info),
+	tp/Texinfo/XS/main/build_perl_info.c (store_additional_info)
+	(build_additional_info, build_global_info),
+	tp/Texinfo/XS/main/document_types.h (GLOBAL_INFO),
+	tp/Texinfo/XS/main/utils.c (delete_global_info): split
+	build_additional_info out of store_additional_info, to build
+	additional info on a passed hash.  Pass other set document global info
+	in a associated_info.
+
+	* tp/texi2any.pl: set configured_information PACKAGE* variables and
+	pass them as set_document_global_info.
+
+	* tp/t/init/redefine_need.init (my_need_formatting): test getting
+	PACKAGE_AND_VERSION.
+
+2024-01-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (set_converter_option_defaults, convert_to_*)
+	(test): remove unused $main_configuration argument. Add a $debug
+	argument to set_converter_option_defaults $debug argument and set
+	converted_format and DEBUG options in set_converter_option_defaults.
+
+	* tp/t/test_utils.pl (test): move code around, small changes.
+
+2024-01-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm: update POD documentation.
+
+2024-01-25  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl (_parsed_manual_tree),
+	tp/t/test_utils.pl (test), tp/texi2any.pl: do not get a return value
+	from Texinfo::Transformations::insert_nodes_for_sectioning_commands.
+
+	* tp/t/test_utils.pl (test), tp/texi2any.pl: do not get a return value
+	from Texinfo::Transformations::fill_gaps_in_sectioning.
+
+	Update POD documentation.
+
+2024-01-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XSLoader.pm (init): simply use _fatal if the libtool name
+	was not found.
+
+2024-01-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_element_footer): use
+	an explicit list of characters to be considered as spaces to cope with
+	all the perl versions.
+
+	* tp/Texinfo/XS/convert/convert_html.c (word_number_more_than_level)
+	(html_default_format_element_footer): return the count by reference
+	in word_number_more_than_level.
+
+	* tp/Texinfo/XS/convert/convert_html.c (word_number_more_than_level):
+	count words, not spaces.
+
+2024-01-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (add_newline_if_needed):
+	Implement checking end of a string for newline using "use bytes".
+
+2024-01-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): Rename a variable.
+
+2024-01-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Info.pm (format_node): Pass return value of
+	node_name to Texinfo::Convert::Plaintext::_decode if interpolating
+	into an error message.
+
+2024-01-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (convert_line_new_context):
+	Unconditionally disable encoding in the nested count context
+	and remove a parameter.  All callers updated.
+	(node_name): Call _stream_encode on the result of
+	convert_line_new_context in order still to work with an encoded
+	node name.
+
+2024-01-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (process_printindex)
+	<node name quoting>: Do not increment
+	$self->{'count_context'}->[-1]->{'bytes'} as this is taken care
+	of in _stream_output.
+
+2024-01-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (process_printindex)
+	<(outside of any node>: Call convert_line_new_context with
+	encoding disabled.
+
+2024-01-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (convert_new_context):
+	Inline into the two places it is called and remove function.
+	Set 'encoding_disabled' on the nested count context and pass
+	result to _stream_output instead of _stream_output_encoded.
+
+2024-01-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XSLoader.pm (init): if fallback module is not set, return
+	undef instead of calling die.  For many XS modules there is no perl
+	module fallback, instead, if the perl methods are used instead of the
+	XS methods the output should be fine.  For the other cases, the return
+	value of init should be checked.
+
+	* tp/Texinfo/Convert/ConvertXS.pm ($XS_package, BEGIN),
+	tp/Texinfo/Convert/Converter.pm (get_conf),
+	tp/Texinfo/Convert/PlainTexinfo.pm (convert_tree),
+	tp/Texinfo/Convert/Text.pm (convert_to_text, output),
+	tp/Texinfo/StructTransfXS.pm ($XS_package, BEGIN),
+	tp/Texinfo/Transformations.pm (_new_node): set $XS_package with
+	Texinfo::XSLoader::init return value for ConvertXS and StructTransfXS,
+	and check the value in codes that need to know if the module was
+	loaded, for instance if th eperl functions that are not overriden
+	should not be called.
+
+	* tp/Texinfo/Document.pm (%XS_overrides): remove
+	remove_document_descriptor override, it is not defined in perl.
+
+2024-01-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/ConvertXS.pm (BEGIN),
+	tp/Texinfo/Convert/Paragraph.pm (BEGIN), tp/Texinfo/DocumentXS.pm
+	(BEGIN), tp/Texinfo/IndicesXS.pm (BEGIN), tp/Texinfo/MiscXS.pm
+	(BEGIN), tp/Texinfo/Parser.pm (BEGIN), tp/Texinfo/StructTransfXS.pm
+	(BEGIN): leave out Texinfo::XSLoader::init warning and fatal message
+	arguments when they are undef.
+
+2024-01-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/DocumentXS.pm (BEGIN), tp/Texinfo/IndicesXS.pm (BEGIN),
+	tp/Texinfo/StructTransfXS.pm (BEGIN): set the Texinfo::XSLoader::init
+	fallback_module module argument to undef when there is no actual
+	fallback module.
+
+2024-01-23  Patrice Dumas  <pertusus@free.fr>
+
+	* configure.ac (AM_INIT_AUTOMAKE): decrease required automake version
+	to 1.16.1, which requires @setfilename in Texinfo manuals, but it also
+	the version still found for some platforms.
+
+2024-01-23  Patrice Dumas  <pertusus@free.fr>
+
+	* info/Makefile.am (AUTOMAKE_OPTIONS): remove no-dist-built-sources,
+	it does not seems to be useful.  If it is readded, the automake
+	required version should be increased.
+
+2024-01-23  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi: add @setfilename to simplify using old
+	automake versions.
+
+2024-01-23  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/refcard/Makefile.am (pdf-local): use pdf-local instead of all
+	for the txirefcard target, to avoid depending on tex being installed
+	when building from development sources.
+
+2024-01-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Translations.pm (gdt_string_encoded): Remove now
+	unused function.
+
+2024-01-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_text_heading): Return
+	an unencoding string to be output with _stream_output
+	rather than _stream_output_encoded.  Callers updated.  Call
+	convert_line_new_context with encoding disabled.  Call gdt_string
+	rather than gdt_string_encoded and get display width of result
+	with string_width.
+
+2024-01-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_stream_output): Interchange
+	second and third parameters, to simplify calling when the
+	formatter argument is undef.  All callers updated.
+
+2024-01-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert, format_contents):
+	Call convert_line_new_context with encoding disabled in more
+	places and pass the result to _stream_output rather than
+	_stream_output_encoded.
+
+2024-01-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (convert_line_new_context):
+	Take a new parameter, $encoding_disabled, and set the
+	'encoding_disabled' flag if set.
+	* tp/Texinfo/Convert/Info.pm (_info_header): Output copying
+	block directly by calling _convert, rather than passing the
+	result of convert_tree to _stream_output_encoded.  Use new
+	argument to convert_line_new_context to convert @dircategory
+	commands.  Convert and output @dircategory and @direntry commands
+	without calling _stream_output_encoded.
+
+2024-01-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_stream_byte_count):
+	Recognize an 'encoding_disabled' flag on the count context, and
+	if set, do not encode the output.
+	(process_printindex): Set this flag when converting an index
+	entry and output the result with _stream_output rather than
+	_stream_output_encoded, and to get the display width call
+	string_width rather than string_width_encoded.
+
+2024-01-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_tab_command): round using
+	%.0f to be more accurate than with %d.
+
+	* tp/Makefile.tres, tp/t/html_tests.t (fractions_rounding): add a test
+	that shows an incorrect percent rounding with %d with perl.
+
+2024-01-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/html_tests.t (contents_with_only_top_node)
+	(top_node_top_contents): tests of html_text and file_html for
+	@contents with @node only or @node and @top only.
+
+	* tp/Texinfo/XS/convert/convert_html.c (prepare_special_units): do
+	contents/shortcontents directions only if there is more than one
+	section.
+
+2024-01-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/html_tests.t (end_of_line_in_uref): add test
+	of end of line in uref.
+
+	* tp/Texinfo/XS/convert/convert_html.c (url_protect_url_text)
+	(url_protect_file_text), tp/Texinfo/XS/main/utils.c
+	(encode_with_iconv): pad x percent format with 0.
+
+2024-01-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/html_tests.t
+	(empty_node_in_html_title_no_sec_name, empty_chapter_in_html_title)
+	(empty_chapter_in_html_title_no_node_no_use_nodes): tests with empty
+	node/chapter in html <title> formatting.
+
+2024-01-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_mini_toc),
+	tp/Texinfo/XS/convert/convert_html.c (mini_toc_internal): handle empty
+	sectioning command in mini toc.
+
+	* tp/Makefile.tres, tp/t/30sectioning.t (empty_section_in_chapter):
+	test empty @section in @chapter conversion.
+
+2024-01-22  Patrice Dumas  <pertusus@free.fr>
+
+	* contrib/mass_test/generate_perlVSC.sh: show command line when doing
+	only one test.
+
+2024-01-21  Patrice Dumas  <pertusus@free.fr>
+
+	* contrib/mass_test/*.sh: add more manuals, separate script to
+	output HTML, separate generating HTML and checking the differences.
+
+2024-01-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm: comments covering, hopefully, all
+	the things to change for DocBook 5, following Jean-Christophe Helary
+	mail on bug-texinfo.
+
+2024-01-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (process_footnotes)
+	(format_contents, _menu, process_printindex): Change some uses
+	of _stream_output_encoded to _stream_output.
+
+2024-01-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm:
+	When outputting a single newline, call _stream_output instead
+	of _stream_output_encoded.  This reduces calls to _stream_byte_count
+	to encode the output and allows output to be encoded in fewer,
+	bigger chunks.
+
+2024-01-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Eliminate empty lines counting
+
+	* tp/Texinfo/Convert/Plaintext.pm (conversion_initialization)
+	(_add_newline_if_needed, process_footnotes, _convert),
+	* tp/Texinfo/Convert/Info.pm (_info_header, format_node):
+	Eliminate all updating of $self->{'empty_lines_count'}.
+
+2024-01-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <empty_line>:
+	Unconditionally call _get_form_feeds to propagate form feeds in
+	the input to the output regardsless of 'empty_lines_count'.
+
+2024-01-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Transformations.pm (_new_node): call confess if _new_node
+	is called with XS.
+
+	* tp/t/accents.t: do not set document_descriptor as an option for the
+	converter.
+
+2024-01-21  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_add_newline_if_needed):
+	Replace with implementation that checks the end of the output
+	stream rather than the 'empty_lines_count' counter.
+	* tp/Texinfo/Convert/Info.pm (_info_header): Call
+	_add_newline_if_needed to ensure a blank line at the end of
+	the header.
+
+2024-01-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (%common_converters_defaults):
+	remove document_descriptor, which should not be passed from perl, but
+	added in XS only.
+
+2024-01-21  Patrice Dumas  <pertusus@free.fr>
+
+	Do not remove .inf or .info from manual name for HTML cross references
+
+	* NEWS, tp/Texinfo/Convert/HTML.pm (_external_node_href),
+	tp/Texinfo/XS/convert/convert_html.c (external_node_href): do not
+	remove a .inf or .info at the end of manual name argument for
+	cross-references to external nodes.  This is not done for other
+	formats, does not comply with the HTML cross references specification
+	and is probably a remnant of times long gone.
+
+2024-01-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (output_tree)
+	(conversion_output_begin, conversion_output_end),
+	tp/Texinfo/Convert/DocBook.pm (conversion_output_begin)
+	(conversion_output_end, output), tp/Texinfo/Convert/PlainTexinfo.pm
+	(output), tp/Texinfo/Convert/TexinfoMarkup.pm
+	(conversion_output_begin, conversion_output_end, output),
+	tp/Texinfo/Convert/TextContent.pm (output), tp/Texinfo/DebugTree.pm
+	(output): add output_tree in Converter.pm, a generic method to convert
+	a Texinfo tree to a file, to be called from output.  output_tree calls
+	conversion_output_begin and conversion_output_end.  Call output_tree
+	in output in converters that convert a whole tree.  Rename
+	_output_beginning as conversion_output_begin and _output_end as
+	conversion_output_end in TexinfoMarkup.pm and DocBook.pm.
+	Update Converter.pm POD documentation.
+
+	* tp/Texinfo/Convert/PlainTexinfo.pm (convert): call convert_tree.
+
+2024-01-21  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <float>:
+	Call _add_newline_if_needed instead of checking
+	$self->{'empty_lines_count'} and outputing a newline directly.
+
+2024-01-21  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert) <empty_line>:
+	Try to separate form feed handling from code that actually adds
+	an empty line to the output.  Call _add_newline_if_needed to
+	output the newline and increment the count of empty lines.
+
+2024-01-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_output_beginning, output)
+	(_output_end), tp/Texinfo/Convert/TexinfoMarkup.pm (_output_beginning)
+	(output, _output_end): add _output_beginning to prepare output
+	appearing before tree conversion, and _output_end for output after
+	tree conversion.
+
+2024-01-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert): do not ignore especially
+	sectionning commands with in_skipped_node_top, let the output be
+	generated and discarded as for the remaining of the output.
+
 2024-01-19  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/Convert/Converter.pm: update POD documentation.

@@ -39,12 +39,10 @@ BEGIN {
   if ($XS_convert) {
     Texinfo::XSLoader::init (
       "Texinfo::IndicesXS",
-      "Texinfo::IndicesXS",
+      undef,
       "IndicesXS",
       undef,
       0,
-      undef,
-      undef,
     );
   }
 }

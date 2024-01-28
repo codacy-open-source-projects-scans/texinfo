@@ -1336,7 +1336,9 @@ $result_indices_sort_strings{'form_feeds'} = {
 
 
 
-$result_converted{'plaintext'}->{'form_feeds'} = 'aa
+$result_converted{'plaintext'}->{'form_feeds'} = ' 
+
+aa
 
    bb
 
@@ -1371,9 +1373,11 @@ within
 
 cation
 
+
 in float
 
 type 1
+
 * Menu:
 
 * type 1: fl.                            

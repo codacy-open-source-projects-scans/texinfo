@@ -427,8 +427,7 @@ sub _info_header($$$)
   $result .= add_text($paragraph, '.');
   $result .= Texinfo::Convert::Paragraph::end($paragraph);
   $result .= "\n";
-  $self->{'empty_lines_count'} = 1;
-  $self->_stream_output($paragraph, $result);
+  $self->_stream_output($result, $paragraph);
 
   my $global_commands;
   my $document_info;
@@ -442,16 +441,14 @@ sub _info_header($$$)
   if ($global_commands and $global_commands->{'copying'}) {
     print STDERR "COPYING HEADER\n" if ($self->get_conf('DEBUG'));
     $self->{'in_copying_header'} = 1;
-    my $copying = $self->convert_tree({'contents' =>
+    $self->_convert({'contents' =>
           $global_commands->{'copying'}->{'contents'}});
-    $self->_stream_output_encoded($copying);
     $self->process_footnotes();
     delete $self->{'in_copying_header'};
   }
   $self->set_global_document_commands('before', \@informative_global_commands);
 
   if ($document_info->{'dircategory_direntry'}) {
-    my $dir_section = '';
     $self->{'ignored_commands'}->{'direntry'} = 0;
     foreach my $command (@{$document_info->{'dircategory_direntry'}}) {
       if ($command->{'cmdname'} eq 'dircategory') {
@@ -459,22 +456,17 @@ sub _info_header($$$)
             and defined($command->{'args'}->[0]->{'contents'})) {
           my ($converted, undef) = $self->convert_line_new_context(
              {'contents' => $command->{'args'}->[0]->{'contents'}});
-          my $dircategory = "INFO-DIR-SECTION " . $converted;
-          $dir_section .= $dircategory;
-          $dir_section .= "\n";
+          $self->_stream_output("INFO-DIR-SECTION " . $converted . "\n");
         }
-        $self->{'empty_lines_count'} = 0;
       } elsif ($command->{'cmdname'} eq 'direntry') {
-        $dir_section .= "START-INFO-DIR-ENTRY\n";
-        my $direntry = $self->convert_tree($command);
-        $dir_section .= $direntry;
-        $dir_section .= "END-INFO-DIR-ENTRY\n\n";
-        $self->{'empty_lines_count'} = 1;
+        $self->_stream_output("START-INFO-DIR-ENTRY\n");
+        $self->_convert($command);
+        $self->_stream_output("END-INFO-DIR-ENTRY\n\n");
       }
     }
     $self->{'ignored_commands'}->{'direntry'} = 1;
-    $self->_stream_output_encoded($dir_section);
   }
+  $self->_add_newline_if_needed();
   $result = $self->_stream_result();
   pop @{$self->{'count_context'}};
   return $result;
@@ -530,7 +522,7 @@ sub format_node($$)
 
   $self->add_location($node);
   my $node_begin = "\x{1F}\nFile: $output_filename,  Node: ";
-  $self->_stream_output(undef, $node_begin);
+  $self->_stream_output($node_begin);
 
   my $pre_quote = '';
   my $post_quote = '';
@@ -551,7 +543,7 @@ sub format_node($$)
         and $node->{'extra'}->{'node_directions'}->{lc($direction)}) {
       my $node_direction
           = $node->{'extra'}->{'node_directions'}->{lc($direction)};
-      $self->_stream_output(undef, ",  $direction: ");
+      $self->_stream_output(",  $direction: ");
       if ($node_direction->{'extra'}->{'manual_content'}) {
         $self->convert_line({'type' => '_code',
                           'contents' => [{'text' => '('},
@@ -571,7 +563,7 @@ sub format_node($$)
               and $node_direction->{'extra'}->{'manual_content'}) {
             $self->plaintext_line_warn($self, sprintf(__(
                  "\@node %s name should not contain `,': %s"),
-                                           $direction, $node_text),
+                                     $direction, $self->_decode($node_text)),
                              $node->{'source_info'});
           }
           if ($self->{'info_special_chars_quote'}) {
@@ -584,13 +576,11 @@ sub format_node($$)
     } elsif ($direction eq 'Up'
              and $node->{'extra'}->{'normalized'} eq 'Top') {
       # add an up direction for Top node
-      $self->_stream_output(undef,
-                   ",  $direction: ".$self->get_conf('TOP_NODE_UP'));
+      $self->_stream_output(",  $direction: ".$self->get_conf('TOP_NODE_UP'));
     }
   }
-  $self->_stream_output(undef, "\n\n");
+  $self->_stream_output("\n\n");
   $self->{'count_context'}->[-1]->{'lines'} = 3;
-  $self->{'empty_lines_count'} = 1;
 
   return;
 }

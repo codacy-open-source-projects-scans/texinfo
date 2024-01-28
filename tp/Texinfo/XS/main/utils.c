@@ -444,11 +444,11 @@ encode_with_iconv (iconv_t our_iconv, char *s, const SOURCE_INFO *source_info)
         case EILSEQ:
         default:
           if (source_info)
-            fprintf(stderr, "%s:%d: encoding error at byte 0x%2x\n",
+            fprintf(stderr, "%s:%d: encoding error at byte 0x%02x\n",
               source_info->file_name, source_info->line_nr,
                                              *(unsigned char *)inptr);
           else
-            fprintf(stderr, "encoding error at byte 0x%2x\n",
+            fprintf(stderr, "encoding error at byte 0x%02x\n",
                     *(unsigned char *)inptr);
           inptr++; bytes_left--;
           break;
@@ -1009,10 +1009,13 @@ delete_global_info (GLOBAL_INFO *global_info_ref)
   GLOBAL_INFO global_info = *global_info_ref;
 
   free (global_info.dircategory_direntry.list);
+  free_strings_list (&global_info.included_files);
 
   free (global_info.input_encoding_name);
   free (global_info.input_file_name);
   free (global_info.input_directory);
+
+  destroy_associated_info (&global_info.other_info);
 
   /* perl specific information */
   free (global_info.input_perl_encoding);

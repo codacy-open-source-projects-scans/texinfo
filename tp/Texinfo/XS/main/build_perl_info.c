@@ -238,21 +238,16 @@ newSVpv_byte (const char *str, STRLEN len)
 }
 
 static void
-store_additional_info (const ELEMENT *e, ASSOCIATED_INFO* a, char *key,
-                       int avoid_recursion)
+build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
+                       int *nr_info)
 {
   dTHX;
 
+  *nr_info = 0; /* number of info type stored */
+
   if (a->info_number > 0)
     {
-      HV *extra;
       int i;
-      int nr_info = 0; /* number of info type stored */
-
-
-      /* Use sv_2mortal so that reference count is decremented if
-         the hash is not saved. */
-      extra = (HV *) sv_2mortal((SV *)newHV ());
 
       for (i = 0; i < a->info_number; i++)
         {
@@ -263,7 +258,7 @@ store_additional_info (const ELEMENT *e, ASSOCIATED_INFO* a, char *key,
 
           if (k->type == extra_deleted)
             continue;
-          nr_info++;
+          (*nr_info)++;
 
           switch (k->type)
             {
@@ -376,11 +371,28 @@ store_additional_info (const ELEMENT *e, ASSOCIATED_INFO* a, char *key,
             }
         }
 #undef STORE
-
-      if (nr_info > 0)
-        hv_store (e->hv, key, strlen (key),
-                  newRV_inc((SV *)extra), 0);
     }
+}
+
+static void
+store_additional_info (const ELEMENT *e, ASSOCIATED_INFO *a, char *key,
+                       int avoid_recursion)
+{
+  int nr_info;
+  HV *additional_info_hv;
+
+  dTHX;
+
+  /* Use sv_2mortal so that reference count is decremented if
+         the hash is not saved. */
+  additional_info_hv = (HV *) sv_2mortal((SV *)newHV ());
+
+
+  build_additional_info (additional_info_hv, a, avoid_recursion, &nr_info);
+
+  if (nr_info > 0)
+    hv_store (e->hv, key, strlen (key),
+              newRV_inc((SV *)additional_info_hv), 0);
 }
 
 static void
@@ -876,6 +888,30 @@ build_index_data (INDEX **index_names_in)
 }
 
 
+AV *
+build_string_list (STRING_LIST *strings_list, enum sv_string_type type)
+{
+  AV *av;
+  int i;
+
+  dTHX;
+
+  av = newAV ();
+
+  for (i = 0; i < strings_list->number; i++)
+    {
+      char *value = strings_list->list[i];
+      if (!value)
+        av_push (av, newSV (0));
+      else if (type == svt_char)
+        av_push (av, newSVpv_utf8 (value, 0));
+      else
+        av_push (av, newSVpv_byte (value, 0));
+    }
+  return av;
+}
+
+
 /* Return object to be used as 'info', retrievable with the
    'global_information' function. */
 HV *
@@ -886,6 +922,7 @@ build_global_info (GLOBAL_INFO *global_info_ref,
   GLOBAL_INFO global_info = *global_info_ref;
   GLOBAL_COMMANDS global_commands = *global_commands_ref;
   ELEMENT *document_language;
+  int nr_info;
 
   dTHX;
 
@@ -902,6 +939,15 @@ build_global_info (GLOBAL_INFO *global_info_ref,
   if (global_info.input_perl_encoding)
     hv_store (hv, "input_perl_encoding", strlen ("input_perl_encoding"),
               newSVpv (global_info.input_perl_encoding, 0), 0);
+
+  if (global_info.included_files.number)
+    {
+      AV *av = build_string_list (&global_info.included_files, svt_byte);
+      hv_store (hv, "included_files", strlen ("included_files"),
+                newRV_noinc ((SV *) av), 0);
+    }
+
+  build_additional_info (hv, &global_info.other_info, 0, &nr_info);
 
   /* duplicate information with global_commands to avoid needing to use
      global_commands and build tree elements in other codes, for
@@ -1601,29 +1647,6 @@ build_integer_stack (INTEGER_STACK *integer_stack)
     {
       int value = integer_stack->stack[i];
       av_push (av, newSViv (value));
-    }
-  return av;
-}
-
-AV *
-build_string_list (STRING_LIST *strings_list, enum sv_string_type type)
-{
-  AV *av;
-  int i;
-
-  dTHX;
-
-  av = newAV ();
-
-  for (i = 0; i < strings_list->number; i++)
-    {
-      char *value = strings_list->list[i];
-      if (!value)
-        av_push (av, newSV (0));
-      else if (type == svt_char)
-        av_push (av, newSVpv_utf8 (value, 0));
-      else
-        av_push (av, newSVpv_byte (value, 0));
     }
   return av;
 }

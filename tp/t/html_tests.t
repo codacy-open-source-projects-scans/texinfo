@@ -725,6 +725,15 @@ In top.
 '
 @titlefont{}
 '],
+['end_of_line_in_uref',
+'See the @uref{https://gcc.gnu.org/codingconventions.html#Spelling
+Spelling, terminology and markup} section.'],
+['fractions_rounding',
+'@multitable @columnfractions .19 .30 .29 .22
+@item In contents            @tab In contents                  @tab In contents           @tab Not in contents
+@item @code{@@chapter}       @tab @code{@@unnumbered}          @tab @code{@@appendix} @tab @code{@@chapheading}
+@end multitable
+'],
 ['spaces_in_line_break_in_verb_w',
 '@w{aaa  bb
 ccc}
@@ -838,6 +847,20 @@ my $file_name_case_insensitive_conflict_node = '@node Top
 ';
 
 my @test_cases_file_text = (
+# already tested in 30sectioning.t, but we want tests with all the possible
+# entry points
+['contents_with_only_top_node',
+'
+@node Top
+
+@contents
+',],
+['top_node_top_contents',
+'@contents
+
+@node Top
+@top Texinfo modules documentation
+',],
 ['test_accents_sc_default',
 undef, {'test_file' => 'punctuation_small_case_accents_utf8.texi'}],
 ['test_accents_sc_enable_encoding',
@@ -880,8 +903,29 @@ my $css_init_file_texinfo = '@node Top
 @titlefont{in a new heading}
 ';
 
-# test that the node name that goes in the redirection file is reproducible.
 my @file_tests = (
+['empty_node_in_html_title_no_sec_name',
+'@node Top
+@top top
+
+@node
+@chapter chap
+', {}, {'SECTION_NAME_IN_TITLE' => 0, 'SPLIT' => 'chapter'}],
+['empty_chapter_in_html_title',
+'@node Top
+@top top
+
+@node chap
+@chapter
+', {}, {'SPLIT' => 'chapter'}],
+# the chapter file is named '.html', which is ok, but no file may be better
+['empty_chapter_in_html_title_no_node_no_use_nodes',
+'@node Top
+@top top
+
+@chapter
+', {}, {'SPLIT' => 'chapter', 'USE_NODES' => 0}],
+# test that the node name that goes in the redirection file is reproducible.
 ['redirection_same_labels',
 '@node Top
 @top the top
@@ -1348,6 +1392,11 @@ foreach my $test (@file_tests) {
   $test->[2]->{'full_document'} = 1 unless (exists($test->[2]->{'full_document'}));
 }
 foreach my $test (@test_cases_file_text) {
+  if (defined($test->[1])) {
+    $test->[2]->{'test_input_file_name'} = $test->[0] . '.texi';
+    $test->[2]->{'full_document'} = 1
+       unless (exists($test->[2]->{'full_document'}));
+  }
   push @{$test->[2]->{'test_formats'}}, ('html_text', 'file_html');
 }
 

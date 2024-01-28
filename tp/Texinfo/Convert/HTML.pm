@@ -5909,8 +5909,8 @@ sub _convert_tab_command($$$$$)
   my $cf = $multitable->{'extra'}->{'columnfractions'};
   if ($cf) {
     if (exists($cf->{'extra'}->{'misc_args'}->[$cell_nr-1])) {
-      my $percent = sprintf('%d',
-                             100*$cf->{'extra'}->{'misc_args'}->[$cell_nr-1]);
+      my $percent = sprintf('%.0f',
+                            100. * $cf->{'extra'}->{'misc_args'}->[$cell_nr-1]);
       $fractions = " width=\"$percent%\"";
     }
   }
@@ -8052,12 +8052,22 @@ sub _default_format_element_footer($$$$;$)
         my $no_footer_word_count;
         if ($self->get_conf('WORDS_IN_PAGE')) {
           $content = '' if (!defined($content));
+          # NOTE it would have been better to skip a leading space, but
+          # it cannot happen as the content should start with an HTML element.
+          # splitting at [\h\v] may have been relevant, but then the result
+          # would be different from XS code result and could give different
+          # results in perl in some cases.
           # FIXME it seems that NO-BREAK SPACE and NEXT LINE (NEL) may
           # not be in \h and \v in some case, but not sure which case it is
           # It is supposed to be explained but it is not very clear
           # https://perldoc.perl.org/perlrecharclass#Whitespace
-          # TODO starting in Perl v5.18 [\h\v] could be replaced by \s
-          my @cnt = split(/[\h\v]+/, $content);
+          # [\h\v]+ does not match on solaris 11 with perl 5.10.1, not sure
+          # why.
+          #my @cnt = split(/[\h\v]+/, $content);
+          # Use an explicit list to match the same in all versions of perl.
+          # TODO starting in Perl v5.14 could be replaced by \s\cK (with /a)
+          # TODO starting in Perl v5.18 could be replaced by \s (with /a)
+          my @cnt = split(/[\t\n\f\r \cK]+/, $content);
           if (scalar(@cnt) < $self->get_conf('WORDS_IN_PAGE')) {
             $no_footer_word_count = 1;
           }
@@ -8923,6 +8933,9 @@ sub convert_tree($$;$)
 # a format_* function?
 # protect an url, in which characters with specific meaning in url are considered
 # to have their specific meaning
+# TODO turn end of lines to spaces?  Currently, an end of line is percent
+# protected, it is most likely not what the author intended.  Tested in
+# html_tests.t end_of_line_in_uref
 sub url_protect_url_text($$)
 {
   my $self = shift;
@@ -10486,7 +10499,6 @@ sub _external_node_href($$$)
       }
     }
     my $manual_base = $manual_name;
-    $manual_base =~ s/\.info?$//;
     $manual_base =~ s/^.*\///;
     my $split_found;
     my $htmlxref_href;
@@ -10625,6 +10637,8 @@ sub _mini_toc
       # converts in the current page context.
       #my $text = $self->command_text($section, 'text_nonumber');
       my $tree = $self->command_tree($section, 1);
+      # happens with empty sectioning command
+      next if (!$tree);
       my $text = $self->convert_tree($tree, "mini_toc \@$section->{'cmdname'}");
 
       $entry_index++;
@@ -10907,6 +10921,7 @@ sub _file_header_information($$;$)
           and $command->{'extra'}->{'associated_section'}->{'args'}->[0]) {
         $element_tree = $command->{'extra'}->{'associated_section'}->{'args'}->[0];
       } else {
+        # this should not happen, as the command_string should be empty already
         $element_tree = $self->command_tree($command);
       }
       # TRANSLATORS: sectioning element title for the page header
