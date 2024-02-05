@@ -21,33 +21,34 @@ typedef struct NAMED_STRING_ELEMENT_LIST {
     NAMED_STRING_ELEMENT *list;
 } NAMED_STRING_ELEMENT_LIST;
 
-void translations_configure (char *localesdir, char *strings_textdomain_in);
+void configure_output_strings_translations (char *localesdir,
+                                            char *strings_textdomain_in);
 
-char *translate_string (OPTIONS *options, const char * string,
-                  const char *translation_context, const char *in_lang);
-int replace_convert_substrings (OPTIONS *options, char *translated_string,
-                            NAMED_STRING_ELEMENT_LIST *replaced_substrings);
+char *translate_string (const char * string, const char *lang,
+                        const char *translation_context);
+int replace_convert_substrings (char *translated_string,
+                            NAMED_STRING_ELEMENT_LIST *replaced_substrings,
+                            int debug_level);
 char *replace_substrings (const char *string,
                     const NAMED_STRING_ELEMENT_LIST *replaced_substrings);
 
-int gdt (const char * string, OPTIONS *options,
+int gdt (const char * string, OPTIONS *options, const char *lang,
          NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-         const char *translation_context,
-         const char *in_lang);
+         const char *translation_context);
 
 ELEMENT *gdt_tree (const char * string, DOCUMENT *document, OPTIONS *options,
+                   const char *lang,
                    NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                   const char *translation_context,
-                   const char *in_lang);
+                   const char *translation_context);
 
-char *gdt_string (const char *string, OPTIONS *options,
+char *gdt_string (const char *string, OPTIONS *options, const char *lang,
                   NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                  const char *translation_context, const char *in_lang);
+                  const char *translation_context);
 
 ELEMENT *pgdt_tree (const char *translation_context, const char *string,
                     DOCUMENT *document, OPTIONS *options,
-                    NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                    const char *in_lang);
+                    const char *lang,
+                    NAMED_STRING_ELEMENT_LIST *replaced_substrings);
 
 NAMED_STRING_ELEMENT_LIST * new_named_string_element_list (void);
 void add_string_to_named_string_element_list (NAMED_STRING_ELEMENT_LIST *nsel,

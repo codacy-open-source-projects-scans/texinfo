@@ -77,7 +77,7 @@ my %brace_commands = %Texinfo::Commands::brace_commands;
 
 my $NO_NUMBER_FOOTNOTE_SYMBOL = '*';
 
-# documentlanguage is used through gdt().
+# documentlanguage is used through cdt().
 my @informative_global_commands = ('paragraphindent', 'firstparagraphindent',
 'frenchspacing', 'footnotestyle', 'documentlanguage', 'deftypefnnewline');
 
@@ -1069,6 +1069,24 @@ sub _add_newline_if_needed($) {
   return;
 }
 
+# Ensure the output ends in a newline character.
+sub _ensure_end_of_line($)
+{
+  my $self = shift;
+
+  my $result = _stream_result($self);
+
+  return if !defined($result) or $result eq '';
+
+  if (substr($result, -1) ne "\n") {
+    _stream_output($self, "\n");
+    _add_lines_count($self, 1);
+    $self->{'text_element_context'}->[-1]->{'counter'} = 0;
+  }
+  return;
+}
+
+
 sub _open_code($)
 {
   my $formatter = shift;
@@ -1372,12 +1390,12 @@ sub format_contents($$$)
                or !defined($self->get_conf('NUMBER_SECTIONS')))) {
         if ($section->{'cmdname'} eq 'appendix'
             and $section->{'extra'}->{'section_level'} == 1) {
-          $section_title_tree = $self->gdt('Appendix {number} {section_title}',
+          $section_title_tree = $self->cdt('Appendix {number} {section_title}',
                {'number' => {'text'
                                => $section->{'extra'}->{'section_number'}},
                 'section_title' => $section->{'args'}->[0]});
         } else {
-          $section_title_tree = $self->gdt('{number} {section_title}',
+          $section_title_tree = $self->cdt('{number} {section_title}',
                {'number' => {'text'
                                => $section->{'extra'}->{'section_number'}},
                 'section_title' => $section->{'args'}->[0]});
@@ -1501,7 +1519,7 @@ sub process_printindex($$;$)
   if (!defined($self->{'index_entries'}) and $indices_information) {
 
     my $merged_index_entries
-      = Texinfo::Indices::merge_indices($indices_information);
+      = $self->{'document'}->merged_indices();
     my $index_entries_sort_strings;
     ($self->{'index_entries'}, $index_entries_sort_strings)
       = Texinfo::Indices::sort_indices_by_index(undef, $self,
@@ -1664,7 +1682,7 @@ sub process_printindex($$;$)
       # cache the transformation to text and byte counting, as
       # it is likely that there is more than one such entry
        if (!$self->{'outside_of_any_node_text'}) {
-          my $tree = $self->gdt('(outside of any node)');
+          my $tree = $self->cdt('(outside of any node)');
           my ($node_text, $width)
             = $self->convert_line_new_context($tree);
           $self->{'outside_of_any_node_text'} = $node_text;
@@ -1763,22 +1781,6 @@ sub _anchor($$)
 
 my $listoffloat_entry_length = 41;
 
-sub ensure_end_of_line($)
-{
-  my $self = shift;
-
-  my $result = _stream_result($self);
-
-  return if !defined($result) or $result eq '';
-
-  if (substr($result, -1) ne "\n") {
-    _stream_output($self, "\n");
-    _add_lines_count($self, 1);
-    $self->{'text_element_context'}->[-1]->{'counter'} = 0;
-  }
-  return;
-}
-
 sub image_formatted_text($$$$)
 {
   my ($self, $element, $basefile, $text) = @_;
@@ -1863,11 +1865,11 @@ sub _text_heading($$$;$$)
   if (defined($number)) {
     if ($current->{'cmdname'} eq 'appendix'
         and $current->{'extra'}->{'section_level'} == 1) {
-      $text = $self->gdt_string(
+      $text = $self->cdt_string(
                  'Appendix {number} {section_title}',
                  {'number' => $number, 'section_title' => $heading});
     } else {
-      $text = $self->gdt_string(
+      $text = $self->cdt_string(
                  '{number} {section_title}',
                  {'number' => $number, 'section_title' => $heading});
     }
@@ -2060,10 +2062,10 @@ sub _convert($$)
       my $tree;
       if ($element->{'extra'}
           and $element->{'extra'}->{'translation_context'}) {
-        $tree = $self->pgdt($element->{'extra'}->{'translation_context'},
+        $tree = $self->pcdt($element->{'extra'}->{'translation_context'},
                             $element->{'text'});
       } else {
-        $tree = $self->gdt($element->{'text'});
+        $tree = $self->cdt($element->{'text'});
       }
       _convert($self, $tree);
       return;
@@ -2649,10 +2651,10 @@ sub _convert($$)
           }
           my $email_tree;
           if ($name and $email) {
-            $email_tree = $self->gdt('{name} @url{{email}}',
+            $email_tree = $self->cdt('{name} @url{{email}}',
                              {'name' => $name, 'email' => $email});
           } elsif ($email) {
-            $email_tree = $self->gdt('@url{{email}}',
+            $email_tree = $self->cdt('@url{{email}}',
                              {'email' => $email});
           } elsif ($name) {
             $email_tree = $name;
@@ -2683,11 +2685,11 @@ sub _convert($$)
                and defined($element->{'args'}->[1])
                and $element->{'args'}->[1]->{'contents'}
                and @{$element->{'args'}->[1]->{'contents'}}) {
-              $inserted = $self->gdt('{text} ({url})',
+              $inserted = $self->cdt('{text} ({url})',
                    {'text' => $element->{'args'}->[1],
                     'url' => $url });
             } else {
-              $inserted = $self->gdt('@t{<{url}>}', {'url' => $url});
+              $inserted = $self->cdt('@t{<{url}>}', {'url' => $url});
             }
           } elsif (scalar(@{$element->{'args'}}) == 2
                    and defined($element->{'args'}->[1])
@@ -2758,7 +2760,7 @@ sub _convert($$)
               and defined($element->{'args'}->[-1])
               and $element->{'args'}->[-1]->{'contents'}
               and @{$element->{'args'}->[-1]->{'contents'}}) {
-            my $inserted = $self->gdt('{abbr_or_acronym} ({explanation})',
+            my $inserted = $self->cdt('{abbr_or_acronym} ({explanation})',
                    {'abbr_or_acronym' => $argument,
                     'explanation' => $element->{'args'}->[-1]});
             _convert($self, $inserted);
@@ -2852,7 +2854,7 @@ sub _convert($$)
         }
         return;
       } elsif ($command eq 'value') {
-        my $expansion = $self->gdt('@{No value for `{value}\'@}',
+        my $expansion = $self->cdt('@{No value for `{value}\'@}',
                                    {'value' => $element->{'args'}->[0]});
         my $piece;
         if ($formatter->{'_top_formatter'}) {
@@ -2965,7 +2967,7 @@ sub _convert($$)
         if ($element->{'args'} and $element->{'args'}->[0]
             and $element->{'args'}->[0]->{'contents'}
             and scalar(@{$element->{'args'}->[0]->{'contents'}})) {
-          my $prepended = $self->gdt('@b{{quotation_arg}:} ',
+          my $prepended = $self->cdt('@b{{quotation_arg}:} ',
              {'quotation_arg' => $element->{'args'}->[0]});
           $prepended->{'type'} = 'frenchspacing';
           #_convert($self, $prepended);
@@ -3016,7 +3018,7 @@ sub _convert($$)
             and @{$element->{'args'}->[0]->{'contents'}}) {
           # FIXME reset the paragraph count in cartouche and use a
           # specific format_context?
-          my $prepended = $self->gdt('@center @b{{cartouche_arg}}',
+          my $prepended = $self->cdt('@center @b{{cartouche_arg}}',
              {'cartouche_arg' => $element->{'args'}->[0]});
           $prepended->{'type'} = 'frenchspacing';
           # Do not consider the title to be like a paragraph
@@ -3087,7 +3089,7 @@ sub _convert($$)
              {'indent_length' =>
                  ($self->{'format_context'}->[-1]->{'indent_level'} -1)
                    * $indent_length});
-        $self->ensure_end_of_line();
+        _ensure_end_of_line($self);
       }
     } elsif ($command eq 'item' and $element->{'parent'}->{'cmdname'}
              and $block_commands{$element->{'parent'}->{'cmdname'}}
@@ -3149,7 +3151,7 @@ sub _convert($$)
               'contents' => [$element->{'args'}->[0]]},
              {'indent_length' => 0});
       }
-      $self->ensure_end_of_line();
+      _ensure_end_of_line($self);
       my $result = _stream_result($self);
       if ($result ne '') {
 
@@ -3184,7 +3186,7 @@ sub _convert($$)
                    * $indent_length});
         }
       }
-      $self->ensure_end_of_line();
+      _ensure_end_of_line($self);
       return;
     } elsif ($command eq 'verbatiminclude') {
       my $expansion = Texinfo::Convert::Utils::expand_verbatiminclude(
@@ -3446,14 +3448,14 @@ sub _convert($$)
              'name' => $name,
              'arguments' => $arguments};
             if ($omit_def_space) {
-              $tree = $self->gdt('@tie{}-- {category}: {name}{arguments}',
+              $tree = $self->cdt('@tie{}-- {category}: {name}{arguments}',
                                  $strings);
             } else {
-              $tree = $self->gdt('@tie{}-- {category}: {name} {arguments}',
+              $tree = $self->cdt('@tie{}-- {category}: {name} {arguments}',
                                  $strings);
             }
           } else {
-            $tree = $self->gdt('@tie{}-- {category}: {name}', {
+            $tree = $self->cdt('@tie{}-- {category}: {name}', {
                  'category' => $category,
                  'name' => $name});
           }
@@ -3470,21 +3472,21 @@ sub _convert($$)
                 and $command eq 'deftypefn') {
               if ($omit_def_space) {
                 $tree
-                  = $self->gdt('@tie{}-- {category}:@*{type}@*{name}{arguments}',
+                  = $self->cdt('@tie{}-- {category}:@*{type}@*{name}{arguments}',
                                $strings);
               } else {
                 $tree
-                  = $self->gdt('@tie{}-- {category}:@*{type}@*{name} {arguments}',
+                  = $self->cdt('@tie{}-- {category}:@*{type}@*{name} {arguments}',
                                $strings);
               }
             } else {
               if ($omit_def_space) {
                 $tree
-                  = $self->gdt('@tie{}-- {category}: {type} {name}{arguments}',
+                  = $self->cdt('@tie{}-- {category}: {type} {name}{arguments}',
                                $strings);
               } else {
                 $tree
-                  = $self->gdt('@tie{}-- {category}: {type} {name} {arguments}',
+                  = $self->cdt('@tie{}-- {category}: {type} {name} {arguments}',
                                $strings);
               }
             }
@@ -3495,10 +3497,10 @@ sub _convert($$)
              'name' => $name};
             if ($self->get_conf('deftypefnnewline') eq 'on'
                 and $command eq 'deftypefn') {
-              $tree = $self->gdt('@tie{}-- {category}:@*{type}@*{name}',
+              $tree = $self->cdt('@tie{}-- {category}:@*{type}@*{name}',
                                  $strings);
             } else {
-              $tree = $self->gdt('@tie{}-- {category}: {type} {name}',
+              $tree = $self->cdt('@tie{}-- {category}: {type} {name}',
                                  $strings);
             }
           }
@@ -3513,15 +3515,15 @@ sub _convert($$)
              'arguments' => $arguments};
             if ($omit_def_space) {
               $tree
-               = $self->gdt('@tie{}-- {category} of {class}: {name}{arguments}',
+               = $self->cdt('@tie{}-- {category} of {class}: {name}{arguments}',
                             $strings);
             } else {
               $tree
-               = $self->gdt('@tie{}-- {category} of {class}: {name} {arguments}',
+               = $self->cdt('@tie{}-- {category} of {class}: {name} {arguments}',
                             $strings);
             }
           } else {
-            $tree = $self->gdt('@tie{}-- {category} of {class}: {name}', {
+            $tree = $self->cdt('@tie{}-- {category} of {class}: {name}', {
              'category' => $category,
              'class' => $class,
              'name' => $name});
@@ -3537,15 +3539,15 @@ sub _convert($$)
              'arguments' => $arguments};
             if ($omit_def_space) {
               $tree
-                = $self->gdt('@tie{}-- {category} on {class}: {name}{arguments}',
+                = $self->cdt('@tie{}-- {category} on {class}: {name}{arguments}',
                              $strings);
             } else {
               $tree
-                = $self->gdt('@tie{}-- {category} on {class}: {name} {arguments}',
+                = $self->cdt('@tie{}-- {category} on {class}: {name} {arguments}',
                              $strings);
             }
           } else {
-            $tree = $self->gdt('@tie{}-- {category} on {class}: {name}', {
+            $tree = $self->cdt('@tie{}-- {category} on {class}: {name}', {
              'category' => $category,
              'class' => $class,
              'name' => $name});
@@ -3561,21 +3563,21 @@ sub _convert($$)
             if ($self->get_conf('deftypefnnewline') eq 'on') {
               if ($omit_def_space) {
                 $tree
-                  = $self->gdt('@tie{}-- {category} on {class}:@*{type}@*{name}{arguments}',
+                  = $self->cdt('@tie{}-- {category} on {class}:@*{type}@*{name}{arguments}',
                                $strings);
               } else {
                 $tree
-                  = $self->gdt('@tie{}-- {category} on {class}:@*{type}@*{name} {arguments}',
+                  = $self->cdt('@tie{}-- {category} on {class}:@*{type}@*{name} {arguments}',
                                $strings);
               }
             } else {
               if ($omit_def_space) {
                 $tree
-                  = $self->gdt('@tie{}-- {category} on {class}: {type} {name}{arguments}',
+                  = $self->cdt('@tie{}-- {category} on {class}: {type} {name}{arguments}',
                                $strings);
               } else {
                 $tree
-                  = $self->gdt('@tie{}-- {category} on {class}: {type} {name} {arguments}',
+                  = $self->cdt('@tie{}-- {category} on {class}: {type} {name} {arguments}',
                                $strings);
               }
             }
@@ -3587,11 +3589,11 @@ sub _convert($$)
              'name' => $name};
             if ($self->get_conf('deftypefnnewline') eq 'on') {
               $tree
-                = $self->gdt('@tie{}-- {category} on {class}:@*{type}@*{name}',
+                = $self->cdt('@tie{}-- {category} on {class}:@*{type}@*{name}',
                              $strings);
             } else {
               $tree
-                = $self->gdt('@tie{}-- {category} on {class}: {type} {name}',
+                = $self->cdt('@tie{}-- {category} on {class}: {type} {name}',
                              $strings);
             }
           }
@@ -3605,11 +3607,11 @@ sub _convert($$)
              'arguments' => $arguments};
             if ($omit_def_space) {
               $tree
-                = $self->gdt('@tie{}-- {category} of {class}: {type} {name}{arguments}',
+                = $self->cdt('@tie{}-- {category} of {class}: {type} {name}{arguments}',
                              $strings);
             } else {
               $tree
-                = $self->gdt('@tie{}-- {category} of {class}: {type} {name} {arguments}',
+                = $self->cdt('@tie{}-- {category} of {class}: {type} {name} {arguments}',
                              $strings);
             }
           } else {
@@ -3619,7 +3621,7 @@ sub _convert($$)
              'class' => $class,
              'name' => $name};
             $tree
-              = $self->gdt('@tie{}-- {category} of {class}: {type} {name}',
+              = $self->cdt('@tie{}-- {category} of {class}: {type} {name}',
                              $strings);
           }
         }
@@ -3881,7 +3883,7 @@ sub _convert($$)
                        add_pending_word($formatter->{'container'}),
                        $formatter->{'container'});
         end_line($formatter->{'container'});
-        $self->ensure_end_of_line();
+        _ensure_end_of_line($self);
       }
 
       return;
@@ -4030,7 +4032,7 @@ sub _convert($$)
       $self->{'format_context'}->[-1]->{'row_counts'} = [];
       _stream_output_encoded($self, $result);
     } elsif ($type eq 'before_node_section') {
-      ensure_end_of_line($self);
+      _ensure_end_of_line($self);
       $self->{'text_before_first_node'} = _stream_result($self);
     }
   }
@@ -4051,7 +4053,7 @@ sub _convert($$)
     _stream_output($self,
                Texinfo::Convert::Paragraph::end($preformatted->{'container'}),
                $preformatted->{'container'});
-    $self->ensure_end_of_line();
+    _ensure_end_of_line($self);
 
     if ($self->{'context'}->[-1] eq 'flushright') {
       my $result = _stream_result($self);
@@ -4099,7 +4101,7 @@ sub _convert($$)
             and $author->{'args'}->[0]->{'contents'}) {
           _convert($self,
             # TRANSLATORS: quotation author
-            $self->gdt("\@center --- \@emph{{author}}",
+            $self->cdt("\@center --- \@emph{{author}}",
                {'author' => $author->{'args'}->[0]}));
         }
       }

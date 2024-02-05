@@ -44,9 +44,6 @@
 
 /*
 my $DEFAULT_ENCODING = 'utf-8';
-my $DEFAULT_PERL_ENCODING = 'utf-8';
-
-my $messages_textdomain = 'texinfo';
 */
 
 static char *working_locale = 0;
@@ -55,16 +52,21 @@ static char *locale_command = 0;
 static char *strings_textdomain = "texinfo_document";
 
 void
-translations_configure (char *localesdir, char *strings_textdomain_in)
+configure_output_strings_translations (char *localesdir,
+                                       char *strings_textdomain_in)
 {
   char *textdomain_directory;
   if (strings_textdomain_in)
     strings_textdomain = strings_textdomain_in;
 
   #ifdef ENABLE_NLS
-  /* FIXME error out if failure?
-     if failure bindtextdomain sets errno to ENOMEM and returns NULL */
   textdomain_directory = bindtextdomain (strings_textdomain, localesdir);
+
+  if (!textdomain_directory)
+    {
+      fprintf (stderr, "bindtextdomain: error setting %s to `%s': %s\n",
+               strings_textdomain, localesdir, strerror(errno));
+    }
   #endif
 }
 
@@ -147,14 +149,13 @@ switch_messages_locale (void)
 }
 
 char *
-translate_string (OPTIONS *options, const char * string,
-                  const char *translation_context, const char *in_lang)
+translate_string (const char * string, const char *in_lang,
+                  const char *translation_context)
 {
   const char *lang = in_lang;
   char *saved_LANGUAGE;
   char *saved_LANG;
   char *saved_LC_MESSAGES;
-  char *encoding = 0;
   char *langs[2] = {0, 0};
   char *main_lang = 0;
   char *translated_string;
@@ -162,9 +163,7 @@ translate_string (OPTIONS *options, const char * string,
   static TEXT language_locales;
   int i;
 
-  if ((!lang) && options && options->documentlanguage.string)
-    lang = options->documentlanguage.string;
-  if (!lang)
+  if (!in_lang)
     lang = "en";
 
   if (strlen (lang) == 0)
@@ -262,34 +261,13 @@ translate_string (OPTIONS *options, const char * string,
       if (i > 0)
         text_append_n (&language_locales, ":", 1);
       text_append (&language_locales, langs[i]);
-      if (encoding)
-        {
-          text_append_n (&language_locales, ".", 1);
-          text_append (&language_locales, encoding);
-        }
-    /*
-      also try us-ascii, the charset should be compatible with other
-      charset, and should resort to @-commands if needed for non
-      ascii characters
-      REMARK this is not necessarily true for every language/encoding.
-      This can be true for latin1, and maybe some other 8 bit encodings
-      with accents available as @-commands, but not for most
-      language.  However, for those languages, it is unlikely that
-      the locale with .us-ascii are set, so it should not hurt
-      to add this possibility.
-     */
-      if (!encoding || !strcmp (encoding, "us-ascii"))
-        {
-          text_append_n (&language_locales, ":", 1);
-          text_append (&language_locales, langs[i]);
-          text_append_n (&language_locales, ".", 1);
-          text_append (&language_locales, "us-ascii");
-        }
       free (langs[i]);
     }
+
   if (setenv ("LANGUAGE", language_locales.text, 1) != 0)
     {
-      fprintf (stderr, "gdt: setenv `%s' error for string `%s': %s\n",
+      fprintf (stderr,
+              "translate_string: setenv `%s' error for string `%s': %s\n",
               language_locales.text, string, strerror(errno));
     }
 
@@ -445,12 +423,14 @@ substitute (ELEMENT *tree, NAMED_STRING_ELEMENT_LIST *replaced_substrings)
 /* the caller should have made sure that the
    inserted elements do not appear elsewhere in the tree. */
 int
-replace_convert_substrings (OPTIONS *options, char *translated_string,
-                            NAMED_STRING_ELEMENT_LIST *replaced_substrings)
+replace_convert_substrings (char *translated_string,
+                            NAMED_STRING_ELEMENT_LIST *replaced_substrings,
+                            int debug_level)
 {
   int i;
   char *texinfo_line;
   int document_descriptor;
+  int parser_debug_level = 0;
   DOCUMENT *document;
 
   if (replaced_substrings)
@@ -481,30 +461,20 @@ replace_convert_substrings (OPTIONS *options, char *translated_string,
   fprintf(stderr, "INTERNAL V CMDS '%s' '%s'\n", translated_string,
                                                  texinfo_line);
    */ 
-  /* FIXME different from Perl case, as in perl case, a parser is
-     setup, which means a full reset of configuration, here would
-     correspond to a call of reset_parser */
+
+  /* set parser debug level to one less than debug_level */
+  if (debug_level > 0)
+    parser_debug_level = debug_level - 1;
+
+  reset_parser (parser_debug_level);
+  parser_set_debug (parser_debug_level);
+
   /*
    accept @txiinternalvalue as a valid Texinfo command, used to mark
    location in tree of substituted brace enclosed strings.
    */
   parser_set_accept_internalvalue (1);
 
-  /* TODO implement setting configuration.  This may not be needed when
-     called from a parser without reset_parser being called, but could be
-     when called from a converter.  As long as only DEBUG is passed
-     this is not really problematic. */
-  /*
-  # general customization relevant for parser
-  if ($customization_information) {
-    foreach my $conf_variable ('DEBUG') {
-      if (defined($customization_information->get_conf($conf_variable))) {
-        $parser_conf->{$conf_variable}
-          = $customization_information->get_conf($conf_variable);
-      }
-    }
-  }
-   */
   document_descriptor = parse_string (texinfo_line, 1);
 
   /* FIXME if called from parser through complete_indices, options will
@@ -513,7 +483,7 @@ replace_convert_substrings (OPTIONS *options, char *translated_string,
   /*
   debug ("IN TR PARSER '%s'", texinfo_line);
    */
-  if (options && options->DEBUG.integer > 0)
+  if (debug_level > 0)
     fprintf (stderr, "XS|IN TR PARSER '%s'\n", texinfo_line);
 
   document = retrieve_document (document_descriptor);
@@ -541,7 +511,7 @@ replace_convert_substrings (OPTIONS *options, char *translated_string,
 /*
   {
     char *result_texi = convert_to_texinfo (document->tree);
-    if (options && options->DEBUG.integer > 0)
+    if (debug_level > 0)
       fprintf (stderr, "XS|RESULT GDT %d: '%s'\n", document_descriptor,
                result_texi);
     free (result_texi);
@@ -556,17 +526,21 @@ replace_convert_substrings (OPTIONS *options, char *translated_string,
 
 /* returns a document descriptor. */
 int
-gdt (const char *string, OPTIONS *options,
+gdt (const char *string, OPTIONS *options, const char *lang,
      NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-     const char *translation_context, const char *in_lang)
+     const char *translation_context)
 {
-  char *translated_string = translate_string (options, string,
-                                              translation_context,
-                                              in_lang);
+  int debug_level = 0;
+  int document_descriptor;
 
-  int document_descriptor
-    = replace_convert_substrings (options, translated_string,
-                                  replaced_substrings);
+  char *translated_string = translate_string (string, lang,
+                                              translation_context);
+
+  if (options && options->DEBUG.integer >= 0)
+    debug_level = options->DEBUG.integer;
+
+  document_descriptor  = replace_convert_substrings (translated_string,
+                                  replaced_substrings, debug_level);
   free (translated_string);
   return document_descriptor;
 }
@@ -577,46 +551,25 @@ gdt (const char *string, OPTIONS *options,
    if one knows that there won't be small strings (the general case) */
 ELEMENT *
 gdt_tree (const char *string, DOCUMENT *document, OPTIONS *options,
-          NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-          const char *translation_context,
-          const char *in_lang)
+          const char *lang, NAMED_STRING_ELEMENT_LIST *replaced_substrings,
+          const char *translation_context)
 {
-  ELEMENT *tree;
-  int gdt_document_descriptor = gdt (string, options, replaced_substrings,
-                                     translation_context, in_lang);
-  TREE_AND_STRINGS *tree_and_strings
-     = unregister_document_descriptor_tree (gdt_document_descriptor);
-
-  tree = tree_and_strings->tree;
-
-  if (tree_and_strings->small_strings)
-    {
-      /* this is very unlikely, as small strings correspond to file names and
-         macro names, while we are parsing a simple string */
-      if (tree_and_strings->small_strings->number)
-        {
-          if (document)
-            merge_strings (document->small_strings,
-                           tree_and_strings->small_strings);
-          else
-            fatal ("gdt_tree no document but small_strings");
-        }
-      free (tree_and_strings->small_strings->list);
-      free (tree_and_strings->small_strings);
-    }
-  free (tree_and_strings);
+  int gdt_document_descriptor = gdt (string, options, lang,
+                                     replaced_substrings, translation_context);
+  ELEMENT *tree
+    = unregister_document_merge_with_document (gdt_document_descriptor,
+                                               document);
 
   return tree;
 }
 
 char *
-gdt_string (const char *string, OPTIONS *options,
+gdt_string (const char *string, OPTIONS *options, const char *lang,
             NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-            const char *translation_context, const char *in_lang)
+            const char *translation_context)
 {
-  char *translated_string = translate_string (options, string,
-                                              translation_context,
-                                              in_lang);
+  char *translated_string = translate_string (string, lang,
+                                              translation_context);
 
   char *result = replace_substrings (translated_string, replaced_substrings);
   free (translated_string);
@@ -625,12 +578,11 @@ gdt_string (const char *string, OPTIONS *options,
 
 ELEMENT *
 pgdt_tree (const char *translation_context, const char *string,
-           DOCUMENT *document, OPTIONS *options,
-           NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-           const char *in_lang)
+           DOCUMENT *document, OPTIONS *options, const char *lang,
+           NAMED_STRING_ELEMENT_LIST *replaced_substrings)
 {
-  return gdt_tree (string, document, options, replaced_substrings,
-                   translation_context, in_lang);
+  return gdt_tree (string, document, options, lang, replaced_substrings,
+                   translation_context);
 }
 
 NAMED_STRING_ELEMENT_LIST *

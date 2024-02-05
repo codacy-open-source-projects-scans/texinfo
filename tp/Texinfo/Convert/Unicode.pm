@@ -1586,13 +1586,13 @@ sub unicode_point_decoded_in_encoding($$) {
     # to lower case to match the encoding names used here.  In the code
     # encoding names are lower cased early.
     $encoding = lc($encoding);
+  }
 
-    return 1 if ($encoding eq 'utf-8'
+  return 1 if ((!defined($encoding) or $encoding eq 'utf-8')
                     or ($unicode_to_eight_bit{$encoding}
                         and ($unicode_to_eight_bit{$encoding}->{$unicode_point}
                              # excludes 127 \x{7F} DEL
                              or hex($unicode_point) < 127)));
-  }
   return 0;
 }
 
@@ -1701,16 +1701,14 @@ sub string_width($)
     return length($string);
   }
 
-  if ($string !~ /\n/) {
-    $string =~ s/\p{InFullwidth}/\x{02}/g;
-    $string =~ s/[\p{L}\p{N}\p{P}\p{S}\p{Zs}]/\x{01}/g;
-    $string =~ s/[^\x{01}\x{02}]/\x{00}/g;
+  $string =~ s/\p{InFullwidth}/\x{02}/g;
+  $string =~ s/[\p{L}\p{N}\p{P}\p{S}\p{Zs}]/\x{01}/g;
+  $string =~ s/[^\x{01}\x{02}]/\x{00}/g;
 
-    # This sums up the byte values of the bytes in $string, which now are
-    # all either 0, 1 or 2.  This is faster.  The original, more readable
-    # version is below.
-    return unpack("U0%32A*", $string);
-  }
+  # This sums up the byte values of the bytes in $string, which now are
+  # all either 0, 1 or 2.  This is faster.  The original, more readable
+  # version is below.
+  return unpack("U0%32A*", $string);
 
   if (! defined($string)) {
     cluck();
@@ -1721,8 +1719,6 @@ sub string_width($)
       $width += 2;
     } elsif ($character =~ /[\p{L}\p{N}\p{P}\p{S}\p{Zs}]/) {
       $width += 1;
-    } elsif ($character eq "\n") {
-      $width = 0;
     } else {
       # zero width character: \pC (including controls), \pM, \p{Zl}, \p{Zp}
     }

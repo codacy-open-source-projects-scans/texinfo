@@ -2503,4 +2503,3 @@ call_button_direction_function (CONVERTER *self,
 }
 
 
-

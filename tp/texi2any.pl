@@ -341,15 +341,15 @@ my $main_program_set_options = {
 
 # set configure information as constants
 foreach my $configured_variable (keys(%$configured_information)) {
-  Texinfo::Common::set_constant($configured_variable,
+  Texinfo::Common::set_build_constant($configured_variable,
+                       $configured_information->{$configured_variable});
+  # set also with _CONFIG prepended, as in C code.
+  Texinfo::Common::set_build_constant($configured_variable.'_CONFIG',
                        $configured_information->{$configured_variable});
 }
 
-# here set configure information with _OPTION prepended, to mark that
-# these are customization variables that may be modified in init files
-# or on the command line.
 foreach my $configured_variable (keys(%$configured_information)) {
-  $main_program_set_options->{$configured_variable . '_OPTION'}
+  $main_program_set_options->{$configured_variable}
     = $configured_information->{$configured_variable};
 }
 
@@ -1147,11 +1147,11 @@ if ($cmdline_options->{'HIGHLIGHT_SYNTAX'}) {
 
 # For tests, set some strings to values not changing with releases
 my %test_conf = (
-    'PACKAGE_VERSION_OPTION' => '',
-    'PACKAGE_OPTION' => 'texinfo',
-    'PACKAGE_NAME_OPTION' => 'texinfo',
-    'PACKAGE_AND_VERSION_OPTION' => 'texinfo',
-    'PACKAGE_URL_OPTION' => 'http://www.gnu.org/software/texinfo/',
+    'PACKAGE_VERSION' => '',
+    'PACKAGE' => 'texinfo',
+    'PACKAGE_NAME' => 'texinfo',
+    'PACKAGE_AND_VERSION' => 'texinfo',
+    'PACKAGE_URL' => 'http://www.gnu.org/software/texinfo/',
 # maybe don't set this?
     'PROGRAM' => 'texi2any',
 );
@@ -1529,7 +1529,7 @@ while(@input_files) {
   my $main_configuration = Texinfo::MainConfig::new();
 
   # encoding is needed for output files
-  # encoding and documentlanguage are needed for gdt() in regenerate_master_menu
+  # documentlanguage is needed for gdt() in regenerate_master_menu
   Texinfo::Common::set_output_encodings($main_configuration, $document);
   if (not defined($main_configuration->get_conf('documentlanguage'))
       and defined ($document_information->{'documentlanguage'})) {

@@ -39,7 +39,7 @@
 #include "errors.h"
 #include "convert_to_text.h"
 #include "convert_to_texinfo.h"
-#include "indices_in_conversion.h"
+#include "manipulate_indices.h"
 #include "command_stack.h"
 #include "document.h"
 #include "get_perl_info.h"
@@ -180,19 +180,25 @@ converter_document_warn (SV *converter_in, text, ...)
                       self->conf, MSG_document_warning, continuation, strdup (text));
            }
 
-void
-get_index_entries_sorted_by_letter (SV *converter_in, SV *index_entries_sorted_by_letter)
-      PREINIT:
-         CONVERTER *self;
-         INDEX_SORTED_BY_LETTER *index_entries_by_letter;
-      CODE:
-         self = get_sv_converter (converter_in,
-                                  "get_index_entries_sorted_by_letter");
-         index_entries_by_letter
-            = get_sv_index_entries_sorted_by_letter
-                                          (self->document->index_names,
-                                           index_entries_sorted_by_letter);
-         self->index_entries_by_letter = index_entries_by_letter;
+SV *
+get_converter_indices_sorted_by_letter (SV *converter_sv, SV *indices_information)
+     PREINIT:
+        CONVERTER *self;
+     CODE:
+        self = get_sv_converter (converter_sv,
+                                 "get_converter_indices_sorted_by_letter");
+        if (self)
+          {
+            INDEX_SORTED_BY_LETTER *index_entries_by_letter
+              = converter_sort_indices_by_letter (self);
+            RETVAL
+             = build_sorted_indices_by_letter (index_entries_by_letter,
+                                               indices_information);
+          }
+        else
+          RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
 
 # pass the stream of an unclosed file path.
 # tried with OutputStream instead of FILE, but it did not work, there
@@ -1688,16 +1694,6 @@ html_check_htmlxref_already_warned (SV *converter_in, manual_name, SV *source_in
            }
     OUTPUT:
          RETVAL
-
-void
-html_merge_index_entries (SV *converter_in)
-      PREINIT:
-         CONVERTER *self;
-     CODE:
-         self = get_sv_converter (converter_in,
-                                  "html_merge_index_entries");
-         if (self)
-           html_merge_index_entries (self);
 
 void
 reset_output_init_conf (SV *sv_in)

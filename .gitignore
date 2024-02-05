@@ -85,6 +85,7 @@ tp/Texinfo/XS/gnulib/lib/inttypes.h
 tp/Texinfo/XS/gnulib/lib/stdlib.h
 tp/Texinfo/XS/gnulib/lib/unistd.h
 tp/Texinfo/XS/gnulib/lib/iconv.h
+tp/Texinfo/XS/gnulib/lib/obstack.h
 tp/Texinfo/XS/gnulib/lib/stdckdint.h
 tp/Texinfo/XS/gnulib/lib/uchar.h
 tp/Texinfo/XS/gnulib/lib/uniconv.h
@@ -318,6 +319,7 @@ tp/Texinfo/XS/gnulib/m4/ltversion.m4
 tp/Texinfo/XS/gnulib/m4/lt~obsolete.m4
 
 tp/Texinfo/XS/main/DocumentXS.c
+tp/Texinfo/XS/main/IndicesXS.c
 tp/Texinfo/XS/main/accent_tables_8bit_codepoints.c
 tp/Texinfo/XS/main/command_data.c
 tp/Texinfo/XS/main/cmd_normalization.c
@@ -353,7 +355,6 @@ tp/Texinfo/XS/parsetexi/*.la
 tp/Texinfo/XS/parsetexi/*.lo
 
 tp/Texinfo/XS/convert/ConvertXS.c
-tp/Texinfo/XS/convert/IndicesXS.c
 
 tp/Texinfo/XS/convert/.libs
 tp/Texinfo/XS/convert/*.la

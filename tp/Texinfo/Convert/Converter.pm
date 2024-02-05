@@ -56,7 +56,7 @@ use Texinfo::Translations;
 
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
-@ISA = qw(Exporter Texinfo::Translations);
+@ISA = qw(Exporter);
 
 %EXPORT_TAGS = ( 'all' => [ qw(
 xml_protect_text
@@ -96,6 +96,8 @@ my %XS_overrides = (
    => "Texinfo::Convert::ConvertXS::get_conf",
   "Texinfo::Convert::Converter::_XS_set_document"
    => "Texinfo::Convert::ConvertXS::converter_set_document",
+  "Texinfo::Convert::Converter::_XS_get_converter_indices_sorted_by_letter"
+   => "Texinfo::Convert::ConvertXS::get_converter_indices_sorted_by_letter",
 
   # fully overriden for all the converters
   "Texinfo::Convert::Converter::get_converter_errors"
@@ -162,9 +164,9 @@ my %common_converters_defaults = (
 # values are what is used in tests of the Converters.  These variables are
 # customization options, set in the main program when a converter is
 # called from the main program.
-  'PACKAGE_AND_VERSION_OPTION'  => 'texinfo',
-  'PACKAGE_VERSION_OPTION'      => '',
-  'PACKAGE_URL_OPTION'          => 'http://www.gnu.org/software/texinfo/',
+  'PACKAGE_AND_VERSION'  => 'texinfo',
+  'PACKAGE_VERSION'      => '',
+  'PACKAGE_URL'          => 'http://www.gnu.org/software/texinfo/',
   'PROGRAM'              => '',
 );
 
@@ -180,7 +182,7 @@ my %all_converters_defaults
 if (0) {
   my $self;
   # TRANSLATORS: expansion of @error{} as Texinfo code
-  $self->gdt('error@arrow{}');
+  $self->cdt('error@arrow{}');
 }
 
 our %default_args_code_style = (
@@ -624,6 +626,33 @@ sub destroy($)
 {
 }
 
+sub cdt($$;$$)
+{
+  my ($self, $string, $replaced_substrings, $translation_context) = @_;
+
+  return Texinfo::Translations::gdt($self, $string,
+                                    $self->get_conf('documentlanguage'),
+                                    $replaced_substrings,
+                                    $translation_context);
+}
+
+sub cdt_string($$;$$)
+{
+  my ($self, $string, $replaced_substrings, $translation_context) = @_;
+
+  return Texinfo::Translations::gdt_string($self, $string,
+                                    $self->get_conf('documentlanguage'),
+                                    $replaced_substrings,
+                                    $translation_context);
+}
+
+sub pcdt($$;$$)
+{
+  my ($self, $translation_context, $string, $replaced_substrings) = @_;
+
+  return $self->cdt($string, $replaced_substrings, $translation_context);
+}
+
 sub converter_line_error($$$;$)
 {
   my $self = shift;
@@ -631,7 +660,7 @@ sub converter_line_error($$$;$)
   my $error_location_info = shift;
   my $continuation = shift;
 
-  my $message = Texinfo::Report::format_line_message ('error', $text,
+  my $message = Texinfo::Report::format_line_message('error', $text,
                                  $error_location_info, $continuation,
                                             $self->get_conf('DEBUG'));
   push @{$self->{'error_warning_messages'}}, $message;
@@ -644,7 +673,7 @@ sub converter_line_warn($$$;$)
   my $error_location_info = shift;
   my $continuation = shift;
 
-  my $message = Texinfo::Report::format_line_message ('warning', $text,
+  my $message = Texinfo::Report::format_line_message('warning', $text,
                                    $error_location_info, $continuation,
                                               $self->get_conf('DEBUG'));
   push @{$self->{'error_warning_messages'}}, $message;
@@ -1522,15 +1551,15 @@ sub float_type_number($$)
   my $tree;
   if ($type_element) {
     if (defined($float_number)) {
-      $tree = $self->gdt("{float_type} {float_number}",
+      $tree = $self->cdt("{float_type} {float_number}",
                          {'float_type' => $type_element,
                           'float_number' => {'text' => $float_number}});
     } else {
-      $tree = $self->gdt("{float_type}",
+      $tree = $self->cdt("{float_type}",
                          {'float_type' => $type_element});
     }
   } elsif (defined($float_number)) {
-    $tree = $self->gdt("{float_number}",
+    $tree = $self->cdt("{float_number}",
                        {'float_number' => {'text' => $float_number}});
   }
   return $tree;
@@ -1570,24 +1599,24 @@ sub float_name_caption($$)
     if ($caption_element) {
       if ($float_number_element) {
         # TRANSLATORS: added before caption
-        $prepended = $self->gdt('{float_type} {float_number}: ', $substrings);
+        $prepended = $self->cdt('{float_type} {float_number}: ', $substrings);
       } else {
         # TRANSLATORS: added before caption, no float label
-        $prepended = $self->gdt('{float_type}: ', $substrings);
+        $prepended = $self->cdt('{float_type}: ', $substrings);
       }
     } else {
       if ($float_number_element) {
-        $prepended = $self->gdt("{float_type} {float_number}", $substrings);
+        $prepended = $self->cdt("{float_type} {float_number}", $substrings);
       } else {
-        $prepended = $self->gdt("{float_type}", $substrings);
+        $prepended = $self->cdt("{float_type}", $substrings);
       }
     }
   } elsif ($float_number_element) {
     if ($caption_element) {
       # TRANSLATORS: added before caption, no float type
-      $prepended = $self->gdt('{float_number}: ', $substrings);
+      $prepended = $self->cdt('{float_number}: ', $substrings);
     } else {
-      $prepended = $self->gdt("{float_number}", $substrings);
+      $prepended = $self->cdt("{float_number}", $substrings);
     }
   }
   return ($caption_element, $prepended);
@@ -1698,6 +1727,50 @@ sub comma_index_subentries_tree {
     return {'contents' => \@contents};
   }
   return undef;
+}
+
+# Perl version should not be called, only used for the XS override.
+sub _XS_get_converter_indices_sorted_by_letter($$)
+{
+  my $converter = shift;
+  my $indices_information = shift;
+
+  return undef;
+}
+
+# TODO document
+sub get_converter_indices_sorted_by_letter($)
+{
+  my $self = shift;
+
+  if ($self->{'index_entries_by_letter'}) {
+    return $self->{'index_entries_by_letter'};
+  }
+
+  my $indices_information;
+  if ($self->{'document'}) {
+    $indices_information = $self->{'document'}->indices_information();
+  }
+
+  if ($indices_information) {
+    if (!$self->get_conf('TEST') and $self->{'converter_descriptor'}
+        and $XS_convert) {
+      # get from XS
+      $self->{'index_entries_by_letter'}
+        = _XS_get_converter_indices_sorted_by_letter($self,
+                                                     $indices_information);
+    } else {
+      my $merged_index_entries
+        = $self->{'document'}->merged_indices();
+
+      my $index_entries_sort_strings;
+      ($self->{'index_entries_by_letter'}, $index_entries_sort_strings)
+          = Texinfo::Indices::sort_indices_by_letter(undef, $self,
+                                           $merged_index_entries,
+                                           $indices_information);
+    }
+  }
+  return $self->{'index_entries_by_letter'};
 }
 
 sub _count_converted_text($$)
@@ -2438,6 +2511,50 @@ Texinfo::Report::add_formatted_message|Texinfo::Report/$registrar->add_formatted
 
 =back
 
+=head2 Translations in output documents
+
+C<Texinfo::Convert::Converter> provides wrappers around
+L<Texinfo::Translations> methods that sets the language to the current
+C<documentlanguage>.
+
+The C<cdt> and C<pcdt> methods are used to translate strings to be output in
+converted documents, and return a Texinfo tree.  The C<cdt_string> is similar
+but returns a simple string, for already converted strings.
+
+=over
+
+=item $tree = $converter->cdt($string, $replaced_substrings, $translation_context)
+
+=item $string = $converter->cdt_string($string, $replaced_substrings, $translation_context)
+X<C<cdt>> X<C<cdt_string>>
+
+The I<$string> is a string to be translated.  With C<cdt>
+the function returns a Texinfo tree, as the string is interpreted
+as Texinfo code after translation.  With C<cdt_string> a string
+is returned.
+
+I<$replaced_substrings> is an optional hash reference specifying
+some substitution to be done after the translation.  The key of the
+I<$replaced_substrings> hash reference identifies what is to be substituted.
+In the string to be translated word in brace matching keys of
+I<$replaced_substrings> are replaced.
+For C<cdt>, the value is a Texinfo tree that is substituted in the
+resulting texinfo tree. For C<cdt_string>, the value is a string that
+is replaced in the resulting string.
+
+The I<$translation_context> is optional.  If not C<undef> this is a translation
+context string for I<$string>.  It is the first argument of C<pgettext>
+in the C API of Gettext.
+
+=item $tree = $object->pcdt($translation_context, $string, $replaced_substrings)
+X<C<pcdt>>
+
+Same to C<cdt> except that the I<$translation_context> is not optional.
+This function is useful to mark strings with a translation context for
+translation.  This function is similar to pgettext in the Gettext C API.
+
+=back
+
 =head2 Conversion to XML
 
 Some C<Texinfo::Convert::Converter> methods target conversion to XML.
@@ -2495,9 +2612,9 @@ entity, or C<undef> is there is no such entity.
 The module provides methods that may be useful for converter.
 Most methods take a I<$converter> as argument to get some
 information and use methods for error reporting, see L</Registering error and
-warning messages>.  Also to translate strings, see L<Texinfo::Translations>.
-For useful methods that need a converter optionally and can be used in
-converters that do not inherit from C<Texinfo::Convert::Converter>, see
+warning messages>.  Also to translate strings, see L</Translations in output
+documents>.  For useful methods that need a converter optionally and can be
+used in converters that do not inherit from C<Texinfo::Convert::Converter>, see
 L<Texinfo::Convert::Utils>.
 
 =over

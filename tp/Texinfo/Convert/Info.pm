@@ -416,7 +416,7 @@ sub _info_header($$$)
   # This ensures that spaces in file are kept.
   $result .= add_next($paragraph, $output_filename);
   my $program = $self->get_conf('PROGRAM');
-  my $version = $self->get_conf('PACKAGE_VERSION_OPTION');
+  my $version = $self->get_conf('PACKAGE_VERSION');
   if (defined($program) and $program ne '') {
     $result .=
         add_text($paragraph, ", produced by $program version $version from ");
@@ -509,8 +509,6 @@ sub format_node($$)
                 or not $node->{'extra'}->{'is_target'});
 
   my ($node_text, undef) = $self->node_name($node);
-  # check not needed most probably because of the test of 'normalized'.
-  #return '' if ($node_text eq '');
 
   my $output_filename;
   if (defined($self->{'output_filename'})) {

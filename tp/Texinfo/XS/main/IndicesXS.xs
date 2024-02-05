@@ -37,7 +37,7 @@
 #include "utils.h"
  */
 #include "document.h"
-#include "indices_in_conversion.h"
+#include "manipulate_indices.h"
 #include "get_perl_info.h"
 /* for newSVpv_utf8 */
 #include "build_perl_info.h"
@@ -153,4 +153,16 @@ index_entry_element_sort_string (SV *customization_info_sv, SV *main_entry_sv, S
          }
     OUTPUT:
          RETVAL
+
+#void
+#sort_indices_by_letter (SV *registrar, SV *customization_information, SV *index_entries, SV *indices_information, ...)
+#     PROTOTYPE: $$$$;$
+#     PREINIT:
+#         SV *sorted_index_entries_sv;
+#      PPCODE:
+#         sorted_index_entries_sv = build_sorted_indices_by_letter (
+#
+#         EXTEND(SP, 2);
+#         PUSHs(sv_2mortal(sorted_index_entries_sv));
+#         PUSHs(sv_2mortal(result_sv));
 

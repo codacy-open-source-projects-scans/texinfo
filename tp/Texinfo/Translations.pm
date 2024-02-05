@@ -1,4 +1,4 @@
-# Translations.pm: translate strings.
+# Translations.pm: translate strings in output.
 #
 # Copyright 2010-2023 Free Software Foundation, Inc.
 # 
@@ -16,6 +16,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
+
+# This code is used for output documents strings translations, not for
+# error messages translations.
 
 package Texinfo::Translations;
 
@@ -37,12 +40,12 @@ use Locale::Messages;
 # modules do not setup data such that their order of loading is not
 # important, as long as they load after their dependencies.
 
-# to load a parser
-use Texinfo::Parser;
-
 use Texinfo::DocumentXS;
 
 use Texinfo::Convert::Unicode;
+
+# to load a parser
+use Texinfo::Parser;
 
 # we want a reliable way to switch locale for the document
 # strings translations so we don't use the system gettext.
@@ -53,7 +56,7 @@ sub import {
   if (!$module_loaded) {
     Texinfo::XSLoader::override(
       "Texinfo::Translations::_XS_configure",
-      "Texinfo::DocumentXS::translations_configure");
+      "Texinfo::DocumentXS::configure_output_strings_translations");
     # Example of how gdt could be overriden.  Not used because
     # the approach is flawed as there won't be any substitution if the trees in
     # $replaced_substrings are not registered in C data, as is the case in
@@ -70,9 +73,6 @@ sub import {
 # i18n
 
 my $DEFAULT_LANGUAGE = 'en';
-
-my $DEFAULT_ENCODING = 'utf-8';
-#my $DEFAULT_PERL_ENCODING = 'utf-8';
 
 my $messages_textdomain = 'texinfo';
 my $strings_textdomain = 'texinfo_document';
@@ -96,8 +96,7 @@ sub configure($;$)
 }
 
 # libintl converts between encodings but doesn't decode them into the
-# perl internal format.  This is only called if the encoding is a proper
-# perl encoding.
+# perl internal format.
 sub _decode_i18n_string($$)
 {
   my $string = shift;
@@ -137,37 +136,21 @@ sub _switch_messages_locale
   $working_locale = $locale;
 }
 
-# Get document translation - handle translations of in-document strings.
-# Return a parsed Texinfo tree
-# $LANG set the language if set, otherwise the documentlanguage configuration
-# variable is used; if still undef, the $DEFAULT_LANGUAGE variable is used.
-# NOTE whether documentlanguage is set as a configuration variable depends a
-# lot on the caller.
-#  * If called from a Parser, or from the main program, documentlanguage is in
-#    general not set, except if set from the command line.
-#    When called from the parser, however, it should only be for @def* object
-#    oriented def* index name translation and $LANG is likely to be set from the
-#    tree if there was a @documentlanguage.
-#  * If called from a converter, documentlanguage will in general be set from
-#    the document when it is encountered.  Before the first @documentlanguage,
-#    it depends on the converter.  Some do not set @documentlanguage before it
-#    is encountered.  Some set some default based on @documentlanguage if in
-#    the preamble, some set some default language (in general en) in any
-#    case.
-sub translate_string($$;$$)
+# Return a translated string.
+# $LANG set the language if set.  If undef, the $DEFAULT_LANGUAGE variable
+# is used.
+# NOTE If called from a converter, $LANG will in general be set from the
+# document documentlanguage when it is encountered.  Before the first
+# @documentlanguage, it depends on the converter.  Some do not set
+# @documentlanguage before it is encountered.  Some set some default
+# based on @documentlanguage if in the preamble, some set some default
+# language (in general en) in any case.
+# Can be replaced by a call to a user-supplied function in gdt* with a
+# different prototype.
+sub translate_string($$;$)
 {
-  my ($customization_information, $string, $translation_context, $lang) = @_;
-  if (ref($customization_information) eq 'Texinfo::Document') {
-    cluck;
-  }
-  # In addition to being settable from the command line,
-  # the language needs to be dynamic in case there is an untranslated string
-  # from another language that needs to be translated.
-  $lang = $customization_information->get_conf('documentlanguage')
-    if ($customization_information and !defined($lang));
-  if (defined($lang) and $lang eq '') {
-    cluck ("BUG: defined but empty documentlanguage: $customization_information: '$string'\n");
-  }
+  my ($string, $lang, $translation_context) = @_;
+
   $lang = $DEFAULT_LANGUAGE if (!defined($lang));
 
   my ($saved_LC_MESSAGES, $saved_LANGUAGE);
@@ -187,25 +170,6 @@ sub translate_string($$;$$)
 
   Locale::Messages::textdomain($strings_textdomain);
 
-  # FIXME do this only once when encoding is seen (or at beginning)
-  # instead of here, each time that gdt is called?
-  my $encoding;
-  #my $perl_encoding;
-  if ($customization_information) {
-    # NOTE the following customization variables are not set for
-    # a Parser, so the encoding will be undef when gdt is called from
-    # parsers.
-    if ($customization_information->get_conf('OUTPUT_ENCODING_NAME')) {
-      $encoding = $customization_information->get_conf('OUTPUT_ENCODING_NAME');
-    }
-    #if (defined($customization_information->get_conf('OUTPUT_PERL_ENCODING'))) {
-    #  $perl_encoding = $customization_information->get_conf('OUTPUT_PERL_ENCODING');
-    #}
-  } else {
-    # NOTE never happens in the tests, unlikely to happen at all.
-    $encoding = $DEFAULT_ENCODING;
-    #$perl_encoding = $DEFAULT_PERL_ENCODING;
-  }
   Locale::Messages::bind_textdomain_codeset($strings_textdomain, 'UTF-8');
   Locale::Messages::bind_textdomain_filter($strings_textdomain,
                           \&_decode_i18n_string, 'UTF-8');
@@ -216,16 +180,8 @@ sub translate_string($$;$$)
   # with UTF-8.  If there are actually characters that cannot be encoded in the
   # output encoding issues will still show up when encoding to output, though.
   # Should be more similar with code used in XS modules, too.
-  # As a side note, the best would have been to directly decode using the
+  # As a side note, the best could have been to directly decode using the
   # charset used in the po/gmo files, but it does not seems to be available.
-  #Locale::Messages::bind_textdomain_codeset($strings_textdomain, $encoding)
-  #  if (defined($encoding) and $encoding ne 'us-ascii');
-  #if (!($encoding and $encoding eq 'us-ascii')) {
-  #  if (defined($perl_encoding)) {
-  #    Locale::Messages::bind_textdomain_filter($strings_textdomain,
-  #      \&_decode_i18n_string, $perl_encoding);
-  #  }
-  #}
 
   my @langs = ($lang);
   if ($lang =~ /^([a-z]+)_([A-Z]+)/) {
@@ -234,31 +190,7 @@ sub translate_string($$;$$)
     push @langs, $main_lang;
   }
 
-  my @locales;
-  foreach my $language (@langs) {
-    # NOTE the locale file with appended encoding are searched for, but if
-    # not found, files with stripped encoding are searched for too:
-    # https://www.gnu.org/software/libc/manual/html_node/Using-gettextized-software.html
-    if (defined($encoding)) {
-      push @locales, "$language.$encoding";
-    } else {
-      push @locales, $language;
-    }
-    # also try us-ascii, the charset should be compatible with other
-    # charset, and should resort to @-commands if needed for non
-    # ascii characters
-    # REMARK this is not necessarily true for every language/encoding.
-    # This can be true for latin1, and maybe some other 8 bit encodings
-    # with accents available as @-commands, but not for most
-    # language.  However, for those languages, it is unlikely that
-    # the locale with .us-ascii are set, so it should not hurt
-    # to add this possibility.
-    if (!$encoding or ($encoding and $encoding ne 'us-ascii')) {
-      push @locales, "$language.us-ascii";
-    }
-  }
-
-  my $locales = join(':', @locales);
+  my $locales = join(':', @langs);
 
   Locale::Messages::nl_putenv("LANGUAGE=$locales");
 
@@ -291,25 +223,32 @@ sub translate_string($$;$$)
 }
 
 # Get document translation - handle translations of in-document strings.
-# Return a parsed Texinfo tree
-sub gdt($$;$$$)
+# Return a parsed Texinfo tree.
+# $TRANSLATED_STRING_METHOD is optional.  If set, it is called instead
+# of translate_string.  $TRANSLATED_STRING_METHOD takes
+# $CUSTOMIZATION_INFORMATION as first argument in addition to other
+# translate_string arguments.
+sub gdt($$;$$$$)
 {
-  my ($customization_information, $string, $replaced_substrings,
-      $translation_context, $lang) = @_;
+  my ($customization_information, $string, $lang, $replaced_substrings,
+      $translation_context, $translate_string_method) = @_;
 
-  # allows to redefine translate_string, as done in the HTML converter.  Cannot
-  # directly call translate_string on $customization_information, as it may not
-  # provide the method if it does not inherit from Texinfo::Translations, as is
-  # the case for Texinfo::Parser.
-  my $translate_string_method
-     = $customization_information->can('translate_string');
-  $translate_string_method = \&translate_string if (!$translate_string_method);
-  my $translated_string = &$translate_string_method($customization_information,
-                                       $string, $translation_context, $lang);
+  my $translated_string;
+  if ($translate_string_method) {
+    $translated_string = &$translate_string_method($customization_information,
+                                       $string, $lang, $translation_context);
+  } else {
+    $translated_string = translate_string($string, $lang, $translation_context);
+  }
 
-  my $result_tree = replace_convert_substrings($customization_information,
-                                    $translated_string,
-                                    $replaced_substrings);
+  my $debug_level;
+  if ($customization_information) {
+    $debug_level = $customization_information->get_conf('DEBUG');
+  }
+
+  my $result_tree
+    = _replace_convert_substrings($translated_string, $replaced_substrings,
+                                  $debug_level);
   #print STDERR "GDT '$string' '$translated_string' '".
   #     Texinfo::Convert::Texinfo::convert_to_texinfo($result_tree)."'\n";
   return $result_tree;
@@ -318,31 +257,24 @@ sub gdt($$;$$$)
 # Get document translation - handle translations of in-document strings.
 # In general for already converted strings that do not need to go through
 # a Texinfo tree.
-sub gdt_string($$;$$$)
+sub gdt_string($$;$$$$)
 {
-  my ($customization_information, $string, $replaced_substrings,
-      $translation_context, $lang) = @_;
+  my ($customization_information, $string, $lang, $replaced_substrings,
+      $translation_context, $translate_string_method) = @_;
 
-  # Following code allows to redefine translate_string, as done in the HTML
-  # converter.  We check with can() explicitely instead of letting inheritance
-  # rules determine which method to call (which would be achieved with
-  # $customization_information->translate_string) because
-  # $customization_information may not provide the method if it does not
-  # inherit from Texinfo::Translations, as is the case for Texinfo::Parser.
-  my $translate_string_method
-     = $customization_information->can('translate_string');
-  $translate_string_method = \&translate_string if (!$translate_string_method);
+  my $translated_string;
+  if ($translate_string_method) {
+    $translated_string = &$translate_string_method($customization_information,
+                                       $string, $lang, $translation_context);
+  } else {
+    $translated_string = translate_string($string, $lang, $translation_context);
+  }
 
-  my $translated_string = &$translate_string_method($customization_information,
-                                       $string, $translation_context, $lang);
-
-  return replace_substrings ($customization_information, $translated_string,
-                             $replaced_substrings);
+  return _replace_substrings ($translated_string, $replaced_substrings);
 }
 
-sub replace_substrings($$;$)
+sub _replace_substrings($;$)
 {
-  my $customization_information = shift;
   my $translated_string = shift;
   my $replaced_substrings = shift;
 
@@ -356,12 +288,11 @@ sub replace_substrings($$;$)
   return $translation_result;
 }
 
-
-sub replace_convert_substrings($$;$)
+sub _replace_convert_substrings($;$$)
 {
-  my $customization_information = shift;
   my $translated_string = shift;
   my $replaced_substrings = shift;
+  my $debug_level = shift;
 
   my $texinfo_line = $translated_string;
 
@@ -381,26 +312,17 @@ sub replace_convert_substrings($$;$)
   # location in tree of substituted brace enclosed strings.
   my $parser_conf = {'accept_internalvalue' => 1};
 
-  # general customization relevant for parser
-  if ($customization_information) {
-    my $debug_level = $customization_information->get_conf('DEBUG');
-    # one less debug level for the gdt parser.
-    if (defined($debug_level)) {
-      if ($debug_level > 0) {
-        $debug_level--;
-      }
-      $parser_conf->{'DEBUG'} = $debug_level;
+  # set parser debug level to one less than $debug_level
+  if (defined($debug_level)) {
+    my $parser_debug_level = $debug_level;
+    if ($parser_debug_level > 0) {
+      $parser_debug_level--;
     }
-    #foreach my $conf_variable () {
-    #  if (defined($customization_information->get_conf($conf_variable))) {
-    #    $parser_conf->{$conf_variable}
-    #      = $customization_information->get_conf($conf_variable);
-    #  }
-    #}
+    $parser_conf->{'DEBUG'} = $parser_debug_level;
   }
   my $parser = Texinfo::Parser::simple_parser($parser_conf);
 
-  if ($customization_information->get_conf('DEBUG')) {
+  if ($debug_level) {
     print STDERR "IN TR PARSER '$texinfo_line'\n";
   }
 
@@ -416,7 +338,7 @@ sub replace_convert_substrings($$;$)
     }
   }
   $tree = _substitute($tree, $replaced_substrings);
-  if ($customization_information->get_conf('DEBUG')) {
+  if ($debug_level) {
     print STDERR "RESULT GDT: '".
        Texinfo::Convert::Texinfo::convert_to_texinfo($tree)."'\n";
   }
@@ -465,9 +387,9 @@ sub _substitute($$) {
 sub pgdt($$$;$$)
 {
   my ($customization_information, $translation_context, $string,
-      $replaced_substrings, $lang) = @_;
-  return $customization_information->gdt($string, $replaced_substrings,
-                                         $translation_context, $lang);
+      $lang, $replaced_substrings) = @_;
+  return gdt($customization_information, $string, $lang,
+             $replaced_substrings, $translation_context);
 }
 
 if (0) {
@@ -532,8 +454,8 @@ sub complete_indices($$)
               or $def_command eq 'defmethod'
               or $def_command eq 'deftypemethod') {
             $index_entry = gdt($customization_information, '{name} on {class}',
-                               {'name' => $name_copy, 'class' => $class_copy},
-                                undef, $entry_language);
+                               $entry_language,
+                               {'name' => $name_copy, 'class' => $class_copy});
             $text_element = {'text' => ' on ',
                              'parent' => $index_entry_normalized};
           } elsif ($def_command eq 'defcv'
@@ -541,8 +463,8 @@ sub complete_indices($$)
                    or $def_command eq 'deftypeivar'
                    or $def_command eq 'deftypecv') {
             $index_entry = gdt($customization_information, '{name} of {class}',
-                               {'name' => $name_copy, 'class' => $class_copy},
-                               undef, $entry_language);
+                               $entry_language,
+                               {'name' => $name_copy, 'class' => $class_copy});
             $text_element = {'text' => ' of ',
                              'parent' => $index_entry_normalized};
           }
@@ -580,6 +502,7 @@ Texinfo::Translations - Translations of output documents strings for Texinfo mod
   Texinfo::Translations::configure('LocaleData');
 
   my $tree_translated = $converter->gdt('See {reference} in @cite{{book}}',
+                         $converter->get_conf('documentlanguage'),
                        {'reference' => $tree_reference,
                         'book'  => {'text' => $book_name}});
 
@@ -621,17 +544,11 @@ The C<gdt> and C<pgdt> methods are used to translate strings to be output in
 converted documents, and return a Texinfo tree.  The C<gdt_string> is similar
 but returns a simple string, for already converted strings.
 
-The C<replace_convert_substrings> method is called by C<gdt> to substitute
-replaced substrings in a translated string and convert to a Texinfo tree.
-It may be especially useful when overriding or reimplementing C<gdt>.  The
-C<replace_substrings> method is called by C<gdt_string> to substitute
-replaced substrings in a translated string.
-
 =over
 
-=item $tree = $object->gdt($string, $replaced_substrings, $translation_context, $lang)
+=item $tree = $object->gdt($string, $lang, $replaced_substrings, $translation_context, $translate_string_method)
 
-=item $string = $object->gdt_string($string, $replaced_substrings, $translation_context, $lang)
+=item $string = $object->gdt_string($string, $lang, $replaced_substrings, $translation_context, $translate_string_method)
 
 X<C<gdt>> X<C<gdt_string>>
 
@@ -639,6 +556,8 @@ The I<$string> is a string to be translated.  With C<gdt>
 the function returns a Texinfo tree, as the string is interpreted
 as Texinfo code after translation.  With C<gdt_string> a string
 is returned.
+
+I<$lang> is the language used for the translation.
 
 I<$replaced_substrings> is an optional hash reference specifying
 some substitution to be done after the translation.  The key of the
@@ -651,13 +570,15 @@ is replaced in the resulting string.
 
 The I<$object> is typically a converter, but can be any object that implements
 C<get_conf>, or undefined (C<undef>).  If not undefined, the information in the
-I<$object> is used to determine the encoding, the documentlanguage and get some
-customization information.
+I<$object> is used to get some customization information.
 
 The I<$translation_context> is optional.  If not C<undef> this is a translation
 context string for I<$string>.  It is the first argument of C<pgettext>
-in the C API of Gettext.  I<$lang> is optional. If set, it overrides the
-documentlanguage.
+in the C API of Gettext.
+
+The I<$translate_string_method> is optional.  If not undef it should be a
+reference on a function that is called instead of C<translate_string>.  It
+allows to customize string translation.
 
 For example, in the following call, the string
 C<See {reference} in @cite{{book}}> is translated, then
@@ -666,39 +587,20 @@ I<$tree_reference> in the resulting tree, and I<{book}>
 replaced by the associated texinfo tree text element:
 
   $tree = $converter->gdt('See {reference} in @cite{{book}}',
+                       $converter->get_conf('documentlanguage'),
                        {'reference' => $tree_reference,
                         'book'  => {'text' => $book_name}});
 
 C<gdt> uses a gettext-like infrastructure to retrieve the
 translated strings, using the I<texinfo_document> domain.
 
-=item $tree = $object->pgdt($translation_context, $string, $replaced_substrings, $lang)
+=item $tree = $object->pgdt($translation_context, $string, $lang, $replaced_substrings)
 X<C<pgdt>>
 
 Same to C<gdt> except that the I<$translation_context> is not optional.
 Calls C<gdt>.  This function is useful to mark strings with a
 translation context for translation.  This function is similar to pgettext
 in the Gettext C API.
-
-=item $tree = $object->replace_convert_substrings($translated_string, $replaced_substrings)
-
-=item $string = $object->replace_substrings($translated_string, $replaced_substrings)
-
-X<C<replace_convert_substrings>> X<C<replace_substrings>>
-
-I<$translated_string> is a string already translated.  I<$replaced_substrings>
-is an optional hash reference specifying some substitution to be done.
-I<$object> is typically a converter, but can be any object that implements
-C<get_conf>, or undefined (C<undef>).  If not undefined, the information in the
-I<$object> is used to get some customization information.
-
-C<replace_convert_substrings> performs the substitutions of substrings in the
-translated string and converts to a Texinfo tree.  It is called from C<gdt>
-after the retrieval of the translated string.
-
-C<replace_substrings> performs the substitutions of substrings in the
-translated string.  It is called from C<gdt_string> after the retrieval of the
-translated string.
 
 =back
 

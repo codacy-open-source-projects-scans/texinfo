@@ -40,6 +40,9 @@
 #include "translations.h"
 #include "manipulate_tree.h"
 #include "unicode.h"
+#include "manipulate_indices.h"
+#include "document.h"
+#include "call_perl_function.h"
 #include "converter.h"
 
 /* associate lower case no brace accent command to the upper case
@@ -340,15 +343,13 @@ float_type_number (CONVERTER *self, const ELEMENT *float_e)
       add_element_to_named_string_element_list (replaced_substrings,
                                      "float_type", type_element_copy);
       if (float_number)
-        tree = gdt_tree ("{float_type} {float_number}", self->document,
-                         self->conf, replaced_substrings, 0, 0);
+        tree = cdt_tree ("{float_type} {float_number}", self,
+                         replaced_substrings, 0);
       else
-        tree = gdt_tree ("{float_type}", self->document, self->conf,
-                         replaced_substrings, 0, 0);
+        tree = cdt_tree ("{float_type}", self, replaced_substrings, 0);
     }
   else if (float_number)
-    tree = gdt_tree ("{float_number}", self->document, self->conf,
-                     replaced_substrings, 0, 0);
+    tree = cdt_tree ("{float_number}", self, replaced_substrings, 0);
 
   destroy_named_string_element_list (replaced_substrings);
 
@@ -392,34 +393,32 @@ float_name_caption (CONVERTER *self, const ELEMENT *float_e)
         {
           if (float_number)
             /* TRANSLATORS: added before caption */
-            prepended = gdt_tree ("{float_type} {float_number}: ",
-                                  self->document,
-                                  self->conf, replaced_substrings, 0, 0);
+            prepended = cdt_tree ("{float_type} {float_number}: ",
+                                  self, replaced_substrings, 0);
           else
             /* TRANSLATORS: added before caption, no float label */
-            prepended = gdt_tree ("{float_type}: ", self->document, self->conf,
-                                 replaced_substrings, 0, 0);
+            prepended = cdt_tree ("{float_type}: ", self,
+                                  replaced_substrings, 0);
         }
       else
         {
           if (float_number)
-            prepended = gdt_tree ("{float_type} {float_number}",
-                                  self->document,
-                                  self->conf, replaced_substrings, 0, 0);
+            prepended = cdt_tree ("{float_type} {float_number}",
+                                  self, replaced_substrings, 0);
           else
-            prepended = gdt_tree ("{float_type}", self->document, self->conf,
-                                 replaced_substrings, 0, 0);
+            prepended = cdt_tree ("{float_type}", self,
+                                  replaced_substrings, 0);
         }
     }
   else if (float_number)
     {
       if (caption_element)
       /* TRANSLATORS: added before caption, no float type */
-        prepended = gdt_tree ("{float_number}: ", self->document, self->conf,
-                              replaced_substrings, 0, 0);
+        prepended = cdt_tree ("{float_number}: ", self,
+                              replaced_substrings, 0);
       else
-        prepended = gdt_tree ("{float_number}", self->document, self->conf,
-                              replaced_substrings, 0, 0);
+        prepended = cdt_tree ("{float_number}", self,
+                              replaced_substrings, 0);
     }
 
   result->caption = caption_element;
@@ -636,6 +635,41 @@ free_comma_index_subentries_tree (ELEMENT_LIST *element_list)
         destroy_element (content);
     }
   destroy_list (element_list);
+}
+
+INDEX_SORTED_BY_LETTER *
+converter_sort_indices_by_letter (CONVERTER *self)
+{
+  if (self->index_entries_by_letter)
+    return self->index_entries_by_letter;
+
+  const MERGED_INDICES *merged_indices
+    = document_merged_indices (self->document);
+
+  self->index_entries_by_letter
+    = sort_indices_by_letter (&self->error_messages, self->conf,
+                              merged_indices,
+                              self->document->index_names);
+  return self->index_entries_by_letter;
+}
+
+INDEX_SORTED_BY_LETTER *
+get_converter_indices_sorted_by_letter (CONVERTER *self)
+{
+  if (self->index_entries_by_letter)
+    return self->index_entries_by_letter;
+
+  if (self->document->index_names)
+    {
+      /* get Perl sorting for reproducible tests */
+      if (self->conf->TEST.integer > 0)
+        self->index_entries_by_letter
+         = get_call_index_entries_sorted_by_letter (self);
+      else /* sets self->index_entries_by_letter */
+        converter_sort_indices_by_letter (self);
+    }
+
+  return self->index_entries_by_letter;
 }
 
 /* to be freed by caller */

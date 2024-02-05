@@ -1,3 +1,579 @@
+2024-02-04  Patrice Dumas  <pertusus@free.fr>
+
+	Add COLLATION_LANGUAGE for linguistic tailoring of indices sorting
+
+	* tp/Texinfo/options_data.txt (COLLATION_LANGUAGE),
+	tp/Texinfo/Indices.pm (setup_sortable_index_entries), doc/texinfo.texi
+	(Other Customization Variables): add COLLATION_LANGUAGE to set
+	linguistic tailoring for index sorting.  Not set in the default case.
+	Requires Unicode::Collate::Locale to be effective.
+	For a discussion about this customization option, see bug-texinfo, 4
+	Feb 2024.
+
+2024-02-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (%text_brace_no_arg_commands),
+	tp/Texinfo/Convert/NodeNameNormalization.pm,
+	tp/Texinfo/Convert/Text.pm: move %text_brace_no_arg_commands to
+	Texinfo/Common.pm to avoid a dependency of NodeNameNormalization.pm on
+	Text.pm as it leads to a circular dependency as Text.pm depends
+	indirectly on NodeNameNormalization.pm.
+
+2024-02-04  Patrice Dumas  <pertusus@free.fr>
+
+	* Texinfo/Convert/NodeNameNormalization.pm (_convert): rename $command
+	as $cmdname and use it more through the code.
+
+2024-02-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Indices.pm (setup_sortable_index_entries),
+	tp/Texinfo/XS/main/manipulate_indices.c
+	(setup_sortable_index_entries): do not set INCLUDE_DIRECTORIES, as it
+	is only useful for @verbatiminclude, which cannot appear in index
+	entries.
+
+2024-02-04  Patrice Dumas  <pertusus@free.fr>
+
+	Update po files
+
+2024-02-04  Patrice Dumas  <pertusus@free.fr>
+
+	Make indices sorting independent of the output encodings
+
+	* NEWS, tp/Texinfo/Indices.pm (setup_sortable_index_entries),
+	tp/Texinfo/XS/main/manipulate_indices.c
+	(setup_sortable_index_entries): do not use
+	setup_index_entry_keys_formatting to setup the conversion to text of
+	sort strings.  Instead setup the conversion to always use unicode if
+	possible and never pass a converter.
+
+	* tp/Texinfo/Indices.pm (setup_index_entry_keys_formatting): rename
+	$customization_info as $customization_information.
+
+2024-02-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_printindex_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_printindex_command): if
+	the first command in the first index entry in a letter is a no
+	arg command, format the command, possibly using the upper case command 
+	to format the letter.
+
+	* tp/Texinfo/XS/main/manipulate_indices.c (strip_index_ignore_chars)
+	(index_entry_element_sort_string, new_index_entry_text_or_command)
+	(idx_leading_text_or_command)
+	(index_entry_first_letter_text_or_command),
+	tp/Texinfo/XS/main/manipulate_indices.h (INDEX_ENTRY_TEXT_OR_COMMAND):
+	add strip_index_ignore_chars based onindex_entry_element_sort_string
+	code.  Implement index_entry_first_letter_text_or_command in C.
+
+	* test_files_generated_list, tp/t/html_tests.t
+	(letter_command_in_index, U_in_index): new tests with @-commands in
+	index entries that should be used for letter formatting.
+
+2024-02-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (is_content_empty): do not consider text set to
+	'0' to be empty.
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_printindex_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_printindex_command):
+	normalize and transliterate letter to use it as an identifier. Gather
+	the first formatted index entry in a letter. Format the letter only
+	once.
+
+	* tp/Texinfo/Indices.pm (_idx_leading_text_or_command)
+	(index_entry_first_letter_text_or_command): add a function that finds
+	the first letter as an @-command, or the first letter text.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Utils.pm (definition_category_tree),
+	tp/Texinfo/XS/main/convert_utils.c (definition_category_tree):
+	set translation using the documentlanguage extra information from the
+	tree element if there are no options available.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (_convert),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal):
+	translate untranslated type using the documentlanguage extra
+	information from the tree element if there is no converter
+	available.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document.c
+	(unregister_document_merge_with_document): merge
+	unregister_document_descriptor_tree in
+	unregister_document_merge_with_document.  Remove TREE_AND_STRINGS.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document.c
+	(unregister_document_merge_with_document),
+	tp/Texinfo/XS/main/translations.c (gdt_tree): add based on gdt_tree
+	code.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_gdt, html_gdt_tree)
+	(html_cdt_tree): redo functions based on new codes.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/translations.c (replace_convert_substrings):
+	call reset_parser.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_cdt),
+	tp/Texinfo/XS/main/translations.c (replace_convert_substrings, gdt):
+	pass debug_level instead of options to replace_convert_substrings.
+	Set parser debug level in replace_convert_substrings.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Translations.pm (translate_string, gdt, gdt_string):
+	remove unused translate_string first argument.  Do not remove the
+	first argument of the user-defined $translate_string_method optionally
+	passed to gdt and gdt_string.  Update callers.
+
+	* tp/Texinfo/Translations.pm (_replace_substrings)
+	(_replace_convert_substrings): rename to make clear that the functions
+	are internal.  Replace _replace_convert_substrings
+	$customization_information by $debug_level as it is the only variable
+	that is used and we want to keep it like this.
+
+	* tp/Texinfo/XS/main/translations.c (translate_string): remove unused
+	first argument.  Update callers.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (pcdt): call cdt.
+
+	* tp/Texinfo/Translations.pm (gdt, gdt_string): add a
+	$translate_string_method to allow customization of translate_string
+	instead of using can on the $customization_information argument.
+
+	* tp/Texinfo/Convert/HTML.pm (@ISA, html_translate_string)
+	(cdt, cdt_string): do not inherit Texinfo::Translations.
+	Rename translate_string as html_translate_string.  Redefine cdt and
+	cdt_string to pass html_translate_string to gdt and gdt_string
+	to customize translate_string.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_utils.c (cdt_tree): add to replace
+	gdt_tree when only converter is used.  Update caller of gdt_tree.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_translate_string),
+	tp/Texinfo/XS/main/translations.c (translate_string): change order of
+	arguments.  Use passed lang as is.  Update callers.
+
+	* tp/Texinfo/XS/main/translations.c (gdt, gdt_tree, gdt_string)
+	(pgdt_tree), tp/Texinfo/XS/main/DocumentXS.xs: change arguments order.
+	Update callers.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_cdt, html_cdt_tree)
+	(html_cdt_string, html_pcdt_tree): use instead of html_gdt,
+	html_gdt_tree and html_gdt_string and html_pgdt_tree.  Determine lang
+	from converter in html_cdt_tree and html_cdt_string, use converter
+	document.  Update callers.
+
+	* tp/Texinfo/XS/structuring_transfo/structuring.c (new_master_menu):
+	separate better cases of options defined or not.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Translations.pm (pgdt): call gdt directly.
+
+	* tp/Texinfo/Convert/Converter.pm (@ISA), tp/Texinfo/Convert/HTML.pm
+	(@ISA): do not inherit Texinfo::Translations in Converter.pm.  Inherit
+	Texinfo::Translations in HTML.pm, only to be able to redefine
+	translate_string.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Translations Output and Customization),
+	(Internationalization of Strings Function), po_document/Makevars
+	(XGETTEXT_OPTIONS), tp/Texinfo/Convert/Converter.pm (cdt, cdt_string)
+	(pcdt), tp/Texinfo/Convert/*.pm, tp/Texinfo/Translations.pm
+	(translate_string, gdt, gdt_string, pgdt): do not set language in
+	gdt, gdt_string, pgdt, instead get it as argument.  Change the
+	arguments order to have $lang appear earlier.  Add wrappers for
+	converters, called cdt, cdt_string and pcdt that set the language with
+	get_conf('documentlanguage').  Update callers.
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	No encoding, no us-ascii added to locale for document translations
+
+	* NEWS, doc/texinfo.texi (Internationalization of Document Strings),
+	tp/Texinfo/Translations.pm (translate_string),
+	tp/Texinfo/XS/main/translations.c (translate_string): do not prepend
+	the encoding nor us-ascii to the locale name to find the translations.
+	For the encoding it is not done in XS, not useful since long in Perl
+	and encoding was never available when translating from parser.  Note
+	that this does not constrain the actual encoding declared in the po/mo
+	file (which could be us-ascii) and do not prevent from using accented
+	@-commands in translations (which would be needed for accented letters
+	if the encoding is us-ascii).
+
+2024-02-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/tests/Makefile.onetst, tp/tests/coverage/list-of-tests: disable
+	the test of --trace-includes as it leads to a different result in out
+	of sources build.
+
+2024-02-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/get_perl_info.c
+	(copy_sv_options_for_convert_text): fetch ASCII_GLYPH, NUMBER_SECTIONS
+	and set_case.
+
+	* tp/t/convert_to_text.t: test 'set_case' value set as a
+	Texinfo::Convert::Text::convert_to_text call option.
+
+2024-02-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (test_files),
+	t/input_files/formatting_customizations_input.texi, tp/Makefile.tres,
+	tp/t/converters_tests.t (reference_for_formatting_customizations)
+	(test_formatting_customizations), tp/tests/Makefile.onetst,
+	tp/tests/formatting/list-of-tests: add tests of customizations on
+	formatting.  Setup a separate test in tests/formatting/list-of-tests
+	to be able to test rawtext too, as in t/*.t raw text does not take
+	into account customization.
+
+	* tp/Texinfo/Convert/Text.pm (brace_no_arg_command),
+	tp/Texinfo/Convert/Unicode.pm (unicode_point_decoded_in_encoding),
+	tp/Texinfo/XS/main/convert_to_text.c (text_brace_no_arg_command),
+	tp/Texinfo/XS/main/unicode.c (unicode_point_decoded_in_encoding):
+	consider that encoding is the default, UTF-8 in
+	unicode_point_decoded_in_encoding if undef.  Check that encoding is
+	defined in text brace_no_arg_command and do not call unicode
+	brace_no_arg_command if not.
+
+	* tp/Texinfo/Translations.pm (import),
+	tp/Texinfo/XS/main/DocumentXS.xs
+	(configure_output_strings_translations),
+	tp/Texinfo/XS/main/translations.c
+	(configure_output_strings_translations): rename
+	translations_configure as configure_output_strings_translations.
+
+	* tp/Texinfo/XS/main/translations.c
+	(configure_output_strings_translations): add error message if
+	bindtextdomain failed.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_translate_names): add
+	document to html_gdt_tree call.
+
+2024-02-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c,
+	tp/Texinfo/XS/main/call_perl_function.c
+	(get_call_index_entries_sorted_by_letter): move
+	get_call_index_entries_sorted_by_letter to call_perl_function.c.
+
+	* tp/Texinfo/XS/convert/converter.c
+	(converter_sort_indices_by_letter),
+	tp/Texinfo/XS/main/manipulate_indices.c: move
+	converter_sort_indices_by_letter to converter.c.
+
+	* tp/Texinfo/Convert/Converter.pm (%XS_overrides)
+	(_XS_get_converter_indices_sorted_by_letter)
+	(get_converter_indices_sorted_by_letter),
+	tp/Texinfo/Convert/HTML.pm (get_info),
+	tp/Texinfo/Indices.pm (%XS_convert_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs
+	(get_converter_indices_sorted_by_letter),
+	tp/Texinfo/XS/main/IndicesXS.xs,
+	tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/convert/converter.c
+	(get_converter_indices_sorted_by_letter): add
+	get_converter_indices_sorted_by_letter based on get_info in HTML.pm
+	and associated _XS_get_converter_indices_sorted_by_letter based on
+	get_converter_indices_sorted_by_letter in Texinfo::Indices.
+	Remove Texinfo::Indices::get_converter_indices_sorted_by_letter.
+	Move get_converter_indices_sorted_by_letter to ConvertXS.xs.
+	Rename html_get_info_index_entries_by_letter as
+	get_converter_indices_sorted_by_letter and move to converter.c.
+
+2024-01-31  Patrice Dumas  <pertusus@free.fr>
+
+	Sort index entries on demand in HTML
+
+	* tp/Texinfo/Convert/HTML.pm (get_info, convert, output): sort indices
+	when get_info is called for 'index_entries_by_letter'.
+
+	* tp/Texinfo/XS/main/IndicesXS.xs
+	(get_converter_indices_sorted_by_letter),
+	tp/Texinfo/XS/main/manipulate_indices.c
+	(converter_sort_indices_by_letter): add
+	converter_sort_indices_by_letter to sort index entries by letter with
+	a converter.  Call it in get_converter_indices_sorted_by_letter.
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(get_call_index_entries_sorted_by_letter),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_get_info_index_entries_by_letter, convert_printindex_command):
+	add get_call_index_entries_sorted_by_letter to get sorted indices from
+	HTML by calling Texinfo::Convert::HTML::get_info and
+	get_sv_index_entries_sorted_by_letter.  Add
+	html_get_info_index_entries_by_letter and call it when sorted indices
+	are needed.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs: remove
+	_XS_get_index_entries_sorted_by_letter, _NonXS_sort_index_entries,
+	_XS_only_sort_index_entries, _sort_index_entries,
+	get_index_entries_sorted_by_letter, html_sort_index_entries.
+
+2024-01-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document.c (document_merged_indices): rename
+	merged_indices as document_merged_indices.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_sort_index_entries): use
+	document_merged_indices.
+
+	* tp/Texinfo/XS/main/manipulate_indices.c
+	(index_entry_element_sort_string, index_entry_element_sort_string_key)
+	(setup_sortable_index_entries, sort_indices_by_letter): use const for
+	merged_indices.
+
+2024-01-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (locate_include_file): change code used to
+	concatenate directories and file to get the same result as with XS/C
+	in tests.
+
+2024-01-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (locate_include_file): simplify code.
+
+2024-01-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line): check if
+	verbatiminclude path is defined.
+
+2024-01-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (nodist_IndicesXS_la_SOURCES),
+	tp/Texinfo/XS/main/IndicesXS.xs: move IndicesXS.xs to main/.
+
+2024-01-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_la_SOURCES)
+	(IndicesXS_la_SOURCES, ConvertXS_la_SOURCES),
+	tp/Texinfo/XS/main/manipulate_indices.c: move indices_in_conversion.c
+	to main/ and rename as manipulate_indices.c.
+
+	* tp/Texinfo/Convert/HTML.pm (_NonXS_sort_index_entries),
+	tp/Texinfo/Convert/IXIN.pm (output_ixin), tp/Texinfo/Convert/LaTeX.pm
+	(_prepare_indices), tp/Texinfo/Convert/Plaintext.pm
+	(process_printindex), tp/Texinfo/Document.pm (merged_indices),
+	tp/init/chm.pm, tp/t/test_sort.t, tp/t/test_utils.pl: add
+	merged_indices in Texinfo::Document to store and get merged indices in
+	document.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_sort_index_entries),
+	tp/Texinfo/XS/main/converter_types.h, tp/Texinfo/XS/main/document.c
+	(merged_indices, destroy_document_information_except_tree),
+	tp/Texinfo/XS/main/document_types.h (MERGED_INDEX, MERGED_INDICES)
+	(DOCUMENT), tp/Texinfo/XS/main/manipulate_indices.c (merge_indices)
+	(destroy_merged_indices, setup_sortable_index_entries)
+	(sort_indices_by_letter): add merged_indices in document to store and
+	get merged indices in document.  Remove index_entries from CONVERTER.
+	Move MERGED_INDEX to document_types.h, add MERGED_INDICES struct for a
+	list of merged indices.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides)
+	(_NonXS_sort_index_entries), tp/Texinfo/XS/convert/ConvertXS.xs,
+	tp/Texinfo/XS/convert/convert_html.c: remove
+	_XS_html_merge_index_entries and html_merge_index_entries.
+
+2024-01-31  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Conversion General Information),
+	tp/Texinfo/Convert/HTML.pm (%available_converter_info)
+	(_NonXS_sort_index_entries), tp/init/chm.pm (chm_init): remove
+	'index_entries' from the HTML general information API, it can easily
+	be setup in user code.
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(build_sorted_indices_by_letter): add to be able to build Perl sorted
+	indices from C data.
+
+	* tp/Texinfo/Indices.pm (%XS_convert_overrides)
+	(get_converter_indices_sorted_by_letter),
+	tp/Texinfo/XS/convert/IndicesXS.xs
+	(get_converter_indices_sorted_by_letter): add an XS interface to get
+	indices sorted by letter from a converter.
+
+	* tp/Texinfo/Convert/HTML.pm (get_info): get 'index_entries_by_letter'
+	on demand from XS if not already set.
+
+2024-01-30  Patrice Dumas  <pertusus@free.fr>
+
+	Add gnulib module for XS
+
+	* tp/Texinfo/XS:
+	Run "gnulib-tool --add-import unictype/category-Mn"
+
+2024-01-30  Patrice Dumas  <pertusus@free.fr>
+
+	* contrib/mass_test/generate_perlVSC.sh: do not remove the directories
+	if only one test is done.
+
+	* contrib/mass_test/check_perlVSC.sh: add the possibility to check the
+	diff for one test only.
+
+2024-01-30  Patrice Dumas  <pertusus@free.fr>
+
+	Index sorting in C
+
+	* tp/Texinfo/Indices.pm (setup_sortable_index_entries): rename
+	variables.  Simplify code that determine that there is one non empty
+	entry/subentry.
+
+	* tp/Texinfo/XS/parsetexi/indices.c (enter_index_entry),
+	tp/Texinfo/XS/main/tree_types.h (INDEX_ENTRY): add index
+	entry number in index entry structure.
+
+	* tp/Texinfo/XS/convert/indices_in_conversion.c (set_sort_key)
+	(INDEX_SORT_STRING_KEY, index_entry_element_sort_string_key)
+	(setup_sortable_index_entries, LETTER_SORTABLE_ENTRIES)
+	(INDEX_LETTERS_SORTABLE_ENTRIES, compare_index_letter)
+	(compare_sortable_subentry_keys, compare_sortable_index_entry)
+	(sort_indices_by_letter),
+	tp/Texinfo/XS/convert/indices_in_conversion.h
+	(SORTABLE_INDEX_SUBENTRY, SORTABLE_INDEX_ENTRY)
+	(INDEX_SORTABLE_ENTRIES, INDICES_SORTABLE_ENTRIES): implement
+	index sorting by letter in C.
+	* tp/Texinfo/XS/configure.ac: check for newlocale and strxfrm_l.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides)
+	(_NonXS_sort_index_entries, _XS_only_sort_index_entries)
+	(_sort_index_entries), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_sort_index_entries), tp/Texinfo/XS/convert/convert_html.c
+	(html_sort_index_entries): XS interface for index sorting in HTML,
+	if TEST is not set.
+
+2024-01-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Other Customization Variables),
+	* NEWS: Document USE_UNICODE_COLLATION.
+
+2024-01-29  Patrice Dumas  <pertusus@free.fr>
+
+	Add @verbatiminclude files to --trace-includes output
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): add
+	@verbatiminclude file to included_files if found and readable.  No
+	errors if not found or not readable.
+
+	* tp/tests/Makefile.onetst, tp/tests/coverage/list-of-tests
+	(formatting_trace_includes): add a test of --trace-includes.
+
+	* doc/texinfo.texi: fix a typo.
+
+2024-01-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Indices.pm (setup_sortable_index_entries): use
+	Unicode::Collate if possible if USE_UNICODE_COLLATION is undef.
+
+	* tp/Texinfo/options_data.txt (TRACE_INCLUDES): reclassify as
+	program_cmdline.
+
+2024-01-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl, tp/t/init/redefine_need.init (my_need_formatting),
+	doc/texi2any_api.texi (Getting Build Constants), tp/Texinfo/Common.pm
+	b/tp/Texinfo/Common.pm (%build_constants, set_build_constant)
+	(get_build_constant): rename get_constant as get_build_constant and
+	set_constant as set_build_constant (Gavin).
+
+2024-01-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	USE_UNICODE_COLLATION
+
+	* tp/Texinfo/options_data.txt: Add USE_UNICODE_COLLATION, 1 by default.
+	* tp/Texinfo/Indices.pm (setup_sortable_index_entries): If
+	USE_UNICODE_COLLATION is false, use the Texinfo::CollateStub
+	module instead of Unicode::Collate.
+
+2024-01-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl: set also PACKAGE*_CONFIG to have the same symbols
+	defined as in C.
+
+	* tp/t/init/redefine_need.init (my_need_formatting): also test
+	PACKAGE_CONFIG.
+
+2024-01-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Info.pm (format_node):
+	Remove commented-out line of code.
+
+2024-01-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Unicode.pm (string_width):
+	Do not reset the counter to zero at a newline, as this only
+	occurs for malformed input and it is not worth the complication.
+	* tp/Texinfo/XS/main/utils.c (width_multibyte): Make the same
+	change.  Reverses change on 2023-12-31.
+
+2024-01-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Convert/Plaintext.pm
+	(ensure_end_of_line, _ensure_end_of_line):
+	Move function in file to be right after _add_newline_if_needed,
+	as the implementation is similar.  Rename with leading underscore
+	to mark as "internal", and do not call with method call syntax
+	throughout.  No functional change intended.
+
+2024-01-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/infodoc.c (describe_key): Fix handling of keys with
+	"invalid" mappings.
+
+	Report from Bugsy Abatantuono <bugsyabatantuono@proton.me>.
+
+2024-01-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/doc.h (FUNCTION_DOC, InfoCommand): Use "InfoCommand" as
+	the sole name for this type.
+
+2024-01-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/info.h (Function, CFunction): Remove unused typedefs.
+
+2024-01-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: update for PACKAGE_* name change
+
+2024-01-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/options_data.txt: Remove _OPTION suffixes from
+	PACKAGE_* variables in order to maintain backwards compatability,
+	especially for customization files (e.g. for ffmpeg).
+	Report from Arsen Arsenović <arsen@gentoo.org>.
+
+	* tp/texi2any.pl: Set the variables from the "configured information"
+	without adding a suffix.
+	* tp/Texinfo/Convert/Converter.pm, tp/Texinfo/Convert/HTML.pm,
+	tp/Texinfo/Convert/Info.pm, tp/Texinfo/XS/convert/convert_html.c,
+	tp/t/init/t2h_singular.init, tp/t/layout.t: Consequent changes.
+
+	* tp/maintain/regenerate_C_options_info.pl: #undef the PACKAGE_*
+	symbols to avoid a clash with symbols defined by autoconf.
+	Analysis by Patrice.
+
+	* tp/Texinfo/XS/configure.ac: Propagate PACKAGE, PACKAGE_NAME,
+	PACKAGE_URL and PACKAGE_VERSION using AC_DEFINE_UNQUOTED, with
+	a _CONFIG suffix, in order to make these symbols still accessible
+	in the XS sources.  Suggestion from Patrice.
+	* tp/Texinfo/XS/main/build_perl_info.c (init): Refer to PACKAGE_CONFIG
+	rather than PACKAGE.
+
 2024-01-27  Gavin Smith <gavinsmith0123@gmail.com>
 
 	* doc/texinfo.texi (Invoking texi2any),

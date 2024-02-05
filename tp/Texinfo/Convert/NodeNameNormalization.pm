@@ -37,12 +37,15 @@ use Text::Unidecode;
 
 # commands classes
 use Texinfo::Commands;
-# for nobrace_symbol_text
+# for nobrace_symbol_text and text_brace_no_arg_commands
 use Texinfo::Common;
 # use the hashes and functions
 use Texinfo::Convert::Unicode;
-# reuse conversion hashes
-use Texinfo::Convert::Text;
+
+# NOTE it is important that there is no dependency to Texinfo::Convert::Text
+# to avoid a dependency loop, in particular for data definition.
+# The loop would be Texinfo::Convert::Text -> Texinfo::Translations
+#   -> Texinfo::Parser -> this module
 
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
@@ -61,7 +64,8 @@ $VERSION = '7.1dev';
 
 
 my %normalize_node_brace_no_arg_commands
-  = %Texinfo::Convert::Text::text_brace_no_arg_commands;
+  = %Texinfo::Common::text_brace_no_arg_commands;
+
 foreach my $command (keys(%Texinfo::Convert::Unicode::unicode_character_brace_no_arg_commands)) {
   $normalize_node_brace_no_arg_commands{$command} =
      $Texinfo::Convert::Unicode::unicode_character_brace_no_arg_commands{$command};
@@ -271,18 +275,18 @@ sub _convert($)
     $result =~ s/\s+/ /g;
   }
   if ($element->{'cmdname'}) {
-    my $command = $element->{'cmdname'};
-    if (defined($normalize_node_nobrace_symbol_text{$element->{'cmdname'}})) {
-      return $normalize_node_nobrace_symbol_text{$element->{'cmdname'}};
-    } elsif (defined($normalize_node_brace_no_arg_commands{$element->{'cmdname'}})) {
-      $command = $element->{'extra'}->{'clickstyle'}
+    my $cmdname = $element->{'cmdname'};
+    if (defined($normalize_node_nobrace_symbol_text{$cmdname})) {
+      return $normalize_node_nobrace_symbol_text{$cmdname};
+    } elsif (defined($normalize_node_brace_no_arg_commands{$cmdname})) {
+      $cmdname = $element->{'extra'}->{'clickstyle'}
          if ($element->{'extra'}
           and defined($element->{'extra'}->{'clickstyle'})
           and defined($normalize_node_brace_no_arg_commands{$element->{'extra'}->{'clickstyle'}}));
-      my $result = $normalize_node_brace_no_arg_commands{$command};
+      my $result = $normalize_node_brace_no_arg_commands{$cmdname};
       return $result;
     # commands with braces
-    } elsif ($accent_commands{$element->{'cmdname'}}) {
+    } elsif ($accent_commands{$cmdname}) {
       return '' if (!$element->{'args'});
       my $accent_text = _convert($element->{'args'}->[0]);
       my $accented_char
@@ -294,10 +298,9 @@ sub _convert($)
         $accented_char = $accent_text;
       }
       return $accented_char;
-    } elsif ($Texinfo::Commands::ref_commands{$element->{'cmdname'}}) {
+    } elsif ($Texinfo::Commands::ref_commands{$cmdname}) {
       my @args_try_order;
-      if ($element->{'cmdname'} eq 'inforef'
-          or $element->{'cmdname'} eq 'link') {
+      if ($cmdname eq 'inforef' or $cmdname eq 'link') {
         @args_try_order = (0, 1, 2);
       } else {
         @args_try_order = (0, 1, 2, 4, 3);
@@ -314,7 +317,7 @@ sub _convert($)
     } elsif ($element->{'args'} and $element->{'args'}->[0]
            and (($element->{'args'}->[0]->{'type'}
                 and $element->{'args'}->[0]->{'type'} eq 'brace_command_arg')
-                or $element->{'cmdname'} eq 'math')) {
+                or $cmdname eq 'math')) {
       return _convert($element->{'args'}->[0]);
     }
   }

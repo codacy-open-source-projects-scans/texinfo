@@ -159,4 +159,5 @@ FORMATTED_BUTTON_INFO *call_button_simple_function (CONVERTER *self,
 FORMATTED_BUTTON_INFO *call_button_direction_function (CONVERTER *self,
                              void *formatting_reference_sv,
                              int direction, const ELEMENT *element);
+
 #endif

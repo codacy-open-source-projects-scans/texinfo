@@ -264,9 +264,9 @@ enter_index_entry (enum command_id index_type_cmd,
   memset (entry, 0, sizeof (INDEX_ENTRY));
 
   entry->index_name = idx->name;
-  /* not needed, the position in the index is directly used
+  /* not needed in the parser, the position in the index is directly used.
+     Used for sorting */
   entry->number = idx->entries_number;
-  */
   entry->entry_element = element;
 
   /* Create ignored_chars string. */
@@ -461,7 +461,7 @@ complete_indices (int document_descriptor)
                           to be set, but we use the language of the element */
                           index_entry = gdt_tree ("{name} on {class}",
                                                   document, options,
-                                                  substrings, 0, lang);
+                                                  lang, substrings, 0);
 
                           text_append (&text_element->text, " on ");
                         }
@@ -471,8 +471,8 @@ complete_indices (int document_descriptor)
                                || def_command == CM_deftypecv)
                         {
                           index_entry = gdt_tree ("{name} of {class}",
-                                                  document, options,
-                                                  substrings, 0, lang);
+                                                  document, options, lang,
+                                                  substrings, 0);
 
                           text_append (&text_element->text, " of ");
                         }

@@ -141,6 +141,8 @@ FORCE           program_cmdline undef  integer
 NO_WARN         program_cmdline undef  integer
 # --silent.  Not used.  For completeness
 SILENT          program_cmdline undef  char
+# --trace-includes
+TRACE_INCLUDES  program_cmdline 0      integer
 
 # following also set in converters
 # --headers.  Modified by the format.
@@ -159,7 +161,6 @@ SHOW_BUILTIN_CSS_RULES       program_customization 0         integer
 SORT_ELEMENT_COUNT           program_customization undef     char
 SORT_ELEMENT_COUNT_WORDS     program_customization undef     integer
 TEXI2DVI                     program_customization texi2dvi  char
-TRACE_INCLUDES               program_customization 0         integer
 TREE_TRANSFORMATIONS         program_customization undef     char
 
 
@@ -185,6 +186,7 @@ TEXTCONTENT_COMMENT                converter_customization undef   integer
 # be good to update from time to time to avoid test results that are not
 # valid against their reported DTD.
 TEXINFO_DTD_VERSION                converter_customization 7.1     char
+USE_UNICODE_COLLATION              converter_customization 1       integer
 
 # Some are for all converters, EXTENSION for instance, some for
 # some converters, for example CLOSE_QUOTE_SYMBOL and many
@@ -211,6 +213,7 @@ CHAPTER_HEADER_LEVEL               converter_customization undef   integer
 CHECK_HTMLXREF                     converter_customization undef   integer
 CLOSE_DOUBLE_QUOTE_SYMBOL          converter_customization undef   char
 CLOSE_QUOTE_SYMBOL                 converter_customization undef   char
+COLLATION_LANGUAGE                 converter_customization undef   char
 COMMAND_LINE_ENCODING              converter_customization undef   char
 COMPLEX_FORMAT_IN_TABLE            converter_customization undef   integer
 CONTENTS_OUTPUT_LOCATION           converter_customization undef   char
@@ -280,11 +283,11 @@ OUTPUT_CHARACTERS                  converter_customization undef   integer
 OUTPUT_ENCODING_NAME               converter_customization undef   char
 OUTPUT_FILE_NAME_ENCODING          converter_customization undef   char
 OUTPUT_PERL_ENCODING               converter_customization undef   char
-PACKAGE_OPTION                     converter_customization undef   char
-PACKAGE_AND_VERSION_OPTION         converter_customization undef   char
-PACKAGE_NAME_OPTION                converter_customization undef   char
-PACKAGE_URL_OPTION                 converter_customization undef   char
-PACKAGE_VERSION_OPTION             converter_customization undef   char
+PACKAGE                            converter_customization undef   char
+PACKAGE_AND_VERSION                converter_customization undef   char
+PACKAGE_NAME                       converter_customization undef   char
+PACKAGE_URL                        converter_customization undef   char
+PACKAGE_VERSION                    converter_customization undef   char
 PRE_BODY_CLOSE                     converter_customization undef   char
 PREFIX                             converter_customization undef   char
 PROGRAM                            converter_customization undef   char

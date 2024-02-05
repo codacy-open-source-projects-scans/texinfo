@@ -92,7 +92,7 @@ expand_today (OPTIONS *options)
   year = time_tm->tm_year + 1900;
 
   month_tree = gdt_tree (convert_utils_month_name[time_tm->tm_mon], 0, options,
-                         0, 0, 0);
+                         options->documentlanguage.string, 0, 0);
   day_element = new_element (ET_NONE);
   year_element = new_element (ET_NONE);
   text_printf (&day_element->text, "%d", time_tm->tm_mday);
@@ -103,7 +103,8 @@ expand_today (OPTIONS *options)
   add_element_to_named_string_element_list (substrings, "day", day_element);
   add_element_to_named_string_element_list (substrings, "year", year_element);
 
-  result = gdt_tree ("{month} {day}, {year}", 0, options, substrings, 0, 0);
+  result = gdt_tree ("{month} {day}, {year}", 0, options,
+                     options->documentlanguage.string, substrings, 0);
   destroy_named_string_element_list (substrings);
 
   return result;
@@ -210,12 +211,14 @@ add_heading_number (OPTIONS *options, const ELEMENT *current, char *text,
                 {
                   numbered_heading
                    = gdt_string ("Appendix {number} {section_title}",
-                                 options, substrings, 0, 0);
+                                 options, options->documentlanguage.string,
+                                 substrings, 0);
                 }
             }
           if (!numbered_heading)
-            numbered_heading = gdt_string ("{number} {section_title}",
-                                          options, substrings, 0, 0);
+            numbered_heading
+              = gdt_string ("{number} {section_title}", options,
+                            options->documentlanguage.string, substrings, 0);
 
           destroy_named_string_element_list (substrings);
 
@@ -494,7 +497,9 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
   ELEMENT *result = 0;
   ELEMENT *arg_category = 0;
   ELEMENT *arg_class = 0;
+  /*
   ELEMENT *arg_class_code;
+   */
   ELEMENT *class_copy;
   char *def_command;
 
@@ -531,6 +536,7 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
 
   class_copy = copy_tree (arg_class);
 
+  /*
   if (!options)
     {
       ELEMENT *brace_command_arg = new_element (ET_brace_command_arg);
@@ -539,6 +545,7 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
       add_to_element_contents (brace_command_arg, class_copy);
       add_to_element_args (arg_class_code, brace_command_arg);
     }
+   */
 
   def_command = lookup_extra_string (current, "def_command");
 
@@ -549,66 +556,89 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
       || !strcmp(def_command, "deftypemethod"))
     {
       ELEMENT *category_copy = copy_tree (arg_category);
+      NAMED_STRING_ELEMENT_LIST *substrings
+                                   = new_named_string_element_list ();
+      add_element_to_named_string_element_list (substrings,
+                                                "category", category_copy);
+      add_element_to_named_string_element_list (substrings,
+                                                "class", class_copy);
       if (options)
         {
-          NAMED_STRING_ELEMENT_LIST *substrings
-                                       = new_named_string_element_list ();
-          add_element_to_named_string_element_list (substrings,
-                                                     "category", category_copy);
-          add_element_to_named_string_element_list (substrings,
-                                                           "class", class_copy);
           /*
           TRANSLATORS: association of a method or operation name with a class
           in descriptions of object-oriented programming methods or operations.
            */
 
           result = gdt_tree ("{category} on @code{{class}}", 0, options,
-                             substrings, 0, 0);
-          destroy_named_string_element_list (substrings);
+                             options->documentlanguage.string, substrings, 0);
         }
       else
         {
+          const char *documentlanguage
+                = lookup_extra_string (current, "documentlanguage");
+          result = gdt_tree ("{category} on @code{{class}}", 0, 0,
+                             documentlanguage, substrings, 0);
+          /*
           result = new_element (ET_NONE);
           ELEMENT *text_element = new_element (ET_NONE);
           add_to_element_contents (result, category_copy);
           text_append (&text_element->text, " on ");
           add_to_element_contents (result, text_element);
           add_to_element_contents (result, arg_class_code);
+           */
         }
+      destroy_named_string_element_list (substrings);
     } else if (!strcmp(def_command, "defivar")
       || !strcmp(def_command, "deftypeivar")
       || !strcmp(def_command, "defcv")
       || !strcmp(def_command, "deftypecv"))
     {
       ELEMENT *category_copy = copy_tree (arg_category);
+      NAMED_STRING_ELEMENT_LIST *substrings
+                                   = new_named_string_element_list ();
+      add_element_to_named_string_element_list (substrings,
+                                                "category", category_copy);
+      add_element_to_named_string_element_list (substrings,
+                                                "class", class_copy);
       if (options)
         {
-          NAMED_STRING_ELEMENT_LIST *substrings
-                                       = new_named_string_element_list ();
-          add_element_to_named_string_element_list (substrings,
-                                                     "category", category_copy);
-          add_element_to_named_string_element_list (substrings,
-                                                           "class", class_copy);
           /*
           TRANSLATORS: association of a method or operation name with a class
           in descriptions of object-oriented programming methods or operations.
            */
 
           result = gdt_tree ("{category} of @code{{class}}", 0, options,
-                             substrings, 0, 0);
-          destroy_named_string_element_list (substrings);
+                             options->documentlanguage.string, substrings, 0);
         }
       else
         {
+          const char *documentlanguage
+                = lookup_extra_string (current, "documentlanguage");
+          result = gdt_tree ("{category} of @code{{class}}", 0, 0,
+                             documentlanguage, substrings, 0);
+          /*
           result = new_element (ET_NONE);
           ELEMENT *text_element = new_element (ET_NONE);
           add_to_element_contents (result, category_copy);
           text_append (&text_element->text, " of ");
           add_to_element_contents (result, text_element);
           add_to_element_contents (result, arg_class_code);
+           */
         }
+      destroy_named_string_element_list (substrings);
     }
   return result;
+}
+
+ELEMENT *
+cdt_tree (const char * string, CONVERTER *self,
+          NAMED_STRING_ELEMENT_LIST *replaced_substrings,
+          const char *translation_context)
+{
+  const char *lang = self->conf->documentlanguage.string;
+
+  return gdt_tree (string, self->document, self->conf, lang,
+                   replaced_substrings, translation_context);
 }
 
 ELEMENT *
@@ -622,8 +652,8 @@ translated_command_tree (CONVERTER *self, enum command_id cmd)
       if (translated_command->cmd == cmd
           && translated_command->translation)
         {
-          ELEMENT *result = gdt_tree (translated_command->translation, 0,
-                                      self->conf, 0, 0, 0);
+          ELEMENT *result = cdt_tree (translated_command->translation,
+                                      self, 0, 0);
           return result;
         }
     }

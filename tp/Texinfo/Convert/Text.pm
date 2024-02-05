@@ -43,6 +43,8 @@ use Texinfo::Convert::Texinfo;
 # misc functions and data
 use Texinfo::Convert::Utils;
 
+use Texinfo::Translations;
+
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 @ISA = qw(Exporter);
@@ -109,72 +111,6 @@ foreach my $ignored_command ('html', 'tex', 'xml', 'docbook', 'latex') {
   $ignored_format_raw_commands{$ignored_command} = 1;
 }
 
-# used by Texinfo::Convert::NodeNormalization
-our %text_brace_no_arg_commands = (
-               'TeX'                => 'TeX',
-               'LaTeX'              => 'LaTeX',
-               'bullet'             => '*',
-               'copyright'          => '(C)',
-               'registeredsymbol'   => '(R)',
-               'dots'         => '...',
-               'enddots'      => '...',
-               'equiv'        => '==',
-               'error'        => 'error-->',
-               'expansion'    => '==>',
-               'arrow'        => '->',
-               'minus'        => '-',
-               'point'        => '-!-',
-               'print'        => '-|',
-               'result'       => '=>',
-               'today'        => '',
-               'aa'           => 'aa',
-               'AA'           => 'AA',
-               'ae'           => 'ae',
-               'oe'           => 'oe',
-               'AE'           => 'AE',
-               'OE'           => 'OE',
-               'o'            => '/o',
-               'O'            => '/O',
-               'ss'           => 'ss',
-               'l'            => '/l',
-               'L'            => '/L',
-               'DH'           => 'D',
-               'dh'           => 'd',
-               'TH'           => 'TH', # http://www.evertype.com/standards/wynnyogh/thorn.html
-
-               'th'           => 'th',
-               'exclamdown'   => '!',
-               'questiondown' => '?',
-               'pounds'       => '#',
-               'ordf'         => 'a',
-               'ordm'         => 'o',
-               'comma'        => ',',
-               'atchar'       => '@',
-               'ampchar'      => '&',
-               'lbracechar'   => '{',
-               'rbracechar'   => '}',
-               'backslashchar' => '\\',
-               'hashchar'      => '#',
-               'euro'         => 'Euro',
-               'geq'          => '>=',
-               'leq'          => '<=',
-               'tie'          => ' ',
-               'textdegree'      => 'o',
-               'quotedblleft'    => '"',
-               'quotedblright'   => '"',
-               'quoteleft'       => '`',
-               'quoteright'      => "'",
-               'quotedblbase'    => ',,',
-               'quotesinglbase'  => ',',
-               'guillemetleft'   => '<<',
-               'guillemetright'  => '>>',
-               'guillemotleft'   => '<<',
-               'guillemotright'  => '>>',
-               'guilsinglleft'   => '<',
-               'guilsinglright'  => '>',
-               'click'           => '', # specially treated
-);
-
 # used in C commands table generation
 our %sort_brace_no_arg_commands = (
   'copyright' => 'C',
@@ -208,7 +144,8 @@ foreach my $type ('ignorable_spaces_after_command',
 }
 
 
-my @text_indicator_converter_options = ('NUMBER_SECTIONS', 'ASCII_GLYPH', 'TEST');
+my @text_indicator_converter_options
+      = ('ASCII_GLYPH', 'NUMBER_SECTIONS', 'TEST');
 
 sub _initialize_options_encoding($$)
 {
@@ -407,11 +344,12 @@ sub brace_no_arg_command($;$)
   $command = $element->{'extra'}->{'clickstyle'}
      if ($element->{'extra'}
       and defined($element->{'extra'}->{'clickstyle'})
-      and defined($text_brace_no_arg_commands{
+      and defined($Texinfo::Common::text_brace_no_arg_commands{
                                   $element->{'extra'}->{'clickstyle'}}));
   my $result;
-  if (!($options and $options->{'ASCII_GLYPH'})
-        or !exists($Texinfo::Convert::Unicode::extra_unicode_map{$command})) {
+  if (defined($encoding) and
+      (!($options and $options->{'ASCII_GLYPH'})
+       or !exists($Texinfo::Convert::Unicode::extra_unicode_map{$command}))) {
     $result
        = Texinfo::Convert::Unicode::brace_no_arg_command($command, $encoding);
   }
@@ -428,7 +366,7 @@ sub brace_no_arg_command($;$)
         and $sort_brace_no_arg_commands{$command}) {
       $result = $sort_brace_no_arg_commands{$command};
     } else {
-      $result = $text_brace_no_arg_commands{$command};
+      $result = $Texinfo::Common::text_brace_no_arg_commands{$command};
     }
   }
   if ($options and $Texinfo::Commands::letter_no_arg_commands{$command}) {
@@ -545,22 +483,31 @@ sub _convert($$)
                                                     $element->{'cmdname'}})))));
   my $result = '';
   if (defined($element->{'text'})) {
-    if ($element->{'type'} and $element->{'type'} eq 'untranslated'
-        and $options and $options->{'converter'}) {
-      # the tree documentlanguage corresponds to the documentlanguage
-      # at the place of the tree, but the converter may want to use
-      # another documentlanguage, for instance the documentlanguage at
-      # the end of the preamble, so we let the converter set it.
-      #my $tree = $options->{'converter'}->gdt($element->{'text'}, undef,
-      #                  undef, $element->{'extra'}->{'documentlanguage'});
+    if ($element->{'type'} and $element->{'type'} eq 'untranslated') {
       my $tree;
+      my $translation_context;
       if ($element->{'extra'}
           and $element->{'extra'}->{'translation_context'}) {
-        $tree = $options->{'converter'}->pgdt(
-                            $element->{'extra'}->{'translation_context'},
-                            $element->{'text'});
+        $translation_context = $element->{'extra'}->{'translation_context'};
+      }
+
+      if ($options and $options->{'converter'}) {
+        # the tree documentlanguage corresponds to the documentlanguage
+        # at the place of the tree, but the converter may want to use
+        # another documentlanguage, for instance the documentlanguage at
+        # the end of the preamble, so we let the converter set it.
+        if ($translation_context) {
+          $tree = $options->{'converter'}->pcdt($translation_context,
+                                                $element->{'text'});
+        } else {
+          $tree = $options->{'converter'}->cdt($element->{'text'});
+        }
       } else {
-        $tree = $options->{'converter'}->gdt($element->{'text'});
+        # if there is no converter, we use the documentlanguage available
+        # in the tree.
+        $tree = Texinfo::Translations::gdt(undef, $element->{'text'},
+                             $element->{'extra'}->{'documentlanguage'},
+                             undef, $translation_context);
       }
       $result = _convert($options, $tree);
     } else {
@@ -605,7 +552,8 @@ sub _convert($$)
         $year += ($year < 70) ? 2000 : 1900;
         return "$Texinfo::Convert::Utils::month_name[$mon] $mday, $year";
       }
-    } elsif (defined($text_brace_no_arg_commands{$element->{'cmdname'}})) {
+    } elsif (defined($Texinfo::Common::text_brace_no_arg_commands{
+                                                 $element->{'cmdname'}})) {
       return brace_no_arg_command($element, $options);
     # commands with braces
     } elsif ($accent_commands{$element->{'cmdname'}}) {
@@ -1133,7 +1081,7 @@ Texinfo to other formats.  There is no promise of API stability.
 C<Texinfo::Convert::Text> is a simple backend that converts a Texinfo tree
 to simple text.  It is used in converters, especially for file names.
 The conversion is very simple, and, in the default case, cannot handle
-output strings translation or error handling.
+error handling nor some output strings translation.
 
 Converters derived from L<Texinfo::Convert::Converter> should have conversion
 text options associated to the C<convert_text_options> key.

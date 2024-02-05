@@ -263,10 +263,6 @@ my %XS_conversion_overrides = (
   "Texinfo::Convert::HTML::_check_htmlxref_already_warned"
    => "Texinfo::Convert::ConvertXS::html_check_htmlxref_already_warned",
 
-  "Texinfo::Convert::HTML::_XS_get_index_entries_sorted_by_letter"
-   => "Texinfo::Convert::ConvertXS::get_index_entries_sorted_by_letter",
-  "Texinfo::Convert::HTML::_XS_html_merge_index_entries"
-   => "Texinfo::Convert::ConvertXS::html_merge_index_entries",
   "Texinfo::Convert::HTML::_prepare_conversion_units"
    => "Texinfo::Convert::ConvertXS::html_prepare_conversion_units",
   "Texinfo::Convert::HTML::_prepare_units_directions_files"
@@ -1277,11 +1273,11 @@ sub _internal_command_tree($$$)
 
           if ($command->{'cmdname'} eq 'appendix'
               and $command->{'extra'}->{'section_level'} == 1) {
-            $tree = $self->gdt('Appendix {number} {section_title}',
+            $tree = $self->cdt('Appendix {number} {section_title}',
                                $substituted_strings);
           } else {
             # TRANSLATORS: numbered section title
-            $tree = $self->gdt('{number} {section_title}',
+            $tree = $self->cdt('{number} {section_title}',
                                $substituted_strings);
           }
         } else {
@@ -1767,7 +1763,7 @@ sub direction_string($$$;$)
       }
       if (defined($context_converted_string)) {
         my $result_string
-          = $self->gdt_string($context_converted_string);
+          = $self->cdt_string($context_converted_string);
         $self->{'directions_strings'}->{$string_type}->{$direction}->{$context}
           = $self->substitute_html_non_breaking_space($result_string);
       } else {
@@ -1782,7 +1778,7 @@ sub direction_string($$$;$)
       $translation_context .= ' direction '
                        .$direction_type_translation_context{$string_type};
       my $translated_tree
-        = $self->pgdt($translation_context,
+        = $self->pcdt($translation_context,
                       $translated_directions_strings->{$string_type}
                                             ->{$direction}->{'to_convert'});
       my $converted_tree;
@@ -1844,7 +1840,7 @@ sub special_unit_info($$$) {
       my $translated_tree;
       if (defined($special_unit_info_string)) {
         my $translation_context = "$special_unit_variety section heading";
-        $translated_tree = $self->pgdt($translation_context,
+        $translated_tree = $self->pcdt($translation_context,
                                        $special_unit_info_string);
       }
       $self->{'special_unit_info'}->{$type}->{$special_unit_variety}
@@ -2305,7 +2301,7 @@ my %available_converter_info;
 foreach my $converter_info ('copying_comment', 'current_filename',
    'destination_directory', 'document', 'document_name',
    'documentdescription_string', 'expanded_formats',
-   'index_entries', 'index_entries_by_letter', 'jslicenses',
+   'index_entries_by_letter', 'jslicenses',
    'line_break_element', 'non_breaking_space', 'paragraph_symbol',
    'simpletitle_command_name', 'simpletitle_tree',
    'title_string', 'title_tree', 'title_titlepage') {
@@ -2328,7 +2324,12 @@ sub get_info($$)
     }
   #} else {
   #  cluck();
+  } elsif ($converter_info eq 'index_entries_by_letter') {
+    $self->{'converter_info'}->{'index_entries_by_letter'}
+      = $self->get_converter_indices_sorted_by_letter();
+    return $self->{'converter_info'}->{'index_entries_by_letter'};
   }
+  return undef;
 }
 
 # This function should be used in formatting functions when some
@@ -2810,13 +2811,13 @@ sub _translate_names($)
                                         ->{$command}->{$context}->{'unset'}) {
         $translated_commands{$command} = 1;
         $self->{'no_arg_commands_formatting'}->{$command}->{$context}->{'text'}
-         = $self->gdt_string($self->{'no_arg_commands_formatting'}
+         = $self->cdt_string($self->{'no_arg_commands_formatting'}
                        ->{$command}->{$context}->{'translated_converted'});
       } elsif ($context eq 'normal') {
         my $translated_tree;
         if (defined($self->{'no_arg_commands_formatting'}
                       ->{$command}->{$context}->{'translated_to_convert'})) {
-          $translated_tree = $self->gdt($self->{'no_arg_commands_formatting'}
+          $translated_tree = $self->cdt($self->{'no_arg_commands_formatting'}
                           ->{$command}->{$context}->{'translated_to_convert'});
         } else {
           # default translated commands
@@ -2841,9 +2842,9 @@ sub _translate_names($)
 # redefined functions
 #
 # Texinfo::Translations::translate_string redefined to call user defined function.
-sub translate_string($$;$$)
+sub html_translate_string($$$;$)
 {
-  my ($self, $string, $translation_context, $lang) = @_;
+  my ($self, $string, $lang, $translation_context) = @_;
   if (defined($self->{'formatting_function'}->{'format_translate_message'})) {
     my $format_lang = $lang;
     $format_lang = $self->get_conf('documentlanguage')
@@ -2856,7 +2857,32 @@ sub translate_string($$;$$)
     }
   }
 
-  return $self->SUPER::translate_string($string, $translation_context, $lang);
+  return Texinfo::Translations::translate_string($string, $lang,
+                                                 $translation_context);
+}
+
+# redefine generic Converter functions to pass a customized translate_string
+# function
+sub cdt($$;$$)
+{
+  my ($self, $string, $replaced_substrings, $translation_context) = @_;
+
+  return Texinfo::Translations::gdt($self, $string,
+                                    $self->get_conf('documentlanguage'),
+                                    $replaced_substrings,
+                                    $translation_context,
+                                    \&html_translate_string);
+}
+
+sub cdt_string($$;$$)
+{
+  my ($self, $string, $replaced_substrings, $translation_context) = @_;
+
+  return Texinfo::Translations::gdt_string($self, $string,
+                                    $self->get_conf('documentlanguage'),
+                                    $replaced_substrings,
+                                    $translation_context,
+                                    \&html_translate_string);
 }
 
 sub converter_defaults($$)
@@ -3087,7 +3113,7 @@ $default_no_arg_commands_formatting{'normal'}->{"\n"} = {'text' => '&nbsp;'};
 ## This is used to have gettext pick up the chain to be translated
 #if (0) {
 #  my $not_existing;
-#  $not_existing->gdt('error--&gt;');
+#  $not_existing->cdt('error--&gt;');
 #}
 
 $default_no_arg_commands_formatting{'normal'}->{'enddots'}
@@ -3485,7 +3511,7 @@ sub _convert_value_command($$$$)
   my $command = shift;
   my $args = shift;
 
-  return $self->convert_tree($self->gdt('@{No value for `{value}\'@}',
+  return $self->convert_tree($self->cdt('@{No value for `{value}\'@}',
                  {'value' => {'text' => $args->[0]->{'monospacestring'}}}));
 }
 
@@ -3575,7 +3601,7 @@ sub _convert_explained_command($$$$)
   if ($args and $args->[1] and defined($args->[1]->{'normal'})) {
     my $explanation_result = $args->[1]->{'normal'};
     # TRANSLATORS: abbreviation or acronym explanation
-    $result = $self->convert_tree($self->gdt('{explained_string} ({explanation})',
+    $result = $self->convert_tree($self->cdt('{explained_string} ({explanation})',
           {'explained_string' => {'type' => '_converted',
                    'text' => $result},
            'explanation' => {'type' => '_converted',
@@ -5608,7 +5634,7 @@ sub _convert_quotation_command($$$$$)
       if ($author->{'args'}->[0]
           and $author->{'args'}->[0]->{'contents'}) {
         # TRANSLATORS: quotation author
-        my $centered_author = $self->gdt("\@center --- \@emph{{author}}",
+        my $centered_author = $self->cdt("\@center --- \@emph{{author}}",
            {'author' => $author->{'args'}->[0]});
         $centered_author->{'parent'} = $command;
         $result .= $self->convert_tree($centered_author,
@@ -6026,11 +6052,11 @@ sub _convert_xref_commands($$$$)
       = { 'reference_name' => {'type' => '_converted', 'text' => $reference} };
 
     if ($cmdname eq 'pxref') {
-      $tree = $self->gdt('see {reference_name}', $substrings);
+      $tree = $self->cdt('see {reference_name}', $substrings);
     } elsif ($cmdname eq 'xref') {
-      $tree = $self->gdt('See {reference_name}', $substrings);
+      $tree = $self->cdt('See {reference_name}', $substrings);
     } elsif ($cmdname eq 'ref' or $cmdname eq 'link') {
-      $tree = $self->gdt('{reference_name}', $substrings);
+      $tree = $self->cdt('{reference_name}', $substrings);
     }
   } else {
     # external reference, including unknown node without file nor book
@@ -6123,61 +6149,61 @@ sub _convert_xref_commands($$$$)
                        => {'type' => '_converted', 'text' => $reference},
                      'book' => {'type' => '_converted', 'text' => $book }};
       if ($cmdname eq 'pxref') {
-        $tree = $self->gdt('see {reference} in @cite{{book}}', $substrings);
+        $tree = $self->cdt('see {reference} in @cite{{book}}', $substrings);
       } elsif ($cmdname eq 'xref' or $cmdname eq 'inforef') {
-        $tree = $self->gdt('See {reference} in @cite{{book}}', $substrings);
+        $tree = $self->cdt('See {reference} in @cite{{book}}', $substrings);
       } else { # @ref
-        $tree = $self->gdt('{reference} in @cite{{book}}', $substrings);
+        $tree = $self->cdt('{reference} in @cite{{book}}', $substrings);
       }
     } elsif (defined($book_reference)) {
       $substrings = { 'book_reference' => {'type' => '_converted',
                                            'text' => $book_reference }};
       if ($cmdname eq 'pxref') {
-        $tree = $self->gdt('see @cite{{book_reference}}', $substrings);
+        $tree = $self->cdt('see @cite{{book_reference}}', $substrings);
       } elsif ($cmdname eq 'xref' or $cmdname eq 'inforef') {
-        $tree = $self->gdt('See @cite{{book_reference}}', $substrings);
+        $tree = $self->cdt('See @cite{{book_reference}}', $substrings);
       } else { # @ref
-        $tree = $self->gdt('@cite{{book_reference}}', $substrings);
+        $tree = $self->cdt('@cite{{book_reference}}', $substrings);
       }
     } elsif (defined($book) and defined($name)) {
       $substrings = {
               'section' => {'type' => '_converted', 'text' => $name},
               'book' => {'type' => '_converted', 'text' => $book }};
       if ($cmdname eq 'pxref') {
-        $tree = $self->gdt('see `{section}\' in @cite{{book}}', $substrings);
+        $tree = $self->cdt('see `{section}\' in @cite{{book}}', $substrings);
       } elsif ($cmdname eq 'xref' or $cmdname eq 'inforef') {
-        $tree = $self->gdt('See `{section}\' in @cite{{book}}', $substrings);
+        $tree = $self->cdt('See `{section}\' in @cite{{book}}', $substrings);
       } else { # @ref
-        $tree = $self->gdt('`{section}\' in @cite{{book}}', $substrings);
+        $tree = $self->cdt('`{section}\' in @cite{{book}}', $substrings);
       }
     } elsif (defined($book)) { # should seldom or even never happen
       $substrings = {'book' => {'type' => '_converted', 'text' => $book }};
       if ($cmdname eq 'pxref') {
-        $tree = $self->gdt('see @cite{{book}}', $substrings);
+        $tree = $self->cdt('see @cite{{book}}', $substrings);
       } elsif ($cmdname eq 'xref' or $cmdname eq 'inforef') {
-        $tree = $self->gdt('See @cite{{book}}', $substrings);
+        $tree = $self->cdt('See @cite{{book}}', $substrings);
       } else { # @ref
-        $tree = $self->gdt('@cite{{book}}', $substrings);
+        $tree = $self->cdt('@cite{{book}}', $substrings);
       }
     } elsif (defined($reference)) {
       $substrings = { 'reference'
                         => {'type' => '_converted', 'text' => $reference} };
       if ($cmdname eq 'pxref') {
-        $tree = $self->gdt('see {reference}', $substrings);
+        $tree = $self->cdt('see {reference}', $substrings);
       } elsif ($cmdname eq 'xref' or $cmdname eq 'inforef') {
-        $tree = $self->gdt('See {reference}', $substrings);
+        $tree = $self->cdt('See {reference}', $substrings);
       } else { # @ref
-        $tree = $self->gdt('{reference}', $substrings);
+        $tree = $self->cdt('{reference}', $substrings);
       }
     } elsif (defined($name)) {
       $substrings = { 'section'
                         => {'type' => '_converted', 'text' => $name} };
       if ($cmdname eq 'pxref') {
-        $tree = $self->gdt('see `{section}\'', $substrings);
+        $tree = $self->cdt('see `{section}\'', $substrings);
       } elsif ($cmdname eq 'xref' or $cmdname eq 'inforef') {
-        $tree = $self->gdt('See `{section}\'', $substrings);
+        $tree = $self->cdt('See `{section}\'', $substrings);
       } else { # @ref
-        $tree = $self->gdt('`{section}\'', $substrings);
+        $tree = $self->cdt('`{section}\'', $substrings);
       }
     }
 
@@ -6246,6 +6272,7 @@ sub _convert_printindex_command($$$$)
   my %letter_is_symbol;
   # First collect the links that are used in entries and in letter summaries
   my $symbol_idx = 0;
+  my $normalized_letter_idx = 0;
   foreach my $letter_entry (@{$index_entries_by_letter->{$index_name}}) {
     my $letter = $letter_entry->{'letter'};
     my $is_symbol = $letter !~ /^\p{Alpha}/;
@@ -6255,13 +6282,25 @@ sub _convert_printindex_command($$$$)
       $symbol_idx++;
       $identifier = $index_element_id . "_${index_name}_symbol-$symbol_idx";
     } else {
-      $identifier = $index_element_id . "_${index_name}_letter-${letter}";
+      my $normalized_letter =
+  Texinfo::Convert::NodeNameNormalization::normalize_transliterate_texinfo(
+               {'text' => $letter});
+      my $letter_identifier = $normalized_letter;
+      if ($normalized_letter ne $letter) {
+        # disambiguate, as it could be another letter, case of @l, for example
+        $normalized_letter_idx++;
+        $letter_identifier = "${normalized_letter}-${normalized_letter_idx}";
+      }
+      $identifier = $index_element_id
+                       . "_${index_name}_letter-${letter_identifier}";
     }
     $letter_id{$letter} = $identifier;
+
   }
 
   $self->_new_document_context($cmdname);
 
+  my %formatted_letters;
   # Next do the entries to determine the letters that are not empty
   my @letter_entries;
   my $result_index_entries = '';
@@ -6269,6 +6308,7 @@ sub _convert_printindex_command($$$$)
     my $letter = $letter_entry->{'letter'};
     my $entries_text = '';
     my $entry_nr = -1;
+    my $first_entry;
     # since we normalize, a different formatting will not trigger a new
     # formatting of the main entry or a subentry level.  This is the
     # same for Texinfo TeX
@@ -6420,14 +6460,14 @@ sub _convert_printindex_command($$$$)
             $result_tree
           # TRANSLATORS: redirect to another index entry
           # TRANSLATORS: @: is discardable and is used to avoid a msgfmt error
-        = $self->gdt('@code{{main_index_entry}}, @emph{See@:} @code{{seeentry}}',
+        = $self->cdt('@code{{main_index_entry}}, @emph{See@:} @code{{seeentry}}',
                                         {'main_index_entry' => $entry_tree,
                                          'seeentry' => $referred_tree});
           } else {
             $result_tree
           # TRANSLATORS: redirect to another index entry
           # TRANSLATORS: @: is discardable and used to avoid a msgfmt error
-               = $self->gdt('{main_index_entry}, @emph{See@:} {seeentry}',
+               = $self->cdt('{main_index_entry}, @emph{See@:} {seeentry}',
                                         {'main_index_entry' => $entry_tree,
                                          'seeentry' => $referred_tree});
           }
@@ -6445,7 +6485,7 @@ sub _convert_printindex_command($$$$)
           $section_class = "$cmdname-index-see-entry-section";
         } else {
           # TRANSLATORS: refer to another index entry
-          my $reference_tree = $self->gdt('@emph{See also} {see_also_entry}',
+          my $reference_tree = $self->cdt('@emph{See also} {see_also_entry}',
                                        {'see_also_entry' => $referred_tree});
           my $conv_str_entry
         = "index $index_name l $letter index entry $entry_nr (with seealso)";
@@ -6500,6 +6540,10 @@ sub _convert_printindex_command($$$$)
         }
 
         next if ($entry !~ /\S/ and $last_entry_level == 0);
+
+        if (!defined($first_entry)) {
+          $first_entry = $index_entry_ref;
+        }
 
         @prev_normalized_entry_levels = @new_normalized_entry_levels;
 
@@ -6598,9 +6642,37 @@ sub _convert_printindex_command($$$$)
     }
     # a letter and associated indice entries
     if ($entries_text ne '') {
+      my $formatted_letter;
+      my $letter_command;
+
+      # may not be defined if there are only seeentry/seealso
+      if (defined($first_entry)) {
+        my $letter_text;
+        ($letter_text, $letter_command)
+          = Texinfo::Indices::index_entry_first_letter_text_or_command(
+                                                             $first_entry);
+      }
+
+      if ($letter_command and !$accent_commands{$letter_command->{'cmdname'}}
+          and $letter_command->{'cmdname'} ne 'U'
+          # special case, the uppercasing of that command is not done
+          # if as a command, while it is done correctly in $letter
+          and $letter_command->{'cmdname'} ne 'ss') {
+        my $cmdname = $letter_command->{'cmdname'};
+        if ($letter_no_arg_commands{$cmdname}
+            and $letter_no_arg_commands{uc($cmdname)}) {
+          $letter_command = {'cmdname' => uc($cmdname)};
+        }
+        $formatted_letter = $self->convert_tree($letter_command,
+                                                "index letter $letter command");
+      } else {
+        $formatted_letter
+         = &{$self->formatting_function('format_protect_text')}($self, $letter);
+      }
+      $formatted_letters{$letter} = $formatted_letter;
+
       $result_index_entries .= '<tr>' .
-        "<th id=\"$letter_id{$letter}\">".
-        &{$self->formatting_function('format_protect_text')}($self, $letter)
+        "<th id=\"$letter_id{$letter}\">".$formatted_letter
         . "</th></tr>\n" . $entries_text
         . "<tr><td colspan=\"3\">".$self->get_conf('DEFAULT_RULE')."</td></tr>\n";
       push @letter_entries, $letter_entry;
@@ -6614,8 +6686,7 @@ sub _convert_printindex_command($$$$)
     my $letter = $letter_entry->{'letter'};
     my $summary_letter_link
       = $self->html_attribute_class('a',["summary-letter-$cmdname"])
-       ." href=\"#$letter_id{$letter}\"><b>".
-          &{$self->formatting_function('format_protect_text')}($self, $letter)
+       ." href=\"#$letter_id{$letter}\"><b>".$formatted_letters{$letter}
            .'</b></a>';
     if ($letter_is_symbol{$letter}) {
       push @non_alpha, $summary_letter_link;
@@ -6653,7 +6724,7 @@ sub _convert_printindex_command($$$$)
     my $summary_header = $self->html_attribute_class('table',
             ["$index_name-letters-header-$cmdname"]).'><tr><th>'
         # TRANSLATORS: before list of letters and symbols grouping index entries
-      . $self->convert_tree($self->gdt('Jump to')) .": $non_breaking_space </th><td>" .
+      . $self->convert_tree($self->cdt('Jump to')) .": $non_breaking_space </th><td>" .
       $non_alpha_text . $join . $alpha_text . "</td></tr></table>\n";
 
     $result .= $summary_header;
@@ -6665,10 +6736,10 @@ sub _convert_printindex_command($$$$)
     ." border=\"0\">\n" . '<tr><td></td>'
     . $self->html_attribute_class('th', ["entries-header-$cmdname"]).'>'
       # TRANSLATORS: index entries column header in index formatting
-    . $self->convert_tree($self->gdt('Index Entry')) .'</th>'
+    . $self->convert_tree($self->cdt('Index Entry')) .'</th>'
     . $self->html_attribute_class('th', ["sections-header-$cmdname"]).'>'
       # TRANSLATORS: section of index entry column header in index formatting
-    . $self->convert_tree($self->gdt('Section')) . "</th></tr>\n"
+    . $self->convert_tree($self->cdt('Section')) . "</th></tr>\n"
     . "<tr><td colspan=\"3\">".$self->get_conf('DEFAULT_RULE')
     ."</td></tr>\n";
   $result .= $result_index_entries;
@@ -6680,7 +6751,7 @@ sub _convert_printindex_command($$$$)
     my $summary_footer = $self->html_attribute_class('table',
                  ["$index_name-letters-footer-$cmdname"]).'><tr><th>'
         # TRANSLATORS: before list of letters and symbols grouping index entries
-      . $self->convert_tree($self->gdt('Jump to'))
+      . $self->convert_tree($self->cdt('Jump to'))
       . ": $non_breaking_space </th><td>"
       . $non_alpha_text . $join . $alpha_text . "</td></tr></table>\n";
     $result .= $summary_footer
@@ -6791,7 +6862,7 @@ sub _open_quotation_command($$$)
       and $command->{'args'}->[0]->{'contents'}
       and @{$command->{'args'}->[0]->{'contents'}}) {
     $formatted_quotation_arg_to_prepend
-     = $self->convert_tree($self->gdt('@b{{quotation_arg}:} ',
+     = $self->convert_tree($self->cdt('@b{{quotation_arg}:} ',
              {'quotation_arg' => $command->{'args'}->[0]}),
                            "open $cmdname prepended arg");
   }
@@ -7672,15 +7743,15 @@ sub _convert_def_line_type($$$$)
       if ($base_command_name eq 'deftypeop'
           and $type_element
           and $self->get_conf('deftypefnnewline') eq 'on') {
-        $category_tree = $self->gdt('{category} on @code{{class}}:@* ',
+        $category_tree = $self->cdt('{category} on @code{{class}}:@* ',
                                     $substrings);
       } elsif ($base_command_name eq 'defop'
                or $base_command_name eq 'deftypeop') {
-        $category_tree = $self->gdt('{category} on @code{{class}}: ',
+        $category_tree = $self->cdt('{category} on @code{{class}}: ',
                                     $substrings);
       } elsif ($base_command_name eq 'defcv'
                or $base_command_name eq 'deftypecv') {
-        $category_tree = $self->gdt('{category} of @code{{class}}: ',
+        $category_tree = $self->cdt('{category} of @code{{class}}: ',
                                     $substrings);
       }
     } else {
@@ -7696,9 +7767,9 @@ sub _convert_def_line_type($$$$)
         # an explicit <br> in that case.  Probably requires changing
         # the conversion of @* in a @def* line in preformatted, nothing
         # really specific of @deftypefnnewline on.
-        $category_tree = $self->gdt('{category}:@* ', $substrings);
+        $category_tree = $self->cdt('{category}:@* ', $substrings);
       } else {
-        $category_tree = $self->gdt('{category}: ', $substrings);
+        $category_tree = $self->cdt('{category}: ', $substrings);
       }
     }
     if ($category_tree) {
@@ -10273,44 +10344,6 @@ sub _prepare_output_units_global_targets($$$$)
   }
 }
 
-sub _XS_get_index_entries_sorted_by_letter($$)
-{
-}
-
-sub _XS_html_merge_index_entries($)
-{
-}
-
-sub _sort_index_entries($)
-{
-  my $self = shift;
-
-  my $indices_information;
-  if ($self->{'document'}) {
-    $indices_information = $self->{'document'}->indices_information();
-  }
-
-  if ($indices_information) {
-
-    my $merged_index_entries
-        = Texinfo::Indices::merge_indices($indices_information);
-    my $index_entries_sort_strings;
-
-    ($self->{'index_entries_by_letter'}, $index_entries_sort_strings)
-            = Texinfo::Indices::sort_indices_by_letter(undef, $self,
-                                               $merged_index_entries,
-                                               $indices_information);
-    $self->{'index_entries'} = $merged_index_entries;
-
-    # pass sorted index entries to XS for a reproducible sorting.
-    if ($self->{'converter_descriptor'} and $XS_convert) {
-      _XS_get_index_entries_sorted_by_letter($self,
-                                 $self->{'index_entries_by_letter'});
-      _XS_html_merge_index_entries($self);
-    }
-  }
-}
-
 sub _prepare_index_entries_targets($)
 {
   my $self = shift;
@@ -10828,15 +10861,15 @@ sub _default_format_program_string($)
   my $self = shift;
   if (defined($self->get_conf('PROGRAM'))
       and $self->get_conf('PROGRAM') ne ''
-      and defined($self->get_conf('PACKAGE_URL_OPTION'))) {
+      and defined($self->get_conf('PACKAGE_URL'))) {
     return $self->convert_tree(
-      $self->gdt('This document was generated on @emph{@today{}} using @uref{{program_homepage}, @emph{{program}}}.',
+      $self->cdt('This document was generated on @emph{@today{}} using @uref{{program_homepage}, @emph{{program}}}.',
          { 'program_homepage' => {'text'
-                           => $self->get_conf('PACKAGE_URL_OPTION')},
+                           => $self->get_conf('PACKAGE_URL')},
            'program' => {'text' => $self->get_conf('PROGRAM')} }));
   } else {
     return $self->convert_tree(
-      $self->gdt('This document was generated on @emph{@today{}}.'));
+      $self->cdt('This document was generated on @emph{@today{}}.'));
   }
 }
 
@@ -10878,7 +10911,7 @@ sub _default_format_end_file($$$)
         and ($js_setting eq 'generate' or $js_setting eq 'reference')) {
       $result .=
         '<a href="'.$self->url_protect_url_text($js_path).'" rel="jslicense"><small>'
-        .$self->convert_tree($self->gdt('JavaScript license information'))
+        .$self->convert_tree($self->cdt('JavaScript license information'))
         .'</small></a>';
     }
   }
@@ -10925,7 +10958,7 @@ sub _file_header_information($$;$)
         $element_tree = $self->command_tree($command);
       }
       # TRANSLATORS: sectioning element title for the page header
-      my $title_tree = $self->gdt('{element_text} ({title})',
+      my $title_tree = $self->cdt('{element_text} ({title})',
                    { 'title' => $self->get_info('title_tree'),
                      'element_text' => $element_tree });
       $title = $self->convert_tree_new_formatting_context(
@@ -10974,8 +11007,8 @@ sub _file_header_information($$;$)
   my $after_body_open = '';
   $after_body_open = $self->get_conf('AFTER_BODY_OPEN')
     if (defined($self->get_conf('AFTER_BODY_OPEN')));
-  my $program_and_version = $self->get_conf('PACKAGE_AND_VERSION_OPTION');
-  my $program_homepage = $self->get_conf('PACKAGE_URL_OPTION');
+  my $program_and_version = $self->get_conf('PACKAGE_AND_VERSION');
+  my $program_homepage = $self->get_conf('PACKAGE_URL');
   my $program = $self->get_conf('PROGRAM');
   my $generator = '';
   if (defined($program) and $program ne '') {
@@ -11139,7 +11172,7 @@ sub _default_format_node_redirection_page($$;$)
   my $href = $self->command_href($command, $filename);
   my $direction = "<a href=\"$href\">$name</a>";
   my $string = $self->convert_tree(
-    $self->gdt('The node you are looking for is at {href}.',
+    $self->cdt('The node you are looking for is at {href}.',
       { 'href' => {'type' => '_converted', 'text' => $direction }}));
 
   my ($title, $description, $encoding, $date, $css_lines,
@@ -11264,7 +11297,7 @@ sub _default_format_special_body_about($$$)
   }
   $about .= "<p>\n";
   $about .= $self->convert_tree(
-    $self->gdt('  The buttons in the navigation panels have the following meaning:'))
+    $self->cdt('  The buttons in the navigation panels have the following meaning:'))
             . "\n";
   $about .= <<EOT;
 </p>
@@ -11272,13 +11305,13 @@ sub _default_format_special_body_about($$$)
   <tr>
 EOT
    # TRANSLATORS: direction column header in the navigation help
-  $about .= '    <th> ' . $self->convert_tree($self->gdt('Button')) . " </th>\n" .
+  $about .= '    <th> ' . $self->convert_tree($self->cdt('Button')) . " </th>\n" .
    # TRANSLATORS: button label column header in the navigation help
-   '    <th> ' . $self->convert_tree($self->gdt('Name')) . " </th>\n" .
+   '    <th> ' . $self->convert_tree($self->cdt('Name')) . " </th>\n" .
    # TRANSLATORS: direction description column header in the navigation help
-   '    <th> ' . $self->convert_tree($self->gdt('Go to')) . " </th>\n" .
+   '    <th> ' . $self->convert_tree($self->cdt('Go to')) . " </th>\n" .
    # TRANSLATORS: section reached column header in the navigation help
-   '    <th> ' . $self->convert_tree($self->gdt('From 1.2.3 go to')) . "</th>\n"
+   '    <th> ' . $self->convert_tree($self->cdt('From 1.2.3 go to')) . "</th>\n"
  . "  </tr>\n";
 
   my $active_icons;
@@ -11327,7 +11360,7 @@ EOT
 
 <p>
 EOT
-  $about .= $self->convert_tree($self->gdt('  where the @strong{ Example } assumes that the current position is at @strong{ Subsubsection One-Two-Three } of a document of the following structure:')) . "\n";
+  $about .= $self->convert_tree($self->cdt('  where the @strong{ Example } assumes that the current position is at @strong{ Subsubsection One-Two-Three } of a document of the following structure:')) . "\n";
 
 #  where the <strong> Example </strong> assumes that the current position
 #  is at <strong> Subsubsection One-Two-Three </strong> of a document of
@@ -11339,10 +11372,10 @@ EOT
 EOT
   my $non_breaking_space = $self->get_info('non_breaking_space');
   # TRANSLATORS: example name of section for section 1
-  $about .= '  <li> 1. ' . $self->convert_tree($self->gdt('Section One')) . "\n" .
+  $about .= '  <li> 1. ' . $self->convert_tree($self->cdt('Section One')) . "\n" .
 "    <ul>\n" .
        # TRANSLATORS: example name of section for section 1.1
-'      <li>1.1 ' . $self->convert_tree($self->gdt('Subsection One-One')) . "\n";
+'      <li>1.1 ' . $self->convert_tree($self->cdt('Subsection One-One')) . "\n";
   $about .= <<EOT;
         <ul>
           <li>...</li>
@@ -11350,23 +11383,23 @@ EOT
       </li>
 EOT
                  # TRANSLATORS: example name of section for section 1.2
-  $about .= '      <li>1.2 ' . $self->convert_tree($self->gdt('Subsection One-Two')) . "\n" .
+  $about .= '      <li>1.2 ' . $self->convert_tree($self->cdt('Subsection One-Two')) . "\n" .
 "        <ul>\n" .
                  # TRANSLATORS: example name of section for section 1.2.1
-'          <li>1.2.1 ' . $self->convert_tree($self->gdt('Subsubsection One-Two-One')) . "</li>\n" .
+'          <li>1.2.1 ' . $self->convert_tree($self->cdt('Subsubsection One-Two-One')) . "</li>\n" .
                  # TRANSLATORS: example name of section for section 1.2.2
-'          <li>1.2.2 ' . $self->convert_tree($self->gdt('Subsubsection One-Two-Two')) . "</li>\n" .
+'          <li>1.2.2 ' . $self->convert_tree($self->cdt('Subsubsection One-Two-Two')) . "</li>\n" .
                  # TRANSLATORS: example name of section for section 1.2.3
-'          <li>1.2.3 ' . $self->convert_tree($self->gdt('Subsubsection One-Two-Three'))
+'          <li>1.2.3 ' . $self->convert_tree($self->cdt('Subsubsection One-Two-Three'))
                   . " $non_breaking_space $non_breaking_space\n"
 .
-'            <strong>&lt;== ' . $self->convert_tree($self->gdt('Current Position')) . " </strong></li>\n" .
+'            <strong>&lt;== ' . $self->convert_tree($self->cdt('Current Position')) . " </strong></li>\n" .
                  # TRANSLATORS: example name of section for section 1.2.4
-'          <li>1.2.4 ' . $self->convert_tree($self->gdt('Subsubsection One-Two-Four')) . "</li>\n" .
+'          <li>1.2.4 ' . $self->convert_tree($self->cdt('Subsubsection One-Two-Four')) . "</li>\n" .
 "        </ul>\n" .
 "      </li>\n" .
                  # TRANSLATORS: example name of section for section 1.3
-'      <li>1.3 ' . $self->convert_tree($self->gdt('Subsection One-Three')) . "\n";
+'      <li>1.3 ' . $self->convert_tree($self->cdt('Subsection One-Three')) . "\n";
   $about .= <<EOT;
         <ul>
           <li>...</li>
@@ -11374,7 +11407,7 @@ EOT
       </li>
 EOT
                  # TRANSLATORS: example name of section for section 1.4
-  $about .= '      <li>1.4 ' . $self->convert_tree($self->gdt('Subsection One-Four')) . "</li>\n";
+  $about .= '      <li>1.4 ' . $self->convert_tree($self->cdt('Subsection One-Four')) . "</li>\n";
 
   $about .= <<EOT;
     </ul>
@@ -11890,8 +11923,6 @@ sub convert($$)
   # Some information is not available yet.
   $self->_reset_info();
 
-  $self->_sort_index_entries();
-
   # cache, as it is checked for each text element
   if ($self->get_conf('OUTPUT_CHARACTERS')
       and $self->get_conf('OUTPUT_ENCODING_NAME')
@@ -12241,7 +12272,7 @@ sub _prepare_converted_output_info($)
     }
   }
   if (!defined($html_title_string)) {
-    my $default_title = $self->gdt('Untitled Document');
+    my $default_title = $self->cdt('Untitled Document');
     $self->{'title_tree'} = $default_title;
     $self->{'title_string'} = $self->convert_tree_new_formatting_context(
           {'type' => '_string', 'contents' => [$self->{'title_tree'}]},
@@ -12611,8 +12642,6 @@ sub output($$)
   # in translate_names
   # Some information is not available yet.
   $self->_reset_info();
-
-  $self->_sort_index_entries();
 
   # cache, as it is checked for each text element
   if ($self->get_conf('OUTPUT_CHARACTERS')
@@ -13128,10 +13157,10 @@ sub _convert($$;$)
       my $translated;
       if ($element->{'extra'}
           and $element->{'extra'}->{'translation_context'}) {
-        $translated = $self->pgdt($element->{'extra'}->{'translation_context'},
+        $translated = $self->pcdt($element->{'extra'}->{'translation_context'},
                                   $element->{'text'});
       } else {
-        $translated = $self->gdt($element->{'text'});
+        $translated = $self->cdt($element->{'text'});
       }
       $result = $self->_convert($translated, 'translated TEXT');
     } else {

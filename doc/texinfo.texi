@@ -15155,7 +15155,7 @@ files.)
 @opindex --trace-includes
 @vindex TRACE_INCLUDES
 Print the name of each included file to standard output, including any
-indrectly included files.  An include file is printed only if it was
+indirectly included files.  An include file is printed only if it was
 actually found.  When this option is given, @command{texi2any} does not
 output in any output format.  (The purpose of this option is to make it
 easier to collect the sources of a Texinfo manual.)
@@ -16157,6 +16157,20 @@ character.  The default for Info is set the same as for
 @code{OPEN_DOUBLE_QUOTE_SYMBOL}, except that the Unicode code is a closing
 double quote (see below).
 
+@item COLLATION_LANGUAGE
+By default, @command{texi2any} sorts document indices according to the
+@dfn{Unicode Collation Algorithm} (defined in
+@uref{http://www.unicode.org/reports/tr10/, Unicode Technical Standard #10}),
+without language specific collation tailoring.  If set, use the language
+for linguistic tailoring of indices sorting.
+
+If there is no support for linguistic tailoring because of missing software or
+missing support for the specified language, revert silently to the default.  In
+Perl, the @code{Unicode::Collate::Locale} module is used for linguistic
+tailoring, therefore if this module is not installed the variable will be
+silently ignored.  If @code{USE_UNICODE_COLLATION} is set to @samp{0}
+there is no unicode collation and no linguistic tailoring either.
+
 @item COMMAND_LINE_ENCODING
 Encoding used to decode command-line arguments.  Default is based on the locale
 encoding.  This may affect file names inserted into output files or error
@@ -16536,6 +16550,26 @@ Default is on for Info, off for other output.  If set, use exactly
 what @code{@@setfilename} gives for the output file name, including
 the extension.  You should not need to explicitly set this variable.
 
+@pindex Unicode::Collate
+@item USE_UNICODE_COLLATION
+By default, @command{texi2any} sorts document indices according to
+the @dfn{Unicode Collation Algorithm} (defined in
+@uref{http://www.unicode.org/reports/tr10/, Unicode Technical Standard #10}),
+which performs a @dfn{multi-level} ordering of strings containing Unicode
+code points.  (To do this, the program uses the @code{Unicode::Collate}
+module, a standard part of Perl installations.)  However, the use of
+this algorithm incurs noticeably longer run times when processing manuals
+with large indices.
+
+Set this variable to @samp{0} to use a simpler, faster sorting algorithm
+which only uses Perl's built-in string comparison.
+
+You may find this useful for speeding up @command{texi2any} if you don't
+have many non-ASCII characters in index entry text, or if you don't care
+about having the indices sorted correctly, especially when working on
+the draft of a manual.
+
+
 @pindex Text::Unidecode
 @item USE_UNIDECODE
 If set to false, do not use the @code{Text::Unidecode} Perl module to
@@ -16600,27 +16634,8 @@ The expansion of a translation string is done like this:
 @item First, the string is translated.  The locale
 is @var{documentlanguage}@code{.}@var{documentencoding}.
 
-@cindex @code{us-ascii} encoding, and translations
 If the @var{documentlanguage} has the form @samp{ll_CC}, that is
 tried first, and then just @samp{ll}.
-
-To cope with the possibility of having multiple encodings, a
-special use of the @code{us-ascii} locale encoding is also possible.
-If the @samp{ll} locale in the current encoding does not exist, and the
-encoding is not @code{us-ascii}, then @code{us-ascii} is tried.
-
-The idea is that if there is a @code{us-ascii} encoding, it means that
-all the characters in the charset may be expressed as @@-commands.
-For example, there is a @code{fr.us-ascii} locale that can accommodate
-any encoding, since all the Latin@tie{}1 characters have associated
-@@-commands.  On the other hand, Japanese has only a translation
-@code{ja.utf-8}, since there are no @@-commands for Japanese
-characters.
-
-The @code{us-ascii} locales are not needed much now that
-UTF-8 is used for most documents.  Note that accented characters
-are required to be expressed as @@-commands in the @code{us-ascii} locales,
-which may be inconvenient for translators.
 
 @item Next, in most cases, the string is expanded as Texinfo, and converted.
 The arguments are substituted; for example, @samp{@{arg_name@}} is replaced by

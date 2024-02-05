@@ -294,21 +294,21 @@ foreach my $output_format_command ('info', 'plaintext',
 
 
 # constants.  Set by the main program.
-my %constants;
+my %build_constants;
 
-sub set_constant($$)
+sub set_build_constant($$)
 {
   my $key = shift;
   my $value = shift;
 
-  $constants{$key} = $value;
+  $build_constants{$key} = $value;
 }
 
-sub get_constant($)
+sub get_build_constant($)
 {
   my $key = shift;
 
-  return $constants{$key};
+  return $build_constants{$key};
 }
 
 
@@ -391,6 +391,73 @@ our %nobrace_symbol_text;
            '{', '{',
            '&', '&',
            '\\', '\\',  # should only appear in math
+);
+
+# used by Texinfo::Convert::Text, Texinfo::Convert::NodeNormalization
+# and Texinfo::Convert::TextContent.
+our %text_brace_no_arg_commands = (
+               'TeX'                => 'TeX',
+               'LaTeX'              => 'LaTeX',
+               'bullet'             => '*',
+               'copyright'          => '(C)',
+               'registeredsymbol'   => '(R)',
+               'dots'         => '...',
+               'enddots'      => '...',
+               'equiv'        => '==',
+               'error'        => 'error-->',
+               'expansion'    => '==>',
+               'arrow'        => '->',
+               'minus'        => '-',
+               'point'        => '-!-',
+               'print'        => '-|',
+               'result'       => '=>',
+               'today'        => '',
+               'aa'           => 'aa',
+               'AA'           => 'AA',
+               'ae'           => 'ae',
+               'oe'           => 'oe',
+               'AE'           => 'AE',
+               'OE'           => 'OE',
+               'o'            => '/o',
+               'O'            => '/O',
+               'ss'           => 'ss',
+               'l'            => '/l',
+               'L'            => '/L',
+               'DH'           => 'D',
+               'dh'           => 'd',
+               'TH'           => 'TH', # http://www.evertype.com/standards/wynnyogh/thorn.html
+
+               'th'           => 'th',
+               'exclamdown'   => '!',
+               'questiondown' => '?',
+               'pounds'       => '#',
+               'ordf'         => 'a',
+               'ordm'         => 'o',
+               'comma'        => ',',
+               'atchar'       => '@',
+               'ampchar'      => '&',
+               'lbracechar'   => '{',
+               'rbracechar'   => '}',
+               'backslashchar' => '\\',
+               'hashchar'      => '#',
+               'euro'         => 'Euro',
+               'geq'          => '>=',
+               'leq'          => '<=',
+               'tie'          => ' ',
+               'textdegree'      => 'o',
+               'quotedblleft'    => '"',
+               'quotedblright'   => '"',
+               'quoteleft'       => '`',
+               'quoteright'      => "'",
+               'quotedblbase'    => ',,',
+               'quotesinglbase'  => ',',
+               'guillemetleft'   => '<<',
+               'guillemetright'  => '>>',
+               'guillemotleft'   => '<<',
+               'guillemotright'  => '>>',
+               'guilsinglleft'   => '<',
+               'guilsinglright'  => '>',
+               'click'           => '', # specially treated
 );
 
 our %def_map = (
@@ -1188,10 +1255,10 @@ sub locate_include_file($$)
     }
   }
 
-  my $found_file;
   if ($ignore_include_directories) {
-    $found_file = $input_file_path
-         if (-e $input_file_path and -r $input_file_path);
+    if (-e $input_file_path and -r $input_file_path) {
+      return $input_file_path;
+    }
   } else {
     my @include_directories;
     if ($customization_information
@@ -1206,15 +1273,20 @@ sub locate_include_file($$)
       my ($include_volume, $include_dir_path, $include_filename)
          = File::Spec->splitpath($include_dir, 1);
 
+      # catpath/catdir remove leading . and remove empty directories
+      # within paths.  To be more like XS/C output, we do it more simply
+      #my $possible_file = File::Spec->catpath($include_volume,
+      #  File::Spec->catdir(File::Spec->splitdir($include_dir_path),
+      #                     @directories), $filename);
+      my $filepath = $directories . $filename;
       my $possible_file = File::Spec->catpath($include_volume,
-        File::Spec->catdir(File::Spec->splitdir($include_dir_path),
-                           @directories), $filename);
-      $found_file = $possible_file
-           if (-e $possible_file and -r $possible_file);
-      last if (defined($found_file));
+                      $include_dir_path, $filepath);
+      if (-e $possible_file and -r $possible_file) {
+        return $possible_file;
+      }
     }
   }
-  return $found_file;
+  return undef;
 }
 
 # TODO document?
@@ -1500,7 +1572,7 @@ sub is_content_empty($;$)
         return 0;
       }
     }
-    if ($content->{'text'} and $content->{'text'} =~ /\S/) {
+    if (defined($content->{'text'}) and $content->{'text'} =~ /\S/) {
       return 0;
     }
     if (not is_content_empty($content, $do_not_ignore_index_entries)) {
@@ -2745,7 +2817,8 @@ Texinfo::Common - Texinfo modules common data and miscellaneous methods
     = Texinfo::Common::collect_commands_in_tree($document_root,
                                              \@commands_to_collect);
 
-  my $package_version = Texinfo::Common::get_constant('PACKAGE_AND_VERSION');
+  my $package_version
+    = Texinfo::Common::get_build_constant('PACKAGE_AND_VERSION');
 
 =head1 NOTES
 
@@ -2763,27 +2836,43 @@ methods.
 Hashes are defined as C<our> variables, and are therefore available
 outside of the module.
 
-Constants are available by calling C<get_constant>:
+Values defined for a Texinfo build independently of any document or
+output format are available by calling C<get_build_constant>:
 
 =over
 
-=item $value = get_constant($name)
+=item $value = get_build_constant($name)
 
-The following constants are available:
+The following build constants are available:
 
 =over
 
 =item PACKAGE
 
+=item PACKAGE_CONFIG
+
 =item PACKAGE_AND_VERSION
+
+=item PACKAGE_AND_VERSION_CONFIG
 
 =item PACKAGE_NAME
 
+=item PACKAGE_NAME_CONFIG
+
 =item PACKAGE_VERSION
+
+=item PACKAGE_VERSION_CONFIG
 
 =item PACKAGE_URL
 
-Texinfo package name and versions.  Values set by configure.
+=item PACKAGE_URL_CONFIG
+
+Texinfo package name and versions.  Values of build constants without
+C<_CONFIG> appended are set by configure.  For each variable set by
+configure there is another one with C<_CONFIG> appended
+to the name set to the same value, to match the name of the macros set in
+C.  So, for example C<PACKAGE_VERSION_CONFIG> value is the same as
+C<PACKAGE_VERSION>, set to the C<PACKAGE_VERSION> value set by configure.
 
 =back
 
@@ -2801,7 +2890,7 @@ and C<plaintext>.
 =back
 
 TODO: undocumented
-%null_device_file %default_parser_customization_values %multiple_at_command_options %unique_at_command_options %converter_cmdline_options %default_main_program_customization_options %converter_customization_options %document_settable_at_commands %def_map %command_structuring_level %level_to_structuring_command %encoding_name_conversion_map
+%null_device_file %default_parser_customization_values %multiple_at_command_options %unique_at_command_options %converter_cmdline_options %default_main_program_customization_options %converter_customization_options %document_settable_at_commands %def_map %command_structuring_level %level_to_structuring_command %encoding_name_conversion_map %text_brace_no_arg_commands
 
 =head1 @-COMMAND INFORMATION
 

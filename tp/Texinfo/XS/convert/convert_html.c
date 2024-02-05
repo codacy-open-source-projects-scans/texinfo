@@ -42,14 +42,14 @@
 #include "output_unit.h"
 #include "converter.h"
 #include "node_name_normalization.h"
-#include "indices_in_conversion.h"
+#include "manipulate_indices.h"
 #include "convert_to_texinfo.h"
 #include "translations.h"
 #include "convert_utils.h"
 #include "convert_to_text.h"
 #include "call_perl_function.h"
 #include "call_html_perl_function.h"
-/* for TREE_AND_STRINGS */
+/* for unregister_document_merge_with_document */
 #include "document.h"
 /* for OTXI_UNICODE_TEXT_CASES */
 #include "unicode.h"
@@ -568,7 +568,8 @@ format_translate_message (CONVERTER *self,
 
 char *
 html_translate_string (CONVERTER *self, const char *string,
-                   const char *translation_context, const char *in_lang)
+                       const char *lang,
+                       const char *translation_context)
 {
   FORMATTING_REFERENCE *formatting_reference
     = &self->formatting_references[FR_format_translate_message];
@@ -579,107 +580,106 @@ html_translate_string (CONVERTER *self, const char *string,
       && formatting_reference->status != FRS_status_ignored
       && formatting_reference->sv_reference)
     {
-      const char *lang = in_lang;
-      char *translated_string;
-
-      if (!lang && self->conf->documentlanguage.string)
-        lang = self->conf->documentlanguage.string;
-
-      translated_string
+      char *translated_string
        = format_translate_message(self, string, lang, translation_context);
 
       if (translated_string)
         return translated_string;
     }
 
-  return translate_string (self->conf, string, translation_context,
-                           in_lang);
+  return translate_string (string, lang, translation_context);
 }
 
 /* returns a document descriptor. */
+/* same as gdt with html_translate_string called instead of translate_string */
 int
-html_gdt (const char *string, CONVERTER *self,
+html_gdt (const char *string, CONVERTER *self, const char *lang,
      NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-     const char *translation_context, const char *in_lang)
+     const char *translation_context)
 {
-  char *translated_string = html_translate_string (self, string,
-                                              translation_context,
-                                              in_lang);
+  OPTIONS *options = self->conf;
+  int debug_level = 0;
+  int document_descriptor;
 
-  int document_descriptor
-    = replace_convert_substrings (self->conf, translated_string,
-                                  replaced_substrings);
+  char *translated_string = html_translate_string (self, string, lang,
+                                                   translation_context);
+
+  if (options && options->DEBUG.integer >= 0)
+    debug_level = options->DEBUG.integer;
+
+  document_descriptor  = replace_convert_substrings (translated_string,
+                                  replaced_substrings, debug_level);
   free (translated_string);
   return document_descriptor;
 }
 
-/* a copy and paste of translations.c gdt_tree with html_gdt instead of gdt */
+/* same as gdt_tree with html_gdt called instead of gdt */
 ELEMENT *
-html_gdt_tree (const char *string, DOCUMENT *document, CONVERTER *self,
-               NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-               const char *translation_context,
-               const char *in_lang)
+html_gdt_tree (const char *string, CONVERTER *self,
+               const char *lang, NAMED_STRING_ELEMENT_LIST *replaced_substrings,
+               const char *translation_context)
 {
-  ELEMENT *tree;
-  int gdt_document_descriptor = html_gdt (string, self, replaced_substrings,
-                                     translation_context, in_lang);
-  TREE_AND_STRINGS *tree_and_strings
-     = unregister_document_descriptor_tree (gdt_document_descriptor);
+  DOCUMENT *document = self->document;
 
-  tree = tree_and_strings->tree;
+  int gdt_document_descriptor = html_gdt (string, self, lang,
+                                     replaced_substrings, translation_context);
 
-  if (tree_and_strings->small_strings)
-    {
-      /* this is very unlikely, as small strings correspond to file names and
-         macro names, while we are parsing a simple string */
-      if (tree_and_strings->small_strings->number)
-        {
-          if (document)
-            merge_strings (document->small_strings,
-                           tree_and_strings->small_strings);
-          else
-            fatal ("html_gdt_tree no document but small_strings");
-        }
-      free (tree_and_strings->small_strings->list);
-      free (tree_and_strings->small_strings);
-    }
-  free (tree_and_strings);
-
+  ELEMENT *tree
+    = unregister_document_merge_with_document (gdt_document_descriptor,
+                                               document);
   return tree;
 }
 
-char *
-html_gdt_string (const char *string, CONVERTER *self,
-                 NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                 const char *translation_context, const char *in_lang)
+/* same as cdt_tree with html_gdt_tree called instead of gdt_tree */
+ELEMENT *
+html_cdt_tree (const char *string, CONVERTER *self,
+               NAMED_STRING_ELEMENT_LIST *replaced_substrings,
+               const char *translation_context)
 {
-  char *translated_string = html_translate_string (self, string,
-                                      translation_context, in_lang);
+  const char *lang = self->conf->documentlanguage.string;
 
-  char *result = replace_substrings (translated_string, replaced_substrings);
+  return html_gdt_tree (string, self, lang,
+                        replaced_substrings, translation_context);
+}
+
+char *
+html_cdt_string (const char *string, CONVERTER *self,
+                 NAMED_STRING_ELEMENT_LIST *replaced_substrings,
+                 const char *translation_context)
+{
+  char *translated_string;
+  char *result;
+  const char *lang = 0;
+
+  if (self->conf->documentlanguage.string)
+    lang = self->conf->documentlanguage.string;
+
+  translated_string = html_translate_string (self, string, lang,
+                                             translation_context);
+
+  result = replace_substrings (translated_string, replaced_substrings);
   free (translated_string);
   return result;
 }
 
 ELEMENT *
-html_pgdt_tree (const char *translation_context, const char *string,
-                DOCUMENT *document, CONVERTER *self,
-                NAMED_STRING_ELEMENT_LIST *replaced_substrings,
-                const char *in_lang)
+html_pcdt_tree (const char *translation_context, const char *string,
+                CONVERTER *self,
+                NAMED_STRING_ELEMENT_LIST *replaced_substrings)
 {
-  return html_gdt_tree (string, document, self, replaced_substrings,
-                        translation_context, in_lang);
+  return html_cdt_tree (string, self, replaced_substrings,
+                        translation_context);
 }
 
 static void
-translate_convert_to_html_internal (const char *string, DOCUMENT *document,
+translate_convert_to_html_internal (const char *string,
                CONVERTER *self,
                NAMED_STRING_ELEMENT_LIST *replaced_substrings,
                const char *translation_context,
-               const char *in_lang, TEXT *result, char *explanation)
+               TEXT *result, char *explanation)
 {
-  ELEMENT *translation_tree = html_gdt_tree (string, document, self,
-                           replaced_substrings, translation_context, in_lang);
+  ELEMENT *translation_tree = html_cdt_tree (string, self,
+                           replaced_substrings, translation_context);
 
   add_to_element_list (&self->tree_to_build, translation_tree);
   convert_to_html_internal (self, translation_tree, result, explanation);
@@ -1022,8 +1022,8 @@ special_unit_info_tree (CONVERTER *self, const enum special_unit_info_tree type,
           xasprintf (&translation_context, "%s section heading",
                      special_unit_variety);
           self->special_unit_info_tree[type][i]
-            = html_pgdt_tree (translation_context, special_unit_info_string,
-                              self->document, self, 0, 0);
+            = html_pcdt_tree (translation_context, special_unit_info_string,
+                              self, 0);
           free (translation_context);
           add_to_element_list (&self->tree_to_build,
                                self->special_unit_info_tree[type][i]);
@@ -2892,9 +2892,9 @@ direction_string (CONVERTER *self, int direction,
           text_append_n (&translation_context, " direction ", 11);
           text_append (&translation_context,
                        direction_type_translation_context[string_type]);
-          translated_tree = html_pgdt_tree (translation_context.text,
-                              dir_translated->to_convert, self->document,
-                              self, 0, 0);
+          translated_tree = html_pcdt_tree (translation_context.text,
+                              dir_translated->to_convert,
+                              self, 0);
           free (translation_context.text);
           if (context == TDS_context_string)
             {
@@ -2934,7 +2934,7 @@ direction_string (CONVERTER *self, int direction,
           if (context_converted_string)
             {
               char *translated_string
-                = html_gdt_string (context_converted_string, self, 0, 0, 0);
+                = html_cdt_string (context_converted_string, self, 0, 0);
               char *result_string
                 = substitute_html_non_breaking_space (self, translated_string);
               self->directions_strings[string_type][direction][context]
@@ -3832,16 +3832,15 @@ html_internal_command_tree (CONVERTER *self, const ELEMENT *command,
                       if (section_level == 1)
                         {
                           tree->tree
-                            = gdt_tree ("Appendix {number} {section_title}",
-                                        self->document, self->conf,
-                                        replaced_substrings, 0, 0);
+                            = html_cdt_tree (
+                                        "Appendix {number} {section_title}",
+                                        self, replaced_substrings, 0);
                         }
                     }
                   if (!tree->tree)
                     /* TRANSLATORS: numbered section title */
-                    tree->tree = gdt_tree ("{number} {section_title}",
-                                            self->document, self->conf,
-                                            replaced_substrings, 0, 0);
+                    tree->tree = html_cdt_tree ("{number} {section_title}",
+                                             self, replaced_substrings, 0);
 
                   destroy_named_string_element_list (replaced_substrings);
                   tree->status = tree_added_status_new_tree;
@@ -4667,17 +4666,6 @@ get_copiable_anchor (CONVERTER *self, const char *id)
       return result.text;
     }
   return 0;
-}
-
-void
-html_merge_index_entries (CONVERTER *self)
-{
-  if (self->document->index_names)
-    {
-      INDEX **index_names = self->document->index_names;
-      MERGED_INDEX *merged_index_entries = merge_indices (index_names);
-      self->index_entries = merged_index_entries;
-    }
 }
 
 int
@@ -6536,14 +6524,14 @@ html_default_format_program_string (CONVERTER *self, TEXT *result)
 {
   ELEMENT *tree;
   if (self->conf->PROGRAM.string && strlen (self->conf->PROGRAM.string)
-      && self->conf->PACKAGE_URL_OPTION.string)
+      && self->conf->PACKAGE_URL.string)
     {
       ELEMENT *program_homepage = new_element (ET_NONE);
       ELEMENT *program = new_element (ET_NONE);
       NAMED_STRING_ELEMENT_LIST *substrings
                                    = new_named_string_element_list ();
 
-      text_append (&program_homepage->text, self->conf->PACKAGE_URL_OPTION.string);
+      text_append (&program_homepage->text, self->conf->PACKAGE_URL.string);
       text_append (&program->text, self->conf->PROGRAM.string);
 
       add_element_to_named_string_element_list (substrings,
@@ -6551,9 +6539,9 @@ html_default_format_program_string (CONVERTER *self, TEXT *result)
       add_element_to_named_string_element_list (substrings,
                                                 "program", program);
 
-      tree = html_gdt_tree ("This document was generated on @emph{@today{}} "
+      tree = html_cdt_tree ("This document was generated on @emph{@today{}} "
                             "using @uref{{program_homepage}, @emph{{program}}}.",
-                            self->document, self, substrings, 0, 0);
+                            self, substrings, 0);
       destroy_named_string_element_list (substrings);
       /* destroyed with the tree
       destroy_element (program);
@@ -6562,8 +6550,8 @@ html_default_format_program_string (CONVERTER *self, TEXT *result)
     }
   else
     {
-      tree = html_gdt_tree ("This document was generated on @emph{@today{}}.",
-                            self->document, self, 0, 0, 0);
+      tree = html_cdt_tree ("This document was generated on @emph{@today{}}.",
+                            self, 0, 0);
     }
   add_to_element_list (&self->tree_to_build, tree);
   convert_to_html_internal (self, tree, result, 0);
@@ -6665,9 +6653,8 @@ html_default_format_end_file (CONVERTER *self, const char *filename,
               free (js_path);
               text_append_n (&result, "\" rel=\"jslicense\"><small>", 25);
 
-              tree = html_gdt_tree ("JavaScript license information",
-                                     self->document,
-                                     self, 0, 0, 0);
+              tree = html_cdt_tree ("JavaScript license information",
+                                     self, 0, 0);
               add_to_element_list (&self->tree_to_build, tree);
               convert_to_html_internal (self, tree, &result, 0);
               remove_element_from_list (&self->tree_to_build, tree);
@@ -6919,8 +6906,8 @@ file_header_information (CONVERTER *self, const ELEMENT *command,
 
           /* TRANSLATORS: sectioning element title for the page header */
           title_tree
-            = html_gdt_tree ("{element_text} ({title})",
-                                   self->document, self, substrings, 0, 0);
+            = html_cdt_tree ("{element_text} ({title})",
+                             self, substrings, 0);
 
           destroy_named_string_element_list (substrings);
 
@@ -7152,8 +7139,8 @@ html_default_format_begin_file (CONVERTER *self, const char *filename,
   text_append_n (&result, "\n", 1);
   text_printf (&result, "<html%s>\n", begin_info->root_html_element_attributes);
   text_printf (&result, "<!-- Created by %s, %s -->\n<head>\n",
-                        self->conf->PACKAGE_AND_VERSION_OPTION.string,
-                        self->conf->PACKAGE_URL_OPTION.string);
+                        self->conf->PACKAGE_AND_VERSION.string,
+                        self->conf->PACKAGE_URL.string);
   if (begin_info->encoding)
     text_append (&result, begin_info->encoding);
   text_append_n (&result, "\n", 1);
@@ -8185,8 +8172,8 @@ html_default_format_node_redirection_page (CONVERTER *self,
 
   text_init (&body);
   translate_convert_to_html_internal (
-          "The node you are looking for is at {href}.", self->document,
-           self, substrings, 0, 0, &body, 0);
+          "The node you are looking for is at {href}.",
+           self, substrings, 0, &body, 0);
 
   begin_info = file_header_information (self, element, filename);
 
@@ -8198,8 +8185,8 @@ html_default_format_node_redirection_page (CONVERTER *self,
   text_printf (&result, "<!-- Created by %s, %s -->\n"
        "<!-- This file redirects to the location of a node or anchor -->\n"
        "<head>\n",
-                        self->conf->PACKAGE_AND_VERSION_OPTION.string,
-                        self->conf->PACKAGE_URL_OPTION.string);
+                        self->conf->PACKAGE_AND_VERSION.string,
+                        self->conf->PACKAGE_URL.string);
   if (begin_info->encoding)
     text_append (&result, begin_info->encoding);
   text_append_n (&result, "\n", 1);
@@ -8538,8 +8525,8 @@ convert_value_command (CONVERTER *self, const enum command_id cmd,
   add_element_to_named_string_element_list (substrings,
                                             "value", value_text);
 
-  tree = html_gdt_tree ("@{No value for `{value}'@}", self->document,
-                        self, substrings, 0, 0);
+  tree = html_cdt_tree ("@{No value for `{value}'@}",
+                        self, substrings, 0);
 
   add_to_element_list (&self->tree_to_build, tree);
   convert_to_html_internal (self, tree, result, 0);
@@ -8764,8 +8751,8 @@ convert_explained_command (CONVERTER *self, const enum command_id cmd,
                           "explained_string", explained_string_element);
       add_element_to_named_string_element_list (substrings,
                           "explanation", explanation_result_element);
-      tree = html_gdt_tree ("{explained_string} ({explanation})",
-                             self->document, self, substrings, 0, 0);
+      tree = html_cdt_tree ("{explained_string} ({explanation})",
+                             self, substrings, 0);
       destroy_named_string_element_list (substrings);
 
       xasprintf (&context_str, "convert explained  %s",
@@ -11285,8 +11272,8 @@ convert_quotation_command (CONVERTER *self, const enum command_id cmd,
 
               /* TRANSLATORS: quotation author */
               translate_convert_to_html_internal (
-                             "@center --- @emph{{author}}", self->document,
-                             self, substrings, 0, 0, result,
+                             "@center --- @emph{{author}}",
+                             self, substrings, 0, result,
                              "convert quotation author");
               destroy_named_string_element_list (substrings);
             }
@@ -12033,18 +12020,18 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                           "reference_name", reference_element);
       if (cmd == CM_pxref)
         {
-          tree = html_gdt_tree ("see {reference_name}", self->document,
-                                self, substrings, 0, 0);
+          tree = html_cdt_tree ("see {reference_name}",
+                                self, substrings, 0);
         }
       else if (cmd == CM_xref)
         {
-          tree = html_gdt_tree ("See {reference_name}", self->document,
-                                self, substrings, 0, 0);
+          tree = html_cdt_tree ("See {reference_name}",
+                                self, substrings, 0);
         }
       else if (cmd == CM_ref || cmd == CM_link)
         {
-          tree = html_gdt_tree ("{reference_name}", self->document,
-                                self, substrings, 0, 0);
+          tree = html_cdt_tree ("{reference_name}",
+                                self, substrings, 0);
         }
       destroy_named_string_element_list (substrings);
     }
@@ -12195,18 +12182,18 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                                          "reference", reference_element);
           if (cmd == CM_pxref)
             {
-              tree = html_gdt_tree ("see {reference} in @cite{{book}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("see {reference} in @cite{{book}}",
+                                    self, substrings, 0);
             }
           else if (cmd == CM_xref)
             {
-              tree = html_gdt_tree ("See {reference} in @cite{{book}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("See {reference} in @cite{{book}}",
+                                    self, substrings, 0);
             }
           else /* @ref */
             {
-              tree = html_gdt_tree ("{reference} in @cite{{book}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("{reference} in @cite{{book}}",
+                                    self, substrings, 0);
             }
         }
       else if (book_reference)
@@ -12218,18 +12205,18 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                                           "book_reference", book_element);
           if (cmd == CM_pxref)
             {
-              tree = html_gdt_tree ("see @cite{{book_reference}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("see @cite{{book_reference}}",
+                                    self, substrings, 0);
             }
           else if (cmd == CM_xref || cmd == CM_inforef)
             {
-              tree = html_gdt_tree ("See @cite{{book_reference}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("See @cite{{book_reference}}",
+                                    self, substrings, 0);
             }
           else /* @ref */
             {
-              tree = html_gdt_tree ("@cite{{book_reference}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("@cite{{book_reference}}",
+                                    self, substrings, 0);
             }
         }
       else if (book && name)
@@ -12245,18 +12232,18 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                                          "section", reference_element);
           if (cmd == CM_pxref)
             {
-              tree = html_gdt_tree ("see `{section}' in @cite{{book}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("see `{section}' in @cite{{book}}",
+                                    self, substrings, 0);
             }
           else if (cmd == CM_xref || cmd == CM_inforef)
             {
-              tree = html_gdt_tree ("See `{section}' in @cite{{book}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("See `{section}' in @cite{{book}}",
+                                    self, substrings, 0);
             }
           else /* @ref */
             {
-              tree = html_gdt_tree ("`{section}' in @cite{{book}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("`{section}' in @cite{{book}}",
+                                    self, substrings, 0);
             }
         }
       else if (book)
@@ -12268,18 +12255,18 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                                           "book", book_element);
           if (cmd == CM_pxref)
             {
-              tree = html_gdt_tree ("see @cite{{book}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("see @cite{{book}}",
+                                    self, substrings, 0);
             }
           else if (cmd == CM_xref || cmd == CM_inforef)
             {
-              tree = html_gdt_tree ("See @cite{{book}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("See @cite{{book}}",
+                                    self, substrings, 0);
             }
           else /* @ref */
             {
-              tree = html_gdt_tree ("@cite{{book}}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("@cite{{book}}",
+                                    self, substrings, 0);
             }
         }
       else if (reference)
@@ -12291,18 +12278,18 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                                          "reference", reference_element);
           if (cmd == CM_pxref)
             {
-              tree = html_gdt_tree ("see {reference}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("see {reference}",
+                                    self, substrings, 0);
             }
           else if (cmd == CM_xref || cmd == CM_inforef)
             {
-              tree = html_gdt_tree ("See {reference}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("See {reference}",
+                                    self, substrings, 0);
             }
           else /* @ref */
             {
-              tree = html_gdt_tree ("{reference}",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("{reference}",
+                                    self, substrings, 0);
             }
         }
       else if (name)
@@ -12314,18 +12301,18 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                                          "section", reference_element);
           if (cmd == CM_pxref)
             {
-              tree = html_gdt_tree ("see `{section}'",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("see `{section}'",
+                                    self, substrings, 0);
             }
           else if (cmd == CM_xref || cmd == CM_inforef)
             {
-              tree = html_gdt_tree ("See `{section}'",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("See `{section}'",
+                                    self, substrings, 0);
             }
           else /* @ref */
             {
-              tree = html_gdt_tree ("`{section}'",
-                                    self->document, self, substrings, 0, 0);
+              tree = html_cdt_tree ("`{section}'",
+                                    self, substrings, 0);
             }
         }
       free (reference);
@@ -12392,8 +12379,7 @@ printindex_letters_head_foot_internal (CONVERTER *self, const char *index_name,
   text_append_n (result, "><tr><th>", 9);
 
   /* TRANSLATORS: before list of letters and symbols grouping index entries */
-  translate_convert_to_html_internal ("Jump to", self->document, self, 0,
-                                      0, 0, result, 0);
+  translate_convert_to_html_internal ("Jump to", self, 0, 0, result, 0);
   text_append_n (result, ": ", 2);
   text_append_n (result,
                  self->special_character[SC_non_breaking_space].string,
@@ -12435,8 +12421,9 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
   size_t non_alpha_nr = 0;
   size_t alpha_nr = 0;
   int *letter_is_symbol;
-  int *letter_has_entries;
+  char **formatted_letters;
   size_t symbol_idx = 0;
+  size_t normalized_letter_idx = 0;
   size_t i;
   char *entry_class_seeentry;
   char *section_class_seeentry;
@@ -12450,8 +12437,10 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
   char *index_name_cmd_class;
   char *alpha_text = 0;
   char *non_alpha_text = 0;
+  INDEX_SORTED_BY_LETTER *index_entries_by_letter
+    = get_converter_indices_sorted_by_letter (self);
 
-  if (!self->index_entries_by_letter)
+  if (!index_entries_by_letter)
     return;
 
   if (html_in_string (self))
@@ -12463,7 +12452,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
   else
     return;
 
-  for (idx = self->index_entries_by_letter; idx->name; idx++)
+  for (idx = index_entries_by_letter; idx->name; idx++)
     {
       if (!strcmp (idx->name, index_name))
         {
@@ -12499,8 +12488,8 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
   memset (non_alpha, 0, (index_sorted->letter_number +1) * sizeof (char *));
   letter_is_symbol
     = (int *) malloc (index_sorted->letter_number * sizeof (int));
-  letter_has_entries
-    = (int *) malloc (index_sorted->letter_number * sizeof (int));
+  formatted_letters = (char **) malloc
+      (index_sorted->letter_number * sizeof (char *));
 
   for (i = 0; i < index_sorted->letter_number; i++)
     {
@@ -12519,8 +12508,29 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                                    index_name, symbol_idx);
         }
       else
-        xasprintf (&letter_id[i], "%s_%s_letter-%s", index_element_id,
-                                   index_name, letter);
+        {
+          char *normalized_letter = letter;
+          ELEMENT *letter_text = new_element (ET_NONE);
+          text_append (&letter_text->text, letter);
+          normalized_letter = normalize_transliterate_texinfo (letter_text,
+                                             (self->conf->TEST.integer > 0));
+          destroy_element (letter_text);
+
+          if (strcmp (letter, normalized_letter))
+            {
+              char *tmp_normalized_letter;
+   /* disambiguate, as it could be another letter, case of @l, for example */
+              normalized_letter_idx++;
+              xasprintf (&tmp_normalized_letter, "%s-%zu", normalized_letter,
+                                                 normalized_letter_idx);
+              free (normalized_letter);
+              normalized_letter = tmp_normalized_letter;
+            }
+
+          xasprintf (&letter_id[i], "%s_%s_letter-%s", index_element_id,
+                                     index_name, normalized_letter);
+          free (normalized_letter);
+        }
     }
 
   html_new_document_context (self, builtin_command_name (cmd), 0, 0);
@@ -12551,6 +12561,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
   /* Next do the entries to determine the letters that are not empty */
   for (i = 0; i < index_sorted->letter_number; i++)
     {
+      INDEX_ENTRY *first_entry = 0;
       LETTER_INDEX_ENTRIES *letter_entry = &index_sorted->letter_entries[i];
       char *letter = letter_entry->letter;
       size_t entry_nr = 0;
@@ -12820,17 +12831,17 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                     {
        /* TRANSLATORS: redirect to another index entry */
        /* TRANSLATORS: @: is discardable and is used to avoid a msgfmt error */
-                      result_tree = html_gdt_tree (
+                      result_tree = html_cdt_tree (
        "@code{{main_index_entry}}, @emph{See@:} @code{{seeentry}}",
-                                      self->document, self, substrings, 0, 0);
+                                      self, substrings, 0);
                     }
                   else
                     {
         /* TRANSLATORS: redirect to another index entry */
         /* TRANSLATORS: @: is discardable and used to avoid a msgfmt error */
-                      result_tree = html_gdt_tree (
+                      result_tree = html_cdt_tree (
                     "{main_index_entry}, @emph{See@:} {seeentry}",
-                                      self->document, self, substrings, 0, 0);
+                                      self, substrings, 0);
                     }
                   xasprintf (&convert_info,
                              "index %s l %s index entry %zu seeentry",
@@ -12863,9 +12874,9 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
 
                   add_element_to_named_string_element_list (substrings,
                                              "see_also_entry", referred_tree);
-                  reference_tree = html_gdt_tree (
+                  reference_tree = html_cdt_tree (
                                   "@emph{See also} {see_also_entry}",
-                                      self->document, self, substrings, 0, 0);
+                                      self, substrings, 0);
 
                   xasprintf (&conv_str_entry,
                              "index %s l %s index entry %zu (with seealso)",
@@ -12985,6 +12996,9 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                 }
               else
                 {
+                  if (!first_entry)
+                    first_entry = index_entry_ref;
+
                   if (index_entry_ref->entry_associated_element)
                     target_element = index_entry_ref->entry_associated_element;
                   else
@@ -13154,34 +13168,92 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
 
       if (entries_text.end > 0)
         {
+          char *formatted_letter;
+          ELEMENT *letter_command = 0;
+          enum command_id letter_cmd = 0;
+
+          if (first_entry)
+            {
+              INDEX_ENTRY_TEXT_OR_COMMAND *entry_text_or_command
+                = index_entry_first_letter_text_or_command (first_entry);
+
+              if (entry_text_or_command)
+                {
+                  letter_command = entry_text_or_command->command;
+
+                  free (entry_text_or_command->text);
+                  free (entry_text_or_command);
+
+                  if (letter_command)
+                    letter_cmd = element_builtin_data_cmd (letter_command);
+                }
+            }
+
+          if (letter_command
+              && (!(builtin_command_data[letter_cmd].flags & CF_accent))
+              && letter_cmd != CM_U
+            /* special case, the uppercasing of that command is not done
+               if as a command, while it is done correctly in letter */
+              && letter_cmd != CM_ss)
+            {
+              ELEMENT *formatted_command;
+              char *explanation;
+              if (html_commands_data[letter_cmd].upper_case_cmd)
+                {
+                   formatted_command = new_element (ET_NONE);
+                   formatted_command->cmd
+                      = html_commands_data[letter_cmd].upper_case_cmd;
+                }
+              else
+                formatted_command = letter_command;
+
+              xasprintf (&explanation, "index letter %s command", letter);
+              add_to_element_list (&self->tree_to_build, formatted_command);
+              formatted_letter
+                = html_convert_tree (self, formatted_command, explanation);
+              remove_element_from_list (&self->tree_to_build,
+                                        formatted_command);
+              if (formatted_command != letter_command)
+                destroy_element (formatted_command);
+              free (explanation);
+            }
+          else
+            {
+              TEXT text_letter;
+              text_init (&text_letter);
+              text_append (&text_letter, "");
+              format_protect_text (self, letter, &text_letter);
+              formatted_letter = text_letter.text;
+            }
+
+          formatted_letters[i] = formatted_letter;
+
           text_append_n (&result_index_entries, "<tr>", 4);
           text_printf (&result_index_entries, "<th id=\"%s\">", letter_id[i]);
-          format_protect_text (self, letter, &result_index_entries);
+          text_append (&result_index_entries, formatted_letter);
           text_append_n (&result_index_entries, "</th></tr>\n", 11);
           text_append (&result_index_entries, entries_text.text);
           text_append_n (&result_index_entries, "<tr><td colspan=\"3\">", 20);
           text_append (&result_index_entries, self->conf->DEFAULT_RULE.string);
           text_append_n (&result_index_entries, "</td></tr>\n", 11);
-          letter_has_entries[i] = 1;
         }
       else
-        letter_has_entries[i] = 0;
+        {
+          formatted_letters[i] = 0;
+        }
     }
 
   add_string (summary_letter_cmd, entry_classes);
   attribute_class = html_attribute_class (self, "a", entry_classes);
   for (i = 0; i < index_sorted->letter_number; i++)
     {
-      if (letter_has_entries[i])
+      if (formatted_letters[i])
         {
-          LETTER_INDEX_ENTRIES *letter_entry = &index_sorted->letter_entries[i];
-          char *letter = letter_entry->letter;
-
           text_reset (&entries_text);
 
           text_append (&entries_text, attribute_class);
           text_printf (&entries_text, " href=\"#%s\"><b>", letter_id[i]);
-          format_protect_text (self, letter, &entries_text);
+          text_append (&entries_text, formatted_letters[i]);
           text_append_n (&entries_text, "</b></a>", 8);
 
           if (letter_is_symbol[i])
@@ -13194,12 +13266,14 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
               alpha[alpha_nr] = strdup (entries_text.text);
               alpha_nr++;
             }
+
+          free (formatted_letters[i]);
         }
     }
   free (attribute_class);
 
   free (letter_is_symbol);
-  free (letter_has_entries);
+  free (formatted_letters);
 
   for (i = 0; i < index_sorted->letter_number; i++)
     free (letter_id[i]);
@@ -13316,8 +13390,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
   free (attribute_class);
   text_append_n (result, ">", 1);
   /* TRANSLATORS: index entries column header in index formatting */
-  translate_convert_to_html_internal ("Index Entry", self->document, self, 0,
-                                      0, 0, result, 0);
+  translate_convert_to_html_internal ("Index Entry", self, 0, 0, result, 0);
   text_append_n (result, "</th>", 5);
 
   xasprintf (&index_name_cmd_class, "sections-header-%s",
@@ -13330,8 +13403,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
   free (attribute_class);
   text_append_n (result, ">", 1);
   /* TRANSLATORS: section of index entry column header in index formatting */
-  translate_convert_to_html_internal ("Section", self->document, self, 0,
-                                      0, 0, result, 0);
+  translate_convert_to_html_internal ("Section", self, 0, 0, result, 0);
   text_append_n (result, "</th></tr>\n", 11);
   text_append_n (result, "<tr><td colspan=\"3\">", 20);
   text_append (result, self->conf->DEFAULT_RULE.string);
@@ -13606,8 +13678,8 @@ open_quotation_command (CONVERTER *self, const enum command_id cmd,
       ELEMENT *quotation_arg_copy = copy_tree (element->args.list[0]);
       add_element_to_named_string_element_list (substrings,
                           "quotation_arg", quotation_arg_copy);
-      tree = html_gdt_tree ("@b{{quotation_arg}:} ", self->document,
-                           self, substrings, 0, 0);
+      tree = html_cdt_tree ("@b{{quotation_arg}:} ",
+                           self, substrings, 0);
       destroy_named_string_element_list (substrings);
       xasprintf (&explanation, "open %s prepended arg", cmdname);
       add_to_element_list (&self->tree_to_build, tree);
@@ -14864,20 +14936,20 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
               && !strcmp (self->conf->deftypefnnewline.string, "on"))
             {
                category_tree
-                  = html_gdt_tree ("{category} on @code{{class}}:@* ",
-                                   self->document, self, substrings, 0, 0);
+                  = html_cdt_tree ("{category} on @code{{class}}:@* ",
+                                   self, substrings, 0);
             }
           else if (base_cmd == CM_defop || base_cmd == CM_deftypeop)
             {
                category_tree
-                  = html_gdt_tree ("{category} on @code{{class}}: ",
-                                   self->document, self, substrings, 0, 0);
+                  = html_cdt_tree ("{category} on @code{{class}}: ",
+                                   self, substrings, 0);
             }
           else if (base_cmd == CM_defcv || base_cmd == CM_deftypecv)
             {
                category_tree
-                  = html_gdt_tree ("{category} of @code{{class}}: ",
-                                   self->document, self, substrings, 0, 0);
+                  = html_cdt_tree ("{category} of @code{{class}}: ",
+                                   self, substrings, 0);
             }
         }
       else
@@ -14887,14 +14959,14 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
               && !strcmp (self->conf->deftypefnnewline.string, "on"))
             {
               category_tree
-                  = html_gdt_tree ("{category}:@* ",
-                                   self->document, self, substrings, 0, 0);
+                  = html_cdt_tree ("{category}:@* ",
+                                   self, substrings, 0);
             }
           else
             {
               category_tree
-                  = html_gdt_tree ("{category}: ",
-                                   self->document, self, substrings, 0, 0);
+                  = html_cdt_tree ("{category}: ",
+                                   self, substrings, 0);
             }
         }
       destroy_named_string_element_list (substrings);
@@ -15393,19 +15465,16 @@ default_format_special_body_about (CONVERTER *self,
   text_append_n (result, "<p>\n", 4);
   translate_convert_to_html_internal (
    "  The buttons in the navigation panels have the following meaning:",
-   self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, "\n</p>\n<table border=\"1\">\n  <tr>\n    <th> ");
-  translate_convert_to_html_internal ("Button", self->document, self, 0,
-                                      0, 0, result, 0);
+  translate_convert_to_html_internal ("Button", self, 0, 0, result, 0);
   text_append (result, " </th>\n    <th> ");
-  translate_convert_to_html_internal ("Name", self->document, self, 0,
-                                      0, 0, result, 0);
+  translate_convert_to_html_internal ("Name", self, 0, 0, result, 0);
   text_append (result, " </th>\n    <th> ");
-  translate_convert_to_html_internal ("Go to", self->document, self, 0,
-                                      0, 0, result, 0);
+  translate_convert_to_html_internal ("Go to", self, 0, 0, result, 0);
   text_append (result, " </th>\n    <th> ");
-  translate_convert_to_html_internal ("From 1.2.3 go to", self->document,
-                                      self, 0, 0, 0, result, 0);
+  translate_convert_to_html_internal ("From 1.2.3 go to", self, 0, 0,
+                                      result, 0);
   text_append (result, "</th>\n  </tr>\n");
 
   for (i = 0; i < buttons->number; i++)
@@ -15478,28 +15547,28 @@ default_format_special_body_about (CONVERTER *self,
   translate_convert_to_html_internal (
  "  where the @strong{ Example } assumes that the current position is at "
  "@strong{ Subsubsection One-Two-Three } of a document of the following "
- "structure:", self->document, self, 0, 0, 0, result, 0);
+ "structure:", self, 0, 0, result, 0);
 
   text_append_n (result, "\n</p>\n\n<ul>\n", 12);
   text_append (result, "  <li> 1. ");
   translate_convert_to_html_internal ("Section One",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, "\n    <ul>\n      <li>1.1 ");
   translate_convert_to_html_internal ("Subsection One-One",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, "\n        <ul>\n          <li>...</li>\n"
      "        </ul>\n      </li>\n      <li>1.2 ");
   translate_convert_to_html_internal ("Subsection One-Two",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, "\n        <ul>\n          <li>1.2.1 ");
   translate_convert_to_html_internal ("Subsubsection One-Two-One",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, "</li>\n          <li>1.2.2 ");
   translate_convert_to_html_internal ("Subsubsection One-Two-Two",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, "</li>\n          <li>1.2.3 ");
   translate_convert_to_html_internal ("Subsubsection One-Two-Three",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append_n (result, " ", 1);
   text_append_n (result,
                 self->special_character[SC_non_breaking_space].string,
@@ -15512,17 +15581,17 @@ default_format_special_body_about (CONVERTER *self,
 
   text_append (result, "            <strong>&lt;== ");
   translate_convert_to_html_internal ("Current Position",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, " </strong></li>\n          <li>1.2.4 ");
   translate_convert_to_html_internal ("Subsubsection One-Two-Four",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, "</li>\n        </ul>\n      </li>\n      <li>1.3 ");
   translate_convert_to_html_internal ("Subsection One-Three",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, "\n        <ul>\n          <li>...</li>\n"
   "        </ul>\n      </li>\n      <li>1.4 ");
   translate_convert_to_html_internal ("Subsection One-Four",
-                           self->document, self, 0, 0, 0, result, 0);
+                                      self, 0, 0, result, 0);
   text_append (result, "</li>\n    </ul>\n  </li>\n</ul>\n");
 }
 
@@ -15687,8 +15756,8 @@ html_prepare_converted_output_info (CONVERTER *self)
 
   if (!html_title_string)
     {
-      ELEMENT *default_title = html_gdt_tree ("Untitled Document",
-                                         self->document, self, 0, 0, 0);
+      ELEMENT *default_title = html_cdt_tree ("Untitled Document",
+                                              self, 0, 0);
       SOURCE_INFO cmd_source_info;
 
       self->title_tree = default_title;
@@ -16635,11 +16704,6 @@ html_reset_converter (CONVERTER *self)
       self->added_title_tree = 0;
     }
 
-  if (self->index_entries)
-    {
-      destroy_merged_indices (self->index_entries);
-      self->index_entries = 0;
-    }
   if (self->index_entries_by_letter)
     {
       destroy_indices_sorted_by_letter (self->index_entries_by_letter);
@@ -17144,17 +17208,18 @@ html_translate_names (CONVERTER *self)
                   add_cmd = 1;
                   free (format_spec->text);
                   format_spec->text
-                   = html_gdt_string (format_spec->translated_converted, self,
-                                 0, 0, 0);
+                   = html_cdt_string (format_spec->translated_converted, self,
+                                      0, 0);
                 }
               else if (cctx == HCC_type_normal)
                 {
                   ELEMENT *translated_tree = 0;
                   if (format_spec->translated_to_convert)
-                    {/* FIXME use document associated to converter? */
+                    {/* it is very unlikely to have small strings to add,
+                        but in case there are is should be ok */
                       translated_tree =
-                        html_gdt_tree (format_spec->translated_to_convert,
-                                   0, self, 0, 0, 0);
+                        html_cdt_tree (format_spec->translated_to_convert,
+                                       self, 0, 0);
                     }
                   else
                     translated_tree = translated_command_tree (self, cmd);
@@ -17577,9 +17642,8 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
         {
           char *translation_context
             = lookup_extra_string (element, "translation_context");
-          ELEMENT *translated = html_gdt_tree (element->text.text,
-                                               self->document,
-                                           self, 0, translation_context, 0);
+          ELEMENT *translated = html_cdt_tree (element->text.text,
+                                           self, 0, translation_context);
 
           add_to_element_list (&self->tree_to_build, translated);
 

@@ -31,6 +31,7 @@
 /* for delete_global_info and wipe_index */
 #include "utils.h"
 #include "convert_to_text.h"
+#include "manipulate_indices.h"
 #include "document.h"
 
 /* note that each time the document list is reallocated, pointers
@@ -133,6 +134,19 @@ register_document_options (DOCUMENT *document, OPTIONS *options)
   document->options = options;
 }
 
+const MERGED_INDICES *
+document_merged_indices (DOCUMENT *document)
+{
+  if (document->index_names)
+    {
+      if (!document->merged_indices)
+        {
+          document->merged_indices = merge_indices (document->index_names);
+        }
+    }
+  return document->merged_indices;
+}
+
 void
 register_document_convert_index_text_options (DOCUMENT *document,
                                               TEXT_OPTIONS *text_options)
@@ -175,6 +189,8 @@ destroy_document_information_except_tree (DOCUMENT *document)
         }
       if (document->convert_index_text_options)
         destroy_text_options (document->convert_index_text_options);
+      if (document->merged_indices)
+        destroy_merged_indices (document->merged_indices);
     }
 }
 
@@ -202,31 +218,45 @@ remove_document_descriptor (int document_descriptor)
    */
 }
 
-/* destroy everything except for the tree, and small strings
-   and unregister the tree such that it won't ever be retrieved.
-   Should be used when the tree becomes part of another document,
-   for instance */
-TREE_AND_STRINGS *
-unregister_document_descriptor_tree (int document_descriptor)
+/* destroy everything except for the tree and merge small string to
+   DOCUMENT */
+ELEMENT *
+unregister_document_merge_with_document (int document_descriptor,
+                                         DOCUMENT *document)
 {
-  TREE_AND_STRINGS *tree_and_strings = 0;
-  DOCUMENT *document = retrieve_document (document_descriptor);
+  DOCUMENT *removed_document = retrieve_document (document_descriptor);
+  ELEMENT *tree;
 
-  if (!document)
+  if (!removed_document)
     return 0;
 
-  tree_and_strings = malloc (sizeof (TREE_AND_STRINGS));
+  destroy_document_information_except_tree (removed_document);
 
-  destroy_document_information_except_tree (document);
-  tree_and_strings->tree = document->tree;
-  tree_and_strings->small_strings = document->small_strings;
+  tree = removed_document->tree;
+  removed_document->tree = 0;
 
-  document->tree = 0;
-  document->small_strings = 0;
   /*
-  fprintf(stderr, "UNREGISTER %p\n", document);
+  fprintf(stderr, "UNREGISTER %p\n", removed_document);
    */
-  return tree_and_strings;
+
+  if (removed_document->small_strings)
+    {
+      if (removed_document->small_strings->number)
+        {
+          if (document)
+            merge_strings (document->small_strings,
+                           removed_document->small_strings);
+          else
+            fatal ("unregister_document_merge_with_document "
+                   "no document but small_strings");
+        }
+      free (removed_document->small_strings->list);
+      free (removed_document->small_strings);
+
+      removed_document->small_strings = 0;
+    }
+
+  return tree;
 }
 
 void
