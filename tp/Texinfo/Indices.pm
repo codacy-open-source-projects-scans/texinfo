@@ -1,6 +1,6 @@
 # Indices.pm: merge and sort indices
 #
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -138,63 +138,6 @@ sub _sort_index_entries($$)
   return $res;
 }
 
-sub _collator_sort_string($$$)
-{
-  my $a = shift;
-  my $b = shift;
-  my $collator = shift;
-  return (($a =~ /^[[:alpha:]]/ and $b =~ /^[[:alpha:]]/)
-              or ($a !~ /^[[:alpha:]]/ and $b !~ /^[[:alpha:]]/))
-                 ? ($collator->cmp ($a, $b))
-                 : (($a =~ /^[[:alpha:]]/ && 1) || -1);
-}
-
-# This is a duplicate of the functions above, for efficiency
-sub _collator_sort_key($$$)
-{
-  my $a = shift;
-  my $b = shift;
-  my $collator = shift;
-  my ($a_value, $a_alpha) = @$a;
-  my ($b_value, $b_alpha) = @$b;
-  if ($a_alpha == $b_alpha) {
-    return $collator->cmp($a_value, $b_value);
-  }
-  return $a_alpha <=> $b_alpha;
-}
-
-sub _collator_sort_index_entries($$$)
-{
-  my $key1 = shift;
-  my $key2 = shift;
-  my $collator = shift;
-
-  my $key_index = 0;
-  # the keys array corresponds to the main entry and subentries
-  foreach my $key1_str (@{$key1->{'keys'}}) {
-    my $res = _collator_sort_key($key1_str,
-                                    $key2->{'keys'}->[$key_index],
-                                    $collator);
-    if ($res != 0) {
-      return $res;
-    }
-    $key_index ++;
-    if (scalar(@{$key2->{'keys'}}) <= $key_index) {
-      last;
-    }
-  }
-  my $res = (scalar(@{$key1->{'keys'}}) <=> scalar(@{$key2->{'keys'}}));
-  if ($res == 0) {
-    $res = ($key1->{'number'} <=> $key2->{'number'});
-  }
-  # This may happen if 2 indices are merged as the number is per
-  # index name.
-  if ($res == 0) {
-    $res = ($key1->{'index_name'} cmp $key2->{'index_name'});
-  }
-  return $res;
-}
-
 sub setup_index_entry_keys_formatting($)
 {
   my $customization_information = shift;
@@ -248,34 +191,6 @@ sub index_entry_element_sort_string($$$$;$)
   return $sort_string;
 }
 
-# $DOCUMENT_INFO is used in XS to retrieve the document.
-sub _index_entry_element_sort_string_key($$$$$;$)
-{
-  my $document_info = shift;
-  my $main_entry = shift;
-  my $index_entry_element = shift;
-  my $options = shift;
-  my $collator = shift;
-  my $prefer_reference_element = shift;
-
-  my $sort_string = index_entry_element_sort_string ($document_info,
-                               $main_entry, $index_entry_element,
-                               $options, $prefer_reference_element);
-
-  # This avoids varying results depending on whether the string is
-  # represented internally in UTF-8.  See 'the "Unicode bug"' in the
-  # "perlunicode" man page.
-  utf8::upgrade($sort_string);
-  my $sort_key;
-  if ($collator) {
-    $sort_key = $collator->getSortKey(uc($sort_string));
-  } else {
-    $sort_key = uc($sort_string);
-  }
-
-  return ($sort_string, $sort_key);
-}
-
 # This is a stub for the Unicode::Collate module.  Although this module is
 # a core Perl module, some distributions may install a stripped-down Perl
 # that doesn't include it, so providing this fall-back allows texi2any
@@ -304,17 +219,7 @@ sub getSortKey($$) {
   return $string;
 }
 
-sub cmp($$$) {
-  my ($self, $a, $b) = @_;
-
-  return ($a cmp $b);
-}
-
 package Texinfo::Indices;
-
-# if true pre-set collating keys
-#my $default_preset_keys = 0;
-my $default_preset_keys = 1;
 
 # this is needed here, as the code can be called both from the main
 # context, with a registrar and customization information, and from
@@ -335,35 +240,12 @@ sub _converter_or_registrar_line_warn($$$$)
   }
 }
 
-# There is no neeed for document information in Perl, however, in XS
-# it is needed to retrieve the Tree elements in the C structures.
-# $CUSTOMIZATION_INFORMATION is used as the source of document
-# information.  It should already be set if it is a converter based
-# on Texinfo::Convert::Converter, but otherwise it should be set by
-# the caller, setting 'document_descriptor' to document->document_descriptor().
-# If $PRESET_KEYS is set, the entries sort keys are set with a collator help
-# and the default sort function can be directly used.  If unset, no collator
-# is passed to the functions setting the sort key, but a collator is used for
-# sorting.  In practice $PRESET_KEYS is always set, as the default
-# $default_preset_keys, which set to 1 is always used in calling functions
-# to determine the value of $PRESET_KEYS.
-sub setup_sortable_index_entries($$$$$)
+sub _setup_collator($$)
 {
-  my $registrar = shift;
-  my $customization_information = shift;
-  my $index_entries = shift;
-  my $indices_information = shift;
-  my $preset_keys = shift;
+  my $use_unicode_collation = shift;
+  my $locale_lang = shift;
 
-  # convert index entries to sort string using unicode when possible
-  # independently of input and output encodings
-  my $convert_text_options = {};
-  $convert_text_options->{'enabled_encoding'} = 'utf-8';
-  # It could be possible to set INCLUDE_DIRECTORIES, but there is no
-  # point doing so, as it is only useful for @verbatiminclude, which
-  # cannot appear in index entries.
-  #$convert_text_options->{'INCLUDE_DIRECTORIES'}
-  #   = $customization_information->get_conf('INCLUDE_DIRECTORIES');
+  my $collator;
 
   # The 'Non-Ignorable' for variable collation elements means that they are
   # treated as normal characters.   This allows to have spaces and punctuation
@@ -393,20 +275,14 @@ sub setup_sortable_index_entries($$$$$)
   #                   'UCA_Version' => 9,
   #                   'table' => 'allkeys-3.1.1.txt');
 
-  my $use_unicode_collation
-    = $customization_information->get_conf('USE_UNICODE_COLLATION');
-
-  my $collator;
   if (!(defined($use_unicode_collation) and !$use_unicode_collation)) {
     # Unicode::Collate::Locale is present in perl core since perl major
     # version 5.14 released in 2011.
-    if (defined($customization_information->get_conf('COLLATION_LANGUAGE'))) {
+    if (defined($locale_lang)) {
       eval { require Unicode::Collate::Locale;
              Unicode::Collate::Locale->import; };
       my $unicode_collate_locale_loading_error = $@;
       if ($unicode_collate_locale_loading_error eq '') {
-        my $locale_lang
-          = $customization_information->get_conf('COLLATION_LANGUAGE');
         $collator = Unicode::Collate::Locale->new('locale' => $locale_lang,
                                                   %collate_options);
       }
@@ -423,16 +299,32 @@ sub setup_sortable_index_entries($$$$$)
   # Fall back to stub if Unicode::Collate not wanted or not available.
   $collator = Texinfo::CollateStub->new() if (!defined($collator));
 
-  my $entries_collator;
-  $entries_collator = $collator if $preset_keys;
-  my $index_sortable_index_entries;
-  my $index_entries_sort_strings = {};
-  return $index_sortable_index_entries, $collator, $index_entries_sort_strings
-    unless ($index_entries);
+  return $collator;
+}
 
-  $index_sortable_index_entries = {};
+sub setup_index_entries_sort_strings($$$$;$)
+{
+  my $registrar = shift;
+  my $customization_information = shift;
+  my $index_entries = shift;
+  my $indices_information = shift;
+  my $prefer_reference_element = shift;
+
+  return undef unless ($index_entries);
+
+  # convert index entries to sort string using unicode when possible
+  # independently of input and output encodings
+  my $convert_text_options = {};
+  $convert_text_options->{'enabled_encoding'} = 'utf-8';
+  # It could be possible to set INCLUDE_DIRECTORIES, but there is no
+  # point doing so, as it is only useful for @verbatiminclude, which
+  # cannot appear in index entries.
+  #$convert_text_options->{'INCLUDE_DIRECTORIES'}
+  #   = $customization_information->get_conf('INCLUDE_DIRECTORIES');
+
+  my $indices_sort_strings = {};
   foreach my $index_name (keys(%$index_entries)) {
-    my $sortable_index_entries = [];
+    my $index_entries_sort_strings = [];
     foreach my $index_entry (@{$index_entries->{$index_name}}) {
       my $entry_index_name = $index_entry->{'index_name'};
       my $main_entry_element = $index_entry->{'entry_element'};
@@ -440,13 +332,12 @@ sub setup_sortable_index_entries($$$$$)
       if ($in_code) {
         Texinfo::Convert::Text::set_options_code($convert_text_options);
       }
-      my ($entry_sort_string, $entry_sort_key)
-        = _index_entry_element_sort_string_key($customization_information,
-                                   $index_entry, $main_entry_element,
-                                   $convert_text_options, $entries_collator);
+      my $entry_sort_string
+        = index_entry_element_sort_string ($customization_information,
+                               $index_entry, $main_entry_element,
+                           $convert_text_options, $prefer_reference_element);
       my $non_empty_index_subentries = 0;
       my @entry_sort_strings;
-      my @entry_sort_keys;
       if ($entry_sort_string !~ /\S/) {
         my $entry_cmdname = $main_entry_element->{'cmdname'};
         $entry_cmdname
@@ -458,10 +349,8 @@ sub setup_sortable_index_entries($$$$$)
                                   $entry_cmdname),
                                $main_entry_element->{'source_info'});
         push @entry_sort_strings, '';
-        push @entry_sort_keys, '';
       } else {
         push @entry_sort_strings, $entry_sort_string;
-        push @entry_sort_keys, $entry_sort_key;
         $non_empty_index_subentries++;
       }
       my $subentry_nr = 0;
@@ -469,10 +358,9 @@ sub setup_sortable_index_entries($$$$$)
       while ($subentry->{'extra'} and $subentry->{'extra'}->{'subentry'}) {
         $subentry_nr ++;
         $subentry = $subentry->{'extra'}->{'subentry'};
-        my ($subentry_sort_string, $sort_subentry_key)
-              = _index_entry_element_sort_string_key($customization_information,
-                             $index_entry, $subentry, $convert_text_options,
-                                $entries_collator);
+        my $subentry_sort_string
+              = index_entry_element_sort_string($customization_information,
+                             $index_entry, $subentry, $convert_text_options);
         if ($subentry_sort_string !~ /\S/) {
           my $entry_cmdname = $main_entry_element->{'cmdname'};
           $entry_cmdname
@@ -484,54 +372,133 @@ sub setup_sortable_index_entries($$$$$)
                                     $subentry_nr, $entry_cmdname),
                                   $main_entry_element->{'source_info'});
           push @entry_sort_strings, '';
-          push @entry_sort_keys, '';
         } else {
           push @entry_sort_strings, $subentry_sort_string;
-          push @entry_sort_keys, $sort_subentry_key;
           $non_empty_index_subentries++;
         }
       }
       if ($non_empty_index_subentries > 0) {
-        my @keys_and_alpha;
+        my $subentries_alpha_strings;
         for (my $i = 0; $i < scalar (@entry_sort_strings); $i++) {
           my $alpha = 0;
           if ($entry_sort_strings[$i] =~ /^[[:alpha:]]/) {
             $alpha = 1;
           }
-          push @keys_and_alpha, [$entry_sort_keys[$i], $alpha];
+          push @$subentries_alpha_strings,
+             {'sort_string' => $entry_sort_strings[$i], 'alpha' => $alpha};
         }
-        my $sortable_entry = {'entry' => $index_entry,
-                              'keys' => \@keys_and_alpha,
-                              'entry_keys' => \@entry_sort_strings,
-                              'number' => $index_entry->{'entry_number'},
+        push @{$index_entries_sort_strings}, {'entry' => $index_entry,
+                              'sort_strings' => $subentries_alpha_strings,
+                                 'number' => $index_entry->{'entry_number'},
                               'index_name' => $entry_index_name};
-        push @{$sortable_index_entries}, $sortable_entry;
       }
       if ($in_code) {
         Texinfo::Convert::Text::reset_options_code($convert_text_options);
       }
-      $index_entries_sort_strings->{$index_entry}
-         = join(', ', @entry_sort_strings);
+    }
+    $indices_sort_strings->{$index_name} = $index_entries_sort_strings;
+  }
+
+  return $indices_sort_strings;
+}
+
+# There is no strict need for document information in Perl, however, in XS
+# it is needed to retrieve the Tree elements in the C structures.
+# $CUSTOMIZATION_INFORMATION is used as the source of document
+# information.  It should already be set if it is a converter based
+# on Texinfo::Convert::Converter, but otherwise it should be set by
+# the caller, setting 'document_descriptor' to document->document_descriptor().
+sub setup_sortable_index_entries($$)
+{
+  my $collator = shift;
+  my $indices_sort_strings = shift;
+
+  my $index_sortable_index_entries;
+  my $index_entries_sort_strings = {};
+  return $index_sortable_index_entries, $index_entries_sort_strings
+    unless ($indices_sort_strings);
+
+  $index_sortable_index_entries = {};
+  foreach my $index_name (keys(%$indices_sort_strings)) {
+    my $sortable_index_entries = [];
+    foreach my $index_entry (@{$indices_sort_strings->{$index_name}}) {
+      my @keys_and_alpha;
+      foreach my $sort_string_alpha (@{$index_entry->{'sort_strings'}}) {
+        my $sort_string = $sort_string_alpha->{'sort_string'};
+        # TODO $sort_string is never used directly to sort anymore, so
+        # it is possible that utf8::upgrade is not needed anymore.  To be safe,
+        # we can keep it until we only support perl > 5.12.
+        # This avoids varying results depending on whether the string is
+        # represented internally in UTF-8.  See 'the "Unicode bug"' in the
+        # "perlunicode" man page.
+        utf8::upgrade($sort_string);
+        my $sort_key = $collator->getSortKey(uc($sort_string));
+        push @keys_and_alpha, [$sort_key, $sort_string_alpha->{'alpha'}];
+
+      }
+      my $sortable_entry = {'entry' => $index_entry->{'entry'},
+                            'keys' => \@keys_and_alpha,
+                            'entry_strings_alpha' => $index_entry->{'sort_strings'},
+                            'number' => $index_entry->{'number'},
+                            'index_name' => $index_entry->{'index_name'}};
+      push @{$sortable_index_entries}, $sortable_entry;
+      $index_entries_sort_strings->{$index_entry->{'entry'}}
+         = join(', ', map {$_->{'sort_string'}}
+                          @{$index_entry->{'sort_strings'}});
     }
     $index_sortable_index_entries->{$index_name} = $sortable_index_entries;
   }
-  return ($index_sortable_index_entries, $collator, $index_entries_sort_strings);
+
+  return ($index_sortable_index_entries, $index_entries_sort_strings);
 }
 
-sub sort_indices_by_index($$$$;$)
+sub _setup_sort_sortable_strings_collator($$$$;$$$)
 {
   my $registrar = shift;
   my $customization_information = shift;
+  my $use_unicode_collation = shift;
+  my $locale_lang = shift;
   my $index_entries = shift;
   my $indices_information = shift;
-  my $preset_keys = shift;
-  $preset_keys = $default_preset_keys if (!defined($preset_keys));
+  my $document = shift;
+
+  my $indices_sort_strings;
+  if ($document) {
+    $indices_sort_strings = Texinfo::Document::indices_sort_strings($registrar,
+                                   $customization_information, $document);
+  } else {
+    $indices_sort_strings = setup_index_entries_sort_strings($registrar,
+                                   $customization_information, $index_entries,
+                                   $indices_information);
+  }
+
+  my $collator = _setup_collator($use_unicode_collation, $locale_lang);
 
   my $sorted_index_entries;
-  my ($index_sortable_index_entries, $collator, $index_entries_sort_strings)
-    = setup_sortable_index_entries($registrar, $customization_information,
-                       $index_entries, $indices_information, $preset_keys);
+  my ($index_sortable_index_entries, $index_entries_sort_strings)
+    = setup_sortable_index_entries($collator, $indices_sort_strings);
 
+  return ($index_sortable_index_entries, $index_entries_sort_strings,
+          $collator);
+}
+
+sub sort_indices_by_index($$$$;$$$)
+{
+  my $registrar = shift;
+  my $customization_information = shift;
+  my $use_unicode_collation = shift;
+  my $locale_lang = shift;
+  my $index_entries = shift;
+  my $indices_information = shift;
+  my $document = shift;
+
+  my ($index_sortable_index_entries, $index_entries_sort_strings,
+      $collator) = _setup_sort_sortable_strings_collator($registrar,
+                       $customization_information, $use_unicode_collation,
+                       $locale_lang, $index_entries, $indices_information,
+                       $document);
+
+  my $sorted_index_entries;
   if (!$index_sortable_index_entries) {
     return ($sorted_index_entries, $index_entries_sort_strings);
   }
@@ -539,17 +506,10 @@ sub sort_indices_by_index($$$$;$)
   $sorted_index_entries = {};
   foreach my $index_name (keys(%$index_sortable_index_entries)) {
     my $sortable_index_entries = $index_sortable_index_entries->{$index_name};
-    if ($preset_keys) {
-      $sorted_index_entries->{$index_name} = [
-        map {$_->{'entry'}} sort {_sort_index_entries($a, $b)}
+    $sorted_index_entries->{$index_name} = [
+         map {$_->{'entry'}} sort {_sort_index_entries($a, $b)}
                                                 @{$sortable_index_entries}
        ];
-    } else {
-      $sorted_index_entries->{$index_name} = [
-    map {$_->{'entry'}} sort {_collator_sort_index_entries($a, $b, $collator)}
-                                                @{$sortable_index_entries}
-      ];
-    }
   }
   return ($sorted_index_entries, $index_entries_sort_strings);
 }
@@ -620,7 +580,6 @@ sub _idx_leading_text_or_command($$)
   return (undef, undef);
 }
 
-# TODO document
 # Return the leading text or textual command that could be used
 # for sorting.
 sub index_entry_first_letter_text_or_command($;$)
@@ -670,20 +629,23 @@ sub index_entry_first_letter_text_or_command($;$)
   }
 }
 
-sub sort_indices_by_letter($$$$;$)
+sub sort_indices_by_letter($$$$$$;$)
 {
   my $registrar = shift;
   my $customization_information = shift;
+  my $use_unicode_collation = shift;
+  my $locale_lang = shift;
   my $index_entries = shift;
   my $indices_information = shift;
-  my $preset_keys = shift;
-  $preset_keys = $default_preset_keys if (!defined($preset_keys));
+  my $document = shift;
+
+  my ($index_sortable_index_entries, $index_entries_sort_strings,
+      $collator) = _setup_sort_sortable_strings_collator($registrar,
+                       $customization_information, $use_unicode_collation,
+                       $locale_lang, $index_entries, $indices_information,
+                       $document);
 
   my $sorted_index_entries;
-  my ($index_sortable_index_entries, $collator, $index_entries_sort_strings)
-    = setup_sortable_index_entries($registrar, $customization_information,
-                       $index_entries, $indices_information, $preset_keys);
-
   if (!$index_sortable_index_entries) {
     return ($sorted_index_entries, $index_entries_sort_strings);
   }
@@ -693,7 +655,8 @@ sub sort_indices_by_letter($$$$;$)
     my $sortable_index_entries = $index_sortable_index_entries->{$index_name};
     my $index_letter_hash = {};
     foreach my $sortable_entry (@{$sortable_index_entries}) {
-      my $entry_key = $sortable_entry->{'entry_keys'}->[0];
+      my $entry_key
+        = $sortable_entry->{'entry_strings_alpha'}->[0]->{'sort_string'};
 
       # the following line leads to each accented letter being separate
       # $letter = uc(substr($entry_key, 0, 1));
@@ -710,21 +673,20 @@ sub sort_indices_by_letter($$$$;$)
 
       push @{$index_letter_hash->{$letter}}, $sortable_entry;
     }
-    # need to use directly the collator here as there is no
-    # separate sort keys.
-    my @sorted_letters = sort {_collator_sort_string($a, $b, $collator)}
-                                             (keys %$index_letter_hash);
-    foreach my $letter (@sorted_letters) {
-      my @sorted_letter_entries;
-      if ($preset_keys) {
-        @sorted_letter_entries
+
+    my @letter_keys;
+    foreach my $letter (keys %$index_letter_hash) {
+      my $sort_key = $collator->getSortKey($letter);
+      push @letter_keys, [$sort_key, $letter, $index_letter_hash->{$letter}];
+    }
+
+    my @sorted_letters = sort{$a->[0] cmp $b->[0]} @letter_keys;
+
+    foreach my $letter_and_entries (@sorted_letters) {
+      my $letter = $letter_and_entries->[1];
+      my @sorted_letter_entries
          = map {$_->{'entry'}} sort {_sort_index_entries($a, $b)}
-                                            @{$index_letter_hash->{$letter}};
-      } else {
-        @sorted_letter_entries
-         = map {$_->{'entry'}} sort {_collator_sort_index_entries($a, $b, $collator)}
-                                            @{$index_letter_hash->{$letter}};
-      }
+                                            @{$letter_and_entries->[2]};
       push @{$sorted_index_entries->{$index_name}},
         { 'letter' => $letter, 'entries' => \@sorted_letter_entries };
     }

@@ -2,7 +2,7 @@
 # setup_converters_code_tables.pl: use perl data, mainly manually
 # generated hashes, to generate corresponding C data.
 
-# Copyright 2023 Free Software Foundation, Inc.
+# Copyright 2023-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -269,8 +269,8 @@ foreach my $command_name (@commands_order) {
   if (exists($name_commands{$command_name})) {
     $command = $name_commands{$command_name};
   }
-  if (defined($Texinfo::Convert::Text::text_brace_no_arg_commands{$command_name})) {
-    my $result = $Texinfo::Convert::Text::text_brace_no_arg_commands{$command_name};
+  if (defined($Texinfo::Common::text_brace_no_arg_commands{$command_name})) {
+    my $result = $Texinfo::Common::text_brace_no_arg_commands{$command_name};
     my $protected = join ('', map {_protect_char($_)} split ('', $result));
     print TEXT "\"$protected\",   /* $command */\n";
   } else {

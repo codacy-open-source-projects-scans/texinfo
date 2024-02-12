@@ -1,4 +1,4 @@
-# Copyright 2023 Free Software Foundation, Inc.
+# Copyright 2023-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -202,6 +202,100 @@ sub merged_indices($)
     }
   }
   return $self->{'merged_indices'};
+}
+
+# TODO document
+sub indices_sort_strings($$$;$)
+{
+  my $registrar = shift;
+  my $customization_information = shift;
+  my $document = shift;
+  my $prefer_reference_element = shift;
+
+  if (!$document->{'index_entries_sort_strings'}) {
+    my $indices_sort_strings
+      = Texinfo::Indices::setup_index_entries_sort_strings($registrar,
+             $customization_information, $document->merged_indices(),
+                          $document->indices_information(),
+                           $prefer_reference_element);
+    $document->{'index_entries_sort_strings'} = $indices_sort_strings;
+  }
+
+  return $document->{'index_entries_sort_strings'};
+}
+
+# TODO document
+sub sorted_indices_by_letter($$$$$)
+{
+  my $registrar = shift;
+  my $customization_information = shift;
+  my $document = shift;
+  my $use_unicode_collation = shift;
+  my $locale_lang = shift;
+
+  my $lang_key;
+  if (!$use_unicode_collation) {
+    $lang_key = '';
+  } elsif (!defined($locale_lang)) {
+    # special name corresponding to Unicode Collation with 'Non-Ignorable'
+    # set for variable collation elements
+    $lang_key = '-';
+  } else {
+    $lang_key = $locale_lang;
+  }
+
+  $document->{'sorted_indices_by_letter'} = {}
+    if (!$document->{'sorted_indices_by_letter'});
+
+  if (!$document->{'sorted_indices_by_letter'}->{$lang_key}) {
+    my $index_entries_sort_strings;
+    ($document->{'sorted_indices_by_letter'}->{$lang_key},
+     $index_entries_sort_strings)
+      = Texinfo::Indices::sort_indices_by_letter($registrar,
+                               $customization_information,
+                        $use_unicode_collation, $locale_lang,
+                          $document->merged_indices(),
+                          $document->indices_information(),
+                          $document);
+  }
+  return $document->{'sorted_indices_by_letter'}->{$lang_key};
+}
+
+# TODO document
+sub sorted_indices_by_index($$$$$)
+{
+  my $registrar = shift;
+  my $customization_information = shift;
+  my $document = shift;
+  my $use_unicode_collation = shift;
+  my $locale_lang = shift;
+
+  my $lang_key;
+  if (!$use_unicode_collation) {
+    $lang_key = '';
+  } elsif (!defined($locale_lang)) {
+    # special name corresponding to Unicode Collation with 'Non-Ignorable'
+    # set for variable collation elements
+    $lang_key = '-';
+  } else {
+    $lang_key = $locale_lang;
+  }
+
+  $document->{'sorted_indices_by_index'} = {}
+    if (!$document->{'sorted_indices_by_index'});
+
+  if (!$document->{'sorted_indices_by_index'}->{$lang_key}) {
+    my $index_entries_sort_strings;
+    ($document->{'sorted_indices_by_index'}->{$lang_key},
+     $index_entries_sort_strings)
+      = Texinfo::Indices::sort_indices_by_index($registrar,
+                               $customization_information,
+                        $use_unicode_collation, $locale_lang,
+                          $document->merged_indices(),
+                          $document->indices_information(),
+                          $document);
+  }
+  return $document->{'sorted_indices_by_index'}->{$lang_key};
 }
 
 # only set if the Texinfo::Document object has been set up by XS code.

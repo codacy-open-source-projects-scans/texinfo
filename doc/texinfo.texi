@@ -33,7 +33,7 @@ This manual is for GNU Texinfo (version @value{VERSION}, @value{UPDATED}),
 a documentation system that can produce both online information and a
 printed manual from a single source using semantic markup.
 
-Copyright @copyright{} 1988-2023 Free Software Foundation, Inc.
+Copyright @copyright{} 1988-2024 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -14375,48 +14375,6 @@ coincidentally, he is also the long-time maintainer of @command{gawk}
 @file{texindex/Makefile.am} shows example usage of the system.
 
 
-@node Print with @command{lpr}
-@nodedescription How to print.
-@section Print with @command{lpr} from Shell
-
-@pindex lpr @r{(DVI print command)}
-
-The way to print a DVI file depends on your system installation.  Two
-common ones are @samp{dvips foo.dvi -o} to make a PostScript file
-first and then print that, and @samp{lpr -d foo.dvi} to print a DVI
-file directly.
-
-For example, the following commands will (probably) suffice to sort
-the indices, format, and print this manual using the @command{texi2dvi}
-shell script (@pxref{Format with @command{texi2dvi}}).
-
-@example
-@group
-texi2dvi texinfo.texi
-dvips texinfo.dvi -o
-lpr texinfo.ps
-@end group
-@end example
-
-Depending on the @command{lpr} setup on your machine, you might be able to
-combine the last two steps into @code{lpr -d texinfo.dvi}.
-
-@cindex PCL file, for printing
-You can also generate a PDF file by running @command{texi2dvi} instead of
-@command{texi2dvi}; a PDF is often directly printable.  Or you can
-generate a PCL file by using @command{dvilj} instead of @command{dvips}, if
-you have a printer that prefers that format.
-
-@cindex Shell printing, on MS-DOS/MS-Windows
-@cindex Printing DVI files, on MS-DOS/MS-Windows
-@pindex lpr@r{-d, replacements on MS-DOS/MS-Windows}
-@command{lpr} is a standard program on Unix systems, but it is usually
-absent on MS-DOS/MS-Windows.  If so, just create a PostScript or PDF
-or PCL file, whatever is most convenient, and print that in the usual
-way for your machine (e.g., by sending to the appropriate port,
-usually @samp{PRN}).
-
-
 @node Preparing for @TeX{}
 @nodedescription What to do before you use @TeX{}.
 @section Preparing for @TeX{}
@@ -14576,6 +14534,50 @@ before the @code{@@titlepage} command:
 @example
 @@finalout
 @end example
+
+@node Printing Japanese and Chinese
+@nodedescription XeTeX or LuaTeX required.
+@section Printing Japanese and Chinese
+
+@cindex Chinese language
+@cindex Japanese language
+Texinfo comes with support files for processing input in the
+Japanese and Chinese languages.
+
+@cindex Japanese with Xe@TeX{}
+@cindex Japanese with LuaTeX
+For Japanese, you use the @file{texinfo-ja.tex} file. Your main input
+file should begin with a @samp{\input texinfo-ja} line, rather than
+the standard
+@w{@samp{\input texinfo}}.  Use the UTF-8 character encoding as usual.
+You must process the files with either Xe@TeX{} or LuaTeX.
+
+@cindex Chinese with Xe@TeX{}
+For Chinese, you use the @file{texinfo-zh.tex} file. Your main input
+file should begin with a @samp{\input texinfo-zh} line, rather than
+the standard
+@w{@samp{\input texinfo}}.  Use the UTF-8 character encoding as usual.
+You must process the files with Xe@TeX{}.
+
+For example, you would run
+@samp{PDFTEX=xetex texi2pdf @var{my-input-file.texi}}
+to use Xe@TeX{} to produce PDF output.  You may have to install Xe@TeX{}
+(or LuaTeX), the @samp{zhspacing} package, and/or font packages.
+
+Neither Japanese nor Chinese is supported with the standard @TeX{} (or
+pdf@TeX{}) program, as it cannot support the fonts and thousands of
+glyphs needed for these languages.
+
+The Texinfo distribution comes with a couple of sample files that you
+can use to test support for these languages:
+@samp{short-sample-ja.texi} for Japanese, and @samp{short-sample-zh.texi}
+for Chinese.
+
+@cindex Xe@TeX{}
+@cindex LuaTeX
+For more information on these extensions to @TeX{}, see
+@uref{https://tug.org/xetex/, the Xe@TeX{} home page} and
+@uref{https://www.luatex.org/, the LuaTeX website}.
 
 
 @node Generic Translator @command{texi2any}
@@ -16161,15 +16163,19 @@ double quote (see below).
 By default, @command{texi2any} sorts document indices according to the
 @dfn{Unicode Collation Algorithm} (defined in
 @uref{http://www.unicode.org/reports/tr10/, Unicode Technical Standard #10}),
-without language specific collation tailoring.  If set, use the language
-for linguistic tailoring of indices sorting.
+without language-specific collation tailoring.  If set, use the language
+for linguistic tailoring of index sorting.
 
-If there is no support for linguistic tailoring because of missing software or
-missing support for the specified language, revert silently to the default.  In
-Perl, the @code{Unicode::Collate::Locale} module is used for linguistic
-tailoring, therefore if this module is not installed the variable will be
-silently ignored.  If @code{USE_UNICODE_COLLATION} is set to @samp{0}
-there is no unicode collation and no linguistic tailoring either.
+@command{texi2any} gives no warning if there is no support for linguistic
+tailoring, either due to missing software or missing support for the
+specified language.
+
+In Perl, the @code{Unicode::Collate::Locale} module is used for linguistic
+tailoring; therefore if this module is not installed, the variable will be
+silently ignored.
+
+If @code{USE_UNICODE_COLLATION} is set to @samp{0}, there is no Unicode
+collation and so no linguistic tailoring either.
 
 @item COMMAND_LINE_ENCODING
 Encoding used to decode command-line arguments.  Default is based on the locale
@@ -16561,8 +16567,8 @@ module, a standard part of Perl installations.)  However, the use of
 this algorithm incurs noticeably longer run times when processing manuals
 with large indices.
 
-Set this variable to @samp{0} to use a simpler, faster sorting algorithm
-which only uses Perl's built-in string comparison.
+Set this variable to @samp{0} to use a simpler, faster sorting algorithm.
+@c which only uses Perl's built-in string comparison or strcmp in C
 
 You may find this useful for speeding up @command{texi2any} if you don't
 have many non-ASCII characters in index entry text, or if you don't care

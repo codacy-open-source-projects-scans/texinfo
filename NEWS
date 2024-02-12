@@ -1,7 +1,7 @@
 This NEWS file records noteworthy changes, very tersely.
 See the manual for detailed information.
 
-  Copyright 1992-2023 Free Software Foundation, Inc.
+  Copyright 1992-2024 Free Software Foundation, Inc.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -13,10 +13,14 @@ See the manual for detailed information.
  . use @ as the escape character in all index files.  this requires
    new enough texi2dvi (Texinfo 6.7, 2019) for index files to be properly
    processed.
+ . you can call @unmacro with an undefined macro name, matching the
+   behavior of texi2any
 * texi2any
  . info output: output Info-documentlanguage in Local Variables section
    of output file if @documentlanguage is given
  . Indices sorting is independent of the input or output encodings.
+ . new variable COLLATION_LANGUAGE to allow linguistic tailoring of
+   index sorting order
  . new variable USE_UNICODE_COLLATION to allow turning off the slower
    use of Unicode collation when sorting indices
  . remove SIMPLE_MENU customization option and tree transformation.

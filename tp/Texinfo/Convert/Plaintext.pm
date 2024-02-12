@@ -1,6 +1,6 @@
 # Plaintext.pm: output tree as text with filling.
 #
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -1513,18 +1513,21 @@ sub process_printindex($$;$)
   my $indices_information;
   if ($self->{'document'}) {
     $indices_information = $self->{'document'}->indices_information();
-  }
 
-  # this is not redone for each index, only once
-  if (!defined($self->{'index_entries'}) and $indices_information) {
+    # this is not redone for each index, only once
+    if (!defined($self->{'index_entries'}) and $indices_information) {
 
-    my $merged_index_entries
-      = $self->{'document'}->merged_indices();
-    my $index_entries_sort_strings;
-    ($self->{'index_entries'}, $index_entries_sort_strings)
-      = Texinfo::Indices::sort_indices_by_index(undef, $self,
-                                           $merged_index_entries,
-                                           $indices_information);
+      my $use_unicode_collation
+        = $self->get_conf('USE_UNICODE_COLLATION');
+      my $locale_lang;
+      if (!(defined($use_unicode_collation) and !$use_unicode_collation)) {
+        $locale_lang = $self->get_conf('COLLATION_LANGUAGE');
+      }
+      $self->{'index_entries'}
+        = Texinfo::Document::sorted_indices_by_index(undef, $self,
+                                                   $self->{'document'},
+                                        $use_unicode_collation, $locale_lang);
+    }
   }
   if (!$self->{'index_entries'} or !$self->{'index_entries'}->{$index_name}
       or ! @{$self->{'index_entries'}->{$index_name}}) {
