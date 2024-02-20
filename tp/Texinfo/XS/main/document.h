@@ -31,6 +31,21 @@ void register_document_convert_index_text_options (DOCUMENT *document,
                                          struct TEXT_OPTIONS *text_options);
 
 const MERGED_INDICES *document_merged_indices (DOCUMENT *document);
+const INDICES_SORT_STRINGS *document_indices_sort_strings (
+                               DOCUMENT *document,
+                               ERROR_MESSAGE_LIST *error_messages,
+                               OPTIONS *options, int prefer_reference_element);
+
+INDEX_SORTED_BY_INDEX *sorted_indices_by_index (DOCUMENT *document,
+                         ERROR_MESSAGE_LIST *error_messages,
+                         OPTIONS *options, int use_unicode_collation,
+                         const char *collation_language,
+                         const char *collation_locale);
+INDEX_SORTED_BY_LETTER *sorted_indices_by_letter (DOCUMENT *document,
+                          ERROR_MESSAGE_LIST *error_messages,
+                          OPTIONS *options, int use_unicode_collation,
+                          const char *collation_language,
+                          const char *collation_locale);
 
 void remove_document_descriptor (int document_descriptor);
 ELEMENT *unregister_document_merge_with_document (int document_descriptor,

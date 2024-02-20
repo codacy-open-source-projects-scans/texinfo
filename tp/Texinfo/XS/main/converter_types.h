@@ -181,7 +181,6 @@ enum html_text_type {
    HTT_string_nonumber, /* not sure that it is set/used */
    /* not only used for element text, also for direction text */
    HTT_href,
-   HTT_target,
    HTT_node,
    HTT_section,
 };
@@ -313,21 +312,10 @@ typedef struct HTML_SHARED_CONVERSION_STATE {
     FOOTNOTE_ID_NUMBER *footnote_id_numbers; /* footnote_id_numbers->{char $footid} = int */
     int html_menu_entry_index;
     int **formatted_index_entries; /* formatted_index_entries->{INDEX_ENTRY $index_entry_ref} = 1, ++ */
+    int *formatted_listoffloats_nr;
     /* stored in HTML_TARGET formatted_nodedescription_nr */
     /* formatted_nodedescriptions */
 } HTML_SHARED_CONVERSION_STATE;
-
-typedef struct LETTER_INDEX_ENTRIES {
-    char *letter;
-    INDEX_ENTRY **entries;
-    size_t entries_number;
-} LETTER_INDEX_ENTRIES;
-
-typedef struct INDEX_SORTED_BY_LETTER {
-    char *name;
-    LETTER_INDEX_ENTRIES *letter_entries;
-    size_t letter_number;
-} INDEX_SORTED_BY_LETTER;
 
 typedef struct HTML_COMMAND_CONVERSION {
     char *element;
@@ -685,7 +673,6 @@ typedef struct CONVERTER {
     STRING_LIST small_strings;
 
     DOCUMENT *document;
-    INDEX_SORTED_BY_LETTER *index_entries_by_letter;
     int document_units_descriptor;
 
     struct TEXT_OPTIONS *convert_text_options;

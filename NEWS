@@ -20,7 +20,9 @@ See the manual for detailed information.
    of output file if @documentlanguage is given
  . Indices sorting is independent of the input or output encodings.
  . new variable COLLATION_LANGUAGE to allow linguistic tailoring of
-   index sorting order
+   index sorting
+ . new variable DOCUMENTLANGUAGE_COLLATION to use @documentlanguage for
+   the linguistic tailoring of index sorting
  . new variable USE_UNICODE_COLLATION to allow turning off the slower
    use of Unicode collation when sorting indices
  . remove SIMPLE_MENU customization option and tree transformation.
@@ -30,6 +32,7 @@ See the manual for detailed information.
    "texinfo_document" domain
  . the us-ascii encoding is not tried anymore when looking for a document
    output string locale.  Accent @-commands can still be used in translations.
+ . only allow highlighting commands to be redefined with @definfoenclose.
  . HTML, Texinfo and raw text output:
    An implementation of the conversion in C has been included.  Set the
     `TEXINFO_XS_CONVERT' environment variable to 1 to use.

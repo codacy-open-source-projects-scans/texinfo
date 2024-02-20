@@ -96,8 +96,6 @@ my %XS_overrides = (
    => "Texinfo::Convert::ConvertXS::get_conf",
   "Texinfo::Convert::Converter::_XS_set_document"
    => "Texinfo::Convert::ConvertXS::converter_set_document",
-  "Texinfo::Convert::Converter::_XS_get_converter_indices_sorted_by_letter"
-   => "Texinfo::Convert::ConvertXS::get_converter_indices_sorted_by_letter",
 
   # fully overriden for all the converters
   "Texinfo::Convert::Converter::get_converter_errors"
@@ -110,6 +108,10 @@ my %XS_overrides = (
    => "Texinfo::Convert::ConvertXS::converter_document_error",
   "Texinfo::Convert::Converter::converter_document_warn"
    => "Texinfo::Convert::ConvertXS::converter_document_warn",
+  "Texinfo::Convert::Converter::get_converter_indices_sorted_by_letter"
+   => "Texinfo::Convert::ConvertXS::get_converter_indices_sorted_by_letter",
+  "Texinfo::Convert::Converter::get_converter_indices_sorted_by_index"
+   => "Texinfo::Convert::ConvertXS::get_converter_indices_sorted_by_index",
 
   # XS only
   "Texinfo::Convert::Converter::reset_converter"
@@ -1729,17 +1731,6 @@ sub comma_index_subentries_tree {
   return undef;
 }
 
-# Perl version should not be called, only used for the XS override.
-sub _XS_get_converter_indices_sorted_by_letter($$)
-{
-  my $converter = shift;
-  my $indices_information = shift;
-
-  return undef;
-}
-
-# TODO document?  Or should Texinfo::Document::sorted_indices_by_letter
-# be called directly?
 sub get_converter_indices_sorted_by_letter($)
 {
   my $self = shift;
@@ -1747,34 +1738,53 @@ sub get_converter_indices_sorted_by_letter($)
   my $indices_information;
   if ($self->{'document'}) {
     $indices_information = $self->{'document'}->indices_information();
-  }
 
-  if ($indices_information) {
-    if (!$self->get_conf('TEST') and $self->{'converter_descriptor'}
-        and $XS_convert) {
-      # get from XS
-      if ($self->{'index_entries_by_letter'}) {
-        return $self->{'index_entries_by_letter'};
-      }
-
-      $self->{'index_entries_by_letter'}
-        = _XS_get_converter_indices_sorted_by_letter($self,
-                                                     $indices_information);
-    } else {
+    if ($indices_information) {
       my $use_unicode_collation
         = $self->get_conf('USE_UNICODE_COLLATION');
       my $locale_lang;
       if (!(defined($use_unicode_collation) and !$use_unicode_collation)) {
         $locale_lang = $self->get_conf('COLLATION_LANGUAGE');
+        if (!defined($locale_lang)
+            and $self->get_conf('DOCUMENTLANGUAGE_COLLATION')) {
+          $locale_lang = $self->get_conf('documentlanguage');
+        }
       }
 
-      $self->{'index_entries_by_letter'}
-        = Texinfo::Document::sorted_indices_by_letter(undef, $self,
-                                                 $self->{'document'},
+      return Texinfo::Document::sorted_indices_by_letter($self->{'document'},
+                                                 undef, $self,
                                    $use_unicode_collation, $locale_lang);
     }
   }
-  return $self->{'index_entries_by_letter'};
+  return undef;
+}
+
+sub get_converter_indices_sorted_by_index($)
+{
+  my $self = shift;
+
+  my $indices_information;
+  if ($self->{'document'}) {
+    $indices_information = $self->{'document'}->indices_information();
+
+    if ($indices_information) {
+      my $use_unicode_collation
+        = $self->get_conf('USE_UNICODE_COLLATION');
+      my $locale_lang;
+      if (!(defined($use_unicode_collation) and !$use_unicode_collation)) {
+        $locale_lang = $self->get_conf('COLLATION_LANGUAGE');
+        if (!defined($locale_lang)
+            and $self->get_conf('DOCUMENTLANGUAGE_COLLATION')) {
+          $locale_lang = $self->get_conf('documentlanguage');
+        }
+      }
+
+      return Texinfo::Document::sorted_indices_by_index($self->{'document'},
+                                               undef, $self,
+                                 $use_unicode_collation, $locale_lang);
+    }
+  }
+  return undef;
 }
 
 sub _count_converted_text($$)
@@ -2717,6 +2727,32 @@ the element.  In many cases, converters ignore comments and output is
 better formatted with new lines added independently of the presence
 of newline or comment in the initial Texinfo line, so most converters
 are better off not using this method.
+
+=item $sorted_indices = $converter->get_converter_indices_sorted_by_index()
+
+=item $sorted_indices = $converter->get_converter_indices_sorted_by_letter()
+X<C<get_converter_indices_sorted_by_index>>
+X<C<get_converter_indices_sorted_by_letter>>
+
+C<get_converter_indices_sorted_by_letter> returns the indices sorted by index
+and letter, while C<get_converter_indices_sorted_by_index> returns the indices
+with all entries of an index together.
+
+When sorting by letter, an array reference of letter hash references is
+associated with each index name.  Each letter hash reference has two
+keys, a I<letter> key with the letter, and an I<entries> key with an array
+reference of sorted index entries beginning with the letter.  The letter
+is a character string suitable for sorting letters, but is not necessarily
+the best to use for output.
+
+When simply sorting, the array of the sorted index entries is associated
+with the index name.
+
+The functions call L<< C<Texinfo::Document::sorted_indices_by_letter>|Texinfo::Document/$sorted_indices = $document->sorted_indices_by_letter($registrar, $customization_information, $use_unicode_collation, $locale_lang) >>
+or L<< C<Texinfo::Document::sorted_indices_by_index>|Texinfo::Document/$sorted_indices = $document->sorted_indices_by_index($registrar, $customization_information, $use_unicode_collation, $locale_lang) >>
+with arguments based on C<USE_UNICODE_COLLATION>, C<COLLATION_LANGUAGE> and
+C<DOCUMENTLANGUAGE_COLLATION> customization options, and, if relevant, current
+C<@documentlanguage>.
 
 =item $filename = sub $converter->node_information_filename($normalized, $label_element)
 X<C<node_information_filename>>

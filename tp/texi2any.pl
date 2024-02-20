@@ -617,12 +617,14 @@ my %formats_table = (
  'info' => {
              'nodes_tree' => 1,
              'floats' => 1,
+             'setup_index_entries_sort_strings' => 1,
              'module' => 'Texinfo::Convert::Info'
            },
   'plaintext' => {
              'nodes_tree' => 1,
              'floats' => 1,
              'split' => 1,
+             'setup_index_entries_sort_strings' => 1,
              'module' => 'Texinfo::Convert::Plaintext'
            },
   'html' => {
@@ -633,6 +635,7 @@ my %formats_table = (
              'move_index_entries_after_items' => 1,
              'relate_index_entries_to_table_items' => 1,
              'no_warn_non_empty_parts' => 1,
+             'setup_index_entries_sort_strings' => 1,
              'module' => 'Texinfo::Convert::HTML'
            },
   'latex' => {
@@ -657,6 +660,7 @@ my %formats_table = (
                   # is 'ixinsxml', as Texinfo tree conversion is done
                   # from within Texinfo::Convert::IXINSXML
              'nodes_tree' => 1,
+             'setup_index_entries_sort_strings' => 1,
              'module' => 'Texinfo::Convert::IXINSXML',
              'floats' => 1,
            },
@@ -1631,7 +1635,8 @@ while(@input_files) {
   if ($tree_transformations{'complete_tree_nodes_menus'}) {
     Texinfo::Transformations::complete_tree_nodes_menus($tree);
   } elsif ($tree_transformations{'complete_tree_nodes_missing_menu'}) {
-    Texinfo::Transformations::complete_tree_nodes_missing_menu($tree);
+    Texinfo::Transformations::complete_tree_nodes_missing_menu($tree,
+                                                    $main_configuration);
   }
 
   if ($tree_transformations{'regenerate_master_menu'}) {
@@ -1669,6 +1674,11 @@ while(@input_files) {
   }
   if ($formats_table{$converted_format}->{'floats'}) {
     Texinfo::Structuring::number_floats($document);
+  }
+
+  if ($formats_table{$converted_format}->{'setup_index_entries_sort_strings'}) {
+    Texinfo::Document::indices_sort_strings($document, $registrar,
+                                            $main_configuration);
   }
 
   $document = Texinfo::Document::rebuild_document($document);

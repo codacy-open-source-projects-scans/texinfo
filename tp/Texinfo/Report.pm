@@ -88,16 +88,16 @@ sub format_line_message($$$$;$)
   my $continuation = shift;
   my $warn = shift;
 
-  # TODO actually a bug, add a bug message/cluck
-  return if (!defined($error_location_info));
+  if (!defined($error_location_info)) {
+    cluck("BUG: format_line_message: error_location_info undef");
+    return;
+  }
 
   my $message_line;
 
   if (defined($error_location_info->{'macro'})) {
     if ($type eq 'warning') {
-      # TODO change the context to "Texinfo source file warning in a macro"
-      # when nearing the release
-      $message_line = sprintf(__p("Texinfo source file warning",
+      $message_line = sprintf(__p("Texinfo source file warning in macro",
                                "warning: %s (possibly involving \@%s)")."\n",
                            $text, $error_location_info->{'macro'});
     } else {
@@ -136,6 +136,11 @@ sub line_warn($$$$;$$)
   my $continuation = shift;
   my $silent = shift;
 
+  if (!defined($error_location_info)) {
+    cluck("BUG: line_warn: error_location_info undef");
+    return;
+  }
+
   my $warn = (defined($configuration_information)
               and $configuration_information->get_conf('DEBUG')
               and not $silent);
@@ -153,6 +158,11 @@ sub line_error($$$$;$$)
   my $error_location_info = shift;
   my $continuation = shift;
   my $silent = shift;
+
+  if (!defined($error_location_info)) {
+    cluck("BUG: line_error: error_location_info undef");
+    return;
+  }
 
   my $warn = (defined($configuration_information)
               and $configuration_information->get_conf('DEBUG')
@@ -315,8 +325,7 @@ The text of the error.
 
 =item error_line
 
-The text of the error formatted with the file name, line number and macro
-name, as needed.
+The text of the error formatted with the macro name, as needed.
 
 =item line_nr
 
@@ -349,7 +358,7 @@ X<C<line_error>>
 Register a warning or an error.  The I<$text> is the text of the
 error or warning.  The I<$configuration_information> object gives
 some information that can modify the messages or their delivery.
-The optional I<$error_location_info> holds the information on the error or
+The mandatory I<$error_location_info> holds the information on the error or
 warning location.  The I<$error_location_info> reference on hash may be
 obtained from Texinfo elements I<source_info> keys.   It may also
 be setup to point to a file name, using the C<file_name> key and

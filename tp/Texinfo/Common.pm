@@ -1464,7 +1464,8 @@ sub set_output_encodings($$)
     }
     my $perl_encoding = Encode::resolve_alias($conversion_encoding);
     if (defined($perl_encoding) and $perl_encoding ne '') {
-      $customization_information->set_conf('OUTPUT_PERL_ENCODING', $perl_encoding);
+      $customization_information->set_conf('OUTPUT_PERL_ENCODING',
+                                           $perl_encoding);
     }
   }
 }
@@ -1729,7 +1730,7 @@ sub split_custom_heading_command_contents($)
   return $result;
 }
 
-# FIXME document?
+# TODO document?
 # currently untested/unused, but there is a similar function in XS that
 # is used.
 sub replace_element_in_contents($$$)
@@ -2646,10 +2647,10 @@ sub debug_print_element($;$)
   my $print_parent = shift;
 
   if (!defined($current)) {
-    return "debug_print_element: UNDEF\n";
+    return "debug_print_element: UNDEF";
   }
   if (ref($current) ne 'HASH') {
-    return "debug_print_element: $current not a hash\n";
+    return "debug_print_element: $current not a hash";
   }
   my $type = '';
   my $cmd = '';

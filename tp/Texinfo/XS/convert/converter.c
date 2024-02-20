@@ -637,39 +637,46 @@ free_comma_index_subentries_tree (ELEMENT_LIST *element_list)
   destroy_list (element_list);
 }
 
-INDEX_SORTED_BY_LETTER *
-converter_sort_indices_by_letter (CONVERTER *self)
+INDEX_SORTED_BY_INDEX *
+get_converter_indices_sorted_by_index (CONVERTER *self)
 {
-  if (self->index_entries_by_letter)
-    return self->index_entries_by_letter;
+  if (self->document)
+    {
+      char *collation_language = 0;
+      if (self->conf->COLLATION_LANGUAGE.string)
+        collation_language = self->conf->COLLATION_LANGUAGE.string;
+      else if (self->conf->DOCUMENTLANGUAGE_COLLATION.integer > 0
+               && self->conf->documentlanguage.string)
+        collation_language = self->conf->documentlanguage.string;
 
-  const MERGED_INDICES *merged_indices
-    = document_merged_indices (self->document);
-
-  self->index_entries_by_letter
-    = sort_indices_by_letter (&self->error_messages, self->conf,
-                              merged_indices,
-                              self->document->index_names);
-  return self->index_entries_by_letter;
+      return sorted_indices_by_index (self->document,
+                               &self->error_messages, self->conf,
+                               self->conf->USE_UNICODE_COLLATION.integer,
+                               collation_language,
+                               self->conf->XS_STRXFRM_COLLATION_LOCALE.string);
+    }
+  return 0;
 }
 
 INDEX_SORTED_BY_LETTER *
 get_converter_indices_sorted_by_letter (CONVERTER *self)
 {
-  if (self->index_entries_by_letter)
-    return self->index_entries_by_letter;
-
-  if (self->document->index_names)
+  if (self->document)
     {
-      /* get Perl sorting for reproducible tests */
-      if (self->conf->TEST.integer > 0)
-        self->index_entries_by_letter
-         = get_call_index_entries_sorted_by_letter (self);
-      else /* sets self->index_entries_by_letter */
-        converter_sort_indices_by_letter (self);
-    }
+      char *collation_language = 0;
+      if (self->conf->COLLATION_LANGUAGE.string)
+        collation_language = self->conf->COLLATION_LANGUAGE.string;
+      else if (self->conf->DOCUMENTLANGUAGE_COLLATION.integer > 0
+               && self->conf->documentlanguage.string)
+        collation_language = self->conf->documentlanguage.string;
 
-  return self->index_entries_by_letter;
+      return sorted_indices_by_letter (self->document,
+                               &self->error_messages, self->conf,
+                               self->conf->USE_UNICODE_COLLATION.integer,
+                               collation_language,
+                               self->conf->XS_STRXFRM_COLLATION_LOCALE.string);
+    }
+  return 0;
 }
 
 /* to be freed by caller */
@@ -1015,8 +1022,7 @@ next_for_tieaccent (const char *text, const char **next)
     }
   else
     {
-      uint8_t *encoded_u8 = u8_strconv_from_encoding (text, "UTF-8",
-                                                  iconveh_question_mark);
+      uint8_t *encoded_u8 = utf8_from_string (text);
       ucs4_t first_char;
       u8_next (&first_char, encoded_u8);
       free (encoded_u8);
@@ -1092,8 +1098,7 @@ xml_numeric_entity_accent (enum command_id cmd, const char *text)
               xasprintf (&accented_char, "%s%s", text,
                          unicode_diacritics[cmd].text);
               normalized_char = normalize_NFC (accented_char);
-              encoded_u8 = u8_strconv_from_encoding (normalized_char, "UTF-8",
-                                                     iconveh_question_mark);
+              encoded_u8 = utf8_from_string (normalized_char);
               next = u8_next (&first_char, encoded_u8);
               if (next)
                 {

@@ -30,11 +30,9 @@ use strict;
 # Can be used to check that there is no incorrect autovivfication
 # no autovivification qw(fetch delete exists store strict);
 
-# FIXME Could not do that before index sorting was in that file, probably
-# for uc().
 # stop \s from matching non-ASCII spaces, etc.  \p{...} can still be
 # used to match Unicode character classes.
-#use if $] >= 5.014, re => '/a';
+use if $] >= 5.014, re => '/a';
 
 use Carp qw(cluck confess);
 
@@ -330,7 +328,8 @@ sub sectioning_structure($$$)
         $command_numbers[$level] = 1;
       }
     }
-    if ($appendix_commands{$content->{'cmdname'}} and !$in_appendix) {
+    if ($appendix_commands{$content->{'cmdname'}} and !$in_appendix
+        and $level == $number_top_level) {
       $in_appendix = 1;
       # NOTE we rely on perl auto-increment operator 'magic' for variables
       # in string context, the increment is done as a string, preserving each
@@ -1011,8 +1010,8 @@ sub complete_node_tree_with_menus($$$)
             $up_node->{'source_info'});
         }
       }
-      # FIXME check that the all the nodes are in a menu (except for Top)?
-      # FIXME check that node_up is not an external node (except for Top)?
+      # TODO check that the all the nodes are in a menu (except for Top)?
+      # TODO check that node_up is not an external node (except for Top)?
     }
   }
 }
@@ -1407,9 +1406,38 @@ sub new_block_command($$)
   return $element;
 }
 
+sub _insert_menu_comment_content($$$;$)
+{
+  my $menu_contents = shift;
+  my $position = shift;
+  my $inserted_element = shift;
+  my $no_leading_empty_line = shift;
+
+  my $menu_comment = {'type' => 'menu_comment', 'contents' => []};
+  my $preformatted = {'type' => 'preformatted', 'parent' => $menu_comment,
+                      'contents' => []};
+  $menu_comment->{'contents'}->[0] = $preformatted;
+
+  if (!$no_leading_empty_line) {
+    push @{$preformatted->{'contents'}},
+           {'text' => "\n", 'type' => 'empty_line'};
+  }
+
+  push @{$preformatted->{'contents'}},
+          @{$inserted_element->{'contents'}},
+          {'text' => "\n", 'type' => 'empty_line'},
+          {'text' => "\n", 'type' => 'empty_line'};
+
+  foreach my $content (@{$preformatted->{'contents'}}) {
+    $content->{'parent'} = $preformatted;
+  }
+  splice (@$menu_contents, $position, 0, $menu_comment);
+}
+
+# $CUSTOMIZATION_INFORMATION is only used for the top menu
 sub new_complete_node_menu
 {
-  my ($node, $use_sections) = @_;
+  my ($node, $customization_information, $use_sections) = @_;
 
   my @node_childs = get_node_node_childs_from_sectioning($node);
 
@@ -1426,6 +1454,55 @@ sub new_complete_node_menu
     if (defined($entry)) {
       $entry->{'parent'} = $new_menu;
       push @{$new_menu->{'contents'}}, $entry;
+    }
+  }
+
+  # in top node, insert menu comments for parts and for the first appendix
+  if ($section and $section->{'cmdname'} eq 'top'
+      and $customization_information
+      and $node->{'extra'}->{'normalized'}
+      and $node->{'extra'}->{'normalized'} eq 'Top') {
+    my $content_index = 0;
+    my $in_appendix = 0;
+    foreach my $child (@node_childs) {
+      # can happen with node without argument or with empty argument
+      if (!$child->{'extra'} or !$child->{'extra'}->{'is_target'}) {
+        next;
+      }
+
+      my $child_section = $child->{'extra'}->{'associated_section'};
+      if ($child_section) {
+        my $part_added = 0;
+        my $associated_part = $child_section->{'extra'}->{'associated_part'};
+        if ($associated_part and $associated_part->{'args'}
+            and scalar(@{$associated_part->{'args'}}) > 0) {
+          my $part_title_copy
+            = Texinfo::Common::copy_contentsNonXS(
+                                $associated_part->{'args'}->[0]);
+          my $part_title
+           = Texinfo::Translations::gdt($customization_information,
+                                        'Part: {part_title}',
+                    $customization_information->get_conf('documentlanguage'),
+                                     {'part_title' => $part_title_copy});
+          _insert_menu_comment_content($new_menu->{'contents'}, $content_index,
+                                       $part_title, ($content_index == 0));
+          $content_index++;
+          $part_added = 1;
+        }
+        if (!$in_appendix
+            and $appendix_commands{$child_section->{'cmdname'}}) {
+          my $appendix_title
+             = Texinfo::Translations::gdt($customization_information,
+                                          'Appendices',
+                   $customization_information->get_conf('documentlanguage'));
+          _insert_menu_comment_content($new_menu->{'contents'}, $content_index,
+                                       $appendix_title,
+                                       ($content_index == 0 or $part_added));
+          $content_index++;
+          $in_appendix++;
+        }
+      }
+      $content_index++;
     }
   }
 
@@ -1491,7 +1568,7 @@ sub new_complete_menu_master_menu($$$)
   my $labels = shift;
   my $node = shift;
 
-  my $menu_node = new_complete_node_menu($node);
+  my $menu_node = new_complete_node_menu($node, $self);
   if ($menu_node
       and $node->{'extra'}->{'normalized'}
       and $node->{'extra'}->{'normalized'} eq 'Top'
@@ -1533,7 +1610,8 @@ sub _print_down_menus($$;$)
     @menus = @{$node->{'extra'}->{'menus'}};
   } else {
     my $current_menu
-      = Texinfo::Structuring::new_complete_node_menu($node, $use_sections);
+      = Texinfo::Structuring::new_complete_node_menu($node, undef,
+                                                     $use_sections);
     if (defined($current_menu)) {
       @menus = ( $current_menu );
     } else {
@@ -1568,20 +1646,9 @@ sub _print_down_menus($$;$)
 
     my $node_title_copy
       = Texinfo::Common::copy_contentsNonXS($node_name_element);
-    my $menu_comment = {'type' => 'menu_comment', 'contents' => []};
-    my $preformatted = {'type' => 'preformatted', 'parent' => $menu_comment};
-    $menu_comment->{'contents'}->[0] = $preformatted;
 
-    $preformatted->{'contents'}
-      = [{'text' => "\n", 'type' => 'empty_line'},
-         @{$node_title_copy->{'contents'}},
-         {'text' => "\n", 'type' => 'empty_line'},
-         {'text' => "\n", 'type' => 'empty_line'}];
-
-    foreach my $content (@{$preformatted->{'contents'}}) {
-      $content->{'parent'} = $preformatted;
-    }
-    unshift @master_menu_contents, $menu_comment;
+    _insert_menu_comment_content(\@master_menu_contents, 0,
+                                 $node_title_copy, 0);
 
     # now recurse in the children
     foreach my $child (@node_children) {
@@ -2371,20 +2438,23 @@ X<C<new_block_command>>
 Complete I<$element> by adding the I<$command_name>, the command line
 argument and C<@end> to turn the element to a proper block command.
 
-=item $new_menu = new_complete_node_menu($node, $use_sections)
+=item $new_menu = new_complete_node_menu($node, $customization_information, $use_sections)
 X<C<new_complete_node_menu>>
 
 Returns a texinfo tree menu for node I<$node>, pointing to the children
 of the node obtained with the sectioning structure.  If I<$use_sections>
 is set, use section names for the menu entry names.
+I<$customization_information>, if defined, should hold information
+needed for translations.  Translations are only needed when generating the
+top node menu.
 
-=item $detailmenu = new_master_menu($translations, $identifier_target, $menus)
+=item $detailmenu = new_master_menu($customization_information, $identifier_target, $menus)
 X<C<new_master_menu>>
 
 Returns a detailmenu tree element formatted as a master node.
-I<$translations>, if defined, should be a L<Texinfo::Translations> object and
-should also hold customization information. I<$menus> is an array
-reference containing the regular menus of the Top node.
+I<$menus> is an array reference containing the regular menus of the Top node.
+I<$customization_information>, if defined, should hold information
+needed for translations.
 
 =item $entry = new_node_menu_entry($node, $use_sections)
 X<C<new_node_menu_entry>>

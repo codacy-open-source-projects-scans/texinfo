@@ -940,6 +940,7 @@ sub test($$)
   my $added_main_configurations = {'FORMAT_MENU' => 'menu',
                                    'CHECK_MISSING_MENU_ENTRY' => 1};
 
+  # FIXME this has changed
   # this is only used for index keys sorting in structuring
   foreach my $structuring_and_converter_option ('ENABLE_ENCODING') {
     if (defined($parser_options->{$structuring_and_converter_option})) {
@@ -952,7 +953,8 @@ sub test($$)
   }
 
   foreach my $structuring_option ('CHECK_NORMAL_MENU_STRUCTURE',
-                                                    'FORMAT_MENU') {
+                                  'FORMAT_MENU', 'USE_UNICODE_COLLATION',
+                                  'COLLATION_LANGUAGE') {
     if (defined($parser_options->{$structuring_option})) {
       $added_main_configurations->{$structuring_option}
         = $parser_options->{$structuring_option};
@@ -1107,7 +1109,8 @@ sub test($$)
   if ($tree_transformations{'complete_tree_nodes_menus'}) {
     Texinfo::Transformations::complete_tree_nodes_menus($tree);
   } elsif ($tree_transformations{'complete_tree_nodes_missing_menu'}) {
-    Texinfo::Transformations::complete_tree_nodes_missing_menu($tree);
+    Texinfo::Transformations::complete_tree_nodes_missing_menu($tree,
+                                                     $main_configuration);
   }
 
   if ($tree_transformations{'regenerate_master_menu'}) {
@@ -1147,6 +1150,14 @@ sub test($$)
       }
     }
   }
+
+  # Here the sort strings are generated, both in Perl and XS.
+  # If $XS_structuring is set, the Perl structure cannot be
+  # built yet from XS as the document index information have not
+  # been rebuilt yet, but it is not needed at that point.
+  Texinfo::Document::indices_sort_strings($document, $registrar,
+                                          $main_configuration);
+
   # could be in a if !$XS_structuring, but the function should not be
   # overriden already in that case
   $document = Texinfo::Document::rebuild_document($document);
@@ -1162,7 +1173,6 @@ sub test($$)
   }
 
   my ($errors, $error_nrs) = $registrar->errors();
-
   my $indices_information = $document->indices_information();
   # FIXME maybe it would be good to compare $merged_index_entries?
   my $merged_index_entries = $document->merged_indices();
@@ -1187,12 +1197,18 @@ sub test($$)
        = $main_configuration->get_conf('COLLATION_LANGUAGE');
     }
 
-    ($sorted_index_entries, $index_entries_sort_strings)
-      = Texinfo::Indices::sort_indices_by_index($registrar,
+    my $indices_sort_strings
+      = Texinfo::Document::indices_sort_strings($document, $registrar,
+                                                $main_configuration);
+
+    $index_entries_sort_strings
+     = Texinfo::Indices::format_index_entries_sort_strings(
+                                                     $indices_sort_strings);
+
+    $sorted_index_entries
+      = Texinfo::Indices::sort_indices_by_index($document, $registrar,
                                                 $main_configuration,
-                                 $use_unicode_collation, $locale_lang,
-                                   $merged_index_entries,
-                                   $indices_information, $document);
+                                 $use_unicode_collation, $locale_lang);
     $indices_sorted_sort_strings = {};
     foreach my $index_name (keys(%$sorted_index_entries)) {
       # index entries sort strings sorted in the order of the index entries
@@ -1205,6 +1221,7 @@ sub test($$)
       }
     }
   }
+
 
   # use the parser expanded formats to be similar to the main program,
   # and also to avoid having @inline* and raw output format @-commands

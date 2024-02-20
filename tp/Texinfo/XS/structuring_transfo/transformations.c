@@ -45,6 +45,7 @@
 #include "targets.h"
 #include "node_name_normalization.h"
 #include "transformations.h"
+#include "unicode.h"
 
 
 /* in Common.pm */
@@ -105,8 +106,7 @@ protect_first_parenthesis (ELEMENT *element)
 
           if (content->source_mark_list.number)
             {
-              u8_text = u8_strconv_from_encoding (p, "UTF-8",
-                                               iconveh_question_mark);
+              u8_text = utf8_from_string (p);
               u8_p = u8_text;
 
               current_position = 0;
@@ -1094,7 +1094,8 @@ complete_tree_nodes_menus (ELEMENT *root, int use_sections)
 }
 
 void
-complete_tree_nodes_missing_menu (ELEMENT *root, int use_sections)
+complete_tree_nodes_missing_menu (ELEMENT *root, DOCUMENT *document,
+                                  OPTIONS *options, int use_sections)
 {
   ELEMENT_LIST *non_automatic_nodes
      = get_non_automatic_nodes_with_sections (root);
@@ -1106,7 +1107,8 @@ complete_tree_nodes_missing_menu (ELEMENT *root, int use_sections)
       if (!(menus && menus->number > 0))
         {
           ELEMENT *section = lookup_extra_element (node, "associated_section");
-          ELEMENT *current_menu = new_complete_node_menu (node, use_sections);
+          ELEMENT *current_menu = new_complete_node_menu (node, document,
+                                                      options, use_sections);
           if (current_menu)
             prepend_new_menu_in_node_section (node, section, current_menu);
         }
@@ -1366,8 +1368,7 @@ protect_hashchar_at_line_beginning_internal (const char *type,
                               memset (&(current->source_mark_list), 0,
                                   sizeof (SOURCE_MARK_LIST));
 
-                              u8_text = u8_strconv_from_encoding (p, "UTF-8",
-                                              iconveh_question_mark);
+                              u8_text = utf8_from_string (p);
                               u8_p = u8_text;
 
                               current_position = 0;

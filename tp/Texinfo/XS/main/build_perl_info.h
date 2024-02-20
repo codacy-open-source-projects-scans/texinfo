@@ -53,9 +53,15 @@ void pass_output_unit_files (SV *converter_sv,
 void build_output_files_information (SV *converter_sv,
                    OUTPUT_FILES_INFORMATION *output_files_information);
 
-SV *build_sorted_indices_by_letter (
-                      INDEX_SORTED_BY_LETTER *index_entries_by_letter,
-                      SV *indices_information);
+HV *build_indices_sort_strings (
+                  const INDICES_SORT_STRINGS *indices_sort_strings,
+                            HV *indices_information_hv);
+HV *build_sorted_indices_by_letter (
+                      const INDEX_SORTED_BY_LETTER *index_entries_by_letter,
+                      HV *indices_information_hv);
+HV *build_sorted_indices_by_index (
+                      const INDEX_SORTED_BY_INDEX *index_entries_by_index,
+                      HV *indices_information_hv);
 
 SV *html_build_direction_icons (CONVERTER *converter,
                             DIRECTION_ICON_LIST *direction_icons);

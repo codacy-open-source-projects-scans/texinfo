@@ -2504,6 +2504,9 @@ sub _index_entry($$)
         Texinfo::Convert::Text::set_options_code(
           $self->{'index_formatting_text_options'});
       }
+      # NOTE in XS code, the $self->{'index_formatting_text_options'}
+      # argument is ignored, instead the $self converter is used to find C
+      # text options data setup by setup_index_entry_keys_formatting.
       my $sort_string
            = Texinfo::Indices::index_entry_element_sort_string(
                                           $self, $entry,
@@ -3329,7 +3332,7 @@ sub _convert($$)
             # the table of content.  In that case, setup a text representation.
             $text_representation = '';
           }
-          # TODO: should translate
+          # TODO translation
           my $reference_result = '';
           if ($cmdname eq 'xref') {
             $reference_result = "See ";
@@ -3422,7 +3425,7 @@ sub _convert($$)
           # external ref
           # TODO hyper reference to manual file which seems to be implemented
           # in recent Texinfo TeX
-          # TODO: should translate
+          # TODO translation
           if ($cmdname eq 'xref') {
             $result .= "See ";
           } elsif ($cmdname eq 'pxref') {

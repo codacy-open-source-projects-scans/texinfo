@@ -246,6 +246,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/converters_tests/references_to_top_no_top_output/res_html \
   t/results/converters_tests/references_to_top_no_top_output/res_latex \
   t/results/converters_tests/refs_formatting.pl \
+  t/results/converters_tests/sections_and_printindex.pl \
   t/results/converters_tests/setfilename_no_extension.pl \
   t/results/converters_tests/setfilename_no_extension/res_docbook \
   t/results/converters_tests/setfilename_no_extension/res_html \
@@ -366,6 +367,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/coverage_braces/caption_not_closed.pl \
   t/results/coverage_braces/code_not_closed.pl \
   t/results/coverage_braces/contain_plain_text_nestings.pl \
+  t/results/coverage_braces/definfoenclose_texinfo_commands.pl \
   t/results/coverage_braces/email_possibilities.pl \
   t/results/coverage_braces/empty_commands.pl \
   t/results/coverage_braces/empty_images.pl \
@@ -678,6 +680,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/mathjax_with_texinfo_html_text.pl \
   t/results/html_tests/mathjax_with_texinfo_no_convert_to_latex.pl \
   t/results/html_tests/menu.pl \
+  t/results/html_tests/menu_in_documentdescription.pl \
   t/results/html_tests/menu_in_example.pl \
   t/results/html_tests/no_content.pl \
   t/results/html_tests/no_content/res_html \
@@ -830,6 +833,10 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/indices/encoding_index_utf8_enable_encoding/res_html \
   t/results/indices/encoding_index_utf8_enable_encoding/res_info \
   t/results/indices/encoding_index_utf8_enable_encoding/res_plaintext \
+  t/results/indices/encoding_index_utf8_no_use_unicode.pl \
+  t/results/indices/encoding_index_utf8_no_use_unicode/res_html \
+  t/results/indices/encoding_index_utf8_no_use_unicode/res_info \
+  t/results/indices/encoding_index_utf8_no_use_unicode/res_plaintext \
   t/results/indices/explicit_sort_key.pl \
   t/results/indices/ftable_vtable.pl \
   t/results/indices/ignored_sort_char_empty_entries.pl \
@@ -1019,6 +1026,12 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/init_files_tests/customize_special_element/res_html \
   t/results/init_files_tests/customize_translations.pl \
   t/results/init_files_tests/customize_translations/res_html \
+  t/results/init_files_tests/directions_string_base.pl \
+  t/results/init_files_tests/directions_string_base/res_html \
+  t/results/init_files_tests/directions_string_undef.pl \
+  t/results/init_files_tests/directions_string_undef/res_html \
+  t/results/init_files_tests/directions_string_undef_texi2html.pl \
+  t/results/init_files_tests/directions_string_undef_texi2html/res_html \
   t/results/init_files_tests/documentation_examples.pl \
   t/results/init_files_tests/documentation_examples/res_html \
   t/results/init_files_tests/macro_defined_txiinternalvalue_in_translation.pl \
@@ -1131,6 +1144,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/languages/documentlanguage.pl \
   t/results/languages/documentlanguage/res_html \
   t/results/languages/documentlanguage/res_info \
+  t/results/languages/documentlanguage_generated_master_menu.pl \
   t/results/languages/documentlanguage_option.pl \
   t/results/languages/documentlanguage_option/res_html \
   t/results/languages/documentlanguage_option/res_info \
@@ -1436,6 +1450,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/macro/verb_with_brace_in_macro_call.pl \
   t/results/macro/zero_argument.pl \
   t/results/macro/zero_argument_comment.pl \
+  t/results/menu/appendix_and_associated_part_in_generated_menu.pl \
   t/results/menu/bad_beginning.pl \
   t/results/menu/block_commands_in_menu_description.pl \
   t/results/menu/commands_in_nodedescriptionblock.pl \
@@ -1477,6 +1492,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/menu/no_colon_in_menu.pl \
   t/results/menu/nodedescription_descriptions.pl \
   t/results/menu/nodedescriptionblock_descriptions.pl \
+  t/results/menu/part_appendix_in_generated_menu.pl \
   t/results/menu/reference_to_external_manual.pl \
   t/results/menu/sc_in_menu.pl \
   t/results/menu/simple.pl \

@@ -181,21 +181,83 @@ converter_document_warn (SV *converter_in, text, ...)
            }
 
 SV *
-get_converter_indices_sorted_by_letter (SV *converter_sv, SV *indices_information)
+get_converter_indices_sorted_by_index (SV *converter_sv)
      PREINIT:
         CONVERTER *self;
+        INDEX_SORTED_BY_INDEX *index_entries_by_index = 0;
+        HV *converter_hv;
+        SV **document_sv;
+     CODE:
+        self = get_sv_converter (converter_sv,
+                                 "get_converter_indices_sorted_by_index");
+        if (self)
+          index_entries_by_index
+            = get_converter_indices_sorted_by_index (self);
+
+        converter_hv = (HV *) SvRV (converter_sv);
+        document_sv = hv_fetch (converter_hv, "document",
+                                strlen ("document"), 0);
+        RETVAL = 0;
+        if (document_sv)
+          {
+            SV **indices_information_sv;
+            HV *document_hv = (HV *) SvRV (*document_sv);
+            indices_information_sv
+              = hv_fetch (document_hv, "indices", strlen ("indices"), 0);
+
+            if (index_entries_by_index && indices_information_sv)
+              {
+                HV *indices_information_hv
+                   = (HV *) SvRV (*indices_information_sv);
+                HV *index_entries_by_index_hv
+                   = build_sorted_indices_by_index (index_entries_by_index,
+                                                    indices_information_hv);
+                RETVAL
+                 = newRV_inc ((SV *) index_entries_by_index_hv);
+              }
+          }
+        if (!RETVAL)
+          RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
+SV *
+get_converter_indices_sorted_by_letter (SV *converter_sv)
+     PREINIT:
+        CONVERTER *self;
+        INDEX_SORTED_BY_LETTER *index_entries_by_letter = 0;
+        HV *converter_hv;
+        SV **document_sv;
      CODE:
         self = get_sv_converter (converter_sv,
                                  "get_converter_indices_sorted_by_letter");
         if (self)
+          index_entries_by_letter
+            = get_converter_indices_sorted_by_letter (self);
+
+        converter_hv = (HV *) SvRV (converter_sv);
+        document_sv = hv_fetch (converter_hv, "document",
+                                strlen ("document"), 0);
+        RETVAL = 0;
+        if (document_sv)
           {
-            INDEX_SORTED_BY_LETTER *index_entries_by_letter
-              = converter_sort_indices_by_letter (self);
-            RETVAL
-             = build_sorted_indices_by_letter (index_entries_by_letter,
-                                               indices_information);
+            SV **indices_information_sv;
+            HV *document_hv = (HV *) SvRV (*document_sv);
+            indices_information_sv
+              = hv_fetch (document_hv, "indices", strlen ("indices"), 0);
+
+            if (index_entries_by_letter && indices_information_sv)
+              {
+                HV *indices_information_hv
+                   = (HV *) SvRV (*indices_information_sv);
+                HV *index_entries_by_letter_hv
+                   = build_sorted_indices_by_letter (index_entries_by_letter,
+                                                     indices_information_hv);
+                RETVAL
+                 = newRV_inc ((SV *) index_entries_by_letter_hv);
+              }
           }
-        else
+        if (!RETVAL)
           RETVAL = newSV (0);
     OUTPUT:
          RETVAL
@@ -752,10 +814,32 @@ html_in_align (SV *converter_in)
          CONVERTER *self;
          enum command_id cmd;
      CODE:
-         self = get_sv_converter (converter_in,
-                                  "html_in_align");
+         self = get_sv_converter (converter_in, "html_in_align");
          cmd = html_in_align (self);
          RETVAL = builtin_command_name (cmd);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_current_filename (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in, "html_current_filename");
+         RETVAL = newSVpv_utf8 (self->current_filename.filename, 0);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_current_output_unit (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in, "html_current_output_unit");
+         if (!self->current_output_unit)
+           RETVAL = newSV (0);
+         else
+           RETVAL = newRV_inc ((SV *) self->current_output_unit->hv);
     OUTPUT:
          RETVAL
 
@@ -855,7 +939,7 @@ html_get_target (SV *converter_in, SV *element_sv)
            {
              int output_units_descriptor
                = get_output_units_descriptor_converter_sv (converter_in);
-             ELEMENT *element;
+             const ELEMENT *element;
              element = html_find_element_from_sv (self, element_sv,
                                                   output_units_descriptor);
              if (element)
@@ -878,8 +962,8 @@ SV *
 html_command_id (SV *converter_in, SV *element_sv)
      PREINIT:
          CONVERTER *self;
-         char *id = 0;
-         ELEMENT *element;
+         const char *id = 0;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                               "html_command_id", &self);
@@ -899,7 +983,7 @@ html_command_contents_target (SV *converter_in, SV *element_sv, cmdname)
      PREINIT:
          CONVERTER *self;
          char *id = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                               "html_command_contents_target",
@@ -922,7 +1006,7 @@ html_footnote_location_target (SV *converter_in, SV *element_sv)
      PREINIT:
          CONVERTER *self;
          char *id = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                               "html_footnote_location_target",
@@ -942,7 +1026,7 @@ html_command_filename (SV *converter_in, SV *element_sv)
      PREINIT:
          CONVERTER *self;
          const char *filename = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                               "html_command_filename",
@@ -969,7 +1053,7 @@ html_command_root_element_command (SV *converter_in, SV *element_sv)
      PREINIT:
          CONVERTER *self;
          const ELEMENT *root_element_command = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                      "html_command_root_element_command",
@@ -992,7 +1076,7 @@ html_command_node (SV *converter_in, SV *element_sv)
      PREINIT:
          CONVERTER *self;
          const ELEMENT *node_element = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                               "html_command_node", &self);
@@ -1011,19 +1095,19 @@ html_internal_command_href (SV *converter_in, SV *element_sv, SV *source_filenam
      PREINIT:
          CONVERTER *self;
          char *href = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                          "html_internal_command_href", &self);
 
          if (element)
            {
-             char *source_filename = 0;
-             char *specified_target = 0;
+             const char *source_filename = 0;
+             const char *specified_target = 0;
              if (source_filename_sv && SvOK (source_filename_sv))
-               source_filename = SvPVutf8_nolen(source_filename_sv);
+               source_filename = SvPVutf8_nolen (source_filename_sv);
              if (specified_target_sv && SvOK (specified_target_sv))
-               specified_target = SvPVutf8_nolen(specified_target_sv);
+               specified_target = SvPVutf8_nolen (specified_target_sv);
              href = html_internal_command_href (self, element, source_filename,
                                                 specified_target);
            }
@@ -1044,7 +1128,7 @@ html_command_contents_href (SV *converter_in, SV *element_sv, cmdname, SV *sourc
      PREINIT:
          CONVERTER *self;
          char *href = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                          "html_command_contents_href", &self);
@@ -1052,7 +1136,7 @@ html_command_contents_href (SV *converter_in, SV *element_sv, cmdname, SV *sourc
          if (element)
            {
              enum command_id cmd = lookup_builtin_command (cmdname);
-             char *source_filename = 0;
+             const char *source_filename = 0;
              if (source_filename_sv && SvOK (source_filename_sv))
                source_filename = SvPVutf8_nolen(source_filename_sv);
              href = html_command_contents_href (self, element, cmd,
@@ -1074,15 +1158,15 @@ html_footnote_location_href (SV *converter_in, SV *element_sv, SV *source_filena
      PREINIT:
          CONVERTER *self;
          char *href = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                          "html_footnote_location_href", &self);
          if (element)
            {
-             char *source_filename = 0;
-             char *specified_target = 0;
-             char *target_filename_in = 0;
+             const char *source_filename = 0;
+             const char *specified_target = 0;
+             const char *target_filename_in = 0;
              if (source_filename_sv && SvOK(source_filename_sv))
                source_filename = SvPVutf8_nolen (source_filename_sv);
              if (specified_target_sv && SvOK(specified_target_sv))
@@ -1091,11 +1175,14 @@ html_footnote_location_href (SV *converter_in, SV *element_sv, SV *source_filena
                target_filename_in = SvPVutf8_nolen (target_filename_sv);
 
              href = html_footnote_location_href (self, element, source_filename,
-                                                 specified_target, target_filename_in);
+                                          specified_target, target_filename_in);
            }
 
          if (href)
-           RETVAL = newSVpv_utf8 (href, 0);
+           {
+             RETVAL = newSVpv_utf8 (href, 0);
+             free (href);
+           }
          else
            RETVAL = newSV (0);
     OUTPUT:
@@ -1106,7 +1193,7 @@ html_internal_command_tree (SV *converter_in, SV *element_sv, SV* no_number_sv)
      PREINIT:
          CONVERTER *self;
          ELEMENT *command_tree = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                          "html_internal_command_tree", &self);
@@ -1137,7 +1224,7 @@ html_internal_command_text (SV *converter_in, SV *element_sv, char *type)
      PREINIT:
          CONVERTER *self;
          char *text = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                                          "html_internal_command_text", &self);
@@ -1174,8 +1261,8 @@ html_internal_command_text (SV *converter_in, SV *element_sv, char *type)
 
 void
 html_set_shared_conversion_state (SV *converter_in, cmdname, state_name, ...)
-         char *cmdname = (char *)SvPVutf8_nolen($arg);
-         char *state_name = (char *)SvPVutf8_nolen($arg);
+         const char *cmdname = (char *)SvPVutf8_nolen($arg);
+         const char *state_name = (char *)SvPVutf8_nolen($arg);
      PREINIT:
          CONVERTER *self;
          SV **args_sv = 0;
@@ -1199,8 +1286,8 @@ html_set_shared_conversion_state (SV *converter_in, cmdname, state_name, ...)
 
 SV *
 html_get_shared_conversion_state (SV *converter_in, cmdname, state_name, ...)
-         char *cmdname = (char *)SvPVutf8_nolen($arg);
-         char *state_name = (char *)SvPVutf8_nolen($arg);
+         const char *cmdname = (char *)SvPVutf8_nolen($arg);
+         const char *state_name = (char *)SvPVutf8_nolen($arg);
      PREINIT:
          CONVERTER *self;
          SV **args_sv = 0;
@@ -1226,7 +1313,7 @@ html_get_shared_conversion_state (SV *converter_in, cmdname, state_name, ...)
 
 void
 html_register_opened_section_level (SV *converter_in, int level, close_string)
-         char *close_string = (char *)SvPVutf8_nolen($arg);
+         const char *close_string = (char *)SvPVutf8_nolen($arg);
      PREINIT:
          CONVERTER *self;
      CODE:
@@ -2075,7 +2162,7 @@ html_prepare_node_redirection_page (SV *converter_in, SV *element_sv, redirectio
      PREINIT:
          CONVERTER *self;
          char *redirection_page = 0;
-         ELEMENT *element;
+         const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
                               "html_prepare_node_redirection_page", &self);

@@ -374,7 +374,7 @@ build_html_formatting_state (CONVERTER *converter, unsigned long flags)
 #define FETCH(key) key##_sv = hv_fetch (hv, #key, strlen (#key), 0);
 #define STORE(key, value) hv_store (hv, key, strlen (key), value, 0)
 
-  if (flags & HMSF_converter_state)
+  if (flags & HMSF_ignore_notice)
     {
       STORE("ignore_notice",
         newSViv (converter->ignore_notice));
@@ -396,31 +396,6 @@ build_html_formatting_state (CONVERTER *converter, unsigned long flags)
       else
         STORE("current_node",
            newRV_inc ((SV *) converter->current_node->hv));
-    }
-
-  if (flags & HMSF_current_output_unit)
-    {
-      if (!converter->current_output_unit)
-        STORE("current_output_unit", newSV (0));
-      else
-        STORE("current_output_unit",
-           newRV_inc ((SV *) converter->current_output_unit->hv));
-    }
-
-  /* for scalars corresponding to value that can be found in get_info
-     the value associated to the key in the 'converter_info' hash is
-     a reference to the value in the converter, such as
-     \$converter->{"current_filename"}.
-     *current_filename_sv corresponds to $converter->{"current_filename"},
-     the value should be changed, but the SV should not be replaced */
-  if (flags & HMSF_current_filename)
-    {
-      SV **current_filename_sv;
-      current_filename_sv = hv_fetch (hv, "current_filename",
-                                      strlen ("current_filename"), 1);
-      sv_setpv (*current_filename_sv, converter->current_filename.filename);
-      if (converter->current_filename.filename)
-        SvUTF8_on (*current_filename_sv);
     }
 
   if (flags & HMSF_multiple_pass)

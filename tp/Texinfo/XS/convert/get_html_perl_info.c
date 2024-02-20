@@ -966,6 +966,7 @@ html_conversion_initialization_sv (SV *converter_sv, CONVERTER *converter)
       int i;
       SV **direction_sv = 0;
       HV *direction_hv = 0;
+      const char *type_name = direction_string_type_names[DS_type];
 
       converter->directions_strings[DS_type] = (char ***)
         malloc (nr_string_directions * sizeof (char **));
@@ -974,7 +975,6 @@ html_conversion_initialization_sv (SV *converter_sv, CONVERTER *converter)
 
       if (directions_strings_sv)
         {
-          const char *type_name = direction_string_type_names[DS_type];
           direction_sv = hv_fetch (directions_strings_hv, type_name,
                                    strlen (type_name), 0);
           if (direction_sv)
@@ -1016,7 +1016,7 @@ html_conversion_initialization_sv (SV *converter_sv, CONVERTER *converter)
                       SV **value_sv = hv_fetch (context_hv, context_name,
                                                 strlen (context_name), 0);
 
-                      if (value_sv)
+                      if (value_sv && SvOK (*value_sv))
                         {
                            converter->directions_strings[DS_type][i][j]
                              = strdup ((char *) SvPVutf8_nolen (*value_sv));
@@ -1246,13 +1246,13 @@ html_converter_prepare_output_sv (SV *converter_sv, CONVERTER *converter)
 
 /* find C Texinfo tree element based on element_sv perl tree element.
    Only for elements that can be targets of links. */
-ELEMENT *
-html_find_element_from_sv (CONVERTER *converter, SV *element_sv,
-                      int output_units_descriptor)
+const ELEMENT *
+html_find_element_from_sv (CONVERTER *converter, const SV *element_sv,
+                           int output_units_descriptor)
 {
   HV *element_hv;
   SV **type_sv;
-  ELEMENT *element;
+  const ELEMENT *element;
 
   dTHX;
 
@@ -1323,8 +1323,8 @@ get_output_units_descriptor_converter_sv (SV *converter_in)
 }
 
 /* find converter and element */
-ELEMENT *
-element_converter_from_sv (SV *converter_in, SV *element_sv,
+const ELEMENT *
+element_converter_from_sv (SV *converter_in, const SV *element_sv,
                            const char *warn_string, CONVERTER **converter_out)
 {
   int output_units_descriptor;
@@ -1400,7 +1400,7 @@ find_node_target_info_nodedescription_sv (CONVERTER *converter,
                                        strlen ("element_node"), 0);
       if (element_node_sv)
         {
-          ELEMENT *node = html_find_element_from_sv (converter,
+          const ELEMENT *node = html_find_element_from_sv (converter,
                                                 *element_node_sv, 0);
           if (node)
             {
@@ -1476,6 +1476,32 @@ html_set_shared_conversion_state (CONVERTER *converter, SV *converter_in,
       if (target_info)
         target_info->formatted_nodedescription_nr = number;
     }
+  else if (!strcmp (state_name, "formatted_listoffloats"))
+    {
+      char *type = (char *)SvPVutf8_nolen(args_sv[0]);
+      int number = SvIV (args_sv[1]);
+      if (converter->document && converter->document->listoffloats)
+        {
+          int i;
+          LISTOFFLOATS_TYPE_LIST
+            *listoffloats = converter->document->listoffloats;
+          for (i = 0; i < listoffloats->number; i++)
+            {
+              LISTOFFLOATS_TYPE *float_types = &listoffloats->float_types[i];
+              if (!strcmp (float_types->type, type))
+                {
+                  if (float_types->float_list.number >= 0)
+                    {
+                      int *formatted_listoffloats_nr
+                        = &converter->shared_conversion_state
+                            .formatted_listoffloats_nr[i];
+                      *formatted_listoffloats_nr = number;
+                    }
+                  break;
+                }
+            }
+        }
+    }
   else if (!strcmp (state_name, "in_skipped_node_top"))
     {
       int in_skipped_node_top = SvIV (args_sv[0]);
@@ -1537,6 +1563,30 @@ html_get_shared_conversion_state (CONVERTER *converter, SV *converter_in,
 
       if (target_info && target_info->formatted_nodedescription_nr > 0)
         return newSViv (target_info->formatted_nodedescription_nr);
+    }
+  else if (!strcmp (state_name, "formatted_listoffloats"))
+    {
+      char *type = (char *)SvPVutf8_nolen(args_sv[0]);
+      if (converter->document && converter->document->listoffloats)
+        {
+          int i;
+          LISTOFFLOATS_TYPE_LIST *listoffloats
+            = converter->document->listoffloats;
+          for (i = 0; i < listoffloats->number; i++)
+            {
+              LISTOFFLOATS_TYPE *float_types = &listoffloats->float_types[i];
+              if (!strcmp (float_types->type, type))
+                {
+                  if (float_types->float_list.number >= 0)
+                    {
+                      return newSViv (converter->shared_conversion_state
+                                       .formatted_listoffloats_nr[i]);
+                    }
+                  else
+                    return newSV (0);
+                }
+            }
+        }
     }
   else if (!strcmp (state_name, "in_skipped_node_top"))
     return newSViv(converter->shared_conversion_state.in_skipped_node_top);

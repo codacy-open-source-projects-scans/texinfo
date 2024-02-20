@@ -61,9 +61,8 @@ rebuild_document (SV *document_in, ...)
         char *descriptor_key = "document_descriptor";
         HV *hv_in;
       CODE:
-        if (items > 1)
-          if (SvOK(ST(1)))
-            no_store = SvIV (ST(1));
+        if (items > 1 && SvOK(ST(1)))
+          no_store = SvIV (ST(1));
 
         hv_in = (HV *)SvRV (document_in);
         document_descriptor_sv = hv_fetch (hv_in, descriptor_key,
@@ -128,9 +127,8 @@ rebuild_tree (SV *tree_in, ...)
         int no_store = 0;
         DOCUMENT *document = 0;
       CODE:
-        if (items > 1)
-          if (SvOK(ST(1)))
-            no_store = SvIV (ST(1));
+        if (items > 1 && SvOK(ST(1)))
+          no_store = SvIV (ST(1));
 
         document = get_sv_tree_document (tree_in, "rebuild_tree");
         if (document)
@@ -175,6 +173,44 @@ set_document_options (SV *sv_options_in, SV *document_in)
             OPTIONS *options = init_copy_sv_options (sv_options_in, 0, 0);
             register_document_options (document, options);
           }
+
+# registrar, main_configuration, prefer_reference_element
+SV *
+indices_sort_strings (SV *document_in, ...)
+    PROTOTYPE: $$$;$
+    PREINIT:
+        DOCUMENT *document = 0;
+        const INDICES_SORT_STRINGS *indices_sort_strings = 0;
+        SV **indices_information_sv;
+        HV *document_hv;
+        int prefer_reference_element = 0;
+     CODE:
+        document = get_sv_document_document (document_in,
+                                             "indices_sort_strings");
+        if (items > 3 && SvOK(ST(3)))
+          prefer_reference_element = SvIV (ST(3));
+        if (document)
+          indices_sort_strings
+           = document_indices_sort_strings (document, document->error_messages,
+                                  document->options, prefer_reference_element);
+
+        document_hv = (HV *) SvRV (document_in);
+        indices_information_sv
+          = hv_fetch (document_hv, "indices", strlen ("indices"), 0);
+
+        if (indices_sort_strings && indices_information_sv)
+          {
+            HV *indices_information_hv = (HV *) SvRV (*indices_information_sv);
+            HV *indices_sort_strings_hv
+              = build_indices_sort_strings (indices_sort_strings,
+                                            indices_information_hv);
+
+            RETVAL = newRV_inc ((SV *) indices_sort_strings_hv);
+          }
+        else
+          RETVAL = newSV (0);
+    OUTPUT:
+        RETVAL
 
 
 # Next correspond to XS interfaces that have no associated

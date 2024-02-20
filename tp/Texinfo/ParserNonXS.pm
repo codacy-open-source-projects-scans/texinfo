@@ -3027,7 +3027,7 @@ sub _isolate_last_space
     $current->{'info'} = {} if (!$current->{'info'});
     $current->{'info'}->{'comment_at_end'}
                            = _pop_element_from_contents($self, $current);
-    # TODO: @c should probably not be allowed inside most brace commands
+    # TODO @c should probably not be allowed inside most brace commands
     # as this would be difficult to implement properly in TeX.
   }
 
@@ -4031,7 +4031,7 @@ sub _end_line_starting_block($$$)
         if ($content->{'type'} and $content->{'type'} eq 'bracketed_arg') {
           $max_columns++;
         } elsif ($content->{'text'}) {
-          # TODO: this should be a warning or an error - all prototypes
+          # TODO this should be a warning or an error - all prototypes
           # on a @multitable line should be in braces, as documented in the
           # Texinfo manual.
         } else {
@@ -4975,7 +4975,7 @@ sub _handle_macro($$$$$)
     if ($self->{'DEBUG'});
 
   my $error;
-  # FIXME use a different counter for linemacro?
+  # TODO use a different counter for linemacro?
   if ($self->{'MAX_MACRO_CALL_NESTING'}
       and $self->{'macro_expansion_nr'} > $self->{'MAX_MACRO_CALL_NESTING'}) {
     $self->_line_warn(sprintf(__(
@@ -4988,7 +4988,7 @@ sub _handle_macro($$$$$)
     foreach my $input (@{$self->{'input'}}[0..$#{$self->{'input'}}-1]) {
       if (defined($input->{'input_source_info'}->{'macro'})
           and $input->{'input_source_info'}->{'macro'} eq $command) {
-        # FIXME different message for linemacro?
+        # TODO different message for linemacro?
         $self->_line_error(sprintf(__(
        "recursive call of macro %s is not allowed; use \@rmacro if needed"),
                                    $command), $source_info);
@@ -5298,7 +5298,7 @@ sub _handle_other_command($$$$$)
 
     if ($in_heading_spec_commands{$command}) {
       # TODO use a more generic system for check of @-command nesting
-      # in command on context stack
+      # in command on context stack?
       my $top_context_command = $self->_top_context_command();
       if (not defined($top_context_command)
           or not $heading_spec_commands{$top_context_command}) {
@@ -7685,24 +7685,33 @@ sub _parse_line_command_args($$$)
     } elsif ($line =~ s/^([[:alnum:]][[:alnum:]\-]*)\s*,\s*([^\s,]*)\s*,\s*([^\s,]*)$//) {
       $args = [$1, $2, $3 ];
       my ($cmd_name, $begin, $end) = ($1, $2, $3);
-      $self->{'definfoenclose'}->{$cmd_name} = [ $begin, $end ];
-      print STDERR "DEFINFOENCLOSE \@$cmd_name: $begin, $end\n"
+      if ($all_commands{$cmd_name}
+          and (!$brace_commands{$cmd_name}
+               or ($brace_commands{$cmd_name} ne 'style_code'
+                   and $brace_commands{$cmd_name} ne 'style_no_code'
+                   and $brace_commands{$cmd_name} ne 'style_other'))) {
+        $self->_line_error(sprintf(__("cannot redefine with \@%s: %s"),
+                           $command, $cmd_name), $source_info);
+      } else {
+        $self->{'definfoenclose'}->{$cmd_name} = [ $begin, $end ];
+        print STDERR "DEFINFOENCLOSE \@$cmd_name: $begin, $end\n"
                if ($self->{'DEBUG'});
-      delete $self->{'macros'}->{$cmd_name};
-      delete $self->{'aliases'}->{$cmd_name};
-      # unset @def*index effect
-      delete $self->{'line_commands'}->{$cmd_name};
-      #delete $self->{'close_paragraph_commands'}->{$cmd_name};
-      delete $self->{'no_paragraph_commands'}->{$cmd_name};
-      delete $self->{'basic_inline_commands'}->{$cmd_name};
-      delete $self->{'command_index'}->{$cmd_name};
-      # consistent with XS parser, value not actually used anywhere.
-      $self->{'brace_commands'}->{$cmd_name} = 'style_other';
-      # this allows to obtain the same result as the XS parser which checks
-      # dynamically the brace_commands type
-      $self->{'valid_nestings'}->{$cmd_name} = \%in_full_text_commands;
-      # note that a built-in command previously in a hash classifying the
-      # @-command otherwise will remain there, possibly having specific effects.
+        delete $self->{'macros'}->{$cmd_name};
+        delete $self->{'aliases'}->{$cmd_name};
+        # unset @def*index effect
+        delete $self->{'line_commands'}->{$cmd_name};
+        #delete $self->{'close_paragraph_commands'}->{$cmd_name};
+        delete $self->{'no_paragraph_commands'}->{$cmd_name};
+        delete $self->{'basic_inline_commands'}->{$cmd_name};
+        delete $self->{'command_index'}->{$cmd_name};
+        # consistent with XS parser, value not actually used anywhere.
+        $self->{'brace_commands'}->{$cmd_name} = 'style_other';
+        # this allows to obtain the same result as the XS parser which checks
+        # dynamically the brace_commands type
+        $self->{'valid_nestings'}->{$cmd_name} = \%in_full_text_commands;
+        # note that a built-in command previously in a hash classifying the
+        # @-command otherwise will remain there, possibly having specific effects.
+      }
     } else {
       $self->_line_error(sprintf(__("bad argument to \@%s"), $command),
                          $source_info);

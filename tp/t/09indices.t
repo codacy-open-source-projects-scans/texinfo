@@ -1026,6 +1026,8 @@ my $encoding_index_text = '
 @cindex @exclamdown{}
 @cindex @TH{}
 @cindex @DH{}
+@cindex @ordf{}
+@cindex @ordm{}
 @cindex @textdegree{}
 @cindex 0
 @cindex 9
@@ -1062,6 +1064,12 @@ undef,
 undef,
 {'skip' => ($] < 5.018) ? 'Perl too old incompatible Unicode collation' : undef,
 'test_file' => 'encoding_index_utf8.texi', 'ENABLE_ENCODING' => 0},
+],
+['encoding_index_utf8_no_use_unicode',
+undef,
+{'test_file' => 'encoding_index_utf8.texi', 'ENABLE_ENCODING' => 0,
+'USE_UNICODE_COLLATION' => 0},
+{'USE_UNICODE_COLLATION' => 0},
 ],
 ['encoding_index_ascii_enable_encoding',
 '

@@ -956,23 +956,24 @@ sub _stream_encode($$)
   my $self = shift;
   my $string = shift;
 
-  if (!defined($self->{'encoding_object'})) {
-    my $encoding = $self->{'output_perl_encoding'};
-    if ($encoding and $encoding ne 'ascii') {
-      my $Encode_encoding_object = Encode::find_encoding($encoding);
-      if (!defined($Encode_encoding_object)) {
-        Carp::croak "Unknown encoding '$encoding'";
-      }
-      $self->{'encoding_object'} = $Encode_encoding_object;
-    }
-  }
-
-  if ($self->{'encoding_object'}) {
-    my $encoded = $self->{'encoding_object'}->encode($string);
-    return $encoded;
-  } else {
+  if ($self->{'encoding_disabled'}) {
     return $string;
   }
+
+  if (!defined($self->{'encoding_object'})) {
+    my $encoding = $self->{'output_perl_encoding'};
+    if (!$encoding or $encoding eq 'ascii') {
+      $self->{'encoding_disabled'} = 1;
+      return $string;
+    }
+    my $Encode_encoding_object = Encode::find_encoding($encoding);
+    if (!defined($Encode_encoding_object)) {
+      Carp::croak "Unknown encoding '$encoding'";
+    }
+    $self->{'encoding_object'} = $Encode_encoding_object;
+  }
+
+  return $self->{'encoding_object'}->encode($string);
 }
 
 
@@ -1227,7 +1228,7 @@ sub _compute_spaces_align_line($$$;$)
   return $spaces_prepended;
 }
 
-# TODO: $bytes_count return value is not needed anywheree
+# TODO $bytes_count return value is not needed anywhere
 sub _align_lines($$$$$$)
 {
   my ($self, $text_encoded, $max_column, $direction,
@@ -1510,27 +1511,16 @@ sub process_printindex($$;$)
     return '';
   }
 
+  my $index_entries;
   my $indices_information;
   if ($self->{'document'}) {
     $indices_information = $self->{'document'}->indices_information();
-
-    # this is not redone for each index, only once
-    if (!defined($self->{'index_entries'}) and $indices_information) {
-
-      my $use_unicode_collation
-        = $self->get_conf('USE_UNICODE_COLLATION');
-      my $locale_lang;
-      if (!(defined($use_unicode_collation) and !$use_unicode_collation)) {
-        $locale_lang = $self->get_conf('COLLATION_LANGUAGE');
-      }
-      $self->{'index_entries'}
-        = Texinfo::Document::sorted_indices_by_index(undef, $self,
-                                                   $self->{'document'},
-                                        $use_unicode_collation, $locale_lang);
+    if ($indices_information) {
+      $index_entries = $self->get_converter_indices_sorted_by_index();
     }
   }
-  if (!$self->{'index_entries'} or !$self->{'index_entries'}->{$index_name}
-      or ! @{$self->{'index_entries'}->{$index_name}}) {
+  if (!$index_entries or !$index_entries->{$index_name}
+      or !@{$index_entries->{$index_name}}) {
     return '';
   }
 
@@ -1539,7 +1529,7 @@ sub process_printindex($$;$)
   my %entry_nodes;
   my $max_index_line_nr_string_length = 0;
   my %ignored_entries;
-  foreach my $entry (@{$self->{'index_entries'}->{$index_name}}) {
+  foreach my $entry (@{$index_entries->{$index_name}}) {
     my $main_entry_element = $entry->{'entry_element'};
     # FIXME format in a way instead of ignoring
     if ($main_entry_element->{'extra'}
@@ -1612,7 +1602,7 @@ sub process_printindex($$;$)
                                   'no_added_eol' => 1});
   push @{$self->{'formatters'}}, $formatter;
 
-  foreach my $entry (@{$self->{'index_entries'}->{$index_name}}) {
+  foreach my $entry (@{$index_entries->{$index_name}}) {
     next if ($ignored_entries{$entry});
 
     my $main_entry_element = $entry->{'entry_element'};
@@ -2518,7 +2508,7 @@ sub _convert($$)
 
           # Check if punctuation follows the ref command.
           #
-          # FIXME: is @xref really special here?  Original comment:
+          # FIXME is @xref really special here?  Original comment:
           # "If command is @xref, the punctuation must always follow the
           # command, for other commands it may be in the argument..."
 

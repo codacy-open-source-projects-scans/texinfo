@@ -934,6 +934,14 @@ components of output units, isolated sections not associated with nodes
 are associated with the previous node, and isolated nodes are
 output units.
 
+A last type of output units exist, ``virtual'' output units corresponding to
+directions to external manual nodes.  They are not part of the output, but can
+be used in directions.  They are often referred to as @dfn{external node units}
+or @dfn{external manual units}.  These units do not exist in the document
+output, therefore there are no functions called to format those output units.
+They can appear in directions formatting (@pxref{Elements and Links for
+Directions}).
+
 
 @node Directions
 @section Directions
@@ -1076,11 +1084,6 @@ context where only entities are available (attributes).
 A string representing the direction to be used in contexts
 with HTML elements (preformatted and normal contexts).
 @xref{Init File Expansion Contexts}.
-
-@item target
-A string representing the target of the direction, typically used as id
-attribute in the output unit corresponding to the direction, and in href
-attribute.
 
 @item node
 Same as @code{text}, but selecting the node associated with the
@@ -1321,6 +1324,9 @@ the @code{rel} attribute is used in navigation.  In that case the
 @code{rel} direction string is used for the @code{rel}
 attribute (@pxref{Direction Strings}).
 
+Leading space buttons mixed with directions not found may be omitted
+of the navigation panel output.
+
 
 @node User Defined Functions
 @chapter User Defined Functions
@@ -1384,9 +1390,8 @@ converter and as a generic @code{Texinfo::Convert::Converter}
 converter can be used for error reporting by using
 @code{Texinfo::Convert::Converter} methods. @xref{Error
 Reporting in User Defined Functions} on error reporting.
-The converter can also be used for
-in-document strings translation as it is also a @code{Texinfo::Translations}
-object (@pxref{Texinfo::Translations,,, texi2any_internals}).
+The converter can also be used for in-document strings translation.
+@xref{Translations Output and Customization} on translated strings in output.
 
 
 @node Texinfo Tree Conversion Functions
@@ -1395,7 +1400,7 @@ object (@pxref{Texinfo::Translations,,, texi2any_internals}).
 One important converter method that can be used in user defined functions
 is @code{convert_tree} that convert a Texinfo tree rooted at any element.
 There is no reason to use that function often, as the converter
-already goes through the tree calling reference functions to convert
+already goes through the tree calling functions to convert
 the elements, but it can be interesting in some cases.
 
 @deftypefun {@var{$converted_text} =} @var{$converter}->convert_tree (@var{\%element}, @var{$explanation})
@@ -1422,16 +1427,15 @@ For such cases, the function is
 @deftypefun {@var{$converted_text} =} @var{$converter}->convert_tree_new_formatting_context @
       (@var{\%element}, @var{$context}, @var{$multiple_pass}, @var{$global_context}, @
        @var{$block_command_name})
-@var{\%element} is a Texinfo tree element.  @var{$context} is an optional
-string describing the new context to be setup to format out of the main
-conversion flow.  If not defined, the conversion is done in the main document
-flow.  @var{$multiple_pass} is an optional string that marks that the
-conversion is done more than once.  It should be unique and suitable for
-inclusion in targets and identifiers.  @var{$global_context} is an optional
-string that marks that the formatting may be done in advance, and can be
-redone.  @var{$block_command_name} is an optional block command name that is
-used to initialized the new context.  It can be useful, in particular, to propagate
-the topmost block command in the new context.
+@var{\%element} is a Texinfo tree element.  @var{$context} describes the new
+context setup to format out of the main conversion flow.  @var{$multiple_pass}
+is an optional string that marks that the conversion is done more than once.
+It should be unique and suitable for inclusion in targets and identifiers.
+@var{$global_context} is an optional string that marks that the formatting may
+be done in advance, and can be redone.  @var{$block_command_name} is an
+optional block command name that is used to initialized the new context.  It
+can be useful, in particular, to propagate the topmost block command in the new
+context.
 
 The function returns @var{\%element} converted, setting the conversion context
 according to the arguments.
@@ -1477,6 +1481,10 @@ is a continuation of the previous registered message.
 @end defun
 
 Note that registering an error does not stop the processing of the Texinfo tree.
+
+@xref{Texinfo@asis{::}Convert@asis{::}Converter Registering error and warning
+messages,,,texi2any_internals} for the converter module documentation on
+errors and warning messages registration.
 
 
 @node Texinfo Tree Elements in User Defined Functions
@@ -1537,8 +1545,11 @@ The following keys of output unit hashes can be interesting:
 
 @table @code
 @item unit_type
+@anchor{Unit Type}
+@cindex Unit type
 @code{unit} for normal output units, @code{special_unit} for
-special units.
+special units and @code{external_node_unit} for external nodes virtual units
+corresponding to references to external manuals.
 
 @item unit_command
 For normal output units, points to the associated @code{@@node} or sectioning
@@ -1555,6 +1566,9 @@ appear in the Texinfo tree but can be used as a target for directions
 to the special unit.  This element has an @code{associated_unit} key
 that points to the associated output unit.
 
+for references to external manuals virtual units, points to the tree
+element corresponding to the external manual and node label.
+
 @item unit_contents
 Array reference on tree elements associated to the output unit.
 
@@ -1564,6 +1578,10 @@ The associated file name.
 @item unit_directions
 Hash with @code{next} and @code{prev} for the
 next and previous output units in document order.
+
+@item special_unit_variety
+The variety of the special output unit.
+For special units only. @xref{Special Units Varieties}.
 @end table
 
 
@@ -1777,7 +1795,8 @@ In the rare cases when overriding the customization would be needed, the
 @node Conversion General Information
 @section Conversion General Information
 
-Some general information is available from the converter.
+Some general information is available from the converter.  This information
+should not change during conversion.
 
 To determine if an output format such as @samp{html} or @samp{tex}
 is expanded (@pxref{Conditional Commands,,, texinfo, Texinfo}), use
@@ -1800,9 +1819,6 @@ The available information is about:
 Text appearing in @code{@@copying} with all the Texinfo commands
 put into comments (@pxref{@code{@@copying},,, texinfo, Texinfo}).
 
-@item current_filename
-The file name of the current output unit being converted.
-
 @item destination_directory
 Destination directory for the output files.  It is common to use that string in directory
 or file paths with functions requiring binary strings.  In that case the
@@ -1810,7 +1826,8 @@ character string needs to be encoded.  @xref{Encoding File Path Strings}.
 
 @item document
 The @code{Texinfo::Document} parsed Texinfo document being converted.
-Some information is available from the document using function accessors:
+Some information relevant for conversion is available from the document
+using function accessors:
 
 @table @code
 @item floats_information
@@ -1836,6 +1853,8 @@ Information about defined indices, merged indices and index entries.
 List of the sectioning commands in the document.
 @end table
 
+@xref{Texinfo@asis{::}Document Getting document information,,,texi2any_internals} on information available from the document.
+
 @item document_name
 Base name of the document.  It is common to use that string in in directory or
 file paths with functions requiring binary strings.  In that case the character
@@ -1852,18 +1871,6 @@ expansion (@pxref{Conditional Commands,,, texinfo, Texinfo}).  An
 hash reference with format names as key and a true value as value if
 the format is expanded, according to command-line and init file
 information.
-
-@c remove from the API at leat temporary such as not to worry with
-@c that to sort out XS/nonXS interfaces for index_entries_by_letter
-@c which is actually used
-@ignore
-@item index_entries
-Information on indices taking into account merged indices.
-@xref{Texinfo::Structuring $merged_entries = merge_indices($index_names),,Texinfo::Structuring::merge_indices, texi2any_internals}.
-@end ignore
-
-@item index_entries_by_letter
-Index entries sorted by letter. @xref{Texinfo::Structuring ($index_entries_sorted@comma{} $index_entries_sort_strings) = sort_indices($registrar@comma{} $configuration_information@comma{} $merged_index_entries@comma{} $sort_by_letter),,Texinfo::Structuring::sort_indices,texi2any_internals}.
 
 @item jslicenses
 An hash reference with  categories of javascript used in the document
@@ -2170,7 +2177,7 @@ This could be used, for example, to initialize variables and collect
 some @@-commands text, and doing clean-up after the Texinfo tree
 conversion.
 
-There are four places for user defined functions:
+There are four stages for user defined functions:
 @table @code
 @item setup
 Called right after completing main program customization information
@@ -2485,23 +2492,25 @@ which should only be the case for types ignored in HTML.
 
 Output units formatting function are setup and used similarly as
 for tree container types (@pxref{Type Tree Element Conversion Functions}).
+The output unit types correspond to the @code{unit_type} key values
+of output unit hashes (@pxref{Unit Type}).
 
 User defined functions called for the conversion of an output unit
 are registered with @code{texinfo_register_output_unit_formatting}.  The user
 defined function is called after conversion of the content.
 
-@defun texinfo_register_output_unit_formatting ($type, \@ampchar{}handler)
-@var{$type} is the output unit type.
+@defun texinfo_register_output_unit_formatting ($unit_type, \@ampchar{}handler)
+@var{$unit_type} is the output unit type.
 @var{\&handler} is the user defined function reference.
 @end defun
 
 The call of the user defined functions is:
 
 @deftypefn {Function Reference} @var{$text} output_unit_conversion (@var{$converter}, @
-        @var{$type}, @var{\%output_unit}, @var{$content})
-@var{$converter} is a converter object. @var{$type} is the output unit type.
-@var{\%output_unit} is the output unit.  @var{$content} the formatted contents.
-@var{$content} can be @code{undef} or the empty string.
+        @var{$unit_type}, @var{\%output_unit}, @var{$content})
+@var{$converter} is a converter object. @var{$unit_type} is the output unit
+type. @var{\%output_unit} is the output unit.  @var{$content} the formatted
+contents.  @var{$content} can be @code{undef} or the empty string.
 
 The @var{$text} returned is the result of the output unit conversion.
 @end deftypefn
@@ -2509,18 +2518,30 @@ The @var{$text} returned is the result of the output unit conversion.
 To call a conversion function from user defined code, the function reference
 should first be retrieved using @code{type_conversion}:
 
-@deftypefun {@var{\&output_unit_conversion} =} @var{$converter}->output_unit_conversion (@var{$type})
-@var{$type} is the output unit type.  Returns the
-conversion function reference for @var{$type}, or @samp{undef} if there is none.
+@deftypefun {@var{\&output_unit_conversion} =} @var{$converter}->output_unit_conversion (@var{$unit_type})
+@var{$unit_type} is the output unit type.  Returns the
+conversion function reference for @var{$unit_type}, or @samp{undef} if there is none.
 @end deftypefun
 
 It is possible to have access to the default conversion function reference.
 The function used is:
 
-@deftypefun {@var{\&default_output_unit_conversion} =} @var{$converter}->default_output_unit_conversion (@var{$type})
-@var{$type} is the output unit type.  Returns the
-default conversion function reference for @var{$type}, or @samp{undef} if there is none.
+@deftypefun {@var{\&default_output_unit_conversion} =} @var{$converter}->default_output_unit_conversion (@var{$unit_type})
+@var{$unit_type} is the output unit type.  Returns the
+default conversion function reference for @var{$unit_type}, or @samp{undef}
+if there is none.
 @end deftypefun
+
+Nomal output units with output unit type @code{unit} default conversion
+involves calling the formatting reference
+@code{format_element_footer} (@pxref{Element Header and Footer Formatting}).
+
+Special units conversion is achieved by calling
+@code{special_unit_body_formatting} (@pxref{Special Unit Body Formatting
+Functions}), @code{format_navigation_header} (@pxref{Navigation Panel and
+Navigation Header Formatting}), @code{format_heading_text} (@pxref{Basic
+Formatting Customization}) and @code{format_element_footer} (@pxref{Element
+Header and Footer Formatting}).  Special units type is @code{special_unit}.
 
 
 @node Formatting Functions
@@ -2958,6 +2979,17 @@ preformatted containers and @@-commands such as @code{@@abbr}, @code{@@footnote}
 @node Dynamic Converter Formatting Information
 @section Dynamic Converter Formatting Information
 
+To get the current output unit being converted, use @code{current_output_unit}:
+@deftypefun {@var{$output_unit} =} @var{$converter}->current_output_unit ()
+Return the output unit being converted, or @code{undef} if there is no
+output unit.
+@end deftypefun
+
+To get the file name of the current output unit being converted,
+use @code{current_filename}:
+@deftypefun {@var{$filename} =} @var{$converter}->current_filename ()
+Return the file name of the current output unit being converted.
+@end deftypefun
 
 To get the current paragraph and preformatted number, use @code{paragraph_number}
 or @code{preformatted_number}:
@@ -2987,6 +3019,16 @@ use @code{in_multi_expanded}:
 @deftypefun {@var{$multi_expanded_context_information} =} @var{$converter}->in_multi_expanded ()
 Return a string representing the multiple expanded context, or @code{undef} if
 not in a multiple expanded context.
+@end deftypefun
+
+Sorted index entries are available through
+@code{get_converter_indices_sorted_by_letter}:
+
+@deftypefun {@var{$sorted_index_entries} = } @var{$converter}->get_converter_indices_sorted_by_letter ()
+Returns index entries sorted by index and letter.
+This function should be called each time sorted indices are needed,
+in case the sorting depends on the @code{@@documentlanguage} value.
+@xref{Texinfo@asis{::}Convert@asis{::}Converter $sorted_indices = $converter->get_converter_indices_sorted_by_letter(),,Texinfo::Convert::Converter::get_converter_indices_sorted_by_letter,texi2any_internals}.
 @end deftypefun
 
 To get the location of an image file, use @code{html_image_file_location_name}:
@@ -3204,14 +3246,14 @@ The function @code{get_shared_conversion_state} is used to get information:
 @deftypefun {@var{$value} =} @var{$converter}->get_shared_conversion_state (@var{$cmdname}, @var{$name}, [@var{$selector} @dots{}])
 Return the reference @var{$value} associated with @var{$cmdname}
 and @var{$name}. The number of selectors given in argument should match
-the number of selectors in the definition (possible none).
+the number of selectors in the definition (possibly none).
 @end deftypefun
 
 For example, continuing with the @samp{color} shared information data
 defined above, with one selector variable:
 @example
 my $number = $converter->get_shared_conversion_state('quotation',
-                                               'color', $element);
+                                               'color', 'purple1');
 @end example
 
 The function @code{set_shared_conversion_state} is used to set
@@ -3226,7 +3268,7 @@ the number of selectors in the definition (possible none).
 For example:
 @example
 $converter->set_shared_conversion_state('quotation', 'color',
-                                        $selector_element, 42);
+                                        'special_black', 42);
 @end example
 
 The converter is used to hold the information, but does not use nor write.
@@ -3243,6 +3285,7 @@ default formatting functions:
 @item @code{acronym} @tab @code{explained_commands} @tab string (first argument) @tab string
 @item @code{footnote} @tab @code{footnote_number} @tab @tab integer
 @item @code{footnote} @tab @code{footnote_id_numbers} @tab string (footnote id) @tab integer
+@item @code{listoffloats} @tab @code{formatted_listoffloats} @tab string (normalized argument) @tab integer
 @item @code{menu} @tab @code{html_menu_entry_index} @tab @tab integer
 @item @code{printindex} @tab @code{formatted_index_entries} @tab index_entry (index entry hash) @tab integer
 @item @code{top} @tab @code{in_skipped_node_top} @tab @tab integer
@@ -3262,6 +3305,8 @@ Associate a footnote identifier, typically used in hyperlink reference,
 to the number of time the corresponding footnote was formatted.  More than
 one corresponds to very rare cases, for instance a footnote in @code{@@copying}
 and multiple @code{@@insertcopying}.
+@item formatted_listoffloats
+Associate a list of float type to the number of time it was formatted.
 @item html_menu_entry_index
 Current number of menu entries in a menu. Reset to 0 at @code{@@menu} beginning.
 @item formatted_index_entries
@@ -3284,7 +3329,9 @@ Customization}) and for specific elements headings such as footnotes,
 contents or about (@pxref{Special Units Information Customization}).
 Translated strings can also be inserted in the output in user-defined
 customization functions, by using specific functions for internationalization
-of strings, @code{cdt}, @code{cdt_string} or @code{cgdt}.
+of strings, @code{cdt}, @code{cdt_string} or @code{pcdt}
+(@pxref{Texinfo@asis{::}Convert@asis{::}Converter Translations in output
+documents,,, texi2any_internals}).
 
 It is possible to customize the translated strings, in order to
 change the translations of the strings translated in the default case.
@@ -3298,7 +3345,7 @@ information on the default case.
 @section Internationalization of Strings Function
 
 @vindex texinfo_document @r{Gettext domain}
-The subroutines @code{cdt}, @code{cdt_string} or @code{cgdt}, are used for
+The subroutines @code{cdt}, @code{cdt_string} or @code{pcdt}, are used for
 translated strings:
 
 @deftypefun {@var{$translated_tree} =} @var{$converter}->cdt (@var{$string}, @var{\%variables_hash}, @var{$translation_context})
@@ -3516,7 +3563,7 @@ Retrieve the @var{$direction} (@pxref{Directions}) string of type
 @var{$string_type} (@pxref{Direction Strings}).  @var{$context} is
 @samp{normal} or @samp{string}.  @xref{Init File Expansion Contexts}.  If
 @var{$context} is @code{undef}, the @samp{normal} context is assumed.
-The string will be translated if needed.
+The string will be translated if needed.  May return @code{undef}.
 @end deftypefun
 
 
@@ -4219,11 +4266,11 @@ By default, the function associated with @code{format_element_header}
 formats the header and navigation panel of an output unit.
 
 @deftypefn {Function Reference} @var{$formatted_header} format_element_header @
-    (@var{$converter}, @var{$command_name}, @var{\%element}, @var{\%tree_unit_element})
+    (@var{$converter}, @var{$command_name}, @var{\%element}, @var{\%output_unit})
 @var{\%element} is the element in which the navigation header is formatted
 (sectioning command, @code{@@node} or special output unit). @var{$command_name} is
 the associated command name.  It may be @code{undef} for special output units.
-@var{\%tree_unit_element} is the associated output unit (@pxref{Texinfo
+@var{\%output_unit} is the associated output unit (@pxref{Texinfo
 Tree Elements in User Defined Functions}).
 
 Returns the formatted navigation header and panel.
@@ -4240,10 +4287,10 @@ Similarly, the function associated with @code{format_element_footer}
 formats the footer and navigation panel of a output unit.
 
 @deftypefn {Function Reference} @var{$formatted_footer} format_element_footer @
-   (@var{$converter}, @var{$tree_unit_type}, @var{\%output_unit}, @
+   (@var{$converter}, @var{$output_unit_type}, @var{\%output_unit}, @
     @var{$content}, @var{$command})
 @var{\%output_unit} is the output unit in which the
-navigation footer is formatted.  @var{$tree_unit_type} is the associated type.
+navigation footer is formatted.  @var{$output_unit_type} is the associated type.
 @var{$content} is the formatted element content.  @var{$content} can be
 @code{undef}. @var{$command} is an optional argument, the @@-command
 associated with the @var{\%output_unit}.
@@ -4261,8 +4308,8 @@ formatting, such as @code{SPLIT}, @code{HEADERS}, @code{DEFAULT_RULE},
 @end deftypefn
 
 
-@node Heading Commands and Tree Elements Formatting
-@chapter Heading Commands and Tree Elements Formatting
+@node Heading Commands Formatting
+@chapter Heading Commands Formatting
 
 The customization variables
 @code{CONTENTS_OUTPUT_LOCATION},
@@ -4280,22 +4327,6 @@ extent (@pxref{Opening and Closing Sectioning Commands Extent}).  The
 associated with @@-commands.  The corresponding function references can
 therefore be replaced by user defined functions for a precise control of
 conversion (@xref{Command Tree Element Conversion Functions}).
-
-Tree unit elements default conversion involves calling the formatting reference
-@code{format_element_footer} (@pxref{Element Header and Footer Formatting}).
-The conversion for these elements with type @code{unit} can be be replaced by
-user defined functions for a precise control of conversion (@pxref{Type Tree
-Element Conversion Functions}).
-
-Special units conversion is achieved by calling
-@code{special_unit_body_formatting} (@pxref{Special Unit Body Formatting
-Functions}), @code{format_navigation_header} (@pxref{Navigation Panel and
-Navigation Header Formatting}), @code{format_heading_text} (@pxref{Basic
-Formatting Customization}) and @code{format_element_footer} (@pxref{Element
-Header and Footer Formatting}).  The conversion for these special units with
-unit type @code{special_unit_type} can be be replaced by user defined functions
-for a precise control of conversion (@pxref{Output Units Conversion
-Functions}).
 
 
 @node Beginning and Ending Files
@@ -4318,7 +4349,7 @@ the functions references.
 
 @vindex DOCTYPE
 You can set the variable @code{DOCTYPE} to replace the default.
-the @code{DOCTYPE} is output at the very beginning of each output
+The @code{DOCTYPE} is output at the very beginning of each output
 file.
 
 @vindex EXTRA_HEAD
