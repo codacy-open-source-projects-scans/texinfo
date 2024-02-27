@@ -21,11 +21,6 @@
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
-/* Avoid warnings about Perl headers redefining symbols that gnulib
-   redefined already. */
-#if defined _WIN32 && !defined __CYGWIN__
-  #undef free
-#endif
 #include "XSUB.h"
 
 #undef context
@@ -35,16 +30,16 @@
 #include "tree_types.h"
 #include "converter_types.h"
 #include "document_types.h"
+/* for non_perl_strndup and similar */
+#include "utils.h"
 #include "build_perl_info.h"
 #include "call_perl_function.h"
 
- /* The NOTE in build_perl_info.c about not using malloc/free should
-    be relevant for this file
-    TODO there are calls to strndup.  Is it ok?
-  */
+ /* See the NOTE in build_perl_info.c on use of functions related to
+    memory allocation */
 
 char *
-call_nodenamenormalization_unicode_to_transliterate (char *text)
+call_nodenamenormalization_unicode_to_transliterate (const char *text)
 {
   int count;
   char *result;
@@ -76,7 +71,7 @@ call_nodenamenormalization_unicode_to_transliterate (char *text)
 
   result_sv = POPs;
   result_ret = SvPVutf8 (result_sv, len);
-  result = strndup (result_ret, len);
+  result = non_perl_strndup (result_ret, len);
 
   PUTBACK;
 
@@ -87,7 +82,7 @@ call_nodenamenormalization_unicode_to_transliterate (char *text)
 }
 
 char *
-call_latex_convert_to_latex_math (CONVERTER *self, ELEMENT *element)
+call_latex_convert_to_latex_math (CONVERTER *self, const ELEMENT *element)
 {
   int count;
   char *result;
@@ -102,12 +97,7 @@ call_latex_convert_to_latex_math (CONVERTER *self, ELEMENT *element)
   if (!self->hv)
     return 0;
 
-  /* in case of @displaymath an element containing the contents
-     of the displaymath element is passed, it is not registered in perl */
-  if (!element->hv)
-    {
-      element_to_perl_hash (element, 1);
-    }
+  build_tree_to_build (&self->tree_to_build);
 
   dSP;
 
@@ -147,7 +137,7 @@ call_latex_convert_to_latex_math (CONVERTER *self, ELEMENT *element)
 
   result_sv = POPs;
   result_ret = SvPVutf8 (result_sv, len);
-  result = strndup (result_ret, len);
+  result = non_perl_strndup (result_ret, len);
 
   PUTBACK;
 

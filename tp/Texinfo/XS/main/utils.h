@@ -45,12 +45,12 @@ extern const char *command_location_names[];
 extern const char *html_button_direction_names[];
 extern char *html_command_text_type_name[];
 
-typedef struct {
+typedef struct ENCODING_CONVERSION {
     char *encoding_name;
     iconv_t iconv;
 } ENCODING_CONVERSION;
 
-typedef struct {
+typedef struct ENCODING_CONVERSION_LIST {
     ENCODING_CONVERSION *list;
     size_t number;
     size_t space;
@@ -60,7 +60,7 @@ typedef struct {
 extern ENCODING_CONVERSION_LIST output_conversions;
 extern ENCODING_CONVERSION_LIST input_conversions;
 
-typedef struct {
+typedef struct DEF_ALIAS {
     enum command_id alias;
     enum command_id command;
     char *category;
@@ -129,8 +129,8 @@ typedef struct TARGET_FILENAME {
 
 typedef struct FILE_SOURCE_INFO {
     char *filename;
-    char *type;
-    char *name;
+    const char *type;
+    const char *name;
     const ELEMENT *element;
     char *path;
 } FILE_SOURCE_INFO;
@@ -148,6 +148,27 @@ typedef struct ACCENTS_STACK {
     ELEMENT *argument;
 } ACCENTS_STACK;
 
+typedef struct TARGET_CONTENTS_FILENAME {
+    char *target;
+    char *filename;
+    char *target_contents;
+    char *target_shortcontents;
+} TARGET_CONTENTS_FILENAME;
+
+typedef struct FILE_NAME_PATH {
+    char *filename;
+    char *filepath;
+} FILE_NAME_PATH;
+
+typedef struct TARGET_DIRECTORY_FILENAME {
+    char *filename;
+    char *directory;
+    char *target;
+} TARGET_DIRECTORY_FILENAME;
+
+void non_perl_free (void *ptr);
+char *non_perl_strdup (const char *s);
+char *non_perl_strndup (const char *s, size_t n);
 
 int xasprintf (char **ptr, const char *template, ...);
 
@@ -178,17 +199,19 @@ size_t index_number_index_by_name (const SORTED_INDEX_NAMES *sorted_indices,
 char *read_flag_name (char **ptr);
 int section_level (const ELEMENT *section);
 enum command_id section_level_adjusted_command_name (const ELEMENT *element);
-char *collapse_spaces (char *text);
+char *collapse_spaces (const char *text);
 char *parse_line_directive (char *line, int *retval, int *out_line_no);
-int is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries);
+int is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries);
 
+STRING_LIST *new_string_list (void);
 void clear_strings_list (STRING_LIST *strings);
 void free_strings_list (STRING_LIST *strings);
 void destroy_strings_list (STRING_LIST *strings);
 char *add_string (const char *string, STRING_LIST *strings_list);
-void merge_strings (STRING_LIST *strings_list, STRING_LIST *merged_strings);
-void copy_strings (STRING_LIST *dest_list, STRING_LIST *source_list);
-size_t find_string (STRING_LIST *strings_list, const char *string);
+void merge_strings (STRING_LIST *strings_list,
+                    const STRING_LIST *merged_strings);
+void copy_strings (STRING_LIST *dest_list, const STRING_LIST *source_list);
+size_t find_string (const STRING_LIST *strings_list, const char *string);
 
 void destroy_accent_stack (ACCENTS_STACK *accent_stack);
 
@@ -205,8 +228,10 @@ void set_output_encoding (OPTIONS *customization_information,
                           DOCUMENT *document);
 OPTION *get_command_option (OPTIONS *options, enum command_id cmd);
 
-void add_include_directory (char *filename, STRING_LIST *include_dirs_list);
-char *locate_include_file (char *filename, STRING_LIST *include_dirs_list);
+void add_include_directory (const char *filename,
+                            STRING_LIST *include_dirs_list);
+char *locate_include_file (const char *filename,
+                           const STRING_LIST *include_dirs_list);
 
 ENCODING_CONVERSION *get_encoding_conversion (const char *encoding,
                                     ENCODING_CONVERSION_LIST *encodings_list);
@@ -221,7 +246,7 @@ char *encode_string (char *input_string, const char *encoding, int *status,
 EXPANDED_FORMAT *new_expanded_formats (void);
 void clear_expanded_formats (EXPANDED_FORMAT *formats);
 void add_expanded_format (EXPANDED_FORMAT *formats, const char *format);
-int format_expanded_p (EXPANDED_FORMAT *formats, const char *format);
+int format_expanded_p (const EXPANDED_FORMAT *formats, const char *format);
 int expanded_formats_number (void);
 void set_expanded_formats_from_options (EXPANDED_FORMAT *formats,
                                         const OPTIONS *options);
@@ -248,5 +273,11 @@ void html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons);
 void initialize_option (OPTION *option, enum global_option_type type);
 void clear_option (OPTION *option);
 void free_option (OPTION *option);
+
+TARGET_FILENAME *new_target_filename (void);
+TARGET_CONTENTS_FILENAME *new_target_contents_filename (void);
+FILE_NAME_PATH *new_file_name_path (void);
+TARGET_DIRECTORY_FILENAME *new_target_directory_filename (void);
+FORMATTED_BUTTON_INFO *new_formatted_button_info (void);
 
 #endif

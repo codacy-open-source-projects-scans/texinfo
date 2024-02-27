@@ -40,6 +40,7 @@
 #include "convert_to_texinfo.h"
 #include "output_unit.h"
 #include "command_stack.h"
+/* also for perl_only_* wrappers */
 #include "build_perl_info.h"
 /* for NAMED_STRING_ELEMENT_LIST */
 #include "translations.h"
@@ -48,19 +49,12 @@
 
 #define LOCALEDIR DATADIR "/locale"
 
-  /* NOTE: Do not call 'malloc' or 'free' in any function called in this file.
-     Since this file (build_html_perl_state.c) includes the Perl headers,
-     we get the Perl redefinitions, which we do not want, as we don't use
-     them throughout the rest of the program. */
-
-  /* Can't use asprintf here, because it might come from Gnulib, and
-     will then use malloc that is different from Perl's malloc, whereas
-     free below is redirected to Perl's implementation.  This could
-     cause crashes if the two malloc/free implementations were different.  */
+ /* See the NOTE in build_perl_info.c on use of functions related to
+    memory allocation */
 
 #define STORE(key, sv) hv_store (html_target_hv, key, strlen (key), sv, 0)
 HV *
-build_html_target (HTML_TARGET *html_target)
+build_html_target (const HTML_TARGET *html_target)
 {
   HV *html_target_hv;
   SV *target_sv;
@@ -92,7 +86,7 @@ build_html_target (HTML_TARGET *html_target)
 }
 
 SV *
-build_html_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info)
+build_html_files_source_info (const FILE_SOURCE_INFO_LIST *files_source_info)
 {
   int i;
   HV *hv;
@@ -106,10 +100,10 @@ build_html_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info)
 #define STORE(key, sv) hv_store (file_source_info_hv, key, strlen (key), sv, 0)
       for (i = 0; i < files_source_info->number; i++)
         {
-          FILE_SOURCE_INFO * file_source_info = &files_source_info->list[i];
+          const FILE_SOURCE_INFO * file_source_info = &files_source_info->list[i];
           HV *file_source_info_hv;
           SV *file_source_info_sv;
-          char *filename = file_source_info->filename;
+          const char *filename = file_source_info->filename;
           SV *filename_sv = newSVpv_utf8 (filename, 0);
 
           file_source_info_hv = newHV ();
@@ -137,9 +131,9 @@ build_html_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info)
   return newRV_noinc ((SV *) hv);
 }
 
-HV *
+static HV *
 build_html_global_units_directions (const OUTPUT_UNIT **global_units_directions,
-                       SPECIAL_UNIT_DIRECTION *special_units_direction_name)
+                     const SPECIAL_UNIT_DIRECTION *special_units_direction_name)
 {
   int i;
   HV *hv;
@@ -155,19 +149,21 @@ build_html_global_units_directions (const OUTPUT_UNIT **global_units_directions,
     {
       if (global_units_directions[i])
         {
-          char *direction_name = html_global_unit_direction_names[i];
+          const char *direction_name = html_global_unit_direction_names[i];
           hv_store (hv, direction_name, strlen (direction_name),
                     newRV_inc ((SV *) global_units_directions[i]->hv), 0);
         }
     }
 
-  /* html_prepare_units_directions_files is allocated because
-     html_prepare_units_directions_files was called before */
+  /* special_units_direction_name is allocated because
+     html_prepare_output_units_global_targets or
+     html_prepare_units_directions_files was called before
+     calling pass_html_global_units_directions */
   for (i = 0; special_units_direction_name[i].output_unit; i++)
     {
-      SPECIAL_UNIT_DIRECTION *special_unit_direction
+      const SPECIAL_UNIT_DIRECTION *special_unit_direction
        = &special_units_direction_name[i];
-      char *direction_name = special_unit_direction->direction;
+      const char *direction_name = special_unit_direction->direction;
       const OUTPUT_UNIT *output_unit = special_unit_direction->output_unit;
       hv_store (hv, direction_name, strlen (direction_name),
                   newRV_inc ((SV *) output_unit->hv), 0);
@@ -179,7 +175,7 @@ build_html_global_units_directions (const OUTPUT_UNIT **global_units_directions,
 void
 pass_html_global_units_directions (SV *converter_sv,
                        const OUTPUT_UNIT **global_units_directions,
-                       SPECIAL_UNIT_DIRECTION *special_units_direction_name)
+                   const SPECIAL_UNIT_DIRECTION *special_units_direction_name)
 {
   HV *global_units_directions_hv;
   SV *global_units_directions_sv;
@@ -284,11 +280,10 @@ build_html_translated_names (HV *hv, CONVERTER *converter)
       const char *type_name = special_unit_info_type_names[string_type];
       char *key;
       HV *special_unit_hv = newHV ();
-      /* TODO do not call xasprintf/free?  See NOTE at the beginning */
-      xasprintf (&key, "%s_tree", type_name);
+      perl_only_xasprintf (&key, "%s_tree", type_name);
       hv_store (special_unit_info_hv, key, strlen (key),
                 newRV_noinc ((SV *) special_unit_hv), 0);
-      free (key);
+      perl_only_free (key);
     }
 
   /* pass all the information for each context for translated commands */
@@ -317,7 +312,7 @@ build_html_translated_names (HV *hv, CONVERTER *converter)
               HTML_COMMAND_CONVERSION *no_arg_cmd_context
                   = &conversion_contexts[k];
 
-              char *context_name = html_conversion_context_type_names[k];
+              const char *context_name = html_conversion_context_type_names[k];
               SV **context_sv = hv_fetch (no_arg_command_hv,
                                  context_name, strlen (context_name), 0);
               HV *context_hv = (HV *) SvRV (*context_sv);
@@ -550,19 +545,5 @@ build_simpletitle (CONVERTER *converter, HV *converter_hv)
   hv_store (converter_hv, "simpletitle_command_name",
             strlen ("simpletitle_command_name"),
             newSVpv (builtin_command_name (converter->simpletitle_cmd), 0), 0);
-}
-
-void
-build_tree_to_build (ELEMENT_LIST *tree_to_build)
-{
-  if (tree_to_build->number > 0)
-    {
-      int i;
-      for (i = 0; i < tree_to_build->number; i++)
-        {
-          build_texinfo_tree (tree_to_build->list[i], 1);
-        }
-      tree_to_build->number = 0;
-    }
 }
 

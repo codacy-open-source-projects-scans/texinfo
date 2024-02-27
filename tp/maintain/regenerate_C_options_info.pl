@@ -266,14 +266,12 @@ print GET '
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
-/* Avoid warnings about Perl headers redefining symbols that gnulib
-   redefined already. */
-#if defined _WIN32 && !defined __CYGWIN__
-  #undef free
-#endif
 #include "XSUB.h"
 
 #undef context
+
+ /* See the NOTE in build_perl_info.c on use of functions related to
+    memory allocation */
 
 ';
 
@@ -288,7 +286,7 @@ print GET '#include "get_perl_info.h"'."\n";
 print GET '#include "build_perl_info.h"'."\n\n";
 
 print GET 'void
-get_sv_option (OPTIONS *options, const char *key, SV *value, int force, CONVERTER *converter)
+get_sv_option (OPTIONS *options, const char *key, SV *value, int force, const CONVERTER *converter)
 {
   dTHX;
 
@@ -311,9 +309,9 @@ foreach my $category (sort(keys(%option_categories))) {
       # TODO the generated file includes perl headers.  The NOTE in
       # build_perl_info.c about not using malloc/free should be relevant for
       # the generated file.
-      print GET "      free (options->$option.string);
+      print GET "      non_perl_free (options->$option.string);
       if (SvOK (value))
-        options->$option.string = strdup (SvPV${SV_function_type}_nolen (value));
+        options->$option.string = non_perl_strdup (SvPV${SV_function_type}_nolen (value));
       else
         options->$option.string = 0;
     }\n";

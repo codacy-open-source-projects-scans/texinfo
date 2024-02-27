@@ -472,6 +472,7 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
   int i;
   ELEMENT *argument = new_element (ET_NONE);
   ELEMENT *argument_content = new_element (ET_NONE);
+  counter_reset (&count_toplevel_braces);
   counter_push (&count_toplevel_braces, argument_content, 0);
 
   add_to_element_args (current, argument);
@@ -1026,7 +1027,7 @@ wipe_values (void)
 }
 
 void
-store_value (char *name, char *value)
+store_value (const char *name, const char *value)
 {
   int i;
   VALUE *v = 0;

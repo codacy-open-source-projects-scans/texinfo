@@ -42,15 +42,16 @@ ELEMENT *cdt_tree (const char * string, CONVERTER *self,
 ELEMENT *translated_command_tree (CONVERTER *self, enum command_id cmd);
 void destroy_translated_commands (TRANSLATED_COMMAND *translated_commands);
 
-char *encoded_input_file_name (OPTIONS *options,
-                         GLOBAL_INFO *global_information,
-                         char *file_name, char *input_file_encoding,
+char *encoded_input_file_name (const OPTIONS *options,
+                         const GLOBAL_INFO *global_information,
+                         char *file_name, const char *input_file_encoding,
                          char **file_name_encoding,
                          const SOURCE_INFO *source_info);
-char *encoded_output_file_name (OPTIONS *options,
-                                GLOBAL_INFO *global_information,
-                                char *file_name, char **file_name_encoding,
-                                SOURCE_INFO *source_info);
+char *encoded_output_file_name (const OPTIONS *options,
+                                const GLOBAL_INFO *global_information,
+                                char *file_name,
+                                char **file_name_encoding,
+                                const SOURCE_INFO *source_info);
 
 FILE *output_files_open_out (OUTPUT_FILES_INFORMATION *self,
                              const char *file_path,
@@ -60,8 +61,8 @@ void output_files_register_closed (OUTPUT_FILES_INFORMATION *self,
 void free_output_files_information (OUTPUT_FILES_INFORMATION *self);
 void clear_output_files_information (OUTPUT_FILES_INFORMATION *self);
 
-ELEMENT *find_root_command_next_heading_command (const ELEMENT *root,
-                                  EXPANDED_FORMAT *formats,
+const ELEMENT *find_root_command_next_heading_command (const ELEMENT *root,
+                                  const EXPANDED_FORMAT *formats,
                                   int do_not_ignore_contents,
                                   int do_not_ignore_index_entries);
 

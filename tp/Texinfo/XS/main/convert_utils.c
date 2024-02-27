@@ -91,8 +91,9 @@ expand_today (OPTIONS *options)
 
   year = time_tm->tm_year + 1900;
 
-  month_tree = gdt_tree (convert_utils_month_name[time_tm->tm_mon], 0, options,
-                         options->documentlanguage.string, 0, 0);
+  month_tree = gdt_tree (convert_utils_month_name[time_tm->tm_mon], 0,
+                         options->documentlanguage.string, 0,
+                         options->DEBUG.integer, 0);
   day_element = new_element (ET_NONE);
   year_element = new_element (ET_NONE);
   text_printf (&day_element->text, "%d", time_tm->tm_mday);
@@ -103,8 +104,9 @@ expand_today (OPTIONS *options)
   add_element_to_named_string_element_list (substrings, "day", day_element);
   add_element_to_named_string_element_list (substrings, "year", year_element);
 
-  result = gdt_tree ("{month} {day}, {year}", 0, options,
-                     options->documentlanguage.string, substrings, 0);
+  result = gdt_tree ("{month} {day}, {year}", 0,
+                     options->documentlanguage.string, substrings,
+                     options->DEBUG.integer, 0);
   destroy_named_string_element_list (substrings);
 
   return result;
@@ -147,7 +149,10 @@ find_innermost_accent_contents (const ELEMENT *element)
           if (!(content_data_cmd && (content_data_cmd == CM_c
                                      || content_data_cmd == CM_comment)))
             {
-              if (content_data_cmd && content_flags & CF_accent)
+         /* if accent is tieaccent, keep everything and do not try to
+            nest more */
+              if (current->cmd != CM_tieaccent
+                  && content_data_cmd && content_flags & CF_accent)
                 {
                   current = content;
                   if (argument)
@@ -211,13 +216,13 @@ add_heading_number (OPTIONS *options, const ELEMENT *current, char *text,
                 {
                   numbered_heading
                    = gdt_string ("Appendix {number} {section_title}",
-                                 options, options->documentlanguage.string,
+                                 options->documentlanguage.string,
                                  substrings, 0);
                 }
             }
           if (!numbered_heading)
             numbered_heading
-              = gdt_string ("{number} {section_title}", options,
+              = gdt_string ("{number} {section_title}",
                             options->documentlanguage.string, substrings, 0);
 
           destroy_named_string_element_list (substrings);
@@ -265,9 +270,9 @@ convert_to_utf8_verbatiminclude (char *s, ENCODING_CONVERSION *conversion,
   The caller should free the return value and FILE_NAME_ENCODING.
 */
 char *
-encoded_input_file_name (OPTIONS *options,
-                         GLOBAL_INFO *global_information,
-                         char *file_name, char *input_file_encoding,
+encoded_input_file_name (const OPTIONS *options,
+                         const GLOBAL_INFO *global_information,
+                         char *file_name, const char *input_file_encoding,
                          char **file_name_encoding,
                          const SOURCE_INFO *source_info)
 {
@@ -297,13 +302,16 @@ encoded_input_file_name (OPTIONS *options,
   return result;
 }
 
+/* NOTE it would have been better to have FILE_NAME const, but iconv
+   argument may not be const, so no const here either */
 char *
-encoded_output_file_name (OPTIONS *options, GLOBAL_INFO *global_information,
+encoded_output_file_name (const OPTIONS *options,
+                          const GLOBAL_INFO *global_information,
                           char *file_name, char **file_name_encoding,
-                          SOURCE_INFO *source_info)
+                          const SOURCE_INFO *source_info)
 {
   char *result;
-  char *encoding = 0;
+  const char *encoding = 0;
   int status;
 
   if (options && options->OUTPUT_FILE_NAME_ENCODING.string)
@@ -569,15 +577,16 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
           in descriptions of object-oriented programming methods or operations.
            */
 
-          result = gdt_tree ("{category} on @code{{class}}", 0, options,
-                             options->documentlanguage.string, substrings, 0);
+          result = gdt_tree ("{category} on @code{{class}}", 0,
+                             options->documentlanguage.string, substrings,
+                             options->DEBUG.integer, 0);
         }
       else
         {
           const char *documentlanguage
                 = lookup_extra_string (current, "documentlanguage");
-          result = gdt_tree ("{category} on @code{{class}}", 0, 0,
-                             documentlanguage, substrings, 0);
+          result = gdt_tree ("{category} on @code{{class}}", 0,
+                             documentlanguage, substrings, 0, 0);
           /*
           result = new_element (ET_NONE);
           ELEMENT *text_element = new_element (ET_NONE);
@@ -607,15 +616,16 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
           in descriptions of object-oriented programming methods or operations.
            */
 
-          result = gdt_tree ("{category} of @code{{class}}", 0, options,
-                             options->documentlanguage.string, substrings, 0);
+          result = gdt_tree ("{category} of @code{{class}}", 0,
+                             options->documentlanguage.string, substrings,
+                             options->DEBUG.integer, 0);
         }
       else
         {
           const char *documentlanguage
                 = lookup_extra_string (current, "documentlanguage");
-          result = gdt_tree ("{category} of @code{{class}}", 0, 0,
-                             documentlanguage, substrings, 0);
+          result = gdt_tree ("{category} of @code{{class}}", 0,
+                             documentlanguage, substrings, 0, 0);
           /*
           result = new_element (ET_NONE);
           ELEMENT *text_element = new_element (ET_NONE);
@@ -636,9 +646,10 @@ cdt_tree (const char * string, CONVERTER *self,
           const char *translation_context)
 {
   const char *lang = self->conf->documentlanguage.string;
+  int debug_level = self->conf->DEBUG.integer;
 
-  return gdt_tree (string, self->document, self->conf, lang,
-                   replaced_substrings, translation_context);
+  return gdt_tree (string, self->document, lang, replaced_substrings,
+                   debug_level, translation_context);
 }
 
 ELEMENT *
@@ -831,9 +842,9 @@ output_files_register_closed (OUTPUT_FILES_INFORMATION *self,
   fprintf (stderr, "BUG: %s not opened\n", file_path);
 }
 
-ELEMENT *
+const ELEMENT *
 find_root_command_next_heading_command (const ELEMENT *root,
-                                  EXPANDED_FORMAT *formats,
+                                  const EXPANDED_FORMAT *formats,
                                   int do_not_ignore_contents,
                                   int do_not_ignore_index_entries)
 {
@@ -844,7 +855,7 @@ find_root_command_next_heading_command (const ELEMENT *root,
 
   for (i = 0; i < root->contents.number; i++)
     {
-      ELEMENT *content = root->contents.list[i];
+      const ELEMENT *content = root->contents.list[i];
       enum command_id data_cmd = element_builtin_data_cmd (content);
 
       if (data_cmd)
@@ -905,7 +916,7 @@ find_root_command_next_heading_command (const ELEMENT *root,
         return 0;
       if (content->text.end > 0)
         {
-          char *text = element_text (content);
+          const char *text = element_text (content);
           /* only whitespace characters */
           if (! text[strspn (text, whitespace_chars)] == '\0')
             return 0;

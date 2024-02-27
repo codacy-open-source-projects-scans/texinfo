@@ -22,7 +22,6 @@
 #include <stddef.h>
 #include <inttypes.h>
 #include <unistr.h>
-#include <uniconv.h>
 #include <unictype.h>
 
 #include "command_ids.h"
@@ -366,10 +365,10 @@ float_name_caption (CONVERTER *self, const ELEMENT *float_e)
   NAMED_STRING_ELEMENT_LIST *replaced_substrings
      = new_named_string_element_list ();
 
-  char *float_type = lookup_extra_string (float_e, "float_type");
-  char *float_number = lookup_extra_string (float_e, "float_number");
+  const char *float_type = lookup_extra_string (float_e, "float_type");
+  const char *float_number = lookup_extra_string (float_e, "float_number");
 
-  ELEMENT *caption_element = lookup_extra_element (float_e, "caption");
+  const ELEMENT *caption_element = lookup_extra_element (float_e, "caption");
   if (!caption_element)
     caption_element = lookup_extra_element (float_e, "shortcaption");
 
@@ -546,7 +545,7 @@ table_item_content_tree (CONVERTER *self, const ELEMENT *element)
 
 char *
 convert_accents (CONVERTER *self, const ELEMENT *accent,
- char *(*convert_tree)(CONVERTER *self, const ELEMENT *tree, char *explanation),
+ char *(*convert_tree)(CONVERTER *self, const ELEMENT *tree, const char *explanation),
  char *(*format_accent)(CONVERTER *self, const char *text, const ELEMENT *element,
                         int set_case),
   int output_encoded_characters,
@@ -681,7 +680,7 @@ get_converter_indices_sorted_by_letter (CONVERTER *self)
 
 /* to be freed by caller */
 char *
-top_node_filename (CONVERTER *self, char *document_name)
+top_node_filename (const CONVERTER *self, const char *document_name)
 {
   TEXT top_node_filename;
 
@@ -712,9 +711,9 @@ initialize_output_units_files (CONVERTER *self)
 }
 
 static size_t
-find_output_unit_file (CONVERTER *self, char *filename, int *status)
+find_output_unit_file (const CONVERTER *self, const char *filename, int *status)
 {
-  FILE_NAME_PATH_COUNTER_LIST *output_unit_files
+  const FILE_NAME_PATH_COUNTER_LIST *output_unit_files
     = &self->output_unit_files;
   int i;
   *status = 0;
@@ -731,8 +730,8 @@ find_output_unit_file (CONVERTER *self, char *filename, int *status)
 }
 
 static size_t
-add_output_units_file (CONVERTER *self, char *filename,
-                       char *normalized_filename)
+add_output_units_file (CONVERTER *self, const char *filename,
+                       const char *normalized_filename)
 {
   size_t file_index;
   FILE_NAME_PATH_COUNTER *new_output_unit_file;
@@ -766,7 +765,7 @@ add_output_units_file (CONVERTER *self, char *filename,
   filename with the same name insensitive to the case.
  */
 static size_t
-register_normalize_case_filename (CONVERTER *self, char *filename)
+register_normalize_case_filename (CONVERTER *self, const char *filename)
 {
   size_t output_unit_file_idx;
   if (self->conf->CASE_INSENSITIVE_FILENAMES.integer > 0)
@@ -816,7 +815,7 @@ register_normalize_case_filename (CONVERTER *self, char *filename)
 
 size_t
 set_output_unit_file (CONVERTER *self, OUTPUT_UNIT *output_unit,
-                      char *filename, int set_counter)
+                      const char *filename, int set_counter)
 {
   size_t output_unit_file_idx
      = register_normalize_case_filename (self, filename);
@@ -829,27 +828,25 @@ set_output_unit_file (CONVERTER *self, OUTPUT_UNIT *output_unit,
 }
 
 void
-set_file_path (CONVERTER *self, char *filename, char *filepath,
-               char *destination_directory)
+set_file_path (CONVERTER *self, const char *filename, const char *filepath,
+               const char *destination_directory)
 {
   size_t output_unit_file_idx
       = register_normalize_case_filename (self, filename);
   FILE_NAME_PATH_COUNTER *output_unit_file
     = &self->output_unit_files.list[output_unit_file_idx];
   char *filepath_str;
-  int free_filepath = 0;
 
   if (!filepath)
     if (destination_directory && strlen (destination_directory))
       {
         xasprintf (&filepath_str, "%s/%s", destination_directory,
                                   output_unit_file->filename);
-        free_filepath = 1;
       }
     else
-      filepath_str = output_unit_file->filename;
+      filepath_str = strdup (output_unit_file->filename);
   else
-    filepath_str = filepath;
+    filepath_str = strdup (filepath);
 
   if (output_unit_file->filepath)
     {
@@ -858,6 +855,7 @@ set_file_path (CONVERTER *self, char *filename, char *filepath,
           if (self->conf->DEBUG.integer > 0)
             fprintf (stderr, "set_file_path: filepath set: %s\n",
                              filepath_str);
+          free (filepath_str);
         }
       else
         {
@@ -865,13 +863,11 @@ set_file_path (CONVERTER *self, char *filename, char *filepath,
             fprintf (stderr, "set_file_path: filepath reset: %s, %s\n",
                              output_unit_file->filepath, filepath_str);
           free (output_unit_file->filepath);
-          output_unit_file->filepath = strdup (filepath_str);
+          output_unit_file->filepath = filepath_str;
         }
     }
   else
-    output_unit_file->filepath = strdup (filepath_str);
-  if (free_filepath)
-    free (filepath_str);
+    output_unit_file->filepath = filepath_str;
 }
 
 static void
@@ -1036,8 +1032,7 @@ next_for_tieaccent (const char *text, const char **next)
           if (first_char_len < 0)
             fatal ("u8_uctomb returns negative value");
           first_char_u8[first_char_len] = 0;
-          first_char_text = u8_strconv_to_encoding (first_char_u8, "UTF-8",
-                                                    iconveh_question_mark);
+          first_char_text = string_from_utf8 (first_char_u8);
           free (first_char_u8);
           p = text + strlen (first_char_text);
           *next = p;

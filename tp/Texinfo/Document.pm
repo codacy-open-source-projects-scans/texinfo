@@ -93,6 +93,7 @@ sub register
   my $global_commands_information = shift;
   my $identifier_target = shift;
   my $labels_list = shift;
+  my $registrar = shift;
 
   my $document = {
     'tree' => $tree,
@@ -103,6 +104,7 @@ sub register
     'global_info' => $global_information,
     'identifiers_target' => $identifier_target,
     'labels_list' => $labels_list,
+    'registrar' => $registrar,
   };
 
   bless $document;
@@ -210,19 +212,18 @@ sub merged_indices($)
 # In general, it is not needed to call that function directly,
 # as it is called by Texinfo::Indices::sort_indices_by_*.  It may
 # be called in advance, however, if errors need to be collected early.
-sub indices_sort_strings($$$;$)
+sub indices_sort_strings($$;$)
 {
   my $document = shift;
-  my $registrar = shift;
   my $customization_information = shift;
   my $prefer_reference_element = shift;
 
   if (!$document->{'index_entries_sort_strings'}) {
     my $indices_sort_strings
-      = Texinfo::Indices::setup_index_entries_sort_strings($registrar,
-             $customization_information, $document->merged_indices(),
-                          $document->indices_information(),
-                           $prefer_reference_element);
+      = Texinfo::Indices::setup_index_entries_sort_strings
+             ($document->{'registrar'}, $customization_information,
+              $document->merged_indices(), $document->indices_information(),
+              $prefer_reference_element);
     $document->{'index_entries_sort_strings'} = $indices_sort_strings;
   }
 
@@ -230,10 +231,9 @@ sub indices_sort_strings($$$;$)
 }
 
 # call Texinfo::Indices::sort_indices_by_letter and cache the result
-sub sorted_indices_by_letter($$$$$)
+sub sorted_indices_by_letter($$$$)
 {
   my $document = shift;
-  my $registrar = shift;
   my $customization_information = shift;
   my $use_unicode_collation = shift;
   my $locale_lang = shift;
@@ -255,18 +255,17 @@ sub sorted_indices_by_letter($$$$$)
   if (!$document->{'sorted_indices_by_letter'}->{$lang_key}) {
     $document->merged_indices();
     $document->{'sorted_indices_by_letter'}->{$lang_key}
-      = Texinfo::Indices::sort_indices_by_letter($document,
-                          $registrar, $customization_information,
-                           $use_unicode_collation, $locale_lang);
+      = Texinfo::Indices::sort_indices_by_letter
+          ($document, $document->{'registrar'}, $customization_information,
+           $use_unicode_collation, $locale_lang);
   }
   return $document->{'sorted_indices_by_letter'}->{$lang_key};
 }
 
 # call Texinfo::Indices::sort_indices_by_index and cache the result
-sub sorted_indices_by_index($$$$$)
+sub sorted_indices_by_index($$$$)
 {
   my $document = shift;
-  my $registrar = shift;
   my $customization_information = shift;
   my $use_unicode_collation = shift;
   my $locale_lang = shift;
@@ -288,9 +287,9 @@ sub sorted_indices_by_index($$$$$)
   if (!$document->{'sorted_indices_by_index'}->{$lang_key}) {
     $document->merged_indices();
     $document->{'sorted_indices_by_index'}->{$lang_key}
-      = Texinfo::Indices::sort_indices_by_index($document,
-                       $registrar, $customization_information,
-                        $use_unicode_collation, $locale_lang);
+      = Texinfo::Indices::sort_indices_by_index
+          ($document, $document->{'registrar'}, $customization_information,
+           $use_unicode_collation, $locale_lang);
   }
   return $document->{'sorted_indices_by_index'}->{$lang_key};
 }
@@ -302,12 +301,13 @@ sub document_descriptor($)
   return $self->{'document_descriptor'};
 }
 
-sub _existing_label_error($$;$$)
+sub _existing_label_error($$;$)
 {
   my $self = shift;
   my $element = shift;
-  my $registrar = shift;
   my $customization_information = shift;
+
+  my $registrar = $self->{'registrar'};
 
   if ($element->{'extra'}
       and defined($element->{'extra'}->{'normalized'})) {
@@ -329,11 +329,10 @@ sub _existing_label_error($$;$$)
   }
 }
 
-sub _add_element_to_identifiers_target($$;$$)
+sub _add_element_to_identifiers_target($$;$)
 {
   my $self = shift;
   my $element = shift;
-  my $registrar = shift;
   my $customization_information = shift;
 
   if ($element->{'extra'}
@@ -363,8 +362,7 @@ sub set_labels_identifiers_target($$$)
   $self->{'identifiers_target'} = {};
   if (defined $self->{'labels_list'}) {
     foreach my $element (@{$self->{'labels_list'}}) {
-      my $retval = _add_element_to_identifiers_target($self,
-                                         $element, $registrar,
+      my $retval = _add_element_to_identifiers_target($self, $element,
                                          $customization_information);
       if (!$retval and $element->{'extra'}
           and defined($element->{'extra'}->{'normalized'})) {
@@ -378,25 +376,22 @@ sub set_labels_identifiers_target($$$)
      = sort {$a->{'extra'}->{'normalized'} cmp $b->{'extra'}->{'normalized'}}
         @elements_with_error;
     foreach my $element (@sorted) {
-      _existing_label_error($self, $element, $registrar,
-                            $customization_information);
+      _existing_label_error($self, $element, $customization_information);
     }
   }
 }
 
 # TODO document when stabilized
-sub register_label_element($$;$$)
+sub register_label_element($$;$)
 {
   my $self = shift;
   my $element = shift;
-  my $registrar = shift;
   my $customization_information = shift;
 
-  my $retval = _add_element_to_identifiers_target($self, $element, $registrar,
+  my $retval = _add_element_to_identifiers_target($self, $element,
                                          $customization_information);
   if (!$retval) {
-    _existing_label_error($self, $element, $registrar,
-                                         $customization_information);
+    _existing_label_error($self, $element, $customization_information);
   }
   # FIXME do not push at the end but have the caller give an information
   # on the element it should be after or before in the list?
@@ -416,8 +411,6 @@ sub rebuild_document($;$)
 {
   my $document = shift;
   my $no_store = shift;
-
-  return $document;
 }
 
 # this method does nothing, but the XS override rebuilds the Perl
@@ -433,6 +426,23 @@ sub rebuild_tree($;$)
 # this method does nothing, but the XS override clears the document errors
 sub clear_document_errors($)
 {
+}
+
+sub errors($)
+{
+  my $document = shift;
+
+  my $registrar = $document->{'registrar'};
+  return if !defined($registrar);
+
+  foreach my $error (@{$document->{'errors'}}) {
+    $registrar->add_formatted_message($error);
+  }
+  @{$document->{'errors'}} = ();
+  Texinfo::Document::clear_document_errors(
+                                      $document->document_descriptor());
+
+  return $registrar->errors();
 }
 
 1;
@@ -595,7 +605,7 @@ to the same document with @-commands that refer to node, anchors or floats.
 =item $nodes_list = nodes_list($document)
 
 Returns an array reference containing the document nodes.  In general set to
-the nodes list returned by L<Texinfo::Structuring nodes_tree|Texinfo::Structuring/$nodes_list = nodes_tree($document, $registrar, $customization_information)>,
+the nodes list returned by L<Texinfo::Structuring nodes_tree|Texinfo::Structuring/$nodes_list = nodes_tree($document, $customization_information)>,
 by a call to L<register_document_nodes_list|/register_document_nodes_list ($document, $nodes_list)>.
 
 =item $sections_list = sections_list($document)
@@ -699,9 +709,9 @@ of index entry structures described in L</index_entries>.
 L<< C<Texinfo::Indices::merge_indices>|Texinfo::Indices/$merged_indices = merge_indices($indices_information) >>
 is used to merge the indices.
 
-=item $sorted_indices = $document->sorted_indices_by_index($registrar, $customization_information, $use_unicode_collation, $locale_lang)
+=item $sorted_indices = $document->sorted_indices_by_index($customization_information, $use_unicode_collation, $locale_lang)
 
-=item $sorted_indices = $document->sorted_indices_by_letter($registrar, $customization_information, $use_unicode_collation, $locale_lang)
+=item $sorted_indices = $document->sorted_indices_by_letter($customization_information, $use_unicode_collation, $locale_lang)
 X<C<sorted_indices_by_index>> X<C<sorted_indices_by_letter>>
 
 C<sorted_indices_by_letter> returns the indices sorted by index and letter,
@@ -726,8 +736,6 @@ the best to use for output.
 When simply sorting, the array of the sorted index entries is associated
 with the index name.
 
-Register errors in I<$registrar> or through I<$customization_information>.
-
 L<< C<Texinfo::Indices::sort_indices_by_index>|Texinfo::Indices/$index_entries_sorted = sort_indices_by_index($document, $registrar, $customization_information, $use_unicode_collation, $locale_lang) >>
 and L<< C<Texinfo::Indices::sort_indices_by_letter>|Texinfo::Indices/$index_entries_sorted = sort_indices_by_letter($document, $registrar, $customization_information, $use_unicode_collation, $locale_lang) >>
 are used to sort the indices, if needed.
@@ -741,7 +749,7 @@ parsers codes.
 
 =over
 
-=item $document = Texinfo::Document::register($tree, $global_information, $indices_information, $floats_information, $internal_references_information, $global_commands_information, $identifier_target, $labels_list)
+=item $document = Texinfo::Document::register($tree, $global_information, $indices_information, $floats_information, $internal_references_information, $global_commands_information, $identifier_target, $labels_list, $registrar)
 
 Setup a document. There is no reason to call this method out of parsers, as
 it is already done by the Texinfo parsers.  The arguments are gathered

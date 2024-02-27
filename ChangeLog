@@ -1,3 +1,622 @@
+2024-02-26  Patrice Dumas  <pertusus@free.fr>
+
+	Wrappers around functions to avoid mixing Perl and non-Perl
+
+	* tp/Texinfo/XS/convert/convert_html.c (initialize_cmd_list)
+	(new_htmlxref_manual_list, initialize_js_categories_list)
+	(initialize_jslicense_files, initialize_css_selector_style_list)
+	(new_directions_strings_translated_type, new_directions_strings_type)
+	(new_special_unit_formatting_references)
+	(initialize_special_unit_info_type),
+	tp/Texinfo/XS/convert/get_html_perl_info.c: add and use initialization
+	functions, and use more wrappers.
+
+2024-02-25  Patrice Dumas  <pertusus@free.fr>
+
+	Homogenize the reference to the NOTE in build_perl_info.c
+
+2024-02-25  Patrice Dumas  <pertusus@free.fr>
+
+	Add wrappers around functions to avoid mixing Perl and non-Perl
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.h,
+	tp/Texinfo/XS/main/utils.h (TARGET_CONTENTS_FILENAME, FILE_NAME_PATH)
+	(TARGET_DIRECTORY_FILENAME): move to main/utils.h.
+
+	* tp/Texinfo/XS/*/*.xs, tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_translated_names),
+	tp/Texinfo/XS/convert/call_html_perl_function.c,
+	tp/Texinfo/XS/convert/get_html_perl_info.c,
+	tp/Texinfo/XS/main/api_to_perl.c, tp/Texinfo/XS/main/build_perl_info.c
+	(perl_only_free, perl_only_malloc, perl_only_strdup)
+	(perl_only_strndup, perl_only_xvasprintf, perl_only_xasprintf),
+	tp/Texinfo/XS/main/call_perl_function.c,
+	tp/Texinfo/XS/main/get_perl_info.c, tp/Texinfo/XS/main/utils.c
+	(non_perl_free, non_perl_strdup, non_perl_strndup, new_string_list)
+	(new_target_filename, new_target_contents_filename, new_file_name_path)
+	(new_target_directory_filename, new_formatted_button_info),
+	tp/maintain/regenerate_C_options_info.pl: add and use wrappers for
+	some of free, strdup, strndup, malloc, xvasprintf and xasprintf with
+	Perl only variants defined in files including only Perl headers (no
+	gnulib headers) and non Perl variants defined in files not including
+	Perl headers.  Also add constructors to call malloc in main/utils.c.
+
+2024-02-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs, tp/Texinfo/XS/main/IndicesXS.xs,
+	tp/Texinfo/XS/main/build_perl_info.c,
+	tp/Texinfo/XS/main/call_perl_function.c,
+	tp/Texinfo/XS/main/get_perl_info.c,
+	tp/maintain/regenerate_C_options_info.pl: remove code avoiding
+	redefinition by gnulib as gnulib headers are not included.  Update
+	comments.
+
+	* tp/Texinfo/XS/Makefile.am (DocumentXS_la_L*, ConvertXS_la_LIBADD):
+	add libgnu.la and $(LTLIBICONV) $(LTLIBUNISTRING) is not there for
+	XS that are likely to use code related to those libraries.
+
+	* tp/Texinfo/XS/Makefile.am (IndicesXS_la_CPPFLAGS): remove gnulib
+	includes, they are not needed.
+
+2024-02-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/errors.c (message_list_line_formatted_message)
+	(message_list_document_formatted_message)
+	(vmessage_list_line_error, message_list_document_error_internal):
+	call strdup in message_list_line_formatted_message and
+	message_list_document_formatted_message directly when registering the
+	message, and set const on the argument.  Free the messages in
+	vmessage_list_line_error and message_list_document_error_internal
+	after registering them.  This is so directly calling
+	message_list_*_formatted_message does not require calling strdup.
+
+	Add const.
+
+2024-02-25  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Reset parsetexi counters
+
+	* tp/Texinfo/XS/parsetexi/parser.c (reset_parser_counters): New.
+	* tp/Texinfo/XS/parsetexi/api.c (reset_parser_except_conf): Call it.
+
+	There were intermittent failures in the t/03coverage_braces.t
+	definfoenclose_texinfo_commands test due to one of the counters
+	not being reset.
+
+2024-02-25  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Reset parsetexi counters
+
+	* tp/Texinfo/XS/parsetexi/counter.c (counter_reset): New function.
+	* tp/Texinfo/XS/parsetexi/macro.c: Call it on 'count_toplevel_braces'.
+
+2024-02-25  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Document.pm
+	(sorted_indices_by_letter, sorted_indices_by_index):
+	Remove "registrar" argument.
+
+2024-02-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c,
+	tp/Texinfo/XS/main/build_perl_info.c (build_tree_to_build),
+	tp/Texinfo/XS/main/call_perl_function.c
+	(call_latex_convert_to_latex_math),
+	tp/Texinfo/XS/convert/convert_html.c (convert_to_html_internal): move
+	build_tree_to_build to build_perl_info.c.  Use it in
+	call_latex_convert_to_latex_math to rebuild the tree if needed.
+	Prepare in convert_to_html_internal.
+
+	Add const.
+
+2024-02-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Utils.pm (find_innermost_accent_contents),
+	tp/Texinfo/XS/main/convert_utils.c (find_innermost_accent_contents):
+	take everything and do not nest if current accent command is
+	tieaccent.
+
+	* tp/Texinfo/XS/convert/convert_html.c (css_string_accent): call
+	text_init early and once.  Fixes in tieaccent code.
+
+	* tp/Makefile.tres, tp/t/html_tests.t (itemize_tieaccent): add test of
+	tieaccent in itemize argument.
+
+2024-02-25  Patrice Dumas  <pertusus@free.fr>
+
+	Add const.
+
+2024-02-25  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove separate error registrar arguments
+
+	* tp/Texinfo/Document.pm, tp/Texinfo/XS/main/DocumentXS.xs
+	(indices_sort_strings):
+	* tp/Texinfo/Structuring.pm,
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(check_nodes_are_referenced, set_menus_node_directions)
+	(complete_node_tree_with_menus, nodes_tree):
+	Remove separate Texinfo::Report 'registrar' arguments, and access
+	errors through 'registrar' key on Texinfo::Document arguments.
+
+2024-02-25  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove separate error registrar argument
+
+	* tp/Texinfo/Structuring.pm (warn_non_empty_parts),
+	* tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs,
+	(warn_non_empty_parts):
+	Remove separate Texinfo::Report 'registrar' argument, and access
+	errors through 'registrar' key on Texinfo::Document argument.
+
+2024-02-25  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove separate error registrar argument
+
+	* tp/Texinfo/Structuring.pm (associate_internal_references),
+	* tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(associate_internal_references):
+	Remove separate Texinfo::Report 'registrar' argument, and access
+	errors through 'registrar' key on Texinfo::Document argument.
+
+2024-02-25  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove separate error registrar argument
+
+	* tp/Texinfo/Transformations.pm
+	(insert_nodes_for_sectioning_commands, _new_node),
+	* tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(insert_nodes_for_sectioning_commands),
+	* tp/Texinfo/Document.pm (_existing_label_error)
+	(_add_element_to_identifiers_target, register_label_element):
+	Remove "registrar" argument and access errors through 'registrar'
+	key on Texinfo::Document argument.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	Add const.  Replace some int by size_t.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (add_source_mark): correct used
+	sizeof.  Allocate space one by one as more than one source mark in
+	list is uncommon.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (set_file_source_info)
+	(html_destroy_files_source_info, html_set_pages_files),
+	tp/Texinfo/XS/main/utils.h (FILE_SOURCE_INFO): free filepath coming
+	from user-defined file_id_setting unit_file_name function.
+	Copy filepath in FILE_SOURCE_INFO.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (test_files),
+	tp/t/init/set_unit_file_name_filepath.pm, tp/Makefile.tres,
+	tp/t/html_tests.t (set_unit_file_name_filepath): add test of
+	unit_file_name user-defined file setting filepath.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	Add const.
+
+2024-02-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Reference Texinfo::Report in Texinfo::Document object.
+
+	* tp/Texinfo/Document.pm (register): Take an extra argument, a
+	Texinfo::Report reference, and keep it in the 'registrar' value.
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm: (_get_parser_info):
+	Save reference to Texinfo::Document object in 'registrar' .
+	* tp/Texinfo/ParserNonXS.pm (_parse_texi): Update call to "register".
+	* tp/Texinfo/XS/main/build_perl_info.c (rebuild_document):
+	Do not clear 'registrar' key on hash.
+
+	* tp/Texinfo/Document.pm (errors):
+	New function.  Return errors, including any errors in
+	the 'errors' array.  Wipe 'errors' array after adding the errors
+	to the Texinfo::Report object to allow calling multiple times.
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm: (_get_parser_info):
+	Wipe 'errors' array after propagating to Texinfo::Report.
+
+	* tp/texi2any.pl (handle_document_errors, handle_errors)
+	(_handle_errors): Add new function handle_document_errors to
+	get errors from Texinfo::Document.
+	* tp/t/test_parser_registrar.t,
+	* tp/t/test_utils.pl: Call Texinfo::Document::errors instead
+	of Texinfo::Report::errors.
+
+	* tp/texi2any.pl, tp/t/test_utils.pl [XS structuring]:
+	Eliminate loop copying errors with
+	Texinfo::Report::add_formatted_message, as this is dealt with in
+	Texinfo::Document::errors instead.
+
+2024-02-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XSLoader.pm (init): Remove $warning_message and
+	$fatal_message arguments.
+
+2024-02-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Parser.pm: Always call Texinfo::XSLoader::init with
+	"Texinfo::Parser" as the first argument.  This is needed to call
+	the import function loaded from Texinfo/ParserNonXS.pm.  Undef
+	the "Parsetexi" argument if TEXINFO_XS_PARSER is 0.
+	* tp/Texinfo/XSLoader.pm (init): Check if argument giving the name
+	of the Libtool file is undefined.
+
+	Running with TEXINFO_XS_PARSER=0 was broken.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/input.c (input_push_text): call strdup in
+	input_push_text for the value_flag instead of having it called by the
+	caller.  Make value_flag const.
+
+	* tp/Texinfo/XS/parsetexi/input.c (input_push_file): add const.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/input.c (input_push_file): use save_string
+	if needed on input filename to store the path in input_file_path.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	Add const.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/extra.c (add_extra_contents): replace the input
+	list argument by no_lookup.  If not set, first check that the array
+	does not exist before creating it.  Update callers.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/extra.c (add_extra_directions): check if the
+	extra directions already exist and create them only if they do not
+	exist.  Update callers.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/extra.c (add_extra_directions): remove input
+	element list argument, it is never set.  Update callers.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c: remove now unused
+	element_set_empty_contents.
+
+2024-02-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/extra.c (add_extra_directions)
+	(lookup_extra_directions), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_associated_info, associate_info_references),
+	tp/Texinfo/XS/main/tree.c (destroy_associated_info)
+	(list_set_empty_contents): use ELEMENT_LIST for extra_directions.
+	Update callers.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	Add const.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/extra.c (add_extra_contents)
+	(lookup_extra_contents): remove create argument of
+	lookup_extra_contents.  If value is 0, create a list in
+	add_extra_contents.  Return the list from add_extra_contents.
+	Update callers.
+
+	* tp/Texinfo/XS/main/extra.c (add_extra_directions)
+	(lookup_extra_directions, lookup_extra_element): remove create
+	argument of lookup_extra_directions.  If value is 0, create an
+	element in add_extra_directions.  Do not accept extra_directions as a
+	possible type for lookup_extra_element.  Update callers and replace
+	calls to lookup_extra_element for directions by calls to
+	lookup_extra_directions.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c: replace G_ARRAY by
+	G_LIST and use ppport.h which should provide compatibility.  ppport.h
+	do not proposes to include ppport.h, but it is likely that it is
+	needed.
+
+	* README-hacking: only propose to check the changes proposed by
+	ppport.h, as it may be wrong.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	Remove/add ppport.h includes based on perl ppport.h output
+
+	* README-hacking: add instructions on calling ppport.h.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	update ppport.h
+
+	* README-hacking: add instructions on updating tp/Texinfo/XS/ppport.h.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	remove duplicate ppport.h file
+
+2024-02-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Stop calling hv_fetch with null argument
+
+	* tp/texi2any.pl: Avoid calling Texinfo::Document::remove_document
+	with undef argument.
+
+	* tp/Texinfo/XS/main/get_perl_info.c (get_document_or_warn):
+	Check if hash obtained from argument is null.
+
+	This is the case in test_scripts/formatting_info_extension_warning.sh.
+
+2024-02-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/t/test_parse_texi_line.t: invert order of Test::More::is test
+	to put expected result second, not first.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_indices.c: add const.
+
+	Remove TODOs.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_indices.c
+	(INDEX_COLLATOR, setup_collator, destroy_indices_sortable_entries):
+	remove INDEX_COLLATOR language field.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/errors.c  (message_list_document_error)
+	(message_list_document_warn): add continuation argument.  Update
+	callers.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(prepare_index_entries_targets): remove test of index having entries
+	as indices in sorted_index_names always have entries.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_get_shared_conversion_state): check if index_nr is not 0.
+
+	* tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/convert/get_html_perl_info.c,
+	tp/Texinfo/XS/main/converter_types.h (SORTED_INDEX_NAMES),
+	tp/Texinfo/XS/main/get_perl_info.c: add static and const.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/node_name_normalization.c
+	(convert_to_normalized_internal): change order of condition in if,
+	change comments.
+
+2024-02-23  Patrice Dumas  <pertusus@free.fr>
+
+	* /tp/Texinfo/XS/convert/convert_html.c
+	(prepare_index_entries_targets, html_initialize_output_state),
+	tp/Texinfo/XS/main/converter_types.h (SORTED_INDEX_NAMES),
+	tp/Texinfo/XS/main/get_perl_info.c
+	(find_sorted_index_names_index_entry_extra_index_entry_sv),
+	tp/Texinfo/XS/main/utils.c (index_number_index_by_name): keep only
+	indices with entries in sorted_index_names.  Have SORTED_INDEX_NAMES
+	hold a list of INDEX pointers.  Remove INDEX_NUMBER.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/unicode.c (string_from_utf8): cast to char *
+	before using strdup.
+
+	* tp/Texinfo/XS/main/unicode.c (utf8_from_string, string_from_utf8):
+	change comment to avoid compiler warning.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/targets.c (existing_label_error)
+	(register_label_element),
+	tp/Texinfo/XS/structuring_transfo/transformations.c (new_node)
+	(insert_nodes_for_sectioning_commands): use message_list_* functions
+	in existing_label_error.  Pass error_messages to existing_label_error
+	through new_node and register_label_element.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_texi), tp/Texinfo/Translations.pm
+	(complete_indices), tp/Texinfo/XS/parsetexi/indices.c
+	(complete_indices), tp/Texinfo/XS/parsetexi/parser.c (parse_texi):
+	pass debug_level as complete_indices argument.  Set debug_level in C
+	for complete_indices based on debug_output.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/translations.c (gdt, gdt_tree, pgdt_tree)
+	(gdt_string), tp/Texinfo/XS/main/DocumentXS.xs (gdt): remove options
+	argument, pass debug_level as argument.  Update callers.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Translations.pm (gdt, gdt_string): pass debug_level
+	as an argument, change argument order, use customization_information
+	as translate_string_method first argument only.  Update callers.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	Update po files.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_line_command_args): use the same
+	messages as in C for definfoenclose related messages.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	Update po files.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Utils.pm (@month_name): use Texinfo::Common::gdt
+	to mark strings at the same time as filling @month_name.
+
+	Update/change/remove some FIXME.
+
+2024-02-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Utils.pm (expand_today): use cdt with converter.
+
+2024-02-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: Update which gnulib modules now depend on gperf.
+
+2024-02-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (set_output_units_files),
+	tp/Texinfo/Convert/Plaintext.pm (output): move output implementation
+	out of Converter.pm to Plaintext.pm. Rename _set_output_units_files as
+	set_output_units_files.
+
+	* tp/Texinfo/Convert/Plaintext.pm (output): set
+	$self->{'encoding_disabled'} if not outputting to a file, before any
+	conversion is done.
+
+	* tp/Texinfo/Convert/Plaintext.pm: move code around.
+
+2024-02-21  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl (_fix_texinfo_tree)
+	(_parsed_manual_tree): update Texinfo::Document::rebuild_document
+	call.
+
+2024-02-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (output), tp/Texinfo/Convert/HTML.pm
+	(_internal_command_href, _html_get_tree_root_element)
+	(_html_set_pages_files, _prepare_special_units, _html_convert_convert)
+	(output_internal_links, _html_convert_output),
+	tp/Texinfo/Convert/IXIN.pm, tp/Texinfo/Convert/Info.pm (output),
+	tp/Texinfo/Convert/Plaintext.pm (convert),
+	tp/Texinfo/XS/convert/convert_html.c  (html_get_tree_root_element)
+	(prepare_special_units, html_internal_command_href)
+	(html_set_pages_files, html_convert_convert, html_convert_output):
+	remove all the codes that are never run as they correspond to
+	no output unit since output units are always set if split_by_*
+	have been called.
+
+2024-02-20  Patrice Dumas  <pertusus@free.fr>
+
+	Fix memory leaks found with valgrind
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): free
+	fullpath of verbatiminclude after adding to global_info included_files.
+
+	* tp/Texinfo/XS/convert/convert_html.c (mini_toc_internal): set href
+	after it is sure that the section is non empty and processed.
+
+2024-02-20  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS:
+	Run "gnulib --remove-import uniconv/u8-strconv-to-enc" and
+	"gnulib --remove-import uniconv/u8-strconv-from-enc" and
+	"gnulib --remove-import uniconv/u32-strconv-from-enc".
+
+2024-02-20  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/unicode.c (utf8_from_string, string_from_utf8):
+	Replace calls to u8_strconv_from_encoding and u8_strconv_to_encoding
+	with call to strdup followed by cast.
+	(format_eight_bit_accents_stack): Replace call to
+	u8_strconv_from_encoding with call to utf8_from_string.
+
+	This eliminates the requirement for gnulib uniconv modules, which
+	indirectly required the iconv_open module.
+
+2024-02-20  Gavin Smith  <gavinsmith0123@gmail.com>, and
+            Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (convert):
+	Set $self->{'encoding_disabled'} to 1 so that 'convert' will
+	always return an unencoded character string.
+	* tp/t/test_utils.pl (convert_to_plaintext, convert_to_info):
+	Do not set OUTPUT_PERL_ENCODING to prevent encoding.
+	* tp/Texinfo/Convert/Info.pm (output): Set
+	$self->{'encoding_disabled'} if not outputting to a file, before
+	any conversion is done.
+
+2024-02-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (rebuild_document),
+	tp/Texinfo/XS/main/DocumentXS.xs (rebuild_document),
+	tp/Texinfo/XS/main/build_perl_info.c (fill_document_hv)
+	(build_document, rebuild_document): distinguish building document and
+	rebuilding an existing HV.  Reuse the reference given as
+	rebuild_document argument, do not return anything. Update callers of
+	Texinfo::Document::rebuild_document.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (rebuild_output_units_list):
+	add a debug message.
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (rebuild_tree): handle better
+	no_store.
+
+	* tp/Texinfo/XS/main/DocumentXS.xs: move code around.
+
+2024-02-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (rebuild_output_units),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(rebuild_output_units): reuse the input reference instead of creating
+	a new one.  Do that by calling rebuild_output_units_list in XS.
+	Do not return anything.  Update callers.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c: make a function
+	static, add const.
+
+	* tp/Texinfo/XS/main/build_perl_info.c: move code around.
+
+	* tp/Texinfo/Convert/Info.pm (output): move code around.  Rename
+	variables as output_unit*.
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (parse_line_command_args): remove
+	a useless TODO.
+
+2024-02-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(fill_output_units_descriptor_av): inline fill_output_units in
+	fill_output_units_descriptor_av.
+
+2024-02-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(fill_output_units_descriptor_av, build_output_units_list)
+	(rebuild_output_units_list): add fill_output_units_descriptor_av with
+	code common to build_output_units_list and rebuild_output_units_list.
+
+2024-02-20  Patrice Dumas  <pertusus@free.fr>
+
+	Wrapper for u8_strconv_to_encoding
+
+	* tp/Texinfo/XS/main/unicode.c (string_from_utf8):
+	Create wrapper for u8_strconv_from_encoding to do the reverse of
+	utf8_from_string.  All callers of u8_strconv_from_encoding updated.
+	Also replace some incorrect calls of utf8_from_string by
+	string_from_utf8.
+
+2024-02-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (output_unit_to_perl_hash)
+	(fill_output_units, build_output_units_list)
+	(rebuild_output_units_list): remove status, call fatal if an hv
+	expected to be present is not there.
+
 2024-02-19  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Makefile.tres, tp/t/languages.t

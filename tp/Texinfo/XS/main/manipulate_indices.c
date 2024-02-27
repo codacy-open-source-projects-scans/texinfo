@@ -19,7 +19,6 @@
 #include <stdio.h>
 #include <locale.h>
 #include <ctype.h>
-#include "uniconv.h"
 #include "unictype.h"
 #include "unistr.h"
 
@@ -273,7 +272,6 @@ index_entry_element_sort_string (const INDEX_ENTRY *main_entry,
 
 typedef struct INDEX_COLLATOR {
     enum collation_type_name type;
-    char *language;
     union {
       /* perl element. This should be SV *sv,
          but we don't want to include the Perl headers everywhere; */
@@ -285,7 +283,7 @@ typedef struct INDEX_COLLATOR {
 } INDEX_COLLATOR;
 
 static BYTES_STRING *
-get_sort_key (INDEX_COLLATOR *collator, const char *sort_string)
+get_sort_key (const INDEX_COLLATOR *collator, const char *sort_string)
 {
   BYTES_STRING *sort_key;
   switch (collator->type)
@@ -582,13 +580,10 @@ setup_collator (int use_unicode_collation, const char *collation_language,
   if (use_unicode_collation == 0)
     {
       result->type = ctn_no_unicode;
-      /* TODO check if needed */
-      result->language = strdup ("");
     }
   else if (collation_language)
     {
       result->type = ctn_language_collation;
-      result->language = strdup (collation_language);
       result->sv = call_setup_collator (1, collation_language);
     }
   else
@@ -602,12 +597,11 @@ setup_collator (int use_unicode_collation, const char *collation_language,
           if (result->locale)
             {
               result->type = ctn_locale_collation;
-              result->language = strdup (collation_locale);
               return result;
             }
           else
             {
-              message_list_document_warn (error_messages, options,
+              message_list_document_warn (error_messages, options, 0,
                          "collation locale not found: %s", collation_locale);
             }
         }
@@ -615,15 +609,13 @@ setup_collator (int use_unicode_collation, const char *collation_language,
       #endif
 
       result->type = ctn_unicode;
-      /* TODO check if needed */
-      result->language = strdup ("-");
       result->sv = call_setup_collator (1, 0);
     }
   return result;
 }
 
 static INDICES_SORTABLE_ENTRIES *
-setup_sortable_index_entries (INDEX_COLLATOR *collator,
+setup_sortable_index_entries (const INDEX_COLLATOR *collator,
                          const INDICES_SORT_STRINGS *indices_sort_strings)
 {
   size_t i;
@@ -679,7 +671,7 @@ setup_sortable_index_entries (INDEX_COLLATOR *collator,
                     = &sortable_entry->sortable_subentries[k];
                   INDEX_SUBENTRY_SORT_STRING *subenty_sort_string
                     = &index_entry_sort_string->sort_string_subentries[k];
-                  /* TODO or refer to subenty_sort_string structure? */
+
                   sortable_subentry->sort_string
                     = strdup (subenty_sort_string->sort_string);
                   sortable_subentry->alpha = subenty_sort_string->alpha;
@@ -893,8 +885,6 @@ destroy_indices_sortable_entries (
 static void
 destroy_collator (INDEX_COLLATOR *collator)
 {
-  if (collator)
-    free (collator->language);
   free (collator);
 }
 
@@ -1075,8 +1065,7 @@ sort_indices_by_letter (DOCUMENT *document, ERROR_MESSAGE_LIST *error_messages,
                   if (first_char_len < 0)
                     fatal ("u8_uctomb returns negative value");
                   first_char_u8[first_char_len] = 0;
-                  first_char_text = u8_strconv_to_encoding (first_char_u8,
-                                               "UTF-8", iconveh_question_mark);
+                  first_char_text = string_from_utf8 (first_char_u8);
                   free (first_char_u8);
                   text_append (&letter_text, first_char_text);
                   free (first_char_text);
@@ -1349,7 +1338,7 @@ idx_leading_text_or_command (ELEMENT *tree, const char *ignore_chars)
    To be freed by caller.
 */
 INDEX_ENTRY_TEXT_OR_COMMAND *
-index_entry_first_letter_text_or_command (INDEX_ENTRY *index_entry)
+index_entry_first_letter_text_or_command (const INDEX_ENTRY *index_entry)
 {
   ELEMENT *index_entry_element = index_entry->entry_element;
   char *sortas = lookup_extra_string (index_entry_element, "sortas");

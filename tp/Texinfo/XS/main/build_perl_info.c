@@ -14,6 +14,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <config.h>
+#include <stdio.h>
+#include <stdarg.h>
 
 /* Avoid namespace conflicts. */
 #define context perl_context
@@ -21,11 +23,6 @@
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
-/* Avoid warnings about Perl headers redefining symbols that gnulib
-   redefined already. */
-#if defined _WIN32 && !defined __CYGWIN__
-  #undef free
-#endif
 #include "XSUB.h"
 
 #undef context
@@ -57,21 +54,74 @@
 
 #define LOCALEDIR DATADIR "/locale"
 
-  /* TODO the following NOTE could be obsolete, as this code is now part
-     of a library that is not linked against Gnulib.  However, XS dynamic
-     shared object link against both the library this code is part of and
-     another library that does not use perl headers and do not link against
-     perl libraries but links against Gnulib. */
+  /* NOTE This file includes the Perl headers, therefore we get the Perl
+     redefinitions of functions related to memory allocation, such as
+     'free', 'malloc', 'strdup' or 'asprintf'. In other files, the Gnulib
+     redefinition of those functions are used. It is wrong to mix functions
+     from Perl and Gnulib. If memory is allocated with Gnulib defined malloc,
+     and then freed with Perl defined free (or vice versa), then an error
+     can occur like "Free to wrong pool".
+    https://lists.gnu.org/archive/html/bug-texinfo/2016-01/msg00016.html
+   */
 
-  /* NOTE: Do not call 'malloc' or 'free' in any function called in this file.
-     Since this file (build_perl_info.c) includes the Perl headers,
-     we get the Perl redefinitions, which we do not want, as we don't use
-     them throughout the rest of the program. */
+   /* Functions defined in files with Gnulib definition should therefore
+      be used to allocate or free to match with the functions used to
+      free or allocate in files using Gnulib definitions.
 
-  /* Can't use asprintf here, because it might come from Gnulib, and
-     will then use malloc that is different from Perl's malloc, whereas
-     free below is redirected to Perl's implementation.  This could
-     cause crashes if the two malloc/free implementations were different.  */
+      To be sure to use Perl defined functions, wrappers
+      can be used, from build_perl_info.h:
+       perl_only_free, perl_only_strdup, perl_only_strndup, perl_only_malloc,
+       perl_only_xvasprintf, perl_only_xasprintf.
+
+      To be sure to use non Perl defined functions, constructors and wrappers
+      can be used, from utils.h:
+       non_perl_free, non_perl_strdup, non_perl_strndup.
+    */
+
+/* wrappers to be sure to use Perl defined functions */
+void
+perl_only_free (void *ptr)
+{
+  free (ptr);
+}
+
+void *
+perl_only_malloc (size_t size)
+{
+  return malloc (size);
+}
+
+char *
+perl_only_strdup (const char *s)
+{
+  return strdup (s);
+}
+
+char *
+perl_only_strndup (const char *s, size_t n)
+{
+  return strndup (s, n);
+}
+
+/* wrapper for vasprintf */
+int
+perl_only_xvasprintf (char **ptr, const char *template, va_list ap)
+{
+  int ret;
+  ret = vasprintf (ptr, template, ap);
+  if (ret < 0)
+    abort (); /* out of memory */
+  return ret;
+}
+
+/* wrapper for asprintf */
+int
+perl_only_xasprintf (char **ptr, const char *template, ...)
+{
+  va_list v;
+  va_start (v, template);
+  return perl_only_xvasprintf (ptr, template, v);
+}
 
 int
 init (int texinfo_uninstalled, char *builddir)
@@ -135,6 +185,8 @@ build_perl_array (ELEMENT_LIST *e, int avoid_recursion)
               text_init (&message);
               text_printf (&message,
                 "BUG: build_perl_array oot %d: %s\n", i, debug_str);
+      /* Calling free in this file on data possibly allocated with gnulib
+         is not ok in general, but ok here, as it should never be called */
               free (debug_str);
               fprintf (stderr, "%s", message.text);
               free (message.text);
@@ -167,7 +219,7 @@ build_perl_container (ELEMENT *e, int avoid_recursion)
 }
 
 static SV *
-build_perl_directions (ELEMENT_LIST *e, int avoid_recursion)
+build_perl_directions (const ELEMENT_LIST *e, int avoid_recursion)
 {
   SV *sv;
   HV *hv;
@@ -196,6 +248,8 @@ build_perl_directions (ELEMENT_LIST *e, int avoid_recursion)
                   text_init (&message);
                   text_printf (&message,
                     "BUG: build_perl_directions oot %s: %s\n", key, debug_str);
+      /* Calling free in this file on data possibly allocated with gnulib
+         is not ok in general, but ok here, as it should never be called */
                   free (debug_str);
                   fprintf (stderr, "%s", message.text);
                   free (message.text);
@@ -315,8 +369,7 @@ build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
               }
             case extra_directions:
               {
-              if (f)
-                STORE(build_perl_directions (&f->contents, avoid_recursion));
+              STORE(build_perl_directions (k->list, avoid_recursion));
               break;
               }
             case extra_string:
@@ -551,8 +604,8 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
           text_init (&message);
           text_printf (&message, "parent %p hv not set in %s '%s'\n",
                             e->parent, debug_str, convert_to_texinfo (e));
-          free (debug_str);
           fatal (message.text);
+          free (debug_str);
         }
       sv = newRV_inc ((SV *) e->parent->hv);
       hv_store (e->hv, "parent", strlen ("parent"), sv, HSH_parent);
@@ -889,7 +942,7 @@ build_index_data (INDEX **index_names_in)
 
 
 AV *
-build_string_list (STRING_LIST *strings_list, enum sv_string_type type)
+build_string_list (const STRING_LIST *strings_list, enum sv_string_type type)
 {
   AV *av;
   int i;
@@ -900,7 +953,7 @@ build_string_list (STRING_LIST *strings_list, enum sv_string_type type)
 
   for (i = 0; i < strings_list->number; i++)
     {
-      char *value = strings_list->list[i];
+      const char *value = strings_list->list[i];
       if (!value)
         av_push (av, newSV (0));
       else if (type == svt_char)
@@ -1201,15 +1254,9 @@ get_document (size_t document_descriptor)
   return sv;
 }
 
-/* Return Texinfo::Document perl object corresponding to the
-   C document structure corresponding to DOCUMENT_DESCRIPTOR.
-   If NO_STORE is set, destroy the C document.
- */
-SV *
-build_document (size_t document_descriptor, int no_store)
+static void
+fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
 {
-  HV *hv;
-  SV *sv;
   DOCUMENT *document;
   HV *hv_tree;
   HV *hv_info;
@@ -1223,11 +1270,8 @@ build_document (size_t document_descriptor, int no_store)
   AV *av_errors_list;
   AV *av_nodes_list = 0;
   AV *av_sections_list = 0;
-  HV *hv_stash;
 
   dTHX;
-
-  hv = newHV ();
 
   document = retrieve_document (document_descriptor);
 
@@ -1308,6 +1352,24 @@ build_document (size_t document_descriptor, int no_store)
                 newSViv (document_descriptor), 0);
 
     }
+}
+
+/* Return Texinfo::Document perl object corresponding to the
+   C document structure corresponding to DOCUMENT_DESCRIPTOR.
+   If NO_STORE is set, destroy the C document.
+ */
+SV *
+build_document (size_t document_descriptor, int no_store)
+{
+  HV *hv;
+  SV *sv;
+  HV *hv_stash;
+
+  dTHX;
+
+  hv = newHV ();
+
+  fill_document_hv (hv, document_descriptor, no_store);
 
   hv_stash = gv_stashpv ("Texinfo::Document", GV_ADD);
   sv = newRV_noinc ((SV *) hv);
@@ -1315,19 +1377,48 @@ build_document (size_t document_descriptor, int no_store)
   return sv;
 }
 
+void
+rebuild_document (SV *document_in, int no_store)
+{
+  HV *hv;
+  SV **document_descriptor_sv;
+  char *descriptor_key = "document_descriptor";
+  char *registrar_key = "registrar";
 
-/*
- Return a non 0 status if pointers to perl elements from C elements are
- missing.
- NOTE that this cannot happen anymore as the hv are always set
- and never removed.
- */
-static int
+  dTHX;
+
+  hv = (HV *)SvRV (document_in);
+
+  document_descriptor_sv = hv_fetch (hv, descriptor_key,
+                                     strlen (descriptor_key), 0);
+
+  SV **registrar_svp, *registrar_sv = 0;
+  registrar_svp = hv_fetch (hv, registrar_key, strlen (registrar_key), 0);
+  if (registrar_svp)
+    {
+      registrar_sv = *registrar_svp;
+      SvREFCNT_inc(registrar_sv); /* prevent destruction at hv_clear below */
+    }
+
+  if (document_descriptor_sv)
+    {
+      int document_descriptor = SvIV (*document_descriptor_sv);
+      hv_clear (hv);
+      fill_document_hv (hv, document_descriptor, no_store);
+      if (registrar_sv)
+        hv_store (hv, registrar_key, strlen (registrar_key), registrar_sv, 0);
+    }
+  else
+    {
+      fprintf (stderr, "ERROR: document rebuild: no %s\n", descriptor_key);
+    }
+}
+
+static void
 output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
 {
   int i;
   SV *sv;
-  int status = 0;
   HV *directions_hv;
 
   dTHX;
@@ -1356,19 +1447,22 @@ output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
     {
       if (output_unit->directions[i])
         {
-          char *direction_name = relative_unit_direction_name[i];
+          const char *direction_name = relative_unit_direction_name[i];
           OUTPUT_UNIT *direction_unit = output_unit->directions[i];
           SV *unit_sv;
           /* should ony happen for reference to external nodes that have
              not yet been processed */
           if (!direction_unit->hv)
             {
-              int direction_status;
               if (direction_unit->unit_type != OU_external_node_unit)
-                fprintf (stderr, "BUG: not external node but no perl ref %s\n",
-                                 output_unit_texi (direction_unit));
-              direction_status = output_unit_to_perl_hash (direction_unit);
-              status += direction_status;
+                {
+                  char *msg;
+                  xasprintf (&msg, "BUG: not external node but no perl ref %s",
+                                   output_unit_texi (direction_unit));
+                  fatal (msg);
+                  free (msg);
+                }
+              output_unit_to_perl_hash (direction_unit);
             }
           unit_sv = newRV_inc ((SV *) direction_unit->hv);
           hv_store (directions_hv, direction_name, strlen (direction_name),
@@ -1378,27 +1472,27 @@ output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
 
   if (output_unit->unit_command)
     {
-      ELEMENT *command = output_unit->unit_command;
-      if (!command->hv)
+      const ELEMENT *command;
+      if (!output_unit->unit_command->hv
+          && output_unit->unit_command->type == ET_special_unit_element)
         {
-          if (command->type == ET_special_unit_element)
-            {
-              SV *unit_sv;
-              unit_sv = newRV_inc ((SV *) output_unit->hv);
-              /* a virtual out of tree element, add it to perl */
-              element_to_perl_hash (command, 0);
-              hv_store (command->hv, "associated_unit",
-                        strlen ("associated_unit"), unit_sv, 0);
-            }
+          SV *unit_sv;
+
+          /* a virtual out of tree element, add it to perl */
+          element_to_perl_hash (output_unit->unit_command, 0);
+
+          unit_sv = newRV_inc ((SV *) output_unit->hv);
+          hv_store (output_unit->unit_command->hv, "associated_unit",
+                    strlen ("associated_unit"), unit_sv, 0);
         }
 
-      if (command->hv)
-        {
-          sv = newRV_inc ((SV *) command->hv);
-          STORE("unit_command");
-        }
-      else
-       status++;
+      command = output_unit->unit_command;
+
+      if (!command->hv)
+        fatal ("Missing output unit unit_command hv");
+
+      sv = newRV_inc ((SV *) command->hv);
+      STORE("unit_command");
     }
 
   if (output_unit->associated_document_unit)
@@ -1429,10 +1523,7 @@ output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
           SV *unit_sv;
 
           if (!element_hv)
-            {
-              status++;
-              continue;
-            }
+            fatal ("Missing output unit unit_contents element hv");
 
           sv = newRV_inc ((SV *) element_hv);
 
@@ -1486,59 +1577,95 @@ output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
     }
 
 #undef STORE
-
-  return status;
 }
 
 static int
-fill_output_units (AV *av_output_units, OUTPUT_UNIT_LIST *output_units)
+fill_output_units_descriptor_av (AV *av_output_units,
+                                 size_t output_units_descriptor)
 {
-  SV *sv;
-  int i;
+  const OUTPUT_UNIT_LIST *output_units;
+  size_t i;
 
   dTHX;
 
+  output_units = retrieve_output_units (output_units_descriptor);
+
+  if (!output_units || !output_units->number)
+    return 0;
+
   for (i = 0; i < output_units->number; i++)
     {
+      SV *sv;
       OUTPUT_UNIT *output_unit = output_units->list[i];
-      int status = output_unit_to_perl_hash (output_unit);
-      if (status)
-        return 0;
+      output_unit_to_perl_hash (output_unit);
       /* we do not transfer the hv ref to the perl av because we consider
          that output_unit->hv still own a reference, which should only be
          released when the output_unit is destroyed in C */
       sv = newRV_inc ((SV *) output_unit->hv);
       av_push (av_output_units, sv);
     }
+
+  /* store in the first perl output unit of the list */
+  hv_store (output_units->list[0]->hv, "output_units_descriptor",
+            strlen ("output_units_descriptor"),
+            newSViv (output_units_descriptor), 0);
   return 1;
 }
 
 SV *
 build_output_units_list (size_t output_units_descriptor)
 {
-  int status;
   AV *av_output_units;
-  OUTPUT_UNIT_LIST *output_units
-    = retrieve_output_units (output_units_descriptor);
 
   dTHX;
 
-  if (!output_units || !output_units->number)
-    return newSV(0);
-
   av_output_units = newAV ();
 
-  status = fill_output_units (av_output_units, output_units);
+  if (!fill_output_units_descriptor_av (av_output_units,
+                                        output_units_descriptor))
+    {/* no output unit */
+      av_undef (av_output_units);
+      return newSV(0);
+    }
+  else
+    return newRV_noinc ((SV *) av_output_units);
+}
 
-  if (!status)
-    return newSV(0);
+void
+rebuild_output_units_list (SV *output_units_sv, size_t output_units_descriptor)
+{
+  AV *av_output_units;
 
-  /* store in the first perl output unit of the list */
-  hv_store (output_units->list[0]->hv, "output_units_descriptor",
-            strlen ("output_units_descriptor"),
-            newSViv (output_units_descriptor), 0);
+  dTHX;
 
-  return newRV_noinc ((SV *) av_output_units);
+  if (!SvOK (output_units_sv))
+    {
+      const OUTPUT_UNIT_LIST *output_units
+         = retrieve_output_units (output_units_descriptor);
+      if (output_units && output_units->number)
+        fprintf (stderr, "BUG: no input sv for %zu output units (%zu)",
+                 output_units->number, output_units_descriptor);
+      return;
+    }
+
+  av_output_units = (AV *) SvRV (output_units_sv);
+  av_clear (av_output_units);
+
+  if (!fill_output_units_descriptor_av (av_output_units,
+                                        output_units_descriptor))
+    {
+ /* the output_units_descriptor is not found.  In the codes calling
+    this function, the output_units_descriptor should have been found
+    within the Perl reference used as argument here.  If there is
+    something to rebuild, this should mean that there is an output
+    units list in C, therefore we output an error here.  It could
+    be redundant with errors output earlier in calling code, but it
+    is better to have more debug messages.
+  */
+      fprintf (stderr, "BUG: rebuild_output_units_list: output unit"
+                       "descriptor not found: %zu\n", output_units_descriptor);
+      return;
+    }
 }
 
 SV *
@@ -1553,8 +1680,11 @@ get_conf (CONVERTER *converter, const char *option_name)
 
 /* add C messages to a Texinfo::Report object, like
    Texinfo::Report::add_formatted_message does.
-   TODO it could replace the calls to add_formatted_message
-   in perl code, if it is found relevant.
+   TODO currently unused. It could replace the calls to add_formatted_message
+   in perl code, if it is found relevant.  For converters, this is unlikely,
+   as errors need to be passed explicitely both from Perl and XS.  For
+   errors registered in document, it may be useful to avoid the need to
+   rebuild the document prior to passing error messages.
  */
 void
 pass_converter_errors (ERROR_MESSAGE_LIST *error_messages,
@@ -1614,46 +1744,8 @@ pass_converter_errors (ERROR_MESSAGE_LIST *error_messages,
   clear_error_message_list (error_messages);
 }
 
-void
-rebuild_output_units_list (SV *output_units_sv, size_t output_units_descriptor)
-{
-  AV *av_output_units;
-  int status;
-
-  OUTPUT_UNIT_LIST *output_units
-    = retrieve_output_units (output_units_descriptor);
-
-  dTHX;
-
-  if (! SvOK (output_units_sv))
-    {
-      if (output_units && output_units->number)
-        fprintf (stderr, "BUG: no input sv for %zu output units (%zu)",
-                 output_units->number, output_units_descriptor);
-      return;
-    }
-
-  av_output_units = (AV *) SvRV (output_units_sv);
-  av_clear (av_output_units);
-
-  /* TODO cannot associate output_units_descriptor. A problem? */
-  if (!output_units || !output_units->number)
-    return;
-
-  status = fill_output_units (av_output_units, output_units);
-
-  /* warn? */
-  if (!status)
-    return;
-
-  /* store in the first perl output unit of the list */
-  hv_store (output_units->list[0]->hv, "output_units_descriptor",
-            strlen ("output_units_descriptor"),
-            newSViv (output_units_descriptor), 0);
-}
-
 AV *
-build_integer_stack (INTEGER_STACK *integer_stack)
+build_integer_stack (const INTEGER_STACK *integer_stack)
 {
   AV *av;
   int i;
@@ -1761,7 +1853,6 @@ pass_output_unit_files (SV *converter_sv,
   dTHX;
 
   HV *converter_hv = (HV *) SvRV (converter_sv);
-
 
   filenames_sv = build_filenames (output_unit_files);
   file_counters_sv = build_file_counters (output_unit_files);
@@ -2226,3 +2317,18 @@ html_build_direction_icons (CONVERTER *converter,
     }
   return newRV_noinc ((SV *)icons_hv);
 }
+
+void
+build_tree_to_build (ELEMENT_LIST *tree_to_build)
+{
+  if (tree_to_build->number > 0)
+    {
+      int i;
+      for (i = 0; i < tree_to_build->number; i++)
+        {
+          build_texinfo_tree (tree_to_build->list[i], 1);
+        }
+      tree_to_build->number = 0;
+    }
+}
+

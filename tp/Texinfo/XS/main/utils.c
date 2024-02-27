@@ -24,7 +24,6 @@
 #include <iconv.h>
 #include <errno.h>
 #include <stdbool.h>
-#include "uniconv.h"
 #include "unistr.h"
 #include "unicase.h"
 #include "uniwidth.h"
@@ -44,8 +43,8 @@
 #include "debug.h"
 #include "builtin_commands.h"
 #include "api_to_perl.h"
-#include "utils.h"
 #include "unicode.h"
+#include "utils.h"
 
 #define min_level command_structuring_level[CM_chapter]
 #define max_level command_structuring_level[CM_subsubsection]
@@ -138,6 +137,25 @@ char *html_command_text_type_name[] = {
   "href", "node", "section",
 };
 
+/* wrappers to be sure to use non-Perl defined functions */
+void
+non_perl_free (void *ptr)
+{
+  free (ptr);
+}
+
+char *
+non_perl_strdup (const char *s)
+{
+  return strdup (s);
+}
+
+char *
+non_perl_strndup (const char *s, size_t n)
+{
+  return strndup (s, n);
+}
+
 /* wrapper for asprintf */
 int
 xasprintf (char **ptr, const char *template, ...)
@@ -218,8 +236,7 @@ to_upper_or_lower_multibyte (const char *text, int lower_or_upper)
                             NULL, NULL, NULL, &lengthp);
 
   free (u8_text);
-  result = u8_strconv_to_encoding (u8_result, "UTF-8",
-                                   iconveh_question_mark);
+  result = string_from_utf8 (u8_result);
   free (u8_result);
   return result;
 }
@@ -402,7 +419,8 @@ text_buffer_iconv (TEXT *buf, iconv_t iconv_state,
 }
 
 char *
-encode_with_iconv (iconv_t our_iconv, char *s, const SOURCE_INFO *source_info)
+encode_with_iconv (iconv_t our_iconv, char *s,
+                   const SOURCE_INFO *source_info)
 {
   static TEXT t;
   ICONV_CONST char *inptr; size_t bytes_left;
@@ -541,7 +559,7 @@ new_expanded_formats (void)
 }
 
 int
-format_expanded_p (EXPANDED_FORMAT *formats, const char *format)
+format_expanded_p (const EXPANDED_FORMAT *formats, const char *format)
 {
   int i;
   for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
@@ -629,7 +647,9 @@ ultimate_index (INDEX *index)
 }
 
 /* only used in conversion, on sorted indices names */
-/* TODO also a bsearch? */
+/* A linear search is probably ok, as the number of
+   indices should always be small.  If needed a bsearch
+   could also be implemented. */
 size_t
 index_number_index_by_name (const SORTED_INDEX_NAMES *sorted_indices,
                             const char *name)
@@ -638,7 +658,7 @@ index_number_index_by_name (const SORTED_INDEX_NAMES *sorted_indices,
 
   for (i = 0; i < sorted_indices->number; i++)
     {
-      if (!strcmp (sorted_indices->list[i].index->name, name))
+      if (!strcmp (sorted_indices->list[i]->name, name))
         return i+1;
     }
   return 0;
@@ -670,10 +690,10 @@ read_flag_name (char **ptr)
 
 /* s/\s+/ /g with re => '/a' in perl */
 char *
-collapse_spaces (char *text)
+collapse_spaces (const char *text)
 {
   TEXT result;
-  char *p = text;
+  const char *p = text;
 
   if (!text)
     return 0;
@@ -706,11 +726,16 @@ collapse_spaces (char *text)
    The filename of the line directive is returned.
    The line number value is in OUT_LINE_NO.
    RETVAL value is 1 for valid line directive, 0 otherwise.
+
+   TODO would be good to have line const, but it is not possible
+   because of strtoul and because of the transient modification to
+   have a \0.
 */
 char *
 parse_line_directive (char *line, int *retval, int *out_line_no)
 {
-  char *p = line, *q;
+  char *p = line;
+  char *q;
   char *filename = 0;
   int line_no = 0;
 
@@ -821,10 +846,21 @@ wipe_index_names (INDEX **index_names)
 
 
 /* string lists */
+
+STRING_LIST *
+new_string_list (void)
+{
+  STRING_LIST *result = (STRING_LIST *) malloc (sizeof (STRING_LIST));
+  memset (result, 0, sizeof (STRING_LIST));
+
+  return result;
+}
+
 /* include directories and include file */
 
 void
-add_include_directory (char *input_filename, STRING_LIST *include_dirs_list)
+add_include_directory (const char *input_filename,
+                       STRING_LIST *include_dirs_list)
 {
   int len;
   char *filename = strdup (input_filename);
@@ -851,7 +887,7 @@ add_string (const char *string, STRING_LIST *strings_list)
 }
 
 void
-merge_strings (STRING_LIST *strings_list, STRING_LIST *merged_strings)
+merge_strings (STRING_LIST *strings_list, const STRING_LIST *merged_strings)
 {
   int i;
   if (strings_list->number + merged_strings->number > strings_list->space)
@@ -868,7 +904,7 @@ merge_strings (STRING_LIST *strings_list, STRING_LIST *merged_strings)
 }
 
 void
-copy_strings (STRING_LIST *dest_list, STRING_LIST *source_list)
+copy_strings (STRING_LIST *dest_list, const STRING_LIST *source_list)
 {
   int i;
   if (dest_list->number + source_list->number > dest_list->space)
@@ -885,7 +921,7 @@ copy_strings (STRING_LIST *dest_list, STRING_LIST *source_list)
 
 /* return the index +1, to return 0 if not found */
 size_t
-find_string (STRING_LIST *strings_list, const char *target)
+find_string (const STRING_LIST *strings_list, const char *target)
 {
   size_t j;
   for (j = 0; j < strings_list->number; j++)
@@ -902,7 +938,7 @@ find_string (STRING_LIST *strings_list, const char *target)
 /* try to locate a file called FILENAME, looking for it in the list of include
    directories. */
 char *
-locate_include_file (char *filename, STRING_LIST *include_dirs_list)
+locate_include_file (const char *filename, const STRING_LIST *include_dirs_list)
 {
   char *fullpath;
   struct stat dummy;
@@ -1320,7 +1356,7 @@ section_level_adjusted_command_name (const ELEMENT *element)
 
 /* corresponding perl function in Common.pm */
 int
-is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries)
+is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries)
 {
   int i;
   if (!tree || !tree->contents.number)
@@ -1328,7 +1364,7 @@ is_content_empty (ELEMENT *tree, int do_not_ignore_index_entries)
 
   for (i = 0; i < tree->contents.number; i++)
     {
-      ELEMENT *content = tree->contents.list[i];
+      const ELEMENT *content = tree->contents.list[i];
       enum command_id data_cmd = element_builtin_data_cmd (content);
 
       if (data_cmd)
@@ -1607,4 +1643,57 @@ initialize_option (OPTION *option, enum global_option_type type)
 
       default:
     }
+}
+
+
+/* constructors in particular called from files including perl headers */
+
+TARGET_FILENAME *
+new_target_filename (void)
+{
+  TARGET_FILENAME *result
+    = (TARGET_FILENAME *) malloc (sizeof (TARGET_FILENAME));
+
+  result->filename = 0;
+
+  return result;
+}
+
+TARGET_CONTENTS_FILENAME *
+new_target_contents_filename (void)
+{
+  TARGET_CONTENTS_FILENAME *result = (TARGET_CONTENTS_FILENAME *)
+                         malloc (sizeof (TARGET_CONTENTS_FILENAME));
+
+  return result;
+}
+
+FILE_NAME_PATH *
+new_file_name_path (void)
+{
+  FILE_NAME_PATH *result
+   = (FILE_NAME_PATH *) malloc (sizeof (FILE_NAME_PATH));
+  memset (result, 0, sizeof (FILE_NAME_PATH));
+
+  return result;
+}
+
+TARGET_DIRECTORY_FILENAME *
+new_target_directory_filename (void)
+{
+  TARGET_DIRECTORY_FILENAME *result = (TARGET_DIRECTORY_FILENAME *)
+              malloc (sizeof (TARGET_DIRECTORY_FILENAME));
+  memset (result, 0, sizeof (TARGET_DIRECTORY_FILENAME));
+
+  return result;
+}
+
+FORMATTED_BUTTON_INFO *
+new_formatted_button_info (void)
+{
+  FORMATTED_BUTTON_INFO *result
+   = (FORMATTED_BUTTON_INFO *) malloc (sizeof (FORMATTED_BUTTON_INFO));
+  memset (result, 0, sizeof (FORMATTED_BUTTON_INFO));
+
+  return result;
 }

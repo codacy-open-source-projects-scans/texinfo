@@ -19,7 +19,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
-#include "uniconv.h"
 #include "unistr.h"
 
 #include "tree_types.h"
@@ -91,6 +90,7 @@ copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
           copy_tree_internal (f, 0);
           break;
         case extra_contents:
+        case extra_directions:
           {
           KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
           new_extra_contents = new_list ();
@@ -98,20 +98,26 @@ copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
           for (j = 0; j < k_ref->list->number; j++)
             {
               ELEMENT *e = k_ref->list->list[j];
-              k_copy = lookup_extra_by_index (e, "_copy", -1);
-              if (k_copy)
-                add_to_element_list (new_extra_contents,
-                                     k_copy->element);
-              else
+              if (!e && info->info[i].type == extra_directions)
                 {
-                  increase_ref_counter (e);
                   add_to_element_list (new_extra_contents, 0);
                 }
-              copy_tree_internal (e, 0);
+              else
+                {
+                  k_copy = lookup_extra_by_index (e, "_copy", -1);
+                  if (k_copy)
+                    add_to_element_list (new_extra_contents,
+                                         k_copy->element);
+                  else
+                    {
+                      increase_ref_counter (e);
+                      add_to_element_list (new_extra_contents, 0);
+                    }
+                  copy_tree_internal (e, 0);
+                }
             }
           break;
           }
-        case extra_directions:
         case extra_container:
           {
           KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
@@ -120,23 +126,16 @@ copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
           for (j = 0; j < f->contents.number; j++)
             {
               ELEMENT *e = f->contents.list[j];
-              if (!e && info->info[i].type == extra_directions)
-                {
-                  add_to_contents_as_array (new_extra_element, 0);
-                }
+              k_copy = lookup_extra_by_index (e, "_copy", -1);
+              if (k_copy)
+                add_to_contents_as_array (new_extra_element,
+                                          k_copy->element);
               else
                 {
-                  k_copy = lookup_extra_by_index (e, "_copy", -1);
-                  if (k_copy)
-                    add_to_contents_as_array (new_extra_element,
-                                              k_copy->element);
-                  else
-                    {
-                      increase_ref_counter (e);
-                      add_to_contents_as_array (new_extra_element, 0);
-                    }
-                  copy_tree_internal (e, 0);
+                  increase_ref_counter (e);
+                  add_to_contents_as_array (new_extra_element, 0);
                 }
+              copy_tree_internal (e, 0);
             }
             break;
           }
@@ -253,6 +252,7 @@ associate_info_references (ASSOCIATED_INFO *info, ASSOCIATED_INFO *new_info)
             break;
           }
         case extra_contents:
+        case extra_directions:
           {
             KEY_PAIR *k = lookup_associated_info (new_info, key);
             ELEMENT_LIST *new_extra_contents = k->list;
@@ -261,28 +261,6 @@ associate_info_references (ASSOCIATED_INFO *info, ASSOCIATED_INFO *new_info)
                 KEY_PAIR *k_copy;
                 ELEMENT *e = k_ref->list->list[j];
                 ELEMENT *new_e = new_extra_contents->list[j];
-                if (!new_e)
-                  {
-                    ELEMENT *new_ref = get_copy_ref (e);
-                    new_extra_contents->list[j] = new_ref;
-                  }
-
-                k_copy = lookup_extra_by_index (e, "_copy", -1);
-                if (k_copy)
-                  copy_extra_info (e, k_copy->element);
-              }
-              break;
-            }
-        case extra_container:
-        case extra_directions:
-          {
-            KEY_PAIR *k = lookup_associated_info (new_info, key);
-            new_extra_element = k->element;
-            for (j = 0; j < f->contents.number; j++)
-              {
-                KEY_PAIR *k_copy;
-                ELEMENT *e = f->contents.list[j];
-                ELEMENT *new_e = new_extra_element->contents.list[j];
                 if (!e && info->info[i].type == extra_directions)
                   {
                   }
@@ -291,16 +269,36 @@ associate_info_references (ASSOCIATED_INFO *info, ASSOCIATED_INFO *new_info)
                     if (!new_e)
                       {
                         ELEMENT *new_ref = get_copy_ref (e);
-                        new_extra_element->contents.list[j] = new_ref;
+                        new_extra_contents->list[j] = new_ref;
                       }
-
                     k_copy = lookup_extra_by_index (e, "_copy", -1);
                     if (k_copy)
                       copy_extra_info (e, k_copy->element);
                   }
-                }
-              break;
-            }
+              }
+            break;
+          }
+        case extra_container:
+          {
+            KEY_PAIR *k = lookup_associated_info (new_info, key);
+            new_extra_element = k->element;
+            for (j = 0; j < f->contents.number; j++)
+              {
+                KEY_PAIR *k_copy;
+                ELEMENT *e = f->contents.list[j];
+                ELEMENT *new_e = new_extra_element->contents.list[j];
+                if (!new_e)
+                  {
+                    ELEMENT *new_ref = get_copy_ref (e);
+                    new_extra_element->contents.list[j] = new_ref;
+                  }
+
+                k_copy = lookup_extra_by_index (e, "_copy", -1);
+                if (k_copy)
+                  copy_extra_info (e, k_copy->element);
+              }
+            break;
+          }
         case extra_string:
           { /* A simple string. */
             char *value = k_ref->string;
@@ -395,12 +393,13 @@ copy_contents (ELEMENT *element, enum element_type type)
 void
 add_source_mark (SOURCE_MARK *source_mark, ELEMENT *e)
 {
-  SOURCE_MARK_LIST *s_mark_list = &(e->source_mark_list);
+  SOURCE_MARK_LIST *s_mark_list = &e->source_mark_list;
   if (s_mark_list->number == s_mark_list->space)
     {
-      s_mark_list->space++;  s_mark_list->space *= 1.5;
-      s_mark_list->list = realloc (s_mark_list->list,
-                          s_mark_list->space * sizeof (SOURCE_MARK));
+      s_mark_list->space++;
+      s_mark_list->list
+          = realloc (s_mark_list->list,
+                     s_mark_list->space * sizeof (SOURCE_MARK *));
       if (!s_mark_list->list)
         fatal ("realloc failed");
     }
@@ -408,8 +407,8 @@ add_source_mark (SOURCE_MARK *source_mark, ELEMENT *e)
   s_mark_list->number++;
 }
 
-SOURCE_MARK *
-remove_from_source_mark_list (SOURCE_MARK_LIST *list, int where)
+static SOURCE_MARK *
+remove_from_source_mark_list (SOURCE_MARK_LIST *list, size_t where)
 {
   SOURCE_MARK *removed;
 
@@ -435,10 +434,10 @@ size_t
 relocate_source_marks (SOURCE_MARK_LIST *source_mark_list, ELEMENT *new_e,
                        size_t begin_position, size_t len)
 {
-  int i = 0;
-  int j;
-  int list_number = source_mark_list->number;
-  int *indices_to_remove;
+  size_t i = 0;
+  size_t j;
+  size_t list_number = source_mark_list->number;
+  size_t *indices_to_remove;
   size_t end_position;
 
   if (list_number == 0)
@@ -446,8 +445,8 @@ relocate_source_marks (SOURCE_MARK_LIST *source_mark_list, ELEMENT *new_e,
 
   end_position = begin_position + len;
 
-  indices_to_remove = malloc (sizeof (int) * list_number);
-  memset (indices_to_remove, 0, sizeof (int) * list_number);
+  indices_to_remove = malloc (sizeof (size_t) * list_number);
+  memset (indices_to_remove, 0, sizeof (size_t) * list_number);
 
   while (i < list_number)
     {
@@ -485,10 +484,12 @@ relocate_source_marks (SOURCE_MARK_LIST *source_mark_list, ELEMENT *new_e,
     }
   /* i is past the last index with a potential source mark to remove
      (to be ready for the next pass in the loop above).  So remove one */
-  for (j = i - 1; j >= 0; j--)
+  for (j = i - 1; ; j--)
     {
       if (indices_to_remove[j] == 1)
         remove_from_source_mark_list (source_mark_list, j);
+      if (j == 0)
+        break;
     }
 
   free (indices_to_remove);
@@ -836,8 +837,7 @@ modify_tree (ELEMENT *tree,
                                           argument);
               if (new_element)
                 {
-                  /* FIXME destroy previous element? or let (*operation)
-                     do it? */
+               /* *operation should take care of destroying removed element */
                   tree->source_mark_list.list[i]->element
                       = new_element->list[0];
                   destroy_list (new_element);
@@ -849,7 +849,8 @@ modify_tree (ELEMENT *tree,
 }
 
 ELEMENT *
-new_asis_command_with_text (char *text, ELEMENT *parent, enum element_type type)
+new_asis_command_with_text (const char *text, ELEMENT *parent,
+                            enum element_type type)
 {
   ELEMENT *new_command = new_element (ET_NONE);
   ELEMENT *brace_command_arg = new_element (ET_brace_command_arg);
@@ -863,7 +864,7 @@ new_asis_command_with_text (char *text, ELEMENT *parent, enum element_type type)
 }
 
 ELEMENT_LIST *
-protect_text (ELEMENT *current, char *to_protect)
+protect_text (ELEMENT *current, const char *to_protect)
 {
   if (current->text.end > 0 && !(current->type == ET_raw
                                  || current->type == ET_rawline_arg)
@@ -874,7 +875,7 @@ protect_text (ELEMENT *current, char *to_protect)
       /* count UTF-8 encoded Unicode characters for source marks locations */
       uint8_t *u8_text = 0;
       size_t current_position;
-      uint8_t *u8_p = 0;
+      const uint8_t *u8_p = 0;
       size_t u8_len;
 
       if (current->source_mark_list.number)
@@ -887,7 +888,7 @@ protect_text (ELEMENT *current, char *to_protect)
 
       while (*p)
         {
-          int leading_nr = strcspn (p, to_protect);
+          size_t leading_nr = strcspn (p, to_protect);
           ELEMENT *text_elt = new_element (current->type);
           text_elt->parent = current->parent;
           if (leading_nr)
@@ -906,7 +907,7 @@ protect_text (ELEMENT *current, char *to_protect)
               u8_p += u8_len;
 
               current_position
-                = relocate_source_marks (&(current->source_mark_list),
+                = relocate_source_marks (&current->source_mark_list,
                                         text_elt,
                                         current_position, u8_len);
             }
@@ -918,10 +919,10 @@ protect_text (ELEMENT *current, char *to_protect)
 
           if (*p)
             {
-              int to_protect_nr = strspn (p, to_protect);
+              size_t to_protect_nr = strspn (p, to_protect);
               if (!strcmp (to_protect, ","))
                 {
-                  int i;
+                  size_t i;
                   for (i = 0; i < to_protect_nr; i++)
                     {
                       ELEMENT *comma = new_element (ET_NONE);
@@ -937,7 +938,7 @@ protect_text (ELEMENT *current, char *to_protect)
                           u8_p += u8_len;
 
                         current_position
-                          = relocate_source_marks (&(current->source_mark_list),
+                          = relocate_source_marks (&current->source_mark_list,
                                                    comma,
                                                    current_position, u8_len);
                         }
@@ -958,7 +959,7 @@ protect_text (ELEMENT *current, char *to_protect)
                       u8_p += u8_len;
 
                       current_position
-                       = relocate_source_marks (&(current->source_mark_list),
+                       = relocate_source_marks (&current->source_mark_list,
                                 new_command->args.list[0]->contents.list[0],
                                               current_position, u8_len);
                     }
@@ -977,13 +978,13 @@ protect_text (ELEMENT *current, char *to_protect)
 
 
 
-char *
-normalized_menu_entry_internal_node (ELEMENT *entry)
+const char *
+normalized_menu_entry_internal_node (const ELEMENT *entry)
 {
   int i;
   for (i = 0; i < entry->contents.number; i++)
     {
-      ELEMENT *content = entry->contents.list[i];
+      const ELEMENT *content = entry->contents.list[i];
       if (content->type == ET_menu_entry_node)
         {
           if (!lookup_extra_element (content, "manual_content"))
@@ -997,10 +998,10 @@ normalized_menu_entry_internal_node (ELEMENT *entry)
 }
 
 ELEMENT *
-normalized_entry_associated_internal_node (ELEMENT *entry,
-                                           LABEL_LIST *identifiers_target)
+normalized_entry_associated_internal_node (const ELEMENT *entry,
+                                           const LABEL_LIST *identifiers_target)
 {
-  char *normalized_entry_node = normalized_menu_entry_internal_node (entry);
+  const char *normalized_entry_node = normalized_menu_entry_internal_node (entry);
   if (normalized_entry_node)
     {
       ELEMENT *node = find_identifier_target (identifiers_target,
@@ -1013,13 +1014,13 @@ normalized_entry_associated_internal_node (ELEMENT *entry,
 ELEMENT *
 first_menu_node (ELEMENT *node, LABEL_LIST *identifiers_target)
 {
-  ELEMENT_LIST *menus = lookup_extra_contents (node, "menus", 0);
+  const ELEMENT_LIST *menus = lookup_extra_contents (node, "menus");
   if (menus)
     {
       int i;
       for (i = 0; i < menus->number; i++)
         {
-          ELEMENT *menu = menus->list[i];
+          const ELEMENT *menu = menus->list[i];
           int j;
           for (j = 0; j < menu->contents.number; j++)
             {

@@ -63,30 +63,19 @@ $VERSION = '7.1dev';
 
 our @month_name =
     (
-     'January', 'February', 'March', 'April', 'May',
-     'June', 'July', 'August', 'September', 'October',
-     'November', 'December'
+     Texinfo::Common::gdt('January'),
+     Texinfo::Common::gdt('February'),
+     Texinfo::Common::gdt('March'),
+     Texinfo::Common::gdt('April'),
+     Texinfo::Common::gdt('May'),
+     Texinfo::Common::gdt('June'),
+     Texinfo::Common::gdt('July'),
+     Texinfo::Common::gdt('August'),
+     Texinfo::Common::gdt('September'),
+     Texinfo::Common::gdt('October'),
+     Texinfo::Common::gdt('November'),
+     Texinfo::Common::gdt('December')
     );
-
-# This is not used as code, but used to mark months as strings to be
-# translated
-if (0) {
-  my $self;
-  my @mark_month_for_translation = (
-   $self->gdt('January'),
-   $self->gdt('February'),
-   $self->gdt('March'),
-   $self->gdt('April'),
-   $self->gdt('May'),
-   $self->gdt('June'),
-   $self->gdt('July'),
-   $self->gdt('August'),
-   $self->gdt('September'),
-   $self->gdt('October'),
-   $self->gdt('November'),
-   $self->gdt('December')
-  );
-}
 
 # this method requires a converter.
 sub expand_today($)
@@ -103,8 +92,8 @@ sub expand_today($)
   # See https://reproducible-builds.org/specs/source-date-epoch/.
 
   $year += ($year < 70) ? 2000 : 1900;
-  return $self->gdt('{month} {day}, {year}',
-          { 'month' => $self->gdt($month_name[$mon]),
+  return $self->cdt('{month} {day}, {year}',
+          { 'month' => $self->cdt($month_name[$mon]),
             'day' => {'text' => $mday}, 'year' => {'text' => $year} });
 }
 
@@ -186,7 +175,7 @@ sub definition_category_tree($$)
       # in descriptions of object-oriented programming methods or operations.
       return $self->cdt('{category} on @code{{class}}', $substrings);
     } else {
-      return Texinfo::Translations::gdt(undef, '{category} on @code{{class}}',
+      return Texinfo::Translations::gdt('{category} on @code{{class}}',
                                  $current->{'extra'}->{'documentlanguage'},
                                  $substrings);
       #my $result = {};
@@ -206,7 +195,7 @@ sub definition_category_tree($$)
       # or instance variable.
       return $self->cdt('{category} of @code{{class}}', $substrings);
     } else {
-      return Texinfo::Translations::gdt(undef, '{category} of @code{{class}}',
+      return Texinfo::Translations::gdt('{category} of @code{{class}}',
                                  $current->{'extra'}->{'documentlanguage'},
                                  $substrings);
       #my $result = {};
@@ -250,7 +239,10 @@ sub find_innermost_accent_contents($)
     foreach my $content (@{$arg->{'contents'}}) {
       if (!($content->{'cmdname'} and ($content->{'cmdname'} eq 'c'
                                        or $content->{'cmdname'} eq 'comment'))) {
-        if ($content->{'cmdname'}
+        # if accent is tieaccent, keep everything and do not try to
+        # nest more
+        if ($current->{'cmdname'} ne 'tieaccent'
+            and $content->{'cmdname'}
             and $Texinfo::Commands::accent_commands{$content->{'cmdname'}}) {
           $current = $content;
           next ACCENT;

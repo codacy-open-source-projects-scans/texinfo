@@ -22,6 +22,7 @@
 #include "tree_types.h"
 #include "document_types.h"
 #include "tree.h"
+#include "errors.h"
 #include "errors_parser.h"
 #include "debug.h"
 #include "builtin_commands.h"
@@ -50,12 +51,12 @@ compare_targets (const void *a, const void *b)
 }
 
 ELEMENT *
-find_identifier_target (LABEL_LIST *identifiers_target,
-                        char *normalized)
+find_identifier_target (const LABEL_LIST *identifiers_target,
+                        const char *normalized)
 {
   static LABEL target_key;
   LABEL *result;
-  target_key.identifier = normalized;
+  target_key.identifier = (char *) normalized;
   result = (LABEL *)bsearch (&target_key, identifiers_target->list,
                              identifiers_target->number, sizeof(LABEL),
                              compare_targets);
@@ -240,25 +241,26 @@ add_element_to_identifiers_target (DOCUMENT *document, ELEMENT *element,
   return normalized;
 }
 
-/* TODO call message_list_* functions instead, but this would require
-   an ERROR_MESSAGE_LIST argument.
-   For now it is not useful, as the code calling register_label_element
-   makes sure that there is no preexisting target element with the
-   same noormalized identifier.
+/* NOTE this function cannot currently be called as the code calling
+   register_label_element makes sure that there is no preexisting
+   target element with the same normalized identifier.
    */
-void
-existing_label_error (DOCUMENT* document, ELEMENT *element, char *normalized)
+static void
+existing_label_error (DOCUMENT* document, ELEMENT *element, char *normalized,
+                      ERROR_MESSAGE_LIST *error_messages)
 {
-  if (normalized)
+  if (normalized && error_messages)
     {
       ELEMENT *existing_target
         = find_identifier_target (document->identifiers_target, normalized);
       ELEMENT *label_element = get_label_element (element);
       char *label_element_texi = convert_contents_to_texinfo (label_element);
-      command_error (element, "@%s `%s' previously defined",
+      message_list_command_error (error_messages, document->options,
+                     element, "@%s `%s' previously defined",
                      builtin_command_name (element->cmd),
                      label_element_texi);
-      line_error_ext (MSG_error, 1, &existing_target->source_info,
+      message_list_line_error_ext (error_messages, document->options,
+                      MSG_error, 1, &existing_target->source_info,
                       "here is the previous definition as @%s",
                       builtin_command_name (existing_target->cmd));
       free (label_element_texi);
@@ -267,7 +269,8 @@ existing_label_error (DOCUMENT* document, ELEMENT *element, char *normalized)
 
 /* return value is 1 for success, 0 for failure */
 int
-register_label_element (int document_descriptor, ELEMENT *element)
+register_label_element (int document_descriptor, ELEMENT *element,
+                        ERROR_MESSAGE_LIST *error_messages)
 {
   int status;
   DOCUMENT *document = retrieve_document (document_descriptor);
@@ -276,7 +279,7 @@ register_label_element (int document_descriptor, ELEMENT *element)
                                                         &status);
   if (!status)
     {
-      existing_label_error(document, element, normalized);
+      existing_label_error (document, element, normalized, error_messages);
     }
   register_label_in_list (document->labels_list, element,
                           normalized);

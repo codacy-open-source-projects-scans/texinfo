@@ -30,8 +30,6 @@
 
 #undef context
 
-#include "ppport.h"
-
 #include "command_ids.h"
 #include "element_types.h"
 #include "converter_types.h"
@@ -48,6 +46,9 @@
 #include "converter.h"
 #include "convert_html.h"
 #include "get_html_perl_info.h"
+
+ /* See the NOTE in build_perl_info.c on use of functions related to
+    memory allocation */
 
 MODULE = Texinfo::Convert::ConvertXS	PACKAGE = Texinfo::Convert::ConvertXS
 
@@ -76,7 +77,7 @@ converter_set_document (SV *converter_in, SV *document_in)
 
 void
 set_conf (SV *converter_in, conf, SV *value)
-         char *conf = (char *)SvPVbyte_nolen($arg);
+         const char *conf = (char *)SvPVbyte_nolen($arg);
       PREINIT:
          CONVERTER *self;
       CODE:
@@ -87,7 +88,7 @@ set_conf (SV *converter_in, conf, SV *value)
 
 void
 force_conf (SV *converter_in, conf, SV *value)
-         char *conf = (char *)SvPVbyte_nolen($arg);
+         const char *conf = (char *)SvPVbyte_nolen($arg);
       PREINIT:
          CONVERTER *self;
       CODE:
@@ -98,7 +99,7 @@ force_conf (SV *converter_in, conf, SV *value)
 
 SV *
 get_conf (SV *converter_in, conf)
-         char *conf = (char *)SvPVbyte_nolen($arg);
+         const char *conf = (char *)SvPVbyte_nolen($arg);
       PREINIT:
          CONVERTER *self;
       CODE:
@@ -112,7 +113,7 @@ get_conf (SV *converter_in, conf)
 
 void
 converter_line_error (SV *converter_in, text, SV *error_location_info, ...)
-          char *text = (char *)SvPVutf8_nolen($arg);
+          const char *text = (char *)SvPVutf8_nolen($arg);
       PROTOTYPE: $$$;$
       PREINIT:
          CONVERTER *self;
@@ -125,12 +126,12 @@ converter_line_error (SV *converter_in, text, SV *error_location_info, ...)
          if (self)
            {
              get_line_message (self, MSG_error, continuation,
-                               error_location_info, strdup (text));
+                               error_location_info, text);
            }
 
 void
 converter_line_warn (SV *converter_in, text, SV *error_location_info, ...)
-          char *text = (char *)SvPVutf8_nolen($arg);
+          const char *text = (char *)SvPVutf8_nolen($arg);
       PROTOTYPE: $$$;$
       PREINIT:
          CONVERTER *self;
@@ -143,12 +144,12 @@ converter_line_warn (SV *converter_in, text, SV *error_location_info, ...)
          if (self)
            {
              get_line_message (self, MSG_warning, continuation,
-                               error_location_info, strdup (text));
+                               error_location_info, text);
            }
 
 void
 converter_document_error (SV *converter_in, text, ...)
-          char *text = (char *)SvPVutf8_nolen($arg);
+          const char *text = (char *)SvPVutf8_nolen($arg);
       PROTOTYPE: $$;$
       PREINIT:
          CONVERTER *self;
@@ -160,12 +161,12 @@ converter_document_error (SV *converter_in, text, ...)
          if (self)
            {
              message_list_document_formatted_message (&self->error_messages,
-               self->conf, MSG_document_error, continuation, strdup (text));
+               self->conf, MSG_document_error, continuation, text);
            }
 
 void
 converter_document_warn (SV *converter_in, text, ...)
-          char *text = (char *)SvPVutf8_nolen($arg);
+          const char *text = (char *)SvPVutf8_nolen($arg);
       PROTOTYPE: $$;$
       PREINIT:
          CONVERTER *self;
@@ -177,14 +178,14 @@ converter_document_warn (SV *converter_in, text, ...)
          if (self)
            {
              message_list_document_formatted_message (&self->error_messages,
-                      self->conf, MSG_document_warning, continuation, strdup (text));
+                      self->conf, MSG_document_warning, continuation, text);
            }
 
 SV *
 get_converter_indices_sorted_by_index (SV *converter_sv)
      PREINIT:
         CONVERTER *self;
-        INDEX_SORTED_BY_INDEX *index_entries_by_index = 0;
+        const INDEX_SORTED_BY_INDEX *index_entries_by_index = 0;
         HV *converter_hv;
         SV **document_sv;
      CODE:
@@ -225,7 +226,7 @@ SV *
 get_converter_indices_sorted_by_letter (SV *converter_sv)
      PREINIT:
         CONVERTER *self;
-        INDEX_SORTED_BY_LETTER *index_entries_by_letter = 0;
+        const INDEX_SORTED_BY_LETTER *index_entries_by_letter = 0;
         HV *converter_hv;
         SV **document_sv;
      CODE:
@@ -267,7 +268,7 @@ get_converter_indices_sorted_by_letter (SV *converter_sv)
 # was an error with a missing type.
 FILE *
 get_unclosed_stream (SV *converter_in, file_path)
-        char *file_path = (char *)SvPVbyte_nolen($arg);
+        const char *file_path = (char *)SvPVbyte_nolen($arg);
       PREINIT:
          CONVERTER *self;
          OUTPUT_FILES_INFORMATION *output_files_information;
@@ -320,7 +321,7 @@ reset_converter (SV *converter_in)
       PREINIT:
          CONVERTER *self = 0;
          HV *stash;
-         char *name;
+         const char *name;
       CODE:
          stash = SvSTASH (SvRV (converter_in));
          name = HvNAME (stash);
@@ -335,7 +336,7 @@ destroy (SV *converter_in)
       PREINIT:
          CONVERTER *self = 0;
          HV *stash;
-         char *name;
+         const char *name;
       CODE:
          stash = SvSTASH (SvRV (converter_in));
          name = HvNAME (stash);
@@ -365,7 +366,7 @@ plain_texinfo_convert_tree (SV *tree_in)
           {
             char *result = convert_to_texinfo (document->tree);
             RETVAL = newSVpv_utf8 (result, 0);
-            free (result);
+            non_perl_free (result);
           }
         else
           RETVAL = newSV(0);
@@ -395,7 +396,7 @@ text_convert_tree (SV *options_in, SV *tree_in)
 
             destroy_text_options (text_options);
             RETVAL = newSVpv_utf8 (result, 0);
-            free (result);
+            non_perl_free (result);
           }
         else
           {
@@ -444,7 +445,7 @@ html_conversion_finalization (SV *converter_in)
 
 void
 html_register_id (SV *converter_in, id)
-         char *id = (char *)SvPVutf8_nolen($arg);
+         const char *id = (char *)SvPVutf8_nolen($arg);
       PREINIT:
          CONVERTER *self;
       CODE:
@@ -455,7 +456,7 @@ html_register_id (SV *converter_in, id)
 
 
 int html_id_is_registered (SV *converter_in, id)
-         char *id = (char *)SvPVutf8_nolen($arg);
+         const char *id = (char *)SvPVutf8_nolen($arg);
       PREINIT:
          CONVERTER *self;
          int found = 0;
@@ -472,8 +473,8 @@ html_new_document_context (SV *converter_in, char *context_name, ...)
       PROTOTYPE: $$;$$
       PREINIT:
          CONVERTER *self;
-         char *document_global_context = 0;
-         char *block_command_name = 0;
+         const char *document_global_context = 0;
+         const char *block_command_name = 0;
          enum command_id block_command = 0;
       CODE:
          self = get_sv_converter (converter_in, "html_new_document_context");
@@ -619,7 +620,7 @@ html_unset_raw_context (SV *converter_in)
 SV *
 html_debug_print_html_contexts (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_debug_print_html_contexts");
@@ -627,7 +628,7 @@ html_debug_print_html_contexts (SV *converter_in)
            {
              char *result = debug_print_html_contexts (self);
              RETVAL = newSVpv_utf8 (result, 0);
-             free (result);
+             non_perl_free (result);
            }
          else
            RETVAL = newSVpv_utf8 ("", 0);
@@ -637,7 +638,7 @@ html_debug_print_html_contexts (SV *converter_in)
 int
 html_in_math (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_in_math");
@@ -648,7 +649,7 @@ html_in_math (SV *converter_in)
 int
 html_in_preformatted_context (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_in_preformatted_context");
@@ -659,7 +660,7 @@ html_in_preformatted_context (SV *converter_in)
 int
 html_inside_preformatted (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_inside_preformatted");
@@ -670,7 +671,7 @@ html_inside_preformatted (SV *converter_in)
 int
 html_in_upper_case (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_in_upper_case");
@@ -681,7 +682,7 @@ html_in_upper_case (SV *converter_in)
 int
 html_in_non_breakable_space (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_in_non_breakable_space");
@@ -692,7 +693,7 @@ html_in_non_breakable_space (SV *converter_in)
 int
 html_in_space_protected (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_in_space_protected");
@@ -703,7 +704,7 @@ html_in_space_protected (SV *converter_in)
 int
 html_in_code (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_in_code");
@@ -714,7 +715,7 @@ html_in_code (SV *converter_in)
 int
 html_in_string (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_in_string");
@@ -725,7 +726,7 @@ html_in_string (SV *converter_in)
 int
 html_in_verbatim (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_in_verbatim");
@@ -736,7 +737,7 @@ html_in_verbatim (SV *converter_in)
 int
 html_in_raw (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_in_raw");
@@ -747,7 +748,7 @@ html_in_raw (SV *converter_in)
 int
 html_paragraph_number (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_paragraph_number");
@@ -758,7 +759,7 @@ html_paragraph_number (SV *converter_in)
 int
 html_preformatted_number (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_preformatted_number");
@@ -769,7 +770,7 @@ html_preformatted_number (SV *converter_in)
 const char *
 html_top_block_command (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
          enum command_id cmd;
      CODE:
          self = get_sv_converter (converter_in,
@@ -782,8 +783,8 @@ html_top_block_command (SV *converter_in)
 SV *
 html_preformatted_classes_stack (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
-         COMMAND_OR_TYPE_STACK *preformatted_classes_stack;
+         const CONVERTER *self;
+         const COMMAND_OR_TYPE_STACK *preformatted_classes_stack;
          AV *preformatted_classes_av;
          size_t i;
      CODE:
@@ -793,9 +794,9 @@ html_preformatted_classes_stack (SV *converter_in)
          preformatted_classes_av = newAV();
          for (i = 0; i < preformatted_classes_stack->top; i++)
            {
-             COMMAND_OR_TYPE *cmd_or_type
+             const COMMAND_OR_TYPE *cmd_or_type
                = &preformatted_classes_stack->stack[i];
-             char *pre_class = 0;
+             const char *pre_class = 0;
              if (cmd_or_type->variety == CTV_type_command)
                pre_class = builtin_command_data[cmd_or_type->cmd].cmdname;
              else if (cmd_or_type->variety == CTV_type_type)
@@ -811,7 +812,7 @@ html_preformatted_classes_stack (SV *converter_in)
 const char *
 html_in_align (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
          enum command_id cmd;
      CODE:
          self = get_sv_converter (converter_in, "html_in_align");
@@ -823,7 +824,7 @@ html_in_align (SV *converter_in)
 SV *
 html_current_filename (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in, "html_current_filename");
          RETVAL = newSVpv_utf8 (self->current_filename.filename, 0);
@@ -833,7 +834,7 @@ html_current_filename (SV *converter_in)
 SV *
 html_current_output_unit (SV *converter_in)
      PREINIT:
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in, "html_current_output_unit");
          if (!self->current_output_unit)
@@ -844,11 +845,11 @@ html_current_output_unit (SV *converter_in)
          RETVAL
 
 SV *
-html_count_elements_in_filename (SV *converter_in, char *spec, filename)
-         char *filename = (char *)SvPVutf8_nolen($arg);
+html_count_elements_in_filename (SV *converter_in, const char *spec, filename)
+         const char *filename = (char *)SvPVutf8_nolen($arg);
      PREINIT:
          IV count = -1;
-         CONVERTER *self;
+         const CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_count_elements_in_filename");
@@ -890,7 +891,7 @@ html_register_file_information (SV *converter_in, key, int value)
 
 void
 html_get_file_information (SV *converter_in, key, ...)
-         char *key = (char *)SvPVutf8_nolen($arg);
+         const char *key = (char *)SvPVutf8_nolen($arg);
     PROTOTYPE: $$;$
      PREINIT:
          CONVERTER *self;
@@ -906,7 +907,7 @@ html_get_file_information (SV *converter_in, key, ...)
            filename_sv = ST(2);
          if (self)
            {
-             char *filename = 0;
+             const char *filename = 0;
              int status;
              if (filename_sv)
                filename = SvPVutf8_nolen (filename_sv);
@@ -944,7 +945,7 @@ html_get_target (SV *converter_in, SV *element_sv)
                                                   output_units_descriptor);
              if (element)
                {
-                 HTML_TARGET *target_info = html_get_target (self, element);
+                 const HTML_TARGET *target_info = html_get_target (self, element);
                  if (target_info)
                    html_target_hv = build_html_target (target_info);
                }
@@ -979,10 +980,10 @@ html_command_id (SV *converter_in, SV *element_sv)
 
 SV *
 html_command_contents_target (SV *converter_in, SV *element_sv, cmdname)
-         char *cmdname = (char *)SvPVutf8_nolen($arg);
+         const char *cmdname = (char *)SvPVutf8_nolen($arg);
      PREINIT:
          CONVERTER *self;
-         char *id = 0;
+         const char *id = 0;
          const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
@@ -1005,7 +1006,7 @@ SV *
 html_footnote_location_target (SV *converter_in, SV *element_sv)
      PREINIT:
          CONVERTER *self;
-         char *id = 0;
+         const char *id = 0;
          const ELEMENT *element;
      CODE:
          element = element_converter_from_sv (converter_in, element_sv,
@@ -1033,7 +1034,7 @@ html_command_filename (SV *converter_in, SV *element_sv)
                                               &self);
          if (element)
            {
-             FILE_NUMBER_NAME *file_number_name
+             const FILE_NUMBER_NAME *file_number_name
                = html_command_filename (self, element);
              if (file_number_name)
                {
@@ -1115,7 +1116,7 @@ html_internal_command_href (SV *converter_in, SV *element_sv, SV *source_filenam
          if (href)
            {
              RETVAL = newSVpv_utf8 (href, 0);
-             free (href);
+             non_perl_free (href);
            }
          else
            RETVAL = newSV (0);
@@ -1146,7 +1147,7 @@ html_command_contents_href (SV *converter_in, SV *element_sv, cmdname, SV *sourc
          if (href)
            {
              RETVAL = newSVpv_utf8 (href, 0);
-             free (href);
+             non_perl_free (href);
            }
          else
            RETVAL = newSV (0);
@@ -1181,7 +1182,7 @@ html_footnote_location_href (SV *converter_in, SV *element_sv, SV *source_filena
          if (href)
            {
              RETVAL = newSVpv_utf8 (href, 0);
-             free (href);
+             non_perl_free (href);
            }
          else
            RETVAL = newSV (0);
@@ -1220,7 +1221,7 @@ html_internal_command_tree (SV *converter_in, SV *element_sv, SV* no_number_sv)
          RETVAL
 
 SV *
-html_internal_command_text (SV *converter_in, SV *element_sv, char *type)
+html_internal_command_text (SV *converter_in, SV *element_sv, const char *type)
      PREINIT:
          CONVERTER *self;
          char *text = 0;
@@ -1252,7 +1253,7 @@ html_internal_command_text (SV *converter_in, SV *element_sv, char *type)
          if (text)
            {
              RETVAL = newSVpv_utf8 (text, 0);
-             free (text);
+             non_perl_free (text);
            }
          else
            RETVAL = newSV (0);
@@ -1274,7 +1275,7 @@ html_set_shared_conversion_state (SV *converter_in, cmdname, state_name, ...)
          if (args_nr > 0)
            {
              int i;
-             args_sv = (SV **) malloc (args_nr * sizeof (SV *));
+             args_sv = (SV **) perl_only_malloc (args_nr * sizeof (SV *));
              for (i = 0; i < args_nr; i++)
                {
                  args_sv[i] = ST(i+3);
@@ -1282,7 +1283,7 @@ html_set_shared_conversion_state (SV *converter_in, cmdname, state_name, ...)
            }
          html_set_shared_conversion_state (self, converter_in,
                                 cmdname, state_name, args_nr, args_sv);
-         free (args_sv);
+         perl_only_free (args_sv);
 
 SV *
 html_get_shared_conversion_state (SV *converter_in, cmdname, state_name, ...)
@@ -1299,7 +1300,7 @@ html_get_shared_conversion_state (SV *converter_in, cmdname, state_name, ...)
          if (args_nr > 0)
            {
              int i;
-             args_sv = (SV **) malloc (args_nr * sizeof (SV *));
+             args_sv = (SV **) perl_only_malloc (args_nr * sizeof (SV *));
              for (i = 0; i < args_nr; i++)
                {
                  args_sv[i] = ST(i+3);
@@ -1307,7 +1308,7 @@ html_get_shared_conversion_state (SV *converter_in, cmdname, state_name, ...)
            }
          RETVAL = html_get_shared_conversion_state (self, converter_in,
                                      cmdname, state_name, args_nr, args_sv);
-         free (args_sv);
+         perl_only_free (args_sv);
     OUTPUT:
          RETVAL
 
@@ -1356,7 +1357,7 @@ html_close_registered_sections_level (SV *converter_in, int level)
 
 SV *
 html_attribute_class (SV *converter_in, element, ...)
-         char *element = (char *)SvPVutf8_nolen($arg);
+         const char *element = (char *)SvPVutf8_nolen($arg);
     PROTOTYPE: $$;$
     PREINIT:
          CONVERTER *self;
@@ -1373,8 +1374,7 @@ html_attribute_class (SV *converter_in, element, ...)
              char *result;
              if (classes_sv)
                {
-                 classes = (STRING_LIST *) malloc (sizeof (STRING_LIST));
-                 memset (classes, 0, sizeof (STRING_LIST));
+                 classes = new_string_list ();
                  add_svav_to_string_list (classes_sv, classes, svt_char);
                }
              result = html_attribute_class (self, element, classes);
@@ -1406,7 +1406,7 @@ html_get_css_elements_classes (SV *converter_in, ...)
          if (self)
            {
              STRING_LIST *result;
-             char *filename = 0;
+             const char *filename = 0;
              if (filename_sv)
                filename = SvPVutf8_nolen (filename_sv);
              result = html_get_css_elements_classes (self, filename);
@@ -1431,7 +1431,7 @@ html_get_css_elements_classes (SV *converter_in, ...)
 
 void
 html_css_add_info (SV *converter_in, char *spec, css_info)
-         char *css_info = (char *)SvPVutf8_nolen($arg);
+         const char *css_info = (char *)SvPVutf8_nolen($arg);
     PREINIT:
          CONVERTER *self;
     CODE:
@@ -1445,7 +1445,7 @@ html_css_add_info (SV *converter_in, char *spec, css_info)
 
 void
 html_css_set_selector_style (SV *converter_in, css_info, SV *css_style_sv)
-         char *css_info = (char *)SvPVutf8_nolen($arg);
+         const char *css_info = (char *)SvPVutf8_nolen($arg);
     PREINIT:
          CONVERTER *self;
     CODE:
@@ -1470,7 +1470,7 @@ html_css_get_info (SV *converter_in, char *spec)
                                   "html_css_add_info");
          if (self)
            {
-             STRING_LIST *result;
+             const STRING_LIST *result;
              enum css_info_type type = html_get_css_info_spec (spec);
              result = html_css_get_info (self, type);
              if (result)
@@ -1484,7 +1484,7 @@ html_css_get_info (SV *converter_in, char *spec)
 
 SV *
 html_css_get_selector_style (SV *converter_in, css_info)
-         char *css_info = (char *)SvPVutf8_nolen($arg);
+         const char *css_info = (char *)SvPVutf8_nolen($arg);
     PREINIT:
          CONVERTER *self;
          const char *css_style = 0;
@@ -1504,18 +1504,19 @@ html_css_get_selector_style (SV *converter_in, css_info)
 
 void
 html_register_footnote (SV *converter_in, SV *command, footid, docid, int number_in_doc, footnote_location_filename, ...)
-         char *footid = (char *)SvPVutf8_nolen($arg);
-         char *docid = (char *)SvPVutf8_nolen($arg);
-         char *footnote_location_filename = (char *)SvPVutf8_nolen($arg);
+         const char *footid = (char *)SvPVutf8_nolen($arg);
+         const char *docid = (char *)SvPVutf8_nolen($arg);
+         const char *footnote_location_filename = (char *)SvPVutf8_nolen($arg);
       PROTOTYPE: $$$$$$$
       PREINIT:
          CONVERTER *self;
-         char *multi_expanded_region = 0;
+         const char *multi_expanded_region = 0;
       CODE:
          self = get_sv_converter (converter_in,
                                   "html_register_footnote");
          if (self)
            {
+             /* TODO use functions used for other elements? */
              /* find footnote in XS.  First use index in global commands,
                 then number_in_doc, and if not effective, do a linear search */
              ELEMENT *footnote = 0;
@@ -1614,11 +1615,11 @@ html_get_pending_footnotes (SV *converter_in)
 
 void
 html_register_pending_formatted_inline_content (SV *converter_in, category, ...)
-         char *category = (char *)SvPVutf8_nolen($arg);
+         const char *category = (char *)SvPVutf8_nolen($arg);
       PROTOTYPE: $$$
       PREINIT:
          CONVERTER *self;
-         char *inline_content = 0;
+         const char *inline_content = 0;
      CODE:
          self = get_sv_converter (converter_in,
                        "html_register_pending_formatted_inline_content");
@@ -1633,7 +1634,7 @@ html_register_pending_formatted_inline_content (SV *converter_in, category, ...)
 
 SV *
 html_cancel_pending_formatted_inline_content (SV *converter_in, category)
-         char *category = (char *)SvPVutf8_nolen($arg);
+         const char *category = (char *)SvPVutf8_nolen($arg);
       PREINIT:
          CONVERTER *self;
          char *inline_content = 0;
@@ -1679,7 +1680,7 @@ html_get_pending_formatted_inline_content (SV *converter_in)
 
 void
 html_associate_pending_formatted_inline_content (SV *converter_in, SV *element_sv, inline_content)
-         char *inline_content = (char *)SvPVutf8_nolen($arg);
+         const char *inline_content = (char *)SvPVutf8_nolen($arg);
       PREINIT:
          CONVERTER *self;
       CODE:
@@ -1761,7 +1762,7 @@ html_command_is_in_referred_command_stack (SV *converter_in, SV *element_sv)
 
 int
 html_check_htmlxref_already_warned (SV *converter_in, manual_name, SV *source_info_sv)
-         char *manual_name = (char *)SvPVutf8_nolen($arg);
+         const char *manual_name = (char *)SvPVutf8_nolen($arg);
       PREINIT:
          CONVERTER *self;
          SOURCE_INFO *source_info = 0;
@@ -1792,7 +1793,7 @@ html_prepare_conversion_units (SV *converter_in, ...)
       PROTOTYPE: $$$
       PREINIT:
          HV *converter_hv;
-         char *document_name = 0;
+         const char *document_name = 0;
          CONVERTER *self;
          int output_units_descriptor = 0;
          int special_units_descriptor = 0;
@@ -1829,7 +1830,8 @@ html_prepare_conversion_units (SV *converter_in, ...)
                    newRV_inc ((SV *) output_units_hv), 0);
 
          /* calls perl customization functions, so need to be done after
-            build_output_units_list calls to be able to retrieve perl units */
+            build_output_units_list calls to be able to retrieve Perl
+            output units references */
          html_prepare_conversion_units_targets (self, document_name,
               output_units_descriptor, special_units_descriptor,
               associated_special_units_descriptor);
@@ -1841,10 +1843,10 @@ html_prepare_conversion_units (SV *converter_in, ...)
 
 SV *
 html_prepare_units_directions_files (SV *converter_in, SV *output_units_in, SV *special_units_in, SV *associated_special_units_in, output_file, destination_directory, output_filename, document_name)
-         char *output_file = (char *)SvPVutf8_nolen($arg);
-         char *destination_directory = (char *)SvPVutf8_nolen($arg);
-         char *output_filename = (char *)SvPVutf8_nolen($arg);
-         char *document_name = (char *)SvPVutf8_nolen($arg);
+         const char *output_file = (char *)SvPVutf8_nolen($arg);
+         const char *destination_directory = (char *)SvPVutf8_nolen($arg);
+         const char *output_filename = (char *)SvPVutf8_nolen($arg);
+         const char *document_name = (char *)SvPVutf8_nolen($arg);
   PREINIT:
          CONVERTER *self = 0;
          int output_units_descriptor = 0;
@@ -2004,8 +2006,8 @@ html_prepare_converted_output_info (SV *converter_in)
 
 void
 html_prepare_title_titlepage (SV *converter_in, SV *output_units_in, output_file, output_filename)
-         char *output_file = (char *)SvPVutf8_nolen($arg);
-         char *output_filename = (char *)SvPVutf8_nolen($arg);
+         const char *output_file = (char *)SvPVutf8_nolen($arg);
+         const char *output_filename = (char *)SvPVutf8_nolen($arg);
   PREINIT:
          CONVERTER *self = 0;
          int output_units_descriptor = 0;
@@ -2075,7 +2077,7 @@ html_convert_convert (SV *converter_in, SV *tree_in, SV *output_units_in, SV *sp
 # currently not used, convert_tree is not called on trees registered in XS
 SV *
 html_convert_tree (SV *converter_in, SV *tree_in, explanation)
-        char *explanation = (char *)SvPVbyte_nolen($arg);
+        const char *explanation = (char *)SvPVbyte_nolen($arg);
   PROTOTYPE: $$;$
   PREINIT:
         CONVERTER *self = 0;
@@ -2103,10 +2105,10 @@ html_convert_tree (SV *converter_in, SV *tree_in, explanation)
 
 SV *
 html_convert_output (SV *converter_in, SV *tree_in, SV *output_units_in, SV *special_units_in, output_file, destination_directory, output_filename, document_name)
-         char *output_file = (char *)SvPVutf8_nolen($arg);
-         char *destination_directory = (char *)SvPVutf8_nolen($arg);
-         char *output_filename = (char *)SvPVutf8_nolen($arg);
-         char *document_name = (char *)SvPVutf8_nolen($arg);
+         const char *output_file = (char *)SvPVutf8_nolen($arg);
+         const char *destination_directory = (char *)SvPVutf8_nolen($arg);
+         const char *output_filename = (char *)SvPVutf8_nolen($arg);
+         const char *document_name = (char *)SvPVutf8_nolen($arg);
   PREINIT:
          CONVERTER *self = 0;
          DOCUMENT *document = 0;
@@ -2158,7 +2160,7 @@ html_convert_output (SV *converter_in, SV *tree_in, SV *output_units_in, SV *spe
 
 SV *
 html_prepare_node_redirection_page (SV *converter_in, SV *element_sv, redirection_filename)
-         char *redirection_filename = (char *)SvPVutf8_nolen($arg);
+         const char *redirection_filename = (char *)SvPVutf8_nolen($arg);
      PREINIT:
          CONVERTER *self;
          char *redirection_page = 0;

@@ -3939,7 +3939,7 @@ sub _end_line_def_line($$$)
     if (defined($index_entry)) {
       if ($class_element) {
         # Delay getting the text until Texinfo::Indices
-        # in order to avoid using gdt.
+        # in order to avoid calling gdt.
         # We need to store the language as well in case there are multiple
         # languages in the document.
         if ($command_index{$def_command} eq 'fn'
@@ -7148,7 +7148,7 @@ sub _process_remaining_on_line($$$$)
                sprintf(__("undefined flag: %s"), $value), $source_info);
 
             # caller should expand something along
-            # gdt($self, '@{No value for `{value}\'@}',
+            # cdt($self, '@{No value for `{value}\'@}',
             #                            {'value' => ...});
             my $new_element = _new_value_element($command, $value, $current,
                                                  $spaces_element);
@@ -7513,12 +7513,14 @@ sub _parse_texi($$$)
   # Setup identifier target elements based on 'labels_list'
   Texinfo::Document::set_labels_identifiers_target($self,
                                               $self->{'registrar'}, $self);
-  Texinfo::Translations::complete_indices($self, $self->{'index_names'});
+  Texinfo::Translations::complete_indices($self->{'index_names'},
+                                          $self->{'DEBUG'});
 
   my $document = Texinfo::Document::register($root,
      $self->{'global_info'}, $self->{'index_names'}, $self->{'floats'},
      $self->{'internal_references'}, $self->{'commands_info'},
-     $self->{'identifiers_target'}, $self->{'labels_list'});
+     $self->{'identifiers_target'}, $self->{'labels_list'},
+     $self->{'registrar'});
 
   return $document;
 }
@@ -7690,8 +7692,9 @@ sub _parse_line_command_args($$$)
                or ($brace_commands{$cmd_name} ne 'style_code'
                    and $brace_commands{$cmd_name} ne 'style_no_code'
                    and $brace_commands{$cmd_name} ne 'style_other'))) {
-        $self->_line_error(sprintf(__("cannot redefine with \@%s: %s"),
-                           $command, $cmd_name), $source_info);
+        $self->_line_error(sprintf(
+                    __("cannot redefine with \@definfoenclose: %s"),
+                                   $cmd_name), $source_info);
       } else {
         $self->{'definfoenclose'}->{$cmd_name} = [ $begin, $end ];
         print STDERR "DEFINFOENCLOSE \@$cmd_name: $begin, $end\n"
@@ -7713,7 +7716,8 @@ sub _parse_line_command_args($$$)
         # @-command otherwise will remain there, possibly having specific effects.
       }
     } else {
-      $self->_line_error(sprintf(__("bad argument to \@%s"), $command),
+      $self->_line_error(sprintf(__("bad argument to \@definfoenclose"),
+                                 $command),
                          $source_info);
     }
   } elsif ($command eq 'columnfractions') {

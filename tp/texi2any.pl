@@ -1229,6 +1229,22 @@ sub _exit($$)
      or $error_count > get_conf('ERROR_LIMIT')));
 }
 
+sub handle_document_errors($$$)
+{
+  my $document = shift;
+  my $error_count = shift;
+  my $opened_files = shift;
+
+  die if ref($document) ne 'Texinfo::Document';
+
+  my ($errors, $new_error_count) = $document->errors();
+  $error_count += $new_error_count if ($new_error_count);
+  _handle_errors($errors);
+
+  _exit($error_count, $opened_files);
+  return $error_count;
+}
+
 sub handle_errors($$$)
 {
   my $self = shift;
@@ -1237,6 +1253,15 @@ sub handle_errors($$$)
 
   my ($errors, $new_error_count) = $self->errors();
   $error_count += $new_error_count if ($new_error_count);
+  _handle_errors($errors);
+
+  _exit($error_count, $opened_files);
+  return $error_count;
+}
+
+sub _handle_errors($)
+{
+  my $errors = shift;
   foreach my $error_message (@$errors) {
     if ($error_message->{'type'} eq 'error' or !get_conf('NO_WARN')) {
       my $s = '';
@@ -1260,9 +1285,6 @@ sub handle_errors($$$)
       warn $s;
     }
   }
-
-  _exit($error_count, $opened_files);
-  return $error_count;
 }
 
 # Avoid loading these modules until down here to speed up the case
@@ -1554,7 +1576,7 @@ while(@input_files) {
     # no need to rebuild the tree here if convert_to_texinfo is XS code.
     if (not (defined $ENV{TEXINFO_XS_CONVERT}
              and $ENV{TEXINFO_XS_CONVERT} eq '1')) {
-      $document = Texinfo::Document::rebuild_document($document);
+      Texinfo::Document::rebuild_document($document);
       $tree = $document->tree();
     }
     my $texinfo_text = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
@@ -1611,10 +1633,10 @@ while(@input_files) {
 
   if ($tree_transformations{'insert_nodes_for_sectioning_commands'}) {
     Texinfo::Transformations::insert_nodes_for_sectioning_commands($document,
-                                               $registrar, $main_configuration);
+                                               $main_configuration);
   }
 
-  Texinfo::Structuring::associate_internal_references($document, $registrar,
+  Texinfo::Structuring::associate_internal_references($document,
                                                       $main_configuration);
   # information obtained through Texinfo::Structuring
   # and useful in converters.
@@ -1628,8 +1650,7 @@ while(@input_files) {
   }
 
   if (!$formats_table{$converted_format}->{'no_warn_non_empty_parts'}) {
-    Texinfo::Structuring::warn_non_empty_parts($document, $registrar,
-                                               $main_configuration);
+    Texinfo::Structuring::warn_non_empty_parts($document, $main_configuration);
   }
 
   if ($tree_transformations{'complete_tree_nodes_menus'}) {
@@ -1645,11 +1666,9 @@ while(@input_files) {
   }
 
   if ($formats_table{$converted_format}->{'nodes_tree'}) {
-    my $nodes_list
-        = Texinfo::Structuring::nodes_tree($document, $registrar,
-                                            $main_configuration);
-    Texinfo::Document::register_document_nodes_list($document,
-                                                    $nodes_list);
+    my $nodes_list = Texinfo::Structuring::nodes_tree($document,
+                                                      $main_configuration);
+    Texinfo::Document::register_document_nodes_list($document, $nodes_list);
 
     # With this condition, menu is the default for 'FORMAT_MENU'.
     # However, this can only happen if
@@ -1661,14 +1680,13 @@ while(@input_files) {
     # is never used.
     if (not defined(get_conf('FORMAT_MENU'))
         or get_conf('FORMAT_MENU') eq 'menu') {
-      Texinfo::Structuring::set_menus_node_directions($document, $registrar,
+      Texinfo::Structuring::set_menus_node_directions($document,
                                                       $main_configuration);
 
       Texinfo::Structuring::complete_node_tree_with_menus($document,
-                                                          $registrar,
                                                           $main_configuration);
 
-      Texinfo::Structuring::check_nodes_are_referenced($document, $registrar,
+      Texinfo::Structuring::check_nodes_are_referenced($document,
                                                        $main_configuration);
     }
   }
@@ -1677,21 +1695,12 @@ while(@input_files) {
   }
 
   if ($formats_table{$converted_format}->{'setup_index_entries_sort_strings'}) {
-    Texinfo::Document::indices_sort_strings($document, $registrar,
-                                            $main_configuration);
+    Texinfo::Document::indices_sort_strings($document, $main_configuration);
   }
 
-  $document = Texinfo::Document::rebuild_document($document);
-
-  if ($XS_structuring) {
-    foreach my $error (@{$document->{'errors'}}) {
-      $registrar->add_formatted_message($error);
-    }
-    Texinfo::Document::clear_document_errors(
-                                        $document->document_descriptor());
-  }
-
-  $error_count = handle_errors($registrar, $error_count, \@opened_files);
+  Texinfo::Document::rebuild_document($document);
+  $error_count = handle_document_errors($document,
+                                        $error_count, \@opened_files);
 
   if ($format eq 'structure') {
     goto NEXT;
@@ -1890,7 +1899,7 @@ while(@input_files) {
 
   $converter->destroy();
  NEXT:
-  Texinfo::Document::remove_document($document);
+  Texinfo::Document::remove_document($document) if defined($document);
 }
 
 foreach my $unclosed_file (keys(%main_unclosed_files)) {

@@ -79,7 +79,7 @@ typedef struct {
 ELEMENT *setup_document_root_and_before_node_section (void);
 int parse_texi (ELEMENT *root_elt, ELEMENT *current_elt);
 int parse_texi_document (void);
-void set_documentlanguage_override (char *value);
+void set_documentlanguage_override (const char *value);
 void set_accept_internalvalue (int value);
 void set_restricted (int value);
 
@@ -142,6 +142,7 @@ int register_global_command (ELEMENT *current);
 void wipe_parser_global_info (void);
 
 extern COUNTER count_remaining_args, count_items, count_cells;
+void reset_parser_counters (void);
 
 /* In multitable.c */
 ELEMENT *item_multitable_parent (ELEMENT *current);

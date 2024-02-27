@@ -225,10 +225,9 @@ parse_line_command_args (ELEMENT *line_command)
         line += strspn (line, whitespace_chars);
         if (*line != ',')
           goto definfoenclose_invalid;
-        line++;
+        line++; /* Past ','. */
         line += strspn (line, whitespace_chars);
 
-        /* TODO: Can we have spaces in the delimiters? */
         len = strcspn (line, ",");
         start = strndup (line, len);
         line += len;
@@ -1329,6 +1328,7 @@ end_line_misc_line (ELEMENT *current)
               fullpath = parser_locate_include_file (sys_filename);
               if (fullpath && access (fullpath, R_OK) == 0)
                 add_string (fullpath, &global_info.included_files);
+              free (fullpath);
             }
           else if (current->cmd == CM_documentencoding)
             {

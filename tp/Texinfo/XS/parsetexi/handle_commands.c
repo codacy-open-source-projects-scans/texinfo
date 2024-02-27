@@ -44,8 +44,8 @@
 #include "extra.h"
 
 /* Return a containing @itemize or @enumerate if inside it. */
-ELEMENT *
-item_container_parent (ELEMENT *current)
+static ELEMENT *
+item_container_parent (const ELEMENT *current)
 {
   if ((current->cmd == CM_item
        || current->type == ET_before_item)
@@ -61,7 +61,7 @@ item_container_parent (ELEMENT *current)
 /* Check that there are no text holding environments (currently
    checking only paragraphs and preformatted) in contents. */
 int
-check_no_text (ELEMENT *current)
+check_no_text (const ELEMENT *current)
 {
   int after_paragraph = 0;
   int i, j;
@@ -940,7 +940,7 @@ handle_line_command (ELEMENT *current, char **line_inout,
               else if (parent->cmd == CM_quotation
                        || parent->cmd == CM_smallquotation)
                 {
-                  ELEMENT_LIST *l = lookup_extra_contents (parent, "authors", 1);
+                  ELEMENT_LIST *l = add_extra_contents (parent, "authors", 0);
                   add_to_element_list (l, current);
                   add_extra_element (current, "quotation", parent);
                   found = 1; break;
@@ -992,7 +992,7 @@ clear_parser_expanded_formats (void)
 }
 
 void
-add_parser_expanded_format (char *format)
+add_parser_expanded_format (const char *format)
 {
   add_expanded_format (parser_expanded_formats, format);
 }
@@ -1118,7 +1118,7 @@ handle_block_command (ELEMENT *current, char **line_inout,
                   else
                     {
                       ELEMENT_LIST *l
-                        = lookup_extra_contents (current_node, "menus", 1);
+                        = add_extra_contents (current_node, "menus", 0);
                       add_to_element_list (l, block);
                     }
                 }

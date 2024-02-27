@@ -572,6 +572,10 @@ sub conversion_finalization($)
   my $self = shift;
 
   $self->pop_top_formatter();
+
+  if ($self->{'encoding_disabled'}) {
+    delete $self->{'encoding_disabled'};
+  }
 }
 
 sub count_context_bug_message($$$)
@@ -591,62 +595,6 @@ sub count_context_bug_message($$$)
                                $output_unit->{'unit_command'});
     die;
   }
-}
-
-# the initialization of module specific state is not done in output()
-# as output() is the generic Converter::Convert function, so it needs
-# to be done here by calling _initialize_converter_state.
-sub convert_output_unit($$)
-{
-  my ($self, $output_unit) = @_;
-
-  $self->{'count_context'}->[-1]->{'result'} = '';
-
-  if ($output_unit->{'unit_contents'}) {
-    foreach my $content (@{$output_unit->{'unit_contents'}}) {
-      _convert($self, $content);
-    }
-  }
-  $self->count_context_bug_message('', $output_unit);
-  $self->process_footnotes($output_unit);
-  $self->count_context_bug_message('footnotes ', $output_unit);
-
-  return _stream_result($self);
-}
-
-sub convert($$)
-{
-  my ($self, $document) = @_;
-
-  $self->conversion_initialization($document);
-
-  my $root = $document->tree();
-
-  my $result = '';
-
-  my $output_units = Texinfo::Structuring::split_by_node($root);
-  if (!defined($output_units)) {
-    push @{$self->{'count_context'}}, {'lines' => 0, 'bytes' => 0,
-                                       'locations' => [],
-                                       'result' => '' };
-    $self->_convert($root);
-    $self->count_context_bug_message('no element ');
-    $self->process_footnotes();
-    $self->count_context_bug_message('no element footnotes ');
-    $result = _stream_result($self);
-
-    pop @{$self->{'count_context'}};
-    return $result;
-  } else {
-    foreach my $output_unit (@$output_units) {
-      my $node_text = convert_output_unit($self, $output_unit);
-      $result .= $node_text;
-    }
-  }
-
-  $self->conversion_finalization();
-
-  return $result;
 }
 
 sub convert_tree($$)
@@ -676,6 +624,217 @@ sub convert_tree($$)
   return $result;
 }
 
+# the initialization of module specific state is not done in output()
+# as output() is the generic Converter::Convert function, so it needs
+# to be done here by calling _initialize_converter_state.
+sub convert_output_unit($$)
+{
+  my ($self, $output_unit) = @_;
+
+  $self->{'count_context'}->[-1]->{'result'} = '';
+
+  if ($output_unit->{'unit_contents'}) {
+    foreach my $content (@{$output_unit->{'unit_contents'}}) {
+      _convert($self, $content);
+    }
+  }
+  $self->count_context_bug_message('', $output_unit);
+  $self->process_footnotes($output_unit);
+  $self->count_context_bug_message('footnotes ', $output_unit);
+
+  return _stream_result($self);
+}
+
+sub convert($$)
+{
+  my ($self, $document) = @_;
+
+  $self->conversion_initialization($document);
+  $self->{'encoding_disabled'} = 1;
+
+  my $root = $document->tree();
+
+  my $result = '';
+
+  my $output_units = Texinfo::Structuring::split_by_node($root);
+
+  foreach my $output_unit (@$output_units) {
+    my $node_text = convert_output_unit($self, $output_unit);
+    $result .= $node_text;
+  }
+
+  $self->conversion_finalization();
+
+  return $result;
+}
+
+# use file_counters and out_filepaths converter states.
+sub output($$)
+{
+  my $self = shift;
+  my $document = shift;
+
+  $self->conversion_initialization($document);
+
+  my $root = $document->tree();
+
+  my $output_units;
+
+  if (defined($self->get_conf('OUTFILE'))
+      and ($Texinfo::Common::null_device_file{$self->get_conf('OUTFILE')}
+           or $self->get_conf('OUTFILE') eq '-'
+           or $self->get_conf('OUTFILE') eq '')) {
+    if ($self->get_conf('SPLIT')) {
+      $self->converter_document_warn(
+               sprintf(__("%s: output incompatible with split"),
+                                   $self->get_conf('OUTFILE')));
+      $self->force_conf('SPLIT', '');
+    }
+  }
+  if ($self->get_conf('SPLIT')) {
+    $self->set_conf('NODE_FILES', 1);
+  }
+
+  my ($output_file, $destination_directory, $output_filename,
+       $document_name)
+      = $self->determine_files_and_directory($self->{'output_format'});
+  my ($encoded_destination_directory, $dir_encoding)
+    = $self->encoded_output_file_name($destination_directory);
+  my $succeeded
+    = $self->create_destination_directory($encoded_destination_directory,
+                                          $destination_directory);
+  unless ($succeeded) {
+    $self->conversion_finalization();
+    return undef;
+  }
+
+  if ($self->get_conf('USE_NODES')) {
+    $output_units = Texinfo::Structuring::split_by_node($root);
+  } else {
+    $output_units = Texinfo::Structuring::split_by_section($root);
+  }
+
+  Texinfo::Structuring::split_pages($output_units, $self->get_conf('SPLIT'));
+
+  Texinfo::Structuring::rebuild_output_units($output_units);
+
+  # determine file names associated with the different pages
+  if ($output_file ne '') {
+    $self->set_output_units_files($output_units, $output_file,
+                                   $destination_directory,
+                                   $output_filename, $document_name);
+  } else {
+    $self->{'encoding_disabled'} = 1;
+  }
+
+  # Now do the output
+  my $fh;
+  if (!defined($output_units->[0]->{'unit_filename'})) {
+    # no page
+    my $output = '';
+    my $outfile_name;
+    my $encoded_outfile_name;
+    if ($output_file ne '') {
+      if ($self->get_conf('SPLIT')) {
+        my $top_node_file_name = $self->top_node_filename($document_name);
+        if ($destination_directory ne '') {
+          $outfile_name = File::Spec->catfile($destination_directory,
+                                              $top_node_file_name);
+        } else {
+          $outfile_name = $top_node_file_name;
+        }
+      } else {
+        $outfile_name = $output_file;
+      }
+      print STDERR "DO No pages, output in $outfile_name\n"
+        if ($self->get_conf('DEBUG'));
+      my $path_encoding;
+      ($encoded_outfile_name, $path_encoding)
+        = $self->encoded_output_file_name($outfile_name);
+      my $error_message;
+      ($fh, $error_message) = Texinfo::Common::output_files_open_out(
+                    $self->output_files_information(), $self,
+                    $encoded_outfile_name);
+      if (!$fh) {
+        $self->converter_document_error(
+                 sprintf(__("could not open %s for writing: %s"),
+                                      $outfile_name, $error_message));
+        $self->conversion_finalization();
+        return undef;
+      }
+    } else {
+      print STDERR "DO No pages, string output\n"
+        if ($self->get_conf('DEBUG'));
+    }
+
+    foreach my $output_unit (@$output_units) {
+      my $output_unit_text = $self->convert_output_unit($output_unit);
+      $output .= $self->write_or_return($output_unit_text, $fh);
+    }
+    # NOTE do not close STDOUT now to avoid a perl warning.
+    # FIXME is it still true that there is such a warning?
+    if ($fh and $outfile_name ne '-') {
+      Texinfo::Common::output_files_register_closed(
+                  $self->output_files_information(), $encoded_outfile_name);
+      if (!close($fh)) {
+        $self->converter_document_error(
+                 sprintf(__("error on closing %s: %s"),
+                                      $outfile_name, $!));
+      }
+    }
+    if ($output_file eq '') {
+      $self->conversion_finalization();
+      return $output;
+    }
+  } else {
+    # output with pages
+    print STDERR "DO Elements with filenames\n"
+      if ($self->get_conf('DEBUG'));
+    my %files_filehandle;
+
+    foreach my $output_unit (@$output_units) {
+      my $output_unit_filename = $output_unit->{'unit_filename'};
+      my $out_filepath = $self->{'out_filepaths'}->{$output_unit_filename};
+      my $file_fh;
+      # open the file and output the elements
+      if (!exists($files_filehandle{$output_unit_filename})) {
+        my $error_message;
+        ($file_fh, $error_message) = Texinfo::Common::output_files_open_out(
+                             $self->output_files_information(), $self,
+                             $out_filepath);
+        if (!$file_fh) {
+          $self->converter_document_error(
+                sprintf(__("could not open %s for writing: %s"),
+                       $out_filepath, $error_message));
+          $self->conversion_finalization();
+          return undef;
+        }
+        $files_filehandle{$output_unit_filename} = $file_fh;
+      } else {
+        $file_fh = $files_filehandle{$output_unit_filename};
+      }
+      my $output_unit_text = $self->convert_output_unit($output_unit);
+      print $file_fh $output_unit_text;
+      $self->{'file_counters'}->{$output_unit_filename}--;
+      if ($self->{'file_counters'}->{$output_unit_filename} == 0) {
+        # NOTE do not close STDOUT here to avoid a perl warning
+        if ($out_filepath ne '-') {
+          Texinfo::Common::output_files_register_closed(
+            $self->output_files_information(), $out_filepath);
+          if (!close($file_fh)) {
+            $self->converter_document_error(
+                     sprintf(__("error on closing %s: %s"),
+                                  $out_filepath, $!));
+            $self->conversion_finalization();
+            return undef;
+          }
+        }
+      }
+    }
+  }
+  $self->conversion_finalization();
+  return undef;
+}
 my $end_sentence = quotemeta('.?!');
 my $after_punctuation = quotemeta('"\')]');
 

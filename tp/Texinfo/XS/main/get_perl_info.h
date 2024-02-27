@@ -14,7 +14,7 @@
 
 /* in options_get_perl.c */
 void get_sv_option (OPTIONS *options, const char *key, SV *value,
-                    int force, CONVERTER *converter);
+                    int force, const CONVERTER *converter);
 /* in options_init_free.c */
 void set_option_key_configured (OPTIONS *options, const char *key,
                                 int configured);
@@ -26,12 +26,12 @@ DOCUMENT *get_sv_document_document (SV *document_in, char *warn_string);
 OUTPUT_UNIT_LIST *get_sv_output_units (SV *output_units_in, char *warn_string);
 int get_sv_output_units_descriptor (SV *output_units_in, char *warn_string);
 
-void add_svav_to_string_list (SV *sv, STRING_LIST *string_list,
+void add_svav_to_string_list (const SV *sv, STRING_LIST *string_list,
                               enum sv_string_type type);
 
 SOURCE_INFO *get_source_info (SV *source_info_sv);
 void get_line_message (CONVERTER *self, enum error_type type, int continuation,
-                       SV *error_location_info, char *message);
+                       SV *error_location_info, const char *message);
 OPTIONS *init_copy_sv_options (SV *sv_in, CONVERTER *converter, int force);
 void get_sv_configured_options (SV *configured_sv_in, OPTIONS *options);
 void copy_converter_conf_sv (HV *hv, CONVERTER *converter,
@@ -54,12 +54,12 @@ INDEX_SORTED_BY_LETTER *get_sv_index_entries_sorted_by_letter
 TEXT_OPTIONS *copy_sv_options_for_convert_text (SV *sv_in);
 
 BUTTON_SPECIFICATION_LIST *html_get_button_specification_list
-                                (CONVERTER *converter, SV *buttons_sv);
-void html_get_direction_icons_sv (CONVERTER *converter,
+                                (const CONVERTER *converter, const SV *buttons_sv);
+void html_get_direction_icons_sv (const CONVERTER *converter,
                              DIRECTION_ICON_LIST *direction_icons,
-                             SV *icons_sv);
+                             const SV *icons_sv);
 
-const ELEMENT *find_element_from_sv (CONVERTER *converter,
+const ELEMENT *find_element_from_sv (const CONVERTER *converter,
                                      const DOCUMENT *document_in,
                           const SV *element_sv, int output_units_descriptor);
 #endif

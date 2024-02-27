@@ -302,6 +302,14 @@ COUNTER count_remaining_args;
 COUNTER count_items;
 COUNTER count_cells;
 
+void
+reset_parser_counters (void)
+{
+  counter_reset (&count_remaining_args);
+  counter_reset (&count_items);
+  counter_reset (&count_cells);
+}
+
 
 /* Information that is not local to where it is set in the Texinfo input,
    for example document language and encoding. */
@@ -327,7 +335,7 @@ set_documentlanguage (char *value)
 }
 
 void
-set_documentlanguage_override (char *value)
+set_documentlanguage_override (const char *value)
 {
   free (global_documentlanguage);
   global_documentlanguage = value ? strdup (value) : 0;
@@ -1859,8 +1867,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
                       input_push_text (strdup (remaining_line),
                                        current_source_info.line_nr, 0, 0);
                       input_push_text (strdup (value),
-                                       current_source_info.line_nr, 0,
-                                       strdup (flag));
+                                       current_source_info.line_nr, 0, flag);
 
                       value_source_mark
                           = new_source_mark (SM_type_value_expansion);
@@ -2770,7 +2777,7 @@ parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
 
   document_descriptor = store_document(current);
 
-  complete_indices (document_descriptor);
+  complete_indices (document_descriptor, debug_output);
 
   return document_descriptor;
 }

@@ -57,14 +57,14 @@ void
 message_list_line_formatted_message (ERROR_MESSAGE_LIST *error_messages,
                            enum error_type type, int continuation,
                            const SOURCE_INFO *cmd_source_info,
-                           char *message, int warn)
+                           const char *message, int warn)
 {
   TEXT error_line;
   ERROR_MESSAGE *error_message;
 
   error_message = reallocate_error_messages (error_messages);
 
-  error_message->message = message;
+  error_message->message = strdup (message);
   error_message->type = type;
   error_message->continuation = continuation;
 
@@ -145,20 +145,21 @@ vmessage_list_line_error (ERROR_MESSAGE_LIST *error_messages,
   message_list_line_formatted_message (error_messages,
                              type, continuation,
                              cmd_source_info, message, warn);
+  free (message);
 }
 
 void
 message_list_document_formatted_message (ERROR_MESSAGE_LIST *error_messages,
-                                         OPTIONS *conf,
+                                         const OPTIONS *conf,
                                          enum error_type type, int continuation,
-                                         char *message)
+                                         const char *message)
 {
   TEXT error_line;
   ERROR_MESSAGE *error_message;
 
   error_message = reallocate_error_messages (error_messages);
 
-  error_message->message = message;
+  error_message->message = strdup (message);
   error_message->type = type;
   error_message->continuation = continuation;
 
@@ -214,7 +215,7 @@ message_list_document_formatted_message (ERROR_MESSAGE_LIST *error_messages,
 
 static void
 message_list_document_error_internal (ERROR_MESSAGE_LIST *error_messages,
-                                      OPTIONS *conf,
+                                      const OPTIONS *conf,
                                       enum error_type type, int continuation,
                                       const char *format, va_list v)
 {
@@ -228,12 +229,14 @@ message_list_document_error_internal (ERROR_MESSAGE_LIST *error_messages,
   if (!message) fatal ("vasprintf failed");
 
   message_list_document_formatted_message (error_messages, conf, type,
-                                            continuation, message);
+                                           continuation, message);
+
+  free (message);
 }
 
 void
 message_list_line_error_ext (ERROR_MESSAGE_LIST *error_messages,
-                             OPTIONS *conf,
+                             const OPTIONS *conf,
                              enum error_type type, int continuation,
               const SOURCE_INFO *cmd_source_info, const char *format, ...)
 {
@@ -247,7 +250,7 @@ message_list_line_error_ext (ERROR_MESSAGE_LIST *error_messages,
 
 void
 message_list_command_warn (ERROR_MESSAGE_LIST *error_messages,
-                           OPTIONS *conf,
+                           const OPTIONS *conf,
                            const ELEMENT *e, const char *format, ...)
 {
   va_list v;
@@ -262,7 +265,7 @@ message_list_command_warn (ERROR_MESSAGE_LIST *error_messages,
    function already has a variable argument */
 void
 vmessage_list_command_warn (ERROR_MESSAGE_LIST *error_messages,
-                            OPTIONS *conf,
+                            const OPTIONS *conf,
                             const ELEMENT *e, const char *format, va_list v)
 {
   vmessage_list_line_error (error_messages, MSG_warning, 0,
@@ -272,7 +275,7 @@ vmessage_list_command_warn (ERROR_MESSAGE_LIST *error_messages,
 
 void
 message_list_command_error (ERROR_MESSAGE_LIST *error_messages,
-                            OPTIONS *conf,
+                            const OPTIONS *conf,
                             const ELEMENT *e, const char *format, ...)
 {
   va_list v;
@@ -283,30 +286,31 @@ message_list_command_error (ERROR_MESSAGE_LIST *error_messages,
                            &e->source_info, format, v);
 }
 
-/* TODO a continuation argument may need to be added. */
 void
 message_list_document_error (ERROR_MESSAGE_LIST *error_messages,
-                             OPTIONS *conf,
+                             const OPTIONS *conf, int continuation,
                              const char *format, ...)
 {
   va_list v;
 
   va_start (v, format);
   message_list_document_error_internal (error_messages, conf,
-                                        MSG_document_error, 0,
+                                        MSG_document_error,
+                                        continuation,
                                         format, v);
 }
 
 void
 message_list_document_warn (ERROR_MESSAGE_LIST *error_messages,
-                            OPTIONS *conf,
+                            const OPTIONS *conf, int continuation,
                             const char *format, ...)
 {
   va_list v;
 
   va_start (v, format);
   message_list_document_error_internal (error_messages, conf,
-                                        MSG_document_warning, 0,
+                                        MSG_document_warning,
+                                        continuation,
                                         format, v);
 }
 

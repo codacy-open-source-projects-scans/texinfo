@@ -11,6 +11,10 @@ Before next release
 ===================
 
 
+Add a TODO FIXME near reset_parser_counters in parsetexi/parser.c to
+remember that there should be debug messages for counters that were
+reset but should not have to be and there is a likely bug..
+
 Bugs
 ====
 
@@ -89,6 +93,12 @@ Gavin and Patrice
 
 4) separate the structure of text elements and other elements, as text elements
    should not need contents/args/extra.
+
+
+Maybe change build/rebuild document to only rebuild what needs to, such
+as to be able to call when needed by converters and not in specific
+places in the code.
+
 
 hyphenation: should only appear in toplevel.
 
@@ -734,6 +744,7 @@ for file in t/*.t ; do bfile=`basename $file .t`; echo $bfile; valgrind --suppre
 
 With memory leaks
 for file in t/*.t ; do bfile=`basename $file .t`; echo $bfile; valgrind --suppressions=./texi2any.supp -q --leak-check=full perl -w $file > val_res/$bfile.out 2>&1 ; done
+for file in t/*.t ; do bfile=`basename $file .t`; echo $bfile; valgrind -q --leak-check=full perl -w $file > val_res/$bfile.out 2>&1 ; done
 
 For tests in tp/tests, a way to have valgrind call prependend is to add,
 in tp/defs:

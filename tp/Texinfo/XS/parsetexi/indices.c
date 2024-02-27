@@ -20,8 +20,7 @@
 
 #include "tree_types.h"
 #include "command_ids.h"
-/* document and options used in complete_indices */
-#include "options_types.h"
+/* document used in complete_indices */
 #include "document_types.h"
 #include "tree.h"
 #include "errors_parser.h"
@@ -375,12 +374,11 @@ resolve_indices_merged_in (void)
    Done in a separate function and not inside the main parser loop because
    it requires parsing Texinfo code in gdt_tree too */
 void
-complete_indices (int document_descriptor)
+complete_indices (int document_descriptor, int debug_level)
 {
   INDEX **i, *idx;
   DOCUMENT *document;
   INDEX **index_names;
-  OPTIONS *options;
 
   /* beware that document may have a change in adress if realloc on
      the documents list is called in gdt.  So only use it here and
@@ -388,7 +386,6 @@ complete_indices (int document_descriptor)
   document = retrieve_document (document_descriptor);
 
   index_names = document->index_names;
-  options = document->options;
 
   for (i = index_names; (idx = *i); i++)
     {
@@ -457,11 +454,10 @@ complete_indices (int document_descriptor)
                           || def_command == CM_deftypeop
                           || def_command == CM_defmethod
                           || def_command == CM_deftypemethod)
-                        { /* note that at that point, options are unlikely
-                          to be set, but we use the language of the element */
+                        {
                           index_entry = gdt_tree ("{name} on {class}",
-                                                  document, options,
-                                                  lang, substrings, 0);
+                                                  document, lang, substrings,
+                                                  debug_level, 0);
 
                           text_append (&text_element->text, " on ");
                         }
@@ -471,8 +467,8 @@ complete_indices (int document_descriptor)
                                || def_command == CM_deftypecv)
                         {
                           index_entry = gdt_tree ("{name} of {class}",
-                                                  document, options, lang,
-                                                  substrings, 0);
+                                                  document, lang, substrings,
+                                                  debug_level, 0);
 
                           text_append (&text_element->text, " of ");
                         }

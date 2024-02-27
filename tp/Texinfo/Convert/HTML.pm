@@ -1076,9 +1076,7 @@ sub _internal_command_href($$;$$)
     # Happens if there are no pages, for example if OUTPUT is set to ''
     # as in the test cases.  Also for things in @titlepage when
     # titlepage is not output.
-    if ($self->{'document_units'} and $self->{'document_units'}->[0]
-        and defined($self->{'document_units'}->[0]
-                                   ->{'unit_filename'})) {
+    if ($self->{'document_units'}->[0]->{'unit_filename'}) {
       # In that case use the first page.
       $target_filename
         = $self->{'document_units'}->[0]->{'unit_filename'};
@@ -2909,10 +2907,11 @@ sub cdt($$;$$)
 {
   my ($self, $string, $replaced_substrings, $translation_context) = @_;
 
-  return Texinfo::Translations::gdt($self, $string,
+  return Texinfo::Translations::gdt($string,
                                     $self->get_conf('documentlanguage'),
                                     $replaced_substrings,
-                                    $translation_context,
+                                    $self->get_conf('DEBUG'),
+                                    $translation_context, $self,
                                     \&html_translate_string);
 }
 
@@ -2920,10 +2919,10 @@ sub cdt_string($$;$$)
 {
   my ($self, $string, $replaced_substrings, $translation_context) = @_;
 
-  return Texinfo::Translations::gdt_string($self, $string,
+  return Texinfo::Translations::gdt_string($string,
                                     $self->get_conf('documentlanguage'),
                                     $replaced_substrings,
-                                    $translation_context,
+                                    $translation_context, $self,
                                     \&html_translate_string);
 }
 
@@ -7173,7 +7172,7 @@ sub _convert_definfoenclose_type($$$$) {
   $content = '' if (!defined($content));
 
   # TODO add a span to mark the original command as a class?
-  # Not to be done as long as the definfoenclose is deprecated.
+  # Not to be done as long as definfoenclose is deprecated.
   return &{$self->formatting_function('format_protect_text')}($self,
                                       $element->{'extra'}->{'begin'})
      . $content .
@@ -9608,8 +9607,7 @@ sub _html_get_tree_root_element($$;$)
           }
         } elsif ($current->{'cmdname'} eq 'titlepage'
                  and $self->get_conf('USE_TITLEPAGE_FOR_TITLE')
-                 and $self->get_conf('SHOW_TITLE')
-                 and $self->{'document_units'}->[0]) {
+                 and $self->get_conf('SHOW_TITLE')) {
           #print STDERR "FOR titlepage document_units [0]\n" if ($debug);
           return ($self->{'document_units'}->[0],
                   $self->{'document_units'}->[0]->{'unit_command'});
@@ -9651,9 +9649,6 @@ sub _html_set_pages_files($$$$$$$$$)
   my $destination_directory = shift;
   my $output_filename = shift;
   my $document_name = shift;
-
-  # Ensure that the document has pages
-  return undef if (!defined($output_units) or !@$output_units);
 
   $self->initialize_output_units_files();
 
@@ -9883,7 +9878,6 @@ sub _html_set_pages_files($$$$$$$$$)
       # Associate the special elements that have no page with the main page.
       # This may only happen if not split.
       if (!defined($filename)
-          and $output_units and $output_units->[0]
           and defined($output_units->[0]->{'unit_filename'})) {
         $filename = $output_units->[0]->{'unit_filename'};
       }
@@ -10109,11 +10103,7 @@ sub _prepare_special_units($$)
         } else {
           my $associated_output_unit;
           if ($contents_location eq 'after_title') {
-            if ($output_units and scalar(@$output_units)) {
-              $associated_output_unit = $output_units->[0];
-            } else {
-              next;
-            }
+            $associated_output_unit = $output_units->[0];
           } elsif ($contents_location eq 'after_top') {
             if ($global_commands and $global_commands->{'top'}) {
               my $section_top = $global_commands->{'top'};
@@ -10149,12 +10139,12 @@ sub _prepare_special_units($$)
 
   if ($global_commands and $global_commands->{'footnote'}
       and $self->get_conf('footnotestyle') eq 'separate'
-      and $output_units and scalar(@$output_units) > 1) {
+      and scalar(@$output_units) > 1) {
     $do_special{'footnotes'} = 1;
   }
 
   if ((!defined($self->get_conf('DO_ABOUT'))
-       and $output_units and scalar(@$output_units) > 1
+       and scalar(@$output_units) > 1
            and ($self->get_conf('SPLIT') or $self->get_conf('HEADERS')))
        or ($self->get_conf('DO_ABOUT'))) {
     $do_special{'about'} = 1;
@@ -10184,9 +10174,7 @@ sub _prepare_special_units($$)
 
   # Setup separate special output units
   my $previous_output_unit;
-  if ($output_units and scalar(@$output_units)) {
-    $previous_output_unit = $output_units->[-1];
-  }
+  $previous_output_unit = $output_units->[-1];
 
   foreach my $special_unit_variety (@sorted_elements_varieties) {
 
@@ -11967,22 +11955,16 @@ sub _html_convert_convert($$$$)
 
   $self->{'current_filename'} = '';
 
-  if (!defined($output_units)) {
-    print STDERR "\nC NO UNIT\n" if ($self->get_conf('DEBUG'));
-    $result = $self->_convert($root, 'convert no unit');
-    $result .= &{$self->formatting_function('format_footnotes_segment')}($self);
-  } else {
-    my $unit_nr = 0;
-    # TODO there is no rule before the footnotes special element in
-    # case of separate footnotes in the default formatting style.
-    # Not sure if it is an issue.
-    foreach my $output_unit (@$output_units, @$special_units) {
-      print STDERR "\nC UNIT $unit_nr\n" if ($self->get_conf('DEBUG'));
-      my $output_unit_text = $self->convert_output_unit($output_unit,
-                                                 "convert unit $unit_nr");
-      $result .= $output_unit_text;
-      $unit_nr++;
-    }
+  my $unit_nr = 0;
+  # TODO there is no rule before the footnotes special element in
+  # case of separate footnotes in the default formatting style.
+  # Not sure if it is an issue.
+  foreach my $output_unit (@$output_units, @$special_units) {
+    print STDERR "\nC UNIT $unit_nr\n" if ($self->get_conf('DEBUG'));
+    my $output_unit_text = $self->convert_output_unit($output_unit,
+                                               "convert unit $unit_nr");
+    $result .= $output_unit_text;
+    $unit_nr++;
   }
   $self->{'current_filename'} = undef;
   return $result;
@@ -12053,6 +12035,7 @@ sub convert($$)
   # are set and present in the buttons, as is the case in the default
   # buttons.  For example in converters_tests/ref_in_sectioning
   # or converters_tests/sections_and_printindex.
+  # Output units lists are rebuilt in the XS code.
   $self->_prepare_output_units_global_targets($output_units,
                                               $special_units,
                                               $associated_special_units);
@@ -12138,19 +12121,18 @@ sub output_internal_links($)
 {
   my $self = shift;
   my $out_string = '';
-  if ($self->{'document_units'}) {
-    foreach my $output_unit (@{$self->{'document_units'}}) {
-      my $text;
-      my $href;
-      my $command = $output_unit->{'unit_command'};
-      if (defined($command)) {
-        # Use '' for filename, to force a filename in href.
-        $href = $self->command_href($command, '');
-        my $tree = $self->command_tree($command);
-        if ($tree) {
-          $text = Texinfo::Convert::Text::convert_to_text($tree,
-                                    $self->{'convert_text_options'});
-        }
+
+  foreach my $output_unit (@{$self->{'document_units'}}) {
+    my $text;
+    my $href;
+    my $command = $output_unit->{'unit_command'};
+    if (defined($command)) {
+      # Use '' for filename, to force a filename in href.
+      $href = $self->command_href($command, '');
+      my $tree = $self->command_tree($command);
+      if ($tree) {
+        $text = Texinfo::Convert::Text::convert_to_text($tree,
+                                  $self->{'convert_text_options'});
       }
       if (defined($href) or defined($text)) {
         $out_string .= $href if (defined($href));
@@ -12160,6 +12142,7 @@ sub output_internal_links($)
       }
     }
   }
+
   my $index_entries_by_letter
     = $self->get_converter_indices_sorted_by_letter();
   if ($index_entries_by_letter) {
@@ -12452,24 +12435,17 @@ sub _html_convert_output($$$$$$$$)
   if ($output_file eq '') {
     $self->{'current_filename'} = $output_filename;
     my $body = '';
-    if ($output_units and @$output_units) {
-      my $unit_nr = 0;
-      # TODO there is no rule before the footnotes special element in
-      # case of separate footnotes in the default formatting style.
-      # Not sure if it is an issue.
-      foreach my $output_unit (@$output_units, @$special_units) {
-        print STDERR "\nUNIT NO-PAGE $unit_nr\n" if ($self->get_conf('DEBUG'));
-        my $output_unit_text
-          = $self->convert_output_unit($output_unit,
-                                       "no-page output unit $unit_nr");
-        $body .= $output_unit_text;
-        $unit_nr++;
-      }
-    } else {
-      $body .= $self->get_info('title_titlepage');
-      print STDERR "\nNO UNIT NO PAGE\n" if ($self->get_conf('DEBUG'));
-      $body .= $self->_convert($root, 'no-page output no unit');
-      $body .= &{$self->formatting_function('format_footnotes_segment')}($self);
+    my $unit_nr = 0;
+    # TODO there is no rule before the footnotes special element in
+    # case of separate footnotes in the default formatting style.
+    # Not sure if it is an issue.
+    foreach my $output_unit (@$output_units, @$special_units) {
+      print STDERR "\nUNIT NO-PAGE $unit_nr\n" if ($self->get_conf('DEBUG'));
+      my $output_unit_text
+        = $self->convert_output_unit($output_unit,
+                                     "no-page output unit $unit_nr");
+      $body .= $output_unit_text;
+      $unit_nr++;
     }
 
     # do end file first, in case it needs some CSS
@@ -12772,7 +12748,7 @@ sub output($$)
   # setup untranslated strings
   $self->_translate_names();
 
-  # The XS code override rebuilds output units, so there is no need to call
+  # Output units lists are rebuilt in the XS code so there is no need to call
   # rebuild_output_units.
   my $files_source_info
     = $self->_prepare_units_directions_files($output_units, $special_units,

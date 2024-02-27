@@ -64,7 +64,7 @@ static ENCODING_CONVERSION *current_encoding_conversion = 0;
    set_input_encoding to be for "utf-8" as the codes assume
    a conversion to UTF-8 in encodings_list[0]. */
 int
-set_input_encoding (char *encoding)
+set_input_encoding (const char *encoding)
 {
   int encoding_set = 0;
 
@@ -170,14 +170,14 @@ static char *input_file_name_encoding = 0;
 static char *locale_encoding = 0;
 
 void
-set_input_file_name_encoding (char *value)
+set_input_file_name_encoding (const char *value)
 {
   free (input_file_name_encoding);
   input_file_name_encoding = value ? strdup (value) : 0;
 }
 
 void
-set_locale_encoding (char *value)
+set_locale_encoding (const char *value)
 {
   free (locale_encoding);
   locale_encoding =  value ? strdup (value) : 0;
@@ -453,12 +453,14 @@ next_text (ELEMENT *current)
    If already within a macro expansion, but not from a macro expansion
    (from a value expansion, for instance), the macro name will be taken
    from the input stack.
-   VALUE_FLAG is the name of the value flag expanded as text.
-   VALUE_FLAG will be later free'd, but not MACRO_NAME.
+   VALUE_FLAG is the name of the value flag expanded as text.  It is
+   copied, and the copy will be later free'd, but the argument is never
+   free'd.  MACRO_NAME is copied and the copy is saved using save_string,
+   the argument is not free'd.
  */
 void
 input_push_text (char *text, int line_number, const char *macro_name,
-                 char *value_flag)
+                 const char *value_flag)
 {
   char *filename = 0;
   const char *in_macro = 0;
@@ -496,7 +498,8 @@ input_push_text (char *text, int line_number, const char *macro_name,
   input_stack[input_number].source_info.file_name = save_string (filename);
   input_stack[input_number].source_info.macro = save_string (in_macro);
   input_stack[input_number].macro_name = save_string (macro_name);
-  input_stack[input_number].value_flag = value_flag;
+  input_stack[input_number].value_flag
+     = value_flag ? strdup (value_flag) : 0;
   input_stack[input_number].input_source_mark = 0;
   input_number++;
 }
@@ -599,7 +602,7 @@ top_file_index (void)
 static STRING_LIST parser_include_dirs_list = {0, 0, 0};
 
 void
-parser_add_include_directory (char *filename)
+parser_add_include_directory (const char *filename)
 {
   add_include_directory (filename, &parser_include_dirs_list);
 }
@@ -611,18 +614,19 @@ parser_clear_include_directories (void)
 }
 
 char *
-parser_locate_include_file (char *filename)
+parser_locate_include_file (const char *filename)
 {
   return locate_include_file (filename, &parser_include_dirs_list);
 }
 
 /* Try to open a file called FILENAME */
 int
-input_push_file (char *filename)
+input_push_file (const char *filename)
 {
   FILE *stream = 0;
   char *p, *q;
   char *base_filename;
+  char *stored_file_path;
 
   if (!strcmp (filename, "-"))
     stream = stdin;
@@ -649,13 +653,19 @@ input_push_file (char *filename)
       q = strchr (q + 1, '/');
     }
   if (p)
-    base_filename = save_string (p+1);
+    {
+      base_filename = save_string (p+1);
+      stored_file_path = save_string (filename);
+    }
   else
-    base_filename = save_string (filename);
+    {
+      base_filename = save_string (filename);
+      stored_file_path = base_filename;
+    }
 
   input_stack[input_number].type = IN_file;
   input_stack[input_number].file = stream;
-  input_stack[input_number].input_file_path = filename;
+  input_stack[input_number].input_file_path = stored_file_path;
   input_stack[input_number].source_info.file_name = base_filename;
   input_stack[input_number].source_info.line_nr = 0;
   input_stack[input_number].source_info.macro = 0;

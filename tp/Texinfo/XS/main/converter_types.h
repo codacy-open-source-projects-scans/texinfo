@@ -413,7 +413,7 @@ typedef struct OUTPUT_FILES_INFORMATION {
 
 typedef struct SPECIAL_UNIT_DIRECTION {
     const OUTPUT_UNIT *output_unit;
-    char *direction;
+    const char *direction;
 } SPECIAL_UNIT_DIRECTION;
 
 typedef struct FORMATTING_REFERENCE {
@@ -461,10 +461,10 @@ typedef struct HTML_DOCUMENT_CONTEXT_STACK {
     size_t space;
 } HTML_DOCUMENT_CONTEXT_STACK;
 
-typedef struct STRING_WITH_LEN {
-    char *string;
+typedef struct FIXED_STRING_WITH_LEN {
+    const char *string;
     size_t len;
-} STRING_WITH_LEN;
+} FIXED_STRING_WITH_LEN;
 
 typedef struct CSS_SELECTOR_STYLE {
     char *selector;
@@ -646,14 +646,10 @@ typedef struct JSLICENSE_CATEGORY_LIST {
     JSLICENSE_FILE_INFO_LIST *list;
 } JSLICENSE_CATEGORY_LIST;
 
-typedef struct INDEX_NUMBER {
-    size_t number;
-    INDEX *index;
-} INDEX_NUMBER;
-
+/* contains only indices with entries */
 typedef struct SORTED_INDEX_NAMES {
     size_t number;
-    INDEX_NUMBER *list;
+    const INDEX **list;
 } SORTED_INDEX_NAMES;
 
 typedef struct CONVERTER {
@@ -696,8 +692,8 @@ typedef struct CONVERTER {
     char *pre_class_types[TXI_TREE_TYPES_NUMBER];
     int upper_case[BUILTIN_CMD_NUMBER];
     ACCENT_ENTITY_INFO accent_entities[BUILTIN_CMD_NUMBER];
-    STRING_WITH_LEN special_character[SC_non_breaking_space+1];
-    STRING_WITH_LEN line_break_element;
+    FIXED_STRING_WITH_LEN special_character[SC_non_breaking_space+1];
+    FIXED_STRING_WITH_LEN line_break_element;
     CSS_SELECTOR_STYLE_LIST css_element_class_styles;
     STRING_LIST css_rule_lines;
     STRING_LIST css_import_lines;

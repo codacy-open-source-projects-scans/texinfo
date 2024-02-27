@@ -1148,6 +1148,15 @@ Need 2 elements for separate footnotes.
 
 @anchor{@sansserif{ll} @r{jj}}
 ',],
+['set_unit_file_name_filepath',
+'@node Top
+@top top
+
+@node chap
+@chapter Chap
+', {'init_files' => ['set_unit_file_name_filepath.pm']},
+   {'SPLIT' => 'node'},
+],
 # NOTE the result is incorrect, the first footnote text is at the
 # end of the file but the link is towards the separate file.
 # The manual states that the footnotestyle should be in the preamble,
@@ -1174,6 +1183,32 @@ $itemize_arguments_text
 ['itemize_arguments_enable_encoding',
 $itemize_arguments_text
 , {'ENABLE_ENCODING' => 1}, {'OUTPUT_CHARACTERS' => 1}
+],
+['itemize_tieaccent',
+'@itemize @tieaccent{ab}
+@item item @tieaccent{ab}
+@end itemize
+
+@itemize @tieaccent{@aa{}@^e}
+@item item @tieaccent{@aa{}@^e}
+@end itemize
+
+@itemize @tieaccent{@aa{}d}
+@item item @tieaccent{@aa{}d}
+@end itemize
+
+@itemize @tieaccent{x@^e}
+@item item @tieaccent{x@^e}
+@end itemize
+
+@itemize @tieaccent{g}
+@item item @tieaccent{g}
+@end itemize
+
+@itemize @tieaccent{@^e}
+@item item @tieaccent{@^e}
+@end itemize
+',
 ],
 ['check_htmlxref_no_use_nodes',
 $check_htmlxref_text

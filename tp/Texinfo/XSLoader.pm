@@ -70,23 +70,19 @@ sub _find_file($) {
   return undef;
 }
 
-# Load either from XS implementation in $MODULE along with Perl file
-# $PERL_EXTRA_FILE, or non-XS implementation $FALLBACK_MODULE.
-# $MODULE_NAME is the name of a Libtool file used for
-# loading the XS subroutines.
+# Load module $module, either from XS implementation in
+# Libtool file $MODULE_NAME and Perl file $PERL_EXTRA_FILE,
+# or non-XS implementation $FALLBACK_MODULE.
 # $INTERFACE_VERSION is a module interface number, to be changed when the XS
 # interface changes.
 # The package loaded is returned or undef if there is no fallback and the
 # XS package was not loaded.
-# TODO remove $warning_message and $fatal_message?
 sub init {
   my ($module,
      $fallback_module,
      $module_name,
      $perl_extra_file,
      $interface_version,
-     $warning_message,
-     $fatal_message
    ) = @_;
 
   # Possible values for TEXINFO_XS environment variable:
@@ -114,16 +110,7 @@ sub init {
     goto FALLBACK;
   }
 
-  if ($warning_message) {
-    _debug $warning_message;
-  }
-
-  if ($fatal_message) {
-    _fatal $fatal_message;
-    goto FALLBACK;
-  }
-
-  if (!$module) {
+  if (!$module_name) {
     goto FALLBACK;
   }
 

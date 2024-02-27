@@ -19,9 +19,9 @@ Gettext are listed in NEWS; usually the latest official releases.  If
 you are getting the sources from the development repository (or change
 configure.ac), you'll need to have these tools installed to (re)build.
 You'll also need help2man (for building man pages) and gperf (for building
-the "iconv_open" module from gnulib).  If you modify texindex/ti.twjr,
-you'll need gawk >= 4.0.  All of these programs are available from
-https://ftp.gnu.org/gnu.
+"unicase/*" and "uninorm/*" modules from gnulib).  If you modify
+texindex/ti.twjr, you'll need gawk >= 4.0.  All of these programs are
+available from https://ftp.gnu.org/gnu.
 
 After getting the development sources, and installing the tools above,
 you can run
@@ -306,6 +306,11 @@ Update gnulib:
   'git status -u' and add untracked files
 
 Use util/srclist-txi for checking files to be copied from gnulib
+
+Update ppport.h in tp/Texinfo/XS:
+  perl -MDevel::PPPort -e'Devel::PPPort::WriteFile'
+Check what changes ppport.h reports:
+  perl ppport.h --compat-version=5.8.1 *.xs misc.c xspara.c miscxs.h xspara.h */*.xs main/get_perl_info.* main/build_perl_info.* main/api_to_perl.* convert/call_html_perl_function.* convert/build_html_perl_state.* convert/get_html_perl_info.*
 
 make po-check             # update po/POTFILES.in as needed
 make po_document-check    # update po_document/POTFILES.in as needed

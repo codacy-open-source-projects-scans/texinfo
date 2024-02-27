@@ -3,6 +3,7 @@
 #define BUILD_PERL_INFO_H
 
 #include <stddef.h>
+#include <stdarg.h>
 
 #include "EXTERN.h"
 #include "perl.h"
@@ -12,6 +13,13 @@
 #include "document_types.h"
 #include "converter_types.h"
 #include "options_types.h"
+
+void perl_only_free (void *ptr);
+void *perl_only_malloc (size_t size);
+char *perl_only_strdup (const char *s);
+char *perl_only_strndup (const char *s, size_t n);
+int perl_only_xvasprintf (char **ptr, const char *template, va_list ap);
+int perl_only_xasprintf (char **ptr, const char *template, ...);
 
 int init (int texinfo_uninstalled, char *srcdir_in);
 
@@ -26,6 +34,7 @@ void element_to_perl_hash (ELEMENT *e, int avoid_recursion);
 
 SV *build_document (size_t document_descriptor, int no_store);
 SV *get_document (size_t document_descriptor);
+void rebuild_document (SV *document_in, int no_store);
 
 HV *build_texinfo_tree (ELEMENT *root, int avoid_recursion);
 AV *build_errors (ERROR_MESSAGE* error_list, size_t error_number);
@@ -44,8 +53,8 @@ SV *build_output_units_list (size_t output_units_descriptor);
 void rebuild_output_units_list (SV *output_units_sv,
                                 size_t output_units_descriptor);
 
-AV *build_integer_stack (INTEGER_STACK *integer_stack);
-AV *build_string_list (STRING_LIST *strings_list, enum sv_string_type);
+AV *build_integer_stack (const INTEGER_STACK *integer_stack);
+AV *build_string_list (const STRING_LIST *strings_list, enum sv_string_type);
 
 void pass_output_unit_files (SV *converter_sv,
                         FILE_NAME_PATH_COUNTER_LIST *output_unit_files);
@@ -66,5 +75,7 @@ HV *build_sorted_indices_by_index (
 SV *html_build_direction_icons (CONVERTER *converter,
                             DIRECTION_ICON_LIST *direction_icons);
 SV *get_conf (CONVERTER *converter, const char *option_name);
+
+void build_tree_to_build (ELEMENT_LIST *tree_to_build);
 
 #endif

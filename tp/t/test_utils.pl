@@ -532,14 +532,6 @@ sub convert_to_plaintext($$$$$)
     }
   }
 
-  # If not outputing to a file, do not encode.  Return value from
-  # 'output' is a character string.  It will be encoded to
-  # UTF-8 in the results file.
-  if (defined($converter_options->{'OUTFILE'})
-      and $converter_options->{'OUTFILE'} eq '') {
-    $converter_options->{'OUTPUT_PERL_ENCODING'} = '';
-  }
-
   my $converter = Texinfo::Convert::Plaintext->converter($converter_options);
 
   my $result;
@@ -573,16 +565,6 @@ sub convert_to_info($$$$$)
   $converter_options
     = set_converter_option_defaults($converter_options, 'info',
                                     $self->{'DEBUG'});
-
-  # If not outputing to a file, do not encode.  Return value from
-  # 'output' is a character string.  This will be encoded to
-  # UTF-8 in the results file.  This may make byte offsets in the tag table
-  # incorrect, so if those needed to be tested, an separate output file
-  # would have to be used instead.
-  if (defined($converter_options->{'OUTFILE'})
-      and $converter_options->{'OUTFILE'} eq '') {
-    $converter_options->{'OUTPUT_PERL_ENCODING'} = '';
-  }
 
   my $converter = Texinfo::Convert::Info->converter($converter_options);
   my $result = $converter->output($document);
@@ -1091,10 +1073,10 @@ sub test($$)
 
   if ($tree_transformations{'insert_nodes_for_sectioning_commands'}) {
     Texinfo::Transformations::insert_nodes_for_sectioning_commands(
-                             $document, $registrar, $main_configuration);
+                             $document, $main_configuration);
   }
 
-  Texinfo::Structuring::associate_internal_references($document, $registrar,
+  Texinfo::Structuring::associate_internal_references($document,
                                                       $main_configuration);
   my $sections_list
         = Texinfo::Structuring::sectioning_structure($tree, $registrar,
@@ -1103,8 +1085,7 @@ sub test($$)
     Texinfo::Document::register_document_sections_list($document,
                                                        $sections_list);
   }
-  Texinfo::Structuring::warn_non_empty_parts($document, $registrar,
-                                             $main_configuration);
+  Texinfo::Structuring::warn_non_empty_parts($document, $main_configuration);
 
   if ($tree_transformations{'complete_tree_nodes_menus'}) {
     Texinfo::Transformations::complete_tree_nodes_menus($tree);
@@ -1119,21 +1100,20 @@ sub test($$)
   }
 
   my $nodes_tree_nodes_list
-          = Texinfo::Structuring::nodes_tree($document, $registrar,
-                                             $main_configuration);
+          = Texinfo::Structuring::nodes_tree($document, $main_configuration);
 
   Texinfo::Document::register_document_nodes_list($document,
                                                   $nodes_tree_nodes_list);
 
-  Texinfo::Structuring::set_menus_node_directions($document, $registrar,
+  Texinfo::Structuring::set_menus_node_directions($document,
                                                   $main_configuration);
 
   if (not defined($main_configuration->get_conf('FORMAT_MENU'))
       or $main_configuration->get_conf('FORMAT_MENU') eq 'menu') {
-    Texinfo::Structuring::complete_node_tree_with_menus($document, $registrar,
+    Texinfo::Structuring::complete_node_tree_with_menus($document,
                                                         $main_configuration);
 
-    Texinfo::Structuring::check_nodes_are_referenced($document, $registrar,
+    Texinfo::Structuring::check_nodes_are_referenced($document,
                                                      $main_configuration);
   }
 
@@ -1155,24 +1135,15 @@ sub test($$)
   # If $XS_structuring is set, the Perl structure cannot be
   # built yet from XS as the document index information have not
   # been rebuilt yet, but it is not needed at that point.
-  Texinfo::Document::indices_sort_strings($document, $registrar,
-                                          $main_configuration);
+  Texinfo::Document::indices_sort_strings($document, $main_configuration);
 
   # could be in a if !$XS_structuring, but the function should not be
   # overriden already in that case
-  $document = Texinfo::Document::rebuild_document($document);
+  Texinfo::Document::rebuild_document($document);
   # should not actually be useful, as the same element should be reused.
   $tree = $document->tree();
 
-  if ($XS_structuring) {
-    foreach my $error (@{$document->{'errors'}}) {
-      $registrar->add_formatted_message($error);
-    }
-    Texinfo::Document::clear_document_errors(
-                                           $document->document_descriptor());
-  }
-
-  my ($errors, $error_nrs) = $registrar->errors();
+  my ($errors, $error_nrs) = $document->errors();
   my $indices_information = $document->indices_information();
   # FIXME maybe it would be good to compare $merged_index_entries?
   my $merged_index_entries = $document->merged_indices();
@@ -1198,8 +1169,7 @@ sub test($$)
     }
 
     my $indices_sort_strings
-      = Texinfo::Document::indices_sort_strings($document, $registrar,
-                                                $main_configuration);
+      = Texinfo::Document::indices_sort_strings($document, $main_configuration);
 
     $index_entries_sort_strings
      = Texinfo::Indices::format_index_entries_sort_strings(
@@ -1401,12 +1371,12 @@ sub test($$)
     if ($self->{'DEBUG'} and $unsplit_needed);
 
   # There is no XS overriding for the following codes. rebuild_output_units
-  # returns the input output units if there is no XS structures, which allows
-  # to have tests passing when XS is used (in the default case).  If overriding
+  # does nothing if there is no XS structures, which allows to have tests
+  # passing when XS is used (in the default case).  If overriding
   # of XS is setup, most likely all the functions should have an XS override
   # (units_directions has not, though there is an implementation in C),
   # otherwise some information will be missing in the rebuild_output_units
-  # output.
+  # output units.
   my $output_units;
   if ($test_split eq 'node') {
     $output_units = Texinfo::Structuring::split_by_node($tree);
@@ -1429,8 +1399,7 @@ sub test($$)
   }
 
   if ($test_split or $split_pages) {
-    $output_units
-      = Texinfo::Structuring::rebuild_output_units($output_units);
+    Texinfo::Structuring::rebuild_output_units($output_units);
   }
 
   my $file = "t/results/$self->{'name'}/$test_name.pl";

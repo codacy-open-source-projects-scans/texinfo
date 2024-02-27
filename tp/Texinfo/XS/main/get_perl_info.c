@@ -21,12 +21,9 @@
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
-/* Avoid warnings about Perl headers redefining symbols that gnulib
-   redefined already. */
-#if defined _WIN32 && !defined __CYGWIN__
-  #undef free
-#endif
 #include "XSUB.h"
+
+#include "ppport.h"
 
 #undef context
 
@@ -44,13 +41,18 @@
 #include "output_unit.h"
 #include "convert_to_text.h"
 #include "converter.h"
+/* for perl_only_* */
+#include "build_perl_info.h"
 #include "get_perl_info.h"
 
- /* TODO the NOTE in build_perl_info.c about not using malloc/free should
-    be relevant for this file */
+ /* See the NOTE in build_perl_info.c on use of functions related to
+    memory allocation */
 
 #define FETCH(key) key##_sv = hv_fetch (element_hv, #key, strlen(#key), 0);
 
+/* used for debugging only */
+/* This function mixes Perl and gnulib allocation functions, but since it is
+   only used for debugging it is ok */
 static void
 debug_print_element_hv (HV *element_hv)
 {
@@ -89,6 +91,7 @@ debug_print_element_hv (HV *element_hv)
   free (msg.text);
 }
 
+/* used for debugging only */
 void
 debug_print_element_sv (SV *element_sv)
 {
@@ -117,6 +120,11 @@ get_document_or_warn (SV *sv_in, char *key, char *warn_string)
   dTHX;
 
   hv_in = (HV *)SvRV (sv_in);
+  if (!hv_in)
+    {
+      fprintf (stderr, "ERROR: %s: no hash\n", warn_string);
+      return 0;
+    }
   document_descriptor_sv = hv_fetch (hv_in, key, strlen (key), 0);
   if (document_descriptor_sv && SvOK (*document_descriptor_sv))
     {
@@ -154,6 +162,7 @@ get_sv_document_document (SV *document_in, char *warn_string)
                                warn_string);
 }
 
+/* caller should ensure that OUTPUT_UNIT_IN is defined */
 int
 get_sv_output_units_descriptor (SV *output_units_in, char *warn_string)
 {
@@ -223,7 +232,8 @@ get_sv_output_units (SV *output_units_in, char *warn_string)
 }
 
 void
-add_svav_to_string_list (SV *sv, STRING_LIST *string_list, enum sv_string_type type)
+add_svav_to_string_list (const SV *sv, STRING_LIST *string_list,
+                         enum sv_string_type type)
 {
   int i;
   SSize_t strings_nr;
@@ -240,7 +250,7 @@ add_svav_to_string_list (SV *sv, STRING_LIST *string_list, enum sv_string_type t
       SV** string_sv = av_fetch (av, i, 0);
       if (string_sv)
         {
-          char *string;
+          const char *string;
           if (type == svt_char)
             string = SvPVutf8_nolen (*string_sv);
           else
@@ -274,7 +284,7 @@ get_source_info (SV *source_info_sv)
   if (macro_sv)
     {
       char *macro = (char *) SvPVutf8_nolen (*macro_sv);
-      source_info->macro = strdup (macro);
+      source_info->macro = non_perl_strdup (macro);
     }
 
   FETCH(file_name)
@@ -282,7 +292,7 @@ get_source_info (SV *source_info_sv)
   if (file_name_sv && SvOK (*file_name_sv))
     {
       char *file_name = (char *) SvPVbyte_nolen (*file_name_sv);
-      source_info->file_name = strdup (file_name);
+      source_info->file_name = non_perl_strdup (file_name);
     }
 
   FETCH(line_nr)
@@ -296,7 +306,7 @@ get_source_info (SV *source_info_sv)
 
 void
 get_line_message (CONVERTER *self, enum error_type type, int continuation,
-                  SV *error_location_info, char *message)
+                  SV *error_location_info, const char *message)
 {
   int do_warn = (self->conf->DEBUG.integer > 1);
   SOURCE_INFO *source_info = get_source_info (error_location_info);
@@ -304,7 +314,7 @@ get_line_message (CONVERTER *self, enum error_type type, int continuation,
     {
       char *saved_string = add_string (source_info->file_name,
                                        &self->small_strings);
-      free (source_info->file_name);
+      non_perl_free (source_info->file_name);
       source_info->file_name = saved_string;
     }
 
@@ -312,7 +322,7 @@ get_line_message (CONVERTER *self, enum error_type type, int continuation,
     {
       char *saved_string = add_string (source_info->macro,
                                        &self->small_strings);
-      free (source_info->macro);
+      non_perl_free (source_info->macro);
       source_info->macro = saved_string;
     }
 
@@ -320,7 +330,7 @@ get_line_message (CONVERTER *self, enum error_type type, int continuation,
                                        type, continuation, source_info,
                                        message, do_warn);
 
-  free (source_info);
+  non_perl_free (source_info);
 }
 
 void
@@ -489,7 +499,7 @@ set_translated_commands (CONVERTER *converter, HV *hv_in)
                   char *tmp_spec = (char *) SvPVutf8_nolen (translation_sv);
                   TRANSLATED_COMMAND *translated_command
                     = &converter->translated_commands[i];
-                  translated_command->translation = strdup (tmp_spec);
+                  translated_command->translation = non_perl_strdup (tmp_spec);
                   translated_command->cmd = cmd;
                 }
             }
@@ -570,7 +580,7 @@ converter_initialize (SV *converter_sv)
   if (output_format_sv && SvOK (*output_format_sv))
     {
       converter->output_format
-         = strdup (SvPVutf8_nolen (*output_format_sv));
+         = non_perl_strdup (SvPVutf8_nolen (*output_format_sv));
     }
 
    /*
@@ -637,7 +647,7 @@ find_index_entry_sv (const SV *index_entry_sv, INDEX **index_names,
   SV **index_name_sv;
   SV **entry_number_sv;
   int entry_idx_in_index;
-  char *entry_index_name = 0;
+  const char *entry_index_name = 0;
   const INDEX *idx;
 
   dTHX;
@@ -657,7 +667,7 @@ find_index_entry_sv (const SV *index_entry_sv, INDEX **index_names,
       xasprintf (&msg, "%s: no entry info\n", warn_str);
       fatal (msg);
     }
-  entry_index_name = (char *) SvPVutf8_nolen (*index_name_sv);
+  entry_index_name = (const char *) SvPVutf8_nolen (*index_name_sv);
   *entry_number = SvIV (*entry_number_sv);
   entry_idx_in_index = *entry_number - 1;
 
@@ -797,7 +807,7 @@ get_sv_index_entries_sorted_by_letter (INDEX **index_names,
       letter_entries_nr = av_top_index (av) +1;
 
       index_index_letters = &indices_entries_by_letter[j];
-      index_index_letters->name = strdup (idx_name);
+      index_index_letters->name = non_perl_strdup (idx_name);
       index_index_letters->letter_number = letter_entries_nr;
       index_index_letters->letter_entries
         = (LETTER_INDEX_ENTRIES *)
@@ -828,7 +838,7 @@ get_sv_index_entries_sorted_by_letter (INDEX **index_names,
                   fatal (msg);
                 }
               letter_string = (char *) SvPVutf8_nolen (*letter_sv);
-              letter_entries->letter = strdup (letter_string);
+              letter_entries->letter = non_perl_strdup (letter_string);
 
               entries_av = (AV *) SvRV (*entries_sv);
               entries_nr = av_top_index (entries_av) +1;
@@ -851,13 +861,13 @@ get_sv_index_entries_sorted_by_letter (INDEX **index_names,
                              idx_name, i, letter_entries->letter, k);
                       fatal (msg);
                     }
-                  xasprintf (&warn_string,
+                  perl_only_xasprintf (&warn_string,
                          "get_sv_index_entries_sorted_by_letter: %s: %d: %s: %d",
                          idx_name, i, letter_entries->letter, k);
                   index_entry = find_index_entry_sv (*index_entry_sv, index_names,
                                                      warn_string, &entry_idx,
                                                      &entry_number);
-                  free (warn_string);
+                  perl_only_free (warn_string);
 
                   letter_entries->entries[k] = index_entry;
 
@@ -949,7 +959,8 @@ copy_sv_options_for_convert_text (SV *sv_in)
 
   FETCH(enabled_encoding)
   if (enabled_encoding_sv)
-    text_options->encoding = strdup (SvPVutf8_nolen (*enabled_encoding_sv));
+    text_options->encoding
+      = non_perl_strdup (SvPVutf8_nolen (*enabled_encoding_sv));
 
   FETCH(set_case)
   if (set_case_sv)
@@ -995,8 +1006,8 @@ copy_sv_options_for_convert_text (SV *sv_in)
 }
 #undef FETCH
 
-int
-html_get_direction_index (CONVERTER *converter, const char *direction)
+static int
+html_get_direction_index (const CONVERTER *converter, const char *direction)
 {
   int i;
   if (converter && converter->direction_unit_direction_name)
@@ -1007,18 +1018,6 @@ html_get_direction_index (CONVERTER *converter, const char *direction)
             return i;
         }
     }
-   /* we could do the following, but there is no point in getting the
-      buttons if not all can be determined */
-   /*
-  else
-    {
-      for (i = 0; i < NON_SPECIAL_DIRECTIONS_NR; i++)
-        {
-          if (!strcmp (direction, html_button_direction_names[i]))
-            return i;
-        }
-    }
-    */
   return -1;
 }
 
@@ -1033,7 +1032,8 @@ static const char *button_function_type_string[] = {
 
 /* HTML specific, but needs to be there for options_get_perl.c */
 BUTTON_SPECIFICATION_LIST *
-html_get_button_specification_list (CONVERTER *converter, SV *buttons_sv)
+html_get_button_specification_list (const CONVERTER *converter,
+                                    const SV *buttons_sv)
 {
   BUTTON_SPECIFICATION_LIST *result;
   AV *buttons_av;
@@ -1175,9 +1175,9 @@ html_get_button_specification_list (CONVERTER *converter, SV *buttons_sv)
 
 /* HTML specific, but needs to be there for options_get_perl.c */
 void
-html_get_direction_icons_sv (CONVERTER *converter,
+html_get_direction_icons_sv (const CONVERTER *converter,
                              DIRECTION_ICON_LIST *direction_icons,
-                             SV *icons_sv)
+                             const SV *icons_sv)
 {
   HV *icons_hv;
   int i;
@@ -1213,24 +1213,23 @@ html_get_direction_icons_sv (CONVERTER *converter,
       if (direction_icon_sv && SvOK (*direction_icon_sv))
         {
           direction_icons->list[i]
-            = strdup (SvPVutf8_nolen (*direction_icon_sv));
+            = non_perl_strdup (SvPVutf8_nolen (*direction_icon_sv));
         }
       else
         direction_icons->list[i] = 0;
     }
 }
 
-INDEX_ENTRY *
+static const INDEX_ENTRY *
 find_sorted_index_names_index_entry_extra_index_entry_sv (
-                                       SORTED_INDEX_NAMES *sorted_index_names,
-                                       const SV *extra_index_entry_sv)
+                                  const SORTED_INDEX_NAMES *sorted_index_names,
+                                  const SV *extra_index_entry_sv)
 {
   AV *extra_index_entry_av;
   SV **index_name_sv;
-  char *index_name = 0;
+  const char *index_name = 0;
 
   dTHX;
-
 
   extra_index_entry_av = (AV *) SvRV (extra_index_entry_sv);
 
@@ -1251,7 +1250,7 @@ find_sorted_index_names_index_entry_extra_index_entry_sv (
               size_t index_nr
                 = index_number_index_by_name (sorted_index_names,
                                               index_name);
-              return &sorted_index_names->list[index_nr -1].index
+              return &sorted_index_names->list[index_nr -1]
                  ->index_entries[entry_number -1];
             }
         }
@@ -1259,7 +1258,7 @@ find_sorted_index_names_index_entry_extra_index_entry_sv (
   return 0;
 }
 
-INDEX_ENTRY *
+static const INDEX_ENTRY *
 find_document_index_entry_extra_index_entry_sv (const DOCUMENT *document,
                                              const SV *extra_index_entry_sv)
 {
@@ -1299,12 +1298,12 @@ find_document_index_entry_extra_index_entry_sv (const DOCUMENT *document,
 /* if there is a converter with sorted index names, use the
    sorted index names, otherwise use the index information from
    a document */
-static INDEX_ENTRY *
+static const INDEX_ENTRY *
 find_element_extra_index_entry_sv (const DOCUMENT *document,
-                                   CONVERTER *converter,
+                                   const CONVERTER *converter,
                                    const SV *extra_index_entry_sv)
 {
-  INDEX_ENTRY *index_entry;
+  const INDEX_ENTRY *index_entry;
   if (!converter || !converter->document || !converter->document->index_names)
     {
       if (document)
@@ -1430,13 +1429,13 @@ const ELEMENT *
 find_subentry_index_command_sv (const DOCUMENT *document, HV *element_hv)
 {
   HV *current_parent = element_hv;
-  SV *current_sv = 0;
+  const SV *current_sv = 0;
 
   dTHX;
 
   while (1)
     {
-      SV *subentry_parent_sv = subentry_hv_parent (current_parent);
+      const SV *subentry_parent_sv = subentry_hv_parent (current_parent);
       if (subentry_parent_sv)
         {
           current_parent = (HV *) SvRV (subentry_parent_sv);
@@ -1467,8 +1466,9 @@ find_subentry_index_command_sv (const DOCUMENT *document, HV *element_hv)
    when going through the elements associated to indices to setup
    index entries sort strings.
  */
-const ELEMENT *find_index_entry_associated_hv (INDEX_ENTRY *index_entry,
-                                               HV *element_hv)
+static const ELEMENT *
+find_index_entry_associated_hv (const INDEX_ENTRY *index_entry,
+                                const HV *element_hv)
 {
   if (index_entry->entry_associated_element
       && index_entry->entry_associated_element->hv == element_hv)
@@ -1482,9 +1482,6 @@ const ELEMENT *find_index_entry_associated_hv (INDEX_ENTRY *index_entry,
   return 0;
 }
 
-/* TODO nodedescription using the extra element_node and the
- * node extra node_description? */
-
 /* find C Texinfo tree element based on element_sv perl tree element.
    Both DOCUMENT_IN and CONVERTER are optional, but if there is no
    document coming from one or the other, elements will not be found.
@@ -1494,9 +1491,10 @@ const ELEMENT *find_index_entry_associated_hv (INDEX_ENTRY *index_entry,
    OUTPUT_UNIT_DESCRIPTOR is optional, it should allow to find sectioning
    commands faster.
    Only for global commands, commands with indices, and sectioning root
-   commands */
+   commands.  More could be added if needed, for example nodedescription.
+ */
 const ELEMENT *
-find_element_from_sv (CONVERTER *converter, const DOCUMENT *document_in,
+find_element_from_sv (const CONVERTER *converter, const DOCUMENT *document_in,
                       const SV *element_sv, int output_units_descriptor)
 {
   enum command_id cmd = 0;
@@ -1586,7 +1584,7 @@ find_element_from_sv (CONVERTER *converter, const DOCUMENT *document_in,
       EXTRA(associated_index_entry)
       if (associated_index_entry_sv)
         {
-          INDEX_ENTRY *index_entry
+          const INDEX_ENTRY *index_entry
                = find_element_extra_index_entry_sv (document,
                                                     converter,
                                               *associated_index_entry_sv);
@@ -1602,7 +1600,7 @@ find_element_from_sv (CONVERTER *converter, const DOCUMENT *document_in,
       EXTRA(index_entry)
       if (index_entry_sv)
         {
-          INDEX_ENTRY *index_entry
+          const INDEX_ENTRY *index_entry
                      = find_element_extra_index_entry_sv (document,
                                                           converter,
                                                           *index_entry_sv);

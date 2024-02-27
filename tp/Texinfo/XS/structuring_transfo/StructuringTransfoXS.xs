@@ -28,8 +28,6 @@
 
 #undef context
 
-#include "ppport.h"
-
 #include "options_types.h"
 #include "tree_types.h"
 #include "document_types.h"
@@ -42,6 +40,9 @@
 #include "output_unit.h"
 #include "get_perl_info.h"
 #include "build_perl_info.h"
+
+ /* See the NOTE in build_perl_info.c on use of functions related to
+    memory allocation */
 
 MODULE = Texinfo::StructTransfXS	PACKAGE = Texinfo::StructTransfXS
 
@@ -72,6 +73,8 @@ fill_gaps_in_sectioning (SV *tree_in, ...)
             destroy_list (added_sections);
           }
 
+# This is only used in tests, and not for all the tests, copy_treeNonXS is
+# more generally used because the C tree element cannot be found in general.
 SV *
 copy_tree (SV *tree_in)
     PREINIT:
@@ -81,7 +84,11 @@ copy_tree (SV *tree_in)
         if (document)
           {
             ELEMENT *result = copy_tree (document->tree);
-            /* FIXME have a similar system but for trees only? */
+          /* document additional information, global info, labels, indices...
+             is not setup with copy_tree, so we only have the tree to store.
+             This is not different from the Perl code and, in general,
+             it is best that way.
+           */
             int copy_document_descriptor = register_document (result, 0, 0, 0,
                                                       0, 0, 0, 0, 0, 0);
             HV *hv = build_texinfo_tree (result, 0);
@@ -138,7 +145,7 @@ reference_to_arg_in_tree (SV *tree_in)
 
 void
 associate_internal_references (SV *document_in, ...)
-    PROTOTYPE: $$$
+    PROTOTYPE: $$
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -166,7 +173,7 @@ sectioning_structure (SV *tree_in, ...)
 
 void
 warn_non_empty_parts (SV *document_in, ...)
-   PROTOTYPE: $$$
+   PROTOTYPE: $$
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -177,7 +184,7 @@ warn_non_empty_parts (SV *document_in, ...)
 
 void
 set_menus_node_directions (SV *document_in, ...)
-  PROTOTYPE: $$$
+  PROTOTYPE: $$
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -188,7 +195,7 @@ set_menus_node_directions (SV *document_in, ...)
 
 void
 complete_node_tree_with_menus (SV *document_in, ...)
-  PROTOTYPE: $$$
+  PROTOTYPE: $$
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -199,7 +206,7 @@ complete_node_tree_with_menus (SV *document_in, ...)
 
 void
 check_nodes_are_referenced (SV *document_in, ...)
-  PROTOTYPE: $$$
+  PROTOTYPE: $$
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -269,7 +276,7 @@ regenerate_master_menu (SV *document_in, SV *customization_information, SV *use_
 # The perl function returns the list of added nodes.
 void
 insert_nodes_for_sectioning_commands (SV *document_in, ...)
-   PROTOTYPE: $;$$
+   PROTOTYPE: $;$
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -287,7 +294,7 @@ insert_nodes_for_sectioning_commands (SV *document_in, ...)
 # value for a return status, if it becomes needed.
 void
 nodes_tree (SV *document_in, ...)
-   PROTOTYPE: $$$
+   PROTOTYPE: $$
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -400,24 +407,17 @@ unsplit (SV *tree_in)
     OUTPUT:
         RETVAL
 
-# return the input if XS information is missing
-SV *
+void
 rebuild_output_units (SV *output_units_in)
     PREINIT:
         int output_units_descriptor = 0;
      CODE:
-      /* This is called in Texinfo::Convert::Converter::output on
+      /* This may be called in Texinfo::Convert::Converter::output on
          converters that may or may not have XS information, so no warning */
         output_units_descriptor
            = get_sv_output_units_descriptor (output_units_in, 0);
         if (output_units_descriptor)
-          RETVAL = build_output_units_list (output_units_descriptor);
-        else
-         /* NOTE adding SvREFCNT_inc was done by trial and error
-            as without one gets "Useless assignment to a temporary" */
-          RETVAL = SvREFCNT_inc(output_units_in);
-    OUTPUT:
-        RETVAL
+          rebuild_output_units_list (output_units_in, output_units_descriptor);
 
 void
 split_pages (SV *output_units_in, char *split)

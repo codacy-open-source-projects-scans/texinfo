@@ -21,26 +21,25 @@
 #define PERL_NO_GET_CONTEXT
 #include "EXTERN.h"
 #include "perl.h"
-#if defined _WIN32 && !defined __CYGWIN__
-# undef free
-#endif
 #include "XSUB.h"
 
 #undef context
 
-#include "ppport.h"
-
 #include "tree_types.h"
 #include "document_types.h"
+/* non_perl_* */
+#include "utils.h"
 /*
 #include "tree.h"
-#include "utils.h"
  */
 #include "document.h"
 #include "manipulate_indices.h"
 #include "get_perl_info.h"
 /* for newSVpv_utf8 */
 #include "build_perl_info.h"
+
+ /* See the NOTE in build_perl_info.c on use of functions related to
+    memory allocation */
 
 MODULE = Texinfo::IndicesXS	PACKAGE = Texinfo::IndicesXS
 
@@ -149,7 +148,7 @@ index_entry_element_sort_string (SV *customization_info_sv, SV *main_entry_sv, S
        else
          {
            RETVAL = newSVpv_utf8 (sort_string, 0);
-           free (sort_string);
+           non_perl_free (sort_string);
          }
     OUTPUT:
          RETVAL
