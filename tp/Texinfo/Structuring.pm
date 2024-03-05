@@ -163,11 +163,13 @@ my %unnumbered_commands = %Texinfo::Commands::unnumbered_commands;
 # 'section_childs'
 # 'section_directions'
 # 'toplevel_directions'
-sub sectioning_structure($$$)
+sub sectioning_structure($$)
 {
-  my $root = shift;
-  my $registrar = shift;
+  my $document = shift;
   my $customization_information = shift;
+
+  my $root = $document->tree();
+  my $registrar = $document->registrar();
 
   my $sec_root;
   my $previous_section;
@@ -402,11 +404,12 @@ sub warn_non_empty_parts($$)
   my $customization_information = shift;
 
   my $global_commands = $document->global_commands_information();
+  my $registrar = $document->registrar();
 
   if ($global_commands->{'part'}) {
     foreach my $part (@{$global_commands->{'part'}}) {
       if (!Texinfo::Common::is_content_empty($part)) {
-        $document->{'registrar'}->line_warn($customization_information,
+        $registrar->line_warn($customization_information,
                sprintf(__("\@%s not empty"),
                        $part->{'cmdname'}), $part->{'source_info'});
       }
@@ -565,6 +568,7 @@ sub check_nodes_are_referenced($$)
   my $nodes_list = $document->nodes_list();
   my $identifier_target = $document->labels_information();
   my $refs = $document->internal_references_information();
+  my $registrar = $document->registrar();
 
   return unless ($nodes_list and scalar(@{$nodes_list}));
 
@@ -625,7 +629,7 @@ sub check_nodes_are_referenced($$)
     # it is normal that a redundant node is not referenced
     if ($node->{'extra'}->{'is_target'}
         and not exists($referenced_nodes{$node})) {
-      $document->{'registrar'}->line_warn($customization_information,
+      $registrar->line_warn($customization_information,
                             sprintf(__("node `%s' unreferenced"),
                                     target_element_to_texi_label($node)),
                             $node->{'source_info'});
@@ -676,7 +680,7 @@ sub set_menus_node_directions($$)
   my $global_commands = $document->global_commands_information();
   my $nodes_list = $document->nodes_list();
   my $identifier_target = $document->labels_information();
-  my $registrar = $document->{'registrar'};
+  my $registrar = $document->registrar();
 
   return undef unless ($nodes_list and scalar(@{$nodes_list}));
 
@@ -810,7 +814,7 @@ sub complete_node_tree_with_menus($$)
 
   my $nodes_list = $document->nodes_list();
   my $identifier_target = $document->labels_information();
-  my $registrar = $document->{'registrar'};
+  my $registrar = $document->registrar();
 
   return unless ($nodes_list and @{$nodes_list});
 
@@ -1023,6 +1027,7 @@ sub nodes_tree($$)
 
   my $root = $document->tree();
   my $identifier_target = $document->labels_information();
+  my $registrar = $document->registrar();
 
   my $top_node;
   my @nodes_list = ();
@@ -1131,7 +1136,7 @@ sub nodes_tree($$)
                 and !Texinfo::Convert::Texinfo::check_node_same_texinfo_code(
                                  $node_target,
                                  $direction_element->{'extra'}->{'node_content'})) {
-              $document->{'registrar'}->line_warn($customization_information,
+              $registrar->line_warn($customization_information,
                 sprintf(
              __("%s pointer `%s' (for node `%s') different from %s name `%s'"),
                   $direction_texts{$direction},
@@ -1143,7 +1148,7 @@ sub nodes_tree($$)
             }
           } else {
             if (!$customization_information->get_conf('novalidate')) {
-              $document->{'registrar'}->line_error($customization_information,
+              $registrar->line_error($customization_information,
                    sprintf(__("%s reference to nonexistent `%s'"),
                       $direction_texts{$direction},
                       link_element_to_texi($direction_element)),
@@ -1168,6 +1173,9 @@ sub associate_internal_references($$)
   my $refs = $document->internal_references_information();
 
   return if (!defined($refs));
+
+  my $registrar = $document->registrar();
+
   foreach my $ref (@$refs) {
     my $label_element;
     if ($ref->{'type'} and $ref->{'type'} eq 'menu_entry_node') {
@@ -1193,7 +1201,7 @@ sub associate_internal_references($$)
       if (!defined($normalized)
           or !defined($identifier_target->{$normalized})) {
         if (!$customization_information->get_conf('novalidate')) {
-          $document->{'registrar'}->line_error($customization_information,
+          $registrar->line_error($customization_information,
                      sprintf(__("\@%s reference to nonexistent node `%s'"),
                              $ref->{'cmdname'},
                              link_element_to_texi($label_element)),
@@ -1205,7 +1213,7 @@ sub associate_internal_references($$)
             and !Texinfo::Convert::Texinfo::check_node_same_texinfo_code(
                                $node_target,
                                $label_element->{'extra'}->{'node_content'})) {
-          $document->{'registrar'}->line_warn($customization_information,
+          $registrar->line_warn($customization_information,
              sprintf(__("\@%s to `%s', different from %s name `%s'"),
                      $ref->{'cmdname'},
                      link_element_to_texi($label_element),
@@ -2239,10 +2247,9 @@ Texinfo::Structuring - information on Texinfo::Document tree
     units_directions units_file_directions);
 
   # $document is a parsed Texinfo::Document document, $tree is the
-  # associated Texinfo document tree.  $parser is a Texinfo::Parser
-  # object. $config is an object implementing the get_conf() method.
-  my $registrar = $parser->registered_errors();
-  my $sections_list = sectioning_structure($tree, $registrar, $config);
+  # associated Texinfo document tree. $config is an object implementing
+  # the get_conf() method.
+  my $sections_list = sectioning_structure($document, $config);
   my $identifier_target = $document->labels_information();
   my $global_commands = $document->global_commands_information();
   my $nodes_list = nodes_tree($document, $config);
@@ -2480,12 +2487,12 @@ Return the sectioning command name corresponding to the sectioning
 element I<$element>, adjusted in order to take into account raised
 and lowered sections, when needed.
 
-=item $sections_list = sectioning_structure($tree, $registrar, $customization_information)
+=item $sections_list = sectioning_structure($document, $customization_information)
 X<C<sectioning_structure>>
 
-This function goes through the tree and gather information on the document
-structure for sectioning commands.  It returns a reference on the sections
-elements list.  Errors are registered in I<$registrar>.
+This function goes through the parsed document tree and gather information
+on the document structure for sectioning commands.  It returns a reference
+on the sections elements list.
 
 It sets section elements C<extra> hash values:
 

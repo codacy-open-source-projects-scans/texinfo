@@ -183,7 +183,7 @@ sub parser (;$$)
   return $parser;
 }
 
-sub _get_error_registrar($)
+sub _get_parser_error_registrar($)
 {
   my $self = shift;
   if (not $self->{'registrar'}) {
@@ -200,8 +200,8 @@ sub _get_parser_info($$;$$) {
   my $no_build = shift;
   my $no_store = shift;
 
-  my ($registrar, $configuration_information)
-     = _get_error_registrar($self);
+  my ($parser_registrar, $configuration_information)
+     = _get_parser_error_registrar($self);
 
   my $document;
   if ($no_build) {
@@ -213,23 +213,24 @@ sub _get_parser_info($$;$$) {
   #Texinfo::Translations::complete_indices ($self,
   #                                 $document->indices_information());
 
-  # Copy the errors into the error list in Texinfo::Report.
-  foreach my $error (@{$document->{'errors'}}) {
-    $registrar->add_formatted_message($error);
+  # Copy the errors into the error list in parser Texinfo::Report.
+  foreach my $error (@{$document->{'parser_errors'}}) {
+    $parser_registrar->add_formatted_message($error);
   }
-  @{$document->{'errors'}} = ();
-  clear_document_errors($document_descriptor);
-
-  # Reference the same Texinfo::Report object
-  $document->{'registrar'} = $registrar;
+  @{$document->{'parser_errors'}} = ();
+  clear_document_parser_errors($document_descriptor);
 
   # additional info relevant in perl only.
   my $perl_encoding
     = Texinfo::Common::get_perl_encoding($document->{'commands_info'},
-                              $registrar, $configuration_information);
+                        $parser_registrar, $configuration_information);
   $perl_encoding = 'utf-8' if (!defined($perl_encoding));
   Texinfo::Document::set_document_global_info($document,
                      'input_perl_encoding', $perl_encoding);
+
+  # New error registrar for document to be used after parsing, for
+  # structuring and tree modifications
+  $document->{'registrar'} = Texinfo::Report::new();
 
   return $document;
 }
@@ -250,13 +251,14 @@ sub parse_texi_file ($$;$)
   my $document_descriptor = parse_file ($input_file_path,
                                         $basename, $directories);
   if (!$document_descriptor) {
-    my ($registrar, $configuration_information) = _get_error_registrar($self);
+    my ($parser_registrar, $configuration_information)
+       = _get_parser_error_registrar($self);
     my $input_file_name = $input_file_path;
     my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
     if (defined($encoding)) {
       $input_file_name = decode($encoding, $input_file_path);
     }
-    $registrar->document_error($configuration_information,
+    $parser_registrar->document_error($configuration_information,
        sprintf(__("could not open %s: %s"), $input_file_name, $!));
     return undef;
   }

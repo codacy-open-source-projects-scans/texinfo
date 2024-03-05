@@ -22,6 +22,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #if defined _WIN32 && !defined __CYGWIN__
+/* See comment in XSParagraph.xs for why we #undef free. */
 # undef free
 #endif
 #include "XSUB.h"
@@ -103,6 +104,9 @@ get_document (int document_descriptor)
 
 void
 clear_document_errors (int document_descriptor)
+
+void
+clear_document_parser_errors (int document_descriptor)
 
 void
 parser_store_value (name, value)

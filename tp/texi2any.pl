@@ -1229,22 +1229,6 @@ sub _exit($$)
      or $error_count > get_conf('ERROR_LIMIT')));
 }
 
-sub handle_document_errors($$$)
-{
-  my $document = shift;
-  my $error_count = shift;
-  my $opened_files = shift;
-
-  die if ref($document) ne 'Texinfo::Document';
-
-  my ($errors, $new_error_count) = $document->errors();
-  $error_count += $new_error_count if ($new_error_count);
-  _handle_errors($errors);
-
-  _exit($error_count, $opened_files);
-  return $error_count;
-}
-
 sub handle_errors($$$)
 {
   my $self = shift;
@@ -1525,15 +1509,15 @@ while(@input_files) {
     print STDERR Data::Dumper->Dump([$tree]);
   }
   # object registering errors and warnings
-  my $registrar = $parser->registered_errors();
+  my $parser_registrar = $parser->registered_errors();
   if (!defined($tree) or $format eq 'parse') {
-    handle_errors($registrar, $error_count, \@opened_files);
+    handle_errors($parser_registrar, $error_count, \@opened_files);
     goto NEXT;
   }
 
   my $document_information = $document->global_information();
   if (get_conf('TRACE_INCLUDES')) {
-    handle_errors($registrar, $error_count, \@opened_files);
+    handle_errors($parser_registrar, $error_count, \@opened_files);
     my $included_file_paths = $document_information->{'included_files'};
     if (defined($included_file_paths)) {
       foreach my $included_file (@$included_file_paths) {
@@ -1617,7 +1601,7 @@ while(@input_files) {
     }
   }
   if (get_conf('DUMP_TEXI') or $formats_table{$format}->{'texi2dvi_format'}) {
-    handle_errors($registrar, $error_count, \@opened_files);
+    handle_errors($parser_registrar, $error_count, \@opened_files);
     goto NEXT;
   }
 
@@ -1642,7 +1626,7 @@ while(@input_files) {
   # and useful in converters.
   # every format needs the sectioning structure
   my $sections_list
-            = Texinfo::Structuring::sectioning_structure($tree, $registrar,
+            = Texinfo::Structuring::sectioning_structure($document,
                                                        $main_configuration);
   if ($sections_list) {
     Texinfo::Document::register_document_sections_list($document,
@@ -1699,8 +1683,17 @@ while(@input_files) {
   }
 
   Texinfo::Document::rebuild_document($document);
-  $error_count = handle_document_errors($document,
-                                        $error_count, \@opened_files);
+
+  # parser errors
+  my ($errors, $new_error_count) = $parser_registrar->errors();
+  $error_count += $new_error_count if ($new_error_count);
+  # document/structuring errors
+  my ($document_errors, $document_error_count) = $document->errors();
+  $error_count += $document_error_count if ($document_error_count);
+  push @$errors, @$document_errors;
+
+  _handle_errors($errors);
+  _exit($error_count, \@opened_files);
 
   if ($format eq 'structure') {
     goto NEXT;

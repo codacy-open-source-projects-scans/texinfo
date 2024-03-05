@@ -38,23 +38,23 @@ sub run_test($$$;$)
   my $document = $parser->parse_texi_piece($in, 1);
   my $tree = $document->tree();
 
-  my $registrar = $parser->registered_errors();
+  my $parser_registrar = $parser->registered_errors();
 
   my $corrected_tree =
     Texinfo::Transformations::protect_hashchar_at_line_beginning($tree,
-                                                  $registrar, $parser);
+                                            $document->registrar(), $parser);
 
   Texinfo::Document::rebuild_document($document);
   $corrected_tree = $document->tree();
 
-  if ($with_XS) {
-    foreach my $error (@{$document->{'errors'}}) {
-      $registrar->add_formatted_message($error);
-    }
-  }
-
   if (defined($error_message)) {
-    my ($errors, $errors_count) = $registrar->errors();
+    my $parser_registrar = $parser->registered_errors();
+    my ($errors, $errors_count) = $parser_registrar->errors();
+    my ($document_errors, $document_errors_count)
+      = $document->errors();
+    $errors_count += $document_errors_count if ($document_errors_count);
+    push @$errors, @$document_errors;
+
     my ($error_line_nr_reference, $error_line_reference) = @$error_message;
     if (!$error_line_reference) {
       if ($errors and scalar(@$errors)) {

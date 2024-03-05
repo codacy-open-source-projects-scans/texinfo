@@ -56,11 +56,11 @@
 
   /* NOTE This file includes the Perl headers, therefore we get the Perl
      redefinitions of functions related to memory allocation, such as
-     'free', 'malloc', 'strdup' or 'asprintf'. In other files, the Gnulib
-     redefinition of those functions are used. It is wrong to mix functions
-     from Perl and Gnulib. If memory is allocated with Gnulib defined malloc,
-     and then freed with Perl defined free (or vice versa), then an error
-     can occur like "Free to wrong pool".
+     'free' or 'malloc'.  In other files, the Gnulib redefinition of
+     those functions are used.  It is wrong to mix functions from Perl
+     and Gnulib.  If memory is allocated with Gnulib defined malloc,
+     and then freed with Perl defined free (or vice versa), then an
+     error can occur like "Free to wrong pool".
     https://lists.gnu.org/archive/html/bug-texinfo/2016-01/msg00016.html
    */
 
@@ -70,12 +70,12 @@
 
       To be sure to use Perl defined functions, wrappers
       can be used, from build_perl_info.h:
-       perl_only_free, perl_only_strdup, perl_only_strndup, perl_only_malloc,
-       perl_only_xvasprintf, perl_only_xasprintf.
+       perl_only_free, perl_only_strdup, perl_only_strndup, perl_only_malloc.
 
       To be sure to use non Perl defined functions, constructors and wrappers
       can be used, from utils.h:
-       non_perl_free, non_perl_strdup, non_perl_strndup.
+       non_perl_free, non_perl_strdup, non_perl_strndup,
+       non_perl_xvasprintf, non_perl_xasprintf.
     */
 
 /* wrappers to be sure to use Perl defined functions */
@@ -91,36 +91,32 @@ perl_only_malloc (size_t size)
   return malloc (size);
 }
 
+/* Implement as we are not sure that Perl will define a version of this
+   function. */
+/* NB this function does not appear to be used currently. */
 char *
 perl_only_strdup (const char *s)
 {
-  return strdup (s);
-}
-
-char *
-perl_only_strndup (const char *s, size_t n)
-{
-  return strndup (s, n);
-}
-
-/* wrapper for vasprintf */
-int
-perl_only_xvasprintf (char **ptr, const char *template, va_list ap)
-{
-  int ret;
-  ret = vasprintf (ptr, template, ap);
-  if (ret < 0)
-    abort (); /* out of memory */
+  size_t len = strlen (s);
+  char *ret = perl_only_malloc (len+1);
+  memcpy (ret, s, len+1);
   return ret;
 }
 
-/* wrapper for asprintf */
-int
-perl_only_xasprintf (char **ptr, const char *template, ...)
+/* Implement as we are not sure that Perl will define a version of this
+   function. */
+/* NB this function does not appear to be used currently. */
+char *
+perl_only_strndup (const char *s, size_t n)
 {
-  va_list v;
-  va_start (v, template);
-  return perl_only_xvasprintf (ptr, template, v);
+  size_t len = strlen (s);
+  if (len > n)
+    len = n;
+
+  char *ret = perl_only_malloc (len+1);
+  memcpy (ret, s, len);
+  ret[len] = '\0';
+  return ret;
 }
 
 int
@@ -1222,6 +1218,7 @@ get_document (size_t document_descriptor)
   HV *hv_tree;
   HV *hv_info;
   AV *av_errors_list;
+  AV *av_parser_errors_list;
 
   dTHX;
 
@@ -1235,10 +1232,16 @@ get_document (size_t document_descriptor)
   av_errors_list = build_errors (document->error_messages->list,
                                  document->error_messages->number);
 
+  av_parser_errors_list
+    = build_errors (document->parser_error_messages->list,
+                    document->parser_error_messages->number);
+
+
 #define STORE(key, value) hv_store (hv, key, strlen (key), newRV_inc ((SV *) value), 0)
   STORE("tree", hv_tree);
   STORE("global_info", hv_info);
   STORE("errors", av_errors_list);
+  STORE("parser_errors", av_parser_errors_list);
 #undef STORE
 
   hv_store (hv, "document_descriptor", strlen ("document_descriptor"),
@@ -1268,6 +1271,7 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
   HV *hv_identifiers_target;
   AV *av_labels_list;
   AV *av_errors_list;
+  AV *av_parser_errors_list;
   AV *av_nodes_list = 0;
   AV *av_sections_list = 0;
 
@@ -1305,6 +1309,10 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
 
   av_errors_list = build_errors (document->error_messages->list,
                                  document->error_messages->number);
+  av_parser_errors_list
+    = build_errors (document->parser_error_messages->list,
+                    document->parser_error_messages->number);
+
 
   if (document->nodes_list)
     av_nodes_list = build_elements_list (document->nodes_list);
@@ -1329,6 +1337,7 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
   STORE("identifiers_target", hv_identifiers_target);
   STORE("labels_list", av_labels_list);
   STORE("errors", av_errors_list);
+  STORE("parser_errors", av_parser_errors_list);
 
   if (av_nodes_list)
     STORE("nodes_list", av_nodes_list);
@@ -1392,6 +1401,9 @@ rebuild_document (SV *document_in, int no_store)
   document_descriptor_sv = hv_fetch (hv, descriptor_key,
                                      strlen (descriptor_key), 0);
 
+  /* Note that we could also keep the parser_registrar, however at that
+     point it should not be useful anymore, so it is better to let it
+     be cleared */
   SV **registrar_svp, *registrar_sv = 0;
   registrar_svp = hv_fetch (hv, registrar_key, strlen (registrar_key), 0);
   if (registrar_svp)

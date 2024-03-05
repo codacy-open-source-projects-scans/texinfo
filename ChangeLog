@@ -1,3 +1,148 @@
+2024-03-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_starting_block),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block): add a
+	warning when a command as @itemize argument is a brace command, do not
+	have braces and is not a mark (noarg) command.
+
+2024-03-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/get_perl_info.c: Remove unnecessary #include.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	Update POD documentation.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl (_parsed_manual_tree): update calls
+	to Texinfo::Transformations and Texinfo::Structuring methods by
+	removing registrar and using document when needed.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_protect_hashchar_at_line_beginning.t (run_test): store
+	tree transformation error messags in document registrar.  Use document
+	error function to get errors and merge with parser registrar errors.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	Change name of registrar variables to clarify the type of registrar
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (_get_parser_error_registrar):
+	rename _get_error_registrar as _get_parser_error_registrar.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): use document registrar in tree
+	transformation test.
+
+	* tp/t/test_utils.pl (test): rename $registrar as $parser_registrar.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (_existing_label_error)
+	(set_labels_identifiers_target)
+	(register_label_element), tp/Texinfo/Transformations.pm (_new_node):
+	pass registrar as argument of _existing_label_error and
+	register_label_element.  Set the argument in
+	set_labels_identifiers_target as should be done for a parser, and in
+	_new_node as a document.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (registrar), tp/Texinfo/Structuring.pm: add 
+	accessor for registrar.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (sectioning_structure),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(sectioning_structure): use a document in argument, to avoid the
+	possibility to use the parser error registrar.  Update callers.
+
+	* tp/t/test_utils.pl (test): call
+	Texinfo::Document::sorted_indices_by_index instead of
+	Texinfo::Indices::sort_indices_by_index, in particular to use the
+	document errors registrar more simply.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	Separate Parser and Document errors and registrars
+
+	* tp/Texinfo/Document.pm (register),
+	tp/Texinfo/XS/main/build_perl_info.c (get_document, fill_document_hv),
+	tp/Texinfo/XS/main/document.c (register_document)
+	(clear_document_parser_errors), tp/Texinfo/XS/main/document_types.h
+	(DOCUMENT), tp/Texinfo/XS/parsetexi/Parsetexi.pm (_get_parser_info),
+	tp/t/test_parser_registrar.t, tp/t/test_utils.pl (test),
+	tp/texi2any.pl: add a separate Texinfo::Report error registrar in
+	perl, and separate parser_error_messages ERROR_MESSAGE_LIST in C.
+	Merge parser and document errors in texi2any.pl and test_utils.pl.
+	Remove handle_document_errors in texi2any.pl as the code is inlined
+	for the merging of errors in the main loop.
+
+2024-03-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove some perl_only_* wrappers
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(perl_only_xasprintf, perl_only_xvasprintf): Remove as wrappers,
+	as it is likely that Perl does not define its own versions
+	of these.  It's not worth implementing them ourselves as this is
+	not trivial to do, and they are not currently needed.
+
+	* tp/Texinfo/XS/main/utils.c
+	(non_perl_xasprintf, non_perl_xvasprintf): Add.
+
+	* tp/Texinfo/XS/main/get_perl_info.c
+	(get_sv_index_entries_sorted_by_letter): Replace calls to
+	perl_only_xasprintf and perl_only_free with calls to non_perl_xasprintf
+	and non_perl_free.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_translated_names): Replace call to perl_only_xasprintf
+	with calls to perl_only_malloc and sprintf.
+
+2024-03-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Reimplement perl_only_* wrappers
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(perl_only_strdup, perl_only_strndup): Reimplement as it is
+	likely that Perl does not define its own versions of these.
+
+2024-03-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Consolidate "#undef free" comment.
+
+	* tp/Texinfo/XS/XSParagraph.xs,
+	* tp/Texinfo/XS/MiscXS.xs,
+	* tp/Texinfo/XS/convert/ConvertXS.xs,
+	* tp/Texinfo/XS/convert/build_html_perl_state.c,
+	* tp/Texinfo/XS/convert/call_html_perl_function.c,
+	* tp/Texinfo/XS/convert/get_html_perl_info.c,
+	* tp/Texinfo/XS/main/api_to_perl.c,
+	* tp/Texinfo/XS/misc.c,
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs,
+	* tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs,
+	* tp/Texinfo/XS/xspara.c:
+	Refer to comment in XSParagraph.xs for why we "#undef free" and
+	expand on this comment.
+
+2024-03-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.h (initialize_cmd_list): fix
+	definition.
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/convert/convert_html.c
+	(new_special_unit_info_type): replace
+	initialize_special_unit_info_type by new_special_unit_info_type.
+
+	* tp/Texinfo/XS/convert/convert_html.c, tp/Texinfo/XS/main/utils.c:
+	use new_string_list.
+
 2024-02-26  Patrice Dumas  <pertusus@free.fr>
 
 	Wrappers around functions to avoid mixing Perl and non-Perl

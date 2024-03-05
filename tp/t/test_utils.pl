@@ -545,12 +545,12 @@ sub convert_to_plaintext($$$$$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
-  my $registrar = Texinfo::Report::new();
+  my $converter_registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $registrar->add_formatted_message($error);
+    $converter_registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $registrar->errors();
+  my ($errors, $error_nrs) = $converter_registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -572,12 +572,12 @@ sub convert_to_info($$$$$)
   die if (!defined($converter_options->{'SUBDIR'}) and !defined($result));
 
   my $converter_errors = $converter->get_converter_errors();
-  my $registrar = Texinfo::Report::new();
+  my $converter_registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $registrar->add_formatted_message($error);
+    $converter_registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $registrar->errors();
+  my ($errors, $error_nrs) = $converter_registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -608,13 +608,13 @@ sub convert_to_html($$$$$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
-  my $registrar = Texinfo::Report::new();
+  my $converter_registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $registrar->add_formatted_message($error);
+    $converter_registrar->add_formatted_message($error);
   }
 
   die if (!defined($converter_options->{'SUBDIR'}) and !defined($result));
-  my ($errors, $error_nrs) = $registrar->errors();
+  my ($errors, $error_nrs) = $converter_registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -643,12 +643,12 @@ sub convert_to_xml($$$$$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
-  my $registrar = Texinfo::Report::new();
+  my $converter_registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $registrar->add_formatted_message($error);
+    $converter_registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $registrar->errors();
+  my ($errors, $error_nrs) = $converter_registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -697,12 +697,12 @@ sub convert_to_docbook($$$$$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
-  my $registrar = Texinfo::Report::new();
+  my $converter_registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $registrar->add_formatted_message($error);
+    $converter_registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $registrar->errors();
+  my ($errors, $error_nrs) = $converter_registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -730,12 +730,12 @@ sub convert_to_latex($$$$$)
   }
 
   my $converter_errors = $converter->get_converter_errors();
-  my $registrar = Texinfo::Report::new();
+  my $converter_registrar = Texinfo::Report::new();
   foreach my $error (@$converter_errors) {
-    $registrar->add_formatted_message($error);
+    $converter_registrar->add_formatted_message($error);
   }
 
-  my ($errors, $error_nrs) = $registrar->errors();
+  my ($errors, $error_nrs) = $converter_registrar->errors();
   return ($errors, $result, $converter);
 }
 
@@ -1034,16 +1034,17 @@ sub test($$)
     $document = $parser->parse_texi_file($test_file, $XS_structuring);
   }
   my $tree = $document->tree();
-  my $registrar = $parser->registered_errors();
+  my $parser_registrar = $parser->registered_errors();
 
   if (not defined($tree)) {
     print STDERR "ERROR: parsing result undef\n";
-    my ($parser_errors, $parser_error_count) = $registrar->errors();
+    my ($parser_errors, $parser_error_count) = $parser_registrar->errors();
     foreach my $error_message (@$parser_errors) {
       warn $error_message->{'error_line'}
         if ($error_message->{'type'} eq 'error');
     }
   }
+  my ($errors, $error_nrs) = $parser_registrar->errors();
 
   if ($tree_transformations{'fill_gaps_in_sectioning'}) {
     Texinfo::Transformations::fill_gaps_in_sectioning($tree);
@@ -1079,7 +1080,7 @@ sub test($$)
   Texinfo::Structuring::associate_internal_references($document,
                                                       $main_configuration);
   my $sections_list
-        = Texinfo::Structuring::sectioning_structure($tree, $registrar,
+        = Texinfo::Structuring::sectioning_structure($document,
                                                    $main_configuration);
   if ($sections_list) {
     Texinfo::Document::register_document_sections_list($document,
@@ -1123,8 +1124,8 @@ sub test($$)
     foreach my $transformation (@$additional_tree_transformations) {
       my $tree_transformation_sub = $tested_transformations{$transformation};
       if ($transformation eq 'protect_hashchar_at_line_beginning') {
-        &$tree_transformation_sub($document->tree(), $registrar,
-                                         $main_configuration);
+        &$tree_transformation_sub($document->tree(), $document->registrar(),
+                                  $main_configuration);
       } else {
         &$tree_transformation_sub($document->tree());
       }
@@ -1143,7 +1144,8 @@ sub test($$)
   # should not actually be useful, as the same element should be reused.
   $tree = $document->tree();
 
-  my ($errors, $error_nrs) = $document->errors();
+  my ($document_errors, $document_error_nrs) = $document->errors();
+  push @$errors, @$document_errors;
   my $indices_information = $document->indices_information();
   # FIXME maybe it would be good to compare $merged_index_entries?
   my $merged_index_entries = $document->merged_indices();
@@ -1176,8 +1178,8 @@ sub test($$)
                                                      $indices_sort_strings);
 
     $sorted_index_entries
-      = Texinfo::Indices::sort_indices_by_index($document, $registrar,
-                                                $main_configuration,
+      = Texinfo::Document::sorted_indices_by_index($document,
+                                          $main_configuration,
                                  $use_unicode_collation, $locale_lang);
     $indices_sorted_sort_strings = {};
     foreach my $index_name (keys(%$sorted_index_entries)) {
@@ -1191,7 +1193,6 @@ sub test($$)
       }
     }
   }
-
 
   # use the parser expanded formats to be similar to the main program,
   # and also to avoid having @inline* and raw output format @-commands

@@ -156,6 +156,26 @@ non_perl_strndup (const char *s, size_t n)
   return strndup (s, n);
 }
 
+/* wrapper for vasprintf */
+int
+non_perl_xvasprintf (char **ptr, const char *template, va_list ap)
+{
+  int ret;
+  ret = vasprintf (ptr, template, ap);
+  if (ret < 0)
+    abort (); /* out of memory */
+  return ret;
+}
+
+/* wrapper for asprintf */
+int
+non_perl_xasprintf (char **ptr, const char *template, ...)
+{
+  va_list v;
+  va_start (v, template);
+  return non_perl_xvasprintf (ptr, template, v);
+}
+
 /* wrapper for asprintf */
 int
 xasprintf (char **ptr, const char *template, ...)
@@ -1622,8 +1642,7 @@ initialize_option (OPTION *option, enum global_option_type type)
       case GO_bytes_string_list:
       case GO_file_string_list:
       case GO_char_string_list:
-        option->strlist = (STRING_LIST *) malloc (sizeof (STRING_LIST));
-        memset (option->strlist, 0, sizeof (STRING_LIST));
+        option->strlist = new_string_list ();
         break;
 
       case GO_char:
