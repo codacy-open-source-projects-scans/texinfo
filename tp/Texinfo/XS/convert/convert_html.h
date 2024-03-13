@@ -5,8 +5,6 @@
 #include "command_ids.h"
 #include "element_types.h"
 #include "converter_types.h"
-/* for FILE_SOURCE_INFO_LIST */
-#include "utils.h"
 
 enum count_elements_in_filename_type {
   CEFT_total,
@@ -192,45 +190,29 @@ size_t html_check_htmlxref_already_warned (CONVERTER *self,
                                            const char *manual_name,
                                            const SOURCE_INFO *source_info);
 
-void html_prepare_conversion_units (CONVERTER *self,
-                                    int *output_units_descriptor_ref,
-                                    int *special_units_descriptor_ref,
-                                    int *associated_special_units_descriptor_ref);
+void html_prepare_conversion_units (CONVERTER *self);
 
 void html_prepare_conversion_units_targets (CONVERTER *self,
-                                     const char *document_name,
-                                     int output_units_descriptor,
-                                     int special_units_descriptor,
-                                     int associated_special_units_descriptor);
+                                     const char *document_name);
 
 FILE_SOURCE_INFO_LIST * html_prepare_units_directions_files (CONVERTER *self,
-          int output_units_descriptor,
-          int special_units_descriptor, int associated_special_units_descriptor,
           const char *output_file, const char *destination_directory,
           const char *output_filename, const char *document_name);
 
-void html_prepare_output_units_global_targets (CONVERTER *self,
-                                        int output_units_descriptor,
-                                        int special_units_descriptor,
-                                        int associated_special_units_descriptor);
+void html_prepare_output_units_global_targets (CONVERTER *self);
 
 void html_translate_names (CONVERTER *self);
 
 void html_prepare_simpletitle (CONVERTER *self);
 void html_prepare_converted_output_info (CONVERTER *self);
-void html_prepare_title_titlepage (CONVERTER *self, int output_units_descriptor,
-                                   const char *output_file,
+void html_prepare_title_titlepage (CONVERTER *self, const char *output_file,
                                    const char *output_filename);
 
-char *html_convert_convert (CONVERTER *self, const ELEMENT *root,
-                            int output_units_descriptor,
-                            int special_units_descriptor);
+char *html_convert_convert (CONVERTER *self, const ELEMENT *root);
 char *html_convert_tree (CONVERTER *self, const ELEMENT *tree,
                          const char *explanation);
 
 char *html_convert_output (CONVERTER *self, const ELEMENT *root,
-                           int output_units_descriptor,
-                           int special_units_descriptor,
                            const char *output_file,
                            const char *destination_directory,
                            const char *output_filename,
@@ -239,6 +221,8 @@ char *html_convert_output (CONVERTER *self, const ELEMENT *root,
 char *html_prepare_node_redirection_page (CONVERTER *self,
                                           const ELEMENT *element,
                                           const char *filename);
+int html_node_redirections (CONVERTER *self,
+            const char *output_file, const char *destination_directory);
 
 void html_check_transfer_state_finalization (CONVERTER *self);
 void html_free_converter (CONVERTER *self);

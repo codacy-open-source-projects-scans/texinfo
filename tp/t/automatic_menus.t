@@ -28,7 +28,6 @@ sub test($$$;$$)
   my $parser = Texinfo::Parser::parser();
   my $document = $parser->parse_texi_text($in);
   my $tree = $document->tree();
-  my $registrar = $parser->registered_errors();
   Texinfo::Structuring::associate_internal_references($document, $parser);
 
   Texinfo::Structuring::sectioning_structure($document, $parser);
@@ -40,7 +39,8 @@ sub test($$$;$$)
     Texinfo::Transformations::complete_tree_nodes_menus($tree, $use_sections);
   }
 
-  $tree = Texinfo::Document::rebuild_tree($tree);
+  # rebuild the tree
+  $tree = $document->tree();
 
   my $texi_result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 

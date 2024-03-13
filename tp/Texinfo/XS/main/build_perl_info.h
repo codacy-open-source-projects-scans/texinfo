@@ -35,6 +35,7 @@ SV *get_document (size_t document_descriptor);
 void rebuild_document (SV *document_in, int no_store);
 
 HV *build_texinfo_tree (ELEMENT *root, int avoid_recursion);
+SV *store_texinfo_tree (DOCUMENT *document, HV *document_hv);
 AV *build_errors (ERROR_MESSAGE* error_list, size_t error_number);
 AV *build_target_elements_list (LABEL *labels_list,
                                 size_t labels_number);
@@ -45,11 +46,31 @@ HV *build_float_list (FLOAT_RECORD *floats_list, size_t floats_number);
 HV *build_index_data (INDEX **index_names_in);
 HV *build_global_info (GLOBAL_INFO *global_info_ref,
                        GLOBAL_COMMANDS *global_commands_ref);
+void build_global_info_tree_info (HV *hv, GLOBAL_INFO *global_info_ref);
 HV *build_global_commands (GLOBAL_COMMANDS *global_commands_ref);
+
+SV *document_indices_information (SV *document_in);
+SV *document_global_commands_information (SV *document_in);
+SV *document_labels_information (SV *document_in);
+SV *document_nodes_list (SV *document_in);
+SV *document_sections_list (SV *document_in);
+
+SV *document_floats_information (SV *document_in);
+SV *document_internal_references_information (SV *document_in);
+SV *document_labels_list (SV *document_in);
+
+SV *document_global_information (SV *document_in);
+
+void pass_document_parser_errors_to_registrar (int document_descriptor,
+                                               SV *parser_sv);
+SV *pass_errors_to_registrar (ERROR_MESSAGE_LIST *error_messages,
+                              SV *object_sv,
+                              SV **errors_warnings_out, SV **error_nrs_out);
 
 SV *build_output_units_list (size_t output_units_descriptor);
 void rebuild_output_units_list (SV *output_units_sv,
                                 size_t output_units_descriptor);
+SV *setup_output_units_handler (size_t output_units_descriptor);
 
 AV *build_integer_stack (const INTEGER_STACK *integer_stack);
 AV *build_string_list (const STRING_LIST *strings_list, enum sv_string_type);

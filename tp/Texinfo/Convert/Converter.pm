@@ -112,6 +112,8 @@ my %XS_overrides = (
    => "Texinfo::Convert::ConvertXS::get_converter_indices_sorted_by_letter",
   "Texinfo::Convert::Converter::get_converter_indices_sorted_by_index"
    => "Texinfo::Convert::ConvertXS::get_converter_indices_sorted_by_index",
+  "Texinfo::Convert::Converter::set_global_document_commands"
+   => "Texinfo::Convert::ConvertXS::converter_set_global_document_commands",
 
   # XS only
   "Texinfo::Convert::Converter::reset_converter"
@@ -687,20 +689,11 @@ sub determine_files_and_directory($$)
     $input_basename =~ s/\.te?x(i|info)?$//;
   }
 
-  my $global_commands;
-  if ($self->{'document'}) {
-    $global_commands = $self->{'document'}->global_commands_information();
-  }
-
   my $setfilename;
   if (defined($self->get_conf('setfilename'))) {
     $setfilename = $self->get_conf('setfilename');
-  } elsif ($global_commands
-           and $global_commands->{'setfilename'}
-           and $global_commands->{'setfilename'}->{'extra'}
-           and defined($global_commands->{'setfilename'}->{'extra'}->{'text_arg'})) {
-    $setfilename
-      = $global_commands->{'setfilename'}->{'extra'}->{'text_arg'};
+  } elsif ($document_info and defined($document_info->{'setfilename'})) {
+    $setfilename = $document_info->{'setfilename'};
   }
 
   my $input_basename_for_outfile = $input_basename;
@@ -1631,22 +1624,11 @@ sub sort_element_counts($$;$$)
 
   $converter->conversion_initialization($document);
 
-  my $tree = $document->tree();
-
   my $output_units;
   if ($use_sections) {
-    $output_units = Texinfo::Structuring::split_by_section($tree);
+    $output_units = Texinfo::Structuring::split_by_section($document);
   } else {
-    $output_units = Texinfo::Structuring::split_by_node($tree);
-  }
-
-  # cannot happen for now, but could in the past and could in the future.
-  if (!$output_units) {
-    my $name = 'NOT an output unit';
-    my $converted_text = $converter->convert($document);
-    my $count = _count_converted_text($converted_text, $count_words);
-    my $result = "$count  $name\n";
-    return ([[$count, $name]], $result);
+    $output_units = Texinfo::Structuring::split_by_node($document);
   }
 
   my $max_count = 0;
@@ -2113,9 +2095,9 @@ C<convert_output_unit> takes a I<$converter> and an output unit
 I<$output_unit> as argument.  The implementation of
 C<convert_output_unit> of C<Texinfo::Convert::Converter> could be suitable in
 many cases.  Output units are typically returned by L<Texinfo::Structuring
-split_by_section|Texinfo::Structuring/$output_units = split_by_section($tree)>
+split_by_section|Texinfo::Structuring/$output_units = split_by_section($document)>
 or L<Texinfo::Structuring split_by_node|Texinfo::Structuring/$output_units =
-split_by_node($tree)>.
+split_by_node($document)>.
 
 Output units are not relevant for all the formats, the Texinfo tree can also be
 converted directly, in general by using C<output_tree>.

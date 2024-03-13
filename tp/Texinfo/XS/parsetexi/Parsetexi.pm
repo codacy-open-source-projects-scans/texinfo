@@ -4,12 +4,12 @@
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License,
 # or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
@@ -200,8 +200,13 @@ sub _get_parser_info($$;$$) {
   my $no_build = shift;
   my $no_store = shift;
 
+  # make sure that the parser Texinfo::Report registrar is setup
   my ($parser_registrar, $configuration_information)
      = _get_parser_error_registrar($self);
+
+  # get hold of errors before calling build_document, as if $no_store is set
+  # they will be destroyed.
+  pass_document_parser_errors_to_registrar($document_descriptor, $self);
 
   my $document;
   if ($no_build) {
@@ -209,16 +214,6 @@ sub _get_parser_info($$;$$) {
   } else {
     $document = build_document ($document_descriptor, $no_store);
   }
-
-  #Texinfo::Translations::complete_indices ($self,
-  #                                 $document->indices_information());
-
-  # Copy the errors into the error list in parser Texinfo::Report.
-  foreach my $error (@{$document->{'parser_errors'}}) {
-    $parser_registrar->add_formatted_message($error);
-  }
-  @{$document->{'parser_errors'}} = ();
-  clear_document_parser_errors($document_descriptor);
 
   # additional info relevant in perl only.
   my $perl_encoding
@@ -330,11 +325,23 @@ sub parse_texi_line($$;$$$)
   return $document->tree();
 }
 
-sub registered_errors($)
+# Only used in a test, not documented, there for symmetry with document
+sub registrar($)
 {
   my $self = shift;
   return $self->{'registrar'};
 }
+
+sub errors($)
+{
+  my $self = shift;
+  my $registrar = $self->{'registrar'};
+  if (!$registrar) {
+    return undef;
+  }
+  return $registrar->errors();
+}
+
 
 1;
 __END__

@@ -110,6 +110,11 @@ register_document (ELEMENT *root, INDEX **index_names,
 
   document->listoffloats = float_list_to_listoffloats_list (floats_list);
 
+  document->modified_information |= F_DOCM_tree | F_DOCM_index_names
+     | F_DOCM_floats | F_DOCM_internal_references | F_DOCM_labels_list
+     | F_DOCM_identifiers_target | F_DOCM_global_info
+     | F_DOCM_global_commands;
+
   /*
   fprintf(stderr, "REGISTER %zu %p %p %p %p\n", document_index +1, document,
                        document->tree, document->index_names, document->options);
@@ -121,6 +126,7 @@ void
 register_document_nodes_list (DOCUMENT *document, ELEMENT_LIST *nodes_list)
 {
   document->nodes_list = nodes_list;
+  document->modified_information |= F_DOCM_nodes_list;
 }
 
 void
@@ -128,6 +134,7 @@ register_document_sections_list (DOCUMENT *document,
                                  ELEMENT_LIST *sections_list)
 {
   document->sections_list = sections_list;
+  document->modified_information |= F_DOCM_sections_list;
 }
 
 void
@@ -144,6 +151,7 @@ document_merged_indices (DOCUMENT *document)
       if (!document->merged_indices)
         {
           document->merged_indices = merge_indices (document->index_names);
+          document->modified_information |= F_DOCM_merged_indices;
         }
     }
   return document->merged_indices;
@@ -162,7 +170,7 @@ register_document_convert_index_text_options (DOCUMENT *document,
 const INDICES_SORT_STRINGS *
 document_indices_sort_strings (DOCUMENT *document,
                                ERROR_MESSAGE_LIST *error_messages,
-                               OPTIONS *options, int prefer_reference_element)
+                               OPTIONS *options)
 {
   if (!document->indices_sort_strings)
     {
@@ -171,10 +179,10 @@ document_indices_sort_strings (DOCUMENT *document,
 
       document->indices_sort_strings
        = setup_index_entries_sort_strings (error_messages, options,
-                               merged_indices, document->index_names,
-                               prefer_reference_element);
-    }
+                               merged_indices, document->index_names, 0);
 
+      document->modified_information |= F_DOCM_indices_sort_strings;
+    }
   return document->indices_sort_strings;
 }
 
@@ -285,6 +293,8 @@ sorted_indices_by_index (DOCUMENT *document,
         = sort_indices_by_index (document, error_messages, options,
                                  use_unicode_collation, collation_language,
                                  collation_locale);
+      /* TODO keep track of the precise sorted index that was modified */
+      document->modified_information |= F_DOCM_sorted_indices_by_index;
     }
   return collation_sorted_indices->sorted_indices;
 }
@@ -396,6 +406,8 @@ sorted_indices_by_letter (DOCUMENT *document,
         = sort_indices_by_letter (document, error_messages, options,
                                   use_unicode_collation, collation_language,
                                   collation_locale);
+      /* TODO keep track of the precise sorted index that was modified */
+      document->modified_information |= F_DOCM_sorted_indices_by_letter;
     }
   return collation_sorted_indices->sorted_indices;
 }
@@ -421,6 +433,8 @@ destroy_document_information_except_tree (DOCUMENT *document)
       wipe_index_names (document->index_names);
       wipe_error_message_list (document->error_messages);
       free (document->error_messages);
+      wipe_error_message_list (document->parser_error_messages);
+      free (document->parser_error_messages);
       if (document->nodes_list)
         destroy_list (document->nodes_list);
       if (document->sections_list)

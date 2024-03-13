@@ -35,6 +35,12 @@ enum sv_string_type {
   svt_char,
 };
 
+enum output_units_descriptor_type {
+   OUDT_units,
+   OUDT_special_units,
+   OUDT_associated_special_units,
+};
+
 enum formatting_reference_status {
    FRS_status_none,
    FRS_status_default_set,        /* default is set, no customization (or
@@ -117,6 +123,21 @@ enum direction_string_type {
 enum direction_string_context {
   TDS_context_normal,
   TDS_context_string,
+};
+
+#define HTML_FILE_ID_SETTING_NAMES_LIST \
+  html_file_id_setting_name(special_unit_target_file_name) \
+  html_file_id_setting_name(label_target_name) \
+  html_file_id_setting_name(node_file_name)\
+  html_file_id_setting_name(sectioning_command_target_name)\
+  html_file_id_setting_name(unit_file_name)\
+  html_file_id_setting_name(external_target_split_name)\
+  html_file_id_setting_name(external_target_non_split_name)
+
+enum html_file_id_setting {
+  #define html_file_id_setting_name(name) FIS_## name,
+   HTML_FILE_ID_SETTING_NAMES_LIST
+  #undef html_file_id_setting_name
 };
 
 /* %default_formatting_references in Texinfo::HTML */
@@ -411,6 +432,20 @@ typedef struct OUTPUT_FILES_INFORMATION {
     FILE_STREAM_LIST unclosed_files;
 } OUTPUT_FILES_INFORMATION;
 
+typedef struct FILE_SOURCE_INFO {
+    char *filename;
+    const char *type;
+    const char *name;
+    const ELEMENT *element;
+    char *path;
+} FILE_SOURCE_INFO;
+
+typedef struct FILE_SOURCE_INFO_LIST {
+    size_t number;
+    size_t space;
+    FILE_SOURCE_INFO *list;
+} FILE_SOURCE_INFO_LIST;
+
 typedef struct SPECIAL_UNIT_DIRECTION {
     const OUTPUT_UNIT *output_unit;
     const char *direction;
@@ -669,7 +704,6 @@ typedef struct CONVERTER {
     STRING_LIST small_strings;
 
     DOCUMENT *document;
-    int document_units_descriptor;
 
     struct TEXT_OPTIONS *convert_text_options;
     struct TEXT_OPTIONS *convert_index_text_options;
@@ -685,6 +719,8 @@ typedef struct CONVERTER {
 
   /* HTML specific */
     /* set for a converter */
+    int external_references_number; /* total number of external references
+                                       that could be called */
     COMMAND_ID_LIST no_arg_formatted_cmd;
     COMMAND_ID_LIST style_formatted_cmd;
     COMMAND_ID_LIST accent_cmd;
@@ -699,6 +735,10 @@ typedef struct CONVERTER {
     STRING_LIST css_import_lines;
     /* filled based on css_element_class_styles when needed */
     STRING_LIST css_element_class_list;
+  /* perl function references. This should be SV *sv,
+     but we don't want to include the Perl headers everywhere; */
+    const void *file_id_setting_refs[FIS_external_target_non_split_name+1];
+    int file_id_setting_ref_number; /* number of references actually set */
     FORMATTING_REFERENCE
        formatting_references[FR_format_translate_message+1];
     FORMATTING_REFERENCE
@@ -729,6 +769,7 @@ typedef struct CONVERTER {
     const char **direction_unit_direction_name;
 
     /* set for a document */
+    int output_units_descriptors[OUDT_associated_special_units+1];
     enum htmlxref_split_type document_htmlxref_split_type;
     const OUTPUT_UNIT **global_units_directions;
     SPECIAL_UNIT_DIRECTION *special_units_direction_name;
@@ -739,6 +780,7 @@ typedef struct CONVERTER {
     HTML_TARGET_LIST html_targets[BUILTIN_CMD_NUMBER];
     HTML_TARGET_LIST html_special_targets[ST_footnote_location+1];
     COMMAND_STACK html_target_cmds; /* list of cmd with targets */
+    FILE_SOURCE_INFO_LIST files_source_info;
     JSLICENSE_CATEGORY_LIST jslicenses;
     /* associate cmd and index in special_unit_varieties STRING_LIST */
     /* number in sync with command_special_unit_variety, +1 for trailing 0 */

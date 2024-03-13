@@ -50,6 +50,7 @@
 #include "output_unit.h"
 /* for clear_error_message_list */
 #include "errors.h"
+#include "get_perl_info.h"
 #include "build_perl_info.h"
 
 #define LOCALEDIR DATADIR "/locale"
@@ -675,6 +676,20 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
   store_additional_info (e, &e->extra_info, "extra", avoid_recursion);
   store_additional_info (e, &e->info_info, "info", avoid_recursion);
 
+  if (e->associated_unit)
+    {
+      /* output_unit_to_perl_hash uses the unit_contents elements hv,
+         so we may want to setup the tree hv before building the output
+         units.  In that case, the output unit hv is not ready, so here
+         we do not error out if the hv is not set.
+          */
+      if (e->associated_unit->hv)
+        {
+          hv_store (e->hv, "associated_unit", strlen ("associated_unit"),
+                    newRV_inc ((SV *) e->associated_unit->hv), 0);
+        }
+    }
+
   store_source_mark_list (e);
 
   if (e->source_info.line_nr)
@@ -1005,6 +1020,15 @@ build_global_info (GLOBAL_INFO *global_info_ref,
     hv_store (hv, "novalidate", strlen ("novalidate"),
               newSViv (1), 0);
 
+  if (global_commands.setfilename)
+    {
+      char *setfilename_text
+        = informative_command_value (global_commands.setfilename);
+      if (setfilename_text)
+      hv_store (hv, "setfilename", strlen ("setfilename"),
+                newSVpv_utf8 (setfilename_text, 0), 0);
+    }
+
   document_language = get_global_document_command (global_commands_ref,
                                        CM_documentlanguage, CL_preamble);
   if (document_language)
@@ -1015,30 +1039,6 @@ build_global_info (GLOBAL_INFO *global_info_ref,
     }
 
   return hv;
-}
-
-/* global info that requires a built tree */
-void
-build_global_info_tree_info (HV *hv, GLOBAL_INFO *global_info_ref)
-{
-  int i;
-  ELEMENT *e;
-  GLOBAL_INFO global_info = *global_info_ref;
-
-  dTHX;
-
-  if (global_info.dircategory_direntry.number > 0)
-    {
-      AV *av = newAV ();
-      hv_store (hv, "dircategory_direntry", strlen ("dircategory_direntry"),
-                newRV_noinc ((SV *) av), 0);
-      for (i = 0; i < global_info.dircategory_direntry.number; i++)
-        {
-          e = global_info.dircategory_direntry.list[i];
-          if (e->hv)
-            av_push (av, newRV_inc ((SV *) e->hv));
-        }
-    }
 }
 
 /* Return object to be used as 'commands_info', which holds references
@@ -1070,6 +1070,20 @@ build_global_commands (GLOBAL_COMMANDS *global_commands_ref)
 #include "main/global_unique_commands_case.c"
 
 #undef GLOBAL_UNIQUE_CASE
+
+  /* list of direntry and dircategory */
+  if (global_commands.dircategory_direntry.number > 0)
+    {
+      AV *av = newAV ();
+      hv_store (hv, "dircategory_direntry", strlen ("dircategory_direntry"),
+                newRV_noinc ((SV *) av), 0);
+      for (i = 0; i < global_commands.dircategory_direntry.number; i++)
+        {
+          e = global_commands.dircategory_direntry.list[i];
+          if (e->hv)
+            av_push (av, newRV_inc ((SV *) e->hv));
+        }
+    }
 
   /* The following are arrays of elements. */
 
@@ -1185,7 +1199,7 @@ convert_error (ERROR_MESSAGE e)
 
 /* Errors */
 AV *
-build_errors (ERROR_MESSAGE* error_list, size_t error_number)
+build_errors (ERROR_MESSAGE *error_list, size_t error_number)
 {
   AV *av;
   int i;
@@ -1203,6 +1217,149 @@ build_errors (ERROR_MESSAGE* error_list, size_t error_number)
   return av;
 }
 
+/* add C messages to a Texinfo::Report object, like
+   Texinfo::Report::add_formatted_message does.
+   NOTE probably not useful for converters as errors need to be passed
+   explicitely both from Perl and XS.
+
+   Also return $report->{'errors_warnings'} in ERRORS_WARNINGS_OUT and
+   $report->{'error_nrs'} in ERRORS_NRS_OUT, even if ERROR_MESSAGES is
+   0, to avoid the need to fetch them from report_hv if calling code
+   is interested in those SV.
+ */
+static void
+add_formatted_error_messages (ERROR_MESSAGE_LIST *error_messages,
+                              HV *report_hv, SV **errors_warnings_out,
+                              SV **error_nrs_out)
+{
+  SV **errors_warnings_sv;
+  SV **error_nrs_sv;
+  int i;
+
+  dTHX;
+
+
+  *errors_warnings_out = 0;
+  *error_nrs_out = 0;
+
+  if (!report_hv)
+    {
+      fprintf (stderr, "add_formatted_error_messages: BUG: no perl report\n");
+      return;
+    }
+
+  errors_warnings_sv = hv_fetch (report_hv, "errors_warnings",
+                                 strlen ("errors_warnings"), 0);
+
+  error_nrs_sv = hv_fetch (report_hv, "error_nrs",
+                                      strlen ("error_nrs"), 0);
+
+  if (errors_warnings_sv && SvOK (*errors_warnings_sv))
+    {
+      int error_nrs = 0;
+      if (error_nrs_sv && SvOK (*error_nrs_sv))
+        {
+          error_nrs = SvIV (*error_nrs_sv);
+          *error_nrs_out = *error_nrs_sv;
+        }
+      *errors_warnings_out = *errors_warnings_sv;
+
+      if (!error_messages)
+        {
+          /* TODO if this message appears in output, it should probably
+             be removed, as this situation is allowed from DocumentXS.xs
+             document_errors */
+          fprintf (stderr,
+               "add_formatted_error_messages: NOTE: no error_messages\n");
+          return;
+        }
+      else
+        {
+          AV *av = (AV *)SvRV (*errors_warnings_sv);
+
+          for (i = 0; i < error_messages->number; i++)
+            {
+              ERROR_MESSAGE error_msg = error_messages->list[i];
+              SV *sv = convert_error (error_msg);
+
+              if (error_msg.type == MSG_error && !error_msg.continuation)
+                error_nrs++;
+              av_push (av, sv);
+            }
+
+          if (error_nrs)
+            {
+              if (error_nrs_sv && SvOK (*error_nrs_sv))
+                {
+                  sv_setiv(*error_nrs_sv, error_nrs);
+                }
+              else
+                {
+                  SV *new_error_nrs_sv = newSViv (error_nrs);
+                  hv_store (report_hv, "error_nrs",
+                       strlen ("error_nrs"), new_error_nrs_sv, 0);
+                  *error_nrs_out = new_error_nrs_sv;
+                }
+            }
+        }
+    }
+  else
+    {
+      /* warn if it does not looks like a Texinfo::Report object, as
+         it is likely that the error messages are going to disappear */
+      fprintf (stderr, "BUG? no 'errors_warnings'. Not a Perl Texinfo::Report?\n");
+    }
+
+  clear_error_message_list (error_messages);
+}
+
+/* ERROR_MESSAGES can be 0, in that case the function is used to get
+   the perl references but they are not modified */
+SV *
+pass_errors_to_registrar (ERROR_MESSAGE_LIST *error_messages, SV *object_sv,
+                          SV **errors_warnings_out, SV **error_nrs_out)
+{
+  HV *object_hv;
+  SV **registrar_sv;
+  const char *registrar_key = "registrar";
+
+  dTHX;
+
+  object_hv = (HV *) SvRV (object_sv);
+
+  registrar_sv = hv_fetch (object_hv, registrar_key,
+                           strlen (registrar_key), 0);
+  if (registrar_sv && SvOK (*registrar_sv))
+    {
+      HV *report_hv = (HV *) SvRV (*registrar_sv);
+      add_formatted_error_messages (error_messages, report_hv,
+                                    errors_warnings_out, error_nrs_out);
+      return newRV_inc ((SV *) report_hv);
+    }
+  *errors_warnings_out = 0;
+  *error_nrs_out = 0;
+  return newSV (0);
+}
+
+void
+pass_document_parser_errors_to_registrar (int document_descriptor,
+                                          SV *parser_sv)
+{
+  DOCUMENT *document;
+  SV *errors_warnings_sv = 0;
+  SV *error_nrs_sv = 0;
+
+  dTHX;
+
+  document = retrieve_document (document_descriptor);
+
+  if (!document)
+    return;
+
+  pass_errors_to_registrar (document->parser_error_messages, parser_sv,
+                            &errors_warnings_sv, &error_nrs_sv);
+}
+
 
 
 /* build a minimal document, without tree/global commands/indices, only
@@ -1217,8 +1374,6 @@ get_document (size_t document_descriptor)
   SV *sv;
   HV *hv_tree;
   HV *hv_info;
-  AV *av_errors_list;
-  AV *av_parser_errors_list;
 
   dTHX;
 
@@ -1229,19 +1384,11 @@ get_document (size_t document_descriptor)
 
   hv_info = build_global_info (document->global_info, document->global_commands);
 
-  av_errors_list = build_errors (document->error_messages->list,
-                                 document->error_messages->number);
-
-  av_parser_errors_list
-    = build_errors (document->parser_error_messages->list,
-                    document->parser_error_messages->number);
-
-
 #define STORE(key, value) hv_store (hv, key, strlen (key), newRV_inc ((SV *) value), 0)
   STORE("tree", hv_tree);
   STORE("global_info", hv_info);
-  STORE("errors", av_errors_list);
-  STORE("parser_errors", av_parser_errors_list);
+
+  document->modified_information &= ~F_DOCM_global_info;
 #undef STORE
 
   hv_store (hv, "document_descriptor", strlen ("document_descriptor"),
@@ -1270,8 +1417,6 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
   AV *av_internal_xref;
   HV *hv_identifiers_target;
   AV *av_labels_list;
-  AV *av_errors_list;
-  AV *av_parser_errors_list;
   AV *av_nodes_list = 0;
   AV *av_sections_list = 0;
 
@@ -1283,7 +1428,6 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
 
   hv_info = build_global_info (document->global_info,
                                document->global_commands);
-  build_global_info_tree_info (hv_info, document->global_info);
 
   hv_commands_info = build_global_commands (document->global_commands);
 
@@ -1307,13 +1451,6 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
   av_labels_list = build_target_elements_list (document->labels_list->list,
                                                document->labels_list->number);
 
-  av_errors_list = build_errors (document->error_messages->list,
-                                 document->error_messages->number);
-  av_parser_errors_list
-    = build_errors (document->parser_error_messages->list,
-                    document->parser_error_messages->number);
-
-
   if (document->nodes_list)
     av_nodes_list = build_elements_list (document->nodes_list);
 
@@ -1329,24 +1466,39 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
 
   /* must be kept in sync with Texinfo::Document register keys */
   STORE("tree", hv_tree);
+  document->modified_information &= ~F_DOCM_tree;
   STORE("indices", hv_index_names);
+  document->modified_information &= ~F_DOCM_index_names;
   STORE("listoffloats_list", hv_listoffloats_list);
+  document->modified_information &= ~F_DOCM_floats;
   STORE("internal_references", av_internal_xref);
+  document->modified_information &= ~F_DOCM_internal_references;
   STORE("commands_info", hv_commands_info);
+  document->modified_information &= ~F_DOCM_global_commands;
   STORE("global_info", hv_info);
+  document->modified_information &= ~F_DOCM_global_info;
   STORE("identifiers_target", hv_identifiers_target);
+  document->modified_information &= ~F_DOCM_identifiers_target;
   STORE("labels_list", av_labels_list);
-  STORE("errors", av_errors_list);
-  STORE("parser_errors", av_parser_errors_list);
+  document->modified_information &= ~F_DOCM_labels_list;
 
   if (av_nodes_list)
-    STORE("nodes_list", av_nodes_list);
+    {
+      STORE("nodes_list", av_nodes_list);
+      document->modified_information &= ~F_DOCM_nodes_list;
+    }
 
   if (av_sections_list)
-    STORE("sections_list", av_sections_list);
+    {
+      STORE("sections_list", av_sections_list);
+      document->modified_information &= ~F_DOCM_sections_list;
+    }
 
   if (hv_indices_sort_strings)
-    STORE("index_entries_sort_strings", hv_indices_sort_strings);
+    {
+      STORE("index_entries_sort_strings", hv_indices_sort_strings);
+      document->modified_information &= ~F_DOCM_indices_sort_strings;
+    }
 #undef STORE
 
   if (no_store)
@@ -1392,8 +1544,6 @@ rebuild_document (SV *document_in, int no_store)
   HV *hv;
   SV **document_descriptor_sv;
   char *descriptor_key = "document_descriptor";
-  char *registrar_key = "registrar";
-
   dTHX;
 
   hv = (HV *)SvRV (document_in);
@@ -1401,30 +1551,194 @@ rebuild_document (SV *document_in, int no_store)
   document_descriptor_sv = hv_fetch (hv, descriptor_key,
                                      strlen (descriptor_key), 0);
 
-  /* Note that we could also keep the parser_registrar, however at that
-     point it should not be useful anymore, so it is better to let it
-     be cleared */
-  SV **registrar_svp, *registrar_sv = 0;
-  registrar_svp = hv_fetch (hv, registrar_key, strlen (registrar_key), 0);
-  if (registrar_svp)
-    {
-      registrar_sv = *registrar_svp;
-      SvREFCNT_inc(registrar_sv); /* prevent destruction at hv_clear below */
-    }
-
   if (document_descriptor_sv)
     {
       int document_descriptor = SvIV (*document_descriptor_sv);
-      hv_clear (hv);
       fill_document_hv (hv, document_descriptor, no_store);
-      if (registrar_sv)
-        hv_store (hv, registrar_key, strlen (registrar_key), registrar_sv, 0);
     }
   else
     {
       fprintf (stderr, "ERROR: document rebuild: no %s\n", descriptor_key);
     }
 }
+
+SV *
+store_texinfo_tree (DOCUMENT *document, HV *document_hv)
+{
+  SV *result_sv = 0;
+  const char *key = "tree";
+
+  dTHX;
+
+  if (document->modified_information & F_DOCM_tree)
+    {
+      HV *result_hv = build_texinfo_tree (document->tree, 0);
+      hv_store (result_hv, "tree_document_descriptor",
+                strlen ("tree_document_descriptor"),
+                newSViv (document->descriptor), 0);
+      result_sv = newRV_inc ((SV *) result_hv);
+      hv_store (document_hv, key, strlen (key), result_sv, 0);
+      document->modified_information &= ~F_DOCM_tree;
+    }
+  return result_sv;
+}
+
+#define BUILD_PERL_DOCUMENT_ITEM(fieldname,keyname,funcname,buildname,HVAV) \
+SV * \
+document_##funcname (SV *document_in) \
+{ \
+  HV *document_hv; \
+  SV *result_sv = 0; \
+  const char *key = #keyname; \
+\
+  dTHX;\
+\
+  document_hv = (HV *) SvRV (document_in); \
+  DOCUMENT *document = get_sv_document_document (document_in, "document_" #funcname); \
+\
+  if (document && document->fieldname)\
+    {\
+      store_texinfo_tree (document, document_hv);\
+      if (document->modified_information & F_DOCM_##fieldname)\
+        {\
+          HVAV *result_av_hv = buildname (document->fieldname);\
+          result_sv = newRV_inc ((SV *) result_av_hv);\
+          hv_store (document_hv, key, strlen (key), result_sv, 0);\
+          document->modified_information &= ~F_DOCM_##fieldname;\
+        }\
+    }\
+\
+  if (!result_sv)\
+    {\
+      SV **sv_ref = hv_fetch (document_hv, key, strlen (key), 0);\
+      if (sv_ref && SvOK (*sv_ref))\
+        result_sv = *sv_ref;\
+    }\
+\
+  if (result_sv)\
+    {\
+      SvREFCNT_inc (result_sv);\
+    }\
+  else\
+    result_sv = newSV (0);\
+\
+  return result_sv;\
+}
+
+/*
+BUILD_PERL_DOCUMENT_ITEM(fieldname,keyname,funcname,buildname,HVAV)
+ */
+
+BUILD_PERL_DOCUMENT_ITEM(index_names,indices,indices_information,build_index_data,HV)
+
+BUILD_PERL_DOCUMENT_ITEM(global_commands,commands_info,global_commands_information,build_global_commands,HV)
+
+BUILD_PERL_DOCUMENT_ITEM(identifiers_target,identifiers_target,labels_information,build_identifiers_target,HV)
+
+BUILD_PERL_DOCUMENT_ITEM(nodes_list,nodes_list,nodes_list,build_elements_list,AV)
+
+BUILD_PERL_DOCUMENT_ITEM(sections_list,sections_list,sections_list,build_elements_list,AV)
+
+#undef BUILD_PERL_DOCUMENT_ITEM
+
+#define BUILD_PERL_DOCUMENT_LIST(fieldname,keyname,funcname,buildname,HVAV) \
+SV * \
+document_##funcname (SV *document_in) \
+{ \
+  HV *document_hv; \
+  SV *result_sv = 0; \
+  const char *key = #keyname; \
+\
+  dTHX;\
+\
+  document_hv = (HV *) SvRV (document_in); \
+  DOCUMENT *document = get_sv_document_document (document_in, "document_" #funcname); \
+\
+  if (document && document->fieldname)\
+    {\
+      store_texinfo_tree (document, document_hv);\
+      if (document->modified_information & F_DOCM_##fieldname)\
+        {\
+          HVAV *result_av_hv = buildname (document->fieldname->list,\
+                                     document->fieldname->number);\
+          result_sv = newRV_inc ((SV *) result_av_hv);\
+          hv_store (document_hv, key, strlen (key), result_sv, 0);\
+          document->modified_information &= ~F_DOCM_##fieldname;\
+        }\
+    }\
+\
+  if (!result_sv)\
+    {\
+      SV **sv_ref = hv_fetch (document_hv, key, strlen (key), 0);\
+      if (sv_ref && SvOK (*sv_ref))\
+        result_sv = *sv_ref;\
+    }\
+\
+  if (result_sv)\
+    {\
+      SvREFCNT_inc (result_sv);\
+    }\
+  else\
+    result_sv = newSV (0);\
+\
+  return result_sv;\
+}
+
+/*
+BUILD_PERL_DOCUMENT_LIST(fieldname,keyname,funcname,buildname,HVAV)
+*/
+
+BUILD_PERL_DOCUMENT_LIST(floats,listoffloats_list,floats_information,build_float_types_list,HV)
+
+BUILD_PERL_DOCUMENT_LIST(internal_references,internal_references,internal_references_information,build_internal_xref_list,AV)
+
+BUILD_PERL_DOCUMENT_LIST(labels_list,labels_list,labels_list,build_target_elements_list,AV)
+
+#undef BUILD_PERL_DOCUMENT_LIST
+
+SV *
+document_global_information (SV *document_in)
+{
+  HV *document_hv;
+  SV *result_sv = 0;
+  const char *key = "global_info";
+
+  dTHX;
+
+  document_hv = (HV *) SvRV (document_in);
+
+  DOCUMENT *document = get_sv_document_document (document_in,
+                                     "document_global_information");
+  if (document)
+    {
+      if (document->modified_information & F_DOCM_global_info)
+        {
+          HV *result_hv = build_global_info (document->global_info,
+                                             document->global_commands);
+          result_sv = newRV_inc ((SV *) result_hv);
+          hv_store (document_hv, key, strlen (key), result_sv, 0);
+          document->modified_information &= ~F_DOCM_global_info;
+        }
+    }
+
+  if (!result_sv)
+    {
+      SV **sv_ref = hv_fetch (document_hv, key, strlen (key), 0);
+      if (sv_ref && SvOK (*sv_ref))
+        result_sv = *sv_ref;
+    }
+
+  if (result_sv)
+    {
+      SvREFCNT_inc (result_sv);
+    }
+  else
+    result_sv = newSV (0);
+
+  return result_sv;
+}
+
+
 
 static void
 output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
@@ -1469,7 +1783,8 @@ output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
               if (direction_unit->unit_type != OU_external_node_unit)
                 {
                   char *msg;
-                  xasprintf (&msg, "BUG: not external node but no perl ref %s",
+                  xasprintf (&msg, "BUG: not external node but no"
+                                   " output unit Perl ref: %s",
                                    output_unit_texi (direction_unit));
                   fatal (msg);
                   free (msg);
@@ -1637,10 +1952,41 @@ build_output_units_list (size_t output_units_descriptor)
                                         output_units_descriptor))
     {/* no output unit */
       av_undef (av_output_units);
-      return newSV(0);
+      return newSV (0);
     }
   else
     return newRV_noinc ((SV *) av_output_units);
+}
+
+/* a fake output units list that only holds a descriptor allowing
+   to retrieve the C data */
+SV *
+setup_output_units_handler (size_t output_units_descriptor)
+{
+  AV *av_output_units;
+  HV *dummy_output_unit;
+  SV *sv;
+  const OUTPUT_UNIT_LIST *output_units;
+
+  dTHX;
+
+  output_units = retrieve_output_units (output_units_descriptor);
+
+  if (!output_units || !output_units->number)
+    return newSV (0);
+
+  av_output_units = newAV ();
+
+  dummy_output_unit = newHV ();
+
+  hv_store (dummy_output_unit, "output_units_descriptor",
+            strlen ("output_units_descriptor"),
+            newSViv (output_units_descriptor), 0);
+
+  sv = newRV_inc ((SV *) dummy_output_unit);
+  av_push (av_output_units, sv);
+
+  return newRV_noinc ((SV *) av_output_units);
 }
 
 void
@@ -1653,9 +1999,9 @@ rebuild_output_units_list (SV *output_units_sv, size_t output_units_descriptor)
   if (!SvOK (output_units_sv))
     {
       const OUTPUT_UNIT_LIST *output_units
-         = retrieve_output_units (output_units_descriptor);
+        = retrieve_output_units (output_units_descriptor);
       if (output_units && output_units->number)
-        fprintf (stderr, "BUG: no input sv for %zu output units (%zu)",
+        fprintf (stderr, "BUG: no input sv for %zu output units (%zu)\n",
                  output_units->number, output_units_descriptor);
       return;
     }
@@ -1675,10 +2021,12 @@ rebuild_output_units_list (SV *output_units_sv, size_t output_units_descriptor)
     is better to have more debug messages.
   */
       fprintf (stderr, "BUG: rebuild_output_units_list: output unit"
-                       "descriptor not found: %zu\n", output_units_descriptor);
+                  " descriptor not found: %zu\n", output_units_descriptor);
       return;
     }
 }
+
+
 
 SV *
 get_conf (CONVERTER *converter, const char *option_name)
@@ -1688,72 +2036,6 @@ get_conf (CONVERTER *converter, const char *option_name)
   if (converter->conf)
     return build_sv_option (converter->conf, option_name, converter);
   return newSV (0);
-}
-
-/* add C messages to a Texinfo::Report object, like
-   Texinfo::Report::add_formatted_message does.
-   TODO currently unused. It could replace the calls to add_formatted_message
-   in perl code, if it is found relevant.  For converters, this is unlikely,
-   as errors need to be passed explicitely both from Perl and XS.  For
-   errors registered in document, it may be useful to avoid the need to
-   rebuild the document prior to passing error messages.
- */
-void
-pass_converter_errors (ERROR_MESSAGE_LIST *error_messages,
-                       HV *report_hv)
-{
-  int i;
-  SV **errors_warnings_sv;
-  SV **error_nrs_sv;
-
-  dTHX;
-
-  if (!error_messages)
-    {
-      fprintf (stderr, "pass_converter_errors: NOTE: no error_messages\n");
-      return;
-    }
-
-  if (!report_hv)
-    {
-      fprintf (stderr, "pass_converter_errors: BUG: no perl report\n");
-      return;
-    }
-
-  errors_warnings_sv = hv_fetch (report_hv, "errors_warnings",
-                                 strlen ("errors_warnings"), 0);
-
-  error_nrs_sv = hv_fetch (report_hv, "error_nrs",
-                                      strlen ("error_nrs"), 0);
-
-  if (errors_warnings_sv && SvOK(*errors_warnings_sv))
-    {
-      AV *av = (AV *)SvRV (*errors_warnings_sv);
-      int error_nrs = 0;
-      if (error_nrs_sv)
-        error_nrs = SvIV (*error_nrs_sv);
-
-      for (i = 0; i < error_messages->number; i++)
-        {
-          ERROR_MESSAGE error_msg = error_messages->list[i];
-          SV *sv = convert_error (error_msg);
-
-          if (error_msg.type == MSG_error && !error_msg.continuation)
-            error_nrs++;
-          av_push (av, sv);
-        }
-      if (error_nrs)
-        hv_store (report_hv, "error_nrs",
-                  strlen ("error_nrs"), newSViv (error_nrs), 0);
-    }
-  else
-    {
-      /* warn if it does not looks like a Texinfo::Report object, as
-         it is likely that the error messages are going to disappear */
-      fprintf (stderr, "BUG? no 'errors_warnings'. Not a Perl Texinfo::Report?\n");
-    }
-
-  clear_error_message_list (error_messages);
 }
 
 AV *

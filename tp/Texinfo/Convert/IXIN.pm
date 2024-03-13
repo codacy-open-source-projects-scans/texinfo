@@ -325,8 +325,6 @@ sub output_ixin($$)
 
   $self->conversion_initialization($document);
 
-  my $root = $document->tree();
-
   my ($output_file, $destination_directory, $output_filename)
     = $self->determine_files_and_directory($self->{'output_format'});
 
@@ -385,18 +383,20 @@ sub output_ixin($$)
   my $sections_list;
   my $identifiers_target;
   my $indices_information;
+  my $global_commands;
   if ($self->{'document'}) {
     $document_info = $self->{'document'}->global_information();
     $floats = $self->{'document'}->floats_information();
     $sections_list = $self->{'document'}->sections_list();
     $identifiers_target = $self->{'document'}->labels_information();
     $indices_information = $self->{'document'}->indices_information();
+    $global_commands = $self->{'document'}->global_commands_information();
   }
 
-  if ($document_info and $document_info->{'dircategory_direntry'}) {
+  if ($global_commands and $global_commands->{'dircategory_direntry'}) {
     my $current_category;
     foreach my $dircategory_direntry
-                  (@{$document_info->{'dircategory_direntry'}}) {
+                  (@{$global_commands->{'dircategory_direntry'}}) {
       if ($dircategory_direntry->{'cmdname'}
           and $dircategory_direntry->{'cmdname'} eq 'dircategory') {
         if ($current_category) {
@@ -419,7 +419,7 @@ sub output_ixin($$)
 
   # FIXME vars: wait for Thien-Thi answer.
 
-  my $output_units = Texinfo::Structuring::split_by_node($root);
+  my $output_units = Texinfo::Structuring::split_by_node($document);
   # setting_commands is for @-commands appearing before the first node,
   # while end_of_nodes_setting_commands holds, for @-commands names, the
   # last @-command element.
@@ -428,10 +428,6 @@ sub output_ixin($$)
   my %setting_commands_defaults;
   # FIXME this code is unclear and probably needs to be fixed if developemnt
   # resumes.  Maybe could be replaced by set_global_document_commands.
-  my $global_commands;
-  if ($self->{'document'}) {
-    $global_commands = $self->{'document'}->global_commands_information();
-  }
   foreach my $global_command (keys(%{$global_commands})) {
     if ((($Texinfo::Commands::line_commands{$global_command}
           and $Texinfo::Commands::line_commands{$global_command} eq 'specific')
@@ -903,6 +899,9 @@ sub output_ixin($$)
   my $blobs = '';
   my $blobs_index = '';
   my $blob_nr = 0;
+
+  my $root = $document->tree();
+
   my $collected_image_commands = Texinfo::Common::collect_commands_list_in_tree(
                                                                 $root, ['image']);
   if (scalar(@{$collected_image_commands})) {

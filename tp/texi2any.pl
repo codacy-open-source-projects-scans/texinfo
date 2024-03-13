@@ -1229,13 +1229,13 @@ sub _exit($$)
      or $error_count > get_conf('ERROR_LIMIT')));
 }
 
-sub handle_errors($$$)
+sub handle_errors(@)
 {
-  my $self = shift;
+  my $errors = shift;
+  my $new_error_count = shift;
   my $error_count = shift;
   my $opened_files = shift;
 
-  my ($errors, $new_error_count) = $self->errors();
   $error_count += $new_error_count if ($new_error_count);
   _handle_errors($errors);
 
@@ -1491,14 +1491,11 @@ while(@input_files) {
 
   my $parser = Texinfo::Parser::parser($parser_file_options);
   my $document = $parser->parse_texi_file($input_file_name, $XS_structuring);
-  my $tree;
-  if (defined($document)) {
-    $tree = $document->tree();
-  }
 
-  if (defined($tree)
+  if (defined($document)
       and (defined(get_conf('DUMP_TREE'))
            or (get_conf('DEBUG') and get_conf('DEBUG') >= 10))) {
+    my $tree = $document->tree();
     # this is very wrong, but a way to avoid a spurious warning.
     no warnings 'once';
     local $Data::Dumper::Purity = 1;
@@ -1509,15 +1506,14 @@ while(@input_files) {
     print STDERR Data::Dumper->Dump([$tree]);
   }
   # object registering errors and warnings
-  my $parser_registrar = $parser->registered_errors();
-  if (!defined($tree) or $format eq 'parse') {
-    handle_errors($parser_registrar, $error_count, \@opened_files);
+  if (!defined($document) or $format eq 'parse') {
+    handle_errors($parser->errors(), $error_count, \@opened_files);
     goto NEXT;
   }
 
   my $document_information = $document->global_information();
   if (get_conf('TRACE_INCLUDES')) {
-    handle_errors($parser_registrar, $error_count, \@opened_files);
+    handle_errors($parser->errors(), $error_count, \@opened_files);
     my $included_file_paths = $document_information->{'included_files'};
     if (defined($included_file_paths)) {
       foreach my $included_file (@$included_file_paths) {
@@ -1527,11 +1523,10 @@ while(@input_files) {
     goto NEXT;
   }
 
+  my $tree = $document->tree(1);
   if ($tree_transformations{'fill_gaps_in_sectioning'}) {
     Texinfo::Transformations::fill_gaps_in_sectioning($tree);
   }
-
-  my $identifier_target = $document->labels_information();
 
   # setup a configuration object which defines get_conf and gives the same as
   # get_conf() in main program.  It is for Structuring/Transformations methods
@@ -1557,10 +1552,10 @@ while(@input_files) {
 
   if (defined(get_conf('MACRO_EXPAND')) and $file_number == 0) {
     require Texinfo::Convert::Texinfo;
-    # no need to rebuild the tree here if convert_to_texinfo is XS code.
+    # if convert_to_texinfo is not XS code get Perl tree.
     if (not (defined $ENV{TEXINFO_XS_CONVERT}
              and $ENV{TEXINFO_XS_CONVERT} eq '1')) {
-      Texinfo::Document::rebuild_document($document);
+      #Texinfo::Document::rebuild_document($document);
       $tree = $document->tree();
     }
     my $texinfo_text = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
@@ -1601,7 +1596,7 @@ while(@input_files) {
     }
   }
   if (get_conf('DUMP_TEXI') or $formats_table{$format}->{'texi2dvi_format'}) {
-    handle_errors($parser_registrar, $error_count, \@opened_files);
+    handle_errors($parser->errors(), $error_count, \@opened_files);
     goto NEXT;
   }
 
@@ -1678,14 +1673,16 @@ while(@input_files) {
     Texinfo::Structuring::number_floats($document);
   }
 
+  # do it now to get error messages here
   if ($formats_table{$converted_format}->{'setup_index_entries_sort_strings'}) {
-    Texinfo::Document::indices_sort_strings($document, $main_configuration);
+    Texinfo::Document::setup_indices_sort_strings($document,
+                                                  $main_configuration);
   }
 
-  Texinfo::Document::rebuild_document($document);
+  #Texinfo::Document::rebuild_document($document);
 
   # parser errors
-  my ($errors, $new_error_count) = $parser_registrar->errors();
+  my ($errors, $new_error_count) = $parser->errors();
   $error_count += $new_error_count if ($new_error_count);
   # document/structuring errors
   my ($document_errors, $document_error_count) = $document->errors();
@@ -1744,7 +1741,7 @@ while(@input_files) {
 
   push @opened_files, Texinfo::Common::output_files_opened_files(
                               $converter->output_files_information());
-  handle_errors($converter_registrar, $error_count, \@opened_files);
+  handle_errors($converter_registrar->errors(), $error_count, \@opened_files);
   my $converter_unclosed_files
        = Texinfo::Common::output_files_unclosed_files(
                                $converter->output_files_information());

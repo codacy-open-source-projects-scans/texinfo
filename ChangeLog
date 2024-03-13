@@ -1,3 +1,492 @@
+2024-03-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_units_directions_files): always return undef, as the
+	return value is ignored if XS overrides are used for the conversion.
+
+2024-03-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (@itemize):
+	Do not say that the argument has to "result in a single character
+	in the Info file", as multiple characters do work fine as an argument.
+	Remove description of what @bullet outputs in different output
+	formats, for brevity.  Move discussion of optional braces after
+	the example.  Move discussion of having at least one @item, index
+	entries and comments, and blank lines after the example usage.
+
+2024-03-12  Patrice Dumas  <pertusus@free.fr>
+
+	No information to Perl if no Perl functions are potentially called
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_title_titlepage)
+	(html_convert_convert, html_convert_output),
+	tp/Texinfo/XS/convert/convert_html.c (html_convert_convert)
+	(html_prepare_title_titlepage, html_convert_output): get output units
+	descriptors from converter.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_conversion_units),
+	tp/Texinfo/XS/convert/convert_html.c (html_converter_initialize),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER): set a counter based
+	on total Perl function references potentially called.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_conversion_units)
+	(html_prepare_units_directions_files)
+	(html_prepare_output_units_global_targets)
+	(html_prepare_converted_output_info, html_prepare_title_titlepage),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_formatting_state),
+	tp/Texinfo/XS/convert/convert_html.c (html_translate_names),
+	tp/Texinfo/XS/main/build_perl_info.c (setup_output_units_handler):
+	do not pass information to Perl if Perl functions are not called.
+
+2024-03-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_units_directions_files),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_prepare_units_directions_files): get output units descriptors
+	from converter.
+
+2024-03-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_conversion_units)
+	(html_prepare_output_units_global_targets),
+	tp/Texinfo/XS/convert/convert_html.c (html_get_tree_root_element)
+	(prepare_special_units, html_prepare_conversion_units)
+	(set_special_units_targets_files)
+	(prepare_associated_special_units_targets, html_internal_command_href)
+	(html_prepare_conversion_units_targets)
+	(html_prepare_output_units_global_targets)
+	(html_prepare_units_directions_files),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER)
+	(enum output_units_descriptor_type): add output_units_descriptors
+	to converter store all types of output units descriptors.  Remove
+	output_units_descriptors.  Use that informaton to get output units
+	descriptors instead of going through Perl.
+
+2024-03-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER): count the number of file_id_setting references actually set.
+
+2024-03-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(HTML_FILE_ID_SETTING_NAMES_LIST, enum html_file_id_setting)
+	(CONVERTER), tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_file_id_setting_*): get the file_id_setting function references
+	keys only once in html_converter_initialize_sv, store them in the
+	converter.
+
+2024-03-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_file_id_setting_*): check if special_unit->hv exist after
+	getting the function to call such that the Perl data may be rebuilt at
+	that time.
+
+2024-03-11  Patrice Dumas  <pertusus@free.fr>
+
+	Count Perl functions used
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(register_type_conversion_function, register_type_open_function)
+	(register_command_conversion_function, register_command_open_function)
+	(register_output_unit_conversion_function)
+	(register_special_unit_body_formatting_function)
+	(html_converter_initialize): register_* return 1 if a function was
+	registered.  Setup counters of perl functions registerd and not
+	replaced by C functions.
+
+	* tp/Texinfo/XS/main/get_perl_info.c
+	(html_get_button_specification_list),
+	tp/Texinfo/XS/main/option_types.h (BUTTON_SPECIFICATION_LIST),
+	tp/maintain/regenerate_C_options_info.pl: add and set counters of the
+	number of functions used in buttons for directions, of type
+	BIT_function, that are not default functions.  Count for a
+	BUTTON_SPECIFICATION_LIST and for all BUTTON_SPECIFICATION_LIST
+	OPTIONS.
+
+2024-03-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): collect
+	Texinfo::Config::GNUT_initialize_config init files customization
+	variables information return value and use it in converter options.
+
+	* tp/t/init_files_tests.t (redefined_buttons_functions),
+	t/init/redefined_buttons.pm, tp/Makefile.am (test_files),
+	tp/Makefile.tres: add a test of redefinition of button formatting
+	functions in init file.
+
+2024-03-11  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm,
+	tp/t/automatic_menus.t, tp/t/convert_to_text.t,
+	tp/t/index_before_item.t, tp/t/reference_to_text_in_tree.t,
+	tp/t/test_fill_gaps_in_sectioning.t, tp/t/test_tree_copy.t: call
+	tree() to rebuild the tree from a document instead of using
+	Texinfo::Document::rebuild_tree.
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm: do not return the tree
+	when its root is a container and is not modified by transformations.
+	Use parse_texi_piece instead of parse_texi_text for pieces of Texinfo.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl (_parsed_manual_tree)
+	(_fix_texinfo_tree): comment out calls to
+	Texinfo::Document::rebuild_document.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs: comments for unused overrides.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* po/Makevars (XGETTEXT_OPTIONS), tp/Texinfo/XS/main/errors.c
+	(vmessage_list_line_error, message_list_command_warn)
+	(pmessage_list_command_warn): add a translation context to
+	vmessage_list_line_error.  Add the pmessage_list_command_warn function
+	with a translation context and continuation.  Add a continuation
+	argument for message_list_command_warn.  Update callers.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_node_redirections),
+	tp/Texinfo/XS/convert/convert_html.c (html_node_redirections):
+	implement html_node_redirections and add an XS override.
+
+	* tp/Texinfo/Convert/HTML.pm (_node_redirections): remove extension
+	related ocde, it is not used.  Rename $out_filename as $out_filepath.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document.c
+	(destroy_document_information_except_tree): free
+	document->parser_error_messages.
+
+	* tp/Texinfo/XS/main/translations.c (replace_convert_substrings): show
+	and clear parser error messages, not other document errors.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_node_redirections): use labels_list
+	instead of labels_information.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_units_directions_files),
+	tp/Texinfo/XS/convert/convert_html.c (html_reset_files_source_info)
+	(html_free_files_source_info, html_destroy_files_source_info)
+	(html_set_pages_files, html_reset_converter, html_free_converter),
+	tp/Texinfo/XS/main/converter_types.h (FILE_SOURCE_INFO)
+	(FILE_SOURCE_INFO_LIST, CONVERTER), tp/Texinfo/XS/main/utils.h:
+	add files_source_info to converter, move FILE_SOURCE_INFO and
+	FILE_SOURCE_INFO_LIST definition to converter_types.h.  Use converter
+	files_source_info in html_set_pages_files, add functions to reset and
+	free FILE_SOURCE_INFO_LIST and use those functions in converter reset
+	and free, instead of destroying the files_source_info in
+	html_prepare_units_directions_files.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/automatic_nodes.t, tp/t/do_master_menu.t,
+	tp/t/protect_character_in_texinfo.t,
+	tp/t/test_protect_hashchar_at_line_beginning.t: comment out
+	Texinfo::Document::rebuild_document calls, as it is not needed anymore.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_conversion_units):
+	setup the Perl Texinfo tree before building output units to Perl as
+	output units refer to the root commands.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash): allow
+	element associated_unit hv not to be already set, in case the tree is
+	rebuilt before the output units, while there are already output units
+	in XS/C.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (determine_files_and_directory),
+	tp/Texinfo/Convert/Text.pm (output): remove useless calls to
+	global_commands_information.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_node_redirections): move code related
+	to node files redirections to a function, in particular to prepare for
+	XS overriding.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (copy_option): handle NULL source
+	string.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_line_command)
+	(_handle_block_command): fix global commands state key.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	XS interface for Texinfo::Convert::Converter::set_global_document_commands
+
+	* tp/Texinfo/Convert/Converter.pm (%XS_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs
+	(converter_set_global_document_commands): add an XS interface for
+	set_global_document_commands.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	Put dircategory_direntry in global_commands
+
+	* tp/Texinfo/ParserNonXS.pm (_register_global_command)
+	(_handle_block_command), tp/Texinfo/XS/main/document_types.h,
+	tp/Texinfo/XS/main/utils.c (delete_global_info)
+	(delete_global_commands), tp/Texinfo/XS/parsetexi/handle_commands.c
+	(handle_line_command, handle_block_command),
+	tp/Texinfo/XS/parsetexi/parser.c (store_document),
+	tp/Texinfo/XS/main/command_data.awk, tp/Texinfo/Convert/IXIN.pm,
+	tp/Texinfo/Convert/Info.pm (_info_header): put dircategory_direntry
+	in global_commands.
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (document_global_information),
+	tp/Texinfo/Document.pm (global_information),
+	tp/Texinfo/XS/main/build_perl_info.c (build_global_commands)
+	(document_global_information): remove optional argument of
+	global_information.  Remove build_global_info_tree_info.  Update
+	callers.
+
+2024-03-10  Patrice Dumas  <pertusus@free.fr>
+
+	Add setfilename value to global_info
+
+	* tp/Texinfo/Convert/Converter.pm (determine_files_and_directory),
+	tp/Texinfo/Convert/Text.pm (output), tp/Texinfo/ParserNonXS.pm
+	(get_parser_info), tp/Texinfo/XS/main/build_perl_info.c
+	(build_global_info): add the setfilename text argument to global_info
+	as it is used to determine output file name.
+
+2024-03-09  Patrice Dumas  <pertusus@free.fr>
+
+	Do not call rebuild_document
+
+	* tp/texi2any.pl, tp/t/test_utils.pl (test): do not call
+	rebuild_document, the document information should be built to Perl
+	when called through the accessors.
+
+	* tp/texi2any.pl: remove a useless call to labels_information.
+
+	* t/test_utils.pl: remove a useless call to
+	global_commands_information.
+
+	* tp/Texinfo/Document.pm (global_information),
+	tp/Texinfo/XS/main/DocumentXS.xs (document_global_information),
+	tp/Texinfo/XS/main/build_perl_info.c (document_global_information),
+	tp/texi2any.pl, t/test_utils.pl: add an argument to
+	global_information/document_global_information such that only
+	information that do not require building the Perl tree is returned if
+	set.  Similar to calling only get_document, called that way from the
+	main program.
+
+2024-03-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (%XS_structure_overrides)
+	(setup_indices_sort_strings, indices_sort_strings),
+	tp/Texinfo/XS/main/DocumentXS.xs (setup_indices_sort_strings),
+	tp/texi2any.pl: add setup_indices_sort_strings that does the same as
+	indices_sort_strings but does not return anything, to avoid building
+	Perl data in XS if not needed.
+
+2024-03-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash): store
+	associated_unit in element.
+
+	* tp/Texinfo/XS/main/document.c (register_document_sections_list):
+	fix document->modified_information flag used.
+
+	* tp/Texinfo/Document.pm (labels_list), tp/Texinfo/Convert/HTML.pm
+	(_set_root_commands_targets_node_files): add an interface for Document
+	'labels_list'.
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (document_tree): no warning if
+	XS document is not found.
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (document_tree),
+	tp/Texinfo/XS/main/build_perl_info.c (store_texinfo_tree): split
+	store_texinfo_tree out of document_tree to be able to call
+	build_texinfo_tree if needed.
+
+	* tp/Texinfo/Document.pm (%XS_structure_overrides),
+	tp/Texinfo/XS/main/DocumentXS.xs (document_global_information)
+	(document_indices_information, document_global_commands_information)
+	(document_labels_information, document_nodes_list)
+	(document_sections_list, document_floats_information)
+	(document_internal_references_information, document_labels_list),
+	tp/Texinfo/XS/main/build_perl_info.c (BUILD_PERL_DOCUMENT_ITEM)
+	(BUILD_PERL_DOCUMENT_LIST, document_global_information): add an XS
+	override for document accessors.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(get_converter_indices_sorted_by_index)
+	(get_converter_indices_sorted_by_letter),
+	tp/Texinfo/XS/main/DocumentXS.xs  (indices_sort_strings): get index
+	entries by calling document_indices_information.
+
+2024-03-09  Patrice Dumas  <pertusus@free.fr>
+
+	XS override for Texinfo::Document tree
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (document_tree),
+	tp/Texinfo/Document.pm (%XS_structure_overrides, tree): add an XS
+	override for Texinfo::Document tree.  Add an optional argument to
+	tree() to avoid building the Perl tree if only a handler on XS data is
+	needed.
+
+	* tp/texi2any.pl, tp/t/test_utils.pl (test): set the new argument of
+	tree() when tree handler only is needed.
+
+2024-03-09  Patrice Dumas  <pertusus@free.fr>
+
+	Set document->modified_information when modified, unset when passed to
+	Perl
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (set_document_global_info),
+	tp/Texinfo/XS/main/build_perl_info.c (get_document, fill_document_hv),
+	tp/Texinfo/XS/main/document.c, tp/Texinfo/XS/main/output_unit.c
+	(split_by_node, split_by_section, unsplit),
+	tp/Texinfo/XS/main/targets.c (add_element_to_identifiers_target),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs,
+	tp/Texinfo/XS/structuring_transfo/structuring.c,
+	tp/Texinfo/XS/structuring_transfo/transformations.c: set
+	document->modified_information flags when set or modified in C;
+	Remove the flags when passed to Perl document structure.
+
+2024-03-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (indices_sort_strings),
+	tp/Texinfo/XS/main/DocumentXS.xs (indices_sort_strings),
+	tp/Texinfo/XS/main/document.c (document_indices_sort_strings): remove
+	prefer_reference_element argument, as the result is cached, therefore
+	the first call prefer_reference_element argument only would be
+	used.  Also the possibility associated to that argument probably do
+	not make much sense when doing a document indices_sort_strings.
+
+2024-03-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_prepare_conversion_units)
+	(_html_convert_convert, run_stage_handlers, _html_convert_output),
+	tp/Texinfo/Structuring.pm (split_by_node, split_by_section)
+	(_XS_unsplit, unsplit), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_convert_convert, html_convert_output),
+	tp/Texinfo/XS/main/output_unit.c (split_by_node, split_by_section)
+	(unsplit), tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(split_by_node, split_by_section, unsplit): pass a document instead of
+	a tree in argument.  Update callers.
+
+2024-03-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document_types.h (DOCUMENT): add a
+	modified_information flags field to DOCUMENT to keep track of which
+	information is passed to Perl.
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (indices_sort_strings),
+	tp/Texinfo/XS/main/document.c (document_indices_sort_strings): build
+	Perl indices_sort_strings information only once based on a DOCUMENT
+	modified_information flag, and cache the Perl indices_sort_strings
+	information in the Perl document hash, as is done in Perl overriden
+	code.
+
+2024-03-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs,
+	tp/Texinfo/XS/main/build_perl_info.c: remove pass_document_errors.
+
+	* tp/Texinfo/XS/main/build_perl_info.c: move functions around.
+
+2024-03-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (registrar),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (registrar): get self argument.
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(pass_document_parser_errors_to_registrar),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (_get_parser_info),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs
+	(pass_document_parser_errors_to_registrar): pass directly document
+	prser errors to registrar. Remove pass_document_parser_errors.
+
+2024-03-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (errors),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (errors): add errors as the main
+	way to get parser errors.  Remove registered_errors.  Update callers
+	of registered_errors to call directly errors.
+
+	* tp/Texinfo/ParserNonXS.pm (registrar),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (registrar): add Texinfo::Report
+	registrar accessors to have the same interface as document, only
+	currently used in a test.
+
+2024-03-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (%XS_overrides, errors),
+	tp/Texinfo/XS/main/DocumentXS.xs (document_errors),
+	tp/Texinfo/XS/main/build_perl_info.c (add_formatted_error_messages)
+	(pass_errors_to_registrar): override directly
+	Texinfo::Document::errors.  Rename pass_converter_errors as
+	add_formatted_error_messages and return error_nrs and errors_warnings
+	Perl references too.
+
+2024-03-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_starting_block),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block): change
+	warning message based on mailing list feedback.  Use command_data in C.
+
+2024-03-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (rebuild_document): do not
+	clear the existing document HV.
+
+2024-03-06  Patrice Dumas  <pertusus@free.fr>
+
+	Get errors from XS independently of document build/rebuild
+
+	* tp/Texinfo/XS/main/build_perl_info.c (pass_document_parser_errors),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (_get_parser_info),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (pass_document_parser_errors):
+	pass XS parser errors through the pass_document_parser_errors XS
+	interface and remove them from XS data.
+
+	* tp/Texinfo/Document.pm (%XS_overrides, _XS_pass_document_errors)
+	(errors), tp/Texinfo/XS/main/DocumentXS.xs (pass_document_errors),
+	tp/Texinfo/XS/main/build_perl_info.c (pass_document_errors):
+	pass directly XS errors to Perl through pass_document_errors
+	independentely of document rebuild, and remove errors from XS data.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (get_document)
+	(fill_document_hv): do not build parser nor document errors lists.
+
+	* tp/Texinfo/Document.pm (%XS_overrides): remove XS interface for
+	clear_document_errors.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs: remove clear_document_errors
+	and clear_document_parser_errors XS interfaces.
+
+	* tp/Texinfo/Document.pm (register): remove 'parser_registrar' field
+	and $parser_registrar register function argument.  Update caller.
+
+	* tp/t/test_utils.pl (test): do not call indices_sort_strings early
+	anymore, and do not call $document->errors() right after rebuilding
+	document, now that there are no link between retrieving errors and
+	building document to Perl.
+
+2024-03-05  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Command List): @bullet is often associated with
+	@itemize, not @table.
+
 2024-03-04  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/ParserNonXS.pm (_end_line_starting_block),

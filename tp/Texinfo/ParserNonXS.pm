@@ -887,7 +887,21 @@ sub get_parser_info($)
   } else {
     $self->{'global_info'}->{'input_encoding_name'} = 'utf-8';
   }
+
   my $global_commands = $self->{'commands_info'};
+
+  # information based on commands commonly needed.
+  if ($global_commands->{'novalidate'}) {
+    $self->{'global_info'}->{'novalidate'} = 1;
+  }
+
+  if ($global_commands->{'setfilename'}
+      and $global_commands->{'setfilename'}->{'extra'}
+      and defined($global_commands->{'setfilename'}->{'extra'}->{'text_arg'})) {
+    $self->{'global_info'}->{'setfilename'}
+      = $global_commands->{'setfilename'}->{'extra'}->{'text_arg'};
+  }
+
   my $document_language
     = Texinfo::Common::get_global_document_command($global_commands,
                                                    'documentlanguage',
@@ -895,9 +909,6 @@ sub get_parser_info($)
   if ($document_language) {
     $self->{'global_info'}->{'documentlanguage'}
       = Texinfo::Common::informative_command_value($document_language);
-  }
-  if ($global_commands->{'novalidate'}) {
-    $self->{'global_info'}->{'novalidate'} = 1;
   }
 }
 
@@ -972,10 +983,21 @@ sub _parse_texi_document($)
   return $document;
 }
 
-sub registered_errors($)
+# Only used in a test, not documented, there for symmetry with document
+sub registrar($)
 {
   my $self = shift;
   return $self->{'registrar'};
+}
+
+sub errors($)
+{
+  my $self = shift;
+  my $registrar = $self->{'registrar'};
+  if (!$registrar) {
+    return undef;
+  }
+  return $registrar->errors();
 }
 
 sub _setup_conf($$)
@@ -4160,9 +4182,8 @@ sub _end_line_starting_block($$$)
         my $cmdname = $command_as_argument->{'cmdname'};
         if (defined($brace_commands{$cmdname})
             and $brace_commands{$cmdname} ne 'noarg') {
-          $self->_command_warn($current,
-       __("non-mark brace command `\@%s' as \@%s argument should have braces"),
-            $cmdname, $command);
+          $self->_command_warn($current, __("\@%s expected braces"),
+                               $cmdname);
         }
       }
     }
@@ -5776,7 +5797,7 @@ sub _handle_line_command($$$$$$)
   _register_global_command($self, $command_e, $source_info)
     if $command_e;
   if ($command eq 'dircategory') {
-    push @{$self->{'global_info'}->{'dircategory_direntry'}}, $command_e;
+    push @{$self->{'commands_info'}->{'dircategory_direntry'}}, $command_e;
   }
   return ($current, $line, $retval, $command_e);
 }
@@ -5864,7 +5885,7 @@ sub _handle_block_command($$$$$)
     }
     if ($block_commands{$command} eq 'menu') {
       $self->_push_context('ct_preformatted', $command);
-      push @{$self->{'global_info'}->{'dircategory_direntry'}}, $block
+      push @{$self->{'commands_info'}->{'dircategory_direntry'}}, $block
         if ($command eq 'direntry');
       if ($self->{'current_node'}) {
         if ($command eq 'direntry') {
@@ -7537,8 +7558,7 @@ sub _parse_texi($$$)
   my $document = Texinfo::Document::register($root,
      $self->{'global_info'}, $self->{'index_names'}, $self->{'floats'},
      $self->{'internal_references'}, $self->{'commands_info'},
-     $self->{'identifiers_target'}, $self->{'labels_list'},
-     $self->{'registrar'});
+     $self->{'identifiers_target'}, $self->{'labels_list'});
 
   return $document;
 }
@@ -7995,10 +8015,7 @@ Texinfo::Parser - Parse Texinfo code into a Perl tree
   use Texinfo::Parser;
   my $parser = Texinfo::Parser::parser();
   my $document = $parser->parse_texi_file("somefile.texi");
-  # a Texinfo::Report object in which the errors and warnings
-  # encountered while parsing are registered.
-  my $registrar = $parser->registered_errors();
-  my ($errors, $errors_count) = $registrar->errors();
+  my ($errors, $errors_count) = $parser->errors();
   foreach my $error_message (@$errors) {
     warn $error_message->{'error_line'};
   }
@@ -8072,10 +8089,6 @@ Maximal number of nested user-defined macro calls.  Default is 100000.
 A string corresponding to a document language set by C<@documentlanguage>.
 It overrides the document C<@documentlanguage> information, if present.
 
-=item registrar
-
-L<Texinfo::Report> object reused by the parser to register errors.
-
 =item values
 
 A hash reference.  Keys are names, values are the corresponding values.
@@ -8136,21 +8149,19 @@ undef is returned if the file couldn't be read.
 
 =back
 
-The errors collected during the tree parsing are registered in a
-L<Texinfo::Report> object.  This object is available with
-C<registered_errors>.  The errors registered in the C<Texinfo::Report>
-object are available through the C<errors> method.  This method is
-described in L<Texinfo::Report::errors|Texinfo::Report/($error_warnings_list, $error_count) = errors($registrar)>.
+The errors collected during the tree parsing are available with
+C<errors>.  These errors are internally registered in a C<Texinfo::Report>
+object.
 
 =over
 
-=item $registrar = registered_errors($parser)
-X<C<registered_errors>>
+=item ($error_warnings_list, $error_count) = $parser->errors()
+X<C<errors>>
 
-I<$registrar> is a L<Texinfo::Report> object in which the errors
-and warnings encountered while parsing are registered.  If a I<registrar>
-is passed to the parser initialization options, it is reused, otherwise
-a new one is created.
+This function returns as I<$error_count> the count of parsing errors.
+The I<$error_warnings_list> is an array of hash references
+one for each error, warning or error line continuation.
+They are described in detail in L<Texinfo::Report::errors|Texinfo::Report/($error_warnings_list, $error_count) = errors($registrar)>.
 
 =back
 

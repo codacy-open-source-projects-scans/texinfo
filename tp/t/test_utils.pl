@@ -975,6 +975,7 @@ sub test($$)
 
   # reset Texinfo::Config informations to have isolated tests
   Texinfo::Config::GNUT_reinitialize_init_files();
+  my $init_files_options = {};
   my $init_file_directories = [$srcdir.'init/', $srcdir.'t/init/'];
   # the init file names are supposed to be binary strings.  Since they
   # are not encoded anywhere, probably only non ascii file names should
@@ -986,7 +987,8 @@ sub test($$)
       $conf->{'COMMAND_LINE_ENCODING'} = $locale_encoding;
       $conf->{'MESSAGE_ENCODING'} = $locale_encoding;
     }
-    Texinfo::Config::GNUT_initialize_config('', $conf, {});
+    $init_files_options
+      = Texinfo::Config::GNUT_initialize_config('', $conf, {});
     foreach my $filename (@{$parser_options->{'init_files'}}) {
       my $file = Texinfo::Common::locate_init_file($filename,
                                                $init_file_directories, 0);
@@ -1033,18 +1035,17 @@ sub test($$)
     print STDERR "  TEST $test_name ($test_file)\n" if ($self->{'DEBUG'});
     $document = $parser->parse_texi_file($test_file, $XS_structuring);
   }
-  my $tree = $document->tree();
-  my $parser_registrar = $parser->registered_errors();
+  my $tree = $document->tree(1);
 
   if (not defined($tree)) {
     print STDERR "ERROR: parsing result undef\n";
-    my ($parser_errors, $parser_error_count) = $parser_registrar->errors();
+    my ($parser_errors, $parser_error_count) = $parser->errors();
     foreach my $error_message (@$parser_errors) {
       warn $error_message->{'error_line'}
         if ($error_message->{'type'} eq 'error');
     }
   }
-  my ($errors, $error_nrs) = $parser_registrar->errors();
+  my ($errors, $error_nrs) = $parser->errors();
 
   if ($tree_transformations{'fill_gaps_in_sectioning'}) {
     Texinfo::Transformations::fill_gaps_in_sectioning($tree);
@@ -1055,7 +1056,6 @@ sub test($$)
   Texinfo::Common::set_output_encodings($main_configuration,
                                         $document);
 
-  my $global_commands = $document->global_commands_information();
   if ($document_information->{'novalidate'}) {
     $main_configuration->set_conf('novalidate', 1);
   }
@@ -1124,28 +1124,19 @@ sub test($$)
     foreach my $transformation (@$additional_tree_transformations) {
       my $tree_transformation_sub = $tested_transformations{$transformation};
       if ($transformation eq 'protect_hashchar_at_line_beginning') {
-        &$tree_transformation_sub($document->tree(), $document->registrar(),
+        &$tree_transformation_sub($tree, $document->registrar(),
                                   $main_configuration);
       } else {
-        &$tree_transformation_sub($document->tree());
+        &$tree_transformation_sub($tree);
       }
     }
   }
 
-  # Here the sort strings are generated, both in Perl and XS.
-  # If $XS_structuring is set, the Perl structure cannot be
-  # built yet from XS as the document index information have not
-  # been rebuilt yet, but it is not needed at that point.
-  Texinfo::Document::indices_sort_strings($document, $main_configuration);
-
   # could be in a if !$XS_structuring, but the function should not be
   # overriden already in that case
-  Texinfo::Document::rebuild_document($document);
-  # should not actually be useful, as the same element should be reused.
+  #Texinfo::Document::rebuild_document($document);
   $tree = $document->tree();
 
-  my ($document_errors, $document_error_nrs) = $document->errors();
-  push @$errors, @$document_errors;
   my $indices_information = $document->indices_information();
   # FIXME maybe it would be good to compare $merged_index_entries?
   my $merged_index_entries = $document->merged_indices();
@@ -1194,6 +1185,9 @@ sub test($$)
     }
   }
 
+  my ($document_errors, $document_error_nrs) = $document->errors();
+  push @$errors, @$document_errors;
+
   # use the parser expanded formats to be similar to the main program,
   # and also to avoid having @inline* and raw output format @-commands
   # with elided contents especially parsed because they are ignored
@@ -1213,7 +1207,8 @@ sub test($$)
 
   foreach my $format (@tested_formats) {
     if (defined($formats{$format})) {
-      my $format_converter_options = {%$converter_options};
+      my $format_converter_options = {%$converter_options,
+                                      %$init_files_options};
       my $format_type = $format;
       if ($format_type =~ s/^file_//) {
         # the information that the results is a file is passed
@@ -1367,7 +1362,7 @@ sub test($$)
   # on conversion should be fairly well tested.  See above the comment
   # near test_split with more explanation on why previous splitting should
   # not interfere with conversion.
-  my $unsplit_needed = Texinfo::Structuring::unsplit($tree);
+  my $unsplit_needed = Texinfo::Structuring::unsplit($document);
   print STDERR "  UNSPLIT: $test_name\n"
     if ($self->{'DEBUG'} and $unsplit_needed);
 
@@ -1380,9 +1375,9 @@ sub test($$)
   # output units.
   my $output_units;
   if ($test_split eq 'node') {
-    $output_units = Texinfo::Structuring::split_by_node($tree);
+    $output_units = Texinfo::Structuring::split_by_node($document);
   } elsif ($test_split eq 'section') {
-    $output_units = Texinfo::Structuring::split_by_section($tree);
+    $output_units = Texinfo::Structuring::split_by_section($document);
   }
   if ($test_split) {
     my $identifier_target = $document->labels_information();

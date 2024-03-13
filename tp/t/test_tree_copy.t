@@ -137,7 +137,6 @@ T
 my $test_parser = Texinfo::Parser::parser();
 my $document = Texinfo::Parser::parse_texi_piece($test_parser, $text);
 my $tree = $document->tree();
-my $test_parser_registrar = $test_parser->registered_errors();
 my $copy = Texinfo::Common::copy_tree($tree);
 
 my $texi_tree = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
@@ -150,8 +149,8 @@ is ($texi_copy, $texi_tree, "tree and copy to texi match");
 # set sectioning structure and redo a copy
 Texinfo::Structuring::sectioning_structure($document,
                                            $test_parser);
-
-$tree = Texinfo::Document::rebuild_tree($tree);
+# rebuild the tree
+$tree = $document->tree();
 
 my $copy_with_sec = Texinfo::Common::copy_tree($tree);
 
@@ -179,9 +178,7 @@ foreach my $file_include (['Texinfo', $manual_file, $manual_include_dir],
    = Texinfo::Parser::parser({'INCLUDE_DIRECTORIES' => [$test_include_dir]});
   my $document = $test_parser->Texinfo::Parser::parse_texi_file($test_file);
   my $texinfo_test_tree = $document->tree();
-  my $test_parser_registrar = $test_parser->registered_errors();
-  my ($test_parser_errors, $test_parser_error_count)
-        = $test_parser_registrar->errors();
+  my ($test_parser_errors, $test_parser_error_count) = $test_parser->errors();
   foreach my $error_message (@$test_parser_errors) {
     warn "$label: ".$error_message->{'error_line'}
       if ($debug);

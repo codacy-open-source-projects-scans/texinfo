@@ -72,7 +72,6 @@ my $tree = $document->tree();
 #use Texinfo::DebugTree;
 #print STDERR Texinfo::DebugTree->convert_tree ($tree);
 
-my $registrar = $parser->registered_errors();
 my $main_configuration = Texinfo::MainConfig::new();
 # Setup sectioning commands numbers
 my $sections_list
@@ -82,7 +81,8 @@ if ($sections_list) {
   Texinfo::Document::register_document_sections_list($document,
                                                      $sections_list);
 }
-$tree = Texinfo::Document::rebuild_tree($tree);
+# rebuild the tree
+$tree = $document->tree();
 
 # a converter only used for translation in text conversion, not
 # to convert anything.

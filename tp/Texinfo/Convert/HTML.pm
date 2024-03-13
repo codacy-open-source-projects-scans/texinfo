@@ -287,6 +287,8 @@ my %XS_conversion_overrides = (
   # => "Texinfo::Convert::ConvertXS::html_convert_tree",
   "Texinfo::Convert::HTML::_prepare_node_redirection_page"
    => "Texinfo::Convert::ConvertXS::html_prepare_node_redirection_page",
+  "Texinfo::Convert::HTML::_node_redirections"
+   => "Texinfo::Convert::ConvertXS::html_node_redirections",
 );
 
 # XS initialization independent of customization
@@ -9484,19 +9486,19 @@ sub _set_root_commands_targets_node_files($)
   my $self = shift;
 
   my $sections_list;
-  my $identifiers_target;
+  my $labels_list;
   if ($self->{'document'}) {
     $sections_list = $self->{'document'}->sections_list();
-    $identifiers_target = $self->{'document'}->labels_information();
+    $labels_list = $self->{'document'}->labels_list();
   }
 
-  if ($identifiers_target) {
+  if ($labels_list) {
     my $extension = '';
     $extension = '.'.$self->get_conf('EXTENSION')
                 if (defined($self->get_conf('EXTENSION'))
                     and $self->get_conf('EXTENSION') ne '');
 
-    foreach my $target_element (@{$self->{'document'}->{'labels_list'}}) {
+    foreach my $target_element (@$labels_list) {
       next if (not $target_element->{'extra'}
                or not $target_element->{'extra'}->{'is_target'});
       my $label_element = Texinfo::Common::get_label_element($target_element);
@@ -9947,15 +9949,15 @@ sub _html_set_pages_files($$$$$$$$$)
 sub _prepare_conversion_units($$$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
   my $document_name = shift;
 
   my ($output_units, $special_units, $associated_special_units);
 
   if ($self->get_conf('USE_NODES')) {
-    $output_units = Texinfo::Structuring::split_by_node($root);
+    $output_units = Texinfo::Structuring::split_by_node($document);
   } else {
-    $output_units = Texinfo::Structuring::split_by_section($root);
+    $output_units = Texinfo::Structuring::split_by_section($document);
   }
 
   # Needs to be set early in case it would be needed to find some region
@@ -11947,7 +11949,7 @@ sub _prepare_title_titlepage($$$$)
 sub _html_convert_convert($$$$)
 {
   my $self = shift;
-  my $root = shift;
+  my $document = shift;
   my $output_units = shift;
   my $special_units = shift;
 
@@ -12002,7 +12004,6 @@ sub convert($$)
   $self->conversion_initialization($document);
 
   my $converter_info;
-  my $root = $document->tree();
 
   # the presence of contents elements in the document is used in diverse
   # places, set it once for all here
@@ -12023,7 +12024,7 @@ sub convert($$)
   }
 
   my ($output_units, $special_units, $associated_special_units)
-    = $self->_prepare_conversion_units($root, undef);
+    = $self->_prepare_conversion_units($document, undef);
 
   # setup global targets.  It is not clearly relevant to have those
   # global targets when called as convert, but the Top global
@@ -12056,7 +12057,7 @@ sub convert($$)
   $self->_reset_info();
 
   # main conversion here
-  my $result = $self->_html_convert_convert($root, $output_units,
+  my $result = $self->_html_convert_convert($document, $output_units,
                                             $special_units);
 
   $self->conversion_finalization();
@@ -12203,7 +12204,7 @@ sub output_internal_links($)
 sub run_stage_handlers($$$)
 {
   my $converter = shift;
-  my $root = shift;
+  my $document = shift;
   my $stage = shift;
 
   my $stage_handlers = Texinfo::Config::GNUT_get_stage_handlers();
@@ -12216,7 +12217,7 @@ sub run_stage_handlers($$$)
       if ($converter->get_conf('DEBUG')) {
         print STDERR "RUN handler $handler_idx: stage $stage, priority $priority\n";
       }
-      my $status = &{$handler}($converter, $root, $stage);
+      my $status = &{$handler}($converter, $document, $stage);
       if ($status != 0) {
         if ($status < 0) {
           $converter->converter_document_error(
@@ -12428,7 +12429,7 @@ sub _prepare_converted_output_info($)
 # units or root conversion
 sub _html_convert_output($$$$$$$$)
 {
-  my ($self, $root, $output_units, $special_units, $output_file,
+  my ($self, $document, $output_units, $special_units, $output_file,
       $destination_directory, $output_filename, $document_name) = @_;
 
   my $text_output = '';
@@ -12573,281 +12574,28 @@ sub _prepare_node_redirection_page($$$)
   return $redirection_page;
 }
 
-# Main function for outputting a manual in HTML.
-# $SELF is the output converter object of class Texinfo::Convert::HTML (this
-# module), and $DOCUMENT is the parsed document from the parser and structuring
-sub output($$)
+sub _node_redirections($$$$)
 {
   my $self = shift;
-  my $document = shift;
+  my $output_file = shift;
+  my $destination_directory = shift;
+  my $files_source_info = shift;
 
-  $self->conversion_initialization($document);
-
-  my $identifiers_target;
-  if ($document) {
-    $identifiers_target = $document->labels_information();
+  my $labels_list;
+  if ($self->{'document'}) {
+    $labels_list = $self->{'document'}->labels_list();
   }
 
-  my $root = $document->tree();
-
-  # set here early even though actual values are only set later on.  It is
-  # therefore set in converter_info early too (using the reference).
-  $self->{'current_filename'} = undef;
-
-  # no splitting when writing to the null device or to stdout or returning
-  # a string
-  if (defined($self->get_conf('OUTFILE'))
-      and ($Texinfo::Common::null_device_file{$self->get_conf('OUTFILE')}
-           or $self->get_conf('OUTFILE') eq '-'
-           or $self->get_conf('OUTFILE') eq '')) {
-    $self->force_conf('SPLIT', '');
-    $self->force_conf('MONOLITHIC', 1);
-  }
-  if ($self->get_conf('SPLIT')) {
-    $self->set_conf('NODE_FILES', 1);
-  }
-  $self->set_conf('EXTERNAL_CROSSREF_SPLIT', $self->get_conf('SPLIT'));
-
-  if (not defined($self->get_conf('NODE_NAME_IN_INDEX'))) {
-    $self->set_conf('NODE_NAME_IN_INDEX', $self->get_conf('USE_NODES'));
-  }
-
-  my $handler_fatal_error_level = $self->get_conf('HANDLER_FATAL_ERROR_LEVEL');
-
-  if ($self->get_conf('HTML_MATH')
-        and $self->get_conf('HTML_MATH') eq 'mathjax') {
-    # See https://www.gnu.org/licenses/javascript-labels.html
-    #
-    # The link to the source for mathjax does not strictly follow the advice
-    # there: instead we link to instructions for obtaining the full source in
-    # its preferred form of modification.
-
-    my $mathjax_script = $self->get_conf('MATHJAX_SCRIPT');
-    if (! defined($mathjax_script)) {
-      $mathjax_script = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
-      $self->set_conf('MATHJAX_SCRIPT', $mathjax_script);
-    }
-
-    my $mathjax_source = $self->get_conf('MATHJAX_SOURCE');
-    if (! defined($mathjax_source)) {
-      $mathjax_source = 'http://docs.mathjax.org/en/latest/web/hosting.html#getting-mathjax-via-git';
-      $self->set_conf('MATHJAX_SOURCE', $mathjax_source);
-    }
-  }
-
-  if ($self->get_conf('HTML_MATH')
-      and not defined($self->get_conf('CONVERT_TO_LATEX_IN_MATH'))) {
-    $self->set_conf('CONVERT_TO_LATEX_IN_MATH', 1);
-  }
-
-  if ($self->get_conf('CONVERT_TO_LATEX_IN_MATH')) {
-    $self->{'options_latex_math'}
-     = { Texinfo::Convert::LaTeX::copy_options_for_convert_to_latex_math($self) };
-  }
-
-  if ($self->get_conf('NO_TOP_NODE_OUTPUT')
-      and not defined($self->get_conf('SHOW_TITLE'))) {
-    $self->set_conf('SHOW_TITLE', 1);
-  }
-
-  # set information, to have some information for run_stage_handlers.
-  # Some information is not available yet.
-  $self->_reset_info();
-
-  my $setup_status = $self->run_stage_handlers($root, 'setup');
-  unless ($setup_status < $handler_fatal_error_level
-          and $setup_status > -$handler_fatal_error_level) {
-    $self->conversion_finalization();
-    return undef;
-  }
-
-  # the configuration has potentially been modified for
-  # this output file especially.  Set a corresponding initial
-  # configuration.
-  $self->{'output_init_conf'} = { %{$self->{'conf'}} };
-  # pass to XS.
-  _XS_reset_output_init_conf($self);
-
-  # set BODYTEXT
-  $self->set_global_document_commands('preamble', ['documentlanguage']);
-  my $structure_preamble_document_language = $self->get_conf('documentlanguage');
-  $self->set_conf('BODYTEXT',
-                  'lang="' . $structure_preamble_document_language . '"');
-  $self->set_global_document_commands('before', ['documentlanguage']);
-
-  # the presence of contents elements in the document is used in diverse
-  # places, set it once for all here
-  my @contents_elements_options
-                  = grep {Texinfo::Common::valid_customization_option($_)}
-                        sort(keys(%contents_command_special_unit_variety));
-  $self->set_global_document_commands('last', \@contents_elements_options);
-
-  $self->{'jslicenses'} = {};
-  if ($self->get_conf('HTML_MATH')
-        and $self->get_conf('HTML_MATH') eq 'mathjax') {
-    # See https://www.gnu.org/licenses/javascript-labels.html
-
-    my $mathjax_script = $self->get_conf('MATHJAX_SCRIPT');
-    my $mathjax_source = $self->get_conf('MATHJAX_SOURCE');
-
-    $self->{'jslicenses'}->{'mathjax'} = {
-      $mathjax_script =>
-        [ 'Apache License, Version 2.0.',
-          'https://www.apache.org/licenses/LICENSE-2.0',
-          $mathjax_source ]};
-  }
-  if ($self->get_conf('INFO_JS_DIR')) {
-    $self->{'jslicenses'}->{'infojs'} = {
-      'js/info.js' =>
-         [ 'GNU General Public License 3.0 or later',
-           'http://www.gnu.org/licenses/gpl-3.0.html',
-           'js/info.js' ],
-       'js/modernizr.js' =>
-          [ 'Expat',
-            'http://www.jclark.com/xml/copying.txt',
-            'js/modernizr.js' ]};
-  }
-  $self->_prepare_css();
-
-  # this sets OUTFILE, to be used if not split, but also 'output_filename'
-  # that is useful when split, 'destination_directory' that is mainly useful
-  # when split and 'document_name' that is generally useful.
-  my ($output_file, $destination_directory, $output_filename, $document_name)
-        = $self->determine_files_and_directory($self->{'output_format'});
-  my ($encoded_destination_directory, $dir_encoding)
-    = $self->encoded_output_file_name($destination_directory);
-  my $succeeded
-    = $self->create_destination_directory($encoded_destination_directory,
-                                          $destination_directory);
-  unless ($succeeded) {
-    $self->conversion_finalization();
-    return undef;
-  }
-
-  # set for init files
-  $self->{'document_name'} = $document_name;
-  $self->{'destination_directory'} = $destination_directory;
-
-  # set information, to have it available for the conversions
-  # in translate_names
-  # Some information is not available yet.
-  $self->_reset_info();
-
-  # cache, as it is checked for each text element
-  if ($self->get_conf('OUTPUT_CHARACTERS')
-      and $self->get_conf('OUTPUT_ENCODING_NAME')
-      and $self->get_conf('OUTPUT_ENCODING_NAME') eq 'utf-8') {
-    $self->{'use_unicode_text'} = 1;
-  }
-
-  # Get the list of output units to be processed.
-  # Customization information in $self->{'conf'} is passed to XS code too.
-  my ($output_units, $special_units, $associated_special_units)
-    = $self->_prepare_conversion_units($root, $document_name);
-
-  # setup untranslated strings
-  $self->_translate_names();
-
-  # Output units lists are rebuilt in the XS code so there is no need to call
-  # rebuild_output_units.
-  my $files_source_info
-    = $self->_prepare_units_directions_files($output_units, $special_units,
-                $associated_special_units,
-                $output_file, $destination_directory, $output_filename,
-                $document_name);
-
-  # set information, to have it ready for run_stage_handlers and for titles
-  # formatting.  Some information is not available yet.
-  $self->_reset_info();
-
-  my $structure_status = $self->run_stage_handlers($root, 'structure');
-  unless ($structure_status < $handler_fatal_error_level
-          and $structure_status > -$handler_fatal_error_level) {
-    $self->conversion_finalization();
-    return undef;
-  }
-
-  my $default_document_language = $self->get_conf('documentlanguage');
-
-  $self->set_global_document_commands('preamble', ['documentlanguage']);
-
-  my $preamble_document_language = $self->get_conf('documentlanguage');
-
-  if ($default_document_language ne $preamble_document_language) {
-    $self->_translate_names();
-  }
-
-  $self->_prepare_converted_output_info();
-
-  # set information, to have it ready for run_stage_handlers.
-  # Some information is not available yet.
-  $self->_reset_info();
-
-  # TODO document that this stage handler is called with end of
-  # preamble documentlanguage.
-  my $init_status = $self->run_stage_handlers($root, 'init');
-  unless ($init_status < $handler_fatal_error_level
-          and $init_status > -$handler_fatal_error_level) {
-    $self->conversion_finalization();
-    return undef;
-  }
-
-  # information settable by customization files is passed to XS too
-  $self->_prepare_title_titlepage($output_units, $output_file,
-                                  $output_filename);
-
-  $self->set_global_document_commands('before', ['documentlanguage']);
-
-  if ($default_document_language ne $preamble_document_language) {
-    $self->_translate_names();
-  }
-
-  # complete information should be available.
-  $self->_reset_info();
-
-  # conversion
-  my $text_output = $self->_html_convert_output($root, $output_units,
-                       $special_units, $output_file, $destination_directory,
-                       $output_filename, $document_name);
-
-  $self->get_output_files_XS_unclosed_streams();
-
-  if (!defined($text_output)) {
-    $self->conversion_finalization();
-    return undef;
-  }
-
-  if ($text_output ne '' and $output_file eq '') {
-    # $output_file eq '' should always be true, see comment above.
-    if (!$self->get_conf('TEST')) {
-      # This case is unlikely to happen, as there is no output file
-      # only if formatting is called as convert, which only happens in tests.
-      $self->_do_js_files($destination_directory);
-    }
-    $self->conversion_finalization();
-    return $text_output;
-  }
-
-  $self->_do_js_files($destination_directory);
-
-  my $finish_status = $self->run_stage_handlers($root, 'finish');
-  unless ($finish_status < $handler_fatal_error_level
-          and $finish_status > -$handler_fatal_error_level) {
-    $self->conversion_finalization();
-    return undef;
-  }
-
-  my $extension = '';
-  $extension = '.'.$self->get_conf('EXTENSION')
-            if (defined($self->get_conf('EXTENSION'))
-                and $self->get_conf('EXTENSION') ne '');
+  my $redirection_files_done = 0;
   # do node redirection pages
   $self->{'current_filename'} = undef;
   if ($self->get_conf('NODE_FILES')
-      and $identifiers_target and $output_file ne '') {
+      and $labels_list and $output_file ne '') {
+
     my %redirection_filenames;
-    foreach my $label (sort(keys (%{$identifiers_target}))) {
-      my $target_element = $identifiers_target->{$label};
+    foreach my $target_element (@$labels_list) {
+      next if (not $target_element->{'extra'}
+               or not $target_element->{'extra'}->{'is_target'});
       my $label_element = Texinfo::Common::get_label_element($target_element);
       # filename may not be defined in case of an @anchor or similar in
       # @titlepage, and @titlepage is not used.
@@ -12958,38 +12706,303 @@ sub output($$)
           = _prepare_node_redirection_page ($self, $target_element,
                                            $redirection_filename);
 
-        my $out_filename;
+        my $out_filepath;
         if ($destination_directory ne '') {
-          $out_filename = File::Spec->catfile($destination_directory,
+          $out_filepath = File::Spec->catfile($destination_directory,
                                               $redirection_filename);
         } else {
-          $out_filename = $redirection_filename;
+          $out_filepath = $redirection_filename;
         }
-        my ($encoded_out_filename, $path_encoding)
-          = $self->encoded_output_file_name($out_filename);
+        my ($encoded_out_filepath, $path_encoding)
+          = $self->encoded_output_file_name($out_filepath);
         my ($file_fh, $error_message)
                = Texinfo::Common::output_files_open_out(
                              $self->output_files_information(), $self,
-                             $encoded_out_filename);
+                             $encoded_out_filepath);
         if (!$file_fh) {
          $self->converter_document_error(sprintf(__(
                                     "could not open %s for writing: %s"),
-                                    $out_filename, $error_message));
+                                    $out_filepath, $error_message));
         } else {
           print $file_fh $redirection_page;
           Texinfo::Common::output_files_register_closed(
-                  $self->output_files_information(), $encoded_out_filename);
+                  $self->output_files_information(), $encoded_out_filepath);
           if (!close ($file_fh)) {
             $self->converter_document_error(sprintf(__(
                              "error on closing redirection node file %s: %s"),
-                                    $out_filename, $!));
+                                    $out_filepath, $!));
             $self->conversion_finalization();
             return undef;
           }
+          $redirection_files_done++;
         }
       }
     }
   }
+  return $redirection_files_done;
+}
+
+# Main function for outputting a manual in HTML.
+# $SELF is the output converter object of class Texinfo::Convert::HTML (this
+# module), and $DOCUMENT is the parsed document from the parser and structuring
+sub output($$)
+{
+  my $self = shift;
+  my $document = shift;
+
+  $self->conversion_initialization($document);
+
+  # set here early even though actual values are only set later on.  It is
+  # therefore set in converter_info early too (using the reference).
+  $self->{'current_filename'} = undef;
+
+  # no splitting when writing to the null device or to stdout or returning
+  # a string
+  if (defined($self->get_conf('OUTFILE'))
+      and ($Texinfo::Common::null_device_file{$self->get_conf('OUTFILE')}
+           or $self->get_conf('OUTFILE') eq '-'
+           or $self->get_conf('OUTFILE') eq '')) {
+    $self->force_conf('SPLIT', '');
+    $self->force_conf('MONOLITHIC', 1);
+  }
+  if ($self->get_conf('SPLIT')) {
+    $self->set_conf('NODE_FILES', 1);
+  }
+  $self->set_conf('EXTERNAL_CROSSREF_SPLIT', $self->get_conf('SPLIT'));
+
+  if (not defined($self->get_conf('NODE_NAME_IN_INDEX'))) {
+    $self->set_conf('NODE_NAME_IN_INDEX', $self->get_conf('USE_NODES'));
+  }
+
+  my $handler_fatal_error_level = $self->get_conf('HANDLER_FATAL_ERROR_LEVEL');
+
+  if ($self->get_conf('HTML_MATH')
+        and $self->get_conf('HTML_MATH') eq 'mathjax') {
+    # See https://www.gnu.org/licenses/javascript-labels.html
+    #
+    # The link to the source for mathjax does not strictly follow the advice
+    # there: instead we link to instructions for obtaining the full source in
+    # its preferred form of modification.
+
+    my $mathjax_script = $self->get_conf('MATHJAX_SCRIPT');
+    if (! defined($mathjax_script)) {
+      $mathjax_script = 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js';
+      $self->set_conf('MATHJAX_SCRIPT', $mathjax_script);
+    }
+
+    my $mathjax_source = $self->get_conf('MATHJAX_SOURCE');
+    if (! defined($mathjax_source)) {
+      $mathjax_source = 'http://docs.mathjax.org/en/latest/web/hosting.html#getting-mathjax-via-git';
+      $self->set_conf('MATHJAX_SOURCE', $mathjax_source);
+    }
+  }
+
+  if ($self->get_conf('HTML_MATH')
+      and not defined($self->get_conf('CONVERT_TO_LATEX_IN_MATH'))) {
+    $self->set_conf('CONVERT_TO_LATEX_IN_MATH', 1);
+  }
+
+  if ($self->get_conf('CONVERT_TO_LATEX_IN_MATH')) {
+    $self->{'options_latex_math'}
+     = { Texinfo::Convert::LaTeX::copy_options_for_convert_to_latex_math($self) };
+  }
+
+  if ($self->get_conf('NO_TOP_NODE_OUTPUT')
+      and not defined($self->get_conf('SHOW_TITLE'))) {
+    $self->set_conf('SHOW_TITLE', 1);
+  }
+
+  # set information, to have some information for run_stage_handlers.
+  # Some information is not available yet.
+  $self->_reset_info();
+
+  my $setup_status = $self->run_stage_handlers($document, 'setup');
+  unless ($setup_status < $handler_fatal_error_level
+          and $setup_status > -$handler_fatal_error_level) {
+    $self->conversion_finalization();
+    return undef;
+  }
+
+  # the configuration has potentially been modified for
+  # this output file especially.  Set a corresponding initial
+  # configuration.
+  $self->{'output_init_conf'} = { %{$self->{'conf'}} };
+  # pass to XS.
+  _XS_reset_output_init_conf($self);
+
+  # set BODYTEXT
+  $self->set_global_document_commands('preamble', ['documentlanguage']);
+  my $structure_preamble_document_language = $self->get_conf('documentlanguage');
+  $self->set_conf('BODYTEXT',
+                  'lang="' . $structure_preamble_document_language . '"');
+  $self->set_global_document_commands('before', ['documentlanguage']);
+
+  # the presence of contents elements in the document is used in diverse
+  # places, set it once for all here
+  my @contents_elements_options
+                  = grep {Texinfo::Common::valid_customization_option($_)}
+                        sort(keys(%contents_command_special_unit_variety));
+  $self->set_global_document_commands('last', \@contents_elements_options);
+
+  $self->{'jslicenses'} = {};
+  if ($self->get_conf('HTML_MATH')
+        and $self->get_conf('HTML_MATH') eq 'mathjax') {
+    # See https://www.gnu.org/licenses/javascript-labels.html
+
+    my $mathjax_script = $self->get_conf('MATHJAX_SCRIPT');
+    my $mathjax_source = $self->get_conf('MATHJAX_SOURCE');
+
+    $self->{'jslicenses'}->{'mathjax'} = {
+      $mathjax_script =>
+        [ 'Apache License, Version 2.0.',
+          'https://www.apache.org/licenses/LICENSE-2.0',
+          $mathjax_source ]};
+  }
+  if ($self->get_conf('INFO_JS_DIR')) {
+    $self->{'jslicenses'}->{'infojs'} = {
+      'js/info.js' =>
+         [ 'GNU General Public License 3.0 or later',
+           'http://www.gnu.org/licenses/gpl-3.0.html',
+           'js/info.js' ],
+       'js/modernizr.js' =>
+          [ 'Expat',
+            'http://www.jclark.com/xml/copying.txt',
+            'js/modernizr.js' ]};
+  }
+  $self->_prepare_css();
+
+  # this sets OUTFILE, to be used if not split, but also 'output_filename'
+  # that is useful when split, 'destination_directory' that is mainly useful
+  # when split and 'document_name' that is generally useful.
+  my ($output_file, $destination_directory, $output_filename, $document_name)
+        = $self->determine_files_and_directory($self->{'output_format'});
+  my ($encoded_destination_directory, $dir_encoding)
+    = $self->encoded_output_file_name($destination_directory);
+  my $succeeded
+    = $self->create_destination_directory($encoded_destination_directory,
+                                          $destination_directory);
+  unless ($succeeded) {
+    $self->conversion_finalization();
+    return undef;
+  }
+
+  # set for init files
+  $self->{'document_name'} = $document_name;
+  $self->{'destination_directory'} = $destination_directory;
+
+  # set information, to have it available for the conversions
+  # in translate_names
+  # Some information is not available yet.
+  $self->_reset_info();
+
+  # cache, as it is checked for each text element
+  if ($self->get_conf('OUTPUT_CHARACTERS')
+      and $self->get_conf('OUTPUT_ENCODING_NAME')
+      and $self->get_conf('OUTPUT_ENCODING_NAME') eq 'utf-8') {
+    $self->{'use_unicode_text'} = 1;
+  }
+
+  # Get the list of output units to be processed.
+  # Customization information in $self->{'conf'} is passed to XS code too.
+  my ($output_units, $special_units, $associated_special_units)
+    = $self->_prepare_conversion_units($document, $document_name);
+
+  # setup untranslated strings
+  $self->_translate_names();
+
+  # Output units lists are rebuilt in the XS code so there is no need to call
+  # rebuild_output_units.
+  my $files_source_info
+    = $self->_prepare_units_directions_files($output_units, $special_units,
+                $associated_special_units,
+                $output_file, $destination_directory, $output_filename,
+                $document_name);
+
+  # set information, to have it ready for run_stage_handlers and for titles
+  # formatting.  Some information is not available yet.
+  $self->_reset_info();
+
+  my $structure_status = $self->run_stage_handlers($document, 'structure');
+  unless ($structure_status < $handler_fatal_error_level
+          and $structure_status > -$handler_fatal_error_level) {
+    $self->conversion_finalization();
+    return undef;
+  }
+
+  my $default_document_language = $self->get_conf('documentlanguage');
+
+  $self->set_global_document_commands('preamble', ['documentlanguage']);
+
+  my $preamble_document_language = $self->get_conf('documentlanguage');
+
+  if ($default_document_language ne $preamble_document_language) {
+    $self->_translate_names();
+  }
+
+  $self->_prepare_converted_output_info();
+
+  # set information, to have it ready for run_stage_handlers.
+  # Some information is not available yet.
+  $self->_reset_info();
+
+  # TODO document that this stage handler is called with end of
+  # preamble documentlanguage.
+  my $init_status = $self->run_stage_handlers($document, 'init');
+  unless ($init_status < $handler_fatal_error_level
+          and $init_status > -$handler_fatal_error_level) {
+    $self->conversion_finalization();
+    return undef;
+  }
+
+  # information settable by customization files is passed to XS too
+  $self->_prepare_title_titlepage($output_units, $output_file,
+                                  $output_filename);
+
+  $self->set_global_document_commands('before', ['documentlanguage']);
+
+  if ($default_document_language ne $preamble_document_language) {
+    $self->_translate_names();
+  }
+
+  # complete information should be available.
+  $self->_reset_info();
+
+  # conversion
+  my $text_output = $self->_html_convert_output($document, $output_units,
+                       $special_units, $output_file, $destination_directory,
+                       $output_filename, $document_name);
+
+  $self->get_output_files_XS_unclosed_streams();
+
+  if (!defined($text_output)) {
+    $self->conversion_finalization();
+    return undef;
+  }
+
+  if ($text_output ne '' and $output_file eq '') {
+    # $output_file eq '' should always be true, see comment above.
+    if (!$self->get_conf('TEST')) {
+      # This case is unlikely to happen, as there is no output file
+      # only if formatting is called as convert, which only happens in tests.
+      $self->_do_js_files($destination_directory);
+    }
+    $self->conversion_finalization();
+    return $text_output;
+  }
+
+  $self->_do_js_files($destination_directory);
+
+  my $finish_status = $self->run_stage_handlers($document, 'finish');
+  unless ($finish_status < $handler_fatal_error_level
+          and $finish_status > -$handler_fatal_error_level) {
+    $self->conversion_finalization();
+    return undef;
+  }
+
+  # undef status means an error occured, we should return immediately after
+  # calling $self->conversion_finalization() in that case.
+  my $node_redirections_status = _node_redirections($self, $output_file,
+                               $destination_directory, $files_source_info);
   $self->conversion_finalization();
   return undef;
 }

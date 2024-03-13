@@ -103,7 +103,34 @@ remove_document (SV *document_in)
           remove_document_descriptor (document->descriptor);
 
 void
-clear_document_errors (int document_descriptor)
+document_errors (SV *document_in)
+    PREINIT:
+        DOCUMENT *document = 0;
+        SV *errors_warnings_sv = 0;
+        SV *error_nrs_sv = 0;
+        ERROR_MESSAGE_LIST *error_messages = 0;
+     PPCODE:
+        document = get_sv_document_document (document_in, 0);
+        if (document)
+          error_messages = document->error_messages;
+
+        pass_errors_to_registrar (error_messages, document_in,
+                                  &errors_warnings_sv,
+                                  &error_nrs_sv);
+
+        if (!errors_warnings_sv)
+          errors_warnings_sv = newSV (0);
+        else
+          SvREFCNT_inc (errors_warnings_sv);
+        if (!error_nrs_sv)
+          error_nrs_sv = newSV (0);
+        else
+          SvREFCNT_inc (error_nrs_sv);
+
+        EXTEND(SP, 2);
+        PUSHs(sv_2mortal(errors_warnings_sv));
+        PUSHs(sv_2mortal(error_nrs_sv));
+
 
 void
 set_document_options (SV *sv_options_in, SV *document_in)
@@ -126,6 +153,8 @@ set_document_global_info (SV *document_in, char *key, SV *value_sv)
         document = get_sv_document_document (document_in, 0);
         if (document)
           {
+            document->modified_information |= F_DOCM_global_info;
+
             if (!strcmp (key, "input_file_name"))
               {
                 char *value = (char *)SvPVbyte_nolen(value_sv);
@@ -143,7 +172,7 @@ set_document_global_info (SV *document_in, char *key, SV *value_sv)
             else if (!strcmp (key, "input_perl_encoding"))
               {
                 /* should not be needed, but in case global information
-                   is reused, it will be ok */
+                   is reused, it will avoid memory leaks */
                 non_perl_free (document->global_info->input_perl_encoding);
                 document->global_info->input_perl_encoding
                    = non_perl_strdup ((char *)SvPVbyte_nolen(value_sv));
@@ -156,38 +185,134 @@ set_document_global_info (SV *document_in, char *key, SV *value_sv)
               }
           }
 
-# main_configuration, prefer_reference_element
+SV *
+document_tree (SV *document_in, int handler_only=0)
+    PREINIT:
+        HV *document_hv;
+        SV *result_sv = 0;
+        const char *key = "tree";
+     CODE:
+        document_hv = (HV *) SvRV (document_in);
+
+        if (!handler_only)
+          {
+            DOCUMENT *document = get_sv_document_document (document_in, 0);
+            if (document)
+              {
+                result_sv = store_texinfo_tree (document, document_hv);
+              }
+          }
+
+        if (!result_sv)
+          {
+            SV **sv_ref = hv_fetch (document_hv, key, strlen (key), 0);
+            if (sv_ref && SvOK (*sv_ref))
+              result_sv = *sv_ref;
+          }
+
+        if (result_sv)
+          {
+            RETVAL = result_sv;
+            SvREFCNT_inc (result_sv);
+          }
+        else
+          RETVAL = newSV (0);
+    OUTPUT:
+        RETVAL
+
+SV *
+document_global_information (SV *document_in)
+
+SV *
+document_indices_information (SV *document_in)
+
+SV *
+document_global_commands_information (SV *document_in)
+
+SV *
+document_labels_information (SV *document_in)
+
+SV *
+document_nodes_list (SV *document_in)
+
+SV *
+document_sections_list (SV *document_in)
+
+SV *
+document_floats_information (SV *document_in)
+
+SV *
+document_internal_references_information (SV *document_in)
+
+SV *
+document_labels_list (SV *document_in)
+
+# customization_information
+void
+setup_indices_sort_strings (SV *document_in, ...)
+    PROTOTYPE: $$
+    PREINIT:
+        DOCUMENT *document = 0;
+     CODE:
+        document = get_sv_document_document (document_in,
+                                             "setup_indices_sort_strings");
+        if (document)
+          document_indices_sort_strings (document, document->error_messages,
+                                         document->options);
+
+# customization_information
 SV *
 indices_sort_strings (SV *document_in, ...)
-    PROTOTYPE: $$;$
+    PROTOTYPE: $$
     PREINIT:
         DOCUMENT *document = 0;
         const INDICES_SORT_STRINGS *indices_sort_strings = 0;
-        SV **indices_information_sv;
-        HV *document_hv;
-        int prefer_reference_element = 0;
+        SV *result_sv = 0;
+        const char *key = "index_entries_sort_strings";
      CODE:
         document = get_sv_document_document (document_in,
                                              "indices_sort_strings");
-        if (items > 2 && SvOK(ST(2)))
-          prefer_reference_element = SvIV (ST(2));
         if (document)
           indices_sort_strings
            = document_indices_sort_strings (document, document->error_messages,
-                                  document->options, prefer_reference_element);
+                                             document->options);
 
-        document_hv = (HV *) SvRV (document_in);
-        indices_information_sv
-          = hv_fetch (document_hv, "indices", strlen ("indices"), 0);
-
-        if (indices_sort_strings && indices_information_sv)
+        if (indices_sort_strings)
           {
-            HV *indices_information_hv = (HV *) SvRV (*indices_information_sv);
-            HV *indices_sort_strings_hv
-              = build_indices_sort_strings (indices_sort_strings,
-                                            indices_information_hv);
+            HV *document_hv = (HV *) SvRV (document_in);
+            /* build Perl data only if needed and cache the built Perl
+               data in the same hash as done in overriden Perl code */
+            if (document->modified_information & F_DOCM_indices_sort_strings)
+              {
+                SV *indices_information_sv
+                 = document_indices_information (document_in);
+                if (indices_information_sv)
+                  {
+                    HV *indices_information_hv
+                        = (HV *) SvRV (indices_information_sv);
+                    HV *indices_sort_strings_hv
+                     = build_indices_sort_strings (indices_sort_strings,
+                                                   indices_information_hv);
 
-            RETVAL = newRV_inc ((SV *) indices_sort_strings_hv);
+                    result_sv = newRV_inc ((SV *) indices_sort_strings_hv);
+                    hv_store (document_hv, key, strlen (key), result_sv, 0);
+                    document->modified_information
+                                &= ~F_DOCM_indices_sort_strings;
+                  }
+                /* warn if not found? */
+              }
+            else
+              { /* retrieve previously stored result */
+                SV **sv_ref = hv_fetch (document_hv, key, strlen (key), 0);
+                if (sv_ref && SvOK (*sv_ref))
+                  result_sv = *sv_ref;
+                /* error out if not found?  Or rebuild? */
+              }
+          }
+        if (result_sv)
+          {
+            SvREFCNT_inc (result_sv);
+            RETVAL = result_sv;
           }
         else
           RETVAL = newSV (0);
@@ -240,7 +365,7 @@ gdt (string, ...)
                    SV *value = hv_iternextsv(hv_replaced_substrings,
                                              &key, &retlen);
                    DOCUMENT *document = get_sv_tree_document (value, 0);
-                   /* TODO should warn/error if not found or return 
+                   /* TODO should warn/error if not found or return
                       a list of missing string identifiers?  Or check
                       in caller?  In any case, it cannot be good to
                       ignore a replaced substring */

@@ -102,7 +102,7 @@ ENCODING_CONVERSION_LIST input_conversions = {0, 0, 0, 1};
 
 /* to keep synchronized with enum command_location */
 const char *command_location_names[]
-  = {"before", "last", "preamble", "preamble_or_first"};
+  = {"before", "last", "preamble", "preamble_or_first", 0};
 
 /* duplicated when creating a new expanded_formats */
 EXPANDED_FORMAT expanded_formats[] = {
@@ -1058,7 +1058,6 @@ delete_global_info (GLOBAL_INFO *global_info_ref)
 {
   GLOBAL_INFO global_info = *global_info_ref;
 
-  free (global_info.dircategory_direntry.list);
   free_strings_list (&global_info.included_files);
 
   free (global_info.input_encoding_name);
@@ -1075,6 +1074,8 @@ void
 delete_global_commands (GLOBAL_COMMANDS *global_commands_ref)
 {
   GLOBAL_COMMANDS global_commands = *global_commands_ref;
+
+  free (global_commands.dircategory_direntry.list);
 
 #define GLOBAL_CASE(cmx) \
   free (global_commands.cmx.list)

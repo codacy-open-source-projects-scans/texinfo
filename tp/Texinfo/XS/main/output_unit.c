@@ -22,6 +22,7 @@
 #include <stdio.h>
 
 #include "tree_types.h"
+#include "document_types.h"
 /* for fatal */
 #include "utils.h"
 #include "tree.h"
@@ -135,8 +136,9 @@ add_to_output_unit_list (OUTPUT_UNIT_LIST *list, OUTPUT_UNIT *output_unit)
 
 /* in addition to splitting, register the output_units list */
 int
-split_by_node (const ELEMENT *root)
+split_by_node (DOCUMENT *document)
 {
+  const ELEMENT *root = document->tree;
   int output_units_descriptor = new_output_units_descriptor ();
   OUTPUT_UNIT_LIST *output_units
     = retrieve_output_units (output_units_descriptor);
@@ -145,6 +147,9 @@ split_by_node (const ELEMENT *root)
   int i;
 
   add_to_output_unit_list (output_units, current);
+
+  if (root->contents.number > 0)
+    document->modified_information |= F_DOCM_tree;
 
   for (i = 0; i < root->contents.number; i++)
     {
@@ -204,13 +209,17 @@ split_by_node (const ELEMENT *root)
 
 /* in addition to splitting, register the output_units list */
 int
-split_by_section (const ELEMENT *root)
+split_by_section (DOCUMENT *document)
 {
+  const ELEMENT *root = document->tree;
   int output_units_descriptor = new_output_units_descriptor ();
   OUTPUT_UNIT_LIST *output_units
     = retrieve_output_units (output_units_descriptor);
   OUTPUT_UNIT *current = new_output_unit (OU_unit);
   int i;
+
+  if (root->contents.number > 0)
+    document->modified_information |= F_DOCM_tree;
 
   add_to_output_unit_list (output_units, current);
 
@@ -263,8 +272,9 @@ split_by_section (const ELEMENT *root)
 }
 
 int
-unsplit (const ELEMENT *root)
+unsplit (DOCUMENT *document)
 {
+  const ELEMENT *root = document->tree;
   int unsplit_needed = 0;
   int i;
 
@@ -280,6 +290,10 @@ unsplit (const ELEMENT *root)
           unsplit_needed = 1;
         }
     }
+
+  if (unsplit_needed)
+    document->modified_information |= F_DOCM_tree;
+
   return unsplit_needed;
 }
 

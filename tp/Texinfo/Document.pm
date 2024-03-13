@@ -50,10 +50,10 @@ my $XS_structuring = ($XS_parser
 our %XS_overrides = (
   "Texinfo::Document::remove_document"
     => "Texinfo::DocumentXS::remove_document",
-  "Texinfo::Document::clear_document_errors"
-    => "Texinfo::DocumentXS::clear_document_errors",
   "Texinfo::Document::_XS_set_document_global_info",
     => "Texinfo::DocumentXS::set_document_global_info",
+  "Texinfo::Document::errors"
+    => "Texinfo::DocumentXS::document_errors",
 );
 
 # needed by structure code
@@ -62,6 +62,28 @@ our %XS_structure_overrides = (
     => "Texinfo::DocumentXS::rebuild_document",
   "Texinfo::Document::rebuild_tree"
     => "Texinfo::DocumentXS::rebuild_tree",
+  "Texinfo::Document::tree"
+    => "Texinfo::DocumentXS::document_tree",
+  "Texinfo::Document::global_information"
+    => "Texinfo::DocumentXS::document_global_information",
+  "Texinfo::Document::indices_information"
+    => "Texinfo::DocumentXS::document_indices_information",
+  "Texinfo::Document::global_commands_information"
+    => "Texinfo::DocumentXS::document_global_commands_information",
+  "Texinfo::Document::labels_information"
+    => "Texinfo::DocumentXS::document_labels_information",
+  "Texinfo::Document::labels_list"
+    => "Texinfo::DocumentXS::document_labels_list",
+  "Texinfo::Document::nodes_list"
+    => "Texinfo::DocumentXS::document_nodes_list",
+  "Texinfo::Document::sections_list"
+    => "Texinfo::DocumentXS::document_sections_list",
+  "Texinfo::Document::floats_information"
+    => "Texinfo::DocumentXS::document_floats_information",
+  "Texinfo::Document::internal_references_information"
+    => "Texinfo::DocumentXS::document_internal_references_information",
+  "Texinfo::Document::setup_indices_sort_strings"
+    => "Texinfo::DocumentXS::setup_indices_sort_strings",
   "Texinfo::Document::indices_sort_strings"
     => "Texinfo::DocumentXS::indices_sort_strings",
 );
@@ -95,7 +117,6 @@ sub register
   my $global_commands_information = shift;
   my $identifier_target = shift;
   my $labels_list = shift;
-  my $parser_registrar = shift;
 
   my $document = {
     'tree' => $tree,
@@ -106,8 +127,6 @@ sub register
     'global_info' => $global_information,
     'identifiers_target' => $identifier_target,
     'labels_list' => $labels_list,
-    # Parser errors registrar
-    'parser_registrar' => $parser_registrar,
     # New error registrar for the document
     'registrar' => Texinfo::Report::new(),
   };
@@ -145,7 +164,7 @@ sub set_document_global_info($$$)
   $document->{'global_info'}->{$key} = $value;
 }
 
-sub tree($)
+sub tree($;$)
 {
   my $self = shift;
   return $self->{'tree'};
@@ -188,6 +207,12 @@ sub labels_information($)
   return $self->{'identifiers_target'};
 }
 
+sub labels_list($)
+{
+  my $self = shift;
+  return $self->{'labels_list'};
+}
+
 sub nodes_list($)
 {
   my $self = shift;
@@ -223,21 +248,30 @@ sub merged_indices($)
 # In general, it is not needed to call that function directly,
 # as it is called by Texinfo::Indices::sort_indices_by_*.  It may
 # be called in advance, however, if errors need to be collected early.
-sub indices_sort_strings($$;$)
+sub setup_indices_sort_strings($$)
 {
   my $document = shift;
   my $customization_information = shift;
-  my $prefer_reference_element = shift;
 
   if (!$document->{'index_entries_sort_strings'}) {
     my $indices_sort_strings
       = Texinfo::Indices::setup_index_entries_sort_strings
              ($document->{'registrar'}, $customization_information,
-              $document->merged_indices(), $document->indices_information(),
-              $prefer_reference_element);
+              $document->merged_indices(),
+              $document->indices_information(), 0);
     $document->{'index_entries_sort_strings'} = $indices_sort_strings;
   }
+}
 
+# similar to setup_indices_sort_strings, but returns the sort strings too.
+# A different function such that Perl data is only built for that function
+# in the XS override.
+sub indices_sort_strings($$)
+{
+  my $document = shift;
+  my $customization_information = shift;
+
+  setup_indices_sort_strings($document, $customization_information);
   return $document->{'index_entries_sort_strings'};
 }
 
@@ -436,30 +470,14 @@ sub rebuild_tree($;$)
   return $tree;
 }
 
-# this method does nothing, but the XS override clears the document errors
-sub clear_document_errors($)
-{
-}
-
-# In general, this method should be called after calling rebuild_document
-# on the document, such that the XS code builds the 'errors' list before
-# this method is called.  Also note that if XS code was not used, all
-# the errors should already be registered in the document registrar.
-# NOTE similar code is used in the perl code associated to the XS parser to
-# get the errors from parser_errors.
+# The XS override pass C error messages to the document registrar and destroys
+# C associated data.
 sub errors($)
 {
   my $document = shift;
 
   my $registrar = $document->{'registrar'};
   return if !defined($registrar);
-
-  foreach my $error (@{$document->{'errors'}}) {
-    $registrar->add_formatted_message($error);
-  }
-  @{$document->{'errors'}} = ();
-  Texinfo::Document::clear_document_errors(
-                                      $document->document_descriptor());
 
   return $registrar->errors();
 }
@@ -485,10 +503,11 @@ Texinfo::Document - Texinfo document tree and information
   my $identifier_target = $document->labels_information();
   # A hash reference, keys are @-command names, value is an
   # array reference holding all the corresponding @-commands.
+  # Also contains dircategory and direntry list.
   my $global_commands_information
                  = $document->global_commands_information();
   # a hash reference on document information (encodings,
-  # input file name, dircategory and direntry list, for example).
+  # input file name, for example).
   my $global_information = $document->global_information();
 
 =head1 NOTES
@@ -514,11 +533,17 @@ C<tree>:
 
 =over
 
-=item $tree = tree($document)
+=item $tree = tree($document, $handler_only)
 X<C<tree>>
 
 The I<$tree> is a hash reference.  It is described in
 L<Texinfo::Parser/TEXINFO TREE>.
+
+If I<$handler_only> is set and XS extensions are used, the returned
+tree holds a reference to the C Texinfo tree data only, but no actual
+Perl Texinfo tree.  This avoids building the Perl tree if all the
+functions called with the tree as argument have XS interfaces and
+directly use the C data and do not use the Perl tree.
 
 =back
 
@@ -532,11 +557,6 @@ X<C<global_information>>
 The I<$info> returned is a hash reference.  The possible keys are
 
 =over
-
-=item dircategory_direntry
-
-An array of successive C<@dircategory> and C<@direntry> as they appear
-in the document.
 
 =item included_files
 
@@ -577,6 +597,17 @@ I<$commands> is an hash reference.  The keys are @-command names.  The
 associated values are array references containing all the corresponding
 tree elements.
 
+The following list of commands is also available as a key:
+
+=over
+
+=item dircategory_direntry
+
+An array of successive C<@dircategory> and C<@direntry> as they appear
+in the document.
+
+=back
+
 =back
 
 All the @-commands that have an associated label (so can be the
@@ -592,6 +623,12 @@ X<C<labels_information>>
 
 I<$identifier_target> is a hash reference whose keys are normalized
 labels, and the associated value is the corresponding @-command.
+
+=item $labels_list = labels_list ($document)
+X<C<labels_list>>
+
+I<$labels_list> is a list of Texinfo tree command elements that
+could be the target of cross references.
 
 =back
 
@@ -791,10 +828,6 @@ one for each error, warning or error line continuation.  The format of
 these hash references is described
 in L<C<Texinfo::Report::errors>|Texinfo::Report/($error_warnings_list, $error_count) = errors($registrar)>.
 
-Note that, in general, C<error> should
-be called after L<C<rebuild_document>|/$rebuilt_document = rebuild_document($document, $no_store)>,
-such that errors registered in C are passed to Perl.
-
 =back
 
 
@@ -892,34 +925,12 @@ tree I<$tree> if C<rebuild_tree> is called.
 
 If the optional I<$no_store> argument is set, remove the C data.
 
-This method also sets the errors list in the Perl I<$rebuilt_document> based on
-errors and warnings associated to I<$document> stored in C, and should
-therefore be called before calling
-L<C<errors>|/($error warnings list, $error count) = errors($document)>.
-
-B<the document errors should be in C<< $document->{'errors'} >>, but this is not
-documented anywhere, and maybe do not need to be documented as
-L<C<errors>|/($error warnings list, $error count) = errors($document)> can be used to get the errors.>
-
 =back
 
-Some methods allow to release the memory or remove error messages held
-by C data associated to a Texinfo parsed document:
+Some methods allow to release the memory held by C data associated
+to a Texinfo parsed document:
 
 =over
-
-=item clear_document_errors($document)
-X<C<clear_document_errors>>
-
-Remove the document errors and warnings held in C data.
-
-Note that L<C<errors>|/($error warnings list, $error count) = errors($document)>
-already calls C<clear_document_errors>, so calling this function directly
-is usually not needed.
-
-The method can be called on pure Perl modules and does nothing in that case
-as the errors and warnings are already in the L<Texinfo::Report> object
-associated to a document.
 
 =item remove_document($document)
 X<C<remove_document>>

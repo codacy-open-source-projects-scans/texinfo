@@ -475,7 +475,7 @@ sub _setup_sort_sortable_strings_collator($$$$$)
   # simple wrapper around setup_index_entries_sort_strings that caches the
   # result
   my $indices_sort_strings = Texinfo::Document::indices_sort_strings($document,
-                                      $registrar, $customization_information);
+                                                   $customization_information);
 
   my $collator = _setup_collator($use_unicode_collation, $locale_lang);
 
@@ -688,7 +688,7 @@ sub sort_indices_by_letter($$$;$$)
   return $sorted_index_entries;
 }
 
-# Norally called through Texinfo::Document::merged_indices only
+# Normally called through Texinfo::Document::merged_indices only
 sub merge_indices($)
 {
   my $indices_information = shift;

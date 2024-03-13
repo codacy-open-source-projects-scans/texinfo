@@ -33,8 +33,6 @@
 #include "conf.h"
 #include "build_perl_info.h"
 #include "input.h"
-/* for clear_document_errors */
-#include "document.h"
 
  /* See the NOTE in build_perl_info.c on use of functions related to
     memory allocation */
@@ -103,10 +101,7 @@ SV *
 get_document (int document_descriptor)
 
 void
-clear_document_errors (int document_descriptor)
-
-void
-clear_document_parser_errors (int document_descriptor)
+pass_document_parser_errors_to_registrar (int document_descriptor, SV *parser_sv)
 
 void
 parser_store_value (name, value)

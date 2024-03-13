@@ -871,10 +871,8 @@ sub output($$)
   my $document = shift;
 
   my $document_info;
-  my $global_commands;
   if ($document) {
     $document_info = $document->global_information();
-    $global_commands = $document->global_commands_information();
   }
 
   Texinfo::Common::set_output_encodings($self, $document);
@@ -911,13 +909,9 @@ sub output($$)
   $input_basename =~ s/\.te?x(i|info)?$//;
 
   my $setfilename;
-  $setfilename
-   = $global_commands->{'setfilename'}->{'extra'}->{'text_arg'}
-    if ($global_commands
-        and $global_commands->{'setfilename'}
-        and $global_commands->{'setfilename'}->{'extra'}
-        and defined($global_commands->{'setfilename'}
-                                              ->{'extra'}->{'text_arg'}));
+  if ($document_info and defined($document_info->{'setfilename'})) {
+    $setfilename = $document_info->{'setfilename'};
+  }
   my $outfile;
   if (!defined($self->{'OUTFILE'})) {
     if (defined($setfilename)) {
@@ -1069,9 +1063,9 @@ Texinfo::Convert::Text - Convert Texinfo tree to simple text
   # Texinfo::Convert::Converter
   my $text_options = $converter->{'convert_text_options'};
 
-  set_options_code($text options);
+  set_options_code($text_options);
   my $result_with_converter = convert_to_text($tree, $text_options);
-  reset_options_code($text options);
+  reset_options_code($text_options);
 
 =head1 NOTES
 
