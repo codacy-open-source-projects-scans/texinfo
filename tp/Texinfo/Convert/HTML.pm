@@ -897,7 +897,7 @@ sub _get_target($$)
   my $self = shift;
   my $command = shift;
   if (!defined($command)) {
-    cluck("_get_target command not defined");
+    cluck("_get_target command argument not defined");
   }
 
   if ($self->{'targets'}->{$command}) {
@@ -1533,23 +1533,24 @@ sub get_element_root_command_element($$)
   my $self = shift;
   my $element = shift;
 
-  my ($root_element, $root_command) = _html_get_tree_root_element($self, $element);
+  my ($output_unit, $root_command)
+    = _html_get_tree_root_element($self, $element);
   if (defined($root_command)) {
     if ($self->get_conf('USE_NODES')) {
       if ($root_command->{'cmdname'} and $root_command->{'cmdname'} eq 'node') {
-        return ($root_element, $root_command);
+        return ($output_unit, $root_command);
       } elsif ($root_command->{'extra'}
                and $root_command->{'extra'}->{'associated_node'}) {
-        return ($root_element, $root_command->{'extra'}->{'associated_node'});
+        return ($output_unit, $root_command->{'extra'}->{'associated_node'});
       }
     } elsif ($root_command->{'cmdname'}
              and $root_command->{'cmdname'} eq 'node'
              and $root_command->{'extra'}
              and $root_command->{'extra'}->{'associated_section'}) {
-      return ($root_element, $root_command->{'extra'}->{'associated_section'});
+      return ($output_unit, $root_command->{'extra'}->{'associated_section'});
     }
   }
-  return ($root_element, $root_command);
+  return ($output_unit, $root_command);
 }
 
 my %valid_direction_return_type = (
@@ -2495,7 +2496,7 @@ foreach my $buttons ('CHAPTER_BUTTONS', 'MISC_BUTTONS', 'TOP_BUTTONS') {
   $defaults{$buttons} = [@{$defaults{'SECTION_BUTTONS'}}];
 }
 
-foreach my $buttons ('CHAPTER_FOOTER_BUTTONS') {
+foreach my $buttons ('CHAPTER_FOOTER_BUTTONS', 'TOP_FOOTER_BUTTONS') {
   $defaults{$buttons} = [@{$defaults{'SECTION_FOOTER_BUTTONS'}}];
 }
 
@@ -4504,6 +4505,13 @@ sub _default_format_navigation_panel($$$$;$)
   my $source_command = shift;
   my $vertical = shift;
 
+  # a string may be passed, for instance through command line, therefore
+  # it is useful to test that $buttons is an array reference to avoid
+  # a Perl error message
+  if (ref($buttons) ne 'ARRAY') {
+    return '';
+  }
+
   # do the buttons first in case they are formatted as an empty string
   my $nr_of_buttons_shown = 0;
   my $result_buttons = '';
@@ -4526,7 +4534,7 @@ sub _default_format_navigation_panel($$$$;$)
       #  = &{$self->formatting_function('format_button')}($self, $button,
       #                                                   $source_command);
        = &{$self->{'formatting_function'}->{'format_button'}}($self, $button,
-                                                              $source_command);
+                                                            $source_command);
     if ($self->get_conf('HEADER_IN_TABLE')) {
       $result_buttons .= '<tr>'."\n" if $vertical;
       $result_buttons .= '<td>';
@@ -4551,6 +4559,10 @@ sub _default_format_navigation_panel($$$$;$)
     }
   }
 
+  if ($result_buttons eq '') {
+    return '';
+  }
+
   my $result = '';
 
   # if $vertical/VERTICAL_HEAD_NAVIGATION, the buttons are in a vertical
@@ -4563,9 +4575,7 @@ sub _default_format_navigation_panel($$$$;$)
     $result .= "<tr>" unless $vertical;
   } else {
     $result .= $self->html_attribute_class('div', ['nav-panel']).">\n";
-    if ($result_buttons ne '') {
-      $result .= "<p>\n";
-    }
+    $result .= "<p>\n";
   }
 
   $result .= $result_buttons;
@@ -4574,9 +4584,7 @@ sub _default_format_navigation_panel($$$$;$)
     $result .= "</tr>" unless $vertical;
     $result .= "</table>\n";
   } else {
-    if ($result_buttons ne '') {
-      $result .= "</p>\n";
-    }
+    $result .= "</p>\n";
     $result .= "</div>\n";
   }
   return $result;
@@ -4603,7 +4611,7 @@ sub _default_format_navigation_header($$$$)
     $result .= '</td>
 <td>
 ';
-  } elsif ($self->get_conf('SPLIT') eq 'node') {
+  } elsif ($self->get_conf('SPLIT') eq 'node' and $result ne '') {
     $result .= $self->get_conf('DEFAULT_RULE')."\n";
   }
   return $result;
@@ -6309,7 +6317,7 @@ sub _convert_printindex_command($$$$)
      = $self->command_id ($current_output_unit->{'unit_command'});
   }
   if (!defined($index_element_id)) {
-    my ($root_element, $root_command)
+    my ($output_unit, $root_command)
         = $self->get_element_root_command_element($command);
     if ($root_command) {
       $index_element_id = $self->command_id($root_command);
@@ -8172,7 +8180,7 @@ sub _default_format_element_footer($$$$;$)
               or ($self->get_conf('SPLIT')
                   and $self->get_conf('SPLIT') ne 'node')))) {
       if ($is_top) {
-        $buttons = $self->get_conf('TOP_BUTTONS');
+        $buttons = $self->get_conf('TOP_FOOTER_BUTTONS');
       } else {
         $buttons = $self->get_conf('MISC_BUTTONS');
       }
@@ -11926,9 +11934,9 @@ sub conversion_finalization($)
 sub _prepare_title_titlepage($$$$)
 {
   my $self = shift;
-  my $output_units = shift;
   my $output_file = shift;
   my $output_filename = shift;
+  my $output_units = shift;
 
   # set file name to be the first file name for formatting of title page.
   # The title page prepared here is thus only fit to be used in the first
@@ -12051,7 +12059,7 @@ sub convert($$)
   # title.  Not often set in the default case, as convert() is only
   # used in the *.t tests, and a title requires both simpletitle_tree
   # and SHOW_TITLE set, with the default formatting function.
-  $self->_prepare_title_titlepage($output_units, '', '');
+  $self->_prepare_title_titlepage('', '', $output_units);
 
   # complete information should be available.
   $self->_reset_info();
@@ -12429,8 +12437,8 @@ sub _prepare_converted_output_info($)
 # units or root conversion
 sub _html_convert_output($$$$$$$$)
 {
-  my ($self, $document, $output_units, $special_units, $output_file,
-      $destination_directory, $output_filename, $document_name) = @_;
+  my ($self, $output_file, $destination_directory, $output_filename,
+      $document_name, $document, $output_units, $special_units) = @_;
 
   my $text_output = '';
   if ($output_file eq '') {
@@ -12955,8 +12963,8 @@ sub output($$)
   }
 
   # information settable by customization files is passed to XS too
-  $self->_prepare_title_titlepage($output_units, $output_file,
-                                  $output_filename);
+  $self->_prepare_title_titlepage($output_file, $output_filename,
+                                  $output_units);
 
   $self->set_global_document_commands('before', ['documentlanguage']);
 
@@ -12968,9 +12976,9 @@ sub output($$)
   $self->_reset_info();
 
   # conversion
-  my $text_output = $self->_html_convert_output($document, $output_units,
-                       $special_units, $output_file, $destination_directory,
-                       $output_filename, $document_name);
+  my $text_output = $self->_html_convert_output($output_file,
+                       $destination_directory, $output_filename, $document_name,
+                       $document, $output_units, $special_units);
 
   $self->get_output_files_XS_unclosed_streams();
 
@@ -13558,6 +13566,8 @@ sub _set_variables_texi2html($)
                              ' ', ' ', ' ', ' ',
                              'Top', 'Contents', 'Index', 'About' ]],
   ['TOP_BUTTONS', ['Back', 'Forward', ' ',
+                             'Contents', 'Index', 'About']],
+  ['TOP_FOOTER_BUTTONS', ['Back', 'Forward', ' ',
                              'Contents', 'Index', 'About']],
 
   ['MISC_BUTTONS', [ 'Top', 'Contents', 'Index', 'About' ]],

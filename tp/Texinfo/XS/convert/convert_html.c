@@ -673,6 +673,20 @@ html_pcdt_tree (const char *translation_context, const char *string,
 }
 
 static void
+add_tree_to_build (CONVERTER *self, ELEMENT *e)
+{
+  if (self->external_references_number > 0)
+    add_to_element_list (&self->tree_to_build, e);
+}
+
+static void
+remove_tree_to_build (CONVERTER *self, ELEMENT *e)
+{
+  if (self->external_references_number > 0)
+    remove_element_from_list (&self->tree_to_build, e);
+}
+
+static void
 translate_convert_to_html_internal (const char *string,
                CONVERTER *self,
                NAMED_STRING_ELEMENT_LIST *replaced_substrings,
@@ -682,9 +696,9 @@ translate_convert_to_html_internal (const char *string,
   ELEMENT *translation_tree = html_cdt_tree (string, self,
                            replaced_substrings, translation_context);
 
-  add_to_element_list (&self->tree_to_build, translation_tree);
+  add_tree_to_build (self, translation_tree);
   convert_to_html_internal (self, translation_tree, result, explanation);
-  remove_element_from_list (&self->tree_to_build, translation_tree);
+  remove_tree_to_build (self, translation_tree);
 
   destroy_element_and_children (translation_tree);
 }
@@ -1026,8 +1040,7 @@ special_unit_info_tree (CONVERTER *self, const enum special_unit_info_tree type,
             = html_pcdt_tree (translation_context, special_unit_info_string,
                               self, 0);
           free (translation_context);
-          add_to_element_list (&self->tree_to_build,
-                               self->special_unit_info_tree[type][i]);
+          add_tree_to_build (self, self->special_unit_info_tree[type][i]);
           return self->special_unit_info_tree[type][i];
         }
     }
@@ -1857,7 +1870,7 @@ prepare_associated_special_units_targets (CONVERTER *self)
 }
 
 static char *
-normalized_to_id (char *id)
+normalized_to_id (const char *id)
 {
   if (isascii_digit (id[0]) || id[0] == '_')
     {
@@ -1869,30 +1882,35 @@ normalized_to_id (char *id)
 }
 
 static TARGET_FILENAME *
-normalized_label_id_file (CONVERTER *self, char *normalized,
+normalized_label_id_file (CONVERTER *self, const char *normalized,
                           const ELEMENT* label_element)
 {
   int called;
-  char *target;
+  char *target = 0;
   char *target_customized;
+  char *normalized_label = 0;
   TARGET_FILENAME *target_filename
     = (TARGET_FILENAME *) malloc (sizeof (TARGET_FILENAME));
 
-  int normalized_need_to_be_freed = 0;
-  if (!normalized && label_element)
+  if (normalized)
     {
-      normalized = convert_contents_to_identifier (label_element);
-      normalized_need_to_be_freed = 1;
+      normalized_label = strdup (normalized);
+      target = normalized_to_id (normalized);
+    }
+  else if (label_element)
+    {
+      normalized_label
+       = convert_contents_to_identifier (label_element);
+      if (normalized_label)
+        target = normalized_to_id (normalized_label);
     }
 
-  if (normalized)
-    target = normalized_to_id (normalized);
-  else
+  if (!target)
     target = strdup ("");
 
   /* to find out the Top node, one could check $normalized */
   target_customized = call_file_id_setting_label_target_name (self,
-                                  normalized, label_element, target,
+                                  normalized_label, label_element, target,
                                   &called);
 
   if (target_customized)
@@ -1901,18 +1919,17 @@ normalized_label_id_file (CONVERTER *self, char *normalized,
       target = target_customized;
     }
 
-  if (normalized_need_to_be_freed)
-    free (normalized);
-
   target_filename->target = target;
-  target_filename->filename = node_information_filename (self, normalized,
-                                                         label_element);
+  target_filename->filename
+    = node_information_filename (self, normalized_label, label_element);
+
+  free (normalized_label);
 
   return target_filename;
 }
 
-char *
-unique_target (CONVERTER *self, char *target_base)
+static char *
+unique_target (CONVERTER *self, const char *target_base)
 {
   int nr = 1;
   char *target = strdup (target_base);
@@ -2904,13 +2921,12 @@ direction_string (CONVERTER *self, int direction,
                     direction_string_type_names[string_type],
                     direction_string_context_names[context], direction_name);
 
-          add_to_element_list (&self->tree_to_build, converted_tree);
-
+          add_tree_to_build (self, converted_tree);
           result_string
             = convert_tree_new_formatting_context (self, converted_tree,
                                   context_str, 0, context_str, 0);
 
-          remove_element_from_list (&self->tree_to_build, converted_tree);
+          remove_tree_to_build (self, converted_tree);
           free (context_str);
 
           if (context == TDS_context_string)
@@ -3789,13 +3805,13 @@ html_internal_command_tree (CONVERTER *self, const ELEMENT *command,
               ELEMENT *root_code = new_element_added (tree, ET__code);
               add_to_contents_as_array (root_code, command->args.list[0]);
               tree->tree = root_code;
-              add_to_element_list (&self->tree_to_build, tree->tree);
+              add_tree_to_build (self, tree->tree);
             }
           else if (command->cmd == CM_float)
             {
               tree->tree = float_type_number (self, command);
               tree->status = tree_added_status_new_tree;
-              add_to_element_list (&self->tree_to_build, tree->tree);
+              add_tree_to_build (self, tree->tree);
             }
           else if (command->args.number <= 0
                    || command->args.list[0]->contents.number <= 0)
@@ -3841,7 +3857,7 @@ html_internal_command_tree (CONVERTER *self, const ELEMENT *command,
 
                   destroy_named_string_element_list (replaced_substrings);
                   tree->status = tree_added_status_new_tree;
-                  add_to_element_list (&self->tree_to_build, tree->tree);
+                  add_tree_to_build (self, tree->tree);
                 }
               else
                 {
@@ -3892,7 +3908,7 @@ html_external_command_tree (CONVERTER *self, const ELEMENT *command,
     add_to_contents_as_array (root_code, node_content);
 
   tree->tree = root_code;
-  add_to_element_list (&self->tree_to_build, root_code);
+  add_tree_to_build (self, tree->tree);
   return tree;
 }
 
@@ -3964,7 +3980,7 @@ html_internal_command_text (CONVERTER *self, const ELEMENT *command,
             {
               tree_root = new_element (ET__string);
               add_to_contents_as_array (tree_root, selected_tree);
-              add_to_element_list (&self->tree_to_build, tree_root);
+              add_tree_to_build (self, tree_root);
             }
           else
             tree_root = selected_tree;
@@ -3984,7 +4000,7 @@ html_internal_command_text (CONVERTER *self, const ELEMENT *command,
 
           if (type == HTT_string)
             {
-              remove_element_from_list (&self->tree_to_build, tree_root);
+              remove_tree_to_build (self, tree_root);
               destroy_element (tree_root);
             }
           return strdup (target_info->command_text[type]);
@@ -4023,7 +4039,7 @@ html_command_text (CONVERTER *self, const ELEMENT *command,
         {
           tree_root = new_element (ET__string);
           add_to_contents_as_array (tree_root, command_tree->tree);
-          add_to_element_list (&self->tree_to_build, tree_root);
+          add_tree_to_build (self, tree_root);
         }
       else
         tree_root = command_tree->tree;
@@ -4051,7 +4067,7 @@ html_command_text (CONVERTER *self, const ELEMENT *command,
 
       if (type == HTT_string)
         {
-          remove_element_from_list (&self->tree_to_build, tree_root);
+          remove_tree_to_build (self, tree_root);
           destroy_element (tree_root);
         }
       destroy_tree_added_elements (self, command_tree);
@@ -6564,9 +6580,9 @@ html_default_format_program_string (CONVERTER *self, TEXT *result)
       tree = html_cdt_tree ("This document was generated on @emph{@today{}}.",
                             self, 0, 0);
     }
-  add_to_element_list (&self->tree_to_build, tree);
+  add_tree_to_build (self, tree);
   convert_to_html_internal (self, tree, result, 0);
-  remove_element_from_list (&self->tree_to_build, tree);
+  remove_tree_to_build (self, tree);
   destroy_element_and_children (tree);
 }
 
@@ -6666,9 +6682,9 @@ html_default_format_end_file (CONVERTER *self, const char *filename,
 
               tree = html_cdt_tree ("JavaScript license information",
                                      self, 0, 0);
-              add_to_element_list (&self->tree_to_build, tree);
+              add_tree_to_build (self, tree);
               convert_to_html_internal (self, tree, &result, 0);
-              remove_element_from_list (&self->tree_to_build, tree);
+              remove_tree_to_build (self, tree);
 
               destroy_element_and_children (tree);
 
@@ -6734,12 +6750,12 @@ convert_string_tree_new_formatting_context (CONVERTER *self, ELEMENT *tree,
 
   add_to_contents_as_array (tree_root_string, tree);
 
-  add_to_element_list (&self->tree_to_build, tree_root_string);
+  add_tree_to_build (self, tree_root_string);
 
   result = convert_tree_new_formatting_context (self, tree_root_string,
                                        context_string, multiple_pass, 0, 0);
 
-  remove_element_from_list (&self->tree_to_build, tree_root_string);
+  remove_tree_to_build (self, tree_root_string);
   destroy_element (tree_root_string);
   return result;
 }
@@ -6928,7 +6944,7 @@ file_header_information (CONVERTER *self, const ELEMENT *command,
 
           destroy_named_string_element_list (substrings);
 
-          add_to_element_list (&self->tree_to_build, title_tree);
+          add_tree_to_build (self, title_tree);
 
           if (command->cmd)
             xasprintf (&context_str, "file_header_title-element-@%s",
@@ -6945,7 +6961,7 @@ file_header_information (CONVERTER *self, const ELEMENT *command,
                           "element_title");
 
           free (context_str);
-          remove_element_from_list (&self->tree_to_build, title_tree);
+          remove_tree_to_build (self, title_tree);
           destroy_element_and_children (title_tree);
         }
       free (command_string);
@@ -7673,6 +7689,9 @@ html_default_format_navigation_panel (CONVERTER *self,
   text_init (&result_buttons);
   text_append (&result_buttons, "");
 
+  if (!buttons)
+    return;
+
   for (i = 0; i < buttons->number; i++)
     {
       const BUTTON_SPECIFICATION *button = &buttons->list[i];
@@ -7731,6 +7750,12 @@ html_default_format_navigation_panel (CONVERTER *self,
       free (passive);
     }
 
+  if (result_buttons.end <= 0)
+    {
+      free (result_buttons.text);
+      return;
+    }
+
   if (self->conf->HEADER_IN_TABLE.integer > 0)
     {
       attribute_class = html_attribute_class (self, "table",
@@ -7750,8 +7775,7 @@ html_default_format_navigation_panel (CONVERTER *self,
       text_append_n (result, ">\n", 2);
       free (attribute_class);
 
-      if (result_buttons.end > 0)
-        text_append_n (result, "<p>\n", 4);
+      text_append_n (result, "<p>\n", 4);
     }
 
   text_append (result, result_buttons.text);
@@ -7764,9 +7788,7 @@ html_default_format_navigation_panel (CONVERTER *self,
     }
   else
     {
-      if (result_buttons.end > 0)
-        text_append_n (result, "</p>\n", 5);
-
+      text_append_n (result, "</p>\n", 5);
       text_append_n (result, "</div>\n", 7);
     }
   free (result_buttons.text);
@@ -7803,6 +7825,7 @@ html_default_format_navigation_header (CONVERTER *self,
                           const ELEMENT *element, TEXT *result)
 {
   int vertical = 0;
+  size_t result_text_index;
   if (self->conf->VERTICAL_HEAD_NAVIGATION.integer > 0)
     vertical = 1;
   if (vertical)
@@ -7810,11 +7833,15 @@ html_default_format_navigation_header (CONVERTER *self,
      "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n"
      "<tr>\n<td>\n");
 
+  /* keep the current index in result to be able to determine if text was
+     added by format_navigation_panel */
+  result_text_index = result->end;
   format_navigation_panel (self, buttons, cmdname, element, vertical, result);
 
   if (vertical)
     text_append (result, "</td>\n<td>\n");
-  else if (!strcmp (self->conf->SPLIT.string, "node"))
+  else if (!strcmp (self->conf->SPLIT.string, "node")
+           && result->end > result_text_index)
     {
       text_append (result, self->conf->DEFAULT_RULE.string);
       text_append_n (result, "\n", 1);
@@ -8441,11 +8468,11 @@ convert_today_command (CONVERTER *self, const enum command_id cmd,
 {
   ELEMENT *today_element = expand_today (self->conf);
 
-  add_to_element_list (&self->tree_to_build, today_element);
+  add_tree_to_build (self, today_element);
 
   convert_to_html_internal (self, today_element, result, "convert today");
 
-  remove_element_from_list (&self->tree_to_build, today_element);
+  remove_tree_to_build (self, today_element);
   destroy_element_and_children (today_element);
 }
 
@@ -8571,9 +8598,9 @@ convert_value_command (CONVERTER *self, const enum command_id cmd,
   tree = html_cdt_tree ("@{No value for `{value}'@}",
                         self, substrings, 0);
 
-  add_to_element_list (&self->tree_to_build, tree);
+  add_tree_to_build (self, tree);
   convert_to_html_internal (self, tree, result, 0);
-  remove_element_from_list (&self->tree_to_build, tree);
+  remove_tree_to_build (self, tree);
 
   destroy_element_and_children (tree);
 
@@ -8800,9 +8827,9 @@ convert_explained_command (CONVERTER *self, const enum command_id cmd,
 
       xasprintf (&context_str, "convert explained  %s",
                  builtin_command_name (cmd));
-      add_to_element_list (&self->tree_to_build, tree);
+      add_tree_to_build (self, tree);
       convert_to_html_internal (self, tree, result, context_str);
-      remove_element_from_list (&self->tree_to_build, tree);
+      remove_tree_to_build (self, tree);
       free (context_str);
       /* should destroy explained_*_element */
       destroy_element_and_children (tree);
@@ -9955,11 +9982,10 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
 
                   if (menu_node)
                     {
-                      add_to_element_list (&self->tree_to_build, menu_node);
+                      add_tree_to_build (self, menu_node);
                       convert_to_html_internal (self, menu_node,
                                                 &mini_toc_or_auto_menu, 0);
-                      remove_element_from_list (&self->tree_to_build,
-                                                menu_node);
+                      remove_tree_to_build (self, menu_node);
                       /* there are only new or copied elements in the menu */
                       destroy_element_and_children (menu_node);
                     }
@@ -10596,11 +10622,10 @@ convert_verbatiminclude_command (CONVERTER *self, const enum command_id cmd,
 
   if (verbatim_include_verbatim)
     {
-      add_to_element_list (&self->tree_to_build, verbatim_include_verbatim);
+      add_tree_to_build (self, verbatim_include_verbatim);
       convert_to_html_internal (self, verbatim_include_verbatim,
                                 result, "convert verbatiminclude");
-      remove_element_from_list (&self->tree_to_build,
-                                verbatim_include_verbatim);
+      remove_tree_to_build (self, verbatim_include_verbatim);
       destroy_element_and_children (verbatim_include_verbatim);
     }
 }
@@ -11094,11 +11119,12 @@ convert_float_command (CONVERTER *self, const enum command_id cmd,
       if (prepended)
         {
           char *prepended_text;
-          add_to_element_list (&self->tree_to_build, prepended);
+          add_tree_to_build (self, prepended);
           prepended_text
             = convert_tree_new_formatting_context (self, prepended,
                                             "float prepended", 0, 0, 0);
-          remove_element_from_list (&self->tree_to_build, prepended);
+
+          remove_tree_to_build (self, prepended);
           destroy_element_and_children (prepended);
           if (prepended_text)
             {
@@ -11151,10 +11177,10 @@ convert_float_command (CONVERTER *self, const enum command_id cmd,
       add_to_element_args (strong_element, args);
       add_to_element_contents (args, prepended);
 
-      add_to_element_list (&self->tree_to_build, strong_element);
+      add_tree_to_build (self, strong_element);
       prepended_text = convert_tree_new_formatting_context (self,
                         strong_element, "float number type", 0, 0, 0);
-      remove_element_from_list (&self->tree_to_build, strong_element);
+      remove_tree_to_build (self, strong_element);
 
       destroy_element_and_children (strong_element);
 
@@ -11776,7 +11802,7 @@ convert_item_command (CONVERTER *self, const enum command_id cmd,
           tree = table_item_content_tree (self, element);
           if (tree)
             {
-              add_to_element_list (&self->tree_to_build, tree->tree);
+              add_tree_to_build (self, tree->tree);
               converted_e = tree->tree;
             }
           else
@@ -12130,9 +12156,9 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
 
           add_to_contents_as_array (root_code, manual_content);
 
-          add_to_element_list (&self->tree_to_build, root_code);
+          add_tree_to_build (self, root_code);
           file = html_convert_tree (self, root_code, "node file in ref");
-          remove_element_from_list (&self->tree_to_build, root_code);
+          remove_tree_to_build (self, root_code);
           destroy_element (root_code);
         }
 
@@ -12146,10 +12172,10 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                   ELEMENT *node_no_file_tree = new_element (ET__code);
                   add_to_contents_as_array (node_no_file_tree, node_content);
 
-                  add_to_element_list (&self->tree_to_build, node_no_file_tree);
+                  add_tree_to_build (self, node_no_file_tree);
                   node_name = html_convert_tree (self, node_no_file_tree,
                                                  "node in ref");
-                  remove_element_from_list (&self->tree_to_build, node_no_file_tree);
+                  remove_tree_to_build (self, node_no_file_tree);
                   destroy_element (node_no_file_tree);
 
                   if (node_name && strcmp (node_name, "Top"))
@@ -12361,9 +12387,9 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
     {
       char *context_str;
       xasprintf (&context_str, "convert xref %s", builtin_command_name (cmd));
-      add_to_element_list (&self->tree_to_build, tree);
+      add_tree_to_build (self, tree);
       convert_to_html_internal (self, tree, result, context_str);
-      remove_element_from_list (&self->tree_to_build, tree);
+      remove_tree_to_build (self, tree);
       free (context_str);
       /* should destroy reference_element and book_element */
       destroy_element_and_children (tree);
@@ -12771,8 +12797,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                              "index %s l %s index entry %zu subentry %d",
                              index_name, letter, entry_nr -1, level);
                   if (level > 0)
-                    add_to_element_list (&self->tree_to_build,
-                                         entry_trees[level]);
+                    add_tree_to_build (self, entry_trees[level]);
                   if (*formatted_index_entry_nr > 1)
                     {
                       /* call with multiple_pass argument */
@@ -12787,8 +12812,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                     }
                   if (level > 0)
                     {
-                      remove_element_from_list (&self->tree_to_build,
-                                                entry_trees[level]);
+                      remove_tree_to_build (self, entry_trees[level]);
                       destroy_element (entry_trees[level]);
                     }
                   free (convert_info);
@@ -12881,7 +12905,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                   xasprintf (&convert_info,
                              "index %s l %s index entry %zu seeentry",
                              index_name, letter, entry_nr -1);
-                  add_to_element_list (&self->tree_to_build, result_tree);
+                  add_tree_to_build (self, result_tree);
                   if (*formatted_index_entry_nr > 1)
                     {
                       /* call with multiple_pass argument */
@@ -12893,7 +12917,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                       entry = html_convert_tree (self, result_tree,
                                                  convert_info);
                     }
-                  remove_element_from_list (&self->tree_to_build, result_tree);
+                  remove_tree_to_build (self, result_tree);
                   destroy_element_and_children (result_tree);
                   free (convert_info);
 
@@ -12920,8 +12944,8 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                              "index %s l %s index entry %zu seealso",
                              index_name, letter, entry_nr -1);
 
-                  add_to_element_list (&self->tree_to_build, entry_tree);
-                  add_to_element_list (&self->tree_to_build, reference_tree);
+                  add_tree_to_build (self, entry_tree);
+                  add_tree_to_build (self, reference_tree);
                   if (*formatted_index_entry_nr > 1)
                     {
                       /* call with multiple_pass argument */
@@ -12939,10 +12963,8 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                       reference = html_convert_tree (self, reference_tree,
                                                     conv_str_reference);
                     }
-                  remove_element_from_list (&self->tree_to_build,
-                                            reference_tree);
-                  remove_element_from_list (&self->tree_to_build,
-                                            entry_tree);
+                  remove_tree_to_build (self, entry_tree);
+                  remove_tree_to_build (self, reference_tree);
                   destroy_element_and_children (reference_tree);
 
                   free (conv_str_entry);
@@ -13002,7 +13024,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                          index_name, letter, entry_nr -1);
 
               if (last_entry_level > 0)
-                 add_to_element_list (&self->tree_to_build, entry_tree);
+                add_tree_to_build (self, entry_tree);
               if (*formatted_index_entry_nr > 1)
                 {
                   /* call with multiple_pass argument */
@@ -13016,9 +13038,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                                              convert_info);
                 }
               if (last_entry_level > 0)
-                {
-                  remove_element_from_list (&self->tree_to_build, entry_tree);
-                }
+                remove_tree_to_build (self, entry_tree);
               free (convert_info);
 
               if (last_entry_level == 0
@@ -13243,11 +13263,10 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
               xasprintf (&explanation, "index letter %s command", letter);
               if (formatted_command)
                 {
-                  add_to_element_list (&self->tree_to_build, formatted_command);
+                  add_tree_to_build (self, formatted_command);
                   formatted_letter
                     = html_convert_tree (self, formatted_command, explanation);
-                  remove_element_from_list (&self->tree_to_build,
-                                           formatted_command);
+                  remove_tree_to_build (self, formatted_command);
                   destroy_element (formatted_command);
                 }
               else
@@ -13719,10 +13738,10 @@ open_quotation_command (CONVERTER *self, const enum command_id cmd,
                            self, substrings, 0);
       destroy_named_string_element_list (substrings);
       xasprintf (&explanation, "open %s prepended arg", cmdname);
-      add_to_element_list (&self->tree_to_build, tree);
+      add_tree_to_build (self, tree);
       formatted_quotation_arg_to_prepend
         = html_convert_tree (self, tree, explanation);
-      remove_element_from_list (&self->tree_to_build, tree);
+      remove_tree_to_build (self, tree);
       destroy_element_and_children (tree);
       free (explanation);
     }
@@ -14333,12 +14352,12 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
 
           add_to_contents_as_array (root_code, menu_entry_node);
 
-          add_to_element_list (&self->tree_to_build, root_code);
+          add_tree_to_build (self, root_code);
 
           convert_to_html_internal (self, root_code, result,
                                "menu_arg menu_entry_node preformatted");
 
-          remove_element_from_list (&self->tree_to_build, root_code);
+          remove_tree_to_build (self, root_code);
 
           destroy_element (root_code);
 
@@ -14375,7 +14394,7 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
             {
               description_element = new_element (ET_NONE);
               description_element->contents = node_description->contents;
-              add_to_element_list (&self->tree_to_build, description_element);
+              add_tree_to_build (self, description_element);
             }
 
           description
@@ -14393,8 +14412,7 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
             free (multiple_formatted);
           if (node_description->cmd != CM_nodedescription)
             {
-              remove_element_from_list (&self->tree_to_build,
-                                        description_element);
+              remove_tree_to_build (self, description_element);
               description_element->contents.list = 0;
               destroy_element (description_element);
             }
@@ -14465,12 +14483,12 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
 
                   add_to_contents_as_array (root_code, node_content);
 
-                  add_to_element_list (&self->tree_to_build, root_code);
+                  add_tree_to_build (self, root_code);
 
                   name = html_convert_tree (self, root_code,
                                             "menu_arg name");
 
-                  remove_element_from_list (&self->tree_to_build, root_code);
+                  remove_tree_to_build (self, root_code);
 
                   destroy_element (root_code);
                 }
@@ -14536,7 +14554,7 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
             {
               description_element = new_element (ET_NONE);
               description_element->contents = node_description->contents;
-              add_to_element_list (&self->tree_to_build, description_element);
+              add_tree_to_build (self, description_element);
             }
 
           description
@@ -14548,8 +14566,7 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
             free (multiple_formatted);
           if (node_description->cmd != CM_nodedescription)
             {
-              remove_element_from_list (&self->tree_to_build,
-                                        description_element);
+              remove_tree_to_build (self, description_element);
               description_element->contents.list = 0;
               destroy_element (description_element);
             }
@@ -14793,11 +14810,11 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
 
       add_to_contents_as_array (root_code, parsed_def->type);
 
-      add_to_element_list (&self->tree_to_build, root_code);
+      add_tree_to_build (self, root_code);
 
       type_text = html_convert_tree (self, root_code, 0);
 
-      remove_element_from_list (&self->tree_to_build, root_code);
+      remove_tree_to_build (self, root_code);
 
       destroy_element (root_code);
       type_text_len = strlen (type_text);
@@ -14832,7 +14849,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
 
       add_to_contents_as_array (root_code, parsed_def->name);
 
-      add_to_element_list (&self->tree_to_build, root_code);
+      add_tree_to_build (self, root_code);
 
       text_append (&def_call, attribute_class);
       free (attribute_class);
@@ -14840,7 +14857,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
 
       convert_to_html_internal (self, root_code, &def_call, 0);
 
-      remove_element_from_list (&self->tree_to_build, root_code);
+      remove_tree_to_build (self, root_code);
       destroy_element (root_code);
 
       text_append_n (&def_call, "</strong>", 9);
@@ -14859,11 +14876,11 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
 
           add_to_contents_as_array (root_code, parsed_def->args);
 
-          add_to_element_list (&self->tree_to_build, root_code);
+          add_tree_to_build (self, root_code);
 
           args_formatted = html_convert_tree (self, root_code, 0);
 
-          remove_element_from_list (&self->tree_to_build, root_code);
+          remove_tree_to_build (self, root_code);
           destroy_element (root_code);
 
           if (args_formatted[strspn (args_formatted, whitespace_chars)] != '\0')
@@ -14936,9 +14953,9 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
 
       if (category_tree)
         {
-          add_to_element_list (&self->tree_to_build, category_tree);
+          add_tree_to_build (self, category_tree);
           convert_to_html_internal (self, category_tree, result, 0);
-          remove_element_from_list (&self->tree_to_build, category_tree);
+          remove_tree_to_build (self, category_tree);
           destroy_element_and_children (category_tree);
         }
       text_append_n (result, "]</td></tr>\n", 12);
@@ -15020,9 +15037,9 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
               text_append_n (result, ">", 1);
             }
           free (attribute_open);
-          add_to_element_list (&self->tree_to_build, category_tree);
+          add_tree_to_build (self, category_tree);
           convert_to_html_internal (self, category_tree, result, 0);
-          remove_element_from_list (&self->tree_to_build, category_tree);
+          remove_tree_to_build (self, category_tree);
           destroy_element_and_children (category_tree);
           if (open_len)
             text_append_n (result, "</span>", 7);
@@ -15889,8 +15906,8 @@ reset_translated_special_unit_info_tree (CONVERTER *self)
         {
           if (self->special_unit_info_tree[tree_type][i])
             {
-              remove_element_from_list (&self->tree_to_build,
-                       self->special_unit_info_tree[tree_type][i]);
+              remove_tree_to_build (self,
+                             self->special_unit_info_tree[tree_type][i]);
               destroy_element_and_children (
                 self->special_unit_info_tree[tree_type][i]);
 
@@ -17297,9 +17314,9 @@ reset_unset_no_arg_commands_formatting_context (CONVERTER *self,
       char *context;
       ELEMENT *tree_built = 0;
       ELEMENT *translated_tree = no_arg_command_context->tree;
-      if (!translated_tree->hv)
+      if (self->external_references_number > 0 && !translated_tree->hv)
         {
-          add_element_if_not_in_list (&self->tree_to_build, translated_tree);
+          add_to_element_list (&self->tree_to_build, translated_tree);
           tree_built = translated_tree;
         }
       xasprintf (&explanation, "Translated NO ARG @%s ctx %s",
@@ -17427,7 +17444,7 @@ html_translate_names (CONVERTER *self)
                   if (target_info)
                     {
        /* the tree is a reference to special_unit_info_tree, so it should
-          not be freed, but need to be reset to trigger the creation of the
+          not be freed, but it needs to be reset to trigger the creation of the
           special_unit_info_tree tree when needed */
                       clear_tree_added_elements (self, &target_info->tree);
                       free (target_info->command_text[HTT_string]);
@@ -17917,12 +17934,12 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
           ELEMENT *translated = html_cdt_tree (element->text.text,
                                            self, 0, translation_context);
 
-          add_to_element_list (&self->tree_to_build, translated);
+          add_tree_to_build (self, translated);
 
           convert_to_html_internal (self, translated, &text_result,
                                     "translated TEXT");
 
-          remove_element_from_list (&self->tree_to_build, translated);
+          remove_tree_to_build (self, translated);
           destroy_element_and_children (translated);
         }
       else
@@ -17987,11 +18004,11 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
                   ELEMENT *tmp = new_element (ET_NONE);
                   char *latex_content;
 
-                  add_to_element_list (&self->tree_to_build, tmp);
+                  add_tree_to_build (self, tmp);
                   tmp->contents = element->contents;
                   latex_content = call_latex_convert_to_latex_math (self,
                                                                     tmp);
-                  remove_element_from_list (&self->tree_to_build, tmp);
+                  remove_tree_to_build (self, tmp);
                   tmp->contents.list = 0;
                   destroy_element (tmp);
 
@@ -18714,10 +18731,10 @@ html_convert_output (CONVERTER *self, const ELEMENT *root,
 
       today_element->cmd = CM_today;
 
-      add_to_element_list (&self->tree_to_build, today_element);
+      add_tree_to_build (self, today_element);
       today = convert_tree_new_formatting_context (self, today_element,
                                                    "DATE_IN_HEADER", 0, 0, 0);
-      remove_element_from_list (&self->tree_to_build, today_element);
+      remove_tree_to_build (self, today_element);
       destroy_element (today_element);
 
       text_printf (&text,

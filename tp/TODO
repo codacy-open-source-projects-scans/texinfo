@@ -10,10 +10,6 @@ This is the todo list for texi2any
 Before next release
 ===================
 
-Check if LABEL identifier should be const
-
-Remove the need for Texinfo::Structuring::rebuild_output_units, currently seems
-to be called in t/test_utils.pl only.
 
 Bugs
 ====
@@ -101,11 +97,6 @@ ELEMENT *elements[3]
 
 4) separate the structure of text elements and other elements, as text elements
    should not need contents/args/extra.
-
-
-Maybe change build/rebuild document to only rebuild what needs to, such
-as to be able to call when needed by converters and not in specific
-places in the code.
 
 
 hyphenation: should only appear in toplevel.

@@ -1,3 +1,192 @@
+2024-03-19  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi: move "Command Tree Element Opening Functions"
+	after "Command Tree Element Conversion Functions".
+
+	* doc/texi2any_api.texi (Text Tree Elements Conversion): add a
+	subsection for text holding Texinfo tree elements.  Move "Text
+	Formatting Context" to that subsection.
+
+	* doc/texi2any_api.texi: more examples, fixes in text.
+
+2024-03-19  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi: use $converter instead of $self.
+
+	* doc/texi2any_api.texi: move format_button_icon_img and the whole
+	content of "Directions@comma{} Links@comma{} Labels and Files"
+	where it is used.
+
+	* doc/texi2any_api.texi: move "Tree Element Opening Functions" after
+	"Type Tree Element Conversion Functions". Add more examples.
+
+	* tp/init/documentation_examples.pm: update.
+
+	* tp/Texinfo/Convert/HTML.pm (get_element_root_command_element):
+	rename $root_element as $output_unit.
+
+2024-03-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/html_tests.t (anchor_on_vtable_item): add
+	test with @anchor on @vtable @item line.  Based on a report of
+	Georg-Johann Lay.
+
+2024-03-17  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi: use $converter instead of $self.
+
+	* doc/texi2any_api.texi (Formatting HTML Output): add and additional
+	section level structure in the node.  Move some information
+	from "Dynamic Conversion Information" on "Alignment and Multiple
+	Expansion Contexts" and "Dynamic Converter Formatting
+	Information".  Remove "Dynamic Conversion Information".
+
+	* doc/texi2any_api.texi (Customization and Use of Formatting Functions),
+	(Tree Element Conversion Customization, Output Units Conversion
+	Functions): reorganize, add information previously in "Dynamic
+	Conversion Information" and "Heading Commands Formatting", move
+	"Opening and Closing Sectioning Commands Extent" content to "Heading
+	Commands Formatting".
+
+	* doc/texi2any_api.texi (Shared Conversion State): make it a chapter.
+
+	* doc/texi2any_api.texi (Associating Information to an Output File):
+	move to "Beginning and Ending Files".
+
+	* doc/texi2any_api.texi (Conversion to Plain Text): new node based on
+	the expansion of information in "Setting the Context for Conversion".
+
+	* doc/texi2any_api.texi: some rewriting, add more examples.
+
+2024-03-17  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi: reorganize, by adding "Formatting HTML
+	Output" and "Error Reporting, Customization Variables and
+	Paths Manipulation in User Defined Functions" and moving there
+	information from "User Defined Functions", "Protection of
+	URLs" and more generally "Mandatory Conversion Function Calls", which
+	is removed.
+
+2024-03-17  Patrice Dumas  <pertusus@free.fr>
+
+	* README-hacking: mention pod2man.
+
+2024-03-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (@code{@@itemize}): Shorten discussion of
+	moving index entries and comments.
+
+2024-03-17  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Introducing Lists, @code{@@itemize}): use {} in
+	examples with mark commands @itemize arguments.
+
+	* doc/texinfo.texi (@code{@@bullet}, Click Sequences): remove text
+	stating that mark commands @itemize arguments braces are normally
+	omitted that are also of dubious interest.
+
+2024-03-16  Patrice Dumas  <pertusus@free.fr>
+
+	Add TOP_FOOTER_BUTTONS customization variable
+
+	* doc/texi2any_api.texi (Simple Navigation Panel Customization),
+	tp/Texinfo/Convert/HTML.pm (%defaults, _default_format_element_footer)
+	(_set_variables_texi2html), tp/Texinfo/options_data.txt,
+	tp/init/book.pm: add a TOP_FOOTER_BUTTONS to be able to specify
+	seprately the Top node/@top header and footer.
+
+2024-03-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_navigation_panel),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_navigation_panel),
+	tp/Texinfo/XS/main/get_perl_info.c
+	(html_get_button_specification_list),
+	tp/maintain/regenerate_C_options_info.pl: handle a string passed for a
+	buttons list customization variable.  Handle an undef buttons list in
+	C.
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_navigation_panel)
+	(_default_format_navigation_header),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_navigation_panel)
+	(html_default_format_navigation_header): return an empty string instead
+	of an empty <div> for navigation panel when the panel buttons is an
+	empty string.  Do not output an horizontal rule if there is no
+	navigation panel.
+
+	* tp/Makefile.tres, tp/t/layout.t (navigation_test_undef_top_buttons)
+	(navigation_test_zero_top_buttons): tests of TOP_BUTTONS set to undef
+	and set to '0'.
+
+2024-03-15  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Special Unit Body Formatting Functions): fix
+	crossref node name.
+
+2024-03-15  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi: explain better the effect of some
+	customization variables.  Use @subentry.  Other changes.
+
+2024-03-15  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (CSS Customization, Customization of CSS Rules
+	Imports and Selectors, Customizing the CSS Lines): move all the
+	information related to CSS Customization to the same place, in the CSS
+	Customization new node.
+
+2024-03-15  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi: replace 'element direction' by 'output unit
+	direction' everywhere.  Other changes and fixes.
+
+2024-03-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_prepare_title_titlepage)
+	(_html_convert_output, tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_title_titlepage, html_convert_convert)
+	(html_convert_output): change arguments orders if it simplifies
+	ignoring unused arguments in XS.  Ignore unused arguments in XS.
+	Update callers.
+
+2024-03-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_convert_convert)
+	(html_convert_output): use directly C document associated to
+	converter.
+
+	Other minor changes.
+
+2024-03-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c: remove conditions
+	on self->hv and special_unit->hv that should never change.
+
+2024-03-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (add_tree_to_build)
+	(remove_tree_to_build): add functions to add/remove an element to
+	self->tree_to_build.  add/remove to tree_to_build only if
+	self->external_references_number > 0.
+
+2024-03-13  Patrice Dumas  <pertusus@free.fr>
+
+	* po/Makevars (XGETTEXT_OPTIONS): fix message_list_document_* options.
+
+	Update po files.
+
+2024-03-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/main/tree_types.h: add const.
+
+	* tp/Texinfo/XS/convert/convert_html.c (normalized_label_id_file):
+	reorganize code, add const.
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(protect_first_parenthesis): reorganiza code, add const.
+
 2024-03-12  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/XS/convert/ConvertXS.xs
