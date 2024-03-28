@@ -5,7 +5,7 @@ use vars qw(%result_texis %result_texts %result_trees %result_errors
 
 use utf8;
 
-$result_trees{'documentation_examples'} = {
+$result_trees{'documentation_examples_texi2html'} = {
   'contents' => [
     {
       'contents' => [
@@ -1342,11 +1342,11 @@ $result_trees{'documentation_examples'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'documentation_examples'}{'contents'}[4]{'contents'}[1]{'contents'}[8]{'args'}[0]{'extra'}{'node_content'}{'contents'}[0] = $result_trees{'documentation_examples'}{'contents'}[4]{'contents'}[1]{'contents'}[8]{'args'}[0]{'contents'}[0];
-$result_trees{'documentation_examples'}{'contents'}[4]{'contents'}[12]{'extra'}{'element_node'} = $result_trees{'documentation_examples'}{'contents'}[3];
-$result_trees{'documentation_examples'}{'contents'}[4]{'contents'}[13]{'extra'}{'element_node'} = $result_trees{'documentation_examples'}{'contents'}[3];
+$result_trees{'documentation_examples_texi2html'}{'contents'}[4]{'contents'}[1]{'contents'}[8]{'args'}[0]{'extra'}{'node_content'}{'contents'}[0] = $result_trees{'documentation_examples_texi2html'}{'contents'}[4]{'contents'}[1]{'contents'}[8]{'args'}[0]{'contents'}[0];
+$result_trees{'documentation_examples_texi2html'}{'contents'}[4]{'contents'}[12]{'extra'}{'element_node'} = $result_trees{'documentation_examples_texi2html'}{'contents'}[3];
+$result_trees{'documentation_examples_texi2html'}{'contents'}[4]{'contents'}[13]{'extra'}{'element_node'} = $result_trees{'documentation_examples_texi2html'}{'contents'}[3];
 
-$result_texis{'documentation_examples'} = '
+$result_texis{'documentation_examples_texi2html'} = '
 @settitle @email{someone@@example.com, me} @sansserif{in--title} @error{} @equiv{}
 
 @contents
@@ -1407,7 +1407,7 @@ $result_texis{'documentation_examples'} = '
 ';
 
 
-$result_texts{'documentation_examples'} = '
+$result_texts{'documentation_examples_texi2html'} = '
 
 top
 ***
@@ -1451,7 +1451,7 @@ Appendix A Index
 
 ';
 
-$result_sectioning{'documentation_examples'} = {
+$result_sectioning{'documentation_examples_texi2html'} = {
   'extra' => {
     'section_childs' => [
       {
@@ -1537,20 +1537,20 @@ $result_sectioning{'documentation_examples'} = {
     'section_level' => -1
   }
 };
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'section_directions'}{'prev'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[2]{'extra'}{'section_directions'}{'prev'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[2]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[2]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[2]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0];
-$result_sectioning{'documentation_examples'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'documentation_examples'};
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'section_directions'}{'prev'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[2]{'extra'}{'section_directions'}{'prev'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[2]{'extra'}{'section_directions'}{'up'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[2]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[1];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'section_childs'}[2]{'extra'}{'toplevel_directions'}{'up'} = $result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0];
+$result_sectioning{'documentation_examples_texi2html'}{'extra'}{'section_childs'}[0]{'extra'}{'sectioning_root'} = $result_sectioning{'documentation_examples_texi2html'};
 
-$result_nodes{'documentation_examples'} = [
+$result_nodes{'documentation_examples_texi2html'} = [
   {
     'cmdname' => 'node',
     'extra' => {
@@ -1616,17 +1616,17 @@ $result_nodes{'documentation_examples'} = [
   {},
   {}
 ];
-$result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
-$result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'documentation_examples'}[0];
-$result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'};
-$result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'documentation_examples'}[0];
-$result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'documentation_examples'}[0];
-$result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'documentation_examples'}[0];
-$result_nodes{'documentation_examples'}[1] = $result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'};
-$result_nodes{'documentation_examples'}[2] = $result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
-$result_nodes{'documentation_examples'}[3] = $result_nodes{'documentation_examples'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
+$result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
+$result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'documentation_examples_texi2html'}[0];
+$result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'documentation_examples_texi2html'}[0];
+$result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'prev'} = $result_nodes{'documentation_examples_texi2html'}[0];
+$result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'up'} = $result_nodes{'documentation_examples_texi2html'}[0];
+$result_nodes{'documentation_examples_texi2html'}[1] = $result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'};
+$result_nodes{'documentation_examples_texi2html'}[2] = $result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
+$result_nodes{'documentation_examples_texi2html'}[3] = $result_nodes{'documentation_examples_texi2html'}[0]{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'}{'extra'}{'node_directions'}{'next'};
 
-$result_menus{'documentation_examples'} = [
+$result_menus{'documentation_examples_texi2html'} = [
   {
     'extra' => {
       'normalized' => 'Top'
@@ -1649,7 +1649,7 @@ $result_menus{'documentation_examples'} = [
   }
 ];
 
-$result_errors{'documentation_examples'} = [
+$result_errors{'documentation_examples_texi2html'} = [
   {
     'error_line' => 'warning: @vindex missing argument
 ',
@@ -1660,10 +1660,10 @@ $result_errors{'documentation_examples'} = [
 ];
 
 
-$result_floats{'documentation_examples'} = {};
+$result_floats{'documentation_examples_texi2html'} = {};
 
 
-$result_indices_sort_strings{'documentation_examples'} = {
+$result_indices_sort_strings{'documentation_examples_texi2html'} = {
   'cp' => [
     'e1',
     'i2'

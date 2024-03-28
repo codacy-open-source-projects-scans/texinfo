@@ -25,7 +25,7 @@ use if $] >= 5.014, re => '/a';
 
 # for file names portability
 use File::Spec;
-# for dirname and fileparse
+# for fileparse
 use File::Basename;
 
 use Encode;
@@ -41,7 +41,7 @@ BEGIN
   my ($real_command_name, $command_directory, $command_suffix)
    = fileparse($0, '.pl');
   my $updir = File::Spec->updir();
-  # tp director
+  # tp directory
   my $tp_srcdir;
   if (defined($ENV{'srcdir'})) {
     # srcdir is tp/Texinfo/XS

@@ -49,6 +49,66 @@ my $direction_strings_test_text = '@node Top
 @section Sec 3
 ';
 
+my $documentation_examples_text = '
+@settitle @email{someone@@example.com, me} @sansserif{in--title} @error{} @equiv{}
+
+@contents
+
+@node Top
+@top top
+
+@node chapter
+@chapter Chapter
+
+@sansserif{in--text} @- p--n. @error{} @equiv{}
+@xref{my node}@footnote{in footnote}.
+@titlefont{in titlefont}
+@email{a@@b.c, someone}
+@sc{in Sc}
+@var{in var}
+
+@math{@sansserif{in--math} @- a=b @error{} @equiv{}}
+
+@indentedblock
+@example
+@sansserif{in--example} @- c. @error{} @equiv{}
+@email{a@@example}
+@end example
+@end indentedblock
+
+@display
+@email{a@@display}
+@end display
+
+@cindex @file{e1}
+@cindex i2
+
+@vindex    
+
+@documentlanguage fr
+
+@error{}.
+
+@equiv{}
+
+@contents
+
+@node my node
+@chapter New node
+
+@documentlanguage pl
+
+@error{}.
+
+@equiv{}
+
+@node Index
+@appendix Index
+
+@printindex cp
+
+';
+
 my @file_tests = (
 ['customize_translations',
 '
@@ -108,44 +168,13 @@ my @file_tests = (
 Text@footnote{In footnote}.
 ', {'init_files' => ['special_element_customization.pm']}],
 ['documentation_examples',
-'
-@settitle @email{someone@@example.com, me} @sansserif{in--title} @error{} @equiv{}
-
-@node Top
-@top top
-
-@node chapter
-@chapter Chapter
-
-@sansserif{in--text} @- p--n. @error{} @equiv{}
-@xref{my node}@footnote{in footnote}.
-@titlefont{in titlefont}
-@email{a@@b.c, someone}
-@sc{in Sc}
-@var{in var}
-
-@math{@sansserif{in--math} @- a=b @error{} @equiv{}}
-
-@example
-@sansserif{in--example} @- c. @error{} @equiv{}
-@end example
-
-@documentlanguage fr
-
-@error{}.
-
-@equiv{}
-
-@node my node
-
-@documentlanguage de
-
-@error{}.
-
-@equiv{}
-
-
-',{'init_files' => ['documentation_examples.pm']},
+$documentation_examples_text,
+{'init_files' => ['documentation_examples.pm']},
+],
+['documentation_examples_texi2html',
+$documentation_examples_text,
+{'init_files' => ['documentation_examples.pm']},
+{'TEXI2HTML' => 1, 'CONTENTS_OUTPUT_LOCATION' => 'inline'},
 ],
 ['sc_formatting_with_css',
 '@settitle{In title @sc{my string} NEXT}

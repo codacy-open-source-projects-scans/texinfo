@@ -1,4 +1,6 @@
 #! /usr/bin/env perl
+# generate_html_doc_texi.pl: use perl data, mainly manually
+# generated hashes, to generate Texinfo documentation code.
 
 # Copyright 2023-2024 Free Software Foundation, Inc.
 #
@@ -19,26 +21,31 @@ use strict;
 
 use warnings;
 
+use if $] >= 5.014, re => '/a';
+
 # for file names portability
 use File::Spec;
-# for dirname and fileparse
+# for fileparse
 use File::Basename;
 
 BEGIN
 {
-  # NOTE we do not use Texinfo::ModulePath as it may not have been
-  # created yet, as tp/Texinfo/XS may be processed before tp.
-  # Also we have less modules to find, only pure perl code.
+  # do not load XS code, to avoid both depending on and generating
+  # XS code.  Also we do not want to have to find XS object files.
+  $ENV{'TEXINFO_XS'} = 'omit';
+  # NOTE we do not use Texinfo::ModulePath, as we only have pure perl
+  # modules to find, we do not need something as complex, and we would
+  # need to find Texinfo::ModulePath anyway, which require similar code.
   my ($real_command_name, $command_directory, $command_suffix)
    = fileparse($0, '.pl');
   my $updir = File::Spec->updir();
   # tp directory
   my $tp_srcdir;
   if (defined($ENV{'srcdir'})) {
-    # srcdir is tp/Texinfo/XS
-    $tp_srcdir = File::Spec->catdir($ENV{'srcdir'}, $updir, $updir);
+    # srcdir is doc/
+    $tp_srcdir = File::Spec->catdir($ENV{'srcdir'}, $updir, 'tp');
   } else {
-    $tp_srcdir = File::Spec->catdir($command_directory, $updir);
+    $tp_srcdir = File::Spec->catdir($command_directory, $updir, 'tp');
   }
   unshift @INC, $tp_srcdir;
   my $lib_dir = File::Spec->catdir($tp_srcdir, 'maintain');
@@ -48,29 +55,29 @@ BEGIN
   unshift @INC, (File::Spec->catdir($lib_dir, 'lib', 'Text-Unidecode', 'lib'));
 }
 
-use Texinfo::Convert::Unicode;
+use Texinfo::Convert::HTML;
 
-my $unicode_to_eight_bit_file_name = $ARGV[0];
-die "Need a file\n"
-   if (!defined($unicode_to_eight_bit_file_name));
-
-open (UEB, '>', $unicode_to_eight_bit_file_name)
-   or die "Open $unicode_to_eight_bit_file_name: $!\n";
-
-print UEB "struct ENCODING_CODEPOINTS unicode_to_eight_bit[] = {\n";
-
-my %unicode_to_eight_bit = %Texinfo::Convert::Unicode::unicode_to_eight_bit;
-foreach my $encoding (sort (keys (%unicode_to_eight_bit))) {
-  my @codepoints = sort (keys (%{$unicode_to_eight_bit{$encoding}}));
-  print UEB '{"'.$encoding.'", '.scalar(@codepoints).", {\n";
-  foreach my $codepoint (@codepoints) {
-    print UEB '  "'.$codepoint.'",    /* '
-         .$unicode_to_eight_bit{$encoding}->{$codepoint}.' */ '."\n";
+my $result = '';
+foreach my $cmdname (sort(keys(
+         %Texinfo::Convert::HTML::html_default_commands_args))) {
+  my $args_spec = $Texinfo::Convert::HTML::html_default_commands_args{$cmdname};
+  my $line = '@item @code{@@'.$cmdname.'}';
+  foreach my $spec (@$args_spec) {
+    $line .= ' @tab '.join(', ', @$spec);
   }
-  print UEB "}},\n";
+  $line .= "\n";
+  $result .= $line;
 }
-print UEB "};\n\n";
 
-close (UEB);
+my $html_command_args_spec_table_file = $ARGV[0];
+die "Need a file for HTML arguments table\n"
+   if (!defined($html_command_args_spec_table_file));
+
+open (OUT, '>', $html_command_args_spec_table_file)
+  or die "Open $html_command_args_spec_table_file: $!\n";
+
+print OUT $result;
+
+close(OUT);
 
 
