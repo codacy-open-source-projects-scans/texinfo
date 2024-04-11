@@ -858,7 +858,7 @@ sub _convert($$;$)
             }
             $direction_index++;
           }
-          if (! $self->get_conf('USE_NODES')) {
+          if (! $self->get_conf('TXI_MARKUP_NO_SECTION_EXTENT')) {
             $result .= $self->txi_markup_close_element('node');
           }
           $result .= $self->format_comment_or_return_end_line($element);
@@ -873,7 +873,7 @@ sub _convert($$;$)
           $result .= $self->txi_markup_open_element($level_adjusted_cmdname,
                                                     $attribute);
           my $closed_section_element;
-          if ($self->get_conf('USE_NODES')) {
+          if ($self->get_conf('TXI_MARKUP_NO_SECTION_EXTENT')) {
             $closed_section_element
                = $self->txi_markup_close_element($level_adjusted_cmdname);
           } else {
@@ -1613,7 +1613,7 @@ sub _convert($$;$)
   } elsif ($element->{'cmdname'}
            and $Texinfo::Commands::root_commands{$element->{'cmdname'}}
            and $element->{'cmdname'} ne 'node'
-           and !$self->get_conf('USE_NODES')) {
+           and !$self->get_conf('TXI_MARKUP_NO_SECTION_EXTENT')) {
     my $level_adjusted_cmdname
        = Texinfo::Structuring::section_level_adjusted_command_name($element);
     if (!($element->{'extra'}->{'section_childs'}
@@ -1639,7 +1639,7 @@ sub _convert($$;$)
     }
   } elsif ($element->{'cmdname'}
            and $element->{'cmdname'} eq 'node'
-           and $self->get_conf('USE_NODES')) {
+           and $self->get_conf('TXI_MARKUP_NO_SECTION_EXTENT')) {
     $result .= $self->txi_markup_close_element('node');
 
   }
@@ -1690,7 +1690,7 @@ called by C<Texinfo::Convert::TexinfoMarkup>.
 The Texinfo Markup Language elements and attributes are not documented,
 but the Texinfo XML output by the C<Texinfo::Convert::TexinfoXML> subclass
 (L<Texinfo::Convert::TexinfoXML>) is a straightforward formatting as XML,
-and is described by the texinfo DTD.  Therefore the texinfo DTD can be
+and is described by the Texinfo DTD.  Therefore the Texinfo DTD can be
 used as a description of the structure of both Texinfo XML and of the
 more abstract Texinfo Markup Language.
 
@@ -1741,7 +1741,7 @@ Called to format a header at the beginning of output files.
 =item $result = $converter->txi_markup_protect_text($string)
 
 Protect special character in text for text fragments out of text
-texinfo tree elements.  For example, for spaces at end of line that
+Texinfo tree elements.  For example, for spaces at end of line that
 are ignorable in most output formats, for C<@set> or C<@macro>
 arguments.
 

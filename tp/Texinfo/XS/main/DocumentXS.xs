@@ -133,7 +133,7 @@ document_errors (SV *document_in)
 
 
 void
-set_document_options (SV *sv_options_in, SV *document_in)
+register_document_options (SV *document_in, SV *sv_options_in)
     PREINIT:
         DOCUMENT *document = 0;
      CODE:
@@ -144,6 +144,21 @@ set_document_options (SV *sv_options_in, SV *document_in)
             OPTIONS *options = init_copy_sv_options (sv_options_in, 0, 0);
             register_document_options (document, options);
           }
+
+SV *
+document_get_conf (SV *document_in, conf)
+         const char *conf = (char *)SvPVbyte_nolen($arg);
+    PREINIT:
+        DOCUMENT *document = 0;
+     CODE:
+        document = get_sv_document_document (document_in,
+                                             "document_get_conf");
+        if (document && document->options)
+           RETVAL = build_sv_option (document->options, conf, 0);
+        else
+           RETVAL = newSV (0);
+    OUTPUT:
+        RETVAL
 
 void
 set_document_global_info (SV *document_in, char *key, SV *value_sv)

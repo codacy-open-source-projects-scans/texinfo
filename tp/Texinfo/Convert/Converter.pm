@@ -37,7 +37,6 @@ use Storable;
 use Carp qw(cluck confess);
 
 use Texinfo::Convert::ConvertXS;
-
 use Texinfo::XSLoader;
 
 use Texinfo::Options;
@@ -69,18 +68,7 @@ xml_accents
 
 $VERSION = '7.1dev';
 
-# XS parser and not explicitely unset
-my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
-                        or $ENV{TEXINFO_XS} ne 'omit')
-                       and (not defined($ENV{TEXINFO_XS_PARSER})
-                            or $ENV{TEXINFO_XS_PARSER} eq '1')
-                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
-
-my $XS_convert = 0;
-$XS_convert = 1 if ($XS_structuring
-                    and defined $ENV{TEXINFO_XS_CONVERT}
-                    and $ENV{TEXINFO_XS_CONVERT} eq '1');
+my $XS_convert = Texinfo::XSLoader::XS_convert_enabled();
 
 our $module_loaded = 0;
 
@@ -667,12 +655,15 @@ sub determine_files_and_directory($$)
     # file which is not decoded either.  We want to return only
     # decoded character strings such that they can easily be mixed
     # with other character strings, so we decode here.
-    my $input_file_name = $document_info->{'input_file_name'};
+    my $input_file_name_bytes = $document_info->{'input_file_name'};
     my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
+    my $input_file_name;
     if (defined($encoding)) {
-      $input_file_name = decode($encoding, $input_file_name, sub { '?' });
+      $input_file_name = decode($encoding, $input_file_name_bytes, sub { '?' });
       # use '?' as replacement character rather than U+FFFD in case it
       # is re-encoded to an encoding without this character
+    } else {
+      $input_file_name = $input_file_name_bytes;
     }
     my ($directories, $suffix);
     ($input_basefile, $directories, $suffix) = fileparse($input_file_name);
@@ -710,8 +701,7 @@ sub determine_files_and_directory($$)
   # determine output file and output file name
   my $output_file;
   if (!defined($self->get_conf('OUTFILE'))) {
-    if (defined($setfilename_for_outfile)
-        and !$self->get_conf('NO_USE_SETFILENAME')) {
+    if (defined($setfilename_for_outfile)) {
       $output_file = $setfilename_for_outfile;
       $document_path = $setfilename_for_outfile;
       $document_path =~ s/\.[^\.]*$//;
@@ -747,8 +737,7 @@ sub determine_files_and_directory($$)
   # in this case one wants to get the result in a string and there
   # is a setfilename.  The setfilename is used to get something.
   # This happens in the test suite.
-  if ($output_file eq '' and defined($setfilename_for_outfile)
-      and !$self->get_conf('NO_USE_SETFILENAME')) {
+  if ($output_file eq '' and defined($setfilename_for_outfile)) {
     $output_filepath = $setfilename_for_outfile;
     $document_path = $setfilename_for_outfile;
     $document_path =~ s/\.[^\.]*$//;
@@ -1509,7 +1498,14 @@ sub convert_accents($$$;$$)
 
   my ($contents_element, $stack)
       = Texinfo::Convert::Utils::find_innermost_accent_contents($accent);
-  my $arg_text = $self->convert_tree($contents_element);
+  my $arg_text = '';
+  if (defined($contents_element)) {
+    # NOTE the explanation argument is HTML specific, it may theoretically
+    # be used for something else in other formats.  The type (string) should
+    # be fixed to the type used in C/XS.
+    $arg_text = $self->convert_tree($contents_element,
+                                    "ACCENT ARG ".$accent->{'cmdname'});
+  }
 
   if ($output_encoded_characters) {
     my $encoded = Texinfo::Convert::Unicode::encoded_accents($self,

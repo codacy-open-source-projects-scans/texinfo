@@ -61,7 +61,6 @@ use Encode qw(find_encoding decode encode);
 use charnames ();
 
 use Texinfo::Convert::ConvertXS;
-
 use Texinfo::XSLoader;
 
 use Texinfo::Commands;
@@ -90,18 +89,7 @@ use vars qw($VERSION @ISA);
 
 $VERSION = '7.1dev';
 
-# XS parser and not explicitely unset
-my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
-                        or $ENV{TEXINFO_XS} ne 'omit')
-                       and (not defined($ENV{TEXINFO_XS_PARSER})
-                            or $ENV{TEXINFO_XS_PARSER} eq '1')
-                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
-
-my $XS_convert = 0;
-$XS_convert = 1 if ($XS_structuring
-                    and defined $ENV{TEXINFO_XS_CONVERT}
-                    and $ENV{TEXINFO_XS_CONVERT} eq '1');
+my $XS_convert = Texinfo::XSLoader::XS_convert_enabled();
 
 my %XS_overrides = (
   "Texinfo::Convert::HTML::_default_format_protect_text"
@@ -651,11 +639,13 @@ sub html_convert_css_string($$$)
     $self->{'formatting_function'}->{$formatting_reference}
       = $default_css_string_formatting_references{$formatting_reference};
   }
-
+  my $css_string_context_str = 'CSS string '.$context_str;
+  $self->_new_document_context($css_string_context_str);
+  _set_string_context($self);
   my $result
-   = $self->convert_tree_new_formatting_context({'type' => '_string',
-                                                 'contents' => [$element]},
-                                                'CSS string '.$context_str);
+   = $self->convert_tree($element, "new_fmt_ctx C($css_string_context_str)");
+  $self->_pop_document_context();
+
   foreach my $cmdname (keys (%default_css_string_commands_conversion)) {
     $self->{'commands_conversion'}->{$cmdname} = $saved_commands->{$cmdname};
   }
@@ -1634,7 +1624,7 @@ sub from_element_direction($$$;$$$)
                                                 or $type eq 'section') {
       return $self->get_conf('TOP_NODE_UP');
     } else {
-      cluck("type $type not available for TOP_NODE_UP\n");
+      cluck("BUG: type $type not available for TOP_NODE_UP\n");
       return '';
     }
   } elsif (not $target_unit and $source_unit
@@ -1932,7 +1922,11 @@ sub unit_is_top_output_unit($$)
   my $self = shift;
   my $output_unit = shift;
   my $top_output_unit = _get_top_unit($self);
-  return (defined($top_output_unit) and $top_output_unit eq $output_unit);
+  if (defined($top_output_unit) and $top_output_unit eq $output_unit) {
+    return 1;
+  } else {
+    return 0;
+  }
 }
 
 my %default_formatting_references;
@@ -2414,14 +2408,13 @@ my %defaults = (
   'converted_format'   => 'html',
 
   # Customization option variables
-  'AVOID_MENU_REDUNDANCY' => 0,
   'BIG_RULE'              => '<hr>',
-  'BODYTEXT'              => undef,
+  'BODY_ELEMENT_ATTRIBUTES' => undef,
   'CHAPTER_HEADER_LEVEL'  => 2,
   'CLOSE_QUOTE_SYMBOL'    => undef,
   'CONTENTS_OUTPUT_LOCATION' => 'after_top',
   'CONVERT_TO_LATEX_IN_MATH' => undef,
-  'COMPLEX_FORMAT_IN_TABLE' => 0,
+  'INDENTED_BLOCK_COMMANDS_IN_TABLE' => 0,
   'COPIABLE_LINKS'        => 1,
   'DATE_IN_HEADER'        => 0,
   'DEFAULT_RULE'          => '<hr>',
@@ -2555,7 +2548,8 @@ my %default_special_unit_info = (
    },
 );
 
-my @global_directions = ('First', 'Last', 'Index', 'Top');
+# to be kept in the same order as C code HTML_GLOBAL_DIRECTIONS_LIST.
+my @global_directions = ('First', 'Top', 'Index', 'Last');
 my %global_and_special_directions;
 foreach my $global_direction (@global_directions) {
   $global_and_special_directions{$global_direction} = 1;
@@ -2868,8 +2862,8 @@ sub _translate_names($)
             = Texinfo::Convert::Utils::translated_command_tree($self, $command);
         }
         if (defined($translated_tree) and $translated_tree ne '') {
-          $self->{'no_arg_commands_formatting'}->{$command}->{$context}->{'tree'}
-            = $translated_tree;
+          $self->{'no_arg_commands_formatting'}->{$command}
+            ->{$context}->{'translated_tree'} = $translated_tree;
           $translated_commands{$command} = 1;
         }
       }
@@ -3555,7 +3549,8 @@ sub _convert_value_command($$$$)
   my $args = shift;
 
   return $self->convert_tree($self->cdt('@{No value for `{value}\'@}',
-                 {'value' => {'text' => $args->[0]->{'monospacestring'}}}));
+                 {'value' => {'text' => $args->[0]->{'monospacestring'}}}),
+                             'Tr missing value');
 }
 
 $default_commands_conversion{'value'} = \&_convert_value_command;
@@ -4645,9 +4640,12 @@ sub _default_format_element_header($$$$)
            and ($output_unit->{'tree_unit_directions'}->{'next'}
                 or $output_unit->{'tree_unit_directions'}->{'prev'}))) {
     my $is_top = $self->unit_is_top_output_unit($output_unit);
-    my $first_in_page = (defined($output_unit->{'unit_filename'})
-           and $self->count_elements_in_filename('current',
-                           $output_unit->{'unit_filename'}) == 1);
+    my $first_in_page = 0;
+    if (defined($output_unit->{'unit_filename'})
+        and $self->count_elements_in_filename('current',
+                           $output_unit->{'unit_filename'}) == 1) {
+      $first_in_page = 1;
+    }
     my $previous_is_top = 0;
     $previous_is_top = 1
       if ($output_unit->{'tree_unit_directions'}->{'prev'}
@@ -4844,7 +4842,8 @@ sub _convert_heading_command($$$$$)
             = Texinfo::Structuring::new_complete_menu_master_menu($self,
                                                  $identifiers_target, $node);
           if ($menu_node) {
-            $mini_toc_or_auto_menu = $self->convert_tree($menu_node);
+            $mini_toc_or_auto_menu = $self->convert_tree($menu_node,
+                                                         'master menu');
           }
         }
       }
@@ -5175,7 +5174,7 @@ sub _convert_preformatted_command($$$$$)
     $main_cmdname = 'example';
   }
 
-  if ($self->get_conf('COMPLEX_FORMAT_IN_TABLE')
+  if ($self->get_conf('INDENTED_BLOCK_COMMANDS_IN_TABLE')
       and $indented_preformatted_commands{$cmdname}) {
     return _indent_with_table($self, $cmdname, $content, \@classes);
   } else {
@@ -5216,7 +5215,7 @@ sub _convert_indented_command($$$$$)
     $main_cmdname = $cmdname;
   }
 
-  if ($self->get_conf('COMPLEX_FORMAT_IN_TABLE')) {
+  if ($self->get_conf('INDENTED_BLOCK_COMMANDS_IN_TABLE')) {
     return _indent_with_table($self, $main_cmdname, $content, \@classes);
   } else {
     unshift @classes, $main_cmdname;
@@ -6137,7 +6136,7 @@ sub _convert_xref_commands($$$$)
       } elsif (!$label_element->{'extra'}) {
         $label_element->{'extra'} = {};
       }
-      $label_element->{'extra'}->{'manual_content'} = $file_arg->{'tree'};
+      $label_element->{'extra'}->{'manual_content'} = $file_arg->{'arg_tree'};
     } elsif ($arg_node and $arg_node->{'extra'}
              and $arg_node->{'extra'}->{'manual_content'}) {
       my $manual_content = $arg_node->{'extra'}->{'manual_content'};
@@ -6426,19 +6425,27 @@ sub _convert_printindex_command($$$$)
       while ($subentry->{'extra'} and $subentry->{'extra'}->{'subentry'}
              and $subentry_level <= $subentries_max_level) {
         $subentry = $subentry->{'extra'}->{'subentry'};
-        my $subentry_tree = {'contents' => []};
-        $subentry_tree->{'type'} = '_code' if ($in_code);
+        my $subentry_tree;
         if ($subentry->{'args'} and $subentry->{'args'}->[0]
             and $subentry->{'args'}->[0]->{'contents'}) {
-          push @{$subentry_tree->{'contents'}}, $subentry->{'args'}->[0];
+          $subentry_tree = {'contents' => [$subentry->{'args'}->[0]]};
+          $subentry_tree->{'type'} = '_code' if ($in_code);
         }
         if ($subentry_level >= $subentries_max_level) {
           # at the max, concatenate the remaining subentries
-          my $other_subentries_tree = $self->comma_index_subentries_tree($subentry);
-          push @{$subentry_tree->{'contents'}},
-             @{$other_subentries_tree->{'contents'}}
-                if defined($other_subentries_tree);
-        } else {
+          my $other_subentries_tree
+            = $self->comma_index_subentries_tree($subentry);
+          if ($other_subentries_tree) {
+            if ($subentry_tree) {
+              push @{$subentry_tree->{'contents'}},
+                @{$other_subentries_tree->{'contents'}};
+            } else {
+              $subentry_tree
+                = {'contents' => [@{$other_subentries_tree->{'contents'}}]};
+              $subentry_tree->{'type'} = '_code' if ($in_code);
+            }
+          }
+        } elsif ($subentry_tree) {
           push @new_normalized_entry_levels,
             uc(Texinfo::Convert::NodeNameNormalization::convert_to_normalized(
               $subentry_tree));
@@ -6567,9 +6574,8 @@ sub _convert_printindex_command($$$$)
           } else {
             $entry = $self->convert_tree($entry_tree,
                                          $conv_str_entry);
-            $reference
-               = $self->convert_tree_new_formatting_context($reference_tree,
-                                                          $conv_str_reference);
+            $reference = $self->convert_tree($reference_tree,
+                                             $conv_str_reference);
           }
           $entry = '<code>' .$entry .'</code>' if ($in_code);
           $delimiter = $self->get_conf('INDEX_ENTRY_COLON');
@@ -6593,14 +6599,20 @@ sub _convert_printindex_command($$$$)
         @prev_normalized_entry_levels = @new_normalized_entry_levels;
       } else {
         my $entry;
-        my $convert_info = "index $index_name l $letter index entry $entry_nr";
-        if ($formatted_index_entry_nr > 1) {
-          # call with multiple_pass argument
-          $entry = $self->convert_tree_new_formatting_context($entry_tree,
+        if (!defined($entry_tree)) {
+          # can happen at least with an empty subentry
+          $entry = '';
+        } else {
+          my $convert_info
+            = "index $index_name l $letter index entry $entry_nr";
+          if ($formatted_index_entry_nr > 1) {
+            # call with multiple_pass argument
+            $entry = $self->convert_tree_new_formatting_context($entry_tree,
                                                             $convert_info,
                                "index-formatted-$formatted_index_entry_nr");
-        } else {
-          $entry = $self->convert_tree($entry_tree, $convert_info);
+          } else {
+            $entry = $self->convert_tree($entry_tree, $convert_info);
+          }
         }
 
         next if ($entry !~ /\S/ and $last_entry_level == 0);
@@ -6788,7 +6800,8 @@ sub _convert_printindex_command($$$$)
     my $summary_header = $self->html_attribute_class('table',
             ["$index_name-letters-header-$cmdname"]).'><tr><th>'
         # TRANSLATORS: before list of letters and symbols grouping index entries
-      . $self->convert_tree($self->cdt('Jump to')) .": $non_breaking_space </th><td>" .
+      . $self->convert_tree($self->cdt('Jump to'), 'Tr letters header text')
+      . ": $non_breaking_space </th><td>" .
       $non_alpha_text . $join . $alpha_text . "</td></tr></table>\n";
 
     $result .= $summary_header;
@@ -6797,15 +6810,17 @@ sub _convert_printindex_command($$$$)
   # now format the index entries
   $result
    .= $self->html_attribute_class('table', ["$index_name-entries-$cmdname"])
-    ." border=\"0\">\n" . '<tr><td></td>'
-    . $self->html_attribute_class('th', ["entries-header-$cmdname"]).'>'
-      # TRANSLATORS: index entries column header in index formatting
-    . $self->convert_tree($self->cdt('Index Entry')) .'</th>'
-    . $self->html_attribute_class('th', ["sections-header-$cmdname"]).'>'
-      # TRANSLATORS: section of index entry column header in index formatting
-    . $self->convert_tree($self->cdt('Section')) . "</th></tr>\n"
-    . "<tr><td colspan=\"3\">".$self->get_conf('DEFAULT_RULE')
-    ."</td></tr>\n";
+   ." border=\"0\">\n" . '<tr><td></td>'
+   . $self->html_attribute_class('th', ["entries-header-$cmdname"]).'>'
+     # TRANSLATORS: index entries column header in index formatting
+   . $self->convert_tree($self->cdt('Index Entry'), 'Tr th idx entries 1')
+   .'</th>'
+   . $self->html_attribute_class('th', ["sections-header-$cmdname"]).'>'
+     # TRANSLATORS: section of index entry column header in index formatting
+   . $self->convert_tree($self->cdt('Section'), 'Tr th idx entries 2')
+   ."</th></tr>\n"
+   . "<tr><td colspan=\"3\">".$self->get_conf('DEFAULT_RULE')
+   ."</td></tr>\n";
   $result .= $result_index_entries;
   $result .= "</table>\n";
 
@@ -6815,7 +6830,7 @@ sub _convert_printindex_command($$$$)
     my $summary_footer = $self->html_attribute_class('table',
                  ["$index_name-letters-footer-$cmdname"]).'><tr><th>'
         # TRANSLATORS: before list of letters and symbols grouping index entries
-      . $self->convert_tree($self->cdt('Jump to'))
+      . $self->convert_tree($self->cdt('Jump to'), 'Tr letters footer text')
       . ": $non_breaking_space </th><td>"
       . $non_alpha_text . $join . $alpha_text . "</td></tr></table>\n";
     $result .= $summary_footer
@@ -7607,12 +7622,6 @@ sub _convert_menu_entry_type($$$)
     $description = $self->convert_tree($menu_description,
                                          'menu_arg description');
   }
-  if ($description ne ''
-      and $self->get_conf('AVOID_MENU_REDUNDANCY')
-      and _simplify_text_for_comparison($name_no_number)
-            eq _simplify_text_for_comparison($description)) {
-    $description = '';
-  }
   my $non_breaking_space = $self->get_info('non_breaking_space');
   return '<tr>'
      .$self->html_attribute_class('td', ['menu-entry-destination']).'>'
@@ -7735,8 +7744,10 @@ sub _convert_def_line_type($$$$)
 
   my $def_call = '';
   if ($type_element) {
+    my $explanation = "DEF_TYPE $def_command";
     my $type_text = $self->convert_tree({'type' => '_code',
-                                         'contents' => [$type_element]});
+                                         'contents' => [$type_element]},
+                                        $explanation);
     if ($type_text ne '') {
       $def_call .= $self->html_attribute_class('code', ['def-type']).'>'.
           $type_text .'</code>';
@@ -7752,16 +7763,19 @@ sub _convert_def_line_type($$$$)
 
   if ($name_element) {
     $def_call .= $self->html_attribute_class('strong', ['def-name']).'>'.
-       $self->convert_tree({'type' => '_code', 'contents' => [$name_element]})
+       $self->convert_tree({'type' => '_code', 'contents' => [$name_element]},
+                           "DEF_NAME $def_command")
        .'</strong>';
   }
 
   if ($arguments) {
+    my $explanation = "DEF_ARGS $def_command";
   # arguments not only metasyntactic variables
   # (deftypefn, deftypevr, deftypeop, deftypecv)
     if ($Texinfo::Common::def_no_var_arg_commands{$base_command_name}) {
-      my $arguments_formatted = $self->convert_tree({'type' => '_code',
-                                                  'contents' => [$arguments]});
+      my $arguments_formatted
+        = $self->convert_tree({'type' => '_code', 'contents' => [$arguments]},
+                              $explanation);
       if ($arguments_formatted =~ /\S/) {
         $def_call .= ' ' unless($element->{'extra'}->{'omit_def_name_space'});
         $def_call .= $self->html_attribute_class('code',
@@ -7772,7 +7786,7 @@ sub _convert_def_line_type($$$$)
       # only metasyntactic variable arguments (deffn, defvr, deftp, defop, defcv)
       # FIXME not part of the API
       _set_code_context($self, 0);
-      my $arguments_formatted = $self->convert_tree($arguments);
+      my $arguments_formatted = $self->convert_tree($arguments, $explanation);
       _pop_code_context($self);
       if ($arguments_formatted =~ /\S/) {
         $def_call .= ' ' unless($element->{'extra'}->{'omit_def_name_space'});
@@ -7841,7 +7855,8 @@ sub _convert_def_line_type($$$$)
       if ($open ne '') {
         $result .= $open.'>';
       }
-      $result .= $self->convert_tree($category_tree);
+      my $explanation = "DEF_CATEGORY $def_command";
+      $result .= $self->convert_tree($category_tree, $explanation);
       if ($open ne '') {
         $result .= '</span>';
       }
@@ -8405,10 +8420,10 @@ sub _reset_unset_no_arg_commands_formatting_context($$$$;$)
     }
   }
   if ($translate
-      and $no_arg_command_context->{'tree'}
+      and $no_arg_command_context->{'translated_tree'}
       and not defined($no_arg_command_context->{'translated_converted'})) {
     my $translated_tree
-      = $no_arg_command_context->{'tree'};
+      = $no_arg_command_context->{'translated_tree'};
     my $translation_result;
     my $explanation
        = "Translated NO ARG \@$cmdname ctx $reset_context";
@@ -8418,18 +8433,19 @@ sub _reset_unset_no_arg_commands_formatting_context($$$$;$)
         = $self->convert_tree($translated_tree, $explanation);
     } elsif ($reset_context eq 'preformatted') {
       # there does not seems to be anything simpler...
-      my $preformatted_command_name = 'example';
+      my $preformatted_cmdname = 'example';
       $self->_new_document_context($context_str);
-      _open_command_update_context($self, 'example');
+      _open_command_update_context($self, $preformatted_cmdname);
       $translation_result
         = $self->convert_tree($translated_tree, $explanation);
-      _convert_command_update_context($self, 'example');
+      _convert_command_update_context($self, $preformatted_cmdname);
       $self->_pop_document_context();
     } elsif ($reset_context eq 'string') {
-      $translation_result
-        = $self->convert_tree_new_formatting_context({'type' => '_string',
-                                          'contents' => [$translated_tree]},
-                                                     $context_str);
+      $self->_new_document_context($context_str);
+      _set_string_context($self);
+      $translation_result = $self->convert_tree($translated_tree,
+                                                $explanation);
+      $self->_pop_document_context();
     } elsif ($reset_context eq 'css_string') {
       $translation_result = $self->html_convert_css_string($translated_tree,
                                                            $context_str);
@@ -9269,26 +9285,28 @@ sub _prepare_css($)
   my @css_rule_lines;
 
   my $css_files = $self->get_conf('CSS_FILES');
-  foreach my $file (@$css_files) {
+  foreach my $css_file (@$css_files) {
     my $css_file_fh;
-    my $css_file;
-    if ($file eq '-') {
+    my $css_file_path;
+    if ($css_file eq '-') {
       $css_file_fh = \*STDIN;
-      $css_file = '-';
+      $css_file_path = '-';
     } else {
-      $css_file = $self->Texinfo::Common::locate_include_file($file);
-      unless (defined($css_file)) {
-        my $input_file_name = $file;
+      $css_file_path = $self->Texinfo::Common::locate_include_file($css_file);
+      unless (defined($css_file_path)) {
+        my $css_input_file_name;
         my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
         if (defined($encoding)) {
-          $input_file_name = decode($encoding, $input_file_name);
+          $css_input_file_name = decode($encoding, $css_file);
+        } else {
+          $css_input_file_name = $css_file;
         }
         $self->converter_document_warn(sprintf(
-               __("CSS file %s not found"), $input_file_name));
+               __("CSS file %s not found"), $css_input_file_name));
         next;
       }
-      unless (open (CSSFILE, $css_file)) {
-        my $css_file_name = $css_file;
+      unless (open (CSSFILE, $css_file_path)) {
+        my $css_file_name = $css_file_path;
         my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
         if (defined($encoding)) {
           $css_file_name = decode($encoding, $css_file_name);
@@ -9305,9 +9323,9 @@ sub _prepare_css($)
     # binmode($css_file_fh)
     my ($import_lines, $rules_lines);
     ($import_lines, $rules_lines)
-      = $self->_process_css_file($css_file_fh, $css_file);
+      = $self->_process_css_file($css_file_fh, $css_file_path);
     if (!close($css_file_fh)) {
-      my $css_file_name = $css_file;
+      my $css_file_name = $css_file_path;
       my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
       if (defined($encoding)) {
         $css_file_name = decode($encoding, $css_file_name);
@@ -10926,10 +10944,12 @@ sub _default_format_program_string($)
       $self->cdt('This document was generated on @emph{@today{}} using @uref{{program_homepage}, @emph{{program}}}.',
          { 'program_homepage' => {'text'
                            => $self->get_conf('PACKAGE_URL')},
-           'program' => {'text' => $self->get_conf('PROGRAM')} }));
+           'program' => {'text' => $self->get_conf('PROGRAM')} }),
+                              'Tr program string program');
   } else {
     return $self->convert_tree(
-      $self->cdt('This document was generated on @emph{@today{}}.'));
+      $self->cdt('This document was generated on @emph{@today{}}.'),
+                               'Tr program string date');
   }
 }
 
@@ -10971,7 +10991,8 @@ sub _default_format_end_file($$$)
         and ($js_setting eq 'generate' or $js_setting eq 'reference')) {
       $result .=
         '<a href="'.$self->url_protect_url_text($js_path).'" rel="jslicense"><small>'
-        .$self->convert_tree($self->cdt('JavaScript license information'))
+        .$self->convert_tree($self->cdt('JavaScript license information'),
+                             'Tr JS license header')
         .'</small></a>';
     }
   }
@@ -11069,10 +11090,10 @@ sub _file_header_information($$;$)
 
   my $doctype = $self->get_conf('DOCTYPE');
   my $root_html_element_attributes = $self->_root_html_element_attributes_string();
-  my $bodytext = $self->get_conf('BODYTEXT');
+  my $body_attributes = $self->get_conf('BODY_ELEMENT_ATTRIBUTES');
   if ($self->get_conf('HTML_MATH') and $self->get_conf('HTML_MATH') eq 'mathjax'
       and $self->get_file_information('mathjax', $filename)) {
-    $bodytext .= ' class="tex2jax_ignore"';
+    $body_attributes .= ' class="tex2jax_ignore"';
   }
   my $copying_comment = $self->get_info('copying_comment');
   $copying_comment = ''
@@ -11139,8 +11160,8 @@ MathJax = {
 
   }
 
-  return ($title, $description, $encoding, $date, $css_lines,
-          $doctype, $root_html_element_attributes, $bodytext, $copying_comment,
+  return ($title, $description, $encoding, $date, $css_lines, $doctype,
+          $root_html_element_attributes, $body_attributes, $copying_comment,
           $after_body_open, $extra_head, $program_and_version, $program_homepage,
           $program, $generator);
 }
@@ -11197,11 +11218,11 @@ sub _default_format_begin_file($$$)
     }
   }
 
-  my ($title, $description, $encoding, $date, $css_lines,
-          $doctype, $root_html_element_attributes, $bodytext, $copying_comment,
-          $after_body_open, $extra_head, $program_and_version, $program_homepage,
-          $program, $generator) = $self->_file_header_information($command_for_title,
-                                                                  $filename);
+  my ($title, $description, $encoding, $date, $css_lines, $doctype,
+      $root_html_element_attributes, $body_attributes, $copying_comment,
+      $after_body_open, $extra_head, $program_and_version, $program_homepage,
+      $program, $generator)
+        = $self->_file_header_information($command_for_title, $filename);
 
   my $links = $self->_get_links($filename, $output_unit, $node_command);
 
@@ -11227,7 +11248,7 @@ ${links}$css_lines
 $extra_head
 </head>
 
-<body $bodytext>
+<body $body_attributes>
 $after_body_open";
 
   return $result;
@@ -11244,13 +11265,14 @@ sub _default_format_node_redirection_page($$;$)
   my $direction = "<a href=\"$href\">$name</a>";
   my $string = $self->convert_tree(
     $self->cdt('The node you are looking for is at {href}.',
-      { 'href' => {'type' => '_converted', 'text' => $direction }}));
+      { 'href' => {'type' => '_converted', 'text' => $direction }}),
+      'Tr redirection sentence');
 
-  my ($title, $description, $encoding, $date, $css_lines,
-          $doctype, $root_html_element_attributes, $bodytext, $copying_comment,
-          $after_body_open, $extra_head, $program_and_version, $program_homepage,
-          $program, $generator) = $self->_file_header_information($command,
-                                                                  $filename);
+  my ($title, $description, $encoding, $date, $css_lines, $doctype,
+      $root_html_element_attributes, $body_attributes, $copying_comment,
+      $after_body_open, $extra_head, $program_and_version, $program_homepage,
+      $program, $generator) = $self->_file_header_information($command,
+                                                              $filename);
 
   my $result = "$doctype
 <html${root_html_element_attributes}>
@@ -11275,7 +11297,7 @@ $description\n".
 "$extra_head
 </head>
 
-<body $bodytext>
+<body $body_attributes>
 $after_body_open
 <p>$string</p>
 </body>
@@ -11368,7 +11390,8 @@ sub _default_format_special_body_about($$$)
   }
   $about .= "<p>\n";
   $about .= $self->convert_tree(
-    $self->cdt('  The buttons in the navigation panels have the following meaning:'))
+    $self->cdt('  The buttons in the navigation panels have the following meaning:'),
+                               'ABOUT')
             . "\n";
   $about .= <<EOT;
 </p>
@@ -11376,14 +11399,17 @@ sub _default_format_special_body_about($$$)
   <tr>
 EOT
    # TRANSLATORS: direction column header in the navigation help
-  $about .= '    <th> '. $self->convert_tree($self->cdt('Button'))." </th>\n".
+  $about .= '    <th> '. $self->convert_tree($self->cdt('Button'), 'ABOUT')
+   ." </th>\n".
    # TRANSLATORS: button label column header in the navigation help
-   '    <th> ' . $self->convert_tree($self->cdt('Name')) . " </th>\n" .
+   '    <th> ' . $self->convert_tree($self->cdt('Name'), 'ABOUT')
+   . " </th>\n" .
    # TRANSLATORS: direction description column header in the navigation help
-   '    <th> ' . $self->convert_tree($self->cdt('Go to')) . " </th>\n" .
+   '    <th> ' . $self->convert_tree($self->cdt('Go to'), 'ABOUT')
+   . " </th>\n" .
    # TRANSLATORS: section reached column header in the navigation help
-   '    <th> ' . $self->convert_tree($self->cdt('From 1.2.3 go to'))."</th>\n"
-   . "  </tr>\n";
+   '    <th> ' . $self->convert_tree($self->cdt('From 1.2.3 go to'), 'ABOUT')
+   ."</th>\n". "  </tr>\n";
 
   my $active_icons;
   if ($self->get_conf('ICONS')) {
@@ -11405,10 +11431,10 @@ EOT
     # if the button spec is an array we do not know what the button
     # looks like, so we do not show the button but still show explanations.
     if (ref($button_spec) ne 'ARRAY') {
-      my $button_name_string
-          = $self->direction_string($direction, 'button', 'string');
       # FIXME strip FirstInFile from $button to get active icon file?
       if ($active_icons and $active_icons->{$direction}) {
+        my $button_name_string
+          = $self->direction_string($direction, 'button', 'string');
         $about
          .= &{$self->formatting_function('format_button_icon_img')}($self,
                          $button_name_string, $active_icons->{$direction})
@@ -11419,13 +11445,14 @@ EOT
       }
     }
     $about .= "</td>\n";
+    # same order for getting the direction strings as in C code
+    my $button_name = $self->direction_string($direction, 'button');
+    $button_name = '' if (!defined($button_name));
     my $direction_description
       = $self->direction_string($direction, 'description');
     $direction_description = '' if (!defined($direction_description));
     my $direction_example = $self->direction_string($direction, 'example');
     $direction_example = '' if (!defined($direction_example));
-    my $button_name = $self->direction_string($direction, 'button');
-    $button_name = '' if (!defined($button_name));
     $about .=
 '    '.$self->html_attribute_class('td', ['name-direction-about']).'>'
     ."$button_name</td>
@@ -11440,7 +11467,9 @@ EOT
 
 <p>
 EOT
-  $about .= $self->convert_tree($self->cdt('  where the @strong{ Example } assumes that the current position is at @strong{ Subsubsection One-Two-Three } of a document of the following structure:')) . "\n";
+  $about .= $self->convert_tree(
+    $self->cdt('  where the @strong{ Example } assumes that the current position is at @strong{ Subsubsection One-Two-Three } of a document of the following structure:'),
+                                'ABOUT') . "\n";
 
 #  where the <strong> Example </strong> assumes that the current position
 #  is at <strong> Subsubsection One-Two-Three </strong> of a document of
@@ -11452,10 +11481,12 @@ EOT
 EOT
   my $non_breaking_space = $self->get_info('non_breaking_space');
   # TRANSLATORS: example name of section for section 1
-  $about .= '  <li> 1. ' . $self->convert_tree($self->cdt('Section One')) . "\n" .
+  $about .= '  <li> 1. ' . $self->convert_tree($self->cdt('Section One'),
+                                               'ABOUT') . "\n" .
 "    <ul>\n" .
        # TRANSLATORS: example name of section for section 1.1
-'      <li>1.1 ' . $self->convert_tree($self->cdt('Subsection One-One')) . "\n";
+'      <li>1.1 ' . $self->convert_tree($self->cdt('Subsection One-One'),
+                                       'ABOUT') . "\n";
   $about .= <<EOT;
         <ul>
           <li>...</li>
@@ -11464,29 +11495,36 @@ EOT
 EOT
   $about .= '      <li>1.2 ' .
                  # TRANSLATORS: example name of section for section 1.2
-            $self->convert_tree($self->cdt('Subsection One-Two')) . "\n" .
+            $self->convert_tree($self->cdt('Subsection One-Two'), 'ABOUT')
+                                                                    . "\n" .
 "        <ul>\n" .
 '          <li>1.2.1 ' .
                  # TRANSLATORS: example name of section for section 1.2.1
-    $self->convert_tree($self->cdt('Subsubsection One-Two-One')) . "</li>\n" .
+    $self->convert_tree($self->cdt('Subsubsection One-Two-One'), 'ABOUT')
+                                                              . "</li>\n" .
 '          <li>1.2.2 ' .
                  # TRANSLATORS: example name of section for section 1.2.2
-    $self->convert_tree($self->cdt('Subsubsection One-Two-Two')) . "</li>\n" .
+    $self->convert_tree($self->cdt('Subsubsection One-Two-Two'), 'ABOUT')
+                                                              . "</li>\n" .
 '          <li>1.2.3 ' .
                  # TRANSLATORS: example name of section for section 1.2.3
-        $self->convert_tree($self->cdt('Subsubsection One-Two-Three'))
+        $self->convert_tree($self->cdt('Subsubsection One-Two-Three'),
+                            'ABOUT')
                   . " $non_breaking_space $non_breaking_space\n"
 .
 '            <strong>&lt;== ' .
-   $self->convert_tree($self->cdt('Current Position')) . " </strong></li>\n" .
+   $self->convert_tree($self->cdt('Current Position'), 'ABOUT')
+                                                 . " </strong></li>\n" .
 '          <li>1.2.4 ' .
                  # TRANSLATORS: example name of section for section 1.2.4
-  $self->convert_tree($self->cdt('Subsubsection One-Two-Four')) . "</li>\n" .
+  $self->convert_tree($self->cdt('Subsubsection One-Two-Four'), 'ABOUT')
+                                                                . "</li>\n" .
 "        </ul>\n" .
 "      </li>\n" .
 '      <li>1.3 ' .
                  # TRANSLATORS: example name of section for section 1.3
-          $self->convert_tree($self->cdt('Subsection One-Three')) . "\n";
+          $self->convert_tree($self->cdt('Subsection One-Three'), 'ABOUT')
+                                                                    . "\n";
   $about .= <<EOT;
         <ul>
           <li>...</li>
@@ -11495,7 +11533,8 @@ EOT
 EOT
   $about .= '      <li>1.4 ' .
                  # TRANSLATORS: example name of section for section 1.4
-         $self->convert_tree($self->cdt('Subsection One-Four')) . "</li>\n";
+         $self->convert_tree($self->cdt('Subsection One-Four'), 'ABOUT')
+                                                                 . "</li>\n";
 
   $about .= <<EOT;
     </ul>
@@ -12354,8 +12393,6 @@ sub _prepare_converted_output_info($)
         next if (!$command->{'args'} or !$command->{'args'}->[0]
                  or !$command->{'args'}->[0]->{'contents'}
                  or !scalar(@{$command->{'args'}->[0]->{'contents'}}));
-        print STDERR "Using $fulltitle_command as title\n"
-          if ($self->get_conf('DEBUG'));
         $fulltitle_tree = $command->{'args'}->[0];
         last;
       }
@@ -12426,10 +12463,11 @@ sub _prepare_converted_output_info($)
     $self->{'documentdescription_string'}
       = $self->get_conf('documentdescription');
   } elsif ($global_commands and $global_commands->{'documentdescription'}) {
+    my $tmp = {'contents'
+               => $global_commands->{'documentdescription'}->{'contents'}};
     $self->{'documentdescription_string'}
       = $self->convert_tree_new_formatting_context({'type' => '_string',
-                                                    'contents' =>
-                     $global_commands->{'documentdescription'}->{'contents'}},
+                                                    'contents' => [$tmp],},
                                                    'documentdescription');
     chomp($self->{'documentdescription_string'});
   }
@@ -12490,8 +12528,9 @@ sub _html_convert_output($$$$$$$$)
       # and, for special output unit, to avoid outputting anything if empty.
       my $body;
       if ($output_unit->{'unit_type'} eq 'special_unit') {
-        print STDERR "\nUNIT SPECIAL $output_unit->{'special_unit_variety'}\n"
-           if ($self->get_conf('DEBUG'));
+        print STDERR "\nUNIT SPECIAL "
+           ."$output_unit->{'special_unit_variety'} $unit_nr\n"
+          if ($self->get_conf('DEBUG'));
         $body = $self->convert_output_unit($output_unit,
                                            "output s-unit $unit_nr");
         if ($body eq '') {
@@ -12839,10 +12878,10 @@ sub output($$)
   # pass to XS.
   _XS_reset_output_init_conf($self);
 
-  # set BODYTEXT
+  # set BODY_ELEMENT_ATTRIBUTES
   $self->set_global_document_commands('preamble', ['documentlanguage']);
   my $structure_preamble_document_language = $self->get_conf('documentlanguage');
-  $self->set_conf('BODYTEXT',
+  $self->set_conf('BODY_ELEMENT_ATTRIBUTES',
                   'lang="' . $structure_preamble_document_language . '"');
   $self->set_global_document_commands('before', ['documentlanguage']);
 
@@ -13230,6 +13269,7 @@ sub _convert($$;$)
   # cache return value of get_conf for speed
 
   if ($debug) {
+    #cluck() if (!defined($explanation));
     $explanation = 'NO EXPLANATION' if (!defined($explanation));
     my $contexts_str = _debug_print_html_contexts($self);
     print STDERR "ELEMENT($explanation) ".$contexts_str.", ->";
@@ -13237,8 +13277,12 @@ sub _convert($$;$)
     print STDERR " type: $element->{'type'}" if ($element->{'type'});
     my $text = $element->{'text'};
     if (defined($text)) {
-      $text =~ s/\n/\\n/;
-      print STDERR " text: $text";
+      if ($text ne '') {
+        $text =~ s/\n/\\n/;
+        print STDERR " text: $text";
+      } else {
+        print STDERR ' text(EMPTY)';
+      }
     }
     print STDERR "\n";
   }
@@ -13357,7 +13401,7 @@ sub _convert($$;$)
             # do not have $arg_spec reset to normal, such that their argument
             # is not converted here
             $arg_spec = ['normal'] if (!defined($arg_spec));
-            my $arg_formatted = {'tree' => $arg};
+            my $arg_formatted = {'arg_tree' => $arg};
             foreach my $arg_type (@$arg_spec) {
               my $explanation = "$command_type A[$arg_idx]$arg_type";
               if ($arg_type eq 'normal') {
@@ -13484,7 +13528,8 @@ sub _convert($$;$)
     my $content_formatted = '';
     if ($type_name eq 'definfoenclose_command') {
       if ($element->{'args'}) {
-        $content_formatted = $self->_convert($element->{'args'}->[0]);
+        $content_formatted = $self->_convert($element->{'args'}->[0],
+                                             "DEFINFOENCLOSE_ARG");
       }
     } elsif ($element->{'contents'}) {
       my $content_idx = 0;
@@ -13509,6 +13554,11 @@ sub _convert($$;$)
     return $result;
     # no type, no cmdname, but contents.
   } elsif ($element->{'contents'}) {
+    # empty contents should be a bug, but it should not have consequences
+    if ($self->get_conf('TEST')
+        and !scalar(@{$element->{'contents'}})) {
+      cluck("Empty contents in UNNAMED HOLDER");
+    }
     # this happens inside accents, for section/node names, for @images.
     my $content_formatted = '';
     my $content_idx = 0;
@@ -13538,17 +13588,14 @@ sub _set_variables_texi2html($)
   #['DOCTYPE', '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">'],
   #['DOCTYPE', '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">'],
   ['FORMAT_MENU', 'menu'],
-  ['NO_USE_SETFILENAME', 1],
   ['USE_SETFILENAME_EXTENSION', 0],
   ['footnotestyle', 'separate'],
   ['CONTENTS_OUTPUT_LOCATION', 'separate_element'],
   ['FORCE', 1],
-  ['AVOID_MENU_REDUNDANCY', 1],
   ['USE_ACCESSKEY', 0],
   ['NODE_NAME_IN_MENU', 0],
   ['SHORT_TOC_LINK_TO_TOC', 0],
   ['SHOW_TITLE', 1],
-  ['USE_UP_NODE_FOR_ELEMENT_UP', 1],
   ['USE_REL_REV', 0],
   ['USE_LINKS', 0],
   ['USE_NODES', 0],

@@ -12,17 +12,14 @@ use Texinfo::Transformations;
 use Texinfo::Convert::Texinfo;
 use Texinfo::Document;
 use Texinfo::Structuring;
+use Texinfo::XSLoader;
 
 use Data::Dumper;
 
 ok(1);
 
-my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
-                        or $ENV{TEXINFO_XS} ne 'omit')
-                       and (not defined($ENV{TEXINFO_XS_PARSER})
-                            or $ENV{TEXINFO_XS_PARSER} eq '1')
-                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+
+my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
 
 # _new_node cannot be called with XS used for structuring.
 # See comment in the beginning of _new_node.
@@ -37,13 +34,13 @@ sub test_new_node($$$$)
   my $node_tree = $parser->parse_texi_line ($in);
   my $document = $parser->parse_texi_text ('');
   my $identifier_target = $document->labels_information();
-  Texinfo::Structuring::associate_internal_references($document, $parser);
+  Texinfo::Structuring::associate_internal_references($document);
   my $node = Texinfo::Transformations::_new_node($node_tree, $document);
 
   my ($texi_result, $normalized);
   if (defined($node)) {
     $texi_result = Texinfo::Convert::Texinfo::convert_to_texinfo($node);
-    Texinfo::Structuring::associate_internal_references($document, $parser);
+    Texinfo::Structuring::associate_internal_references($document);
     $normalized = $node->{'extra'}->{'normalized'};
     my @identifiers = sort(keys(%$identifier_target));
     if (scalar(@identifiers) != 1) {
@@ -168,10 +165,10 @@ Text.
 
 $parser = Texinfo::Parser::parser();
 $document = $parser->parse_texi_text($sections_text);
-Texinfo::Structuring::associate_internal_references($document, $parser);
-Texinfo::Transformations::insert_nodes_for_sectioning_commands($document,
-                                                          $parser);
-#Texinfo::Document::rebuild_document($document);
+
+Texinfo::Structuring::associate_internal_references($document);
+Texinfo::Transformations::insert_nodes_for_sectioning_commands($document);
+
 $tree = $document->tree();
 my $result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 is ($result, $reference, 'add nodes');
@@ -189,11 +186,8 @@ $document = $parser->parse_texi_text('@node Top
 * (some_manual)::
 @end menu
 ');
-Texinfo::Structuring::associate_internal_references($document, $parser);
-Texinfo::Transformations::insert_nodes_for_sectioning_commands($document,
-                                                          $parser);
-
-#Texinfo::Document::rebuild_document($document);
+Texinfo::Structuring::associate_internal_references($document);
+Texinfo::Transformations::insert_nodes_for_sectioning_commands($document);
 
 my $identifier_target = $document->labels_information();
 my $indices_information = $document->indices_information();

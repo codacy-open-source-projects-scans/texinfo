@@ -76,18 +76,7 @@ use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 
 $VERSION = '7.1dev';
 
-# XS parser and not explicitely unset
-my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
-                        or $ENV{TEXINFO_XS} ne 'omit')
-                       and (not defined($ENV{TEXINFO_XS_PARSER})
-                            or $ENV{TEXINFO_XS_PARSER} eq '1')
-                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
-
-my $XS_convert = 0;
-$XS_convert = 1 if ($XS_structuring
-                    and defined $ENV{TEXINFO_XS_CONVERT}
-                    and $ENV{TEXINFO_XS_CONVERT} eq '1');
+my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
 
 my %XS_overrides = (
   "Texinfo::Structuring::associate_internal_references"
@@ -133,11 +122,11 @@ sub import {
         Texinfo::XSLoader::override ($sub, $XS_overrides{$sub});
       }
     }
-    if ($XS_convert) {
-      for my $sub (keys %XS_convert_overrides) {
-        Texinfo::XSLoader::override ($sub, $XS_convert_overrides{$sub});
-      }
-    }
+    #if ($XS_convert) {
+    #  for my $sub (keys %XS_convert_overrides) {
+    #    Texinfo::XSLoader::override ($sub, $XS_convert_overrides{$sub});
+    #  }
+    #}
     $module_loaded = 1;
   }
   # The usual import method
@@ -163,10 +152,11 @@ my %unnumbered_commands = %Texinfo::Commands::unnumbered_commands;
 # 'section_childs'
 # 'section_directions'
 # 'toplevel_directions'
-sub sectioning_structure($$)
+sub sectioning_structure($)
 {
   my $document = shift;
-  my $customization_information = shift;
+
+  my $customization_information = $document;
 
   my $root = $document->tree();
   my $registrar = $document->registrar();
@@ -398,10 +388,11 @@ sub _print_sectioning_tree($)
   return $result;
 }
 
-sub warn_non_empty_parts($$)
+sub warn_non_empty_parts($)
 {
   my $document = shift;
-  my $customization_information = shift;
+
+  my $customization_information = $document;
 
   my $global_commands = $document->global_commands_information();
   my $registrar = $document->registrar();
@@ -561,10 +552,11 @@ sub get_node_node_childs_from_sectioning
 
 # In general should be called only after complete_node_tree_with_menus
 # to try to generate menus automatically before checking.
-sub check_nodes_are_referenced($$)
+sub check_nodes_are_referenced($)
 {
-  my ($document, $customization_information) = @_;
+  my $document = shift;
 
+  my $customization_information = $document;
   my $nodes_list = $document->nodes_list();
   my $identifier_target = $document->labels_information();
   my $refs = $document->internal_references_information();
@@ -672,11 +664,11 @@ sub _first_menu_node($$)
 }
 
 # set menu_directions
-sub set_menus_node_directions($$)
+sub set_menus_node_directions($)
 {
   my $document = shift;
-  my $customization_information = shift;
 
+  my $customization_information = $document;
   my $global_commands = $document->global_commands_information();
   my $nodes_list = $document->nodes_list();
   my $identifier_target = $document->labels_information();
@@ -807,11 +799,11 @@ sub _section_direction_associated_node($$)
 # complete automatic directions with menus (and first node
 # for Top node).
 # Checks on structure related to menus.
-sub complete_node_tree_with_menus($$)
+sub complete_node_tree_with_menus($)
 {
   my $document = shift;
-  my $customization_information = shift;
 
+  my $customization_information = $document;
   my $nodes_list = $document->nodes_list();
   my $identifier_target = $document->labels_information();
   my $registrar = $document->registrar();
@@ -1020,11 +1012,11 @@ sub complete_node_tree_with_menus($$)
 }
 
 # set node directions based on sectioning and @node explicit directions
-sub nodes_tree($$)
+sub nodes_tree($)
 {
   my $document = shift;
-  my $customization_information = shift;
 
+  my $customization_information = $document;
   my $root = $document->tree();
   my $identifier_target = $document->labels_information();
   my $registrar = $document->registrar();
@@ -1164,10 +1156,11 @@ sub nodes_tree($$)
 
 # For each internal reference command, set the 'normalized' key, in the
 # @*ref first argument or in 'menu_entry_node' extra.
-sub associate_internal_references($$)
+sub associate_internal_references($)
 {
   my $document = shift;
-  my $customization_information = shift;
+
+  my $customization_information = $document;
 
   my $identifier_target = $document->labels_information();
   my $refs = $document->internal_references_information();
@@ -1784,14 +1777,17 @@ sub unsplit($)
 {
   my $document = shift;
 
+  my $unsplit_needed = 0;
   my $XS_unsplit_needed = _XS_unsplit($document);
+  if ($XS_unsplit_needed > 0) {
+    $unsplit_needed = 1;
+  }
 
   my $root = $document->tree();
   if (!$root->{'type'} or $root->{'type'} ne 'document_root'
       or !$root->{'contents'}) {
     return 0;
   }
-  my $unsplit_needed = 0;
   foreach my $content (@{$root->{'contents'}}) {
     if ($content->{'associated_unit'}) {
       delete $content->{'associated_unit'};
@@ -1946,17 +1942,22 @@ sub units_directions($$$)
                 and $node->{'extra'}->{'node_directions'}->{$direction->[1]});
       }
       # Now do NodeForward which is something like the following node.
+      my $associated_section;
       my $automatic_directions
         = (not ($node->{'args'} and scalar(@{$node->{'args'}}) > 1));
+      if ($automatic_directions and $node->{'extra'}
+          and $node->{'extra'}->{'associated_section'}) {
+        $associated_section = $node->{'extra'}->{'associated_section'};
+      }
       my $menu_child = _first_menu_node($node, $identifier_target);
       if ($menu_child) {
         $directions->{'NodeForward'}
           = _label_target_unit_element($menu_child);
-      } elsif ($automatic_directions and $node->{'associated_section'}
-       and $node->{'associated_section'}->{'extra'}->{'section_childs'}
-       and $node->{'associated_section'}->{'extra'}->{'section_childs'}->[0]) {
+      } elsif ($associated_section
+               and $associated_section->{'extra'}->{'section_childs'}
+               and $associated_section->{'extra'}->{'section_childs'}->[0]) {
         $directions->{'NodeForward'}
-          = $node->{'associated_section'}->{'extra'}
+          = $associated_section->{'extra'}
                   ->{'section_childs'}->[0]->{'associated_unit'};
       } elsif ($node->{'extra'}->{'node_directions'}
                and $node->{'extra'}->{'node_directions'}->{'next'}) {
@@ -2019,9 +2020,9 @@ sub units_directions($$$)
         }
         if ($section->{'extra'}->{'section_level'} <= 1) {
           $directions->{'FastBack'} = $section_output_unit;
-        } elsif ($section_output_unit->{'directions'}->{'Fastback'}) {
+        } elsif ($section_output_unit->{'directions'}->{'FastBack'}) {
           $directions->{'FastBack'}
-            = $section_output_unit->{'directions'}->{'Fastback'};
+            = $section_output_unit->{'directions'}->{'FastBack'};
         }
       }
     } else {
@@ -2088,19 +2089,6 @@ sub units_directions($$$)
         $directions->{'FastForward'}->{'directions'}->{'FastBack'}
           = $output_unit;
       }
-    }
-    # Use node up for Up if there is no section up.
-    # Not done in the default case.
-    if ($customization_information->get_conf('USE_UP_NODE_FOR_ELEMENT_UP')
-        and !$directions->{'Up'} and defined($node)
-        and $node->{'extra'}->{'node_directions'}
-        and $node->{'extra'}->{'node_directions'}->{'up'}
-        and (!$node_top or ($node ne $node_top))) {
-      #print STDERR "Node for up: ".output_unit_texi($output_unit)."\n";
-      my $up_node_unit_element
-        = _label_target_unit_element(
-               $node->{'extra'}->{'node_directions'}->{'up'});
-      $directions->{'Up'} = $up_node_unit_element if ($up_node_unit_element);
     }
     if ($output_unit->{'directions'}) {
       %{$output_unit->{'directions'}}
@@ -2216,6 +2204,16 @@ sub output_unit_texi($)
                                                           $unit_command);
 }
 
+# Should be in the same order as relative_unit_direction_name
+# in main/output_unit.c
+my @relative_directions_order = ('This', 'Forward', 'Back', 'FastForward',
+ 'FastBack', 'Next', 'Prev', 'Up', 'SectionNext', 'SectionPrev',
+ 'SectionUp', 'NodeNext', 'NodePrev', 'NodeUp', 'NodeForward', 'NodeBack');
+my @file_directions_order = ('PrevFile', 'NextFile');
+my @all_directions_order
+    = (@relative_directions_order, @file_directions_order,
+       map {'FirstInFile'.$_} @relative_directions_order);
+
 # Used for debugging and in test suite, but not generally useful. Not
 # documented in pod section and not exportable as it should not, in
 # general, be used.
@@ -2225,9 +2223,12 @@ sub print_output_unit_directions($)
   my $result = 'output unit: '.output_unit_texi($output_unit)."\n";
 
   if ($output_unit->{'directions'}) {
-    foreach my $direction (sort(keys(%{$output_unit->{'directions'}}))) {
-      $result .= "  $direction: ".
-       output_unit_texi($output_unit->{'directions'}->{$direction})."\n";
+    #foreach my $direction (sort(keys(%{$output_unit->{'directions'}}))) {
+    foreach my $direction (@all_directions_order) {
+      if (defined($output_unit->{'directions'}->{$direction})) {
+        $result .= "  $direction: ".
+         output_unit_texi($output_unit->{'directions'}->{$direction})."\n";
+      }
     }
   } else {
     $result .= "  NO DIRECTION\n";
@@ -2250,17 +2251,18 @@ Texinfo::Structuring - information on Texinfo::Document tree
     units_directions units_file_directions);
 
   # $document is a parsed Texinfo::Document document, $tree is the
-  # associated Texinfo document tree. $config is an object implementing
+  # associated Texinfo document tree. When customization variables
+  # information is needed, it is obtained from the $document by calling
   # the get_conf() method.
-  my $sections_list = sectioning_structure($document, $config);
+  my $sections_list = sectioning_structure($document);
   my $identifier_target = $document->labels_information();
   my $global_commands = $document->global_commands_information();
-  my $nodes_list = nodes_tree($document, $config);
-  set_menus_node_directions($document, $config);
-  complete_node_tree_with_menus($document, $config);
+  my $nodes_list = nodes_tree($document);
+  set_menus_node_directions($document);
+  complete_node_tree_with_menus($document);
   my $refs = $document->internal_references_information();
-  check_nodes_are_referenced($document, $config);
-  associate_internal_references($document, $config);
+  check_nodes_are_referenced($document);
+  associate_internal_references($document);
   number_floats($document->floats_information());
   my $output_units;
   if ($split_at_nodes) {
@@ -2269,7 +2271,7 @@ Texinfo::Structuring - information on Texinfo::Document tree
     $output_units = split_by_section($document);
   }
   split_pages($output_units, $split);
-  units_directions($config, $identifier_target, $output_units);
+  units_directions($document, $identifier_target, $output_units);
   units_file_directions($output_units);
 
 =head1 NOTES
@@ -2311,18 +2313,18 @@ output units by the user.
 
 No method is exported in the default case.
 
-Most methods takes a L<Texinfo::Report> C<$registrar> as argument for
-error reporting.  Most also require Texinfo customization variables
+Most methods use the L<Texinfo::Report> registrar from a parsed document
+for error reporting. Most also require Texinfo customization variables
 information, which means an object implementing the C<get_conf> method, in
-practice the main program configuration or a converter
-(L<Texinfo::Convert::Converter/Getting and setting customization
-variables>).  Other common input arguments such as target elements associated
-to identifiers or refs are obtained from a parsed document, see
+general a parsed document with registered customization, or, sometime,
+a converter (L<Texinfo::Convert::Converter/Getting and setting customization
+variables>).  Other common data needed such as target elements associated to
+identifiers or refs are obtained from a parsed document, see
 L<Texinfo::Document>.
 
 =over
 
-=item associate_internal_references($document, $customization_information)
+=item associate_internal_references($document)
 X<C<associate_internal_references>>
 
 Verify that internal references (C<@ref> and similar without fourth of
@@ -2331,7 +2333,7 @@ Set the I<normalized> key in the C<extra> hash of C<menu_entry_node> container
 for menu entries and in the first argument C<extra> hash for internal
 references C<@ref> and similar @-commands.
 
-=item check_nodes_are_referenced($document, $customization_information)
+=item check_nodes_are_referenced($document)
 X<C<check_nodes_are_referenced>>
 
 Check that all the nodes are referenced (in menu, @*ref or node direction).
@@ -2339,7 +2341,7 @@ Check that all the nodes are referenced (in menu, @*ref or node direction).
 Should be called after C<complete_node_tree_with_menus> in order to
 have the autogenerated menus available.
 
-=item complete_node_tree_with_menus($document, $customization_information)
+=item complete_node_tree_with_menus($document)
 X<C<complete_node_tree_with_menus>>
 
 Complete nodes directions with menu directions.  Check consistency
@@ -2459,11 +2461,11 @@ Returns the texinfo tree corresponding to a single menu entry pointing to
 I<$node>.  If I<$use_sections> is set, use the section name for the menu
 entry name.  Returns C<undef> if the node argument is missing.
 
-=item $nodes_list = nodes_tree($document, $customization_information)
+=item $nodes_list = nodes_tree($document)
 X<C<nodes_tree>>
 
 Goes through nodes in I<$document> tree and set directions.  Returns the
-list of nodes.  Register errors in I<$registrar>.
+list of nodes.
 
 This functions sets, in the C<extra> node element hash:
 
@@ -2490,7 +2492,7 @@ Return the sectioning command name corresponding to the sectioning
 element I<$element>, adjusted in order to take into account raised
 and lowered sections, when needed.
 
-=item $sections_list = sectioning_structure($document, $customization_information)
+=item $sections_list = sectioning_structure($document)
 X<C<sectioning_structure>>
 
 This function goes through the parsed document tree and gather information
@@ -2534,7 +2536,7 @@ This element is associated to the C<extra> I<sectioning_root> key of the first
 section element of the sections list.  It is also at the top of the tree when
 following the I<up> I<section_directions>.
 
-=item set_menus_node_directions($document, $customization_information);
+=item set_menus_node_directions($document);
 X<C<set_menus_node_directions>>
 
 Goes through menu and set directions.
@@ -2606,11 +2608,11 @@ No splitting, only one page is returned, holding all the output units.
 
 =back
 
-=item warn_non_empty_parts($document, $registrar, $customization_information)
+=item warn_non_empty_parts($document)
 X<C<warn_non_empty_parts>>
 
-Register a warning in I<$registrar> for each C<@part> in global commands
-information of I<$document> that is not empty.
+Register a warning in for each C<@part> in global commands information of
+I<$document> that is not empty.
 
 =back
 

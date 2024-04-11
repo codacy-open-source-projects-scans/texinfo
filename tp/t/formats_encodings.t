@@ -1,5 +1,7 @@
 use strict;
 
+use Encode;
+
 use lib '.';
 use Texinfo::ModulePath (undef, undef, undef, 'updirs' => 2);
 
@@ -318,13 +320,13 @@ $latin1_accents_text
 $weird_accents_text
 ],
 ['weird_accents_disable_encoding',
-$weird_accents_text, {'ENABLE_ENCODING' => 0}
+$weird_accents_text, {}, {'ENABLE_ENCODING' => 0}
 ],
 ['accent',
 $accents_text
 ],
 ['accent_enable_encoding',
-$accents_text, {'ENABLE_ENCODING' => 1}, {'OUTPUT_CHARACTERS' => 1}
+$accents_text, {}, {'ENABLE_ENCODING' => 1, 'OUTPUT_CHARACTERS' => 1}
 ],
 ['accent_argument_non_ascii',
 '@node Top
@@ -361,7 +363,7 @@ $at_commands_in_refs_text,
 
 my @html_text_cases = (
 ['accentenc_enable_encoding',
-$latin1_accents_text, {'ENABLE_ENCODING' => 1}, {'OUTPUT_CHARACTERS' => 1}
+$latin1_accents_text, {}, {'ENABLE_ENCODING' => 1, 'OUTPUT_CHARACTERS' => 1}
 ],
 );
 
@@ -394,6 +396,16 @@ undef, {'test_file' => 'manual_simple_latin1_with_error.texi'}
 undef, {'test_file' => 'multiple_include_encodings.texi',
         'skip' => $Texinfo::ModulePath::conversion_from_euc_cn ne 'yes'
                    ? 'No conversion from EUC-CN' : undef, }
+],
+# This tests is also (and maybe more) a test for the test code.
+# In particular it shows that the file names in error messages
+# are doubly encoded to utf-8.  It does not prevent tests to succeed as
+# both the reference and the checked result are doubly encoded.
+# A similar test is also used in tests/encoded, but here we have the
+# tree in addition.
+['accented_character_in_file_name',
+undef, {'test_file' => Encode::encode('utf-8',
+                            "../../tests/encoded/os\x{e9}_utf8.texi")},
 ],
 ['at_commands_in_refs_utf8',
 '@setfilename at_commands_in_refs_utf8.info

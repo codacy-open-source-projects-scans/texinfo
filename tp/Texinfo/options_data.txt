@@ -201,11 +201,10 @@ ASCII_GLYPH                        converter_customization undef   integer
 ASCII_PUNCTUATION                  converter_customization undef   integer
 AUTO_MENU_DESCRIPTION_ALIGN_COLUMN converter_customization undef   integer
 AUTO_MENU_MAX_WIDTH                converter_customization undef   integer
-AVOID_MENU_REDUNDANCY              converter_customization undef   integer
 BEFORE_SHORT_TOC_LINES             converter_customization undef   char
 BEFORE_TOC_LINES                   converter_customization undef   char
 BIG_RULE                           converter_customization undef   char
-BODYTEXT                           converter_customization undef   char
+BODY_ELEMENT_ATTRIBUTES            converter_customization undef   char
 # for LaTeX
 CLASS_BEGIN_USEPACKAGE             converter_customization undef   char
 COPIABLE_LINKS                     converter_customization undef   integer
@@ -215,7 +214,7 @@ CLOSE_DOUBLE_QUOTE_SYMBOL          converter_customization undef   char
 CLOSE_QUOTE_SYMBOL                 converter_customization undef   char
 COLLATION_LANGUAGE                 converter_customization undef   char
 COMMAND_LINE_ENCODING              converter_customization undef   char
-COMPLEX_FORMAT_IN_TABLE            converter_customization undef   integer
+INDENTED_BLOCK_COMMANDS_IN_TABLE   converter_customization undef   integer
 CONTENTS_OUTPUT_LOCATION           converter_customization undef   char
 CONVERT_TO_LATEX_IN_MATH           converter_customization undef   integer
 DATE_IN_HEADER                     converter_customization undef   integer
@@ -277,7 +276,6 @@ NO_CUSTOM_HTML_ATTRIBUTE           converter_customization undef   integer
 NODE_NAME_IN_INDEX                 converter_customization undef   integer
 NODE_NAME_IN_MENU                  converter_customization undef   integer
 NO_TOP_NODE_OUTPUT                 converter_customization undef   integer
-NO_USE_SETFILENAME                 converter_customization undef   integer
 OPEN_DOUBLE_QUOTE_SYMBOL           converter_customization undef   char
 OPEN_QUOTE_SYMBOL                  converter_customization undef   char
 OUTPUT_CHARACTERS                  converter_customization undef   integer
@@ -302,6 +300,8 @@ T4H_MATH_CONVERSION                converter_customization undef   char
 T4H_TEX_CONVERSION                 converter_customization undef   char
 TEXI2HTML                          converter_customization undef   integer
 TEXINFO_OUTPUT_FORMAT              converter_customization undef   char
+# for Texinfo Markup/XML
+TXI_MARKUP_NO_SECTION_EXTENT       converter_customization undef   integer
 TOC_LINKS                          converter_customization undef   integer
 TOP_FILE                           converter_customization undef   char
 TOP_NODE_FILE_TARGET               converter_customization undef   char
@@ -317,7 +317,6 @@ USE_REL_REV                        converter_customization undef   integer
 USE_SETFILENAME_EXTENSION          converter_customization undef   integer
 USE_TITLEPAGE_FOR_TITLE            converter_customization undef   integer
 USE_UNIDECODE                      converter_customization undef   integer
-USE_UP_NODE_FOR_ELEMENT_UP         converter_customization undef   integer
 USE_XML_SYNTAX                     converter_customization undef   integer
 VERTICAL_HEAD_NAVIGATION           converter_customization undef   integer
 WORDS_IN_PAGE                      converter_customization undef   integer

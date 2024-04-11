@@ -532,11 +532,15 @@ table_item_content_tree (CONVERTER *self, const ELEMENT *element)
         {
           char *begin = lookup_extra_string (command_as_argument, "begin");
           char *end = lookup_extra_string (command_as_argument, "end");
+          char *command_name = lookup_info_string (command_as_argument,
+                                                   "command_name");
           command->type = command_as_argument->type;
           if (begin)
             add_extra_string_dup (command, "begin", begin);
           if (end)
             add_extra_string_dup (command, "end", end);
+          if (command_name)
+            add_info_string_dup (command, "command_name", command_name);
         }
       add_to_element_args (command, arg);
       add_to_contents_as_array (arg, element->args.list[0]);
@@ -561,7 +565,13 @@ convert_accents (CONVERTER *self, const ELEMENT *accent,
   int i;
 
   if (accent_stack->argument)
-    arg_text = (*convert_tree) (self, accent_stack->argument, 0);
+    {
+      char *explanation;
+      xasprintf (&explanation, "ACCENT ARG %s",
+                 builtin_command_name (accent->cmd));
+      arg_text = (*convert_tree) (self, accent_stack->argument, explanation);
+      free (explanation);
+    }
   else
     arg_text = strdup ("");
 
@@ -782,9 +792,13 @@ register_normalize_case_filename (CONVERTER *self, const char *filename)
             {
               FILE_NAME_PATH_COUNTER *output_unit_file
                 = &self->output_unit_files.list[output_unit_file_idx];
+              fprintf (stderr, "Reusing case-insensitive %s for %s\n",
+                       output_unit_file->filename, filename);
+              /*
               fprintf (stderr, "Reusing case-insensitive %s(%zu) for %s\n",
                        output_unit_file->filename, output_unit_file_idx,
                        filename);
+               */
             }
           free (lc_filename);
         }
@@ -805,9 +819,13 @@ register_normalize_case_filename (CONVERTER *self, const char *filename)
             {
               FILE_NAME_PATH_COUNTER *output_unit_file
                 = &self->output_unit_files.list[output_unit_file_idx];
+              fprintf (stderr, "Reusing %s for %s\n",
+                       output_unit_file->filename, filename);
+              /*
               fprintf (stderr, "Reusing %s(%zu) for %s\n",
                        output_unit_file->filename, output_unit_file_idx,
                        filename);
+               */
             }
         }
       else

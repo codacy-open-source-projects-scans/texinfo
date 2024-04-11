@@ -12,6 +12,9 @@ use Texinfo::Common qw(protect_comma_in_tree protect_colon_in_tree
       protect_node_after_label_in_tree);
 use Texinfo::Convert::Texinfo;
 use Texinfo::Document;
+use Texinfo::XSLoader;
+
+my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
 
 ok(1);
 
@@ -55,7 +58,9 @@ sub run_test($$$$)
   # rebuild tree
   $tree_as_text = $document->tree();
 
-  $tree_as_line = Texinfo::Document::rebuild_tree($tree_as_line);
+  if ($XS_structuring) {
+    $tree_as_line = Texinfo::Document::rebuild_tree($tree_as_line);
+  }
 
   my $texi_result_as_text
      = Texinfo::Convert::Texinfo::convert_to_texinfo($tree_as_text);

@@ -1101,9 +1101,10 @@ complete_tree_nodes_menus (const ELEMENT *root, int use_sections)
 }
 
 void
-complete_tree_nodes_missing_menu (const ELEMENT *root, DOCUMENT *document,
-                                  OPTIONS *options, int use_sections)
+complete_tree_nodes_missing_menu (DOCUMENT *document, int use_sections)
 {
+  const ELEMENT *root = document->tree;
+  OPTIONS *options = document->options;
   ELEMENT_LIST *non_automatic_nodes
      = get_non_automatic_nodes_with_sections (root);
   int i;
@@ -1126,11 +1127,6 @@ complete_tree_nodes_missing_menu (const ELEMENT *root, DOCUMENT *document,
   destroy_list (non_automatic_nodes);
 }
 
-/* NOTE in perl there is a customization_information argument:
-# customization_information is used to pass down a translatable object with
-# customization information for the gdt() call.
-Here we use the document.
-*/
 int
 regenerate_master_menu (DOCUMENT *document, int use_sections)
 {

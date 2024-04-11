@@ -32,7 +32,6 @@ use Carp qw(cluck carp confess);
 use Encode qw(decode);
 
 use Texinfo::Convert::ConvertXS;
-
 use Texinfo::XSLoader;
 
 use Texinfo::Commands;
@@ -58,18 +57,7 @@ use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
 
 $VERSION = '7.1dev';
 
-# XS parser and not explicitely unset
-my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
-                        or $ENV{TEXINFO_XS} ne 'omit')
-                       and (not defined($ENV{TEXINFO_XS_PARSER})
-                            or $ENV{TEXINFO_XS_PARSER} eq '1')
-                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
-
-my $XS_convert = 0;
-$XS_convert = 1 if ($XS_structuring
-                    and defined $ENV{TEXINFO_XS_CONVERT}
-                    and $ENV{TEXINFO_XS_CONVERT} eq '1');
+my $XS_convert = Texinfo::XSLoader::XS_convert_enabled();
 
 our $module_loaded = 0;
 sub import {
@@ -320,7 +308,10 @@ sub text_accents($;$$)
   my $options = {};
   $options->{'enabled_encoding'} = $encoding if (defined($encoding));
   $options->{'set_case'} = $set_case if (defined($set_case));
-  my $text = convert_to_text($contents_element, $options);
+  my $text = '';
+  if (defined($contents_element)) {
+    $text = convert_to_text($contents_element, $options);
+  }
 
   my $result = Texinfo::Convert::Unicode::encoded_accents(undef, $text,
                      $stack, $encoding, \&ascii_accent_fallback, $set_case);
@@ -894,10 +885,13 @@ sub output($$)
   #print STDERR "OUTPUT\n";
   my $input_basename;
   if ($document_info and defined($document_info->{'input_file_name'})) {
-    my $input_file_name = $document_info->{'input_file_name'};
+    my $input_file_name_bytes = $document_info->{'input_file_name'};
     my $encoding = $self->{'COMMAND_LINE_ENCODING'};
+    my $input_file_name;
     if (defined($encoding)) {
-      $input_file_name = decode($encoding, $input_file_name);
+      $input_file_name = decode($encoding, $input_file_name_bytes);
+    } else {
+      $input_file_name = $input_file_name_bytes;
     }
     my ($directories, $suffix);
     ($input_basename, $directories, $suffix) = fileparse($input_file_name);

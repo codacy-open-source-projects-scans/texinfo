@@ -36,17 +36,8 @@ use Texinfo::Report;
 
 our $VERSION = '7.1dev';
 
-my $XS_parser = ((not defined($ENV{TEXINFO_XS})
-                  or $ENV{TEXINFO_XS} ne 'omit')
-                 and (not defined($ENV{TEXINFO_XS_PARSER})
-                      or $ENV{TEXINFO_XS_PARSER} eq '1'));
+my $XS_parser = Texinfo::XSLoader::XS_parser_enabled();
 
-# XS parser and not explicitely unset
-my $XS_structuring = ($XS_parser
-                      and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                           or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
-
-# needed by parser
 our %XS_overrides = (
   "Texinfo::Document::remove_document"
     => "Texinfo::DocumentXS::remove_document",
@@ -54,16 +45,16 @@ our %XS_overrides = (
     => "Texinfo::DocumentXS::set_document_global_info",
   "Texinfo::Document::errors"
     => "Texinfo::DocumentXS::document_errors",
-);
-
-# needed by structure code
-our %XS_structure_overrides = (
   "Texinfo::Document::rebuild_document"
     => "Texinfo::DocumentXS::rebuild_document",
   "Texinfo::Document::rebuild_tree"
     => "Texinfo::DocumentXS::rebuild_tree",
   "Texinfo::Document::tree"
     => "Texinfo::DocumentXS::document_tree",
+  "Texinfo::Document::register_document_options"
+    => "Texinfo::DocumentXS::register_document_options",
+  "Texinfo::Document::get_conf",
+    => "Texinfo::DocumentXS::document_get_conf",
   "Texinfo::Document::global_information"
     => "Texinfo::DocumentXS::document_global_information",
   "Texinfo::Document::indices_information"
@@ -94,11 +85,6 @@ sub import {
     if ($XS_parser) {
       for my $sub (keys %XS_overrides) {
         Texinfo::XSLoader::override ($sub, $XS_overrides{$sub});
-      }
-      if ($XS_structuring) {
-        for my $sub (keys %XS_structure_overrides) {
-          Texinfo::XSLoader::override ($sub, $XS_structure_overrides{$sub});
-        }
       }
     }
     $module_loaded = 1;
@@ -229,6 +215,27 @@ sub registrar($)
 {
   my $self = shift;
   return $self->{'registrar'};
+}
+
+# Should be for options used in structuring.
+sub register_document_options($$)
+{
+  my $self = shift;
+  my $options = shift;
+
+  $self->{'options'} = $options;
+}
+
+sub get_conf($$)
+{
+  my $self = shift;
+  my $var = shift;
+
+  if (!$self->{'options'}) {
+    print STDERR "WARNING: $var: Document get_conf uninitialized options\n";
+    return undef;
+  }
+  return $self->{'options'}->{$var};
 }
 
 sub merged_indices($)
@@ -663,13 +670,15 @@ to the same document with @-commands that refer to node, anchors or floats.
 =item $nodes_list = nodes_list($document)
 
 Returns an array reference containing the document nodes.  In general set to
-the nodes list returned by L<Texinfo::Structuring nodes_tree|Texinfo::Structuring/$nodes_list = nodes_tree($document, $customization_information)>,
-by a call to L<register_document_nodes_list|/register_document_nodes_list ($document, $nodes_list)>.
+the nodes list returned by L<Texinfo::Structuring
+nodes_tree|Texinfo::Structuring/$nodes_list = nodes_tree($document)>, by a call
+to L<register_document_nodes_list|/register_document_nodes_list ($document,
+$nodes_list)>.
 
 =item $sections_list = sections_list($document)
 
-Returns an array reference containing the document sections.  In general set to the
-sections list returned by L<Texinfo::Structuring sectioning_structure|Texinfo::Structuring/$sections_list = sectioning_structure($document, $customization_information)>,
+Returns an array reference containing the document sections.  In general set to the sections list returned by
+L<Texinfo::Structuring sectioning_structure|Texinfo::Structuring/$sections_list = sectioning_structure($document)>,
 by a call to L<register_document_sections_list|/register_document_sections_list ($document, $sections_list)>.
 
 =back
@@ -796,6 +805,13 @@ the best to use for output.
 When simply sorting, the array of the sorted index entries is associated
 with the index name.
 
+The optional I<$customization_information> argument is used for
+error reporting, both to find the L<Texinfo::Report> object to use for error
+reporting and Texinfo customization variables information.  In general, it
+should be a converter (L<Texinfo::Convert::Converter/Getting and setting
+customization variables>) or a document L<Texinfo::Document/Getting
+customization options values registered in document>).
+
 L<< C<Texinfo::Indices::sort_indices_by_index>|Texinfo::Indices/$index_entries_sorted = sort_indices_by_index($document, $registrar, $customization_information, $use_unicode_collation, $locale_lang) >>
 and L<< C<Texinfo::Indices::sort_indices_by_letter>|Texinfo::Indices/$index_entries_sorted = sort_indices_by_letter($document, $registrar, $customization_information, $use_unicode_collation, $locale_lang) >>
 are used to sort the indices, if needed.
@@ -832,6 +848,25 @@ in L<C<Texinfo::Report::errors>|Texinfo::Report/($error_warnings_list, $error_co
 
 =back
 
+=head2 Getting customization options values registered in document
+
+By default, customization information is registered in a document object
+just after parsing the Texinfo code. Structuring and tree transformation
+methods then get customization variables values from the document object
+they have in argument. The customization variables set by default may be a
+subset selected to be useful for structuring and tree transformation codes.
+
+To retrieve Texinfo customization variables you can call C<get_conf>:
+
+=over
+
+=item $value = $document->get_conf($variable_name)
+
+Returns the value of the Texinfo customization variable I<$variable_name>
+(possibly C<undef>), if the variable value was registered in the document,
+or C<undef>.
+
+=back
 
 =head2 Registering document and information in document
 
@@ -859,6 +894,17 @@ Register the I<$nodes_list> array reference as I<$document> nodes
 list.  This method should be called after the processing of document
 structure.
 
+=item register_document_options ($document, $options)
+X<C<register_document_options>>
+
+The I<$options> hash reference holds options for the document. These options
+should be Texinfo customization options.  Usually, the options registered in
+the document contain those useful for structuring and tree transformation
+getting place between Texinfo code parsing and conversion to output formats.
+Indeed, document customization options are mainly accessed by structuring and
+tree transformation methods (by calling L<< C<get_conf>|/$value = $document->get_conf($variable_name) >>). The options should in general be registered before
+the calls to C<get_conf>.
+
 =item register_document_sections_list ($document, $sections_list)
 X<C<register_document_sections_list>>
 
@@ -869,9 +915,9 @@ structure.
 =item set_document_global_info($document, $key, $value)
 X<C<set_document_global_info>>
 
-Add I<$value> I<$key> information to I<$document>.  This method should not be
-generally useful, as document global information is already set by the
-Texinfo parser.  The information set should be available through
+Add I<$value> I<$key> global information to I<$document>.  This method
+should not be generally useful, as document global information is already
+set by the Texinfo parser.  The information set should be available through
 the next calls to L<global_information|/$info = global_information($document)>.
 The method should in general be called before the calls to
 C<global_information>.

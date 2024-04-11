@@ -154,8 +154,7 @@ reference_to_arg_in_tree (SV *tree_in)
           reference_to_arg_in_tree (document->tree, document);
 
 void
-associate_internal_references (SV *document_in, ...)
-    PROTOTYPE: $$
+associate_internal_references (SV *document_in)
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -169,8 +168,7 @@ associate_internal_references (SV *document_in, ...)
 # to register in the document.  It is better to reserve the return
 # value for a return status, if it becomes needed.
 void
-sectioning_structure (SV *document_in, ...)
-    PROTOTYPE: $$
+sectioning_structure (SV *document_in)
     PREINIT:
         DOCUMENT *document = 0;
      CODE:
@@ -183,8 +181,7 @@ sectioning_structure (SV *document_in, ...)
           }
 
 void
-warn_non_empty_parts (SV *document_in, ...)
-   PROTOTYPE: $$
+warn_non_empty_parts (SV *document_in)
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -194,8 +191,7 @@ warn_non_empty_parts (SV *document_in, ...)
           warn_non_empty_parts (document);
 
 void
-set_menus_node_directions (SV *document_in, ...)
-  PROTOTYPE: $$
+set_menus_node_directions (SV *document_in)
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -205,8 +201,7 @@ set_menus_node_directions (SV *document_in, ...)
           set_menus_node_directions (document);
 
 void
-complete_node_tree_with_menus (SV *document_in, ...)
-  PROTOTYPE: $$
+complete_node_tree_with_menus (SV *document_in)
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -216,8 +211,7 @@ complete_node_tree_with_menus (SV *document_in, ...)
           complete_node_tree_with_menus (document);
 
 void
-check_nodes_are_referenced (SV *document_in, ...)
-  PROTOTYPE: $$
+check_nodes_are_referenced (SV *document_in)
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -252,28 +246,23 @@ complete_tree_nodes_menus (SV *tree_in, SV *use_sections_in=0)
             document->modified_information |= F_DOCM_tree;
           }
 
-# We use the options of the document, so we ignore
-# customization_information, which should contain the same information
 void
-complete_tree_nodes_missing_menu (SV *tree_in, SV *customization_information=0, SV *use_sections_in=0)
+complete_tree_nodes_missing_menu (SV *document_in, SV *use_sections_in=0)
     PREINIT:
         DOCUMENT *document = 0;
         int use_sections = 0;
      CODE:
-        document = get_sv_tree_document (tree_in,
+        document = get_sv_document_document (document_in,
                              "complete_tree_nodes_missing_menu");
         if (use_sections_in && SvOK (use_sections_in))
           {
             use_sections = SvIV (use_sections_in);
           }
         if (document)
-          complete_tree_nodes_missing_menu (document->tree, document,
-                                            document->options, use_sections);
+          complete_tree_nodes_missing_menu (document, use_sections);
 
-# regenerate_master_menu uses the options of the document, so we ignore
-# customization_information, which should contain the same information
 void
-regenerate_master_menu (SV *document_in, SV *customization_information, SV *use_sections_in=0)
+regenerate_master_menu (SV *document_in, SV *use_sections_in=0)
     PREINIT:
         DOCUMENT *document = 0;
         int use_sections = 0;
@@ -289,8 +278,7 @@ regenerate_master_menu (SV *document_in, SV *customization_information, SV *use_
 
 # The perl function returns the list of added nodes.
 void
-insert_nodes_for_sectioning_commands (SV *document_in, ...)
-   PROTOTYPE: $;$
+insert_nodes_for_sectioning_commands (SV *document_in)
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
@@ -307,8 +295,7 @@ insert_nodes_for_sectioning_commands (SV *document_in, ...)
 # to register in the document.  It is better to reserve the return
 # value for a return status, if it becomes needed.
 void
-nodes_tree (SV *document_in, ...)
-   PROTOTYPE: $$
+nodes_tree (SV *document_in)
     PREINIT:
         DOCUMENT *document = 0;
     CODE:

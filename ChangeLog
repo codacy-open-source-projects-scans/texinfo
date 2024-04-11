@@ -1,3 +1,865 @@
+2024-04-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (close_files): add a note explaining why this
+	function is unlikely to be called.  Die if a file could not be closed.
+
+2024-04-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Report.pm (new): remove the possibility to reuse an
+	object.
+
+	Update POD documentation.
+
+2024-04-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl: call Texinfo::Convert::Texinfo->import().  Move code
+	around.
+
+	* tp/Texinfo/Document.pm: Update POD documentation.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (%XS_overrides, register_document_options),
+	tp/Texinfo/XS/main/DocumentXS.xs (register_document_options),
+	tp/t/test_utils.pl (test), tp/texi2any.pl: rename register_options as
+	register_document_options.  Pass a hash of customization variables to
+	register_document_options, call get_customization_options_hash in the
+	calling code.  Remove _XS_set_document_options.
+
+	* tp/t/test_utils.pl (test): remove a useless setting of
+	document_descriptor in document.
+
+	Update POD documentation.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): rename $main_configuration* variables as
+	$test_customization*.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (%XS_overrides),
+	tp/Texinfo/XS/main/DocumentXS.xs (document_get_conf): add an XS
+	override for Document.pm get_conf.
+
+	* tp/t/test_utils.pl (test), tp/texi2any.pl: use $document to provide
+	customization information.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test), tp/texi2any.pl: use $document as
+	customization provider.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Transformations.pm (complete_tree_nodes_missing_menu)
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(complete_tree_nodes_missing_menu),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(complete_tree_nodes_missing_menu): use a document in argument and
+	use it to get the customization information and root of Texinfo tree.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Transformations.pm
+	(insert_nodes_for_sectioning_commands, regenerate_master_menu):
+	use $document argument to get customization options, remove
+	$main_configuration argument.  Update callers and XS interfaces.
+
+	* Pod-Simple-Texinfo/pod2texi.pl: update for change in structuring and
+	transformation interfaces with $main_configuration argument removed.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (warn_non_empty_parts)
+	(check_nodes_are_referenced, set_menus_node_directions)
+	(complete_node_tree_with_menus, nodes_tree): use $document argument to
+	get customization options, remove $main_configuration argument.
+	Update callers and XS interfaces.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (get_conf): add to use in pure Perl for the
+	get_conf cutomization getting API useing options registerd in the
+	parser. Remove options().
+
+	* tp/Texinfo/Structuring.pm (sectioning_structure)
+	(associate_internal_references),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(associate_internal_references, sectioning_structure),
+	tp/t/automatic_menus.t, tp/t/automatic_nodes.t,
+	tp/t/convert_to_text.t, tp/t/do_master_menu.t, tp/t/test_tree_copy.t,
+	tp/t/test_utils.pl (test), tp/texi2any.pl: use $document argument to
+	get customization options, remove $main_configuration argument for
+	sectioning_structure and associate_internal_references.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (%XS_overrides), tp/Texinfo/Config.pm
+	(get_customization_options_hash), tp/Texinfo/Document.pm
+	(%XS_overrides, register_options, _XS_set_document_options): Replace
+	register_XS_document_main_configuration by Texinfo::Document
+	register_options.  register_options in turn call
+	_XS_set_document_options for XS code.  Add
+	get_customization_options_hash based on
+	register_XS_document_main_configuration, but without the call to
+	set_document_options, to get the options in one hash, call it from
+	Texinfo::Document register_options.  Remove set_document_options from
+	Texinfo/Common.pm and remove register_XS_document_main_configuration.
+	Update callers.
+	
+	* tp/Texinfo/Document.pm (register_options, options): setup the
+	'options' Perl document hash value to be the hash obtained from
+	get_customization_options_hash.
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (set_document_options): change the
+	order of the arguments.  Update callers.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Config.pm (GNUT_set_customization_default),
+	tp/texi2any.pl, tp/t/test_utils.pl (test): rename
+	GNUT_set_main_program_default as GNUT_set_customization_default and
+	rename GNUT_initialize_config as GNUT_initialize_customization.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_command_formatted_args): set arg_tree in perl hash.
+
+	* tp/Texinfo/Convert/HTML.pm (_translate_names)
+	(_reset_unset_no_arg_commands_formatting_context),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_translated_names), tp/Texinfo/XS/convert/convert_html.c
+	(html_free_converter, reset_unset_no_arg_commands_formatting_context)
+	(html_translate_names), tp/Texinfo/XS/main/converter_types.h
+	(HTML_COMMAND_CONVERSION): rename no arg commands tree structure field
+	as translated_tree.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Command Tree Element Conversion Functions),
+	tp/Texinfo/Convert/HTML.pm (_convert_xref_commands, _convert),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_command_formatted_args),
+	tp/Texinfo/XS/convert/convert_html.c (convert_xref_commands)
+	(destroy_args_formatted, convert_to_html_internal),
+	tp/Texinfo/XS/main/converter_types.h (HTML_ARG_FORMATTED),
+	tp/init/html32.pm: rename tree field in tree element conversion
+	formatted argument structure to arg_tree.
+
+2024-04-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Config.pm: adapt comments and a variable name to being
+	called by tests in the same was as by main program.
+
+2024-04-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Config.pm Texinfo::MainConfig (new, get_conf, set_conf)
+	(register_XS_document_main_configuration), tp/t/test_sort.t: remove
+	the 'standalone' case, now that it is not used anymore.  Simplify the
+	Texinfo::MainConfig object structure.
+
+2024-04-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): set main_configuration as in the main
+	program, by setting up defaults, calling
+	Texinfo::Config::GNUT_initialize_config before loading init files,
+	calling Texinfo::MainConfig::new without arguments, and calling
+	Texinfo::Config::GNUT_set_from_cmdline for options from test
+	specification (+DEBUG).
+
+2024-04-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): separate better parser options and main
+	configuration options used for structuring.  Setup main configuration
+	later on.
+
+	* tp/texi2any.pl: add a list of customization options actually
+	used in main_configuration and where they are used in comments.
+
+2024-04-07  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi: refer more to the reader as you.  Update for
+	changes in the Texinfo manual, to avoid some redundancy, and link to
+	the appropriate section.
+
+2024-04-07  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Specific Customization of HTML Formatting): remove
+	a @subentry associated to an @item.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Output Structure Customization): add
+	a definition of output units and an expanded description of the effect
+	of USE_NODES.
+
+	* doc/texinfo.texi (Customization Variables for Multiple Formats):
+	define output units when describing the effect of setting USE_NODES.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi: add @subentry @r{for HTML} for customization
+	variables index entries for variables that are not only for HTML.
+
+	* doc/texinfo.texi (File Names and Links Customization for HTML)
+	(HTML Splitting): small changes.
+
+2024-04-06  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XSLoader.pm (XS_parser_enabled, XS_structuring_enabled)
+	(XS_convert_enabled): New functions, in order to avoid repeating
+	similar blocks of code checking environment variables.
+
+	* tp/Texinfo/Common.pm, tp/Texinfo/Convert/ConvertXS.pm,
+	tp/Texinfo/Convert/Converter.pm, tp/Texinfo/Convert/HTML.pm,
+	tp/Texinfo/Convert/PlainTexinfo.pm, tp/Texinfo/Convert/Texinfo.pm,
+	tp/Texinfo/Convert/Text.pm, tp/Texinfo/Document.pm,
+	tp/Texinfo/Indices.pm, tp/Texinfo/IndicesXS.pm, tp/Texinfo/Parser.pm,
+	tp/Texinfo/StructTransfXS.pm, tp/Texinfo/Structuring.pm,
+	tp/Texinfo/Transformations.pm, tp/t/automatic_nodes.t,
+	tp/t/html_tests.t, tp/t/protect_character_in_texinfo.t,
+	tp/t/test_utils.pl, tp/texi2any.pl: Use the new functions.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Customization for Math): corrections.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/refcard/txivarcheck (read_refman), util/txicustomvars: get
+	customization variables from "Invoking \@command{texi2any}" node too
+	in txivarcheck, and output program_cmdline_options and
+	converter_cmdline_options in txicustomvars.
+
+	* doc/refcard/txivarcheck (read_tp): filter out the 'SILENT'
+	customization variable that is not interesting to document as it does
+	nothing, and the customization variables starting with XS_ that are
+	not documented on purpose.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Other Formats Customization Variables): add
+	default value of TXI_MARKUP_NO_SECTION_EXTENT.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Customization Variables and Options): add index
+	entries for customization variables in the table associating them with
+	options.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Customization Variables for Multiple Formats):
+	explicit which formats are concerned by USE_NODES.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Other Formats Customization Variables),
+	tp/Texinfo/Convert/TexinfoMarkup.pm (_convert),
+	tp/Texinfo/options_data.txt, tp/t/xml_tests.t: add a new customization
+	variable, TXI_MARKUP_NO_SECTION_EXTENT, to be used in TexinfoMarkup.pm
+	instead of USE_NODES to avoid multiple significations for USE_NODES.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/xml_tests.t ($sectioning_test)
+	(sectioning_test_ref, sectioning_test_no_use_nodes): add test of
+	USE_NODES set in Texinfo XML.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Other Formats Customization Variables): new node
+	for customization which apply to specific formats only, for formats
+	without separate customization variables description section.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Customization Variables): move 'Info and Plaintext
+	Customization Variables' before 'LaTeX Customization Variables'.
+	Update overall description of customization variables.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Customization Variables for Multiple Formats):
+	rename 'Other Customization Variables' as 'Customization Variables for
+	Multiple Formats'.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Other Customization Variables)
+	(HTML Customization Variables List): move NODE_NAME_IN_MENU to 'HTML
+	Customization Variables List', as it is used in HTML only.
+
+2024-04-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (%parser_options): remove 'restricted' as it is
+	an internal parser option.
+
+2024-04-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (_get_parser_info):
+	Remove $no_build argument.  Only call build_document if $no_store
+	is set.  Callers updated.
+
+2024-04-05  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Global Customization Variables)
+	(Other Customization Variables): split 'Global Customization
+	Variables' out of 'Other Customization Variables'.
+
+2024-04-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (determine_files_and_directory),
+	tp/Texinfo/Convert/Text.pm (output), tp/Texinfo/Convert/HTML.pm
+	(_prepare_css): use a different variable for file name string bytes
+	and file name character string.
+
+	* tp/Texinfo/Convert/HTML.pm (_prepare_css): rename variables.
+
+	* tp/t/test_utils.pl: change in comments.
+
+2024-04-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_line):
+	Pass false $no_build argument in call to _get_parser_info as
+	otherwise the $no_store argument does nothing.
+
+2024-04-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove optional $no_build argument.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_line)
+	(parse_texi_text): Remove optional $no_build argument.
+	* tp/Texinfo/Translations.pm, tp/t/test_utils.pl: Update calls.
+
+2024-04-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_piece):
+	Remove optional $no_build argument.
+	* tp/t/test_utils.pl: Update call to parse_texi_piece.
+
+2024-04-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	XS parse_texi_file only returns handle for building tree on-demand
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_file): Eliminate
+	optional argument to decide whether to build the Perl information
+	or not.  Always call _get_parser_info with $no_build set.
+
+	* tp/Texinfo/Document.pm (%XS_overrides, %XS_structure_overrides):
+	Eliminate %XS_structure_overrides, and do not depend on the
+	TEXINFO_XS_STRUCTURE variable.
+
+	* tp/texi2any.pl, tp/t/test_utils.pl:
+	Remove extra argument in call to parse_texi_file.
+	Pass argument to Texinfo::Document::tree to control whether tree
+	is built, depending on the setting of TEXINFO_XS_STRUCTURE.
+
+	* tp/t/protect_character_in_texinfo.t:
+	Only call Texinfo::Document::rebuld_tree if TEXINFO_XS_STRUCTURE is on.
+
+2024-04-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/formats_encodings.t
+	(accented_character_in_file_name): add to the t/*.t test suite a file
+	that is already tested in tp/tests/encoded/ and has an accented letter
+	in the Texinfo input file name.
+
+2024-04-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): test if $document is undef to determine
+	if the parsing failed.
+
+2024-04-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/Common.pm (debug_print_tree):
+	Output 'tree_document_descriptor' hash value to help with
+	debugging use of XS code.
+
+2024-04-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/*.t, tp/t/test_utils.pl (test): move ENABLE_ENCODING setup in
+	tests to the converter options, as it is not used in structuring
+	anymore.
+
+2024-04-03  Patrice Dumas  <pertusus@free.fr>
+
+	Rename BODYTEXT customization variable as BODY_ELEMENT_ATTRIBUTES
+
+	* NEWS, doc/texinfo.texi (Customization of HTML Code Inserted)
+	(HTML Customization Variables List), doc/texi2any_api.texi,
+	tp/Texinfo/Convert/HTML.pm (%defaults, _file_header_information)
+	(output), tp/Texinfo/XS/convert/convert_html.c
+	(BEGIN_FILE_INFORMATION, destroy_begin_file_information)
+	(file_header_information, html_default_format_begin_file)
+	(html_default_format_node_redirection_page),
+	tp/Texinfo/options_data.txt, tp/init/html32.pm b/tp/init/html32.pm,
+	tp/t/init/t2h_singular.init: rename BODYTEXT customization variable as
+	BODY_ELEMENT_ATTRIBUTES.  Change variable names and structure field to
+	be consistent.
+
+2024-04-03  Patrice Dumas  <pertusus@free.fr>
+
+	Remove USE_UP_NODE_FOR_ELEMENT_UP customization variable
+
+	* NEWS, doc/texinfo.texi (Other Customization Variables),
+	tp/Texinfo/Convert/HTML.pm (_set_variables_texi2html),
+	tp/Texinfo/Structuring.pm (units_directions),
+	tp/Texinfo/XS/main/output_unit.c (units_directions),
+	tp/Texinfo/options_data.txt: remove USE_UP_NODE_FOR_ELEMENT_UP
+	customization variable.  It would only be relevant if @top is not
+	present, which should never be the case and is quite confusing as
+	it does the reverse as the usual determination of direction based on
+	chapter structuring commands.
+
+2024-04-03  Patrice Dumas  <pertusus@free.fr>
+
+	Remove NO_USE_SETFILENAME customization variable
+
+	* NEWS, doc/texinfo.texi (Other Customization Variables),
+	tp/Texinfo/Convert/Converter.pm (determine_files_and_directory),
+	tp/Texinfo/options_data.txt, tp/Texinfo/Convert/HTML.pm
+	(_set_variables_texi2html): remove NO_USE_SETFILENAME customization
+	variable.  There are other ways to set setfilename or output file name
+	and the @setfilename can be removed from document.
+
+2024-04-03  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi: update cross-references to customization variables
+	nodes.
+
+2024-04-03  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi: replace associated to with associated with.
+
+2024-04-03  Patrice Dumas  <pertusus@free.fr>
+
+	Rename COMPLEX_FORMAT_IN_TABLE as INDENTED_BLOCK_COMMANDS_IN_TABLE
+
+	* NEWS, doc/texinfo.texi (Specific Customization of HTML Formatting)
+	(HTML Customization Variables List), tp/Texinfo/Convert/HTML.pm
+	(%defaults, _convert_indented_command, _convert_preformatted_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_preformatted_command)
+	(convert_indented_command), tp/Texinfo/options_data.txt,
+	tp/init/html32.pm: rename COMPLEX_FORMAT_IN_TABLE customization
+	variable as INDENTED_BLOCK_COMMANDS_IN_TABLE.
+
+2024-04-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Customization of HTML Code Inserted) <BODYTEXT>:
+	Add information about "lang" attribute.
+
+2024-04-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Specific Customization of HTML Formatting):
+	Move COMPLEX_FORMAT_IN_TABLE to the right place.
+
+2024-04-03  Patrice Dumas  <pertusus@free.fr>
+
+	* info/scan.c (scan_reference_marker): If a file name component
+	was read, allow what follows to be blank.  This supports cross
+	references like '*note (manual)::'.
+
+2024-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Syntax Highlighting, HTML Xref):
+	Add @nodedescriptions.  (The content of these is not particularly
+	important, but it looks consistent in the menu in the parent node.)
+
+2024-04-03  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML CSS, EPUB Output File and Directory)
+	(Syntax Highlighting): add customization variables index entries in
+	these nodes where the customization variables effect is described in
+	the context of use.
+
+2024-04-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): add a Top node in
+	cross-ref when there is a file but no node, as the Texinfo Info reader
+	cannot follow a cross-reference with a file but no node name.  Gavin
+	report.
+
+2024-04-02  Patrice Dumas  <pertusus@free.fr>
+
+	Remove AVOID_MENU_REDUNDANCY customization option
+
+	* NEWS, doc/texinfo.texi (HTML Customization Variables List),
+	tp/Texinfo/Convert/HTML.pm (%defaults, _convert_menu_entry_type),
+	tp/Texinfo/XS/convert/convert_html.c (simplify_text_for_comparison)
+	(convert_menu_entry_type), tp/Texinfo/options_data.txt: remove
+	AVOID_MENU_REDUNDANCY customization variable.  The associated
+	case is unlikely to happen, not important, and the user can easily
+	avoid the need for the variable by leaving the menu description blank.
+
+2024-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (EPUB HTML): Add a @nodedescription.  Make
+	explicit that it is texi2any setting variables internally, not
+	anything that the user needs to or can do.
+
+2024-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Customization of Navigation and Headers):
+	Remove index entries for ACTIVE_ICONS and PASSIVE_ICONS.  This
+	stops them being reported by "make vcheck" under doc/refcard.
+	(They are reported because they are not listed in the main
+	hashes in Texinfo/Options.pm that util/txicustomvars checks.)
+	(HTML Output Customization): Add a @nodedescription.
+
+2024-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/refcard/txivarcheck: Search more of the manual for
+	customization variables.
+
+2024-04-02  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (File Names and Links Customization for HTML):
+	Refer to the user of the program as "you".
+
+	* doc/texinfo.texi (Customization of Navigation and Headers): use
+	active voice.
+
+2024-04-02  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (File Names and Links Customization for HTML):
+	Refer to the user of the program as "you".
+
+2024-04-02  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Output Structure Customization)
+	(JavaScript Interface and Licenses): add the 'JavaScript Interface and
+	Licenses' node from content formerly in 'HTML Output Structure
+	Customization'.  Leave USE_NEXT_HEADING_FOR_LONE_NODE description in
+	'HTML Output Structure Customization'.
+
+	* doc/texinfo.texi (HTML Features Customization)
+	(Customization of HTML Code Inserted): split 'General Customization of
+	HTML Code' in two, with 'HTML Features Customization', containing the
+	beginning of th eremoved node and COPIABLE_LINKS description and
+	'Customization of HTML Code Inserted'.
+
+	* doc/texinfo.texi (HTML Features Customization): add examples of
+	DOCTYPE setting. Refer to the user of the program as "you". 
+
+	* doc/texinfo.texi (Customization of HTML Code Inserted): explain how
+	opening and closing quotes are formatted by using a @table.
+
+2024-04-02  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Customization for Math): Refer to the user
+	of the program as "you".
+
+	* doc/texinfo.texi: replace 'In the default case' by 'By default'.
+	Gavin suggestion.
+
+2024-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (HTML Customization Variables List):
+	Shorten introductory text.
+
+2024-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (HTML Customization Variables List):
+	Move to a subsection of "HTML Output Customization".
+	(Customization Variables): Reference node in new location.
+
+2024-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (HTML Customization Variables List)
+	(HTML CSS, HTML Output Structure Customization): Eliminate uses
+	of "associate to", which is not correct English.
+
+2024-04-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (HTML Output Customization):
+	Refer to the user of the program as "you".
+
+2024-04-02  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Command Index, Variables Index): do not
+	merge variable index in general index, there are now many
+	customization variables, a separate index is relevant.  Add 'Variables
+	Index' node.
+
+2024-04-02  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Output Customization): rename
+	'HTML Output Advanced Customization' as 'HTML Output Customization'.
+	Gavin idea.
+
+	* doc/texinfo.texi (HTML Customization Variables List)
+	(HTML Customization for Math): move 'MathJax Customization Variables',
+	'@command{latex2html} Customization Variables' and '@command{tex4ht}
+	Customization Variables' to 'HTML Customization for Math'.
+
+2024-04-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Edits to manual
+
+	* doc/texinfo.texi (HTML Output Advanced Customization)
+	(HTML Output Structure Customization)
+	(File Names and Links Customization for HTML)
+	(Customization of Navigation and Headers)
+	(General Customization of HTML Code)
+	(Specific Customization of HTML Formatting):
+
+	Refer to the user of the program as "you" in many places in order
+	to be clearer as to semantic agency.
+
+2024-04-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Output Advanced Customization): add
+	TEXI2HTML customization variable description.
+
+2024-04-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Info and Plaintext Customization Variables)
+	(Other Customization Variables): new node for Info and plaintext
+	specific customization variables.
+
+	* doc/texinfo.texi (HTML Customization Variables List): move
+	TEXI2HTML to the 'HTML Customization Variables List' node.
+
+2024-04-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Customization Variables List): move
+	EPUB_CREATE_CONTAINER_FILE, EPUB_KEEP_CONTAINER_FOLDER,
+	HIGHLIGHT_SYNTAX and HIGHLIGHT_SYNTAX_DEFAULT_LANGUAGE to the 'HTML
+	Customization Variables List' node.
+
+2024-04-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Other Customization Variables): fix
+	OPEN_QUOTE_SYMBOL numeric entity for HTML.
+
+	* doc/texinfo.texi (General Customization of HTML Code): add
+	CLOSE_QUOTE_SYMBOL and OPEN_QUOTE_SYMBOL for HTML customization
+	description.
+
+2024-04-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi: update internal references to use more the new
+	HTML customization nodes.
+
+	* doc/texinfo.texi (Customization of Navigation and Headers): add
+	OUTPUT_ENCODING_NAME use description in the section.
+
+	* doc/texinfo.texi (HTML Output Structure Customization)
+	(File Names and Links Customization for HTML): minor corrections.
+
+2024-04-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Menus): HTML menus are also automatically
+	generated.
+
+	* doc/texinfo.texi (EPUB HTML): minor change on customization
+	variables used.
+
+	* doc/texinfo.texi (HTML Output Structure Customization): add
+	FORMAT_MENU nomenu to explanations.
+
+	* doc/texinfo.texi: add index entries in HTML Customization nodes and
+	references to those nodes.
+
+2024-04-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Customization Variables)
+	(HTML Output Advanced Customization): add the 'HTML Output Advanced
+	Customization' node in 'Generating HTML' for the description of HTML
+	customization variables use.
+
+2024-04-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Customization for Math): add a node for HTML
+	customization for Math with more details.
+
+2024-04-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Customization Variables List): fix
+	INDEX_ENTRY_COLON default.
+
+	* doc/texinfo.texi (Specific Customization of HTML Formatting): add.
+
+	* doc/texinfo.texi (General Customization of HTML Code): add
+	OUTPUT_CHARACTERS.
+
+	* doc/texinfo.texi (File Names and Links Customization for HTML): add
+	index entries.  Add NODE_NAME_IN_MENU.
+
+2024-03-31  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Customization Variables List): mention that
+	COPIABLE_LINKS are output for headings too.
+
+	* doc/texinfo.texi (File Names and Links Customization for HTML)
+	(Customization of Navigation and Headers)
+	(General Customization of HTML Code): review.  Add USE_ISO and
+	COPIABLE_LINKS description to 'General Customization of HTML Code'.
+
+2024-03-30  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Customization of Navigation and Headers)
+	(General Customization of HTML Code): add nodes describing HTML
+	customization in a more pedagoical way.
+
+	* doc/texinfo.texi (HTML CSS): add the information on CSS related
+	customization variables directly in the 'HTML CSS' node.
+
+2024-03-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_prepare_converted_output_info): avoid
+	having _string the type of a container containing directly the content
+	of another tree element.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_value_command): fix
+	explanation argument.
+
+2024-03-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_special_body_about):
+	reorder code to be in the same order as C code, to get the same debug
+	output.
+
+2024-03-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (units_directions): fix getting
+	associated_section for NodeForward.  Fix one case of FastBack setting.
+
+2024-03-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/structuring.c
+	(new_complete_node_menu): call copy_contents instead of copy_tree on
+	part argument.
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_printindex_command): call
+	convert_tree instead of convert_tree_new_formatting_context for the
+	reference part of seealso when there is no need for multiple pass.
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_value_command)
+	(_default_format_program_string, _default_format_special_body_about),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_program_string, html_default_format_end_file)
+	(convert_value_command, default_format_special_body_about): add/fix
+	explanation argument for tree conversion functions.
+
+	* tp/Texinfo/Convert/HTML.pm (_html_convert_output): add unit number
+	in debug message, as in C.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_get_css_elements_classes): simplify and comment out C specific
+	debug message.
+
+2024-03-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_printindex_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_printindex_command): do not
+	setup a subentry tree for conversion with empty contents.
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_heading_command)
+	(_convert_printindex_command, _convert_def_line_type)
+	(_default_format_end_file, _default_format_node_redirection_page),
+	tp/Texinfo/XS/convert/convert_html.c (html_default_format_end_file)
+	(html_default_format_node_redirection_page, convert_heading_command)
+	(printindex_letters_head_foot_internal, convert_printindex_command)
+	(convert_def_line_type): add explanation argument to tree conversion.
+
+	* tp/Texinfo/XS/convert/converter.c
+	(register_normalize_case_filename): same debug message as in Perl.
+
+	* tp/Texinfo/XS/main/convert_to_texinfo.c
+	(root_heading_command_to_texinfo): also check that there are contents
+	to set a tree for output.
+
+2024-03-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_prepare_converted_output_info): call message_list_document_warn
+	if the input_file_name is not set for missing title message as in
+	Perl.
+
+	* tp/Texinfo/Convert/HTML.pm (_prepare_converted_output_info): remove
+	debug message of little use.
+
+	* tp/Texinfo/Convert/HTML.pm (_convert),
+	tp/Texinfo/XS/convert/convert_html.c (convert_to_html_internal):
+	distinguish undefined text and empty text in debug message.
+
+	* tp/Texinfo/XS/convert/converter.c (table_item_content_tree): keep
+	information on definfoenclose original command name.
+
+	* tp/Texinfo/XS/main/builtin_commands.c (element_command_name): treat
+	especially internal commands corresponding to command classes,
+	CM_index_entry_command and CM_definfoenclose_command.
+
+	* tp/Texinfo/XS/main/errors.c
+	(message_list_document_formatted_message): no warning with debug
+	message as in Perl.
+
+	* tp/Texinfo/XS/main/get_perl_info.c (get_line_message): fix condition
+	to issue a warning.
+
+2024-03-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Utils.pm (find_innermost_accent_contents): return
+	undef for the inner accent command text element if there is no
+	argument at all.  Update callers.
+
+	* tp/Texinfo/Convert/HTML.pm (unit_is_top_output_unit)
+	(_default_format_element_header): return 0 and not an empty string for
+	better looking debug messages.
+
+	* tp/Texinfo/Structuring.pm (unsplit): take into account the XS sub
+	return.
+
+	* tp/Texinfo/Structuring.pm (@relative_directions_order)
+	(@file_directions_order, @all_directions_order)
+	(print_output_unit_directions): use the same aorder as in C/XS for the
+	output unit directions output message.
+
+	* tp/Texinfo/Convert/Converter.pm (convert_accents),
+	tp/Texinfo/Convert/HTML.pm (_convert_printindex_command)
+	(_convert_def_line_type, _convert),
+	tp/Texinfo/XS/convert/convert_html.c (convert_printindex_command)
+	(convert_def_line_type, convert_to_html_internal),
+	tp/Texinfo/XS/convert/converter.c (convert_accents): add explanation
+	argument to tree conversion functions calls.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_element_header): actually output debug message.
+
+	* tp/Texinfo/XS/convert/convert_html.c (direction_string)
+	(convert_explained_command): correct and update debug messages.
+
+2024-03-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (html_convert_css_string)
+	(_reset_unset_no_arg_commands_formatting_context),
+	tp/Texinfo/XS/convert/convert_html.c (html_convert_css_string)
+	(reset_unset_no_arg_commands_formatting_context): set the string
+	context directly instead of using a type _string in Perl.  In C, call
+	html_set_string_context.  Call html_open_command_update_context and
+	html_convert_command_update_context in C for
+	reset_unset_no_arg_commands_formatting_context preformatted context,
+	as in Perl.
+
+2024-03-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (@global_directions): use the same order
+	as in C code HTML_GLOBAL_DIRECTIONS_LIST.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_prepare_conversion_units): do not call
+	set_global_document_commands on contents commands, as it is already
+	done in Perl.
+
+2024-03-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_element_footer): use TOP_FOOTER_BUTTONS.
+
 2024-03-27  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/XS/main/debug.c (debug_protect_eol): protect all the

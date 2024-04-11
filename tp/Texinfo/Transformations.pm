@@ -53,13 +53,7 @@ reference_to_arg_in_tree
 
 $VERSION = '7.1dev';
 
-# XS parser and not explicitely unset
-my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
-                        or $ENV{TEXINFO_XS} ne 'omit')
-                       and (not defined($ENV{TEXINFO_XS_PARSER})
-                            or $ENV{TEXINFO_XS_PARSER} eq '1')
-                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
 
 our %XS_overrides = (
   "Texinfo::Transformations::fill_gaps_in_sectioning"
@@ -436,11 +430,11 @@ sub _reassociate_to_node($$$)
   return undef;
 }
 
-sub insert_nodes_for_sectioning_commands($;$)
+sub insert_nodes_for_sectioning_commands($)
 {
   my $document = shift;
-  my $customization_information = shift;
 
+  my $customization_information = $document;
   my $root = $document->tree();
 
   my @added_nodes;
@@ -609,13 +603,14 @@ sub complete_tree_nodes_menus($;$)
 }
 
 # this only complete menus if there was no menu
-# customization_information is used to pass down a translatable object with
-# customization information for the gdt() call.
-sub complete_tree_nodes_missing_menu($;$$)
+# The document is used to pass customization information for the gdt() call.
+sub complete_tree_nodes_missing_menu($;$)
 {
-  my $root = shift;
-  my $customization_information = shift;
+  my $document = shift;
   my $use_sections = shift;
+
+  my $customization_information = $document;
+  my $root = $document->tree();
 
   my $non_automatic_nodes = _get_non_automatic_nodes_with_sections($root);
   foreach my $node (@{$non_automatic_nodes}) {
@@ -632,12 +627,10 @@ sub complete_tree_nodes_missing_menu($;$$)
   }
 }
 
-# customization_information is used to pass down a translatable object with
-# customization information for the gdt() call.
-sub regenerate_master_menu($$;$)
+# The document is passed as customization information
+sub regenerate_master_menu($;$)
 {
   my $document = shift;
-  my $customization_information = shift;
   my $use_sections = shift;
 
   my $identifier_target = $document->labels_information();
@@ -650,7 +643,7 @@ sub regenerate_master_menu($$;$)
                    or !scalar(@{$top_node->{'extra'}->{'menus'}}));
 
   my $new_master_menu
-      = Texinfo::Structuring::new_master_menu($customization_information,
+      = Texinfo::Structuring::new_master_menu($document,
                       $identifier_target, $top_node->{'extra'}->{'menus'},
                       $use_sections);
   return undef if (!defined($new_master_menu));
@@ -946,7 +939,7 @@ __END__
 
 =head1 NAME
 
-Texinfo::Transformations - transformations of Texinfo Perl tree
+Texinfo::Transformations - transformations of Texinfo tree
 
 =head1 NOTES
 
@@ -974,19 +967,16 @@ Add menu entries or whole menus for nodes associated with sections,
 based on the sectioning tree.  If the optional
 C<$add_section_names_in_entries> argument is set, a menu entry
 name is added using the section name.  This function should be
-called after L<sectioning_structure|Texinfo::Structuring/$sections_list = sectioning_structure($document, $customization_information)>.
+called after L<sectioning_structure|Texinfo::Structuring/$sections_list = sectioning_structure($document)>.
 
-=item complete_tree_nodes_missing_menu($tree, $customization_information, $use_section_names_in_entries)
+=item complete_tree_nodes_missing_menu($document, $use_section_names_in_entries)
 X<C<complete_tree_nodes_missing_menu>>
 
 Add whole menus for nodes associated with sections and without menu,
-based on the sectioning tree.
-I<$customization_information>, if defined, should hold information
-needed for translations.  Translations are only needed when generating the
-top node menu.
+based on the I<$document> sectioning tree.
 If the optional I<$add_section_names_in_entries> argument is set, a menu entry
 name is added using the section name.  This function should be
-called after L<sectioning_structure|Texinfo::Structuring/$sections_list = sectioning_structure($document, $customization_information)>.
+called after L<sectioning_structure|Texinfo::Structuring/$sections_list = sectioning_structure($document)>.
 
 =item fill_gaps_in_sectioning($tree, $commands_heading_tree)
 X<C<fill_gaps_in_sectioning>>
@@ -1003,13 +993,11 @@ If the sectioning commands are lowered or raised (with C<@raisesections>,
 C<@lowersection>) the tree may be modified with C<@raisesections> or
 C<@lowersection> added to some tree elements.
 
-=item insert_nodes_for_sectioning_commands($document, $customization_information)
+=item insert_nodes_for_sectioning_commands($document)
 X<C<insert_nodes_for_sectioning_commands>>
 
 Insert nodes for sectioning commands without node in C<$document>
-tree.  I<$customization_information> is used for error reporting, though there
-should not be any errors as the node names are adapted such as not to clash with
-existing label targets.
+tree.
 
 =item menu_to_simple_menu($menu)
 
@@ -1039,7 +1027,8 @@ errors and warnings encountered while parsing are registered.  If defined,
 I<$customization_information> should give access to customization through
 C<get_conf>.  If both I<$registrar> and I<$customization_information> are
 defined they are used for error reporting in case an hash character could not
-be protected because it appeared in a raw environment.
+be protected because it appeared in a raw formatted environment (C<@tex>,
+C<@html>...).
 
 =item $modified_tree = reference_to_arg_in_tree($tree)
 X<C<reference_to_arg_in_tree>>
@@ -1053,13 +1042,14 @@ for the node name tree.
 A I<$modified_tree> is not systematically returned, if the I<$tree> in argument
 is not replaced, undef may also be returned.
 
-=item regenerate_master_menu($customization_information, $identifier_target)
+=item regenerate_master_menu($document, $use_sections)
 X<C<regenerate_master_menu>>
 
-Regenerate the Top node master menu, replacing the first detailmenu
-in Top node menus or appending at the end of the Top node menu.
-I<$translations>, if defined, should be a L<Texinfo::Translations> object and
-should also hold customization information.
+Regenerate the I<$document> Top node master menu, replacing the first
+detailmenu in Top node menus or appending at the end of the Top node menu.
+
+I<$use_sections> is an optional argument.  If set, sections associated with
+nodes are used as labels in the generated master menu.
 
 =back
 

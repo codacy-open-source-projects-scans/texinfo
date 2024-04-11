@@ -124,6 +124,8 @@ BEGIN {
   }
 }
 
+use Texinfo::XSLoader;
+
 use Locale::Messages;
 use Texinfo::Options;
 use Texinfo::Common;
@@ -489,7 +491,7 @@ sub set_from_cmdline($$) {
 }
 
 sub set_main_program_default($$) {
-  return &Texinfo::Config::GNUT_set_main_program_default(@_);
+  return &Texinfo::Config::GNUT_set_customization_default(@_);
 }
 
 sub get_conf($) {
@@ -547,7 +549,7 @@ my $default_expanded_format = [ $format ];
 my @conf_dirs = ();
 my @prepend_dirs = ();
 
-# The $cmdline_options passed to Texinfo::Config::GNUT_initialize_config
+# The $cmdline_options passed to Texinfo::Config::GNUT_initialize_customization
 # are considered to be arrays in which items can be added or deleted both
 # from the command line and from init files.  $cmdline_options text values
 # are set by GNUT_set_from_cmdline (aliased as set_from_cmdline) from the
@@ -561,7 +563,7 @@ my @prepend_dirs = ();
 # they are parser options.
 my $parser_options = {'values' => {'txicommandconditionals' => 1}};
 
-my $init_files_options = Texinfo::Config::GNUT_initialize_config(
+my $init_files_options = Texinfo::Config::GNUT_initialize_customization(
       $real_command_name, $main_program_default_options, $cmdline_options);
 
 # Need to do that early for early messages
@@ -569,7 +571,7 @@ my $translations_encoding = get_conf('COMMAND_LINE_ENCODING');
 set_translations_encoding($translations_encoding);
 
 # read initialization files.  Better to do that after
-# Texinfo::Config::GNUT_initialize_config() in case loaded
+# Texinfo::Config::GNUT_initialize_customization() in case loaded
 # files replace default options.
 foreach my $file (Texinfo::Common::locate_init_file($conf_file_name,
                   [ reverse(@program_config_dirs) ], 1)) {
@@ -1422,13 +1424,8 @@ die _encode_message(
    .sprintf(__("Try `%s --help' for more information.\n"), $real_command_name))
      unless (scalar(@input_files) >= 1);
 
-# XS parser and not explicitely unset
-my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
-                        or $ENV{TEXINFO_XS} ne 'omit')
-                       and (not defined($ENV{TEXINFO_XS_PARSER})
-                            or $ENV{TEXINFO_XS_PARSER} eq '1')
-                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+# XS parser and not explicitly unset
+my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
 
 if (defined($ENV{TEXINFO_XS_EXTERNAL_CONVERSION})
     and $ENV{TEXINFO_XS_EXTERNAL_CONVERSION}) {
@@ -1490,7 +1487,7 @@ while(@input_files) {
           @prepended_include_directories;
 
   my $parser = Texinfo::Parser::parser($parser_file_options);
-  my $document = $parser->parse_texi_file($input_file_name, $XS_structuring);
+  my $document = $parser->parse_texi_file($input_file_name);
 
   if (defined($document)
       and (defined(get_conf('DUMP_TREE'))
@@ -1523,14 +1520,23 @@ while(@input_files) {
     goto NEXT;
   }
 
-  my $tree = $document->tree(1);
-  if ($tree_transformations{'fill_gaps_in_sectioning'}) {
-    Texinfo::Transformations::fill_gaps_in_sectioning($tree);
-  }
-
-  # setup a configuration object which defines get_conf and gives the same as
-  # get_conf() in main program.  It is for Structuring/Transformations methods
-  # needing access to the configuration information.
+  # setup a configuration Perl object which defines get_conf and set_conf,
+  # use the main program customization information with per-document
+  # customization.  This allows to use functions calling get_conf and
+  # set_conf to manipulate customization information.
+  # After this is done, the customization information should not
+  # change enymore, and it is registered in the document and used by
+  # Structuring/Transformations methods needing access to configuration
+  # information.
+  #
+  # OUTPUT_ENCODING_NAME is set and accessed in set_output_encodings.
+  # OUTPUT_PERL_ENCODING is set and accessed in set_output_encodings and
+  # accessed in output_files_open_out for the MACRO_EXPAND file name.
+  # The following variables are used in Structuring/Transformations:
+  # novalidate, FORMAT_MENU, CHECK_NORMAL_MENU_STRUCTURE,
+  # CHECK_MISSING_MENU_ENTRY.  And DEBUG.
+  # documentlanguage is used in Structuring/Transformations for
+  # translations.
   my $main_configuration = Texinfo::MainConfig::new();
 
   # encoding is needed for output files
@@ -1546,16 +1552,22 @@ while(@input_files) {
     $main_configuration->set_conf('novalidate', 1);
   }
 
-  # Now that all the configuration has been set, associate it to the
-  # document XS
-  $main_configuration->register_XS_document_main_configuration($document);
+  # Now that all the configuration has been set, register with the
+  # document
+  my $document_options = $main_configuration->get_customization_options_hash();
+  $document->register_document_options($document_options);
+
+  # Get the tree object.  Note that if XS structuring in on, the argument
+  # prevents the tree being built as a Perl structure at this stage; only
+  # a "handle" is returned.
+  my $tree = $document->tree($XS_structuring);
 
   if (defined(get_conf('MACRO_EXPAND')) and $file_number == 0) {
     require Texinfo::Convert::Texinfo;
+    Texinfo::Convert::Texinfo->import();
     # if convert_to_texinfo is not XS code get Perl tree.
     if (not (defined $ENV{TEXINFO_XS_CONVERT}
              and $ENV{TEXINFO_XS_CONVERT} eq '1')) {
-      #Texinfo::Document::rebuild_document($document);
       $tree = $document->tree();
     }
     my $texinfo_text = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
@@ -1566,7 +1578,7 @@ while(@input_files) {
           = Texinfo::Common::output_files_initialize();
     my ($macro_expand_fh, $error_message)
           = Texinfo::Common::output_files_open_out(
-                          $macro_expand_files_information, $main_configuration,
+                          $macro_expand_files_information, $document,
                           $encoded_macro_expand_file_name);
     my $error_macro_expand_file;
     if (defined($macro_expand_fh)) {
@@ -1611,42 +1623,38 @@ while(@input_files) {
   }
 
   if ($tree_transformations{'insert_nodes_for_sectioning_commands'}) {
-    Texinfo::Transformations::insert_nodes_for_sectioning_commands($document,
-                                               $main_configuration);
+    Texinfo::Transformations::insert_nodes_for_sectioning_commands($document);
   }
 
-  Texinfo::Structuring::associate_internal_references($document,
-                                                      $main_configuration);
+  Texinfo::Structuring::associate_internal_references($document);
+
   # information obtained through Texinfo::Structuring
   # and useful in converters.
   # every format needs the sectioning structure
   my $sections_list
-            = Texinfo::Structuring::sectioning_structure($document,
-                                                       $main_configuration);
+            = Texinfo::Structuring::sectioning_structure($document);
+
   if ($sections_list) {
     Texinfo::Document::register_document_sections_list($document,
                                                        $sections_list);
   }
 
   if (!$formats_table{$converted_format}->{'no_warn_non_empty_parts'}) {
-    Texinfo::Structuring::warn_non_empty_parts($document, $main_configuration);
+    Texinfo::Structuring::warn_non_empty_parts($document);
   }
 
   if ($tree_transformations{'complete_tree_nodes_menus'}) {
     Texinfo::Transformations::complete_tree_nodes_menus($tree);
   } elsif ($tree_transformations{'complete_tree_nodes_missing_menu'}) {
-    Texinfo::Transformations::complete_tree_nodes_missing_menu($tree,
-                                                    $main_configuration);
+    Texinfo::Transformations::complete_tree_nodes_missing_menu($document);
   }
 
   if ($tree_transformations{'regenerate_master_menu'}) {
-    Texinfo::Transformations::regenerate_master_menu($document,
-                                                     $main_configuration);
+    Texinfo::Transformations::regenerate_master_menu($document);
   }
 
   if ($formats_table{$converted_format}->{'nodes_tree'}) {
-    my $nodes_list = Texinfo::Structuring::nodes_tree($document,
-                                                      $main_configuration);
+    my $nodes_list = Texinfo::Structuring::nodes_tree($document);
     Texinfo::Document::register_document_nodes_list($document, $nodes_list);
 
     # With this condition, menu is the default for 'FORMAT_MENU'.
@@ -1659,14 +1667,11 @@ while(@input_files) {
     # is never used.
     if (not defined(get_conf('FORMAT_MENU'))
         or get_conf('FORMAT_MENU') eq 'menu') {
-      Texinfo::Structuring::set_menus_node_directions($document,
-                                                      $main_configuration);
+      Texinfo::Structuring::set_menus_node_directions($document);
 
-      Texinfo::Structuring::complete_node_tree_with_menus($document,
-                                                          $main_configuration);
+      Texinfo::Structuring::complete_node_tree_with_menus($document);
 
-      Texinfo::Structuring::check_nodes_are_referenced($document,
-                                                       $main_configuration);
+      Texinfo::Structuring::check_nodes_are_referenced($document);
     }
   }
   if ($formats_table{$converted_format}->{'floats'}) {
@@ -1675,8 +1680,7 @@ while(@input_files) {
 
   # do it now to get error messages here
   if ($formats_table{$converted_format}->{'setup_index_entries_sort_strings'}) {
-    Texinfo::Document::setup_indices_sort_strings($document,
-                                                  $main_configuration);
+    Texinfo::Document::setup_indices_sort_strings($document, $document);
   }
 
   #Texinfo::Document::rebuild_document($document);
@@ -1715,9 +1719,10 @@ while(@input_files) {
                             %$file_cmdline_options,
                           };
 
-  # NOTE nothing set in $main_configuration is passed directly, which is
-  # clean, the Converters already have that information in $converter_options,
-  # can determine it themselves or use their defaults.
+  # NOTE nothing set through $main_configuration in customization registered in
+  # document is passed directly, which is clean, the Converters already
+  # have that information in $converter_options, can determine it themselves
+  # or use their defaults.
   # It could be possible to pass some information if it allows
   # for instance to have some consistent information for Structuring
   # and Converters.

@@ -28,6 +28,8 @@ BEGIN {
 require Texinfo::ModulePath;
 Texinfo::ModulePath::init(undef, undef, undef, 'updirs' => 2);
 
+use Texinfo::XSLoader;
+
 # NOTE in general file names and directory names are not encoded,
 # there will be problems if there are non ascii characters in those
 # strings.
@@ -112,13 +114,7 @@ Texinfo::Translations::configure($localesdir);
 
 Locale::Messages::bindtextdomain('texinfo', $localesdir);
 
-# XS parser and not explicitely unset
-my $XS_structuring = ((not defined($ENV{TEXINFO_XS})
-                        or $ENV{TEXINFO_XS} ne 'omit')
-                       and (not defined($ENV{TEXINFO_XS_PARSER})
-                            or $ENV{TEXINFO_XS_PARSER} eq '1')
-                       and (not defined($ENV{TEXINFO_XS_STRUCTURE})
-                            or $ENV{TEXINFO_XS_STRUCTURE} ne '0'));
+my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
 
 my $generated_texis_dir = 't_texis';
 
@@ -491,6 +487,8 @@ sub set_converter_option_defaults($$;$)
   return $converter_options;
 }
 
+# NOTE this function is unlikely to be called, as files are closed in
+# converters except for STDOUT, but in the tests the output is not to STDOUT.
 sub close_files($)
 {
   my $converter = shift;
@@ -498,13 +496,15 @@ sub close_files($)
        = Texinfo::Common::output_files_unclosed_files(
                                $converter->output_files_information());
   if ($converter_unclosed_files) {
+    my $close_error_nr = 0;
     foreach my $unclosed_file (keys(%$converter_unclosed_files)) {
       if (!close($converter_unclosed_files->{$unclosed_file})) {
-        # FIXME or die?
         warn(sprintf("tp_utils.pl: error on closing %s: %s\n",
                     $converter_unclosed_files->{$unclosed_file}, $!));
+        $close_error_nr++;
       }
     }
+    die if ($close_error_nr > 0);
   }
 }
 
@@ -917,33 +917,6 @@ sub test($$)
     delete $parser_options->{'TREE_TRANSFORMATIONS'};
   }
 
-  # set FORMAT_MENU default to menu, which is the default for the parser.
-  # get the same structuring warnings as texi2any.
-  my $added_main_configurations = {'FORMAT_MENU' => 'menu',
-                                   'CHECK_MISSING_MENU_ENTRY' => 1};
-
-  # FIXME this has changed
-  # this is only used for index keys sorting in structuring
-  foreach my $structuring_and_converter_option ('ENABLE_ENCODING') {
-    if (defined($parser_options->{$structuring_and_converter_option})) {
-      $added_main_configurations->{$structuring_and_converter_option}
-        = $parser_options->{$structuring_and_converter_option};
-      $converter_options->{$structuring_and_converter_option}
-        = $parser_options->{$structuring_and_converter_option};
-      delete $parser_options->{$structuring_and_converter_option};
-    }
-  }
-
-  foreach my $structuring_option ('CHECK_NORMAL_MENU_STRUCTURE',
-                                  'FORMAT_MENU', 'USE_UNICODE_COLLATION',
-                                  'COLLATION_LANGUAGE') {
-    if (defined($parser_options->{$structuring_option})) {
-      $added_main_configurations->{$structuring_option}
-        = $parser_options->{$structuring_option};
-      delete $parser_options->{$structuring_option};
-    }
-  }
-
   if ($parser_options->{'skip'}) {
     if (!$self->{'generate'}) {
       SKIP: {
@@ -973,30 +946,34 @@ sub test($$)
     delete $parser_options->{'test_formats'};
   }
 
+  # Setup default customization options to be ready for init files options
+  # setting.
+
+  # TODO use the same as in texi2any.pl?:
+  #   %Texinfo::Common::default_main_program_customization_options
+  # The main difference would be that
+  # CHECK_NORMAL_MENU_STRUCTURE is set to 1.
+  my $test_customization_defaults = {'FORMAT_MENU' => 'menu',
+                                   'CHECK_MISSING_MENU_ENTRY' => 1};
+
   # get symbols in Texinfo::Config namespace before calling the init files
   # such that the added symbols can be removed after running the tests to have
   # isolated tests and be able to load the same init file multiple times.
   my $symbols_before_init_file;
   # reset Texinfo::Config informations to have isolated tests
   Texinfo::Config::GNUT_reinitialize_init_files();
-  my $init_files_options = {};
+  my $init_files_options
+      = Texinfo::Config::GNUT_initialize_customization('',
+                                   $test_customization_defaults, {});
   my $init_file_directories = [$srcdir.'init/', $srcdir.'t/init/'];
-  # the init file names are supposed to be binary strings.  Since they
-  # are not encoded anywhere, probably only non ascii file names should
-  # be used.
-  # FIXME what if srcdir is non ascii (srcdir is truly a binary string).
+  # the init file names should be binary strings.  Since they
+  # are not encoded here, ascii file names should be used or they
+  # should be encoded in test specification files.
   if ($parser_options and $parser_options->{'init_files'}) {
     $symbols_before_init_file = {};
     foreach my $symbol (keys(%Texinfo::Config::)) {
       $symbols_before_init_file->{$symbol} = 1;
     }
-    my $conf = {};
-    if (defined($locale_encoding)) {
-      $conf->{'COMMAND_LINE_ENCODING'} = $locale_encoding;
-      $conf->{'MESSAGE_ENCODING'} = $locale_encoding;
-    }
-    $init_files_options
-      = Texinfo::Config::GNUT_initialize_config('', $conf, {});
     foreach my $filename (@{$parser_options->{'init_files'}}) {
       my $file = Texinfo::Common::locate_init_file($filename,
                                                $init_file_directories, 0);
@@ -1008,13 +985,27 @@ sub test($$)
     }
     delete $parser_options->{'init_files'};
   }
+
+  # Setup test configuration options at this point to remove
+  # structuring options from parser options.
+  my $test_customization_options = {};
+  # gather options for structuring.
+  foreach my $structuring_option ('CHECK_NORMAL_MENU_STRUCTURE',
+                                  'CHECK_MISSING_MENU_ENTRY',
+       # Not structuring options, but used for index sorting strings tests
+                                  'USE_UNICODE_COLLATION',
+                                  'COLLATION_LANGUAGE') {
+    if (defined($parser_options->{$structuring_option})) {
+      $test_customization_options->{$structuring_option}
+        = $parser_options->{$structuring_option};
+      delete $parser_options->{$structuring_option};
+    }
+  }
+
   my $completed_parser_options =
           {'INCLUDE_DIRECTORIES' => [$srcdir.'t/include/'],
            'DEBUG' => $self->{'DEBUG'},
             %$parser_options};
-  my $main_configuration = Texinfo::MainConfig::new({
-                                    %$completed_parser_options,
-                                    %$added_main_configurations });
 
   my $parser = Texinfo::Parser::parser($completed_parser_options);
 
@@ -1025,27 +1016,30 @@ sub test($$)
   if (!$test_file) {
     if ($full_document) {
       print STDERR "  TEST FULL $test_name\n" if ($self->{'DEBUG'});
-      $document = $parser->parse_texi_text($test_text, undef, $XS_structuring);
+      $document = $parser->parse_texi_text($test_text);
     } else {
       print STDERR "  TEST $test_name\n" if ($self->{'DEBUG'});
-      $document = $parser->parse_texi_piece($test_text, undef, $XS_structuring);
+      $document = $parser->parse_texi_piece($test_text);
       if (defined($test_input_file_name)) {
         warn "ERROR: $self->{'name'}: $test_name: piece of texi with a file name\n";
       }
     }
     if (defined($test_input_file_name)) {
-      # FIXME should we need to encode or do we assume that
-      # $test_input_file_name is already bytes?
+      # argument should be byte strings.  In most if not all cases,
+      # 'test_input_file_name' is based on $test_name.  $test_name should
+      # only consist of ascii characters as it is used both as a
+      # character string and a byte string (see the comment below on that),
+      # so we do not encode, but we could if needed.  If we encode, an
+      # output encoding should be determined.
       $document->set_document_global_info('input_file_name',
                                           $test_input_file_name);
     }
   } else {
     print STDERR "  TEST $test_name ($test_file)\n" if ($self->{'DEBUG'});
-    $document = $parser->parse_texi_file($test_file, $XS_structuring);
+    $document = $parser->parse_texi_file($test_file);
   }
-  my $tree = $document->tree(1);
 
-  if (not defined($tree)) {
+  if (not defined($document)) {
     print STDERR "ERROR: parsing result undef\n";
     my ($parser_errors, $parser_error_count) = $parser->errors();
     foreach my $error_message (@$parser_errors) {
@@ -1053,24 +1047,55 @@ sub test($$)
         if ($error_message->{'type'} eq 'error');
     }
   }
+  # Get the tree object.  Note that if XS structuring in on, the argument
+  # prevents the tree being built as a Perl structure at this stage; only
+  # a "handle" is returned.
+  my $tree = $document->tree($XS_structuring);
+
   my ($errors, $error_nrs) = $parser->errors();
+
+  # Setup main configuration options, used for structuring.
+  my $document_information = $document->global_information();
+
+  # setup a configuration Perl object which defines get_conf and set_conf,
+  # use the test customization information with per-document
+  # customization.  This allows to use functions calling get_conf and
+  # set_conf to manipulate customization information.
+  # After this is done, the customization information should not
+  # change enymore, and it is registered in the document and used by
+  # Structuring/Transformations methods needing access to configuration
+  # information.
+  foreach my $parser_and_structuring_option ('FORMAT_MENU', 'DEBUG') {
+    if (defined($parser_options->{$parser_and_structuring_option})) {
+      $test_customization_options->{$parser_and_structuring_option}
+        = $parser_options->{$parser_and_structuring_option};
+    }
+  }
+
+  # setup options from test specification (+DEBUG) as if they were
+  # command-line options, with high precedence.
+  foreach my $option (keys(%$test_customization_options)) {
+    Texinfo::Config::GNUT_set_from_cmdline($option,
+                                 $test_customization_options->{$option});
+  }
+
+  my $test_customization = Texinfo::MainConfig::new();
+
+  Texinfo::Common::set_output_encodings($test_customization,
+                                        $document);
+
+  if ($document_information->{'novalidate'}) {
+    $test_customization->set_conf('novalidate', 1);
+  }
+
+  # Now that all the configuration has been set, register with the
+  # document
+  my $document_options = $test_customization->get_customization_options_hash();
+  $document->register_document_options($document_options);
 
   if ($tree_transformations{'fill_gaps_in_sectioning'}) {
     Texinfo::Transformations::fill_gaps_in_sectioning($tree);
   }
-
-  my $document_information = $document->global_information();
-
-  Texinfo::Common::set_output_encodings($main_configuration,
-                                        $document);
-
-  if ($document_information->{'novalidate'}) {
-    $main_configuration->set_conf('novalidate', 1);
-  }
-
-  # Now that all the configuration has been set, associate it to the
-  # document XS
-  $main_configuration->register_XS_document_main_configuration($document);
 
   if ($tree_transformations{'relate_index_entries_to_items'}) {
     Texinfo::Common::relate_index_entries_to_table_items_in_tree($document);
@@ -1082,48 +1107,43 @@ sub test($$)
 
   if ($tree_transformations{'insert_nodes_for_sectioning_commands'}) {
     Texinfo::Transformations::insert_nodes_for_sectioning_commands(
-                             $document, $main_configuration);
+                                                             $document);
   }
 
-  Texinfo::Structuring::associate_internal_references($document,
-                                                      $main_configuration);
+  Texinfo::Structuring::associate_internal_references($document);
+
   my $sections_list
-        = Texinfo::Structuring::sectioning_structure($document,
-                                                   $main_configuration);
+        = Texinfo::Structuring::sectioning_structure($document);
+
   if ($sections_list) {
     Texinfo::Document::register_document_sections_list($document,
                                                        $sections_list);
   }
-  Texinfo::Structuring::warn_non_empty_parts($document, $main_configuration);
+  Texinfo::Structuring::warn_non_empty_parts($document);
 
   if ($tree_transformations{'complete_tree_nodes_menus'}) {
     Texinfo::Transformations::complete_tree_nodes_menus($tree);
   } elsif ($tree_transformations{'complete_tree_nodes_missing_menu'}) {
-    Texinfo::Transformations::complete_tree_nodes_missing_menu($tree,
-                                                     $main_configuration);
+    Texinfo::Transformations::complete_tree_nodes_missing_menu($document);
   }
 
   if ($tree_transformations{'regenerate_master_menu'}) {
-    Texinfo::Transformations::regenerate_master_menu($document,
-                                                     $main_configuration);
+    Texinfo::Transformations::regenerate_master_menu($document);
   }
 
   my $nodes_tree_nodes_list
-          = Texinfo::Structuring::nodes_tree($document, $main_configuration);
+          = Texinfo::Structuring::nodes_tree($document);
 
   Texinfo::Document::register_document_nodes_list($document,
                                                   $nodes_tree_nodes_list);
 
-  Texinfo::Structuring::set_menus_node_directions($document,
-                                                  $main_configuration);
+  Texinfo::Structuring::set_menus_node_directions($document);
 
-  if (not defined($main_configuration->get_conf('FORMAT_MENU'))
-      or $main_configuration->get_conf('FORMAT_MENU') eq 'menu') {
-    Texinfo::Structuring::complete_node_tree_with_menus($document,
-                                                        $main_configuration);
+  if (not defined($document->get_conf('FORMAT_MENU'))
+      or $document->get_conf('FORMAT_MENU') eq 'menu') {
+    Texinfo::Structuring::complete_node_tree_with_menus($document);
 
-    Texinfo::Structuring::check_nodes_are_referenced($document,
-                                                     $main_configuration);
+    Texinfo::Structuring::check_nodes_are_referenced($document);
   }
 
   Texinfo::Structuring::number_floats($document);
@@ -1133,24 +1153,21 @@ sub test($$)
       my $tree_transformation_sub = $tested_transformations{$transformation};
       if ($transformation eq 'protect_hashchar_at_line_beginning') {
         &$tree_transformation_sub($tree, $document->registrar(),
-                                  $main_configuration);
+                                  $document);
       } else {
         &$tree_transformation_sub($tree);
       }
     }
   }
 
-  # could be in a if !$XS_structuring, but the function should not be
-  # overriden already in that case
-  #Texinfo::Document::rebuild_document($document);
   $tree = $document->tree();
 
   my $indices_information = $document->indices_information();
-  # FIXME maybe it would be good to compare $merged_index_entries?
+  # TODO maybe it would be good to compare $merged_index_entries?
   my $merged_index_entries = $document->merged_indices();
 
   # only print indices information if it differs from the default
-  # indices
+  # indices.  Indices information here is everything but the entries.
   my $indices;
   my $trimmed_index_names = remove_keys($indices_information, ['index_entries']);
   $indices = {'index_names' => $trimmed_index_names}
@@ -1159,18 +1176,16 @@ sub test($$)
   my ($sorted_index_entries, $index_entries_sort_strings);
   my $indices_sorted_sort_strings;
   if ($merged_index_entries) {
-    $main_configuration->{'document_descriptor'}
-      = $document->document_descriptor();
     my $use_unicode_collation
-      = $main_configuration->get_conf('USE_UNICODE_COLLATION');
+      = $document->get_conf('USE_UNICODE_COLLATION');
     my $locale_lang;
     if (!(defined($use_unicode_collation) and !$use_unicode_collation)) {
       $locale_lang
-       = $main_configuration->get_conf('COLLATION_LANGUAGE');
+       = $document->get_conf('COLLATION_LANGUAGE');
     }
 
     my $indices_sort_strings
-      = Texinfo::Document::indices_sort_strings($document, $main_configuration);
+      = Texinfo::Document::indices_sort_strings($document, $document);
 
     $index_entries_sort_strings
      = Texinfo::Indices::format_index_entries_sort_strings(
@@ -1178,7 +1193,7 @@ sub test($$)
 
     $sorted_index_entries
       = Texinfo::Document::sorted_indices_by_index($document,
-                                          $main_configuration,
+                                                   $document,
                                  $use_unicode_collation, $locale_lang);
     $indices_sorted_sort_strings = {};
     foreach my $index_name (keys(%$sorted_index_entries)) {
@@ -1389,7 +1404,7 @@ sub test($$)
   }
   if ($test_split) {
     my $identifier_target = $document->labels_information();
-    Texinfo::Structuring::units_directions($main_configuration,
+    Texinfo::Structuring::units_directions($document,
                                            $identifier_target,
                                            $output_units);
     $directions_text = '';
@@ -1444,11 +1459,12 @@ sub test($$)
     print OUT 'use utf8;'."\n\n";
 
     #print STDERR "Generate: ".Data::Dumper->Dump([$tree], ['$res']);
-    # NOTE $test_name is in general used for directories and
-    # file names, here it is used as a text string.  If non ascii, it
+    # NOTE $test_name is in general used for directories, file names,
+    # and in messages.  Here it is used as a text string.  If non ascii, it
     # should be a character string in internal perl codepoints as OUT
-    # is encoded as utf8.  It should also be encoded to be used as file name
-    # in that case.
+    # is encoded as utf8.  In that case, it should be encoded to be
+    # used as a file name for the above cases.  Since this is not the case,
+    # $test_name should consist of ascii characters only.
     my $out_result;
     {
       local $Data::Dumper::Sortkeys = \&filter_tree_keys;
@@ -1494,11 +1510,14 @@ sub test($$)
     }
     {
       local $Data::Dumper::Sortkeys = 1;
-      # NOTE file names in error messages are bytes, there could be a
-      # need to decode them if there were file names with non ascii
-      # characters.
-      # FIXME remove the NOTE if file names in error messages are not bytes
-      # anymore
+      # NOTE file names in error messages are bytes.  Since strings written
+      # to the test reference output file (with generate) are encoded to
+      # utf-8, the file names with non ascii characters will have the non ascii
+      # characters encoded twice to utf-8 (in 'file_name' hash keys values).
+      # The bytes would need to be decoded first to character strings to be
+      # correctly encoded to utf-8.  Note that having doubly encoded strings
+      # should not prevent the tests to pass, as both the reference and the
+      # results to check are doubly encoded.
       $out_result .= Data::Dumper->Dump([$errors],
                            ['$result_errors{\''.$test_name.'\'}']) ."\n\n";
       $out_result .= Data::Dumper->Dump([$indices],
@@ -1582,8 +1601,9 @@ sub test($$)
     ok (Data::Compare::Compare($indices_sorted_sort_strings,
                                $result_indices_sort_strings{$test_name}),
         $test_name.' indices sort');
-    # FIXME use PlainTexinfo converter to test the XS converter until
-    # convert_to_texinfo goes through XS.
+    # NOTE either a PlainTexinfo converter or a direct call to
+    # convert_to_texinfo can be used to test conversion to raw text,
+    # both for pure Perl and XS.
     my $converter_to_texinfo = Texinfo::Convert::PlainTexinfo->converter();
     my $texi_result = $converter_to_texinfo->convert($document);
     #my $texi_result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);

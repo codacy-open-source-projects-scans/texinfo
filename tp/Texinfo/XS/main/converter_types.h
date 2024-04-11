@@ -344,7 +344,7 @@ typedef struct HTML_COMMAND_CONVERSION {
     /* following is only for no arg command formatting */
     int unset;
     char *text;
-    ELEMENT *tree;
+    ELEMENT *translated_tree;
     char *translated_converted;
     char *translated_to_convert;
 } HTML_COMMAND_CONVERSION;
@@ -540,7 +540,7 @@ typedef struct TYPE_OPEN_FUNCTION {
 } TYPE_OPEN_FUNCTION;
 
 typedef struct HTML_ARG_FORMATTED {
-    const ELEMENT *tree;
+    const ELEMENT *arg_tree;
     char *formatted[AFT_type_raw+1];
 } HTML_ARG_FORMATTED;
 
