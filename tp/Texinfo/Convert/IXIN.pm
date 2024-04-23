@@ -76,8 +76,9 @@ use Texinfo::Commands;
 use Texinfo::Options;
 use Texinfo::Common;
 
+# for section_level_adjusted_command_name
 use Texinfo::Structuring;
-use Texinfo::Indices;
+use Texinfo::OutputUnits;
 
 use Texinfo::Convert::TexinfoSXML;
 
@@ -345,6 +346,8 @@ sub output_ixin($$)
     ($encoded_output_file, $path_encoding)
       = $self->encoded_output_file_name($output_file);
     my $error_message;
+    # the third return information, set if the file has already been used
+    # in this files_information is not checked as this cannot happen.
     ($fh, $error_message) = Texinfo::Common::output_files_open_out(
                              $self->output_files_information(), $self,
                              $encoded_output_file);
@@ -419,7 +422,7 @@ sub output_ixin($$)
 
   # FIXME vars: wait for Thien-Thi answer.
 
-  my $output_units = Texinfo::Structuring::split_by_node($document);
+  my $output_units = Texinfo::OutputUnits::split_by_node($document);
   # setting_commands is for @-commands appearing before the first node,
   # while end_of_nodes_setting_commands holds, for @-commands names, the
   # last @-command element.
@@ -950,7 +953,7 @@ sub output_ixin($$)
         my $file = $self->Texinfo::Common::locate_include_file($file_name);
         if (defined($file)) {
           my $filehandle = do { local *FH };
-          if (open ($filehandle, $file)) {
+          if (open($filehandle, $file)) {
             $blob_nr++;
             if ($extension eq 'txt') {
               my $encoding

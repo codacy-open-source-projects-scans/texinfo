@@ -1,3 +1,553 @@
+2024-04-20  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/README: explain how test_scripts/*.sh can be
+	modified by a sed one liner to be usable when using Makefile.PL.
+
+2024-04-20  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl (BEGIN): detect the case of a
+	pod2texi command installed from Makefile.PL and in that case do not
+	set any path.
+
+	* Pod-Simple-Texinfo/README: explain that pod2texi.pl need to me
+	copied before calling perl Makefile.PL.
+
+	* Pod-Simple-Texinfo/test_scripts/*.sh: correct a comment.
+
+2024-04-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_parse_htmlxref_files): warn if the
+	htmlxref.cnf entry URL prefix is missing.
+
+2024-04-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_close_command_cleanup)
+	(_handle_other_command): remove 'rows_count', instead use
+	scalar(@{$parent->{'contents'}}), as in C code.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (reset_parser_counters),
+	tp/Texinfo/XS/parsetexi/macro.c (expand_linemacro_arguments),
+	tp/Texinfo/XS/parsetexi/counter.c (counter_reset): add debugging
+	messages optional argument in counter_reset, set for counters reset in
+	reset_parser_counters.
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_close_brace),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace),
+	tp/Texinfo/XS/parsetexi/close.c (close_brace_command): in C,
+	remove remaining_args in close_brace_command.  Do not
+	remove 'remaining_args' in _handle_close_brace, both in Perl and C.
+
+	* tp/Texinfo/XS/parsetexi/close.c (close_command_cleanup),
+	tp/Texinfo/XS/parsetexi/counter.c (counter_remove_element): fix removal
+	of row count_cells counter, by adding a new function,
+	counter_remove_element that remove element counters anywhere in the
+	counter list.  This is needed for rows as they are obtained from the
+	bottom of the counter list, not from the top.
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (handle_other_command):
+	remove useless counter management code on row parent element that
+	never get a counter.
+
+2024-04-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_align_lines): remove $bytes_count
+	returned value, as it is not used.  Update caller.
+
+2024-04-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c: remove TODO already in
+	Texinfo/Convert/HTML.pm.
+
+	* tp/Texinfo/Convert/HTML.pm (_html_convert_convert)
+	(_html_convert_output): change TODOs to NOTEs.
+
+2024-04-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/init/html32.pm (html32_convert_tab_command): move code around,
+	remove comment.
+
+2024-04-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(get_converter_indices_sorted_by_index): check if locale language is
+	set before caching the built Perl sorted index.
+
+2024-04-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/init/html32.pm (html32_convert_center_command): in string
+	context, simply return the argument.
+
+2024-04-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_image_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_image_command): if image
+	is not found, do not check if in_multiple_conversions, as it should
+	happen very rarely, but check that there is some 'source_info'.
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_raw_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_raw_command): inline call
+	of _noticed_line_warn and remove the function.
+
+	* tp/t/html_tests.t (tex_expanded_in_caption_multiple_time),
+	tp/Makefile.tres: add test with expanded @teex in HTML in caption,
+	such as to have an expansion of raw format multiple times.
+
+2024-04-17  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Other Dynamic Information),
+	(in_multiple_conversions, _internal_command_text)
+	(convert_tree_new_formatting_context, _noticed_line_warn)
+	(_set_multiple_conversions, _unset_multiple_conversions): add an API
+	to access to multiple_conversions.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_set_multiple_conversions)
+	(html_unset_multiple_conversions, html_in_multiple_conversions),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_formatting_state), tp/Texinfo/XS/convert/convert_html.c
+	(convert_tree_new_formatting_context, html_internal_command_text): XS
+	interface for multiple_conversions.  Remove previous interface.
+
+2024-04-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_internal_command_text)
+	(convert_tree_new_formatting_context, _noticed_line_warn),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_formatting_state), tp/Texinfo/XS/convert/convert_html.c
+	(noticed_line_warn, convert_tree_new_formatting_context)
+	(html_internal_command_text, html_conversion_finalization),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER): rename ignore_notice
+	as multiple_conversions.
+
+	* tp/ext/epub3.pm (epub_convert_image_command): use
+	converter_line_warn instead of _noticed_line_warn, but note that
+	multiple_conversions should be taken into account.
+
+2024-04-17  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm (_accessorize),
+	(_preamble): add a texinfo_generate_setfilename accessor to determine
+	if a @setfilename is inserted in standalone manuals.
+
+	* Pod-Simple-Texinfo/pod2texi.pl: add a --generate-setfilename option,
+	pass to the POD parser.
+
+2024-04-17  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm
+	(pod_title_to_file_name, protect_text): remove leading _ for functions
+	used in pod2texi.pl.  Update callers.
+
+2024-04-17  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm (print_texinfo_errors),
+	Pod-Simple-Texinfo/pod2texi.pl: move _print_texinfo_errors to
+	Pod/Simple/Texinfo.pm and improve.  Update callers.
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm (_accessorize, new),
+	Pod-Simple-Texinfo/pod2texi.pl: add a texinfo_debug accessor to the
+	POD parser, and pass it from pod2texi.pl.
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm
+	(_normalize_texinfo_name): add debug level argument and use it to
+	set debugging in Texinfo parser used for names normalizations and
+	print errors and warnings.  Update callers.
+
+2024-04-17  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/test_scripts/*.sh: use $PERL to use the same perl
+	the XS modules were compiled against.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/Makefile.am (test_files, EXTRA_DIST),
+	Pod-Simple-Texinfo/test_scripts/*.sh: add tests of pod2texi.pl, based
+	on tests formerly in manual_tests.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/targets.c (add_element_to_identifiers_target):
+	set is_target extra information.
+
+	* tp/Texinfo/XS/main/targets.c (register_label_element): fix existing
+	error label error condition.
+
+	* tp/Makefile.tres, tp/t/transformations.t
+	(insert_nodes_for_sectioning_commands): add the same test of
+	insert_nodes_for_sectioning_commands transformation as in
+	t/automatic_nodes.t, here with tree and error messages too.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl (_print_texinfo_errors)
+	(_parsed_manual_tree): better formatting of error messages from
+	Texinfo modules.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl (_parsed_manual_tree): set debugging
+	output and get errors if debug is set.
+
+	* Pod-Simple-Texinfo/pod2texi.pl: fix processing file debug message
+	with $base_level == 0.
+
+	* Pod-Simple-Texinfo/t/Pod-Simple-Texinfo.t (empty head2): add a test
+	with empty =head2.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%parser_state_initialization): initialize
+	'internal_references'.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm
+	(_pod_title_to_file_name): remove end of lines.
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm
+	(_normalize_texinfo_name): return undef in case of parsing errors
+	leading to an undefined document.  Update callers.
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm: change in comments.
+
+	* Pod-Simple-Texinfo/t/Pod-Simple-Texinfo.t (end of line in L): new
+	test.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl: minor change in code, change in
+	comments.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (get_conf): remove warning if options are
+	initialized in get_conf call.  Add a TODO and a comment.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(reference_to_arg_in_tree): use the tree document as document if no
+	document is given in argument.
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(reference_to_arg_in_tree): cast the third modify_tree argument to
+	void *.
+
+2024-04-16  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (@LaTeX{} Customization Variables), 
+	tp/Texinfo/Convert/LaTeX.pm (%defaults, _latex_header),
+	tp/Texinfo/options_data.txt: add new customization variable
+	LATEX_FLOATS_FILE_EXTENSION.
+
+2024-04-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(reference_to_arg_internal): fix flag set for internal reference
+	removal and set it only if an element was actually removed.
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(regenerate_master_menu): set the flag corresponding to modified
+	internal references if needed.
+
+	* tp/Texinfo/Transformations.pm (_reference_to_arg)
+	(reference_to_arg_in_tree),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(reference_to_arg_in_tree): add a document argument to
+	reference_to_arg_in_tree and _reference_to_arg.  Remove removed
+	reference command from document internal references.
+	Update callers.
+
+2024-04-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (remove_from_array): add a simple function to
+	remove the first occurence of an element in an array.
+
+	* tp/Texinfo/Transformations.pm (regenerate_master_menu): use
+	Texinfo::Common remove_from_array to remove the removed menu entries
+	from the internal references list.
+
+2024-04-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/transformations.t
+	(regenerate_master_menu_with_menu_comment): add test of
+	regenerate_master_menu with a menu comment at the end of the Top node.
+
+	Change in comments and spacing.
+
+2024-04-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c
+	(get_converter_indices_sorted_by_index)
+	(get_converter_indices_sorted_by_letter),
+	tp/Texinfo/XS/main/document.c (sorted_indices_by_index)
+	(sorted_indices_by_letter): have sorted_indices_by_* return the
+	full collation indices information, not only the sorted indices, such
+	that the caller may know the language set in collation structure.
+	In get_converter_indices_sorted_by_*, get the language from
+	sorted_indices_by_* collation indices information and pass it through
+	an argument pointer reference.
+	Update callers.
+
+	* tp/Texinfo/XS/main/get_perl_info.c
+	(get_language_document_hv_sorted_indices),
+	tp/Texinfo/XS/convert/ConvertXS.xs
+	(get_converter_indices_sorted_by_index)
+	(get_converter_indices_sorted_by_letter): cache sorted indices built
+	as Perl data in Perl data, such as to build the perl data only once,
+	not for every index.  The cached data is retrieved with
+	get_language_document_hv_sorted_indices, which also creates the hash
+	where the sorted indices are stored, if needed.
+
+2024-04-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/OutputUnits.pm (units_directions),
+	tp/Texinfo/XS/main/output_unit.c (units_directions): replace the
+	customization options argument by print_debug.  Update callers and set
+	the print_debug argument from customization options.
+
+2024-04-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document_types.h, tp/Texinfo/XS/main/document.c
+	(sorted_indices_by_index, sorted_indices_by_letter): remove
+	F_DOCM_sorted_indices_by_*, it is not accurate and not useful.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs: add comments on caching
+	built perl convert sorted_indices_by_*.
+
+2024-04-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (BUILD_PERL_DOCUMENT_ITEM)
+	(BUILD_PERL_DOCUMENT_LIST): change macro definition to have the full
+	function name, as first argument, add a flagname argument to have the
+	full flag name and use a string for keyname.  For improved
+	searchability of the code.
+
+2024-04-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_register_footnote): use
+	code more similar to get_perl_info.c find_element_from_sv, removing
+	useless cases.
+
+2024-04-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (%XS_overrides),
+	tp/Texinfo/XS/main/DocumentXS.xs: remove rebuild_document, document
+	accessors should be used instead.
+
+2024-04-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ManipulateTree.pm (normalized_menu_entry_internal_node)
+	(normalized_entry_associated_internal_node, first_menu_node),
+	tp/Texinfo/Structuring.pm: move functions, some previously internal,
+	from Structuring.pm to ManipulateTree.pm.  Update callers.
+
+	* tp/Texinfo/OutputUnits.pm, doc/tp_api/Makefile.am
+	(texi2any_internals_dependencies), tp/Makefile.am (dist_modules_DATA),
+	tp/Texinfo/Structuring.pm: move output units related functions from
+	Structuring.pm to the new module Texinfo::OutputUnits.  Update
+	callers.
+
+2024-04-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (new_detailmenu),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (new_detailmenu):
+	rename new_master_menu as new_detailmenu, change also variables names.
+	Update callers and variables names in callers.
+
+2024-04-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Indices.pm: remove export of functions.
+
+	* tp/Texinfo/*: fix import of modules related to indices.
+
+	Update POD documentation and comments to explain better which method
+	should be directly used and why there is no XS override for some
+	functions.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_utils.c (output_files_open_out),
+	tp/Texinfo/XS/convert/convert_html.c
+	(convert_output_output_unit_internal, html_node_redirections): add an
+	output argument to output_files_open_out as in Perl, to get the
+	information that a file was reused.  Also, as in Perl, add the file
+	path to opened_files only if not already there.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(build_output_files_opened_files): update for the change in Perl
+	code by building a hash reference.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(protect_hashchar_at_line_beginning_internal): define error_messages
+	and options only where they are needed.
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm: use
+	Texinfo::Transformations methods fully qualified.
+
+2024-04-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: use suppressions file for valgrind
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (protect_colon)
+	(protect_colon_in_tree, protect_comma, protect_comma_in_tree)
+	(protect_node_after_label, protect_node_after_label_in_tree),
+	tp/Texinfo/XS/structuring_transfo/structuring.c,
+	tp/Texinfo/XS/structuring_transfo/transformations.c: move functions
+	calling protect_text and modify_tree out of structuring.c and
+	transformations.c to manipulate_tree.c.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ManipulateTree.pm, tp/Texinfo/Common.pm,
+	tp/Makefile.am (dist_modules_DATA), doc/tp_api/Makefile.am
+	(texi2any_internals_dependencies), : move tree transformation
+	functions depending on modify_tree from Texinfo/Common.pm to the new
+	Texinfo/ManipulateTree.pm module.  Update callers.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/structuring.c: make some functions
+	static.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (locate_file_in_dirs): rename locate_init_file
+	as locate_file_in_dirs.  Update callers.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (output_files_opened_files), tp/texi2any.pl
+	(merge_opened_files): add NOTE in comment to note that paths are not
+	normalized, such that paths with different path names referring to the
+	same file will not be caugth as overwritting files and will not
+	trigger warning messages.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/tests/run_parser_all.sh: do not add a / at the end of $testdir,
+	one is already added in all the uses if needed.
+
+	* tp/Texinfo/Common.pm (output_files_opened_files), tp/texi2any.pl
+	(merge_opened_files): merge opened files with merge_opened_files in
+	texi2any.pl, not in output_files_opened_files,
+	output_files_opened_files simply returns the opened_files hash
+	reference.  Warn if a file is opened more than once in
+	merge_opened_files.
+
+	* tp/tests/Makefile.onetst, tp/tests/formatting/list-of-tests
+	(reuse_macro_expand_file): test --macro-expand with the same name as
+	output file.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (output_files_open_out),
+	tp/Texinfo/Convert/HTML.pm (_do_jslicenses_file): have
+	output_files_open_out return the information that a file that was
+	already opened is opened again, which means overwritting.  Add a
+	warning in the case that can actually happen, with js licenses file.
+
+	* tp/tests/formatting/list-of-tests (js_license_reuse_output_file):
+	test with js licences file overwritting an output file.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (output_files_initialize)
+	(output_files_open_out, output_files_opened_files), tp/texi2any.pl
+	(_exit, %opened_files, handle_errors): use a hash instead of an array
+	for opened files, to avoid unlinking twice files opened (and closed)
+	twice.
+
+2024-04-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm, tp/texi2any.pl: change in comments for a more
+	accurate description of duplicates in opened_files.
+
+2024-04-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm: change in comments.
+
+2024-04-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (convert_tree, convert): fix
+	implementations.  Use XS for convert similarly as in output.
+
+	* tp/Makefile.tres, t/raw_text_converter.t: add test of raw text
+	converter functions not called elsewhere.
+
+2024-04-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_html_set_pages_files),
+	tp/Texinfo/XS/convert/convert_html.c (html_set_pages_files): add
+	warnings when a paths is reset from or to a relative path for an
+	existing file.
+	
+	Change in comments.
+
+2024-04-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/tests/README, tp/TODO: updates related to manual tests.
+
+2024-04-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Predefined Indices): texinfo.texi now has
+	three indices, not two.
+
+2024-04-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Indices.pm, tp/Texinfo/Structuring.pm: update POD
+	documentation.
+
+2024-04-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl: change a TODO to a NOTE.
+
+2024-04-11  Patrice Dumas  <pertusus@free.fr>
+
+	Fix master menu generation with node in its own menus
+
+	* tp/Texinfo/Common.pm (converter_or_registrar_line_warn),
+	tp/Texinfo/Indices.pm: move _converter_or_registrar_line_warn from
+	Indices.pm to Common.pm and rename as
+	converter_or_registrar_line_warn.
+
+	* tp/Texinfo/Structuring.pm (new_master_menu)
+	(new_complete_menu_master_menu, _print_down_menus),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (print_down_menus)
+	(new_master_menu, new_complete_menu_master_menu),
+	tp/t/do_master_menu.t: add the list of up nodes in print_down_menus
+	arguments and check if a child node is also an up node, to avoid
+	infinite recursion.  Add error reporting arguments to
+	print_down_menus, and to caller, new_master_menu and
+	new_complete_menu_master_menu.  Update callers.
+
+	* tp/Makefile.tres, tp/t/info_tests.t (recursive_down_menu): add a
+	test for a node in its own menu with a master menu generation.
+
+2024-04-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): initialize test customization variables
+	defaults with the same hash as in the main program,
+	%Texinfo::Common::default_main_program_customization_options.
+
+	* tp/Texinfo/Convert/Texinfo.pm (target_element_to_texi_label),
+	tp/Texinfo/XS/main/convert_to_texinfo.c
+	(target_element_to_texi_label): handle links to external nodes.
+
+	* tp/Texinfo/Structuring.pm (complete_node_tree_with_menus),
+	tp/Texinfo/XS/structuring_transfo/structuring.c
+	(complete_node_tree_with_menus): no warning on menu and node
+	directions mismatch if the node direction is to an external manual.
+
+	* tp/t/*.t: update tests by changing node direction or menu,
+	adding CHECK_NORMAL_MENU_STRUCTURE set to 0, and comments.
+
 2024-04-10  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/t/test_utils.pl (close_files): add a note explaining why this

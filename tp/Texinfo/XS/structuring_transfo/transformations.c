@@ -37,7 +37,8 @@
 #include "debug.h"
 #include "utils.h"
 /* for copy_contents normalized_menu_entry_internal_node modify_tree
-   protect_text new_asis_command_with_text */
+   protect_colon_in_tree new_asis_command_with_text
+   protect_comma_in_tree protect_node_after_label_in_tree */
 #include "manipulate_tree.h"
 #include "structuring.h"
 #include "convert_to_texinfo.h"
@@ -75,6 +76,7 @@ lookup_index_entry (ELEMENT *index_entry_info, INDEX **indices_information)
   return result;
 }
 
+/* In Texinfo::ManipulateTree */
 void
 protect_first_parenthesis (ELEMENT *element)
 {
@@ -884,8 +886,10 @@ reference_to_arg_internal (const char *type,
       if (document && document->internal_references
           && document->internal_references->number > 0)
         {
-          remove_element_from_list (document->internal_references, e);
-          document->modified_information |= F_DOCM_labels_list;
+          const ELEMENT *removed_internal_ref =
+              remove_element_from_list (document->internal_references, e);
+          if (removed_internal_ref)
+            document->modified_information |= F_DOCM_internal_references;
         }
       if (document)
         document->modified_information |= F_DOCM_tree;
@@ -901,7 +905,7 @@ reference_to_arg_internal (const char *type,
 ELEMENT *
 reference_to_arg_in_tree (ELEMENT *tree, DOCUMENT *document)
 {
-  return modify_tree (tree, &reference_to_arg_internal, document);
+  return modify_tree (tree, &reference_to_arg_internal, (void *) document);
 }
 
 void
@@ -1134,7 +1138,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
 
   const ELEMENT *top_node = find_identifier_target (identifiers_target, "Top");
   const ELEMENT_LIST *menus;
-  ELEMENT *master_menu;
+  ELEMENT *new_detailmenu_e;
   ELEMENT *last_menu;
   const ELEMENT *last_content;
   int i;
@@ -1149,11 +1153,12 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
   else
     return 0;
 
-  master_menu = new_master_menu (document->options, identifiers_target,
-                                 menus, use_sections);
+  new_detailmenu_e = new_detailmenu (document->error_messages,
+                                    document->options, identifiers_target,
+                                    menus, use_sections);
 
   /* no need for a master menu */
-  if (!master_menu)
+  if (!new_detailmenu_e)
     return 0;
 
   document->modified_information |= F_DOCM_tree;
@@ -1170,13 +1175,8 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
             {
               size_t j;
               ELEMENT *removed = remove_from_contents (menu, detailmenu_index);
-              replace_element_in_list (
-                 &document->global_commands->detailmenu, removed, master_menu);
-              /* TODO are the new entries added to internal refs?
-                 Note that if they are not, it is possible that this has
-                 no impact as the associated entry in menu may be
-                 in internal refs, and maybe it is enough.
-               */
+              replace_element_in_list (&document->global_commands->detailmenu,
+                                       removed, new_detailmenu_e);
               /* remove internal refs of removed entries */
               for (j = 0; j < removed->contents.number; j++)
                 {
@@ -1193,7 +1193,10 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
                                 remove_element_from_list (
                                         document->internal_references,
                                                         entry_content);
-                              if (!removed_internal_ref)
+                              if (removed_internal_ref)
+                                document->modified_information
+                                            |= F_DOCM_internal_references;
+                              else
                                 {
                                   char *removed_internal_texi
                                      = convert_to_texinfo (entry_content);
@@ -1207,7 +1210,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
                     }
                 }
               destroy_element_and_children (removed);
-              insert_into_contents (menu, master_menu, detailmenu_index);
+              insert_into_contents (menu, new_detailmenu_e, detailmenu_index);
               return 1;
             }
         }
@@ -1219,7 +1222,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
   if (last_content && last_content->cmd == CM_end)
     index--;
 
-  master_menu->parent = last_menu;
+  new_detailmenu_e->parent = last_menu;
 
   if (index)
     {
@@ -1256,46 +1259,25 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
         }
     }
   /* insert master menu */
-  insert_into_contents (last_menu, master_menu, index);
-  add_to_element_list (&document->global_commands->detailmenu, master_menu);
+  insert_into_contents (last_menu, new_detailmenu_e, index);
+  add_to_element_list (&document->global_commands->detailmenu,
+                       new_detailmenu_e);
   return 1;
 }
 
-ELEMENT_LIST *
-protect_comma (const char *type, ELEMENT *current, void *argument)
-{
-  return protect_text (current, ",");
-}
-
-ELEMENT *
-protect_comma_in_tree (ELEMENT *tree)
-{
-  return modify_tree (tree, &protect_comma, 0);
-}
-
-ELEMENT_LIST *
-protect_node_after_label (const char *type, ELEMENT *current, void *argument)
-{
-  return protect_text (current, ".\t,");
-}
-
-ELEMENT *
-protect_node_after_label_in_tree (ELEMENT *tree)
-{
-  return modify_tree (tree, &protect_node_after_label, 0);
-}
-
-/* NOTE in perl there is a customization_information, but here we use the
-   document for error registration and customization */
+/* NOTE in perl there is a separate registrar and customization_information,
+   here we directly use a document from ARGUMENT for error registration and
+   customization.
+   It would be more flexible to pass separately error_messages and
+   options, but would also require a specific structure, and we
+   always have a document in C/XS, so it is simpler to use it.
+   In Perl, the document may actually be used to get the registrar and
+   customization_information. */
 ELEMENT_LIST *
 protect_hashchar_at_line_beginning_internal (const char *type,
                                              ELEMENT *current,
                                              void *argument)
 {
-  DOCUMENT *document = (DOCUMENT *) argument;
-  ERROR_MESSAGE_LIST *error_messages = document->error_messages;
-  const OPTIONS *options = document->options;
-
   if (current->text.end > 0)
     {
       char *filename;
@@ -1343,6 +1325,11 @@ protect_hashchar_at_line_beginning_internal (const char *type,
                               if (parent_for_warn->cmd
                                   && parent_for_warn->source_info.line_nr)
                                 {
+                                  DOCUMENT *document = (DOCUMENT *) argument;
+                                  ERROR_MESSAGE_LIST *error_messages
+                                      = document->error_messages;
+                                  const OPTIONS *options = document->options;
+
                                   message_list_command_warn (
                                     error_messages, options,
                                     parent_for_warn, 0,

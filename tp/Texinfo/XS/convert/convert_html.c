@@ -2168,25 +2168,6 @@ set_root_commands_targets_node_files (CONVERTER *self)
     }
 }
 
-/*
-intercept warning and error messages to take 'ignore_notice' into
-account
- */
-static void
-noticed_line_warn (CONVERTER *self, const ELEMENT *element,
-                   const char *format, ...)
-{
-  va_list v;
-
-  if (self->ignore_notice)
-    return;
-
-  va_start (v, format);
-
-  vmessage_list_command_warn (&self->error_messages, self->conf,
-                              element, format, v);
-}
-
 /* to be inlined in text parsing codes */
 #define OTXI_PROTECT_XML_FORM_FEED_CASES(var) \
         OTXI_PROTECT_XML_CASES(var) \
@@ -2816,9 +2797,9 @@ convert_tree_new_formatting_context (CONVERTER *self, const ELEMENT *tree,
 
   if (multiple_pass)
     {
-      self->ignore_notice++;
+      self->multiple_conversions++;
       push_string_stack_string (&self->multiple_pass, multiple_pass);
-      self->modified_state |= HMSF_multiple_pass | HMSF_ignore_notice;
+      self->modified_state |= HMSF_multiple_pass;
       multiple_pass_str = "|M";
     }
 
@@ -2833,9 +2814,9 @@ convert_tree_new_formatting_context (CONVERTER *self, const ELEMENT *tree,
 
   if (multiple_pass)
     {
-      self->ignore_notice--;
+      self->multiple_conversions--;
       pop_string_stack (&self->multiple_pass);
-      self->modified_state |= HMSF_multiple_pass | HMSF_ignore_notice;
+      self->modified_state |= HMSF_multiple_pass;
     }
 
   free (context_string_str);
@@ -3986,16 +3967,14 @@ html_internal_command_text (CONVERTER *self, const ELEMENT *command,
           else
             tree_root = selected_tree;
 
-          self->ignore_notice++;
+          self->multiple_conversions++;
           push_element_reference_stack_element (&self->referred_command_stack,
                                                 command, command->hv);
-          self->modified_state |= HMSF_ignore_notice;
           target_info->command_text[type]
             = html_convert_tree (self, tree_root, explanation);
           free (explanation);
           pop_element_reference_stack (&self->referred_command_stack);
-          self->ignore_notice--;
-          self->modified_state |= HMSF_ignore_notice;
+          self->multiple_conversions--;
 
           html_pop_document_context (self);
 
@@ -5576,6 +5555,8 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
                                         file_name_path->filename);
               if (file_source_info)
                 {
+          /*  It is likely that setting different paths for the same file is
+              not intended, so we warn. */
                   if (file_source_info->path && file_name_path->filepath
                       && strcmp (file_source_info->path,
                                  file_name_path->filepath))
@@ -5586,6 +5567,24 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
                                            file_name_path->filename,
                                            file_source_info->path,
                                            file_name_path->filepath);
+                    }
+                  else if (file_name_path->filepath
+                           && !file_source_info->path)
+                    {
+                      message_list_document_warn (&self->error_messages,
+                                                  self->conf, 0,
+                        "resetting %s file path from a relative path to %s",
+                                           file_name_path->filename,
+                                           file_name_path->filepath);
+                    }
+                  else if (!file_name_path->filepath
+                           && file_source_info->path)
+                    {
+                      message_list_document_warn (&self->error_messages,
+                                                  self->conf, 0,
+                        "resetting %s file path from %s to a relative path",
+                                           file_name_path->filename,
+                                           file_source_info->path);
                     }
                   set_file_source_info (file_source_info, "special_file",
                                 "user_defined", 0, file_name_path->filepath);
@@ -5798,8 +5797,8 @@ html_prepare_units_directions_files (CONVERTER *self,
     setup_output_simple_page (self, output_filename);
 
 
-  units_directions (self->conf, self->document->identifiers_target,
-                    output_units);
+  units_directions (self->document->identifiers_target, output_units,
+                    self->conf->DEBUG.integer);
 
   prepare_special_units_directions (self, special_units);
 
@@ -9213,9 +9212,19 @@ convert_image_command (CONVERTER *self, const enum command_id cmd,
 
       if (!image_path_info->image_path)
         {
-          noticed_line_warn (self, element,
-                "@image file `%s' (for HTML) not found, using `%s'",
+      /* it would have been relevant to output the message only if
+         if not ($self->in_multiple_conversions())
+         However, @image formatted in multiple conversions context should be
+         rare out of test suites (and probably always incorrect), so we avoid
+         complexity and slowdown.  We still check that source_info is set, if
+         not it should be a copy, therefore there is no need for error
+         output, especially without line information. */
+          if (element->source_info.line_nr)
+            {
+              message_list_command_warn (&self->error_messages, self->conf,
+                element, 0, "@image file `%s' (for HTML) not found, using `%s'",
                      image_basefile, image_file);
+            }
         }
       free_image_file_location_info (image_path_info);
       free (image_path_info);
@@ -9985,8 +9994,8 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
               if (!menus && automatic_directions)
                 {
                   ELEMENT *menu_node
-                   = new_complete_menu_master_menu (self->conf,
-                             self->document->identifiers_target, node);
+                   = new_complete_menu_master_menu (&self->error_messages,
+                         self->conf, self->document->identifiers_target, node);
 
                   if (menu_node)
                     {
@@ -10314,9 +10323,12 @@ convert_raw_command (CONVERTER *self, const enum command_id cmd,
       return;
     }
 
-  noticed_line_warn (self, element, "raw format %s is not converted",
+  if (!self->multiple_conversions)
+    {
+      message_list_command_warn (&self->error_messages, self->conf,
+                   element, 0, "raw format %s is not converted",
                      element_command_name (element));
-
+    }
   format_protect_text (self, content, result);
 }
 
@@ -12510,8 +12522,9 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
   char *index_name_cmd_class;
   char *alpha_text = 0;
   char *non_alpha_text = 0;
+  char *language;
   INDEX_SORTED_BY_LETTER *index_entries_by_letter
-    = get_converter_indices_sorted_by_letter (self);
+    = get_converter_indices_sorted_by_letter (self, &language);
 
   if (!index_entries_by_letter)
     return;
@@ -13137,9 +13150,9 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
         /* do not warn if the entry is in a special region, like titlepage */
                           if (!element_region)
                             {
-     /* NOTE _noticed_line_warn is not used as printindex should not
-        happen in multiple tree parsing that lead to ignore_notice being set,
-        but the error message is printed only for the first entry formatting. */
+     /* NOTE $self->in_multiple_conversions() is not checked as printindex
+        should not happen in multiple tree conversion, but the error message
+        is printed for the first entry formatting only. */
                               message_list_command_warn (&self->error_messages,
                                       self->conf,
                                       main_entry_element, 0,
@@ -13176,9 +13189,9 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
         /* do not warn if the entry is in a special region, like titlepage */
                               if (!element_region)
                                 {
-      /* NOTE _noticed_line_warn is not used as printindex should not
-         happen in multiple tree parsing that lead to ignore_notice being set,
-         but the error message is printed only for the first entry formatting.
+      /* NOTE $self->in_multiple_conversions() is not checked as printindex
+         should not happen in multiple tree conversion, but the error message
+         is printed for the first entry formatting only.
          NOTE the index entry may be associated to a node in that case. */
                               message_list_command_warn (&self->error_messages,
                                       self->conf,
@@ -14078,9 +14091,6 @@ convert_definfoenclose_type (CONVERTER *self, const enum element_type type,
                        const ELEMENT *element, const char *content,
                        TEXT *result)
 {
-  /* TODO add a span to mark the original command as a class?
-     Not to be done as long as definfoenclose is deprecated. */
-
   const char *begin = lookup_extra_string (element, "begin");
   const char *end = lookup_extra_string (element, "end");
 
@@ -15559,7 +15569,6 @@ default_format_special_body_about (CONVERTER *self,
 
       if (button->type == BST_direction)
         {
-         /* FIXME strip FirstInFile from $button to get active icon file? */
           if (self->conf->ICONS.integer > 0
               && self->conf->ACTIVE_ICONS.icons->number > 0
               && self->conf->ACTIVE_ICONS.icons->list[direction]
@@ -16928,9 +16937,9 @@ html_conversion_finalization (CONVERTER *self)
       if (self->document_global_context)
         fprintf (stderr, "BUG: document_global_context: %d\n",
                          self->document_global_context);
-      if (self->ignore_notice)
-        fprintf (stderr, "BUG: ignore_notice: %d\n",
-                         self->ignore_notice);
+      if (self->multiple_conversions)
+        fprintf (stderr, "BUG: multiple_conversions: %d\n",
+                         self->multiple_conversions);
     }
 
 }
@@ -18598,12 +18607,15 @@ convert_output_output_unit_internal (CONVERTER *self,
       char *out_filepath = unit_file->filepath;
       char *path_encoding;
       char *open_error_message;
+      int overwritten_file;
 
       char *encoded_out_filepath = encoded_output_file_name (self->conf,
                                self->document->global_info, out_filepath,
                                                        &path_encoding, 0);
+      /* overwritten_file being set cannot happen */
       FILE *file_fh = output_files_open_out (&self->output_files_information,
-                               encoded_out_filepath, &open_error_message, 0);
+                               encoded_out_filepath, &open_error_message,
+                               &overwritten_file, 0);
       free (path_encoding);
       if (!file_fh)
         {
@@ -18767,9 +18779,6 @@ html_convert_output (CONVERTER *self, const ELEMENT *root,
                          unit_nr, "UNIT NO-PAGE", "no-page output unit");
           unit_nr++;
         }
-      /* TODO there is no rule before the footnotes special element in
-         case of separate footnotes in the default formatting style.
-         Not sure if it is an issue. */
       if (special_units && special_units->number)
         {
           for (i = 0; i < special_units->number; i++)
@@ -19029,6 +19038,7 @@ html_node_redirections (CONVERTER *self,
                   char *out_filepath;
                   char *path_encoding;
                   char *open_error_message;
+                  int overwritten_file;
 
                   add_to_files_source_info (files_source_info,
                                  redirection_filename, "redirection", 0,
@@ -19049,9 +19059,11 @@ html_node_redirections (CONVERTER *self,
                      = encoded_output_file_name (self->conf,
                                    self->document->global_info, out_filepath,
                                                            &path_encoding, 0);
+                  /* overwritten_file being set cannot happen */
                   FILE *file_fh
                     = output_files_open_out (&self->output_files_information,
-                               encoded_out_filepath, &open_error_message, 0);
+                               encoded_out_filepath, &open_error_message,
+                               &overwritten_file, 0);
                   free (path_encoding);
                   if (!file_fh)
                     {

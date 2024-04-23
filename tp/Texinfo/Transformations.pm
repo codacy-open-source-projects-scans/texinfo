@@ -37,8 +37,9 @@ use Texinfo::XSLoader;
 use Texinfo::Commands;
 use Texinfo::Common;
 use Texinfo::Translations;
-use Texinfo::Structuring;
 use Texinfo::Document;
+use Texinfo::ManipulateTree;
+use Texinfo::Structuring;
 
 require Exporter;
 use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
@@ -181,7 +182,8 @@ sub fill_gaps_in_sectioning($;$)
         my $line_content;
         if ($commands_heading_content) {
           $line_content
-            = Texinfo::Common::copy_contentsNonXS($commands_heading_content);
+            = Texinfo::ManipulateTree::copy_contentsNonXS(
+                                               $commands_heading_content);
           $line_content->{'parent'} = $line_arg;
         } else {
           my $asis_command = {'cmdname' => 'asis',
@@ -230,11 +232,18 @@ sub _reference_to_arg($$$)
 {
   my $type = shift;
   my $current = shift;
+  my $document = shift;
 
-  # FIXME remove from internal references list?
   if ($current->{'cmdname'} and
       $Texinfo::Commands::ref_commands{$current->{'cmdname'}}
       and $current->{'args'}) {
+
+    # remove from internal references
+    if ($document) {
+      my $internal_references = $document->internal_references_information();
+      Texinfo::Common::remove_from_array($internal_references, $current);
+    }
+
     my @args_try_order;
     if ($current->{'cmdname'} eq 'inforef'
         or $current->{'cmdname'} eq 'link') {
@@ -266,11 +275,13 @@ sub _reference_to_arg($$$)
   }
 }
 
-sub reference_to_arg_in_tree($)
+sub reference_to_arg_in_tree($;$)
 {
   my $tree = shift;
+  my $document = shift;
 
-  return Texinfo::Common::modify_tree($tree, \&_reference_to_arg);
+  return Texinfo::ManipulateTree::modify_tree($tree, \&_reference_to_arg,
+                                              $document);
 }
 
 # prepare and add a new node as a possible cross reference targets
@@ -302,9 +313,17 @@ sub _new_node($$;$)
     # that is used to construct the node.
     # Also protect_first_parenthesis has no XS override, only
     # protect_first_parenthesis_in_targets.
-    # FIXME we could also rebuild the tree, after adding an override
-    # for protect_first_parenthesis?
     confess("BUG: _new_node: XS not supported");
+
+    # It could have been possible to rebuild the tree, after adding
+    # an override for protect_first_parenthesis.
+    # If XS is used, however, it is be much better to override all
+    # the functions calling the current function instead of trying
+    # to have it work through an interface because the function is
+    # mostly internal.  So, it is better to keep failing with XS.
+    #
+    # The issue arise because the current function is used in tests,
+    # this cannot work with XS (and tests are skipped).
   }
 
   # We protect for all the contexts, as the node name should be
@@ -315,14 +334,15 @@ sub _new_node($$;$)
   # otherwise, those that are protected with @asis.
   #
   # needed in nodes lines, @*ref and in menus with a label
-  $node_tree = Texinfo::Common::protect_comma_in_tree($node_tree);
+  $node_tree = Texinfo::ManipulateTree::protect_comma_in_tree($node_tree);
   # always
-  Texinfo::Common::protect_first_parenthesis($node_tree);
+  Texinfo::ManipulateTree::protect_first_parenthesis($node_tree);
   # in menu entry without label
-  $node_tree = Texinfo::Common::protect_colon_in_tree($node_tree);
+  $node_tree = Texinfo::ManipulateTree::protect_colon_in_tree($node_tree);
   # in menu entry with label
-  $node_tree = Texinfo::Common::protect_node_after_label_in_tree($node_tree);
-  $node_tree = reference_to_arg_in_tree($node_tree);
+  $node_tree
+    = Texinfo::ManipulateTree::protect_node_after_label_in_tree($node_tree);
+  $node_tree = reference_to_arg_in_tree($node_tree, $document);
 
   my $empty_node = 0;
   if (!$node_tree->{'contents'}
@@ -452,7 +472,7 @@ sub insert_nodes_for_sectioning_commands($)
         $new_node_tree = {'contents' => [{'text' => 'Top'}]};
       } else {
         $new_node_tree
-           = Texinfo::Common::copy_contentsNonXS($content->{'args'}->[0]);
+         = Texinfo::ManipulateTree::copy_contentsNonXS($content->{'args'}->[0]);
       }
       my $new_node = _new_node($new_node_tree, $document,
                                $customization_information);
@@ -467,8 +487,8 @@ sub insert_nodes_for_sectioning_commands($)
         $content->{'extra'}->{'associated_node'} = $new_node;
         $new_node->{'parent'} = $content->{'parent'};
         # reassociate index entries and menus
-        Texinfo::Common::modify_tree($content, \&_reassociate_to_node,
-                                     [$new_node, $previous_node]);
+        Texinfo::ManipulateTree::modify_tree($content, \&_reassociate_to_node,
+                                             [$new_node, $previous_node]);
       }
     }
     # check is_target to avoid erroneous nodes, such as duplicates
@@ -513,7 +533,8 @@ sub complete_node_menu($;$)
         foreach my $entry (@{$menu->{'contents'}}) {
           if ($entry->{'type'} and $entry->{'type'} eq 'menu_entry') {
             my $normalized_entry_node
-              = Texinfo::Structuring::normalized_menu_entry_internal_node($entry);
+              = Texinfo::ManipulateTree::normalized_menu_entry_internal_node(
+                                                                       $entry);
             if (defined($normalized_entry_node)) {
               $existing_entries{$normalized_entry_node} = [$menu, $entry];
             }
@@ -642,11 +663,12 @@ sub regenerate_master_menu($;$)
                    or !$top_node->{'extra'}->{'menus'}
                    or !scalar(@{$top_node->{'extra'}->{'menus'}}));
 
-  my $new_master_menu
-      = Texinfo::Structuring::new_master_menu($document,
+  my $new_detailmenu
+      = Texinfo::Structuring::new_detailmenu($document,
+                      $document->registrar(),
                       $identifier_target, $top_node->{'extra'}->{'menus'},
                       $use_sections);
-  return undef if (!defined($new_master_menu));
+  return undef if (!defined($new_detailmenu));
 
   my $global_detailmenu
     = $document->global_commands_information()->{'detailmenu'};
@@ -655,9 +677,9 @@ sub regenerate_master_menu($;$)
     foreach my $entry (@{$menu->{'contents'}}) {
       if ($entry->{'cmdname'} and $entry->{'cmdname'} eq 'detailmenu') {
         # replace existing detailmenu by the master menu
-        $new_master_menu->{'parent'} = $menu;
+        $new_detailmenu->{'parent'} = $menu;
         splice (@{$menu->{'contents'}}, $detailmenu_index, 1,
-                $new_master_menu);
+                $new_detailmenu);
         # also replace in global commands
         my $index = 0;
         my $global_detailmenu_index = -1;
@@ -670,9 +692,16 @@ sub regenerate_master_menu($;$)
         }
         if ($global_detailmenu_index >= 0) {
           splice (@$global_detailmenu, $global_detailmenu_index, 1,
-                  $new_master_menu);
+                  $new_detailmenu);
         }
-        # FIXME use an API to register a new internal reference?
+        # NOTE the menu entries added in @detailmenu are not added as
+        # internal references.  However, this is not an issue, as the
+        # menu entries in @detailmenu are also in regular menus.
+        # As long as internal references are only used to check if all
+        # the nodes are referenced, not having @detailmenu entries
+        # added is not an issue at all.
+
+        # remove internal refs of removed entries
         my $internal_references = $document->internal_references_information();
         foreach my $detailmenu_entry (@{$entry->{'contents'}}) {
           if ($detailmenu_entry->{'type'}
@@ -680,18 +709,8 @@ sub regenerate_master_menu($;$)
             foreach my $entry_content (@{$detailmenu_entry->{'contents'}}) {
               if ($entry_content->{'type'}
                   and $entry_content->{'type'} eq 'menu_entry_node') {
-                my $index = 0;
-                my $internal_references_idx = -1;
-                foreach my $internal_ref (@$internal_references) {
-                  if ($internal_ref eq $entry_content) {
-                    $internal_references_idx = $index;
-                    last;
-                  }
-                  $index++;
-                }
-                if ($internal_references_idx >= 0) {
-                  splice (@$internal_references, $internal_references_idx, 1);
-                }
+                Texinfo::Common::remove_from_array($internal_references,
+                                                   $entry_content);
               }
             }
           }
@@ -710,7 +729,7 @@ sub regenerate_master_menu($;$)
     $index --;
   }
 
-  $new_master_menu->{'parent'} = $last_menu;
+  $new_detailmenu->{'parent'} = $last_menu;
   if ($index) {
     my $last_element = $last_menu->{'contents'}->[$index-1];
     if ($last_element->{'type'} and $last_element->{'type'} eq 'menu_comment'
@@ -718,8 +737,7 @@ sub regenerate_master_menu($;$)
         and $last_element->{'contents'}->[-1]->{'type'}
         and $last_element->{'contents'}->[-1]->{'type'} eq 'preformatted') {
       {
-      # there is already a menu comment at the end of the menu, add an empty line
-        # FIXME this case is not covered in tests
+        # already a menu comment at the end of the menu, add an empty line
         my $preformatted = $last_element->{'contents'}->[-1];
         my $empty_line = {'type' => 'empty_line', 'text' => "\n",
                           'parent' => $preformatted};
@@ -740,8 +758,8 @@ sub regenerate_master_menu($;$)
     }
   }
   # insert master menu
-  splice (@{$last_menu->{'contents'}}, $index, 0, $new_master_menu);
-  push @$global_detailmenu, $new_master_menu;
+  splice (@{$last_menu->{'contents'}}, $index, 0, $new_detailmenu);
+  push @$global_detailmenu, $new_detailmenu;
 
   return 1;
 }
@@ -908,7 +926,7 @@ sub protect_hashchar_at_line_beginning($;$$)
   my $registrar = shift;
   my $customization_information = shift;
 
-  return Texinfo::Common::modify_tree($tree,
+  return Texinfo::ManipulateTree::modify_tree($tree,
                      \&_protect_hashchar_at_line_beginning,
                       [$registrar, $customization_information]);
 }
@@ -921,16 +939,18 @@ sub _protect_first_parenthesis_in_targets($$$)
 
   my $element_label = Texinfo::Common::get_label_element($current);
   if ($element_label) {
-    Texinfo::Common::protect_first_parenthesis($element_label);
+    Texinfo::ManipulateTree::protect_first_parenthesis($element_label);
   }
   return undef;
 }
 
+# TODO not documented
 sub protect_first_parenthesis_in_targets($)
 {
   my $tree = shift;
 
-  Texinfo::Common::modify_tree($tree, \&_protect_first_parenthesis_in_targets);
+  Texinfo::ManipulateTree::modify_tree($tree,
+                           \&_protect_first_parenthesis_in_targets);
 }
 
 1;
@@ -953,6 +973,9 @@ C<insert_nodes_for_sectioning_commands> that adds nodes for sectioning commands
 without nodes and C<complete_tree_nodes_menus> and
 C<complete_tree_nodes_missing_menu> that completes the node menus based on the
 sectioning tree.
+
+Methods for copying and modifying the Texinfo tree used for default
+conversion to output formats are in L<Texinfo::ManipulateTree>.
 
 =head1 METHODS
 
@@ -1030,14 +1053,16 @@ defined they are used for error reporting in case an hash character could not
 be protected because it appeared in a raw formatted environment (C<@tex>,
 C<@html>...).
 
-=item $modified_tree = reference_to_arg_in_tree($tree)
+=item $modified_tree = reference_to_arg_in_tree($tree, $document)
 X<C<reference_to_arg_in_tree>>
 
 Modify I<$tree> by converting reference @-commands to simple text using one of
 the arguments.  This transformation can be used, for example, to remove
 reference @-command from constructed node names trees, as node names cannot
 contain reference @-command while there could be some in the tree used in input
-for the node name tree.
+for the node name tree.  The I<$document> argument is optional.  If given,
+the converted reference @-command is removed from the I<$document> internal
+references list.
 
 A I<$modified_tree> is not systematically returned, if the I<$tree> in argument
 is not replaced, undef may also be returned.
@@ -1056,7 +1081,7 @@ nodes are used as labels in the generated master menu.
 =head1 SEE ALSO
 
 L<Texinfo manual|http://www.gnu.org/s/texinfo/manual/texinfo/>,
-L<Texinfo::Parser>.
+L<Texinfo::Parser>, L<Texinfo::ManipulateTree>.
 
 =head1 AUTHOR
 

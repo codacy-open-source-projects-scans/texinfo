@@ -70,7 +70,10 @@ use Texinfo::Parser;
 use Texinfo::Convert::Text;
 use Texinfo::Document;
 use Texinfo::Convert::PlainTexinfo;
+use Texinfo::ManipulateTree;
 use Texinfo::Structuring;
+use Texinfo::OutputUnits;
+# for format_index_entries_sort_strings
 use Texinfo::Indices;
 use Texinfo::Translations;
 use Texinfo::Convert::Plaintext;
@@ -891,10 +894,10 @@ sub test($$)
     # There are other specific tests for comparison to texinfo, but here
     # we also get the tree.
     %tested_transformations = (
-     'protect_comma' => \&Texinfo::Common::protect_comma_in_tree,
-     'protect_colon' => \&Texinfo::Common::protect_colon_in_tree,
+     'protect_comma' => \&Texinfo::ManipulateTree::protect_comma_in_tree,
+     'protect_colon' => \&Texinfo::ManipulateTree::protect_colon_in_tree,
      'protect_node_after_label'
-        => \&Texinfo::Common::protect_node_after_label_in_tree,
+        => \&Texinfo::ManipulateTree::protect_node_after_label_in_tree,
      'protect_first_parenthesis'
       => \&Texinfo::Transformations::protect_first_parenthesis_in_targets,
      'protect_hashchar_at_line_beginning'
@@ -949,12 +952,9 @@ sub test($$)
   # Setup default customization options to be ready for init files options
   # setting.
 
-  # TODO use the same as in texi2any.pl?:
-  #   %Texinfo::Common::default_main_program_customization_options
-  # The main difference would be that
-  # CHECK_NORMAL_MENU_STRUCTURE is set to 1.
-  my $test_customization_defaults = {'FORMAT_MENU' => 'menu',
-                                   'CHECK_MISSING_MENU_ENTRY' => 1};
+  my $test_customization_defaults = {
+     %Texinfo::Common::default_main_program_customization_options
+    };
 
   # get symbols in Texinfo::Config namespace before calling the init files
   # such that the added symbols can be removed after running the tests to have
@@ -975,8 +975,8 @@ sub test($$)
       $symbols_before_init_file->{$symbol} = 1;
     }
     foreach my $filename (@{$parser_options->{'init_files'}}) {
-      my $file = Texinfo::Common::locate_init_file($filename,
-                                               $init_file_directories, 0);
+      my $file = Texinfo::Common::locate_file_in_dirs($filename,
+                                            $init_file_directories, 0);
       if (defined($file)) {
         Texinfo::Config::GNUT_load_init_file($file);
       } else {
@@ -1098,11 +1098,12 @@ sub test($$)
   }
 
   if ($tree_transformations{'relate_index_entries_to_items'}) {
-    Texinfo::Common::relate_index_entries_to_table_items_in_tree($document);
+    Texinfo::ManipulateTree::relate_index_entries_to_table_items_in_tree(
+                                                                   $document);
   }
 
   if ($tree_transformations{'move_index_entries_after_items'}) {
-    Texinfo::Common::move_index_entries_after_items_in_tree($tree);
+    Texinfo::ManipulateTree::move_index_entries_after_items_in_tree($tree);
   }
 
   if ($tree_transformations{'insert_nodes_for_sectioning_commands'}) {
@@ -1163,7 +1164,8 @@ sub test($$)
   $tree = $document->tree();
 
   my $indices_information = $document->indices_information();
-  # TODO maybe it would be good to compare $merged_index_entries?
+  # NOTE we do not compare the merged indices since we compare the sorted
+  # indices already and the tests are already big.
   my $merged_index_entries = $document->merged_indices();
 
   # only print indices information if it differs from the default
@@ -1311,7 +1313,7 @@ sub test($$)
             $output_files{$original_test_outfile} = [$format];
           }
           my $outfile = "$output_files_dir/$test_outfile";
-          if (!open (OUTFILE, ">$outfile")) {
+          if (!open(OUTFILE, ">$outfile")) {
             warn "ERROR: open $outfile: $!\n";
           } else {
             # output() or convert() called in convert_to_* calls set_document,
@@ -1348,7 +1350,7 @@ sub test($$)
         if ($converted_errors{$format}) {
           my $errors_file
             = "$output_files_dir/$self->{'name'}/${test_name}_$format.err";
-          if (!open (ERRFILE, ">$errors_file")) {
+          if (!open(ERRFILE, ">$errors_file")) {
             warn "Open $errors_file: $!\n";
           } else {
             foreach my $error_message (@{$converted_errors{$format}}) {
@@ -1385,7 +1387,7 @@ sub test($$)
   # on conversion should be fairly well tested.  See above the comment
   # near test_split with more explanation on why previous splitting should
   # not interfere with conversion.
-  my $unsplit_needed = Texinfo::Structuring::unsplit($document);
+  my $unsplit_needed = Texinfo::OutputUnits::unsplit($document);
   print STDERR "  UNSPLIT: $test_name\n"
     if ($self->{'DEBUG'} and $unsplit_needed);
 
@@ -1398,27 +1400,26 @@ sub test($$)
   # output units.
   my $output_units;
   if ($test_split eq 'node') {
-    $output_units = Texinfo::Structuring::split_by_node($document);
+    $output_units = Texinfo::OutputUnits::split_by_node($document);
   } elsif ($test_split eq 'section') {
-    $output_units = Texinfo::Structuring::split_by_section($document);
+    $output_units = Texinfo::OutputUnits::split_by_section($document);
   }
   if ($test_split) {
     my $identifier_target = $document->labels_information();
-    Texinfo::Structuring::units_directions($document,
-                                           $identifier_target,
-                                           $output_units);
+    Texinfo::OutputUnits::units_directions($identifier_target,
+                                           $output_units, $self->{'DEBUG'});
     $directions_text = '';
     foreach my $output_unit (@$output_units) {
       $directions_text .=
-          Texinfo::Structuring::print_output_unit_directions($output_unit);
+          Texinfo::OutputUnits::print_output_unit_directions($output_unit);
     }
   }
   if ($split_pages) {
-    Texinfo::Structuring::split_pages($output_units, $split_pages);
+    Texinfo::OutputUnits::split_pages($output_units, $split_pages);
   }
 
   if ($test_split or $split_pages) {
-    Texinfo::Structuring::rebuild_output_units($output_units);
+    Texinfo::OutputUnits::rebuild_output_units($output_units);
   }
 
   my $file = "t/results/$self->{'name'}/$test_name.pl";
@@ -1449,7 +1450,7 @@ sub test($$)
     } else {
       $out_file = $srcdir.$file;
     }
-    open (OUT, ">$out_file") or die "Open $out_file: $!\n";
+    open(OUT, ">$out_file") or die "Open $out_file: $!\n";
     binmode (OUT, ":encoding(utf8)");
     print OUT
      'use vars qw(%result_texis %result_texts %result_trees %result_errors '."\n".
@@ -1758,7 +1759,7 @@ sub output_texi_file($)
      unless (-d $dir);
   my $file = "${dir}$test_name.texi";
   print STDERR "texi: $test_name\n" if ($arg_debug);
-  open (OUTFILE, ">$file") or die ("Open $file: $!\n");
+  open(OUTFILE, ">$file") or die ("Open $file: $!\n");
 
   my $encode = 1;
   my $first_line = "\\input texinfo \@c -*-texinfo-*-";
@@ -1772,7 +1773,7 @@ sub output_texi_file($)
     if ($test_options and $test_options->{'test_file'}) {
       $encode = 0;
       $test_file = $input_files_dir . $test_options->{'test_file'};
-      if (open (INFILE, $test_file)) {
+      if (open(INFILE, $test_file)) {
         my $holdTerminator = $/;
         undef $/;
         $test_text = <INFILE>;

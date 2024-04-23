@@ -989,6 +989,18 @@ Some text.
 
 @printindex cp
 '],
+['recursive_down_menu',
+'@node Top
+@top top
+
+@node chapN
+@chapter Intro
+
+@menu
+* chapN::
+@end menu
+', {'test_formats' => ['html']},
+   {'FORMAT_MENU' => 'menu'}],
 );
 
 my @file_tests = (
@@ -1055,6 +1067,11 @@ undef, {'test_file' => 'nodequote.texi',},
 '@node Top
 @top top
 
+@menu
+* chap @* f     nl Something? @* After punct::
+* new n::
+@end menu
+
 @node chap @* f     nl Something? @* After punct
 @chapter Chap
 
@@ -1076,7 +1093,6 @@ text @* f     nl Something? @* After punct
 @xref{ankh @* p, addll@*gg}.
 
 @menu
-* chap @* f     nl Something? @* After punct::
 * ankh @* p::
 * what @* is: ankh @* p.
 * what @* is: ankh p.

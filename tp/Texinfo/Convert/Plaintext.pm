@@ -38,9 +38,9 @@ use Encode;
 
 use Texinfo::Commands;
 use Texinfo::Common;
-use Texinfo::Structuring;
-use Texinfo::Indices;
 use Texinfo::Convert::Texinfo;
+use Texinfo::Structuring;
+use Texinfo::OutputUnits;
 use Texinfo::Convert::Utils;
 use Texinfo::Convert::Text;
 use Texinfo::Convert::Utils;
@@ -586,7 +586,7 @@ sub count_context_bug_message($$$)
     my $output_unit_text;
     if ($output_unit) {
       $output_unit_text
-         = Texinfo::Structuring::output_unit_texi($output_unit);
+         = Texinfo::OutputUnits::output_unit_texi($output_unit);
     } else {
       $output_unit_text = '';
     }
@@ -654,7 +654,7 @@ sub convert($$)
 
   my $result = '';
 
-  my $output_units = Texinfo::Structuring::split_by_node($document);
+  my $output_units = Texinfo::OutputUnits::split_by_node($document);
 
   foreach my $output_unit (@$output_units) {
     my $node_text = convert_output_unit($self, $output_unit);
@@ -705,14 +705,14 @@ sub output($$)
   }
 
   if ($self->get_conf('USE_NODES')) {
-    $output_units = Texinfo::Structuring::split_by_node($document);
+    $output_units = Texinfo::OutputUnits::split_by_node($document);
   } else {
-    $output_units = Texinfo::Structuring::split_by_section($document);
+    $output_units = Texinfo::OutputUnits::split_by_section($document);
   }
 
-  Texinfo::Structuring::split_pages($output_units, $self->get_conf('SPLIT'));
+  Texinfo::OutputUnits::split_pages($output_units, $self->get_conf('SPLIT'));
 
-  Texinfo::Structuring::rebuild_output_units($output_units);
+  Texinfo::OutputUnits::rebuild_output_units($output_units);
 
   # determine file names associated with the different pages
   if ($output_file ne '') {
@@ -748,6 +748,8 @@ sub output($$)
       ($encoded_outfile_name, $path_encoding)
         = $self->encoded_output_file_name($outfile_name);
       my $error_message;
+      # the third return information, set if the file has already been used
+      # in this files_information is not checked as this cannot happen.
       ($fh, $error_message) = Texinfo::Common::output_files_open_out(
                     $self->output_files_information(), $self,
                     $encoded_outfile_name);
@@ -1383,7 +1385,6 @@ sub _compute_spaces_align_line($$$;$)
   return $spaces_prepended;
 }
 
-# TODO $bytes_count return value is not needed anywhere
 sub _align_lines($$$$$$)
 {
   my ($self, $text_encoded, $max_column, $direction,
@@ -1415,7 +1416,6 @@ sub _align_lines($$$$$$)
     }
   }
 
-  my $bytes_count = 0;
   my $delta_bytes = 0;
   my $line_index = 0;
   my $image;
@@ -1452,14 +1452,12 @@ sub _align_lines($$$$$$)
       if ($line_width == 0) {
         $result .= "\n";
         $line_bytes_end += length("\n");
-        $bytes_count += length("\n");
       } else {
         my $spaces_prepended
          = _compute_spaces_align_line($line_width, $max_column, $direction);
         $result .= ' ' x $spaces_prepended . $line ."\n";
         $line_bytes_begin += length(' ' x $spaces_prepended);
         $line_bytes_end += length("\n");
-        $bytes_count += $line_bytes_begin + $line_bytes_end + length($line);
       }
     } else {
       my $line_width = _string_width_encoded($self, $line);
@@ -1475,7 +1473,6 @@ sub _align_lines($$$$$$)
       }
       $result .= ' ' x $prepended_spaces . $line;
       $line_bytes_begin += length(' ' x $prepended_spaces);
-      $bytes_count += $line_bytes_begin + length($line);
       if ($new_image) {
         $image = $new_image;
         $image_prepended_spaces = $new_image_prepended_spaces;
@@ -1496,7 +1493,7 @@ sub _align_lines($$$$$$)
              + $removed_line_bytes_begin + $removed_line_bytes_end;
     $line_index++;
   }
-  return ($result, $bytes_count);
+  return $result;
 }
 
 sub _align_environment($$$$)
@@ -1504,12 +1501,9 @@ sub _align_environment($$$$)
   my ($self, $result, $max, $align) = @_;
 
   my $counts = pop @{$self->{'count_context'}};
-  my $bytes_count;
-  ($result, $bytes_count) = $self->_align_lines($result, $max,
+  $result = $self->_align_lines($result, $max,
                       $align, $counts->{'locations'}, $counts->{'images'});
   $self->_update_locations_counts($counts->{'locations'});
-  # done when $result is output
-  #$self->{'count_context'}->[-1]->{'bytes'} += $bytes_count;
   $self->{'count_context'}->[-1]->{'lines'} += $counts->{'lines'};
   push @{$self->{'count_context'}->[-1]->{'locations'}},
                        @{$counts->{'locations'}};

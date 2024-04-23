@@ -267,18 +267,18 @@ sub html32_convert_tab_command($$$$$)
   my $args = shift;
   my $content = shift;
 
-  my $row = $command->{'parent'};
-  my $row_cmdname = $row->{'contents'}->[0]->{'cmdname'};
-
   $content = '' if (!defined($content));
 
-  # FIXME is it right?
   $content =~ s/^\s*//;
   $content =~ s/\s*$//;
 
   if ($self->in_string()) {
     return $content;
   }
+
+  my $row = $command->{'parent'};
+  my $row_cmdname = $row->{'contents'}->[0]->{'cmdname'};
+
   if ($row_cmdname eq 'headitem') {
     return "<th>" . $content . '</th>';
   } else {
@@ -347,9 +347,7 @@ sub html32_convert_center_command($$$$)
   }
 
   if ($self->in_string()) {
-    # FIXME use an API?
-    return $self->{'types_conversion'}->{'preformatted'}($self, $cmdname, $command,
-                                                         $args->[0]->{'normal'}."\n");
+    return $args->[0]->{'normal'}."\n";
   } else {
     return '<div align="center">'.$args->[0]->{'normal'}."\n</div>";
   }

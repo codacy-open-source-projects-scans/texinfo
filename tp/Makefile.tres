@@ -50,6 +50,7 @@ test_tap_files_generated_list = \
   t/paragraph.t \
   t/plaintext_tests.t \
   t/protect_character_in_texinfo.t \
+  t/raw_text_converter.t \
   t/reference_to_text_in_tree.t \
   t/test_brace_count.t \
   t/test_fill_gaps_in_sectioning.t \
@@ -747,6 +748,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/test_separated_contents_shortcontents/res_html \
   t/results/html_tests/test_xrefautomaticsectiontitle.pl \
   t/results/html_tests/test_xrefautomaticsectiontitle_off_first.pl \
+  t/results/html_tests/tex_expanded_in_caption_multiple_time.pl \
   t/results/html_tests/tex_expanded_in_copying.pl \
   t/results/html_tests/text_before_top_and_contents_after_title.pl \
   t/results/html_tests/text_before_top_and_summarycontents_after_title.pl \
@@ -1010,6 +1012,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/info_tests/pxref_test.pl \
   t/results/info_tests/quote_node_names_info.pl \
   t/results/info_tests/quote_node_names_info/res_info \
+  t/results/info_tests/recursive_down_menu.pl \
   t/results/info_tests/ref_tests.pl \
   t/results/info_tests/space_at_menu_end.pl \
   t/results/info_tests/space_in_menu.pl \
@@ -2010,6 +2013,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/transformations/index_entries_relate_to_item_no_transformation/res_html \
   t/results/transformations/index_entries_relate_to_item_transformation.pl \
   t/results/transformations/index_entries_relate_to_item_transformation/res_html \
+  t/results/transformations/insert_nodes_for_sectioning_commands.pl \
   t/results/transformations/master_menu_fr.pl \
   t/results/transformations/master_menu_fr/res_html \
   t/results/transformations/protect_colon_source_mark.pl \
@@ -2019,6 +2023,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/transformations/protect_hashchar_at_line_beginning_source_mark.pl \
   t/results/transformations/protect_node_after_label_source_mark_in_protected.pl \
   t/results/transformations/regenerate_master_menu_no_need_for_master_menu.pl \
+  t/results/transformations/regenerate_master_menu_with_menu_comment.pl \
   t/results/value/bad_syntax.pl \
   t/results/value/begin_like_comment_on_set_line.pl \
   t/results/value/clear_no_end_of_line.pl \

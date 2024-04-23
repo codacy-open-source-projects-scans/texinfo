@@ -146,8 +146,9 @@ sub _initialize_options_encoding($$)
   }
 }
 
-# TODO not documented.  Not generally useful, as it is called
-# in Texinfo::Convert::Converter to setup options that can be reused.
+# NOTE not documented.  In general, it is not useful to call that
+# function, as it the function is already called in Texinfo::Convert::Converter
+# to setup options that can be reused.
 #
 # $SELF is an object implementing get_conf, in general a converter.
 # Setup options as used by Texinfo::Convert::Text::convert_to_text
@@ -824,34 +825,44 @@ sub converter($;$)
   return $converter;
 }
 
-# This function is not called in anywhere in Texinfo code, it is implemented
-# to be in line with Texinfo::Convert::Converter documentation on functions
-# defined for a converter.
-# TODO set options with $self if defined?
+# This function is not called (except in a test testing the function),
+# it is implemented to be in line with Texinfo::Convert::Converter
+# documentation on functions defined for a converter.
+# We assume that $SELF is defined and a Texinfo::Convert::Text converter
+# that will supply the options.
 sub convert_tree($$)
 {
   my $self = shift;
   my $element = shift;
 
-  my $options = {};
-
-  return _convert($options, $element);
+  return _convert($self, $element);
 }
 
-# This function is not called in anywhere in Texinfo code, it is implemented
-# to be in line with Texinfo::Convert::Converter documentation on functions
-# defined for a converter.
-# TODO set options with $self if defined?
+# This function is not called (except in a test testing the function),
+# it is implemented to be in line with Texinfo::Convert::Converter
+# documentation on functions defined for a converter.
+# We assume that $SELF is defined and a Texinfo::Convert::Text converter.
 sub convert($$)
 {
   my $self = shift;
   my $document = shift;
 
+  Texinfo::Common::set_output_encodings($self, $document);
+  # Cf comment in output() on using $self for options.
+  _initialize_options_encoding($self, $self);
+
   my $root = $document->tree();
 
-  my $options = {};
+  my $result;
+  # Interface with XS converter.
+  if ($XS_convert and defined($root->{'tree_document_descriptor'})
+      and $Texinfo::Convert::ConvertXS::XS_package) {
+    $result = _convert_tree_with_XS($self, $root);
+  } else {
+    $result = _convert($self, $root);
+  }
 
-  return _convert($options, $root);
+  return $result;
 }
 
 # determine outfile and output to that file
@@ -957,6 +968,8 @@ sub output($$)
     ($encoded_outfile, $outfile_encoding)
       = Texinfo::Convert::Utils::encoded_output_file_name($self, $outfile);
     my $error_message;
+    # the third return information, set if the file has already been used
+    # in this files_information is not checked as this cannot happen.
     ($fh, $error_message) = Texinfo::Common::output_files_open_out(
                              $self->{'output_files'}, $self,
                              $encoded_outfile);
@@ -967,7 +980,7 @@ sub output($$)
     }
   }
 
-  # We use $self as text options, see the comment in converter.
+  # We use $self as text options, see the comment above.
 
   my $result;
   # Interface with XS converter.

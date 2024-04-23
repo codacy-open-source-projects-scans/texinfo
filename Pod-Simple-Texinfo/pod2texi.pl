@@ -44,10 +44,24 @@ BEGIN
   my $texinfolibdir;
   my $lib_dir;
 
+  my $in_source = 0;
+  # set if we detect that the command comes from a Perl build with Makefile.PL.
+  # In that case we assume that the modules should be found in directories
+  # already registered in paths.
+  my $keep_paths = 0;
+
+  if (defined($ENV{'TEXINFO_DEV_SOURCE'})
+      and $ENV{'TEXINFO_DEV_SOURCE'} ne '0') {
+    $in_source = 1;
+  } elsif ($datadir eq '@' .'datadir@') {
+    if ($0 =~ /\.pl$/) {
+      $in_source = 1;
+    } else {
+      $keep_paths = 1;
+    }
+  }
   # in-source run
-  if ($datadir eq '@' .'datadir@'
-      or defined($ENV{'TEXINFO_DEV_SOURCE'})
-         and $ENV{'TEXINFO_DEV_SOURCE'} ne '0') {
+  if ($in_source) {
     # To find Texinfo::ModulePath
     if (defined($ENV{'top_builddir'})) {
       unshift @INC, File::Spec->catdir($ENV{'top_builddir'}, 'tp');
@@ -65,7 +79,7 @@ BEGIN
     } else {
       unshift @INC, File::Spec->catdir($command_directory, 'lib');
     }
-  } else {
+  } elsif (!$keep_paths) {
     # Look for modules in their installed locations.
     my $lib_dir = File::Spec->catdir($datadir, $package);
     # look for package data in the installed location.
@@ -135,6 +149,8 @@ and all the \@include is generated.");
     --appendix-sections     use appendix-like sections")."\n";
   $pod2texi_help .= __("    --base-level=NUM|NAME   level of the head1 commands; default 0")."\n";
   $pod2texi_help .= __("    --debug=NUM             set debugging level")."\n";
+  $pod2texi_help .= __("    --generate-setfilename  generate \@setfilename for standalone
+                            manuals")."\n";
   $pod2texi_help .= __("    --headings-as-sections  no structuring command for sections")."\n";
   $pod2texi_help .= __("    --help                  display this help and exit")."\n";
   $pod2texi_help .= __("    --no-fill-section-gaps  do not fill sectioning gaps")."\n";
@@ -162,6 +178,8 @@ my $unnumbered_sections = 0;
 my $appendix_sections = 0;
 my $headings_as_sections = 0;
 my $generate_node_menus = 0;
+# TODO change to 0 when the time has come.
+my $generate_setfilename = 1;
 my $output = '-';
 my $top = 'top';
 my $setfilename = undef;
@@ -191,6 +209,7 @@ There is NO WARRANTY, to the extent permitted by law.\n"), "2021";
    },
   'appendix-sections!' => \$appendix_sections,
   'fill-section-gaps!' => \$fill_sectioning_gaps,
+  'generate-setfilename!' => \$generate_setfilename,
   'headings-as-sections!' => \$headings_as_sections,
   'menus!' => \$generate_node_menus,
   'output|o=s' => \$output,
@@ -235,7 +254,7 @@ if ($base_level > 0) {
     my $manual_name;
     # we don't want to read from STDIN, as the input read would be lost
     # same with named pipe and socket...
-    # FIXME are there other file types that have the same problem?
+    # TODO are there other file types that have the same problem?
     if ($file eq '-' or -p $file or -S $file) {
       # do not read file
     } else {
@@ -284,16 +303,37 @@ sub _parsed_manual_tree($$$$$)
   my $fill_gaps_in_sectioning = shift;
   my $do_node_menus = shift;
 
-  my $texi_parser = Texinfo::Parser::parser();
+  my $parser_options = {};
+  if ($debug > 3) {
+    $parser_options->{'DEBUG'} = $debug - 3;
+  }
+  my $texi_parser = Texinfo::Parser::parser($parser_options);
   my $document = $texi_parser->parse_texi_text($manual_texi);
   my $tree = $document->tree();
-  
+
+  if ($debug > 1) {
+    Pod::Simple::Texinfo::print_texinfo_errors($texi_parser,
+                                           '_parsed_manual_tree');
+  }
+
   my $identifier_target = $document->labels_information();
+
+  # NOTE the document customization information is not initialized
+  # if debug is not high.
+  # The functions called on the document below, and elsewhere in
+  # the code call get_conf for structuring information and menu
+  # generation on the document.
+  # TODO always call register_document_options(), maybe with an empty hash?
+  if ($debug > 3) {
+    # there is not much debug output in structuring code used with the
+    # document, but it could still be interesting to debug.
+    $document->register_document_options({'DEBUG' => $debug - 3});
+  }
 
   if ($fill_gaps_in_sectioning) {
     my $commands_heading_content;
     if ($self->texinfo_sectioning_base_level() > 0) {
-      my $manual_texi = Pod::Simple::Texinfo::_protect_text(
+      my $manual_texi = Pod::Simple::Texinfo::protect_text(
              $self->texinfo_short_title(), 1, 1);
       $commands_heading_content
         = Texinfo::Parser::parse_texi_line(undef, $manual_texi);
@@ -306,12 +346,18 @@ sub _parsed_manual_tree($$$$$)
     }
   }
   Texinfo::Structuring::sectioning_structure($document);
-  my $refs = $document->internal_references_information();
+  $document->internal_references_information();
   # this is needed to set 'normalized' for menu entries, they are
   # used in complete_tree_nodes_menus.
   Texinfo::Structuring::associate_internal_references($document);
   Texinfo::Transformations::complete_tree_nodes_menus($tree)
     if ($section_nodes and $do_node_menus);
+
+  if ($debug > 1) {
+    Pod::Simple::Texinfo::print_texinfo_errors($document,
+                                      '_parsed_manual_tree document');
+  }
+
   return ($texi_parser, $document, $identifier_target);
 }
 
@@ -330,6 +376,10 @@ sub _fix_texinfo_tree($$$$;$$)
                           $do_node_menus);
   if ($do_master_menu) {
     if ($do_node_menus) {
+      # It could be possible to show document errors if debug > 1
+      # for example, but there should not be any error emitted,
+      # except maybe for errors in translations code, which are very
+      # unlikely.
       Texinfo::Transformations::regenerate_master_menu($document,
                                                        $texi_parser);
     } else {
@@ -357,7 +407,6 @@ sub _fix_texinfo_tree($$$$;$$)
       }
     }
   }
-  #Texinfo::Document::rebuild_document($document);
   return ($texi_parser, $document);
 }
 
@@ -401,15 +450,16 @@ foreach my $file (@input_files) {
   my $manual_texi = '';
   my $outfile;
   my $outfile_name;
-  my $manual_name = $file_manual_name{$file};
+  my $manual_name;
   my $manual_title;
   $manual_title = $file_manual_title{$file}
     if (defined($file_manual_title{$file}));
   if ($base_level == 0 and !$file_nr) {
     $outfile = $output;
   } else {
+    $manual_name = $file_manual_name{$file};
     if (defined($manual_title)) {
-      $outfile_name = Pod::Simple::Texinfo::_pod_title_to_file_name($manual_title);
+      $outfile_name = Pod::Simple::Texinfo::pod_title_to_file_name($manual_title);
     } else {
       $outfile_name = $manual_name;
     }
@@ -431,7 +481,7 @@ foreach my $file (@input_files) {
   if ($outfile eq '-') {
     $fh = *STDOUT;
   } else {
-    open (OUT, ">$outfile")
+    open(OUT, ">$outfile")
                or die sprintf(__("%s: could not open %s for writing: %s\n"),
                                           $real_command_name, $outfile, $!);
     $fh = *OUT;
@@ -445,6 +495,8 @@ foreach my $file (@input_files) {
 
   # this sets the string that $parser's output will be sent to
   $new->output_string(\$manual_texi);
+
+  $new->texinfo_generate_setfilename($generate_setfilename);
 
   $new->texinfo_sectioning_base_level($base_level);
   if ($section_nodes) {
@@ -461,14 +513,21 @@ foreach my $file (@input_files) {
     # names without formatting from Pod::Simple::PullParser->get_short_title
     $new->texinfo_internal_pod_manuals(\@manuals);
   }
-  
-  print STDERR "processing $file -> $outfile ($manual_name)\n" if ($debug);
+
+  if ($debug) {
+    $new->texinfo_debug($debug);
+    if ($base_level > 0) {
+      print STDERR "processing $file -> $outfile ($base_level, $manual_name)\n";
+    } else {
+      print STDERR "processing $file -> $outfile\n";
+    }
+  }
   $new->parse_file($file);
 
   if ($section_nodes or $fill_sectioning_gaps) {
     if ($debug > 4) {
-      # print to a file
-      open (DBGFILE, ">$outfile-dbg")
+      # print the manual obtained before fixing the Texinfo code to a file
+      open(DBGFILE, ">$outfile-dbg")
                              or die sprintf(__("%s: could not open %s: %s\n"),
                                       $real_command_name, "$outfile-dbg", $!);
       binmode(DBGFILE, ':encoding(utf-8)');
@@ -499,7 +558,7 @@ foreach my $file (@input_files) {
         push @manuals, $short_title;
         pop @included;
         my $new_outfile
-         = Pod::Simple::Texinfo::_pod_title_to_file_name($short_title);
+         = Pod::Simple::Texinfo::pod_title_to_file_name($short_title);
         $new_outfile .= '.texi';
         $new_outfile = File::Spec->catfile($subdir, $new_outfile)
            if (defined($subdir));
@@ -518,7 +577,7 @@ foreach my $file (@input_files) {
 if ($base_level > 0) {
   my $fh;
   if ($output ne '-') {
-    open (OUT, ">$output")
+    open(OUT, ">$output")
               or die sprintf(__("%s: could not open %s for writing: %s\n"),
                                           $real_command_name, $output, $!);
     $fh = *OUT;
@@ -533,7 +592,7 @@ if ($base_level > 0) {
   my $setfilename_string = '';
   if (defined($setfilename)) {
     $setfilename_string = '@setfilename '
-              . Pod::Simple::Texinfo::_protect_text($setfilename)."\n";
+              . Pod::Simple::Texinfo::protect_text($setfilename)."\n";
   }
 
   my $preamble_result;
@@ -563,7 +622,7 @@ if ($base_level > 0) {
   }
   foreach my $include (@included) {
     my $file = $include->[1];
-    print $fh "\@include ".Pod::Simple::Texinfo::_protect_text($file)."\n";
+    print $fh "\@include ".Pod::Simple::Texinfo::protect_text($file)."\n";
   }
   print $fh "\n\@bye\n";
   
@@ -646,6 +705,11 @@ with output available at L<http://www.gnu.org/software/perl/manual>.
 
 Set debugging level to I<NUM>.
 
+=item B<--generate-setfilename>
+
+Generate a C<@setfilename> line for standalone manuals.  Can be negated
+with C<--no-generate-setfilename>.  Ignored if C<--base-level> is not 0.
+
 =item B<--headings-as-sections>
 
 Use headings commands (C<@heading>, ...) instead of the
@@ -686,8 +750,10 @@ boilerplate is a minimal beginning for a Texinfo document.
 
 =item B<--setfilename>=I<STR>
 
-Use I<STR> in top boilerplate before menu and includes for C<@setfilename>.
-No C<@setfilename> is output in the default case.
+Use I<STR> in top boilerplate before menu and includes for C<@setfilename>
+for the main manual, if C<--base-level> is not set to 0.  Ignored if
+C<--base-level> is 0.  No C<@setfilename> is output in the default case
+for the main manual.
 
 =item B<--subdir>=I<NAME>
 

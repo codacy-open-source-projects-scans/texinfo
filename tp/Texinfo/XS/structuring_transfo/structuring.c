@@ -33,8 +33,10 @@
 /* for get_label_element section_level enumerate_item_representation
    xasprintf */
 #include "utils.h"
-/* for copy_tree copy_contents parse_node_manual modify_tree protect_text */
+/* for copy_tree copy_contents parse_node_manual
+   protect_colon_in_tree */
 #include "manipulate_tree.h"
+#include "command_stack.h"
 #include "node_name_normalization.h"
 #include "convert_to_texinfo.h"
 #include "targets.h"
@@ -527,7 +529,7 @@ get_node_node_childs_from_sectioning (const ELEMENT *node)
   return node_childs;
 }
 
-char **
+static char **
 register_referenced_node (ELEMENT *node, char **referenced_identifiers,
                           size_t *referenced_identifier_space_ptr,
                           size_t *referenced_identifier_number_ptr)
@@ -963,7 +965,7 @@ set_menus_node_directions (DOCUMENT *document)
 
 static char *direction_bases[] = {"section_directions", "toplevel_directions"};
 
-ELEMENT *
+static ELEMENT *
 section_direction_associated_node (const ELEMENT *section,
                                    enum directions direction)
 {
@@ -1214,7 +1216,10 @@ complete_node_tree_with_menus (DOCUMENT *document)
                        = menu_directions->list[d];
                       ELEMENT *menu_dir_manual_content
                        = lookup_extra_element (menu_direction, "manual_content");
-                      if (!menu_dir_manual_content)
+                      ELEMENT *node_dir_manual_content
+                       = lookup_extra_element (node_directions->list[d],
+                                               "manual_content");
+                      if (!menu_dir_manual_content && !node_dir_manual_content)
                         {
                           char *node_texi = target_element_to_texi_label (node);
                           char *dir_texi = target_element_to_texi_label
@@ -1936,8 +1941,11 @@ new_complete_node_menu (const ELEMENT *node, DOCUMENT *document,
   return (new_menu);
 }
 
-ELEMENT_LIST *
-print_down_menus (const ELEMENT *node, const LABEL_LIST *identifiers_target,
+static ELEMENT_LIST *
+print_down_menus (const ELEMENT *node, ELEMENT_STACK *up_nodes,
+                  ERROR_MESSAGE_LIST *error_messages,
+                  const OPTIONS *options,
+                  const LABEL_LIST *identifiers_target,
                   int use_sections)
 {
   ELEMENT_LIST *master_menu_contents = new_list ();
@@ -1998,6 +2006,7 @@ print_down_menus (const ELEMENT *node, const LABEL_LIST *identifiers_target,
       ELEMENT *node_title_copy;
       ELEMENT *associated_section
        = lookup_extra_element (node, "associated_section");
+      int new_up_nodes = 0;
       if (associated_section)
         node_name_element = associated_section->args.list[0];
       else
@@ -2010,17 +2019,63 @@ print_down_menus (const ELEMENT *node, const LABEL_LIST *identifiers_target,
 
       destroy_element (node_title_copy);
 
+      if (!up_nodes)
+        {
+          new_up_nodes = 1;
+          up_nodes = (ELEMENT_STACK *) malloc (sizeof (ELEMENT_STACK));
+          memset (up_nodes, 0, sizeof (ELEMENT_STACK));
+        }
+
+      push_stack_element (up_nodes, node);
+
       /* now recurse in the children */
       for (i = 0; i < node_children->number; i++)
         {
           ELEMENT *child = node_children->list[i];
-          ELEMENT_LIST *child_menu_content
-           = print_down_menus (child, identifiers_target, use_sections);
-          insert_list_slice_into_list (master_menu_contents,
-                                       master_menu_contents->number,
-                                       child_menu_content, 0,
-                                       child_menu_content->number);
-          destroy_list (child_menu_content);
+          ELEMENT_LIST *child_menu_content;
+          const char *normalized_child
+            = lookup_extra_string (child, "normalized");
+          size_t i;
+          int up_node_in_menu = 0;
+
+          for (i = 0; i < up_nodes->top; i++)
+            {
+              const ELEMENT *up_node = up_nodes->stack[i];
+              const char *normalized_up_node
+                = lookup_extra_string (up_node, "normalized");
+              if (!strcmp (normalized_child, normalized_up_node))
+                {
+                  char *up_node_texi
+                    = target_element_to_texi_label (up_node);
+                  message_list_command_warn (error_messages, options,
+                                             up_node, 0,
+                                   "node `%s' appears in its own menus",
+                                   up_node_texi);
+                  free (up_node_texi);
+                  up_node_in_menu = 1;
+                  break;
+                }
+            }
+
+          if (!up_node_in_menu)
+            {
+              child_menu_content
+               = print_down_menus (child, up_nodes, error_messages,
+                                   options, identifiers_target, use_sections);
+              insert_list_slice_into_list (master_menu_contents,
+                                           master_menu_contents->number,
+                                           child_menu_content, 0,
+                                           child_menu_content->number);
+              destroy_list (child_menu_content);
+            }
+        }
+
+      pop_stack_element (up_nodes);
+
+      if (new_up_nodes)
+        {
+          free (up_nodes->stack);
+          free (up_nodes);
         }
     }
 
@@ -2030,12 +2085,14 @@ print_down_menus (const ELEMENT *node, const LABEL_LIST *identifiers_target,
 }
 
 ELEMENT *
-new_master_menu (const OPTIONS *options, const LABEL_LIST *identifiers_target,
-                 const ELEMENT_LIST *menus, int use_sections)
+new_detailmenu (ERROR_MESSAGE_LIST *error_messages,
+                const OPTIONS *options,
+                const LABEL_LIST *identifiers_target,
+                const ELEMENT_LIST *menus, int use_sections)
 {
   /*  only holds contents here, will be turned into a proper block
       in new_block_command */
-  ELEMENT *master_menu = new_element (ET_NONE);
+  ELEMENT *new_detailmenu_e = new_element (ET_NONE);
 
   if (menus && menus->number > 0)
     {
@@ -2055,16 +2112,16 @@ new_master_menu (const OPTIONS *options, const LABEL_LIST *identifiers_target,
                   if (menu_node)
                     {
                       ELEMENT_LIST *down_menus = print_down_menus(menu_node,
+                                          0, error_messages, options,
                                           identifiers_target, use_sections);
                       if (down_menus)
                         {
                           int k;
                           for (k = 0; k < down_menus->number; k++)
-                            down_menus->list[k]->parent = master_menu;
-                          insert_list_slice_into_contents (master_menu,
-                                                 master_menu->contents.number,
-                                                 down_menus, 0,
-                                                 down_menus->number);
+                            down_menus->list[k]->parent = new_detailmenu_e;
+                          insert_list_slice_into_contents (new_detailmenu_e,
+                                           new_detailmenu_e->contents.number,
+                                           down_menus, 0, down_menus->number);
                           destroy_list (down_menus);
                         }
                     }
@@ -2072,14 +2129,14 @@ new_master_menu (const OPTIONS *options, const LABEL_LIST *identifiers_target,
             }
         }
     }
-  if (master_menu->contents.number > 0)
+  if (new_detailmenu_e->contents.number > 0)
     {
       int i;
       ELEMENT *new_line = new_element (ET_NONE);
     /* There is a menu comment with a preformatted added in front of each
        detailed menu section with the node section name */
       ELEMENT *first_preformatted
-        = master_menu->contents.list[0]->contents.list[0];
+        = new_detailmenu_e->contents.list[0]->contents.list[0];
 
       text_append (&new_line->text, "\n");
       new_line->parent = first_preformatted;
@@ -2112,30 +2169,19 @@ new_master_menu (const OPTIONS *options, const LABEL_LIST *identifiers_target,
         }
 
 
-      new_block_command (master_menu, CM_detailmenu);
-      return master_menu;
+      new_block_command (new_detailmenu_e, CM_detailmenu);
+      return new_detailmenu_e;
     }
   else
     {
-      destroy_element (master_menu);
+      destroy_element (new_detailmenu_e);
       return 0;
     }
 }
 
-ELEMENT_LIST *
-protect_colon (const char *type, ELEMENT *current, void *argument)
-{
-  return protect_text(current, ":");
-}
-
 ELEMENT *
-protect_colon_in_tree (ELEMENT *tree)
-{
-  return modify_tree (tree, &protect_colon, 0);
-}
-
-ELEMENT *
-new_complete_menu_master_menu (const OPTIONS *options,
+new_complete_menu_master_menu (ERROR_MESSAGE_LIST *error_messages,
+                               const OPTIONS *options,
                                const LABEL_LIST *identifiers_target,
                                const ELEMENT *node)
 {
@@ -2153,8 +2199,8 @@ new_complete_menu_master_menu (const OPTIONS *options,
           ELEMENT *detailmenu;
 
           add_to_element_list (menus, menu_node);
-          detailmenu = new_master_menu (options, identifiers_target,
-                                        menus, 0);
+          detailmenu = new_detailmenu (error_messages, options,
+                                       identifiers_target, menus, 0);
           destroy_list (menus);
 
           if (detailmenu)

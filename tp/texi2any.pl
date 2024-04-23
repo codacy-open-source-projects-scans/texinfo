@@ -233,7 +233,7 @@ if ($configured_version eq '@' . 'PACKAGE_VERSION@') {
   # if not configured, and $hardcoded_version is set search for the version
   # in configure.ac
   if (defined($hardcoded_version)) {
-    if (open (CONFIGURE,
+    if (open(CONFIGURE,
               "< ".File::Spec->catfile($Texinfo::ModulePath::top_srcdir,
                                        'configure.ac'))) {
       while (<CONFIGURE>) {
@@ -284,7 +284,7 @@ my $texinfo_dtd_version = '@TEXINFO_DTD_VERSION@';
 if ($texinfo_dtd_version eq '@' . 'TEXINFO_DTD_VERSION@') {
   $texinfo_dtd_version = undef;
   if (defined($hardcoded_version)) {
-    if (open (CONFIGURE,
+    if (open(CONFIGURE,
             "< ".File::Spec->catfile($Texinfo::ModulePath::top_srcdir,
                                      'configure.ac'))) {
       while (<CONFIGURE>) {
@@ -458,7 +458,7 @@ sub locate_and_load_init_file($$)
   my $filename = shift;
   my $directories = shift;
 
-  my $file = Texinfo::Common::locate_init_file($filename, $directories, 0);
+  my $file = Texinfo::Common::locate_file_in_dirs($filename, $directories, 0);
   if (defined($file)) {
     # evaluate the code in the Texinfo::Config namespace
     Texinfo::Config::GNUT_load_init_file($file);
@@ -476,7 +476,7 @@ sub locate_and_load_extension_file($$)
   my $filename = shift;
   my $directories = shift;
 
-  my $file = Texinfo::Common::locate_init_file($filename, $directories, 0);
+  my $file = Texinfo::Common::locate_file_in_dirs($filename, $directories, 0);
   if (defined($file)) {
     # evaluate the code in the Texinfo::Config namespace
     Texinfo::Config::GNUT_load_init_file($file);
@@ -573,7 +573,7 @@ set_translations_encoding($translations_encoding);
 # read initialization files.  Better to do that after
 # Texinfo::Config::GNUT_initialize_customization() in case loaded
 # files replace default options.
-foreach my $file (Texinfo::Common::locate_init_file($conf_file_name,
+foreach my $file (Texinfo::Common::locate_file_in_dirs($conf_file_name,
                   [ reverse(@program_config_dirs) ], 1)) {
   Texinfo::Config::GNUT_load_init_file($file);
 }
@@ -1222,9 +1222,9 @@ sub _exit($$)
   my $opened_files = shift;
 
   if ($error_count and $opened_files and !get_conf('FORCE')) {
-    while (@$opened_files) {
-      my $opened_file = shift (@$opened_files);
+    foreach my $opened_file (keys(%$opened_files)) {
       unlink ($opened_file);
+      delete $opened_files->{$opened_file};
     }
   }
   exit (1) if ($error_count and (!get_conf('FORCE')
@@ -1255,7 +1255,7 @@ sub _handle_errors($)
         my $file = $error_message->{'file_name'};
 
         if (get_conf('TEST')) {
-          # otherwise out of source build fail since the file names
+          # otherwise out of source build fails since the file names
           # are different
           my ($directories, $suffix);
           ($file, $directories, $suffix) = fileparse($file);
@@ -1271,6 +1271,29 @@ sub _handle_errors($)
       warn $s;
     }
   }
+}
+
+# If the file overwritting becomes an error, should increase $ERROR_COUNT.
+sub merge_opened_files($$$)
+{
+  my $error_count = shift;
+  my $opened_files = shift;
+  my $newly_opened_files = shift;
+
+  if ($newly_opened_files) {
+    foreach my $opened_file (sort(keys(%$newly_opened_files))) {
+      # NOTE paths are not normalized, therefore different paths names
+      # that refers to the same file will not trigger the message.
+      if (exists($opened_files->{$opened_file})) {
+        document_warn(sprintf(__('overwritting file: %s'),
+                      $opened_file));
+      } else {
+        $opened_files->{$opened_file} = 1;
+      }
+    }
+  }
+
+  return $error_count;
 }
 
 # Avoid loading these modules until down here to speed up the case
@@ -1437,7 +1460,7 @@ if (defined($ENV{TEXINFO_XS_EXTERNAL_FORMATTING})
 }
 
 my $file_number = -1;
-my @opened_files = ();
+my %opened_files;
 my %main_unclosed_files;
 my $error_count = 0;
 # main processing
@@ -1504,13 +1527,13 @@ while(@input_files) {
   }
   # object registering errors and warnings
   if (!defined($document) or $format eq 'parse') {
-    handle_errors($parser->errors(), $error_count, \@opened_files);
+    handle_errors($parser->errors(), $error_count, \%opened_files);
     goto NEXT;
   }
 
   my $document_information = $document->global_information();
   if (get_conf('TRACE_INCLUDES')) {
-    handle_errors($parser->errors(), $error_count, \@opened_files);
+    handle_errors($parser->errors(), $error_count, \%opened_files);
     my $included_file_paths = $document_information->{'included_files'};
     if (defined($included_file_paths)) {
       foreach my $included_file (@$included_file_paths) {
@@ -1576,6 +1599,8 @@ while(@input_files) {
     my $macro_expand_file_name = _decode_input($encoded_macro_expand_file_name);
     my $macro_expand_files_information
           = Texinfo::Common::output_files_initialize();
+    # the third return information, set if the file has already been used
+    # in this files_information is not checked as this cannot happen.
     my ($macro_expand_fh, $error_message)
           = Texinfo::Common::output_files_open_out(
                           $macro_expand_files_information, $document,
@@ -1596,30 +1621,35 @@ while(@input_files) {
                             $macro_expand_file_name, $error_message));
       $error_macro_expand_file = 1;
     }
-    push @opened_files, Texinfo::Common::output_files_opened_files(
-                                      $macro_expand_files_information);
+    my $macro_expand_opened_file =
+      Texinfo::Common::output_files_opened_files(
+                           $macro_expand_files_information);
+    $error_macro_expand_file
+         = merge_opened_files($error_macro_expand_file, \%opened_files,
+                              $macro_expand_opened_file);
+
     # we do not need to go through unclosed files of
     # $macro_expand_files_information as we know that the file is
     # already closed if needed.
-
     if ($error_macro_expand_file) {
       $error_count++;
-      _exit($error_count, \@opened_files);
+      _exit($error_count, \%opened_files);
     }
   }
   if (get_conf('DUMP_TEXI') or $formats_table{$format}->{'texi2dvi_format'}) {
-    handle_errors($parser->errors(), $error_count, \@opened_files);
+    handle_errors($parser->errors(), $error_count, \%opened_files);
     goto NEXT;
   }
 
   if ($formats_table{$converted_format}->{'relate_index_entries_to_table_items'}
       or $tree_transformations{'relate_index_entries_to_table_items'}) {
-    Texinfo::Common::relate_index_entries_to_table_items_in_tree($document);
+    Texinfo::ManipulateTree::relate_index_entries_to_table_items_in_tree(
+                                                                 $document);
   }
 
   if ($formats_table{$converted_format}->{'move_index_entries_after_items'}
       or $tree_transformations{'move_index_entries_after_items'}) {
-    Texinfo::Common::move_index_entries_after_items_in_tree($tree);
+    Texinfo::ManipulateTree::move_index_entries_after_items_in_tree($tree);
   }
 
   if ($tree_transformations{'insert_nodes_for_sectioning_commands'}) {
@@ -1694,7 +1724,7 @@ while(@input_files) {
   push @$errors, @$document_errors;
 
   _handle_errors($errors);
-  _exit($error_count, \@opened_files);
+  _exit($error_count, \%opened_files);
 
   if ($format eq 'structure') {
     goto NEXT;
@@ -1744,9 +1774,12 @@ while(@input_files) {
     }
   }
 
-  push @opened_files, Texinfo::Common::output_files_opened_files(
-                              $converter->output_files_information());
-  handle_errors($converter_registrar->errors(), $error_count, \@opened_files);
+  my $converter_opened_files
+    = Texinfo::Common::output_files_opened_files(
+                    $converter->output_files_information());
+  $error_count = merge_opened_files($error_count, \%opened_files,
+                                    $converter_opened_files);
+  handle_errors($converter_registrar->errors(), $error_count, \%opened_files);
   my $converter_unclosed_files
        = Texinfo::Common::output_files_unclosed_files(
                                $converter->output_files_information());
@@ -1760,7 +1793,7 @@ while(@input_files) {
           warn(sprintf(__("%s: error on closing %s: %s\n"),
                            $real_command_name, $unclosed_file, $!));
           $error_count++;
-          _exit($error_count, \@opened_files);
+          _exit($error_count, \%opened_files);
         }
       }
     }
@@ -1777,6 +1810,8 @@ while(@input_files) {
         = _decode_input($encoded_internal_links_file_name);
     my $internal_links_files_information
          = Texinfo::Common::output_files_initialize();
+    # the third return information, set if the file has already been used
+    # in this files_information is not checked as this cannot happen.
     my ($internal_links_fh, $error_message)
             = Texinfo::Common::output_files_open_out(
                               $internal_links_files_information, $converter,
@@ -1800,15 +1835,19 @@ while(@input_files) {
       $error_internal_links_file = 1;
     }
 
-    push @opened_files, Texinfo::Common::output_files_opened_files(
-                                      $internal_links_files_information);
+    my $internal_links_opened_file
+        = Texinfo::Common::output_files_opened_files(
+                              $internal_links_files_information);
+    $error_internal_links_file
+           = merge_opened_files($error_internal_links_file,
+                                \%opened_files, $internal_links_opened_file);
     # we do not need to go through unclosed files of
     # $internal_links_files_information as we know that the file is
     # already closed if needed.
 
     if ($error_internal_links_file) {
       $error_count++;
-      _exit($error_count, \@opened_files);
+      _exit($error_count, \%opened_files);
     }
   }
 
@@ -1856,6 +1895,8 @@ while(@input_files) {
                                              $sort_element_count_file_name);
     my $sort_elem_files_information
           = Texinfo::Common::output_files_initialize();
+    # the third return information, set if the file has already been used
+    # in this files_information is not checked as this cannot happen.
     my ($sort_element_count_fh, $error_message)
                 = Texinfo::Common::output_files_open_out(
                        $sort_elem_files_information, $converter_element_count,
@@ -1878,8 +1919,12 @@ while(@input_files) {
       $error_sort_element_count_file = 1;
     }
 
-    push @opened_files, Texinfo::Common::output_files_opened_files(
-                                      $sort_elem_files_information);
+    my $sort_element_count_file_opened_file
+      = Texinfo::Common::output_files_opened_files(
+                                $sort_elem_files_information);
+    $error_sort_element_count_file
+           = merge_opened_files($error_sort_element_count_file,
+                      \%opened_files, $sort_element_count_file_opened_file);
 
     $converter_element_count->destroy();
     # we do not need to go through unclosed files of
@@ -1888,7 +1933,7 @@ while(@input_files) {
 
     if ($error_sort_element_count_file) {
       $error_count++;
-      _exit($error_count, \@opened_files);
+      _exit($error_count, \%opened_files);
     }
   }
 
@@ -1902,7 +1947,7 @@ foreach my $unclosed_file (keys(%main_unclosed_files)) {
     warn(sprintf(__("%s: error on closing %s: %s\n"),
                      $real_command_name, $unclosed_file, $!));
     $error_count++;
-    _exit($error_count, \@opened_files);
+    _exit($error_count, \%opened_files);
   }
 }
 

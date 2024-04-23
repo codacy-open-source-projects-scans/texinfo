@@ -249,12 +249,13 @@ get_converter_indices_sorted_by_index (SV *converter_sv)
         const INDEX_SORTED_BY_INDEX *index_entries_by_index = 0;
         HV *converter_hv;
         SV **document_sv;
+        char *language;
      CODE:
         self = get_sv_converter (converter_sv,
                                  "get_converter_indices_sorted_by_index");
         if (self)
           index_entries_by_index
-            = get_converter_indices_sorted_by_index (self);
+            = get_converter_indices_sorted_by_index (self, &language);
 
         converter_hv = (HV *) SvRV (converter_sv);
         document_sv = hv_fetch (converter_hv, "document",
@@ -262,19 +263,51 @@ get_converter_indices_sorted_by_index (SV *converter_sv)
         RETVAL = 0;
         if (document_sv)
           {
-            SV *indices_information_sv
-              = document_indices_information (*document_sv);
-
-            if (index_entries_by_index && indices_information_sv
-                && SvOK (indices_information_sv))
+            /* The sorted indices are cached in the same place as in Perl code.
+               Either Perl code or XS code is used, so this is for consistency
+               not really for interoperability */
+            /* set to document "sorted_indices_by_index" */
+            HV *language_document_sorted_indices_hv;
+            /* try first to get sorted index cached in document
+               "sorted_indices_by_index".
+               Gather the hash to use to cache too in
+               language_document_sorted_indices_hv, for use if sorted index is
+               not found */
+            if (language)
               {
-                HV *indices_information_hv
-                   = (HV *) SvRV (indices_information_sv);
-                HV *index_entries_by_index_hv
-                   = build_sorted_indices_by_index (index_entries_by_index,
-                                                    indices_information_hv);
-                RETVAL
-                 = newRV_inc ((SV *) index_entries_by_index_hv);
+                HV *document_hv = (HV *) SvRV (*document_sv);
+                SV *index_entries_by_index_sv
+                 = get_language_document_hv_sorted_indices (document_hv,
+                                    "sorted_indices_by_index", language,
+                                  &language_document_sorted_indices_hv); 
+                if (index_entries_by_index_sv)
+                  RETVAL = SvREFCNT_inc (index_entries_by_index_sv);
+              }
+            if (!RETVAL)
+              {
+                /* build the sorted indices from C */
+                SV *indices_information_sv
+                  = document_indices_information (*document_sv);
+
+                if (index_entries_by_index && indices_information_sv
+                    && SvOK (indices_information_sv))
+                  {
+                    HV *indices_information_hv
+                      = (HV *) SvRV (indices_information_sv);
+                    HV *index_entries_by_index_hv
+                     = build_sorted_indices_by_index (index_entries_by_index,
+                                                      indices_information_hv);
+                    RETVAL
+                      = newRV_inc ((SV *) index_entries_by_index_hv);
+                   /* the hash for caching was found or created and the sorting
+                      language is set, cache the sorted indices */
+                    if (language_document_sorted_indices_hv && language)
+                      {
+                        hv_store (language_document_sorted_indices_hv,
+                              language, strlen(language),
+                              newRV_inc ((SV *) index_entries_by_index_hv), 0);
+                      }
+                  }
               }
           }
         if (!RETVAL)
@@ -289,12 +322,13 @@ get_converter_indices_sorted_by_letter (SV *converter_sv)
         const INDEX_SORTED_BY_LETTER *index_entries_by_letter = 0;
         HV *converter_hv;
         SV **document_sv;
+        char *language;
      CODE:
         self = get_sv_converter (converter_sv,
                                  "get_converter_indices_sorted_by_letter");
         if (self)
           index_entries_by_letter
-            = get_converter_indices_sorted_by_letter (self);
+            = get_converter_indices_sorted_by_letter (self, &language);
 
         converter_hv = (HV *) SvRV (converter_sv);
         document_sv = hv_fetch (converter_hv, "document",
@@ -302,19 +336,51 @@ get_converter_indices_sorted_by_letter (SV *converter_sv)
         RETVAL = 0;
         if (document_sv)
           {
-            SV *indices_information_sv
-              = document_indices_information (*document_sv);
-
-            if (index_entries_by_letter && indices_information_sv
-                && SvOK (indices_information_sv))
+            /* The sorted indices are cached in the same place as in Perl code.
+               Either Perl code or XS code is used, so this is for consistency
+               not really for interoperability */
+            /* set to document "sorted_indices_by_letter" */
+            HV *language_document_sorted_indices_hv;
+            /* try first to get sorted index cached in document
+               "sorted_indices_by_letter".
+               Gather the hash to use to cache too in
+               language_document_sorted_indices_hv, for use if sorted index is
+               not found */
+            if (language)
               {
-                HV *indices_information_hv
-                   = (HV *) SvRV (indices_information_sv);
-                HV *index_entries_by_letter_hv
-                   = build_sorted_indices_by_letter (index_entries_by_letter,
-                                                     indices_information_hv);
-                RETVAL
-                 = newRV_inc ((SV *) index_entries_by_letter_hv);
+                HV *document_hv = (HV *) SvRV (*document_sv);
+                SV *index_entries_by_index_sv
+                 = get_language_document_hv_sorted_indices (document_hv,
+                                    "sorted_indices_by_letter", language,
+                                  &language_document_sorted_indices_hv); 
+                if (index_entries_by_index_sv)
+                  RETVAL = SvREFCNT_inc (index_entries_by_index_sv);
+              }
+            if (!RETVAL)
+              {
+                /* build the sorted indices from C */
+                SV *indices_information_sv
+                 = document_indices_information (*document_sv);
+
+                if (index_entries_by_letter && indices_information_sv
+                    && SvOK (indices_information_sv))
+                  {
+                    HV *indices_information_hv
+                     = (HV *) SvRV (indices_information_sv);
+                    HV *index_entries_by_letter_hv
+                     = build_sorted_indices_by_letter (index_entries_by_letter,
+                                                       indices_information_hv);
+                    RETVAL
+                     = newRV_inc ((SV *) index_entries_by_letter_hv);
+                    /* the hash for caching was found or created, cache the
+                       sorted indices */
+                    if (language_document_sorted_indices_hv)
+                      {
+                        hv_store (language_document_sorted_indices_hv,
+                              language, strlen(language),
+                              newRV_inc ((SV *) index_entries_by_letter_hv), 0);
+                      }
+                  }
               }
           }
         if (!RETVAL)
@@ -676,6 +742,26 @@ html_unset_raw_context (SV *converter_in)
          if (self)
            html_unset_raw_context (self);
 
+void
+html_set_multiple_conversions (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_set_multiple_conversions");
+         if (self)
+           self->multiple_conversions++;
+
+void
+html_unset_multiple_conversions (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_unset_multiple_conversions");
+         if (self)
+           self->multiple_conversions--;
+
 SV *
 html_debug_print_html_contexts (SV *converter_in)
      PREINIT:
@@ -801,6 +887,17 @@ html_in_raw (SV *converter_in)
          self = get_sv_converter (converter_in,
                                   "html_in_raw");
          RETVAL = html_in_raw (self);
+    OUTPUT:
+         RETVAL
+
+int
+html_in_multiple_conversions (SV *converter_in)
+     PREINIT:
+         const CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_multiple_conversions");
+         RETVAL = self->multiple_conversions;
     OUTPUT:
          RETVAL
 
@@ -1569,24 +1666,21 @@ html_register_footnote (SV *converter_in, SV *command, footid, docid, int number
       PROTOTYPE: $$$$$$$
       PREINIT:
          CONVERTER *self;
-         const char *multi_expanded_region = 0;
+         ELEMENT *footnote = 0;
       CODE:
          self = get_sv_converter (converter_in,
                                   "html_register_footnote");
-         if (self)
+         if (self && self->document)
            {
-             /* TODO use functions used for other elements? */
-             /* find footnote in XS.  First use index in global commands,
-                then number_in_doc, and if not effective, do a linear search */
-             ELEMENT *footnote = 0;
-             ELEMENT *current;
-             HV *command_hv = (HV *) SvRV (command);
+             /* This code is about the same as get_perl_info.c
+                find_element_from_sv, but simpler as we already know
+                which command we are searching for */
+             /* find footnote in XS using index in global commands */
              ELEMENT_LIST *footnotes
                 = &self->document->global_commands->footnotes;
+             HV *command_hv = (HV *) SvRV (command);
              SV **extra_sv
                  = hv_fetch (command_hv, "extra", strlen ("extra"), 0);
-             int global_command_number = 0;
-
              if (extra_sv)
                {
                  HV *extra_hv = (HV *) SvRV (*extra_sv);
@@ -1594,61 +1688,28 @@ html_register_footnote (SV *converter_in, SV *command, footid, docid, int number
                     = hv_fetch (extra_hv, "global_command_number",
                                 strlen ("global_command_number"), 0);
                  if (global_command_number_sv)
-                   global_command_number = SvIV (*global_command_number_sv);
-               }
-             if (global_command_number > 0
-                 && global_command_number - 1 < footnotes->number)
-               {
-                 ELEMENT *current = footnotes->list[global_command_number - 1];
-                 if (command_hv == current->hv)
-                   footnote = current;
-                 else
-                   fprintf (stderr,
-                         "REMARK: global footnote %d %s not directly found\n",
-                            global_command_number, footid);
-               }
-             /* the next two ways should never be needed */
-             if (!footnote && number_in_doc - 1 < footnotes->number)
-               {
-                 ELEMENT *current = footnotes->list[number_in_doc - 1];
-                 if (command_hv == current->hv)
-                   footnote = current;
-                   /*
-                 else
-                   fprintf (stderr,
-                            "REMARK: footnote %d %s not directly found\n",
-                            number_in_doc, footid);
-                    */
-               }
-             if (!footnote)
-               {
-                 size_t i;
-                 for (i = 0; i < footnotes->number; i++)
                    {
-                     current = footnotes->list[i];
-                     if (current->hv == command_hv)
+                     int global_command_number
+                       = SvIV (*global_command_number_sv);
+                     if (global_command_number > 0
+                         && global_command_number - 1 < footnotes->number)
                        {
-                         footnote = current;
-                         break;
+                         const char *multi_expanded_region = 0;
+
+                         footnote = footnotes->list[global_command_number - 1];
+
+                         if (items > 7 && SvOK(ST(7)))
+                           multi_expanded_region = SvPVutf8_nolen (ST(7));
+
+                         html_register_footnote (self, footnote, footid, docid,
+                                    number_in_doc, footnote_location_filename,
+                                                       multi_expanded_region);
                        }
                    }
                }
-             if (footnote)
-               {
-              /*
-                 fprintf (stderr, "FFF %s\n", convert_to_texinfo (footnote));
-               */
-                  if (items > 7 && SvOK(ST(7)))
-                    multi_expanded_region = SvPVutf8_nolen (ST(7));
-                  html_register_footnote (self, footnote, footid, docid,
-                              number_in_doc, footnote_location_filename,
-                                                  multi_expanded_region);
-               }
-             else
-               {
-                 fprintf (stderr, "ERROR: footnote not found\n");
-               }
            }
+         if (!footnote)
+           fprintf (stderr, "BUG: footnote not found\n");
 
 SV *
 html_get_pending_footnotes (SV *converter_in)

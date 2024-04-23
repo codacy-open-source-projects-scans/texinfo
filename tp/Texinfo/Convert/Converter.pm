@@ -49,7 +49,7 @@ use Texinfo::Convert::Unicode;
 use Texinfo::Convert::Texinfo;
 use Texinfo::Convert::Text;
 use Texinfo::Convert::NodeNameNormalization;
-use Texinfo::Structuring;
+use Texinfo::OutputUnits;
 
 use Texinfo::Translations;
 
@@ -144,7 +144,8 @@ my %defaults = (
 my %common_converters_defaults = (
   # Following are set in the main program
   'language_config_dirs' => undef,
-  'converted_format'     => undef,
+  'converted_format'     => undef, # also in converter defaults, but
+                                   # in general set by the caller
   # can be different from the converted_format, for example, epub3
   # output format converted format is html.
   'output_format'        => undef,
@@ -392,6 +393,8 @@ sub output_tree($$)
     ($encoded_output_file, $path_encoding)
       = $self->encoded_output_file_name($output_file);
     my $error_message;
+    # the third return information, set if the file has already been used
+    # in this files_information is not checked as this cannot happen.
     ($fh, $error_message) = Texinfo::Common::output_files_open_out(
                               $self->output_files_information(), $self,
                               $encoded_output_file);
@@ -1128,7 +1131,7 @@ sub set_output_units_files($$$$$$)
     print STDERR 'Page '
      # uncomment for perl object name
      #."$output_unit "
-     .Texinfo::Structuring::output_unit_texi($output_unit)
+     .Texinfo::OutputUnits::output_unit_texi($output_unit)
      .": $output_unit_filename($self->{'file_counters'}->{$output_unit_filename})\n"
               if ($self->get_conf('DEBUG'));
   }
@@ -1306,7 +1309,7 @@ sub txt_image_text($$$)
     return undef, undef;
   } else {
     my $filehandle = do { local *FH };
-    if (open ($filehandle, $txt_file)) {
+    if (open($filehandle, $txt_file)) {
       my $encoding
           = Texinfo::Common::element_associated_processing_encoding($element);
       if (defined($encoding)) {
@@ -1622,9 +1625,9 @@ sub sort_element_counts($$;$$)
 
   my $output_units;
   if ($use_sections) {
-    $output_units = Texinfo::Structuring::split_by_section($document);
+    $output_units = Texinfo::OutputUnits::split_by_section($document);
   } else {
-    $output_units = Texinfo::Structuring::split_by_node($document);
+    $output_units = Texinfo::OutputUnits::split_by_node($document);
   }
 
   my $max_count = 0;
@@ -2090,9 +2093,9 @@ Can be used for the conversion of output units by converters.
 C<convert_output_unit> takes a I<$converter> and an output unit
 I<$output_unit> as argument.  The implementation of
 C<convert_output_unit> of C<Texinfo::Convert::Converter> could be suitable in
-many cases.  Output units are typically returned by L<Texinfo::Structuring
-split_by_section|Texinfo::Structuring/$output_units = split_by_section($document)>
-or L<Texinfo::Structuring split_by_node|Texinfo::Structuring/$output_units =
+many cases.  Output units are typically returned by L<Texinfo::OutputUnits
+split_by_section|Texinfo::OutputUnits/$output_units = split_by_section($document)>
+or L<Texinfo::OutputUnits split_by_node|Texinfo::OutputUnits/$output_units =
 split_by_node($document)>.
 
 Output units are not relevant for all the formats, the Texinfo tree can also be
@@ -2376,6 +2379,40 @@ translation.  This function is similar to pgettext in the Gettext C API.
 
 =back
 
+=head2 Index sorting
+
+You should call the following methods to sort indices in conversion:
+
+=over
+
+=item $sorted_indices = $converter->get_converter_indices_sorted_by_index()
+
+=item $sorted_indices = $converter->get_converter_indices_sorted_by_letter()
+X<C<get_converter_indices_sorted_by_index>>
+X<C<get_converter_indices_sorted_by_letter>>
+
+C<get_converter_indices_sorted_by_letter> returns the indices sorted by index
+and letter, while C<get_converter_indices_sorted_by_index> returns the indices
+with all entries of an index together.
+
+When sorting by letter, an array reference of letter hash references is
+associated with each index name.  Each letter hash reference has two
+keys, a I<letter> key with the letter, and an I<entries> key with an array
+reference of sorted index entries beginning with the letter.  The letter
+is a character string suitable for sorting letters, but is not necessarily
+the best to use for output.
+
+When simply sorting, the array of the sorted index entries is associated
+with the index name.
+
+The functions call L<< C<Texinfo::Document::sorted_indices_by_letter>|Texinfo::Document/$sorted_indices = $document->sorted_indices_by_letter($customization_information, $use_unicode_collation, $locale_lang) >>
+or L<< C<Texinfo::Document::sorted_indices_by_index>|Texinfo::Document/$sorted_indices = $document->sorted_indices_by_index($customization_information, $use_unicode_collation, $locale_lang) >>
+with arguments based on C<USE_UNICODE_COLLATION>, C<COLLATION_LANGUAGE> and
+C<DOCUMENTLANGUAGE_COLLATION> customization options, and, if relevant, current
+C<@documentlanguage>.
+
+=back
+
 =head2 Conversion to XML
 
 Some C<Texinfo::Convert::Converter> methods target conversion to XML.
@@ -2534,32 +2571,6 @@ the element.  In many cases, converters ignore comments and output is
 better formatted with new lines added independently of the presence
 of newline or comment in the initial Texinfo line, so most converters
 are better off not using this method.
-
-=item $sorted_indices = $converter->get_converter_indices_sorted_by_index()
-
-=item $sorted_indices = $converter->get_converter_indices_sorted_by_letter()
-X<C<get_converter_indices_sorted_by_index>>
-X<C<get_converter_indices_sorted_by_letter>>
-
-C<get_converter_indices_sorted_by_letter> returns the indices sorted by index
-and letter, while C<get_converter_indices_sorted_by_index> returns the indices
-with all entries of an index together.
-
-When sorting by letter, an array reference of letter hash references is
-associated with each index name.  Each letter hash reference has two
-keys, a I<letter> key with the letter, and an I<entries> key with an array
-reference of sorted index entries beginning with the letter.  The letter
-is a character string suitable for sorting letters, but is not necessarily
-the best to use for output.
-
-When simply sorting, the array of the sorted index entries is associated
-with the index name.
-
-The functions call L<< C<Texinfo::Document::sorted_indices_by_letter>|Texinfo::Document/$sorted_indices = $document->sorted_indices_by_letter($customization_information, $use_unicode_collation, $locale_lang) >>
-or L<< C<Texinfo::Document::sorted_indices_by_index>|Texinfo::Document/$sorted_indices = $document->sorted_indices_by_index($customization_information, $use_unicode_collation, $locale_lang) >>
-with arguments based on C<USE_UNICODE_COLLATION>, C<COLLATION_LANGUAGE> and
-C<DOCUMENTLANGUAGE_COLLATION> customization options, and, if relevant, current
-C<@documentlanguage>.
 
 =item $filename = sub $converter->node_information_filename($normalized, $label_element)
 X<C<node_information_filename>>
