@@ -3740,7 +3740,8 @@ sub _convert_footnote_command($$$$)
     }
   }
   my $footnote_href;
-  if ($self->get_conf('footnotestyle') eq 'end'
+  my $footnotestyle = $self->get_conf('footnotestyle');
+  if ((!defined($footnotestyle) or $footnotestyle ne 'separate')
       and (defined($multi_expanded_region)
            or $multiple_expanded_footnote)) {
     # if the footnote appears multiple times, command_href() will select
@@ -4388,7 +4389,7 @@ sub _default_format_button($$;$)
         my $href = $self->from_element_direction($direction, 'href',
                                                  undef, undef, $source_command);
         my $text_formatted = $self->from_element_direction($direction, $text);
-        if (defined($href)) {
+        if (defined($href) and defined($text_formatted)) {
           my $anchor_attributes = $self->_direction_href_attributes($direction);
           $active = "<a href=\"$href\"${anchor_attributes}>$text_formatted</a>";
         } else {
@@ -4625,7 +4626,8 @@ sub _default_format_navigation_header($$$$)
     $result .= '</td>
 <td>
 ';
-  } elsif ($self->get_conf('SPLIT') eq 'node' and $result ne '') {
+  } elsif ($self->get_conf('SPLIT')
+           and $self->get_conf('SPLIT') eq 'node' and $result ne '') {
     $result .= $self->get_conf('DEFAULT_RULE')."\n";
   }
   return $result;
@@ -4681,8 +4683,9 @@ sub _default_format_element_header($$$$)
                          $self->get_conf('TOP_BUTTONS'), $cmdname, $command)
            if ($self->get_conf('SPLIT') or $self->get_conf('HEADERS'));
     } else {
+      my $split = $self->get_conf('SPLIT');
       if ($first_in_page and !$self->get_conf('HEADERS')) {
-        if ($self->get_conf('SPLIT') eq 'chapter') {
+        if ($split and $split eq 'chapter') {
           $result
            .= &{$self->formatting_function('format_navigation_header')}($self,
                         $self->get_conf('CHAPTER_BUTTONS'), $cmdname, $command);
@@ -4690,7 +4693,7 @@ sub _default_format_element_header($$$$)
           $result .= $self->get_conf('DEFAULT_RULE') ."\n"
             if (defined($self->get_conf('DEFAULT_RULE'))
                 and !$self->get_conf('VERTICAL_HEAD_NAVIGATION'));
-        } elsif ($self->get_conf('SPLIT') eq 'section') {
+        } elsif ($split and $split eq 'section') {
           $result
             .= &{$self->formatting_function('format_navigation_header')}($self,
                         $self->get_conf('SECTION_BUTTONS'), $cmdname, $command);
@@ -4701,7 +4704,7 @@ sub _default_format_element_header($$$$)
         $result
           .= &{$self->formatting_function('format_navigation_header')}($self,
                         $self->get_conf('SECTION_BUTTONS'), $cmdname, $command);
-      } elsif($self->get_conf('HEADERS') or $self->get_conf('SPLIT') eq 'node') {
+      } elsif ($self->get_conf('HEADERS') or ($split and $split eq 'node')) {
         # got to do this here, as it isn't done otherwise since
         # navigation_header is not called
         $result
@@ -8198,9 +8201,10 @@ sub _default_format_element_footer($$$$;$)
   my $is_special = (defined($unit->{'unit_type'})
                     and $unit->{'unit_type'} eq 'special_unit');
 
+  my $split = $self->get_conf('SPLIT');
   if (($end_page or $next_is_top or $next_is_special or $is_top)
        and $self->get_conf('VERTICAL_HEAD_NAVIGATION')
-       and ($self->get_conf('SPLIT') ne 'node'
+       and (!$split or $split ne 'node'
             or $self->get_conf('HEADERS') or $is_special or $is_top)) {
    $result .= "</td>
 </tr>
@@ -8213,22 +8217,23 @@ sub _default_format_element_footer($$$$;$)
     my $closed_strings = $self->close_registered_sections_level(0);
     $result .= join('', @{$closed_strings});
 
+    my $split = $self->get_conf('SPLIT');
+
     # setup buttons for navigation footer
     if (($is_top or $is_special)
-        and ($self->get_conf('SPLIT') ne '' or !$self->get_conf('MONOLITHIC'))
+        and ($split or !$self->get_conf('MONOLITHIC'))
         and (($self->get_conf('HEADERS')
-              or ($self->get_conf('SPLIT')
-                  and $self->get_conf('SPLIT') ne 'node')))) {
+              or ($split and $split ne 'node')))) {
       if ($is_top) {
         $buttons = $self->get_conf('TOP_FOOTER_BUTTONS');
       } else {
         $buttons = $self->get_conf('MISC_BUTTONS');
       }
-    } elsif ($self->get_conf('SPLIT') eq 'section') {
+    } elsif ($split and $split eq 'section') {
       $buttons = $self->get_conf('SECTION_FOOTER_BUTTONS');
-    } elsif ($self->get_conf('SPLIT') eq 'chapter') {
+    } elsif ($split and $split eq 'chapter') {
       $buttons = $self->get_conf('CHAPTER_FOOTER_BUTTONS');
-    } elsif ($self->get_conf('SPLIT') eq 'node') {
+    } elsif ($split and $split eq 'node') {
       if ($self->get_conf('HEADERS')) {
         my $no_footer_word_count;
         if ($self->get_conf('WORDS_IN_PAGE')) {
@@ -8261,23 +8266,27 @@ sub _default_format_element_footer($$$$;$)
   # NOTE the following condition is almost a duplication of the
   # condition appearing in end_page except that the file counter
   # needs not to be 1
-  if ((!$unit->{'tree_unit_directions'}->{'next'}
-       or (defined($unit->{'unit_filename'})
-           and $unit->{'unit_filename'}
-               ne $unit->{'tree_unit_directions'}->{'next'}->{'unit_filename'}))
-      and $self->get_conf('footnotestyle') eq 'end') {
-    $result .= &{$self->formatting_function('format_footnotes_segment')}($self);
+  if (!$unit->{'tree_unit_directions'}->{'next'}
+      or (defined($unit->{'unit_filename'})
+          and $unit->{'unit_filename'}
+           ne $unit->{'tree_unit_directions'}->{'next'}->{'unit_filename'})) {
+    my $footnotestyle = $self->get_conf('footnotestyle');
+    if (!defined($footnotestyle) or $footnotestyle ne 'separate') {
+      $result
+        .= &{$self->formatting_function('format_footnotes_segment')}($self);
+    }
   }
 
   if ($buttons or !$end_page or $self->get_conf('PROGRAM_NAME_IN_FOOTER')) {
     my $rule;
+    my $split = $self->get_conf('SPLIT');
     if (!$end_page and ($is_top or $next_is_top or ($next_is_special
                                                     and !$is_special))) {
       $rule = $self->get_conf('BIG_RULE');
     } elsif (!$buttons or $is_top or $is_special
-             or ($end_page and ($self->get_conf('SPLIT') eq 'chapter'
-                                 or $self->get_conf('SPLIT') eq 'section'))
-             or ($self->get_conf('SPLIT') eq 'node'
+             or ($end_page and $split
+                 and ($split eq 'chapter' or $split eq 'section'))
+             or ($split and $split eq 'node'
                  and $self->get_conf('HEADERS'))) {
       $rule = $self->get_conf('DEFAULT_RULE');
     }
@@ -9048,9 +9057,10 @@ sub converter_initialize($)
   # The main program warns if the specific command line option value is
   # not known.  We could add a warning here to catch mistakes in init
   # files.  Wait for user reports.
-  if ($self->get_conf('SPLIT') and $self->get_conf('SPLIT') ne 'chapter'
-      and $self->get_conf('SPLIT') ne 'section'
-      and $self->get_conf('SPLIT') ne 'node') {
+  my $split = $self->get_conf('SPLIT');
+  if ($split and $split ne 'chapter'
+      and $split ne 'section'
+      and $split ne 'node') {
     $self->force_conf('SPLIT', 'node');
   }
 
@@ -9069,7 +9079,8 @@ sub converter_initialize($)
           my $type = $self->{'translated_special_unit_info'}->{$tree_type}->[0];
           my $variety_strings
             = $self->{'translated_special_unit_info'}->{$tree_type}->[1];
-          # we do not need both tree type and string type to pass to XS,
+          # we do not need both tree type $tree_type and $type string
+          # to pass to XS, as they both hold the same information,
           # pass only the string type $type and associated varieties information
           $self->{'simplified_special_unit_info'}->{$type} = $variety_strings;
         }
@@ -10216,15 +10227,17 @@ sub _prepare_special_units($$)
   }
 
   if ($global_commands and $global_commands->{'footnote'}
-      and $self->get_conf('footnotestyle') eq 'separate'
       and scalar(@$output_units) > 1) {
-    $do_special{'footnotes'} = 1;
+    my $footnotestyle = $self->get_conf('footnotestyle');
+    if (defined($footnotestyle) and $footnotestyle eq 'separate') {
+      $do_special{'footnotes'} = 1;
+    }
   }
 
   if ((!defined($self->get_conf('DO_ABOUT'))
        and scalar(@$output_units) > 1
-           and ($self->get_conf('SPLIT') or $self->get_conf('HEADERS')))
-       or ($self->get_conf('DO_ABOUT'))) {
+       and ($self->get_conf('SPLIT') or $self->get_conf('HEADERS')))
+      or ($self->get_conf('DO_ABOUT'))) {
     $do_special{'about'} = 1;
   }
 
@@ -10859,7 +10872,7 @@ sub _default_format_contents($$;$$)
   #print STDERR "ROOT_LEVEL Max: $max_root_level, Min: $min_root_level\n";
   my @toc_ul_classes;
   push @toc_ul_classes, 'toc-numbered-mark'
-            if ($self->get_conf('NUMBER_SECTIONS'));
+    if ($self->get_conf('NUMBER_SECTIONS'));
 
   my $result = '';
   if ($is_contents and !defined($self->get_conf('BEFORE_TOC_LINES'))
@@ -12302,40 +12315,38 @@ sub output_internal_links($)
   }
 }
 
-sub run_stage_handlers($$$)
+sub run_stage_handlers($$$$)
 {
   my $converter = shift;
+  my $stage_handlers = shift;
   my $document = shift;
   my $stage = shift;
 
-  my $stage_handlers = Texinfo::Config::GNUT_get_stage_handlers();
   return 0 if (!defined($stage_handlers->{$stage}));
 
-  my @sorted_priorities = sort keys(%{$stage_handlers->{$stage}});
-  foreach my $priority (@sorted_priorities) {
-    my $handler_idx = 1;
-    foreach my $handler (@{$stage_handlers->{$stage}->{$priority}}) {
-      if ($converter->get_conf('DEBUG')) {
-        print STDERR "RUN handler $handler_idx: stage $stage, priority $priority\n";
-      }
-      my $status = &{$handler}($converter, $document, $stage);
-      if ($status != 0) {
-        if ($status < 0) {
-          $converter->converter_document_error(
-             sprintf(__("handler %d of stage %s priority %s failed"),
-                        $handler_idx, $stage, $priority));
-        } else {
-          # the handler is supposed to have output an error message
-          # already if $status > 0
-          if ($converter->get_conf('VERBOSE') or $converter->get_conf('DEBUG')) {
-            print STDERR "FAIL handler $handler_idx: stage $stage, "
-                                       ."priority $priority\n";
-          }
-        }
-        return $status;
-      }
-      $handler_idx++;
+  my $handler_idx = 1;
+  foreach my $handler_and_priority (@{$stage_handlers->{$stage}}) {
+    my ($handler, $priority) = @$handler_and_priority;
+    if ($converter->get_conf('DEBUG')) {
+      print STDERR "RUN handler $handler_idx: stage $stage, priority $priority\n";
     }
+    my $status = &{$handler}($converter, $document, $stage);
+    if ($status != 0) {
+      if ($status < 0) {
+        $converter->converter_document_error(
+           sprintf(__("handler %d of stage %s priority %s failed"),
+                      $handler_idx, $stage, $priority));
+      } else {
+        # the handler is supposed to have output an error message
+        # already if $status > 0
+        if ($converter->get_conf('VERBOSE') or $converter->get_conf('DEBUG')) {
+          print STDERR "FAIL handler $handler_idx: stage $stage, "
+                                     ."priority $priority\n";
+        }
+      }
+      return $status;
+    }
+    $handler_idx++;
   }
   return 0;
 }
@@ -12920,7 +12931,11 @@ sub output($$)
   # Some information is not available yet.
   $self->_reset_info();
 
-  my $setup_status = $self->run_stage_handlers($document, 'setup');
+  # TODO call in converter_initialize
+  my $stage_handlers = Texinfo::Config::GNUT_get_stage_handlers();
+
+  my $setup_status = $self->run_stage_handlers($stage_handlers,
+                                               $document, 'setup');
   unless ($setup_status < $handler_fatal_error_level
           and $setup_status > -$handler_fatal_error_level) {
     $self->conversion_finalization();
@@ -13026,7 +13041,8 @@ sub output($$)
   # formatting.  Some information is not available yet.
   $self->_reset_info();
 
-  my $structure_status = $self->run_stage_handlers($document, 'structure');
+  my $structure_status = $self->run_stage_handlers($stage_handlers,
+                                                   $document, 'structure');
   unless ($structure_status < $handler_fatal_error_level
           and $structure_status > -$handler_fatal_error_level) {
     $self->conversion_finalization();
@@ -13051,7 +13067,8 @@ sub output($$)
 
   # TODO document that this stage handler is called with end of preamble
   # documentlanguage when it is certain that this will not change ever.
-  my $init_status = $self->run_stage_handlers($document, 'init');
+  my $init_status = $self->run_stage_handlers($stage_handlers,
+                                              $document, 'init');
   unless ($init_status < $handler_fatal_error_level
           and $init_status > -$handler_fatal_error_level) {
     $self->conversion_finalization();
@@ -13096,7 +13113,8 @@ sub output($$)
 
   $self->_do_js_files($destination_directory);
 
-  my $finish_status = $self->run_stage_handlers($document, 'finish');
+  my $finish_status = $self->run_stage_handlers($stage_handlers,
+                                                $document, 'finish');
   unless ($finish_status < $handler_fatal_error_level
           and $finish_status > -$handler_fatal_error_level) {
     $self->conversion_finalization();

@@ -1,3 +1,100 @@
+2024-04-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (_id_to_filename), tp/ext/epub3.pm
+	(epub_convert_image_command): handle BASEFILENAME_LENGTH being undef.
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_button),
+	tp/Texinfo/XS/convert/convert_html.c (html_default_format_button):
+	handle from_element_direction return being undef.
+
+	* tp/Texinfo/XS/convert/convert_html.c, tp/Texinfo/Convert/HTML.pm:
+	handle undefined SPLIT.
+
+	* tp/Texinfo/XS/convert/convert_html.c (from_element_direction):
+	handle TOP_NODE_UP being undef.
+
+	* tp/Texinfo/Convert/Plaintext.pm (converter_initialize): handle
+	undefined FILLCOLUMN.
+
+	* tp/ext/epub3.pm (epub_setup): use INFO_JS_DIR and JS_WEBLABELS_FILE
+	if defined, enven if the empty string or 0.
+
+2024-04-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/regenerate_C_options_info.pl: add a better BUG message
+	than the default Perl message for customization variable passed to C
+	that should be an integer but is not.
+
+2024-04-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_footnote_command)
+	(_default_format_element_footer, _prepare_special_units),
+	tp/Texinfo/XS/convert/convert_html.c (prepare_special_units)
+	(html_default_format_element_footer, convert_footnote_command),
+	tp/Texinfo/Convert/Plaintext.pm (process_footnotes, _convert):
+	compare footnotestyle customization value to 'separate' only and
+	handle an undef value.
+
+2024-04-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/TODO: notes on possible optimization after looking at callgrind
+	output for HTML output with C.
+
+2024-04-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Config.pm (GNUT_get_stage_handlers),
+	tp/Texinfo/Convert/HTML.pm (run_stage_handlers, output): sort handlers
+	according to priority in GNUT_get_stage_handlers and return sorted
+	stage handlers.  Pass sorted handlers to run_stage_handlers.  Call
+	Texinfo::Config::GNUT_get_stage_handlers() in output().
+
+2024-04-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_other_command),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_other_command):
+	check that an in_heading_spec command is in an heading_spec command by
+	using the basic_inline_stack_on_line nesting_context.
+
+	* tp/Makefile.tres, tp/t/57invalid_nestings.t
+	(heading_commands_in_center, heading_commands_in_documentlanguage):
+	move two tests from tp/t/02coverage.t.
+
+	* tp/Makefile.tres, tp/t/57invalid_nestings.t
+	(heading_separator_in_accent_command)
+	thischapter_in_footnote_in_evenfooting)
+	(thischapter_in_math_in_evenfooting): new tests of invalid nestings
+	for in heading commands.
+
+2024-04-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/command_data.txt (nodedescription): add
+	contain_basic_inline flag.
+
+2024-04-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (check_valid_nesting): fix
+	condition on contain_plain_text NOBRACE_symbol and CF_in_heading_spec.
+
+2024-04-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%in_plain_text_commands),
+	tp/Texinfo/XS/parsetexi/parser.c (check_valid_nesting): remove @| from
+	commands valid in plain text, by adding a check on
+	%in_heading_spec_commands.
+
+	* tp/Texinfo/ParserNonXS.pm (%in_full_text_commands)
+	(%in_basic_inline_commands): do not put in_heading_spec_commands in
+	%in_full_text_commands, only in %in_basic_inline_commands such that
+	they can only appear in some @-commands (style brace @-commands).
+
+	* tp/Texinfo/XS/parsetexi/parser.c (check_valid_nesting): remove an
+	impossible check of outer_flags & CF_heading_spec for a brace command.
+
+	* tp/Makefile.tres, tp/t/02coverage.t (heading_commands_in_center)
+	(heading_commands_in_documentlanguage): add tests of heading commands
+	in non heading nor footing line command and in contain_plain_text
+	command.
+
 2024-04-20  Patrice Dumas  <pertusus@free.fr>
 
 	* Pod-Simple-Texinfo/README: explain how test_scripts/*.sh can be
