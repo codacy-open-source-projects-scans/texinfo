@@ -215,52 +215,72 @@ $result_trees{'test_deftypefnnewline'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'Function'
+                          'contents' => [
+                            {
+                              'text' => 'Function'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
+                      'info' => {
+                        'inserted' => 1
                       },
-                      'type' => 'bracketed_inserted'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces_inserted'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 'data-type'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
+                      'info' => {
+                        'inserted' => 1
                       },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'data-type'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'arguments...'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'arguments...'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     }
                   ],
                   'info' => {
@@ -354,36 +374,51 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypefn_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypefn_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -477,62 +512,85 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'a--rguments...'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'a--rguments...'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     }
                   ],
                   'info' => {
@@ -549,38 +607,66 @@ $result_trees{'test_deftypefnnewline'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -663,49 +749,68 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -722,38 +827,66 @@ $result_trees{'test_deftypefnnewline'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -836,49 +969,68 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -895,38 +1047,66 @@ $result_trees{'test_deftypefnnewline'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -1009,62 +1189,85 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'a--rguments...'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'a--rguments...'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {
@@ -1081,38 +1284,66 @@ $result_trees{'test_deftypefnnewline'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -1195,23 +1426,34 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'fun'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'fun'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'arg'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'arg'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -1344,52 +1586,72 @@ $result_trees{'test_deftypefnnewline'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'Function'
+                          'contents' => [
+                            {
+                              'text' => 'Function'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
+                      'info' => {
+                        'inserted' => 1
                       },
-                      'type' => 'bracketed_inserted'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces_inserted'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 'data-type2'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
+                      'info' => {
+                        'inserted' => 1
                       },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'data-type2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'arguments2...'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'arguments2...'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     }
                   ],
                   'info' => {
@@ -1483,36 +1745,51 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypefn_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypefn_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -1606,62 +1883,85 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'a--rguments2...'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'a--rguments2...'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     }
                   ],
                   'info' => {
@@ -1678,38 +1978,66 @@ $result_trees{'test_deftypefnnewline'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -1792,49 +2120,68 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -1851,38 +2198,66 @@ $result_trees{'test_deftypefnnewline'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypeop_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypeop_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -1965,49 +2340,68 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -2024,38 +2418,66 @@ $result_trees{'test_deftypefnnewline'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -2138,62 +2560,85 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c--ategory2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--ategory2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 't--ype2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 't--ype2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'a--rguments2...'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'a--rguments2...'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {
@@ -2210,38 +2655,66 @@ $result_trees{'test_deftypefnnewline'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'd--eftypecv_name2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'd--eftypecv_name2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'c--lass2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c--lass2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -2324,23 +2797,34 @@ $result_trees{'test_deftypefnnewline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'fun2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'fun2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'arg2'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'arg2'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -2861,7 +3345,7 @@ $result_converted{'xml'}->{'test_deftypefnnewline'} = '<setfilename file="test_d
 <node name="chapter" spaces=" "><nodename>chapter</nodename><nodeprev automatic="on">Top</nodeprev><nodeup automatic="on">Top</nodeup></node>
 <chapter spaces=" "><sectiontitle>chap</sectiontitle>
 
-<deftypefun spaces=" " endspaces=" "><definitionterm><indexterm index="fn" number="1">name</indexterm><defcategory automatic="on" bracketed="on">Function</defcategory> <deftype>data-type</deftype> <deffunction>name</deffunction> <defparamtype>arguments...</defparamtype></definitionterm>
+<deftypefun spaces=" " endspaces=" "><definitionterm><indexterm index="fn" number="1">name</indexterm><defcategory automatic="on">Function</defcategory> <deftype>data-type</deftype> <deffunction>name</deffunction> <defparamtype>arguments...</defparamtype></definitionterm>
 <definitionitem><para>aaa
 </para></definitionitem></deftypefun>
 
@@ -2891,7 +3375,7 @@ $result_converted{'xml'}->{'test_deftypefnnewline'} = '<setfilename file="test_d
 
 <deftypefnnewline spaces=" " value="off" line="off"></deftypefnnewline>
 
-<deftypefun spaces=" " endspaces=" "><definitionterm><indexterm index="fn" number="6">name2</indexterm><defcategory automatic="on" bracketed="on">Function</defcategory> <deftype>data-type2</deftype> <deffunction>name2</deffunction> <defparamtype>arguments2...</defparamtype></definitionterm>
+<deftypefun spaces=" " endspaces=" "><definitionterm><indexterm index="fn" number="6">name2</indexterm><defcategory automatic="on">Function</defcategory> <deftype>data-type2</deftype> <deffunction>name2</deffunction> <defparamtype>arguments2...</defparamtype></definitionterm>
 <definitionitem><para>aaa2
 </para></definitionitem></deftypefun>
 

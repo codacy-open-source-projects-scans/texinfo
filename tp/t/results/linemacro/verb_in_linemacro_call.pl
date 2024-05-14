@@ -248,59 +248,69 @@ $result_trees{'verb_in_linemacro_call'} = {
                   'type' => 'paragraph'
                 }
               ],
-              'type' => 'def_item'
+              'type' => 'before_defline'
             },
             {
               'args' => [
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'Name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'Name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'other'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'j'
+                          'contents' => [
+                            {
+                              'text' => 'other'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 9,
-                        'macro' => 'mycommand'
-                      },
-                      'source_marks' => [
+                      'type' => 'def_name'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
                         {
-                          'counter' => 1,
-                          'sourcemark_type' => 'linemacro_expansion',
-                          'status' => 'end'
+                          'contents' => [
+                            {
+                              'text' => 'j'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 9,
+                            'macro' => 'mycommand'
+                          },
+                          'source_marks' => [
+                            {
+                              'counter' => 1,
+                              'sourcemark_type' => 'linemacro_expansion',
+                              'status' => 'end'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {

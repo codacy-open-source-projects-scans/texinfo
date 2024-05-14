@@ -17,23 +17,34 @@ $result_trees{'protected_brace'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'c'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'cmdname' => '{',
-                      'extra' => {
-                        'def_role' => 'name'
-                      }
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'cmdname' => '{'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {

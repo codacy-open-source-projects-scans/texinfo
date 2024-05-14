@@ -17,7 +17,6 @@
 
 # Types for @-commands
 command_as_argument
-command_as_argument_inserted
 index_entry_command
 following_arg
 space_command_arg
@@ -35,7 +34,6 @@ text_before_beginning
 space_at_end_menu_node
 after_menu_description_line
 spaces_after_cmd_before_arg
-spaces_inserted
 
 # Other special types
 document_root
@@ -78,25 +76,38 @@ inter_item
 def_line
 def_item
 inter_def_item
+before_defline
 multitable_head
 multitable_body
 row
 balanced_braces
 bracketed_arg
 bracketed_linemacro_arg
-def_aggregate
-bracketed_inserted
+
+# container of definition line argument content
+def_line_arg
+# A special case, as in general it should not be recursed into,
+# instead the text within should be translated
+untranslated_def_line_arg
+
+# definition line direct arguments containers.  Contains bracketed_arg
+# and *def_line_arg.
+def_category
+def_class
+def_type
+def_name
+def_typearg
+def_arg
+
+# text for def commands, definition line direct arguments
+delimiter
+spaces
+# type of text element inserted in untranslated_def_line_arg
+untranslated
 
 # for unexpanded parts of conditionals
 elided_rawpreformatted
 elided_brace_command_arg
-
-# for def commands
-delimiter
-spaces
-
-# for inserted text in def commands
-untranslated
 
 # for macro expansion source marks
 macro_call

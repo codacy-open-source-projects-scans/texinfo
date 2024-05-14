@@ -104,10 +104,17 @@ $result_trees{'defcondx_Dbar'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'foo'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'foo'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     }
                   ],
                   'info' => {
@@ -180,10 +187,17 @@ $result_trees{'defcondx_Dbar'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'bar'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'bar'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     }
                   ],
                   'info' => {

@@ -515,7 +515,7 @@ find_element_target_search (const HTML_TARGET_LIST *targets,
 
   searched_element.element = element;
   result = (HTML_TARGET *) bsearch (&searched_element,
-               targets->list, targets->number, sizeof(HTML_TARGET),
+               targets->list, targets->number, sizeof (HTML_TARGET),
                compare_element_target);
   return result;
 }
@@ -650,10 +650,7 @@ html_cdt_string (const char *string, CONVERTER *self,
 {
   char *translated_string;
   char *result;
-  const char *lang = 0;
-
-  if (self->conf->documentlanguage.string)
-    lang = self->conf->documentlanguage.string;
+  const char *lang = self->conf->documentlanguage.string;
 
   translated_string = html_translate_string (self, string, lang,
                                              translation_context);
@@ -934,7 +931,7 @@ find_page_name_number
 
   result = (PAGE_NAME_NUMBER *) bsearch (&searched_page_name,
                 page_name_number->list,
-                page_name_number->number, sizeof(PAGE_NAME_NUMBER),
+                page_name_number->number, sizeof (PAGE_NAME_NUMBER),
                 compare_page_name_number);
   if (!result)
     return 0;
@@ -1485,17 +1482,20 @@ prepare_special_units (CONVERTER *self, int output_units_descriptor)
                       break;
                     }
                 }
-              if (!strcmp (contents_location, "separate_element"))
+              if (contents_location
+                  && !strcmp (contents_location, "separate_element"))
                 add_string (special_unit_variety, do_special);
               else
                 {
                   OUTPUT_UNIT *special_output_unit = 0;
                   const OUTPUT_UNIT *associated_output_unit = 0;
-                  if (!strcmp (contents_location, "after_title"))
+                  if (contents_location
+                      && !strcmp (contents_location, "after_title"))
                     {
                       associated_output_unit = output_units->list[0];
                     }
-                  else if (!strcmp (contents_location, "after_top"))
+                  else if (contents_location
+                           && !strcmp (contents_location, "after_top"))
                     {
                       if (self->document->global_commands->top)
                         {/* note that top is a uniq command */
@@ -1509,7 +1509,8 @@ prepare_special_units (CONVERTER *self, int output_units_descriptor)
                       if (!associated_output_unit)
                         continue;
                     }
-                  else if (!strcmp (contents_location, "inline"))
+                  else if (contents_location
+                           && !strcmp (contents_location, "inline"))
                     {
                       const ELEMENT_LIST *global_command
                        = get_cmd_global_multi_command (
@@ -1548,7 +1549,7 @@ prepare_special_units (CONVERTER *self, int output_units_descriptor)
 
   if (self->document->global_commands->footnotes.number > 0
       && self->conf->footnotestyle.string
-      && !strcmp(self->conf->footnotestyle.string, "separate")
+      && !strcmp (self->conf->footnotestyle.string, "separate")
       && output_units->number > 1)
     add_string ("footnotes", do_special);
 
@@ -2983,7 +2984,7 @@ find_htmlxref_manual
 
   result = (HTMLXREF_MANUAL *) bsearch (&searched_manual,
                 htmlxref_manuals->list,
-                htmlxref_manuals->number, sizeof(HTMLXREF_MANUAL),
+                htmlxref_manuals->number, sizeof (HTMLXREF_MANUAL),
                 compare_htmlxref_manual);
 
   return result;
@@ -3059,7 +3060,7 @@ external_node_href (CONVERTER *self, const ELEMENT *external_node,
   TARGET_FILENAME *target_filename =
     normalized_label_id_file (self, normalized, node_contents);
 
-  /* undef if conversion is called through convert() */
+  /* always undef if conversion is called through convert() */
   if (self->conf->EXTERNAL_CROSSREF_SPLIT.string
       && strlen (self->conf->EXTERNAL_CROSSREF_SPLIT.string))
     /* initialize to EXTERNAL_CROSSREF_SPLIT */
@@ -3934,7 +3935,7 @@ html_internal_command_text (CONVERTER *self, const ELEMENT *command,
 
           if (command->cmd)
             {
-              const char *command_name = element_command_name(command);
+              const char *command_name = element_command_name (command);
               context_name = command_name;
               xasprintf (&explanation, "command_text:%s @%s",
                          html_command_text_type_name[type],
@@ -4031,7 +4032,7 @@ html_command_text (CONVERTER *self, const ELEMENT *command,
            argument, in a menu, or a reconstituted tree. */
         xasprintf (&context_str, "command_text %s @%s",
                    html_command_text_type_name[type],
-                   element_command_name(command));
+                   element_command_name (command));
       else if (command->type)
         xasprintf (&context_str, "command_text %s %s",
                    html_command_text_type_name[type],
@@ -4217,7 +4218,7 @@ find_css_selector_style
 
   result = (CSS_SELECTOR_STYLE *) bsearch (&searched_selector,
                 css_element_class_styles->list,
-                css_element_class_styles->number, sizeof(CSS_SELECTOR_STYLE),
+                css_element_class_styles->number, sizeof (CSS_SELECTOR_STYLE),
                 compare_selector_style);
 
   return result;
@@ -4814,7 +4815,7 @@ find_footnote_id_number (const CONVERTER *self, const char *footnote_id)
 
   result = (FOOTNOTE_ID_NUMBER *) bsearch (&searched_footnote_id,
                 self->shared_conversion_state.footnote_id_numbers,
-                global_footnotes->number, sizeof(FOOTNOTE_ID_NUMBER),
+                global_footnotes->number, sizeof (FOOTNOTE_ID_NUMBER),
                 compare_footnote_id);
   return result;
 }
@@ -5942,7 +5943,7 @@ direction_href_attributes (CONVERTER *self, int direction, TEXT *result)
         text_printf (result, " accesskey=\"%s\"", accesskey);
     }
 
-  if (self->conf->USE_REL_REV.integer)
+  if (self->conf->USE_REL_REV.integer > 0)
     {
       const char *button_rel
         = direction_string (self, direction, TDS_type_rel,
@@ -5992,9 +5993,19 @@ html_default_format_heading_text (CONVERTER *self, const enum command_id cmd,
 
   if (level < 1)
     heading_level = 1;
-  else if (level > self->conf->MAX_HEADER_LEVEL.integer)
-    heading_level = self->conf->MAX_HEADER_LEVEL.integer;
+  else
+    {
+      /* TODO if option defaults become more used,
+         setup a structure with options defaults instead of hardcoding */
+      int max_header_level = 4;
+      if (self->conf->MAX_HEADER_LEVEL.integer >= 1)
+        max_header_level = self->conf->MAX_HEADER_LEVEL.integer;
+      else if (self->conf->MAX_HEADER_LEVEL.integer == 0)
+        max_header_level = 1;
 
+      if (level > max_header_level)
+        heading_level = max_header_level;
+    }
   xasprintf (&heading_html_element, "h%d", heading_level);
 
   char *attribute_class
@@ -6018,7 +6029,7 @@ html_default_format_heading_text (CONVERTER *self, const enum command_id cmd,
 
   text_append_n (result, ">", 1);
 
-  copiable_anchor = get_copiable_anchor(self, heading_target);
+  copiable_anchor = get_copiable_anchor (self, heading_target);
 
   if (copiable_anchor)
     text_append_n (result, "<span>", 6);
@@ -6100,7 +6111,8 @@ html_default_format_contents (CONVERTER *self, const enum command_id cmd,
   if (max_root_level < 1)
     max_root_level = 1;
   /*
-   fprintf(stderr, "ROOT_LEVEL Max: %d, Min: %d\n", max_root_level, min_root_level);
+   fprintf (stderr, "ROOT_LEVEL Max: %d, Min: %d\n", max_root_level,
+                                                     min_root_level);
    */
 
   if ((is_contents && !self->conf->BEFORE_TOC_LINES.string)
@@ -6136,10 +6148,11 @@ html_default_format_contents (CONVERTER *self, const enum command_id cmd,
 
   link_to_toc = (!is_contents && self->conf->SHORT_TOC_LINK_TO_TOC.integer > 0
                  && self->conf->contents.integer > 0
-                 && (strcmp
-                    (self->conf->CONTENTS_OUTPUT_LOCATION.string, "inline")
-               || self->document->global_commands->contents.number > 0
-               || self->document->global_commands->shortcontents.number > 0));
+                 && (!self->conf->CONTENTS_OUTPUT_LOCATION.string
+                     || strcmp (self->conf->CONTENTS_OUTPUT_LOCATION.string,
+                                "inline")
+                     || self->document->global_commands->contents.number > 0
+                || self->document->global_commands->shortcontents.number > 0));
 
   for (i = 0; i < root_children->number; i++)
     {
@@ -6417,9 +6430,11 @@ html_default_format_footnotes_sequence (CONVERTER *self, TEXT *result)
 
           if (self->conf->NUMBER_FOOTNOTES.integer > 0)
             xasprintf (&footnote_mark, "%d", number_in_doc);
-          else
+          else if (self->conf->NO_NUMBER_FOOTNOTE_SYMBOL.string)
             footnote_mark
               = strdup (self->conf->NO_NUMBER_FOOTNOTE_SYMBOL.string);
+          else
+            footnote_mark = strdup ("");
 
           attribute_class = html_attribute_class (self, "h5",
                             &foot_body_heading_classes);
@@ -6677,10 +6692,9 @@ html_default_format_end_file (CONVERTER *self, const char *filename,
               && mathjax_jslicenses_file_nr > 0))
         {
           if (self->conf->JS_WEBLABELS_FILE.string
-              && (self->conf->JS_WEBLABELS.string
-                  && (!strcmp (self->conf->JS_WEBLABELS.string, "generate")
-                      || !strcmp (self->conf->JS_WEBLABELS.string,
-                                  "reference"))))
+              && self->conf->JS_WEBLABELS.string
+              && (!strcmp (self->conf->JS_WEBLABELS.string, "generate")
+                  || !strcmp (self->conf->JS_WEBLABELS.string, "reference")))
             {
               ELEMENT *tree;
               char *js_path = url_protect_url_text (self,
@@ -7016,7 +7030,8 @@ file_header_information (CONVERTER *self, const ELEMENT *command,
     begin_info->root_html_element_attributes = strdup ("");
 
   text_reset (&text);
-  text_append (&text, self->conf->BODY_ELEMENT_ATTRIBUTES.string);
+  if (self->conf->BODY_ELEMENT_ATTRIBUTES.string)
+    text_append (&text, self->conf->BODY_ELEMENT_ATTRIBUTES.string);
   if (self->conf->HTML_MATH.string
       && !strcmp (self->conf->HTML_MATH.string, "mathjax")
       && html_get_file_information (self, "mathjax", filename, &status) > 0)
@@ -7119,7 +7134,7 @@ get_links (CONVERTER* self, const char *filename,
            const OUTPUT_UNIT *output_unit,
            const ELEMENT *node_command, TEXT *result)
 {
-  if (self->conf->USE_LINKS.integer > 0)
+  if (self->conf->USE_LINKS.integer > 0 && self->conf->LINKS_BUTTONS.buttons)
     {
       int i;
       const BUTTON_SPECIFICATION_LIST *link_buttons
@@ -7168,6 +7183,8 @@ html_default_format_begin_file (CONVERTER *self, const char *filename,
   const ELEMENT *command_for_title = 0;
   BEGIN_FILE_INFORMATION *begin_info;
   TEXT result;
+  const char *package_and_version;
+  const char *package_url;
 
   if (output_unit)
     {
@@ -7189,12 +7206,20 @@ html_default_format_begin_file (CONVERTER *self, const char *filename,
 
   text_init (&result);
 
-  text_append (&result, self->conf->DOCTYPE.string);
+  if (self->conf->DOCTYPE.string)
+    text_append (&result, self->conf->DOCTYPE.string);
   text_append_n (&result, "\n", 1);
   text_printf (&result, "<html%s>\n", begin_info->root_html_element_attributes);
+  if (self->conf->PACKAGE_AND_VERSION.string)
+    package_and_version = self->conf->PACKAGE_AND_VERSION.string;
+  else
+    package_and_version = "";
+  if (self->conf->PACKAGE_URL.string)
+    package_url = self->conf->PACKAGE_URL.string;
+  else
+    package_url = "";
   text_printf (&result, "<!-- Created by %s, %s -->\n<head>\n",
-                        self->conf->PACKAGE_AND_VERSION.string,
-                        self->conf->PACKAGE_URL.string);
+                        package_and_version, package_url);
   if (begin_info->encoding)
     text_append (&result, begin_info->encoding);
   text_append_n (&result, "\n", 1);
@@ -7342,7 +7367,8 @@ default_panel_button_dynamic_direction_internal (CONVERTER *self,
 
   href = from_element_direction (self, direction, HTT_href, 0, 0, element);
 
-  if (!strcmp (self->conf->xrefautomaticsectiontitle.string, "on"))
+  if (self->conf->xrefautomaticsectiontitle.string
+      && !strcmp (self->conf->xrefautomaticsectiontitle.string, "on"))
     node = from_element_direction (self, direction, HTT_section, 0, 0, 0);
 
   if (!node)
@@ -7692,16 +7718,16 @@ html_default_format_navigation_panel (CONVERTER *self,
                          int vertical, TEXT *result)
 {
   int i;
-  /* do the buttons first in case they are formatteed as an empty string */
   int nr_of_buttons_shown = 0;
   TEXT result_buttons;
   char *attribute_class;
 
-  text_init (&result_buttons);
-  text_append (&result_buttons, "");
-
   if (!buttons)
     return;
+
+  /* do the buttons first in case they are formatted as an empty string */
+  text_init (&result_buttons);
+  text_append (&result_buttons, "");
 
   for (i = 0; i < buttons->number; i++)
     {
@@ -7853,6 +7879,7 @@ html_default_format_navigation_header (CONVERTER *self,
     text_append (result, "</td>\n<td>\n");
   else if (self->conf->SPLIT.string
            && !strcmp (self->conf->SPLIT.string, "node")
+           && self->conf->DEFAULT_RULE.string
            && result->end > result_text_index)
     {
       text_append (result, self->conf->DEFAULT_RULE.string);
@@ -8248,6 +8275,8 @@ html_default_format_node_redirection_page (CONVERTER *self,
   TEXT result;
   TEXT body;
   BEGIN_FILE_INFORMATION *begin_info;
+  const char *package_and_version;
+  const char *package_url;
   char *href = html_command_href (self, element, filename, 0, 0);
   char *name = html_command_text (self, element, 0);
   ELEMENT *direction_element = new_element (ET__converted);
@@ -8271,14 +8300,22 @@ html_default_format_node_redirection_page (CONVERTER *self,
 
   text_init (&result);
 
-  text_append (&result, self->conf->DOCTYPE.string);
+  if (self->conf->DOCTYPE.string)
+    text_append (&result, self->conf->DOCTYPE.string);
   text_append_n (&result, "\n", 1);
   text_printf (&result, "<html%s>\n", begin_info->root_html_element_attributes);
+  if (self->conf->PACKAGE_AND_VERSION.string)
+    package_and_version = self->conf->PACKAGE_AND_VERSION.string;
+  else
+    package_and_version = "";
+  if (self->conf->PACKAGE_URL.string)
+    package_url = self->conf->PACKAGE_URL.string;
+  else
+    package_url = "";
   text_printf (&result, "<!-- Created by %s, %s -->\n"
        "<!-- This file redirects to the location of a node or anchor -->\n"
        "<head>\n",
-                        self->conf->PACKAGE_AND_VERSION.string,
-                        self->conf->PACKAGE_URL.string);
+                        package_and_version, package_url);
   if (begin_info->encoding)
     text_append (&result, begin_info->encoding);
   text_append_n (&result, "\n", 1);
@@ -8548,7 +8585,7 @@ convert_style_command (CONVERTER *self, const enum command_id cmd,
           free (style_as_cmd);
         }
 
-      if (formatting_spec->quote)
+      if (formatting_spec->quote && self->conf->OPEN_QUOTE_SYMBOL.string)
         text_append (result, self->conf->OPEN_QUOTE_SYMBOL.string);
 
       open
@@ -8574,7 +8611,7 @@ convert_style_command (CONVERTER *self, const enum command_id cmd,
           text_append_n (result, ">", 1);
         }
 
-      if (formatting_spec->quote)
+      if (formatting_spec->quote && self->conf->CLOSE_QUOTE_SYMBOL.string)
         text_append (result, self->conf->CLOSE_QUOTE_SYMBOL.string);
     }
   else
@@ -8895,8 +8932,10 @@ convert_footnote_command (CONVERTER *self, const enum command_id cmd,
 
   if (self->conf->NUMBER_FOOTNOTES.integer > 0)
     xasprintf (&footnote_mark, "%d", foot_num);
-  else
+  else if (self->conf->NO_NUMBER_FOOTNOTE_SYMBOL.string)
     footnote_mark = strdup (self->conf->NO_NUMBER_FOOTNOTE_SYMBOL.string);
+  else
+    footnote_mark = strdup ("");
 
   if (html_in_string (self))
     {
@@ -9029,7 +9068,7 @@ convert_uref_command (CONVERTER *self, const enum command_id cmd,
       if (strlen (replacement))
         text = replacement;
     }
-  if ((!text || !strlen(text)) && url_string)
+  if ((!text || !strlen (text)) && url_string)
     text = url_string;
 
   if (!url || !strlen (url))
@@ -9565,7 +9604,7 @@ css_string_accent (CONVERTER *self, const char *text,
                   if (!p)
                     {
                       char *first_char_text;
-                      uint8_t *first_char_u8 = malloc (7 * sizeof(uint8_t));
+                      uint8_t *first_char_u8 = malloc (7 * sizeof (uint8_t));
                       int first_char_len
                         = u8_uctomb (first_char_u8, first_char, 6);
                       if (first_char_len < 0)
@@ -9677,7 +9716,8 @@ convert_indicateurl_command (CONVERTER *self, const enum command_id cmd,
       || !args_formatted->args[0].formatted[AFT_type_normal])
     return;
 
-  text_append (result, self->conf->OPEN_QUOTE_SYMBOL.string);
+  if (self->conf->OPEN_QUOTE_SYMBOL.string)
+    text_append (result, self->conf->OPEN_QUOTE_SYMBOL.string);
 
   if (!html_in_string (self))
     {
@@ -9699,7 +9739,8 @@ convert_indicateurl_command (CONVERTER *self, const enum command_id cmd,
   else
     text_append (result, args_formatted->args[0].formatted[AFT_type_normal]);
 
-  text_append (result, self->conf->CLOSE_QUOTE_SYMBOL.string);
+  if (self->conf->CLOSE_QUOTE_SYMBOL.string)
+    text_append (result, self->conf->CLOSE_QUOTE_SYMBOL.string);
 }
 
 void
@@ -9851,7 +9892,7 @@ mini_toc_internal (CONVERTER *self, const ELEMENT *element, TEXT *result)
         the same result for the other files, as the formatting is done in a
         global context, while taking the tree first and calling convert_tree
         converts in the current page context.
-         text = html_command_text(self, section, HTT_text_nonumber);
+         text = html_command_text (self, section, HTT_text_nonumber);
       */
           TREE_ADDED_ELEMENTS *command_tree
              = html_command_tree (self, section, 1);
@@ -9961,6 +10002,7 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
   text_init (&tables_of_contents);
   text_append (&tables_of_contents, "");
   if (element->cmd == CM_top
+      && self->conf->CONTENTS_OUTPUT_LOCATION.string
       && !strcmp (self->conf->CONTENTS_OUTPUT_LOCATION.string, "after_top")
       && self->document->sections_list
       && self->document->sections_list->number > 1)
@@ -9990,7 +10032,8 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
   text_init (&mini_toc_or_auto_menu);
   text_append (&mini_toc_or_auto_menu, "");
   if (tables_of_contents.end <= 0
-      && (flags & CF_sectioning_heading))
+      && (flags & CF_sectioning_heading)
+      && self->conf->FORMAT_MENU.string)
     {
       if (!strcmp (self->conf->FORMAT_MENU.string, "sectiontoc"))
         {
@@ -10066,7 +10109,7 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
       if (in_skipped_node_top == 1)
         {
           format_separate_anchor (self, element_id,
-                                  builtin_command_name(cmd), result);
+                                  builtin_command_name (cmd), result);
           text_append (result, element_header.text);
           free (element_header.text);
           text_append (result, tables_of_contents.text);
@@ -10086,7 +10129,7 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
       if (level_corrected_cmd != cmd)
         {
           xasprintf (&level_set_class, "%s-level-set-%s",
-                     builtin_command_name(cmd),
+                     builtin_command_name (cmd),
                      builtin_command_name (level_corrected_cmd));
         }
     }
@@ -10150,7 +10193,8 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
                   const ELEMENT *next_heading
                     = find_root_command_next_heading_command (element,
                                                         self->expanded_formats,
-                    (!strcmp (
+                    (self->conf->CONTENTS_OUTPUT_LOCATION.string
+                     && !strcmp (
                         self->conf->CONTENTS_OUTPUT_LOCATION.string, "inline")),
                             0);
                   if (next_heading)
@@ -10307,7 +10351,7 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
   else if (heading_id)
     {
    /* case of a lone node and no header, and case of an empty @top */
-      format_separate_anchor (self, heading_id, builtin_command_name(cmd),
+      format_separate_anchor (self, heading_id, builtin_command_name (cmd),
                               result);
     }
 
@@ -11554,7 +11598,7 @@ convert_itemize_command (CONVERTER *self, const enum command_id cmd,
     }
 
   classes = new_string_list ();
-  add_string (builtin_command_name(cmd), classes);
+  add_string (builtin_command_name (cmd), classes);
 
   if (mark_class_name)
     {
@@ -11618,7 +11662,7 @@ convert_enumerate_command (CONVERTER *self, const enum command_id cmd,
     }
 
   classes = new_string_list ();
-  add_string (builtin_command_name(cmd), classes);
+  add_string (builtin_command_name (cmd), classes);
 
   attribute_class = html_attribute_class (self, "ol", classes);
   destroy_strings_list (classes);
@@ -11703,7 +11747,7 @@ convert_multitable_command (CONVERTER *self, const enum command_id cmd,
     }
 
   classes = new_string_list ();
-  add_string (builtin_command_name(cmd), classes);
+  add_string (builtin_command_name (cmd), classes);
 
   attribute_class = html_attribute_class (self, "table", classes);
   destroy_strings_list (classes);
@@ -11732,7 +11776,7 @@ convert_xtable_command (CONVERTER *self, const enum command_id cmd,
     }
 
   classes = new_string_list ();
-  add_string (builtin_command_name(cmd), classes);
+  add_string (builtin_command_name (cmd), classes);
 
   attribute_class = html_attribute_class (self, "dl", classes);
   destroy_strings_list (classes);
@@ -12041,7 +12085,8 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
 
       if (!name)
         {
-          if (!strcmp (self->conf->xrefautomaticsectiontitle.string, "on")
+          if (self->conf->xrefautomaticsectiontitle.string
+              && !strcmp (self->conf->xrefautomaticsectiontitle.string, "on")
               && associated_section
         /* this condition avoids infinite recursions, indeed in that case
            the node will be used and not the section.  There should not be
@@ -13045,8 +13090,9 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                 {
                   if (in_code)
                     text_append_n (&entries_text, "</code>", 7);
-                  text_append (&entries_text,
-                               self->conf->INDEX_ENTRY_COLON.string);
+                  if (self->conf->INDEX_ENTRY_COLON.string)
+                    text_append (&entries_text,
+                                 self->conf->INDEX_ENTRY_COLON.string);
                 }
               text_append_n (&entries_text, "</td>", 5);
 
@@ -13141,8 +13187,9 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                   if (in_code)
                     text_append_n (&entries_text, "</code>", 7);
                   text_append_n (&entries_text, "</a>", 4);
-                  text_append (&entries_text,
-                               self->conf->INDEX_ENTRY_COLON.string);
+                  if (self->conf->INDEX_ENTRY_COLON.string)
+                    text_append (&entries_text,
+                                 self->conf->INDEX_ENTRY_COLON.string);
                   text_append_n (&entries_text, "</td>", 5);
 
                   if (self->conf->NODE_NAME_IN_INDEX.integer > 0)
@@ -13341,7 +13388,9 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
           text_append_n (&result_index_entries, "</th></tr>\n", 11);
           text_append (&result_index_entries, entries_text.text);
           text_append_n (&result_index_entries, "<tr><td colspan=\"3\">", 20);
-          text_append (&result_index_entries, self->conf->DEFAULT_RULE.string);
+          if (self->conf->DEFAULT_RULE.string)
+            text_append (&result_index_entries,
+                         self->conf->DEFAULT_RULE.string);
           text_append_n (&result_index_entries, "</td></tr>\n", 11);
         }
       else
@@ -13516,7 +13565,8 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
                                       "Tr th idx entries 2");
   text_append_n (result, "</th></tr>\n", 11);
   text_append_n (result, "<tr><td colspan=\"3\">", 20);
-  text_append (result, self->conf->DEFAULT_RULE.string);
+  if (self->conf->DEFAULT_RULE.string)
+    text_append (result, self->conf->DEFAULT_RULE.string);
   text_append_n (result, "</td></tr>\n", 11);
   text_append (result, result_index_entries.text);
   text_append_n (result, "</table>\n", 9);
@@ -13575,14 +13625,15 @@ convert_contents_command (CONVERTER *self, const enum command_id cmd,
 
   set_informative_command_value (self->conf, element);
 
-  if (!strcmp (self->conf->CONTENTS_OUTPUT_LOCATION.string, "inline")
+  if (self->conf->CONTENTS_OUTPUT_LOCATION.string
+      && !strcmp (self->conf->CONTENTS_OUTPUT_LOCATION.string, "inline")
       && ((used_cmd == CM_contents && self->conf->contents.integer > 0)
           || (used_cmd == CM_shortcontents
               && self->conf->shortcontents.integer > 0))
       && self->document->sections_list
       && self->document->sections_list->number > 1)
     {
-      char *contents = contents_inline_element(self, used_cmd, element);
+      char *contents = contents_inline_element (self, used_cmd, element);
       if (contents)
         {
           text_append (result, contents);
@@ -13611,30 +13662,36 @@ convert_def_command (CONVERTER *self, const enum command_id cmd,
 
   classes = new_string_list ();
 
-  if (builtin_command_data[cmd].flags & CF_def_alias)
+  if (cmd != CM_defblock)
     {
-      int i;
-      for (i = 0; def_aliases[i].alias ; i++)
+      if (builtin_command_data[cmd].flags & CF_def_alias)
         {
-          if (def_aliases[i].alias == cmd)
+          int i;
+          for (i = 0; def_aliases[i].alias ; i++)
             {
-              original_cmd = def_aliases[i].command;
-              break;
+              if (def_aliases[i].alias == cmd)
+                {
+                  original_cmd = def_aliases[i].command;
+                  break;
+                }
             }
         }
-    }
 
-  xasprintf (&class, "first-%s", builtin_command_name (original_cmd));
-  add_string (class, classes);
-  free (class);
-
-  if (cmd != original_cmd)
-    {
-      xasprintf (&class, "first-%s-alias-first-%s", builtin_command_name (cmd),
-                         builtin_command_name (original_cmd));
+      xasprintf (&class, "first-%s", builtin_command_name (original_cmd));
       add_string (class, classes);
       free (class);
+
+      if (cmd != original_cmd)
+        {
+          xasprintf (&class, "first-%s-alias-first-%s",
+                             builtin_command_name (cmd),
+                             builtin_command_name (original_cmd));
+          add_string (class, classes);
+          free (class);
+        }
     }
+  else
+    add_string (builtin_command_name (cmd), classes);
 
   if (self->conf->DEF_TABLE.integer <= 0)
     {
@@ -14116,6 +14173,27 @@ convert_definfoenclose_type (CONVERTER *self, const enum element_type type,
 }
 
 void
+convert_untranslated_def_line_arg_type
+                      (CONVERTER *self, const enum element_type type,
+                       const ELEMENT *element, const char *content,
+                       TEXT *result)
+{
+  const char *category_text = element->contents.list[0]->text.text;
+  const char *translation_context
+    = lookup_extra_string (element, "translation_context");
+  ELEMENT *translated = html_cdt_tree (category_text,
+                                       self, 0, translation_context);
+
+  add_tree_to_build (self, translated);
+
+  convert_to_html_internal (self, translated, result,
+                            "translated TEXT");
+
+  remove_tree_to_build (self, translated);
+  destroy_element_and_children (translated);
+}
+
+void
 convert_row_type (CONVERTER *self, const enum element_type type,
                   const ELEMENT *element, const char *content,
                   TEXT *result)
@@ -14347,7 +14425,8 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
           text_append_n (result, leading_text, menu_symbol - leading_text);
           leading_text = menu_symbol;
         }
-      text_append (result, self->conf->MENU_SYMBOL.string);
+      if (self->conf->MENU_SYMBOL.string)
+        text_append (result, self->conf->MENU_SYMBOL.string);
       /* past "*" */
       leading_text++;
       text_append (result, leading_text);
@@ -14515,7 +14594,8 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
                 }
             }
 
-          text_append (result, self->conf->MENU_SYMBOL.string);
+          if (self->conf->MENU_SYMBOL.string)
+            text_append (result, self->conf->MENU_SYMBOL.string);
           text_append_n (result, " ", 1);
 
           if (href)
@@ -14542,7 +14622,8 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
             text_append_n (result, "</a>", 4);
         }
 
-      text_append (result, self->conf->MENU_ENTRY_COLON.string);
+      if (self->conf->MENU_ENTRY_COLON.string)
+        text_append (result, self->conf->MENU_ENTRY_COLON.string);
       text_append_n (result, "</td><td>", 9);
       text_append_n (result,
                 self->special_character[SC_non_breaking_space].string,
@@ -14759,8 +14840,8 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
         }
 
       xasprintf (&alias_class, "%s-alias-%s",
-                    builtin_command_name(original_def_cmd),
-                    builtin_command_name(original_cmd));
+                    builtin_command_name (original_def_cmd),
+                    builtin_command_name (original_cmd));
     }
   else
     original_cmd = original_def_cmd;
@@ -14789,7 +14870,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
 
   classes = new_string_list ();
 
-  add_string (builtin_command_name(original_cmd), classes);
+  add_string (builtin_command_name (original_cmd), classes);
   if (alias_class)
     {
       add_string (alias_class, classes);
@@ -14798,7 +14879,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
   if (base_cmd != original_cmd)
     {
       char *class;
-      xasprintf (&class, "def-cmd-%s", builtin_command_name(base_cmd));
+      xasprintf (&class, "def-cmd-%s", builtin_command_name (base_cmd));
       add_string (class, classes);
       free (class);
     }
@@ -14812,7 +14893,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
       ELEMENT *root_code = new_element (ET__code);
       char *explanation;
 
-      xasprintf (&explanation, "DEF_TYPE %s", builtin_command_name(def_cmd));
+      xasprintf (&explanation, "DEF_TYPE %s", builtin_command_name (def_cmd));
 
       add_to_contents_as_array (root_code, parsed_def->type);
 
@@ -14838,6 +14919,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
           text_append_n (&def_call, "</code>", 7);
         }
       if ((base_cmd == CM_deftypefn || base_cmd == CM_deftypeop)
+          && self->conf->deftypefnnewline.string
           && !strcmp (self->conf->deftypefnnewline.string, "on"))
         {
           text_append_n (&def_call, self->line_break_element.string,
@@ -14854,7 +14936,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
       char *attribute_class = html_attribute_class (self, "strong",
                                                     &def_name_classes);
       char *explanation;
-      xasprintf (&explanation, "DEF_NAME %s", builtin_command_name(def_cmd));
+      xasprintf (&explanation, "DEF_NAME %s", builtin_command_name (def_cmd));
 
       ELEMENT *root_code = new_element (ET__code);
 
@@ -14879,12 +14961,12 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
     {
       char *args_formatted;
       char *explanation;
-      xasprintf (&explanation, "DEF_ARGS %s", builtin_command_name(def_cmd));
+      xasprintf (&explanation, "DEF_ARGS %s", builtin_command_name (def_cmd));
    /* arguments not only metasyntactic variables
       (deftypefn, deftypevr, deftypeop, deftypecv) */
       /* Texinfo::Common::def_no_var_arg_commands{$base_command_name} */
-      if (strlen (builtin_command_name(base_cmd)) >= 7
-          && !memcmp (builtin_command_name(base_cmd), "deftype", 7))
+      if (strlen (builtin_command_name (base_cmd)) >= 7
+          && !memcmp (builtin_command_name (base_cmd), "deftype", 7))
         {
           ELEMENT *root_code = new_element (ET__code);
 
@@ -15004,6 +15086,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
                                             "class", class_copy);
 
           if (base_cmd == CM_deftypeop && parsed_def->type
+              && self->conf->deftypefnnewline.string
               && !strcmp (self->conf->deftypefnnewline.string, "on"))
             {
                category_tree
@@ -15027,6 +15110,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
         {
           if ((base_cmd == CM_deftypefn || base_cmd == CM_deftypeop)
               && parsed_def->type
+              && self->conf->deftypefnnewline.string
               && !strcmp (self->conf->deftypefnnewline.string, "on"))
             {
               category_tree
@@ -15050,7 +15134,7 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
           char *explanation;
 
           xasprintf (&explanation, "DEF_CATEGORY %s",
-                     builtin_command_name(def_cmd));
+                     builtin_command_name (def_cmd));
 
           if (open_len)
             {
@@ -15138,16 +15222,17 @@ convert_table_definition_type (CONVERTER *self, const enum element_type type,
 /* associate type to the C function implementing the conversion */
 static const TYPE_INTERNAL_CONVERSION types_internal_conversion_table[] = {
   {ET_balanced_braces, &convert_balanced_braces_type},
-  {ET_before_item, convert_before_item_type},
+  {ET_before_item, &convert_before_item_type},
   {ET_def_item, &convert_def_item_type},
   {ET_inter_def_item, &convert_def_item_type},
+  {ET_before_defline, &convert_def_item_type},
   {ET_def_line, &convert_def_line_type},
   {ET_definfoenclose_command, &convert_definfoenclose_type},
   {ET_index_entry_command, &convert_index_entry_command_type},
   {ET_table_definition, &convert_table_definition_type},
   {ET_inter_item, &convert_table_definition_type},
   {ET_menu_comment, &convert_menu_comment_type},
-  {ET_menu_entry, convert_menu_entry_type},
+  {ET_menu_entry, &convert_menu_entry_type},
   {ET_multitable_body, &convert_multitable_body_type},
   {ET_multitable_head, &convert_multitable_head_type},
   {ET_paragraph, &convert_paragraph_type},
@@ -15155,6 +15240,8 @@ static const TYPE_INTERNAL_CONVERSION types_internal_conversion_table[] = {
   {ET_row, &convert_row_type},
   {ET_table_term, &convert_table_term_type},
   {ET_text, &convert_text},
+  {ET_untranslated_def_line_arg,
+   &convert_untranslated_def_line_arg_type},
   {0, 0},
 };
 
@@ -15341,6 +15428,7 @@ contents_shortcontents_in_title (CONVERTER *self, TEXT *result)
 {
   if (self->document->sections_list
       && self->document->sections_list->number > 0
+      && self->conf->CONTENTS_OUTPUT_LOCATION.string
       && !strcmp (self->conf->CONTENTS_OUTPUT_LOCATION.string, "after_title"))
     {
       enum command_id contents_cmds[2] = {CM_shortcontents, CM_contents};
@@ -15359,8 +15447,11 @@ contents_shortcontents_in_title (CONVERTER *self, TEXT *result)
               if (contents_text)
                 {
                   text_append (result, contents_text);
-                  text_append (result, self->conf->DEFAULT_RULE.string);
-                  text_append_n (result, "\n", 1);
+                  if (self->conf->DEFAULT_RULE.string)
+                    {
+                      text_append (result, self->conf->DEFAULT_RULE.string);
+                      text_append_n (result, "\n", 1);
+                    }
                   free (contents_text);
                 }
             }
@@ -15412,7 +15503,7 @@ html_default_format_titlepage (CONVERTER *self)
       format_simpletitle (self, &result);
       titlepage_text = 1;
     }
-  if (titlepage_text)
+  if (titlepage_text && self->conf->DEFAULT_RULE.string)
     {
       text_append (&result, self->conf->DEFAULT_RULE.string);
       text_append_n (&result, "\n", 1);
@@ -15539,6 +15630,16 @@ default_format_special_body_about (CONVERTER *self,
     }
 
   text_append_n (result, "<p>\n", 4);
+
+  if (!buttons)
+    {
+      translate_convert_to_html_internal (
+               "There are no buttons for this document.", self, 0, 0,
+                result, "ABOUT");
+      text_append_n (result, "\n</p>\n", 6);
+      return;
+    }
+
   translate_convert_to_html_internal (
    "  The buttons in the navigation panels have the following meaning:",
                                       self, 0, 0, result, "ABOUT");
@@ -16789,7 +16890,7 @@ html_initialize_output_state (CONVERTER *self, const char *context)
     line_break_element = "<br>";
 
   self->line_break_element.string = line_break_element;
-  self->line_break_element.len = strlen(line_break_element);
+  self->line_break_element.len = strlen (line_break_element);
 
   sort_css_element_class_styles (self);
 
@@ -17947,21 +18048,6 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
       /* already converted to html, keep it as is, assume it cannot be NULL */
       if (element->type == ET__converted)
         text_append (&text_result, element->text.text);
-      else if (element->type == ET_untranslated)
-        {
-          const char *translation_context
-            = lookup_extra_string (element, "translation_context");
-          ELEMENT *translated = html_cdt_tree (element->text.text,
-                                           self, 0, translation_context);
-
-          add_tree_to_build (self, translated);
-
-          convert_to_html_internal (self, translated, &text_result,
-                                    "translated TEXT");
-
-          remove_tree_to_build (self, translated);
-          destroy_element_and_children (translated);
-        }
       else
         {
           (*(self->current_types_conversion_function[ET_text].type_conversion))
@@ -18314,7 +18400,7 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
       text_init (&type_result);
       text_append (&type_result, "");
 
-      html_open_type_update_context(self, type);
+      html_open_type_update_context (self, type);
 
       if (self->type_open_function[type].type_open)
         (*self->type_open_function[type].type_open)
@@ -18331,7 +18417,8 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
                                         "DEFINFOENCLOSE_ARG");
             }
         }
-      else if (element->contents.number > 0)
+      else if (element->contents.number > 0
+               && type != ET_untranslated_def_line_arg)
         {
           int content_idx;
           text_append (&content_formatted, "");
@@ -18886,7 +18973,7 @@ html_node_redirections (CONVERTER *self,
   FILE_SOURCE_INFO_LIST *files_source_info = &self->files_source_info;
   int redirection_files_done = 0;
   if (self->document->identifiers_target && self->conf->NODE_FILES.integer > 0
-      && strlen(output_file) > 0)
+      && strlen (output_file) > 0)
     {
       const LABEL_LIST *label_targets = self->document->labels_list;
       int i;

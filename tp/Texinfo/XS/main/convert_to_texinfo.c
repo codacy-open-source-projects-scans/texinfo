@@ -98,9 +98,9 @@ expand_cmd_args_to_texi (const ELEMENT *e, TEXT *result)
       for (i = 0; i < e->args.number; i++)
         {
           ELEMENT *arg = e->args.list[i];
-          if (arg->type == ET_spaces_inserted
-              || arg->type == ET_bracketed_inserted
-              || arg->type == ET_command_as_argument_inserted)
+          int status;
+          int inserted = lookup_info_integer (arg, "inserted", &status);
+          if (inserted)
             continue;
 
           if (with_commas)
@@ -132,10 +132,10 @@ static void
 convert_to_texinfo_internal (const ELEMENT *e, TEXT *result)
 {
   ELEMENT *elt;
+  int status;
+  int inserted = lookup_info_integer (e, "inserted", &status);
 
-  if (e->type == ET_spaces_inserted
-      || e->type == ET_bracketed_inserted
-      || e->type == ET_command_as_argument_inserted)
+  if (inserted)
     {}
   else if (e->text.end > 0)
     ADD(e->text.text);
@@ -299,7 +299,7 @@ check_node_same_texinfo_code (const ELEMENT *reference_node,
   else
     node_texi = strdup ("");
 
-  equal_texi = !strcmp(reference_node_texi, node_texi);
+  equal_texi = !strcmp (reference_node_texi, node_texi);
   free (reference_node_texi);
   free (node_texi);
 
@@ -325,7 +325,7 @@ root_heading_command_to_texinfo (const ELEMENT *element)
         tree = element->args.list[0];
     }
   else
-    return strdup("Not a command");
+    return strdup ("Not a command");
 
   text_init (&text);
   if (tree)

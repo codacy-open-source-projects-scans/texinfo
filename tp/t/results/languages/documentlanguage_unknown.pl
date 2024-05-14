@@ -427,70 +427,94 @@ $result_trees{'documentlanguage_unknown'} = {
                     {
                       'contents' => [
                         {
+                          'contents' => [
+                            {
+                              'text' => 'Method',
+                              'type' => 'untranslated'
+                            }
+                          ],
                           'extra' => {
                             'documentlanguage' => 'unknown',
                             'translation_context' => 'category of methods with data type in object-oriented programming for @deftypemethod'
                           },
-                          'text' => 'Method',
-                          'type' => 'untranslated'
+                          'type' => 'untranslated_def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
+                      'info' => {
+                        'inserted' => 1
                       },
-                      'type' => 'bracketed_inserted'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces_inserted'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'class'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
+                      'info' => {
+                        'inserted' => 1
                       },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'text' => 'data-type'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'class'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'data-type'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'arguments'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'arguments'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     }
                   ],
                   'info' => {
@@ -507,38 +531,66 @@ $result_trees{'documentlanguage_unknown'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'class'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'class'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'name'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'class'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'class'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },

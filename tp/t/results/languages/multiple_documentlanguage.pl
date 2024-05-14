@@ -70,57 +70,77 @@ $result_trees{'multiple_documentlanguage'} = {
                             {
                               'contents' => [
                                 {
+                                  'contents' => [
+                                    {
+                                      'text' => 'Instance Variable',
+                                      'type' => 'untranslated'
+                                    }
+                                  ],
                                   'extra' => {
                                     'documentlanguage' => 'fr',
                                     'translation_context' => 'category of instance variables in object-oriented programming for @defivar'
                                   },
-                                  'text' => 'Instance Variable',
-                                  'type' => 'untranslated'
+                                  'type' => 'untranslated_def_line_arg'
                                 }
                               ],
-                              'extra' => {
-                                'def_role' => 'category'
+                              'info' => {
+                                'inserted' => 1
                               },
-                              'type' => 'bracketed_inserted'
+                              'type' => 'def_category'
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'spaces'
-                              },
-                              'text' => ' ',
-                              'type' => 'spaces_inserted'
-                            },
-                            {
-                              'extra' => {
-                                'def_role' => 'class'
-                              },
-                              'text' => 'copying'
-                            },
-                            {
-                              'extra' => {
-                                'def_role' => 'spaces'
+                              'info' => {
+                                'inserted' => 1
                               },
                               'text' => ' ',
                               'type' => 'spaces'
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'name'
-                              },
-                              'text' => 'a'
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'copying'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_class'
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'spaces'
-                              },
                               'text' => ' ',
                               'type' => 'spaces'
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'arg'
-                              },
-                              'text' => 'b'
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'a'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_name'
+                            },
+                            {
+                              'text' => ' ',
+                              'type' => 'spaces'
+                            },
+                            {
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'b'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_arg'
                             }
                           ],
                           'info' => {
@@ -137,38 +157,66 @@ $result_trees{'multiple_documentlanguage'} = {
                         'def_index_element' => {
                           'contents' => [
                             {
-                              'extra' => {
-                                'def_role' => 'name'
-                              },
-                              'text' => 'a'
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'a'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_name'
                             },
                             {
                               'text' => ' de '
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'class'
-                              },
-                              'text' => 'copying'
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'copying'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_class'
                             }
                           ]
                         },
                         'def_index_ref_element' => {
                           'contents' => [
                             {
-                              'extra' => {
-                                'def_role' => 'name'
-                              },
-                              'text' => 'a'
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'a'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_name'
                             },
                             {
                               'text' => ' of '
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'class'
-                              },
-                              'text' => 'copying'
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'copying'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_class'
                             }
                           ]
                         },
@@ -428,57 +476,77 @@ $result_trees{'multiple_documentlanguage'} = {
                     {
                       'contents' => [
                         {
+                          'contents' => [
+                            {
+                              'text' => 'Instance Variable',
+                              'type' => 'untranslated'
+                            }
+                          ],
                           'extra' => {
                             'documentlanguage' => 'fr',
                             'translation_context' => 'category of instance variables in object-oriented programming for @defivar'
                           },
-                          'text' => 'Instance Variable',
-                          'type' => 'untranslated'
+                          'type' => 'untranslated_def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
+                      'info' => {
+                        'inserted' => 1
                       },
-                      'type' => 'bracketed_inserted'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces_inserted'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'fr'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
+                      'info' => {
+                        'inserted' => 1
                       },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'BBB'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'fr'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'CCC'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'BBB'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'CCC'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {
@@ -495,38 +563,66 @@ $result_trees{'multiple_documentlanguage'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'BBB'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'BBB'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' de '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'fr'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'fr'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'BBB'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'BBB'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'fr'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'fr'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -712,57 +808,77 @@ $result_trees{'multiple_documentlanguage'} = {
                     {
                       'contents' => [
                         {
+                          'contents' => [
+                            {
+                              'text' => 'Instance Variable',
+                              'type' => 'untranslated'
+                            }
+                          ],
                           'extra' => {
                             'documentlanguage' => 'hr',
                             'translation_context' => 'category of instance variables in object-oriented programming for @defivar'
                           },
-                          'text' => 'Instance Variable',
-                          'type' => 'untranslated'
+                          'type' => 'untranslated_def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
+                      'info' => {
+                        'inserted' => 1
                       },
-                      'type' => 'bracketed_inserted'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces_inserted'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'hr'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
+                      'info' => {
+                        'inserted' => 1
                       },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'BBB'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'hr'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'CCC'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'BBB'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'CCC'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {
@@ -779,38 +895,66 @@ $result_trees{'multiple_documentlanguage'} = {
                 'def_index_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'BBB'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'BBB'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' od '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'hr'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'hr'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
                 'def_index_ref_element' => {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'BBB'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'BBB'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' of '
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'text' => 'hr'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'hr'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -1329,7 +1473,7 @@ Pr&eacute;c&eacute;dent: <a href="#Top" accesskey="p" rel="prev">top</a>, Monter
 $result_converted{'xml'}->{'multiple_documentlanguage'} = '<documentlanguage xml:lang="fr" spaces=" ">fr</documentlanguage>
 
 <copying endspaces=" ">
-<defivar spaces=" " endspaces=" "><definitionterm><indexterm index="vr" number="1">a de copying</indexterm><defcategory automatic="on" bracketed="on">Instance Variable</defcategory> <defclass>copying</defclass> <defclassvar>a</defclassvar> <defparam>b</defparam></definitionterm>
+<defivar spaces=" " endspaces=" "><definitionterm><indexterm index="vr" number="1">a de copying</indexterm><defcategory automatic="on">Instance Variable</defcategory> <defclass>copying</defclass> <defclassvar>a</defclassvar> <defparam>b</defparam></definitionterm>
 <definitionitem><para>&errorglyph;
 </para></definitionitem></defivar>
 </copying>
@@ -1341,7 +1485,7 @@ $result_converted{'xml'}->{'multiple_documentlanguage'} = '<documentlanguage xml
 <node name="chap" spaces=" "><nodename>chap</nodename><nodeprev automatic="on">Top</nodeprev><nodeup automatic="on">Top</nodeup></node>
 <chapter spaces=" "><sectiontitle>Chap</sectiontitle>
 
-<defivar spaces=" " endspaces=" "><definitionterm><indexterm index="vr" number="2">BBB de fr</indexterm><defcategory automatic="on" bracketed="on">Instance Variable</defcategory> <defclass>fr</defclass> <defclassvar>BBB</defclassvar> <defparam>CCC</defparam></definitionterm>
+<defivar spaces=" " endspaces=" "><definitionterm><indexterm index="vr" number="2">BBB de fr</indexterm><defcategory automatic="on">Instance Variable</defcategory> <defclass>fr</defclass> <defclassvar>BBB</defclassvar> <defparam>CCC</defparam></definitionterm>
 <definitionitem><para>&errorglyph;
 </para></definitionitem></defivar>
 
@@ -1351,7 +1495,7 @@ $result_converted{'xml'}->{'multiple_documentlanguage'} = '<documentlanguage xml
 
 <documentlanguage xml:lang="hr" spaces=" ">hr</documentlanguage>
 
-<defivar spaces=" " endspaces=" "><definitionterm><indexterm index="vr" number="3">BBB od hr</indexterm><defcategory automatic="on" bracketed="on">Instance Variable</defcategory> <defclass>hr</defclass> <defclassvar>BBB</defclassvar> <defparam>CCC</defparam></definitionterm>
+<defivar spaces=" " endspaces=" "><definitionterm><indexterm index="vr" number="3">BBB od hr</indexterm><defcategory automatic="on">Instance Variable</defcategory> <defclass>hr</defclass> <defclassvar>BBB</defclassvar> <defparam>CCC</defparam></definitionterm>
 <definitionitem><para>&errorglyph;
 </para></definitionitem></defivar>
 

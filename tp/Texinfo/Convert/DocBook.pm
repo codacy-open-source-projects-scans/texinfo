@@ -19,7 +19,7 @@
 
 package Texinfo::Convert::DocBook;
 
-use 5.00405;
+use 5.006;
 use strict;
 
 # To check if there is no erroneous autovivification
@@ -39,14 +39,12 @@ use Texinfo::Convert::Utils;
 use Texinfo::Convert::Text;
 use Texinfo::Convert::Converter;
 use Texinfo::Convert::Plaintext;
-use Data::Dumper;
+#use Data::Dumper;
 use Carp qw(cluck);
 
-require Exporter;
-use vars qw($VERSION @ISA);
-@ISA = qw(Texinfo::Convert::Converter);
+our @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.1dev';
+our $VERSION = '7.1dev';
 
 my %brace_commands = %Texinfo::Commands::brace_commands;
 
@@ -212,13 +210,13 @@ my %defcommand_name_type = (
 );
 
 my %def_argument_types_docbook = (
-  'type' => ['returnvalue'],
-  'class' => ['ooclass', 'classname'],
+  'def_type' => ['returnvalue'],
+  'def_class' => ['ooclass', 'classname'],
   # TODO or a simple emphasis?
   # replaceable is not used here, such that replaceable is only
   # used if there is an explicit @var{}
-  'arg' => ['emphasis role="arg"'],
-  'typearg' => ['type'],
+  'def_arg' => ['emphasis role="arg"'],
+  'def_typearg' => ['type'],
 );
 
 my %ignored_block_commands;
@@ -289,6 +287,13 @@ sub converter_initialize($)
                         keys(%Texinfo::Commands::block_commands)) {
     $self->{'context_block_commands'}->{$raw} = 1
          if $self->{'expanded_formats'}->{$raw};
+  }
+
+  foreach my $conf ('OPEN_QUOTE_SYMBOL', 'CLOSE_QUOTE_SYMBOL') {
+    if (not defined($self->get_conf($conf))) {
+      # override undef set in init file/command line
+      $self->force_conf($conf, '');
+    }
   }
 }
 
@@ -1698,15 +1703,15 @@ sub _convert($$;$)
           $main_command = $element->{'extra'}->{'def_command'};
         }
         foreach my $arg (@{$element->{'args'}->[0]->{'contents'}}) {
-          my $type = $arg->{'extra'}->{'def_role'};
+          my $type = $arg->{'type'};
           next if !$type and $arg->{'type'} eq 'spaces';
 
           my $content = $self->_convert($arg);
           if ($type eq 'spaces' or $type eq 'delimiter') {
             $result .= $content;
-          } elsif ($type eq 'category') {
+          } elsif ($type eq 'def_category') {
             $result .= "<phrase role=\"category\"><emphasis role=\"bold\">$content</emphasis>:</phrase>";
-          } elsif ($type eq 'name') {
+          } elsif ($type eq 'def_name') {
             $result .= "<$defcommand_name_type{$main_command}>$content</$defcommand_name_type{$main_command}>";
           } else {
             if (!defined($def_argument_types_docbook{$type})) {

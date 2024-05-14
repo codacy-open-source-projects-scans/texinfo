@@ -292,170 +292,189 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'cat: r. a'
+                          'contents' => [
+                            {
+                              'text' => 'cat: r. a'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 18
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'source_info' => {
-                        'line_nr' => 18
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'class: MyC. b'
+                          'contents' => [
+                            {
+                              'text' => 'class: MyC. b'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 18
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'source_info' => {
-                        'line_nr' => 18
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'type: t. c'
+                          'contents' => [
+                            {
+                              'text' => 'type: t. c'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 18
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'source_info' => {
-                        'line_nr' => 18
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'name? n. d'
+                          'contents' => [
+                            {
+                              'text' => 'name? n. d'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 18
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'source_info' => {
-                        'line_nr' => 18
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'arg?'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'arg?'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'e:'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'e:'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'f.'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'f.'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => '  ',
                       'type' => 'spaces'
                     },
                     {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'v: g. h'
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'v: g. h'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'var',
+                              'source_info' => {
+                                'line_nr' => 18
+                              }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'var',
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 18
-                      }
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'code? is: k'
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'code? is: k'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'code',
+                              'source_info' => {
+                                'line_nr' => 18
+                              }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'code',
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 18
-                      }
+                      'type' => 'def_typearg'
                     }
                   ],
                   'info' => {
@@ -474,13 +493,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'name? n. d'
+                          'contents' => [
+                            {
+                              'text' => 'name? n. d'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
@@ -488,13 +509,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'class: MyC. b'
+                          'contents' => [
+                            {
+                              'text' => 'class: MyC. b'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -503,13 +526,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'name? n. d'
+                          'contents' => [
+                            {
+                              'text' => 'name? n. d'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
@@ -517,13 +542,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'class: MyC. b'
+                          'contents' => [
+                            {
+                              'text' => 'class: MyC. b'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -608,149 +635,169 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'vcat: r. z'
+                          'contents' => [
+                            {
+                              'text' => 'vcat: r. z'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 22
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'source_info' => {
-                        'line_nr' => 22
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'vclass: MyC. u'
+                          'contents' => [
+                            {
+                              'text' => 'vclass: MyC. u'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 22
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'source_info' => {
-                        'line_nr' => 22
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'vname? n; d'
+                          'contents' => [
+                            {
+                              'text' => 'vname? n; d'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 22
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'source_info' => {
-                        'line_nr' => 22
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'varg?'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 've:'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'f.'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces'
-                    },
-                    {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'vv: g? b'
+                              'text' => 'varg?'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'var',
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 22
-                      }
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'vcode? is: a'
+                              'text' => 've:'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'code',
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 22
-                      }
+                      'type' => 'def_arg'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'f.'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'vv: g? b'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'var',
+                              'source_info' => {
+                                'line_nr' => 22
+                              }
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'vcode? is: a'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'code',
+                              'source_info' => {
+                                'line_nr' => 22
+                              }
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {
@@ -769,13 +816,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'vname? n; d'
+                          'contents' => [
+                            {
+                              'text' => 'vname? n; d'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
@@ -783,13 +832,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'vclass: MyC. u'
+                          'contents' => [
+                            {
+                              'text' => 'vclass: MyC. u'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -798,13 +849,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'vname? n; d'
+                          'contents' => [
+                            {
+                              'text' => 'vname? n; d'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
@@ -812,13 +865,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'vclass: MyC. u'
+                          'contents' => [
+                            {
+                              'text' => 'vclass: MyC. u'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -1110,170 +1165,189 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'cat: r. a'
+                          'contents' => [
+                            {
+                              'text' => 'cat: r. a'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 38
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'source_info' => {
-                        'line_nr' => 38
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'class: MyC. b'
+                          'contents' => [
+                            {
+                              'text' => 'class: MyC. b'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 38
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'source_info' => {
-                        'line_nr' => 38
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'type: t. c'
+                          'contents' => [
+                            {
+                              'text' => 'type: t. c'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 38
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'source_info' => {
-                        'line_nr' => 38
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'name? n. d'
+                          'contents' => [
+                            {
+                              'text' => 'name? n. d'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 38
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'source_info' => {
-                        'line_nr' => 38
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'narg?'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'narg?'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'e:'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'e:'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'f.'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'f.'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => '  ',
                       'type' => 'spaces'
                     },
                     {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'v: g. h'
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'v: g. h'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'var',
+                              'source_info' => {
+                                'line_nr' => 38
+                              }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'var',
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 38
-                      }
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'code? is: k'
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'code? is: k'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'code',
+                              'source_info' => {
+                                'line_nr' => 38
+                              }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'code',
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 38
-                      }
+                      'type' => 'def_typearg'
                     }
                   ],
                   'info' => {
@@ -1292,13 +1366,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'name? n. d'
+                          'contents' => [
+                            {
+                              'text' => 'name? n. d'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
@@ -1306,13 +1382,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'class: MyC. b'
+                          'contents' => [
+                            {
+                              'text' => 'class: MyC. b'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -1321,13 +1399,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'name? n. d'
+                          'contents' => [
+                            {
+                              'text' => 'name? n. d'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
@@ -1335,13 +1415,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'class: MyC. b'
+                          'contents' => [
+                            {
+                              'text' => 'class: MyC. b'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -1426,149 +1508,169 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'vcat: r. z'
+                          'contents' => [
+                            {
+                              'text' => 'vcat: r. z'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 42
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'source_info' => {
-                        'line_nr' => 42
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'nvclass: MyC. u'
+                          'contents' => [
+                            {
+                              'text' => 'nvclass: MyC. u'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 42
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'source_info' => {
-                        'line_nr' => 42
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'vname? n; d'
+                          'contents' => [
+                            {
+                              'text' => 'vname? n; d'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 42
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'source_info' => {
-                        'line_nr' => 42
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'varg?'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 've:'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'f.'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces'
-                    },
-                    {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'vv: g? b'
+                              'text' => 'varg?'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'var',
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 42
-                      }
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'vcode? is: a'
+                              'text' => 've:'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'code',
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 42
-                      }
+                      'type' => 'def_arg'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'f.'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'vv: g? b'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'var',
+                              'source_info' => {
+                                'line_nr' => 42
+                              }
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
+                    },
+                    {
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'vcode? is: a'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'code',
+                              'source_info' => {
+                                'line_nr' => 42
+                              }
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {
@@ -1587,13 +1689,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'vname? n; d'
+                          'contents' => [
+                            {
+                              'text' => 'vname? n; d'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
@@ -1601,13 +1705,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'nvclass: MyC. u'
+                          'contents' => [
+                            {
+                              'text' => 'nvclass: MyC. u'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     }
                   ]
                 },
@@ -1616,13 +1722,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'vname? n; d'
+                          'contents' => [
+                            {
+                              'text' => 'vname? n; d'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_name'
                     },
                     {
                       'text' => ' on '
@@ -1630,13 +1738,15 @@ $result_trees{'frenchspacing_and_code'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'nvclass: MyC. u'
+                          'contents' => [
+                            {
+                              'text' => 'nvclass: MyC. u'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     }
                   ]
                 },

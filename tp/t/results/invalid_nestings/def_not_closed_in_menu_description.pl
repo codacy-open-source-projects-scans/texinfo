@@ -72,36 +72,51 @@ $result_trees{'def_not_closed_in_menu_description'} = {
                             {
                               'contents' => [
                                 {
-                                  'extra' => {
-                                    'def_role' => 'category'
-                                  },
-                                  'text' => 'bidule'
+                                  'contents' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'bidule'
+                                        }
+                                      ],
+                                      'type' => 'def_line_arg'
+                                    }
+                                  ],
+                                  'type' => 'def_category'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'spaces'
-                                  },
                                   'text' => ' ',
                                   'type' => 'spaces'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'name'
-                                  },
-                                  'text' => 'truc'
+                                  'contents' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'truc'
+                                        }
+                                      ],
+                                      'type' => 'def_line_arg'
+                                    }
+                                  ],
+                                  'type' => 'def_name'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'spaces'
-                                  },
                                   'text' => ' ',
                                   'type' => 'spaces'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'arg'
-                                  },
-                                  'text' => 'chose'
+                                  'contents' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'chose'
+                                        }
+                                      ],
+                                      'type' => 'def_line_arg'
+                                    }
+                                  ],
+                                  'type' => 'def_arg'
                                 }
                               ],
                               'info' => {

@@ -1212,6 +1212,10 @@ The functions is called with two arguments, the converter object and the
 output unit direction and should return two scalars, the link href and text and
 a boolean set if a delimiter is needed after that button.
 
+@c This buttons specification is not used anywhere in code nor
+@c tests, it is certainly not worth maintaining in the long run.
+@c Do not document
+@ignore
 @item text string
 The text string is interpreted as an output unit direction information type
 and the corresponding text is used for the link.
@@ -1225,6 +1229,7 @@ For example, if the button array item is
 @noindent
 Then the button will be a link to the next section with text
 based on the name of the node associated with the next section output unit.
+@end ignore
 
 @end table
 
@@ -2370,8 +2375,7 @@ In this container, the conversion is done in a code context
 @xref{Init File Expansion Contexts}.  For a container tree element.
 
 @item _converted
-In this container, the texts are considered to be already formatted.
-This is more likely to be relevant as the type of a text element.
+The text of this text element is considered to be already formatted.
 
 @item _string
 In this container, the conversion is done in a string context.

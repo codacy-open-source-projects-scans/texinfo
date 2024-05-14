@@ -20,7 +20,7 @@
 
 package Texinfo::Convert::Texinfo;
 
-use 5.00405;
+use 5.006;
 use strict;
 
 # stop \s from matching non-ASCII spaces, etc.  \p{...} can still be
@@ -41,18 +41,15 @@ use Texinfo::Commands;
 use Texinfo::Common;
 
 require Exporter;
-use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
-@ISA = qw(Exporter);
+our @ISA = qw(Exporter);
 
-%EXPORT_TAGS = ( 'all' => [ qw(
+our @EXPORT_OK = qw(
   convert_to_texinfo
   link_element_to_texi
   target_element_to_texi_label
-) ] );
+);
 
-@EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
-$VERSION = '7.1dev';
+our $VERSION = '7.1dev';
 
 my $XS_convert = Texinfo::XSLoader::XS_convert_enabled();
 
@@ -79,13 +76,6 @@ my %def_commands             = %Texinfo::Commands::def_commands;
 
 # used in root_heading_command_to_texinfo
 my %sectioning_heading_commands = %Texinfo::Commands::sectioning_heading_commands;
-
-my @ignored_types = ('spaces_inserted', 'bracketed_inserted',
-'command_as_argument_inserted');
-my %ignored_types;
-for my $a (@ignored_types) {
-  $ignored_types{$a} = 1;
-}
 
 # This is used if the document is available for XS, but XS is not
 # used (most likely $TEXINFO_XS_CONVERT is 0).
@@ -207,7 +197,8 @@ sub _convert_to_texinfo($)
   my $result = '';
 
   return '' if ($element->{'type'}
-                and ($ignored_types{$element->{'type'}}));
+                and $element->{'info'}
+                and $element->{'info'}->{'inserted'});
   if (defined($element->{'text'})) {
     $result .= $element->{'text'};
   } else {
@@ -290,7 +281,8 @@ sub _expand_cmd_args_to_texi($) {
     }
     my $arg_nr = 0;
     foreach my $arg (@{$cmd->{'args'}}) {
-      next if $arg->{'type'} and $ignored_types{$arg->{'type'}};
+      next if ($arg->{'type'} and $arg->{'info'}
+               and $arg->{'info'}->{'inserted'});
       if ($with_commas) {
         $result .= ',' if ($arg_nr);
         $arg_nr++;

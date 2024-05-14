@@ -17,36 +17,51 @@ $result_trees{'not_closed'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'truc'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'truc'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'bidule'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'bidule'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'machin'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'machin'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {
@@ -77,36 +92,51 @@ $result_trees{'not_closed'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'truc'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'truc'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'chose'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'chose'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'args'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'args'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {
@@ -150,52 +180,72 @@ $result_trees{'not_closed'} = {
                             {
                               'contents' => [
                                 {
-                                  'text' => 'Variable'
+                                  'contents' => [
+                                    {
+                                      'text' => 'Variable'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
                                 }
                               ],
-                              'extra' => {
-                                'def_role' => 'category'
+                              'info' => {
+                                'inserted' => 1
                               },
-                              'type' => 'bracketed_inserted'
+                              'type' => 'def_category'
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'spaces'
-                              },
-                              'text' => ' ',
-                              'type' => 'spaces_inserted'
-                            },
-                            {
-                              'extra' => {
-                                'def_role' => 'name'
-                              },
-                              'text' => 'type1'
-                            },
-                            {
-                              'extra' => {
-                                'def_role' => 'spaces'
+                              'info' => {
+                                'inserted' => 1
                               },
                               'text' => ' ',
                               'type' => 'spaces'
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'arg'
-                              },
-                              'text' => 'var'
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'type1'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_name'
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'spaces'
-                              },
                               'text' => ' ',
                               'type' => 'spaces'
                             },
                             {
-                              'extra' => {
-                                'def_role' => 'arg'
-                              },
-                              'text' => 'bidule'
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'var'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_arg'
+                            },
+                            {
+                              'text' => ' ',
+                              'type' => 'spaces'
+                            },
+                            {
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'bidule'
+                                    }
+                                  ],
+                                  'type' => 'def_line_arg'
+                                }
+                              ],
+                              'type' => 'def_arg'
                             }
                           ],
                           'info' => {

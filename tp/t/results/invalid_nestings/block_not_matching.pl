@@ -52,42 +52,52 @@ $result_trees{'block_not_matching'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'Function Reference'
+                          'contents' => [
+                            {
+                              'text' => 'Function Reference'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 5
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'source_info' => {
-                        'line_nr' => 5
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'print_navigation'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'print_navigation'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => '$filehandle'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => '$filehandle'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {

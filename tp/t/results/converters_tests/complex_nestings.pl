@@ -164,94 +164,113 @@ $result_trees{'complex_nestings'} = {
                         {
                           'contents' => [
                             {
-                              'text' => 'Function'
+                              'contents' => [
+                                {
+                                  'text' => 'Function'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
                             }
                           ],
-                          'extra' => {
-                            'def_role' => 'category'
+                          'info' => {
+                            'inserted' => 1
                           },
-                          'type' => 'bracketed_inserted'
+                          'type' => 'def_category'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
+                          'info' => {
+                            'inserted' => 1
                           },
                           'text' => ' ',
-                          'type' => 'spaces_inserted'
+                          'type' => 'spaces'
                         },
                         {
                           'contents' => [
                             {
-                              'text' => 'my def'
+                              'contents' => [
+                                {
+                                  'text' => 'my def'
+                                }
+                              ],
+                              'source_info' => {
+                                'line_nr' => 9
+                              },
+                              'type' => 'bracketed_arg'
                             }
                           ],
-                          'extra' => {
-                            'def_role' => 'name'
-                          },
-                          'source_info' => {
-                            'line_nr' => 9
-                          },
-                          'type' => 'bracketed_arg'
+                          'type' => 'def_name'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
-                          },
                           'text' => ' ',
                           'type' => 'spaces'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'arg'
-                          },
-                          'text' => 'args'
-                        },
-                        {
-                          'extra' => {
-                            'def_role' => 'spaces'
-                          },
-                          'text' => ' ',
-                          'type' => 'spaces'
-                        },
-                        {
-                          'args' => [
+                          'contents' => [
                             {
                               'contents' => [
                                 {
-                                  'text' => 'arg'
+                                  'text' => 'args'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'def_line_arg'
                             }
                           ],
-                          'cmdname' => 'var',
-                          'extra' => {
-                            'def_role' => 'arg'
-                          },
-                          'source_info' => {
-                            'line_nr' => 9
-                          }
+                          'type' => 'def_arg'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
-                          },
                           'text' => ' ',
                           'type' => 'spaces'
                         },
                         {
-                          'args' => [
+                          'contents' => [
                             {
-                              'type' => 'brace_command_arg'
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'arg'
+                                        }
+                                      ],
+                                      'type' => 'brace_command_arg'
+                                    }
+                                  ],
+                                  'cmdname' => 'var',
+                                  'source_info' => {
+                                    'line_nr' => 9
+                                  }
+                                }
+                              ],
+                              'type' => 'def_line_arg'
                             }
                           ],
-                          'cmdname' => 'dots',
-                          'extra' => {
-                            'def_role' => 'arg'
-                          },
-                          'source_info' => {
-                            'line_nr' => 9
-                          }
+                          'type' => 'def_arg'
+                        },
+                        {
+                          'text' => ' ',
+                          'type' => 'spaces'
+                        },
+                        {
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'type' => 'brace_command_arg'
+                                    }
+                                  ],
+                                  'cmdname' => 'dots',
+                                  'source_info' => {
+                                    'line_nr' => 9
+                                  }
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_arg'
                         }
                       ],
                       'info' => {
@@ -285,60 +304,75 @@ $result_trees{'complex_nestings'} = {
                         {
                           'contents' => [
                             {
-                              'text' => 'Function'
+                              'contents' => [
+                                {
+                                  'text' => 'Function'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
                             }
                           ],
-                          'extra' => {
-                            'def_role' => 'category'
+                          'info' => {
+                            'inserted' => 1
                           },
-                          'type' => 'bracketed_inserted'
+                          'type' => 'def_category'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
+                          'info' => {
+                            'inserted' => 1
                           },
                           'text' => ' ',
-                          'type' => 'spaces_inserted'
+                          'type' => 'spaces'
                         },
                         {
                           'contents' => [
                             {
-                              'text' => 'other def'
+                              'contents' => [
+                                {
+                                  'text' => 'other def'
+                                }
+                              ],
+                              'source_info' => {
+                                'line_nr' => 10
+                              },
+                              'type' => 'bracketed_arg'
                             }
                           ],
-                          'extra' => {
-                            'def_role' => 'name'
-                          },
-                          'source_info' => {
-                            'line_nr' => 10
-                          },
-                          'type' => 'bracketed_arg'
+                          'type' => 'def_name'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
-                          },
                           'text' => ' ',
                           'type' => 'spaces'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'arg'
-                          },
-                          'text' => 'no'
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'no'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_arg'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
-                          },
                           'text' => ' ',
                           'type' => 'spaces'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'arg'
-                          },
-                          'text' => 'args'
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'args'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_arg'
                         }
                       ],
                       'info' => {
@@ -383,89 +417,106 @@ $result_trees{'complex_nestings'} = {
                                 {
                                   'contents' => [
                                     {
-                                      'text' => 'type'
+                                      'contents' => [
+                                        {
+                                          'text' => 'type'
+                                        }
+                                      ],
+                                      'source_info' => {
+                                        'line_nr' => 11
+                                      },
+                                      'type' => 'bracketed_arg'
                                     }
                                   ],
-                                  'extra' => {
-                                    'def_role' => 'category'
-                                  },
-                                  'source_info' => {
-                                    'line_nr' => 11
-                                  },
-                                  'type' => 'bracketed_arg'
+                                  'type' => 'def_category'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'spaces'
-                                  },
                                   'text' => ' ',
                                   'type' => 'spaces'
                                 },
                                 {
                                   'contents' => [
                                     {
-                                      'text' => 'name'
+                                      'contents' => [
+                                        {
+                                          'text' => 'name'
+                                        }
+                                      ],
+                                      'source_info' => {
+                                        'line_nr' => 11
+                                      },
+                                      'type' => 'bracketed_arg'
                                     }
                                   ],
-                                  'extra' => {
-                                    'def_role' => 'name'
-                                  },
-                                  'source_info' => {
-                                    'line_nr' => 11
-                                  },
-                                  'type' => 'bracketed_arg'
+                                  'type' => 'def_name'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'spaces'
-                                  },
                                   'text' => ' ',
                                   'type' => 'spaces'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'arg'
-                                  },
-                                  'text' => 'and'
+                                  'contents' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'and'
+                                        }
+                                      ],
+                                      'type' => 'def_line_arg'
+                                    }
+                                  ],
+                                  'type' => 'def_arg'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'spaces'
-                                  },
                                   'text' => ' ',
                                   'type' => 'spaces'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'arg'
-                                  },
-                                  'text' => 'now'
+                                  'contents' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'now'
+                                        }
+                                      ],
+                                      'type' => 'def_line_arg'
+                                    }
+                                  ],
+                                  'type' => 'def_arg'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'spaces'
-                                  },
                                   'text' => ' ',
                                   'type' => 'spaces'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'arg'
-                                  },
-                                  'text' => 'the'
+                                  'contents' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'the'
+                                        }
+                                      ],
+                                      'type' => 'def_line_arg'
+                                    }
+                                  ],
+                                  'type' => 'def_arg'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'spaces'
-                                  },
                                   'text' => ' ',
                                   'type' => 'spaces'
                                 },
                                 {
-                                  'extra' => {
-                                    'def_role' => 'arg'
-                                  },
-                                  'text' => 'args'
+                                  'contents' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'args'
+                                        }
+                                      ],
+                                      'type' => 'def_line_arg'
+                                    }
+                                  ],
+                                  'type' => 'def_arg'
                                 }
                               ],
                               'info' => {
@@ -504,47 +555,58 @@ $result_trees{'complex_nestings'} = {
                                         {
                                           'contents' => [
                                             {
-                                              'text' => 'Variable'
+                                              'contents' => [
+                                                {
+                                                  'text' => 'Variable'
+                                                }
+                                              ],
+                                              'type' => 'def_line_arg'
                                             }
                                           ],
-                                          'extra' => {
-                                            'def_role' => 'category'
+                                          'info' => {
+                                            'inserted' => 1
                                           },
-                                          'type' => 'bracketed_inserted'
+                                          'type' => 'def_category'
                                         },
                                         {
-                                          'extra' => {
-                                            'def_role' => 'spaces'
-                                          },
-                                          'text' => ' ',
-                                          'type' => 'spaces_inserted'
-                                        },
-                                        {
-                                          'contents' => [
-                                            {
-                                              'text' => 'variables'
-                                            }
-                                          ],
-                                          'extra' => {
-                                            'def_role' => 'name'
-                                          },
-                                          'source_info' => {
-                                            'line_nr' => 12
-                                          },
-                                          'type' => 'bracketed_arg'
-                                        },
-                                        {
-                                          'extra' => {
-                                            'def_role' => 'spaces'
+                                          'info' => {
+                                            'inserted' => 1
                                           },
                                           'text' => ' ',
                                           'type' => 'spaces'
                                         },
                                         {
-                                          'extra' => {
-                                            'def_role' => 'arg'
-                                          },
-                                          'text' => 'variable-name'
+                                          'contents' => [
+                                            {
+                                              'contents' => [
+                                                {
+                                                  'text' => 'variables'
+                                                }
+                                              ],
+                                              'source_info' => {
+                                                'line_nr' => 12
+                                              },
+                                              'type' => 'bracketed_arg'
+                                            }
+                                          ],
+                                          'type' => 'def_name'
+                                        },
+                                        {
+                                          'text' => ' ',
+                                          'type' => 'spaces'
+                                        },
+                                        {
+                                          'contents' => [
+                                            {
+                                              'contents' => [
+                                                {
+                                                  'text' => 'variable-name'
+                                                }
+                                              ],
+                                              'type' => 'def_line_arg'
+                                            }
+                                          ],
+                                          'type' => 'def_arg'
                                         }
                                       ],
                                       'info' => {
@@ -593,47 +655,58 @@ $result_trees{'complex_nestings'} = {
                                         {
                                           'contents' => [
                                             {
-                                              'text' => 'Variable'
+                                              'contents' => [
+                                                {
+                                                  'text' => 'Variable'
+                                                }
+                                              ],
+                                              'type' => 'def_line_arg'
                                             }
                                           ],
-                                          'extra' => {
-                                            'def_role' => 'category'
+                                          'info' => {
+                                            'inserted' => 1
                                           },
-                                          'type' => 'bracketed_inserted'
+                                          'type' => 'def_category'
                                         },
                                         {
-                                          'extra' => {
-                                            'def_role' => 'spaces'
-                                          },
-                                          'text' => ' ',
-                                          'type' => 'spaces_inserted'
-                                        },
-                                        {
-                                          'contents' => [
-                                            {
-                                              'text' => 'variables too'
-                                            }
-                                          ],
-                                          'extra' => {
-                                            'def_role' => 'name'
-                                          },
-                                          'source_info' => {
-                                            'line_nr' => 14
-                                          },
-                                          'type' => 'bracketed_arg'
-                                        },
-                                        {
-                                          'extra' => {
-                                            'def_role' => 'spaces'
+                                          'info' => {
+                                            'inserted' => 1
                                           },
                                           'text' => ' ',
                                           'type' => 'spaces'
                                         },
                                         {
-                                          'extra' => {
-                                            'def_role' => 'arg'
-                                          },
-                                          'text' => 'other-variable'
+                                          'contents' => [
+                                            {
+                                              'contents' => [
+                                                {
+                                                  'text' => 'variables too'
+                                                }
+                                              ],
+                                              'source_info' => {
+                                                'line_nr' => 14
+                                              },
+                                              'type' => 'bracketed_arg'
+                                            }
+                                          ],
+                                          'type' => 'def_name'
+                                        },
+                                        {
+                                          'text' => ' ',
+                                          'type' => 'spaces'
+                                        },
+                                        {
+                                          'contents' => [
+                                            {
+                                              'contents' => [
+                                                {
+                                                  'text' => 'other-variable'
+                                                }
+                                              ],
+                                              'type' => 'def_line_arg'
+                                            }
+                                          ],
+                                          'type' => 'def_arg'
                                         }
                                       ],
                                       'info' => {
@@ -1324,12 +1397,12 @@ $result_converted{'xml'}->{'complex_nestings'} = '<node name="Top" spaces=" "><n
 
 <example endspaces=" ">
 <pre xml:space="preserve">deffs
-</pre><defun spaces=" " endspaces=" "><definitionterm><indexterm index="fn" number="1">my def</indexterm><defcategory automatic="on" bracketed="on">Function</defcategory> <deffunction bracketed="on">my def</deffunction> <defparam>args</defparam> <defparam><var>arg</var></defparam> <defparam>&dots;</defparam></definitionterm>
-<defunx spaces=" "><definitionterm><indexterm index="fn" number="2">other def</indexterm><defcategory automatic="on" bracketed="on">Function</defcategory> <deffunction bracketed="on">other def</deffunction> <defparam>no</defparam> <defparam>args</defparam></definitionterm></defunx>
+</pre><defun spaces=" " endspaces=" "><definitionterm><indexterm index="fn" number="1">my def</indexterm><defcategory automatic="on">Function</defcategory> <deffunction bracketed="on">my def</deffunction> <defparam>args</defparam> <defparam><var>arg</var></defparam> <defparam>&dots;</defparam></definitionterm>
+<defunx spaces=" "><definitionterm><indexterm index="fn" number="2">other def</indexterm><defcategory automatic="on">Function</defcategory> <deffunction bracketed="on">other def</deffunction> <defparam>no</defparam> <defparam>args</defparam></definitionterm></defunx>
 <definitionitem><deffn spaces=" " endspaces=" "><definitionterm><indexterm index="fn" number="3">name</indexterm><defcategory bracketed="on">type</defcategory> <deffunction bracketed="on">name</deffunction> <defparam>and</defparam> <defparam>now</defparam> <defparam>the</defparam> <defparam>args</defparam></definitionterm>
-<definitionitem><defvar spaces=" " endspaces=" "><definitionterm><indexterm index="vr" number="1">variables</indexterm><defcategory automatic="on" bracketed="on">Variable</defcategory> <defvariable bracketed="on">variables</defvariable> <defparam>variable-name</defparam></definitionterm>
+<definitionitem><defvar spaces=" " endspaces=" "><definitionterm><indexterm index="vr" number="1">variables</indexterm><defcategory automatic="on">Variable</defcategory> <defvariable bracketed="on">variables</defvariable> <defparam>variable-name</defparam></definitionterm>
 <pre xml:space="preserve">
-</pre><defvarx spaces=" "><definitionterm><indexterm index="vr" number="2">variables too</indexterm><defcategory automatic="on" bracketed="on">Variable</defcategory> <defvariable bracketed="on">variables too</defvariable> <defparam>other-variable</defparam></definitionterm></defvarx>
+</pre><defvarx spaces=" "><definitionterm><indexterm index="vr" number="2">variables too</indexterm><defcategory automatic="on">Variable</defcategory> <defvariable bracketed="on">variables too</defvariable> <defparam>other-variable</defparam></definitionterm></defvarx>
 <definitionitem><pre xml:space="preserve">THis is the defvar
 
 A table within the def

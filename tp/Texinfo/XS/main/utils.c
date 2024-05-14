@@ -187,7 +187,7 @@ xasprintf (char **ptr, const char *template, ...)
 
 void bug (char *message)
 {
-  fprintf (stderr, "texi2any (XS parser): bug: %s\n", message);
+  fprintf (stderr, "texi2any (XS): bug: %s\n", message);
 }
 
 void fatal (char *message)
@@ -199,31 +199,31 @@ void fatal (char *message)
 int
 isascii_alnum (int c)
 {
-  return (((c & ~0x7f) == 0) && isalnum(c));
+  return (((c & ~0x7f) == 0) && isalnum (c));
 }
 
 int
 isascii_alpha (int c)
 {
-  return (((c & ~0x7f) == 0) && isalpha(c));
+  return (((c & ~0x7f) == 0) && isalpha (c));
 }
 
 int
 isascii_digit (int c)
 {
-  return (((c & ~0x7f) == 0) && isdigit(c));
+  return (((c & ~0x7f) == 0) && isdigit (c));
 }
 
 int
 isascii_lower (int c)
 {
-  return (((c & ~0x7f) == 0) && islower(c));
+  return (((c & ~0x7f) == 0) && islower (c));
 }
 
 int
 isascii_upper (int c)
 {
-  return (((c & ~0x7f) == 0) && isupper(c));
+  return (((c & ~0x7f) == 0) && isupper (c));
 }
 
 
@@ -476,11 +476,11 @@ encode_with_iconv (iconv_t our_iconv, char *s,
         case EILSEQ:
         default:
           if (source_info)
-            fprintf(stderr, "%s:%d: encoding error at byte 0x%02x\n",
+            fprintf (stderr, "%s:%d: encoding error at byte 0x%02x\n",
               source_info->file_name, source_info->line_nr,
                                              *(unsigned char *)inptr);
           else
-            fprintf(stderr, "encoding error at byte 0x%02x\n",
+            fprintf (stderr, "encoding error at byte 0x%02x\n",
                     *(unsigned char *)inptr);
           inptr++; bytes_left--;
           break;
@@ -499,13 +499,13 @@ decode_string (char *input_string, const char *encoding, int *status,
   *status = 0;
   /* not sure this can happen */
   if (!encoding)
-    return strdup(input_string);
+    return strdup (input_string);
 
   ENCODING_CONVERSION *conversion
     = get_encoding_conversion (encoding, &input_conversions);
 
   if (!conversion)
-    return strdup(input_string);
+    return strdup (input_string);
 
   *status = 1;
 
@@ -523,13 +523,13 @@ encode_string (char *input_string, const char *encoding, int *status,
      DOC_ENCODING_FOR_INPUT_FILE_NAME set to 0 and no locales encoding
      information */
   if (!encoding)
-    return strdup(input_string);
+    return strdup (input_string);
 
   ENCODING_CONVERSION *conversion
     = get_encoding_conversion (encoding, &output_conversions);
 
   if (!conversion)
-    return strdup(input_string);
+    return strdup (input_string);
 
   *status = 1;
 
@@ -824,7 +824,7 @@ normalize_encoding_name (const char *text, int *possible_encoding)
   for (p = text; *p; p++)
     {
       /* check if ascii and alphanumeric */
-      if (isascii_alnum(*p))
+      if (isascii_alnum (*p))
         {
           *possible_encoding = 1;
           *q = tolower (*p);
@@ -1028,7 +1028,7 @@ destroy_strings_list (STRING_LIST *strings)
 void
 set_conf_string (OPTION *option, const char *value)
 {
-  if (option->type != GO_char && option->type != GO_bytes)
+  if (option->type != GOT_char && option->type != GOT_bytes)
     fatal ("set_conf_string bad option type\n");
 
   if (option->configured > 0)
@@ -1146,7 +1146,7 @@ informative_command_value (const ELEMENT *element)
         return "1";
       /* NOTE only @set, which should be ignored, can have args.number > 1.
          We handle this case with TEXT text, but do not free memory
-         as should be, as this case should never happen. 
+         as should be, as this case should never happen.
        */
       else if (element->args.number > 0)
         {
@@ -1210,7 +1210,7 @@ set_informative_command_value (OPTIONS *options, const ELEMENT *element)
       option = get_command_option (options, cmd);
       if (option)
         {
-          if (option->type == GO_integer)
+          if (option->type == GOT_integer)
             {
               if (option->configured <= 0)
                 option->integer = strtoul (value, NULL, 10);
@@ -1488,7 +1488,7 @@ enumerate_item_representation (char *specification, int number)
 
   if (specification[strspn (specification, digit_chars)] == '\0')
     {
-      int spec = strtol(specification, NULL, 10) + number -1;
+      int spec = strtol (specification, NULL, 10) + number -1;
       text_printf (&result, "%d", spec);
       return result.text;
     }
@@ -1571,28 +1571,28 @@ clear_option (OPTION *option)
 {
   switch (option->type)
     {
-      case GO_char:
-      case GO_bytes:
+      case GOT_char:
+      case GOT_bytes:
         free (option->string);
         option->string = 0;
         break;
 
-      case GO_bytes_string_list:
-      case GO_file_string_list:
-      case GO_char_string_list:
+      case GOT_bytes_string_list:
+      case GOT_file_string_list:
+      case GOT_char_string_list:
         clear_strings_list (option->strlist);
         break;
 
-      case GO_buttons:
+      case GOT_buttons:
         html_free_button_specification_list (option->buttons);
         option->buttons = 0;
         break;
 
-      case GO_icons:
+      case GOT_icons:
         html_clear_direction_icons (option->icons);
         break;
 
-      case GO_integer:
+      case GOT_integer:
         option->integer = -1;
 
       default:
@@ -1605,27 +1605,27 @@ free_option (OPTION *option)
 {
   switch (option->type)
     {
-      case GO_char:
-      case GO_bytes:
+      case GOT_char:
+      case GOT_bytes:
         free (option->string);
         break;
 
-      case GO_bytes_string_list:
-      case GO_file_string_list:
-      case GO_char_string_list:
+      case GOT_bytes_string_list:
+      case GOT_file_string_list:
+      case GOT_char_string_list:
         destroy_strings_list (option->strlist);
         break;
 
-      case GO_buttons:
+      case GOT_buttons:
         html_free_button_specification_list (option->buttons);
         break;
 
-      case GO_icons:
+      case GOT_icons:
         html_free_direction_icons (option->icons);
         free (option->icons);
         break;
 
-      case GO_integer:
+      case GOT_integer:
       default:
     }
 }
@@ -1636,26 +1636,26 @@ initialize_option (OPTION *option, enum global_option_type type)
   option->type = type;
   switch (type)
     {
-      case GO_integer:
+      case GOT_integer:
         option->integer = -1;
         break;
 
-      case GO_bytes_string_list:
-      case GO_file_string_list:
-      case GO_char_string_list:
+      case GOT_bytes_string_list:
+      case GOT_file_string_list:
+      case GOT_char_string_list:
         option->strlist = new_string_list ();
         break;
 
-      case GO_char:
-      case GO_bytes:
+      case GOT_char:
+      case GOT_bytes:
         option->string = 0;
         break;
 
-      case GO_buttons:
+      case GOT_buttons:
         option->buttons = 0;
         break;
 
-      case GO_icons:
+      case GOT_icons:
         option->icons = (DIRECTION_ICON_LIST *)
                           malloc (sizeof (DIRECTION_ICON_LIST));
         memset (option->icons, 0, sizeof (DIRECTION_ICON_LIST));

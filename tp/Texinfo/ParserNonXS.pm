@@ -61,7 +61,7 @@ use if $] >= 5.014, re => '/a';
 
 # debug
 use Carp qw(cluck confess);
-use Data::Dumper;
+#use Data::Dumper;
 
 # to detect if an encoding may be used to open the files
 # to encode/decode in-memory strings used as files
@@ -94,8 +94,7 @@ use Texinfo::Convert::NodeNameNormalization;
 use Texinfo::Translations;
 
 require Exporter;
-use vars qw($VERSION @ISA @EXPORT_OK %EXPORT_TAGS);
-@ISA = qw(Exporter);
+our @ISA = qw(Exporter);
 
 our $module_loaded = 0;
 sub import {
@@ -110,17 +109,15 @@ sub import {
   goto &Exporter::import;
 }
 
-%EXPORT_TAGS = ( 'all' => [ qw(
+our @EXPORT_OK = qw(
     parser
     parse_texi_file
     parse_texi_line
     parse_texi_piece
     parse_texi_text
-) ] );
+);
 
-@EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
-
-$VERSION = '7.1dev';
+our $VERSION = '7.1dev';
 
 
 # these are the default values for the parser state
@@ -232,17 +229,19 @@ my %parser_default_configuration = (
 #                         is also in that structure.
 # line_commands           the same as %line_commands in Texinfo::Common,
 #                         but with index entry commands dynamically added
-# close_paragraph_commands      same as %default_close_paragraph_commands, with
-#                               index commands dynamically added.
+# close_paragraph_commands      same as %close_paragraph_commands, with
+#                               commands dynamically added (no command added
+#                               in 2024).
 # close_preformatted_commands   same as %close_preformatted_commands
-# no_paragraph_commands   the same as %default_no_paragraph_commands
-#                         below, with index entry commands dynamically added.
+# no_paragraph_commands   the same as %no_paragraph_commands below,
+#                         with new index entry commands dynamically added.
 # basic_inline_commands   the same as %contain_basic_inline_commands below, but
-#                         with index entry commands dynamically added
+#                         with new index entry commands dynamically added
 # current_node            last seen node.
 # current_section         last seen section.
 # nodes                   list of nodes.
 # command_index           associate a command name with an index name.
+# index_entry_commands    index entry commands, including added index commands.
 # internal_references     an array holding all the internal references.
 
 # set                     points to the value set when initializing, for
@@ -300,6 +299,7 @@ my %global_unique_commands    = %Texinfo::Commands::global_unique_commands;
 my %in_index_commands         = %Texinfo::Commands::in_index_commands;
 my %explained_commands        = %Texinfo::Commands::explained_commands;
 my %inline_format_commands    = %Texinfo::Commands::inline_format_commands;
+my %index_entry_command_commands    = %Texinfo::Commands::index_entry_command_commands;
 
 my %def_map                   = %Texinfo::Common::def_map;
 my %def_aliases               = %Texinfo::Common::def_aliases;
@@ -389,18 +389,7 @@ foreach my $not_begin_line_command ('comment', 'c', 'columnfractions',
 my %index_names = %Texinfo::Commands::index_names;
 
 # @-commands that do not start a paragraph
-my %default_no_paragraph_commands = %Texinfo::Commands::no_paragraph_commands;
-
-my %default_close_paragraph_commands = %close_paragraph_commands;
-my %default_basic_inline_commands = %contain_basic_inline_commands;
-foreach my $index (keys(%index_names)) {
-  my $one_letter_prefix = substr($index, 0, 1);
-  foreach my $prefix ($index, $one_letter_prefix) {
-    #$default_close_paragraph_commands{$prefix.'index'} = 1;
-    $default_basic_inline_commands{$prefix.'index'} = 1;
-    $default_no_paragraph_commands{$prefix.'index'} = 1;
-  }
-}
+my %no_paragraph_commands = %Texinfo::Commands::no_paragraph_commands;
 
 # does not include index commands
 my %close_preformatted_commands = %close_paragraph_commands;
@@ -591,11 +580,13 @@ sub parser(;$$)
   $parser->{'line_commands'} = dclone(\%line_commands);
   $parser->{'brace_commands'} = dclone(\%brace_commands);
   $parser->{'valid_nestings'} = dclone(\%default_valid_nestings);
-  $parser->{'no_paragraph_commands'} = {%default_no_paragraph_commands};
+  $parser->{'no_paragraph_commands'} = {%no_paragraph_commands};
   $parser->{'index_names'} = dclone(\%index_names);
   $parser->{'command_index'} = {%command_index};
-  $parser->{'close_paragraph_commands'} = {%default_close_paragraph_commands};
+  $parser->{'index_entry_commands'} = {%index_entry_command_commands};
+  $parser->{'close_paragraph_commands'} = {%close_paragraph_commands};
   $parser->{'close_preformatted_commands'} = {%close_preformatted_commands};
+  $parser->{'basic_inline_commands'} = {%contain_basic_inline_commands};
 
   # following is common with simple_parser
   # other initializations
@@ -606,7 +597,6 @@ sub parser(;$$)
   $parser->{'nesting_context'}->{'basic_inline_stack_on_line'} = [];
   $parser->{'nesting_context'}->{'basic_inline_stack_block'} = [];
   $parser->{'nesting_context'}->{'regions_stack'} = [];
-  $parser->{'basic_inline_commands'} = {%default_basic_inline_commands};
 
   $parser->_init_context_stack();
 
@@ -624,19 +614,12 @@ sub parser(;$$)
   return $parser;
 }
 
-# simple parser initialization.  The only difference with a regular parser
-# is that the dynamical @-commands groups and indices information references
-# that are initialized in each regular parser are initialized once for all
-# and shared among simple parsers.  It is used in gdt() and this has a sizable
-# effect on performance.
-my $simple_parser_line_commands = dclone(\%line_commands);
-my $simple_parser_brace_commands = dclone(\%brace_commands);
-my $simple_parser_valid_nestings = dclone(\%default_valid_nestings);
-my $simple_parser_no_paragraph_commands = {%default_no_paragraph_commands};
-my $simple_parser_index_names = dclone(\%index_names);
-my $simple_parser_command_index = {%command_index};
-my $simple_parser_close_paragraph_commands = {%default_close_paragraph_commands};
-my $simple_parser_close_preformatted_commands = {%close_preformatted_commands};
+# simple parser initialization.  A simple parser is a restricted parser,
+# in which new commands are not defined (no user-defined macros, alias,
+# no new index commands), and index entries are not set.  Therefore,
+# the default data can be used as it won't be modified and most
+# indices information is not needed at all.  It is used in gdt() and this
+# has a sizable effect on performance.
 sub simple_parser(;$)
 {
   my $conf = shift;
@@ -644,8 +627,7 @@ sub simple_parser(;$)
   my $parser = dclone(\%parser_default_configuration);
   bless $parser;
 
-  # Flag to say that some parts of the parser should not be modified,
-  # as they are reused among all parsers returned from this function.
+  # Flag to say that some parts of the parser should not be modified.
   $parser->{'restricted'} = 1;
 
   _setup_conf($parser, $conf);
@@ -653,14 +635,18 @@ sub simple_parser(;$)
   print STDERR "!!!!!!!!!!!!!!!! RESETTING THE PARSER !!!!!!!!!!!!!!!!!!!!!\n"
     if ($parser->{'DEBUG'});
 
-  $parser->{'line_commands'} = $simple_parser_line_commands;
-  $parser->{'brace_commands'} = $simple_parser_brace_commands;
-  $parser->{'valid_nestings'} = $simple_parser_valid_nestings;
-  $parser->{'no_paragraph_commands'} = $simple_parser_no_paragraph_commands;
-  $parser->{'index_names'} = $simple_parser_index_names;
-  $parser->{'command_index'} = $simple_parser_command_index;
-  $parser->{'close_paragraph_commands'} = $simple_parser_close_paragraph_commands;
-  $parser->{'close_preformatted_commands'} = $simple_parser_close_preformatted_commands;
+  $parser->{'line_commands'} = \%line_commands;
+  $parser->{'brace_commands'} = \%brace_commands;
+  $parser->{'valid_nestings'} = \%default_valid_nestings;
+  $parser->{'no_paragraph_commands'} = \%no_paragraph_commands;
+  # not needed, but not undef because it is exported to document
+  $parser->{'index_names'} = {};
+  # not needed
+  #$parser->{'command_index'} = {};
+  $parser->{'index_entry_commands'} = \%index_entry_command_commands;
+  $parser->{'close_paragraph_commands'} = \%close_paragraph_commands;
+  $parser->{'close_preformatted_commands'} = \%close_preformatted_commands;
+  $parser->{'basic_inline_commands'} = \%contain_basic_inline_commands;
 
   # other initializations
   $parser->{'definfoenclose'} = {};
@@ -670,7 +656,6 @@ sub simple_parser(;$)
   $parser->{'nesting_context'}->{'basic_inline_stack_on_line'} = [];
   $parser->{'nesting_context'}->{'basic_inline_stack_block'} = [];
   $parser->{'nesting_context'}->{'regions_stack'} = [];
-  $parser->{'basic_inline_commands'} = {%default_basic_inline_commands};
 
   $parser->_init_context_stack();
 
@@ -1884,7 +1869,7 @@ sub _gather_def_item($$;$)
   my $type;
   # means that we are between a @def*x and a @def
   if ($next_command
-        and $next_command ne 'defline' and $next_command ne 'deftypeline') {
+      and $next_command ne 'defline' and $next_command ne 'deftypeline') {
     $type = 'inter_def_item';
   } else {
     $type = 'def_item';
@@ -1916,7 +1901,13 @@ sub _gather_def_item($$;$)
       unshift @{$def_item->{'contents'}}, $item_content;
     }
   }
-  if (scalar(@{$def_item->{'contents'}})) {
+  my $gathered_content_count = scalar(@{$def_item->{'contents'}});
+  if ($gathered_content_count) {
+    if ($current->{'cmdname'} eq 'defblock'
+      # all content between @defblock and first @def*line
+        and $gathered_content_count == $contents_count) {
+      $def_item->{'type'} = 'before_defline';
+    }
     push @{$current->{'contents'}}, $def_item;
   }
 }
@@ -3122,9 +3113,14 @@ sub _split_delimiters
 {
   my ($self, $root, $current, $source_info) = @_;
 
-  if (defined $root->{'type'} # 'spaces' for spaces
-      or !defined $root->{'text'}) {
+  if ($root->{'type'} and ($root->{'type'} eq 'bracketed_arg'
+                           or defined $root->{'text'})) {
     return $root;
+  } elsif (!defined $root->{'text'}) {
+    my $new = {'type' => 'def_line_arg', 'parent' => $current,
+               'contents' => [$root]};
+    $root->{'parent'} = $current;
+    return $new;
   } else {
     my @elements;
     my $type;
@@ -3138,13 +3134,14 @@ sub _split_delimiters
     }
     while (1) {
       if ($text =~ s/^([^$chars]+)//) {
-        push @elements, {'text' => $1, 'parent' => $root->{'parent'}};
+        my $new = {'type' => 'def_line_arg', 'parent' => $root->{'parent'}};
+        $new->{'contents'} = [{'text' => $1, 'parent' => $new}];
+        push @elements, $new;
         $current_position = Texinfo::Common::relocate_source_marks(
-                                 $remaining_source_marks, $elements[-1],
-                                 $current_position, length($1));
+                              $remaining_source_marks, $new->{'contents'}->[0],
+                              $current_position, length($1));
       } elsif ($text =~ s/^([$chars])//) {
         push @elements, {'text' => $1, 'type' => 'delimiter',
-                         'extra' => {'def_role' => 'delimiter'},
                          'parent' => $root->{'parent'}};
         $current_position = Texinfo::Common::relocate_source_marks(
                                  $remaining_source_marks, $elements[-1],
@@ -3169,7 +3166,8 @@ sub _split_def_args
 {
   my ($self, $root, $current, $source_info) = @_;
 
-  if ($root->{'type'} and $root->{'type'} eq 'spaces_inserted') {
+  if ($root->{'type'} and $root->{'type'} eq 'spaces'
+      and $root->{'info'} and $root->{'info'}->{'inserted'}) {
     return $root;
   } elsif (defined $root->{'text'}) {
     my @elements;
@@ -3192,9 +3190,6 @@ sub _split_def_args
                                $current_position, length($t));
       if ($type) {
         $e->{'type'} = $type;
-        if ($type eq 'spaces') {
-          $e->{'extra'} = {'def_role' => 'spaces'};
-        }
         $type = undef;
       } else {
         $type = 'spaces';
@@ -3216,8 +3211,7 @@ sub _split_def_args
   return $root;
 }
 
-# the index is set past the gathered or aggregated
-# element.
+# the index is set past the gathered or aggregated element.
 sub _next_bracketed_or_word_agg($$)
 {
   my $current = shift;
@@ -3231,7 +3225,6 @@ sub _next_bracketed_or_word_agg($$)
     }
     my $element = $current->{'contents'}->[$$index_ref];
     if ($element->{'type'} and ($element->{'type'} eq 'spaces'
-                                or $element->{'type'} eq 'spaces_inserted'
                                 or $element->{'type'} eq 'delimiter')) {
       last if ($num > 0);
 
@@ -3245,12 +3238,18 @@ sub _next_bracketed_or_word_agg($$)
 
   return undef if ($num == 0);
 
-  return $current->{'contents'}->[$$index_ref -1]
-    if ($num == 1);
-
+  if ($num == 1) {
+    my $element = $current->{'contents'}->[$$index_ref -1];
+    if ($element->{'type'} and ($element->{'type'} eq 'bracketed_arg'
+                                or $element->{'type'} eq 'def_line_arg'
+                       or $element->{'type'} eq 'untranslated_def_line_arg')) {
+      # there is only one bracketed element
+      return $element;
+    }
+  }
   my @gathered_contents
     = splice(@{$current->{'contents'}}, $$index_ref - $num, $num);
-  my $new = {'type' => 'def_aggregate', 'parent' => $current,
+  my $new = {'type' => 'def_line_arg', 'parent' => $current,
              'contents' => \@gathered_contents};
   foreach my $content (@gathered_contents) {
     $content->{'parent'} = $new;
@@ -3275,6 +3274,8 @@ sub _parse_def($$$$)
   my $arg_type;
   my $arg_types_nr;
 
+  my $inserted_category = 0;
+
   # could have used def_aliases, but use code more similar with the XS parser
   if ($def_alias_commands{$command}) {
     my $real_command = $def_aliases{$command};
@@ -3289,28 +3290,33 @@ sub _parse_def($$$$)
       ($translation_context, $category) = @$category_translation_context;
     }
 
-    my $bracketed = { 'type' => 'bracketed_inserted',
-                      'parent' => $current };
-    my $content = { 'text' => $category, 'parent' => $bracketed };
+    $inserted_category = 1;
+    my $def_line_arg = {'type' => 'def_line_arg',
+                        'parent' => $current};
+    my $content = { 'text' => $category, 'parent' => $def_line_arg };
     # the category string is an english string (such as Function).  If
     # documentlanguage is set it needs to be translated during the conversion.
     if (defined($self->{'documentlanguage'})) {
+      $def_line_arg->{'type'} = 'untranslated_def_line_arg';
       $content->{'type'} = 'untranslated';
-      $content->{'extra'} = {'documentlanguage' => $self->{'documentlanguage'}};
+      $def_line_arg->{'extra'}
+         = {'documentlanguage' => $self->{'documentlanguage'}};
       if (defined($translation_context)) {
-        $content->{'extra'}->{'translation_context'} = $translation_context;
+        $def_line_arg->{'extra'}->{'translation_context'}
+          = $translation_context;
       }
     }
-    @{$bracketed->{'contents'}} = ($content);
+    @{$def_line_arg->{'contents'}} = ($content);
 
-    unshift @contents, $bracketed,
-                       { 'text' => ' ', 'type' => 'spaces_inserted',
+    unshift @contents, $def_line_arg,
+                       { 'text' => ' ', 'type' => 'spaces',
+                         'info' => {'inserted' => 1},
                          'parent' => $current,
-                         'extra' => {'def_role' => 'spaces'},
                        };
 
     $command = $def_aliases{$command};
   }
+
   @args = @{$def_map{$command}};
   $arg_type = pop @args if ($args[-1] eq 'arg' or $args[-1] eq 'argtype');
   # If $arg_type is not set (for @def* commands that are not documented
@@ -3332,24 +3338,25 @@ sub _parse_def($$$$)
   for ($i = 0; $i < $arg_types_nr; $i++) {
     my $element = _next_bracketed_or_word_agg($current, \$contents_idx);
     if ($element) {
-      $result{$args[$i]} = $element;
+      my $new_def_type = {'type' => 'def_'.$args[$i],
+                          'parent' => $element->{'parent'}};
+      $new_def_type->{'contents'} = [$element];
+      $element->{'parent'} = $new_def_type;
+      $current->{'contents'}->[$contents_idx - 1] = $new_def_type;
+
+      $result{$args[$i]} = $new_def_type;
     } else {
       last;
     }
   }
-
-  foreach my $type (keys(%result)) {
-    my $element = $result{$type};
-    $element->{'extra'} = {} if (!$element->{'extra'});
-    $element->{'extra'}->{'def_role'} = $type;
+  if ($inserted_category) {
+    $current->{'contents'}->[0]->{'info'} = {'inserted' => 1};
   }
 
   my @args_results = map (_split_delimiters($self, $_, $current, $source_info),
                           splice(@{$current->{'contents'}}, $contents_idx,
                                  scalar(@{$current->{'contents'}}) - $contents_idx));
-  push @{$current->{'contents'}}, @args_results;
 
-  # set def_role for the rest of arguments.
   my $set_type_not_arg = 1;
   # For some commands, alternate between "arg" and "typearg".
   # In that case $set_type_not_arg is both used to set to argtype and
@@ -3358,24 +3365,36 @@ sub _parse_def($$$$)
 
   my $type = $set_type_not_arg;
 
-  foreach my $content (@args_results) {
+  for (my $j = 0; $j < scalar(@args_results); $j++) {
+    my $content = $args_results[$j];
+    my $def_type;
     if ($content->{'type'} and $content->{'type'} eq 'spaces') {
     } elsif ($content->{'type'} and $content->{'type'} eq 'delimiter') {
       $type = $set_type_not_arg;
-    } elsif ($content->{'cmdname'} and $content->{'cmdname'} ne 'code') {
-      $content->{'extra'} = {} if (!$content->{'extra'});
-      $content->{'extra'}->{'def_role'} = 'arg';
+    } elsif ($content->{'type'} and $content->{'type'} eq 'def_line_arg'
+             and $content->{'contents'}
+             and scalar(@{$content->{'contents'}}) == 1
+             and $content->{'contents'}->[0]->{'cmdname'}
+             and $content->{'contents'}->[0]->{'cmdname'} ne 'code') {
+      $def_type = 'def_arg';
       $type = $set_type_not_arg;
     } else {
-      $content->{'extra'} = {} if (!$content->{'extra'});
       if ($type == 1) {
-        $content->{'extra'}->{'def_role'} = 'arg';
+        $def_type = 'def_arg';
       } else {
-        $content->{'extra'}->{'def_role'} = 'typearg';
+        $def_type = 'def_typearg';
       }
       $type = $type * $set_type_not_arg;
     }
+    if (defined($def_type)) {
+      my $new_def_type = {'type' => $def_type,
+                          'parent' => $content->{'parent'},};
+      $new_def_type->{'contents'} = [$content];
+      $content->{'parent'} = $new_def_type;
+      $args_results[$j] = $new_def_type;
+    }
   }
+  push @{$current->{'contents'}}, @args_results;
 
   return \%result;
 }
@@ -3760,7 +3779,7 @@ sub _end_line_misc_line($$$)
   } elsif ($command eq 'listoffloats') {
     _parse_float_type($current);
   } else {
-    if ($self->{'command_index'}->{$current->{'cmdname'}}) {
+    if ($self->{'index_entry_commands'}->{$current->{'cmdname'}}) {
       $current->{'type'} = 'index_entry_command';
       $current->{'info'} = {} if (!$current->{'info'});
       $current->{'info'}->{'command_name'} = $current->{'cmdname'};
@@ -3773,10 +3792,11 @@ sub _end_line_misc_line($$$)
     } else {
       if (($command eq 'item' or $command eq 'itemx')
           and $current->{'parent'}->{'cmdname'}
-          and $self->{'command_index'}->{$current->{'parent'}->{'cmdname'}}) {
+          and ($current->{'parent'}->{'cmdname'} eq 'ftable'
+               or $current->{'parent'}->{'cmdname'} eq 'vtable')) {
         _enter_index_entry($self, $current->{'parent'}->{'cmdname'},
                            $current, $source_info);
-      } elsif ($self->{'command_index'}->{$current->{'cmdname'}}) {
+      } elsif ($self->{'index_entry_commands'}->{$current->{'cmdname'}}) {
         _enter_index_entry($self, $current->{'cmdname'},
                            $current, $source_info);
       }
@@ -3851,11 +3871,12 @@ sub _end_line_misc_line($$$)
       } else {
         $source_mark = { 'sourcemark_type' => $command };
       }
-      # this is in order to keep source marks that are within a
-      # removed element.  For the XS parser it is also easier to
+      # keep the elements, also keeping source marks that are within
+      # removed elements.  For the XS parser it is also easier to
       # manage the source mark memory which can stay associated
       # to the element.
       my $removed_element = _pop_element_from_contents($self, $current);
+      delete $removed_element->{'parent'};
       $source_mark->{'element'} = $removed_element;
       _register_source_mark($self, $current, $source_mark);
     }
@@ -3955,15 +3976,16 @@ sub _end_line_def_line($$$)
     # do a standard index entry tree
     my $index_entry;
     if (defined($name_element)) {
+      my $arg = $name_element->{'contents'}->[0];
       $index_entry = $name_element
        # empty bracketed
-        unless ($name_element->{'type'}
-                and $name_element->{'type'} eq 'bracketed_arg'
-                and (!$name_element->{'contents'}
-                     or (!scalar(@{$name_element->{'contents'}}))
-                     or (scalar(@{$name_element->{'contents'}}) == 1
-                        and defined($name_element->{'contents'}->[0]->{'text'})
-                        and $name_element->{'contents'}->[0]->{'text'} !~ /\S/)));
+        unless ($arg->{'type'}
+                and $arg->{'type'} eq 'bracketed_arg'
+                and (!$arg->{'contents'}
+                     or (!scalar(@{$arg->{'contents'}}))
+                     or (scalar(@{$arg->{'contents'}}) == 1
+                        and defined($arg->{'contents'}->[0]->{'text'})
+                        and $arg->{'contents'}->[0]->{'text'} !~ /\S/)));
     }
     if (defined($index_entry)) {
       if ($class_element) {
@@ -3971,9 +3993,13 @@ sub _end_line_def_line($$$)
         # in order to avoid calling gdt.
         # We need to store the language as well in case there are multiple
         # languages in the document.
-        if ($command_index{$def_command} eq 'fn'
-            or $command_index{$def_command} eq 'vr'
-                and $def_command ne 'defcv') {
+        if ($def_command eq 'defop'
+            or $def_command eq 'deftypeop'
+            or $def_command eq 'defmethod'
+            or $def_command eq 'deftypemethod'
+            or $def_command eq 'defivar'
+            or $def_command eq 'deftypeivar'
+            or $def_command eq 'deftypecv') {
           undef $index_entry;
           if (defined($self->{'documentlanguage'})) {
             $current->{'extra'}->{'documentlanguage'}
@@ -4226,7 +4252,8 @@ sub _end_line_starting_block($$$)
           unshift @{$current->{'args'}}, $block_line_arg;
         }
         my $inserted = { 'cmdname' => 'bullet',
-                         'type' => 'command_as_argument_inserted',
+                         'type' => 'command_as_argument',
+                         'info' => {'inserted' => 1},
                          'parent' => $block_line_arg };
         unshift @{$block_line_arg->{'contents'}}, $inserted;
         $current->{'extra'} = {} if (!$current->{'extra'});
@@ -4236,7 +4263,8 @@ sub _end_line_starting_block($$$)
       $current->{'extra'} = {} if (!$current->{'extra'});
       if (!$current->{'extra'}->{'command_as_argument'}) {
         my $inserted =  { 'cmdname' => 'asis',
-                          'type' => 'command_as_argument_inserted',
+                          'type' => 'command_as_argument',
+                         'info' => {'inserted' => 1},
                           'parent' => $current };
         unshift @{$current->{'args'}}, $inserted;
         $current->{'extra'}->{'command_as_argument'} = $inserted;
@@ -4294,7 +4322,7 @@ sub _end_line_starting_block($$$)
                   or $self->{'macros'}->{$name}
                   or $self->{'definfoenclose'}->{$name}
                   or $self->{'aliases'}->{$name}
-                  or $self->{'command_index'}->{$name}
+                  or $self->{'index_entry_commands'}->{$name}
                 );
                 if (($command_is_defined
                      and $command eq 'ifcommanddefined')
@@ -4777,8 +4805,8 @@ sub _is_index_element {
   my ($self, $element) = @_;
 
   if (!$element->{'cmdname'}
-        or (!$self->{'command_index'}->{$element->{'cmdname'}}
-             and $element->{'cmdname'} ne 'subentry')) {
+      or (!$self->{'index_entry_commands'}->{$element->{'cmdname'}}
+          and $element->{'cmdname'} ne 'subentry')) {
     return 0;
   }
   return 1;
@@ -5365,7 +5393,6 @@ sub _handle_other_command($$$$$)
       }
     }
     if ($arg_spec eq 'symbol') {
-      # TODO generalize?
       if ($command eq '\\' and $self->_top_context() ne 'ct_math') {
         $self->_line_warn(sprintf(
                    __("\@%s should only appear in math context"),
@@ -7038,7 +7065,7 @@ sub _process_remaining_on_line($$$$)
   # handle unknown @-command
   if ($command and !$all_commands{$command}
       and !$self->{'definfoenclose'}->{$command}
-      and !$self->{'command_index'}->{$command}
+      and !$self->{'index_entry_commands'}->{$command}
       # @txiinternalvalue is invalid unless accept_internalvalue is set
       and !($command eq 'txiinternalvalue'
             and $self->{'accept_internalvalue'})
@@ -7760,9 +7787,9 @@ sub _parse_line_command_args($$$)
         delete $self->{'aliases'}->{$cmd_name};
         # unset @def*index effect
         delete $self->{'line_commands'}->{$cmd_name};
-        #delete $self->{'close_paragraph_commands'}->{$cmd_name};
         delete $self->{'no_paragraph_commands'}->{$cmd_name};
         delete $self->{'basic_inline_commands'}->{$cmd_name};
+        delete $self->{'index_entry_commands'}->{$cmd_name};
         delete $self->{'command_index'}->{$cmd_name};
         # consistent with XS parser, value not actually used anywhere.
         $self->{'brace_commands'}->{$cmd_name} = 'style_other';
@@ -7827,9 +7854,9 @@ sub _parse_line_command_args($$$)
         delete $self->{'brace_commands'}->{$index_cmdname};
         delete $self->{'valid_nestings'}->{$index_cmdname};
         $self->{'line_commands'}->{$index_cmdname} = 'line';
-        #$self->{'close_paragraph_commands'}->{$index_cmdname} = 1;
         $self->{'no_paragraph_commands'}->{$index_cmdname} = 1;
         $self->{'basic_inline_commands'}->{$index_cmdname} = 1;
+        $self->{'index_entry_commands'}->{$index_cmdname} = $name;
         $self->{'command_index'}->{$index_cmdname} = $name;
       }
     } else {
@@ -7839,30 +7866,35 @@ sub _parse_line_command_args($$$)
   } elsif ($command eq 'synindex' || $command eq 'syncodeindex') {
     # REMACRO
     if ($line =~ /^([[:alnum:]][[:alnum:]\-]*)\s+([[:alnum:]][[:alnum:]\-]*)$/) {
-      my $index_name_from = $1;
-      my $index_name_to = $2;
-      my $index_from = $self->{'index_names'}->{$index_name_from};
-      my $index_to = $self->{'index_names'}->{$index_name_to};
-      $self->_line_error(sprintf(__("unknown source index in \@%s: %s"),
-                                 $command, $index_name_from), $source_info)
-        unless $index_from;
-      $self->_line_error(sprintf(__("unknown destination index in \@%s: %s"),
-                                 $command, $index_name_to), $source_info)
-        unless $index_to;
-      if ($index_from and $index_to) {
-        my $current_to = Texinfo::Common::ultimate_index($self->{'index_names'},
+      if ($self->{'restricted'}) {
+        # do nothing
+      } else {
+        my $index_name_from = $1;
+        my $index_name_to = $2;
+        my $index_from = $self->{'index_names'}->{$index_name_from};
+        my $index_to = $self->{'index_names'}->{$index_name_to};
+        $self->_line_error(sprintf(__("unknown source index in \@%s: %s"),
+                                   $command, $index_name_from), $source_info)
+          unless $index_from;
+        $self->_line_error(sprintf(__("unknown destination index in \@%s: %s"),
+                                   $command, $index_name_to), $source_info)
+          unless $index_to;
+        if ($index_from and $index_to) {
+          my $current_to
+               = Texinfo::Common::ultimate_index($self->{'index_names'},
                                                          $index_to);
-        # find the merged indices recursively avoiding loops
-        if ($current_to->{'name'} ne $index_name_from) {
-          my $in_code = 0;
-          $in_code = 1 if ($command eq 'syncodeindex');
-          $index_from->{'in_code'} = $in_code;
-          $index_from->{'merged_in'} = $current_to->{'name'};
-          $args = [$index_name_from, $index_name_to];
-        } else {
-          $self->_line_warn(sprintf(__(
-                         "\@%s leads to a merging of %s in itself, ignoring"),
-                             $command, $index_name_from), $source_info);
+          # find the merged indices recursively avoiding loops
+          if ($current_to->{'name'} ne $index_name_from) {
+            my $in_code = 0;
+            $in_code = 1 if ($command eq 'syncodeindex');
+            $index_from->{'in_code'} = $in_code;
+            $index_from->{'merged_in'} = $current_to->{'name'};
+            $args = [$index_name_from, $index_name_to];
+          } else {
+            $self->_line_warn(sprintf(__(
+                           "\@%s leads to a merging of %s in itself, ignoring"),
+                               $command, $index_name_from), $source_info);
+          }
         }
       }
     } else {
@@ -7870,8 +7902,10 @@ sub _parse_line_command_args($$$)
                                 $command, $line), $source_info);
     }
   } elsif ($command eq 'printindex') {
+    if ($self->{'restricted'}) {
+      # do nothing
     # REMACRO
-    if ($line =~ /^([[:alnum:]][[:alnum:]\-]*)$/) {
+    } elsif ($line =~ /^([[:alnum:]][[:alnum:]\-]*)$/) {
       my $name = $1;
       if (!exists($self->{'index_names'}->{$name})) {
         $self->_line_error(sprintf(__("unknown index `%s' in \@printindex"),
@@ -8330,10 +8364,10 @@ element:
 
 =item def_line
 
-This type may be associated with a definition command with a x form,
-like C<@defunx>, C<@defvrx>.  For the form without x, the associated
-I<def_line> is the first C<contents> element.  It is described in more
-details below.
+This type is associated with a definition command with a x form,
+like C<@defunx>, C<@defvrx> and with C<@defline> and C<@deftypeline>.
+For the form without x, the associated I<def_line> is the first C<contents>
+element.  It is described in more details below.
 
 =item definfoenclose_command
 
@@ -8374,6 +8408,15 @@ at all):
 
 Space after a node in the menu entry, when there is no description,
 and space appearing after the description line.
+
+=item delimiter
+
+=item spaces
+
+Spaces on definition command line separating the definition command arguments.
+Delimiters, such as comma, square brackets and parentheses appearing in
+definition command line arguments at the end of the line, separated from
+surrounding texts during the parsing phase.
 
 =item empty_line
 
@@ -8422,8 +8465,8 @@ Text appearing before real content, including the C<\input texinfo.tex>.
 =item untranslated
 
 English text added by the parser that may need to be translated
-during conversion.  Happens for C<@def*> @-commands aliases that
-leads to prepending text such as 'Function'.
+during conversion.  Happens for definition line @-commands aliases that
+leads to prepending text such as ``Function''.
 
 =back
 
@@ -8493,6 +8536,11 @@ be collected to know when a top-level brace command is closed.  In C<@math>,
 in raw output format brace commands and within brace @-commands in raw output
 format block commands.
 
+=item before_defline
+
+A container for content before the first C<@defline> or C<@deftypeline>
+in C<@defblock>.
+
 =item before_item
 
 A container for content before the first C<@item> of block @-commands
@@ -8546,9 +8594,21 @@ argument text (which does not contain the braces) and does not contain other
 elements.  It should not appear directly in the tree as the user defined
 linemacro call is replaced by the linemacro body.
 
-=item def_aggregate
+=item def_category
 
-Contains several elements that together are a single unit on a @def* line.
+=item def_class
+
+=item def_type
+
+=item def_name
+
+=item def_typearg
+
+=item def_arg
+
+Definition line arguments containers corresponding to the different parts of a
+definition line command.  Contains one C<bracketed_arg>, C<def_line_arg> or
+C<untranslated_def_line_arg> container.
 
 =item def_line
 
@@ -8559,9 +8619,34 @@ Contains several elements that together are a single unit on a @def* line.
 The I<def_line> type is either associated with a container within a
 definition command, or is the type of a definition command with a x form,
 like C<@deffnx>, or C<@defline>.  It holds the definition line arguments.
+For each element in a C<def_line> I<line_arg> or I<block_line_arg>, the type of
+the element describes the meaning of the element.  It is one of
+I<def_category>, I<def_name>, I<def_class>, I<def_type>, I<def_arg>,
+I<def_typearg>, I<spaces> or I<delimiter>, depending on the definition.
+
 The container with type I<def_item> holds the definition text content.
 Content appearing before a definition command with a x form is in
 an I<inter_def_item> container.
+
+=item def_line_arg
+
+=item untranslated_def_line_arg
+
+the I<def_line_arg> contains one or several elements that together are a single
+unit on a definition command line.  This container is very similar with a
+I<bracketed_arg> on a definition line, except that there is no bracket.
+Appears in definition line arguments containers such as I<def_category>,
+I<def_arg> or similar.
+
+The I<untranslated_def_line_arg> is similar, but only happens for automatically
+added categories and contains only a text element.  For example, the C<deffun>
+line I<def_category> container may contain an I<untranslated_def_line_arg> type
+container containing itself a text element with ``Function'' as text, if the
+document language demands a translation.  Note that the
+I<untranslated_def_line_arg> is special, as, in general, it should not be
+recursed into, as the text within is untranslated, but the untranslated text
+should be gathered when converting the I<untranslated_def_line_arg> type
+container.
 
 =item macro_call
 
@@ -8706,6 +8791,12 @@ call.
 
 C<@verb> delimiter is in I<delimiter>.
 
+=item inserted
+
+Set if the element is not in the Texinfo input code, but is inserted
+as a default for @-command argument or as a definition command automatically
+inserted category (for example I<Function> for C<@defun>).
+
 =item spaces_after_argument
 
 A reference to an element containing the spaces after @-command arguments
@@ -8765,9 +8856,15 @@ associated index entry and for @anchor.
 The index entry information is associated to @-commands that have an associated
 index entry.  The associated information should not be directly accessed,
 instead L<C<Texinfo::Common::lookup_index_entry>|Texinfo::Common/($index_entry, $index_info) = lookup_index_entry($index_entry_info, $indices_information)>
-should be called on the C<extra> I<index_entry> value.  The
-I<$indices_information> is the information on a Texinfo manual indices obtained
-from
+should be called on the C<extra> I<index_entry> value:
+
+   my ($index_entry, $index_info)
+    = Texinfo::Common::lookup_index_entry(
+                        $element->{'extra'}->{'index_entry'},
+                        $indices_information);
+
+The I<$indices_information> is the information on a Texinfo manual indices
+obtained from
 L<< C<Texinfo::Document::indices_information>|Texinfo::Document/$indices_information = $document->indices_information() >>.
 The index entry information hash returned by
 C<Texinfo::Common::lookup_index_entry> is described in
@@ -8839,11 +8936,6 @@ If it is an x form, it has I<not_after_command> set if not
 appearing after the definition command without x.
 
 =item C<def_line>
-
-For each element in a C<def_line>, the key I<def_role> holds a string
-describing the meaning of the element.  It is one of
-I<category>, I<name>, I<class>, I<type>, I<arg>, I<typearg>,
-I<spaces> or I<delimiter>, depending on the definition.
 
 The I<def_index_element> is a Texinfo tree element corresponding to
 the index entry associated to the definition line, based on the
@@ -9015,7 +9107,7 @@ The part preceding the command is in I<associated_part>.
 If the level of the document was modified by C<@raisections>
 or C<@lowersections>, the differential level is in I<level_modifier>.
 
-=item C<untranslated>
+=item C<untranslated_def_line_arg>
 
 I<documentlanguage> holds the C<@documentlanguage> value.
 If there is a translation context, it should be in I<translation_context>.

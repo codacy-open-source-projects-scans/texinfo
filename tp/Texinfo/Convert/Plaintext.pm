@@ -21,7 +21,7 @@
 
 package Texinfo::Convert::Plaintext;
 
-use 5.00405;
+use 5.006;
 
 # See comment at start of HTML.pm
 use if $] >= 5.012, feature => qw(unicode_strings);
@@ -48,8 +48,7 @@ use Texinfo::Convert::Converter;
 use Texinfo::Convert::Paragraph;
 
 require Exporter;
-use vars qw($VERSION @ISA);
-@ISA = qw(Texinfo::Convert::Converter);
+our @ISA = qw(Texinfo::Convert::Converter);
 
 # Some extra initialization for the first time this module is loaded.
 # This could be done in a UNITCHECK block, introduced in Perl 5.10.
@@ -65,7 +64,7 @@ sub import {
   goto &Exporter::import;
 }
 
-$VERSION = '7.1dev';
+our $VERSION = '7.1dev';
 
 
 # commands that are of use for formatting.
@@ -626,9 +625,6 @@ sub convert_tree($$)
   return $result;
 }
 
-# the initialization of module specific state is not done in output()
-# as output() is the generic Converter::Convert function, so it needs
-# to be done here by calling _initialize_converter_state.
 sub convert_output_unit($$)
 {
   my ($self, $output_unit) = @_;
@@ -2142,77 +2138,64 @@ sub _convert($$)
 
   # process text
   if (defined($element->{'text'})) {
-    if (!$type or $type ne 'untranslated') {
-      if (!$formatter->{'_top_formatter'}) {
-        if ($type and $type eq 'raw') {
-          _stream_output($self,
-            add_next($formatter->{'container'}, $element->{'text'}),
-            $formatter->{'container'});
-        } else {
-          # Convert ``, '', `, ', ---, -- in $COMMAND->{'text'} to their
-          # output, possibly coverting to upper case as well.
-          my $text = $element->{'text'};
-
-          if ($formatter->{'upper_case_stack'}->[-1]->{'upper_case'}) {
-            $text = _protect_sentence_ends($text);
-            $text = uc($text);
-          }
-          if (!$self->{'ascii_dashes_and_quotes'} and $self->{'to_utf8'}) {
-            $text = Texinfo::Convert::Unicode::unicode_text($text,
-                        $formatter->{'font_type_stack'}->[-1]->{'monospace'});
-          } elsif (!$formatter->{'font_type_stack'}->[-1]->{'monospace'}) {
-            $text = _process_text_internal($text);
-          }
-
-          # inlined below for efficiency
-          #_stream_output($self,
-          #               add_text ($formatter->{'container'}, $text),
-          #               $formatter->{'container'});
-
-          my $added_text = add_text ($formatter->{'container'}, $text);
-
-          my $count_context = $self->{'count_context'}->[-1];
-
-          if (defined($formatter->{'container'})) {
-            # count number of newlines
-            #my $count = $added_text =~ tr/\n//;
-            my $count = Texinfo::Convert::Paragraph::end_line_count($formatter->{'container'});
-
-            $count_context->{'lines'} += $count;
-          }
-
-          if (!defined $count_context->{'pending_text'}) {
-            $count_context->{'pending_text'} = '';
-          }
-          $count_context->{'pending_text'} .= $added_text;
-        }
-        return;
-      # the following is only possible if paragraphindent is set to asis
-      } elsif ($type and $type eq 'spaces_before_paragraph') {
-        _stream_output($self, $element->{'text'});
-        return;
-      # ignore text outside of any format, but warn if ignored text not empty
-      } elsif ($element->{'text'} =~ /\S/) {
-        $self->present_bug_message("ignored text not empty `$element->{'text'}'",
-                                   $element);
-        return;
-      } else {
-        # miscellaneous top-level whitespace - possibly after an @image
+    if (!$formatter->{'_top_formatter'}) {
+      if ($type and $type eq 'raw') {
         _stream_output($self,
-                       add_text($formatter->{'container'}, $element->{'text'}),
-                       $formatter->{'container'});
-        return;
-      }
-    } else {
-      my $tree;
-      if ($element->{'extra'}
-          and $element->{'extra'}->{'translation_context'}) {
-        $tree = $self->pcdt($element->{'extra'}->{'translation_context'},
-                            $element->{'text'});
+          add_next($formatter->{'container'}, $element->{'text'}),
+          $formatter->{'container'});
       } else {
-        $tree = $self->cdt($element->{'text'});
+        # Convert ``, '', `, ', ---, -- in $COMMAND->{'text'} to their
+        # output, possibly coverting to upper case as well.
+        my $text = $element->{'text'};
+
+        if ($formatter->{'upper_case_stack'}->[-1]->{'upper_case'}) {
+          $text = _protect_sentence_ends($text);
+          $text = uc($text);
+        }
+        if (!$self->{'ascii_dashes_and_quotes'} and $self->{'to_utf8'}) {
+          $text = Texinfo::Convert::Unicode::unicode_text($text,
+                      $formatter->{'font_type_stack'}->[-1]->{'monospace'});
+        } elsif (!$formatter->{'font_type_stack'}->[-1]->{'monospace'}) {
+          $text = _process_text_internal($text);
+        }
+
+        # inlined below for efficiency
+        #_stream_output($self,
+        #               add_text ($formatter->{'container'}, $text),
+        #               $formatter->{'container'});
+
+        my $added_text = add_text ($formatter->{'container'}, $text);
+
+        my $count_context = $self->{'count_context'}->[-1];
+
+        if (defined($formatter->{'container'})) {
+          # count number of newlines
+          #my $count = $added_text =~ tr/\n//;
+          my $count = Texinfo::Convert::Paragraph::end_line_count($formatter->{'container'});
+
+          $count_context->{'lines'} += $count;
+        }
+
+        if (!defined $count_context->{'pending_text'}) {
+          $count_context->{'pending_text'} = '';
+        }
+        $count_context->{'pending_text'} .= $added_text;
       }
-      _convert($self, $tree);
+      return;
+    # the following is only possible if paragraphindent is set to asis
+    } elsif ($type and $type eq 'spaces_before_paragraph') {
+      _stream_output($self, $element->{'text'});
+      return;
+    # ignore text outside of any format, but warn if ignored text not empty
+    } elsif ($element->{'text'} =~ /\S/) {
+      $self->present_bug_message("ignored text not empty `$element->{'text'}'",
+                                 $element);
+      return;
+    } else {
+      # miscellaneous top-level whitespace - possibly after an @image
+      _stream_output($self,
+                     add_text($formatter->{'container'}, $element->{'text'}),
+                     $formatter->{'container'});
       return;
     }
   }
@@ -3065,8 +3048,9 @@ sub _convert($$)
       # remark:
       # cartouche group and raggedright -> nothing on format stack
 
+      my $format_menu = $self->get_conf('FORMAT_MENU');
       if ($menu_commands{$command}
-          and $self->get_conf('FORMAT_MENU') eq 'nomenu') {
+          and (!$format_menu or $format_menu eq 'nomenu')) {
         return '';
       }
       if ($self->{'preformatted_context_commands'}->{$command}
@@ -3625,7 +3609,8 @@ sub _convert($$)
               'name' => $name,
               'type' => $type,
               'arguments' => $arguments};
-            if ($self->get_conf('deftypefnnewline') eq 'on'
+            if ($self->get_conf('deftypefnnewline')
+                and $self->get_conf('deftypefnnewline') eq 'on'
                 and $command eq 'deftypefn') {
               if ($omit_def_space) {
                 $tree
@@ -3652,7 +3637,8 @@ sub _convert($$)
              'category' => $category,
              'type' => $type,
              'name' => $name};
-            if ($self->get_conf('deftypefnnewline') eq 'on'
+            if ($self->get_conf('deftypefnnewline')
+                and $self->get_conf('deftypefnnewline') eq 'on'
                 and $command eq 'deftypefn') {
               $tree = $self->cdt('@tie{}-- {category}:@*{type}@*{name}',
                                  $strings);
@@ -3717,7 +3703,8 @@ sub _convert($$)
              'class' => $class,
              'type' => $type,
              'arguments' => $arguments};
-            if ($self->get_conf('deftypefnnewline') eq 'on') {
+            if ($self->get_conf('deftypefnnewline')
+                and $self->get_conf('deftypefnnewline') eq 'on') {
               if ($omit_def_space) {
                 $tree
                   = $self->cdt('@tie{}-- {category} on {class}:@*{type}@*{name}{arguments}',
@@ -3744,7 +3731,8 @@ sub _convert($$)
              'type' => $type,
              'class' => $class,
              'name' => $name};
-            if ($self->get_conf('deftypefnnewline') eq 'on') {
+            if ($self->get_conf('deftypefnnewline')
+                and $self->get_conf('deftypefnnewline') eq 'on') {
               $tree
                 = $self->cdt('@tie{}-- {category} on {class}:@*{type}@*{name}',
                              $strings);
@@ -4051,6 +4039,17 @@ sub _convert($$)
       _open_code($formatter);
     } elsif ($type eq '_stop_upper_case') {
       push @{$formatter->{'upper_case_stack'}}, {};
+    } elsif ($type eq 'untranslated_def_line_arg') {
+      my $tree;
+      if ($element->{'extra'}
+          and $element->{'extra'}->{'translation_context'}) {
+        $tree = $self->pcdt($element->{'extra'}->{'translation_context'},
+                            $element->{'contents'}->[0]->{'text'});
+      } else {
+        $tree = $self->cdt($element->{'contents'}->[0]->{'text'});
+      }
+      _convert($self, $tree);
+      return;
     }
   }
 
@@ -4285,6 +4284,7 @@ sub _convert($$)
                                               $identifiers_target, $node);
         if ($menu_node) {
           $self->_convert($menu_node);
+          _add_newline_if_needed($self);
         }
       }
     }

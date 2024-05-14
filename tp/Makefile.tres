@@ -173,6 +173,12 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/converters_tests/contents_at_document_begin_inline/res_html \
   t/results/converters_tests/contents_at_document_begin_separate_element.pl \
   t/results/converters_tests/contents_at_document_begin_separate_element/res_html \
+  t/results/converters_tests/conversion_with_undef_customization.pl \
+  t/results/converters_tests/conversion_with_undef_customization/res_docbook \
+  t/results/converters_tests/conversion_with_undef_customization/res_html \
+  t/results/converters_tests/conversion_with_undef_customization/res_info \
+  t/results/converters_tests/conversion_with_undef_customization/res_latex \
+  t/results/converters_tests/conversion_with_undef_customization/res_xml \
   t/results/converters_tests/definition_commands.pl \
   t/results/converters_tests/definition_commands/res_html \
   t/results/converters_tests/definition_commands/res_latex \
@@ -185,6 +191,12 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/converters_tests/empty/res_xml \
   t/results/converters_tests/empty_accent.pl \
   t/results/converters_tests/enumerate_above_ten.pl \
+  t/results/converters_tests/extension_undef.pl \
+  t/results/converters_tests/extension_undef/res_docbook \
+  t/results/converters_tests/extension_undef/res_html \
+  t/results/converters_tests/extension_undef/res_info \
+  t/results/converters_tests/extension_undef/res_latex \
+  t/results/converters_tests/extension_undef/res_xml \
   t/results/converters_tests/footnote_no_number.pl \
   t/results/converters_tests/footnote_no_number_separate.pl \
   t/results/converters_tests/form_feeds.pl \
@@ -430,7 +442,9 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/def/all_commands_printindex.pl \
   t/results/def/all_empty_def.pl \
   t/results/def/ampchar.pl \
+  t/results/def/bracketed_arg_no_space.pl \
   t/results/def/code_in_def.pl \
+  t/results/def/comment_index_before_defline.pl \
   t/results/def/def_defx_mismatch.pl \
   t/results/def/def_groupings_args.pl \
   t/results/def/defblock_no_defline.pl \
@@ -465,6 +479,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/def/protected_brace.pl \
   t/results/def/ref_in_def.pl \
   t/results/def/space_in_def_for_index.pl \
+  t/results/def/text_block_before_defline.pl \
   t/results/def/wrong_braces_simple.pl \
   t/results/def/wrong_braces_with_end_of_lines.pl \
   t/results/docbook_tests/between_node_and_section.pl \
@@ -671,6 +686,8 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/info_js_dir_html.pl \
   t/results/html_tests/info_js_dir_html_file.pl \
   t/results/html_tests/info_js_dir_html_file/res_html \
+  t/results/html_tests/info_js_dir_html_file_js_weblabels_file_undef.pl \
+  t/results/html_tests/info_js_dir_html_file_js_weblabels_file_undef/res_html \
   t/results/html_tests/info_js_dir_html_text.pl \
   t/results/html_tests/itemize_arguments.pl \
   t/results/html_tests/itemize_arguments/res_html \
@@ -765,6 +782,8 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/top_node_up_implicit_no_nodes.pl \
   t/results/html_tests/transliterated_names_conflicts.pl \
   t/results/html_tests/transliterated_names_conflicts/res_html \
+  t/results/html_tests/undef_split_and_big_rule.pl \
+  t/results/html_tests/undef_split_and_big_rule/res_html \
   t/results/html_tests/uref_accented_letter.pl \
   t/results/html_tests/uref_accented_letter_ascii.pl \
   t/results/html_tests/uref_accented_letter_latin1.pl \
@@ -793,6 +812,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/include/double_include.pl \
   t/results/include/include_at_end_line.pl \
   t/results/include/include_comment.pl \
+  t/results/include/include_in_removed_before_item.pl \
   t/results/include/include_setfilename_on_setfilename_line.pl \
   t/results/include/include_space.pl \
   t/results/include/include_space_comment.pl \
@@ -1182,7 +1202,6 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/languages/multiple_lang_chapters_texi2html.pl \
   t/results/languages/multiple_lang_chapters_texi2html/res_html \
   t/results/languages/multiple_lang_chapters_texi2html/res_info \
-  t/results/languages/no_documentlanguage_before_copying.pl \
   t/results/languages/simple_documentlanguage.pl \
   t/results/languages/unknown_language.pl \
   t/results/languages/unknown_region.pl \
@@ -1491,6 +1510,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/menu/entry_after_detailmenu.pl \
   t/results/menu/example_in_menu_comment.pl \
   t/results/menu/example_in_menu_description.pl \
+  t/results/menu/format_menu_undef.pl \
   t/results/menu/formats_in_menu.pl \
   t/results/menu/inlineraw_in_menu_description.pl \
   t/results/menu/invalid_info_menu_entry.pl \
@@ -2074,6 +2094,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/xml_tests/comments_on_block_command_lines.pl \
   t/results/xml_tests/comments_on_misc_command_line.pl \
   t/results/xml_tests/image_inline_or_not.pl \
+  t/results/xml_tests/inline_commands.pl \
   t/results/xml_tests/inlineifset_empty_second_arg.pl \
   t/results/xml_tests/lone_bye.pl \
   t/results/xml_tests/macro_and_args.pl \

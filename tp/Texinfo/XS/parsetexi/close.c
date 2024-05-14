@@ -240,7 +240,7 @@ close_command_cleanup (ELEMENT *current)
                     }
                 }
 
-              add_to_element_contents (last_contents_child(current), row);
+              add_to_element_contents (last_contents_child (current), row);
             }
           else
             {
@@ -302,12 +302,15 @@ close_command_cleanup (ELEMENT *current)
                                      pop_element_from_contents (before_item));
             }
 
-          /* Now if the ET_before_item is empty, remove it. */
+          /* Now if the ET_before_item is empty, remove it.  Note that the
+             some before_item content could also have been reparented in
+             gather_previous_item */
           if (is_container_empty (before_item)
               && before_item->source_mark_list.number == 0)
             {
-              destroy_element (remove_from_contents (current,
-                                                have_leading_spaces ? 1 : 0));
+              ELEMENT *removed = remove_from_contents (current,
+                                                have_leading_spaces ? 1 : 0);
+              destroy_element (removed);
             }
           else /* Non-empty ET_before_item */
             {
@@ -326,7 +329,7 @@ close_command_cleanup (ELEMENT *current)
                 {
                   int empty_format = 1;
                   /* Check for an element that could represent an @item in the
-                     block.  The type of this element will depend on the block 
+                     block.  The type of this element will depend on the block
                      command we are in. */
                   for (i = 0; i < current->contents.number; i++)
                     {
@@ -433,7 +436,7 @@ close_current (ELEMENT *current,
         }
       else
         {
-          /* @item and @tab commands are closed here, as well as line commands 
+          /* @item and @tab commands are closed here, as well as line commands
              with invalid content. */
           current = current->parent;
         }
@@ -491,8 +494,8 @@ close_current (ELEMENT *current,
 
 /* Return lowest level ancestor of CURRENT containing a CLOSED_BLOCK_COMMAND
    element, or the lowest level ancestor if CLOSED_BLOCK_COMMAND is 0.
-   Set CLOSED_BLOCK_ELEMENT to the last closed element.  INTERRUPTING is used in 
-   close_brace_command to display an error message.  Remove a context from 
+   Set CLOSED_BLOCK_ELEMENT to the last closed element.  INTERRUPTING is used
+   in close_brace_command to display an error message.  Remove a context from
    context stack if CLOSED_BLOCK_COMMAND is not 0 and a context was added
    by the CLOSED_BLOCK_COMMAND.
    CLOSED_BLOCK_COMMAND should be the id of a block command.

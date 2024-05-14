@@ -10,6 +10,9 @@ $result_trees{'defline_no_params'} = {
     {
       'contents' => [
         {
+          'type' => 'preamble_before_content'
+        },
+        {
           'args' => [
             {
               'info' => {
@@ -28,23 +31,34 @@ $result_trees{'defline_no_params'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'Builtin'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'Builtin'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'truc'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'truc'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -127,7 +141,7 @@ $result_trees{'defline_no_params'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'defline_no_params'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'defline_no_params'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[2];
+$result_trees{'defline_no_params'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'defline_no_params'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
 
 $result_texis{'defline_no_params'} = '@defblock
 @defline Builtin truc
@@ -175,7 +189,7 @@ strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
 </head>
 
 <body lang="en">
-<dl class="first-defblock">
+<dl class="defblock">
 <dt class="defline"><span class="category-def">Builtin: </span><strong class="def-name">truc</strong></dt>
 <dd><p>Description of truc
 </p></dd></dl>
@@ -241,6 +255,7 @@ $result_converted{'latex'}->{'defline_no_params'} = '\\documentclass{book}
 \\makeatother
 \\pagestyle{single}%
 
+\\begin{document}
 
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
@@ -258,5 +273,12 @@ Description of truc
 $result_converted{'docbook'}->{'defline_no_params'} = '<synopsis><phrase role="category"><emphasis role="bold">Builtin</emphasis>:</phrase> <varname>truc</varname></synopsis>
 <blockquote><para>Description of truc
 </para></blockquote>';
+
+
+$result_converted{'xml'}->{'defline_no_params'} = '<defblock endspaces=" ">
+<defline spaces=" "><definitionterm><defcategory>Builtin</defcategory> <defsymbol>truc</defsymbol></definitionterm></defline>
+<definitionitem><para>Description of truc
+</para></definitionitem></defblock>
+';
 
 1;

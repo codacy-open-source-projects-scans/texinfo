@@ -413,8 +413,8 @@ my @node_keys = ('node_directions',
 my %avoided_keys_tree;
 my @avoided_keys_tree = (@sections_keys, @menus_keys, @node_keys,
     'float_number', 'tree_unit_directions', 'directions',
-    'associated_unit',
-    'parent', 'global_command_number',
+    'associated_unit', 'global_command_number',
+    'parent',
     # only set with the XS parser
     'tree_document_descriptor', 'output_units_descriptor');
 foreach my $avoided_key(@avoided_keys_tree) {
@@ -1062,11 +1062,11 @@ sub test($$)
   # customization.  This allows to use functions calling get_conf and
   # set_conf to manipulate customization information.
   # After this is done, the customization information should not
-  # change enymore, and it is registered in the document and used by
+  # change anymore, and it is registered in the document and used by
   # Structuring/Transformations methods needing access to configuration
   # information.
   foreach my $parser_and_structuring_option ('FORMAT_MENU', 'DEBUG') {
-    if (defined($parser_options->{$parser_and_structuring_option})) {
+    if (exists($parser_options->{$parser_and_structuring_option})) {
       $test_customization_options->{$parser_and_structuring_option}
         = $parser_options->{$parser_and_structuring_option};
     }
@@ -1272,7 +1272,7 @@ sub test($$)
                                   $document, $format_converter_options);
       $converted_errors{$format} = undef if (!@{$converted_errors{$format}});
 
-      if ($format =~ /^file_/ and defined ($converted{$format})) {
+      if ($format =~ /^file_/ and defined($converted{$format})) {
         # This is certainly wrong, because the differences are made on
         # the output files which should be empty.  Differences in output
         # will be missed.  It is tempting to use such format to have

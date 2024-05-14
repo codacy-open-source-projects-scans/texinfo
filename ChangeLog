@@ -1,3 +1,546 @@
+2024-05-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/api.c (reset_parser_except_conf),
+	tp/Texinfo/XS/parsetexi/input.c: remove input_reset_input_stack as
+	it should never be useful.  There are debug messages in parse_texi
+	if the input stack is not empty, if needed, the input stack variables
+	could be reset there.
+
+2024-05-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_is_index_element): use
+	index_entry_commands instead of command_index.
+
+	* tp/Texinfo/ParserNonXS.pm (simple_parser): do not set simple parser
+	state hash reference if they are not used at all (for indices), or set
+	directly to the default hashes if it is sure that they won't be
+	modified.
+
+2024-05-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line): add missing
+	parenthesis.
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_def_line): add missing
+	definition command name with index.
+
+	* tp/Texinfo/ParserNonXS.pm (%index_entry_command_commands)
+	(_end_line_misc_line, _is_index_element, _process_remaining_on_line)
+	(_parse_line_command_args, simple_parser, parser): do not use
+	$self->{'command_index'} to determine if a command is an index
+	command, add and use $self->{'index_entry_commands'}, for a clearer
+	code more similar to C code.
+
+2024-05-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line): use command names
+	instead of %command_index for @*table commands and @def* commands
+	with index entries names, for clearer a code, a code more similar to C
+	and to avoid using %command_index for something else that associating
+	an index to a command.
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_line_command_args),
+	tp/Texinfo/XS/parsetexi/end_line.c (parse_line_command_args): do not
+	set synindex, syncodeindex and printindex arguments if in restricted
+	parser.
+
+	* tp/Texinfo/XS/main/translations.c (replace_convert_substrings): set
+	restricted on the parser used for translations to be in restricted
+	mode as if simple_parser had been called from Perl.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_index_data),
+	tp/Texinfo/XS/parsetexi/indices.c (resolve_indices_merged_in)
+	(complete_indices): handle the case of no indices at all.
+
+	* tp/Texinfo/XS/parsetexi/api.c (reset_parser_except_conf),
+	tp/Texinfo/XS/parsetexi/parser.c (parse_texi):
+
+	* tp/Texinfo/XS/parsetexi/indices.c (init_index_commands)
+	(forget_indices): set num_index_commands and number_of_indices to 0 in
+	forget_indices only.
+
+	* tp/t/init/translation_in_parser_in_translation.pm: test more
+	index related functions in gdt/parse_texi_line.
+
+2024-05-11  Patrice Dumas  <pertusus@free.fr>
+
+	Handle default index commands similarly to other @-commands
+
+	* tp/Texinfo/ParserNonXS.pm (parser, simple_parser),
+	tp/Texinfo/XS/parsetexi/indices.c (struct def, default_indices)
+	(init_index_commands), tp/Texinfo/command_data.txt,
+	tp/maintain/regenerate_commands_perl_info.pl: add default index
+	commands to tp/Texinfo/command_data.txt like other builtin @-commands.
+
+2024-05-11  Patrice Dumas  <pertusus@free.fr>
+
+	Update POD of index_entry extra key.
+
+2024-05-11  Patrice Dumas  <pertusus@free.fr>
+
+	Update documentation POD with new organization of @def* trees.
+
+2024-05-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am: remove an obsolete FIXME on libraries
+	being searched for in libdir, as it is not the case (Gavin tests).
+
+2024-05-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (XSParagraph_la_SOURCES),
+	tp/Texinfo/XS/xspara.c, tp/Texinfo/XS/xspara.h: use main/text.c.
+	Remove Texinfo/XS/xspara_text.c and Texinfo/XS/xspara_text.h.
+
+2024-05-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/text.c (text_alloc): inline fatal() call
+	in order not to depend on utils.h.
+
+	* tp/Texinfo/XS/main/utils.c (bug): change message.
+
+	* tp/Texinfo/XS/xspara_text.c: remove unused text_destroy.
+
+	Other minor changes in texts and comments.
+
+2024-05-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree_types.h: remove now unused DEF_ARG.
+
+2024-05-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/def.c (DEF_MAP, parse_def),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_def_line): remove
+	arguments field from DEF_MAP, have parse_def return an array of
+	ELEMENT and use the type of elements in end_line_def_line instead
+	of a string.
+
+2024-05-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_split_delimiters, _split_def_args)
+	(_parse_def), tp/Texinfo/XS/parsetexi/def.c (split_delimiters)
+	(split_def_args, parse_def): remove completly extra def_role from the
+	tree now that definition line arguments container types are used
+	instead.
+
+2024-05-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (%def_argument_types_docbook)
+	(_convert), tp/Texinfo/Convert/TexinfoMarkup.pm (_convert),
+	tp/Texinfo/Convert/Utils.pm (definition_arguments_content)
+	(definition_category_tree), tp/Texinfo/Translations.pm
+	(complete_indices), tp/Texinfo/XS/main/convert_utils.c
+	(definition_arguments_content, definition_category_tree),
+	tp/Texinfo/XS/parsetexi/indices.c (complete_indices): use directly the
+	type of definition line argument containers instead of def_role.
+
+2024-05-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/def.c (parse_def): use definition line
+	argument element type instead of role string to determine the type of
+	argument on definition line.
+
+2024-05-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/TexinfoMarkup.pm (_convert),
+	tp/Texinfo/ParserNonXS.pm (_parse_def, _end_line_def_line),
+	tp/Texinfo/XS/main/element_types.txt, tp/Texinfo/XS/parsetexi/def.c
+	(DEF_MAP, def_maps, parse_def), tp/Texinfo/XS/parsetexi/end_line.c
+	(end_line_def_line): put definition line arguments in specific
+	containers corresponding to the role on the definition line, as
+	already in the extra def_role (in order to replace the extra def_role).
+
+2024-05-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm
+	(_convert_untranslated_def_line_arg_type, _convert),
+	tp/Texinfo/Convert/LaTeX.pm (_convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert),
+	tp/Texinfo/Convert/TexinfoMarkup.pm (_convert),
+	tp/Texinfo/Convert/Text.pm (_convert), tp/Texinfo/ParserNonXS.pm
+	(_next_bracketed_or_word_agg, _parse_def),
+	tp/Texinfo/XS/convert/convert_html.c
+	(convert_untranslated_def_line_arg_type, convert_to_html_internal),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal),
+	tp/Texinfo/XS/main/element_types.txt, tp/Texinfo/XS/parsetexi/def.c
+	(next_bracketed_or_word_agg, parse_def): use def_line_arg for
+	def_category and untranslated_def_line_arg instead of
+	untranslated_def_category and put them directly on def line, to get
+	the same tree as for other def line arguments.
+
+2024-05-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_split_delimiters)
+	(_next_bracketed_or_word_agg, _parse_def),
+	tp/Texinfo/XS/main/element_types.txt, tp/Texinfo/XS/parsetexi/def.c
+	(next_bracketed_or_word_agg) (split_delimiters, parse_def): rename
+	def_aggregate type as def_line_arg type.
+
+2024-05-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/LaTeX.pm (%ignored_types, _convert),
+	tp/Texinfo/Convert/Texinfo.pm (_convert_to_texinfo)
+	(_expand_cmd_args_to_texi), tp/Texinfo/Convert/TexinfoMarkup.pm
+	(_convert), tp/Texinfo/ParserNonXS.pm (_end_line_starting_block),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal), tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block): rename
+	command_as_argument_inserted as command_as_argument and set info
+	inserted instead. Remove %ignored_types in Texinfo.pm.
+
+	* tp/Texinfo/Convert/LaTeX.pm (%ignorable_types): remove unused
+	variable.
+
+2024-05-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm
+	(_convert_untranslated_def_category_type, _convert),
+	tp/Texinfo/Convert/LaTeX.pm (_convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert),
+	tp/Texinfo/Convert/Texinfo.pm (@ignored_types)
+	(_expand_cmd_args_to_texi), tp/Texinfo/Convert/TexinfoMarkup.pm
+	(_convert), tp/Texinfo/Convert/Text.pm (_convert),
+	tp/Texinfo/ParserNonXS.pm (_parse_def),
+	tp/Texinfo/XS/convert/convert_html.c
+	(convert_untranslated_def_category_type)
+	(types_internal_conversion_table, convert_to_html_internal),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal), tp/Texinfo/XS/main/convert_to_text.c
+	(convert_to_text_internal), tp/Texinfo/XS/main/element_types.c
+	(convert_to_text_internal), tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/parsetexi/def.c (parse_def): rename
+	def_category_inserted as def_category and
+	untranslated_def_category_inserted as untranslated_def_category
+	and add the inserted information as an info integer.
+
+2024-05-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/extra.c (add_info_integer)
+	(lookup_key_pair_integer, lookup_extra_integer, lookup_info_integer):
+	add add_info_integer and lookup_info_integer.
+
+	* tp/Texinfo/Convert/Texinfo.pm (@ignored_types, _convert_to_texinfo),
+	tp/Texinfo/ParserNonXS.pm (_split_def_args)
+	(_next_bracketed_or_word_agg, _parse_def),
+	tp/Texinfo/XS/parsetexi/def.c (next_bracketed_or_word_agg),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal), tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/parsetexi/def.c (next_bracketed_or_word_agg)
+	(split_def_args, parse_def): rename spaces_inserted as spaces and add
+	the inserted information as an info integer.
+
+2024-05-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_split_delimiters),
+	tp/Texinfo/XS/parsetexi/def.c (split_delimiters): put text appearing
+	along with delimiters in def_aggregate containers.
+
+2024-05-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_split_delimiters)
+	(_next_bracketed_or_word_agg, _parse_def),
+	tp/Texinfo/XS/parsetexi/def.c (next_bracketed_or_word_agg)
+	(split_delimiters, parse_def): put lone commands definition line
+	arguments in a def_aggregate type container.  When parsing remaining
+	arguments of a definition line, put everything that is not a lone
+	bracketed_arg in a def_aggregate.
+
+2024-05-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_def),
+	tp/Texinfo/XS/parsetexi/def.c (parse_def): put extra info
+	documentlanguage and translation_context in
+	untranslated_def_category_inserted element.
+
+	* tp/Texinfo/Convert/HTML.pm
+	(_convert_untranslated_def_category_inserted_type, _convert),
+	tp/Texinfo/XS/convert/convert_html.c
+	(convert_untranslated_def_category_inserted_type)
+	(convert_table_definition_type, convert_to_html_internal),
+	tp/Texinfo/Convert/LaTeX.pm (_convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert), tp/Texinfo/Convert/Text.pm
+	(_convert), tp/Texinfo/XS/main/convert_to_text.c
+	(convert_to_text_internal): convert especially the
+	untranslated_def_category_inserted element, performing the translation
+	of the text string in contents, instead of directly converting the
+	untranslated text element.
+
+2024-05-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Texinfo.pm (@ignored_types),
+	tp/Texinfo/Convert/TexinfoMarkup.pm (_convert),
+	tp/Texinfo/ParserNonXS.pm (_parse_def),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal), tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/parsetexi/def.c (parse_def): rename bracketed_inserted
+	as def_category_inserted or untranslated_def_category_inserted if
+	the category should be translated.
+
+2024-05-07  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Setting the Context for Conversion):
+	_converted type should only be text.
+
+2024-05-05  Patrice Dumas  <pertusus@free.fr>
+
+	* configure.ac (Perl version and modules, tp-tests)
+	(perl-api-texi-build, pod-simple-texinfo-tests): update Perl modules
+	and version in checks.
+
+	Add use Data::Dumper in files where it is used, comment out if not
+	used.
+
+2024-05-05  Patrice Dumas  <pertusus@free.fr>
+
+	Use use warnings instead of $^W
+
+	* Pod-Simple-Texinfo/pod2texi.pl, tp/texi2any.pl, util/txixml2texi.pl:
+	use use warnings instead of setting $^W.
+
+2024-05-05  Patrice Dumas  <pertusus@free.fr>
+
+	Update use use.
+
+	Replace require VERSION by use, do not use use vars, update use Perl
+	version to be 5.006 if our is used, use use warnings instead of $^W.
+
+	Remove %EXPORT_TAGS.
+
+2024-05-05  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/generate_html_doc_texi.pl: remove use re => '/a', there is no
+	string manipulation in the code.
+
+2024-05-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/LaTeX.pm (_convert): leave content of
+	before_defline as is directly in top level content.
+
+2024-05-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (%type_elements): leave content of
+	before_defline as is without any element.
+
+2024-05-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_gather_def_item),
+	tp/Texinfo/XS/main/element_types.txt, tp/Texinfo/XS/parsetexi/def.c
+	(gather_def_item): put content before @defblock and first @def*line in
+	a before_defline container.
+
+	* tp/Texinfo/Convert/DocBook.pm (%type_elements),
+	tp/Texinfo/Convert/HTML.pm (%default_types_conversion),
+	tp/Texinfo/Convert/LaTeX.pm (_convert),
+	tp/Texinfo/Convert/TexinfoMarkup.pm (%type_elements),
+	tp/Texinfo/XS/convert/convert_html.c
+	(types_internal_conversion_table): update for before_defline.
+
+	* util/texinfo.dtd: update for beforefirstdefline.
+
+2024-05-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/19def.t (@test_defblock): add full_document for LaTeX output
+	tests.
+
+2024-05-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (prepare_special_units)
+	(html_default_format_heading_text, html_default_format_contents)
+	(convert_style_command, convert_indicateurl_command)
+	(convert_heading_command, convert_printindex_command)
+	(convert_contents_command, convert_menu_entry_type)
+	(contents_shortcontents_in_title): handle FORMAT_MENU MAX_HEADER_LEVEL
+	CONTENTS_OUTPUT_LOCATION OPEN_QUOTE_SYMBOL CLOSE_QUOTE_SYMBOL
+	MENU_SYMBOL INDEX_ENTRY_COLON MENU_ENTRY_COLON being undef, and thus
+	NULL in C, in case they were reset to undef in Perl user-defined code
+	after the beginning of the conversion.
+
+2024-05-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/regenerate_C_options_info.pl,
+	tp/Texinfo/XS/main/option_types.h (global_option_type),
+	tp/Texinfo/XS/main/utils.c, tp/Texinfo/XS/convert/converter.c:
+	prefix global_option_type enums with GOT_ instead of GO_ to be able to
+	add other global options enum.
+
+2024-05-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(get_converter_indices_sorted_by_index): initialize variables.
+
+	* tp/Texinfo/XS/main/manipulate_indices.c (destroy_collator):
+	call freelocale to deallocate resources associated with the locale
+	created with newlocale.
+
+2024-05-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): add a newline after
+	generated menu if needed.
+
+2024-05-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/19def.t (comment_index_before_defline)
+	(text_block_before_defline): add test with content in @defblock before
+	@defline.
+
+2024-05-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_def_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_def_command): use
+	directly defblock as class name.
+
+2024-05-03  Patrice Dumas  <pertusus@free.fr>
+
+	* util/texinfo.dtd: add nodedescriptionblock and nodedescription.
+	Fix defblock to allow definitionitem interspeded with defline.
+
+2024-05-03  Patrice Dumas  <pertusus@free.fr>
+
+	* util/txixml2texi.pl: handle linemacro.
+
+	* util/txixml2texi.pl (_encode): convert upon printing instead of
+	using binmode, which is unreliable if not used right on when opening
+	and never changing the filter.
+
+2024-05-03  Patrice Dumas  <pertusus@free.fr>
+
+	* util/texinfo.dtd: add defbracketed, defblock, defline and
+	deftypeline.
+
+	* configure.ac (TEXINFO_DTD_VERSION): bump.
+
+2024-05-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/TexinfoMarkup.pm (_convert): add an element for
+	bracketed_arg not already associated to another element.
+
+	* tp/Makefile.tres, tp/t/19def.t (bracketed_arg_no_space): add test
+	for bracketed arguments not corresponding to one definition line
+	argument.
+
+	* tp/t/19def.t: convert @test_defblock to xml.
+
+2024-05-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/TexinfoMarkup.pm (_convert): fix @inline*
+	commands output to include inlinefmtifelse second argument.
+
+	* tp/t/converters_tests.t (inlinefmtifelse_with_commands): update xml
+	part of the test to have argument text content match the context.
+
+	* tp/Makefile.tres, tp/t/xml_tests.t (inline_commands): add @inline*
+	commands expansion test.
+
+2024-05-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Indices.pm (setup_index_entry_keys_formatting): handle
+	undefined OUTPUT_ENCODING_NAME.
+
+2024-05-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_begin_file)
+	(html_default_format_node_redirection_page): use empty string for
+	PACKAGE_AND_VERSION and PACKAGE_URL if undefined.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(default_format_special_body_about): add a new line.
+
+2024-05-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/html_tests.t
+	(info_js_dir_html_file_js_weblabels_file_undef): add a test with
+	INFO_JS_DIR set and JS_WEBLABELS_FILE undef.
+
+2024-05-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/html_tests.t (undef_split_and_big_rule): test
+	with SPLIT and BIG_RULE undef.
+
+2024-05-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (converter_initialize): set
+	OPEN_QUOTE_SYMBOL and CLOSE_QUOTE_SYMBOL if undef.
+
+	* tp/Texinfo/Convert/LaTeX.pm (_convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert): handle undef
+	deftypefnnewline customization value.
+
+	* tp/Makefile.tres, tp/t/converters_tests.t
+	(conversion_with_undef_customization): add a test with many
+	customization variables undef.
+
+2024-05-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/converters_tests.t (extension_undef): add a
+	test with EXTENSION undef.
+
+2024-05-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize)
+	(conversion_initialization): set FORMAT_MENU, MAX_HEADER_LEVEL,
+	CONTENTS_OUTPUT_LOCATION, INDEX_ENTRY_COLON, MENU_ENTRY_COLON if
+	undef in converter_initialize.  Set OPEN_QUOTE_SYMBOL,
+	CLOSE_QUOTE_SYMBOL and MENU_SYMBOL if undef after setting the default.
+
+	* tp/Texinfo/Convert/HTML.pm, tp/Texinfo/XS/convert/convert_html.c:
+	allow documentlanguage, OUTPUT_ENCODING_NAME,
+	NO_NUMBER_FOOTNOTE_SYMBOL, xrefautomaticsectiontitle, DEFAULT_RULE,
+	deftypefnnewline, DOCTYPE, BODY_ELEMENT_ATTRIBUTES, AFTER_BODY_OPEN,
+	PACKAGE_AND_VERSION, PACKAGE_URL, LINKS_BUTTONS, SECTION_BUTTONS in
+	About body, JS_WEBLABELS_FILE, HANDLER_FATAL_ERROR_LEVEL to be undef.
+
+	* tp/Texinfo/Convert/Info.pm (format_node): handle undef TOP_NODE_UP.
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_special_body_about),
+	tp/Texinfo/XS/convert/convert_html.c
+	(default_format_special_body_about): different output for the About
+	page if the SECTION_BUTTONS are undefined.
+
+	* tp/Texinfo/XS/structuring_transfo/structuring.c
+	(set_menus_node_directions), tp/Texinfo/XS/parsetexi/Parsetexi.pm
+	(parser), tp/Texinfo/Convert/Plaintext.pm (_convert): handle undef
+	FORMAT_MENU.
+
+	* tp/Makefile.tres, tp/t/test_utils.pl (test), tp/t/10menu.t
+	(format_menu_undef): add a test with FORMAT_MENU undef.
+
+2024-05-01  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Simple Navigation Panel Customization):
+	comment out documentation of buttons specification that is not used in 
+	code nor tests.
+
+2024-05-01  Patrice Dumas  <pertusus@free.fr>
+
+	Remove skipped test result.
+
+2024-05-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ManipulateTree.pm (_protect_text),
+	tp/Texinfo/Transformations.pm (_protect_hashchar_at_line_beginning):
+	set the parent of brace_command_arg added for added glyph command
+	elements.
+
+2024-05-01  Patrice Dumas  <pertusus@free.fr>
+
+	Remove parent of @include or @setfilename source mark elements
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): remove parent
+	of @include or @setfilename element removed from the tree and
+	registered as source mark element.
+
+	* tp/Makefile.am (test_files), tp/Makefile.tres, tp/t/80include.t
+	(include_in_removed_before_item): add test of @include in @table
+	before_item after a comment that holds the source mark, with
+	before_item removed from the tree.
+
+	Report from Christoph.
+
+2024-05-01  Patrice Dumas  <pertusus@free.fr>
+
+	Change in comments, minor changes in code.
+
 2024-04-30  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/Convert/Converter.pm (_id_to_filename), tp/ext/epub3.pm

@@ -86,9 +86,8 @@ MiscXS_la_LDFLAGS = $(XSLIBS_LDFLAGS)
 xs_LTLIBRARIES += XSParagraph.la
 nodist_XSParagraph_la_SOURCES = XSParagraph.c
 CLEANFILES += XSParagraph.c
-# FIXME use main/text.*?
 XSParagraph_la_SOURCES = xspara.c xspara.h \
-                         xspara_text.c xspara_text.h ppport.h
+                         main/text.c main/text.h ppport.h
 XSParagraph_la_CFLAGS = $(XSLIBS_CFLAGS)
 XSParagraph_la_CPPFLAGS = $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) $(XSLIBS_CPPFLAGS)
 XSParagraph_la_LIBADD = $(builddir)/gnulib/lib/libgnu.la
@@ -299,10 +298,6 @@ libtexinfoxs_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/convert $(AM_CPPFLAGS) $
 libtexinfoxs_la_CFLAGS = $(XSLIBS_CFLAGS)
 libtexinfoxs_la_LIBADD = libtexinfo.la
 libtexinfoxs_la_LDFLAGS = -version-info 0:0:0 $(perl_conf_LDFLAGS) $(LTLIBINTL)
-
-# FIXME libtexinfo.so.* and libtexinfoxs.so.* are sought in system
-# directories first (${libdir}) before the correct installed location, so
-# there is potential for the wrong library file to be dynamically loaded.
 
 
 ########################## Parsetexi XS parser

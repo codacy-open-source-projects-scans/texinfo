@@ -10,6 +10,9 @@ $result_trees{'deftypeline'} = {
     {
       'contents' => [
         {
+          'type' => 'preamble_before_content'
+        },
+        {
           'args' => [
             {
               'info' => {
@@ -28,141 +31,158 @@ $result_trees{'deftypeline'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'Function'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'Function'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'long int'
+                          'contents' => [
+                            {
+                              'text' => 'long int'
+                            }
+                          ],
+                          'source_info' => {
+                            'line_nr' => 2
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'source_info' => {
-                        'line_nr' => 2
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_type'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'foo'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'foo'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'delimiter'
-                      },
                       'text' => '(',
                       'type' => 'delimiter'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'int'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'int'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_typearg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'bar'
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'bar'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'var',
+                              'source_info' => {
+                                'line_nr' => 2
+                              }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'var',
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 2
-                      }
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'delimiter'
-                      },
                       'text' => ',',
                       'type' => 'delimiter'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'typearg'
-                      },
-                      'text' => 'int'
-                    },
-                    {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
-                      'text' => ' ',
-                      'type' => 'spaces'
-                    },
-                    {
-                      'args' => [
+                      'contents' => [
                         {
                           'contents' => [
                             {
-                              'text' => 'baz'
+                              'text' => 'int'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'cmdname' => 'var',
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 2
-                      }
+                      'type' => 'def_typearg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'delimiter'
-                      },
+                      'text' => ' ',
+                      'type' => 'spaces'
+                    },
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'baz'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
+                                }
+                              ],
+                              'cmdname' => 'var',
+                              'source_info' => {
+                                'line_nr' => 2
+                              }
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
+                    },
+                    {
                       'text' => ')',
                       'type' => 'delimiter'
                     }
@@ -258,7 +278,7 @@ $result_trees{'deftypeline'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'deftypeline'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'deftypeline'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[4];
+$result_trees{'deftypeline'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'deftypeline'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[4];
 
 $result_texis{'deftypeline'} = '@defblock
 @deftypeline Function {long int} foo (int @var{bar}, int @var{baz})
@@ -306,7 +326,7 @@ strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
 </head>
 
 <body lang="en">
-<dl class="first-defblock">
+<dl class="defblock">
 <dt class="deftypeline"><span class="category-def">Function: </span><code class="def-type">long int</code> <strong class="def-name">foo</strong> <code class="def-code-arguments">(int <var class="var">bar</var>, int <var class="var">baz</var>)</code></dt>
 <dd><p>&hellip;
 </p></dd></dl>
@@ -375,6 +395,7 @@ $result_converted{'latex'}->{'deftypeline'} = '\\documentclass{book}
 \\makeatother
 \\pagestyle{single}%
 
+\\begin{document}
 
 \\noindent\\begin{tabularx}{\\linewidth}{@{}Xr}
 \\rightskip=5em plus 1 fill \\hangindent=2em \\hyphenpenalty=10000
@@ -392,5 +413,12 @@ $result_converted{'latex'}->{'deftypeline'} = '\\documentclass{book}
 $result_converted{'docbook'}->{'deftypeline'} = '<synopsis><phrase role="category"><emphasis role="bold">Function</emphasis>:</phrase> <returnvalue>long int</returnvalue> <varname>foo</varname> (<type>int</type> <emphasis role="arg"><replaceable>bar</replaceable></emphasis>, <type>int</type> <emphasis role="arg"><replaceable>baz</replaceable></emphasis>)</synopsis>
 <blockquote><para>&#8230;
 </para></blockquote>';
+
+
+$result_converted{'xml'}->{'deftypeline'} = '<defblock endspaces=" ">
+<deftypeline spaces=" "><definitionterm><defcategory>Function</defcategory> <deftype bracketed="on">long int</deftype> <defsymbol>foo</defsymbol> <defdelimiter>(</defdelimiter><defparamtype>int</defparamtype> <defparam><var>bar</var></defparam><defdelimiter>,</defdelimiter> <defparamtype>int</defparamtype> <defparam><var>baz</var></defparam><defdelimiter>)</defdelimiter></definitionterm></deftypeline>
+<definitionitem><para>&dots;
+</para></definitionitem></defblock>
+';
 
 1;

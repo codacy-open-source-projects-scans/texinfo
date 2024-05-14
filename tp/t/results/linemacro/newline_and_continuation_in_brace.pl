@@ -158,86 +158,97 @@ $result_trees{'newline_and_continuation_in_brace'} = {
                   'text' => ''
                 }
               ],
-              'type' => 'def_item'
+              'type' => 'before_defline'
             },
             {
               'args' => [
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'category'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'category'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'a'
-                        },
-                        {
-                          'args' => [
+                          'contents' => [
                             {
-                              'contents' => [
+                              'text' => 'a'
+                            },
+                            {
+                              'args' => [
                                 {
-                                  'text' => 'b c'
+                                  'contents' => [
+                                    {
+                                      'text' => 'b c'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'cmdname' => 'code',
+                              'source_info' => {
+                                'line_nr' => 9,
+                                'macro' => 'mylinecommand'
+                              }
+                            },
+                            {
+                              'text' => 'd'
                             }
                           ],
-                          'cmdname' => 'code',
-                          'source_info' => {
-                            'line_nr' => 9,
-                            'macro' => 'mylinecommand'
-                          }
-                        },
-                        {
-                          'text' => 'd'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'def_aggregate'
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'some'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'some'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'arg'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'arg'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'source_marks' => [
                         {
                           'counter' => 1,
@@ -249,60 +260,70 @@ $result_trees{'newline_and_continuation_in_brace'} = {
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'b'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'b'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'source_marks' => [
+                          'contents' => [
                             {
-                              'counter' => 2,
-                              'position' => 5,
-                              'sourcemark_type' => 'defline_continuation'
+                              'source_marks' => [
+                                {
+                                  'counter' => 2,
+                                  'position' => 5,
+                                  'sourcemark_type' => 'defline_continuation'
+                                }
+                              ],
+                              'text' => 'next    last'
                             }
                           ],
-                          'text' => 'next    last'
+                          'source_info' => {
+                            'line_nr' => 9,
+                            'macro' => 'mylinecommand'
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_info' => {
-                        'line_nr' => 9,
-                        'macro' => 'mylinecommand'
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_arg'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'source_marks' => [
+                      'contents' => [
                         {
-                          'counter' => 1,
-                          'position' => 4,
-                          'sourcemark_type' => 'linemacro_expansion',
-                          'status' => 'end'
+                          'contents' => [
+                            {
+                              'source_marks' => [
+                                {
+                                  'counter' => 1,
+                                  'position' => 4,
+                                  'sourcemark_type' => 'linemacro_expansion',
+                                  'status' => 'end'
+                                }
+                              ],
+                              'text' => 'line'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'text' => 'line'
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {

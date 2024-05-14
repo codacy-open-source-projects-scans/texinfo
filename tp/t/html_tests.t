@@ -1001,6 +1001,18 @@ my @file_tests = (
 @node chap
 @chapter
 ', {}, {'SPLIT' => 'chapter'}],
+# A big rule would be between chapter and section if BIG_RULE was not undef
+['undef_split_and_big_rule',
+'node Top
+@top top
+
+@node chap
+@chapter Chapter
+
+@node sec
+@section Sec
+', {}, {'SPLIT' => undef, 'BIG_RULE' => undef}
+],
 # the chapter file is named '.html', which is ok, but no file may be better
 ['empty_chapter_in_html_title_no_node_no_use_nodes',
 '@node Top
@@ -1487,6 +1499,8 @@ $mathjax_with_texinfo,
 {'HTML_MATH' => 'mathjax'}],
 ['info_js_dir_html_file',
 $info_js_dir_test, {}, {'INFO_JS_DIR' => 'js'}],
+['info_js_dir_html_file_js_weblabels_file_undef',
+$info_js_dir_test, {}, {'INFO_JS_DIR' => 'js', 'JS_WEBLABELS_FILE' => undef}],
 ['css_in_node_redirection_page',
 '@node Top
 @top top

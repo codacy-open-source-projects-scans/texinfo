@@ -59,7 +59,7 @@ is_decimal_number (char *string)
   char *p = string;
   char *first_digits = 0;
   char *second_digits = 0;
-  
+
   if (string[0] == '\0')
     return 0;
 
@@ -74,8 +74,8 @@ is_decimal_number (char *string)
     }
 
   if (*p /* Bytes remaining at end of argument. */
-      || (!first_digits && !second_digits)) /* Need digits either 
-                                               before or after the 
+      || (!first_digits && !second_digits)) /* Need digits either
+                                               before or after the
                                                decimal point. */
     {
       return 0;
@@ -93,7 +93,7 @@ is_whole_number (char *string)
 }
 
 /* Parse the arguments to a line command.  Return an element whose contents
-   is an array of the arguments.  For some commands, there is further 
+   is an array of the arguments.  For some commands, there is further
    processing of the arguments (for example, for an @alias, remember the
    alias.) */
 ELEMENT *
@@ -178,7 +178,7 @@ parse_line_command_args (ELEMENT *line_command)
         if (command_data(existing_cmd).flags & CF_ALIAS)
           {
             enum command_id alias_exist_cmd = command_data(existing_cmd).data;
-            if (! strcmp(command_name(alias_exist_cmd), new))
+            if (! strcmp (command_name(alias_exist_cmd), new))
               line_warn ("recursive alias definition of %s through %s ignored",
                             new, command_name(existing_cmd));
             else
@@ -299,7 +299,7 @@ parse_line_command_args (ELEMENT *line_command)
             q = strpbrk (p, whitespace_chars);
             if (!q)
               q = p + strlen (p);
-            
+
             arg = strndup (p, q - p);
 
             /* Check argument is valid. */
@@ -401,6 +401,13 @@ parse_line_command_args (ELEMENT *line_command)
         if (*p)
           goto synindex_invalid; /* More at end of line. */
 
+        if (global_restricted)
+          {
+            free (index_name_from);
+            free (index_name_to);
+            break;
+          }
+
         from_index = indices_info_index_by_name (index_names, index_name_from);
         to_index = indices_info_index_by_name (index_names, index_name_to);
         if (!from_index)
@@ -423,7 +430,7 @@ parse_line_command_args (ELEMENT *line_command)
                 ADD_ARG(index_name_from);
                 ADD_ARG(index_name_to);
                 /* Note that 'current_to' may not end up as the index
-                   'from_index' merges into if there are further @synindex 
+                   'from_index' merges into if there are further @synindex
                    commands. */
               }
             else
@@ -448,6 +455,8 @@ parse_line_command_args (ELEMENT *line_command)
         arg = read_command_name (&p);
         if (!arg || *p)
           line_error ("bad argument to @printindex: %s", line);
+        else if (global_restricted)
+          {}
         else
           {
             INDEX *idx = indices_info_index_by_name (index_names,arg);
@@ -661,7 +670,7 @@ ELEMENT *
 end_line_def_line (ELEMENT *current)
 {
   enum command_id def_command;
-  DEF_ARG **def_info = 0;
+  ELEMENT **def_info = 0;
   char *def_cmdname;
   ELEMENT *index_entry = 0; /* Index entry text. */
   ELEMENT *def_info_name = 0;
@@ -687,16 +696,14 @@ end_line_def_line (ELEMENT *current)
 
   /* Record the index entry if def_info is not empty. */
 
-  while (def_info[i] != 0 && def_info[i]->element != 0)
+  while (def_info[i] != 0)
     {
-      if (!strcmp(def_info[i]->arg_type, "name"))
-        def_info_name = def_info[i]->element;
-      else if (!strcmp(def_info[i]->arg_type, "class"))
-        def_info_class = def_info[i]->element;
-      else if (!strcmp(def_info[i]->arg_type, "category"))
-        def_info_category = def_info[i]->element;
-      free (def_info[i]->arg_type);
-      free (def_info[i]);
+      if (def_info[i]->type == ET_def_name)
+        def_info_name = def_info[i];
+      else if (def_info[i]->type == ET_def_class)
+        def_info_class = def_info[i];
+      else if (def_info[i]->type == ET_def_category)
+        def_info_category = def_info[i];
       i++;
     }
   free (def_info);
@@ -706,11 +713,12 @@ end_line_def_line (ELEMENT *current)
       if (def_info_name)
         {
           char *t;
+          ELEMENT *arg = def_info_name->contents.list[0];
           /* Set index_entry unless an empty ET_bracketed_arg. */
-          if (def_info_name->type == ET_bracketed_arg
-              && (def_info_name->contents.number == 0
-                  || (def_info_name->contents.number == 1
-                      && (t = def_info_name->contents.list[0]->text.text)
+          if (arg->type == ET_bracketed_arg
+              && (arg->contents.number == 0
+                  || (arg->contents.number == 1
+                      && (t = arg->contents.list[0]->text.text)
                       && t[strspn (t, whitespace_chars)] == '\0')))
             {
             }
@@ -816,7 +824,7 @@ end_line_starting_block (ELEMENT *current)
 
       for (i = 0; i < current->contents.number; i++)
         {
-          ELEMENT *e = contents_child_by_index(current, i);
+          ELEMENT *e = contents_child_by_index (current, i);
 
           if (e->type == ET_bracketed_arg)
             {
@@ -1024,10 +1032,10 @@ end_line_starting_block (ELEMENT *current)
         {
           ELEMENT *e;
           ELEMENT *block_line_arg;
-          if (last_args_child(current)
-              && last_args_child(current)->type == ET_block_line_arg)
+          if (last_args_child (current)
+              && last_args_child (current)->type == ET_block_line_arg)
             {
-              block_line_arg = last_args_child(current);
+              block_line_arg = last_args_child (current);
             }
           else
             {
@@ -1035,7 +1043,8 @@ end_line_starting_block (ELEMENT *current)
               insert_into_args (current, block_line_arg, 0);
             }
 
-          e = new_element (ET_command_as_argument_inserted);
+          e = new_element (ET_command_as_argument);
+          add_info_integer (e, "inserted", 1);
           e->cmd = CM_bullet;
           insert_into_contents (block_line_arg, e, 0);
           add_extra_element (current, "command_as_argument", e);
@@ -1045,7 +1054,8 @@ end_line_starting_block (ELEMENT *current)
         {
           ELEMENT *e;
 
-          e = new_element (ET_command_as_argument_inserted);
+          e = new_element (ET_command_as_argument);
+          add_info_integer (e, "inserted", 1);
           e->cmd = CM_asis;
           insert_into_args (current, e, 0);
           add_extra_element (current, "command_as_argument", e);
@@ -1311,7 +1321,7 @@ end_line_misc_line (ELEMENT *current)
                   if (status)
                     {
                       char *decoded_file_path
-                         = convert_to_utf8 (strdup(fullpath));
+                         = convert_to_utf8 (strdup (fullpath));
                       command_error (current,
                                      "@include: could not open %s: %s",
                                      decoded_file_path,
@@ -1513,7 +1523,7 @@ end_line_misc_line (ELEMENT *current)
       if (superfluous_arg)
         {
           char *texi_line, *p, *p1;
-          p = convert_to_texinfo (args_child_by_index(current, 0));
+          p = convert_to_texinfo (args_child_by_index (current, 0));
 
           texi_line = p;
 
@@ -1527,7 +1537,7 @@ end_line_misc_line (ELEMENT *current)
                 p1--;
               *p1 = '\0';
             }
-          command_error (current, "bad argument to @%s: %s", 
+          command_error (current, "bad argument to @%s: %s",
                          command_name(current->cmd), texi_line);
           free (p);
         }
@@ -1596,12 +1606,12 @@ end_line_misc_line (ELEMENT *current)
           add_info_string_dup (current, "command_name",
                                command_name(current->cmd));
         }
-      /* All the other "line" commands. Check they have an argument. Empty 
+      /* All the other "line" commands. Check they have an argument. Empty
          @top is allowed. */
       if (current->args.list[0]->contents.number == 0
           && current->cmd != CM_top)
         {
-          command_warn (current, "@%s missing argument", 
+          command_warn (current, "@%s missing argument",
                         command_name(current->cmd));
         }
       else
@@ -1625,7 +1635,7 @@ end_line_misc_line (ELEMENT *current)
           if ((command_flags(current) & CF_index_entry_command
                 || current->cmd == CM_subentry))
             {
-              set_non_ignored_space_in_index_before_command(
+              set_non_ignored_space_in_index_before_command (
                                                      current->args.list[0]);
             }
         }
@@ -1665,7 +1675,8 @@ end_line_misc_line (ELEMENT *current)
               add_to_element_contents (closed_command, end_elt);
 
               if (command_data(closed_command->cmd).data == BLOCK_menu
-                  && command_data(current_context_command()).data == BLOCK_menu)
+                  && command_data(current_context_command ()).data
+                                                              == BLOCK_menu)
                 {
                   ELEMENT *e;
                   debug ("CLOSE menu but still in menu context");
@@ -1713,11 +1724,16 @@ end_line_misc_line (ELEMENT *current)
 
           if (source_mark)
             {
-              /* this is in order to keep source marks that are within a
-                removed element.  For the XS parser it is also easier to
+              /* keep the elements, also keeping source marks that are within
+                removed elements.  For the XS parser it is also easier to
                 manage the source mark memory which can stay associated
                 to the element. */
               source_mark->element = pop_element_from_contents (current);
+            /* remove parent information, as the parent could be removed
+               from the tree (case of a before_item, for example), and also
+               because it seems incorrect to consider that there is a specific
+               parent in the tree. */
+              source_mark->element->parent = 0;
               register_source_mark (current, source_mark);
             }
         }
@@ -1744,7 +1760,7 @@ end_line_misc_line (ELEMENT *current)
       current = last_contents_child (current);
       if (cmd == CM_node)
         counter_pop (&count_remaining_args);
-      
+
       /* Set 'associated_section' extra key for a node. */
       if (cmd != CM_node && cmd != CM_part)
         {
@@ -1873,7 +1889,7 @@ end_line (ELEMENT *current)
     {
       debug_nonl ("Still opened line/block command %s: ",
                   context_name (current_context ()));
-      debug_parser_print_element (current, 1); debug("");
+      debug_parser_print_element (current, 1); debug ("");
       if (current_context () == ct_def)
         {
           while (current->parent

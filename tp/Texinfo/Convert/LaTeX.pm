@@ -163,7 +163,7 @@
 
 package Texinfo::Convert::LaTeX;
 
-use 5.00405;
+use 5.006;
 
 # See comment at start of HTML.pm
 use if $] >= 5.012, feature => qw(unicode_strings);
@@ -185,10 +185,9 @@ use Texinfo::Convert::Text;
 use Texinfo::Indices;
 use Texinfo::Convert::Converter;
 
-use vars qw($VERSION @ISA);
-@ISA = qw(Texinfo::Convert::Converter);
+our @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.1dev';
+our $VERSION = '7.1dev';
 
 # could export convert_to_latex_math
 
@@ -554,18 +553,10 @@ foreach my $type ('ignorable_spaces_after_command',
   $ignorable_space_types{$type} = 1;
 }
 
-# ignore 'command_as_argument_inserted' in order to use the default
-# setting for @itemize if there is no argument
 my %ignored_types;
-foreach my $type ('command_as_argument_inserted',
-            'postamble_after_end', 'preamble_before_beginning',
-            'preamble_before_setfilename', 'command_as_argument_inserted') {
+foreach my $type ('postamble_after_end', 'preamble_before_beginning',
+            'preamble_before_setfilename') {
   $ignored_types{$type} = 1;
-}
-
-my %ignorable_types = %ignorable_space_types;
-foreach my $ignored_type(keys(%ignored_types)) {
-  $ignorable_types{$ignored_type} = 1;
 }
 
 # The following code is used to define style commands with more
@@ -2648,7 +2639,12 @@ sub _convert($$)
   my $type = $element->{'type'};
   my $cmdname = $element->{'cmdname'};
 
-  if ((defined($type) and $self->{'ignored_types'}->{$type})
+  if ((defined($type) and ($self->{'ignored_types'}->{$type}
+      # ignore 'command_as_argument' inserted in order to use the default
+      # setting for @itemize if there is no argument
+                           or ($type eq 'command_as_argument'
+                               and $element->{'info'}
+                               and $element->{'info'}->{'inserted'})))
        or (defined($cmdname)
             and ($self->{'ignored_commands'}->{$cmdname}
                  or ($Texinfo::Commands::brace_commands{$cmdname}
@@ -2707,21 +2703,8 @@ sub _convert($$)
 
   # process text
   if (defined($element->{'text'})) {
-    if (!$type or $type ne 'untranslated') {
-      $result .= _protect_text($self, $element->{'text'});
-      return $result;
-    } else {
-      my $tree;
-      if ($element->{'extra'}
-          and $element->{'extra'}->{'translation_context'}) {
-        $tree = $self->pcdt($element->{'extra'}->{'translation_context'},
-                            $element->{'text'});
-      } else {
-        $tree = $self->cdt($element->{'text'});
-      }
-      my $converted = _convert($self, $tree);
-      return $converted;
-    }
+    $result .= _protect_text($self, $element->{'text'});
+    return $result;
   }
 
   # for displaymath that closes the preformatted
@@ -4132,7 +4115,8 @@ sub _convert($$)
           $command = $element->{'extra'}->{'def_command'};
         }
 
-        my $deftypefnnewline = ($self->get_conf('deftypefnnewline') eq 'on'
+        my $deftypefnnewline = ($self->get_conf('deftypefnnewline')
+               and $self->get_conf('deftypefnnewline') eq 'on'
                and ($command eq 'deftypefn' or $command eq 'deftypeop'));
 
         my $def_space = ' ';
@@ -4307,6 +4291,17 @@ sub _convert($$)
       $result .= _open_preformatted($self, $element);
     } elsif ($element->{'type'} eq '_dot_not_end_sentence') {
       $self->{'formatting_context'}->[-1]->{'dot_not_end_sentence'} += 1;
+    } elsif ($element->{'type'} eq 'untranslated_def_line_arg') {
+      my $tree;
+      if ($element->{'extra'}
+          and $element->{'extra'}->{'translation_context'}) {
+        $tree = $self->pcdt($element->{'extra'}->{'translation_context'},
+                            $element->{'contents'}->[0]->{'text'});
+      } else {
+        $tree = $self->cdt($element->{'contents'}->[0]->{'text'});
+      }
+      my $converted = _convert($self, $tree);
+      return $converted;
     }
   }
 

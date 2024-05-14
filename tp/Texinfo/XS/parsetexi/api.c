@@ -74,7 +74,6 @@ reset_parser_except_conf (void)
   */
   wipe_index_names (index_names);
   forget_indices ();
-  init_index_commands ();
   wipe_identifiers_target ();
   reset_context_stack ();
   reset_command_stack (&nesting_context.basic_inline_stack);
@@ -88,7 +87,6 @@ reset_parser_except_conf (void)
      opened handlers */
   parser_reset_encoding_list ();
   set_input_encoding ("utf-8");
-  input_reset_input_stack ();
   source_marks_reset_counters ();
 
   reset_obstacks ();
@@ -99,7 +97,7 @@ reset_parser_except_conf (void)
 void
 reset_parser (int local_debug_output)
 {
-  /* We cannot call debug() here, because the configuration of the previous
+  /* We cannot call debug () here, because the configuration of the previous
      parser invokation has not been reset already, and new configuration has
      not been read, so we need to pass the configuration information
      directly */
@@ -274,5 +272,5 @@ parser_set_accept_internalvalue (int value)
 void
 parser_set_restricted (int value)
 {
-  set_restricted(value);
+  set_restricted (value);
 }

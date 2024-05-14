@@ -80,7 +80,7 @@ expand_today (OPTIONS *options)
     {
    /* This assumes that the SOURCE_DATE_EPOCH environment variable will contain
       a correct, positive integer in the time_t range */
-      tloc = (time_t)strtoll(source_date_epoch, NULL, 10);
+      tloc = (time_t)strtoll (source_date_epoch, NULL, 10);
       time_tm = gmtime (&tloc);
     }
   else
@@ -461,19 +461,16 @@ definition_arguments_content (const ELEMENT *element)
           for (i = 0; i < def_line->contents.number; i++)
             {
               ELEMENT *arg = def_line->contents.list[i];
-              char *role = lookup_extra_string (arg, "def_role");
-              if (!role)
-                fprintf (stderr, "BUG: NO ROLE %s\n", print_element_debug (arg, 0));
-              if (!strcmp (role, "class"))
+              if (arg->type == ET_def_class)
                 result->class = arg;
-              else if (!strcmp (role, "category"))
+              else if (arg->type == ET_def_category)
                 result->category = arg;
-              else if (!strcmp (role, "type"))
+              else if (arg->type == ET_def_type)
                 result->type = arg;
-              else if (!strcmp (role, "name"))
+              else if (arg->type == ET_def_name)
                 result->name = arg;
-              else if (!strcmp (role, "arg") || !strcmp (role, "typearg")
-                       || !strcmp (role, "delimiter"))
+              else if (arg->type == ET_def_arg || arg->type == ET_def_typearg
+                       || arg->type == ET_delimiter)
                 {
                   i--;
                   break;
@@ -518,13 +515,12 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
       for (i = 0; i < def_line->contents.number; i++)
         {
           ELEMENT *arg = def_line->contents.list[i];
-          char *role = lookup_extra_string (arg, "def_role");
-          if (!strcmp (role, "class"))
+          if (arg->type == ET_def_class)
             arg_class = arg;
-          else if (!strcmp (role, "category"))
+          else if (arg->type == ET_def_category)
             arg_category = arg;
-          else if (!strcmp (role, "arg") || !strcmp (role, "typearg")
-                   || !strcmp (role, "delimiter"))
+          else if (arg->type == ET_def_arg || arg->type == ET_def_typearg
+                   || arg->type == ET_delimiter)
             break;
         }
     }
@@ -558,10 +554,10 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
   def_command = lookup_extra_string (current, "def_command");
 
   /* do something more efficient */
-  if (!strcmp(def_command, "defop")
-      || !strcmp(def_command, "deftypeop")
-      || !strcmp(def_command, "defmethod")
-      || !strcmp(def_command, "deftypemethod"))
+  if (!strcmp (def_command, "defop")
+      || !strcmp (def_command, "deftypeop")
+      || !strcmp (def_command, "defmethod")
+      || !strcmp (def_command, "deftypemethod"))
     {
       ELEMENT *category_copy = copy_tree (arg_category);
       NAMED_STRING_ELEMENT_LIST *substrings
@@ -597,10 +593,10 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
            */
         }
       destroy_named_string_element_list (substrings);
-    } else if (!strcmp(def_command, "defivar")
-      || !strcmp(def_command, "deftypeivar")
-      || !strcmp(def_command, "defcv")
-      || !strcmp(def_command, "deftypecv"))
+    } else if (!strcmp (def_command, "defivar")
+      || !strcmp (def_command, "deftypeivar")
+      || !strcmp (def_command, "defcv")
+      || !strcmp (def_command, "deftypecv"))
     {
       ELEMENT *category_copy = copy_tree (arg_category);
       NAMED_STRING_ELEMENT_LIST *substrings
@@ -906,13 +902,13 @@ find_root_command_next_heading_command (const ELEMENT *root,
                 /* ignored conditional */
                || builtin_command_data[data_cmd].data == BLOCK_conditional
                || (builtin_command_data[data_cmd].data == BLOCK_format_raw
-                   && !format_expanded_p 
+                   && !format_expanded_p
                              (formats, element_command_name (content))))
                 continue;
               else
                 return 0;
             }
-          else 
+          else
             { /* brace commands */
               if (other_flags & CF_non_formatted_brace)
                 continue;

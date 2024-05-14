@@ -191,36 +191,51 @@ $result_trees{'def_in_copying'} = {
                     {
                       'contents' => [
                         {
-                          'extra' => {
-                            'def_role' => 'category'
-                          },
-                          'text' => 'aa'
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'aa'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_category'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
-                          },
                           'text' => ' ',
                           'type' => 'spaces'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'name'
-                          },
-                          'text' => 'bb'
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'bb'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_name'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
-                          },
                           'text' => ' ',
                           'type' => 'spaces'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'arg'
-                          },
-                          'text' => 'cc'
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'cc'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_arg'
                         }
                       ],
                       'info' => {
@@ -253,36 +268,51 @@ $result_trees{'def_in_copying'} = {
                     {
                       'contents' => [
                         {
-                          'extra' => {
-                            'def_role' => 'category'
-                          },
-                          'text' => 'aax'
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'aax'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_category'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
-                          },
                           'text' => ' ',
                           'type' => 'spaces'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'name'
-                          },
-                          'text' => 'bbx'
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'bbx'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_name'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'spaces'
-                          },
                           'text' => ' ',
                           'type' => 'spaces'
                         },
                         {
-                          'extra' => {
-                            'def_role' => 'arg'
-                          },
-                          'text' => 'ccx'
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'ccx'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_arg'
                         }
                       ],
                       'info' => {
@@ -456,36 +486,51 @@ $result_trees{'def_in_copying'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'aa'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'aa'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'bb'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'bb'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'cc'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'cc'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {
@@ -518,36 +563,51 @@ $result_trees{'def_in_copying'} = {
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'text' => 'aax'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'aax'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'text' => 'bbx'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'bbx'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'arg'
-                      },
-                      'text' => 'ccx'
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'ccx'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_arg'
                     }
                   ],
                   'info' => {

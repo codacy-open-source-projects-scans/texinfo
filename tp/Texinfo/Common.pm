@@ -48,25 +48,22 @@ use Texinfo::Commands;
 use Texinfo::Options;
 
 require Exporter;
-use vars qw($VERSION @ISA @EXPORT @EXPORT_OK %EXPORT_TAGS);
-@ISA = qw(Exporter);
+our @ISA = qw(Exporter);
 
-%EXPORT_TAGS = ( 'all' => [ qw(
+our @EXPORT_OK = qw(
 collect_commands_in_tree
 collect_commands_list_in_tree
 valid_customization_option
 valid_tree_transformation
-) ] );
-
-@EXPORT_OK = ( @{ $EXPORT_TAGS{'all'} } );
+);
 
 # This is where the Texinfo modules get access to __( without explicit
 # import.
-@EXPORT = qw(
+our @EXPORT = qw(
 __ __p
 );
 
-$VERSION = '7.1dev';
+our $VERSION = '7.1dev';
 
 # i18n
 # For the messages translations.
@@ -422,8 +419,8 @@ our %def_map = (
     'defop',     [ 'category', 'class' , 'name', 'arg' ],
     'deftp',     [ 'category', 'name', 'argtype' ],
     # shortcuts
-    # The strings are marked to be translated in the parsers with type
-    # 'untranslated'.
+    # The strings are marked to be translated in the parsers in type
+    # 'untranslated_def_line_arg'.
     'defun',         {'deffn'     => pgdt_context(
                                          'category of functions for @defun',
                                          'Function')},
@@ -2037,10 +2034,11 @@ sub debug_hash
   warn "$str\n";
 }
 
+# for debugging
 use Data::Dumper;
 
 my @kept_keys = ('contents', 'cmdname', 'type', 'text', 'args',
-  'extra', 'info', 'def_role', 'spaces_before_argument',
+  'extra', 'info', 'spaces_before_argument',
   'spaces_after_argument', 'comment_at_end', 'index_entry'
 );
 my %kept_keys;

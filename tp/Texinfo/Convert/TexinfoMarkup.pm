@@ -29,7 +29,7 @@
 
 package Texinfo::Convert::TexinfoMarkup;
 
-use 5.00405;
+use 5.006;
 use strict;
 
 # To check if there is no erroneous autovivification
@@ -43,13 +43,12 @@ use Texinfo::Convert::Converter;
 use Texinfo::Convert::Unicode;
 # for debugging and adding the original line for some commands
 use Texinfo::Convert::Texinfo;
-use Data::Dumper;
+#use Data::Dumper;
 use Carp qw(cluck);
 
-use vars qw($VERSION @ISA);
-@ISA = qw(Texinfo::Convert::Converter);
+our @ISA = qw(Texinfo::Convert::Converter);
 
-$VERSION = '7.1dev';
+our $VERSION = '7.1dev';
 
 
 # our because it is used in the xml to texi translator and subclasses.
@@ -257,6 +256,7 @@ my %type_elements = (
   'multitable_body' => 'tbody',
   'def_item' => 'definitionitem',
   'before_item' => 'beforefirstitem',
+  'before_defline' => 'beforefirstdefline',
 );
 
 my %default_context_block_commands = (
@@ -630,12 +630,11 @@ sub _convert($$;$)
                         [['command', $element->{'extra'}->{'clickstyle'}]]);
       }
       if ($self->{'itemize_line'} and $element->{'type'}
-          and ($element->{'type'} eq 'command_as_argument'
-               or $element->{'type'} eq 'command_as_argument_inserted')
+          and $element->{'type'} eq 'command_as_argument'
           and !$element->{'args'}) {
         my $arguments = [['command', $element->{'cmdname'}]];
         push @$arguments, ['automatic', 'on']
-          if ($element->{'type'} eq 'command_as_argument_inserted');
+          if ($element->{'info'} and $element->{'info'}->{'inserted'});
         return $self->txi_markup_element('formattingcommand', $arguments);
       }
       return $self->_format_command($element->{'cmdname'});
@@ -1041,12 +1040,12 @@ sub _convert($$;$)
           $self->{'document_context'}->[-1]->{'raw'} = 1;
         }
         my $command_result = '';
-        if (scalar (@{$element->{'args'}}) == 2
-              and defined($element->{'args'}->[-1])
-              and $element->{'args'}->[-1]->{'contents'}
-              and @{$element->{'args'}->[-1]->{'contents'}}) {
+        if (scalar(@{$element->{'args'}}) >= 2
+              and defined($element->{'args'}->[1])
+              and $element->{'args'}->[1]->{'contents'}
+              and scalar(@{$element->{'args'}->[1]->{'contents'}})) {
           $command_result = $self->_convert({'contents'
-                        => $element->{'args'}->[-1]->{'contents'}});
+                                         => [$element->{'args'}->[1]]});
         }
         if ($element->{'cmdname'} eq 'inlineraw') {
           pop @{$self->{'document_context'}};
@@ -1260,8 +1259,8 @@ sub _convert($$;$)
         push @$attribute,
          (['commandarg', $command_as_arg->{'cmdname'}],
              $self->_infoenclose_attribute($command_as_arg));
-        if ($command_as_arg->{'type'}
-            and $command_as_arg->{'type'} eq 'command_as_argument_inserted') {
+        if ($command_as_arg->{'info'}
+            and $command_as_arg->{'info'}->{'inserted'}) {
           push @$attribute, ['automaticcommandarg', 'on'];
         }
       } elsif ($element->{'extra'}
@@ -1492,8 +1491,7 @@ sub _convert($$;$)
       $result
         .= $self->txi_markup_open_element($type_elements{$element->{'type'}},
                                           $attribute);
-    }
-    if ($element->{'type'} eq 'def_line') {
+    } elsif ($element->{'type'} eq 'def_line') {
       if ($element->{'cmdname'}) {
         # @def*x command has the command associated with def_line.
         my $attribute = [];
@@ -1518,34 +1516,36 @@ sub _convert($$;$)
           $alias = 0;
         }
         foreach my $arg (@{$element->{'args'}->[0]->{'contents'}}) {
+          my $type = $arg->{'type'};
           # should only happen for dubious trees in which the def line
           # was not split in def roles
-          next if (not $arg->{'extra'} or not $arg->{'extra'}->{'def_role'});
-          my $type = $arg->{'extra'}->{'def_role'};
+          next if (!defined($type));
           my $content = $self->_convert($arg);
           if ($type eq 'spaces') {
             $content =~ s/\n$//;
             $result .= $content;
           } else {
             my $attribute = [];
-            if ($type eq 'category' and $alias) {
+            if ($type eq 'def_category' and $alias) {
               push @$attribute, ['automatic', 'on'];
             }
             my $format_element;
-            if ($type eq 'name') {
+            if ($type eq 'def_name') {
               $format_element = $defcommand_name_type{$main_command};
-            } elsif ($type eq 'arg') {
+            } elsif ($type eq 'def_arg') {
               $format_element = 'param';
-            } elsif ($type eq 'typearg') {
+            } elsif ($type eq 'def_typearg') {
               $format_element = 'paramtype';
             } else {
               $format_element = $type;
+              $format_element =~ s/^def_//;
             }
-            if ($arg->{'type'}
-                and ($arg->{'type'} eq 'bracketed_arg'
-                  or ($arg->{'type'} eq 'bracketed_inserted'))) {
+            if ($arg->{'contents'} and scalar($arg->{'contents'})
+                and $arg->{'contents'}->[0]->{'type'}
+                and $arg->{'contents'}->[0]->{'type'} eq 'bracketed_arg') {
               push @$attribute, ['bracketed', 'on'];
-              push @$attribute, _leading_trailing_spaces_arg($arg);
+              push @$attribute,
+                 _leading_trailing_spaces_arg($arg->{'contents'}->[0]);
             }
             $result
               .= $self->txi_markup_open_element("def$format_element", $attribute)
@@ -1562,6 +1562,28 @@ sub _convert($$;$)
       }
       chomp ($result);
       $result .= "\n";
+    # case of bracketed in def line not corresponding to a def* argument
+    # by itself, for example, in the following '{a b}{c d}' is the
+    # argument, it is not a bracketed by itself, but contains two
+    # bracketed_arg.  Similarly '{e f}' is a bracketed_arg but the arg is
+    # 'h{e f}'.
+    # @deffn {a b}{c d} h{e f} g h
+    } elsif ($element->{'type'} eq 'bracketed_arg'
+             and not ($element->{'parent'}->{'parent'}->{'cmdname'}
+                      and $element->{'parent'}->{'parent'}->{'cmdname'}
+                                                           eq 'multitable')
+             and (!$element->{'parent'}->{'type'}
+                  or ($element->{'parent'}->{'type'} ne 'def_category'
+                      and $element->{'parent'}->{'type'} ne 'def_type'
+                      and $element->{'parent'}->{'type'} ne 'def_name'
+                      and $element->{'parent'}->{'type'} ne 'def_typearg'
+                      and $element->{'parent'}->{'type'} ne 'def_arg'
+                      and $element->{'parent'}->{'type'} ne 'def_class'))) {
+      my $attribute = [];
+      push @$attribute, ['bracketed', 'on'];
+      push @$attribute, _leading_trailing_spaces_arg($element);
+      $result .= $self->txi_markup_open_element("defbracketed", $attribute);
+      push @close_format_elements, 'defbracketed';
     }
   }
   if ($element->{'contents'}) {

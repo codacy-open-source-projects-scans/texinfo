@@ -151,7 +151,7 @@ $result_trees{'braces_after_text'} = {
                   'text' => ''
                 }
               ],
-              'type' => 'def_item'
+              'type' => 'before_defline'
             },
             {
               'args' => [
@@ -160,55 +160,56 @@ $result_trees{'braces_after_text'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'text'
-                        },
-                        {
                           'contents' => [
                             {
-                              'text' => 'in paren'
+                              'text' => 'text'
+                            },
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'in paren'
+                                }
+                              ],
+                              'source_info' => {
+                                'line_nr' => 6,
+                                'macro' => 'mymacro'
+                              },
+                              'type' => 'bracketed_arg'
                             }
                           ],
-                          'source_info' => {
-                            'line_nr' => 6,
-                            'macro' => 'mymacro'
-                          },
-                          'type' => 'bracketed_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'type' => 'def_aggregate'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'rest'
-                        },
-                        {
                           'contents' => [
                             {
-                              'text' => 'in paren'
+                              'text' => 'rest'
+                            },
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'in paren'
+                                }
+                              ],
+                              'source_info' => {
+                                'line_nr' => 6,
+                                'macro' => 'mymacro'
+                              },
+                              'type' => 'bracketed_arg'
                             }
                           ],
-                          'source_info' => {
-                            'line_nr' => 6,
-                            'macro' => 'mymacro'
-                          },
-                          'type' => 'bracketed_arg'
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'type' => 'def_aggregate'
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {

@@ -19,100 +19,100 @@ $result_trees{'empty_deftypeop_name'} = {
                     {
                       'contents' => [
                         {
-                          'text' => 'Command'
-                        },
-                        {
-                          'args' => [
+                          'contents' => [
                             {
-                              'contents' => [
+                              'text' => 'Command'
+                            },
+                            {
+                              'args' => [
                                 {
-                                  'text' => 'com'
+                                  'contents' => [
+                                    {
+                                      'text' => 'com'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'cmdname' => 'code',
+                              'source_info' => {
+                                'line_nr' => 1
+                              }
                             }
                           ],
-                          'cmdname' => 'code',
-                          'source_info' => {
-                            'line_nr' => 1
-                          }
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'type' => 'def_aggregate'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'Window'
-                        },
-                        {
-                          'args' => [
+                          'contents' => [
                             {
-                              'contents' => [
+                              'text' => 'Window'
+                            },
+                            {
+                              'args' => [
                                 {
-                                  'text' => 'int'
+                                  'contents' => [
+                                    {
+                                      'text' => 'int'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'cmdname' => 'code',
+                              'source_info' => {
+                                'line_nr' => 1
+                              }
                             }
                           ],
-                          'cmdname' => 'code',
                           'source_info' => {
                             'line_nr' => 1
-                          }
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'class'
-                      },
-                      'source_info' => {
-                        'line_nr' => 1
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_class'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
                       'contents' => [
                         {
-                          'text' => 'expose'
-                        },
-                        {
-                          'args' => [
+                          'contents' => [
                             {
-                              'contents' => [
+                              'text' => 'expose'
+                            },
+                            {
+                              'args' => [
                                 {
-                                  'text' => 'exp'
+                                  'contents' => [
+                                    {
+                                      'text' => 'exp'
+                                    }
+                                  ],
+                                  'type' => 'brace_command_arg'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'cmdname' => 'var',
+                              'source_info' => {
+                                'line_nr' => 1
+                              }
                             }
                           ],
-                          'cmdname' => 'var',
-                          'source_info' => {
-                            'line_nr' => 1
-                          }
+                          'type' => 'def_line_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'type'
-                      },
-                      'type' => 'def_aggregate'
+                      'type' => 'def_type'
                     }
                   ],
                   'info' => {

@@ -793,39 +793,40 @@ $result_trees{'index_special_region_no_insertcopying_titlepage_no_nodes_footnote
                     {
                       'contents' => [
                         {
-                          'text' => 'truc'
+                          'contents' => [
+                            {
+                              'text' => 'truc'
+                            }
+                          ],
+                          'source_info' => {
+                            'file_name' => 'index_special_region_no_insertcopying.texi',
+                            'line_nr' => 45
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'source_info' => {
-                        'file_name' => 'index_special_region_no_insertcopying.texi',
-                        'line_nr' => 45
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'info' => {
-                        'spaces_before_argument' => {
-                          'text' => ' '
+                      'contents' => [
+                        {
+                          'info' => {
+                            'spaces_before_argument' => {
+                              'text' => ' '
+                            }
+                          },
+                          'source_info' => {
+                            'file_name' => 'index_special_region_no_insertcopying.texi',
+                            'line_nr' => 45
+                          },
+                          'type' => 'bracketed_arg'
                         }
-                      },
-                      'source_info' => {
-                        'file_name' => 'index_special_region_no_insertcopying.texi',
-                        'line_nr' => 45
-                      },
-                      'type' => 'bracketed_arg'
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -854,17 +855,19 @@ $result_trees{'index_special_region_no_insertcopying_titlepage_no_nodes_footnote
                     {
                       'contents' => [
                         {
-                          'text' => 'truc'
+                          'contents' => [
+                            {
+                              'text' => 'truc'
+                            }
+                          ],
+                          'source_info' => {
+                            'file_name' => 'index_special_region_no_insertcopying.texi',
+                            'line_nr' => 46
+                          },
+                          'type' => 'bracketed_arg'
                         }
                       ],
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'source_info' => {
-                        'file_name' => 'index_special_region_no_insertcopying.texi',
-                        'line_nr' => 46
-                      },
-                      'type' => 'bracketed_arg'
+                      'type' => 'def_category'
                     }
                   ],
                   'info' => {
@@ -892,31 +895,32 @@ $result_trees{'index_special_region_no_insertcopying_titlepage_no_nodes_footnote
                 {
                   'contents' => [
                     {
-                      'extra' => {
-                        'def_role' => 'category'
-                      },
-                      'source_info' => {
-                        'file_name' => 'index_special_region_no_insertcopying.texi',
-                        'line_nr' => 47
-                      },
-                      'type' => 'bracketed_arg'
+                      'contents' => [
+                        {
+                          'source_info' => {
+                            'file_name' => 'index_special_region_no_insertcopying.texi',
+                            'line_nr' => 47
+                          },
+                          'type' => 'bracketed_arg'
+                        }
+                      ],
+                      'type' => 'def_category'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'spaces'
-                      },
                       'text' => ' ',
                       'type' => 'spaces'
                     },
                     {
-                      'extra' => {
-                        'def_role' => 'name'
-                      },
-                      'source_info' => {
-                        'file_name' => 'index_special_region_no_insertcopying.texi',
-                        'line_nr' => 47
-                      },
-                      'type' => 'bracketed_arg'
+                      'contents' => [
+                        {
+                          'source_info' => {
+                            'file_name' => 'index_special_region_no_insertcopying.texi',
+                            'line_nr' => 47
+                          },
+                          'type' => 'bracketed_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
                     }
                   ],
                   'info' => {
@@ -985,7 +989,10 @@ $result_trees{'index_special_region_no_insertcopying_titlepage_no_nodes_footnote
           'args' => [
             {
               'cmdname' => 'asis',
-              'type' => 'command_as_argument_inserted'
+              'info' => {
+                'inserted' => 1
+              },
+              'type' => 'command_as_argument'
             },
             {
               'info' => {
