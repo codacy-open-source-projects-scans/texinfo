@@ -31,6 +31,8 @@
 #include "extra.h"
 /* for non_perl_* */
 #include "utils.h"
+/* for clear_error_message_list */
+#include "errors.h"
 #include "document.h"
 #include "translations.h"
 #include "get_perl_info.h"
@@ -114,11 +116,12 @@ document_errors (SV *document_in)
      PPCODE:
         document = get_sv_document_document (document_in, 0);
         if (document)
-          error_messages = document->error_messages;
+          error_messages = &document->error_messages;
 
         pass_errors_to_registrar (error_messages, document_in,
                                   &errors_warnings_sv,
                                   &error_nrs_sv);
+        clear_error_message_list (error_messages);
 
         if (!errors_warnings_sv)
           errors_warnings_sv = newSV (0);
@@ -175,29 +178,29 @@ set_document_global_info (SV *document_in, char *key, SV *value_sv)
             if (!strcmp (key, "input_file_name"))
               {
                 char *value = (char *)SvPVbyte_nolen(value_sv);
-                if (document->global_info->input_file_name)
+                if (document->global_info.input_file_name)
                   {
                     fprintf (stderr,
-                        "BUG: %d: reset input_file_name '%s' -> '%s'\n",
+                        "BUG: %zu: reset input_file_name '%s' -> '%s'\n",
                         document->descriptor,
-                        document->global_info->input_file_name, value);
-                    non_perl_free (document->global_info->input_file_name);
+                        document->global_info.input_file_name, value);
+                    non_perl_free (document->global_info.input_file_name);
                   }
-                document->global_info->input_file_name
+                document->global_info.input_file_name
                   = non_perl_strdup (value);
               }
             else if (!strcmp (key, "input_perl_encoding"))
               {
                 /* should not be needed, but in case global information
                    is reused, it will avoid memory leaks */
-                non_perl_free (document->global_info->input_perl_encoding);
-                document->global_info->input_perl_encoding
+                non_perl_free (document->global_info.input_perl_encoding);
+                document->global_info.input_perl_encoding
                    = non_perl_strdup ((char *)SvPVbyte_nolen(value_sv));
               }
             else
               {
                 add_associated_info_string_dup (
-                          &document->global_info->other_info,
+                          &document->global_info.other_info,
                           key, (char *)SvPVutf8_nolen(value_sv));
               }
           }
@@ -274,7 +277,7 @@ setup_indices_sort_strings (SV *document_in, ...)
         document = get_sv_document_document (document_in,
                                              "setup_indices_sort_strings");
         if (document)
-          document_indices_sort_strings (document, document->error_messages,
+          document_indices_sort_strings (document, &document->error_messages,
                                          document->options);
 
 # customization_information
@@ -291,7 +294,7 @@ indices_sort_strings (SV *document_in, ...)
                                              "indices_sort_strings");
         if (document)
           indices_sort_strings
-           = document_indices_sort_strings (document, document->error_messages,
+           = document_indices_sort_strings (document, &document->error_messages,
                                              document->options);
 
         if (indices_sort_strings)

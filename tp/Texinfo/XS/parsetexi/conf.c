@@ -16,42 +16,155 @@
 #include <config.h>
 #include <string.h>
 
-#include "tree_types.h"
+#include "utils.h"
+#include "macro.h"
 #include "conf.h"
 
 /* Configuration values. */
-CONF conf;
+PARSER_CONF parser_conf;
 
 void
-conf_set_show_menu (int i)
+parser_conf_set_show_menu (int i)
 {
-  conf.show_menu = i;
+  parser_conf.show_menu = i;
 }
 
 void
-conf_set_CPP_LINE_DIRECTIVES (int i)
+parser_conf_set_CPP_LINE_DIRECTIVES (int i)
 {
-  conf.cpp_line_directives = i;
+  parser_conf.cpp_line_directives = i;
 }
 
 void
-conf_set_IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME (int i)
+parser_conf_set_IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME (int i)
 {
-  conf.ignore_space_after_braced_command_name = i;
+  parser_conf.ignore_space_after_braced_command_name = i;
 }
 
 void
-conf_set_MAX_MACRO_CALL_NESTING (int i)
+parser_conf_set_MAX_MACRO_CALL_NESTING (int i)
 {
-  conf.max_macro_call_nesting = i;
+  parser_conf.max_macro_call_nesting = i;
+}
+
+int
+parser_conf_set_NO_INDEX (int i)
+{
+  int previous = parser_conf.no_index;
+  parser_conf.no_index = i;
+  return previous;
+}
+
+int
+parser_conf_set_NO_USER_COMMANDS (int i)
+{
+  int previous = parser_conf.no_user_commands;
+  parser_conf.no_user_commands = i;
+  return previous;
+}
+
+int
+parser_conf_set_DEBUG (int i)
+{
+  int previous = parser_conf.debug;
+  parser_conf.debug = i;
+  return previous;
 }
 
 void
-reset_conf (void)
+parser_conf_clear_INCLUDE_DIRECTORIES (void)
 {
-  memset (&conf, 0, sizeof (conf));
-  conf.show_menu = 1;
-  conf.cpp_line_directives = 1;
-  conf.ignore_space_after_braced_command_name = 1;
-  conf.max_macro_call_nesting = 100000;
+  clear_strings_list (&parser_conf.include_directories);
+}
+
+void
+parser_conf_add_include_directory (const char *filename)
+{
+  add_include_directory (filename, &parser_conf.include_directories);
+}
+
+void
+parser_conf_clear_expanded_formats (void)
+{
+  clear_expanded_formats (parser_conf.expanded_formats);
+}
+
+void
+parser_conf_add_expanded_format (const char *format)
+{
+  add_expanded_format (parser_conf.expanded_formats, format);
+}
+
+void
+parser_conf_set_documentlanguage (const char *value)
+{
+  free (parser_conf.documentlanguage);
+  parser_conf.documentlanguage = value ? strdup (value) : 0;
+  parser_conf.global_documentlanguage_fixed = 1;
+}
+
+void
+parser_conf_set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i)
+{
+  parser_conf.doc_encoding_for_input_file_name = i;
+}
+
+void
+parser_conf_set_INPUT_FILE_NAME_ENCODING (const char *value)
+{
+  free (parser_conf.input_file_name_encoding);
+  parser_conf.input_file_name_encoding = value ? strdup (value) : 0;
+}
+
+void
+parser_conf_set_LOCALE_ENCODING (const char *value)
+{
+  free (parser_conf.locale_encoding);
+  parser_conf.locale_encoding =  value ? strdup (value) : 0;
+}
+
+void
+parser_conf_set_accept_internalvalue (int value)
+{
+  parser_conf.accept_internalvalue = value;
+}
+
+void
+reset_parser_conf (void)
+{
+  wipe_values (&parser_conf.values);
+  clear_strings_list (&parser_conf.include_directories);
+  free (parser_conf.documentlanguage);
+  free (parser_conf.input_file_name_encoding);
+  free (parser_conf.locale_encoding);
+
+  parser_conf.accept_internalvalue = 0;
+  parser_conf.cpp_line_directives = 1;
+  parser_conf.debug = 1;
+  parser_conf.doc_encoding_for_input_file_name = 1;
+  parser_conf.documentlanguage = 0;
+  parser_conf.ignore_space_after_braced_command_name = 1;
+  parser_conf.input_file_name_encoding = 0;
+  parser_conf.locale_encoding = 0;
+  parser_conf.max_macro_call_nesting = 100000;
+  parser_conf.no_index = 0;
+  parser_conf.no_user_commands = 0;
+  parser_conf.show_menu = 1;
+
+  parser_conf.global_documentlanguage_fixed = 0;
+
+  memcpy (parser_conf.expanded_formats, default_expanded_formats,
+          sizeof (parser_conf.expanded_formats));
+  /* It would have been cleaner to separate setting default values,
+     but it is not needed, as default_expanded_formats is already zeros,
+     so the call can be kept in comments
+  conf_clear_expanded_formats ();
+   */
+
+  add_include_directory (".", &parser_conf.include_directories);
+
+  /* special value always returned as 1 to mark that @ifcommandnotdefined
+     is implemented.  Note that when called from the main program it is set
+     from Perl using the configuration passed to the parser */
+  store_value (&parser_conf.values, "txicommandconditionals", "1");
 }

@@ -79,8 +79,9 @@ set_input_encoding (const char *encoding)
   if (current_encoding_conversion)
     {
       encoding_set = 1;
-      free (global_info.input_encoding_name);
-      global_info.input_encoding_name = strdup (encoding);
+      GLOBAL_INFO *global_info = &parsed_document->global_info;
+      free (global_info->input_encoding_name);
+      global_info->input_encoding_name = strdup (encoding);
     }
 
   return encoding_set;
@@ -169,56 +170,33 @@ convert_to_utf8 (char *s)
   return ret;
 }
 
-
-static int doc_encoding_for_input_file_name = 1;
-static char *input_file_name_encoding = 0;
-static char *locale_encoding = 0;
-
-void
-set_input_file_name_encoding (const char *value)
-{
-  free (input_file_name_encoding);
-  input_file_name_encoding = value ? strdup (value) : 0;
-}
-
-void
-set_locale_encoding (const char *value)
-{
-  free (locale_encoding);
-  locale_encoding =  value ? strdup (value) : 0;
-}
-
-void
-set_doc_encoding_for_input_file_name (int value)
-{
-  doc_encoding_for_input_file_name = value;
-}
-
 /* Reverse the decoding of the filename to the input encoding, to retrieve
    the bytes that were present in the original Texinfo file.  Return
-   value is freed by free_small_strings. */
+   value is freed when freeing small_strings. */
 char *
 encode_file_name (char *filename)
 {
   if (!reverse_iconv)
     {
-      if (input_file_name_encoding)
+      if (parser_conf.input_file_name_encoding)
         {
-          reverse_iconv = iconv_open (input_file_name_encoding, "UTF-8");
+          reverse_iconv
+            = iconv_open (parser_conf.input_file_name_encoding, "UTF-8");
         }
-      else if (doc_encoding_for_input_file_name)
+      else if (parser_conf.doc_encoding_for_input_file_name)
         {
           if (current_encoding_conversion
-              && strcmp (global_info.input_encoding_name, "utf-8"))
+              && strcmp (parsed_document->global_info.input_encoding_name,
+                         "utf-8"))
             {
               char *conversion_encoding
                 = current_encoding_conversion->encoding_name;
               reverse_iconv = iconv_open (conversion_encoding, "UTF-8");
             }
         }
-      else if (locale_encoding)
+      else if (parser_conf.locale_encoding)
         {
-          reverse_iconv = iconv_open (locale_encoding, "UTF-8");
+          reverse_iconv = iconv_open (parser_conf.locale_encoding, "UTF-8");
         }
     }
   if (reverse_iconv && reverse_iconv != (iconv_t) -1)
@@ -532,51 +510,13 @@ set_input_source_mark (SOURCE_MARK *source_mark)
   input_stack[input_number - 1].input_source_mark = source_mark;
 }
 
-/* For filenames and macro names, it is possible that they won't be referenced
-   in the line number of any element.  It would be too much work to keep track,
-   so just keep them all here, and free them all together at the end. */
-char **small_strings = 0;
-size_t small_strings_num = 0;
-static size_t small_strings_space;
-
 char *
 save_string (const char *string)
 {
-  char *ret = string ? strdup (string) : 0;
-  if (ret)
-    {
-      if (small_strings_num == small_strings_space)
-        {
-          small_strings_space++;
-          small_strings_space += (small_strings_space >> 2);
-          small_strings = realloc (small_strings, small_strings_space
-                                   * sizeof (char *));
-          if (!small_strings)
-            fatal ("realloc failed");
-        }
-      small_strings[small_strings_num++] = ret;
-    }
-  return ret;
-}
+  if (!string)
+    return 0;
 
-void
-forget_small_strings (void)
-{
-  small_strings = 0;
-  small_strings_num = 0;
-  small_strings_space = 0;
-}
-
-/* not used */
-void
-free_small_strings (void)
-{
-  size_t i;
-  for (i = 0; i < small_strings_num; i++)
-    {
-      free (small_strings[i]);
-    }
-  small_strings_num = 0;
+  return add_string (string, parsed_document->small_strings);
 }
 
 void
@@ -599,24 +539,10 @@ top_file_index (void)
 }
 
 
-static STRING_LIST parser_include_dirs_list = {0, 0, 0};
-
-void
-parser_add_include_directory (const char *filename)
-{
-  add_include_directory (filename, &parser_include_dirs_list);
-}
-
-void
-parser_clear_include_directories (void)
-{
-  clear_strings_list (&parser_include_dirs_list);
-}
-
 char *
 parser_locate_include_file (const char *filename)
 {
-  return locate_include_file (filename, &parser_include_dirs_list);
+  return locate_include_file (filename, &parser_conf.include_directories);
 }
 
 /* Try to open a file called FILENAME */

@@ -16,21 +16,52 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
-typedef struct CONF {
-    int show_menu;
+#include "document_types.h"
+
+/* TODO there is no reason to have the structure and extern included in
+   codes only interested by the parser API, which only need the functions */
+
+typedef struct PARSER_CONF {
+    int accept_internalvalue;
     int cpp_line_directives;
+    int doc_encoding_for_input_file_name;
+    char *documentlanguage;
+    int debug;
+    char *input_file_name_encoding;
     int ignore_space_after_braced_command_name;
+    STRING_LIST include_directories;
+    char *locale_encoding;
     int max_macro_call_nesting;
-} CONF;
+    int no_index;
+    int no_user_commands;
+    int show_menu;
 
-extern CONF conf;
+    int global_documentlanguage_fixed;
 
-/* part of public API */
-void conf_set_show_menu (int i);
-void conf_set_CPP_LINE_DIRECTIVES (int i);
-void conf_set_IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME (int i);
-void conf_set_MAX_MACRO_CALL_NESTING (int i);
+    EXPANDED_FORMAT expanded_formats[7];
+    VALUE_LIST values;
+} PARSER_CONF;
 
-void reset_conf (void);
+extern PARSER_CONF parser_conf;
+
+/* part of parser public API */
+void parser_conf_set_show_menu (int i);
+void parser_conf_set_CPP_LINE_DIRECTIVES (int i);
+int parser_conf_set_DEBUG (int i);
+void parser_conf_set_IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME (int i);
+void parser_conf_set_MAX_MACRO_CALL_NESTING (int i);
+int parser_conf_set_NO_INDEX (int i);
+int parser_conf_set_NO_USER_COMMANDS (int i);
+void parser_conf_clear_INCLUDE_DIRECTORIES (void);
+void parser_conf_add_include_directory (const char *filename);
+void parser_conf_clear_expanded_formats (void);
+void parser_conf_add_expanded_format (const char *format);
+void parser_conf_set_documentlanguage (const char *value);
+void parser_conf_set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i);
+void parser_conf_set_INPUT_FILE_NAME_ENCODING (const char *value);
+void parser_conf_set_LOCALE_ENCODING (const char *value);
+void parser_conf_set_accept_internalvalue (int value);
+
+void reset_parser_conf (void);
 
 #endif

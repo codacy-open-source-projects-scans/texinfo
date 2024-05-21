@@ -78,6 +78,11 @@ typedef struct GLOBAL_INFO {
     char *input_perl_encoding;
 } GLOBAL_INFO;
 
+typedef struct INDEX_LIST {
+    size_t number;
+    INDEX **list;
+} INDEX_LIST;
+
 typedef struct MERGED_INDEX {
     char *name;
     INDEX_ENTRY *index_entries;
@@ -170,22 +175,26 @@ typedef struct COLLATIONS_INDICES_SORTED_BY_LETTER {
 } COLLATIONS_INDICES_SORTED_BY_LETTER;
 
 typedef struct DOCUMENT {
-    int descriptor;
+    size_t descriptor;
     ELEMENT *tree;
-    INDEX **index_names;
+    INDEX_LIST indices_info;
     MERGED_INDICES *merged_indices;
-    FLOAT_RECORD_LIST *floats;
-    LISTOFFLOATS_TYPE_LIST *listoffloats;
-    ELEMENT_LIST *internal_references;
-    LABEL_LIST *labels_list;
-    LABEL_LIST *identifiers_target;
-    GLOBAL_INFO *global_info;
-    GLOBAL_COMMANDS *global_commands;
+  /* Array of recorded @float's. */
+    FLOAT_RECORD_LIST floats;
+    LISTOFFLOATS_TYPE_LIST listoffloats;
+    ELEMENT_LIST internal_references;
+    LABEL_LIST labels_list;
+  /* Array of target elements with unique identifiers, sorted by identifier */
+    LABEL_LIST identifiers_target;
+  /* Information that is not local to where it is set in the Texinfo input,
+   for example document language and encoding. */
+    GLOBAL_INFO global_info;
+    GLOBAL_COMMANDS global_commands;
     STRING_LIST *small_strings;
+    ERROR_MESSAGE_LIST error_messages;
+    ERROR_MESSAGE_LIST parser_error_messages;
     ELEMENT_LIST *nodes_list;
     ELEMENT_LIST *sections_list;
-    ERROR_MESSAGE_LIST *error_messages;
-    ERROR_MESSAGE_LIST *parser_error_messages;
     struct OPTIONS *options; /* for options used in structuring */
     struct TEXT_OPTIONS *convert_index_text_options; /* for index
                                        sorting without converter */
@@ -197,10 +206,21 @@ typedef struct DOCUMENT {
     unsigned long modified_information;
 } DOCUMENT;
 
-/* not in document, but used in parser */
+/* following not in document, but used in parser */
 typedef struct EXPANDED_FORMAT {
     char *format;
     int expandedp;
 } EXPANDED_FORMAT;
+
+typedef struct {
+    char *name;
+    char *value;
+} VALUE;
+
+typedef struct {
+    size_t number;
+    size_t space;
+    VALUE *list;
+} VALUE_LIST;
 
 #endif

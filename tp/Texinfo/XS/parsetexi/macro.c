@@ -24,6 +24,8 @@
 #include "utils.h"
 #include "tree.h"
 #include "tree_types.h"
+/* for VALUE */
+#include "document_types.h"
 #include "debug_parser.h"
 #include "errors_parser.h"
 #include "text.h"
@@ -41,45 +43,50 @@ static MACRO *macro_list;
 static size_t macro_number;
 static size_t macro_space;
 
+static size_t free_slots_nr;
+
 
 /* Macro definition. */
 
 MACRO *
-lookup_macro_and_slot (enum command_id cmd, size_t *free_slot)
+lookup_macro (enum command_id cmd)
 {
   int i;
-  if (free_slot)
-    *free_slot = 0;
 
   for (i = 0; i < macro_number; i++)
     {
       if (macro_list[i].cmd == cmd)
         return &macro_list[i];
-      if (free_slot && !*free_slot && macro_list[i].cmd == 0)
-        *free_slot = i;
     }
   return 0;
 }
 
 void
-new_macro (char *name, ELEMENT *macro)
+new_macro (const char *name, const ELEMENT *macro)
 {
   enum command_id new;
   MACRO *m = 0;
-  size_t free_slot = 0;
 
-  if (global_restricted)
+  if (parser_conf.no_user_commands)
     return;
 
   /* Check for an existing definition first for us to overwrite. */
   new = lookup_command (name);
   if (new)
-    m = lookup_macro_and_slot (new, &free_slot);
+    m = lookup_macro (new);
+
   if (!m)
     {
       size_t macro_index;
-      if (free_slot)
-        macro_index = free_slot;
+      if (free_slots_nr)
+        {
+          for (macro_index = 0; macro_index < macro_number; macro_index++)
+            if (macro_list[macro_index].cmd == 0)
+              break;
+          if (macro_index == macro_number)
+            bug ("free slot not found");
+          free_slots_nr--;
+        }
       else
         {
           if (macro_number == macro_space)
@@ -114,12 +121,14 @@ new_macro (char *name, ELEMENT *macro)
    name and the arguments it takes, and return this information in a new
    ELEMENT. */
 ELEMENT *
-parse_macro_command_line (enum command_id cmd, char **line_inout,
+parse_macro_command_line (enum command_id cmd, const char **line_inout,
                           ELEMENT *parent)
 {
-  char *line = *line_inout;
+  const char *line = *line_inout;
+  const char *pline = line;
   ELEMENT *macro, *macro_name;
-  char *name, *args_ptr;
+  char *name;
+  const char *args_ptr;
   int index;
 
   macro = new_element (ET_NONE);
@@ -128,8 +137,8 @@ parse_macro_command_line (enum command_id cmd, char **line_inout,
 
   add_info_string_dup (macro, "arg_line", line);
 
-  line += strspn (line, whitespace_chars);
-  name = read_command_name (&line);
+  pline += strspn (pline, whitespace_chars);
+  name = read_command_name (&pline);
 
   if (!name)
     {
@@ -138,8 +147,8 @@ parse_macro_command_line (enum command_id cmd, char **line_inout,
       return macro;
     }
 
-  if (*line && *line != '{' && *line != '@'
-      && !strchr (whitespace_chars, *line))
+  if (*pline && *pline != '{' && *pline != '@'
+      && !strchr (whitespace_chars, *pline))
     {
       line_error ("bad name for @%s", command_name (cmd));
       add_extra_integer (macro, "invalid_syntax", 1);
@@ -154,7 +163,7 @@ parse_macro_command_line (enum command_id cmd, char **line_inout,
   free (name);
   add_to_element_args (macro, macro_name);
 
-  args_ptr = line;
+  args_ptr = pline;
   args_ptr += strspn (args_ptr, whitespace_chars);
 
   if (*args_ptr != '{')
@@ -170,7 +179,7 @@ parse_macro_command_line (enum command_id cmd, char **line_inout,
       /* args_ptr is after a '{' or ','.  INDEX holds the number of
          the macro argument */
 
-      char *q, *q2;
+      const char *q, *q2;
       ELEMENT *arg;
 
       args_ptr += strspn (args_ptr, whitespace_chars);
@@ -212,15 +221,15 @@ parse_macro_command_line (enum command_id cmd, char **line_inout,
 
           /* Check the argument name. */
             {
-              char *p;
+              const char *p;
               for (p = args_ptr; p < q2; p++)
                 {
                   if (!isascii_alnum (*p) && *p != '_' && *p != '-')
                     {
-                      char saved = *q2; *q2 = 0;
+                      char *formal_arg = strndup (args_ptr, q2 - args_ptr);
                       line_error ("bad or empty @%s formal argument: %s",
-                                  command_name(cmd), args_ptr);
-                      *q2 = saved;
+                                  command_name(cmd), formal_arg);
+                      free (formal_arg);
                       add_extra_integer (macro, "invalid_syntax", 1);
                       break;
                     }
@@ -237,11 +246,11 @@ parse_macro_command_line (enum command_id cmd, char **line_inout,
     }
 
  check_trailing:
-  line = args_ptr;
-  line += strspn (line, whitespace_chars);
-  if (*line && *line != '@')
+  pline = args_ptr;
+  pline += strspn (pline, whitespace_chars);
+  if (*pline && *pline != '@')
     {
-      char *argument_str = strdup (line);
+      char *argument_str = strdup (pline);
       /* remove new line for the message */
       char *end_line = strchr (argument_str, '\n');
 
@@ -252,9 +261,8 @@ parse_macro_command_line (enum command_id cmd, char **line_inout,
       free (argument_str);
       add_extra_integer (macro, "invalid_syntax", 1);
     }
-  //line += strlen (line); /* Discard rest of line. */
 
-  *line_inout = line;
+  *line_inout = pline;
   return macro;
 }
 
@@ -264,20 +272,21 @@ parse_macro_command_line (enum command_id cmd, char **line_inout,
 /* Return index into given arguments to look for the value of NAME.
    Return -1 if not found. */
 
-int
-lookup_macro_parameter (char *name, ELEMENT *macro)
+static int
+lookup_macro_parameter (const char *name, const ELEMENT *macro)
 {
   int i, pos;
-  ELEMENT **args;
+  /* the args_list pointer is const not the ELEMENT */
+  ELEMENT *const *args_list;
 
   /* Find 'arg' in MACRO parameters. */
-  args = macro->args.list;
+  args_list = macro->args.list;
   pos = 0;
   for (i = 0; i < macro->args.number; i++)
     {
-      if (args[i]->type == ET_macro_arg)
+      if (args_list[i]->type == ET_macro_arg)
         {
-          if (!strcmp (args[i]->text.text, name))
+          if (!strcmp (args_list[i]->text.text, name))
             return pos;
           pos++;
         }
@@ -305,12 +314,12 @@ remove_empty_arg (ELEMENT *argument)
 /* LINE points the opening brace in a macro invocation.  CMD is the command
    identifier of the macro command.  Return array of the arguments.  Return
    value to be freed by caller.  */
-void
-expand_macro_arguments (ELEMENT *macro, char **line_inout, enum command_id cmd,
-                        ELEMENT *current)
+static void
+expand_macro_arguments (const ELEMENT *macro, const char **line_inout,
+                        enum command_id cmd, ELEMENT *current)
 {
-  char *line = *line_inout;
-  char *pline = line;
+  const char *line = *line_inout;
+  const char *pline = line;
   TEXT *arg;
   int braces_level = 1;
   int args_total;
@@ -341,7 +350,7 @@ expand_macro_arguments (ELEMENT *macro, char **line_inout, enum command_id cmd,
     {
       /* At the beginning of this loop pline is at the start
          of an argument. */
-      char *sep;
+      const char *sep;
 
       sep = pline + strcspn (pline, "\\,{}");
       if (!*sep)
@@ -400,7 +409,7 @@ expand_macro_arguments (ELEMENT *macro, char **line_inout, enum command_id cmd,
             {
               if (current->args.number < args_total)
                 {
-                  char *p = pline;
+                  const char *p = pline;
 
                   remove_empty_content (argument);
 
@@ -450,8 +459,8 @@ funexit:
   *line_inout = line;
 }
 
-void
-set_toplevel_braces_nr (COUNTER *counter, ELEMENT* element)
+static void
+set_toplevel_braces_nr (COUNTER *counter, ELEMENT *element)
 {
   int toplevel_braces_nr = counter_value (counter, element);
   if (toplevel_braces_nr)
@@ -459,12 +468,12 @@ set_toplevel_braces_nr (COUNTER *counter, ELEMENT* element)
   counter_pop (counter);
 }
 
-void
-expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
+static void
+expand_linemacro_arguments (const ELEMENT *macro, const char **line_inout,
                             enum command_id cmd, ELEMENT *current)
 {
-  char *line = *line_inout;
-  char *pline = line;
+  const char *line = *line_inout;
+  const char *pline = line;
   TEXT *arg;
   int braces_level = 0;
   int args_total;
@@ -495,7 +504,7 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
 
   while (1)
     {
-      char *sep;
+      const char *sep;
 
       sep = pline + strcspn (pline, linecommand_expansion_delimiters);
       if (!*sep)
@@ -566,7 +575,7 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
               if (cmd && (command_data(cmd).flags & CF_brace)
                   && strchr (whitespace_chars, *pline)
                   && ((command_flags(current) & CF_accent)
-                   || conf.ignore_space_after_braced_command_name))
+                   || parser_conf.ignore_space_after_braced_command_name))
                 {
                   int whitespaces_len = strspn (pline, whitespace_chars);
                   text_append_n (arg, pline, whitespaces_len);
@@ -665,23 +674,21 @@ expand_linemacro_arguments (ELEMENT *macro, char **line_inout,
 }
 /* ARGUMENTS element holds the arguments used in the macro invocation.
    EXPANDED gets the result of the expansion. */
-void
-expand_macro_body (MACRO *macro_record, ELEMENT *arguments, TEXT *expanded)
+static void
+expand_macro_body (const MACRO *macro_record, const ELEMENT *arguments,
+                   TEXT *expanded)
 {
   int pos; /* Index into arguments. */
-  ELEMENT *macro;
-  char *macrobody;
-  char *ptext;
-
-  macro = macro_record->element;
+  const ELEMENT *macro;
+  const char *macrobody;
+  const char *ptext;
 
   macrobody = macro_record->macrobody;
 
-  /* Initialize TEXT object. */
-  expanded->end = 0;
-
   if (!macrobody)
     return;
+
+  macro = macro_record->element;
 
   ptext = macrobody;
   while (1)
@@ -689,7 +696,7 @@ expand_macro_body (MACRO *macro_record, ELEMENT *arguments, TEXT *expanded)
       /* At the start of this loop ptext is at the beginning or
          just after the last backslash sequence. */
 
-      char *bs; /* Pointer to next backslash. */
+      const char *bs; /* Pointer to next backslash. */
 
       bs = strchrnul (ptext, '\\');
       text_append_n (expanded, ptext, bs - ptext);
@@ -704,6 +711,7 @@ expand_macro_body (MACRO *macro_record, ELEMENT *arguments, TEXT *expanded)
         }
       else
         {
+          char *name;
           bs = strchr (ptext, '\\');
           if (!bs)
             {
@@ -712,45 +720,32 @@ expand_macro_body (MACRO *macro_record, ELEMENT *arguments, TEXT *expanded)
               return;
             }
 
-          *bs = '\0';
-          pos = lookup_macro_parameter (ptext, macro);
+          name = strndup (ptext, bs - ptext);
+          pos = lookup_macro_parameter (name, macro);
           if (pos == -1)
             {
               line_error ("\\ in @%s expansion followed `%s' instead of "
                           "parameter name or \\",
-                          macro->args.list[0]->text.text,
-                          ptext);
+                          macro->args.list[0]->text.text, name);
               text_append (expanded, "\\");
-              text_append (expanded, ptext);
+              text_append (expanded, name);
             }
           else
             {
               if (arguments && pos < arguments->args.number)
                 {
-                  ELEMENT *argument = args_child_by_index (arguments, pos);
+                  const ELEMENT *argument
+                    = args_child_by_index (arguments, pos);
                   if (argument->contents.number > 0)
                     text_append (expanded,
                       last_contents_child (
                         args_child_by_index (arguments, pos))->text.text);
                 }
             }
-          *bs = '\\';
+          free (name);
           ptext = bs + 1;
         }
     }
-}
-
-MACRO *
-lookup_macro (enum command_id cmd)
-{
-  int i;
-
-  for (i = 0; i < macro_number; i++)
-    {
-      if (macro_list[i].cmd == cmd)
-        return &macro_list[i];
-    }
-  return 0;
 }
 
 void
@@ -765,10 +760,16 @@ unset_macro_record (MACRO *m)
   free (m->macrobody);
   m->macrobody = 0;
   m->element = 0;
+
+  /* NOTE if m->cmd was already 0, this is not an new free slot.  We assume
+     that m->cmd was not already 0 and do not do an explicit check as
+     all the callers should already make sure that m->cmd is not 0 (by
+     finding the cmd with lookup_command and m with lookup_macro) */
+  free_slots_nr++;
 }
 
 void
-delete_macro (char *name)
+delete_macro (const char *name)
 {
   enum command_id cmd;
   MACRO *m;
@@ -791,17 +792,18 @@ wipe_macros (void)
       free (macro_list[i].macrobody);
     }
   macro_number = 0;
+  free_slots_nr = 0;
 }
 
 /* Handle macro expansion.  CMD is the macro command.
    The returned element is an out of tree element holding the call
    arguments also associated to the macro expansion source mark */
 ELEMENT *
-handle_macro (ELEMENT *current, char **line_inout, enum command_id cmd)
+handle_macro (ELEMENT *current, const char **line_inout, enum command_id cmd)
 {
-  char *line, *p;
+  const char *line, *p;
   MACRO *macro_record;
-  ELEMENT *macro;
+  const ELEMENT *macro;
   TEXT expanded;
   char *expanded_macro_text;
   int args_number;
@@ -810,7 +812,6 @@ handle_macro (ELEMENT *current, char **line_inout, enum command_id cmd)
   int error = 0;
 
   line = *line_inout;
-  text_init (&expanded);
 
   macro_record = lookup_macro (cmd);
   if (!macro_record)
@@ -845,13 +846,13 @@ handle_macro (ELEMENT *current, char **line_inout, enum command_id cmd)
         }
     }
 
-  if (conf.max_macro_call_nesting
-      && macro_expansion_nr > conf.max_macro_call_nesting)
+  if (parser_conf.max_macro_call_nesting
+      && macro_expansion_nr > parser_conf.max_macro_call_nesting)
     {
       line_warn (
          "macro call nested too deeply "
          "(set MAX_MACRO_CALL_NESTING to override; current value %d)",
-                conf.max_macro_call_nesting);
+                parser_conf.max_macro_call_nesting);
       error = 1;
     }
 
@@ -958,9 +959,10 @@ handle_macro (ELEMENT *current, char **line_inout, enum command_id cmd)
       goto funexit;
     }
 
+  text_init (&expanded);
   expand_macro_body (macro_record, macro_call_element, &expanded);
 
-  if (expanded.text && expanded.end > 0)
+  if (expanded.end > 0)
     {
       if (expanded.text[expanded.end - 1] == '\n')
         expanded.text[--expanded.end] = '\0';
@@ -1005,29 +1007,41 @@ handle_macro (ELEMENT *current, char **line_inout, enum command_id cmd)
 
 /* @set and @value */
 
-typedef struct {
-    char *name;
-    char *value;
-} VALUE;
-
-static VALUE *value_list;
-static size_t value_number;
-static size_t value_space;
+static VALUE_LIST parser_values;
 
 void
-wipe_values (void)
+wipe_values (VALUE_LIST *values)
 {
   size_t i;
-  for (i = 0; i < value_number; i++)
+  for (i = 0; i < values->number; i++)
     {
-      free (value_list[i].name);
-      free (value_list[i].value);
+      free (values->list[i].name);
+      free (values->list[i].value);
     }
-  value_number = 0;
+  values->number = 0;
+}
+
+/* initialize parsing run values to the configuration values */
+void
+init_values (void)
+{
+  size_t i;
+
+  wipe_values (&parser_values);
+
+  if (parser_values.space < parser_conf.values.number)
+    {
+      parser_values.space = parser_conf.values.number;
+      parser_values.list = realloc (parser_values.list,
+                                    parser_values.space * sizeof (VALUE));
+    }
+  for (i = 0; i < parser_conf.values.number; i++)
+    store_value (&parser_values, parser_conf.values.list[i].name,
+                 parser_conf.values.list[i].value);
 }
 
 void
-store_value (const char *name, const char *value)
+store_value (VALUE_LIST *values, const char *name, const char *value)
 {
   int i;
   VALUE *v = 0;
@@ -1036,11 +1050,12 @@ store_value (const char *name, const char *value)
   len = strlen (name);
 
   /* Check if already defined. */
-  for (i = 0; i < value_number; i++)
+  for (i = 0; i < values->number; i++)
     {
-      if (!strncmp (value_list[i].name, name, len) && !value_list[i].name[len])
+      if (!strncmp (values->list[i].name, name, len)
+          && !values->list[i].name[len])
         {
-          v = &value_list[i];
+          v = &values->list[i];
           free (v->name); free (v->value);
           break;
         }
@@ -1048,28 +1063,31 @@ store_value (const char *name, const char *value)
 
   if (!v)
     {
-      if (value_number == value_space)
+      if (values->number == values->space)
         {
-          value_list = realloc (value_list, (value_space += 5) * sizeof (VALUE));
+          values->list = realloc (values->list,
+                                  (values->space += 5) * sizeof (VALUE));
         }
-      v = &value_list[value_number++];
+      v = &values->list[values->number++];
     }
 
   v->name = strdup (name);
   v->value = strdup (value);
 
   /* Internal Texinfo flag */
-  if (!strncmp (name, "txi", 3))
+  if (!strncmp (name, "txi", 3) && parsed_document)
     {
+      IGNORED_CHARS *ignored_chars_info
+        = &parsed_document->global_info.ignored_chars;
       int val = (strcmp (value, "0") != 0);
       if (!strcmp (name, "txiindexbackslashignore"))
-        global_info.ignored_chars.backslash = val;
+        ignored_chars_info->backslash = val;
       else if (!strcmp (name, "txiindexhyphenignore"))
-        global_info.ignored_chars.hyphen = val;
+        ignored_chars_info->hyphen = val;
       else if (!strcmp (name, "txiindexlessthanignore"))
-        global_info.ignored_chars.lessthan = val;
+        ignored_chars_info->lessthan = val;
       else if (!strcmp (name, "txiindexatsignignore"))
-        global_info.ignored_chars.atsign = val;
+        ignored_chars_info->atsign = val;
 
       /* also: txicodequotebacktick, txicodequoteundirected,
          txicommandconditionals.  Deal with them here? */
@@ -1077,28 +1095,37 @@ store_value (const char *name, const char *value)
 }
 
 void
-clear_value (char *name)
+store_parser_value (const char *name, const char *value)
+{
+  store_value (&parser_values, name, value);
+}
+
+void
+clear_value (const char *name)
 {
   int i;
-  for (i = 0; i < value_number; i++)
+  VALUE_LIST *values = &parser_values;
+  for (i = 0; i < values->number; i++)
     {
-      if (!strcmp (value_list[i].name, name))
+      if (!strcmp (values->list[i].name, name))
         {
-          value_list[i].name[0] = '\0';
-          value_list[i].value[0] = '\0';
+          values->list[i].name[0] = '\0';
+          values->list[i].value[0] = '\0';
         }
     }
   /* Internal Texinfo flag */
   if (!strncmp (name, "txi", 3))
     {
+      IGNORED_CHARS *ignored_chars_info
+        = &parsed_document->global_info.ignored_chars;
       if (!strcmp (name, "txiindexbackslashignore"))
-        global_info.ignored_chars.backslash = 0;
+        ignored_chars_info->backslash = 0;
       else if (!strcmp (name, "txiindexhyphenignore"))
-        global_info.ignored_chars.hyphen = 0;
+        ignored_chars_info->hyphen = 0;
       else if (!strcmp (name, "txiindexlessthanignore"))
-        global_info.ignored_chars.lessthan = 0;
+        ignored_chars_info->lessthan = 0;
       else if (!strcmp (name, "txiindexatsignignore"))
-        global_info.ignored_chars.atsign = 0;
+        ignored_chars_info->atsign = 0;
 
       /* also: txicodequotebacktick, txicodequoteundirected,
          txicommandconditionals.  Deal with them here? */
@@ -1106,20 +1133,16 @@ clear_value (char *name)
 }
 
 char *
-fetch_value (char *name)
+fetch_value (const char *name)
 {
   int i;
-  for (i = 0; i < value_number; i++)
+  VALUE_LIST *values = &parser_values;
+  for (i = 0; i < values->number; i++)
     {
-      if (!strcmp (value_list[i].name, name))
-        return value_list[i].value;
+      if (!strcmp (values->list[i].name, name))
+        return values->list[i].value;
     }
 
-  /* special value always returned as 1 to mark that @ifcommandnotdefined
-      is implemented.  Note that in most cases it is also set from perl
-      using the configuration passed to the parser */
-  if (!strcmp (name, "txicommandconditionals"))
-    return "1";
   return 0;
 }
 
@@ -1142,7 +1165,7 @@ lookup_infoenclose (enum command_id cmd)
 }
 
 void
-add_infoenclose (enum command_id cmd, char *begin, char *end)
+add_infoenclose (enum command_id cmd, const char *begin, const char *end)
 {
   int i;
   INFO_ENCLOSE *ie = 0;

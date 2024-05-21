@@ -57,6 +57,13 @@ Document *XS_EXTERNAL_FORMATTING *XS_EXTERNAL_CONVERSION?
 Delayed bugs/features
 =====================
 
+call after/in pass_document_parser_errors_to_registrar?
+clear_document_parser_errors (document_descriptor);
+
+Parser API is inconsistent between Perl and XS.  The Perl API allows
+reuse of parser and parallel use of parsers, which is not really
+possible with XS.
+
 Gavin idea to use see/See for cross references in --plaintext output.
 More generally, the plaintext ref_commands formatting code
 could be completly different from the Info code, which is the current
@@ -105,6 +112,8 @@ $current->{'extra'}->{'following_punctuation'} or similar.
 Using callgrind to find the time used by functions
 
 valgrind --tool=callgrind perl -w texi2any.pl ../doc/texinfo.texi --html
+# to avoid cycles (some remain in Perl only code) that mess up the graph:
+valgrind --tool=callgrind --separate-callers=3 --separate-recs=10 perl -w texi2any.pl ../doc/texinfo.texi --html
 kcachegrind callgrind.out.XXXXXX
 
 C code could be checked to see if using an hash map implementation,
@@ -114,9 +123,9 @@ Could be interesting for find_string:
  unique_target -> find_string
  (and, though much less used output_files_open_out -> find_string)
 
-Another possibility for optimization would be to call Perl less, as it
-still uses about 40% of the time (for html) even though it should mainly be
-for code called once (and not for Perl functions called from C).
+For the Texinfo manual with full XS, Perl uses 22% of the time (for html),
+now only for code hopefully called once.  Calling Perl getSortKey uses about
+28% (more on sorting and C below).
 
 
 hyphenation: should only appear in toplevel.
@@ -781,6 +790,13 @@ for file in t/*.t ; do bfile=`basename $file .t`; perl -w $file -d 1 2>t/check_d
 export TEXINFO_XS_PARSER=0
 for file in t/*.t ; do bfile=`basename $file .t`; perl -w $file -d 1 2>t/check_debug_differences/PL_$bfile.err ; done
 for file in t/*.t ; do bfile=`basename $file .t`; sed 's/^XS|//' t/check_debug_differences/XS_$bfile.err | diff -u t/check_debug_differences/PL_$bfile.err - > t/check_debug_differences/debug_$bfile.diff; done
+
+Full check, including XS conversion and memory leaks in debug:
+export TEXINFO_XS_CONVERT=1
+PERL_DESTRUCT_LEVEL=2
+export PERL_DESTRUCT_LEVEL
+for file in t/*.t ; do bfile=`basename $file .t`; valgrind -q --leak-check=full perl -w $file -d 1 2>t/check_debug_differences/XS_$bfile.err ; done
+
 
 Setting flags
 our_CFLAGS='-g -Wformat-security -Wall -Wno-parentheses -Wno-missing-braces'

@@ -28,15 +28,9 @@
 #include "debug_parser.h"
 /* reset_obstacks */
 #include "tree.h"
-/* wipe_index_names */
-#include "utils.h"
-/* for parser_add_include_directory, set_input_file_name_encoding ... */
+/* for set_input_file_name_encoding ... */
 #include "input.h"
 #include "source_marks.h"
-/* wipe_identifiers_target */
-#include "labels.h"
-/* forget_indices init_index_commands */
-#include "indices.h"
 #include "errors.h"
 /* for wipe_user_commands */
 #include "commands.h"
@@ -44,37 +38,37 @@
 #include "context_stack.h"
 /* for clear_parser_expanded_formats and add_parser_expanded_format */
 #include "handle_commands.h"
-/* for wipe_macros and store_value */
+/* for wipe_macros store_value init_values wipe_values */
 #include "macro.h"
+#include "document.h"
 /* for reset_conf */
 #include "conf.h"
+/* for init_index_commands */
+#include "indices.h"
 #include "api.h"
 
-/* When reset_parser_except_conf is called in parse_*, store_document will
-   be called afterwards.
-   When reset_parser_except_conf is called by reset_parser in parser
-   initialization, however, there will be a call to parse_* afterwards
-   leading to calling reset_parser_except_conf again without a call to
-   store_document inbetween.
- */
-void
-reset_parser_except_conf (void)
+static void
+initialize_parsing (void)
 {
-  /* parser structures registered in document are reset by the
-     call to store_document, except for global info that is only
-     copied */
-  wipe_parser_global_info ();
+  parsed_document = new_document ();
 
   wipe_user_commands ();
   wipe_macros ();
-  /* index_names are forgotten in store_document, however, there
-     can be two calls of reset_parser_except_conf without a call to
-     store_document inbetween, for that case there need to be a call to
-     wipe_index_names and forget_indices before init_index_commands.
-  */
-  wipe_index_names (index_names);
-  forget_indices ();
-  wipe_identifiers_target ();
+
+  init_values ();
+
+  free (global_documentlanguage);
+  if (parser_conf.global_documentlanguage_fixed && parser_conf.documentlanguage)
+    global_documentlanguage = strdup (parser_conf.documentlanguage);
+  else
+    global_documentlanguage = 0;
+
+  free (global_clickstyle);
+  global_clickstyle = strdup ("arrow");
+  global_kbdinputstyle = kbd_distinct;
+
+  current_node = current_section = current_part = 0;
+
   reset_context_stack ();
   reset_command_stack (&nesting_context.basic_inline_stack);
   reset_command_stack (&nesting_context.basic_inline_stack_on_line);
@@ -86,12 +80,14 @@ reset_parser_except_conf (void)
      list to avoid memory leaks rather than reuse the iconv
      opened handlers */
   parser_reset_encoding_list ();
-  set_input_encoding ("utf-8");
   source_marks_reset_counters ();
 
   reset_obstacks ();
 
-  current_node = current_section = current_part = 0;
+  if (!parser_conf.no_index)
+    init_index_commands ();
+
+  set_input_encoding ("utf-8");
 }
 
 void
@@ -108,21 +104,7 @@ reset_parser (int local_debug_output)
     fprintf (stderr,
           "!!!!!!!!!!!!!!!! RESETTING THE PARSER !!!!!!!!!!!!!!!!!!!!!\n");
 
-  reset_parser_except_conf ();
-  wipe_values ();
-  clear_parser_expanded_formats ();
-  parser_clear_include_directories ();
-  reset_conf ();
-
-  global_documentlanguage_fixed = 0;
-  set_documentlanguage (0);
-
-  set_doc_encoding_for_input_file_name (1);
-  set_input_file_name_encoding (0);
-  set_locale_encoding (0);
-
-  global_accept_internalvalue = 0;
-  global_restricted = 0;
+  reset_parser_conf ();
 }
 
 /* Determine directory path based on file name.
@@ -135,17 +117,25 @@ parse_file (const char *filename, const char *input_file_name,
 {
   int document_descriptor;
   char *p, *q;
+  GLOBAL_INFO *global_info;
 
   int status;
 
+  initialize_parsing ();
+
   status = input_push_file (filename);
   if (status)
-    return 0;
+    {
+      remove_document_descriptor (parsed_document->descriptor);
+      return 0;
+    }
 
-  free (global_info.input_file_name);
-  free (global_info.input_directory);
-  global_info.input_file_name = strdup (input_file_name);
-  global_info.input_directory = strdup (input_directory);
+  global_info = &parsed_document->global_info;
+
+  free (global_info->input_file_name);
+  free (global_info->input_directory);
+  global_info->input_file_name = strdup (input_file_name);
+  global_info->input_directory = strdup (input_directory);
 
   /* Strip off a leading directory path, by looking for the last
      '/' in filename. */
@@ -161,7 +151,7 @@ parse_file (const char *filename, const char *input_file_name,
     {
       char saved = *p;
       *p = '\0';
-      parser_add_include_directory (filename);
+      parser_conf_add_include_directory (filename);
       *p = saved;
     }
 
@@ -176,7 +166,8 @@ parse_text (const char *string, int line_nr)
 {
   int document_descriptor;
 
-  reset_parser_except_conf ();
+  initialize_parsing ();
+
   input_push_text (strdup (string), line_nr, 0, 0);
   document_descriptor = parse_texi_document ();
   return document_descriptor;
@@ -191,8 +182,10 @@ parse_string (const char *string, int line_nr)
   ELEMENT *root_elt;
   int document_descriptor;
 
-  reset_parser_except_conf ();
+  initialize_parsing ();
+
   root_elt = new_element (ET_root_line);
+
   input_push_text (strdup (string), line_nr, 0, 0);
   document_descriptor = parse_texi (root_elt, root_elt);
   return document_descriptor;
@@ -205,7 +198,8 @@ parse_piece (const char *string, int line_nr)
   int document_descriptor;
   ELEMENT *before_node_section, *document_root;
 
-  reset_parser_except_conf ();
+  initialize_parsing ();
+
   before_node_section = setup_document_root_and_before_node_section ();
   document_root = before_node_section->parent;
 
@@ -214,63 +208,15 @@ parse_piece (const char *string, int line_nr)
   return document_descriptor;
 }
 
-/* for debugging */
 void
-parser_set_debug (int value)
+parser_conf_reset_values (void)
 {
-  set_debug_output (value);
+  wipe_values (&parser_conf.values);
 }
 
 void
-parser_set_documentlanguage_override (const char *value)
+parser_conf_add_value (const char *name, const char *value)
 {
-  set_documentlanguage_override (value);
+  store_value (&parser_conf.values, name, value);
 }
 
-void
-parser_set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i)
-{
-  set_doc_encoding_for_input_file_name (i);
-}
-
-void
-parser_set_input_file_name_encoding (const char *value)
-{
-  set_input_file_name_encoding (value);
-}
-
-void
-parser_set_locale_encoding (const char *value)
-{
-  set_locale_encoding (value);
-}
-
-void
-parser_store_value (const char *name, const char *value)
-{
-  store_value (name, value);
-}
-
-void
-parser_clear_expanded_formats (void)
-{
-  clear_parser_expanded_formats ();
-}
-
-void
-parser_add_expanded_format (const char *format)
-{
-  add_parser_expanded_format (format);
-}
-
-void
-parser_set_accept_internalvalue (int value)
-{
-  set_accept_internalvalue (value);
-}
-
-void
-parser_set_restricted (int value)
-{
-  set_restricted (value);
-}

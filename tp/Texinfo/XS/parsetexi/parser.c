@@ -29,17 +29,15 @@
 /* for relocate_source_marks */
 #include "manipulate_tree.h"
 #include "debug_parser.h"
-/* error_messages_list forget_errors ... */
 #include "errors_parser.h"
 #include "text.h"
 #include "counter.h"
 #include "builtin_commands.h"
 #include "macro.h"
-/* forget_small_strings small_strings ... */
 #include "input.h"
 #include "source_marks.h"
 #include "extra.h"
-/* for conf */
+/* for parser_conf */
 #include "conf.h"
 #include "command_stack.h"
 /* for nesting_context */
@@ -47,12 +45,14 @@
 #include "commands.h"
 /* for labels_list labels_number forget_labels forget_internal_xrefs */
 #include "labels.h"
-/* for register_document */
+/* for retrieve_document */
 #include "document.h"
 /* for set_labels_identifiers_target */
 #include "targets.h"
-/* for complete_indices forget_indices */
+/* for forget_indices complete_indices */
 #include "indices.h"
+/* for float_list_to_listoffloats_list */
+#include "floats.h"
 #include "parser.h"
 
 
@@ -66,9 +66,12 @@ const char *linecommand_expansion_delimiters = WHITESPACE_CHARS_EXCEPT_NEWLINE
                                                "{}@";
 #undef WHITESPACE_CHARS_EXCEPT_NEWLINE
 
+DOCUMENT *parsed_document = 0;
+
+
 /* Check if the contents of S2 appear at S1). */
 int
-looking_at (char *s1, char *s2)
+looking_at (const char *s1, const char *s2)
 {
   return !strncmp (s1, s2, strlen (s2));
 }
@@ -78,9 +81,9 @@ looking_at (char *s1, char *s2)
    commands, but is also used elsewhere.  Return value to be freed by caller.
    *PTR is advanced past the read name.  Return 0 if name is invalid. */
 char *
-read_command_name (char **ptr)
+read_command_name (const char **ptr)
 {
-  char *p = *ptr, *q;
+  const char *p = *ptr, *q;
   char *ret = 0;
 
   q = p;
@@ -101,9 +104,9 @@ read_command_name (char **ptr)
    if the command is a single character command.
    Return 0 if name is invalid or the empty string */
 char *
-parse_command_name (char **ptr, int *single_char)
+parse_command_name (const char **ptr, int *single_char)
 {
-  char *p = *ptr;
+  const char *p = *ptr;
   char *ret = 0;
   *single_char = 0;
 
@@ -130,10 +133,10 @@ parse_command_name (char **ptr, int *single_char)
 
 /* the pointer returned is past @c/@comment, whether there is indeed
    a comment or not.  If there is a comment, *has_comment is set to 1 */
-char *
-read_comment (char *line, int *has_comment)
+const char *
+read_comment (const char *line, int *has_comment)
 {
-  char *p = line;
+  const char *p = line;
   int len = strlen (line);
 
   *has_comment = 0;
@@ -311,54 +314,16 @@ reset_parser_counters (void)
 }
 
 
-/* Information that is not local to where it is set in the Texinfo input,
-   for example document language and encoding. */
-GLOBAL_INFO global_info;
-GLOBAL_COMMANDS global_commands;
 char *global_clickstyle = 0;
 char *global_documentlanguage = 0;
-int global_documentlanguage_fixed = 0;
-int global_accept_internalvalue = 0;
-int global_restricted = 0;
 
 enum kbd_enum global_kbdinputstyle = kbd_distinct;
-
-/* Set the document language unless it was set on the texi2any command line. */
-void
-set_documentlanguage (char *value)
-{
-  if (!global_documentlanguage_fixed)
-    {
-      free (global_documentlanguage);
-      global_documentlanguage = value ? strdup (value) : 0;
-    }
-}
-
-void
-set_documentlanguage_override (const char *value)
-{
-  free (global_documentlanguage);
-  global_documentlanguage = value ? strdup (value) : 0;
-  global_documentlanguage_fixed = 1;
-}
-
-
-void
-set_accept_internalvalue (int value)
-{
-  global_accept_internalvalue = value;
-}
-
-void
-set_restricted (int value)
-{
-  global_restricted = value;
-}
 
 /* Record the information from a command of global effect. */
 int
 register_global_command (ELEMENT *current)
 {
+  GLOBAL_COMMANDS *global_commands = &parsed_document->global_commands;
   enum command_id cmd = current->cmd;
   if (cmd == CM_summarycontents)
     cmd = CM_shortcontents;
@@ -371,21 +336,21 @@ register_global_command (ELEMENT *current)
         {
 #define GLOBAL_CASE(cmx) \
         case CM_##cmx:   \
-          add_to_element_list (&global_commands.cmx, current); \
+          add_to_element_list (&global_commands->cmx, current); \
           add_extra_integer (current, "global_command_number", \
-                             global_commands.cmx.number); \
+                             global_commands->cmx.number); \
           break
 
         case CM_footnote:
-          add_to_element_list (&global_commands.footnotes, current);
+          add_to_element_list (&global_commands->footnotes, current);
           add_extra_integer (current, "global_command_number",
-                             global_commands.footnotes.number);
+                             global_commands->footnotes.number);
           break;
 
         case CM_float:
-          add_to_element_list (&global_commands.floats, current);
+          add_to_element_list (&global_commands->floats, current);
           add_extra_integer (current, "global_command_number",
-                             global_commands.floats.number);
+                             global_commands->floats.number);
           break;
 
 #include "global_multi_commands_case.c"
@@ -409,12 +374,12 @@ register_global_command (ELEMENT *current)
           /* Check if we are inside an @include, and if so, do nothing. */
           if (top_file_index () > 0)
             break;
-          where = &global_commands.setfilename;
+          where = &global_commands->setfilename;
           break;
 
 #define GLOBAL_UNIQUE_CASE(cmd) \
         case CM_##cmd: \
-          where = &global_commands.cmd; \
+          where = &global_commands->cmd; \
           break
 
 #include "main/global_unique_commands_case.c"
@@ -437,27 +402,6 @@ register_global_command (ELEMENT *current)
   return 0;
 }
 
-
-void
-wipe_parser_global_info (void)
-{
-  free (global_clickstyle);
-  global_clickstyle = strdup ("arrow");
-  if (!global_documentlanguage_fixed)
-    {
-      free (global_documentlanguage);
-      global_documentlanguage = 0;
-    }
-  global_kbdinputstyle = kbd_distinct;
-
-  delete_global_info (&global_info);
-  memset (&global_info, 0, sizeof (global_info));
-
-  delete_global_commands (&global_commands);
-  /* clear the fields and reset elements lists */
-  memset (&global_commands, 0, sizeof (global_commands));
-}
-
 /* setup a Texinfo tree with document_root as root and before_node_section
    as first content.  Used for all the tree except for those obtained by
    parse_texi_line/parse_string. */
@@ -473,16 +417,18 @@ setup_document_root_and_before_node_section (void)
 /* Put everything before @setfilename in a special type and separate
    a preamble for informative commands */
 void
-rearrange_tree_beginning (ELEMENT *before_node_section)
+rearrange_tree_beginning (ELEMENT *before_node_section, int document_descriptor)
 {
+  DOCUMENT *document = retrieve_document (document_descriptor);
   ELEMENT *informational_preamble;
   /* temporary placeholder */
   ELEMENT_LIST *first_types = new_list ();
 
   /* Put everything before @setfilename in a special type.  This allows to
      ignore everything before @setfilename. */
-  if (global_commands.setfilename
-      && global_commands.setfilename->parent == before_node_section)
+  if (document->global_commands.setfilename
+      && document->global_commands.setfilename->parent
+                                          == before_node_section)
     {
       ELEMENT *before_setfilename
          = new_element (ET_preamble_before_setfilename);
@@ -543,7 +489,9 @@ int
 parse_texi_document (void)
 {
   int document_descriptor;
-  char *linep, *line = 0;
+  char *line = 0;
+  const char *linep;
+
   ELEMENT *before_node_section = setup_document_root_and_before_node_section ();
   ELEMENT *preamble_before_beginning = 0;
   ELEMENT *document_root = before_node_section->parent;
@@ -582,7 +530,13 @@ parse_texi_document (void)
 
   document_descriptor = parse_texi (document_root, before_node_section);
 
-  rearrange_tree_beginning (before_node_section);
+  /* TODO the document information often use more memory than needed,
+     when space > number.  We could realloc here the diverse structures
+     to number. No need to do it in parse_texi, it should only be
+     truely interesting for a whole document.
+   */
+
+  rearrange_tree_beginning (before_node_section, document_descriptor);
 
   return document_descriptor;
 }
@@ -695,7 +649,7 @@ end_preformatted (ELEMENT *current,
    from that element.
    */
 ELEMENT *
-merge_text (ELEMENT *current, char *text, ELEMENT *transfer_marks_element)
+merge_text (ELEMENT *current, const char *text, ELEMENT *transfer_marks_element)
 {
   int no_merge_with_following_text = 0;
   int leading_spaces = strspn (text, whitespace_chars);
@@ -1024,10 +978,10 @@ isolate_last_space (ELEMENT *current)
    or commands starting a block, that will end up in COMMAND extra spaces
    value. */
 void
-start_empty_line_after_command (ELEMENT *current, char **line_inout,
+start_empty_line_after_command (ELEMENT *current, const char **line_inout,
                                 ELEMENT *command)
 {
-  char *line = *line_inout;
+  const char *line = *line_inout;
   ELEMENT *e;
   int len;
 
@@ -1125,10 +1079,10 @@ new_value_element (enum command_id cmd, char *flag, ELEMENT *spaces_element)
 
 /* Check if line is "@end ..." for current command.  If so, advance LINE. */
 int
-is_end_current_command (ELEMENT *current, char **line,
+is_end_current_command (ELEMENT *current, const char **line,
                         enum command_id *end_cmd)
 {
-  char *linep;
+  const char *linep;
   char *cmdname;
 
   linep = *line;
@@ -1383,12 +1337,12 @@ check_valid_nesting_context (enum command_id cmd)
           GET_A_NEW_LINE when we need to read a new line
           FINISHED_TOTALLY when @bye was found */
 int
-process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
+process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
 {
   ELEMENT *current = *current_inout;
   ELEMENT *macro_call_element = 0;
-  char *line = *line_inout;
-  char *line_after_command;
+  const char *line = *line_inout;
+  const char *line_after_command;
   int retval = STILL_MORE_TO_PROCESS;
   enum command_id end_cmd;
   enum command_id from_alias = CM_NONE;
@@ -1405,7 +1359,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
   if (command_flags(current) & CF_block
       && (command_data(current->cmd).data == BLOCK_raw))
     {
-      char *p = line;
+      const char *p = line;
       enum command_id cmd = 0;
       int closed_nested_raw = 0;
       /* Check if we are using a macro within a macro. */
@@ -1555,7 +1509,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
   else if (command_flags(current) & CF_block
       && (command_data(current->cmd).data == BLOCK_conditional))
     {
-      char *p = line;
+      const char *p = line;
 
       /* check for nested @ifset (so that @end ifset doesn't end the
          the outermost @ifset). */
@@ -1609,7 +1563,6 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
 
           e = new_element (ET_empty_line);
           add_to_element_contents (current, e);
-
         }
       else
         {
@@ -1624,9 +1577,9 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
   /* Check if parent element is 'verb' */
   else if (current->parent && current->parent->cmd == CM_verb)
     {
-      char *q;
-
-      char *delimiter = lookup_info_string (current->parent, "delimiter");
+      const char *q;
+      const char *delimiter
+        = lookup_info_string (current->parent, "delimiter");
 
       if (strcmp (delimiter, ""))
         {
@@ -1657,10 +1610,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
               add_to_element_contents (current, e);
             }
           debug ("END VERB");
-          if (strcmp (delimiter, ""))
-            line = q + strlen (delimiter);
-          else
-            line = q;
+          line = q + strlen (delimiter);
           /* The '}' will close the @verb command in handle_separator below. */
         }
       else
@@ -1682,7 +1632,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
       ELEMENT *e_elided_rawpreformatted;
       ELEMENT *e_empty_line;
       enum command_id dummy;
-      char *line_dummy;
+      const char *line_dummy;
       int n;
 
       e_elided_rawpreformatted = new_element (ET_elided_rawpreformatted);
@@ -1820,9 +1770,9 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
      and early value expansion may be needed to provide with an argument. */
   else if (cmd == CM_value)
     {
-      char *remaining_line = line_after_command;
+      const char *remaining_line = line_after_command;
       ELEMENT *spaces_element = 0;
-      if (conf.ignore_space_after_braced_command_name)
+      if (parser_conf.ignore_space_after_braced_command_name)
         {
           int whitespaces_len = strspn (remaining_line, whitespace_chars);
           if (whitespaces_len > 0)
@@ -1852,13 +1802,14 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
                       ELEMENT *sm_value_element;
 
                       remaining_line++; /* past '}' */
-                      if (conf.max_macro_call_nesting
-                          && value_expansion_nr >= conf.max_macro_call_nesting)
+                      if (parser_conf.max_macro_call_nesting
+                          && value_expansion_nr
+                                  >= parser_conf.max_macro_call_nesting)
                         {
                           line_warn (
                             "value call nested too deeply "
                    "(set MAX_MACRO_CALL_NESTING to override; current value %d)",
-                             conf.max_macro_call_nesting);
+                             parser_conf.max_macro_call_nesting);
                           free (flag);
                           if (spaces_element)
                             destroy_element (spaces_element);
@@ -1886,7 +1837,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
 
                       /* Move 'line' to end of string so next input to
                          be processed is taken from input stack. */
-                      line = remaining_line + strlen (remaining_line);
+                      line += (remaining_line - line) + strlen (remaining_line);
                     }
                   if (value)
                     {
@@ -1991,7 +1942,7 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
 
       if (strchr (whitespace_chars, *line)
                && ((command_flags(current) & CF_accent)
-                   || conf.ignore_space_after_braced_command_name))
+                   || parser_conf.ignore_space_after_braced_command_name))
         {
            int whitespaces_len;
            int additional_newline = 0;
@@ -2009,15 +1960,15 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
                     /* do not consider the end of line to be possibly between
                        the @-command and the argument if at the end of a
                        line or block @-command. */
-                       char saved; /* TODO: Have a length argument to merge_text? */
+                       char *space_text;
                        if (current->contents.number > 0)
                          gather_spaces_after_cmd_before_arg (current);
                        current = current->parent;
-                       saved = line[whitespaces_len];
-                       line[whitespaces_len] = '\0';
-                       current = merge_text (current, line, 0);
+                       /* TODO: Have a length argument to merge_text? */
+                       space_text = strndup (line, whitespaces_len);
+                       current = merge_text (current, space_text, 0);
+                       free (space_text);
                        line += whitespaces_len;
-                       *line = saved;
                        isolate_last_space (current);
                        current = end_line (current);
                        retval = GET_A_NEW_LINE;
@@ -2141,10 +2092,10 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
       /* @value not expanded (expansion is done above), and @txiinternalvalue */
       if ((cmd == CM_value) || (cmd == CM_txiinternalvalue))
         {
-          char *arg_start;
+          const char *arg_start;
           char *flag;
           ELEMENT *spaces_element = 0;
-          if (conf.ignore_space_after_braced_command_name)
+          if (parser_conf.ignore_space_after_braced_command_name)
             {
               int whitespaces_len = strspn (line, whitespace_chars);
               if (whitespaces_len > 0)
@@ -2440,13 +2391,13 @@ process_remaining_on_line (ELEMENT **current_inout, char **line_inout)
 
       /* Output until next command, separator or newline. */
       {
-        char saved; /* TODO: Have a length argument to merge_text? */
+        char *sep_text;
         len = strcspn (line, "{}@,:\t.\n\f");
-        saved = line[len];
-        line[len] = '\0';
-        current = merge_text (current, line, 0);
+        /* TODO: Have a length argument to merge_text? */
+        sep_text = strndup (line, len);
+        current = merge_text (current, sep_text, 0);
+        free (sep_text);
         line += len;
-        *line = saved;
       }
     }
   else /*  End of line */
@@ -2479,13 +2430,13 @@ funexit:
 
 /* Check for a #line directive. */
 static int
-check_line_directive (char *line)
+check_line_directive (const char *line)
 {
   int line_no = 0;
   int status = 0;
   char *parsed_filename;
 
-  if (!conf.cpp_line_directives)
+  if (!parser_conf.cpp_line_directives)
     return 0;
 
   /* Check input is coming directly from a file. */
@@ -2504,137 +2455,16 @@ check_line_directive (char *line)
   return 0;
 }
 
-/* store global parser information in a document calling register_document
-   and forgetting about the global information that got registered */
-int
-store_document (ELEMENT *root)
-{
-  int document_descriptor;
-  int i;
-  LABEL_LIST *labels;
-  FLOAT_RECORD_LIST *floats;
-  ELEMENT_LIST *internal_references;
-  STRING_LIST *small_strings_list;
-  ERROR_MESSAGE_LIST *error_messages;
-  GLOBAL_INFO *doc_global_info = malloc (sizeof (GLOBAL_INFO));
-  GLOBAL_COMMANDS *doc_global_commands = malloc (sizeof (GLOBAL_COMMANDS));
-
-  labels = malloc (sizeof (LABEL_LIST));
-
-  /* this is actually used to deallocate above labels_number */
-  labels_list = realloc (labels_list,
-                         labels_number * sizeof (LABEL));
-
-  labels->list = labels_list;
-  labels->number = labels_number;
-  labels->space = labels_number;
-
-  floats = malloc (sizeof (FLOAT_RECORD_LIST));
-  parser_float_list.list = realloc (parser_float_list.list,
-        parser_float_list.number * sizeof (FLOAT_RECORD));
-
-  floats->list = parser_float_list.list;
-  floats->number = parser_float_list.number;
-  floats->space = parser_float_list.number;
-
-  internal_references = malloc (sizeof (ELEMENT_LIST));
-
-  internal_xref_list.list = realloc (internal_xref_list.list,
-                             internal_xref_list.number * sizeof (ELEMENT));
-
-  internal_references->list = internal_xref_list.list;
-  internal_references->number = internal_xref_list.number;
-  internal_references->space = internal_xref_list.number;
-
-  memcpy (doc_global_info, &global_info, sizeof (GLOBAL_INFO));
-  if (global_info.input_encoding_name)
-    doc_global_info->input_encoding_name
-      = strdup (global_info.input_encoding_name);
-  if (global_info.input_file_name)
-    doc_global_info->input_file_name
-      = strdup (global_info.input_file_name);
-  if (global_info.input_directory)
-    doc_global_info->input_directory
-      = strdup (global_info.input_directory);
-
-  #define COPY_GLOBAL_ARRAY(type,cmd) \
-   doc_global_##type->cmd.list = 0;                            \
-   doc_global_##type->cmd.number = 0;                          \
-   doc_global_##type->cmd.space = 0;                           \
-   if (global_##type.cmd.number > 0)                           \
-    {                                                                   \
-      for (i = 0; i < global_##type.cmd.number; i++)           \
-        {                                                               \
-          ELEMENT *e = global_##type.cmd.list[i]; \
-          add_to_element_list (&doc_global_##type->cmd, e);        \
-        }                                                               \
-    }
-  memcpy (doc_global_commands, &global_commands, sizeof (GLOBAL_COMMANDS));
-
-  COPY_GLOBAL_ARRAY(commands,dircategory_direntry);
-
-  #define GLOBAL_CASE(cmd) \
-   COPY_GLOBAL_ARRAY(commands,cmd)
-
-  GLOBAL_CASE(footnotes);
-  GLOBAL_CASE(floats);
-
-#include "global_multi_commands_case.c"
-
-  #undef GLOBAL_CASE
-  #undef COPY_GLOBAL_ARRAY
-
-  small_strings = realloc (small_strings, small_strings_num * sizeof (char *));
-  small_strings_list = malloc (sizeof (STRING_LIST));
-  small_strings_list->list = small_strings;
-  small_strings_list->number = small_strings_num;
-  small_strings_list->space = small_strings_num;
-
-  error_messages_list.list = realloc (error_messages_list.list,
-                        error_messages_list.number * sizeof (ERROR_MESSAGE));
-  error_messages = malloc (sizeof (ERROR_MESSAGE_LIST));
-  error_messages->list = error_messages_list.list;
-  error_messages->number = error_messages_list.number;
-  error_messages->space = error_messages_list.number;
-
-  document_descriptor
-   = register_document (root, index_names, floats, internal_references,
-                        labels, identifiers_target, doc_global_info,
-                        doc_global_commands,
-                        small_strings_list, error_messages);
-  forget_indices ();
-  forget_labels ();
-
-  memset (&parser_float_list, 0, sizeof (FLOAT_RECORD_LIST));
-
-  forget_internal_xrefs ();
-
-  memset (&global_info.included_files, 0, sizeof (STRING_LIST));
-
-  forget_small_strings ();
-  forget_errors ();
-
-  identifiers_target = 0;
-
-  return document_descriptor;
-}
-
 /* Pass in a ROOT_ELT root of "Texinfo tree".  Starting point for adding
    to the tree is CURRENT_ELT.  Returns a stored DOCUMENT_DESCRIPTOR */
 int
 parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
 {
   ELEMENT *current = current_elt;
-  int document_descriptor;
   static char *allocated_line;
-  char *line;
+  const char *line;
   int status;
-
-  /* done here and not in reset_parser_except_conf as usually done
-     as restricted is set after reset_parser_except_conf and before
-     calling parsing functions */
-  if (!global_restricted)
-    init_index_commands ();
+  DOCUMENT *document = parsed_document;
 
   /* Read input file line-by-line. */
   while (1)
@@ -2781,14 +2611,20 @@ parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
 
   /* update merged_in.  Only needed for merging happening after first
      index merge */
-  resolve_indices_merged_in ();
+  resolve_indices_merged_in (&document->indices_info);
 
-  identifiers_target
-    = set_labels_identifiers_target (labels_list, labels_number);
+  set_labels_identifiers_target (&document->labels_list,
+                                 &document->identifiers_target);
 
-  document_descriptor = store_document (current);
+  document->tree = current;
 
-  complete_indices (document_descriptor, debug_output);
+  float_list_to_listoffloats_list (&document->floats,
+                                   &document->listoffloats);
 
-  return document_descriptor;
+  parsed_document = 0;
+  forget_indices ();
+
+  complete_indices (document, parser_conf.debug);
+
+  return document->descriptor;
 }

@@ -22,25 +22,17 @@
 #include "text.h"
 #include "element_types.h"
 #include "debug.h"
+#include "conf.h"
 #include "debug_parser.h"
 
-/* Whether to dump debugging output on stderr. */
-int debug_output = 0;
+/* debug functions used in parser, depending on parser_conf.debug */
 
 void
-set_debug_output (int value)
-{
-  debug_output = value;
-}
-
-/* debug functions used in parser, depending on debug_output */
-
-void
-debug (char *s, ...)
+debug (const char *s, ...)
 {
   va_list v;
 
-  if (!debug_output)
+  if (!parser_conf.debug)
     return;
   va_start (v, s);
   vfprintf (stderr, s, v);
@@ -48,11 +40,11 @@ debug (char *s, ...)
 }
 
 void
-debug_nonl (char *s, ...)
+debug_nonl (const char *s, ...)
 {
   va_list v;
 
-  if (!debug_output)
+  if (!parser_conf.debug)
     return;
   va_start (v, s);
   vfprintf (stderr, s, v);
@@ -61,7 +53,7 @@ debug_nonl (char *s, ...)
 void
 debug_print_element (const ELEMENT *e, int print_parent)
 {
-  if (debug_output)
+  if (parser_conf.debug)
     {
       char *result;
       result = print_element_debug (e, print_parent);
@@ -71,15 +63,13 @@ debug_print_element (const ELEMENT *e, int print_parent)
 }
 
 void
-debug_print_protected_string (char *input_string)
+debug_print_protected_string (const char *input_string)
 {
-  if (debug_output)
+  if (parser_conf.debug)
     {
-      int allocated = 0;
-      char *result = debug_protect_eol (input_string, &allocated);
+      char *result = debug_protect_eol (input_string);
       fputs (result, stderr);
-      if (allocated)
-        free (result);
+      free (result);
     }
 }
 
@@ -102,7 +92,7 @@ debug_parser_command_name (enum command_id cmd)
 }
 
 char *
-print_element_debug_parser (ELEMENT *e, int print_parent)
+print_element_debug_parser (const ELEMENT *e, int print_parent)
 {
   TEXT text;
   char *result;
@@ -115,11 +105,9 @@ print_element_debug_parser (ELEMENT *e, int print_parent)
     text_printf (&text, "(%s)", element_type_names[e->type]);
   if (e->text.end > 0)
     {
-      int allocated = 0;
-      char *element_text = debug_protect_eol (e->text.text, &allocated);
+      char *element_text = debug_protect_eol (e->text.text);
       text_printf (&text, "[T: %s]", element_text);
-      if (allocated)
-        free (element_text);
+      free (element_text);
     }
   if (e->args.number)
     text_printf (&text, "[A%d]", e->args.number);
@@ -139,9 +127,9 @@ print_element_debug_parser (ELEMENT *e, int print_parent)
 }
 
 void
-debug_parser_print_element (ELEMENT *e, int print_parent)
+debug_parser_print_element (const ELEMENT *e, int print_parent)
 {
-  if (debug_output)
+  if (parser_conf.debug)
     {
       char *result;
       result = print_element_debug_parser (e, print_parent);

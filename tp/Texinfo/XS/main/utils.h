@@ -45,6 +45,8 @@ extern const char *command_location_names[];
 extern const char *html_button_direction_names[];
 extern char *html_command_text_type_name[];
 
+extern const EXPANDED_FORMAT default_expanded_formats[];
+
 typedef struct ENCODING_CONVERSION {
     char *encoding_name;
     iconv_t iconv;
@@ -179,16 +181,16 @@ void delete_global_commands (GLOBAL_COMMANDS *global_commands_ref);
 char *normalize_encoding_name (const char *text, int *possible_encoding);
 ELEMENT *item_line_parent (ELEMENT *current);
 ELEMENT *get_label_element (const ELEMENT *e);
-INDEX *indices_info_index_by_name (INDEX **indices_information,
+INDEX *indices_info_index_by_name (const INDEX_LIST *indices_information,
                                    const char *name);
 INDEX *ultimate_index (INDEX *index);
 size_t index_number_index_by_name (const SORTED_INDEX_NAMES *sorted_indices,
                                    const char *name);
-char *read_flag_name (char **ptr);
+char *read_flag_name (const char **ptr);
 int section_level (const ELEMENT *section);
 enum command_id section_level_adjusted_command_name (const ELEMENT *element);
 char *collapse_spaces (const char *text);
-char *parse_line_directive (char *line, int *retval, int *out_line_no);
+char *parse_line_directive (const char *line, int *retval, int *out_line_no);
 int is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries);
 
 STRING_LIST *new_string_list (void);
@@ -204,7 +206,7 @@ size_t find_string (const STRING_LIST *strings_list, const char *string);
 void destroy_accent_stack (ACCENTS_STACK *accent_stack);
 
 void wipe_index (INDEX *idx);
-void wipe_index_names (INDEX **index_names);
+void free_indices_info (INDEX_LIST *indices_info);
 
 /* in options_init_free.c */
 void initialize_options (OPTIONS *options);
@@ -241,18 +243,21 @@ void set_expanded_formats_from_options (EXPANDED_FORMAT *formats,
 
 char *enumerate_item_representation (char *specification, int number);
 
-ELEMENT *get_global_document_command (GLOBAL_COMMANDS *global_commands,
+const ELEMENT *get_global_document_command (
+                                      const GLOBAL_COMMANDS *global_commands,
                                       enum command_id cmd,
                                       enum command_location command_location);
 char *informative_command_value (const ELEMENT *element);
 void set_informative_command_value (OPTIONS *options, const ELEMENT *element);
-ELEMENT *set_global_document_command (GLOBAL_COMMANDS *global_commands,
+const ELEMENT *set_global_document_command (GLOBAL_COMMANDS *global_commands,
                              OPTIONS *options, enum command_id cmd,
                              enum command_location command_location);
-ELEMENT_LIST *get_cmd_global_multi_command (GLOBAL_COMMANDS *global_commands_ref,
-                                      enum command_id cmd);
-ELEMENT *get_cmd_global_uniq_command (GLOBAL_COMMANDS *global_commands_ref,
-                                      enum command_id cmd);
+const ELEMENT_LIST *get_cmd_global_multi_command (
+                                    const GLOBAL_COMMANDS *global_commands_ref,
+                                    enum command_id cmd);
+const ELEMENT *get_cmd_global_uniq_command (
+                                    const GLOBAL_COMMANDS *global_commands_ref,
+                                    enum command_id cmd);
 
 void html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons);
 void html_clear_direction_icons (DIRECTION_ICON_LIST *direction_icons);

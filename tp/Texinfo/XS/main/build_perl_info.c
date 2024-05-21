@@ -155,7 +155,7 @@ void element_to_perl_hash (ELEMENT *e, int avoid_recursion);
    information where build_perl_array is called.
  */
 static SV *
-build_perl_array (ELEMENT_LIST *e, int avoid_recursion)
+build_perl_array (const ELEMENT_LIST *e, int avoid_recursion)
 {
   SV *sv;
   AV *av;
@@ -289,8 +289,8 @@ newSVpv_byte (const char *str, STRLEN len)
 }
 
 static void
-build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
-                       int *nr_info)
+build_additional_info (HV *extra, const ASSOCIATED_INFO *a,
+                       int avoid_recursion, int *nr_info)
 {
   dTHX;
 
@@ -302,10 +302,9 @@ build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
 
       for (i = 0; i < a->info_number; i++)
         {
-          KEY_PAIR *k = &a->info[i];
+          const KEY_PAIR *k = &a->info[i];
 #define STORE(sv) hv_store (extra, key, strlen (key), sv, 0)
           const char *key = k->key;
-          ELEMENT *f = k->element;
 
           if (k->type == extra_deleted)
             continue;
@@ -314,6 +313,7 @@ build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
           switch (k->type)
             {
             case extra_element:
+              {
               /* For references to other parts of the tree, create the hash so
                  we can point to it. */
               /* Note that this does not happen much, as the contents
@@ -321,11 +321,14 @@ build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
                  happens for root commands (sections, nodes) and associated
                  commands, and could also happen for subentry as it is not
                  a children of the associated index command */
+              ELEMENT *f = k->element;
               if (!f->hv)
                 f->hv = newHV ();
               STORE(newRV_inc ((SV *)f->hv));
               break;
+              }
             case extra_element_oot:
+              {
               /* Note that this is only used for info hash in the parser, with
                  simple elements that are associated to one element only, should
                  not be referred to elsewhere (and should not contain other
@@ -349,17 +352,22 @@ build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
                   fprintf (stderr, message.text);
                 }
                    */
+              ELEMENT *f = k->element;
               if (!f->hv || !avoid_recursion)
                 element_to_perl_hash (f, avoid_recursion);
               STORE(newRV_inc ((SV *)f->hv));
               break;
+              }
             case extra_container:
+              {
+              ELEMENT *f = k->element;
               build_perl_container (f, avoid_recursion);
               STORE(newRV_inc ((SV *)f->hv));
               break;
+              }
             case extra_contents:
               {
-              ELEMENT_LIST *l = k->list;
+              const ELEMENT_LIST *l = k->list;
               if (l && l->number)
                 STORE(build_perl_array (l, avoid_recursion));
               break;
@@ -371,7 +379,7 @@ build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
               }
             case extra_string:
               { /* A simple string. */
-              char *value = k->string;
+              const char *value = k->string;
               STORE(newSVpv_utf8 (value, 0));
               break;
               }
@@ -385,16 +393,16 @@ build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
               }
             case extra_misc_args:
               {
-              int j;
-              AV *av;
-              av = newAV ();
+              size_t j;
+              const ELEMENT *f = k->element;
+              AV *av = newAV ();
               av_unshift (av, f->contents.number);
 
               STORE(newRV_inc ((SV *)av));
               /* An array of strings or integers. */
               for (j = 0; j < f->contents.number; j++)
                 {
-                  KEY_PAIR *k_integer;
+                  const KEY_PAIR *k_integer;
                   k_integer = lookup_extra (f->contents.list[j], "integer");
                   if (k_integer)
                     {
@@ -425,8 +433,8 @@ build_additional_info (HV *extra, ASSOCIATED_INFO *a, int avoid_recursion,
 }
 
 static void
-store_additional_info (const ELEMENT *e, ASSOCIATED_INFO *a, char *key,
-                       int avoid_recursion)
+store_additional_info (const ELEMENT *e, const ASSOCIATED_INFO *a,
+                       const char *key, int avoid_recursion)
 {
   int nr_info;
   HV *additional_info_hv;
@@ -446,7 +454,7 @@ store_additional_info (const ELEMENT *e, ASSOCIATED_INFO *a, char *key,
 }
 
 static void
-store_source_mark_list (ELEMENT *e)
+store_source_mark_list (const ELEMENT *e)
 {
   dTHX;
 
@@ -463,7 +471,7 @@ store_source_mark_list (ELEMENT *e)
         {
           HV *source_mark;
           SV *sv;
-          SOURCE_MARK *s_mark = e->source_mark_list.list[i];
+          const SOURCE_MARK *s_mark = e->source_mark_list.list[i];
           IV source_mark_position;
           IV source_mark_counter;
           source_mark = newHV ();
@@ -480,14 +488,14 @@ store_source_mark_list (ELEMENT *e)
             }
           if (s_mark->element)
             {
-              ELEMENT *e = s_mark->element;
+              ELEMENT *s_m_e = s_mark->element;
               /* should only be referred to in one source mark */
               /* but can be reused when tree is rebuilt
               if (e->hv)
                 fatal ("element_to_perl_hash source mark elt twice");
                */
-              element_to_perl_hash (e, 0);
-              STORE("element", newRV_inc ((SV *)e->hv));
+              element_to_perl_hash (s_m_e, 0);
+              STORE("element", newRV_inc ((SV *)s_m_e->hv));
             }
           if (s_mark->line)
             {
@@ -695,7 +703,7 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
   if (e->source_info.line_nr)
     {
 #define STORE(key, sv, hsh) hv_store (hv, key, strlen (key), sv, hsh)
-      SOURCE_INFO *source_info = &e->source_info;
+      const SOURCE_INFO *source_info = &e->source_info;
       HV *hv = newHV ();
       hv_store (e->hv, "source_info", strlen ("source_info"),
                 newRV_noinc ((SV *)hv), HSH_source_info);
@@ -740,7 +748,7 @@ build_texinfo_tree (ELEMENT *root, int avoid_recursion)
 /* Return array of target elements.  build_texinfo_tree must
    be called first. */
 AV *
-build_target_elements_list (LABEL *labels_list, size_t labels_number)
+build_target_elements_list (const LABEL_LIST *labels_list)
 {
   AV *target_array;
   SV *sv;
@@ -749,11 +757,11 @@ build_target_elements_list (LABEL *labels_list, size_t labels_number)
   dTHX;
 
   target_array = newAV ();
-  av_unshift (target_array, labels_number);
+  av_unshift (target_array, labels_list->number);
 
-  for (i = 0; i < labels_number; i++)
+  for (i = 0; i < labels_list->number; i++)
     {
-      sv = newRV_inc (labels_list[i].element->hv);
+      sv = newRV_inc (labels_list->list[i].element->hv);
       av_store (target_array, i, sv);
     }
 
@@ -761,7 +769,7 @@ build_target_elements_list (LABEL *labels_list, size_t labels_number)
 }
 
 HV *
-build_identifiers_target (LABEL_LIST *identifiers_target)
+build_identifiers_target (const LABEL_LIST *identifiers_target)
 {
   HV* hv;
 
@@ -784,8 +792,7 @@ build_identifiers_target (LABEL_LIST *identifiers_target)
 }
 
 AV *
-build_internal_xref_list (ELEMENT **internal_xref_list,
-                          size_t internal_xref_number)
+build_internal_xref_list (const ELEMENT_LIST *internal_xref_list)
 {
   AV *list_av;
   SV *sv;
@@ -794,11 +801,11 @@ build_internal_xref_list (ELEMENT **internal_xref_list,
   dTHX;
 
   list_av = newAV ();
-  av_unshift (list_av, internal_xref_number);
+  av_unshift (list_av, internal_xref_list->number);
 
-  for (i = 0; i < internal_xref_number; i++)
+  for (i = 0; i < internal_xref_list->number; i++)
     {
-      sv = newRV_inc (internal_xref_list[i]->hv);
+      sv = newRV_inc (internal_xref_list->list[i]->hv);
       av_store (list_av, i, sv);
     }
 
@@ -806,7 +813,7 @@ build_internal_xref_list (ELEMENT **internal_xref_list,
 }
 
 AV *
-build_elements_list (ELEMENT_LIST *list)
+build_elements_list (const ELEMENT_LIST *list)
 {
   AV *list_av;
   SV *sv;
@@ -829,7 +836,7 @@ build_elements_list (ELEMENT_LIST *list)
 
 /* Return hash for list of @float's that appeared in the file. */
 HV *
-build_float_types_list (FLOAT_RECORD *floats_list, size_t floats_number)
+build_float_types_list (const FLOAT_RECORD_LIST *floats)
 {
   HV *float_hash;
   SV *sv;
@@ -839,10 +846,10 @@ build_float_types_list (FLOAT_RECORD *floats_list, size_t floats_number)
 
   float_hash = newHV ();
 
-  for (i = 0; i < floats_number; i++)
+  for (i = 0; i < floats->number; i++)
     {
       AV *av = 0;
-      SV *float_type = newSVpv_utf8 (floats_list[i].type, 0);
+      SV *float_type = newSVpv_utf8 (floats->list[i].type, 0);
       /* use hv_fetch_ent to be able to pass a SV string for the key and
          not a char to be able to signal that it is UTF-8 encoded.  In recent
          perlapi, it is said that a negative len can be used to specify
@@ -864,7 +871,7 @@ build_float_types_list (FLOAT_RECORD *floats_list, size_t floats_number)
           hv_store_ent (float_hash, float_type,
                         newRV_noinc ((SV *)av), 0);
         }
-      sv = newRV_inc ((SV *)floats_list[i].element->hv);
+      sv = newRV_inc ((SV *)floats->list[i].element->hv);
       av_push (av, sv);
     }
 
@@ -874,7 +881,7 @@ build_float_types_list (FLOAT_RECORD *floats_list, size_t floats_number)
 /* returns a hash for a single entry in $self->{'index_names'}, containing
    information about a single index. */
 static HV *
-build_single_index_data (INDEX *index)
+build_single_index_data (const INDEX *index)
 {
 #define STORE(key, value) hv_store (hv, key, strlen (key), value, 0)
 
@@ -907,7 +914,7 @@ build_single_index_data (INDEX *index)
         {
 #define STORE2(key, value) hv_store (entry, key, strlen (key), value, 0)
           HV *entry;
-          INDEX_ENTRY *e;
+          const INDEX_ENTRY *e;
 
           e = &index->index_entries[j];
           entry = newHV ();
@@ -933,23 +940,21 @@ build_single_index_data (INDEX *index)
    build_texinfo_tree must be called before this so all the 'hv' fields
    are set on the elements in the tree. */
 HV *
-build_index_data (INDEX **index_names_in)
+build_index_data (const INDEX_LIST *indices_info)
 {
+  size_t i;
   HV *hv;
-  INDEX **i, *idx;
 
   dTHX;
 
   hv = newHV ();
 
-  if (index_names_in)
+  for (i = 0; i < indices_info->number; i++)
     {
-      for (i = index_names_in; (idx = *i); i++)
-        {
-          HV *hv2 = build_single_index_data (idx);
-          hv_store (hv, idx->name, strlen (idx->name),
-                                           newRV_noinc ((SV *)hv2), 0);
-        }
+      const INDEX *idx = indices_info->list[i];
+      HV *hv2 = build_single_index_data (idx);
+      hv_store (hv, idx->name, strlen (idx->name),
+                newRV_noinc ((SV *)hv2), 0);
     }
 
   return hv;
@@ -983,13 +988,13 @@ build_string_list (const STRING_LIST *strings_list, enum sv_string_type type)
 /* Return object to be used as 'info', retrievable with the
    'global_information' function. */
 HV *
-build_global_info (GLOBAL_INFO *global_info_ref,
-                   GLOBAL_COMMANDS *global_commands_ref)
+build_global_info (const GLOBAL_INFO *global_info_ref,
+                   const GLOBAL_COMMANDS *global_commands_ref)
 {
   HV *hv;
-  GLOBAL_INFO global_info = *global_info_ref;
-  GLOBAL_COMMANDS global_commands = *global_commands_ref;
-  ELEMENT *document_language;
+  const GLOBAL_INFO global_info = *global_info_ref;
+  const GLOBAL_COMMANDS global_commands = *global_commands_ref;
+  const ELEMENT *document_language;
   int nr_info;
 
   dTHX;
@@ -1026,7 +1031,7 @@ build_global_info (GLOBAL_INFO *global_info_ref,
 
   if (global_commands.setfilename)
     {
-      char *setfilename_text
+      const char *setfilename_text
         = informative_command_value (global_commands.setfilename);
       if (setfilename_text)
       hv_store (hv, "setfilename", strlen ("setfilename"),
@@ -1037,7 +1042,7 @@ build_global_info (GLOBAL_INFO *global_info_ref,
                                        CM_documentlanguage, CL_preamble);
   if (document_language)
     {
-      char *language = informative_command_value (document_language);
+      const char *language = informative_command_value (document_language);
       hv_store (hv, "documentlanguage", strlen ("documentlanguage"),
                 newSVpv (language, 0), 0);
     }
@@ -1048,13 +1053,12 @@ build_global_info (GLOBAL_INFO *global_info_ref,
 /* Return object to be used as 'commands_info', which holds references
    to tree elements. */
 HV *
-build_global_commands (GLOBAL_COMMANDS *global_commands_ref)
+build_global_commands (const GLOBAL_COMMANDS *global_commands_ref)
 {
   HV *hv;
   AV *av;
   int i;
-  ELEMENT *e;
-  GLOBAL_COMMANDS global_commands = *global_commands_ref;
+  const GLOBAL_COMMANDS global_commands = *global_commands_ref;
 
   dTHX;
 
@@ -1083,7 +1087,7 @@ build_global_commands (GLOBAL_COMMANDS *global_commands_ref)
                 newRV_noinc ((SV *) av), 0);
       for (i = 0; i < global_commands.dircategory_direntry.number; i++)
         {
-          e = global_commands.dircategory_direntry.list[i];
+          const ELEMENT *e = global_commands.dircategory_direntry.list[i];
           if (e->hv)
             av_push (av, newRV_inc ((SV *) e->hv));
         }
@@ -1098,7 +1102,7 @@ build_global_commands (GLOBAL_COMMANDS *global_commands_ref)
                 newRV_noinc ((SV *) av), 0);
       for (i = 0; i < global_commands.footnotes.number; i++)
         {
-          e = global_commands.footnotes.list[i];
+          const ELEMENT *e = global_commands.footnotes.list[i];
           if (e->hv)
             av_push (av, newRV_inc ((SV *) e->hv));
         }
@@ -1112,7 +1116,7 @@ build_global_commands (GLOBAL_COMMANDS *global_commands_ref)
                 newRV_noinc ((SV *) av), 0);
       for (i = 0; i < global_commands.floats.number; i++)
         {
-          e = global_commands.floats.list[i];
+          const ELEMENT *e = global_commands.floats.list[i];
           if (e->hv)
             av_push (av, newRV_inc ((SV *) e->hv));
         }
@@ -1126,7 +1130,7 @@ build_global_commands (GLOBAL_COMMANDS *global_commands_ref)
                 newRV_noinc ((SV *) av), 0);                              \
       for (i = 0; i < global_commands.cmd.number; i++)             \
         {                                                               \
-          e = global_commands.cmd.list[i];            \
+          const ELEMENT *e = global_commands.cmd.list[i];            \
           if (e->hv)                                                    \
             av_push (av, newRV_inc ((SV *) e->hv));                     \
         }                                                               \
@@ -1144,7 +1148,7 @@ build_global_commands (GLOBAL_COMMANDS *global_commands_ref)
 
 
 static void
-build_source_info_hash (SOURCE_INFO source_info, HV *hv)
+build_source_info_hash (const SOURCE_INFO source_info, HV *hv)
 {
   dTHX;
 
@@ -1170,7 +1174,7 @@ build_source_info_hash (SOURCE_INFO source_info, HV *hv)
 /* build perl already 'formatted' message, same as the output of
    Texinfo::Report::format*message */
 static SV *
-convert_error (ERROR_MESSAGE e)
+convert_error (const ERROR_MESSAGE e)
 {
   HV *hv;
   SV *msg;
@@ -1203,7 +1207,7 @@ convert_error (ERROR_MESSAGE e)
 
 /* Errors */
 AV *
-build_errors (ERROR_MESSAGE *error_list, size_t error_number)
+build_errors (const ERROR_MESSAGE *error_list, size_t error_number)
 {
   AV *av;
   int i;
@@ -1232,7 +1236,7 @@ build_errors (ERROR_MESSAGE *error_list, size_t error_number)
    is interested in those SV.
  */
 static void
-add_formatted_error_messages (ERROR_MESSAGE_LIST *error_messages,
+add_formatted_error_messages (const ERROR_MESSAGE_LIST *error_messages,
                               HV *report_hv, SV **errors_warnings_out,
                               SV **error_nrs_out)
 {
@@ -1283,7 +1287,7 @@ add_formatted_error_messages (ERROR_MESSAGE_LIST *error_messages,
 
           for (i = 0; i < error_messages->number; i++)
             {
-              ERROR_MESSAGE error_msg = error_messages->list[i];
+              const ERROR_MESSAGE error_msg = error_messages->list[i];
               SV *sv = convert_error (error_msg);
 
               if (error_msg.type == MSG_error && !error_msg.continuation)
@@ -1313,14 +1317,13 @@ add_formatted_error_messages (ERROR_MESSAGE_LIST *error_messages,
          it is likely that the error messages are going to disappear */
       fprintf (stderr, "BUG? no 'errors_warnings'. Not a Perl Texinfo::Report?\n");
     }
-
-  clear_error_message_list (error_messages);
 }
 
 /* ERROR_MESSAGES can be 0, in that case the function is used to get
    the perl references but they are not modified */
 SV *
-pass_errors_to_registrar (ERROR_MESSAGE_LIST *error_messages, SV *object_sv,
+pass_errors_to_registrar (const ERROR_MESSAGE_LIST *error_messages,
+                          SV *object_sv,
                           SV **errors_warnings_out, SV **error_nrs_out)
 {
   HV *object_hv;
@@ -1360,8 +1363,9 @@ pass_document_parser_errors_to_registrar (int document_descriptor,
   if (!document)
     return;
 
-  pass_errors_to_registrar (document->parser_error_messages, parser_sv,
+  pass_errors_to_registrar (&document->parser_error_messages, parser_sv,
                             &errors_warnings_sv, &error_nrs_sv);
+  clear_error_message_list (&document->parser_error_messages);
 }
 
 
@@ -1386,7 +1390,8 @@ get_document (size_t document_descriptor)
   hv = newHV ();
   hv_tree = newHV ();
 
-  hv_info = build_global_info (document->global_info, document->global_commands);
+  hv_info = build_global_info (&document->global_info,
+                               &document->global_commands);
 
 #define STORE(key, value) hv_store (hv, key, strlen (key), newRV_inc ((SV *) value), 0)
   STORE("tree", hv_tree);
@@ -1430,12 +1435,12 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
 
   hv_tree = build_texinfo_tree (document->tree, 0);
 
-  hv_info = build_global_info (document->global_info,
-                               document->global_commands);
+  hv_info = build_global_info (&document->global_info,
+                               &document->global_commands);
 
-  hv_commands_info = build_global_commands (document->global_commands);
+  hv_commands_info = build_global_commands (&document->global_commands);
 
-  hv_index_names = build_index_data (document->index_names);
+  hv_index_names = build_index_data (&document->indices_info);
 
   /* NOTE there is also a document->listoffloats which structure
      is more like the hv_listoffloats_list, so it could be
@@ -1443,17 +1448,13 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
      for example build_listoffloats_list that would create the
      hv_listoffloats_list based on document->listoffloats. */
   hv_listoffloats_list
-         = build_float_types_list (document->floats->list,
-                                   document->floats->number);
+         = build_float_types_list (&document->floats);
 
-  av_internal_xref = build_internal_xref_list (
-                    document->internal_references->list,
-                    document->internal_references->number);
+  av_internal_xref = build_internal_xref_list (&document->internal_references);
 
-  hv_identifiers_target = build_identifiers_target (document->identifiers_target);
+  hv_identifiers_target = build_identifiers_target (&document->identifiers_target);
 
-  av_labels_list = build_target_elements_list (document->labels_list->list,
-                                               document->labels_list->number);
+  av_labels_list = build_target_elements_list (&document->labels_list);
 
   if (document->nodes_list)
     av_nodes_list = build_elements_list (document->nodes_list);
@@ -1588,6 +1589,11 @@ store_texinfo_tree (DOCUMENT *document, HV *document_hv)
   return result_sv;
 }
 
+/* there are 2 differences between BUILD_PERL_DOCUMENT_ITEM and
+   BUILD_PERL_DOCUMENT_LIST: in BUILD_PERL_DOCUMENT_LIST no check on existing
+    and the address of document->fieldname is passed.
+ */
+
 #define BUILD_PERL_DOCUMENT_ITEM(funcname,fieldname,keyname,flagname,buildname,HVAV) \
 SV * \
 funcname (SV *document_in) \
@@ -1634,11 +1640,7 @@ funcname (SV *document_in) \
 BUILD_PERL_DOCUMENT_ITEM(funcname,fieldname,keyname,flagname,buildname,HVAV)
  */
 
-BUILD_PERL_DOCUMENT_ITEM(document_indices_information,index_names,"indices",F_DOCM_index_names,build_index_data,HV)
 
-BUILD_PERL_DOCUMENT_ITEM(document_global_commands_information,global_commands,"commands_info",F_DOCM_global_commands,build_global_commands,HV)
-
-BUILD_PERL_DOCUMENT_ITEM(document_labels_information,identifiers_target,"identifiers_target",F_DOCM_identifiers_target,build_identifiers_target,HV)
 
 BUILD_PERL_DOCUMENT_ITEM(document_nodes_list,nodes_list,"nodes_list",F_DOCM_nodes_list,build_elements_list,AV)
 
@@ -1659,13 +1661,12 @@ funcname (SV *document_in) \
   document_hv = (HV *) SvRV (document_in); \
   DOCUMENT *document = get_sv_document_document (document_in, #funcname); \
 \
-  if (document && document->fieldname)\
+  if (document)\
     {\
       store_texinfo_tree (document, document_hv);\
       if (document->modified_information & flagname)\
         {\
-          HVAV *result_av_hv = buildname (document->fieldname->list,\
-                                     document->fieldname->number);\
+          HVAV *result_av_hv = buildname (&document->fieldname);\
           result_sv = newRV_inc ((SV *) result_av_hv);\
           hv_store (document_hv, key, strlen (key), result_sv, 0);\
           document->modified_information &= ~flagname;\
@@ -1699,6 +1700,12 @@ BUILD_PERL_DOCUMENT_LIST(document_internal_references_information,internal_refer
 
 BUILD_PERL_DOCUMENT_LIST(document_labels_list,labels_list,"labels_list",F_DOCM_labels_list,build_target_elements_list,AV)
 
+BUILD_PERL_DOCUMENT_LIST(document_indices_information,indices_info,"indices",F_DOCM_index_names,build_index_data,HV)
+
+BUILD_PERL_DOCUMENT_LIST(document_labels_information,identifiers_target,"identifiers_target",F_DOCM_identifiers_target,build_identifiers_target,HV)
+
+BUILD_PERL_DOCUMENT_LIST(document_global_commands_information,global_commands,"commands_info",F_DOCM_global_commands,build_global_commands,HV)
+
 #undef BUILD_PERL_DOCUMENT_LIST
 
 SV *
@@ -1718,8 +1725,8 @@ document_global_information (SV *document_in)
     {
       if (document->modified_information & F_DOCM_global_info)
         {
-          HV *result_hv = build_global_info (document->global_info,
-                                             document->global_commands);
+          HV *result_hv = build_global_info (&document->global_info,
+                                             &document->global_commands);
           result_sv = newRV_inc ((SV *) result_hv);
           hv_store (document_hv, key, strlen (key), result_sv, 0);
           document->modified_information &= ~F_DOCM_global_info;
@@ -2034,7 +2041,7 @@ rebuild_output_units_list (SV *output_units_sv, size_t output_units_descriptor)
 
 
 SV *
-get_conf (CONVERTER *converter, const char *option_name)
+get_conf (const CONVERTER *converter, const char *option_name)
 {
   dTHX;
 
@@ -2062,7 +2069,7 @@ build_integer_stack (const INTEGER_STACK *integer_stack)
 }
 
 SV *
-build_filenames (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+build_filenames (const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 {
   int i;
   HV *hv;
@@ -2075,9 +2082,10 @@ build_filenames (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
     {
       for (i = 0; i < output_unit_files->number; i++)
         {
-          FILE_NAME_PATH_COUNTER *output_unit_file
+          const FILE_NAME_PATH_COUNTER *output_unit_file
             = &output_unit_files->list[i];
-          char *normalized_filename = output_unit_file->normalized_filename;
+          const char *normalized_filename
+             = output_unit_file->normalized_filename;
           SV *normalized_filename_sv = newSVpv_utf8 (normalized_filename, 0);
 
           hv_store_ent (hv, normalized_filename_sv,
@@ -2089,7 +2097,7 @@ build_filenames (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 }
 
 SV *
-build_file_counters (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+build_file_counters (const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 {
   int i;
   HV *hv;
@@ -2102,9 +2110,9 @@ build_file_counters (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
     {
       for (i = 0; i < output_unit_files->number; i++)
         {
-          FILE_NAME_PATH_COUNTER *output_unit_file
+          const FILE_NAME_PATH_COUNTER *output_unit_file
             = &output_unit_files->list[i];
-          char *filename = output_unit_file->filename;
+          const char *filename = output_unit_file->filename;
           SV *filename_sv = newSVpv_utf8 (filename, 0);
 
           hv_store_ent (hv, filename_sv, newSViv (output_unit_file->counter), 0);
@@ -2115,7 +2123,7 @@ build_file_counters (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 }
 
 SV *
-build_out_filepaths (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+build_out_filepaths (const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 {
   int i;
   HV *hv;
@@ -2128,9 +2136,9 @@ build_out_filepaths (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
     {
       for (i = 0; i < output_unit_files->number; i++)
         {
-          FILE_NAME_PATH_COUNTER *output_unit_file
+          const FILE_NAME_PATH_COUNTER *output_unit_file
             = &output_unit_files->list[i];
-          char *filename = output_unit_file->filename;
+          const char *filename = output_unit_file->filename;
           SV *filename_sv = newSVpv_utf8 (filename, 0);
 
           hv_store_ent (hv, filename_sv,
@@ -2143,7 +2151,7 @@ build_out_filepaths (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 
 void
 pass_output_unit_files (SV *converter_sv,
-                        FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+                        const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 {
   SV *filenames_sv;
   SV *file_counters_sv;
@@ -2169,12 +2177,12 @@ pass_output_unit_files (SV *converter_sv,
 /* Texinfo::Common output_files_information API */
 void
 build_output_files_unclosed_files (HV *hv,
-                    OUTPUT_FILES_INFORMATION *output_files_information)
+                 const OUTPUT_FILES_INFORMATION *output_files_information)
 {
   SV **unclosed_files_sv;
   HV *unclosed_files_hv;
 
-  FILE_STREAM_LIST *unclosed_files;
+  const FILE_STREAM_LIST *unclosed_files;
   int i;
 
   dTHX;
@@ -2198,8 +2206,8 @@ build_output_files_unclosed_files (HV *hv,
     {
       for (i = 0; i < unclosed_files->number; i++)
         {
-          FILE_STREAM *file_stream = &unclosed_files->list[i];
-          char *file_path = file_stream->file_path;
+          const FILE_STREAM *file_stream = &unclosed_files->list[i];
+          const char *file_path = file_stream->file_path;
       /* It is not possible to associate the unclosed stream to a SV.
          It is possible to obtain a PerlIO from a FILE, as described in
            https://perldoc.perl.org/perlapio
@@ -2232,12 +2240,12 @@ build_output_files_unclosed_files (HV *hv,
  $converter->{'output_files'} = Texinfo::Common::output_files_initialize(); */
 void
 build_output_files_opened_files (HV *hv,
-                    OUTPUT_FILES_INFORMATION *output_files_information)
+                    const OUTPUT_FILES_INFORMATION *output_files_information)
 {
   SV **opened_files_sv;
   HV *opened_files_hv;
 
-  STRING_LIST *opened_files;
+  const STRING_LIST *opened_files;
   int i;
 
   dTHX;
@@ -2260,7 +2268,7 @@ build_output_files_opened_files (HV *hv,
     {
       for (i = 0; i < opened_files->number; i++)
         {
-          char *file_path = opened_files->list[i];
+          const char *file_path = opened_files->list[i];
           SV *file_path_sv = newSVpv_byte (file_path, 0);
           hv_store_ent (opened_files_hv, file_path_sv, newSViv (1), 0);
         }
@@ -2269,7 +2277,7 @@ build_output_files_opened_files (HV *hv,
 
 void
 build_output_files_information (SV *converter_sv,
-                   OUTPUT_FILES_INFORMATION *output_files_information)
+                   const OUTPUT_FILES_INFORMATION *output_files_information)
 {
   HV *hv;
   SV **output_files_sv;
@@ -2301,7 +2309,7 @@ build_output_files_information (SV *converter_sv,
 
 /* not used for now */
 SV *
-build_expanded_formats (EXPANDED_FORMAT *expanded_formats)
+build_expanded_formats (const EXPANDED_FORMAT *expanded_formats)
 {
   int i;
   HV *expanded_hv;
@@ -2313,7 +2321,7 @@ build_expanded_formats (EXPANDED_FORMAT *expanded_formats)
     {
       if (expanded_formats[i].expandedp)
         {
-          char *format = expanded_formats[i].format;
+          const char *format = expanded_formats[i].format;
           hv_store (expanded_hv, format, strlen (format),
                     newSViv (1), 0);
         }
@@ -2384,9 +2392,9 @@ build_indices_sort_strings (const INDICES_SORT_STRINGS *indices_sort_strings,
 
   for (i = 0; i < indices_sort_strings->number; i++)
     {
-      INDEX_SORT_STRINGS *index_sort_strings
+      const INDEX_SORT_STRINGS *index_sort_strings
          = &indices_sort_strings->indices[i];
-      char *index_name = index_sort_strings->index->name;
+      const char *index_name = index_sort_strings->index->name;
 
       if (index_sort_strings->entries_number > 0)
         {
@@ -2398,10 +2406,10 @@ build_indices_sort_strings (const INDICES_SORT_STRINGS *indices_sort_strings,
 
           for (j = 0; j < index_sort_strings->entries_number; j++)
             {
-              INDEX_ENTRY_SORT_STRING *index_entry_sort_string
+              const INDEX_ENTRY_SORT_STRING *index_entry_sort_string
                 = &index_sort_strings->sort_string_entries[j];
-              INDEX_ENTRY *entry = index_entry_sort_string->entry;
-              char *entry_index_name = entry->index_name;
+              const INDEX_ENTRY *entry = index_entry_sort_string->entry;
+              const char *entry_index_name = entry->index_name;
               int entry_number = entry->number;
               char *message;
               SV *index_entry_sv;
@@ -2449,7 +2457,7 @@ build_indices_sort_strings (const INDICES_SORT_STRINGS *indices_sort_strings,
 
               for (k = 0; k < index_entry_sort_string->subentries_number; k++)
                 {
-                  INDEX_SUBENTRY_SORT_STRING *subentry_sort_string
+                  const INDEX_SUBENTRY_SORT_STRING *subentry_sort_string
                     = &index_entry_sort_string->sort_string_subentries[k];
                   HV *subentry_sort_string_hv = newHV ();
 
@@ -2494,8 +2502,8 @@ build_sorted_indices_by_index (
 
       for (j = 0; j < idx->entries_number; j++)
         {
-          INDEX_ENTRY *entry = idx->entries[j];
-          char *index_name = entry->index_name;
+          const INDEX_ENTRY *entry = idx->entries[j];
+          const char *index_name = entry->index_name;
           int entry_number = entry->number;
           char *message;
           SV *index_entry_sv;
@@ -2551,7 +2559,7 @@ build_sorted_indices_by_letter (
           size_t j;
           HV *letter_hv = newHV ();
           AV *entries_av = newAV ();
-          LETTER_INDEX_ENTRIES *letter = &idx->letter_entries[i];
+          const LETTER_INDEX_ENTRIES *letter = &idx->letter_entries[i];
 
           hv_store (letter_hv, "letter", strlen ("letter"),
                     newSVpv_utf8 (letter->letter, 0), 0);
@@ -2563,8 +2571,8 @@ build_sorted_indices_by_letter (
 
           for (j = 0; j < letter->entries_number; j++)
             {
-              INDEX_ENTRY *entry = letter->entries[j];
-              char *index_name = entry->index_name;
+              const INDEX_ENTRY *entry = letter->entries[j];
+              const char *index_name = entry->index_name;
               int entry_number = entry->number;
               char *message;
               SV *index_entry_sv;
@@ -2589,8 +2597,8 @@ build_sorted_indices_by_letter (
 }
 
 SV *
-html_build_direction_icons (CONVERTER *converter,
-                            DIRECTION_ICON_LIST *direction_icons)
+html_build_direction_icons (const CONVERTER *converter,
+                            const DIRECTION_ICON_LIST *direction_icons)
 {
   HV *icons_hv;
   int i;

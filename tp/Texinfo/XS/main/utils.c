@@ -105,7 +105,9 @@ const char *command_location_names[]
   = {"before", "last", "preamble", "preamble_or_first", 0};
 
 /* duplicated when creating a new expanded_formats */
-EXPANDED_FORMAT expanded_formats[] = {
+/* NOTE if you add a format, increase the size of CONF.expanded_formats
+ */
+const EXPANDED_FORMAT default_expanded_formats[] = {
     "html", 0,
     "docbook", 0,
     "plaintext", 0,
@@ -544,7 +546,8 @@ void
 clear_expanded_formats (EXPANDED_FORMAT *formats)
 {
   int i;
-  for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
+  for (i = 0; i < sizeof (default_expanded_formats)
+                            / sizeof (*default_expanded_formats);
        i++)
     {
       formats[i].expandedp = 0;
@@ -555,7 +558,8 @@ void
 add_expanded_format (EXPANDED_FORMAT *formats, const char *format)
 {
   int i;
-  for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
+  for (i = 0; i < sizeof (default_expanded_formats)
+                      / sizeof (*default_expanded_formats);
        i++)
     {
       if (!strcmp (format, formats[i].format))
@@ -572,8 +576,8 @@ EXPANDED_FORMAT *
 new_expanded_formats (void)
 {
   EXPANDED_FORMAT *formats
-     = (EXPANDED_FORMAT *) malloc (sizeof (expanded_formats));
-  memcpy (formats, expanded_formats, sizeof (expanded_formats));
+     = (EXPANDED_FORMAT *) malloc (sizeof (default_expanded_formats));
+  memcpy (formats, default_expanded_formats, sizeof (default_expanded_formats));
 
   return formats;
 }
@@ -582,7 +586,8 @@ int
 format_expanded_p (const EXPANDED_FORMAT *formats, const char *format)
 {
   int i;
-  for (i = 0; i < sizeof (expanded_formats)/sizeof (*expanded_formats);
+  for (i = 0; i < sizeof (default_expanded_formats)
+                           / sizeof (*default_expanded_formats);
        i++)
     {
       if (!strcmp (format, formats[i].format))
@@ -594,7 +599,8 @@ format_expanded_p (const EXPANDED_FORMAT *formats, const char *format)
 int
 expanded_formats_number (void)
 {
-  return sizeof (expanded_formats)/sizeof (*expanded_formats);
+  return sizeof (default_expanded_formats)
+                          / sizeof (*default_expanded_formats);
 }
 
 void
@@ -647,14 +653,17 @@ get_label_element (const ELEMENT *e)
 /* index related code used both in parsing and conversion */
 /* NAME is the name of an index, e.g. "cp" */
 INDEX *
-indices_info_index_by_name (INDEX **indices_information, const char *name)
+indices_info_index_by_name (const INDEX_LIST *indices_information,
+                            const char *name)
 {
-  INDEX **i;
-  INDEX *idx;
+  size_t i;
 
-  for (i = indices_information; (idx = *i); i++)
-    if (!strcmp (idx->name, name))
-      return idx;
+  for (i = 0; i < indices_information->number; i++)
+    {
+      INDEX *idx = indices_information->list[i];
+      if (!strcmp (idx->name, name))
+        return idx;
+    }
   return 0;
 }
 
@@ -689,9 +698,9 @@ index_number_index_by_name (const SORTED_INDEX_NAMES *sorted_indices,
 /* text parsing functions used in diverse situations */
 /* Read a name used for @set, @value and translations arguments. */
 char *
-read_flag_name (char **ptr)
+read_flag_name (const char **ptr)
 {
-  char *p = *ptr, *q;
+  const char *p = *ptr, *q;
   char *ret = 0;
 
   q = p;
@@ -752,10 +761,11 @@ collapse_spaces (const char *text)
    have a \0.
 */
 char *
-parse_line_directive (char *line, int *retval, int *out_line_no)
+parse_line_directive (const char *line, int *retval, int *out_line_no)
 {
-  char *p = line;
-  char *q;
+  const char *p = line;
+  const char *q;
+  char *digit_end;
   char *filename = 0;
   int line_no = 0;
 
@@ -778,20 +788,17 @@ parse_line_directive (char *line, int *retval, int *out_line_no)
   /* p should now be at the line number */
   if (!strchr (digit_chars, *p))
     return 0;
-  line_no = strtoul (p, &p, 10);
+  line_no = strtoul (p, &digit_end, 10);
+  p += (digit_end - p);
 
   p += strspn (p, " \t");
   if (*p == '"')
     {
-      char saved;
       p++;
       q = strchr (p, '"');
       if (!q)
         return 0;
-      saved = *q;
-      *q = 0;
-      filename = strdup (p);
-      *q = saved;
+      filename = strndup (p, q - p);
       p = q + 1;
       p += strspn (p, " \t");
 
@@ -850,18 +857,16 @@ wipe_index (INDEX *idx)
 }
 
 void
-wipe_index_names (INDEX **index_names)
+free_indices_info (INDEX_LIST *indices_info)
 {
-  INDEX **i, *idx;
-  if (index_names)
+  size_t i;
+  for (i = 0; i < indices_info->number; i++)
     {
-      for (i = index_names; (idx = *i); i++)
-        {
-          wipe_index (idx);
-          free (idx);
-        }
+      INDEX *idx = indices_info->list[i];
+      wipe_index (idx);
+      free (idx);
     }
-  free (index_names);
+  free (indices_info->list);
 }
 
 
@@ -1004,7 +1009,6 @@ clear_strings_list (STRING_LIST *strings)
   strings->number = 0;
 }
 
-/* very similar to parsetexi/input.c free_small_strings */
 void
 free_strings_list (STRING_LIST *strings)
 {
@@ -1044,10 +1048,9 @@ void
 set_output_encoding (OPTIONS *customization_information, DOCUMENT *document)
 {
   if (customization_information
-      && document && document->global_info
-      && document->global_info->input_encoding_name) {
+      && document && document->global_info.input_encoding_name) {
     set_conf_string (&customization_information->OUTPUT_ENCODING_NAME,
-                      document->global_info->input_encoding_name);
+                      document->global_info.input_encoding_name);
   }
 }
 
@@ -1088,8 +1091,8 @@ delete_global_commands (GLOBAL_COMMANDS *global_commands_ref)
 #undef GLOBAL_CASE
 }
 
-ELEMENT_LIST *
-get_cmd_global_multi_command (GLOBAL_COMMANDS *global_commands_ref,
+const ELEMENT_LIST *
+get_cmd_global_multi_command (const GLOBAL_COMMANDS *global_commands_ref,
                               enum command_id cmd)
 {
 
@@ -1113,8 +1116,8 @@ get_cmd_global_multi_command (GLOBAL_COMMANDS *global_commands_ref,
    }
 }
 
-ELEMENT *
-get_cmd_global_uniq_command (GLOBAL_COMMANDS *global_commands_ref,
+const ELEMENT *
+get_cmd_global_uniq_command (const GLOBAL_COMMANDS *global_commands_ref,
                              enum command_id cmd)
 {
 
@@ -1244,18 +1247,18 @@ in_preamble (ELEMENT *element)
 
   For unique command, the last may be considered to be the same as the first.
 */
-ELEMENT *
-get_global_document_command (GLOBAL_COMMANDS *global_commands,
+const ELEMENT *
+get_global_document_command (const GLOBAL_COMMANDS *global_commands,
                              enum command_id cmd,
                              enum command_location command_location)
 {
-  ELEMENT *element = 0;
+  const ELEMENT *element = 0;
   if (command_location != CL_last && command_location != CL_preamble_or_first
       && command_location != CL_preamble)
     fprintf (stderr, "BUG: get_global_document_command: unknown CL: %d\n",
                      command_location);
 
-  ELEMENT_LIST *command_list
+  const ELEMENT_LIST *command_list
      = get_cmd_global_multi_command (global_commands, cmd);
   if (builtin_command_data[cmd].flags & CF_global)
     {
@@ -1291,7 +1294,7 @@ get_global_document_command (GLOBAL_COMMANDS *global_commands,
     }
   else
     {
-      ELEMENT *command
+      const ELEMENT *command
         = get_cmd_global_uniq_command (global_commands, cmd);
       if (command)
         element = command;
@@ -1304,12 +1307,12 @@ get_global_document_command (GLOBAL_COMMANDS *global_commands,
   set_informative_command_value), no @-commands setting side effects are done
   and associated customization variables are not set/reset either.
  */
-ELEMENT *
+const ELEMENT *
 set_global_document_command (GLOBAL_COMMANDS *global_commands, OPTIONS *options,
                              enum command_id cmd,
                              enum command_location command_location)
 {
-  ELEMENT *element
+  const ELEMENT *element
      = get_global_document_command (global_commands, cmd,
                                     command_location);
   if (element)

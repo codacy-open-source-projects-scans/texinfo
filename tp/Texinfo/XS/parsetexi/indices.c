@@ -41,8 +41,6 @@
 #include "parser.h"
 #include "indices.h"
 
-INDEX **index_names = 0;
-int number_of_indices = 0;
 int space_for_indices = 0;
 
 typedef struct {
@@ -101,20 +99,24 @@ add_index_command (char *cmdname, INDEX *idx)
 static INDEX *
 add_index_internal (char *name, int in_code)
 {
-  INDEX *idx = malloc (sizeof (INDEX));
+  INDEX_LIST *indices = &parsed_document->indices_info;
+  INDEX *idx = (INDEX *) malloc (sizeof (INDEX));
 
-  memset (idx, 0, sizeof *idx);
+  memset (idx, 0, sizeof (INDEX));
   idx->name = name;
   idx->prefix = name;
   idx->in_code = in_code;
-  if (number_of_indices == space_for_indices)
+
+  if (indices->number == space_for_indices)
     {
       space_for_indices += 5;
-      index_names = realloc (index_names, (space_for_indices + 1)
-                             * sizeof (INDEX *));
+      indices->list
+        = realloc (indices->list, space_for_indices * sizeof (INDEX *));
     }
-  index_names[number_of_indices++] = idx;
-  index_names[number_of_indices] = 0;
+
+  indices->list[indices->number] = idx;
+  indices->number++;
+
   return idx;
 }
 
@@ -124,7 +126,8 @@ add_index_internal (char *name, int in_code)
 void
 add_index (const char *name, int in_code)
 {
-  INDEX *idx = indices_info_index_by_name (index_names, name);
+  INDEX *idx
+    = indices_info_index_by_name (&parsed_document->indices_info, name);
   char *cmdname;
 
   if (!idx)
@@ -140,6 +143,7 @@ void
 init_index_commands (void)
 {
   INDEX *idx;
+  INDEX_LIST *indices = &parsed_document->indices_info;
 
   struct def { char *name; int in_code;
                enum command_id cmd2; enum command_id cmd1;}
@@ -192,21 +196,6 @@ init_index_commands (void)
     };
 #undef X
 
-  /* number_of_indices and num_index_commands
-   * should already be reset to 0 by forget_indices
-
-  if (number_of_indices != 0)
-    {
-      fprintf (stderr, "BUG: init_index_commands: number_of_indices != 0\n");
-      number_of_indices = 0;
-    }
-  if (num_index_commands != 0)
-    {
-      fprintf (stderr, "BUG: init_index_commands: num_index_commands != 0\n");
-      num_index_commands = 0;
-    }
-   */
-
   for (p = default_indices; p->name; p++)
     {
       idx = add_index_internal (strdup (p->name), p->in_code);
@@ -217,16 +206,16 @@ init_index_commands (void)
     }
 
   associate_command_to_index (CM_vtable,
-    indices_info_index_by_name (index_names, "vr"));
+    indices_info_index_by_name (indices, "vr"));
   associate_command_to_index (CM_ftable,
-    indices_info_index_by_name (index_names, "fn"));
+    indices_info_index_by_name (indices, "fn"));
 
   for (i = 0;
        i < sizeof (def_command_indices) / sizeof (def_command_indices[0]);
        i++)
     {
       enum command_id cmd;
-      idx = indices_info_index_by_name (index_names,
+      idx = indices_info_index_by_name (indices,
                                         def_command_indices[i].name);
       if (idx)
         {
@@ -252,8 +241,10 @@ enter_index_entry (enum command_id index_type_cmd,
   INDEX *idx;
   INDEX_ENTRY *entry;
   TEXT ignored_chars;
+  const IGNORED_CHARS *ignored_chars_info
+    = &parsed_document->global_info.ignored_chars;
 
-  if (global_restricted)
+  if (parser_conf.no_index)
     return;
 
   idx = index_of_command (index_type_cmd);
@@ -275,13 +266,13 @@ enter_index_entry (enum command_id index_type_cmd,
 
   /* Create ignored_chars string. */
   text_init (&ignored_chars);
-  if (global_info.ignored_chars.backslash)
+  if (ignored_chars_info->backslash)
     text_append (&ignored_chars, "\\");
-  if (global_info.ignored_chars.hyphen)
+  if (ignored_chars_info->hyphen)
     text_append (&ignored_chars, "-");
-  if (global_info.ignored_chars.lessthan)
+  if (ignored_chars_info->lessthan)
     text_append (&ignored_chars, "<");
-  if (global_info.ignored_chars.atsign)
+  if (ignored_chars_info->atsign)
     text_append (&ignored_chars, "@");
   if (ignored_chars.end > 0)
     {
@@ -350,31 +341,25 @@ set_non_ignored_space_in_index_before_command (ELEMENT *content)
 
 
 
-/* reset indices without unallocating them nor the list of indices */
 void
 forget_indices (void)
 {
-  index_names = 0;
-  number_of_indices = 0;
   space_for_indices = 0;
   num_index_commands = 0;
 }
 
 void
-resolve_indices_merged_in (void)
+resolve_indices_merged_in (const INDEX_LIST *indices_info)
 {
-  INDEX **i, *idx;
-
-  if (index_names)
+  size_t i;
+  for (i = 0; i < indices_info->number; i++)
     {
-      for (i = index_names; (idx = *i); i++)
+      INDEX *idx = indices_info->list[i];
+      if (idx->merged_in)
         {
-          if (idx->merged_in)
-            {
-              /* This index is merged in another one. */
-              INDEX *ultimate = ultimate_index (idx);
-              idx->merged_in = ultimate;
-            }
+          /* This index is merged in another one. */
+          INDEX *ultimate = ultimate_index (idx);
+          idx->merged_in = ultimate;
         }
     }
 }
@@ -383,24 +368,16 @@ resolve_indices_merged_in (void)
    Done in a separate function and not inside the main parser loop because
    it requires parsing Texinfo code in gdt_tree too */
 void
-complete_indices (int document_descriptor, int debug_level)
+complete_indices (DOCUMENT *document, int debug_level)
 {
-  INDEX **i, *idx;
-  DOCUMENT *document;
-  INDEX **index_names;
+  INDEX_LIST *indices;
+  size_t i;
 
-  /* beware that document may have a change in adress if realloc on
-     the documents list is called in gdt.  So only use it here and
-     not after gdt call */
-  document = retrieve_document (document_descriptor);
+  indices = &document->indices_info;
 
-  if (!document->index_names)
-    return;
-
-  index_names = document->index_names;
-
-  for (i = index_names; (idx = *i); i++)
+  for (i = 0; i < indices->number; i++)
     {
+      INDEX *idx = indices->list[i];
       if (idx->entries_number > 0)
         {
           int j;

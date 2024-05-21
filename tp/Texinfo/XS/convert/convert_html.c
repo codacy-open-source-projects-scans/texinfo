@@ -287,8 +287,8 @@ static OUTPUT_UNIT *
 get_top_unit (DOCUMENT *document, const OUTPUT_UNIT_LIST *output_units)
 {
   const ELEMENT *node_top = find_identifier_target
-                          (document->identifiers_target, "Top");
-  const ELEMENT *section_top = document->global_commands->top;
+                          (&document->identifiers_target, "Top");
+  const ELEMENT *section_top = document->global_commands.top;
 
   if (section_top)
     return section_top->associated_unit;
@@ -356,10 +356,10 @@ html_get_tree_root_element (CONVERTER *self, const ELEMENT *command,
           const OUTPUT_UNIT_LIST *output_units
          = retrieve_output_units (self->output_units_descriptors[OUDT_units]);
           if (data_cmd == CM_copying
-              && self->document->global_commands->insertcopying.number > 0)
+              && self->document->global_commands.insertcopying.number > 0)
             {
               const ELEMENT_LIST global_insertcopying
-                = self->document->global_commands->insertcopying;
+                = self->document->global_commands.insertcopying;
               int i;
               for (i = 0; i < global_insertcopying.number; i++)
                 {
@@ -1497,10 +1497,10 @@ prepare_special_units (CONVERTER *self, int output_units_descriptor)
                   else if (contents_location
                            && !strcmp (contents_location, "after_top"))
                     {
-                      if (self->document->global_commands->top)
+                      if (self->document->global_commands.top)
                         {/* note that top is a uniq command */
                           const ELEMENT *section_top
-                             = self->document->global_commands->top;
+                             = self->document->global_commands.top;
 
                           if (section_top->associated_unit)
                             associated_output_unit
@@ -1514,7 +1514,7 @@ prepare_special_units (CONVERTER *self, int output_units_descriptor)
                     {
                       const ELEMENT_LIST *global_command
                        = get_cmd_global_multi_command (
-                                      self->document->global_commands, cmd);
+                                      &self->document->global_commands, cmd);
                       if (global_command->number > 0)
                         {
                           int i;
@@ -1547,7 +1547,7 @@ prepare_special_units (CONVERTER *self, int output_units_descriptor)
         }
     }
 
-  if (self->document->global_commands->footnotes.number > 0
+  if (self->document->global_commands.footnotes.number > 0
       && self->conf->footnotestyle.string
       && !strcmp (self->conf->footnotestyle.string, "separate")
       && output_units->number > 1)
@@ -2075,7 +2075,7 @@ void
 set_root_commands_targets_node_files (CONVERTER *self)
 {
 
-  if (self->document->identifiers_target)
+  if (self->document->identifiers_target.number > 0)
     {
       const char *extension = 0;
 
@@ -2083,7 +2083,7 @@ set_root_commands_targets_node_files (CONVERTER *self)
         extension = self->conf->EXTENSION.string;
       /* use labels_list and not identifiers_target to process in the
          document order */
-      LABEL_LIST *label_targets = self->document->labels_list;
+      const LABEL_LIST *label_targets = &self->document->labels_list;
       int i;
       for (i = 0; i < label_targets->number; i++)
         {
@@ -4693,7 +4693,7 @@ compare_index_name (const void *a, const void *b)
 void
 prepare_index_entries_targets (CONVERTER *self)
 {
-  if (self->document->index_names)
+  if (self->document->indices_info.number > 0)
     {
       size_t i;
       self->shared_conversion_state.formatted_index_entries
@@ -4800,7 +4800,7 @@ FOOTNOTE_ID_NUMBER *
 find_footnote_id_number (const CONVERTER *self, const char *footnote_id)
 {
   const ELEMENT_LIST *global_footnotes
-    = &self->document->global_commands->footnotes;
+    = &self->document->global_commands.footnotes;
 
   FOOTNOTE_ID_NUMBER *result = 0;
   static FOOTNOTE_ID_NUMBER searched_footnote_id;
@@ -4827,7 +4827,7 @@ static void
 prepare_footnotes_targets (CONVERTER *self)
 {
   const ELEMENT_LIST *global_footnotes
-    = &self->document->global_commands->footnotes;
+    = &self->document->global_commands.footnotes;
   if (global_footnotes->number > 0)
     {
       int i;
@@ -4903,7 +4903,7 @@ set_heading_commands_targets (CONVERTER *self)
     {
       enum command_id cmd = heading_commands_list[i];
       const ELEMENT_LIST *global_command
-        = get_cmd_global_multi_command (self->document->global_commands, cmd);
+        = get_cmd_global_multi_command (&self->document->global_commands, cmd);
 
       if (global_command->number > 0)
         {
@@ -5046,10 +5046,10 @@ html_prepare_output_units_global_targets (CONVERTER *self)
   /* It is always the first printindex, even if it is not output (for example
      it is in @copying and @titlepage, which are certainly wrong constructs).
    */
-  if (self->document->global_commands->printindex.number > 0)
+  if (self->document->global_commands.printindex.number > 0)
     {
       const ELEMENT *printindex
-        = self->document->global_commands->printindex.list[0];
+        = self->document->global_commands.printindex.list[0];
       ROOT_AND_UNIT *root_unit
         = html_get_tree_root_element (self, printindex, 0);
       if (root_unit->output_unit)
@@ -5297,8 +5297,8 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
       int i;
 
       /* first determine the top node file name. */
-      if (self->document->identifiers_target)
-        node_top = find_identifier_target (self->document->identifiers_target,
+      if (self->document->identifiers_target.number > 0)
+        node_top = find_identifier_target (&self->document->identifiers_target,
                                            "Top");
 
       top_node_filename_str = top_node_filename (self, document_name);
@@ -5348,7 +5348,7 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
                       if (normalized)
                         node_target
                          = find_identifier_target (
-                                  self->document->identifiers_target,
+                                  &self->document->identifiers_target,
                                   normalized);
                    /* double node are not normalized, they are handled here */
                       if (!node_target)
@@ -5612,9 +5612,12 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
       self->output_unit_file_indices[i] = output_unit_file_idx;
       output_unit_file = &self->output_unit_files.list[output_unit_file_idx];
       if (self->conf->DEBUG.integer > 0)
-        fprintf (stderr, "Page %s: %s(%d)\n",
-                 output_unit_texi (output_unit),
+        {
+          char *output_unit_text = output_unit_texi (output_unit);
+          fprintf (stderr, "Page %s: %s(%d)\n", output_unit_text,
                  output_unit->unit_filename, output_unit_file->counter);
+          free (output_unit_text);
+        }
       free (filename);
     }
 
@@ -5804,7 +5807,7 @@ html_prepare_units_directions_files (CONVERTER *self,
     setup_output_simple_page (self, output_filename);
 
 
-  units_directions (self->document->identifiers_target, output_units,
+  units_directions (&self->document->identifiers_target, output_units,
                     self->conf->DEBUG.integer);
 
   prepare_special_units_directions (self, special_units);
@@ -6151,8 +6154,8 @@ html_default_format_contents (CONVERTER *self, const enum command_id cmd,
                  && (!self->conf->CONTENTS_OUTPUT_LOCATION.string
                      || strcmp (self->conf->CONTENTS_OUTPUT_LOCATION.string,
                                 "inline")
-                     || self->document->global_commands->contents.number > 0
-                || self->document->global_commands->shortcontents.number > 0));
+                     || self->document->global_commands.contents.number > 0
+                || self->document->global_commands.shortcontents.number > 0));
 
   for (i = 0; i < root_children->number; i++)
     {
@@ -7920,6 +7923,7 @@ html_default_format_element_header (CONVERTER *self,
     {
       int i;
       TEXT debug_txt;
+      char *output_unit_text;
       text_init (&debug_txt);
       text_append (&debug_txt, "FORMAT elt header (");
       for (i = 0; i < output_unit->unit_contents.number; i++)
@@ -7931,7 +7935,9 @@ html_default_format_element_header (CONVERTER *self,
           text_append (&debug_txt, elt_str);
           free (elt_str);
         }
-      text_printf (&debug_txt, ") %s\n", output_unit_texi (output_unit));
+      output_unit_text = output_unit_texi (output_unit);
+      text_printf (&debug_txt, ") %s\n", output_unit_text);
+      free (output_unit_text);
       fprintf (stderr, "%s", debug_txt.text);
       free (debug_txt.text);
     }
@@ -7965,9 +7971,12 @@ html_default_format_element_header (CONVERTER *self,
         previous_is_top = 1;
 
       if (self->conf->DEBUG.integer > 0)
-        fprintf (stderr, "Header (%d, %d, %d): %s\n", previous_is_top, is_top,
-                         first_in_page,
-                         root_heading_command_to_texinfo (command));
+        {
+          char *root_heading_texi = root_heading_command_to_texinfo (command);
+          fprintf (stderr, "Header (%d, %d, %d): %s\n", previous_is_top,
+                         is_top, first_in_page, root_heading_texi);
+          free (root_heading_texi);
+        }
 
       if (is_top)
        /* use TOP_BUTTONS for top. */
@@ -9114,7 +9123,7 @@ find_image_extension_file (CONVERTER *self, const ELEMENT *element,
   char *located_image_path;
 
   xasprintf (&image_file, "%s%s", image_basefile, extension);
-  file_name = encoded_input_file_name (self->conf, self->document->global_info,
+  file_name = encoded_input_file_name (self->conf, &self->document->global_info,
                    image_file, 0, &input_file_encoding, &element->source_info);
 
   located_image_path = locate_include_file (file_name,
@@ -9985,8 +9994,11 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
   element_id = html_command_id (self, element);
 
   if (self->conf->DEBUG.integer > 0)
-    fprintf (stderr, "CONVERT elt heading %s\n",
-                     root_heading_command_to_texinfo (element));
+    {
+      char *root_heading_texi = root_heading_command_to_texinfo (element);
+      fprintf (stderr, "CONVERT elt heading %s\n", root_heading_texi);
+      free (root_heading_texi);
+    }
 
   /* All the root commands are associated to an output unit, the condition
      on associated_unit is always true. */
@@ -10051,7 +10063,7 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
                 {
                   ELEMENT *menu_node
                    = new_complete_menu_master_menu (&self->error_messages,
-                         self->conf, self->document->identifiers_target, node);
+                         self->conf, &self->document->identifiers_target, node);
 
                   if (menu_node)
                     {
@@ -10696,7 +10708,7 @@ convert_verbatiminclude_command (CONVERTER *self, const enum command_id cmd,
 {
   ELEMENT *verbatim_include_verbatim
     = expand_verbatiminclude (&self->error_messages, self->conf,
-                              self->document->global_info, element);
+                              &self->document->global_info, element);
 
   if (verbatim_include_verbatim)
     {
@@ -10981,10 +10993,10 @@ convert_insertcopying_command (CONVERTER *self, const enum command_id cmd,
                     const HTML_ARGS_FORMATTED *args_formatted,
                     const char *content, TEXT *result)
 {
-  if (self->document->global_commands->copying)
+  if (self->document->global_commands.copying)
     {
       ELEMENT *tmp = new_element (ET_NONE);
-      tmp->contents = self->document->global_commands->copying->contents;
+      tmp->contents = self->document->global_commands.copying->contents;
       convert_to_html_internal (self, tmp, result, "convert insertcopying");
       tmp->contents.list = 0;
       destroy_element (tmp);
@@ -11012,7 +11024,7 @@ convert_listoffloats_command (CONVERTER *self, const enum command_id cmd,
   if (html_in_string (self))
     return;
 
-  listoffloats = self->document->listoffloats;
+  listoffloats = &self->document->listoffloats;
 
   if (!listoffloats->number)
     return;
@@ -12058,7 +12070,7 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
       if (normalized && !manual_content)
         {
           target_node = find_identifier_target (
-                                  self->document->identifiers_target,
+                                  &self->document->identifiers_target,
                                   normalized);
         }
     }
@@ -12771,7 +12783,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
           entry_content_element = index_content_element (main_entry_element, 0);
           entry_index_nr
              = index_number_index_by_name (&self->sorted_index_names,
-                                                   index_entry_ref->index_name);
+                                           index_entry_ref->index_name);
           entry_index = self->sorted_index_names.list[entry_index_nr-1];
 
  /* to avoid double error messages, call convert_tree_new_formatting_context
@@ -14337,7 +14349,7 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
       if (normalized)
         {
           const ELEMENT *node
-           = find_identifier_target (self->document->identifiers_target,
+           = find_identifier_target (&self->document->identifiers_target,
                                      normalized);
           if (node)
             {
@@ -15489,10 +15501,10 @@ html_default_format_titlepage (CONVERTER *self)
   TEXT result;
   text_init (&result);
   text_append (&result, "");
-  if (self->document->global_commands->titlepage)
+  if (self->document->global_commands.titlepage)
     {
       ELEMENT *tmp = new_element (ET_NONE);
-      tmp->contents = self->document->global_commands->titlepage->contents;
+      tmp->contents = self->document->global_commands.titlepage->contents;
       convert_to_html_internal (self, tmp, &result, "convert titlepage");
       tmp->contents.list = 0;
       destroy_element (tmp);
@@ -15875,7 +15887,7 @@ html_prepare_simpletitle (CONVERTER *self)
     {
       enum command_id cmd = simpletitle_cmds[i];
       const ELEMENT *command
-        = get_cmd_global_uniq_command (self->document->global_commands, cmd);
+        = get_cmd_global_uniq_command (&self->document->global_commands, cmd);
       if (command && command->args.number > 0
           && command->args.list[0]->contents.number > 0)
         {
@@ -15908,7 +15920,7 @@ html_prepare_converted_output_info (CONVERTER *self)
     {
       enum command_id cmd = fulltitle_cmds[i];
       const ELEMENT *command
-        = get_cmd_global_uniq_command (self->document->global_commands, cmd);
+        = get_cmd_global_uniq_command (&self->document->global_commands, cmd);
       if (command && command->args.number > 0
           && command->args.list[0]->contents.number > 0)
         {
@@ -15918,12 +15930,12 @@ html_prepare_converted_output_info (CONVERTER *self)
     }
 
   if (!fulltitle_tree
-      && self->document->global_commands->titlefont.number > 0
-      && self->document->global_commands->titlefont.list[0]->args.number > 0
-      && self->document->global_commands->titlefont.list[0]->args.list[0]
+      && self->document->global_commands.titlefont.number > 0
+      && self->document->global_commands.titlefont.list[0]->args.number > 0
+      && self->document->global_commands.titlefont.list[0]->args.list[0]
                                     ->contents.number > 0)
     {
-      fulltitle_tree = self->document->global_commands->titlefont.list[0];
+      fulltitle_tree = self->document->global_commands.titlefont.list[0];
     }
 
   if (fulltitle_tree)
@@ -15953,12 +15965,12 @@ html_prepare_converted_output_info (CONVERTER *self)
 
       self->added_title_tree = 1;
 
-      if (self->document->global_info->input_file_name)
+      if (self->document->global_info.input_file_name)
         {
           /* setup a source info with file only */
           memset (&cmd_source_info, 0, sizeof (SOURCE_INFO));
           cmd_source_info.file_name
-           = self->document->global_info->input_file_name;
+           = self->document->global_info.input_file_name;
           /* this is more in line with the Perl function used, as DEBUG is
              checked in the called function */
           message_list_line_error_ext (&self->error_messages, self->conf,
@@ -15976,12 +15988,12 @@ html_prepare_converted_output_info (CONVERTER *self)
 
   /* copying comment */
 
-  if (self->document->global_commands->copying)
+  if (self->document->global_commands.copying)
     {
       char *copying_comment;
       ELEMENT *tmp = new_element (ET_NONE);
 
-      tmp->contents = self->document->global_commands->copying->contents;
+      tmp->contents = self->document->global_commands.copying->contents;
 
       copying_comment = convert_to_text (tmp, self->convert_text_options);
 
@@ -15999,14 +16011,14 @@ html_prepare_converted_output_info (CONVERTER *self)
   if (self->conf->documentdescription.string)
     self->documentdescription_string
      = strdup (self->conf->documentdescription.string);
-  else if (self->document->global_commands->documentdescription)
+  else if (self->document->global_commands.documentdescription)
     {
       ELEMENT *tmp = new_element (ET_NONE);
       char *documentdescription_string;
       size_t documentdescription_string_len;
 
       tmp->contents
-        = self->document->global_commands->documentdescription->contents;
+        = self->document->global_commands.documentdescription->contents;
 
       documentdescription_string
                  = convert_string_tree_new_formatting_context (self,
@@ -16923,26 +16935,27 @@ html_initialize_output_state (CONVERTER *self, const char *context)
 
   html_new_document_context (self, context, 0, 0);
 
-  if (self->document && self->document->index_names)
+  if (self->document && self->document->indices_info.number)
     {
-      INDEX **i, *idx;
+      size_t i;
       size_t j;
-      INDEX **index_names = self->document->index_names;
+      INDEX_LIST *indices_info = &self->document->indices_info;
       const INDEX **sorted_index_names;
-      size_t index_nr = 0;
+      size_t index_nr = indices_info->number;
       size_t non_empty_index_nr = 0;
       size_t idx_non_empty = 0;
 
-      for (i = index_names; (idx = *i); i++)
+      for (i = 0; i < index_nr; i++)
         {
-          index_nr++;
+          INDEX *idx = indices_info->list[i];
           if (idx->entries_number > 0)
             non_empty_index_nr++;
         }
 
       sorted_index_names = (const INDEX **) malloc (index_nr * sizeof (INDEX *));
 
-      memcpy (sorted_index_names, index_names, index_nr * sizeof (INDEX *));
+      memcpy (sorted_index_names, indices_info->list,
+              index_nr * sizeof (INDEX *));
       qsort (sorted_index_names, index_nr, sizeof (INDEX *),
              compare_index_name);
 
@@ -16965,9 +16978,9 @@ html_initialize_output_state (CONVERTER *self, const char *context)
   if (self->document)
     {
       const LISTOFFLOATS_TYPE_LIST *listoffloats
-         = self->document->listoffloats;
+         = &self->document->listoffloats;
 
-      if (listoffloats && listoffloats->number)
+      if (listoffloats->number)
         {
           self->shared_conversion_state.formatted_listoffloats_nr
            = (int *) malloc (listoffloats->number * sizeof (int));
@@ -17082,7 +17095,7 @@ html_reset_converter (CONVERTER *self)
   free (self->shared_conversion_state.formatted_listoffloats_nr);
   self->shared_conversion_state.formatted_listoffloats_nr = 0;
 
-  if (self->document->index_names)
+  if (self->document->indices_info.number)
     {
       for (i = 0; i < self->sorted_index_names.number; i++)
         {
@@ -17092,7 +17105,7 @@ html_reset_converter (CONVERTER *self)
   }
 
   free (self->sorted_index_names.list);
-  memset (&self->sorted_index_names, 0, sizeof (SORTED_INDEX_NAMES));
+  memset (&self->sorted_index_names, 0, sizeof (INDEX_LIST));
 
   free (self->special_units_direction_name);
   self->special_units_direction_name = 0;
@@ -18009,11 +18022,9 @@ convert_to_html_internal (CONVERTER *self, const ELEMENT *element,
         {
           if (element->text.end > 0)
             {
-              int allocated;
-              char *text = debug_protect_eol (element->text.text, &allocated);
+              char *text = debug_protect_eol (element->text.text);
               text_printf (&debug_str, " text: %s", text);
-              if (allocated)
-                free (text);
+              free (text);
             }
           else
             text_append_n (&debug_str, " text(EMPTY)", 12);
@@ -18710,7 +18721,7 @@ convert_output_output_unit_internal (CONVERTER *self,
       int overwritten_file;
 
       char *encoded_out_filepath = encoded_output_file_name (self->conf,
-                               self->document->global_info, out_filepath,
+                               &self->document->global_info, out_filepath,
                                                        &path_encoding, 0);
       /* overwritten_file being set cannot happen */
       FILE *file_fh = output_files_open_out (&self->output_files_information,
@@ -18972,10 +18983,11 @@ html_node_redirections (CONVERTER *self,
 {
   FILE_SOURCE_INFO_LIST *files_source_info = &self->files_source_info;
   int redirection_files_done = 0;
-  if (self->document->identifiers_target && self->conf->NODE_FILES.integer > 0
+  if (self->document->identifiers_target.number > 0
+      && self->conf->NODE_FILES.integer > 0
       && strlen (output_file) > 0)
     {
-      const LABEL_LIST *label_targets = self->document->labels_list;
+      const LABEL_LIST *label_targets = &self->document->labels_list;
       int i;
       const ENCODING_CONVERSION *conversion = 0;
 
@@ -19157,7 +19169,7 @@ html_node_redirections (CONVERTER *self,
 
                   char *encoded_out_filepath
                      = encoded_output_file_name (self->conf,
-                                   self->document->global_info, out_filepath,
+                                   &self->document->global_info, out_filepath,
                                                            &path_encoding, 0);
                   /* overwritten_file being set cannot happen */
                   FILE *file_fh

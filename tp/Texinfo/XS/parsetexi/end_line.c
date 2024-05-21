@@ -30,6 +30,7 @@
 /* for isascii_alnum whitespace_chars read_flag_name
    indices_info_index_by_name ultimate_index fatal */
 #include "utils.h"
+#include "conf.h"
 /* for parse_node_manual */
 #include "manipulate_tree.h"
 /* for parse_float_type add_to_float_record_list */
@@ -54,11 +55,11 @@
 #include "node_name_normalization.h"
 
 static int
-is_decimal_number (char *string)
+is_decimal_number (const char *string)
 {
-  char *p = string;
-  char *first_digits = 0;
-  char *second_digits = 0;
+  const char *p = string;
+  const char *first_digits = 0;
+  const char *second_digits = 0;
 
   if (string[0] == '\0')
     return 0;
@@ -85,7 +86,7 @@ is_decimal_number (char *string)
 }
 
 static int
-is_whole_number (char *string)
+is_whole_number (const char *string)
 {
   if (string[strspn (string, digit_chars)] == '\0')
     return 1;
@@ -108,7 +109,7 @@ parse_line_command_args (ELEMENT *line_command)
   ELEMENT *arg = line_command->args.list[0];
   ELEMENT *line_args;
   enum command_id cmd;
-  char *line;
+  const char *line;
 
   cmd = line_command->cmd;
   if (arg->contents.number == 0)
@@ -131,7 +132,7 @@ parse_line_command_args (ELEMENT *line_command)
     {
     case CM_alias:
       {
-        if (global_restricted)
+        if (parser_conf.no_user_commands)
           break;
         /* @alias NEW = EXISTING */
         char *new = 0, *existing = 0;
@@ -149,7 +150,9 @@ parse_line_command_args (ELEMENT *line_command)
 
         if (!isascii_alnum (*line))
           goto alias_invalid;
+
         existing = read_command_name (&line);
+
         if (!existing)
           goto alias_invalid;
 
@@ -210,7 +213,7 @@ parse_line_command_args (ELEMENT *line_command)
       }
     case CM_definfoenclose:
       {
-        if (global_restricted)
+        if (parser_conf.no_user_commands)
           break;
 
         /* @definfoenclose phoo,//,\\ */
@@ -281,7 +284,7 @@ parse_line_command_args (ELEMENT *line_command)
       {
         /*  @multitable @columnfractions .33 .33 .33 */
         ELEMENT *new;
-        char *p, *q;
+        const char *p, *q;
 
         if (!*line)
           {
@@ -333,11 +336,11 @@ parse_line_command_args (ELEMENT *line_command)
     case CM_defindex:
     case CM_defcodeindex:
       {
-        if (global_restricted)
+        if (parser_conf.no_user_commands || parser_conf.no_index)
           break;
 
         char *name = 0;
-        char *p = line;
+        const char *p = line;
 
         name = read_command_name (&p);
         if (*p)
@@ -348,14 +351,14 @@ parse_line_command_args (ELEMENT *line_command)
            BASE.NAME in the same directory.  This is to prevent such
            files being overwritten by the files read by texindex. */
         {
-          static char *forbidden_index_names[] = {
+          static const char *forbidden_index_names[] = {
             "cp", "fn", "ky", "pg", "tp", "vr",
             "cps", "fns", "kys", "pgs", "tps", "vrs",
             "info", "ps", "pdf", "htm", "html",
             "log", "aux", "dvi", "texi", "txi",
             "texinfo", "tex", "bib", 0
           };
-          char **ptr;
+          const char **ptr;
           for (ptr = forbidden_index_names; *ptr; ptr++)
             if (!strcmp (name, *ptr))
               goto defindex_reserved;
@@ -383,7 +386,7 @@ parse_line_command_args (ELEMENT *line_command)
         char *index_name_from = 0, *index_name_to = 0;
         INDEX *from_index;
         INDEX *to_index;
-        char *p = line;
+        const char *p = line;
 
         if (!isascii_alnum (*p))
           goto synindex_invalid;
@@ -401,15 +404,17 @@ parse_line_command_args (ELEMENT *line_command)
         if (*p)
           goto synindex_invalid; /* More at end of line. */
 
-        if (global_restricted)
+        if (parser_conf.no_index)
           {
             free (index_name_from);
             free (index_name_to);
             break;
           }
 
-        from_index = indices_info_index_by_name (index_names, index_name_from);
-        to_index = indices_info_index_by_name (index_names, index_name_to);
+        from_index = indices_info_index_by_name (&parsed_document->indices_info,
+                                                 index_name_from);
+        to_index = indices_info_index_by_name (&parsed_document->indices_info,
+                                               index_name_to);
         if (!from_index)
           line_error ("unknown source index in @%s: %s",
                       command_name(cmd), index_name_from);
@@ -451,15 +456,16 @@ parse_line_command_args (ELEMENT *line_command)
     case CM_printindex:
       {
         char *arg;
-        char *p = line;
+        const char *p = line;
         arg = read_command_name (&p);
         if (!arg || *p)
           line_error ("bad argument to @printindex: %s", line);
-        else if (global_restricted)
+        else if (parser_conf.no_index)
           {}
         else
           {
-            INDEX *idx = indices_info_index_by_name (index_names,arg);
+            INDEX *idx
+             = indices_info_index_by_name (&parsed_document->indices_info, arg);
             if (!idx)
               line_error ("unknown index `%s' in @printindex", arg);
             else
@@ -662,10 +668,6 @@ parse_line_command_args (ELEMENT *line_command)
 #undef ADD_ARG
 }
 
-/* Array of recorded @float's. */
-FLOAT_RECORD_LIST parser_float_list = {0, 0, 0};
-
-
 ELEMENT *
 end_line_def_line (ELEMENT *current)
 {
@@ -712,7 +714,7 @@ end_line_def_line (ELEMENT *current)
     {
       if (def_info_name)
         {
-          char *t;
+          const char *t;
           ELEMENT *arg = def_info_name->contents.list[0];
           /* Set index_entry unless an empty ET_bracketed_arg. */
           if (arg->type == ET_bracketed_arg
@@ -877,7 +879,7 @@ end_line_starting_block (ELEMENT *current)
       float_type = parse_float_type (current);
 
       /* add to global 'floats' array */
-      add_to_float_record_list (&parser_float_list, float_type, current);
+      add_to_float_record_list (&parsed_document->floats, float_type, current);
 
       if (current_section)
         add_extra_element (current, "float_section", current_section);
@@ -887,7 +889,7 @@ end_line_starting_block (ELEMENT *current)
       KEY_PAIR *k;
       if (command == CM_enumerate)
         {
-          char *spec = "1";
+          const char *spec = "1";
 
           if (current->args.number > 0
               && current->args.list[0]->contents.number > 0)
@@ -1095,8 +1097,8 @@ end_line_starting_block (ELEMENT *current)
               ELEMENT *arg_elt = current->args.list[0]->contents.list[0];
               if (arg_elt->text.end > 0)
                 {
-                  char *name = arg_elt->text.text;
-                  char *p = name + strspn (name, whitespace_chars);
+                  const char *p = arg_elt->text.text;
+                  p += strspn (p, whitespace_chars);
                   if (!*p)
                     {
                       line_error ("@%s requires a name", command_name(command));
@@ -1104,7 +1106,6 @@ end_line_starting_block (ELEMENT *current)
                     }
                   else
                     {
-                      char *p = name;
                       char *flag = read_flag_name (&p);
                       if (flag && !*p)
                         {
@@ -1148,7 +1149,7 @@ end_line_starting_block (ELEMENT *current)
 
           p = command_name(command) + 2; /* After "if". */
           /* note that if a 2 letter format existed, like @ifme, the length of
-             p should be checked before the call to memcpm */
+             p should be checked before the call to memcmp */
           if (!memcmp (p, "not", 3))
             p += 3; /* After "not". */
 
@@ -1265,7 +1266,7 @@ end_line_misc_line (ELEMENT *current)
           add_extra_string (current, "text_arg", text);
           if (current->cmd == CM_end)
             {
-              char *line = text;
+              const char *line = text;
 
               /* Set end_command - used below. */
               end_command = read_command_name (&line);
@@ -1336,7 +1337,8 @@ end_line_misc_line (ELEMENT *current)
                       include_source_mark = new_source_mark (SM_type_include);
                       include_source_mark->status = SM_status_start;
                       set_input_source_mark (include_source_mark);
-                      add_string (fullpath, &global_info.included_files);
+                      add_string (fullpath,
+                                  &parsed_document->global_info.included_files);
                     }
                   free (fullpath);
                 }
@@ -1344,23 +1346,23 @@ end_line_misc_line (ELEMENT *current)
           else if (current->cmd == CM_verbatiminclude)
             {
               char *fullpath, *sys_filename;
+              GLOBAL_INFO *global_info = &parsed_document->global_info;
 
-              if (global_info.input_encoding_name)
+              if (global_info->input_encoding_name)
                 add_extra_string_dup (current, "input_encoding_name",
-                                      global_info.input_encoding_name);
+                                      global_info->input_encoding_name);
               /* gather included file for 'included_files'.  No errors, they
                  should be output by converters */
               sys_filename = encode_file_name (text);
               fullpath = parser_locate_include_file (sys_filename);
               if (fullpath && access (fullpath, R_OK) == 0)
-                add_string (fullpath, &global_info.included_files);
+                add_string (fullpath, &global_info->included_files);
               free (fullpath);
             }
           else if (current->cmd == CM_documentencoding)
             {
-              int i; char *p, *normalized_text;
-              int encoding_set;
-              char *input_encoding = 0;
+              int i;
+              char *normalized_text;
               int possible_encoding = 0;
 
               normalized_text = normalize_encoding_name (text,
@@ -1371,17 +1373,20 @@ end_line_misc_line (ELEMENT *current)
                               text);
               else
                 {
+                  int encoding_set;
+                  char *input_encoding = 0;
 
             /* Warn if the encoding is not one of the encodings supported as an
                argument to @documentencoding, documented in Texinfo manual */
                   {
-                    char *texinfo_encoding = 0;
-                    static char *canonical_encodings[] = {
+                    static const char *canonical_encodings[] = {
                       "us-ascii", "utf-8", "iso-8859-1",
                       "iso-8859-15","iso-8859-2","koi8-r", "koi8-u",
                       0
                     };
+                    const char *texinfo_encoding = 0;
                     char *text_lc;
+                    char *p;
 
                     text_lc = strdup (text);
                     for (p = text_lc; *p; p++)
@@ -1416,7 +1421,7 @@ end_line_misc_line (ELEMENT *current)
                   /* the Perl Parser calls Encode::find_encoding, so knows
                      about more encodings than what we know about here.
                    */
-                    static struct encoding_map map[] = {
+                    static const struct encoding_map map[] = {
                           "utf-8", "utf-8",
                           "utf8", "utf-8",
                           "ascii",  "us-ascii",
@@ -1458,7 +1463,7 @@ end_line_misc_line (ELEMENT *current)
                     }
 
                   /* set_input_encoding also sets
-                     global_info.input_encoding_name */
+                     global_info->input_encoding_name */
                   encoding_set = set_input_encoding (input_encoding);
                   if (encoding_set)
                     {
@@ -1473,7 +1478,7 @@ end_line_misc_line (ELEMENT *current)
             }
           else if (current->cmd == CM_documentlanguage)
             {
-              char *p, *q;
+              const char *p;
 
               /* Texinfo::Common::warn_unknown_language checks with
                  tp/Texinfo/Documentlanguages.pm, which is an automatically
@@ -1494,52 +1499,61 @@ end_line_misc_line (ELEMENT *current)
                   if (p - text > 4)
                     {
                       /* looks too long */
-                      char saved = *p;
-                      *p = 0;
+                      char *lang = strndup (text, p - text);
                       command_warn (current, "%s is not a valid language code",
-                                    text);
-                      *p = saved;
+                                    lang);
+                      free (lang);
                     }
                   if (*p == '_')
                     {
-                      q = p + 1;
-                      p = q;
+                      const char *region_code;
+                      p++;
+                      region_code = p;
                       /* Language code should be of the form LL_CC,
                          language code followed by country code. */
                       while (isascii_alpha (*p))
                         p++;
-                      if (*p || p - q > 4)
+                      if (*p || p - region_code > 4)
                         {
                           /* non-alphabetic char in country code or code
                              is too long. */
                           command_warn (current,
-                                        "%s is not a valid region code", q);
+                                        "%s is not a valid region code",
+                                        region_code);
                         }
                     }
                 }
-              set_documentlanguage (text);
+           /* Set the document language unless it was set on the command line. */
+              if (!parser_conf.global_documentlanguage_fixed)
+                {
+                  free (global_documentlanguage);
+                  global_documentlanguage = strdup (text);
+                }
             }
         }
       if (superfluous_arg)
         {
-          char *texi_line, *p, *p1;
-          p = convert_to_texinfo (args_child_by_index (current, 0));
+          const char *p;
+          char *p1;
+          char *texi_line
+            = convert_to_texinfo (args_child_by_index (current, 0));
 
-          texi_line = p;
+          p = texi_line;
 
-          texi_line += strspn (texi_line, whitespace_chars);
+          /* trim leading whitespace. */
+          p += strspn (p, whitespace_chars);
 
-          /* Trim leading and trailing whitespace. */
-          p1 = strchr (texi_line, '\0');
-          if (p1 > texi_line)
+          /* Trim trailing whitespace. */
+          p1 = strchr (p, '\0');
+          if (p1 > p)
             {
-              while (p1 > texi_line && strchr (whitespace_chars, p1[-1]))
+              while (p1 > p && strchr (whitespace_chars, p1[-1]))
                 p1--;
               *p1 = '\0';
             }
           command_error (current, "bad argument to @%s: %s",
-                         command_name(current->cmd), texi_line);
-          free (p);
+                         command_name(current->cmd), p);
+          free (texi_line);
         }
     }
   else if (current->cmd == CM_node)

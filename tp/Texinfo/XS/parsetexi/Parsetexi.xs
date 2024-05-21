@@ -32,7 +32,6 @@
 #include "api.h"
 #include "conf.h"
 #include "build_perl_info.h"
-#include "input.h"
 
  /* See the NOTE in build_perl_info.c on use of functions related to
     memory allocation */
@@ -54,31 +53,31 @@ PROTOTYPES: ENABLE
 int
 init (texinfo_uninstalled, builddir)
      int texinfo_uninstalled
-     char *builddir = (char *)SvPVbyte_nolen($arg);
+     char *builddir = (char *)SvPVbyte_nolen ($arg);
 
 void
 reset_parser (int debug_output)
 
 # file path, can be in any encoding
 int
-parse_file(filename, input_file_name, input_directory)
-        char *filename = (char *)SvPVbyte_nolen($arg);
-        char *input_file_name = (char *)SvPVbyte_nolen($arg);
-        char *input_directory = (char *)SvPVbyte_nolen($arg);
+parse_file (filename, input_file_name, input_directory)
+        char *filename = (char *)SvPVbyte_nolen ($arg);
+        char *input_file_name = (char *)SvPVbyte_nolen ($arg);
+        char *input_directory = (char *)SvPVbyte_nolen ($arg);
 
 int
-parse_piece(string, line_nr)
-        char *string = (char *)SvPVbyte_nolen($arg);
+parse_piece (string, line_nr)
+        char *string = (char *)SvPVutf8_nolen ($arg);
         int line_nr
 
 int
-parse_string(string, line_nr)
-        char *string = (char *)SvPVbyte_nolen($arg);
+parse_string (string, line_nr)
+        char *string = (char *)SvPVutf8_nolen ($arg);
         int line_nr
 
 int
-parse_text(string, line_nr)
-        char *string = (char *)SvPVbyte_nolen($arg);
+parse_text (string, line_nr)
+        char *string = (char *)SvPVutf8_nolen ($arg);
         int line_nr
 
 # note that giving optional arguments, like: int no_store=0
@@ -104,55 +103,110 @@ void
 pass_document_parser_errors_to_registrar (int document_descriptor, SV *parser_sv)
 
 void
-parser_store_value (name, value)
-        char *name = (char *)SvPVbyte_nolen($arg);
-        char *value = (char *)SvPVbyte_nolen($arg);
+parser_store_values (SV *values)
+      CODE:
+        parser_conf_reset_values ();
+        if (SvOK (values))
+          {
+            I32 i;
+            HV *values_hv = (HV *)SvRV (values);
+            I32 hv_number = hv_iterinit (values_hv);
 
-# file path, can be in any encoding
-void
-parser_add_include_directory (filename)
-        char *filename = (char *)SvPVbyte_nolen($arg);
-
-void
-parser_clear_expanded_formats ()
-
-void
-parser_add_expanded_format (format)
-     char *format = (char *)SvPVbyte_nolen($arg);
-
-void
-conf_set_show_menu (int i)
-
-void
-conf_set_CPP_LINE_DIRECTIVES (int i)
-
-void
-conf_set_IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME (int i)
+            for (i = 0; i < hv_number; i++)
+              {
+                HE *next = hv_iternext (values_hv);
+                SV *flag_sv = hv_iterkeysv (next);
+                char *key = SvPVutf8_nolen (flag_sv);
+                SV *value_sv = hv_iterval (values_hv, next);
+                if (value_sv && SvOK (value_sv))
+                  {
+                    char *value_text = SvPVutf8_nolen (value_sv);
+                    parser_conf_add_value (key, value_text);
+                  }
+              }
+          }
 
 void
-conf_set_MAX_MACRO_CALL_NESTING (int i)
+parser_store_INCLUDE_DIRECTORIES (SV *directories)
+      CODE:
+        parser_conf_clear_INCLUDE_DIRECTORIES ();
+        if (SvOK (directories))
+          {
+            SSize_t i;
+            AV *directories_av = (AV *)SvRV (directories);
+            SSize_t directories_nr = av_top_index (directories_av) +1;
+
+            for (i = 0; i < directories_nr; i++)
+              {
+                SV **directory_sv = av_fetch (directories_av, i, 0);
+                if (directory_sv && SvOK (*directory_sv))
+                  {
+     /*  the directories from the command line or the input file name
+         are already byte strings (or ascii).  The encoding was detected
+         as COMMAND_LINE_ENCODING, but it is not used in the XS parser. */
+                    char *directory = SvPVbyte_nolen (*directory_sv);
+                    parser_conf_add_include_directory (directory);
+                  }
+              }
+          }
 
 void
-parser_set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i)
+parser_store_EXPANDED_FORMATS (SV *expanded_formats)
+      CODE:
+        parser_conf_clear_expanded_formats ();
+        if (SvOK (expanded_formats))
+          {
+            SSize_t i;
+            AV *expanded_formats_av = (AV *)SvRV (expanded_formats);
+            SSize_t expanded_formats_nr = av_top_index (expanded_formats_av) +1;
+
+            for (i = 0; i < expanded_formats_nr; i++)
+              {
+                SV **format_sv = av_fetch (expanded_formats_av, i, 0);
+                if (format_sv && SvOK (*format_sv))
+                  {
+                    char *format = SvPVutf8_nolen (*format_sv);
+                    parser_conf_add_expanded_format (format);
+                  }
+              }
+          }
 
 void
-parser_set_input_file_name_encoding (value)
-     char *value = (char *)SvPVbyte_nolen($arg);
+parser_conf_set_show_menu (int i)
 
 void
-parser_set_locale_encoding (value)
-     char *value = (char *)SvPVbyte_nolen($arg);
+parser_conf_set_CPP_LINE_DIRECTIVES (int i)
 
 void
-parser_set_documentlanguage_override (value)
-     char *value = (char *)SvPVbyte_nolen($arg);
+parser_conf_set_IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME (int i)
 
 void
-parser_set_debug (int i)
+parser_conf_set_MAX_MACRO_CALL_NESTING (int i)
+
+int
+parser_conf_set_NO_INDEX (int i)
+
+int
+parser_conf_set_NO_USER_COMMANDS (int i)
 
 void
-parser_set_accept_internalvalue (int value)
+parser_conf_set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i)
 
 void
-parser_set_restricted (int value)
+parser_conf_set_INPUT_FILE_NAME_ENCODING (value)
+     char *value = (char *)SvPVutf8_nolen ($arg);
+
+void
+parser_conf_set_LOCALE_ENCODING (value)
+     char *value = (char *)SvPVutf8_nolen ($arg);
+
+void
+parser_conf_set_documentlanguage (value)
+     char *value = (char *)SvPVutf8_nolen ($arg);
+
+int
+parser_conf_set_DEBUG (int i)
+
+void
+parser_conf_set_accept_internalvalue (int value)
 

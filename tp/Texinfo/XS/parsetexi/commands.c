@@ -18,8 +18,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* for global_accept_internalvalue */
-#include "parser.h"
+#include "conf.h"
 #include "command_ids.h"
 #include "builtin_commands.h"
 /* for lookup_macro and unset_macro_record */
@@ -33,7 +32,7 @@ static size_t user_defined_space = 0;
 
 /* Return element number.  Return 0 if not found. */
 enum command_id
-lookup_command (char *cmdname)
+lookup_command (const char *cmdname)
 {
   enum command_id cmd;
   int i;
@@ -55,7 +54,7 @@ lookup_command (char *cmdname)
 
   /* txiinternalvalue is invalid if the corresponding parameter
    * is not set */
-  if (cmd == CM_txiinternalvalue && !global_accept_internalvalue)
+  if (cmd == CM_txiinternalvalue && !parser_conf.accept_internalvalue)
     return 0;
 
   return cmd;
@@ -64,7 +63,7 @@ lookup_command (char *cmdname)
 /* Add a new user-defined Texinfo command, like an index or macro command.
    No reference to NAME is retained. */
 enum command_id
-add_texinfo_command (char *name)
+add_texinfo_command (const char *name)
 {
   enum command_id existing_cmd = lookup_command (name);
 
@@ -140,7 +139,6 @@ int
 close_preformatted_command (enum command_id cmd_id)
 {
   return cmd_id != CM_sp
-          && command_data(cmd_id).flags & CF_close_paragraph
-          && !(command_data(cmd_id).flags & CF_index_entry_command);
+          && command_data(cmd_id).flags & CF_close_paragraph;
 }
 

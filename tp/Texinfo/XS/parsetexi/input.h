@@ -24,23 +24,12 @@ char *parser_locate_include_file (const char *filename);
 char *encode_file_name (char *filename);
 char *convert_to_utf8 (char *s);
 int set_input_encoding (const char *encoding);
-void parser_add_include_directory (const char *filename);
-void parser_clear_include_directories (void);
-
-extern char **small_strings;
-extern size_t small_strings_num;
 
 char *save_string (const char *string);
-void free_small_strings (void);
-void forget_small_strings (void);
 
 extern int input_number;
 extern int macro_expansion_nr;
 extern int value_expansion_nr;
 extern int after_end_fetch_nr;
-
-void set_input_file_name_encoding (const char *value);
-void set_locale_encoding (const char *value);
-void set_doc_encoding_for_input_file_name (int value);
 
 #endif

@@ -23,7 +23,7 @@
  be allocated on the heap and be available in the parser.  It could
  also be passed to the parsed document but it seems complicated to
  make it available to alloc_element outside of the parser (more
- precisely after a call to store_document), in code related to
+ precisely after parse_texi has returned), in code related to
  tree modification and conversion.
 
  If obstack is used again, in addition to the obvious changes,
@@ -488,7 +488,7 @@ pop_element_from_contents (ELEMENT *parent)
 }
 
 ELEMENT *
-last_args_child (ELEMENT *current)
+last_args_child (const ELEMENT *current)
 {
   if (current->args.number == 0)
     return 0;
@@ -506,7 +506,7 @@ last_contents_child (const ELEMENT *current)
 }
 
 ELEMENT *
-contents_child_by_index (ELEMENT *e, int index)
+contents_child_by_index (const ELEMENT *e, int index)
 {
   if (index < 0)
     index = e->contents.number + index;
@@ -518,7 +518,7 @@ contents_child_by_index (ELEMENT *e, int index)
 }
 
 ELEMENT *
-args_child_by_index (ELEMENT *e, int index)
+args_child_by_index (const ELEMENT *e, int index)
 {
   if (index < 0)
     index = e->args.number + index;

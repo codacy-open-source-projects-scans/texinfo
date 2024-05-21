@@ -50,7 +50,7 @@
 
 /* in Common.pm */
 INDEX_ENTRY_AND_INDEX *
-lookup_index_entry (ELEMENT *index_entry_info, INDEX **indices_information)
+lookup_index_entry (ELEMENT *index_entry_info, INDEX_LIST *indices_info)
 {
   INDEX_ENTRY_AND_INDEX *result = 0;
   int status;
@@ -60,7 +60,7 @@ lookup_index_entry (ELEMENT *index_entry_info, INDEX **indices_information)
   char *entry_index_name = index_entry_info->contents.list[0]->text.text;
   INDEX *index_info;
 
-  index_info = indices_info_index_by_name (indices_information,
+  index_info = indices_info_index_by_name (indices_info,
                                            entry_index_name);
   if (!index_info)
     return 0;
@@ -315,7 +315,7 @@ fill_gaps_in_sectioning (ELEMENT *root, ELEMENT *commands_heading_content)
 
 void
 relate_index_entries_to_table_items_in (ELEMENT *table,
-                                        INDEX **indices_information)
+                                        INDEX_LIST *indices_info)
 {
   int i;
 
@@ -385,7 +385,7 @@ relate_index_entries_to_table_items_in (ELEMENT *table,
                       ELEMENT *index_entry_info = lookup_extra_element (content,
                                                                  "index_entry");
                       idx_info = lookup_index_entry (index_entry_info,
-                                                     indices_information);
+                                                     indices_info);
                       if (idx_info->index_entry)
                         entry_idx_info = idx_info;
                       else
@@ -431,18 +431,18 @@ relate_index_entries_to_table_items_internal (const char *type,
 {
   if (current->cmd && current->cmd == CM_table)
     {
-      INDEX **indices_information = (INDEX **)argument;
-      relate_index_entries_to_table_items_in (current, indices_information);
+      INDEX_LIST *indices_info = (INDEX_LIST *)argument;
+      relate_index_entries_to_table_items_in (current, indices_info);
     }
   return 0;
 }
 
 void
 relate_index_entries_to_table_items_in_tree (ELEMENT *tree,
-                                             INDEX **indices_information)
+                                             INDEX_LIST *indices_info)
 {
   modify_tree (tree, &relate_index_entries_to_table_items_internal,
-               indices_information);
+               indices_info);
 }
 
 void
@@ -549,7 +549,7 @@ ELEMENT *
 new_node (ERROR_MESSAGE_LIST *error_messages, ELEMENT *node_tree,
           DOCUMENT *document)
 {
-  LABEL_LIST *identifiers_target = document->identifiers_target;
+  const LABEL_LIST *identifiers_target = &document->identifiers_target;
   int document_descriptor = document->descriptor;
   int empty_node = 0;
   int appended_number;
@@ -651,7 +651,7 @@ new_node (ERROR_MESSAGE_LIST *error_messages, ELEMENT *node_tree,
       non_hyphen_char = normalized + strspn (normalized, "-");
       if (*non_hyphen_char)
         {
-          if (identifiers_target)
+          if (identifiers_target->number > 0)
             {
               target = find_identifier_target (identifiers_target, normalized);
             }
@@ -791,7 +791,7 @@ insert_nodes_for_sectioning_commands (DOCUMENT *document)
                   new_node_tree = copy_contents (content->args.list[0],
                                                  ET_NONE);
                 }
-              added_node = new_node (document->error_messages, new_node_tree,
+              added_node = new_node (&document->error_messages, new_node_tree,
                                      document);
               destroy_element (new_node_tree);
               if (added_node)
@@ -883,11 +883,10 @@ reference_to_arg_internal (const char *type,
             }
           index++;
         }
-      if (document && document->internal_references
-          && document->internal_references->number > 0)
+      if (document && document->internal_references.number > 0)
         {
           const ELEMENT *removed_internal_ref =
-              remove_element_from_list (document->internal_references, e);
+              remove_element_from_list (&document->internal_references, e);
           if (removed_internal_ref)
             document->modified_information |= F_DOCM_internal_references;
         }
@@ -1134,7 +1133,7 @@ complete_tree_nodes_missing_menu (DOCUMENT *document, int use_sections)
 int
 regenerate_master_menu (DOCUMENT *document, int use_sections)
 {
-  const LABEL_LIST *identifiers_target = document->identifiers_target;
+  const LABEL_LIST *identifiers_target = &document->identifiers_target;
 
   const ELEMENT *top_node = find_identifier_target (identifiers_target, "Top");
   const ELEMENT_LIST *menus;
@@ -1153,7 +1152,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
   else
     return 0;
 
-  new_detailmenu_e = new_detailmenu (document->error_messages,
+  new_detailmenu_e = new_detailmenu (&document->error_messages,
                                     document->options, identifiers_target,
                                     menus, use_sections);
 
@@ -1175,7 +1174,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
             {
               size_t j;
               ELEMENT *removed = remove_from_contents (menu, detailmenu_index);
-              replace_element_in_list (&document->global_commands->detailmenu,
+              replace_element_in_list (&document->global_commands.detailmenu,
                                        removed, new_detailmenu_e);
               /* remove internal refs of removed entries */
               for (j = 0; j < removed->contents.number; j++)
@@ -1191,7 +1190,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
                             {
                               const ELEMENT *removed_internal_ref =
                                 remove_element_from_list (
-                                        document->internal_references,
+                                        &document->internal_references,
                                                         entry_content);
                               if (removed_internal_ref)
                                 document->modified_information
@@ -1260,7 +1259,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
     }
   /* insert master menu */
   insert_into_contents (last_menu, new_detailmenu_e, index);
-  add_to_element_list (&document->global_commands->detailmenu,
+  add_to_element_list (&document->global_commands.detailmenu,
                        new_detailmenu_e);
   return 1;
 }
@@ -1326,13 +1325,11 @@ protect_hashchar_at_line_beginning_internal (const char *type,
                                   && parent_for_warn->source_info.line_nr)
                                 {
                                   DOCUMENT *document = (DOCUMENT *) argument;
-                                  ERROR_MESSAGE_LIST *error_messages
-                                      = document->error_messages;
                                   const OPTIONS *options = document->options;
 
                                   message_list_command_warn (
-                                    error_messages, options,
-                                    parent_for_warn, 0,
+                                    &document->error_messages,
+                                    options, parent_for_warn, 0,
                                     "could not protect hash character in @%s",
                                 builtin_command_name (parent_for_warn->cmd));
                                   break;

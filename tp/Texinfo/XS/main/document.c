@@ -34,10 +34,7 @@
 #include "manipulate_indices.h"
 #include "document.h"
 
-/* note that each time the document list is reallocated, pointers
-   to documents need to be reset, so in general the document should be
-   retrieved with the index in the list */
-static DOCUMENT *document_list;
+static DOCUMENT **document_list;
 static size_t document_number;
 static size_t document_space;
 
@@ -45,35 +42,23 @@ DOCUMENT *
 retrieve_document (int document_descriptor)
 {
   if (document_descriptor <= document_number
-      && document_list[document_descriptor -1].tree != 0)
-    return &document_list[document_descriptor -1];
+      && document_list[document_descriptor -1] != 0)
+    return document_list[document_descriptor -1];
   return 0;
 }
 
 /* descriptor starts at 1, 0 is an error */
-size_t
-register_document (ELEMENT *root, INDEX **index_names,
-                   FLOAT_RECORD_LIST *floats_list,
-                   ELEMENT_LIST *internal_references,
-                   LABEL_LIST *labels_list,
-                   LABEL_LIST *identifiers_target,
-                   GLOBAL_INFO *global_info,
-                   GLOBAL_COMMANDS *global_commands,
-                   STRING_LIST *small_strings,
-                   ERROR_MESSAGE_LIST *parser_error_messages)
+DOCUMENT *
+new_document (void)
 {
   size_t document_index;
+  size_t i;
   int slot_found = 0;
-  DOCUMENT *document = 0;
-  int i;
-
-  /* error? */
-  if (root == 0)
-    return 0;
+  DOCUMENT *document = (DOCUMENT *) malloc (sizeof (DOCUMENT));
 
   for (i = 0; i < document_number; i++)
     {
-      if (document_list[i].tree == 0)
+      if (document_list[i] == 0)
         {
           slot_found = 1;
           document_index = i;
@@ -84,31 +69,22 @@ register_document (ELEMENT *root, INDEX **index_names,
       if (document_number == document_space)
         {
           document_list = realloc (document_list,
-                              (document_space += 5) * sizeof (DOCUMENT));
+                              (document_space += 5) * sizeof (DOCUMENT *));
           if (!document_list)
             fatal ("realloc failed");
         }
       document_index = document_number;
       document_number++;
     }
-  document = &document_list[document_index];
-  /* this initializes the other fields */
+  document_list[document_index] = document;
+
   memset (document, 0, sizeof (DOCUMENT));
   document->descriptor = document_index +1;
-  document->tree = root;
-  document->index_names = index_names;
-  document->floats = floats_list;
-  document->internal_references = internal_references;
-  document->labels_list = labels_list;
-  document->identifiers_target = identifiers_target;
-  document->global_info = global_info;
-  document->global_commands = global_commands;
-  document->small_strings = small_strings;
-  document->parser_error_messages = parser_error_messages;
-  document->error_messages = malloc (sizeof (ERROR_MESSAGE_LIST));
-  memset (document->error_messages, 0, sizeof (ERROR_MESSAGE_LIST));
 
-  document->listoffloats = float_list_to_listoffloats_list (floats_list);
+  /* For filenames and macro names, it is possible that they won't be referenced
+   in the line number of any element.  It would be too much work to keep track,
+   so just keep them all here, and free them all together at the end. */
+  document->small_strings = new_string_list ();
 
   document->modified_information |= F_DOCM_tree | F_DOCM_index_names
      | F_DOCM_floats | F_DOCM_internal_references | F_DOCM_labels_list
@@ -116,10 +92,9 @@ register_document (ELEMENT *root, INDEX **index_names,
      | F_DOCM_global_commands;
 
   /*
-  fprintf (stderr, "REGISTER %zu %p %p %p %p\n", document_index +1, document,
-                       document->tree, document->index_names, document->options);
+  fprintf (stderr, "DOCUMENT %zu %p\n", document_index +1, document);
    */
-  return document_index +1;
+  return document;
 }
 
 void
@@ -146,11 +121,12 @@ register_document_options (DOCUMENT *document, OPTIONS *options)
 const MERGED_INDICES *
 document_merged_indices (DOCUMENT *document)
 {
-  if (document->index_names)
+  if (document->indices_info.number)
     {
       if (!document->merged_indices)
         {
-          document->merged_indices = merge_indices (document->index_names);
+          document->merged_indices
+            = merge_indices (&document->indices_info);
           document->modified_information |= F_DOCM_merged_indices;
         }
     }
@@ -179,7 +155,7 @@ document_indices_sort_strings (DOCUMENT *document,
 
       document->indices_sort_strings
        = setup_index_entries_sort_strings (error_messages, options,
-                               merged_indices, document->index_names, 0);
+                        merged_indices, &document->indices_info, 0);
 
       document->modified_information |= F_DOCM_indices_sort_strings;
     }
@@ -413,24 +389,16 @@ destroy_document_information_except_tree (DOCUMENT *document)
 {
   if (document->tree)
     {
-      delete_global_info (document->global_info);
-      free (document->global_info);
-      delete_global_commands (document->global_commands);
-      free (document->global_commands);
-      free (document->internal_references->list);
-      free (document->internal_references);
-      free (document->floats->list);
-      free (document->floats);
-      destroy_listoffloats_list (document->listoffloats);
-      free (document->labels_list->list);
-      free (document->labels_list);
-      free (document->identifiers_target->list);
-      free (document->identifiers_target);
-      wipe_index_names (document->index_names);
-      wipe_error_message_list (document->error_messages);
-      free (document->error_messages);
-      wipe_error_message_list (document->parser_error_messages);
-      free (document->parser_error_messages);
+      delete_global_info (&document->global_info);
+      delete_global_commands (&document->global_commands);
+      free (document->internal_references.list);
+      free (document->floats.list);
+      free_listoffloats_list (&document->listoffloats);
+      free (document->labels_list.list);
+      free (document->identifiers_target.list);
+      free_indices_info (&document->indices_info);
+      wipe_error_message_list (&document->error_messages);
+      wipe_error_message_list (&document->parser_error_messages);
       if (document->nodes_list)
         destroy_list (document->nodes_list);
       if (document->sections_list)
@@ -494,7 +462,7 @@ remove_document_descriptor (int document_descriptor)
   if (document_descriptor > document_number)
     return;
 
-  document = &document_list[document_descriptor -1];
+  document = document_list[document_descriptor -1];
 
   destroy_document_information_except_tree (document);
 
@@ -503,7 +471,8 @@ remove_document_descriptor (int document_descriptor)
       destroy_element_and_children (document->tree);
       destroy_strings_list (document->small_strings);
     }
-  document->tree = 0;
+  free (document);
+  document_list[document_descriptor -1] = 0;
   /*
   fprintf (stderr, "REMOVE %d %p\n", document_descriptor, document);
    */
@@ -530,22 +499,19 @@ unregister_document_merge_with_document (int document_descriptor,
   fprintf (stderr, "UNREGISTER %p\n", removed_document);
    */
 
-  if (removed_document->small_strings)
+  if (removed_document->small_strings->number)
     {
-      if (removed_document->small_strings->number)
-        {
-          if (document)
-            merge_strings (document->small_strings,
-                           removed_document->small_strings);
-          else
-            fatal ("unregister_document_merge_with_document "
-                   "no document but small_strings");
-        }
-      free (removed_document->small_strings->list);
-      free (removed_document->small_strings);
-
-      removed_document->small_strings = 0;
+      if (document)
+        merge_strings (document->small_strings,
+                       removed_document->small_strings);
+      else
+       fatal ("unregister_document_merge_with_document "
+               "no document but small_strings");
     }
+  free (removed_document->small_strings->list);
+  free (removed_document->small_strings);
+
+  removed_document->small_strings = 0;
 
   return tree;
 }
@@ -555,7 +521,7 @@ clear_document_errors (int document_descriptor)
 {
   DOCUMENT *document = retrieve_document (document_descriptor);
   if (document)
-    wipe_error_message_list (document->error_messages);
+    wipe_error_message_list (&document->error_messages);
 }
 
 void
@@ -563,5 +529,5 @@ clear_document_parser_errors (int document_descriptor)
 {
   DOCUMENT *document = retrieve_document (document_descriptor);
   if (document)
-    wipe_error_message_list (document->parser_error_messages);
+    wipe_error_message_list (&document->parser_error_messages);
 }

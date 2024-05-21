@@ -221,7 +221,7 @@ set_global_document_commands (CONVERTER *converter,
       int i;
       for (i = 0; cmd_list[i] > 0; i++)
         {
-          ELEMENT *element;
+          const ELEMENT *element;
           enum command_id cmd = cmd_list[i];
           if (converter->conf->DEBUG.integer > 0)
             {
@@ -230,9 +230,9 @@ set_global_document_commands (CONVERTER *converter,
                        builtin_command_data[cmd].cmdname);
             }
           element
-            = set_global_document_command (converter->document->global_commands,
-                                           converter->conf,
-                                           cmd, location);
+          = set_global_document_command (&converter->document->global_commands,
+                                         converter->conf,
+                                         cmd, location);
           if (!element)
             {
               OPTION *option_value = command_init (cmd,

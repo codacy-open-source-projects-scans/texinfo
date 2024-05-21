@@ -77,13 +77,10 @@ debug_print_element_hv (HV *element_hv)
   FETCH(text)
   if (text_sv)
     {
-      int allocated = 0;
       char *text = SvPVutf8_nolen (*text_sv);
-      char *protected_text = debug_protect_eol (text,
-                                              &allocated);
+      char *protected_text = debug_protect_eol (text);
       text_printf (&msg, "[T: %s]", protected_text);
-      if (allocated)
-        free (protected_text);
+      free (protected_text);
     }
   fprintf (stderr, "ELT_sv: %s\n", msg.text);
   free (msg.text);
@@ -637,7 +634,7 @@ reset_output_init_conf (SV *sv_in)
 }
 
 INDEX_ENTRY *
-find_index_entry_sv (const SV *index_entry_sv, INDEX **index_names,
+find_index_entry_sv (const SV *index_entry_sv, INDEX_LIST *indices_info,
                      const char *warn_string, const INDEX **entry_idx,
                      int *entry_number)
 {
@@ -669,8 +666,7 @@ find_index_entry_sv (const SV *index_entry_sv, INDEX **index_names,
   *entry_number = SvIV (*entry_number_sv);
   entry_idx_in_index = *entry_number - 1;
 
-  idx = indices_info_index_by_name (index_names,
-                                    entry_index_name);
+  idx = indices_info_index_by_name (indices_info, entry_index_name);
   *entry_idx = idx;
   if (idx)
     {
@@ -688,7 +684,7 @@ find_index_entry_sv (const SV *index_entry_sv, INDEX **index_names,
 /* return value to be freed by caller */
 /* Currently not used */
 INDEX_SORTED_BY_LETTER *
-get_sv_index_entries_sorted_by_letter (INDEX **index_names,
+get_sv_index_entries_sorted_by_letter (INDEX_LIST *indices_info,
                                        SV *index_entries_sorted_by_letter)
 {
   INDEX_SORTED_BY_LETTER *indices_entries_by_letter;
@@ -855,16 +851,17 @@ get_sv_index_entries_sorted_by_letter (INDEX **index_names,
                     {
                       char *msg;
                       xasprintf (&msg,
-  "get_sv_index_entries_sorted_by_letter: %s: %d: %s: %d: no entry\n",
+        "get_sv_index_entries_sorted_by_letter: %s: %d: %s: %d: no entry\n",
                              idx_name, i, letter_entries->letter, k);
                       fatal (msg);
                     }
                   non_perl_xasprintf (&warn_string,
-                         "get_sv_index_entries_sorted_by_letter: %s: %d: %s: %d",
+                     "get_sv_index_entries_sorted_by_letter: %s: %d: %s: %d",
                          idx_name, i, letter_entries->letter, k);
-                  index_entry = find_index_entry_sv (*index_entry_sv, index_names,
-                                                     warn_string, &entry_idx,
-                                                     &entry_number);
+                  index_entry
+                    = find_index_entry_sv (*index_entry_sv, indices_info,
+                                           warn_string, &entry_idx,
+                                           &entry_number);
                   non_perl_free (warn_string);
 
                   letter_entries->entries[k] = index_entry;
@@ -1271,10 +1268,11 @@ find_document_index_entry_extra_index_entry_sv (const DOCUMENT *document,
   SV **index_name_sv;
   char *index_name = 0;
   const INDEX *idx = 0;
+  const INDEX_LIST *indices_info = &document->indices_info;
 
   dTHX;
 
-  if (!document->index_names)
+  if (!indices_info->number)
     return 0;
 
   extra_index_entry_av = (AV *) SvRV (extra_index_entry_sv);
@@ -1283,8 +1281,7 @@ find_document_index_entry_extra_index_entry_sv (const DOCUMENT *document,
   if (index_name_sv)
     {
       index_name = SvPVutf8_nolen (*index_name_sv);
-      idx = indices_info_index_by_name (document->index_names,
-                                        index_name);
+      idx = indices_info_index_by_name (indices_info, index_name);
     }
 
   if (idx)
@@ -1309,7 +1306,7 @@ find_element_extra_index_entry_sv (const DOCUMENT *document,
                                    const SV *extra_index_entry_sv)
 {
   const INDEX_ENTRY *index_entry;
-  if (!converter || !converter->document || !converter->document->index_names)
+  if (!converter || !converter->document)
     {
       if (document)
         index_entry
@@ -1560,9 +1557,9 @@ find_element_from_sv (const CONVERTER *converter, const DOCUMENT *document_in,
           if (global_command_number_sv)
             {
               int global_command_number = SvIV (*global_command_number_sv);
-              ELEMENT_LIST *global_cmd_list
+              const ELEMENT_LIST *global_cmd_list
                 = get_cmd_global_multi_command (
-                              document->global_commands, cmd);
+                              &document->global_commands, cmd);
 
               if (global_command_number > 0
                   && global_command_number - 1 < global_cmd_list->number)
@@ -1570,7 +1567,7 @@ find_element_from_sv (const CONVERTER *converter, const DOCUMENT *document_in,
             }
         }
 
-      if (document && document->identifiers_target)
+      if (document && document->identifiers_target.number)
         {
           SV **normalized_sv;
           EXTRA(normalized)
@@ -1579,7 +1576,7 @@ find_element_from_sv (const CONVERTER *converter, const DOCUMENT *document_in,
               char *normalized = SvPVutf8_nolen (*normalized_sv);
               ELEMENT *element_found
                 = find_identifier_target
-                      (document->identifiers_target, normalized);
+                      (&document->identifiers_target, normalized);
          /* check the element found in case of multiple defined identifier */
               if (element_found && element_hv == element_found->hv)
                 return element_found;
