@@ -456,7 +456,7 @@ close_current (ELEMENT *current,
              be at the end of the document after an empty line we
              do not want to modify */
           /* current = merge_text (current, "}", 0); */
-          text_append (&close_brace->text, "}");
+          text_append_n (&close_brace->text, "}", 1);
           add_to_element_contents (current, close_brace);
           current = current->parent;
           break;
@@ -467,7 +467,7 @@ close_current (ELEMENT *current,
                  == ET_internal_spaces_before_argument)
             {
               /* remove spaces element from tree and update extra values */
-              abort_empty_line (&current, 0);
+              abort_empty_line (&current, NULL, 0);
             }
           current = current->parent;
           break;

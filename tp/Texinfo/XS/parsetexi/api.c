@@ -32,43 +32,66 @@
 #include "input.h"
 #include "source_marks.h"
 #include "errors.h"
+/* for wipe_values ... */
+#include "utils.h"
 /* for wipe_user_commands */
 #include "commands.h"
 #include "command_stack.h"
 #include "context_stack.h"
-/* for clear_parser_expanded_formats and add_parser_expanded_format */
-#include "handle_commands.h"
-/* for wipe_macros store_value init_values wipe_values */
+/* for wipe_macros store_value init_values */
 #include "macro.h"
 #include "document.h"
 /* for reset_conf */
 #include "conf.h"
+/* for global_parser_conf */
+#include "parser_conf.h"
 /* for init_index_commands */
 #include "indices.h"
 #include "api.h"
 
-static void
+static int
 initialize_parsing (void)
 {
   parsed_document = new_document ();
 
+  if (!global_parser_conf.no_index)
+    init_index_commands ();
+
   wipe_user_commands ();
   wipe_macros ();
 
+  /* initialize from conf */
   init_values ();
 
+  /* currently there is no change done to include directories,
+     so global_parser_conf.include_directories could be used instead
+     of parser_include_directories */
+  clear_strings_list (&parser_include_directories);
+  copy_strings (&parser_include_directories,
+                &global_parser_conf.include_directories);
+
   free (global_documentlanguage);
-  if (parser_conf.global_documentlanguage_fixed && parser_conf.documentlanguage)
-    global_documentlanguage = strdup (parser_conf.documentlanguage);
+  if (global_parser_conf.global_documentlanguage_fixed
+      && global_parser_conf.documentlanguage)
+    global_documentlanguage = strdup (global_parser_conf.documentlanguage);
   else
     global_documentlanguage = 0;
 
+  /* initialize document state */
   free (global_clickstyle);
   global_clickstyle = strdup ("arrow");
   global_kbdinputstyle = kbd_distinct;
 
   current_node = current_section = current_part = 0;
+  source_marks_reset_counters ();
 
+  /* it is not totally obvious that is it better to reset the
+     list to avoid memory leaks rather than reuse the iconv
+     opened handlers */
+  parser_reset_encoding_list ();
+  set_input_encoding ("utf-8");
+
+  /* initialize parsing state */
   reset_context_stack ();
   reset_command_stack (&nesting_context.basic_inline_stack);
   reset_command_stack (&nesting_context.basic_inline_stack_on_line);
@@ -76,18 +99,10 @@ initialize_parsing (void)
   reset_command_stack (&nesting_context.regions_stack);
   memset (&nesting_context, 0, sizeof (nesting_context));
   reset_parser_counters ();
-  /* it is not totally obvious that is it better to reset the
-     list to avoid memory leaks rather than reuse the iconv
-     opened handlers */
-  parser_reset_encoding_list ();
-  source_marks_reset_counters ();
 
   reset_obstacks ();
 
-  if (!parser_conf.no_index)
-    init_index_commands ();
-
-  set_input_encoding ("utf-8");
+  return parsed_document->descriptor;
 }
 
 void
@@ -107,40 +122,18 @@ reset_parser (int local_debug_output)
   reset_parser_conf ();
 }
 
-/* Determine directory path based on file name.
-   Return a DOCUMENT_DESCRIPTOR that can be used to retrieve the
-   tree and document obtained by parsing FILENAME.
-   Used for parse_texi_file. */
-int
-parse_file (const char *filename, const char *input_file_name,
-            const char *input_directory)
+/* RESULT should be an array of size two.  Upon return, it holds
+   the file name in the first position and directory, if any, in
+   the second position.  The file name and directory should be
+   freed.
+ */
+static void
+parse_file_path (const char *input_file_path, char **result)
 {
-  int document_descriptor;
-  char *p, *q;
-  GLOBAL_INFO *global_info;
-
-  int status;
-
-  initialize_parsing ();
-
-  status = input_push_file (filename);
-  if (status)
-    {
-      remove_document_descriptor (parsed_document->descriptor);
-      return 0;
-    }
-
-  global_info = &parsed_document->global_info;
-
-  free (global_info->input_file_name);
-  free (global_info->input_directory);
-  global_info->input_file_name = strdup (input_file_name);
-  global_info->input_directory = strdup (input_directory);
-
   /* Strip off a leading directory path, by looking for the last
-     '/' in filename. */
-  p = 0;
-  q = strchr (filename, '/');
+     '/' in input_file_path. */
+  const char *p = 0;
+  const char *q = strchr (input_file_path, '/');
   while (q)
     {
       p = q;
@@ -149,14 +142,67 @@ parse_file (const char *filename, const char *input_file_name,
 
   if (p)
     {
-      char saved = *p;
-      *p = '\0';
-      parser_conf_add_include_directory (filename);
-      *p = saved;
+      result[0] = strdup (p + 1);
+      result[1] = strndup (input_file_path, (p - input_file_path) + 1);
+    }
+  else
+    {
+      result[0] = strdup (input_file_path);
+      /* FIXME or strdup ("") */
+      result[1] = 0;
+    }
+}
+
+/* Determine directory path based on file name.
+   Return a DOCUMENT_DESCRIPTOR that can be used to retrieve the
+   tree and document obtained by parsing INPUT_FILE_PATH.
+   STATUS is set to non zero if parsing could not proceed.
+   It is always the responsibility of the caller to get the error
+   messages and destroy the document.
+
+   Used for parse_texi_file. */
+int
+parse_file (const char *input_file_path, int *status)
+{
+  int document_descriptor = initialize_parsing ();
+  GLOBAL_INFO *global_info;
+  char *input_file_name_and_directory[2];
+  int input_error;
+
+  input_error = input_push_file (input_file_path);
+  if (input_error)
+    {
+      char *decoded_file_path;
+      if (global_parser_conf.command_line_encoding)
+        {
+          int status;
+          decoded_file_path
+            = decode_string (input_file_path,
+                             global_parser_conf.command_line_encoding,
+                             &status, 0);
+        }
+      else
+        decoded_file_path = strdup (input_file_path);
+      message_list_document_error (&parsed_document->parser_error_messages, 0,
+                                   0, "could not open %s: %s",
+                                   decoded_file_path, strerror (input_error));
+      free (decoded_file_path);
+      *status = 1;
+      return document_descriptor;
     }
 
-  document_descriptor = parse_texi_document ();
+  parse_file_path (input_file_path, input_file_name_and_directory);
 
+  global_info = &parsed_document->global_info;
+
+  free (global_info->input_file_name);
+  free (global_info->input_directory);
+  global_info->input_file_name = input_file_name_and_directory[0];
+  global_info->input_directory = input_file_name_and_directory[1];
+
+  parse_texi_document ();
+
+  *status = 0;
   return document_descriptor;
 }
 
@@ -164,12 +210,10 @@ parse_file (const char *filename, const char *input_file_name,
 int
 parse_text (const char *string, int line_nr)
 {
-  int document_descriptor;
-
-  initialize_parsing ();
+  int document_descriptor = initialize_parsing ();
 
   input_push_text (strdup (string), line_nr, 0, 0);
-  document_descriptor = parse_texi_document ();
+  parse_texi_document ();
   return document_descriptor;
 }
 
@@ -180,14 +224,12 @@ int
 parse_string (const char *string, int line_nr)
 {
   ELEMENT *root_elt;
-  int document_descriptor;
-
-  initialize_parsing ();
+  int document_descriptor = initialize_parsing ();
 
   root_elt = new_element (ET_root_line);
 
   input_push_text (strdup (string), line_nr, 0, 0);
-  document_descriptor = parse_texi (root_elt, root_elt);
+  parse_texi (root_elt, root_elt);
   return document_descriptor;
 }
 
@@ -195,28 +237,26 @@ parse_string (const char *string, int line_nr)
 int
 parse_piece (const char *string, int line_nr)
 {
-  int document_descriptor;
+  int document_descriptor = initialize_parsing ();
   ELEMENT *before_node_section, *document_root;
-
-  initialize_parsing ();
 
   before_node_section = setup_document_root_and_before_node_section ();
   document_root = before_node_section->parent;
 
   input_push_text (strdup (string), line_nr, 0, 0);
-  document_descriptor = parse_texi (document_root, before_node_section);
+  parse_texi (document_root, before_node_section);
   return document_descriptor;
 }
 
 void
 parser_conf_reset_values (void)
 {
-  wipe_values (&parser_conf.values);
+  wipe_values (&global_parser_conf.values);
 }
 
 void
 parser_conf_add_value (const char *name, const char *value)
 {
-  store_value (&parser_conf.values, name, value);
+  store_value (&global_parser_conf.values, name, value);
 }
 

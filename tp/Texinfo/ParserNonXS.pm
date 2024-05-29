@@ -141,7 +141,7 @@ our $VERSION = '7.1dev';
 
 # these are the default values for the parsing state of a document.
 # Some could become configurable if moved to Texinfo::Common
-# %parser_state_configuration,
+# %parser_document_state_configuration,
 # but they are not configurable/implemented in the XS parser, so they are
 # best left internal.  Could be relevant to reuse for diverse sources
 # of input associated to the same document.
@@ -155,12 +155,16 @@ my %parser_document_state_initialization = (
                               # reference with 2 values, beginning and ending.
 
   # parsing information still relevant at the end of the parsing
-  'clickstyle' => 'arrow',       #
-  'kbdinputstyle' => 'distinct', #
-  'source_mark_counters' => {},  #
-  'current_node'    => undef,    # last seen node.
-  'current_section' => undef,    # last seen section.
-  'current_part'    => undef,    # last seen part.
+  'clickstyle' => 'arrow',        #
+  'kbdinputstyle' => 'distinct',  #
+  'source_mark_counters' => {},   #
+  'current_node'    => undef,     # last seen node.
+  'current_section' => undef,     # last seen section.
+  'current_part'    => undef,     # last seen part.
+  'sections_level_modifier' => 0, # modified by raise/lowersections
+
+  'input_file_encoding' => 'utf-8', # perl encoding name used for the input
+                                    # file
 );
 
 my %parsing_state_initialization = (
@@ -173,7 +177,6 @@ my %parsing_state_initialization = (
   'raw_block_stack' => [],    # a stack of raw block commands that are nested.
   'macro_expansion_nr' => 0,  # number of macros being expanded
   'value_expansion_nr' => 0,  # number of values being expanded
-  'sections_level_modifier' => 0, # modified by raise/lowersections
   'nesting_context'    => {
                          # key is the context name, value is the
                          # depth of the context.
@@ -206,8 +209,6 @@ my %parsing_state_initialization = (
                          # be added each time a context is pushed on
                          # 'context_stack'.  Could be undef if there
                          # is no @-command associated with the context.
-  'input_file_encoding' => 'utf-8', # perl encoding name used for the input
-                                    # file
 );
 
 my %parser_state_initialization = (%parser_document_state_initialization,
@@ -234,7 +235,8 @@ my %parser_state_initialization = (%parser_document_state_initialization,
 # set                     points to the value set when initializing, for
 #                         configuration items that are not to be overriden
 #                         by @-commands.  For example documentlanguage.
-# conf                    For get_conf
+# conf                    Customization and document state configuration
+#                         based on defaults and parser argument.
 
 # A source information is an hash reference with the keys:
 # line_nr        the line number.
@@ -562,53 +564,57 @@ sub parser(;$)
   # In Texinfo::Common because all the
   # customization options information is gathered here, and also
   # because it is used in other codes, in particular the XS parser.
-  my $parser = dclone(\%Texinfo::Common::parser_settable_configuration);
+  # Note that it also contains inner options like accept_internalvalue
+  # and customizable document parser state values in addition to
+  # regular customization options.
+  my $parser_conf = dclone(\%Texinfo::Common::parser_document_parsing_options);
+  my $parser = {};
   bless $parser;
 
-  # for get_conf, set for all the configuration keys that are also in
-  # %Texinfo::Common::default_parser_customization_values to the
-  # values set at parser initialization
+  # Reset conf from argument, restricting to parser_document_parsing_options,
+  # and set directly parser keys if in parser_settable_configuration and not in
+  # parser_document_parsing_options.
   $parser->{'set'} = {};
   if (defined($conf)) {
     foreach my $key (keys(%$conf)) {
-      if (exists($Texinfo::Common::parser_settable_configuration{$key})) {
-        # we keep registrar instead of copying on purpose, to reuse the object
-        if ($key ne 'values' and $key ne 'registrar' and ref($conf->{$key})) {
-          $parser->{$key} = dclone($conf->{$key});
+      if (exists($Texinfo::Common::parser_document_parsing_options{$key})) {
+        if (ref($conf->{$key})) {
+          $parser_conf->{$key} = dclone($conf->{$key});
         } else {
-          $parser->{$key} = $conf->{$key};
+          $parser_conf->{$key} = $conf->{$key};
         }
         if ($initialization_overrides{$key}) {
-          $parser->{'set'}->{$key} = $parser->{$key};
+          $parser->{'set'}->{$key} = $parser_conf->{$key};
         }
+      } elsif (exists($Texinfo::Common::parser_settable_configuration{$key})) {
+        # we keep instead of copying on purpose, to reuse the objects
+        # Should only be registrar
+        $parser->{$key} = $conf->{$key};
       } else {
         warn "ignoring parser configuration value \"$key\"\n";
       }
     }
   }
 
-  $parser->{'conf'} = {};
-  # restrict variables found by get_conf, and set the values to the
-  # parser initialization values only.  What is found in the document
-  # has no effect.
-  foreach my $key (keys(%Texinfo::Common::default_parser_customization_values)) {
-    $parser->{'conf'}->{$key} = $parser->{$key};
-  }
-
   # This is not very useful in perl, but mimics the XS parser
   print STDERR "!!!!!!!!!!!!!!!! RESETTING THE PARSER !!!!!!!!!!!!!!!!!!!!!\n"
-    if ($parser->{'DEBUG'});
+    if ($parser_conf->{'DEBUG'});
 
   # turn the array to a hash for speed.  Not sure it really matters for such
   # a small array.
   $parser->{'expanded_formats_hash'} = {};
-  foreach my $expanded_format(@{$parser->{'EXPANDED_FORMATS'}}) {
+  foreach my $expanded_format(@{$parser_conf->{'EXPANDED_FORMATS'}}) {
     $parser->{'expanded_formats_hash'}->{$expanded_format} = 1;
   }
 
   if (not defined($parser->{'registrar'})) {
     $parser->{'registrar'} = Texinfo::Report::new();
   }
+
+  # variables set to the parser initialization values only.  What is
+  # found in the document has no effect.  Also used to initialize some
+  # parsing state.
+  $parser->{'conf'} = $parser_conf;
 
   return $parser;
 }
@@ -618,7 +624,7 @@ sub _initialize_parsing()
   my $parser = shift;
 
   my $index_names;
-  if (!$parser->{'NO_INDEX'}) {
+  if (!$parser->{'conf'}->{'NO_INDEX'}) {
     $index_names = dclone(\%index_names);
   } else {
     # not needed, but not undef because it is exported to document
@@ -629,12 +635,21 @@ sub _initialize_parsing()
 
   my $parser_state = dclone(\%parser_state_initialization);
 
+  # initialize from conf.
+  if ($parser->{'conf'}->{'values'}) {
+    $parser_state->{'values'} = dclone($parser->{'conf'}->{'values'});
+  }
+  if (defined($parser->{'conf'}->{'documentlanguage'})) {
+    $parser_state->{'documentlanguage'}
+      = $parser->{'conf'}->{'documentlanguage'};
+  }
+
   $parser_state->{'document'} = $document;
 
   # In gdt(), both NO_INDEX and NO_USER_COMMANDS are set and this has a sizable
   # effect on performance.
 
-  if (!$parser->{'NO_INDEX'}) {
+  if (!$parser->{'conf'}->{'NO_INDEX'}) {
     # Initialize command hash that are dynamically modified for index
     # commands.
     $parser_state->{'command_index'} = {%command_index};
@@ -647,7 +662,7 @@ sub _initialize_parsing()
     $parser_state->{'index_entry_commands'} = \%index_entry_command_commands;
   }
 
-  if (!$parser->{'NO_USER_COMMANDS'}) {
+  if (!$parser->{'conf'}->{'NO_USER_COMMANDS'}) {
     # Initialize command hash that are dynamically modified for
     # definfoenclose, based on defaults.
     $parser_state->{'brace_commands'} = dclone(\%brace_commands);
@@ -660,7 +675,8 @@ sub _initialize_parsing()
     $parser_state->{'valid_nestings'} = \%default_valid_nestings;
   }
 
-  if ($parser->{'NO_USER_COMMANDS'} or $parser->{'NO_INDEX'}) {
+  if ($parser->{'conf'}->{'NO_USER_COMMANDS'}
+      or $parser->{'conf'}->{'NO_INDEX'}) {
     # with NO_USER_COMMANDS or NO_INDEX, new index commands are not defined.
     # Therefore, the default data can be used as it won't be modified.
     $parser_state->{'line_commands'} = \%line_commands;
@@ -675,12 +691,6 @@ sub _initialize_parsing()
   }
 
   return $parser_state;
-}
-
-sub get_conf($$)
-{
-  my ($self, $var) = @_;
-  return $self->{'conf'}->{$var};
 }
 
 sub _new_text_input($$)
@@ -767,6 +777,9 @@ sub parse_texi_piece($$;$)
   $line_nr = 1 if (not defined($line_nr));
 
   my $parser_state = $self->_initialize_parsing();
+  # We rely on parser state overriding the previous state infomation
+  # in self, as documented in perldata:
+  #   If a key appears more than once in the initializer list of a hash, the last occurrence wins
   %$self = (%$self, %$parser_state);
 
   _input_push_text($self, $text, $line_nr);
@@ -874,7 +887,8 @@ sub get_parser_info($)
 
   my $perl_encoding
     = Texinfo::Common::get_perl_encoding($document->{'commands_info'},
-                                         $self->{'registrar'}, $self);
+                                         $self->{'registrar'},
+                                         $self->{'conf'}->{'DEBUG'});
   if (defined($perl_encoding)) {
     $document->{'global_info'}->{'input_perl_encoding'} = $perl_encoding
   }
@@ -917,14 +931,14 @@ sub parse_texi_file($$)
   my ($status, $file_name, $directories, $error_message)
     = _input_push_file($self, $input_file_path);
   if (!$status) {
-    my $input_file_name = $input_file_path;
-    my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
+    my $decoded_input_file_path = $input_file_path;
+    my $encoding = $self->{'conf'}->{'COMMAND_LINE_ENCODING'};
     if (defined($encoding)) {
-      $input_file_name = decode($encoding, $input_file_path);
+      $decoded_input_file_path = decode($encoding, $input_file_path);
     }
-    $self->{'registrar'}->document_error($self,
+    $self->{'registrar'}->document_error(
                  sprintf(__("could not open %s: %s"),
-                                  $input_file_name, $error_message));
+                                  $decoded_input_file_path, $error_message));
     return undef;
   }
 
@@ -991,7 +1005,11 @@ sub errors($)
   if (!$registrar) {
     return undef;
   }
-  return $registrar->errors();
+  my ($error_warnings_list, $error_count) = $registrar->errors();
+
+  $registrar->clear();
+
+  return $error_warnings_list, $error_count;
 }
 
 # Following are the internal parsing subroutines.  The most important are
@@ -1059,15 +1077,25 @@ sub _top_context_command($)
 sub _line_warn
 {
   my $self = shift;
+  my $text = shift;
+  my $error_location_info = shift;
+  my $continuation = shift;
+  my $debug = shift;
   my $registrar = $self->{'registrar'};
-  $registrar->line_warn($self, @_);
+  $registrar->line_warn($text, $error_location_info, $continuation,
+                        $self->{'conf'}->{'DEBUG'});
 }
 
 sub _line_error
 {
   my $self = shift;
+  my $text = shift;
+  my $error_location_info = shift;
+  my $continuation = shift;
+
   my $registrar = $self->{'registrar'};
-  $registrar->line_error($self, @_);
+  $registrar->line_error($text, $error_location_info, $continuation,
+                         $self->{'conf'}->{'DEBUG'});
 }
 
 # Format a bug message
@@ -1220,7 +1248,7 @@ sub _place_source_mark
   print STDERR "MARK "._debug_show_source_mark($source_mark)
    ." $add_element_string ".Texinfo::Common::debug_print_element($mark_element)
       .' '.Texinfo::Common::debug_print_element($element)."\n"
-        if ($self->{'DEBUG'});
+        if ($self->{'conf'}->{'DEBUG'});
 
   if (!$mark_element->{'source_marks'}) {
     $mark_element->{'source_marks'} = [];
@@ -1274,7 +1302,8 @@ sub _parse_macro_command_line($$$$$;$)
                     __("bad name for \@%s"), $command), $source_info);
     $macro->{'extra'} = {'invalid_syntax' => 1};
   } else {
-    print STDERR "MACRO \@$command $macro_name\n" if ($self->{'DEBUG'});
+    print STDERR "MACRO \@$command $macro_name\n"
+                           if ($self->{'conf'}->{'DEBUG'});
 
     $macro->{'args'} = [
       { 'type' => 'macro_name', 'text' => $macro_name,
@@ -1348,7 +1377,7 @@ sub _begin_paragraph($$;$)
     if ($indent) {
       $current->{'extra'} = {$indent => 1};
     }
-    print STDERR "PARAGRAPH\n" if ($self->{'DEBUG'});
+    print STDERR "PARAGRAPH\n" if ($self->{'conf'}->{'DEBUG'});
     return $current;
   }
   return 0;
@@ -1363,7 +1392,7 @@ sub _begin_preformatted($$)
           { 'type' => 'preformatted',
             'parent' => $current };
     $current = $current->{'contents'}->[-1];
-    print STDERR "PREFORMATTED\n" if ($self->{'DEBUG'});
+    print STDERR "PREFORMATTED\n" if ($self->{'conf'}->{'DEBUG'});
   }
   return $current;
 }
@@ -1532,7 +1561,7 @@ sub _close_all_style_commands($$$;$$)
                            ->{$current->{'parent'}->{'cmdname'}} ne 'context') {
     print STDERR "CLOSING(all_style_commands) "
       ."\@$current->{'parent'}->{'cmdname'}\n"
-         if ($self->{'DEBUG'});
+         if ($self->{'conf'}->{'DEBUG'});
     $current = _close_brace_command($self, $current->{'parent'}, $source_info,
                                     $closed_block_command,
                                     $interrupting_command, 1);
@@ -1551,7 +1580,7 @@ sub _end_paragraph($$$;$$)
                                        $closed_block_command,
                                        $interrupting_command);
   if ($current->{'type'} and $current->{'type'} eq 'paragraph') {
-    print STDERR "CLOSE PARA\n" if ($self->{'DEBUG'});
+    print STDERR "CLOSE PARA\n" if ($self->{'conf'}->{'DEBUG'});
     $current = _close_container($self, $current);
   }
   return $current;
@@ -1583,7 +1612,7 @@ sub _remove_empty_content($$)
       print STDERR "REMOVE empty child "
          .Texinfo::Common::debug_print_element($child_element)
           .' from '.Texinfo::Common::debug_print_element($current)."\n"
-            if ($self->{'DEBUG'});
+            if ($self->{'conf'}->{'DEBUG'});
       _pop_element_from_contents($self, $current);
     }
   }
@@ -1603,7 +1632,7 @@ sub _close_container($$)
       .Texinfo::Common::debug_print_element($current, 1)
       .' ('.($current->{'source_marks'}
             ? scalar(@{$current->{'source_marks'}}) : 0)." source marks)\n"
-        if ($self->{'DEBUG'});
+        if ($self->{'conf'}->{'DEBUG'});
     if ($current->{'source_marks'}) {
       # Keep the element to keep the source mark, but remove some types.
       # Keep before_item in order not to add empty table definition in
@@ -1624,7 +1653,7 @@ sub _close_container($$)
       and $current->{'contents'}->[-1] eq $element_to_remove) {
     print STDERR "REMOVE empty type "
       .Texinfo::Common::debug_print_element($element_to_remove, 1)."\n"
-        if ($self->{'DEBUG'});
+        if ($self->{'conf'}->{'DEBUG'});
     _pop_element_from_contents($self, $current);
   }
   return $current;
@@ -1641,7 +1670,7 @@ sub _end_preformatted($$$;$$)
                                        $interrupting_command);
 
   if ($current->{'type'} and $current->{'type'} eq 'preformatted') {
-    print STDERR "CLOSE PREFORMATTED\n" if ($self->{'DEBUG'});
+    print STDERR "CLOSE PREFORMATTED\n" if ($self->{'conf'}->{'DEBUG'});
     $current = _close_container($self, $current);
   }
   return $current;
@@ -1682,7 +1711,6 @@ sub _check_no_text($)
 # $CURRENT is the @table element.
 # $NEXT_COMMAND is the command that follows the entry, usually @item.
 # If it is @itemx, gather an 'inter_item' element instead.
-#
 sub _gather_previous_item($$;$$)
 {
   my ($self, $current, $next_command, $source_info) = @_;
@@ -1705,7 +1733,8 @@ sub _gather_previous_item($$;$$)
     $type = 'table_definition';
   }
 
-  # Working from the end, find the beginning of the definition content
+  # Starting from the end, collect everything that is not an item or
+  # itemx and put it into the $type.
   my $contents_count = scalar(@{$current->{'contents'}});
   my $begin;
   for (my $i = $contents_count - 1; $i >= 0; $i--) {
@@ -1718,14 +1747,14 @@ sub _gather_previous_item($$;$$)
   }
   $begin = 0 if !defined($begin);
 
-  # Find the end of the definition content
+  # Find the end
   my $end;
   if (defined($next_command)) {
     # Don't absorb trailing index entries as they are included with a
     # following @item.
     for (my $i = $contents_count - 1; $i >= $begin; $i--) {
       if (!$current->{'contents'}->[$i]->{'type'}
-        or $current->{'contents'}->[$i]->{'type'} ne 'index_entry_command') {
+          or $current->{'contents'}->[$i]->{'type'} ne 'index_entry_command') {
         $end = $i + 1;
         last;
       }
@@ -1733,7 +1762,8 @@ sub _gather_previous_item($$;$$)
   }
   $end = $contents_count if !defined($end);
 
-  # Extract the table definition
+  # Move everything from 'begin' to 'end' to be children of
+  # table_after_terms.
   my $table_after_terms;
   if ($end - $begin > 0) {
     my $new_contents = [];
@@ -1757,8 +1787,10 @@ sub _gather_previous_item($$;$$)
                     'parent' => $table_entry, };
     push @{$table_entry->{'contents'}}, $table_term;
 
-    # put everything starting from the end until reaching the previous
-    # table entry or beginning of the table in table_term.
+    # We previously collected elements into a table_definition.  Now
+    # do the same for a table_term, starting from the beginning of the
+    # table_definition going back to the previous table entry or beginning
+    # of the table.
     my $contents_count = scalar(@{$current->{'contents'}});
     my $term_begin;
     for (my $i = $begin - 1; $i >= 0; $i--) {
@@ -1768,6 +1800,8 @@ sub _gather_previous_item($$;$$)
                 # reached the previous table entry
                 or $current->{'contents'}->[$i]->{'type'} eq 'table_entry')) {
         if ($current->{'contents'}->[$i]->{'type'} eq 'before_item') {
+          # register the before_item if we reached it in order to
+          # reparent some before_item content to the first item
           $before_item = $current->{'contents'}->[$i];
         }
         $term_begin = $i + 1;
@@ -1787,6 +1821,8 @@ sub _gather_previous_item($$;$$)
     }
     if (defined($before_item) and $before_item->{'contents'}
         and scalar(@{$before_item->{'contents'}})) {
+      print STDERR "REPARENT before_item content\n"
+         if ($self->{'conf'}->{'DEBUG'});
       # reparent any trailing index entries in the before_item to the
       # beginning of table term
       while ($before_item->{'contents'}
@@ -1814,6 +1850,8 @@ sub _gather_previous_item($$;$$)
     # Gathering 'inter_item' between @item and @itemx
     if ($table_after_terms) {
       my $after_paragraph = _check_no_text($table_after_terms);
+      # Text between @item and @itemx is only allowed in a few cases:
+      # comments, empty lines, or index entries.
       if ($after_paragraph) {
         $self->_line_error(__("\@itemx must follow \@item"), $source_info);
       }
@@ -2059,7 +2097,7 @@ sub _close_current($$$;$$)
   if ($current->{'cmdname'}) {
     my $command = $current->{'cmdname'};
     print STDERR "CLOSING(close_current) \@$command\n"
-         if ($self->{'DEBUG'});
+         if ($self->{'conf'}->{'DEBUG'});
     if (exists($self->{'brace_commands'}->{$command})) {
       $current = _close_brace_command($self, $current, $source_info,
                                       $closed_block_command,
@@ -2093,7 +2131,8 @@ sub _close_current($$$;$$)
       $current = $current->{'parent'};
     }
   } elsif ($current->{'type'}) {
-    print STDERR "CLOSING type $current->{'type'}\n" if ($self->{'DEBUG'});
+    print STDERR "CLOSING type $current->{'type'}\n"
+                             if ($self->{'conf'}->{'DEBUG'});
     if ($current->{'type'} eq 'bracketed_arg') {
       # unclosed bracketed argument
       $self->_command_error($current, __("misplaced {"));
@@ -2255,14 +2294,15 @@ sub _merge_text {
     print STDERR "MERGED TEXT: $text||| in "
       .Texinfo::Common::debug_print_element($last_child)
       ." last of ".Texinfo::Common::debug_print_element($current)."\n"
-         if ($self->{'DEBUG'});
+         if ($self->{'conf'}->{'DEBUG'});
     $last_child->{'text'} .= $text;
   } else {
     my $new_element = { 'text' => $text, 'parent' => $current };
     _transfer_source_marks($transfer_marks_element, $new_element)
       if ($transfer_marks_element);
     push @{$current->{'contents'}}, $new_element;
-    print STDERR "NEW TEXT (merge): $text|||\n" if ($self->{'DEBUG'});
+    print STDERR "NEW TEXT (merge): $text|||\n"
+                         if ($self->{'conf'}->{'DEBUG'});
   }
   return $current;
 }
@@ -2317,13 +2357,13 @@ sub _encode_file_name($$)
   my ($self, $file_name) = @_;
 
   my $encoding;
-  my $input_file_name_encoding = $self->get_conf('INPUT_FILE_NAME_ENCODING');
+  my $input_file_name_encoding = $self->{'conf'}->{'INPUT_FILE_NAME_ENCODING'};
   if ($input_file_name_encoding) {
     $encoding = $input_file_name_encoding;
-  } elsif ($self->get_conf('DOC_ENCODING_FOR_INPUT_FILE_NAME')) {
+  } elsif ($self->{'conf'}->{'DOC_ENCODING_FOR_INPUT_FILE_NAME'}) {
     $encoding = $self->{'input_file_encoding'};
   } else {
-    $encoding = $self->get_conf('LOCALE_ENCODING');
+    $encoding = $self->{'conf'}->{'LOCALE_ENCODING'};
   }
 
   return Texinfo::Common::encode_file_name($file_name, $encoding);
@@ -2394,7 +2434,7 @@ sub _next_text($;$)
             . ($input->{'input_source_info'}->{'line_nr'} + 1).
                sprintf(": encoding error at byte 0x%2x\n", ord($error_byte)));
         # show perl message but only with debugging
-        print STDERR "input error: $@\n" if ($self->{'DEBUG'});
+        print STDERR "input error: $@\n" if ($self->{'conf'}->{'DEBUG'});
       }
       # do the decoding
       my $line = Encode::decode($input->{'file_input_encoding'}, $input_line);
@@ -2425,7 +2465,7 @@ sub _next_text($;$)
       # again.  With numerous macros expansions on the last line, this
       # place can be reached more than twice.
       $input->{'after_end_fetch_nr'}++;
-      if ($self->{'DEBUG'} and $input->{'after_end_fetch_nr'} > 1) {
+      if ($self->{'conf'}->{'DEBUG'} and $input->{'after_end_fetch_nr'} > 1) {
         print STDERR "AFTER END FETCHED INPUT NR: "
                          .$input->{'after_end_fetch_nr'}."\n";
       }
@@ -2453,19 +2493,24 @@ sub _next_text($;$)
           # which are byte strings and end up unmodified in output error
           # messages.
           my $file_name_encoding;
+          # FIXME 'file_name_encoding' should always be defined, as
+          # it comes from 'input_file_encoding' which is always
+          # defined, possibly to the default value, so the following
+          # condition should always be true.
           if (defined($input->{'file_name_encoding'})) {
             $file_name_encoding = $input->{'file_name_encoding'};
           } else {
-            $file_name_encoding = $self->get_conf('COMMAND_LINE_ENCODING');
+            $file_name_encoding = $self->{'conf'}->{'COMMAND_LINE_ENCODING'};
           }
           my $decoded_file_name = $input->{'input_file_path'};
           if (defined($file_name_encoding)) {
             $decoded_file_name = decode($file_name_encoding,
                                         $input->{'input_file_path'});
           }
-          $self->{'registrar'}->document_warn($self,
+          $self->{'registrar'}->document_warn(
                                sprintf(__("error on closing %s: %s"),
-                                       $decoded_file_name, $!));
+                                       $decoded_file_name, $!),
+                                    $self->{'conf'}->{'PROGRAM'});
         }
       }
       delete $input->{'fh'};
@@ -2488,7 +2533,7 @@ sub _next_text($;$)
         _register_source_mark($self, $current,
                               $end_source_mark);
       } else {
-        if ($self->{'DEBUG'}) {
+        if ($self->{'conf'}->{'DEBUG'}) {
           print STDERR "INPUT MARK MISSED: "
             ._debug_show_source_mark($input->{'input_source_mark'})."\n";
           cluck();
@@ -2500,7 +2545,7 @@ sub _next_text($;$)
     # source_info, even when nothing is returned and the first input
     # file is closed.
     if (scalar(@{$self->{'input'}}) == 1) {
-      print STDERR "INPUT FINISHED\n" if ($self->{'DEBUG'});
+      print STDERR "INPUT FINISHED\n" if ($self->{'conf'}->{'DEBUG'});
       $input->{'after_end_fetch_nr'} = 0
          if (!defined($input->{'after_end_fetch_nr'}));
       return (undef, { %{$input->{'input_source_info'}} });
@@ -2616,7 +2661,7 @@ sub _expand_macro_arguments($$$$$)
               $argument->{'info'}
                 = {'spaces_before_argument' => {'text' => $1}};
             }
-            print STDERR "MACRO NEW ARG\n" if ($self->{'DEBUG'});
+            print STDERR "MACRO NEW ARG\n" if ($self->{'conf'}->{'DEBUG'});
           } else {
             # implicit quoting when there is one argument.
             if ($args_total != 1) {
@@ -2639,7 +2684,7 @@ sub _expand_macro_arguments($$$$$)
         $argument_content->{'text'} .= $separator;
       }
     } else {
-      print STDERR "MACRO ARG end of line\n" if ($self->{'DEBUG'});
+      print STDERR "MACRO ARG end of line\n" if ($self->{'conf'}->{'DEBUG'});
       $argument_content->{'text'} .= $line;
 
       ($line, $source_info) = _new_line($self, $argument);
@@ -2658,7 +2703,7 @@ sub _expand_macro_arguments($$$$$)
                "macro `%s' declared without argument called with an argument"),
                                 $name), $source_info);
   }
-  print STDERR "END MACRO ARGS EXPANSION\n" if ($self->{'DEBUG'});
+  print STDERR "END MACRO ARGS EXPANSION\n" if ($self->{'conf'}->{'DEBUG'});
   return ($line, $source_info);
 }
 
@@ -2699,7 +2744,7 @@ sub _expand_linemacro_arguments($$$$$)
           $argument_content->{'text'} .= $cmdname;
           substr($line, 0, length($cmdname)) = '';
           if ((defined($self->{'brace_commands'}->{$cmdname})
-               and $self->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'})
+               and $self->{'conf'}->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'})
               or $accent_commands{$cmdname}) {
             $line =~ s/^(\s*)//;
             $argument_content->{'text'} .= $1;
@@ -2733,12 +2778,12 @@ sub _expand_linemacro_arguments($$$$$)
           push @{$argument->{'contents'}}, $argument_content;
           $argument->{'info'}
             = {'spaces_before_argument' => {'text' => $separator}};
-          print STDERR "LINEMACRO NEW ARG\n" if ($self->{'DEBUG'});
+          print STDERR "LINEMACRO NEW ARG\n" if ($self->{'conf'}->{'DEBUG'});
         }
       }
     } else {
       print STDERR "LINEMACRO ARGS no separator $braces_level '"
-                ._debug_protect_eol($line)."'\n" if ($self->{'DEBUG'});
+              ._debug_protect_eol($line)."'\n" if ($self->{'conf'}->{'DEBUG'});
       if ($braces_level > 0) {
         $argument_content->{'text'} .= $line;
 
@@ -2761,7 +2806,7 @@ sub _expand_linemacro_arguments($$$$$)
           ($line, $source_info) = _new_line($self, $argument);
           if (!defined($line)) {
             print STDERR "LINEMACRO ARGS end no EOL\n"
-               if ($self->{'DEBUG'});
+               if ($self->{'conf'}->{'DEBUG'});
             $line = '';
             last;
           }
@@ -2784,24 +2829,24 @@ sub _expand_linemacro_arguments($$$$$)
       if ($toplevel_braces_nr == 1 and $argument_content->{'text'} =~ /^\{(.*)\}$/s) {
         print STDERR "TURN to bracketed $arg_idx "
           .Texinfo::Common::debug_print_element($argument_content)."\n"
-            if ($self->{'DEBUG'});
+            if ($self->{'conf'}->{'DEBUG'});
         $argument_content->{'text'} = $1;
         $argument_content->{'type'} = 'bracketed_linemacro_arg';
       # this message could be added to see all the arguments
       #} else {
       #  print STDERR "NOT bracketed with bracket $arg_idx "
       #    .Texinfo::Common::debug_print_element($argument_content)."\n"
-      #      if ($self->{'DEBUG'});
+      #      if ($self->{'conf'}->{'DEBUG'});
       }
     # this message could be added to see all the arguments
     #} else {
     #  print STDERR "LVL0 no brace $arg_idx "
     #     .Texinfo::Common::debug_print_element($argument_content)."\n"
-    #        if ($self->{'DEBUG'});
+    #        if ($self->{'conf'}->{'DEBUG'});
     }
     $arg_idx++;
   }
-  print STDERR "END LINEMACRO ARGS EXPANSION\n" if ($self->{'DEBUG'});
+  print STDERR "END LINEMACRO ARGS EXPANSION\n" if ($self->{'conf'}->{'DEBUG'});
   return ($line, $source_info);
 }
 
@@ -2919,13 +2964,16 @@ sub _abort_empty_line {
 
     my $spaces_element = $current->{'contents'}->[-1];
 
-    print STDERR "ABORT EMPTY in "
-      .Texinfo::Common::debug_print_element($current)."(p:".
-       (!$no_paragraph_contexts{$self->_top_context()} ? 1 : 0)."): "
-      .$spaces_element->{'type'}
-      ."; add |$additional_spaces|"
-      ." to |$spaces_element->{'text'}|\n"
-        if ($self->{'DEBUG'});
+    if ($self->{'conf'}->{'DEBUG'}) {
+      print STDERR "ABORT EMPTY in "
+        .Texinfo::Common::debug_print_element($current)."(p:".
+          (!$no_paragraph_contexts{$self->_top_context()} ? 1 : 0)."): "
+         .$spaces_element->{'type'}."; ";
+      if ($additional_spaces ne '') {
+        print STDERR "add |$additional_spaces| to ";
+      }
+      print STDERR "|$spaces_element->{'text'}|\n";
+    }
 
     $spaces_element->{'text'} .= $additional_spaces;
 
@@ -3017,7 +3065,7 @@ sub _isolate_last_space
   }
 
   my $debug_str;
-  if ($self->{'DEBUG'}) {
+  if ($self->{'conf'}->{'DEBUG'}) {
     $debug_str = 'p '.Texinfo::Common::debug_print_element($current).'; c ';
     if ($current->{'contents'} and scalar(@{$current->{'contents'}})) {
       $debug_str .=
@@ -3034,14 +3082,14 @@ sub _isolate_last_space
                             and $current->{'type'} ne 'block_line_arg')))
             or $current->{'contents'}->[-1]->{'text'} !~ /\s+$/) {
     print STDERR "NOT ISOLATING $debug_str\n"
-       if ($self->{'DEBUG'});
+       if ($self->{'conf'}->{'DEBUG'});
     return;
   }
 
   my $last_element = $current->{'contents'}->[-1];
 
   print STDERR "ISOLATE SPACE $debug_str\n"
-    if ($self->{'DEBUG'});
+    if ($self->{'conf'}->{'DEBUG'});
 
   if ($current->{'type'} and $current->{'type'} eq 'menu_entry_node') {
     _isolate_trailing_space($current, 'space_at_end_menu_node');
@@ -3375,7 +3423,7 @@ sub _enter_index_entry($$$$)
 {
   my ($self, $command_container, $element, $source_info) = @_;
 
-  return if $self->{'NO_INDEX'};
+  return if $self->{'conf'}->{'NO_INDEX'};
 
   my $document = $self->{'document'};
 
@@ -3534,7 +3582,7 @@ sub _end_line_misc_line($$$)
   my $arg_spec = $self->{'line_commands'}->{$data_cmdname};
 
   print STDERR "MISC END $command\n" #: $arg_spec"
-    if ($self->{'DEBUG'});
+    if ($self->{'conf'}->{'DEBUG'});
 
   if ($arg_spec eq 'specific') {
     my $args = _parse_line_command_args($self, $current, $source_info);
@@ -3566,7 +3614,8 @@ sub _end_line_misc_line($$$)
                                  __("unknown \@end %s"), $end_command);
             $end_command = undef;
           } else {
-            print STDERR "END BLOCK \@end $end_command\n" if ($self->{'DEBUG'});
+            print STDERR "END BLOCK \@end $end_command\n"
+                                     if ($self->{'conf'}->{'DEBUG'});
           }
           # non-ASCII spaces are also superfluous arguments.
           # If there is superfluous text after @end argument, set
@@ -3590,13 +3639,15 @@ sub _end_line_misc_line($$$)
         # not character strings in the internal perl encoding.
         my ($file_path, $file_name_encoding) = _encode_file_name($self, $text);
         my $included_file_path
-             = Texinfo::Common::locate_include_file($self, $file_path);
+             = Texinfo::Common::locate_include_file($file_path,
+                                  $self->{'conf'}->{'INCLUDE_DIRECTORIES'});
         if (defined($included_file_path)) {
           my ($status, $file_name, $directories, $error_message)
              = _input_push_file($self, $included_file_path, $file_name_encoding);
           if ($status) {
             $included_file = 1;
-            print STDERR "Included $included_file_path\n" if ($self->{'DEBUG'});
+            print STDERR "Included $included_file_path\n"
+                                          if ($self->{'conf'}->{'DEBUG'});
             $include_source_mark = {'sourcemark_type' => $command,
                                     'status' => 'start'};
             $self->{'input'}->[0]->{'input_source_mark'} = $include_source_mark;
@@ -3622,7 +3673,8 @@ sub _end_line_misc_line($$$)
         # should be output by converters
         my ($file_path, $file_name_encoding) = _encode_file_name($self, $text);
         my $included_file_path
-             = Texinfo::Common::locate_include_file($self, $file_path);
+             = Texinfo::Common::locate_include_file($file_path,
+                                     $self->{'conf'}->{'INCLUDE_DIRECTORIES'});
         if (defined($included_file_path) and -r $included_file_path) {
           push @{$document->{'global_info'}->{'included_files'}},
                                                   $included_file_path;
@@ -3688,7 +3740,7 @@ sub _end_line_misc_line($$$)
           $self->_command_warn($current, $message);
         }
         if (!$self->{'set'}->{'documentlanguage'}) {
-           $self->{'documentlanguage'} = $text;
+          $self->{'documentlanguage'} = $text;
         }
       }
     }
@@ -3783,7 +3835,7 @@ sub _end_line_misc_line($$$)
   $current = $current->{'parent'};
   if ($end_command) { # Set above
     # More processing of @end
-    print STDERR "END COMMAND $end_command\n" if ($self->{'DEBUG'});
+    print STDERR "END COMMAND $end_command\n" if ($self->{'conf'}->{'DEBUG'});
     # Reparent the "@end" element to be a child of the block element.
     my $end = _pop_element_from_contents($self, $current);
     if ($block_commands{$end_command} ne 'conditional'
@@ -3806,7 +3858,7 @@ sub _end_line_misc_line($$$)
           and defined($self->_top_context_command())
           and $block_commands{$self->_top_context_command()} eq 'menu') {
         print STDERR "CLOSE menu but still in menu context\n"
-          if ($self->{'DEBUG'});
+          if ($self->{'conf'}->{'DEBUG'});
         push @{$current->{'contents'}}, {'type' => 'menu_comment',
                                          'parent' => $current,
                                          'contents' => [] };
@@ -3820,7 +3872,7 @@ sub _end_line_misc_line($$$)
       my $cond_info = pop @{$self->{'conditional_stack'}};
       my ($cond_command, $cond_source_mark) = @$cond_info;
       print STDERR "POP END COND $end_command $cond_command\n"
-        if ($self->{'DEBUG'});
+        if ($self->{'conf'}->{'DEBUG'});
       my $end_source_mark = {'sourcemark_type' =>
                                  $cond_source_mark->{'sourcemark_type'},
                              'counter' =>
@@ -3929,7 +3981,7 @@ sub _end_line_def_line($$$)
 
   print STDERR "END DEF LINE $def_command; current "
     .Texinfo::Common::debug_print_element($current, 1)."\n"
-      if ($self->{'DEBUG'});
+      if ($self->{'conf'}->{'DEBUG'});
 
   my $arguments = _parse_def($self, $def_command, $current, $source_info);
 
@@ -4032,7 +4084,7 @@ sub _end_line_starting_block($$$)
 
   print STDERR "END BLOCK LINE: "
      .Texinfo::Common::debug_print_element($current, 1)."\n"
-       if ($self->{'DEBUG'});
+       if ($self->{'conf'}->{'DEBUG'});
 
   # @multitable args
   if ($command eq 'multitable'
@@ -4283,7 +4335,7 @@ sub _end_line_starting_block($$$)
                   $ifvalue_true = 1;
                 }
                 print STDERR "CONDITIONAL \@$command $name: $ifvalue_true\n"
-                                                        if ($self->{'DEBUG'});
+                                            if ($self->{'conf'}->{'DEBUG'});
                 $bad_line = 0;
               }
             } else { # $command eq 'ifcommanddefined' or 'ifcommandnotdefined'
@@ -4303,7 +4355,7 @@ sub _end_line_starting_block($$$)
                   $ifvalue_true = 1;
                 }
                 print STDERR "CONDITIONAL \@$command $name: $ifvalue_true\n"
-                                                        if ($self->{'DEBUG'});
+                                             if ($self->{'conf'}->{'DEBUG'});
                 $bad_line = 0;
               }
             }
@@ -4323,14 +4375,14 @@ sub _end_line_starting_block($$$)
                      or ($1 eq 'info'
                          and $self->{'expanded_formats_hash'}->{'plaintext'}));
       print STDERR "CONDITIONAL \@$command format $1: $ifvalue_true\n"
-                                                         if ($self->{'DEBUG'});
+                                          if ($self->{'conf'}->{'DEBUG'});
     } else {
       die unless ($command =~ /^if(.*)/);
       $ifvalue_true = 1 if ($self->{'expanded_formats_hash'}->{$1}
               or ($1 eq 'info'
                   and $self->{'expanded_formats_hash'}->{'plaintext'}));
       print STDERR "CONDITIONAL \@$command format $1: $ifvalue_true\n"
-                                                     if ($self->{'DEBUG'});
+                                       if ($self->{'conf'}->{'DEBUG'});
     }
     if ($ifvalue_true) {
       my $conditional_element = $current;
@@ -4343,7 +4395,7 @@ sub _end_line_starting_block($$$)
                          'element' => $conditional_command};
       _register_source_mark($self, $current, $source_mark);
       print STDERR "PUSH BEGIN COND $command\n"
-          if ($self->{'DEBUG'});
+          if ($self->{'conf'}->{'DEBUG'});
       push @{$self->{'conditional_stack'}}, [$command, $source_mark];
     }
   }
@@ -4352,7 +4404,7 @@ sub _end_line_starting_block($$$)
                                      'parent' => $current,
                                      'contents' => [] };
     $current = $current->{'contents'}->[-1];
-    print STDERR "MENU_COMMENT OPEN\n" if ($self->{'DEBUG'});
+    print STDERR "MENU_COMMENT OPEN\n" if ($self->{'conf'}->{'DEBUG'});
   }
   if ($block_commands{$command} eq 'format_raw'
       and $self->{'expanded_formats_hash'}->{$command}) {
@@ -4396,7 +4448,7 @@ sub _end_line_menu_entry ($$$)
   if ($empty_menu_entry_node or $current->{'type'} eq 'menu_entry_name') {
     my $description_or_menu_comment;
     my $menu_type_reopened = 'menu_description';
-    print STDERR "FINALLY NOT MENU ENTRY\n" if ($self->{'DEBUG'});
+    print STDERR "FINALLY NOT MENU ENTRY\n" if ($self->{'conf'}->{'DEBUG'});
     my $menu = $current->{'parent'}->{'parent'};
     my $menu_entry = _pop_element_from_contents($self, $menu);
     if ($menu->{'contents'} and scalar(@{$menu->{'contents'}})
@@ -4448,7 +4500,7 @@ sub _end_line_menu_entry ($$$)
       push @{$current->{'contents'}}, {'type' => 'preformatted',
                                 'parent' => $current, };
       $current = $current->{'contents'}->[-1];
-      print STDERR "THEN MENU_COMMENT OPEN\n" if ($self->{'DEBUG'});
+      print STDERR "THEN MENU_COMMENT OPEN\n" if ($self->{'conf'}->{'DEBUG'});
     }
     # source marks tested in t/*macro.t macro_in_menu_comment_like_entry
     while (@{$menu_entry->{'contents'}}) {
@@ -4473,7 +4525,7 @@ sub _end_line_menu_entry ($$$)
     # MENU_COMMENT open
     $menu_entry = undef;
   } else {
-    print STDERR "MENU ENTRY END LINE\n" if ($self->{'DEBUG'});
+    print STDERR "MENU ENTRY END LINE\n" if ($self->{'conf'}->{'DEBUG'});
     $current = $current->{'parent'};
     $current = _enter_menu_entry_node($self, $current, $source_info);
     if (defined($end_comment)) {
@@ -4498,7 +4550,7 @@ sub _end_line($$$)
       and $current->{'contents'}->[-1]->{'type'} eq 'empty_line') {
     print STDERR "END EMPTY LINE in "
         . Texinfo::Common::debug_print_element($current)."\n"
-          if ($self->{'DEBUG'});
+          if ($self->{'conf'}->{'DEBUG'});
     if ($current->{'type'} and $current->{'type'} eq 'paragraph') {
       # Remove empty_line element.
       my $empty_line = _pop_element_from_contents($self, $current);
@@ -4520,7 +4572,7 @@ sub _end_line($$$)
         # as the source marks are either associated to the menu description
         # or to the empty line after the menu description.  Leave a message
         # in case it happens in the future/some unexpected case.
-        if ($self->{'TEST'}
+        if ($self->{'conf'}->{'TEST'}
             and $empty_preformatted->{'source_marks'}) {
           print STDERR "BUG: source_marks in menu description preformatted\n";
         }
@@ -4543,7 +4595,8 @@ sub _end_line($$$)
                                         'parent' => $current };
       _transfer_source_marks($empty_line, $after_menu_description_line);
       push @{$current->{'contents'}}, $after_menu_description_line;
-      print STDERR "MENU: END DESCRIPTION, OPEN COMMENT\n" if ($self->{'DEBUG'});
+      print STDERR "MENU: END DESCRIPTION, OPEN COMMENT\n"
+                                   if ($self->{'conf'}->{'DEBUG'});
     } elsif (!$no_paragraph_contexts{$self->_top_context()}) {
       $current = _end_paragraph($self, $current, $source_info);
     }
@@ -4570,7 +4623,7 @@ sub _end_line($$$)
   if ($top_context eq 'ct_line' or $top_context eq 'ct_def') {
     print STDERR "Still opened line/block command $top_context: "
       .Texinfo::Common::debug_print_element($current, 1)."\n"
-        if ($self->{'DEBUG'});
+        if ($self->{'conf'}->{'DEBUG'});
     if ($top_context eq 'ct_def') {
       while ($current->{'parent'} and !($current->{'parent'}->{'type'}
             and $current->{'parent'}->{'type'} eq 'def_line')) {
@@ -4694,7 +4747,7 @@ sub _register_extra_menu_entry_information($$;$)
     } elsif ($arg->{'type'} eq 'menu_entry_node') {
       _isolate_last_space($self, $arg);
       if (! $arg->{'contents'}) {
-        if ($self->{'FORMAT_MENU'} eq 'menu') {
+        if ($self->{'conf'}->{'FORMAT_MENU'} eq 'menu') {
           $self->_line_error(__("empty node name in menu entry"), $source_info);
         }
       } else {
@@ -4761,7 +4814,8 @@ sub _register_command_as_argument($$)
   my $self = shift;
   my $cmd_as_arg = shift;
   print STDERR "FOR PARENT \@$cmd_as_arg->{'parent'}->{'parent'}->{'cmdname'} ".
-         "command_as_argument $cmd_as_arg->{'cmdname'}\n" if ($self->{'DEBUG'});
+         "command_as_argument $cmd_as_arg->{'cmdname'}\n"
+              if ($self->{'conf'}->{'DEBUG'});
   $cmd_as_arg->{'type'} = 'command_as_argument' if (!$cmd_as_arg->{'type'});
   $cmd_as_arg->{'parent'}->{'parent'}->{'extra'} = {}
     if (!defined($cmd_as_arg->{'parent'}->{'parent'}->{'extra'}));
@@ -4834,7 +4888,7 @@ sub _parse_texi_regex {
 sub _check_line_directive {
   my ($self, $line, $source_info) = @_;
 
-  if ($self->{'CPP_LINE_DIRECTIVES'}
+  if ($self->{'conf'}->{'CPP_LINE_DIRECTIVES'}
       and defined($source_info->{'file_name'})
       and $source_info->{'file_name'} ne ''
       and !defined($source_info->{'macro'})
@@ -5018,15 +5072,16 @@ sub _handle_macro($$$$$)
   # get the final new line from following text.
   $self->{'macro_expansion_nr'}++;
   print STDERR "MACRO EXPANSION NUMBER $self->{'macro_expansion_nr'} $command\n"
-    if ($self->{'DEBUG'});
+    if ($self->{'conf'}->{'DEBUG'});
 
   my $error;
   # TODO use a different counter for linemacro?
-  if ($self->{'MAX_MACRO_CALL_NESTING'}
-      and $self->{'macro_expansion_nr'} > $self->{'MAX_MACRO_CALL_NESTING'}) {
+  if ($self->{'conf'}->{'MAX_MACRO_CALL_NESTING'}
+      and $self->{'macro_expansion_nr'}
+                  > $self->{'conf'}->{'MAX_MACRO_CALL_NESTING'}) {
     $self->_line_warn(sprintf(__(
   "macro call nested too deeply (set MAX_MACRO_CALL_NESTING to override; current value %d)"),
-                          $self->{'MAX_MACRO_CALL_NESTING'}), $source_info);
+          $self->{'conf'}->{'MAX_MACRO_CALL_NESTING'}), $source_info);
     $error = 1;
   }
 
@@ -5127,7 +5182,7 @@ sub _handle_macro($$$$$)
   }
 
   print STDERR "MACROBODY: $expanded_macro_text".'||||||'."\n"
-    if ($self->{'DEBUG'});
+    if ($self->{'conf'}->{'DEBUG'});
 
   my $sourcemark_type;
   if ($expanded_macro->{'cmdname'} eq 'linemacro') {
@@ -5186,7 +5241,7 @@ sub _handle_menu_entry_separators($$$$$$)
       and $current->{'contents'}->[-1]->{'type'}
       and $current->{'contents'}->[-1]->{'type'} eq 'empty_line'
       and $current->{'contents'}->[-1]->{'text'} eq '') {
-    print STDERR "MENU STAR\n" if ($self->{'DEBUG'});
+    print STDERR "MENU STAR\n" if ($self->{'conf'}->{'DEBUG'});
     _abort_empty_line($self, $current);
     $$line_ref =~ s/^\*//;
     push @{$current->{'contents'}}, { 'parent' => $current,
@@ -5198,10 +5253,10 @@ sub _handle_menu_entry_separators($$$$$$)
            and $current->{'contents'}->[-1]->{'type'} eq 'internal_menu_star') {
     if ($$line_ref !~ /^\s+/) {
       print STDERR "ABORT MENU STAR before: "
-          ._debug_protect_eol($$line_ref)."\n" if ($self->{'DEBUG'});
+          ._debug_protect_eol($$line_ref)."\n" if ($self->{'conf'}->{'DEBUG'});
       delete $current->{'contents'}->[-1]->{'type'};
     } else {
-      print STDERR "MENU ENTRY (certainly)\n" if ($self->{'DEBUG'});
+      print STDERR "MENU ENTRY (certainly)\n" if ($self->{'conf'}->{'DEBUG'});
       # this is the menu star collected previously
       my $menu_star_element = _pop_element_from_contents($self, $current);
       $$line_ref =~ s/^(\s+)//;
@@ -5267,7 +5322,7 @@ sub _handle_menu_entry_separators($$$$$$)
            and $current->{'contents'}->[-1]->{'type'} eq 'menu_entry_separator') {
     my $separator = $current->{'contents'}->[-1]->{'text'};
     print STDERR "AFTER menu_entry_separator $separator\n"
-       if ($self->{'DEBUG'});
+       if ($self->{'conf'}->{'DEBUG'});
     # Separator is ::.
     if ($separator eq ':' and $$line_ref =~ s/^(:)//) {
       $current->{'contents'}->[-1]->{'text'} .= $1;
@@ -5288,14 +5343,15 @@ sub _handle_menu_entry_separators($$$$$$)
     # :: after a menu entry name => change to a menu entry node
     } elsif ($separator =~ /^::/) {
       print STDERR "MENU NODE done (change from menu entry name) $separator\n"
-          if ($self->{'DEBUG'});
+          if ($self->{'conf'}->{'DEBUG'});
       # Change from menu_entry_name (i.e. a label)
       # to a menu entry node
       $current->{'contents'}->[-2]->{'type'} = 'menu_entry_node';
       $current = _enter_menu_entry_node($self, $current, $source_info);
     # a :, but not ::, after a menu entry name => end of menu entry name
     } elsif ($separator =~ /^:/) {
-      print STDERR "MENU ENTRY done $separator\n" if ($self->{'DEBUG'});
+      print STDERR "MENU ENTRY done $separator\n"
+                     if ($self->{'conf'}->{'DEBUG'});
       push @{$current->{'contents'}}, { 'type' => 'menu_entry_node',
                                         'parent' => $current };
       $current = $current->{'contents'}->[-1];
@@ -5303,7 +5359,8 @@ sub _handle_menu_entry_separators($$$$$$)
     # : and is after a menu node (itself following a menu_entry_name)
     } else {
       # NOTE $$line_ref can start with an @-command in that case
-      print STDERR "MENU NODE done $separator\n" if ($self->{'DEBUG'});
+      print STDERR "MENU NODE done $separator\n"
+                                if ($self->{'conf'}->{'DEBUG'});
       $current = _enter_menu_entry_node($self, $current, $source_info);
     }
   } else {
@@ -5386,7 +5443,7 @@ sub _handle_other_command($$$$$)
       # @itemize or @enumerate
       if ($parent = _item_container_parent($current)) {
         if ($command eq 'item') {
-          print STDERR "ITEM CONTAINER\n" if ($self->{'DEBUG'});
+          print STDERR "ITEM CONTAINER\n" if ($self->{'conf'}->{'DEBUG'});
           $parent->{'items_count'}++;
           $command_e = { 'cmdname' => $command, 'parent' => $parent,
                          'extra' =>
@@ -5430,10 +5487,10 @@ sub _handle_other_command($$$$$)
                               {'cell_number' => $row->{'cells_count'}} };
             push @{$row->{'contents'}}, $command_e;
             $current = $row->{'contents'}->[-1];
-            print STDERR "TAB\n" if ($self->{'DEBUG'});
+            print STDERR "TAB\n" if ($self->{'conf'}->{'DEBUG'});
           }
         } else {
-          print STDERR "ROW\n" if ($self->{'DEBUG'});
+          print STDERR "ROW\n" if ($self->{'conf'}->{'DEBUG'});
           my $row = { 'type' => 'row', 'contents' => [],
                       'cells_count' => 1,
                       'parent' => $parent };
@@ -5641,7 +5698,7 @@ sub _handle_line_command($$$$$$)
     if ($command eq 'item' or $command eq 'itemx') {
       my $parent;
       if ($parent = _item_line_parent($current)) {
-        print STDERR "ITEM LINE $command\n" if ($self->{'DEBUG'});
+        print STDERR "ITEM LINE $command\n" if ($self->{'conf'}->{'DEBUG'});
         $current = $parent;
         _gather_previous_item($self, $current, $command, $source_info);
       } else {
@@ -5909,7 +5966,7 @@ sub _handle_block_command($$$$$)
            $block if ($command eq 'direntry');
       if ($self->{'current_node'}) {
         if ($command eq 'direntry') {
-          if ($self->{'FORMAT_MENU'} eq 'menu') {
+          if ($self->{'conf'}->{'FORMAT_MENU'} eq 'menu') {
             $self->_line_warn(__("\@direntry after first node"),
                       $source_info);
           }
@@ -5992,7 +6049,7 @@ sub _handle_brace_command($$$$)
   my $source_info = shift;
 
   print STDERR "OPEN BRACE \@$command\n"
-     if ($self->{'DEBUG'});
+     if ($self->{'conf'}->{'DEBUG'});
 
   my $command_e = { 'cmdname' => $command, 'parent' => $current,};
   $command_e->{'source_info'} = {%{$source_info}};
@@ -6146,7 +6203,7 @@ sub _handle_open_brace($$$$)
       .(defined($current->{'parent'}->{'remaining_args'})
           ? $current->{'parent'}->{'remaining_args'} : '0')
       .' '.Texinfo::Common::debug_print_element($current)."\n"
-       if ($self->{'DEBUG'});
+       if ($self->{'conf'}->{'DEBUG'});
   } elsif ($current->{'parent'}
             and (($current->{'parent'}->{'cmdname'}
                   and $current->{'parent'}->{'cmdname'} eq 'multitable')
@@ -6168,12 +6225,13 @@ sub _handle_open_brace($$$$)
          'parent' => $current,
          'extra' => {'spaces_associated_command' => $current}
        };
-    print STDERR "BRACKETED in def/multitable\n" if ($self->{'DEBUG'});
+    print STDERR "BRACKETED in def/multitable\n"
+                             if ($self->{'conf'}->{'DEBUG'});
   # lone braces accepted right in a rawpreformatted
   } elsif ($current->{'type'}
            and $current->{'type'} eq 'rawpreformatted') {
     print STDERR "LONE OPEN BRACE in rawpreformatted\n"
-       if ($self->{'DEBUG'});
+       if ($self->{'conf'}->{'DEBUG'});
     # this can happen in an expanded rawpreformatted
     $current = _merge_text($self, $current, '{');
   # matching braces accepted in a rawpreformatted, inline raw or
@@ -6192,7 +6250,7 @@ sub _handle_open_brace($$$$)
     my $open_brace = {'text' => '{', 'parent' => $current};
     push @{$current->{'contents'}}, $open_brace;
     print STDERR "BALANCED BRACES in math/rawpreformatted/inlineraw\n"
-       if ($self->{'DEBUG'});
+       if ($self->{'conf'}->{'DEBUG'});
   } else {
     $self->_line_error(sprintf(__("misplaced {")), $source_info); #}
   }
@@ -6206,7 +6264,7 @@ sub _handle_close_brace($$$)
   my $current = shift;
   my $source_info = shift;
 
-  print STDERR "CLOSE BRACE\n" if ($self->{'DEBUG'});
+  print STDERR "CLOSE BRACE\n" if ($self->{'conf'}->{'DEBUG'});
   # For footnote and caption closing, when there is a paragraph inside.
   # This makes the brace command the parent element.
   if ($current->{'parent'} and $current->{'parent'}->{'type'}
@@ -6214,7 +6272,7 @@ sub _handle_close_brace($$$)
       and $current->{'type'} eq 'paragraph') {
     _abort_empty_line($self, $current);
     print STDERR "IN BRACE_COMMAND_CONTEXT end paragraph\n"
-      if ($self->{'DEBUG'});
+      if ($self->{'conf'}->{'DEBUG'});
     $current = _end_paragraph($self, $current, $source_info);
   }
 
@@ -6237,7 +6295,7 @@ sub _handle_close_brace($$$)
     }
     my $closed_command = $current->{'parent'}->{'cmdname'};
     print STDERR "CLOSING(brace) \@$current->{'parent'}->{'cmdname'}\n"
-      if ($self->{'DEBUG'});
+      if ($self->{'conf'}->{'DEBUG'});
     if (defined($brace_commands{$closed_command})
          and $brace_commands{$closed_command} eq 'noarg'
          and $current->{'contents'}
@@ -6403,7 +6461,8 @@ sub _handle_close_brace($$$)
         eval qq!use warnings FATAL => qw(all); hex("$arg")!;
         if ($@) {
           # leave clue in case something else went wrong.
-          warn "\@U hex($arg) eval failed: $@\n" if ($self->{'DEBUG'});
+          warn "\@U hex($arg) eval failed: $@\n"
+                             if ($self->{'conf'}->{'DEBUG'});
           # argument likely exceeds size of integer
         }
         # ok, value can be given to hex(), so try it.
@@ -6506,9 +6565,9 @@ sub _handle_comma($$$$)
       if (!defined($inline_type) or $inline_type eq '') {
         # condition is missing for some reason
         print STDERR "INLINE COND MISSING\n"
-          if ($self->{'DEBUG'});
+          if ($self->{'conf'}->{'DEBUG'});
       } else {
-        print STDERR "INLINE: $inline_type\n" if ($self->{'DEBUG'});
+        print STDERR "INLINE: $inline_type\n" if ($self->{'conf'}->{'DEBUG'});
         if ($inline_format_commands{$current->{'cmdname'}}) {
           if ($self->{'expanded_formats_hash'}->{$inline_type}) {
             $expandp = 1;
@@ -6654,7 +6713,7 @@ sub _new_macro($$$)
   my $name = shift;
   my $current = shift;
 
-  return if $self->{'NO_USER_COMMANDS'};
+  return if $self->{'conf'}->{'NO_USER_COMMANDS'};
 
   my $macrobody;
   if (defined($current->{'contents'})) {
@@ -6680,7 +6739,8 @@ sub _process_remaining_on_line($$$$)
 
   my $retval = $STILL_MORE_TO_PROCESS;
 
-  #print STDERR "PROCESS "._debug_protect_eol($line)."\n" if ($self->{'DEBUG'});
+  #print STDERR "PROCESS "._debug_protect_eol($line)."\n"
+  #    if ($self->{'conf'}->{'DEBUG'});
 
   # in a 'raw' (verbatim, ignore, (r)macro)
   if ($current->{'cmdname'}
@@ -6696,7 +6756,7 @@ sub _process_remaining_on_line($$$$)
             and $line =~ /^\s*\@(ignore)(\@|\s+)/)) {
       push @{$self->{'raw_block_stack'}}, $1;
       print STDERR "RAW SECOND LEVEL $1 in \@$current->{'cmdname'}\n"
-        if ($self->{'DEBUG'});
+        if ($self->{'conf'}->{'DEBUG'});
     } elsif ($line =~ /^(\s*?)\@end\s+([a-zA-Z][\w-]*)/
              and ((scalar(@{$self->{'raw_block_stack'}}) > 0
                    and $2 eq $self->{'raw_block_stack'}->[-1])
@@ -6725,7 +6785,7 @@ sub _process_remaining_on_line($$$$)
             }
             if ($all_commands{$name}
                 or ($name eq 'txiinternalvalue'
-                    and $self->{'accept_internalvalue'})) {
+                    and $self->{'conf'}->{'accept_internalvalue'})) {
               $self->_line_warn(sprintf(__(
                                 "redefining Texinfo language command: \@%s"),
                                         $name), $current->{'source_info'});
@@ -6736,7 +6796,8 @@ sub _process_remaining_on_line($$$$)
             }
           }
         }
-        print STDERR "CLOSED raw $current->{'cmdname'}\n" if ($self->{'DEBUG'});
+        print STDERR "CLOSED raw $current->{'cmdname'}\n"
+                                     if ($self->{'conf'}->{'DEBUG'});
         # start a new line for the @end line (without the first spaces on
         # the line that have already been put in a raw container).
         # This is normally done at the beginning of a line, but not here,
@@ -6788,7 +6849,8 @@ sub _process_remaining_on_line($$$$)
                                  $current->{'cmdname'}), $source_info);
       }
 
-      print STDERR "CLOSED conditional $end_command\n" if ($self->{'DEBUG'});
+      print STDERR "CLOSED conditional $end_command\n"
+                                  if ($self->{'conf'}->{'DEBUG'});
       # see comment above for raw output formats
       push @{$current->{'contents'}}, { 'type' => 'empty_line',
                                         'text' => '',
@@ -6809,11 +6871,11 @@ sub _process_remaining_on_line($$$$)
       push @{$current->{'contents'}},
           { 'text' => $1, 'type' => 'raw', 'parent' => $current }
             if ($1 ne '');
-      print STDERR "END VERB\n" if ($self->{'DEBUG'});
+      print STDERR "END VERB\n" if ($self->{'conf'}->{'DEBUG'});
     } else {
       push @{$current->{'contents'}},
          { 'text' => $line, 'type' => 'raw', 'parent' => $current };
-      print STDERR "LINE VERB: $line" if ($self->{'DEBUG'});
+      print STDERR "LINE VERB: $line" if ($self->{'conf'}->{'DEBUG'});
       return ($current, $line, $source_info, $GET_A_NEW_LINE);
       # goto funexit;  # used in XS code
     }
@@ -6832,7 +6894,7 @@ sub _process_remaining_on_line($$$$)
         # goto funexit;  # used in XS code
       } elsif ($line =~ /^\s*\@end\s+$current->{'cmdname'}/) {
         print STDERR "CLOSED ignored raw preformated $current->{'cmdname'}\n"
-          if ($self->{'DEBUG'});
+          if ($self->{'conf'}->{'DEBUG'});
         last;
       } else {
         my $raw_text = {'type' => 'raw', 'text' => $line,
@@ -6859,11 +6921,12 @@ sub _process_remaining_on_line($$$$)
   while ($line eq '') {
     print STDERR "EMPTY TEXT in: "
      .Texinfo::Common::debug_print_element($current)."\n"
-      if ($self->{'DEBUG'});
+      if ($self->{'conf'}->{'DEBUG'});
     ($line, $source_info) = _next_text($self, $current);
     if (!defined($line)) {
       # End of the file or of a text fragment.
-      print STDERR "NO MORE LINE for empty text\n" if ($self->{'DEBUG'});
+      print STDERR "NO MORE LINE for empty text\n"
+                            if ($self->{'conf'}->{'DEBUG'});
       return ($current, $line, $source_info, $retval);
       # goto funexit;  # used in XS code
     }
@@ -6891,7 +6954,7 @@ sub _process_remaining_on_line($$$$)
   $menu_separator = $menu_only_separator if (!$comma);
   print STDERR "PARSED: "
     .join(', ',map {!defined($_) ? 'UNDEF' : "'$_'"} @line_parsing)."\n"
-       if ($self->{'DEBUG'} and $self->{'DEBUG'} > 3);
+       if ($self->{'conf'}->{'DEBUG'} and $self->{'conf'}->{'DEBUG'} > 3);
 
   my $macro_call_element;
   my $command;
@@ -6957,7 +7020,7 @@ sub _process_remaining_on_line($$$$)
         my $remaining_line = $line;
         substr($remaining_line, 0, $command_length) = '';
         my $spaces_element;
-        if ($self->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'}
+        if ($self->{'conf'}->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'}
             and $remaining_line =~ s/^(\s+)//) {
           $spaces_element = {'text' => $1};
         }
@@ -6965,12 +7028,12 @@ sub _process_remaining_on_line($$$$)
         if ($remaining_line =~ s/^{([\w\-][^\s{\\}~`\^+"<>|@]*)}//) {
           my $value = $1;
           if (exists($self->{'values'}->{$value})) {
-            if ($self->{'MAX_MACRO_CALL_NESTING'}
+            if ($self->{'conf'}->{'MAX_MACRO_CALL_NESTING'}
                 and $self->{'value_expansion_nr'}
-                         >= $self->{'MAX_MACRO_CALL_NESTING'}) {
+                         >= $self->{'conf'}->{'MAX_MACRO_CALL_NESTING'}) {
               $self->_line_warn(sprintf(__(
  "value call nested too deeply (set MAX_MACRO_CALL_NESTING to override; current value %d)"),
-                                $self->{'MAX_MACRO_CALL_NESTING'}), $source_info);
+                       $self->{'conf'}->{'MAX_MACRO_CALL_NESTING'}), $source_info);
               $line = $remaining_line;
               return ($current, $line, $source_info, $retval);
               # goto funexit;  # used in XS code
@@ -7042,7 +7105,7 @@ sub _process_remaining_on_line($$$$)
       and !$self->{'index_entry_commands'}->{$command}
       # @txiinternalvalue is invalid unless accept_internalvalue is set
       and !($command eq 'txiinternalvalue'
-            and $self->{'accept_internalvalue'})
+            and $self->{'conf'}->{'accept_internalvalue'})
       and !$macro_call_element) {
     $self->_line_error(sprintf(__("unknown command `%s'"),
                                   $command), $source_info);
@@ -7069,12 +7132,12 @@ sub _process_remaining_on_line($$$$)
 
     print STDERR "BRACE CMD: no brace after \@$current->{'cmdname'}"
        ."||| "._debug_protect_eol($line)."\n"
-           if ($self->{'DEBUG'});
+           if ($self->{'conf'}->{'DEBUG'});
 
     # Note that non ascii spaces do not count as spaces
     if ($line =~ /^(\s+)/
         and ($accent_commands{$current->{'cmdname'}}
-             or $self->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'})) {
+             or $self->{'conf'}->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'})) {
       my $added_space = $1;
       my $additional_newline;
       if ($added_space =~ /\n/) {
@@ -7119,7 +7182,7 @@ sub _process_remaining_on_line($$$$)
            = {'type' => 'internal_spaces_after_cmd_before_arg',
               'text' => $spaces_after_command, 'parent' => $current};
         $current->{'contents'} = [$e_spaces_after_cmd_before_arg];
-        if ($self->{'DEBUG'}) {
+        if ($self->{'conf'}->{'DEBUG'}) {
           my $spaces_after_command_str = $spaces_after_command;
           $spaces_after_command_str =~ s/\n/\\n/g;
           print STDERR "BRACE CMD before brace init spaces ".
@@ -7132,7 +7195,7 @@ sub _process_remaining_on_line($$$$)
           # only ignore spaces and one newline, two newlines lead to
           # an empty line before the brace or argument which is incorrect.
           print STDERR "BRACE CMD before brace second newline stops spaces\n"
-            if $self->{'DEBUG'};
+            if $self->{'conf'}->{'DEBUG'};
           $self->_line_error(sprintf(__("\@%s expected braces"),
                              $current->{'cmdname'}), $source_info);
           _gather_spaces_after_cmd_before_arg($self, $current);
@@ -7141,7 +7204,7 @@ sub _process_remaining_on_line($$$$)
           $line =~ s/^(\s+)//;
           $current->{'contents'}->[0]->{'text'} .= $added_space;
           print STDERR "BRACE CMD before brace add spaces '$added_space'\n"
-            if $self->{'DEBUG'};
+            if $self->{'conf'}->{'DEBUG'};
         }
       }
     # special case for accent commands, use following character except @
@@ -7152,7 +7215,7 @@ sub _process_remaining_on_line($$$$)
              and $line =~ s/^([^@])//) {
       my $arg_char = $1;
       print STDERR "ACCENT \@$current->{'cmdname'} following_arg: $arg_char\n"
-        if ($self->{'DEBUG'});
+        if ($self->{'conf'}->{'DEBUG'});
       if ($current->{'contents'}) {
         _gather_spaces_after_cmd_before_arg($self, $current);
       }
@@ -7187,12 +7250,12 @@ sub _process_remaining_on_line($$$$)
     substr($line, 0, $command_length) = '';
 
     print STDERR "COMMAND \@".Texinfo::Common::debug_command_name($command)
-                  ."\n" if ($self->{'DEBUG'});
+                  ."\n" if ($self->{'conf'}->{'DEBUG'});
 
     # @value not expanded (expansion is done above), and @txiinternalvalue
     if ($command eq 'value' or $command eq 'txiinternalvalue') {
       my $spaces_element;
-      if ($self->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'}
+      if ($self->{'conf'}->{'IGNORE_SPACE_AFTER_BRACED_COMMAND_NAME'}
           and $line =~ s/^(\s+)//) {
         $spaces_element = {'text' => $1};
       }
@@ -7354,7 +7417,7 @@ sub _process_remaining_on_line($$$$)
     print STDERR "FORM FEED in "
           .Texinfo::Common::debug_print_element($current, 1).": "
            ._debug_protect_eol($line)."\n"
-      if ($self->{'DEBUG'});
+      if ($self->{'conf'}->{'DEBUG'});
     if ($current->{'type'}
         and $current->{'type'} eq 'paragraph') {
       # A form feed stops and restart a paragraph.
@@ -7373,14 +7436,14 @@ sub _process_remaining_on_line($$$$)
     $current = _merge_text($self, $current, $menu_only_separator);
   # Misc text except end of line
   } elsif (defined $misc_text) {
-    #print STDERR "MISC TEXT: $misc_text\n" if ($self->{'DEBUG'});
+    #print STDERR "MISC TEXT: $misc_text\n" if ($self->{'conf'}->{'DEBUG'});
     substr ($line, 0, length ($misc_text)) = '';
     $current = _merge_text($self, $current, $misc_text);
   # end of line
   } else {
     print STDERR "END LINE "
         .Texinfo::Common::debug_print_element($current, 1)."\n"
-          if ($self->{'DEBUG'});
+          if ($self->{'conf'}->{'DEBUG'});
     if ($line =~ s/^(\n)//) {
       $current = _merge_text($self, $current, $1);
     } else {
@@ -7412,13 +7475,13 @@ sub _parse_texi($$$)
     #my $line;
     ($line, $source_info) = _next_text($self, $current);
     if (!defined($line)) {
-      print STDERR "NEXT_LINE NO MORE\n" if ($self->{'DEBUG'});
+      print STDERR "NEXT_LINE NO MORE\n" if ($self->{'conf'}->{'DEBUG'});
       last;
     }
     #print STDERR "@{$self->{'nesting_context'}->{'basic_inline_stack_on_line'}}|$line"
     #if ($self->{'nesting_context'} and $self->{'nesting_context'}->{'basic_inline_stack_on_line'});
 
-    if ($self->{'DEBUG'}) {
+    if ($self->{'conf'}->{'DEBUG'}) {
       my $additional_debug = '';
       if (0) {
         my $source_info_text = '';
@@ -7440,7 +7503,7 @@ sub _parse_texi($$$)
     # generated within a line.
     #if ($line eq '') {
     #  print STDERR "IGNORE EMPTY LINE\n"
-    #     if ($self->{'DEBUG'})
+    #     if ($self->{'conf'}->{'DEBUG'})
     #  next;
     #}
 
@@ -7460,7 +7523,7 @@ sub _parse_texi($$$)
         # not def line
         and $self->_top_context() ne 'ct_def') {
       next NEXT_LINE if _check_line_directive ($self, $line, $source_info);
-      print STDERR "BEGIN LINE\n" if ($self->{'DEBUG'});
+      print STDERR "BEGIN LINE\n" if ($self->{'conf'}->{'DEBUG'});
 
       if ($current->{'contents'}
           and $current->{'contents'}->[-1]->{'type'}
@@ -7481,17 +7544,17 @@ sub _parse_texi($$$)
       ($current, $line, $source_info, $status)
          = _process_remaining_on_line($self, $current, $line, $source_info);
       if ($status == $GET_A_NEW_LINE) {
-        print STDERR "GET_A_NEW_LINE\n" if ($self->{'DEBUG'});
+        print STDERR "GET_A_NEW_LINE\n" if ($self->{'conf'}->{'DEBUG'});
         last;
       } elsif ($status == $FINISHED_TOTALLY) {
-        print STDERR "FINISHED_TOTALLY\n" if ($self->{'DEBUG'});
+        print STDERR "FINISHED_TOTALLY\n" if ($self->{'conf'}->{'DEBUG'});
         goto finished_totally;
       }
       # can happen if there is macro expansion at the end of a text fragment
       # or at the end of a text fragment.
       if (! defined($line)) {
         print STDERR "END LINE in line loop STILL_MORE_TO_PROCESS\n"
-                                                 if ($self->{'DEBUG'});
+                                            if ($self->{'conf'}->{'DEBUG'});
         _abort_empty_line($self, $current);
         $current = _end_line($self, $current, $source_info);
         # It may happen that there was an @include file on the line, it
@@ -7528,7 +7591,7 @@ sub _parse_texi($$$)
 
   # Gather text after @bye
   if (defined($line) and $status == $FINISHED_TOTALLY) {
-    print STDERR "GATHER AFTER BYE\n" if ($self->{'DEBUG'});
+    print STDERR "GATHER AFTER BYE\n" if ($self->{'conf'}->{'DEBUG'});
     my $element_after_bye = {'type' => 'postamble_after_end', 'contents' => [],
                              'parent' => $current};
     while (1) {
@@ -7574,9 +7637,9 @@ sub _parse_texi($$$)
 
   # Setup identifier target elements based on 'labels_list'
   Texinfo::Document::set_labels_identifiers_target($document,
-                                              $self->{'registrar'}, $self);
+                  $self->{'registrar'}, $self->{'conf'}->{'DEBUG'});
   Texinfo::Translations::complete_indices($document->{'indices'},
-                                          $self->{'DEBUG'});
+                                          $self->{'conf'}->{'DEBUG'});
 
   $document->register_tree($root);
 
@@ -7630,7 +7693,7 @@ sub _parse_rawline_command($$$$)
       $args = [$1];
       delete $self->{'macros'}->{$1};
       $has_comment = 1 if (defined($3));
-      print STDERR "UNMACRO $1\n" if ($self->{'DEBUG'});
+      print STDERR "UNMACRO $1\n" if ($self->{'conf'}->{'DEBUG'});
     } elsif ($line !~ /\S/) {
       $self->_line_error(__("\@unmacro requires a name"), $source_info);
     } else {
@@ -7679,7 +7742,7 @@ sub _parse_line_command_args($$$)
 
   # Not in XS parser.  Could be added if deemded interesting, but
   # arguments are already checked below.
-  #if ($self->{'DEBUG'}) {
+  #if ($self->{'conf'}->{'DEBUG'}) {
   #  print STDERR "MISC ARGS \@$command\n";
   #  if ($arg->{'contents'}) {
   #    my $idx = 0;
@@ -7708,7 +7771,7 @@ sub _parse_line_command_args($$$)
 
   if ($command eq 'alias') {
     # REMACRO
-    if ($self->{'NO_USER_COMMANDS'}) {
+    if ($self->{'conf'}->{'NO_USER_COMMANDS'}) {
       # do nothing
     } elsif ($line =~ s/^([[:alnum:]][[:alnum:]-]*)(\s*=\s*)([[:alnum:]][[:alnum:]-]*)$//) {
       my $new_command = $1;
@@ -7740,7 +7803,7 @@ sub _parse_line_command_args($$$)
   } elsif ($command eq 'definfoenclose') {
     # REMACRO
     # FIXME how to handle non ascii space?  As space or in argument?
-    if ($self->{'NO_USER_COMMANDS'}) {
+    if ($self->{'conf'}->{'NO_USER_COMMANDS'}) {
       # do nothing
     } elsif ($line =~ s/^([[:alnum:]][[:alnum:]\-]*)\s*,\s*([^\s,]*)\s*,\s*([^\s,]*)$//) {
       $args = [$1, $2, $3 ];
@@ -7756,7 +7819,7 @@ sub _parse_line_command_args($$$)
       } else {
         $self->{'definfoenclose'}->{$cmd_name} = [ $begin, $end ];
         print STDERR "DEFINFOENCLOSE \@$cmd_name: $begin, $end\n"
-               if ($self->{'DEBUG'});
+               if ($self->{'conf'}->{'DEBUG'});
         delete $self->{'macros'}->{$cmd_name};
         delete $self->{'aliases'}->{$cmd_name};
         # unset @def*index effect
@@ -7803,7 +7866,8 @@ sub _parse_line_command_args($$$)
     }
   } elsif ($command eq 'defindex' || $command eq 'defcodeindex') {
     # REMACRO
-    if ($self->{'NO_USER_COMMANDS'} or $self->{'NO_INDEX'}) {
+    if ($self->{'conf'}->{'NO_USER_COMMANDS'}
+        or $self->{'conf'}->{'NO_INDEX'}) {
       # do nothing
     } elsif ($line =~ /^([[:alnum:]][[:alnum:]\-]*)$/) {
       my $name = $1;
@@ -7841,7 +7905,7 @@ sub _parse_line_command_args($$$)
   } elsif ($command eq 'synindex' || $command eq 'syncodeindex') {
     # REMACRO
     if ($line =~ /^([[:alnum:]][[:alnum:]\-]*)\s+([[:alnum:]][[:alnum:]\-]*)$/) {
-      if ($self->{'NO_INDEX'}) {
+      if ($self->{'conf'}->{'NO_INDEX'}) {
         # do nothing
       } else {
         my $document = $self->{'document'};
@@ -7878,7 +7942,7 @@ sub _parse_line_command_args($$$)
                                 $command, $line), $source_info);
     }
   } elsif ($command eq 'printindex') {
-    if ($self->{'NO_INDEX'}) {
+    if ($self->{'conf'}->{'NO_INDEX'}) {
       # do nothing
     # REMACRO
     } elsif ($line =~ /^([[:alnum:]][[:alnum:]\-]*)$/) {
@@ -8043,8 +8107,10 @@ Texinfo::Parser - Parse Texinfo code into a Perl tree
 =head1 SYNOPSIS
 
   use Texinfo::Parser;
+
   my $parser = Texinfo::Parser::parser();
   my $document = $parser->parse_texi_file("somefile.texi");
+
   my ($errors, $errors_count) = $parser->errors();
   foreach my $error_message (@$errors) {
     warn $error_message->{'error_line'};

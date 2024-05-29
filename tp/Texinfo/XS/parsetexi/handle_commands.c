@@ -25,13 +25,13 @@
 #include "command_ids.h"
 #include "element_types.h"
 #include "text.h"
-/* for isascii_alnum whitespace_chars read_flag_name item_line_parent */
+/* for isascii_alnum whitespace_chars read_flag_len item_line_parent */
 #include "utils.h"
 #include "counter.h"
 #include "command_stack.h"
 #include "context_stack.h"
-/* for conf */
-#include "conf.h"
+/* for global_parser_conf */
+#include "parser_conf.h"
 /* lookup_infoenclose */
 #include "macro.h"
 #include "builtin_commands.h"
@@ -204,7 +204,7 @@ parse_rawline_command (const char *line, enum command_id cmd,
                    "{\\}~^+\"<>|@"); /* other bytes that aren't allowed */
       if (q)
         {
-        /* see also read_flag_name function in utils.c */
+        /* see also read_flag_len function in utils.c */
           r = skip_to_comment_if_comment_or_spaces (q, has_comment);
           if (!r)
             goto set_invalid;
@@ -238,19 +238,22 @@ parse_rawline_command (const char *line, enum command_id cmd,
     case CM_clear:
       {
       char *flag = 0;
+      size_t flag_len;
       p = line;
       p += strspn (p, whitespace_chars);
       if (!*p)
         goto clear_no_name;
       q = p;
-      flag = read_flag_name (&q);
-      if (!flag)
+      flag_len = read_flag_len (p);
+      if (!flag_len)
         goto clear_invalid;
+      q = p + flag_len;
       r = skip_to_comment_if_comment_or_spaces (q, has_comment);
       if (!r || r != q)
         goto clear_invalid; /* Trailing argument. */
 
-      ADD_ARG (p, q - p);
+      ADD_ARG (p, flag_len);
+      flag = strndup (p, flag_len);
       clear_value (flag);
       free (flag);
 
@@ -987,7 +990,7 @@ funexit:
 int
 parser_format_expanded_p (const char *format)
 {
-  return format_expanded_p (parser_conf.expanded_formats, format);
+  return format_expanded_p (global_parser_conf.expanded_formats, format);
 }
 
 /* A command name has been read that starts a multiline block, which should
@@ -1095,7 +1098,7 @@ handle_block_command (ELEMENT *current, const char **line_inout,
 
           if (current_node)
             {
-              if (cmd == CM_direntry && parser_conf.show_menu)
+              if (cmd == CM_direntry && global_parser_conf.show_menu)
                 {
                   line_warn ("@direntry after first node");
                 }

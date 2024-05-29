@@ -175,6 +175,8 @@ char *to_upper_or_lower_multibyte (const char *text, int lower_or_upper);
 int width_multibyte (const char *text);
 int word_bytes_len_multibyte (const char *text);
 
+void wipe_values (VALUE_LIST *values);
+
 void delete_global_info (GLOBAL_INFO *global_info_ref);
 void delete_global_commands (GLOBAL_COMMANDS *global_commands_ref);
 
@@ -186,7 +188,7 @@ INDEX *indices_info_index_by_name (const INDEX_LIST *indices_information,
 INDEX *ultimate_index (INDEX *index);
 size_t index_number_index_by_name (const SORTED_INDEX_NAMES *sorted_indices,
                                    const char *name);
-char *read_flag_name (const char **ptr);
+size_t read_flag_len (const char *text);
 int section_level (const ELEMENT *section);
 enum command_id section_level_adjusted_command_name (const ELEMENT *element);
 char *collapse_spaces (const char *text);

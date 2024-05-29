@@ -1,20 +1,20 @@
 # IXIN.pm: output IXIN format.
 #
 # Copyright 2013-2024 Free Software Foundation, Inc.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License,
 # or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 # Original author: Patrice Dumas <pertusus@free.fr>
 #
 #
@@ -949,7 +949,8 @@ sub output_ixin($$)
         my $file_name_text = "$basefile.$extension";
         my ($file_name, $file_name_encoding)
           = $self->encoded_input_file_name($file_name_text);
-        my $file = $self->Texinfo::Common::locate_include_file($file_name);
+        my $file = Texinfo::Common::locate_include_file($file_name,
+                                  $self->get_conf('INCLUDE_DIRECTORIES'));
         if (defined($file)) {
           my $filehandle = do { local *FH };
           if (open($filehandle, $file)) {

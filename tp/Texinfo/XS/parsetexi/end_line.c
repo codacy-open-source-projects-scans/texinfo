@@ -27,10 +27,9 @@
 #include "tree.h"
 #include "debug_parser.h"
 #include "errors_parser.h"
-/* for isascii_alnum whitespace_chars read_flag_name
+/* for isascii_alnum whitespace_chars read_flag_len
    indices_info_index_by_name ultimate_index fatal */
 #include "utils.h"
-#include "conf.h"
 /* for parse_node_manual */
 #include "manipulate_tree.h"
 /* for parse_float_type add_to_float_record_list */
@@ -53,6 +52,8 @@
 #include "convert_to_texinfo.h"
 /* for convert_to_identifier */
 #include "node_name_normalization.h"
+/* for global_parser_conf */
+#include "parser_conf.h"
 
 static int
 is_decimal_number (const char *string)
@@ -132,7 +133,7 @@ parse_line_command_args (ELEMENT *line_command)
     {
     case CM_alias:
       {
-        if (parser_conf.no_user_commands)
+        if (global_parser_conf.no_user_commands)
           break;
         /* @alias NEW = EXISTING */
         char *new = 0, *existing = 0;
@@ -213,7 +214,7 @@ parse_line_command_args (ELEMENT *line_command)
       }
     case CM_definfoenclose:
       {
-        if (parser_conf.no_user_commands)
+        if (global_parser_conf.no_user_commands)
           break;
 
         /* @definfoenclose phoo,//,\\ */
@@ -336,7 +337,8 @@ parse_line_command_args (ELEMENT *line_command)
     case CM_defindex:
     case CM_defcodeindex:
       {
-        if (parser_conf.no_user_commands || parser_conf.no_index)
+        if (global_parser_conf.no_user_commands
+            || global_parser_conf.no_index)
           break;
 
         char *name = 0;
@@ -404,7 +406,7 @@ parse_line_command_args (ELEMENT *line_command)
         if (*p)
           goto synindex_invalid; /* More at end of line. */
 
-        if (parser_conf.no_index)
+        if (global_parser_conf.no_index)
           {
             free (index_name_from);
             free (index_name_to);
@@ -460,7 +462,7 @@ parse_line_command_args (ELEMENT *line_command)
         arg = read_command_name (&p);
         if (!arg || *p)
           line_error ("bad argument to @printindex: %s", line);
-        else if (parser_conf.no_index)
+        else if (global_parser_conf.no_index)
           {}
         else
           {
@@ -1106,9 +1108,10 @@ end_line_starting_block (ELEMENT *current)
                     }
                   else
                     {
-                      char *flag = read_flag_name (&p);
-                      if (flag && !*p)
+                      size_t flag_len = read_flag_len (p);
+                      if (flag_len && !*(p + flag_len))
                         {
+                          char *flag = strndup (p, flag_len);
                           bad_line = 0;
                           if (command == CM_ifclear || command == CM_ifset)
                             {
@@ -1129,8 +1132,8 @@ end_line_starting_block (ELEMENT *current)
                             }
                           debug ("CONDITIONAL @%s %s: %d",
                                  command_name(command), flag, iftrue);
+                          free (flag);
                         }
-                      free (flag);
                     }
                 }
             }
@@ -1524,7 +1527,7 @@ end_line_misc_line (ELEMENT *current)
                     }
                 }
            /* Set the document language unless it was set on the command line. */
-              if (!parser_conf.global_documentlanguage_fixed)
+              if (!global_parser_conf.global_documentlanguage_fixed)
                 {
                   free (global_documentlanguage);
                   global_documentlanguage = strdup (text);

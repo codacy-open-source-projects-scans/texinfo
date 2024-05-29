@@ -525,7 +525,8 @@ sub html_image_file_location_name($$$$$)
     my ($file_name, $file_name_encoding)
       = $self->encoded_input_file_name($image_basefile.$tried_extension);
     my $located_image_path
-          = $self->Texinfo::Common::locate_include_file($file_name);
+          = Texinfo::Common::locate_include_file($file_name,
+                                  $self->get_conf('INCLUDE_DIRECTORIES'));
     if (defined($located_image_path) and $located_image_path ne '') {
       $image_path = $located_image_path;
       $image_path_encoding = $file_name_encoding;
@@ -5001,7 +5002,15 @@ sub _convert_heading_command($$$$$)
   # if set, the id is associated to the heading text
   my $heading_id;
   if ($opening_section) {
-    my $level = $opening_section->{'extra'}->{'section_level'};
+    my $level;
+    if ($opening_section->{'extra'}
+        and defined($opening_section->{'extra'}->{'section_level'})) {
+      $level = $opening_section->{'extra'}->{'section_level'};
+    } else {
+      # if Structuring sectioning_structure was not called on the
+      # document (cannot happen in main program or test_utils.pl tests)
+      $level = Texinfo::Common::section_level($opening_section);
+    }
     my $closed_strings = $self->close_registered_sections_level($level);
     $result .= join('', @{$closed_strings});
     $self->register_opened_section_level($level, "</div>\n");
@@ -9420,7 +9429,8 @@ sub _prepare_css($)
       $css_file_fh = \*STDIN;
       $css_file_path = '-';
     } else {
-      $css_file_path = $self->Texinfo::Common::locate_include_file($css_file);
+      $css_file_path = Texinfo::Common::locate_include_file($css_file,
+                                  $self->get_conf('INCLUDE_DIRECTORIES'));
       unless (defined($css_file_path)) {
         my $css_input_file_name;
         my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
@@ -10518,9 +10528,11 @@ sub _prepare_output_units_global_targets($$$$)
         $root_command = $root_command->{'extra'}->{'associated_section'};
       }
       # find the first level 1 sectioning element to associate the printindex
-      # with
+      # with.  May not work correctly if structuring was not done
       if ($root_command and $root_command->{'cmdname'} ne 'node') {
-        while ($root_command->{'extra'}->{'section_level'} > 1
+        while ($root_command->{'extra'}
+               and defined($root_command->{'extra'}->{'section_level'})
+               and $root_command->{'extra'}->{'section_level'} > 1
                and $root_command->{'extra'}->{'section_directions'}
                and $root_command->{'extra'}->{'section_directions'}->{'up'}
                and $root_command->{'extra'}->{'section_directions'}->{'up'}
@@ -10927,7 +10939,14 @@ sub _default_format_contents($$;$$)
     $sections_list = $document->sections_list();
   }
   return ''
-   if (!$sections_list or !scalar(@$sections_list));
+   if (!$sections_list or !scalar(@$sections_list)
+       # this should not happen with $sections_list as set from Structuring
+       # sectioning_structure, but could happen with another source.
+       # We consider that if sectioning_root is set as usual, all the
+       # fields are set consistently with what sectioning_structure would
+       # have set.
+       or !$sections_list->[0]->{'extra'}
+       or !defined($sections_list->[0]->{'extra'}->{'sectioning_root'}));
 
   my $section_root = $sections_list->[0]
                                    ->{'extra'}->{'sectioning_root'};

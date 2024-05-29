@@ -29,8 +29,8 @@
 #include "manipulate_tree.h"
 #include "input.h"
 #include "text.h"
-/* for parser_conf */
-#include "conf.h"
+/* for global_parser_conf */
+#include "parser_conf.h"
 #include "convert_to_texinfo.h"
 #include "labels.h"
 #include "source_marks.h"
@@ -66,7 +66,7 @@ register_extra_menu_entry_information (ELEMENT *current)
           if (!parsed_entry_node->manual_content
               && !parsed_entry_node->node_content)
             {
-              if (parser_conf.show_menu)
+              if (global_parser_conf.show_menu)
                 line_error ("empty node name in menu entry");
             }
           else
@@ -130,7 +130,7 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
       ELEMENT *star;
 
       debug ("MENU STAR");
-      abort_empty_line (&current, 0);
+      abort_empty_line (&current, NULL, 0);
       line++; /* Past the '*'. */
 
       star = new_element (ET_internal_menu_star);
@@ -242,7 +242,8 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
         {
           pop_element_from_contents (current);
           current = last_contents_child (current);
-          merge_text (current, last_child->text.text, last_child);
+          merge_text (current, last_child->text.text, last_child->text.end,
+                      last_child);
           destroy_element (last_child);
         }
       /* here we collect spaces following separators. */
@@ -395,7 +396,7 @@ end_line_menu_entry (ELEMENT *current)
         {
           ELEMENT *arg = contents_child_by_index (menu_entry, i);
           if (arg->text.end > 0)
-            current = merge_text (current, arg->text.text, arg);
+            current = merge_text (current, arg->text.text, arg->text.end, arg);
           else
             {
               ELEMENT *e;
@@ -404,7 +405,8 @@ end_line_menu_entry (ELEMENT *current)
                   e = contents_child_by_index (arg, j);
                   if (e->text.end > 0)
                     {
-                      current = merge_text (current, e->text.text, e);
+                      current = merge_text (current, e->text.text,
+                                            e->text.end, e);
                       destroy_element (e);
                     }
                   else

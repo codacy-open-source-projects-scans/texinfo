@@ -42,58 +42,70 @@ use warnings;
 
 use Storable qw(dclone); # standard in 5.007003
 use Encode qw(decode);
-use File::Basename; # for fileparse
 
 use Texinfo::Common;
 use Texinfo::Report;
-use Texinfo::Translations;
-# to return a resulting document
 use Texinfo::Document;
 
-sub get_conf($$)
-{
-  my $self = shift;
-  my $var = shift;
-  return $self->{'conf'}->{$var};
-}
-
 # Initialize the parser
+# The last argument, optional, is a hash provided by the user to change
+# the default values for what is present in %parser_settable_configuration.
 sub parser (;$)
 {
   my $conf = shift;
 
-  my $parser = dclone(\%Texinfo::Common::parser_settable_configuration);
+  # In Texinfo::Common because all the
+  # customization options information is gathered here, and also
+  # because it is used in other codes, in particular the XS parser.
+  # Note that it also contains inner options like accept_internalvalue
+  # and customizable document parser state values in addition to
+  # regular customization options.
+  my $parser_conf = dclone(\%Texinfo::Common::parser_document_parsing_options);
+  my $parser = {};
+  bless $parser;
 
+  # Reset conf from argument, restricting to parser_document_parsing_options,
+  # and set directly parser keys if in parser_settable_configuration and not in
+  # parser_document_parsing_options.
   if (defined($conf)) {
-    foreach my $key (keys (%$conf)) {
-      if (exists($Texinfo::Common::parser_settable_configuration{$key})) {
-        # Copy conf to parser object.
-        # we keep registrar instead of copying on purpose, to reuse the object
-        if ($key ne 'values' and $key ne 'registrar' and ref($conf->{$key})) {
-          $parser->{$key} = dclone($conf->{$key});
+    foreach my $key (keys(%$conf)) {
+      if (exists($Texinfo::Common::parser_document_parsing_options{$key})) {
+        if (ref($conf->{$key})) {
+          $parser_conf->{$key} = dclone($conf->{$key});
         } else {
-          $parser->{$key} = $conf->{$key};
+          $parser_conf->{$key} = $conf->{$key};
         }
-      } # no warning here as in pure Perl as it is warned below
+      } elsif (exists($Texinfo::Common::parser_settable_configuration{$key})) {
+        # we keep instead of copying on purpose, to reuse the objects
+        # Should only be registrar
+        $parser->{$key} = $conf->{$key};
+      } else {
+        # no warning here as in pure Perl as it is warned below
+        #warn "ignoring parser configuration value \"$key\"\n";
+      }
     }
-  }
-  # restrict variables found by get_conf, and set the values to the
-  # parser initialization values only.  What is found in the document
-  # has no effect.
-  $parser->{'conf'} = {};
-  foreach my $key (keys(%Texinfo::Common::default_parser_customization_values)) {
-    $parser->{'conf'}->{$key} = $parser->{$key};
   }
 
   # pass directly DEBUG value to reset_parser to override previous
   # parser configuration, as the configuration isn't already reset and the new
   # configuration is set afterwards.
   my $debug = 0;
-  $debug = $parser->{'DEBUG'} if ($parser->{'DEBUG'});
+  $debug = $parser_conf->{'DEBUG'} if ($parser_conf->{'DEBUG'});
+
+  # The reset_parser call resets the conf to the same values as found in
+  # Texinfo::Common parser_document_parsing_options.
   reset_parser($debug);
+
+  # Following code does the same as Perl code just above to
+  # setup parser_conf in C.
   # (re)set debug in any case, assuming that undef DEBUG is no debug
   parser_conf_set_DEBUG($debug);
 
+  # Storing conf is only needed if the parser is reused.  There could be
+  # a customization variable.  Instead, we set store_conf to 0 if
+  # accept_internalvalue is set, if called from gdt as we know for sure that
+  # the parser is not gonna be reused.
+  my $store_conf = 1;
   if (defined($conf)) {
     foreach my $key (keys(%$conf)) {
       if ($key eq 'INCLUDE_DIRECTORIES') {
@@ -132,43 +144,42 @@ sub parser (;$)
         if (defined($conf->{$key})) {
           parser_conf_set_LOCALE_ENCODING($conf->{$key});
         }
+      } elsif ($key eq 'COMMAND_LINE_ENCODING') {
+        if (defined($conf->{$key})) {
+          parser_conf_set_COMMAND_LINE_ENCODING($conf->{$key});
+        }
       } elsif ($key eq 'accept_internalvalue') {
         if ($conf->{$key}) {
+          # called from gdt, no need to store the parser configuration
           parser_conf_set_accept_internalvalue(1);
+          $store_conf = 0;
         }
-      } elsif ($key eq 'registrar' or $key eq 'COMMAND_LINE_ENCODING'
-               or $key eq 'DEBUG') {
+      } elsif ($key eq 'registrar' or $key eq 'DEBUG') {
         # no action needed, already taken into account or only for Perl code
       } else {
         warn "ignoring parser configuration value \"$key\"\n";
       }
     }
   }
+  if ($store_conf) {
+    register_parser_conf($parser);
 
-  bless $parser;
+    # variables set to the parser initialization values
+    # only.  What is found in the document has no effect.
+    $parser->{'conf'} = $parser_conf;
+  }
+
+  if (not $parser->{'registrar'}) {
+    $parser->{'registrar'} = Texinfo::Report::new();
+  }
 
   return $parser;
-}
-
-sub _get_parser_error_registrar($)
-{
-  my $self = shift;
-  if (not $self->{'registrar'}) {
-    $self->{'registrar'} = Texinfo::Report::new();
-  }
-  my $registrar = $self->{'registrar'};
-  my $configuration_information = $self;
-  return $registrar, $configuration_information;
 }
 
 sub _get_parser_info($$;$) {
   my $self = shift;
   my $document_descriptor = shift;
   my $no_store = shift;
-
-  # make sure that the parser Texinfo::Report registrar is setup
-  my ($parser_registrar, $configuration_information)
-     = _get_parser_error_registrar($self);
 
   # get hold of errors before calling build_document, as if $no_store is set
   # they will be destroyed.
@@ -184,7 +195,7 @@ sub _get_parser_info($$;$) {
   # additional info relevant in perl only.
   my $perl_encoding
     = Texinfo::Common::get_perl_encoding($document->{'commands_info'},
-                        $parser_registrar, $configuration_information);
+                        $self->{'registrar'}, $self->{'conf'}->{'DEBUG'});
   $perl_encoding = 'utf-8' if (!defined($perl_encoding));
   Texinfo::Document::set_document_global_info($document,
                      'input_perl_encoding', $perl_encoding);
@@ -205,23 +216,9 @@ sub parse_texi_file ($$)
   return undef if (!defined($self));
 
   # the file is already a byte string, taken as is from the command
-  # line.  The encoding was detected as COMMAND_LINE_ENCODING, but
-  # it is not useful for the XS parser.
-  # TODO instead of using fileparse here, reimplement fileparse
-  # in XS, or use a file name parsing code from somewhere else?
-  my ($basename, $directories, $suffix) = fileparse($input_file_path);
-  my $document_descriptor = parse_file($input_file_path,
-                                       $basename, $directories);
+  # line.  The encoding was detected as COMMAND_LINE_ENCODING.
+  my $document_descriptor = parse_file($self, $input_file_path);
   if (!$document_descriptor) {
-    my ($parser_registrar, $configuration_information)
-       = _get_parser_error_registrar($self);
-    my $input_file_name = $input_file_path;
-    my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
-    if (defined($encoding)) {
-      $input_file_name = decode($encoding, $input_file_path);
-    }
-    $parser_registrar->document_error($configuration_information,
-       sprintf(__("could not open %s: %s"), $input_file_name, $!));
     return undef;
   }
 
@@ -240,7 +237,7 @@ sub parse_texi_piece($$;$$)
 
   $line_nr = 1 if (not defined($line_nr));
 
-  my $document_descriptor = parse_piece($text, $line_nr);
+  my $document_descriptor = parse_piece($self, $text, $line_nr);
 
   my $document = _get_parser_info($self, $document_descriptor, $no_store);
 
@@ -256,7 +253,7 @@ sub parse_texi_text($$;$)
 
   $line_nr = 1 if (not defined($line_nr));
 
-  my $document_descriptor = parse_text($text, $line_nr);
+  my $document_descriptor = parse_text($self, $text, $line_nr);
 
   my $document = _get_parser_info($self, $document_descriptor);
 
@@ -271,7 +268,7 @@ sub parse_texi_line($$;$$)
 
   $line_nr = 1 if (not defined($line_nr));
 
-  my $document_descriptor = parse_string($text, $line_nr);
+  my $document_descriptor = parse_string($self, $text, $line_nr);
 
   my $document = _get_parser_info($self, $document_descriptor, $no_store);
 
@@ -292,9 +289,12 @@ sub errors($)
   if (!$registrar) {
     return undef;
   }
-  return $registrar->errors();
-}
+  my ($error_warnings_list, $error_count) = $registrar->errors();
 
+  $registrar->clear();
+
+  return ($error_warnings_list, $error_count);
+}
 
 1;
 __END__

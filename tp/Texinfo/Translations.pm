@@ -1,7 +1,7 @@
 # Translations.pm: translate strings in output.
 #
 # Copyright 2010-2024 Free Software Foundation, Inc.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License,
@@ -94,9 +94,13 @@ sub configure($;$)
   if (defined($in_strings_textdomain)) {
     $strings_textdomain = $in_strings_textdomain;
   }
-  Locale::Messages::bindtextdomain($strings_textdomain, $localesdir);
-  # set the directory for the XS code too
-  _XS_configure($localesdir, $strings_textdomain);
+  if (defined($localesdir)) {
+    Locale::Messages::bindtextdomain($strings_textdomain, $localesdir);
+    # set the directory for the XS code too
+    _XS_configure($localesdir, $strings_textdomain);
+  } else {
+    warn 'WARNING: string textdomain directory undefined'."\n";
+  }
 }
 
 # libintl converts between encodings but doesn't decode them into the

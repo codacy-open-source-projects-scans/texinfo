@@ -1,3 +1,442 @@
+2024-05-29  Patrice Dumas  <pertusus@free.fr>
+
+	Use the command line encoding for input file name in message
+
+	* tp/Texinfo/XS/main/parser_conf.c (clear_parser_conf),
+	tp/Texinfo/XS/main/parser_conf.h (PARSER_CONF),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs
+	(parser_conf_set_COMMAND_LINE_ENCODING),
+	tp/Texinfo/XS/parsetexi/conf.c (parser_conf_set_COMMAND_LINE_ENCODING)
+	(reset_parser_conf): pass COMMAND_LINE_ENCODING to C code.
+
+	* b/tp/Texinfo/XS/parsetexi/api.c (parse_file): use the
+	COMMAND_LINE_ENCODING, if set, to decode the input file path name
+	for error line part of the error message output if the input file
+	cannot be opened.
+
+2024-05-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document.c
+	(destroy_document_information_except_tree)
+	(remove_document_descriptor): destroy the document structure fields
+	and the small_strings even if the tree is not set. 
+
+	* tp/Texinfo/XS/main/document.c
+	(unregister_document_merge_with_document): free the removed document
+	itself and liberate the document list slot.
+
+2024-05-28  Patrice Dumas  <pertusus@free.fr>
+
+	Fix error message of XS parser when the input file cannot be opened
+
+	* tp/Texinfo/XS/parsetexi/api.c (initialize_parsing, parse_file)
+	(parse_text, parse_string, parse_piece): have initialize_parsing
+	return the document_descriptor and get it from there in parse_*.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_file),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_file),
+	tp/Texinfo/XS/parsetexi/api.c (parse_file): add a status
+	argument to parse_file in api.c, set it to non-zero if the parsing
+	could not proceed.  Set the open error message in api.c parse_file,
+	where the error can be converted to a string with strerror.  Return a
+	document_descriptor even if there was an error.  In Parsetexi.xs
+	parse_file, check the status, and if there was an error, get the
+	parsing error and destroy the document.  Remove the error setting
+	in Parsetexi.pm parse_texi_file, where $! is unlikely to be correct.
+
+	* tp/Texinfo/ParserNonXS.pm (parse_texi_file): rename $input_file_name
+	as $decoded_input_file_path.
+
+	* tp/Texinfo/ParserNonXS.pm (parse_texi_file): do not pass the
+	PROGRAM configuration value to document_error, it is not in the parser
+	customization variables, and we do not want to add more.
+
+2024-05-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_file): remove the
+	now useless call to fileparse.
+
+2024-05-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line):
+	set directly line to an empty string instead of going to the end of
+	line.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (isolate_trailing_space):
+	reuse text_len instead of calling strlen.
+
+2024-05-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/translations.c (replace_substrings),
+	tp/Texinfo/XS/main/utils.c (read_flag_len),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (parse_rawline_command),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): replace
+	read_flag_name by read_flag_len that only returns the length of the
+	flag.  This allows to check first if there is a matching brace or if
+	there is nothing remaining on the line before allocating the memory
+	for the flag.  Update callers.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (new_value_element)
+	(process_remaining_on_line): add length of flag as an argument to
+	new_value_element.  Update callers.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (abort_empty_line)
+	(isolate_last_space_internal): use text_append_n instead of
+	text_append.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (isolate_last_space_internal):
+	reuse text_len instead of calling strlen.
+
+2024-05-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/macro.c (handle_macro): use strchrnul
+	instead of strchr to have more common code.
+
+2024-05-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_abort_empty_line),
+	tp/Texinfo/XS/parsetexi/parser.c (abort_empty_line): different debug
+	message if additional_spaces are added or not.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (abort_empty_line),
+	tp/Texinfo/XS/parsetexi/parser.c (merge_text): add a length
+	argument for additional_spaces length.  Update callers.
+
+2024-05-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/macro.c (handle_macro),
+	tp/Texinfo/XS/parsetexi/menus.c (handle_menu_entry_separators)
+	(end_line_menu_entry), tp/Texinfo/XS/parsetexi/parser.c (merge_text)
+	(process_remaining_on_line), tp/Texinfo/XS/parsetexi/separator.c
+	(handle_open_brace, handle_close_brace): add a text length argument to
+	merge_text.  Update merge_text and callers.
+
+	* tp/Texinfo/XS/parsetexi/close.c (close_current): use text_append_n
+	instead of text_append.
+
+	* tp/Texinfo/XS/parsetexi/multitable.c (gather_previous_item): output
+	REPARENT debug message only if there are contents in before_item.
+
+2024-05-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_gather_previous_item),
+	tp/Texinfo/XS/parsetexi/multitable.c (gather_previous_item): add a
+	debug message.
+
+2024-05-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Translations.pm (configure): warn if $localesdir
+	is undefined and do not call bindtextdomain nor _XS_configure
+	in that case.
+
+	* tp/t/same_parser_multiple_files.t: find $localesdir and call
+	Texinfo::Translations::configure.
+
+	* tp/t/test_utils.pl: add a comment to explain that even with
+	LocaleData not found, the test could still succeed if the translations
+	are found elsewhere.
+
+2024-05-27  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/tp_api/texi2any_internals_preamble.texi: add @setfilename for
+	platforms with old automake < 1.6.2.
+
+2024-05-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_file): rename
+	$input_file_name as $decoded_input_file_path.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_file),
+	tp/Texinfo/XS/parsetexi/api.c (parse_file),
+	tp/Texinfo/XS/parsetexi/input.c (input_push_file): rename filename as
+	input_file_path.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_file),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_file),
+	tp/Texinfo/XS/parsetexi/api.c (parse_file, parse_file_path): pass
+	only the input file path to parse_file.  Determine the directory in
+	parse_file using the new function parse_file_path.
+
+	* tp/Texinfo/XS/parsetexi/input.c: add some const.
+
+	Changes in comments.
+
+2024-05-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (document_errors): warn if a
+	document C data is not found.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (add_formatted_error_messages):
+	remove error messages for situations that should not happen.
+
+2024-05-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_parse_texi_line.t: change in variable names, test the
+	number of errors in any case.
+
+	* tp/t/test_protect_hashchar_at_line_beginning.t: use
+	Texinfo::XSLoader::XS_*_enabled, change in variable names, test the
+	number of errors in any case, use a list for reference errors, use the
+	same code for errors handling as in test_parse_texi_line.t.
+
+2024-05-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_id_is_registered)
+	(html_register_id, html_converter_initialize, html_reset_converter)
+	(html_free_converter), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER): make registered_ids a pointer in CONVERTER, to have only
+	pointers in the registered ids union.
+
+2024-05-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/converter_types.h (CONVERTER): rename seen_ids as
+	registered_ids.  Update users.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_register_id)
+	(html_id_is_registered), tp/Texinfo/XS/convert/convert_html.c
+	(html_id_is_registered, html_register_id): add html_id_is_registered
+	and html_register_id functions for registered_ids access.
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(init_registered_ids_hv, is_hv_registered_id, hv_register_id)
+	(clear_registered_ids_hv, free_registered_ids_hv),
+	tp/Texinfo/XS/convert/convert_html.c (USE_PERL_HASHMAP)
+	(html_id_is_registered, html_register_id, html_converter_initialize)
+	(html_reset_converter, html_free_converter),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER): add an alternative
+	interface to register and retrieve registered ids, using a Perl hash.
+	If USE_PERL_HASHMAP is defined, the default, the Perl hash map is
+	used.
+
+2024-05-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/parser_conf.c: add a NOTE in comment explaining
+	why the registered confs are never unallocated.
+
+2024-05-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/no_structure_test.t: uncomment the call to
+	Texinfo::Tests::create_group_directory.
+
+2024-05-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (test_files),
+	tp/t/input_files/first_file_same_parser.texi,
+	tp/t/input_files/last_file_same_parser.texi,
+	tp/t/input_files/next_file_same_parser.texi, tp/Makefile.tres,
+	t/same_parser_multiple_files.t: add a special test of reused parser
+	used to parser different files.
+
+2024-05-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Tests.pm (@EXPORT_OK, create_group_directory)
+	(prepare_format_directories), tp/t/no_structure_test.t
+	(_do_format_test_file): add a Package declaration in Texinfo/Tests.pm.
+	Add create_group_directory, move _prepare_test_directory to
+	Texinfo::Tests, renaming as prepare_format_directories.  Rename
+	_run_file_test as _do_format_test_file.
+
+2024-05-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am, tp/t/test_utils.pl, tp/Texinfo/Tests.pm
+	(compare_dirs_files, unlink_dir_files): add tp/Texinfo/Tests.pm for
+	common code to be used in tests.
+
+	* tp/Texinfo/Convert/TexinfoMarkup.pm (_convert): avoid incorrect
+	autovivification for bracketed_arg parent parent.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_default_format_contents):
+	do contents only if there is one section.
+
+	* tp/Texinfo/Convert/DocBook.pm (_docbook_section_element, _convert),
+	tp/Texinfo/Convert/HTML.pm (_convert_heading_command)
+	(_prepare_output_units_global_targets, _default_format_contents),
+	tp/Texinfo/Convert/TexinfoMarkup.pm (_convert),
+	tp/Texinfo/OutputUnits.pm (units_directions),
+	tp/Texinfo/Structuring.pm (section_level_adjusted_command_name),
+	tp/Texinfo/XS/convert/convert_html.c (html_default_format_contents)
+	(convert_heading_command), tp/Texinfo/XS/main/utils.c
+	(section_level_adjusted_command_name): handle better extra
+	section_level, section_directions and section_childs not set, in case
+	there is a conversion without structuring information available.
+
+	* tp/Makefile.tres, t/no_structure_test.t: add tests of conversion
+	without calling Structuring code after parsing.
+
+2024-05-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document.c (wipe_document_errors)
+	(wipe_document_parser_errors): rename clear_document_parser_errors as
+	wipe_document_parser_errors and clear_document_errors as
+	wipe_document_errors.  Update caller.
+
+2024-05-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm: access 'accept_internalvalue' in 'conf'.
+
+	* tp/Texinfo/ParserNonXS.pm (_initialize_parsing): only initialize
+	states from conf if they are modified during parsing.
+
+2024-05-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/api.c (parse_file): comment out the code
+	adding the input file directory to the include directories list as it
+	is already done in the main program.
+
+2024-05-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm: access customization options in 'conf'
+	if they are not supposed to change during parsing.
+
+2024-05-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (_add_element_to_identifiers_target): remove
+	unused customization_information argument.
+
+	* tp/Texinfo/Report.pm (line_warn, line_error), tp/Texinfo/Common.pm
+	(get_perl_encoding, converter_or_registrar_line_warn),
+	tp/Texinfo/Document.pm (_existing_label_error)
+	(set_labels_identifiers_target, register_label_element),
+	tp/Texinfo/ParserNonXS.pm (_line_warn) (_line_error): do not pass
+	customization_information, pass directly $debug.  Update callers.
+
+	* tp/Texinfo/Common.pm (locate_include_file): do not pass
+	customization_information, pass directly $include_directories.  Update
+	callers.
+
+	* tp/Texinfo/Report.pm (document_warn, document_error),
+	tp/t/test_parser_registrar.t: do not pass customization_information,
+	pass directly $program_name. Update callers.
+
+	* tp/Texinfo/ParserNonXS.pm (parse_texi_file, _encode_file_name)
+	(_next_text, _end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (_get_parser_info)
+	(parse_texi_file), tp/t/do_master_menu.t,
+	tp/t/test_protect_hashchar_at_line_beginning.t: access directly conf
+	in $self->{'conf'}. remove get_conf from parsers.
+
+2024-05-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/parser_conf.c (free_parser_conf, apply_conf):
+	If the previous conf is not registered, free the list in addition to
+	clearing them as they are overwritten.  Found with valgrind.
+
+2024-05-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/translations.c (replace_convert_substrings): call
+	reset_parser_conf now that the configurations can be separate.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser): do not store the
+	configuration for later reuse of the parser if accept_internalvalue is
+	set, which is interpreted as being called from gdt, in which case the
+	parser will not be reused.
+
+2024-05-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.c (wipe_values),
+	tp/Texinfo/XS/parsetexi/macro.c: move wipe_values to utils.c such that
+	it may be used by files in main.
+
+2024-05-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/get_perl_info.c (apply_sv_parser_conf),
+	tp/Texinfo/XS/main/parser_conf.c (apply_conf),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_file)
+	(parse_texi_piece, parse_texi_text, parse_texi_line),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_file, parse_piece)
+	(parse_string, parse_text), tp/Texinfo/XS/parsetexi/conf.c
+	(reset_parser_conf): pass parser to parser_* functions in Parsetexi.xs
+	to retrieve the parser_conf_descriptor kept in the parser with
+	apply_sv_parser_conf.  Replace the current global_parser_conf with the 
+	parser_conf associated with the parser by calling apply_conf.
+	Do not clear global_parser_conf structures in reset_parser_conf if the
+	global_parser_conf is registered.  Inline clear_global_parser_conf.
+
+2024-05-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/input.c (parser_include_directories)
+	(parser_locate_include_file), tp/Texinfo/XS/parsetexi/api.c
+	(initialize_parsing, parse_file): add parser_include_directories,
+	initialized from a copy of global_parser_conf.include_directories
+	to add the input file directory for the parsing only and not to the
+	configuration.
+
+2024-05-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/parser_conf.c (parser_conf_list)
+	(parser_conf_number, parser_conf_space, retrieve_parser_conf)
+	(register_conf, clear_parser_conf), tp/Texinfo/XS/main/parser_conf.h
+	(PARSER_CONF), tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (register_parser_conf),
+	tp/Texinfo/XS/parsetexi/conf.c (reset_parser_conf): add
+	parser_conf_list, a list of PARSER_CONF and register parser
+	configuration setup at the end of Parsetexi.pm parser through the
+	reset_parser_conf XS interface.  Clear memory of the global parser
+	conf only if it is not registered.
+
+2024-05-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_la_SOURCES),
+	tp/Texinfo/XS/parsetexi/*.c, tp/Texinfo/XS/parsetexi/conf.c,
+	tp/Texinfo/XS/main/parser_conf.c (global_parser_conf)
+	(clear_parser_conf, clear_global_parser_conf),
+	tp/Texinfo/XS/main/parser_conf.h (PARSER_CONF): add main/parser_conf.c
+	and main/parser_conf.h with code from parsetexi/conf.c and
+	parsetexi/conf.h, with the PARSER_CONF structure and
+	clear_parser_conf.  Rename global parser_conf variable as
+	global_parser_conf.
+
+2024-05-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Document.pm (errors), tp/Texinfo/ParserNonXS.pm (errors),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (errors),
+	tp/t/test_parse_texi_line.t: clear Texinfo::Report errors when
+	returning them with a call to errors().
+
+2024-05-21  Patrice Dumas  <pertusus@free.fr>
+
+	Reset parsing state to the configuration values before parsing
+
+	* tp/Texinfo/Common.pm (%common_parser_customization)
+	(%parser_customization, %parser_inner_options): rename
+	%common_parser_options as %common_parser_customization and add
+	LOCALE_ENCODING.  Rename %parser_options as %parser_customization and
+	%parser_inner_configuration as %parser_inner_options.
+
+	* tp/Texinfo/Common.pm (%parser_configuration)
+	(%parser_document_state_configuration)
+	(%parser_document_parsing_options): split %parser_state_configuration
+	in two with %parser_configuration with registrar and
+	%parser_document_state_configuration with values.  Add
+	%parser_document_parsing_options for all the customizations and
+	similar that should be set for a document parsing.
+
+	* tp/Texinfo/ParserNonXS.pm (%parser_document_state_initialization)
+	(%parsing_state_initialization): move 'sections_level_modifier' and
+	'input_file_encoding' from %parsing_state_initialization to
+	%parser_document_state_initialization.
+
+	* tp/Texinfo/ParserNonXS.pm (parser, _initialize_parsing): base
+	configuration on %Texinfo::Common::parser_document_parsing_options.
+	Add a $parser_conf hash reference and fill it instead of modifying the
+	parser itself for variables in Texinfo::Common
+	parser_document_parsing_options and add only the others (only
+	registrar, in practice) to the parser.  Store $parser_conf in
+	$parser->{'conf'}.  Use $parser->{'conf'} to reset the parser in
+	_initialize_parsing.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser, parse_texi_file)
+	(_get_parser_info): update based on change in ParserNonXS.pm.  Inline
+	_get_parser_error_registrar.
+
+	* tp/Texinfo/XS/parsetexi/api.c (initialize_parsing): move code around
+	to correspond better to type of variables in Perl.
+
+	* tp/Texinfo/XS/parsetexi/conf.c (reset_parser_conf): set debug to 0
+	in the default case.
+
 2024-05-21  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/ParserNonXS.pm (%parsing_state_initialization)

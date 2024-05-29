@@ -176,7 +176,7 @@ sub copy_options_for_convert_text($;$)
       $options{'expanded_formats'}->{$expanded_format} = 1;
     }
   }
-  # for locate_include_file
+  # for expand_verbatiminclude
   $options{'INCLUDE_DIRECTORIES'} = $self->get_conf('INCLUDE_DIRECTORIES');
 
   $options{'converter'} = $self;
@@ -680,7 +680,7 @@ sub _convert($$)
         = Texinfo::Convert::Utils::definition_category_tree(
                                             $options->{'converter'}, $element);
       if (defined($parsed_definition_category)) {
-        my $converted_element = {'contents' => 
+        my $converted_element = {'contents' =>
                         [$parsed_definition_category, {'text' => ': '}]};
         my $contents = $converted_element->{'contents'};
         if ($type_element) {
@@ -785,7 +785,7 @@ sub convert_to_text($;$)
   } elsif (!ref($options)) {
     confess("convert_to_text options not a ref\n");
   }
-  # this is needed for locate_include_file which uses
+  # this is needed for expand_verbatiminclude which uses
   # $configurations_information->get_conf() and thus requires a blessed
   # reference.
   bless $options, "Texinfo::Convert::Text";

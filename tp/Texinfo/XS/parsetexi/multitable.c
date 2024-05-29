@@ -19,6 +19,7 @@
 #include "tree_types.h"
 #include "tree.h"
 #include "commands.h"
+#include "debug_parser.h"
 #include "errors_parser.h"
 /* check_no_text */
 #include "handle_commands.h"
@@ -87,6 +88,7 @@ gather_previous_item (ELEMENT *current, enum command_id next_command)
   if (begin == -1)
     begin = 0;
 
+  /* Find the 'end' */
   if (next_command)
     {
       /* Don't absorb trailing index entries as they are included with a
@@ -106,7 +108,7 @@ gather_previous_item (ELEMENT *current, enum command_id next_command)
 
   table_after_terms = new_element (type);
 
-  /* Move everything from 'begin' onwards to be children of
+  /* Move everything from 'begin' to 'end' to be children of
      table_after_terms. */
   insert_slice_into_contents (table_after_terms, 0, current, begin, end);
   for (i = 0; i < table_after_terms->contents.number; i++)
@@ -121,7 +123,9 @@ gather_previous_item (ELEMENT *current, enum command_id next_command)
       add_to_element_contents (table_entry, table_term);
 
       /* We previously collected elements into a ET_table_definition.  Now
-         do the same for ET_table_term. */
+         do the same for ET_table_term, starting from the beginning of the
+         table_definition going back to the previous table entry or beginning
+         of the table. */
        for (i = begin - 1; i >= 0; i--)
          {
            e = contents_child_by_index (current, i);
@@ -129,7 +133,7 @@ gather_previous_item (ELEMENT *current, enum command_id next_command)
                || e->type == ET_table_entry)
              {
           /* register the before_item if we reached it in order to
-             to reparent some before_item content to the first item */
+             reparent some before_item content to the first item */
                if (e->type == ET_before_item)
                  before_item = e;
                term_begin = i + 1;
@@ -146,9 +150,8 @@ gather_previous_item (ELEMENT *current, enum command_id next_command)
       remove_slice_from_contents (current, term_begin, begin);
       if (before_item)
         {
-          /* TODO debug message?
-          fprintf (stderr, "REPARENT before_item content\n");
-           */
+          if (before_item->contents.number > 0)
+            debug ("REPARENT before_item content");
           /* Reparent any trailing index entries in the before_item to the
              beginning of table term. */
           while (before_item->contents.number > 0

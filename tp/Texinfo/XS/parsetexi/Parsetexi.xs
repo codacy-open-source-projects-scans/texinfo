@@ -31,7 +31,10 @@
 
 #include "api.h"
 #include "conf.h"
+#include "parser_conf.h"
 #include "build_perl_info.h"
+#include "get_perl_info.h"
+#include "document.h"
 
  /* See the NOTE in build_perl_info.c on use of functions related to
     memory allocation */
@@ -58,27 +61,71 @@ init (texinfo_uninstalled, builddir)
 void
 reset_parser (int debug_output)
 
+void
+register_parser_conf (SV *parser)
+    PREINIT:
+      HV *hv_in;
+      const char *key = "parser_conf_descriptor";
+      const PARSER_CONF *parser_conf;
+    CODE:
+      hv_in = (HV *)SvRV (parser);
+      parser_conf = register_conf ();
+      hv_store (hv_in, key, strlen (key),
+                newSViv (parser_conf->descriptor), 0);
+
 # file path, can be in any encoding
 int
-parse_file (filename, input_file_name, input_directory)
-        char *filename = (char *)SvPVbyte_nolen ($arg);
-        char *input_file_name = (char *)SvPVbyte_nolen ($arg);
-        char *input_directory = (char *)SvPVbyte_nolen ($arg);
+parse_file (SV *parser, input_file_path)
+        char *input_file_path = (char *)SvPVbyte_nolen ($arg);
+    PREINIT:
+        int status;
+        int document_descriptor = 0;
+      CODE:
+        apply_sv_parser_conf (parser);
+        document_descriptor = parse_file (input_file_path, &status);
+        if (status)
+          /* if the input file could not be opened */
+          {
+            pass_document_parser_errors_to_registrar (document_descriptor,
+                                                      parser);
+            remove_document_descriptor (document_descriptor);
+            RETVAL = 0;
+          }
+        else
+          RETVAL = document_descriptor;
+      OUTPUT:
+        RETVAL
 
 int
-parse_piece (string, line_nr)
+parse_piece (SV *parser, string, line_nr)
         char *string = (char *)SvPVutf8_nolen ($arg);
         int line_nr
+      CODE:
+        apply_sv_parser_conf (parser);
+        RETVAL = parse_piece (string, line_nr);
+      OUTPUT:
+        RETVAL
 
 int
-parse_string (string, line_nr)
+parse_string (SV *parser, string, line_nr)
         char *string = (char *)SvPVutf8_nolen ($arg);
         int line_nr
+      CODE:
+        apply_sv_parser_conf (parser);
+        RETVAL = parse_string (string, line_nr);
+      OUTPUT:
+        RETVAL
 
 int
-parse_text (string, line_nr)
+parse_text (SV *parser, string, line_nr)
         char *string = (char *)SvPVutf8_nolen ($arg);
         int line_nr
+      CODE:
+        apply_sv_parser_conf (parser);
+        RETVAL = parse_text (string, line_nr);
+      OUTPUT:
+        RETVAL
+
 
 # note that giving optional arguments, like: int no_store=0
 # would have been nice, but in that case an undef value cannot be passed
@@ -143,7 +190,7 @@ parser_store_INCLUDE_DIRECTORIES (SV *directories)
                   {
      /*  the directories from the command line or the input file name
          are already byte strings (or ascii).  The encoding was detected
-         as COMMAND_LINE_ENCODING, but it is not used in the XS parser. */
+         as COMMAND_LINE_ENCODING. */
                     char *directory = SvPVbyte_nolen (*directory_sv);
                     parser_conf_add_include_directory (directory);
                   }
@@ -198,6 +245,10 @@ parser_conf_set_INPUT_FILE_NAME_ENCODING (value)
 
 void
 parser_conf_set_LOCALE_ENCODING (value)
+     char *value = (char *)SvPVutf8_nolen ($arg);
+
+void
+parser_conf_set_COMMAND_LINE_ENCODING (value)
      char *value = (char *)SvPVutf8_nolen ($arg);
 
 void

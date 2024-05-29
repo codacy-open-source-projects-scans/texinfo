@@ -75,7 +75,8 @@ CONDITIONAL_STACK_ITEM *pop_conditional_stack (void);
 CONDITIONAL_STACK_ITEM *top_conditional_stack (void);
 extern size_t conditional_number;
 
-int abort_empty_line (ELEMENT **current_inout, char *additional);
+int abort_empty_line (ELEMENT **current_inout, const char *additional_spaces,
+                      size_t len_text);
 ELEMENT *end_paragraph (ELEMENT *current,
                         enum command_id closed_block_command,
                         enum command_id interrupting_command);
@@ -90,7 +91,7 @@ ELEMENT *end_preformatted (ELEMENT *current,
 char *read_command_name (const char **ptr);
 const char *read_comment (const char *line, int *has_comment);
 char *text_contents_to_plain_text (ELEMENT *e, int *superfluous_arg);
-ELEMENT *merge_text (ELEMENT *current, const char *text,
+ELEMENT *merge_text (ELEMENT *current, const char *text, size_t text_len,
                      ELEMENT *transfer_marks_element);
 void start_empty_line_after_command (ELEMENT *current, const char **line_inout,
                                      ELEMENT *command);

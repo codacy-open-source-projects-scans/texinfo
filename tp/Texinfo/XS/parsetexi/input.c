@@ -31,6 +31,8 @@
 #include "text.h"
 #include "commands.h"
 #include "source_marks.h"
+/* for global_parser_conf */
+#include "parser_conf.h"
 
 enum input_type { IN_file, IN_text };
 
@@ -39,10 +41,10 @@ typedef struct {
 
     FILE *file;
     SOURCE_INFO source_info;
-    char *input_file_path; /* for IN_file type, the full input file path */
+    const char *input_file_path; /* for IN_file type, the full input file path */
 
     char *text;  /* Input text to be parsed as Texinfo. */
-    char *ptext; /* How far we are through 'text'.  Used to split 'text'
+    const char *ptext; /* How far we are through 'text'.  Used to split 'text'
                     into lines. */
     char *value_flag; /* value flag if the input text is a @value
                          expansion */
@@ -87,6 +89,8 @@ set_input_encoding (const char *encoding)
   return encoding_set;
 }
 
+/* list of include directories for parsing (@*include files) */
+STRING_LIST parser_include_directories;
 
 static INPUT *input_stack = 0;
 int input_number = 0;
@@ -178,12 +182,12 @@ encode_file_name (char *filename)
 {
   if (!reverse_iconv)
     {
-      if (parser_conf.input_file_name_encoding)
+      if (global_parser_conf.input_file_name_encoding)
         {
           reverse_iconv
-            = iconv_open (parser_conf.input_file_name_encoding, "UTF-8");
+            = iconv_open (global_parser_conf.input_file_name_encoding, "UTF-8");
         }
-      else if (parser_conf.doc_encoding_for_input_file_name)
+      else if (global_parser_conf.doc_encoding_for_input_file_name)
         {
           if (current_encoding_conversion
               && strcmp (parsed_document->global_info.input_encoding_name,
@@ -194,9 +198,9 @@ encode_file_name (char *filename)
               reverse_iconv = iconv_open (conversion_encoding, "UTF-8");
             }
         }
-      else if (parser_conf.locale_encoding)
+      else if (global_parser_conf.locale_encoding)
         {
-          reverse_iconv = iconv_open (parser_conf.locale_encoding, "UTF-8");
+          reverse_iconv = iconv_open (global_parser_conf.locale_encoding, "UTF-8");
         }
     }
   if (reverse_iconv && reverse_iconv != (iconv_t) -1)
@@ -286,7 +290,8 @@ next_text (ELEMENT *current)
 
       switch (input->type)
         {
-          char *p, *new;
+          const char *p;
+          char *new;
         case IN_text:
           /*
           debug_nonl ("IN_TEXT '"); debug_print_protected_string (input->ptext);
@@ -542,23 +547,24 @@ top_file_index (void)
 char *
 parser_locate_include_file (const char *filename)
 {
-  return locate_include_file (filename, &parser_conf.include_directories);
+  return locate_include_file (filename,
+                              &parser_include_directories);
 }
 
 /* Try to open a file called FILENAME */
 int
-input_push_file (const char *filename)
+input_push_file (const char *input_file_path)
 {
   FILE *stream = 0;
-  char *p, *q;
+  const char *p, *q;
   char *base_filename;
-  char *stored_file_path;
+  const char *stored_file_path;
 
-  if (!strcmp (filename, "-"))
+  if (!strcmp (input_file_path, "-"))
     stream = stdin;
   else
     {
-      stream = fopen (filename, "r");
+      stream = fopen (input_file_path, "r");
       if (!stream)
         return errno;
     }
@@ -572,20 +578,21 @@ input_push_file (const char *filename)
 
   /* Strip off a leading directory path. */
   p = 0;
-  q = strchr (filename, '/');
+  q = strchr (input_file_path, '/');
   while (q)
     {
       p = q;
       q = strchr (q + 1, '/');
     }
+
   if (p)
     {
       base_filename = save_string (p+1);
-      stored_file_path = save_string (filename);
+      stored_file_path = save_string (input_file_path);
     }
   else
     {
-      base_filename = save_string (filename);
+      base_filename = save_string (input_file_path);
       stored_file_path = base_filename;
     }
 

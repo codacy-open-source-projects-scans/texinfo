@@ -46,12 +46,14 @@ test_tap_files_generated_list = \
   t/languages.t \
   t/latex_tests.t \
   t/layout.t \
+  t/no_structure_test.t \
   t/nodenormalization.t \
   t/paragraph.t \
   t/plaintext_tests.t \
   t/protect_character_in_texinfo.t \
   t/raw_text_converter.t \
   t/reference_to_text_in_tree.t \
+  t/same_parser_multiple_files.t \
   t/test_brace_count.t \
   t/test_fill_gaps_in_sectioning.t \
   t/test_is_content_empty.t \
@@ -1679,6 +1681,8 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/multitable/prototype_no_brace.pl \
   t/results/multitable/ref_in_multitable.pl \
   t/results/multitable/w_in_multitable.pl \
+  t/results/no_structure_test/one/res_html \
+  t/results/no_structure_test/one/res_info \
   t/results/paragraph/close_paragraph_command.pl \
   t/results/paragraph/commands_in_flushright.pl \
   t/results/paragraph/comment_between_text.pl \
@@ -1869,6 +1873,12 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/regions/ref_in_copying.pl \
   t/results/regions/ref_in_copying_insert_in_chapter.pl \
   t/results/regions/today_in_copying.pl \
+  t/results/same_parser_multiple_files/three_files_first_file_same_parser/res_html \
+  t/results/same_parser_multiple_files/three_files_first_file_same_parser/res_info \
+  t/results/same_parser_multiple_files/three_files_last_file_same_parser/res_html \
+  t/results/same_parser_multiple_files/three_files_last_file_same_parser/res_info \
+  t/results/same_parser_multiple_files/three_files_next_file_same_parser/res_html \
+  t/results/same_parser_multiple_files/three_files_next_file_same_parser/res_info \
   t/results/sectioning/a_comma_after_node.pl \
   t/results/sectioning/anchor_zero.pl \
   t/results/sectioning/at_commands_in_node.pl \

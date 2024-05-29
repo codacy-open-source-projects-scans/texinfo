@@ -696,12 +696,12 @@ index_number_index_by_name (const SORTED_INDEX_NAMES *sorted_indices,
 
 
 /* text parsing functions used in diverse situations */
-/* Read a name used for @set, @value and translations arguments. */
-char *
-read_flag_name (const char **ptr)
+/* Determine if there is a name used for @set, @value and translations
+   arguments and its length. */
+size_t
+read_flag_len (const char *text)
 {
-  const char *p = *ptr, *q;
-  char *ret = 0;
+  const char *p = text, *q;
 
   q = p;
   if (!isascii_alnum (*q) && *q != '-' && *q != '_')
@@ -710,11 +710,8 @@ read_flag_name (const char **ptr)
   while (!strchr (whitespace_chars, *q)
          && !strchr ("{\\}~`^+\"<>|@", *q))
     q++;
-  ret = strndup (p, q - p);
-  p = q;
 
-  *ptr = p;
-  return ret;
+  return q - p;
 }
 
 /* s/\s+/ /g with re => '/a' in perl */
@@ -755,10 +752,6 @@ collapse_spaces (const char *text)
    The filename of the line directive is returned.
    The line number value is in OUT_LINE_NO.
    RETVAL value is 1 for valid line directive, 0 otherwise.
-
-   TODO would be good to have line const, but it is not possible
-   because of strtoul and because of the transient modification to
-   have a \0.
 */
 char *
 parse_line_directive (const char *line, int *retval, int *out_line_no)
@@ -1055,6 +1048,21 @@ set_output_encoding (OPTIONS *customization_information, DOCUMENT *document)
 }
 
 
+/* code related to values used in files not in parsetexi */
+void
+wipe_values (VALUE_LIST *values)
+{
+  size_t i;
+  for (i = 0; i < values->number; i++)
+    {
+      free (values->list[i].name);
+      free (values->list[i].value);
+    }
+  values->number = 0;
+}
+
+
+
 /* code related to document global info used both in parser and other codes */
 void
 delete_global_info (GLOBAL_INFO *global_info_ref)
@@ -1365,16 +1373,16 @@ section_level_adjusted_command_name (const ELEMENT *element)
 
   heading_level = lookup_extra_integer (element, "section_level", &status);
 
-  if (status < 0)
+  /* the following condition should only be false if sectioning_structure was
+     not called */
+  if (status == 0)
     {
-      bug ("section_level_adjusted_command_name: "
-           "unexpected missing section level");
+      if (command_structuring_level[element->cmd] != heading_level)
+        {
+          return level_to_structuring_command[element->cmd][heading_level];
+        }
     }
 
-  if (command_structuring_level[element->cmd] != heading_level)
-    {
-      return level_to_structuring_command[element->cmd][heading_level];
-    }
   return element->cmd;
 }
 

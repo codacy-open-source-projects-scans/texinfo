@@ -1,20 +1,20 @@
 # DocBook.pm: output tree as DocBook.
 #
 # Copyright 2011-2024 Free Software Foundation, Inc.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License,
 # or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 # Original author: Patrice Dumas <pertusus@free.fr>
 
 package Texinfo::Convert::DocBook;
@@ -107,7 +107,7 @@ my %upper_case_style_commands = (
   'sc' => 1,
 );
 
-my @inline_elements = ('emphasis', 'abbrev', 'acronym', 'link', 
+my @inline_elements = ('emphasis', 'abbrev', 'acronym', 'link',
   'inlinemediaobject', 'firstterm', 'footnote', 'replaceable',
   'subscript', 'superscript', 'wordasword');
 my %inline_elements;
@@ -573,13 +573,17 @@ sub _docbook_section_element($$)
   my $self = shift;
   my $element = shift;
 
-  my $heading_level = $element->{'extra'}->{'section_level'};
-  if (exists $docbook_sections{$heading_level}) {
-    return $docbook_sections{$heading_level};
+  if ($element->{'extra'}
+      and defined($element->{'extra'}->{'section_level'})) {
+    my $heading_level = $element->{'extra'}->{'section_level'};
+    if (exists $docbook_sections{$heading_level}) {
+      return $docbook_sections{$heading_level};
+    }
   }
   my $level_adjusted_cmdname
      = Texinfo::Structuring::section_level_adjusted_command_name($element);
   if ($level_adjusted_cmdname eq 'unnumbered'
+      and $element->{'extra'}
       and $element->{'extra'}->{'associated_node'}
       and $element->{'extra'}->{'associated_node'}->{'extra'}
       and $element->{'extra'}->{'associated_node'}->{'extra'}->{'normalized'}
@@ -588,7 +592,15 @@ sub _docbook_section_element($$)
     return lc($element->{'extra'}->{'associated_node'}->{'extra'}->{'normalized'});
   }
 
-  return $docbook_sections{$level_adjusted_cmdname};
+  if (defined($docbook_sections{$level_adjusted_cmdname})) {
+    return $docbook_sections{$level_adjusted_cmdname};
+  } else {
+    # special case of no structuring information available for a regular
+    # sectioning command, like @section, @appendix, if Structuring
+    # sectioning_structure was not called.
+    my $heading_level = Texinfo::Common::section_level($element);
+    return $docbook_sections{$heading_level};
+  }
 }
 
 sub _index_entry($$)
@@ -918,9 +930,10 @@ sub _convert($$;$)
             # able to figure it out.  For @unnumbered or if ! NUMBER_SECTIONS
             # having a label (empty) is important.
             my $label = '';
-            if (defined($opened_element->{'extra'}->{'section_number'})
-              and ($self->get_conf('NUMBER_SECTIONS')
-                   or !defined($self->get_conf('NUMBER_SECTIONS')))) {
+            if ($opened_element->{'extra'}
+                and defined($opened_element->{'extra'}->{'section_number'})
+                and ($self->get_conf('NUMBER_SECTIONS')
+                     or !defined($self->get_conf('NUMBER_SECTIONS')))) {
               # Looking at docbook2html output, Appendix is appended in the
               # section title, so only the letter is used.
               $label = $opened_element->{'extra'}->{'section_number'};
@@ -1049,7 +1062,7 @@ sub _convert($$;$)
         if ($element->{'cmdname'} eq 'w') {
           push @{$self->{'document_context'}->[-1]->{'no_break'}}, 1;
         }
-        push @{$self->{'document_context'}->[-1]->{'monospace'}}, 
+        push @{$self->{'document_context'}->[-1]->{'monospace'}},
           $in_monospace_not_normal
             if (defined($in_monospace_not_normal));
 
@@ -1306,7 +1319,8 @@ sub _convert($$;$)
           foreach my $extension (@docbook_image_extensions) {
             my ($file_name, $file_name_encoding)
                = $self->encoded_input_file_name("$basefile.$extension");
-            if ($self->Texinfo::Common::locate_include_file($file_name)) {
+            if (Texinfo::Common::locate_include_file($file_name,
+                                  $self->get_conf('INCLUDE_DIRECTORIES'))) {
               push @files, ["$basefile.$extension", uc($extension)];
             }
           }
@@ -1330,7 +1344,7 @@ sub _convert($$;$)
           }
           if (!defined($image_text) and !$image_file_found) {
             $self->converter_line_warn(sprintf(
-                     __("\@image file `%s' not found, using `%s'"), 
+                     __("\@image file `%s' not found, using `%s'"),
                        $basefile, "$basefile.jpg"), $element->{'source_info'});
           }
 
@@ -1405,7 +1419,7 @@ sub _convert($$;$)
             $url_text = '';
           }
           my $replacement;
-          if (scalar(@{$element->{'args'}}) >= 2 
+          if (scalar(@{$element->{'args'}}) >= 2
               and defined($element->{'args'}->[1])
               and $element->{'args'}->[1]->{'contents'}
               and @{$element->{'args'}->[1]->{'contents'}}) {
@@ -1539,10 +1553,10 @@ sub _convert($$;$)
       my $appended = '';
       my @format_elements;
       if (exists($docbook_preformatted_formats{$element->{'cmdname'}})) {
-        push @{$self->{'document_context'}->[-1]->{'preformatted_stack'}}, 
+        push @{$self->{'document_context'}->[-1]->{'preformatted_stack'}},
            $docbook_preformatted_formats{$element->{'cmdname'}};
       } elsif ($element->{'cmdname'} eq 'enumerate') {
-        push @format_elements, 'orderedlist'; 
+        push @format_elements, 'orderedlist';
         my $numeration;
         if ($element->{'extra'}
                and $element->{'extra'}->{'enumerate_specification'}) {
@@ -1680,7 +1694,7 @@ sub _convert($$;$)
   if ($element->{'type'}) {
     #warn " have type $element->{'type'}\n";
     if (exists($docbook_preformatted_formats{$element->{'type'}})) {
-      push @{$self->{'document_context'}->[-1]->{'preformatted_stack'}}, 
+      push @{$self->{'document_context'}->[-1]->{'preformatted_stack'}},
          $docbook_preformatted_formats{$element->{'type'}};
     }
     if (defined($type_elements{$element->{'type'}})) {
@@ -1782,7 +1796,7 @@ sub _convert($$;$)
   foreach my $format_element (@close_format_elements) {
     $result .= "</$format_element>";
   }
-  
+
   if ($element->{'cmdname'}
       and exists($Texinfo::Commands::block_commands{$element->{'cmdname'}})) {
     # a pending_prepend still there may happen if a quotation is empty.
@@ -1814,13 +1828,15 @@ sub _convert($$;$)
     }
     my $level_adjusted_cmdname
         = Texinfo::Structuring::section_level_adjusted_command_name($element);
-    if (!($element->{'extra'}->{'section_childs'}
+    if (!($element->{'extra'}
+          and $element->{'extra'}->{'section_childs'}
           and scalar(@{$element->{'extra'}->{'section_childs'}}))
         or $level_adjusted_cmdname eq 'top') {
       $result .= "</$docbook_sectioning_element>\n";
       pop @{$self->{'lang_stack'}};
       my $current = $element;
-      while ($current->{'extra'}->{'section_directions'}
+      while ($current->{'extra'}
+             and $current->{'extra'}->{'section_directions'}
              and $current->{'extra'}->{'section_directions'}->{'up'}
              # the most up element is a virtual sectioning root element, this
              # condition avoids getting into it
@@ -1851,7 +1867,7 @@ sub _convert($$;$)
   return $result;
 }
 
-# figure: mandatory title->use it with shortcaption?. Has a caption. 
+# figure: mandatory title->use it with shortcaption?. Has a caption.
 
 1;
 

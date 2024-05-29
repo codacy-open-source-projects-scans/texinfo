@@ -1,20 +1,20 @@
 # Info.pm: output tree as Info.
 #
 # Copyright 2010-2024 Free Software Foundation, Inc.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License,
 # or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 # Original author: Patrice Dumas <pertusus@free.fr>
 #
 # Names of methods from Texinfo::Convert::Plaintext overriden begin with format_.
@@ -313,7 +313,7 @@ sub output($$)
                  and $label->{'root'}->{'extra'}->{'is_target'});
     my $label_element = Texinfo::Common::get_label_element($label->{'root'});
     my $prefix;
-    
+
     if ($label->{'root'}->{'cmdname'} eq 'node') {
       $prefix = 'Node';
     } else {
@@ -628,7 +628,8 @@ sub format_image($$)
     foreach my $extension (@extensions) {
       my ($file_name, $file_name_encoding)
         = $self->encoded_input_file_name($basefile.$extension);
-      if ($self->Texinfo::Common::locate_include_file($file_name)) {
+      if (Texinfo::Common::locate_include_file($file_name,
+                          $self->get_conf('INCLUDE_DIRECTORIES'))) {
         # use the basename and not the file found.  It is agreed that it is
         # better, since in any case the files are moved.
         # If the file path found was to be used it should be decoded to perl

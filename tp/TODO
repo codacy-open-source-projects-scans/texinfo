@@ -57,13 +57,6 @@ Document *XS_EXTERNAL_FORMATTING *XS_EXTERNAL_CONVERSION?
 Delayed bugs/features
 =====================
 
-call after/in pass_document_parser_errors_to_registrar?
-clear_document_parser_errors (document_descriptor);
-
-Parser API is inconsistent between Perl and XS.  The Perl API allows
-reuse of parser and parallel use of parsers, which is not really
-possible with XS.
-
 Gavin idea to use see/See for cross references in --plaintext output.
 More generally, the plaintext ref_commands formatting code
 could be completly different from the Info code, which is the current
@@ -116,17 +109,35 @@ valgrind --tool=callgrind perl -w texi2any.pl ../doc/texinfo.texi --html
 valgrind --tool=callgrind --separate-callers=3 --separate-recs=10 perl -w texi2any.pl ../doc/texinfo.texi --html
 kcachegrind callgrind.out.XXXXXX
 
-C code could be checked to see if using an hash map implementation,
-by compiling C code as C++ and using the standard C++ library hash map
-could be interesting (Patrice 2023-10-14).
-Could be interesting for find_string:
- unique_target -> find_string
- (and, though much less used output_files_open_out -> find_string)
 
-For the Texinfo manual with full XS, Perl uses 22% of the time (for html),
-now only for code hopefully called once.  Calling Perl getSortKey uses about
-28% (more on sorting and C below).
+A Perl hash map is used for fast access, see USE_PERL_HASHMAP in
+convert_html.c and interface in call_html_perl_function.c.
+If a hash without Perl dependency is needed, C++ std::unordered_map could
+be used instead of a Perl hash map, by setting up an interface with
+functions similar with the call_html_perl_function.c defined as extern "C".
 
+
+For the Texinfo manual with full XS, Perl uses 26% of the time (for html),
+now only for code hopefully called once.  The switch to global locales
+for setlocale calling that is needed for Perl takes also 4%.  Calling Perl
+getSortKey uses about 28% (more on sorting and C below).
+Decomposition of the time used for the Texinfo manual with full XS
+(in percent):
+ parser: 11
+ index sorting: 30
+ main conversion: 24
+ node redirections: 2.7
+ prepare conversion units: 2.3
+ remove document: 1.6
+ associate internal references: 0.54
+ prepare unit directions: 0.45
+ setup indices sort strings: 0.38
+ reset converter: 0.23
+ structuring transformation1: 0.19
+ structuring transformation2: 0.19
+ remaining Texinfo XS code: 0.35
+ Perl: 26
+sum: 99.92
 
 hyphenation: should only appear in toplevel.
 
@@ -253,6 +264,16 @@ Future features
 ===============
 
 
+Add the possibility to add text to a parsed document by restarting
+parsing, when called as parse_texi_piece or parse_texi_line, by
+storing the parser document state not already in document in document.
+There would be a customization variable to set the parser to be
+restartable, and then parse_texi_piece and parse_texi_line could pass
+a document to retrieve the parsing state.  This should probably
+wait for a clear use case. Currently, the parser is never reused
+for different documents in the main codes, only in specific tests.
+
+
 For converters in C, agreed with Gavin that it is better not to
 translate a perl tree in input, but access directly the C tree that
 was setup by the XS parser.
@@ -366,6 +387,9 @@ to be present reliably.
 
 Tests with correct or acceptable results
 ****************************************
+
+File not found error message with accented characters in its name:
+./texi2any.pl not_éxisting.texi
 
 t/formats_encodings.t manual_simple_utf8_with_error
 utf8 manual with errors involving non ascii strings
@@ -728,7 +752,7 @@ pkgutil -y -i CSWhelp2man CSWpm-data-compare CSWpm-test-deep
 
 The system perl may not be suitable to build XS modules, and the
 system gawk may be too old, openCSW may be needed.  For example: 
-./configure PERL=/opt/csw/bin/perl GAWK=/opt/csw/bin/gawk
+./configure PERL=/opt/csw/bin/perl GAWK=/opt/csw/bin/gawk CFLAGS='-g'
 
 
 Misc notes

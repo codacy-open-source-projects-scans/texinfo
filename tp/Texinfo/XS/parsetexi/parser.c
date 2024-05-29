@@ -23,7 +23,7 @@
 #include "element_types.h"
 #include "tree_types.h"
 #include "tree.h"
-/* for isascii_alnum, whitespace_chars, read_flag_name, item_line_parent
+/* for isascii_alnum, whitespace_chars, read_flag_len, item_line_parent
    delete_global_info, parse_line_directive, count_multibyte */
 #include "utils.h"
 /* for relocate_source_marks */
@@ -37,8 +37,8 @@
 #include "input.h"
 #include "source_marks.h"
 #include "extra.h"
-/* for parser_conf */
-#include "conf.h"
+/* for global_parser_conf */
+#include "parser_conf.h"
 #include "command_stack.h"
 /* for nesting_context */
 #include "context_stack.h"
@@ -530,10 +530,13 @@ parse_texi_document (void)
 
   document_descriptor = parse_texi (document_root, before_node_section);
 
-  /* TODO the document information often use more memory than needed,
-     when space > number.  We could realloc here the diverse structures
-     to number. No need to do it in parse_texi, it should only be
-     truely interesting for a whole document.
+  /* TODO the document structure lists use more memory than needed
+     when space > number.  We could realloc here the diverse lists
+     to hold only what is strictly needed.  There is probably a trade off
+     with speed, and this unused memory is probably small compared to the
+     memory used by the Texinfo tree.
+     No need to do it in parse_texi, it should be relevant for whole
+     documents only.
    */
 
   rearrange_tree_beginning (before_node_section, document_descriptor);
@@ -644,19 +647,27 @@ end_preformatted (ELEMENT *current,
   return current;
 }
 
-/* Add TEXT to the contents of CURRENT, maybe starting a new paragraph.
+/* Add LEN_TEXT of TEXT to the contents of CURRENT, maybe starting a new
+   paragraph.
+   TEXT may not have a NUL character at TEXT + LEN_TEXT.
    If TRANSFER_MARKS_ELEMENT is given, also transfer mark sources
    from that element.
    */
 ELEMENT *
-merge_text (ELEMENT *current, const char *text, ELEMENT *transfer_marks_element)
+merge_text (ELEMENT *current, const char *text, size_t len_text,
+            ELEMENT *transfer_marks_element)
 {
   int no_merge_with_following_text = 0;
-  int leading_spaces = strspn (text, whitespace_chars);
+  int leading_spaces = 0;
   ELEMENT *last_child = last_contents_child (current);
 
+  /* determine the number of leading characters in whitespace_chars */
+  for (; leading_spaces < len_text
+         && strchr (whitespace_chars, text[leading_spaces]);
+       leading_spaces++);
+
   /* Is there a non-whitespace character in the line? */
-  if (text[leading_spaces])
+  if (leading_spaces < len_text)
     {
       char *additional = 0;
 
@@ -669,17 +680,11 @@ merge_text (ELEMENT *current, const char *text, ELEMENT *transfer_marks_element)
           no_merge_with_following_text = 1;
         }
 
-      if (leading_spaces)
+      if (abort_empty_line (&current, text, leading_spaces))
         {
-          additional = malloc (leading_spaces + 1);
-          if (!additional)
-            fatal ("malloc failed");
-          memcpy (additional, text, leading_spaces);
-          additional[leading_spaces] = '\0';
+          text += leading_spaces;
+          len_text -= leading_spaces;
         }
-
-      if (abort_empty_line (&current, additional))
-        text += leading_spaces;
 
       free (additional);
 
@@ -715,39 +720,50 @@ merge_text (ELEMENT *current, const char *text, ELEMENT *transfer_marks_element)
           transfer_marks_element->source_mark_list.number = 0;
         }
 
-      debug_nonl ("MERGED TEXT: %s||| in ", text);
-      debug_parser_print_element (last_child, 0);
-      debug_nonl (" last of ");
-      debug_parser_print_element (current, 0); debug ("");
+      if (global_parser_conf.debug)
+        {
+          char *dbg_text = strndup (text, len_text);
+          debug_nonl ("MERGED TEXT: %s||| in ", dbg_text);
+          free (dbg_text);
+          debug_parser_print_element (last_child, 0);
+          debug_nonl (" last of ");
+          debug_parser_print_element (current, 0); debug ("");
+        }
 
       /* Append text */
-      text_append (&last_child->text, text);
+      text_append_n (&last_child->text, text, len_text);
     }
   else
     {
       ELEMENT *e = new_element (ET_NONE);
       if (transfer_marks_element)
         transfer_source_marks (transfer_marks_element, e);
-      text_append (&e->text, text);
+      text_append_n (&e->text, text, len_text);
       add_to_element_contents (current, e);
-      debug ("NEW TEXT (merge): %s|||", text);
+      if (global_parser_conf.debug)
+        {
+          char *dbg_text = strndup (text, len_text);
+          debug ("NEW TEXT (merge): %s|||", dbg_text);
+          free (dbg_text);
+        }
     }
 
   return current;
 }
 
 /* If last contents child of CURRENT is an empty line element, remove
-   or merge text, and return true. */
+   or merge text, and return true.
+   If LEN_TEXT is set, add LEN_TEXT of ADDITIONAL_SPACES to the
+   last contents child of CURRENT.
+ */
 int
-abort_empty_line (ELEMENT **current_inout, char *additional_spaces)
+abort_empty_line (ELEMENT **current_inout, const char *additional_spaces,
+                  size_t len_text)
 {
   ELEMENT *current = *current_inout;
   int retval;
 
   ELEMENT *last_child = last_contents_child (current);
-
-  if (!additional_spaces)
-    additional_spaces = "";
 
   if (last_child
       && (last_child->type == ET_empty_line
@@ -757,15 +773,25 @@ abort_empty_line (ELEMENT **current_inout, char *additional_spaces)
           || last_child->type == ET_spaces_after_close_brace))
     {
       retval = 1;
-      debug_nonl ("ABORT EMPTY in ");
-      debug_parser_print_element (current, 0);
-      debug_nonl ("(p:%d): %s; add |%s| to |%s|",
-                  in_paragraph_context (current_context ()),
-                  element_type_names[last_child->type], additional_spaces,
-                  last_child->text.end > 0 ? last_child->text.text : "");
-      debug ("");
+      if (global_parser_conf.debug)
+        {
+          debug_nonl ("ABORT EMPTY in ");
+          debug_parser_print_element (current, 0);
+          debug_nonl ("(p:%d): %s; ", in_paragraph_context (current_context ()),
+                      element_type_names[last_child->type]);
+          if (len_text)
+            {
+              char *additional_text_dbg = strndup (additional_spaces, len_text);
+              debug_nonl ("add |%s| to ", additional_text_dbg);
+              free (additional_text_dbg);
+            }
+          debug_nonl ("|%s|",
+                      last_child->text.end > 0 ? last_child->text.text : "");
+          debug ("");
+        }
 
-      text_append (&last_child->text, additional_spaces);
+      if (len_text)
+        text_append_n (&last_child->text, additional_spaces, len_text);
 
       /* Remove element altogether if it's empty. */
       if (last_child->text.end == 0)
@@ -799,7 +825,7 @@ abort_empty_line (ELEMENT **current_inout, char *additional_spaces)
 
           owning_element = lookup_extra_element (last_child,
                                                  "spaces_associated_command");
-          text_append (&spaces_element->text, e->text.text);
+          text_append_n (&spaces_element->text, e->text.text, e->text.end);
           transfer_source_marks (e, spaces_element);
           add_info_element_oot (owning_element, "spaces_before_argument",
                                 spaces_element);
@@ -829,7 +855,7 @@ isolate_last_space_internal (ELEMENT *current)
   /* If text all whitespace */
   if (text[strspn (text, whitespace_chars)] == '\0')
     {
-      text_append (&spaces_element->text, last_elt->text.text);
+      text_append_n (&spaces_element->text, text, text_len);
       transfer_source_marks (last_elt, spaces_element);
       add_info_element_oot (current, "spaces_after_argument",
                             spaces_element);
@@ -843,7 +869,7 @@ isolate_last_space_internal (ELEMENT *current)
       text_reset (&t);
 
       trailing_spaces = 0;
-      for (i = strlen (text) - 1;
+      for (i = text_len - 1;
            i > 0 && strchr (whitespace_chars, text[i]);
            i--)
         trailing_spaces++;
@@ -892,7 +918,7 @@ isolate_trailing_space (ELEMENT *current, enum element_type spaces_type)
       int i, trailing_spaces;
 
       trailing_spaces = 0;
-      for (i = strlen (text) - 1;
+      for (i = text_len - 1;
            i > 0 && strchr (whitespace_chars, text[i]);
            i--)
         trailing_spaces++;
@@ -1059,8 +1085,9 @@ gather_spaces_after_cmd_before_arg (ELEMENT *current)
                         spaces_element);
 }
 
-ELEMENT *
-new_value_element (enum command_id cmd, char *flag, ELEMENT *spaces_element)
+static ELEMENT *
+new_value_element (enum command_id cmd, const char *flag,
+                   int flag_len, ELEMENT *spaces_element)
 {
   ELEMENT *value_elt = new_element (ET_NONE);
   ELEMENT *brace_command_arg = new_element (ET_brace_command_arg);
@@ -1068,7 +1095,7 @@ new_value_element (enum command_id cmd, char *flag, ELEMENT *spaces_element)
 
   value_elt->cmd = cmd;
 
-  text_append (&value_text->text, flag);
+  text_append_n (&value_text->text, flag, flag_len);
   add_to_element_args (value_elt, brace_command_arg);
   add_to_element_contents (brace_command_arg, value_text);
   if (spaces_element)
@@ -1772,7 +1799,7 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
     {
       const char *remaining_line = line_after_command;
       ELEMENT *spaces_element = 0;
-      if (parser_conf.ignore_space_after_braced_command_name)
+      if (global_parser_conf.ignore_space_after_braced_command_name)
         {
           int whitespaces_len = strspn (remaining_line, whitespace_chars);
           if (whitespaces_len > 0)
@@ -1785,37 +1812,42 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
         }
       if (*remaining_line == '{')
         {
-          char *flag;
+          size_t flag_len;
 
           remaining_line++;
-          flag = read_flag_name (&remaining_line);
-          if (flag)
+          flag_len = read_flag_len (remaining_line);
+          if (flag_len)
             {
-              if (*remaining_line == '}')
+              if (*(remaining_line + flag_len) == '}')
                 {
-                  char *value;
-                  value = fetch_value (flag);
+                  char *flag = strndup (remaining_line, flag_len);
+                  char *value = fetch_value (flag);
+
+                  remaining_line += flag_len +1; /* past '}' */
 
                   if (value)
                     {
                       SOURCE_MARK *value_source_mark;
                       ELEMENT *sm_value_element;
 
-                      remaining_line++; /* past '}' */
-                      if (parser_conf.max_macro_call_nesting
+                      if (global_parser_conf.max_macro_call_nesting
                           && value_expansion_nr
-                                  >= parser_conf.max_macro_call_nesting)
+                                  >= global_parser_conf.max_macro_call_nesting)
                         {
                           line_warn (
                             "value call nested too deeply "
                    "(set MAX_MACRO_CALL_NESTING to override; current value %d)",
-                             parser_conf.max_macro_call_nesting);
+                             global_parser_conf.max_macro_call_nesting);
                           free (flag);
                           if (spaces_element)
                             destroy_element (spaces_element);
                           line = remaining_line;
                           goto funexit;
                         }
+
+                      sm_value_element
+                        = new_value_element (cmd, flag, flag_len,
+                                             spaces_element);
 
                       input_push_text (strdup (remaining_line),
                                        current_source_info.line_nr, 0, 0);
@@ -1826,8 +1858,6 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
                           = new_source_mark (SM_type_value_expansion);
                       value_source_mark->status = SM_status_start;
                       value_source_mark->line = strdup (value);
-                      sm_value_element = new_value_element (cmd, flag,
-                                                            spaces_element);
                       value_source_mark->element = sm_value_element;
 
                       register_source_mark (current, value_source_mark);
@@ -1835,17 +1865,16 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
 
                       value_expansion_nr++;
 
-                      /* Move 'line' to end of string so next input to
+                      /* Set 'line' to end of string so next input to
                          be processed is taken from input stack. */
-                      line += (remaining_line - line) + strlen (remaining_line);
+                      line = "";
                     }
+                  free (flag);
                   if (value)
                     {
-                      free (flag);
                       goto funexit;
                     }
                 }
-              free (flag);
             }
         }
       if (spaces_element)
@@ -1942,7 +1971,7 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
 
       if (strchr (whitespace_chars, *line)
                && ((command_flags(current) & CF_accent)
-                   || parser_conf.ignore_space_after_braced_command_name))
+            || global_parser_conf.ignore_space_after_braced_command_name))
         {
            int whitespaces_len;
            int additional_newline = 0;
@@ -1960,14 +1989,10 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
                     /* do not consider the end of line to be possibly between
                        the @-command and the argument if at the end of a
                        line or block @-command. */
-                       char *space_text;
                        if (current->contents.number > 0)
                          gather_spaces_after_cmd_before_arg (current);
                        current = current->parent;
-                       /* TODO: Have a length argument to merge_text? */
-                       space_text = strndup (line, whitespaces_len);
-                       current = merge_text (current, space_text, 0);
-                       free (space_text);
+                       current = merge_text (current, line, whitespaces_len, 0);
                        line += whitespaces_len;
                        isolate_last_space (current);
                        current = end_line (current);
@@ -2092,10 +2117,9 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
       /* @value not expanded (expansion is done above), and @txiinternalvalue */
       if ((cmd == CM_value) || (cmd == CM_txiinternalvalue))
         {
-          const char *arg_start;
-          char *flag;
+          size_t flag_len;
           ELEMENT *spaces_element = 0;
-          if (parser_conf.ignore_space_after_braced_command_name)
+          if (global_parser_conf.ignore_space_after_braced_command_name)
             {
               int whitespaces_len = strspn (line, whitespace_chars);
               if (whitespaces_len > 0)
@@ -2110,24 +2134,23 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
             goto value_invalid;
 
           line++;
-          arg_start = line;
-          flag = read_flag_name (&line);
-          if (!flag)
+          flag_len = read_flag_len (line);
+          if (!flag_len)
             goto value_invalid;
 
-          if (*line != '}')
+          if (*(line + flag_len) != '}')
             {
-              line = arg_start - 1;
-              free (flag);
+              line--;
               goto value_invalid;
             }
 
           if (1) /* @value syntax is valid */
             {
-              char *value;
           value_valid:
               if (cmd == CM_value)
                 {
+                  char *value;
+                  char *flag = strndup (line, flag_len);
                   value = fetch_value (flag);
                   if (!value)
                     {
@@ -2136,14 +2159,16 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
                        for the converters to handle */
                       ELEMENT *value_elt;
 
-                      abort_empty_line (&current, NULL);
+                      abort_empty_line (&current, NULL, 0);
 
                       line_warn ("undefined flag: %s", flag);
 
-                      value_elt = new_value_element (cmd, flag, spaces_element);
+                      value_elt
+                         = new_value_element (cmd, flag, flag_len,
+                                              spaces_element);
                       add_to_element_contents (current, value_elt);
 
-                      line++; /* past '}' */
+                      line += flag_len +1; /* past '}' */
                     }
                   else
                     {
@@ -2160,16 +2185,16 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
                 { /* CM_txiinternalvalue */
                   ELEMENT *txiinternalvalue_elt;
 
-                  abort_empty_line (&current, NULL);
+                  abort_empty_line (&current, NULL, 0);
 
-                  txiinternalvalue_elt = new_value_element (cmd, flag,
-                                                            spaces_element);
+                  txiinternalvalue_elt
+                    = new_value_element (cmd, line, flag_len,
+                                         spaces_element);
 
                   add_to_element_contents (current, txiinternalvalue_elt);
 
-                  line++; /* past '}' */
+                  line += flag_len +1; /* past '}' */
 
-                  free (flag);
                   goto funexit;
                 }
             }
@@ -2209,7 +2234,7 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
       /* warn on not appearing at line beginning.  Need to do before closing
          paragraph as it also closes the empty line */
       if (!def_line_continuation
-          && !abort_empty_line (&current, NULL)
+          && !abort_empty_line (&current, NULL, 0)
           && ((cmd == CM_node || cmd == CM_bye)
               || (command_data(cmd).flags & CF_block)
               || ((command_data(cmd).flags & CF_line)
@@ -2353,16 +2378,13 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
       else if (current->type == ET_line_arg && current->parent->cmd == CM_node)
         line_warn ("superfluous arguments for node");
       else
-        current = merge_text (current, ",", 0);
+        current = merge_text (current, ",", 1, 0);
     }
   else if (strchr (":\t.", *line))
     {
       /* merge menu separator (other than comma) */
-      char separator = *line++;
-      char t[2];
-      t[0] = separator;
-      t[1] = '\0';
-      current = merge_text (current, t, 0);
+      current = merge_text (current, line, 1, 0);
+      line++;
     }
   else if (*line == '\f')
     {
@@ -2382,7 +2404,7 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
           add_to_element_contents (current, e);
         }
       else
-       current = merge_text (current, "\f", 0);
+       current = merge_text (current, "\f", 1, 0);
     }
   /* Misc text except end of line. */
   else if (*line != '\n')
@@ -2391,12 +2413,8 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
 
       /* Output until next command, separator or newline. */
       {
-        char *sep_text;
         len = strcspn (line, "{}@,:\t.\n\f");
-        /* TODO: Have a length argument to merge_text? */
-        sep_text = strndup (line, len);
-        current = merge_text (current, sep_text, 0);
-        free (sep_text);
+        current = merge_text (current, line, len, 0);
         line += len;
       }
     }
@@ -2408,7 +2426,7 @@ process_remaining_on_line (ELEMENT **current_inout, const char **line_inout)
 
       if (*line == '\n')
         {
-          current = merge_text (current, "\n", 0);
+          current = merge_text (current, "\n", 1, 0);
           line++;
         }
       else
@@ -2436,7 +2454,7 @@ check_line_directive (const char *line)
   int status = 0;
   char *parsed_filename;
 
-  if (!parser_conf.cpp_line_directives)
+  if (!global_parser_conf.cpp_line_directives)
     return 0;
 
   /* Check input is coming directly from a file. */
@@ -2505,7 +2523,7 @@ parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
                  == ET_internal_spaces_before_argument)
             {
               /* Remove this element and update 'info' values. */
-              abort_empty_line (&current, 0);
+              abort_empty_line (&current, NULL, 0);
             }
 
           e = new_element (ET_empty_line);
@@ -2534,7 +2552,7 @@ parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
           if (!line)
             {
               debug ("END LINE in line loop STILL_MORE_TO_PROCESS");
-              abort_empty_line (&current, NULL);
+              abort_empty_line (&current, NULL, 0);
               current = end_line (current);
               break;
             }
@@ -2624,7 +2642,7 @@ parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
   parsed_document = 0;
   forget_indices ();
 
-  complete_indices (document, parser_conf.debug);
+  complete_indices (document, global_parser_conf.debug);
 
   return document->descriptor;
 }
