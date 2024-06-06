@@ -100,8 +100,7 @@ po-check:
 	    | grep -v '^src/false\.c$$' | sort > $@-1;			\
 	  files=;							\
 	  for file in `find [a-zA-Z]* -name '*.[ch]' 			\
-		                   -o -name '*.p[lm]'			\
-			           -o -name '*.notyettwjr'`; do		\
+		                   -o -name '*.p[lm]'` ; do             \
 	    # don't look at sources from some subdirs.			\
 	    case $$file in						\
 	      contrib/* ) continue;;					\
@@ -110,19 +109,10 @@ po-check:
               tp/maintain/* ) continue;;				\
               tp/t/results* ) continue;;				\
 	    esac;							\
-	    # if have lex/yacc sources, skip corresponding c/h files.	\
-	    case $$file in						\
-	    *.[ch])							\
-	      base=`expr " $$file" : ' \(.*\)\..'`;			\
-	      { test -f $$base.l || test -f $$base.y; } && continue;;	\
-	    esac;							\
 	    files="$$files $$file";					\
 	  done;								\
-	  # the first alternative is for twjr/gawk, which just uses _"	\
-	  # with no space or lparen; the other alternative matches the	\
-	  # usual function calls, e.g., _("..."), with or without space.\
 	  grep -E -l							\
-	    '\b[^$$]N?__?"|\b(N?__?p?|gettext|line_error|line_error_ext|line_warn|command_error|command_warn) *\([^)"]*("|$$)'	\
+	    '\b(N?__?p?|gettext|line_error|line_error_ext|line_warn|command_error|command_warn|message_list_document_warn|message_list_document_error|message_list_command_warn|message_list_command_error) *\([^)"]*("|$$)'	\
 	    $$files | sort -u > $@-2;					\
 	  diff -u $@-1 $@-2 || exit 1;					\
 	  rm -f $@-1 $@-2;						\

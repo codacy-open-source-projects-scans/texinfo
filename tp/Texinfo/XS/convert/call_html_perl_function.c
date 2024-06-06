@@ -26,7 +26,6 @@
   #undef free
 #endif
 #include "XSUB.h"
-
 #include "ppport.h"
 
 #undef context
@@ -2321,7 +2320,7 @@ init_registered_ids_hv (CONVERTER *self)
 {
   dTHX;
 
-  self->registered_ids_hv = newHV ();
+  self->rid.registered_ids_hv = newHV ();
 }
 
 int
@@ -2329,7 +2328,7 @@ is_hv_registered_id (CONVERTER *self, const char *string)
 {
   dTHX;
 
-  return hv_exists (self->registered_ids_hv, string, strlen (string));
+  return hv_exists (self->rid.registered_ids_hv, string, strlen (string));
 }
 
 void
@@ -2337,7 +2336,8 @@ hv_register_id (CONVERTER *self, const char *string)
 {
   dTHX;
 
-  hv_store (self->registered_ids_hv, string, strlen (string), newSViv (1), 0);
+  hv_store (self->rid.registered_ids_hv, string, strlen (string),
+            newSViv (1), 0);
 }
 
 void
@@ -2345,7 +2345,7 @@ clear_registered_ids_hv (CONVERTER *self)
 {
   dTHX;
 
-  hv_clear (self->registered_ids_hv);
+  hv_clear (self->rid.registered_ids_hv);
 }
 
 void
@@ -2353,5 +2353,5 @@ free_registered_ids_hv (CONVERTER *self)
 {
   dTHX;
 
-  hv_undef (self->registered_ids_hv);
+  hv_undef (self->rid.registered_ids_hv);
 }

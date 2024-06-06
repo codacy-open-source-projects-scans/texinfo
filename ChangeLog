@@ -1,3 +1,174 @@
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert),
+	tp/Texinfo/XS/convert/convert_html.c
+	(set_special_units_targets_files): remove code that is never run
+	found with solaris compiler.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(set_special_units_targets_files): MONOLITHIC option is integer.
+	Found with solaris compiler.
+
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c: include ppport.h for
+	G_LIST.
+
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	Substitute Perl formatting function for button only for Perl with cv_name
+
+	* tp/Texinfo/XS/main/get_perl_info.c
+	(html_get_button_specification_list): replace the Perl formatting
+	function for button by a C formatting function for default formatting
+	functions only if the PErl version has cv_name.  Based on ppport.h
+	output, use 5.21.5 as minimum Perl version.  Based on Gavin
+	investigations.
+
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	Do not use unnamed union for INDEX_COLLATOR
+
+	* tp/Texinfo/XS/main/manipulate_indices.c (INDEX_COLLATOR): rename the
+	union as coll.  Update codes using the corresponding union fields.
+
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	Do not use unnamed union for CONVERTER
+
+	* tp/Texinfo/XS/main/converter_types.h (CONVERTER): rename the
+	registered ids union as rid.  Update codes using the corresponding
+	union fields.
+
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	Do not use unnamed union for COMMAND_OR_TYPE
+
+	* tp/Texinfo/XS/main/converter_types.h (COMMAND_OR_TYPE): name the
+	union as ct.  Update codes using the corresponding union fields.
+
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	Do not use unnamed union for OPTION
+
+	* tp/Texinfo/XS/main/option_types.h: name the main union as o.  Update
+	codes using the corresponding union fields.
+
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	Do not use unnamed union for KEY_PAIR and BUTTON_SPECIFICATION*
+
+	* tp/Texinfo/XS/main/tree_types.h (KEY_PAIR): name the main union as
+	k.  Update codes using the corresponding union fields.
+
+	* tp/Texinfo/XS/main/option_types.h (BUTTON_SPECIFICATION_INFO)
+	(BUTTON_SPECIFICATION): name the main union as b or bi.  Update codes
+	using the corresponding union fields.
+
+2024-06-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* po/POTFILES.in: update
+
+2024-06-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* Makefile.am (po-check): Check for message_list_document_warn,
+	message_list_document_error, message_list_command_warn and
+	message_list_command_error.
+
+2024-06-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* Makefile.am (po-check): Remove check for lex/yacc sources as
+	this does not apply anywhere in this package.
+
+2024-06-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Partial po/POTFILES.in update
+
+	* po/POTFILES.in: add/remove some files
+
+	* Makefile.am (po-check): Remove code checking for strings in
+	.twjr files as it led to false positives for C files containing
+	simply the string constant "__".  This code was not doing anything
+	anyway as it was not enabled for "*.twjr" files.
+
+	* TODO: mention that texindex strings don't seem to be
+	translated.
+
+2024-06-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs,
+	* tp/Texinfo/XS/convert/call_html_perl_function.c,
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs:
+	Add/remove #include "ppport.h" according to output of "perl ppport.h".
+
+2024-06-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: advice on upgrading ppport.h
+
+2024-06-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS: run gnulib-tool --add-import
+
+2024-06-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Run gnulib-tool --add-import at top level
+
+2024-06-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_other_command)
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (handle_other_command):
+	Issue warning for @ at end of line command.
+
+2024-06-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: add entry for SPARC memory alignment bugfix
+
+2024-06-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: add entry for fix on 2024-02-09 "Fix unnumbered sections
+	in PDF outline."
+
+2024-06-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: add entry for fix on 2024-02-11 "Avoid crash from
+	undefined style."
+
+2024-06-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: add entry for fix on 2024-05-01 "Remove parent of @include
+	or @setfilename source mark elements"
+
+2024-06-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (The Top Node, Updating Commands):
+	Avoid saying "sectioning command line" as this is confusing.
+
+2024-06-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Prepare for pretest release
+
+	* configure.ac: bump version to 7.1.90.
+	(AM_INIT_AUTOMAKE): add dist-xz option.
+
+	* util/texi2dvi, util/texi2pdf, js/info.js: version, copyright date.
+
+	* tp/texi2any.pl, info/info.c, install-info/install-info.c,
+	texindex/ti.twjr, Pod-Simple-Texinfo/pod2texi: 2024 in version
+	messages.
+
+2024-05-29  Alfred M. Szmidt  <ams@gnu.org>  (tiny change)
+
+	* tp/Texinfo/XS/main/utils.c (clear_option, free_option)
+	(initialize_option): Add a no-op compund statment to mitigate
+	errors from GCC.
+
+2024-05-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/api.c (parse_file): cast the decode_string
+	argument to char* to remove the const, as, even if decode_string do
+	not modify its argument, it cannot be marked const if iconv input
+	buffer is not const in iconv prototype.
+
 2024-05-29  Patrice Dumas  <pertusus@free.fr>
 
 	Use the command line encoding for input file name in message
