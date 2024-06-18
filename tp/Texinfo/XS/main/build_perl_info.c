@@ -16,6 +16,7 @@
 #include <config.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 /* Avoid namespace conflicts. */
 #define context perl_context
@@ -75,7 +76,7 @@
 
       To be sure to use non Perl defined functions, constructors and wrappers
       can be used, from utils.h:
-       non_perl_free, non_perl_strdup, non_perl_strndup,
+       non_perl_free, non_perl_malloc, non_perl_strdup, non_perl_strndup,
        non_perl_xvasprintf, non_perl_xasprintf.
     */
 
@@ -610,7 +611,7 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
           text_printf (&message, "parent %p hv not set in %s '%s'\n",
                             e->parent, debug_str, convert_to_texinfo (e));
           fatal (message.text);
-          free (debug_str);
+          non_perl_free (debug_str);
         }
       sv = newRV_inc ((SV *) e->parent->hv);
       hv_store (e->hv, "parent", strlen ("parent"), sv, HSH_parent);
@@ -1625,9 +1626,9 @@ funcname (SV *document_in) \
 \
   if (!result_sv)\
     {\
-      SV **sv_ref = hv_fetch (document_hv, key, strlen (key), 0);\
-      if (sv_ref && SvOK (*sv_ref))\
-        result_sv = *sv_ref;\
+      SV **sv_reference = hv_fetch (document_hv, key, strlen (key), 0);\
+      if (sv_reference && SvOK (*sv_reference))\
+        result_sv = *sv_reference;\
     }\
 \
   if (result_sv)\
@@ -1679,9 +1680,9 @@ funcname (SV *document_in) \
 \
   if (!result_sv)\
     {\
-      SV **sv_ref = hv_fetch (document_hv, key, strlen (key), 0);\
-      if (sv_ref && SvOK (*sv_ref))\
-        result_sv = *sv_ref;\
+      SV **sv_reference = hv_fetch (document_hv, key, strlen (key), 0);\
+      if (sv_reference && SvOK (*sv_reference))\
+        result_sv = *sv_reference;\
     }\
 \
   if (result_sv)\
@@ -1739,9 +1740,9 @@ document_global_information (SV *document_in)
 
   if (!result_sv)
     {
-      SV **sv_ref = hv_fetch (document_hv, key, strlen (key), 0);
-      if (sv_ref && SvOK (*sv_ref))
-        result_sv = *sv_ref;
+      SV **sv_reference = hv_fetch (document_hv, key, strlen (key), 0);
+      if (sv_reference && SvOK (*sv_reference))
+        result_sv = *sv_reference;
     }
 
   if (result_sv)

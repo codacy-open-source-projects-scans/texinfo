@@ -35,17 +35,18 @@ pod2texi_pl = $(abs_top_srcdir)/Pod-Simple-Texinfo/pod2texi.pl
 
 if BUILD_PERL_API_TEXI
 # we setup the conversion to Texinfo for inclusion in a document,
-# but we ignore the resulting document, as we include from the
-# Texinfo manual.  The file name for the included section
-# is therefore determined by the information in the Pod file NAME
-# section.
-pod2texi.texi: $(pod2texi_pl)
-	$(PERL) -I $(top_srcdir)/Pod-Simple-Texinfo/lib/ -I $(top_srcdir)/tp/ $(top_srcdir)/Pod-Simple-Texinfo/pod2texi.pl --base-level=subsubsection --no-section-nodes --headings-as-sections $(pod2texi_pl) > /dev/null
+# but we ignore the main document (output to /dev/null) that includes
+# each portion of Texinfo converted from the pod files (here only from
+# pod2texi.pl), as we include from the Texinfo manual.  The file name
+# for the included section is therefore determined by the information
+# in the Pod file NAME section.
+$(srcdir)/pod2texi.texi: $(pod2texi_pl)
+	$(MAKEINFO_ENVIRONMENT) $(PERL) -I $(top_srcdir)/Pod-Simple-Texinfo/lib/ $(top_srcdir)/Pod-Simple-Texinfo/pod2texi.pl --base-level=subsubsection --no-section-nodes --headings-as-sections --subdir=$(srcdir) $(pod2texi_pl) > /dev/null
 endif
 
 TXI_MODULES_ENV = srcdir="$(srcdir)"; export srcdir;
 
-html_default_commands_args.texi: $(top_srcdir)/tp/Texinfo/Convert/HTML.pm $(srcdir)/generate_html_doc_texi.pl
+$(srcdir)/html_default_commands_args.texi: $(top_srcdir)/tp/Texinfo/Convert/HTML.pm $(srcdir)/generate_html_doc_texi.pl
 	$(TXI_MODULES_ENV) $(PERL) $(srcdir)/generate_html_doc_texi.pl $(srcdir)/html_default_commands_args.texi
 
 # We'd also like to use something like this, but Automake calls

@@ -1,3 +1,178 @@
+2024-06-17  Patrice Dumas  <pertusus@free.fr>
+
+	Use explicit prototype for Info command functions
+
+	* info/m-x.c (info_execute_command): call command function with two
+	arguments only, window and count.
+
+	* info/doc.h (InfoCommand), info/echo-area.c
+	(read_and_dispatch_in_echo_area, ea_yank_pop)
+	(ea_possible_completions), info/info.h (COMMAND_FUNCTION),
+	info/makedoc.c (process_one_file), info/session.c
+	(info_read_and_dispatch, read_key_sequence), info/terminal.h
+	(VFunction): add a function type COMMAND_FUNCTION for pointers on info
+	commands function and replace the VFunction untyped generic function
+	type.  Move VFunction definition to terminal.h.
+
+2024-06-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Info tests timeout
+
+	* info/t/Init-test.inc (TEXINFO_INFO_TESTS_TIMEOUT, run_ginfo):
+	Use environment variable to allow changing tests timeout
+	from the environment.  Increase default timeout from 5 to 10
+	seconds. This is to support running the tests on slow systems,
+	such as under CPU emulation.  Report of test timeouts from Nelson.
+
+2024-06-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/regenerate_C_options_info.pl: remove a spurious ; output
+	after generated function definitions.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* system.h: remove strerror definition, the prototype looks wrong and
+	the conditional is not set anywhere.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* info/filesys.h (infopath_string), info/infopath.c (infopath_string):
+	remove extern in infopath_string filesys.h declaration.  Add void in
+	infopath_string argument.
+
+2024-06-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/infomap.c (locate_init_file) [__MINGW32__]:
+	Add missing semicolon.  From Bruno.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/Makefile.am (pod2texi.texi), doc/tp_api/Makefile.am
+	(MAKEINFO_ENVIRONMENT, MAKEINFO, texi2any_internals.texi): set/use
+	environment variables to have ModulePath.pm work correctly.  Remove -I
+	options now unneeded.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.c (non_perl_malloc): add.
+
+	* tp/Texinfo/XS/main/call_perl_function.c (call_collator_getSortKey):
+	use non_perl_malloc instead of malloc.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_types_conversion): call non_perl_free instead of free.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs,
+	tp/Texinfo/XS/main/build_perl_info.c,
+	tp/Texinfo/XS/main/get_perl_info.c,
+	tp/Texinfo/XS/main/node_name_normalization.c,
+	tp/Texinfo/XS/parsetexi/def.c: include stdlib.h for free.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/debug_parser.c: add missing stdlib.h
+	include.  Report by Bruno.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	Add missing void to prototypes
+
+	* tp/Texinfo/XS/main/builtin_commands.h (set_element_type_name_info),
+	tp/Texinfo/XS/main/parser_conf.c (register_conf): add void in
+	prototypes.  Found thanks to -Wstrict-prototypes based on Bruno.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/Makefile.am (pod2texi.texi): add
+	-I $(top_builddir)/tp/Texinfo/XS.
+
+	* tp/Texinfo/ModulePath.pm.in (init): do not add
+	tp/Texinfo/XS/parsetexi to @INC, there is nothing to be found there.
+
+	* tp/Texinfo/ModulePath.pm.in ($tp_builddir),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (init): rename builddir as
+	tp_builddir.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	doc: prefix target file names in srcdir with '$(srcdir)/'
+
+	* doc/Makefile.am (html_default_commands_args.texi): prefix the
+	target file names which is created in srcdir with '$(srcdir)/'.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/conf.c: add missing stdlib.h include.
+	Report by Bruno.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	Remove check and include of xlocale.h now done in gnulib locale
+
+	* tp/Texinfo/XS/configure.ac, tp/Texinfo/XS/main/manipulate_indices.c:
+	remove test of xlocale.h and explicit include, everything should be
+	covered by the gnulibe locale module.  From Gavin and Bruno.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	Add gnulib locale module for XS
+
+	* tp/Texinfo/XS:
+	Run "gnulib-tool --add-import locale"
+
+2024-06-10  Bruno Haible  <bruno@clisp.org>
+
+	man: Add support for VPATH builds with OpenBSD 'make'
+
+	* man/Makefile.am: In the rules that use HELP2MAN, prefix the
+	target file names with '$(srcdir)/'.
+
+2024-06-10  Patrice Dumas  <pertusus@free.fr>
+
+	Include xlocale.h for newlocale and other symbols if found
+
+	* tp/Texinfo/XS/configure.ac (AC_CHECK_HEADERS),
+	tp/Texinfo/XS/main/manipulate_indices.c: test if xlocale.h exists, and
+	if yes include it.  Needed on MacOs.  Report from Bruno.
+
+2024-06-10  Patrice Dumas  <pertusus@free.fr>
+
+	Fix out-of-source build of pod2texi.texi
+
+	* doc/tp_api/Makefile.am (pod2texi.texi): create pod2texi.texi in
+	$(srcdir) by passing the --subdir option.
+	Pass "-I $(top_builddir)/tp" to perl to find generated modules,
+	from Gavin.
+
+2024-06-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix out-of-source build of texi2any_internals.texi
+
+	* doc/tp_api/Makefile.am (texi2any_internals.texi):
+	Pass  "-I $(top_builddir)/tp" to perl to find generated modules.
+	Filter output through sed by outputting a temporary file rather
+	than piping output - this allows detecting if perl run failed.
+
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	* Makefile.am (po_document-check): Check for cdt, pcdt, cdt_string
+	and gdt_string, by modifying the regex.  Some unused functions could
+	be found, such as pgdt_string, but it should not be an issue.
+
+	* po/Makevars, po_document/Makevars: add comments to remember to
+	update po*-check when new functions are added as keywords.
+
+2024-06-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (document_tree)
+	(indices_sort_strings), tp/Texinfo/XS/main/build_perl_info.c
+	(BUILD_PERL_DOCUMENT_ITEM, BUILD_PERL_DOCUMENT_LIST)
+	(document_global_information): rename sv_ref to avoid false positiver
+	reported by ppport.h as sv_ref is also exported as part of Perl API as 
+	a function.  Report by Gavin.
+
 2024-06-06  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/Convert/HTML.pm (_convert),
