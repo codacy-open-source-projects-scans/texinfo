@@ -8478,6 +8478,7 @@ foreach my $customized_reference ('external_target_split_name',
      'format_end_file' => \&_default_format_end_file,
      'format_footnotes_segment' => \&_default_format_footnotes_segment,
      'format_footnotes_sequence' => \&_default_format_footnotes_sequence,
+     'format_single_footnote' => \&_default_format_single_footnote,
      'format_heading_text' => \&_default_format_heading_text,
      'format_navigation_header' => \&_default_format_navigation_header,
      'format_navigation_panel' => \&_default_format_navigation_panel,
@@ -11466,6 +11467,20 @@ $after_body_open
   return $result;
 }
 
+sub _default_format_single_footnote($$$$$$)
+{
+  my $self = shift;
+  my ($command, $footid, $number_in_doc, $href, $mark) = @_;
+  my $footnote_text
+      = $self->convert_tree_new_formatting_context($command->{'args'}->[0],
+                            "$command->{'cmdname'} $number_in_doc $footid");
+  chomp ($footnote_text);
+  $footnote_text .= "\n";
+
+  return $self->html_attribute_class('h5', ['footnote-body-heading']) . '>'.
+     "<a id=\"$footid\" href=\"$href\">($mark)</a></h5>\n" . $footnote_text;
+}
+
 sub _default_format_footnotes_sequence($)
 {
   my $self = shift;
@@ -11478,6 +11493,15 @@ sub _default_format_footnotes_sequence($)
           = @$pending_footnote_info_array;
     my $footnote_location_href = $self->footnote_location_href($command, undef,
                                            $docid, $footnote_location_filename);
+
+    my $footnote_mark;
+    if ($self->get_conf('NUMBER_FOOTNOTES')) {
+      $footnote_mark = $number_in_doc;
+    } else {
+      $footnote_mark = $self->get_conf('NO_NUMBER_FOOTNOTE_SYMBOL');
+      $footnote_mark = '' if (!defined($footnote_mark));
+    }
+
     # NOTE the @-commands in @footnote that are formatted differently depending
     # on in_multi_expanded($self) cannot know that the original context
     # of the @footnote in the main document was $multi_expanded_region.
@@ -11488,23 +11512,10 @@ sub _default_format_footnotes_sequence($)
     # with those @-commands in @footnote in multi expanded
     # region do not justify this additional code and complexity.  The consequences
     # should only be redundant anchors HTML elements.
-    my $footnote_text
-        = $self->convert_tree_new_formatting_context($command->{'args'}->[0],
-                              "$command->{'cmdname'} $number_in_doc $footid");
-    chomp ($footnote_text);
-    $footnote_text .= "\n";
 
-    my $footnote_mark;
-    if ($self->get_conf('NUMBER_FOOTNOTES')) {
-      $footnote_mark = $number_in_doc;
-    } else {
-      $footnote_mark = $self->get_conf('NO_NUMBER_FOOTNOTE_SYMBOL');
-      $footnote_mark = '' if (!defined($footnote_mark));
-    }
-
-    $result .= $self->html_attribute_class('h5', ['footnote-body-heading']) . '>'.
-     "<a id=\"$footid\" href=\"$footnote_location_href\">($footnote_mark)</a></h5>\n"
-     . $footnote_text;
+    $result .= &{$self->formatting_function('format_single_footnote')}($self,
+                                           $command, $footid, $number_in_doc,
+                                     $footnote_location_href, $footnote_mark);
   }
   return $result;
 }
