@@ -196,7 +196,6 @@ DIFF_U_OPTION=
 if test "z$diff_accepts_u_option" = 'zyes' ; then
   DIFF_U_OPTION=-u
 fi
-AC_SUBST([DIFF_U_OPTION])
 
 # check whether diff accepts the -a option (only needed for GNU diff).
 AC_MSG_CHECKING(whether diff accepts -a)
@@ -214,7 +213,28 @@ DIFF_A_OPTION=
 if test "z$diff_accepts_a_option" = 'zyes' ; then
   DIFF_A_OPTION=-a
 fi
-AC_SUBST([DIFF_A_OPTION])
+
+# check whether diff should have --strip-trailing-cr (may be needed on MinGW)
+diff_accepts_cr_option=no
+if echo $host_os | grep mingw >/dev/null ; then
+  AC_MSG_CHECKING(whether diff accepts --strip-trailing-cr)
+  echo foo >conftest.dtx
+  echo foo | diff --strip-trailing-cr - conftest.dtx >/dev/null 2>&1
+  error_status_diff_cr=$?
+  if test $error_status_diff_cr = 0; then
+    diff_accepts_cr_option=yes
+  fi
+  AC_MSG_RESULT($diff_accepts_cr_option)
+  rm -f conftest.dtx
+fi
+
+DIFF_CR_OPTION=
+if test "z$diff_accepts_cr_option" = 'zyes' ; then
+  DIFF_CR_OPTION='--strip-trailing-cr'
+fi
+
+DIFF_OPTIONS="$DIFF_A_OPTION $DIFF_U_OPTION $DIFF_CR_OPTION"
+AC_SUBST([DIFF_OPTIONS])
 
 # Checks for header files.
 AC_CHECK_HEADERS(io.h pwd.h \
@@ -384,8 +404,12 @@ AC_ARG_WITH([external-Text-Unidecode],
 AC_SUBST([USE_UNICODE])
 AC_SUBST([USE_EXTERNAL_UNIDECODE])
 
-# i18n support.  To update to a new version of gettext, run:
+# i18n support.  To upgrade to a new version of gettext, run:
 #   gettextize -f --po-dir=po --po-dir=po_document
+# To fetch the *.m4 files without upgrading, run:
+#   autopoint -f
+# and then revert any changes of gnulib/m4/*.m4 files that downgrade from a
+# newer serial number (from gnulib) to an older serial number (from gettext).
 # See http://gnu.org/s/gnulib/manual/html_node/gettextize-and-autopoint.html.
 AM_GNU_GETTEXT_VERSION([0.21])
 AM_GNU_GETTEXT([external])

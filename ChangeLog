@@ -1,4 +1,183 @@
-2024-08-06  Bruno Haible  <bruno@clisp.org>
+2024-08-21  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi: modify, reassociate and comment out
+	@nodedescription that were incorrectly associated with EPUB related
+	nodes.
+
+2024-08-20  Bruno Haible <bruno@clisp.org>
+
+	build: Fix failure of all install-info tests on Solaris 11.4.
+
+	* install-info/tests/defs.in (DIFF_OPTIONS): New variable.
+	(diff): Remove variable.
+	* install-info/tests/ii-*-test: Use diff $DIFF_OPTIONS instead
+	of ${diff}.
+
+2024-08-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Check for diff --strip-trailing-cr.
+
+	* configure.ac (DIFF_OPTIONS, DIFF_U_OPTION, DIFF_A_OPTION):
+	Do not AC_SUBST DIFF_U_OPTION or DIFF_A_OPTION, using DIFF_OPTIONS
+	instead.
+	(DIFF_CR_OPTION) [mingw]: Check if --strip-trailing-cr option
+	works and include it in DIFF_OPTIONS if so.
+
+	* tp/tests/run_parser_all.sh,
+	* tp/defs.in,
+	* tp/tests/many_input_files/different_encodings.sh,
+	* tp/tests/many_input_files/different_languages_gen_master_menu.sh,
+	* tp/tests/many_input_files/input_dir_non_ascii.sh,
+	* tp/tests/many_input_files/output_dir_file_non_ascii.sh,
+	* tp/tests/many_input_files/output_dir_non_ascii.sh,
+	* tp/tests/many_input_files/tex_l2h.sh,
+	* tp/tests/many_input_files/tex_l2h_output_dir_non_ascii.sh,
+	* tp/tests/many_input_files/tex_t4ht.sh,
+	* tp/tests/many_input_files/tex_t4ht_output_dir_non_ascii.sh,
+	* Pod-Simple-Texinfo/test_scripts/manual_sectioning_gap_test.sh,
+	* Pod-Simple-Texinfo/test_scripts/test_empty_head2.sh,
+	* Pod-Simple-Texinfo/test_scripts/test_ref_to_unknown.sh:
+	Use DIFF_OPTIONS instead of DIFF_A_OPTION and/or DIFF_U_OPTION
+	in order to have --strip-trailing-cr possibly included.
+
+	* install-info/defs.in: Remove handling of --strip-trailing-cr,
+	using DIFF_OPTIONS instead.
+
+	Test failures due to carriage returns on mingw reported by
+	Bruno Haible, bug-texinfo 2024-06-09.
+
+2024-08-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (new_node_menu_entry),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (new_node_menu_entry):
+	set source info for added node menu entries, as a source info is
+	expected for node menu entries. Report from Dario Gjorgjevski and
+	Gavin Smith.
+
+2024-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* build-aux/ar-lib: Remove.  It does not appear to be
+	used anywhere.
+
+2024-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Untrack some build files
+
+	* build-aux/compile, build-aux/config.guess, build-aux/config.sub,
+	build-aux/depcomp, build-aux/install-sh, build-aux/mdate-sh,
+	build-aux/missing, build-aux/tap-driver.sh, build-aux/test-driver:
+	Untrack in git.  These files are imported when autogen.sh runs
+	and this stops a divergence in the output of "git diff" if
+	a different version of automake etc. is installed.
+
+2024-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* autogen.sh: Do not append command line arguments ("$@") to
+	automake command line.  The purpose of this is unknown.  It
+	meant that an incorrect "-n" flag would be printed in "chicken"
+	mode.
+
+2024-08-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/pm_to_blib: Remove empty, apparently useless
+	file.
+
+2024-08-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Add tp/Texinfo/XS/build-aux
+
+	* tp/Texinfo/XS/configure.ac: Add AC_CONFIG_AUX_DIR to use
+	"build-aux" to store some auxiliary build files.  From Bruno.
+
+2024-08-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* autogen.sh: Run autoreconf under tp/Texinfo/XS/ with
+	AUTOPOINT=true.  From Bruno.
+
+2024-08-10  Patrice Dumas  <pertusus@free.fr>
+
+	Update man/pod2texi.1, po*/*.po and gnulib generated gperf files
+
+2024-08-10  Patrice Dumas  <pertusus@free.fr>
+
+	Update po files
+
+2024-08-10  Patrice Dumas  <pertusus@free.fr>
+
+	Run gnulib-tool --add-import in tp/Texinfo/XS
+
+2024-08-10  Patrice Dumas  <pertusus@free.fr>
+
+	Run gnulib-tool --add-import at top level
+
+2024-08-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/regenerate_C_options_info.pl,
+	tp/maintain/regenerate_commands_perl_info.pl,
+	tp/maintain/regenerate_documentlanguages-iana.pl,
+	tp/maintain/regenerate_documentlanguages-loc.pl,
+	tp/maintain/regenerate_perl_options_info.pl,
+	tp/maintain/setup_accent_tables.pl,
+	tp/maintain/setup_converters_code_tables.pl: add the information that
+	a generated file is automatically generated if missing.
+	Use the basename to name the script generating the code files such
+	that the file content is the same in in and out of source builds.
+
+	* tp/Texinfo/XS/Makefile.am (Commands.pm, Options.pm): depend on the
+	generating script.
+
+2024-08-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/tp_api/Makefile.am (texi2any_internals.texi):
+	Change working directory to $(srcdir) before running pod2texi.
+	This allows pod2texi to generate @include directives correctly
+	with the --subdir option.
+	(texi2any_internals_dependencies): List dependencies with
+	../../ prefix instead of $(top_srcdir)/.
+	(MAKEINFO_ENVIRONMENT): Use abs_top_srcdir and abs_top_buildir
+	instead of top_srcdir and top_buildir.
+
+	Analysis by Patrice.
+
+2024-08-09  Patrice Dumas  <pertusus@free.fr>
+
+	* TODO: add Rahguzar demand of math rendered as image in Info.
+
+2024-08-09  Patrice Dumas  <pertusus@free.fr>
+
+	Use prototypes instead of old style K&R definitions
+
+	* info/pcterm.c (pc_goto_xy, pc_put_text, pc_write_chars)
+	(pc_scroll_terminal, pc_initialize_terminal): use prototypes instead
+	of old style K&R definitions.
+
+	Changes in spacing.
+
+2024-08-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove VFunction.
+
+	* info/terminal.c, info/terminal.h
+	(terminal_begin_blink_hook, terminal_begin_bold_hook)
+	(terminal_begin_inverse_hook, terminal_begin_standout_hook)
+	(terminal_begin_underline_hook, terminal_clear_screen_hook)
+	(terminal_clear_to_eol_hook, terminal_default_colour_hook)
+	(terminal_down_line_hook, terminal_end_all_modes_hook)
+	(terminal_end_inverse_hook, terminal_end_standout_hook)
+	(terminal_end_underline_hook, terminal_get_screen_size_hook)
+	(terminal_goto_xy_hook, terminal_initialize_terminal_hook)
+	(terminal_new_terminal_hook, terminal_prep_terminal_hook)
+	(terminal_put_text_hook, terminal_ring_bell_hook)
+	(terminal_scroll_terminal_hook, terminal_set_bgcolour_hook,)
+	(terminal_set_colour_hook, terminal_unprep_terminal_hook,)
+	(terminal_up_line_hook, terminal_write_chars_hook):
+	Declare with explicit variable list.
+	(VFunction): Remove.
+
+	C23 does not allow a variable list to be left undefined as ().
+	Report from Jeffrey Cliff <jeffrey.cliff@gmail.com>.
+
+2024-08-08  Bruno Haible  <bruno@clisp.org>
 
 	* texindex/Makefile.am (texindex.awk): Move the generated
 	texindex.awk from the build dir to the source dir.
@@ -7,33 +186,60 @@
 	TEXINDEX_SCRIPT, so that the texindex program find its
 	texindex.awk script.
 
-2024-08-06  Gavin Smith <gavinsmith0123@gmail.com>
+2024-08-08  Gavin Smith <gavinsmith0123@gmail.com>
 
-	* doc/tp_api/Makefile.am (texi2any_internals.texi):
-	Generate in srcdir.  Report from Bruno.
+	* Pod-Simple-Texinfo/Makefile.am (pod2texi):
+	Remove replacement of USE_EXTERNAL_LIBINTL,
+	USE_EXTERNAL_EASTASIANWIDTH and USE_EXTERNAL_UNIDECODE as
+	these no longer occur in pod2texi.pl (since change
+	on 2023-09-24).
 
-2024-08-06  Patrice Dumas  <pertusus@free.fr>
+2024-08-08  Patrice Dumas  <pertusus@free.fr>
 
-	* doc/tp_api/Makefile.am (texi2any_internals.texi): Pass --subdir
-	option to pod2texi.pl to generate distributed files in srcdir.
-	Report from Bruno Haible.
+	* doc/tp_api/Makefile.am (texi2aany_internals.texi): Generate
+	in srcdir.  Report from Bruno.
 
-2024-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+2024-08-08  Gavin Smith <gavinsmith0123@gmail.com>
 
-	* README-hacking: Remove out-of-date information about running
-	"make" before "make dist".
+	* man/Makefile.am (MAKEINFO): Remove unused (this also had incorrect
+	spelling of another variable).
 
-2024-08-04  Patrice Dumas  <pertusus@free.fr>
+2024-08-08  Gavin Smith <gavinsmith0123@gmail.com>
 
-	* doc/tp_api/Makefile.am (tp/Texinfo/ModulePath.pm):
-	Add rule to allow running "make dist" without running "make"
-	first.  Report from Bruno Haible.
+	* Makefile.am (BUILT_SOURCES): Add tp/Texinfo/ModulePath.pm along
+	with rule to generate it.  This helps in running "make dist"
+	without running "make" first.  Report from Bruno.
 
-2024-08-04  Patrice Dumas  <pertusus@free.fr>
+2024-08-07  Patrice Dumas  <pertusus@free.fr>
 
 	* info/Makefile.am (../gnulib/lib/libgnu.a):
 	Add rule to allow running "make dist" without running "make"
 	first.  Report from Bruno Haible.
+
+2024-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* autogen.sh: Do not run autoreconf under tp/Texinfo/XS/, running
+	individual tools instead.  This stops autopoint running and
+	overwriting files with older versions.
+
+2024-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS: add or upgrade gettext files by following
+	new instructions in configure.ac.
+
+2024-08-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/configure.ac: elaborate on comment using
+	information from Bruno.
+
+2024-08-07  Bruno Haible  <bruno@clisp.org>
+
+	build: Prepare for use of autopoint.
+
+	* configure.ac: Add comments about use of autopoint.
+	* tp/Texinfo/XS/configure.ac: Specify the same GNU gettext
+	version as the top-level configure.ac. Add comments about use
+	of autopoint.
 
 2024-07-27  Patrice Dumas  <pertusus@free.fr>
 
