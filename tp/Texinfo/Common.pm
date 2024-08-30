@@ -1141,34 +1141,60 @@ sub output_files_unclosed_files($)
 # Used in main program, tests and HTML Converter.
 # TODO document?
 #
-# $FILE:        file name to locate. It can be a file path. Binary string.
+# $INPUT_FILE_PATH: file name to locate.  Binary string.  If it is a file
+#                   path, it is not searched for in directories.
 # $DIRECTORIES: a reference on a array containing a list of directories to
 #               search the file in. Binary strings.
 # $ALL_FILES:   if true collect all the files with that name, otherwise stop
 #               at first match.
-sub locate_file_in_dirs($$$)
+# $DEPRECATED_DIRS:  optional argument.  If set, associates deprecated directory
+#                    names with the directory name that should be used
+#
+# Return an array reference with the files found, only one if $ALL_FILES
+# is false, and an array reference with the deprecated directories used.
+sub locate_file_in_dirs($$$;$)
 {
-  my $file = shift;
+  my $input_file_path = shift;
   my $directories = shift;
   my $all_files = shift;
+  my $deprecated_dirs = shift;
 
-  if (File::Spec->file_name_is_absolute($file)) {
-    return $file if (-e $file and -r $file);
+  my $deprecated_dirs_used;
+
+  if (File::Spec->file_name_is_absolute($input_file_path)) {
+    return ([$input_file_path], undef)
+       if (-e $input_file_path and -r $input_file_path);
   } else {
-    my @files;
-    foreach my $dir (@$directories) {
-      next unless (-d $dir);
-      my $possible_file = File::Spec->catfile($dir, $file);
-      if ($all_files) {
-        push (@files, $possible_file)
-          if (-e $possible_file and -r $possible_file);
-      } else {
-        return $possible_file if (-e $possible_file and -r $possible_file);
+    my ($volume, $path_directories, $file)
+       = File::Spec->splitpath($input_file_path);
+    my @path_directories = File::Spec->splitdir($path_directories);
+    if (scalar(@path_directories) > 0) {
+      # do not search in directories if the file name already contains
+      # directories.
+      return ([$input_file_path], undef)
+         if (-e $input_file_path and -r $input_file_path);
+    } else {
+      my @files;
+      foreach my $dir (@$directories) {
+        next unless (-d $dir);
+        my $possible_file = File::Spec->catfile($dir, $input_file_path);
+        if (-e $possible_file and -r $possible_file) {
+          if ($deprecated_dirs->{$dir}) {
+            $deprecated_dirs_used = [] if (!defined($deprecated_dirs_used));
+            push @$deprecated_dirs_used, $dir;
+          }
+          if ($all_files) {
+            push (@files, $possible_file);
+          } else {
+            return [$possible_file], $deprecated_dirs_used;
+          }
+        }
       }
+      return (\@files, $deprecated_dirs_used)
+        if ($all_files and scalar(@files));
     }
-    return @files if ($all_files);
   }
-  return undef;
+  return undef, undef;
 }
 
 sub element_associated_processing_encoding($)

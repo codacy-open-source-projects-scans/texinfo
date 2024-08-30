@@ -1,3 +1,171 @@
+2024-08-28  Patrice Dumas  <pertusus@free.fr>
+
+	Use XDG Base Directory Specification for directory lookups
+
+	* tp/Texinfo/Common.pm (locate_file_in_dirs), tp/t/test_utils.pl
+	(test), tp/texi2any.pl (locate_and_load_init_file)
+	(locate_and_load_extension_file): add deprecated directories argument
+	and return deprecated directories used.  Update callers.
+
+	* tp/texi2any.pl (add_config_paths): add function to setup directories
+	using XDG Base Directory Specification environment variable,
+	installation directory and default XDG Base Directory Specification
+	directories.  The default XDG Base Directory Specification directories
+	are added (last) even if the environment variable is set, such as to
+	always have directories searched implementation and user-configuration
+	independent.
+
+	* tp/texi2any.pl (set_subdir_directories): set all the directories
+	where files are searched for in a subdirectory.  In current directory,
+	in HOME, following the XDG Base Directory Specification and by calling
+	add_config_paths.  Set deprecated_dirs information with dot directory
+	directly found in HOME that is deprecated by XDG Base Directory
+	Specification HOME directories.  Use set_subdir_directories to set
+	@texinfo_language_config_dirs, @program_config_dirs.
+
+	* tp/texi2any.pl (_warn_deprecated_dirs, $config_init_files)
+	(locate_and_load_init_file): warn for deprecated directories.
+
+	* tp/Texinfo/Convert/Converter.pm (%common_converters_defaults),
+	tp/texi2any.pl: pass main program deprecated directories information
+	to converter through deprecated_config_directories key value.
+
+	* tp/Texinfo/Convert/HTML.pm (_parse_htmlxref_files): pass
+	deprecated_config_directories to locate_file_in_dirs and warn about
+	deprecated directories used.
+
+	* NEWS, doc/texi2any_api.texi (Loading Init Files), doc/texinfo.texi
+	(HTML Xref Configuration): update directory lookup descriptions.
+
+2024-08-28  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Simple Navigation Panel Customization): the
+	boolean set by button formatting function specifies that a delimiter
+	is desired before the button.  Also update the description of the
+	functions arguments.
+
+2024-08-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl (%converter_format_expanded_region_name)
+	(set_format): more explicit code and variable names to distinguish
+	output format, converter format and expanded region. 
+
+2024-08-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl: fix a typo.
+
+2024-08-25  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Xref Configuration), tp/texi2any.pl
+	(@texinfo_language_config_dirs): prepend curdir before the call of
+	converter, and also add the leading input file path directory if
+	there is a leading directory and it is not the current directory.
+
+2024-08-25  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Invoking @command{texi2any}): correct -I and -P
+	documentation, texi2any always search in the current directory and the
+	input file path leading directory if there is one , irrespective of
+	the -I and -P values given.
+
+2024-08-25  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Modifying Main Program Array Variables),
+	tp/Texinfo/Config.pm (texinfo_add_to_option_list): add a $prepend
+	optional argument to texinfo_add_to_option_list, in which case the
+	values are prepended.
+
+2024-08-25  Patrice Dumas  <pertusus@free.fr>
+
+	Add TEXINFO_LANGUAGE_DIRECTORIES customization option
+
+	* tp/Texinfo/Convert/Converter.pm (%defaults),
+	tp/Texinfo/Convert/HTML.pm (_load_htmlxref_files),
+	tp/Texinfo/options_data.txt, tp/texi2any.pl ($cmdline_options): add
+	TEXINFO_LANGUAGE_DIRECTORIES to replace the
+	'texinfo_language_config_dirs' information passed directly to
+	converters.
+
+2024-08-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (%common_converters_defaults),
+	tp/Texinfo/Convert/HTML.pm (_load_htmlxref_files), tp/texi2any.pl:
+	rename language_config_dirs as texinfo_language_config_dirs.
+
+2024-08-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (locate_file_in_dirs): if the input file path
+	contains directories, returns it if it is found but do not search it
+	in directories.
+
+	* doc/texi2any_api.texi (Loading Init Files), doc/texinfo.texi (File
+	Names and Links Customization for HTML): update documentation.
+
+2024-08-25  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (HTML Xref Link Basics, HTML Xref Configuration):
+	remove the "HTML Xref Mismatch" node, it is not the best way to go and
+	somewhat obsolete.  Keep the information in tp/TODO.  Add some
+	information on mismatched cross-references in the last paragraphs of
+	"HTML Xref Link Basics".
+
+2024-08-25  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/htmlxref.cnf (smtp, smtpmail): Rename to smtpmail to
+	match name of manual.  Report from Eli.
+
+2024-08-24  Patrice Dumas  <pertusus@free.fr>
+
+	 * tp/Texinfo/Convert/HTML.pm (_parse_htmlxref_files)
+	 (_external_node_href), tp/Texinfo/XS/convert/convert_html.c
+	 (external_node_href): use an empty string for an htmlxref manual
+	 entry without URL prefix instead of undef.
+
+2024-08-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_parse_htmlxref_files): no warning for
+	an empty URL prefix as it is the only way to override an entry
+	appearing in a file processed later on.
+
+	* tp/t/htmlxref.t (htmlxref_no_urlprefix_first), tp/Makefile.tres,
+	tp/t/input_files/htmlxref-no_urlprefix_first.cnf, tp/Makefile.am
+	(test_files): new test with htmlxref entry with an empty URL prefix
+	before an entry with URL prefix.
+
+2024-08-23  Patrice Dumas  <pertusus@free.fr>
+
+	* INSTALL: correct a typo.
+
+2024-08-23  Patrice Dumas  <pertusus@free.fr>
+
+	EPUB Conformance issues documentation, workarounds and TODO
+
+	* TODO, doc/texinfo.texi (EPUB Conformance),
+	contrib/EPUB_conformance/*.patch, contrib/EPUB_conformance/README:
+	document that EPUB generated is not conformant.  Add patches from
+	Daniel Cerqueira in contrib/EPUB_conformance/ that cannot be applied
+	as is, but are necessary for EPUB conformance.  Add TODO entries that
+	should allow to fix more permanently this issue.
+
+2024-08-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/htmlxref.cnf: Add eglot.  Report from Eli.
+
+2024-08-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add extra build system checks.  From Patrice
+	and Bruno.
+
+2024-08-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	No 'local' in shell script
+
+	* install-info/tests/defs.in (findprog): Remove use of
+	'local' for saving the value of IFS (input field separator).
+	On Solaris 10 there is a warning "local: not found" and it
+	is likely stopping IFS from being reset correctly, leading
+	to subsequent errors.
+
 2024-08-21  Patrice Dumas  <pertusus@free.fr>
 
 	* doc/texinfo.texi: modify, reassociate and comment out

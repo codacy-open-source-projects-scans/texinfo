@@ -8662,19 +8662,23 @@ sub _parse_htmlxref_files($$)
         next;
       }
       my $href = shift @htmlxref;
-      if (!defined($href)) {
-        $self->converter_line_warn(sprintf(
-             __("missing %s URL prefix for `%s'"), $split_or_mono, $manual),
-                 {'file_name' => $fname, 'line_nr' => $line_nr});
-      }
+      # No warning for an empty URL prefix as it is the only way to
+      # override an entry appearing in a file processed later on
+      #if (!defined($href)) {
+      #  $self->converter_line_warn(sprintf(
+      #       __("missing %s URL prefix for `%s'"), $split_or_mono, $manual),
+      #           {'file_name' => $fname, 'line_nr' => $line_nr});
+      #}
       next if ($htmlxref->{$manual}
-               and exists($htmlxref->{$manual}->{$split_or_mono}));
+               and defined($htmlxref->{$manual}->{$split_or_mono}));
 
       if (defined($href)) { # substitute 'variables'
         my $re = join '|', map { quotemeta $_ } keys %variables;
         $href =~ s/\$\{($re)\}/defined $variables{$1} ? $variables{$1}
                                                       : "\${$1}"/ge;
         $href =~ s/\/*$// if ($split_or_mono ne 'mono');
+      } else {
+        $href = '';
       }
       $htmlxref->{$manual} = {} if (!$htmlxref->{$manual});
       $htmlxref->{$manual}->{$split_or_mono} = $href;
@@ -8690,6 +8694,8 @@ sub _parse_htmlxref_files($$)
 
 sub _load_htmlxref_files {
   my ($self) = @_;
+
+  my $deprecated_dirs = $self->{'deprecated_config_directories'};
 
   my @htmlxref_files;
   my $htmlxref_mode = $self->get_conf('HTMLXREF_MODE');
@@ -8720,9 +8726,9 @@ sub _load_htmlxref_files {
         unshift @htmlxref_dirs, File::Spec->catdir(
           $Texinfo::ModulePath::top_srcdir, 'tp', 't', 'input_files');
       }
-    } elsif ($self->{'language_config_dirs'}
-             and @{$self->{'language_config_dirs'}}) {
-      @htmlxref_dirs = @{$self->{'language_config_dirs'}};
+    } elsif ($self->get_conf('TEXINFO_LANGUAGE_DIRECTORIES')
+       and scalar(@{$self->get_conf('TEXINFO_LANGUAGE_DIRECTORIES')}) > 0) {
+      @htmlxref_dirs = @{$self->get_conf('TEXINFO_LANGUAGE_DIRECTORIES')};
     }
     unshift @htmlxref_dirs, '.';
 
@@ -8740,9 +8746,30 @@ sub _load_htmlxref_files {
     if (defined($htmlxref_file_name)) {
       my ($encoded_htmlxref_file_name, $htmlxref_file_encoding)
         = $self->encoded_output_file_name($htmlxref_file_name);
-      @htmlxref_files
+      my ($htmlxref_files_array_ref, $deprecated_dirs_used)
         = Texinfo::Common::locate_file_in_dirs($encoded_htmlxref_file_name,
-                                               \@htmlxref_dirs, 1);
+                                               \@htmlxref_dirs, 1,
+                                               $deprecated_dirs);
+      if (defined($htmlxref_files_array_ref)) {
+        @htmlxref_files = @$htmlxref_files_array_ref;
+
+        if (defined($deprecated_dirs_used)) {
+          foreach my $dir (@$deprecated_dirs_used) {
+            my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
+            my ($dir_name, $replacement_dir);
+            if (defined($encoding)) {
+              $dir_name = decode($encoding, $dir);
+              $replacement_dir = decode($encoding, $deprecated_dirs->{$dir})
+            } else {
+              $dir_name = $dir;
+              $replacement_dir = $deprecated_dirs->{$dir};
+            }
+            $self->converter_document_warn(sprintf(__(
+                      "%s directory is deprecated. Use %s instead"),
+                             $dir_name, $replacement_dir));
+          }
+        }
+      }
     }
   }
 
@@ -8754,6 +8781,9 @@ sub _load_htmlxref_files {
 }
 
 # converter state
+#
+#   No API
+#  deprecated_config_directories
 #
 #  output_init_conf
 #
@@ -10769,7 +10799,8 @@ sub _external_node_href($$$)
       my $document_split = $self->get_conf('SPLIT');
       $document_split = 'mono' if (!$document_split);
       foreach my $split_ordered (@{$htmlxref_entries{$document_split}}) {
-        if (defined($htmlxref_info->{$split_ordered})) {
+        if (defined($htmlxref_info->{$split_ordered})
+            and $htmlxref_info->{$split_ordered} ne '') {
           $split_found = $split_ordered;
           $htmlxref_href
             = $self->url_protect_url_text($htmlxref_info->{$split_ordered});

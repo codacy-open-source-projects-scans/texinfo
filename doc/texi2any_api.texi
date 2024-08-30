@@ -107,18 +107,45 @@ of @file{texi2any-config.pm} files is not definitive.
 You can write so-called @dfn{initialization files}, or @dfn{init
 files} for short, to modify almost every aspect of output formatting.
 The program loads init files named @file{texi2any-config.pm} each time it
-is run.  Those files are looked for in the following directories:
+is run.  The directories lookup is based on the @url{https://specifications.freedesktop.org/basedir-spec/latest/, XDG Base
+Directory Specification} with additional possibilities.
+The @file{texi2any-config.pm} files are looked for in the
+following directories:
 
 @table @file
+@item /usr/share/texi2any/
+(with @file{/usr/share/} the second default directory for @env{XDG_DATA_DIRS}
+in the XDG Base Directory Specification)
+
+@item /usr/local/share/texi2any/
+(with @file{/usr/local/share} the first default directory for
+@env{XDG_DATA_DIRS} in the XDG Base Directory Specification)
+
 @item @var{datadir}/texi2any/
 (where @var{datadir} is the system data directory specified at
 compile-time, e.g., @file{/usr/local/share})
 
-@item @var{sysconfdir}/texi2any/
-(likewise specified at compile time, e.g., @file{/usr/local/etc})
+@item @env{XDG_DATA_DIRS}/texi2any
+(for each directory in the @code{:} delimited @env{XDG_DATA_DIRS} environment
+variable, in reverse order)
 
-@item ~/.texi2any/
-(where @code{~} is the current user's home directory)
+@item /etc/xdg/texi2any/
+(with @file{/etc/xdg} the default directory for @env{XDG_CONFIG_DIRS}
+in the XDG Base Directory Specification)
+
+@item @var{sysconfdir}/texi2any/
+(specified at compile time, e.g., @file{/usr/local/etc})
+
+@item @env{XDG_CONFIG_DIRS}/texi2any
+(for each directory in the @code{:} delimited @env{XDG_CONFIG_DIRS}
+environment variable, in reverse order)
+
+@item ~/.config/texi2any/
+(where @code{~} is the current user's home directory, only if
+@env{XDG_CONFIG_HOME} is not set)
+
+@item @env{XDG_CONFIG_HOME}/texi2any
+(with @env{XDG_CONFIG_HOME} an environment variable)
 
 @item ./.texi2any/
 (under the current directory)
@@ -129,38 +156,73 @@ compile-time, e.g., @file{/usr/local/share})
 
 All @file{texi2any-config.pm} files found are loaded, in the above order.
 Thus, @file{./texi2any-config.pm} can override entries in, say,
-@file{/usr/local/share/makeinfo/texi2any-config.pm}.
+@file{/usr/local/share/texi2any/texi2any-config.pm}.
 
 @c @opindex --init-file
 @cindex @option{--init-file}
-However, the most common way to load an initialization file is with
-the @option{--init-file} option, explicitly specifying the file to be
-loaded.  By default the following directories are searched, in the
-following order.  Only the first file found is used:
+However, the most common way to load an initialization file path is with
+the @option{--init-file} option, explicitly specifying the file path to be
+loaded.  If the initialization file path contains directories, it is loaded
+if found.  Otherwise, if the file path is a simple file name, the following
+directories are searched, in the following order by default.  Only the first
+file found is used:
 
 @enumerate
 @item The current directory @file{./};
 
 @item @file{./.texi2any/} under the current directory;
 
-@item @file{~/.texi2any/}
-where @code{~} is the current user's home directory;
+@item @env{XDG_CONFIG_HOME}/texi2any if the @env{XDG_CONFIG_HOME} environment 
+is set, otherwise ~/.config/texi2any/ where @code{~} is the current user's home
+directory;
+
+@item if the environment variable @env{XDG_CONFIG_DIRS} is set,
+@var{directory}/texi2any for each @var{directory} in the
+@code{:} delimited @env{XDG_CONFIG_DIRS} environment variable value;
 
 @item @file{@var{sysconfdir}/texi2any/}
 where @var{sysconfdir} is the system configuration directory
 specified at compile-time, e.g., @file{/usr/local/etc};
 
+@item @file{/etc/xdg/texi2any/}
+
+@item if the environment variable @env{XDG_DATA_DIRS} is set,
+@var{directory}/texi2any for each @var{directory} in the
+@code{:} delimited @env{XDG_DATA_DIRS} environment variable value;
+
 @item @file{@var{datadir}/texi2any/}
-Where @var{datadir} is the system data directory likewise specified at
+Where @var{datadir} is the system data directory specified at
 compile time, e.g., @file{/usr/local/share};
+
+@item @file{/usr/local/share/texi2any/}
+
+@item @file{/usr/share/texi2any/}
 
 @item @file{./.texinfo/init/} under the current directory;
 
 @item @file{~/.texinfo/init/} under the current home directory;
 
+@item @env{XDG_CONFIG_HOME}/texinfo/init if the @env{XDG_CONFIG_HOME}
+environment is set, otherwise ~/.config/texinfo/init/ where @code{~} is the
+current user's home directory;
+
+@item if the environment variable @env{XDG_CONFIG_DIRS} is set,
+@var{directory}/texinfo/init for each @var{directory} in the
+@code{:} delimited @env{XDG_CONFIG_DIRS} environment variable value;
+
 @item @file{@var{sysconfdir}/texinfo/init/} with @var{sysconfdir} as above;
 
+@item @file{/etc/xdg/texinfo/init/}
+
+@item if the environment variable @env{XDG_DATA_DIRS} is set,
+@var{directory}/texinfo/init for each @var{directory} in the
+@code{:} delimited @env{XDG_DATA_DIRS} environment variable value;
+
 @item @file{@var{datadir}/texinfo/init/} with @var{datadir} as above.
+
+@item @file{/usr/local/share/texinfo/init/}
+
+@item @file{/usr/share/texinfo/init/}
 
 @item @file{@var{datadir}/texinfo/ext/} with @var{datadir} as above.
 @end enumerate
@@ -356,12 +418,15 @@ are handled differently. You can use @code{texinfo_add_to_option_list} to
 add values to the array and @code{texinfo_remove_from_option_list} to
 remove values from the array associated with the customization variable:
 
-@defun texinfo_add_to_option_list ($variable_name, $variable_values_array_reference)
+@defun texinfo_add_to_option_list ($variable_name, $variable_values_array_reference, $prepend)
 @defunx texinfo_remove_from_option_list ($variable_name, $variable_values_array_reference)
 @var{$variable_name} is the name of the variable; the values in the
 array reference @var{$variable_values_array_reference} are added to the
 list associated with the variable with @code{texinfo_add_to_option_list}, and removed with
 @code{texinfo_remove_from_option_list}.
+
+If the optional argument of @code{texinfo_add_to_option_list} @var{$prepend}
+is set, the values are prepended instead of being appended.
 @end defun
 
 
@@ -1191,26 +1256,27 @@ and the @code{description} for a more detailed description (@pxref{Direction
 Strings}).
 
 @item function reference
-The function is called with one boolean argument, true if the
-navigation panel should be vertical.  Should return the formatted
-button text.
+The functions is called with one arguments, the converter object.
+The function should return two scalars, the button text and
+a boolean set if a delimiter is desired before the button.
 
 @item scalar reference
 The scalar value is printed.
 
 @item array reference of length 2
 Here, the first array item should be a an output unit direction.
-A link to the output unit associated with the output unit direction
-is generated.  The text of the link depends on the second array item.
+The text of the link depends on the second array item.
 
 @table @emph
 @item reference to a text string
-In that case, the corresponding text is used.
+A link to the output unit associated with the output unit direction
+is generated with the corresponding text used for the text link.
 
 @item reference to a function
-The functions is called with two arguments, the converter object and the
-output unit direction and should return two scalars, the link href and text and
-a boolean set if a delimiter is needed after that button.
+The functions is called with three arguments, the converter object, the
+output unit direction and the source Texinfo tree element (possibly undef).
+The function should return two scalars, the button text and
+a boolean set if a delimiter is desired before the button.
 
 @c This buttons specification is not used anywhere in code nor
 @c tests, it is certainly not worth maintaining in the long run.
@@ -1235,6 +1301,9 @@ based on the name of the node associated with the next section output unit.
 
 @end table
 
+No delimiter is printed before the first button.  Leading space buttons
+mixed with directions not found may be omitted of the navigation panel output.
+
 @vindex USE_ACCESSKEY
 @anchor{Accesskey and @code{rel} Navigation}
 @cindex @code{accesskey} navigation
@@ -1249,9 +1318,6 @@ Similarly, if the @code{USE_REL_REV} customization variable is set,
 the @code{rel} attribute is used in navigation.  In that case the
 @code{rel} direction string is used for the @code{rel}
 attribute (@pxref{Direction Strings}).
-
-Leading space buttons mixed with directions not found may be omitted
-of the navigation panel output.
 
 
 @node User Defined Functions
