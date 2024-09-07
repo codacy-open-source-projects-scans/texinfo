@@ -1,3 +1,196 @@
+2024-09-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/ext/epub3.pm (epub_finish): use transliterate_protect_file_name
+	on opf file name to replace spaces, and avoid non ascii characters.
+
+	* tp/t/test_utils.pl (test): add $srcdir.'ext/' to init files search
+	path.
+
+	* tp/Makefile.tres, tp/t/html_tests.t
+	(setfilename_on_top_and_after_node_epub): add test of EPUB generation,
+	tesing EPUB generation with files with spaces in their names.
+
+2024-09-06  Patrice Dumas  <pertusus@free.fr>
+
+	Percent encode file name in internal href
+
+	* tp/Texinfo/Convert/HTML.pm (_internal_command_href),
+	tp/Texinfo/XS/convert/convert_html.c (html_internal_command_href):
+	call url_protect_file_text on target_filename to percent encode.
+
+2024-09-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_button_icon_img)
+	(_default_format_navigation_panel, _convert_menu_command)
+	(_convert_printindex_command), tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_button_icon_img)
+	(html_default_format_navigation_panel)
+	(html_default_format_navigation_header, convert_menu_command)
+	(convert_printindex_command): remove border=0 for img and table as it
+	is the dafault and a deprecated attribute.
+
+	* tp/tests/many_input_files/Makefile.am (copy-tex-html, copy-tests):
+	copy to $srcdir.
+
+2024-09-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%css_element_class_styles)
+	<displaymath>: center displaymath.  Report and CSS from Rudolf
+	Adamkovič.
+
+2024-09-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/init/t2h_singular.init (singular_format_footer): update for
+	close_registered_sections_level call change.
+
+2024-09-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/ext/latex2html.pm (l2h_to_html): do not set latex2html -dir
+	option if the destination directory is the current directory.
+	Report by Jeremy Bryant.
+
+2024-09-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (test_files), tp/t/input_files/htmlxref-test.cnf,
+	tp/t/htmlxref.t: rename t/input_files/htmlxref.cnf as
+	t/input_files/htmlxref-test.cnf as now the htmlxref.cnf file found
+	along with source files is used and could therefore interact with
+	in-source conversions.
+
+2024-09-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/init/book.pm (book_convert_heading_command): sync with HTML.pm.
+
+2024-09-05  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Heading Commands Formatting),
+	tp/Texinfo/Convert/HTML.pm (register_opened_section_level)
+	(close_registered_sections_level, _initialize_output_state),
+	tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_register_opened_section_level)
+	(html_close_registered_sections_level),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_register_opened_section_level)
+	(html_register_opened_filename_section_level)
+	(html_close_registered_sections_level)
+	(html_close_registered_filename_sections_level, html_set_pages_files)
+	(html_conversion_finalization, html_free_converter),
+	tp/Texinfo/XS/main/converter_types.h (STRING_STACK_LIST, CONVERTER):
+	add a filename argument to register_opened_section_level and
+	close_registered_sections_level to avoid closing sections in another
+	file.  Update XS interface.  Update callers.
+
+2024-09-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/ext/epub3.pm (epub_convert_special_unit_type): rename
+	$element variable as $output_unit. 
+
+2024-09-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (test_files), tp/Makefile.tres, tp/t/html_tests.t
+	(simple_only_special_spaces_node), t/init/no_navigation.pm,
+	t/input_files/simple_only_special_spaces_node.texi: add a simpler
+	version of only_special_spaces_node as a file_test split by node as
+	the smallest case that triggers a bug with div closed in the wrong
+	file.
+
+2024-09-05  Patrice Dumas  <pertusus@free.fr>
+
+	* TODO: add an entry for printindex formatting in HTML, to avoid using
+	table and refer to past discussions.
+
+2024-09-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_heading_command)
+	(_open_node_part_command), tp/Texinfo/XS/convert/convert_html.c
+	(convert_heading_command, open_node_part_command): set
+	in_skipped_node_top when opening a @node (or associated @part), not
+	after processing the contents.
+
+	* tp/Makefile.tres, tp/t/40moresectioning.t
+	(nodes_no_section_footnote_no_top_node_output): add test with
+	footnote in a node after a skipped Top node, with USE_NODES=0.
+
+	* tp/t/*.t: Use the hash notation to set USE_NODES.
+
+2024-09-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_xref_commands),
+	tp/Texinfo/XS/convert/convert_html.c (convert_xref_commands): avoid an
+	infinite recursion going through ref to node on sectioning command
+	line and ref to sectioning command on node line, in case USE_NODES is
+	0.
+
+	* tp/Makefile.tres, tp/t/30sectioning.t
+	(double_recursive_self_section_node_reference_no_use_node): test
+	double recursive self section node reference with USE_NODES=0.
+
+2024-09-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/all_tests.sh: use $srcdir, adapt for out of source
+	build.
+
+2024-09-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/options_data.txt (EPUB_STRICT): add.
+
+	* tp/ext/epub3.pm (epub_finish): if EPUB_STRICT is set, use the EPUB
+	generation time for dcterms:modified.  Based on patch from Daniel
+	Cerqueira <dan.git@lispclub.com>.
+
+	* tp/maintain/check_epubcheck_texi_t.sh: set LC_ALL and LANGUAGE for
+	reproducible errors.  Use EPUB_STRICT in call.  Keep the epub_package
+	directory.
+
+2024-09-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/check_epubcheck_texi_t.sh: check systematically EPUB
+	t/*.t tests validity.
+
+2024-09-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/check_back_xml_forth_texi_t.sh: add $srcdir for out of
+	source builds.
+
+2024-09-03  Patrice Dumas  <pertusus@free.fr>
+
+	Use <pre> for @displaymath HTML formatting
+
+	* NEWS, tp/Texinfo/Convert/HTML.pm (%css_element_class_styles),
+	tp/Texinfo/Convert/HTML.pm (_convert_displaymath_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_displaymath_command):
+	use <pre> for @displaymath formatting such that Texinfo source
+	indentation is kept, in particular for text browsers.  Report from
+	Rudolf Adamkovič.
+
+2024-09-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Update FSF address
+
+	* doc/texinfo.texi,
+	* doc/info-fr.texi,
+	* doc/refcard/txirefcard.tex,
+	* texindex/jrtangle,
+	* texindex/jrweave:
+	Update FSF address or replace with link to website
+
+	* doc/refcard/txirefcard.tex: remove defunct www.gnupress.org link
+
+2024-08-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add a couple of points for building from
+	release branch
+
+2024-09-03  Patrice Dumas  <pertusus@free.fr>
+
+	Add MATHJAX_CONFIGURATION customization variable
+
+	* tp/Texinfo/options_data.txt, doc/texinfo.texi (MathJax Customization
+	Variables), tp/Texinfo/Convert/HTML.pm (_file_header_information)
+	(output), NEWS: add MATHJAX_CONFIGURATION customization variable, for
+	user wanting to change the global MathJax object configuration.
+	Report from Rudolf Adamkovič.
+
 2024-08-28  Patrice Dumas  <pertusus@free.fr>
 
 	Use XDG Base Directory Specification for directory lookups

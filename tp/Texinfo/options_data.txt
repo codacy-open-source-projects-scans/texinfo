@@ -232,6 +232,8 @@ END_USEPACKAGE                     converter_customization undef   char
 EPUB_CREATE_CONTAINER_FILE         converter_customization undef   integer
 # for ext/epub3.pm
 EPUB_KEEP_CONTAINER_FOLDER         converter_customization undef   integer
+# could be temporary
+EPUB_STRICT                        converter_customization undef   integer
 EXTENSION                          converter_customization undef   char
 EXTERNAL_CROSSREF_EXTENSION        converter_customization undef   char
 # This is used like a boolean, but it is set to a char to match SPLIT, such
@@ -269,6 +271,7 @@ L2H_HTML_VERSION                   converter_customization undef   char
 L2H_L2H                            converter_customization undef   char
 L2H_SKIP                           converter_customization undef   integer
 L2H_TMP                            converter_customization undef   char
+MATHJAX_CONFIGURATION              converter_customization undef   char
 MATHJAX_SCRIPT                     converter_customization undef   char
 MATHJAX_SOURCE                     converter_customization undef   char
 MAX_HEADER_LEVEL                   converter_customization undef   integer

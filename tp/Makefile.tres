@@ -737,8 +737,12 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/sectioning_check_menu_structure/res_html \
   t/results/html_tests/set_unit_file_name_filepath.pl \
   t/results/html_tests/set_unit_file_name_filepath/res_html \
+  t/results/html_tests/setfilename_on_top_and_after_node_epub.pl \
+  t/results/html_tests/setfilename_on_top_and_after_node_epub/res_html \
   t/results/html_tests/shortcontents_no_top.pl \
   t/results/html_tests/shorttitlepage.pl \
+  t/results/html_tests/simple_only_special_spaces_node.pl \
+  t/results/html_tests/simple_only_special_spaces_node/res_html \
   t/results/html_tests/simplest_test_date_in_header.pl \
   t/results/html_tests/simplest_test_date_in_header/res_html \
   t/results/html_tests/spaces_in_line_break_in_verb_w.pl \
@@ -1630,6 +1634,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/moresectioning/no_element.pl \
   t/results/moresectioning/nodes_before_after_top_xref.pl \
   t/results/moresectioning/nodes_before_after_top_xref/res_latex \
+  t/results/moresectioning/nodes_no_section_footnote_no_top_node_output.pl \
   t/results/moresectioning/non_automatic_internal_top_node_up.pl \
   t/results/moresectioning/non_automatic_top_node_up_and_url.pl \
   t/results/moresectioning/non_automatic_top_node_up_url.pl \
@@ -1902,6 +1907,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/sectioning/double_node_anchor_float.pl \
   t/results/sectioning/double_part.pl \
   t/results/sectioning/double_recursive_self_section_node_reference.pl \
+  t/results/sectioning/double_recursive_self_section_node_reference_no_use_node.pl \
   t/results/sectioning/double_recursive_self_section_reference.pl \
   t/results/sectioning/double_top.pl \
   t/results/sectioning/double_top_in_menu.pl \

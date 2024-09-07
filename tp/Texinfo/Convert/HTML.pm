@@ -1085,7 +1085,7 @@ sub _internal_command_href($$;$$)
   if (defined($target_filename)) {
     if (!defined($source_filename)
          or $source_filename ne $target_filename) {
-      $href .= $target_filename;
+      $href .= $self->url_protect_file_text($target_filename);
       # omit target if the command is an element command, there is only
       # one element in file and there is a file in the href
       my $command_root_element_command
@@ -2960,6 +2960,9 @@ my %css_element_class_styles = (
      'pre.menu-preformatted'  => 'font-family: serif',
      'a.summary-letter-printindex'  => 'text-decoration: none',
      'pre.display-preformatted'     => 'font-family: inherit',
+     # 'display: flex; justify-content: center' centers the pre as a whole
+     'pre.displaymath'
+           => 'font-style: italic; font-family: serif; display: flex; justify-content: center',
      'span.program-in-footer' => 'font-size: smaller', # used with PROGRAM_NAME_IN_FOOTER
      'span.sansserif'     => 'font-family: sans-serif; font-weight: normal',
      'span.r'             => 'font-family: initial; font-weight: normal; font-style: normal',
@@ -4323,7 +4326,7 @@ sub _default_format_button_icon_img($$$;$)
   }
   return $self->close_html_lone_element(
     '<img src="'.$self->url_protect_url_text($icon)
-       ."\" border=\"0\" alt=\"$alt\" align=\"middle\"");
+       ."\" alt=\"$alt\" align=\"middle\"");
 }
 
 sub _direction_href_attributes($$)
@@ -4595,7 +4598,7 @@ sub _default_format_navigation_panel($$$$;$)
 
   if ($self->get_conf('HEADER_IN_TABLE')) {
     $result .= $self->html_attribute_class('table', ['nav-panel'])
-        .' cellpadding="1" cellspacing="1" border="0">'."\n";
+        .' cellpadding="1" cellspacing="1">'."\n";
     $result .= "<tr>" unless $vertical;
   } else {
     $result .= $self->html_attribute_class('div', ['nav-panel']).">\n";
@@ -4623,7 +4626,7 @@ sub _default_format_navigation_header($$$$)
 
   my $result = '';
   if ($self->get_conf('VERTICAL_HEAD_NAVIGATION')) {
-    $result .= '<table border="0" cellpadding="0" cellspacing="0">
+    $result .= '<table cellpadding="0" cellspacing="0">
 <tr>
 <td>
 ';
@@ -4726,27 +4729,41 @@ sub _default_format_element_header($$$$)
   return $result;
 }
 
-sub register_opened_section_level($$$)
+sub register_opened_section_level($$$$)
 {
   my $self = shift;
+  my $filename = shift;
   my $level = shift;
   my $close_string = shift;
-  while (@{$self->{'pending_closes'}} < $level) {
-    push(@{$self->{'pending_closes'}}, "");
+
+  if (!exists($self->{'pending_closes'}->{$filename})) {
+    $self->{'pending_closes'}->{$filename} = [];
   }
-  push(@{$self->{'pending_closes'}}, $close_string);
+  my $pending_closes = $self->{'pending_closes'}->{$filename};
+  while (@$pending_closes < $level) {
+    push(@$pending_closes, "");
+  }
+  push(@$pending_closes, $close_string);
 }
 
-sub close_registered_sections_level($$)
+sub close_registered_sections_level($$$)
 {
   my $self = shift;
+  my $filename = shift;
   my $level = shift;
+
   if (not defined($level)) {
     cluck 'close_registered_sections_level $level not defined';
   }
+
   my @closed_elements;
-  while (@{$self->{'pending_closes'}} > $level) {
-      my $close_string = pop @{$self->{'pending_closes'}};
+  if (!exists($self->{'pending_closes'}->{$filename})) {
+    return \@closed_elements;
+  }
+
+  my $pending_closes = $self->{'pending_closes'}->{$filename};
+  while (@$pending_closes > $level) {
+      my $close_string = pop @$pending_closes;
       push(@closed_elements, $close_string)
         if ($close_string ne "");
   }
@@ -4886,26 +4903,6 @@ sub _convert_heading_command($$$$$)
     my $in_skipped_node_top
       = $self->get_shared_conversion_state('top', 'in_skipped_node_top');
     $in_skipped_node_top = 0 if (!defined($in_skipped_node_top));
-    my $node_element;
-    if ($cmdname eq 'node') {
-      $node_element = $element;
-    } elsif ($cmdname eq 'part' and $element->{'extra'}
-             and $element->{'extra'}->{'part_following_node'}) {
-      $node_element = $element->{'extra'}->{'part_following_node'};
-    }
-    if ($node_element or $cmdname eq 'part') {
-      if ($node_element and $node_element->{'extra'}
-          and $node_element->{'extra'}->{'normalized'}
-          and $node_element->{'extra'}->{'normalized'} eq 'Top') {
-        $in_skipped_node_top = 1;
-        $self->set_shared_conversion_state('top', 'in_skipped_node_top',
-                                           $in_skipped_node_top);
-      } elsif ($in_skipped_node_top == 1) {
-        $in_skipped_node_top = -1;
-        $self->set_shared_conversion_state('top', 'in_skipped_node_top',
-                                           $in_skipped_node_top);
-      }
-    }
     if ($in_skipped_node_top == 1) {
       my $id_class = $cmdname;
       $result .= &{$self->formatting_function('format_separate_anchor')}($self,
@@ -5011,9 +5008,11 @@ sub _convert_heading_command($$$$$)
       # document (cannot happen in main program or test_utils.pl tests)
       $level = Texinfo::Common::section_level($opening_section);
     }
-    my $closed_strings = $self->close_registered_sections_level($level);
+    my $closed_strings = $self->close_registered_sections_level(
+                                  $self->current_filename(), $level);
     $result .= join('', @{$closed_strings});
-    $self->register_opened_section_level($level, "</div>\n");
+    $self->register_opened_section_level($self->current_filename(), $level,
+                                         "</div>\n");
 
     # use a specific class name to mark that this is the start of
     # the section extent. It is not necessary where the section is.
@@ -5306,16 +5305,23 @@ sub _convert_displaymath_command($$$$$)
   }
 
   my $result = '';
-  $result .= $self->html_attribute_class('div', [$cmdname]).'>';
+  my $pre_classes = [$cmdname];
+
+  my $use_mathjax = ($self->get_conf('HTML_MATH')
+        and $self->get_conf('HTML_MATH') eq 'mathjax');
+
+  if ($use_mathjax) {
+    $self->register_file_information('mathjax', 1);
+    push @$pre_classes, 'tex2jax_process';
+  }
+  $result .= $self->html_attribute_class('pre', $pre_classes).'>';
   if ($self->get_conf('HTML_MATH')
         and $self->get_conf('HTML_MATH') eq 'mathjax') {
-    $self->register_file_information('mathjax', 1);
-    $result .= $self->html_attribute_class('em', ['tex2jax_process']).'>'
-          ."\\[$content\\]".'</em>';
+    $result .= "\\[$content\\]";
   } else {
-    $result .= $self->html_attribute_class('em').'>'."$content".'</em>';
+    $result .= $content;
   }
-  $result .= '</div>';
+  $result .= '</pre>';
   return $result;
 }
 
@@ -5607,7 +5613,7 @@ sub _convert_menu_command($$$$$)
     $end_row = '</td></tr>';
   }
   return $self->html_attribute_class('table', [$cmdname])
-    ." border=\"0\" cellspacing=\"0\">${begin_row}\n"
+    ." cellspacing=\"0\">${begin_row}\n"
       . $content . "${end_row}</table>\n";
 }
 $default_commands_conversion{'menu'} = \&_convert_menu_command;
@@ -6135,7 +6141,12 @@ sub _convert_xref_commands($$$$)
         }
       } elsif (!$self->get_conf('XREF_USE_NODE_NAME_ARG')
                and (defined($self->get_conf('XREF_USE_NODE_NAME_ARG'))
-                    or !in_preformatted_context($self))) {
+                    or !in_preformatted_context($self))
+         # this condition avoids infinite recursions, example with
+         # USE_NODES=0 and node referring to the section and section referring
+         # to the node
+              and not _command_is_in_referred_command_stack($self,
+                                                            $target_root)) {
         $name = $self->command_text($target_root, 'text_nonumber');
         #die "$target_root $target_root->{'normalized'}" if (!defined($name));
       } elsif (defined($args->[0]->{'monospace'})) {
@@ -6350,7 +6361,7 @@ sub _convert_printindex_command($$$$)
   }
 
   #foreach my $letter_entry (@{$index_entries_by_letter->{$index_name}}) {
-  #  print STDERR "IIIIIII $letter_entry->{'letter'}\n";
+  #  print STDERR "IDXLETTER $letter_entry->{'letter'}\n";
   #  foreach my $index_entry (@{$letter_entry->{'entries'}}) {
   #    print STDERR "   ".join('|', keys(%$index_entry))."||| $index_entry->{'key'}\n";
   #  }
@@ -6858,7 +6869,7 @@ sub _convert_printindex_command($$$$)
   # now format the index entries
   $result
    .= $self->html_attribute_class('table', ["$index_name-entries-$cmdname"])
-   ." border=\"0\">\n" . '<tr><td></td>'
+   .">\n" . '<tr><td></td>'
    . $self->html_attribute_class('th', ["entries-header-$cmdname"]).'>'
      # TRANSLATORS: index entries column header in index formatting
    . $self->convert_tree($self->cdt('Index Entry'), 'Tr th idx entries 1')
@@ -6982,6 +6993,43 @@ foreach my $small_command (keys(%small_block_associated_command)) {
   $default_commands_conversion{$small_command}
     = $default_commands_conversion{$small_block_associated_command{$small_command}};
 }
+
+sub _open_node_part_command($$$)
+{
+  my $self = shift;
+  my $cmdname = shift;
+  my $element = shift;
+
+  if ($self->get_conf('NO_TOP_NODE_OUTPUT')) {
+    my $in_skipped_node_top
+      = $self->get_shared_conversion_state('top', 'in_skipped_node_top');
+    $in_skipped_node_top = 0 if (!defined($in_skipped_node_top));
+    my $node_element;
+    if ($cmdname eq 'node') {
+      $node_element = $element;
+    } elsif ($cmdname eq 'part' and $element->{'extra'}
+             and $element->{'extra'}->{'part_following_node'}) {
+      $node_element = $element->{'extra'}->{'part_following_node'};
+    }
+    if ($node_element or $cmdname eq 'part') {
+      if ($node_element and $node_element->{'extra'}
+          and $node_element->{'extra'}->{'normalized'}
+          and $node_element->{'extra'}->{'normalized'} eq 'Top') {
+        $in_skipped_node_top = 1;
+        $self->set_shared_conversion_state('top', 'in_skipped_node_top',
+                                           $in_skipped_node_top);
+      } elsif ($in_skipped_node_top == 1) {
+        $in_skipped_node_top = -1;
+        $self->set_shared_conversion_state('top', 'in_skipped_node_top',
+                                           $in_skipped_node_top);
+      }
+    }
+  }
+  return '';
+}
+
+$default_commands_open{'node'} = \&_open_node_part_command;
+$default_commands_open{'part'} = \&_open_node_part_command;
 
 sub _open_quotation_command($$$)
 {
@@ -8030,7 +8078,8 @@ sub _convert_special_unit_type($$$$)
   my $result = '';
 
   my $special_unit_variety = $output_unit->{'special_unit_variety'};
-  my $closed_strings = $self->close_registered_sections_level(0);
+  my $closed_strings = $self->close_registered_sections_level(
+                                            $self->current_filename(), 0);
   $result .= join('', @{$closed_strings});
 
   my $special_unit_body
@@ -8114,7 +8163,8 @@ sub _convert_unit_type($$$$)
           and defined($self->get_conf('DEFAULT_RULE')));
       # do it here, as it is won't be done at end of page in
       # format_element_footer
-      my $closed_strings = $self->close_registered_sections_level(0);
+      my $closed_strings = $self->close_registered_sections_level(
+                                            $self->current_filename(), 0);
       $result .= join('', @{$closed_strings});
       return $result;
     }
@@ -8277,7 +8327,8 @@ sub _default_format_element_footer($$$$;$)
   my $buttons;
 
   if ($end_page) {
-    my $closed_strings = $self->close_registered_sections_level(0);
+    my $closed_strings = $self->close_registered_sections_level(
+                                            $self->current_filename(), 0);
     $result .= join('', @{$closed_strings});
 
     my $split = $self->get_conf('SPLIT');
@@ -11335,15 +11386,12 @@ sub _file_header_information($$;$)
        and $self->get_conf('HTML_MATH') eq 'mathjax')
       and ($self->get_file_information('mathjax', $filename))) {
     my $mathjax_script = $self->get_conf('MATHJAX_SCRIPT');
+    my $mathjax_configuration = $self->get_conf('MATHJAX_CONFIGURATION');
 
     $extra_head .=
 "<script type='text/javascript'>
 MathJax = {
-  options: {
-    skipHtmlTags: {'[-]': ['pre']},
-    ignoreHtmlClass: 'tex2jax_ignore',
-    processHtmlClass: 'tex2jax_process'
-  },
+$mathjax_configuration
 };
 </script>"
 .'<script type="text/javascript" id="MathJax-script" async
@@ -11927,7 +11975,7 @@ sub _initialize_output_state($$)
 
   # other
   $self->{'pending_footnotes'} = [];
-  $self->{'pending_closes'} = [];
+  $self->{'pending_closes'} = {};
 
   $self->{'css_rule_lines'} = [];
   $self->{'css_import_lines'} = [];
@@ -13076,6 +13124,16 @@ sub output($$)
     if (! defined($mathjax_source)) {
       $mathjax_source = 'http://docs.mathjax.org/en/latest/web/hosting.html#getting-mathjax-via-git';
       $self->set_conf('MATHJAX_SOURCE', $mathjax_source);
+    }
+
+    my $mathjax_configuration = $self->get_conf('MATHJAX_CONFIGURATION');
+    if (!defined($mathjax_configuration)) {
+      $mathjax_configuration = "  options: {
+    skipHtmlTags: {'[-]': ['pre']},
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },";
+      $self->set_conf('MATHJAX_CONFIGURATION', $mathjax_configuration);
     }
   }
 

@@ -253,26 +253,6 @@ sub book_convert_heading_command($$$$$)
     my $in_skipped_node_top
       = $self->get_shared_conversion_state('top', 'in_skipped_node_top');
     $in_skipped_node_top = 0 if (!defined($in_skipped_node_top));
-    my $node_element;
-    if ($cmdname eq 'node') {
-      $node_element = $element;
-    } elsif ($cmdname eq 'part' and $element->{'extra'}
-             and $element->{'extra'}->{'part_following_node'}) {
-      $node_element = $element->{'extra'}->{'part_following_node'};
-    }
-    if ($node_element or $cmdname eq 'part') {
-      if ($node_element and $node_element->{'extra'}
-          and $node_element->{'extra'}->{'normalized'}
-          and $node_element->{'extra'}->{'normalized'} eq 'Top') {
-        $in_skipped_node_top = 1;
-        $self->set_shared_conversion_state('top', 'in_skipped_node_top',
-                                           $in_skipped_node_top);
-      } elsif ($in_skipped_node_top == 1) {
-        $in_skipped_node_top = -1;
-        $self->set_shared_conversion_state('top', 'in_skipped_node_top',
-                                           $in_skipped_node_top);
-      }
-    }
     if ($in_skipped_node_top == 1) {
       my $id_class = $cmdname;
       $result .= &{$self->formatting_function('format_separate_anchor')}($self,
@@ -378,9 +358,11 @@ sub book_convert_heading_command($$$$$)
       # document (cannot happen in main program or test_utils.pl tests)
       $level = Texinfo::Common::section_level($opening_section);
     }
-    my $closed_strings = $self->close_registered_sections_level($level);
+    my $closed_strings = $self->close_registered_sections_level(
+                                  $self->current_filename(), $level);
     $result .= join('', @{$closed_strings});
-    $self->register_opened_section_level($level, "</div>\n");
+    $self->register_opened_section_level($self->current_filename(), $level,
+                                         "</div>\n");
 
     # use a specific class name to mark that this is the start of
     # the section extent. It is not necessary where the section is.

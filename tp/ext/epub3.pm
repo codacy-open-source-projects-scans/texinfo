@@ -88,6 +88,9 @@ use File::Path;
 use File::Spec;
 use File::Copy;
 
+# for strftime
+use POSIX();
+
 # for fileparse
 use File::Basename;
 
@@ -95,6 +98,7 @@ use Encode qw(decode);
 
 # also for __(
 use Texinfo::Common;
+use Texinfo::Convert::NodeNameNormalization;
 use Texinfo::Convert::Utils;
 use Texinfo::Convert::Text;
 
@@ -398,15 +402,15 @@ sub epub_convert_special_unit_type($$$$)
 {
   my $self = shift;
   my $type = shift;
-  my $element = shift;
+  my $output_unit = shift;
   my $content = shift;
 
   push @epub_special_elements_filenames,
-   $element->{'unit_filename'}
-    unless grep {$_ eq $element->{'unit_filename'}}
+   $output_unit->{'unit_filename'}
+    unless grep {$_ eq $output_unit->{'unit_filename'}}
             @epub_special_elements_filenames;
   return &{$self->default_output_unit_conversion($type)}($self,
-                                      $type, $element, $content);
+                                      $type, $output_unit, $content);
 }
 
 sub _epub_remove_container_folder($$)
@@ -625,7 +629,12 @@ sub epub_finish($$)
     return 1;
   }
   my $document_name = $self->get_info('document_name');
-  my $opf_filename = $document_name . '.opf';
+  # We do not only percent encode the file name, as in that case the
+  # checker tells that the file cannot be found, however we can set the
+  # opf file name to anything as long as we are consistent.
+  my $opf_filename
+   = Texinfo::Convert::NodeNameNormalization::transliterate_protect_file_name(
+         $document_name) . '.opf';
   print $container_fh <<EOT;
 <?xml version="1.0"?>
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
@@ -783,16 +792,24 @@ EOT
   my $unique_uid = 'texi-uid';
   # TODO to discuss on bug-texinfo
   my $identifier = 'texinfo:'.$document_name;
-  # FIXME the dcterms:modified is mandatory, and it is also mandatory that it is a date:
+  # the dcterms:modified is mandatory, and it is also mandatory that it is a date:
   #  each Rendition MUST include exactly one [DCTERMS] modified property containing its last modification date. The value of this property MUST be an [XMLSCHEMA-2] dateTime conformant date of the form:
 
   # CCYY-MM-DDThh:mm:ssZ
   #
   # The last modification date MUST be expressed in Coordinated Universal Time (UTC) and MUST be terminated by the "Z" (Zulu) time zone indicator.
-  #
-  # <meta property="dcterms:modified">2012-03-05T12:47:00Z</meta>
+  # FIXME add a way for the user to set $dcterms_modified_str
+  my $dcterms_modified_str;
+  if ($self->get_conf('EPUB_STRICT')) {
+    # dcterms:modified is a publication date.  If the user did not specify
+    # one, we use the EPUB generation time.
+    my $datetime_zulu = POSIX::strftime("%Y-%m-%dT%TZ", gmtime());
+    $dcterms_modified_str = $datetime_zulu;
+  }
+
   # to discuss
   # <dc:rights>
+
   my $opf_file_path_name = File::Spec->catfile($epub_destination_directory,
                                         $epub_document_dir_name, $opf_filename);
   my ($encoded_opf_file_path_name, $opf_path_encoding)
@@ -814,6 +831,10 @@ EOT
       <dc:identifier id="$unique_uid">$identifier</dc:identifier>
       <dc:title>$title</dc:title>
 EOT
+  if (defined($dcterms_modified_str)) {
+    print $opf_fh "      <meta property=\"dcterms:modified\">"
+                    .$dcterms_modified_str."</meta>\n";
+  }
   my @relevant_commands = ('author', 'documentlanguage');
   my $collected_commands = Texinfo::Common::collect_commands_list_in_tree(
                                         $document_root, \@relevant_commands);

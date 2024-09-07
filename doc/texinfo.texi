@@ -79,8 +79,8 @@ Texts.  A copy of the license is included in the section entitled
 
 @sp 1
 Published by the Free Software Foundation @*
-51 Franklin St, Fifth Floor @*
-Boston, MA 02110-1301 @*
+31 Milk St # 960789 @*
+Boston, MA 02196 @*
 USA @*
 ISBN 1-882114-67-1 @c for version 4.0, September 1999.
 @c ISBN 1-882114-65-5 is for version 3.12, March 1998.
@@ -18654,11 +18654,26 @@ are converted to @LaTeX{}, before converting the @code{@@math} or
 @node MathJax Customization Variables
 @subsubsection MathJax Customization Variables
 
-This table lists the customization variables which can be used when 
+This table lists the customization variables which can be used when
 MathJax is being used, which will be the case when @code{HTML_MATH}
 is set to @samp{mathjax}.
 
 @vtable @code
+@item MATHJAX_CONFIGURATION
+Global @samp{MathJax} object configuration (inside the object braces).
+If @code{undef}, @command{texi2any} provides a default with an
+@samp{option} component, which could be, for example:
+@example
+  options: @{
+    skipHtmlTags: @{'[-]': ['pre']@},
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  @},
+@end example
+
+If you provide different defaults, you should make sure that they align
+with the HTML output produced by @command{texi2any}.
+
 @item MATHJAX_SCRIPT
 URL of the MathJax component file (e.g.@: @file{tex-svg.js}) you are using.
 @command{texi2any} provides a default value for this variable, but you

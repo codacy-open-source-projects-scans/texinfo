@@ -1389,35 +1389,67 @@ html_get_file_information (const CONVERTER *self, const char *key,
 }
 
 void
-html_register_opened_section_level (CONVERTER *self, int level,
-                                    const char *close_string)
+html_register_opened_section_level (CONVERTER *self, size_t file_number,
+                                    int level, const char *close_string)
 {
-  STRING_STACK *pending_closes = &self->pending_closes;
+  STRING_STACK *file_pending_closes
+    = &self->pending_closes.list[file_number -1];
 
-  while (pending_closes->top < level)
+  while (file_pending_closes->top < level)
     {
-      push_string_stack_string (pending_closes, "");
+      push_string_stack_string (file_pending_closes, "");
     }
-  push_string_stack_string (pending_closes, close_string);
+  push_string_stack_string (file_pending_closes, close_string);
+}
+
+/* called from Perl */
+void
+html_register_opened_filename_section_level (CONVERTER *self,
+                                    const char *filename,
+                                    int level, const char *close_string)
+{
+  size_t page_number = find_page_name_number (&self->page_name_number,
+                                              filename);
+
+  if (!page_number)
+    return;
+
+  html_register_opened_section_level (self, page_number, level, close_string);
 }
 
 STRING_LIST *
-html_close_registered_sections_level (CONVERTER *self, int level)
+html_close_registered_sections_level (CONVERTER *self, size_t file_number,
+                                      int level)
 {
-  STRING_STACK *pending_closes = &self->pending_closes;
+  STRING_STACK *file_pending_closes
+    = &self->pending_closes.list[file_number -1];
   STRING_LIST *closed_elements = new_string_list ();
 
-  while (pending_closes->top > level)
+  while (file_pending_closes->top > level)
     {
-      const char *close_string = top_string_stack (pending_closes);
+      const char *close_string = top_string_stack (file_pending_closes);
       if (strlen (close_string))
         {
           add_string (close_string, closed_elements);
         }
-      pop_string_stack (pending_closes);
+      pop_string_stack (file_pending_closes);
     }
 
   return closed_elements;
+}
+
+/* called from Perl */
+STRING_LIST *
+html_close_registered_filename_sections_level (CONVERTER *self,
+                                      const char *filename, int level)
+{
+  size_t page_number = find_page_name_number (&self->page_name_number,
+                                              filename);
+
+  if (!page_number)
+    return 0;
+
+  return html_close_registered_sections_level (self, page_number, level);
 }
 
 OUTPUT_UNIT *
@@ -3534,7 +3566,12 @@ html_internal_command_href (CONVERTER *self, const ELEMENT *command,
         {
           const ELEMENT *command_root_element
              = html_command_root_element_command (self, command);
-          text_append (&href, target_filename->filename);
+          char *protected_filename
+            = url_protect_file_text (self, target_filename->filename);
+
+          text_append (&href, protected_filename);
+          free (protected_filename);
+
      /* omit target if the command is an element command, there is only
         one element in file and there is a file in the href */
           if (filename_from && command_root_element)
@@ -5759,6 +5796,12 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
   memset (self->html_files_information.list, 0,
           self->html_files_information.number * sizeof (ASSOCIATED_INFO));
 
+  self->pending_closes.number = self->output_unit_files.number +1;
+  self->pending_closes.list = (STRING_STACK *)
+    malloc (self->pending_closes.number * sizeof (STRING_STACK));
+  memset (self->pending_closes.list, 0,
+          self->pending_closes.number * sizeof (STRING_STACK));
+
   return files_source_info;
 }
 
@@ -5780,6 +5823,12 @@ setup_output_simple_page (CONVERTER *self, const char *output_filename)
        malloc (self->html_files_information.number * sizeof (ASSOCIATED_INFO));
   memset (self->html_files_information.list, 0,
           self->html_files_information.number * sizeof (ASSOCIATED_INFO));
+
+  self->pending_closes.number = 1+1;
+  self->pending_closes.list = (STRING_STACK *)
+       malloc (self->pending_closes.number * sizeof (STRING_STACK));
+  memset (self->pending_closes.list, 0,
+          self->pending_closes.number * sizeof (STRING_STACK));
 
   self->page_name_number.number = 1;
   self->page_name_number.list = (PAGE_NAME_NUMBER *)
@@ -7380,7 +7429,7 @@ html_default_format_button_icon_img (CONVERTER *self,
   text_append (&result, icon_protected);
   free (icon_protected);
 
-  text_append_n (&result, "\" border=\"0\" alt=\"", 18);
+  text_append_n (&result, "\" alt=\"", 7);
   if (name)
     {
       if (button_name)
@@ -7877,7 +7926,7 @@ html_default_format_navigation_panel (CONVERTER *self,
                                               &nav_panel_classes);
       text_append (result, attribute_class);
       text_append (result,
-                   " cellpadding=\"1\" cellspacing=\"1\" border=\"0\">\n");
+                   " cellpadding=\"1\" cellspacing=\"1\">\n");
       free (attribute_class);
 
       if (!vertical)
@@ -7945,7 +7994,7 @@ html_default_format_navigation_header (CONVERTER *self,
     vertical = 1;
   if (vertical)
     text_append (result,
-     "<table border=\"0\" cellpadding=\"0\" cellspacing=\"0\">\n"
+     "<table cellpadding=\"0\" cellspacing=\"0\">\n"
      "<tr>\n<td>\n");
 
   /* keep the current index in result to be able to determine if text was
@@ -8222,7 +8271,8 @@ html_default_format_element_footer (CONVERTER *self,
   if (end_page)
     {
       STRING_LIST *closed_strings;
-      closed_strings = html_close_registered_sections_level (self, 0);
+      closed_strings = html_close_registered_sections_level (self,
+                                       self->current_filename.file_number, 0);
 
       if (closed_strings->number)
         {
@@ -10160,41 +10210,9 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
   if (self->conf->NO_TOP_NODE_OUTPUT.o.integer > 0
       && builtin_command_data[cmd].flags & CF_root)
     {
-      const ELEMENT *node_element = 0;
       int in_skipped_node_top
         = self->shared_conversion_state.in_skipped_node_top;
 
-      if (cmd == CM_node)
-        node_element = element;
-      else if (cmd == CM_part)
-        {
-          const ELEMENT *part_following_node
-            = lookup_extra_element (element, "part_following_node");
-          if (part_following_node)
-            node_element = part_following_node;
-        }
-      if (node_element || cmd == CM_part)
-        {
-          int node_is_top = 0;
-          if (node_element)
-            {
-              const char *normalized = lookup_extra_string (node_element,
-                                                            "normalized");
-              if (normalized && !strcmp (normalized, "Top"))
-                {
-                  node_is_top = 1;
-                  in_skipped_node_top = 1;
-                  self->shared_conversion_state.in_skipped_node_top
-                    = in_skipped_node_top;
-                }
-            }
-          if (!node_is_top && in_skipped_node_top == 1)
-            {
-              in_skipped_node_top = -1;
-              self->shared_conversion_state.in_skipped_node_top
-                = in_skipped_node_top;
-            }
-        }
       if (in_skipped_node_top == 1)
         {
           format_separate_anchor (self, element_id,
@@ -10327,7 +10345,8 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
       if (status != 0)
         level = section_level (opening_section);
 
-      closed_strings = html_close_registered_sections_level (self, level);
+      closed_strings = html_close_registered_sections_level (self,
+                                 self->current_filename.file_number, level);
 
       if (closed_strings->number)
         {
@@ -10341,7 +10360,8 @@ convert_heading_command (CONVERTER *self, const enum command_id cmd,
       free (closed_strings->list);
       free (closed_strings);
 
-      html_register_opened_section_level (self, level, "</div>\n");
+      html_register_opened_section_level (self,
+                        self->current_filename.file_number, level, "</div>\n");
 
     /* use a specific class name to mark that this is the start of
        the section extent. It is not necessary where the section is. */
@@ -10746,42 +10766,40 @@ convert_displaymath_command (CONVERTER *self, const enum command_id cmd,
 {
   char *attribute_class;
   STRING_LIST *classes;
+  int use_mathjax;
 
   if (html_in_string (self))
     {
       if (content)
         text_append (result, content);
+      return;
     }
+
+  use_mathjax = (self->conf->HTML_MATH.o.string
+      && !strcmp (self->conf->HTML_MATH.o.string, "mathjax"));
 
   classes = new_string_list ();
   add_string (builtin_command_name (cmd), classes);
-  attribute_class = html_attribute_class (self, "div", classes);
+
+  if (use_mathjax)
+    {
+      html_register_file_information (self, "mathjax", 1);
+      add_string ("tex2jax_process", classes);
+    }
+
+  attribute_class = html_attribute_class (self, "pre", classes);
   text_append (result, attribute_class);
   free (attribute_class);
   text_append_n (result, ">", 1);
 
-  clear_strings_list (classes);
-
-  if (self->conf->HTML_MATH.o.string
-      && !strcmp (self->conf->HTML_MATH.o.string, "mathjax"))
-    {
-      html_register_file_information (self, "mathjax", 1);
-      add_string ("tex2jax_process", classes);
-      attribute_class = html_attribute_class (self, "em", classes);
-      text_append (result, attribute_class);
-      text_printf (result, ">\\[%s\\]</em>", content);
-      goto out;
-    }
-
-  attribute_class = html_attribute_class (self, "em", 0);
-  text_append (result, attribute_class);
-  text_printf (result, ">%s</em>", content);
-
- out:
-  text_append_n (result, "</div>", 6);
-
   destroy_strings_list (classes);
-  free (attribute_class);
+
+  if (use_mathjax)
+    text_printf (result, "\\[%s\\]", content);
+  else
+    text_printf (result, "%s", content);
+
+  text_append_n (result, "</pre>", 6);
 }
 
 void
@@ -11247,7 +11265,7 @@ convert_menu_command (CONVERTER *self, const enum command_id cmd,
 
   attribute_class = html_attribute_class (self, "table", classes);
   text_append (result, attribute_class);
-  text_append (result, " border=\"0\" cellspacing=\"0\">");
+  text_append (result, " cellspacing=\"0\">");
   if (html_inside_preformatted (self))
     text_append_n (result, "<tr><td>", 8);
   text_append_n (result, "\n", 1);
@@ -12218,7 +12236,12 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
             }
           else if (self->conf->XREF_USE_NODE_NAME_ARG.o.integer <= 0
                    && (self->conf->XREF_USE_NODE_NAME_ARG.o.integer == 0
-                       || !html_in_preformatted_context (self)))
+                       || !html_in_preformatted_context (self))
+        /* this condition avoids infinite recursions, example with
+           USE_NODES=0 and node referring to the section and section referring
+           to the node */
+                   && !command_is_in_referred_command_stack (
+                         &self->referred_command_stack, target_root, 0))
             {
               name = html_command_text (self, target_root, HTT_text_nonumber);
             }
@@ -13631,7 +13654,7 @@ convert_printindex_command (CONVERTER *self, const enum command_id cmd,
   clear_strings_list (entry_classes);
   text_append (result, attribute_class);
   free (attribute_class);
-  text_append_n (result, " border=\"0\">\n<tr><td></td>", 26);
+  text_append_n (result, ">\n<tr><td></td>", 15);
 
   xasprintf (&index_name_cmd_class, "entries-header-%s",
              builtin_command_name (cmd));
@@ -13927,6 +13950,50 @@ static const COMMAND_INTERNAL_CONVERSION commands_internal_conversion_table[] = 
 };
 
 void
+open_node_part_command (CONVERTER *self, const enum command_id cmd,
+                        const ELEMENT *element, TEXT *result)
+{
+  if (self->conf->NO_TOP_NODE_OUTPUT.o.integer > 0)
+    {
+      const ELEMENT *node_element = 0;
+      int in_skipped_node_top
+        = self->shared_conversion_state.in_skipped_node_top;
+
+      if (cmd == CM_node)
+        node_element = element;
+      else if (cmd == CM_part)
+        {
+          const ELEMENT *part_following_node
+            = lookup_extra_element (element, "part_following_node");
+          if (part_following_node)
+            node_element = part_following_node;
+        }
+      if (node_element || cmd == CM_part)
+        {
+          int node_is_top = 0;
+          if (node_element)
+            {
+              const char *normalized = lookup_extra_string (node_element,
+                                                            "normalized");
+              if (normalized && !strcmp (normalized, "Top"))
+                {
+                  node_is_top = 1;
+                  in_skipped_node_top = 1;
+                  self->shared_conversion_state.in_skipped_node_top
+                    = in_skipped_node_top;
+                }
+            }
+          if (!node_is_top && in_skipped_node_top == 1)
+            {
+              in_skipped_node_top = -1;
+              self->shared_conversion_state.in_skipped_node_top
+                = in_skipped_node_top;
+            }
+        }
+    }
+}
+
+void
 open_quotation_command (CONVERTER *self, const enum command_id cmd,
                         const ELEMENT *element, TEXT *result)
 {
@@ -13972,6 +14039,8 @@ open_inline_container_type (CONVERTER *self, const enum element_type type,
 
 /* associate command to the C function implementing the opening */
 static const COMMAND_INTERNAL_OPEN commands_internal_open_table[] = {
+  {CM_node, &open_node_part_command},
+  {CM_part, &open_node_part_command},
   {CM_quotation, &open_quotation_command},
   {CM_smallquotation, &open_quotation_command},
   {0, 0},
@@ -15373,7 +15442,8 @@ convert_unit_type (CONVERTER *self, const enum output_unit_type unit_type,
 
     /* do it here, as it is won't be done at end of page in
        format_element_footer */
-          closed_strings = html_close_registered_sections_level (self, 0);
+          closed_strings = html_close_registered_sections_level (self,
+                                   self->current_filename.file_number, 0);
 
           if (closed_strings->number)
             {
@@ -15427,7 +15497,8 @@ convert_special_unit_type (CONVERTER *self,
   number = find_string (&self->special_unit_varieties,
                         special_unit_variety);
 
-  closed_strings = html_close_registered_sections_level (self, 0);
+  closed_strings = html_close_registered_sections_level (self,
+                                self->current_filename.file_number, 0);
 
   if (closed_strings->number)
     {
@@ -17093,17 +17164,25 @@ html_conversion_finalization (CONVERTER *self)
   free (self->html_files_information.list);
 
   /* should not be possible with default code, as
-     close_registered_sections_level(0)
+     close_registered_sections_level(..., 0)
      is called at the end of processing or at the end of each file.
      However, it could happen if the conversion functions are user
      defined.
    */
-  if (self->pending_closes.top > 0)
+  for (i = 0; i < self->pending_closes.number; i++)
     {
-      message_list_document_warn (&self->error_messages, self->conf, 0,
-         "%zu registered opened sections not closed",
-          self->pending_closes.top);
-      clear_string_stack (&self->pending_closes);
+      STRING_STACK *file_pending_closes = &self->pending_closes.list[i];
+      if (file_pending_closes->top > 0)
+        {
+          FILE_NAME_PATH_COUNTER *file_counter
+            = &self->output_unit_files.list[i];
+          const char *page_name = file_counter->filename;
+
+          message_list_document_warn (&self->error_messages, self->conf, 0,
+             "%s: %zu registered opened sections not closed",
+              page_name, file_pending_closes->top);
+          clear_string_stack (file_pending_closes);
+        }
     }
 
   if (self->pending_inline_content.top > 0)
@@ -17496,7 +17575,13 @@ html_free_converter (CONVERTER *self)
 
   free (self->style_formatted_cmd.list);
 
-  free (self->pending_closes.stack);
+  for (i = 0; i < self->pending_closes.number; i++)
+    {
+      STRING_STACK *file_pending_closes = &self->pending_closes.list[i];
+      free (file_pending_closes->stack);
+    }
+  free (self->pending_closes.list);
+
   free (self->pending_inline_content.stack);
 
   free (self->associated_inline_content.list);
