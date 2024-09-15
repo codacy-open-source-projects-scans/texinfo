@@ -47,6 +47,7 @@ use Test::More;
 # result when regenerating
 use I18N::Langinfo qw(langinfo CODESET);
 use Encode ();
+use File::Spec;
 #use File::Basename;
 #use File::Copy;
 use Data::Dumper ();
@@ -161,8 +162,14 @@ my %formats = (
   'info' => \&convert_to_info,
   'file_info' => \&convert_to_info,
   'html' => \&convert_to_html,
+  # Can also be used for epub, the only difference is the name of the
+  # output directory.
   'file_html' => \&convert_to_html,
   'html_text' => \&convert_to_html,
+  # NOTE setting file_epub format does not automatically loads epub3.pm,
+  # since init files are handled before parsing.  The init file should
+  # also be added to init_files.
+  'file_epub' => \&convert_to_html,
   'xml' => \&convert_to_xml,
   'file_xml' => \&convert_to_xml,
   'docbook' => \&convert_to_docbook,
@@ -709,6 +716,34 @@ sub output_preamble_postamble_latex($$)
   }
 }
 
+sub _set_outfile_name($$$$)
+{
+  my $test_file_name = shift;
+  my $test_name = shift;
+  my $extension = shift;
+  my $format = shift;
+
+  my $original_test_outfile = "$test_file_name/$test_name.$extension";
+  my $test_outfile = $original_test_outfile;
+  if ($output_files{$original_test_outfile}) {
+    warn "WARNING: $test_file_name: $test_name: $format: same name: $original_test_outfile "
+             ."(".join("|", @{$output_files{$original_test_outfile}}).")\n";
+    push @{$output_files{$original_test_outfile}}, $format;
+    $test_outfile = "$test_file_name/${test_name}_${format}.$extension";
+    # we also check that the file name with the format in name
+    # has not already been output
+    if ($output_files{$test_outfile}) {
+      warn "ERROR: $test_file_name: $test_name: $format: same name with format: $test_outfile\n";
+    } else {
+      $output_files{$test_outfile} = [$format];
+    }
+  } else {
+    $output_files{$original_test_outfile} = [$format];
+  }
+
+  return $test_outfile;
+}
+
 my %tested_transformations;
 
 # Run a single test case.  Each test case is an array
@@ -872,6 +907,8 @@ sub test($$)
      %Texinfo::Common::default_main_program_customization_options
     };
 
+  my $doing_epub = 0;
+
   # get symbols in Texinfo::Config namespace before calling the init files
   # such that the added symbols can be removed after running the tests to have
   # isolated tests and be able to load the same init file multiple times.
@@ -898,6 +935,31 @@ sub test($$)
       if (defined($files)) {
         my $file = $files->[0];
         Texinfo::Config::GNUT_load_init_file($file);
+        if ($filename eq 'epub3.pm') {
+          $doing_epub = 1;
+          my $create_epub_file = $arg_output;
+          if ($arg_output) {
+            eval { require Archive::Zip; };
+            my $archive_zip_loading_error = $@;
+
+            $create_epub_file = 0 if ($archive_zip_loading_error);
+          }
+          if ($create_epub_file) {
+            # output EPUB as an epub publication file by setting OUTFILE.
+            # EPUB_CREATE_CONTAINER_FILE should be set in the default case.
+            my $extension = 'epub';
+            mkdir ("$output_files_dir/$self->{'name'}")
+              if (! -d "$output_files_dir/$self->{'name'}");
+            my $test_outfile = _set_outfile_name($self->{'name'}, $test_name,
+                                                  $extension, 'epub');
+            my $outfile = "$output_files_dir/$test_outfile";
+            $converter_options->{'OUTFILE'} = $outfile;
+          } elsif (!defined($converter_options->{'EPUB_CREATE_CONTAINER_FILE'})) {
+          # we override init_files_options, as the priority between
+          # converter_options and init_files_options is not well defined.
+            $init_files_options->{'EPUB_CREATE_CONTAINER_FILE'} = 0;
+          }
+        }
       } else {
         warn (sprintf("could not read init file %s", $filename));
       }
@@ -959,7 +1021,7 @@ sub test($$)
   }
 
   if (not defined($document)) {
-    print STDERR "ERROR: parsing result undef\n";
+    warn "ERROR: parsing result undef\n";
     my ($parser_errors, $parser_error_count) = $parser->errors();
     foreach my $error_message (@$parser_errors) {
       warn $error_message->{'error_line'}
@@ -1146,26 +1208,36 @@ sub test($$)
       = Texinfo::Convert::Text::convert_to_text($tree, {'TEST' => 1,
                           'expanded_formats' => \%expanded_formats});
 
+  # holds conversion function output returned as text for each format.
+  # Should not be set for formats outputting to files.
   my %converted;
   my %converted_errors;
 
   foreach my $format (@tested_formats) {
     if (defined($formats{$format})) {
+      # FIXME is it ok in term of priority?  If a key is in both, last
+      # one is kept, which means priority for init_files_options.
       my $format_converter_options = {%$converter_options,
                                       %$init_files_options};
       my $format_type = $format;
       if ($format_type =~ s/^file_//) {
+        if ($format_type eq 'epub' and !$doing_epub) {
+          warn "ERROR: $self->{'name'}: $test_name: $format: init file not loaded\n";
+        }
         # the information that the results is a file is passed
-        # through $format_converter_options->{'SUBDIR'} being defined
-        my $base = "t/results/$self->{'name'}/$test_name/";
+        # through $format_converter_options->{'SUBDIR'} being defined,
+        # except for EPUB, which set (and reuse) SUBDIR internally.
+        my $test_base_dir = "t/results/$self->{'name'}/$test_name/";
+        my $base;
         my $test_out_dir;
         if ($self->{'generate'}) {
-          $base = $srcdir.$base;
+          $base = $srcdir.$test_base_dir;
           $test_out_dir = $base.'res_'.$format_type;
           if (-d $test_out_dir) {
             unlink_dir_files($test_out_dir);
           }
         } else {
+          $base = $test_base_dir;
           $test_out_dir = $base.'out_'.$format_type;
         }
         if (!defined($format_converter_options->{'SUBDIR'})) {
@@ -1212,25 +1284,10 @@ sub test($$)
         } else {
           $extension = $format_type;
         }
-
         if (defined ($converted{$format})) {
-          my $original_test_outfile = "$self->{'name'}/$test_name.$extension";
-          my $test_outfile = $original_test_outfile;
-          if ($output_files{$original_test_outfile}) {
-            warn "WARNING: $self->{'name'}: $test_name: $format: same name: $original_test_outfile "
-                     ."(".join("|", @{$output_files{$original_test_outfile}}).")\n";
-            push @{$output_files{$original_test_outfile}}, $format;
-            $test_outfile = "$self->{'name'}/${test_name}_${format}.$extension";
-            # we also check that the file name with the format in name
-            # has not already been output
-            if ($output_files{$test_outfile}) {
-              warn "ERROR: $self->{'name'}: $test_name: $format: same name with format: $test_outfile\n";
-            } else {
-              $output_files{$test_outfile} = [$format];
-            }
-          } else {
-            $output_files{$original_test_outfile} = [$format];
-          }
+          my $test_outfile
+            = _set_outfile_name($self->{'name'}, $test_name,
+                                $extension, $format);
           my $outfile = "$output_files_dir/$test_outfile";
           if (!open(OUTFILE, ">$outfile")) {
             warn "ERROR: open $outfile: $!\n";
@@ -1557,6 +1614,67 @@ sub test($$)
             $reference_exists = 1;
             $tests_count += 1;
             my $errors = compare_dirs_files($reference_dir, $results_dir);
+
+            # compare *_epub_package/EPUB and *_epub_package/EPUB/xhtml
+            # contents too for epub
+            if (($format_type eq 'html' or $format_type eq 'epub')
+                and $doing_epub) {
+              my @epub_package_dirs;
+              if (opendir(RDIR, $reference_dir)) {
+                my @files = readdir (RDIR);
+                foreach my $file (@files) {
+                  if ($file =~ /_epub_package$/) {
+                    push @epub_package_dirs, $file;
+                  }
+                }
+              }
+              my $used_dir;
+              foreach my $dir_name (@epub_package_dirs) {
+                my $reference_EPUB_dir;
+                my $reference_xhtml_dir;
+                my $ref_epub_package = File::Spec->catdir($reference_dir,
+                                                          $dir_name);
+                if (-r $ref_epub_package and -d $ref_epub_package) {
+                  $reference_EPUB_dir = File::Spec->catdir($ref_epub_package,
+                                                           'EPUB');
+                  if (-r $reference_EPUB_dir and -d $reference_EPUB_dir) {
+                    $used_dir = 1;
+
+                    my $results_EPUB_dir
+                      = File::Spec->catdir($results_dir, $dir_name, 'EPUB');
+                    my $EPUB_dir_errors
+                      = compare_dirs_files($reference_EPUB_dir,
+                                           $results_EPUB_dir);
+                    if ($EPUB_dir_errors) {
+                      if (!$errors) {
+                        $errors = [];
+                      }
+                      push @$errors, @$EPUB_dir_errors;
+                    }
+
+                    $reference_xhtml_dir
+                      = File::Spec->catdir($reference_EPUB_dir, 'xhtml');
+                    if (-r $reference_xhtml_dir and -d $reference_xhtml_dir) {
+                      my $results_xhtml_dir
+                        = File::Spec->catdir($results_EPUB_dir, 'xhtml');
+                      my $xhtml_dir_errors
+                        = compare_dirs_files($reference_xhtml_dir,
+                                             $results_xhtml_dir);
+                      if ($xhtml_dir_errors) {
+                        if (!$errors) {
+                          $errors = [];
+                        }
+                        push @$errors, @$xhtml_dir_errors;
+                      }
+                    }
+                  }
+                }
+              }
+              if (!$used_dir) {
+                warn "WARNING: $format $test_name: ".
+                                "no suitable epub_package dir\n";
+              }
+            }
             if ($todos{$format}) {
               SKIP: {
                 skip $todos{$format}, 1;

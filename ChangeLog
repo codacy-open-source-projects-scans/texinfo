@@ -1,3 +1,140 @@
+2024-09-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%defaults): do not set MISC_BUTTONS to
+	SECTION_BUTTONS in the default case, as there are no regular
+	directions set for special output units.  Add Top button instead of 
+	regular directions, with default now being the same as with TEXI2HTML
+	style.  Report from Rudolf Adamkovič.
+
+2024-09-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/terminal.c (terminal_prep_terminal_hook): Return void not
+	int.  Report from Biswapriyo Nath.
+
+2024-09-10  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (MathJax Customization Variables),
+	tp/Texinfo/Convert/HTML.pm (output): add tex MathJax option block that
+	tighten the configuration to what is really needed for MathJax in
+	texi2any output.
+
+2024-09-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/tests/Makefile.am (parser_tests_environment): add srcdir in the
+	environment for parser_tests.sh calls.
+
+2024-09-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (%formats, test): add the epub_file format,
+	associated to convert_to_html.
+	Minor changes in code.
+
+	* tp/Makefile.tres, tp/t/epub_tests.t: use epub_file format.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS, TODO, doc/texinfo.texi (Achieving strict EPUB conformance):
+	document EPUB_STRICT and give other information on EPUB conformance.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): if $arg_output is set, output EPUB as an
+	epub file if Archive::Zip is installed, by simply setting OUTFILE.
+
+	* tp/t/test_utils.pl (_set_outfile_name, test): separate code setting
+	output file name for $arg_output as _set_outfile_name.  Use
+	_set_outfile_name both for converted output for the diverse formats
+	and for epub.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): if doing epub, set init_files_options
+	EPUB_CREATE_CONTAINER_FILE in the default case.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/check_epubcheck_texi_t.sh: sort first level directories.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/epub_tests.t, tp/Makefile.tres, tp/t/html_tests.t: new
+	t/epub_tests.t file for epub related tests.  Move epub related tests
+	from html_tests.t to epub_tests.t.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): if epub3.pm is loaded, compare
+	*_epub_package/EPUB and *_epub_package/EPUB/xhtml contents.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/Makefile.am (wwwdoc-build): fix Pod/Simple/Texinfo.pm out of
+	source path.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/Makefile.am (gendocs_envvars, wwwdoc-build): fix out of source
+	wwwdoc-build build.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/ext/epub3.pm (epub_finish): remove a spurious tab character in
+	container file.
+
+2024-09-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/options_data.txt (_INLINE_STYLE_WIDTH), tp/ext/epub3.pm
+	(epub_setup), tp/Texinfo/Convert/HTML.pm (_convert_tab_command)
+	(_convert_def_command), tp/Texinfo/XS/convert/convert_html.c
+	(convert_tab_command, convert_def_command): add _INLINE_STYLE_WIDTH
+	customization variable.  Replace width attribute by inline CSS if
+	_INLINE_STYLE_WIDTH is set.  Set _INLINE_STYLE_WIDTH in epub3.pm if
+	EPUB_STRICT is set.
+
+2024-09-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: manual build of pod2texi.html not required
+	(since 2022-11-19).
+
+2024-09-07  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: add 7.1.1 release notice
+
+2024-09-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/ext/epub3.pm (epub_finish): fix nav file formatting with gap
+	in sectioning.
+
+	* tp/Makefile.tres, tp/t/html_tests.t (section_part_epub): add a test
+	of epub, with @part and starting at @section, leading to a gap in
+	sectioning.
+
+2024-09-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/ext/epub3.pm (epub_finish): fix nav file formatting with a
+	command with a zero section level not appearing first, by consistently
+	using $section_level.
+
+	* tp/Makefile.tres, tp/t/html_tests.t (chapter_before_top_epub): test
+	chapter before top in epub for nav file formatting.
+
+	* tp/maintain/check_epubcheck_texi_t.sh: show the command used to
+	generate EPUB in log.
+
+2024-09-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_xref_commands),
+	tp/Texinfo/XS/convert/convert_html.c (convert_xref_commands): handle
+	better formatting of internal ref in string context with nested
+	references.
+
+	* tp/maintain/check_epubcheck_texi_t.sh: call with
+	NO_TOP_NODE_OUTPUT=0 to avoid lots of false positives.
+
+	* tp/Makefile.tres, tp/t/html_tests.t
+	(double_recursive_self_section_reference_node_no_use_node): new test
+	of recursive references, split with USE_NODES=0.
+
 2024-09-06  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/ext/epub3.pm (epub_finish): use transliterate_protect_file_name

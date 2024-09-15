@@ -463,6 +463,11 @@ sub epub_setup($)
   $nav_filename = $default_nav_filename;
   $epub_file_nr = 1;
 
+
+  if ($self->get_conf('EPUB_STRICT')) {
+    $self->set_conf('_INLINE_STYLE_WIDTH', 1);
+  }
+
   if (not defined($self->get_conf('EPUB_CREATE_CONTAINER_FILE'))) {
     if (not $self->get_conf('TEST')) {
       $self->set_conf('EPUB_CREATE_CONTAINER_FILE', 1);
@@ -640,7 +645,7 @@ sub epub_finish($$)
 <container version="1.0" xmlns="urn:oasis:names:tc:opendocument:xmlns:container">
     <rootfiles>
         <rootfile full-path="${epub_document_dir_name}/${opf_filename}"
-            media-type="application/oebps-package+xml" />	
+            media-type="application/oebps-package+xml" />
     </rootfiles>
 </container>
 EOT
@@ -736,19 +741,26 @@ EOT
       next if ($section->{'cmdname'} eq 'part');
       my $section_level = $section->{'extra'}->{'section_level'};
       $section_level = 1 if ($section_level == 0);
-      # FIXME with gaps in sectioning there could be nesting issues?
       if ($level < $section_level) {
+        print $nav_fh "\n". " " x $level . "<ol>\n";
+        $level++;
         while ($level < $section_level) {
-          my $leading_spaces = '';
-          print $nav_fh "\n". " " x $level . "<ol>\n";
+          # case of gap in sectioning.  The Navigation document requirements
+          # in EPUB mandates a span (or a) after a <li>, and mandates that
+          # it is not empty.  We use a "0" for this text for a lack of
+          # anything better.
+          # There should be a warning/error emitted by texi2any for such a
+          # sectioning structure.
+          print $nav_fh " " x $level . "<li><span>0</span>\n"
+                             . " " x $level . "<ol>\n";
           $level++;
         }
-      } elsif ($level > $section->{'extra'}->{'section_level'}) {
+      } elsif ($level > $section_level) {
         # on the same line as the a element for the first </li>
         print $nav_fh "</li>\n". " " x ($level -1) . "</ol>\n";
         $level--;
         while ($level > $section_level) {
-          print $nav_fh " " x $level . "</li>\n". " " x ($level -1) . "</ol>\n";
+          print $nav_fh " " x $level . "</li>\n"." " x ($level -1) . "</ol>\n";
           $level--;
         }
         print $nav_fh " " x $level ."</li>\n";
@@ -770,7 +782,7 @@ EOT
       $level--;
     }
     while ($level > $root_level) {
-      print $nav_fh " " x $level . "</li>\n". " " x ($level -1) . "</ol>\n";
+      print $nav_fh " " x $level . "</li>\n"." " x ($level -1) . "</ol>\n";
       $level--;
     }
 

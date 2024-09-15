@@ -12100,7 +12100,10 @@ convert_tab_command (CONVERTER *self, const enum command_id cmd,
           const char *fraction_str
             = cf_misc_args->contents.list[cell_nr -1]->text.text;
           double fraction = strtod (fraction_str, NULL);
-          text_printf (result, " width=\"%0.f%%\"", 100 * fraction);
+          if (self->conf->_INLINE_STYLE_WIDTH.o.integer > 0)
+            text_printf (result, " style=\"width: %0.f%%\"", 100 * fraction);
+          else
+            text_printf (result, " width=\"%0.f%%\"", 100 * fraction);
         }
     }
   text_append_n (result, ">", 1);
@@ -12180,7 +12183,7 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
   /* internal reference */
   if (target_node)
     {
-      char *href;
+      char *href = 0;
       STRING_LIST *classes = 0;
      /* This is the node if USE_NODES, otherwise this may be the sectioning
         command (if the sectioning command is really associated to the node) */
@@ -12195,7 +12198,8 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
       if (!associated_section || associated_section != target_root)
         target_root = target_node;
 
-      href = html_command_href (self, target_root, 0, element, 0);
+      if (!html_in_string (self))
+        href = html_command_href (self, target_root, 0, element, 0);
 
       if (!name)
         {
@@ -12213,13 +12217,19 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                    &self->referred_command_stack, associated_section, 0))
             {
               target_root = associated_section;
-              name = html_command_text (self, target_root, HTT_text_nonumber);
+              if (html_in_string (self))
+                name = html_command_text (self, target_root, HTT_string);
+              else
+                name = html_command_text (self, target_root, HTT_text_nonumber);
             }
           else if (target_node->cmd == CM_float)
             {
               if (self->conf->XREF_USE_FLOAT_LABEL.o.integer <= 0)
                 {
-                  name = html_command_text (self, target_root, 0);
+                  if (html_in_string (self))
+                    name = html_command_text (self, target_root, HTT_string);
+                  else
+                    name = html_command_text (self, target_root, 0);
                 }
               if (!name || !strlen (name))
                 {
@@ -12243,7 +12253,10 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
                    && !command_is_in_referred_command_stack (
                          &self->referred_command_stack, target_root, 0))
             {
-              name = html_command_text (self, target_root, HTT_text_nonumber);
+              if (html_in_string (self))
+                name = html_command_text (self, target_root, HTT_string);
+              else
+                name = html_command_text (self, target_root, HTT_text_nonumber);
             }
           else if (args_formatted->number > 0
                    && args_formatted->args[0].formatted[AFT_type_monospace])
@@ -12255,7 +12268,7 @@ convert_xref_commands (CONVERTER *self, const enum command_id cmd,
             name = strdup ("");
         }
 
-      if (href && !html_in_string (self))
+      if (href)
         {
           char *attribute_class;
 
@@ -13825,7 +13838,10 @@ convert_def_command (CONVERTER *self, const enum command_id cmd,
     {
       attribute_class = html_attribute_class (self, "table", classes);
       text_append (result, attribute_class);
-      text_append_n (result, " width=\"100%\">\n", 15);
+      if (self->conf->_INLINE_STYLE_WIDTH.o.integer > 0)
+        text_append_n (result, " style=\"width: 100%\">\n", 22);
+      else
+        text_append_n (result, " width=\"100%\">\n", 15);
       if (content)
         text_append (result, content);
       text_append_n (result, "</table>\n", 9);

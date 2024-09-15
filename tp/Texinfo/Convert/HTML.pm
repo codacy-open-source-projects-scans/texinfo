@@ -2493,9 +2493,11 @@ my %defaults = (
 
 );
 
-foreach my $buttons ('CHAPTER_BUTTONS', 'MISC_BUTTONS', 'TOP_BUTTONS') {
+foreach my $buttons ('CHAPTER_BUTTONS', 'TOP_BUTTONS') {
   $defaults{$buttons} = [@{$defaults{'SECTION_BUTTONS'}}];
 }
+
+$defaults{'MISC_BUTTONS'} = ['Top', 'Contents', 'Index', 'About'];
 
 foreach my $buttons ('CHAPTER_FOOTER_BUTTONS', 'TOP_FOOTER_BUTTONS') {
   $defaults{$buttons} = [@{$defaults{'SECTION_FOOTER_BUTTONS'}}];
@@ -6043,7 +6045,12 @@ sub _convert_tab_command($$$$$)
     if (exists($cf->{'extra'}->{'misc_args'}->[$cell_nr-1])) {
       my $percent = sprintf('%.0f',
                             100. * $cf->{'extra'}->{'misc_args'}->[$cell_nr-1]);
-      $fractions = " width=\"$percent%\"";
+      my $width = "$percent%";
+      if ($self->get_conf('_INLINE_STYLE_WIDTH')) {
+        $fractions = " style=\"width: $width\"";
+      } else {
+        $fractions = " width=\"$width\"";
+      }
     }
   }
 
@@ -6112,7 +6119,10 @@ sub _convert_xref_commands($$$$)
          if (!$target_node->{'extra'}->{'associated_section'}
              or $target_node->{'extra'}->{'associated_section'} ne $target_root);
 
-    my $href = $self->command_href($target_root, undef, $command);
+    my $href;
+    if (!in_string($self)) {
+      $href = $self->command_href($target_root, undef, $command);
+    }
 
     if (!defined($name)) {
       if ($self->get_conf('xrefautomaticsectiontitle') eq 'on'
@@ -6127,10 +6137,19 @@ sub _convert_xref_commands($$$$)
          and not _command_is_in_referred_command_stack($self,
                           $target_node->{'extra'}->{'associated_section'})) {
         $target_root = $target_node->{'extra'}->{'associated_section'};
-        $name = $self->command_text($target_root, 'text_nonumber');
+        if (in_string($self)) {
+          $name = $self->command_text($target_root, 'string');
+        } else {
+          $name = $self->command_text($target_root, 'text_nonumber');
+        }
       } elsif ($target_node->{'cmdname'} eq 'float') {
         if (!$self->get_conf('XREF_USE_FLOAT_LABEL')) {
-          $name = $self->command_text($target_root);
+          if (in_string($self)) {
+            # not tested
+            $name = $self->command_text($target_root, 'string');
+          } else {
+            $name = $self->command_text($target_root);
+          }
         }
         if (!defined($name) or $name eq '') {
           if (defined($args->[0]->{'monospace'})) {
@@ -6147,7 +6166,11 @@ sub _convert_xref_commands($$$$)
          # to the node
               and not _command_is_in_referred_command_stack($self,
                                                             $target_root)) {
-        $name = $self->command_text($target_root, 'text_nonumber');
+        if (in_string($self)) {
+          $name = $self->command_text($target_root, 'string');
+        } else {
+          $name = $self->command_text($target_root, 'text_nonumber');
+        }
         #die "$target_root $target_root->{'normalized'}" if (!defined($name));
       } elsif (defined($args->[0]->{'monospace'})) {
         $name = $args->[0]->{'monospace'};
@@ -6156,9 +6179,10 @@ sub _convert_xref_commands($$$$)
       }
     }
     my $reference = $name;
-    $reference = $self->html_attribute_class('a', [$cmdname])
-                      ." href=\"$href\">$name</a>" if (defined($href)
-                                                       and !in_string($self));
+    if (defined($href)) {
+      $reference = $self->html_attribute_class('a', [$cmdname])
+                      ." href=\"$href\">$name</a>";
+    }
     my $substrings
       = { 'reference_name' => {'type' => '_converted', 'text' => $reference} };
 
@@ -6977,7 +7001,14 @@ sub _convert_def_command($$$$$) {
     return $self->html_attribute_class('dl', \@classes).">\n"
                                         . $content ."</dl>\n";
   } else {
-    return $self->html_attribute_class('table', \@classes)." width=\"100%\">\n"
+    my $width = '100%';
+    my $width_attr;
+    if ($self->get_conf('_INLINE_STYLE_WIDTH')) {
+      $width_attr = "style=\"width: $width\"";
+    } else {
+      $width_attr = "width=\"$width\"";
+    }
+    return $self->html_attribute_class('table', \@classes)." $width_attr>\n"
                                                      . $content . "</table>\n";
   }
 }
@@ -13129,9 +13160,17 @@ sub output($$)
     my $mathjax_configuration = $self->get_conf('MATHJAX_CONFIGURATION');
     if (!defined($mathjax_configuration)) {
       $mathjax_configuration = "  options: {
-    skipHtmlTags: {'[-]': ['pre']},
+    skipHtmlTags: {'[-]': ['pre']},       // do not skip pre
     ignoreHtmlClass: 'tex2jax_ignore',
     processHtmlClass: 'tex2jax_process'
+  },
+  tex: {
+    processEscapes: false,      // do not use \\\$ to produce a literal dollar sign
+    processEnvironments: false, // do not process \\begin{xxx}...\\end{xxx} outside math mode
+    processRefs: false,         // do not process \\ref{...} outside of math mode
+    displayMath: [             // start/end delimiter pairs for display math
+      ['\\\\[', '\\\\]']
+    ],
   },";
       $self->set_conf('MATHJAX_CONFIGURATION', $mathjax_configuration);
     }
