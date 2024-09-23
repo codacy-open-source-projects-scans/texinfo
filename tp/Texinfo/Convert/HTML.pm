@@ -2965,6 +2965,7 @@ my %css_element_class_styles = (
      # 'display: flex; justify-content: center' centers the pre as a whole
      'pre.displaymath'
            => 'font-style: italic; font-family: serif; display: flex; justify-content: center',
+     'table.cartouche'    => 'border-style: solid; border-radius: 0.5em',
      'span.program-in-footer' => 'font-size: smaller', # used with PROGRAM_NAME_IN_FOOTER
      'span.sansserif'     => 'font-family: sans-serif; font-weight: normal',
      'span.r'             => 'font-family: initial; font-weight: normal; font-style: normal',
@@ -2989,14 +2990,23 @@ my %css_element_class_styles = (
      'td.printindex-index-section'   => 'vertical-align: top; padding-left: 1em',
      'td.printindex-index-see-also'  => 'vertical-align: top; padding-left: 1em',
      'td.menu-entry-destination'     => 'vertical-align: top',
-     'td.menu-entry-description'     => 'vertical-align: top',
+     'td.menu-entry-description'     => 'vertical-align: top; padding-left: 1em',
      'th.entries-header-printindex'  => 'text-align:left',
      'th.sections-header-printindex' => 'text-align:left; padding-left: 1em',
      'th.menu-comment'               => 'text-align:left',
      'td.category-def'               => 'text-align:right',
      'td.call-def'                   => 'text-align:left',
-     'td.button-direction-about'     => 'text-align:center',
-     'td.name-direction-about'       => 'text-align:center',
+     'table.direction-about'         => 'border-collapse: collapse',
+     'th.button-direction-about'     => 'border-width: thin; border-bottom-style: solid; border-right-style: solid',
+     'th.name-direction-about'       => 'border-width: thin; border-bottom-style: solid; border-right-style: solid; border-left-style: solid',
+     'th.description-direction-about' => 'border-width: thin; border-bottom-style: solid; border-right-style: solid; border-left-style: solid',
+     'th.example-direction-about'    => 'border-width: thin; border-bottom-style: solid; border-left-style: solid',
+     'td.button-direction-about'     => 'text-align: center; border-width: thin; border-right-style: solid',
+     'td.name-direction-about'       => 'text-align: center; border-width: thin; border-right-style: solid; border-left-style: solid',
+     'td.description-direction-about' => 'border-width: thin; border-right-style: solid; border-left-style: solid',
+     'td.example-direction-about'    => 'border-width: thin; border-left-style: solid',
+     'img.nav-icon'                  => 'vertical-align: middle',
+     'table.def-block'               => 'width: 100%',
 
      # The anchor element is wrapped in a <span> rather than a block level
      # element to avoid it appearing unless the mouse pointer is directly
@@ -4326,9 +4336,10 @@ sub _default_format_button_icon_img($$$;$)
   } else {
     $alt = $button;
   }
+
+  my $img = $self->html_attribute_class('img', ['nav-icon']);
   return $self->close_html_lone_element(
-    '<img src="'.$self->url_protect_url_text($icon)
-       ."\" alt=\"$alt\" align=\"middle\"");
+    "$img src=\"".$self->url_protect_url_text($icon)."\" alt=\"$alt\"");
 }
 
 sub _direction_href_attributes($$)
@@ -4566,7 +4577,7 @@ sub _default_format_navigation_panel($$$$;$)
                                                             $source_command);
     if ($self->get_conf('HEADER_IN_TABLE')) {
       $result_buttons .= '<tr>'."\n" if $vertical;
-      $result_buttons .= '<td>';
+      $result_buttons .= $self->html_attribute_class('td', ['nav-button']).'>';
 
       if (defined($active)) {
         $result_buttons .= $active;
@@ -4599,8 +4610,7 @@ sub _default_format_navigation_panel($$$$;$)
   # header_navigation
 
   if ($self->get_conf('HEADER_IN_TABLE')) {
-    $result .= $self->html_attribute_class('table', ['nav-panel'])
-        .' cellpadding="1" cellspacing="1">'."\n";
+    $result .= $self->html_attribute_class('table', ['nav-panel']).'>'."\n";
     $result .= "<tr>" unless $vertical;
   } else {
     $result .= $self->html_attribute_class('div', ['nav-panel']).">\n";
@@ -4628,10 +4638,11 @@ sub _default_format_navigation_header($$$$)
 
   my $result = '';
   if ($self->get_conf('VERTICAL_HEAD_NAVIGATION')) {
-    $result .= '<table cellpadding="0" cellspacing="0">
-<tr>
-<td>
-';
+    $result .= $self->html_attribute_class('table',
+                                           ['vertical-navigation']).'>'."\n";
+    $result .= "<tr>\n";
+    $result .= $self->html_attribute_class('td',
+                                           ['vertical-navigation']).'>'."\n";
   }
   $result .= &{$self->formatting_function('format_navigation_panel')}($self,
                                    $buttons, $cmdname, $element,
@@ -5615,8 +5626,7 @@ sub _convert_menu_command($$$$$)
     $end_row = '</td></tr>';
   }
   return $self->html_attribute_class('table', [$cmdname])
-    ." cellspacing=\"0\">${begin_row}\n"
-      . $content . "${end_row}</table>\n";
+    .">${begin_row}\n" . $content . "${end_row}</table>\n";
 }
 $default_commands_conversion{'menu'} = \&_convert_menu_command;
 $default_commands_conversion{'detailmenu'} = \&_convert_menu_command;
@@ -5777,7 +5787,7 @@ sub _convert_cartouche_command($$$$$)
   }
   if ($cartouche_content ne '' or $title_content ne '') {
     return $self->html_attribute_class('table', [$cmdname])
-       . " border=\"1\">${title_content}${cartouche_content}"
+       . ">${title_content}${cartouche_content}"
        . "</table>\n";
   }
   return $content;
@@ -6997,19 +7007,14 @@ sub _convert_def_command($$$$$) {
     push @classes, $cmdname;
   }
 
+  push @classes, 'def-block';
+
   if (!$self->get_conf('DEF_TABLE')) {
     return $self->html_attribute_class('dl', \@classes).">\n"
                                         . $content ."</dl>\n";
   } else {
-    my $width = '100%';
-    my $width_attr;
-    if ($self->get_conf('_INLINE_STYLE_WIDTH')) {
-      $width_attr = "style=\"width: $width\"";
-    } else {
-      $width_attr = "width=\"$width\"";
-    }
-    return $self->html_attribute_class('table', \@classes)." $width_attr>\n"
-                                                     . $content . "</table>\n";
+    return $self->html_attribute_class('table', \@classes).">\n"
+                                       . $content . "</table>\n";
   }
 }
 
@@ -7782,7 +7787,6 @@ sub _convert_menu_entry_type($$$)
   return '<tr>'
      .$self->html_attribute_class('td', ['menu-entry-destination']).'>'
                                            ."$name$MENU_ENTRY_COLON</td>"
-    ."<td>${non_breaking_space}${non_breaking_space}</td>"
     .$self->html_attribute_class('td', ['menu-entry-description']).'>'
                                 ."$description</td></tr>\n";
 }
@@ -7802,7 +7806,7 @@ sub _convert_menu_comment_type($$$$)
     return $content;
   } else {
     return '<tr>'.$self->html_attribute_class('th', ['menu-comment'])
-      . ' colspan="3">'.$content .'</th></tr>';
+      . ' colspan="2">'.$content .'</th></tr>';
   }
 }
 
@@ -7897,6 +7901,8 @@ sub _convert_def_line_type($$$$)
   if ($base_command_name ne $original_command_name) {
     push @classes, "def-cmd-$base_command_name";
   }
+
+  push @classes, 'def-line';
 
   my $def_call = '';
   if ($type_element) {
@@ -11687,22 +11693,33 @@ sub _default_format_special_body_about($$$)
     $self->cdt('  The buttons in the navigation panels have the following meaning:'),
                                'ABOUT')
             . "\n";
+  my $table = $self->html_attribute_class('table', ['direction-about']).'>';
   $about .= <<EOT;
 </p>
-<table border="1">
+$table
   <tr>
 EOT
+  my $button_th = $self->html_attribute_class('th',
+                                              ['button-direction-about']).'>';
+  my $name_th = $self->html_attribute_class('th',
+                                               ['name-direction-about']).'>';
+  my $description_th = $self->html_attribute_class('th',
+                                           ['description-direction-about']).'>';
+  my $example_th = $self->html_attribute_class('th',
+                                           ['example-direction-about']).'>';
    # TRANSLATORS: direction column header in the navigation help
-  $about .= '    <th> '. $self->convert_tree($self->cdt('Button'), 'ABOUT')
+  $about .= "    $button_th "
+                . $self->convert_tree($self->cdt('Button'), 'ABOUT')
    ." </th>\n".
    # TRANSLATORS: button label column header in the navigation help
-   '    <th> ' . $self->convert_tree($self->cdt('Name'), 'ABOUT')
+   "    $name_th " . $self->convert_tree($self->cdt('Name'), 'ABOUT')
    . " </th>\n" .
    # TRANSLATORS: direction description column header in the navigation help
-   '    <th> ' . $self->convert_tree($self->cdt('Go to'), 'ABOUT')
+   "    $description_th " . $self->convert_tree($self->cdt('Go to'), 'ABOUT')
    . " </th>\n" .
    # TRANSLATORS: section reached column header in the navigation help
-   '    <th> ' . $self->convert_tree($self->cdt('From 1.2.3 go to'), 'ABOUT')
+   "    $example_th "
+       . $self->convert_tree($self->cdt('From 1.2.3 go to'), 'ABOUT')
    ."</th>\n". "  </tr>\n";
 
   my $active_icons;
@@ -11747,11 +11764,15 @@ EOT
     $direction_description = '' if (!defined($direction_description));
     my $direction_example = $self->direction_string($direction, 'example');
     $direction_example = '' if (!defined($direction_example));
+    my $description_td = $self->html_attribute_class('td',
+                                        ['description-direction-about']).'>';
+    my $example_td = $self->html_attribute_class('td',
+                                            ['example-direction-about']).'>';
     $about .=
 '    '.$self->html_attribute_class('td', ['name-direction-about']).'>'
     ."$button_name</td>
-    <td>$direction_description</td>
-    <td>$direction_example</td>
+    ${description_td}$direction_description</td>
+    ${example_td}$direction_example</td>
   </tr>
 ";
   }

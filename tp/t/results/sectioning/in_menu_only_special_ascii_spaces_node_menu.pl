@@ -542,7 +542,7 @@ $result_converted{'html'}->{'in_menu_only_special_ascii_spaces_node_menu'} = '<!
 <!--
 a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
 span:hover a.copiable-link {visibility: visible}
-td.menu-entry-description {vertical-align: top}
+td.menu-entry-description {vertical-align: top; padding-left: 1em}
 td.menu-entry-destination {vertical-align: top}
 -->
 </style>
@@ -558,10 +558,10 @@ Next: CARRIAGE RETURN|'."\r".'| &nbsp; </p>
 </div>
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
-<table class="menu" cellspacing="0">
-<tr><td class="menu-entry-destination">&bull; :</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">
+<table class="menu">
+<tr><td class="menu-entry-destination">&bull; :</td><td class="menu-entry-description">
 </td></tr>
-<tr><td class="menu-entry-destination">&bull; :</td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">
+<tr><td class="menu-entry-destination">&bull; :</td><td class="menu-entry-description">
 </td></tr>
 </table>
 

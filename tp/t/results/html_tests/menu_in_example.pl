@@ -597,6 +597,7 @@ pre.menu-comment-preformatted {font-family: serif}
 pre.menu-entry-description-preformatted {font-family: serif; display: inline}
 pre.menu-preformatted {font-family: serif}
 span:hover a.copiable-link {visibility: visible}
+table.cartouche {border-style: solid; border-radius: 0.5em}
 -->
 </style>
 
@@ -607,15 +608,15 @@ span:hover a.copiable-link {visibility: visible}
 <h1 class="node" id="Top"><span>Top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 
 <div class="example">
-<table class="menu" cellspacing="0"><tr><td>
+<table class="menu"><tr><td>
 <pre class="menu-preformatted">&bull; <a href="entry.html#Top" accesskey="1">(entry)</a>::</pre><pre class="menu-entry-description-preformatted">
 
-</pre><table class="cartouche" border="1"><tr><td>
+</pre><table class="cartouche"><tr><td>
 <pre class="menu-preformatted">in cartouche in description in menu in example
 </pre></td></tr></table>
 <pre class="menu-comment-preformatted">
 
-</pre><table class="cartouche" border="1"><tr><td>
+</pre><table class="cartouche"><tr><td>
 <pre class="menu-comment-preformatted">in cartouche in menu comment in menu in example
 </pre></td></tr></table>
 <pre class="menu-comment-preformatted">

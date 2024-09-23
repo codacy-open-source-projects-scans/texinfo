@@ -1,3 +1,256 @@
+2024-09-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: remove bug-fix item that was in 7.1.1.
+
+2024-09-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_convert_la_CFLAGS): fix.
+
+2024-09-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am: change order of xs_LTLIBRARIES for
+	relinking in make distcheck.
+
+2024-09-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_converter_perl_info.c (get_sv_converter)
+	(converter_initialize, converter_set_document, reset_output_init_conf)
+	(copy_sv_options_for_convert_text),
+	tp/Texinfo/XS/main/get_perl_info.c, tp/Texinfo/XS/Makefile.am
+	(nodist_IndicesXS_la_SOURCES, ConvertXS_la_SOURCES): move functions
+	needed converter code out of get_perl_info.c to a new file
+	get_converter_perl_info.c.
+
+	* tp/Texinfo/XS/Makefile.am (xs_LTLIBRARIES)
+	(libtexinfo_convert_la_SOURCES, libtexinfo_convert_la_CPPFLAGS)
+	(libtexinfo_la_CFLAGS, libtexinfo_convert_la_LDFLAGS)
+	(IndicesXS_la_CPPFLAGS, IndicesXS_la_LIBADD, ConvertXS_la_SOURCES)
+	(ConvertXS_la_LIBADD): add libtexinfo-convert.la library for converter
+	code, including code linked against Perl called from converters.
+
+2024-09-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/configure.ac (perl_conf_PERL_LINK): setup flags to
+	link against Perl when it is not in perl_conf_LDFLAGS.  Not needed in
+	the default case, but useful to link against Perl explicitly.
+
+2024-09-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%css_element_class_styles): use an
+	absolute border-radius for cartouche as a relative one looks bad when
+	width and height are different.  From Gavin.
+
+2024-09-22  Patrice Dumas  <pertusus@free.fr>
+
+	* p/Texinfo/XS/convert/call_html_perl_function.c
+	(call_latex_convert_to_latex_math),
+	tp/Texinfo/XS/main/call_perl_function.c: move
+	call_latex_convert_to_latex_math to call_html_perl_function.c to avoid
+	a dependency to build_tree_to_build in call_perl_function.c.
+
+	* tp/Texinfo/XS/main/build_perl_info.c,
+	tp/Texinfo/XS/main/build_perl_info.h,
+	tp/Texinfo/XS/main/call_perl_function.c (newSVpv_utf8): move
+	newSVpv_utf8 to call_perl_function.c as it is used here.  Still declare
+	newSVpv_utf8 in build_perl_info.h to avoid bringing Perl headers in
+	call_perl_function.h.
+
+2024-09-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_la_SOURCES)
+	(libtexinfo_la_CPPFLAGS, libtexinfo_la_CFLAGS, libtexinfo_la_LDFLAGS)
+	(libtexinfoxs_la_SOURCES): move api_to_perl.c and call_perl_function.c
+	to libtexinfo, as the functions are needed in libtexinfo code.  Add
+	Perl flags to libtexinfo_la_* accordingly.  This is in order to avoid
+	interdependencies between the libraries, such that -no-undefined can
+	be used for libtexinfo.
+
+2024-09-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_la_LDFLAGS),
+	tp/Texinfo/XS/configure.ac (platform_LDFLAGS): add platform_LDFLAGS to
+	contain -no-undefined on Windows to be used for shared libraries not
+	linked against Perl.
+
+2024-09-22  Patrice Dumas  <pertusus@free.fr>
+
+	* configure.ac (--enable-ptys-tests, PTYS_TESTS): add
+	--enable-ptys-tests, replacing have_ptys with PTYS_TESTS conditional.
+
+	* info/Makefile.am (info_tests_with_pseudotty, info_tests, TESTS)
+	(EXTRA_DIST): split TESTS in two, with info_tests_with_pseudotty tests
+	that are only run if PTYS_TESTS is true.  That way
+	--disable-ptys-tests is acknowledged even if there is a pseudotty
+	program present in the info directory.
+
+	* info/Makefile.am (CLEANFILES): add pseudotty to CLEANFILES if it is
+	not built.
+
+2024-09-21  Patrice Dumas  <pertusus@free.fr>
+
+	* configure.ac (tp-tests): do not conditionalize tp tests on prove, it
+	is not needed since we switched to automake tap implementation.
+
+	* tp/Makefile.am: inline tp_tests variable.
+
+2024-09-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/configure.ac (perl_conf_LDFLAGS): use string
+	concatenation instead of += to add -no-undefined and associated flags.
+	The previous code triggers an error in Cygwin in CI.
+
+2024-09-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/options_data.txt, tp/ext/epub3.pm (epub_setup),
+	tp/maintain/check_epubcheck_texi_t.sh: set dcterms:modified to the
+	generation time in the default case as it is not a publication date,
+	but a last modified date for the whole publication.  Also set
+	_INLINE_STYLE_WIDTH unconditionaly.  Remove EPUB_STRICT.
+
+	* NEWS, TODO, doc/texinfo.texi (EPUB Conformance), tp/TODO: update.
+
+	* doc/texinfo.texi (Generating EPUB): update EPUB generated version.
+
+2024-09-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/formats_encodings.t (japanese_shift_jis): assume that test
+	should be skipped if there is no conversion from EUC-CN as an evidence
+	of problematic iconv implementation.
+
+2024-09-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/configure.ac (fetch_conf): remove carriage return \r
+	for the specific case of a Cygwin shell calling native Windows Perl,
+	as it should be the only case where a carriage return could happen.
+	Use a sed substitution based on a printf carriage return expansion
+	for portability.
+
+2024-09-20  Patrice Dumas  <pertusus@free.fr>
+
+	* configure.ac: redirect STDERR to AS_MESSAGE_LOG_FD for tests of Perl
+	modules checking several modules at once.
+
+2024-09-20  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/tp_api/Makefile.am (MAKEINFO_ENVIRONMENT)
+	(texi2any_internals_dependencies, texi2any_internals.texi): instead of
+	going to srcdir, use --outdir pod2texi.pl option to specify a
+	different output directory from the include directory and generate
+	Texinfo files from the build directory.
+
+2024-09-20  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl (@included): fix included files
+	information order in array reference.
+
+2024-09-20  Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/pod2texi.pl ($pod2texi_help, $outdir)
+	(@included): add --outdir to specify the directory where included
+	files are output, with default based on --subdir.  --subdir is now
+	only used to specify include files directory from the main manual.
+
+2024-09-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%css_element_class_styles)
+	(_convert_def_command), tp/Texinfo/XS/convert/convert_html.c
+	(convert_def_command): use CSS for DEF_TABLE table width setting, as it
+	is styling.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_def_command): use
+	open_element_with_class.
+
+2024-09-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_def_command)
+	(_convert_def_line_type), tp/Texinfo/XS/convert/convert_html.c
+	(convert_def_command, convert_def_line_type): add 'generic' def-block
+	and def-line classes for @def* commands.
+
+2024-09-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/htmlxref.cnf: add gprofng.  From Thérèse Godefroy
+	<godef.th@free.fr>.
+
+2024-09-17  Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS, TODO: remove from TODO add to NEWS that attributes have been
+	replaced by CSS.
+
+2024-09-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/html_tests.t (simple_only_special_spaces_node): skip if Perl
+	too old.
+
+2024-09-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%css_element_class_styles)
+	(_convert_menu_entry_type, _convert_menu_comment_type),
+	tp/Texinfo/XS/convert/convert_html.c (convert_menu_entry_type)
+	(convert_menu_comment_type): do not use empty spaces to add padding
+	between menu <table> columns, instead use CSS padding-left in the
+	menu description cell.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_menu_entry_type): use
+	open_element_with_class.
+
+2024-09-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%css_element_class_styles)
+	(_default_format_button_icon_img),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_button_icon_img): add a class for the icon img,
+	remove align attribute and use CSS instead.
+
+2024-09-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_navigation_header),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_navigation_header): do not set cellpadding nor
+	cellspacing for VERTICAL_HEAD_NAVIGATION, it is not really useful and,
+	if set, should be set with CSS.  Add classes.
+
+2024-09-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_default_format_navigation_panel),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_navigation_panel): do not set cellpadding nor
+	cellspacing for HEADER_IN_TABLE table, the result is very similar to
+	defaults.  Add nav-button class to HEADER_IN_TABLE table td such that
+	CSS can be used to set cell padding.
+
+2024-09-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_menu_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_menu_command): remove
+	cellspacing in @menu formatting table.  It is not really useful,
+	and, if set, should be set with CSS such as to be customizable.
+
+2024-09-15  Patrice Dumas  <pertusus@free.fr>
+
+	Format HTML About directions explanations table with CSS
+
+	* TODO, tp/Texinfo/Convert/HTML.pm (%css_element_class_styles)
+	(_default_format_special_body_about),
+	tp/Texinfo/XS/convert/convert_html.c  (open_element_with_class)
+	(default_format_special_body_about): add classes for all the <th> and
+	<td> in About directions explanations table and for the table itself.
+	Set borders with CSS using those classes.
+
+2024-09-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (file_header_information): use
+	MATHJAX_CONFIGURATION customization variable.
+
+2024-09-15  Patrice Dumas  <pertusus@free.fr>
+
+	Format @cartouche in HTML with CSS and round corners
+
+	* tp/Texinfo/Convert/HTML.pm (%css_element_class_styles)
+	(_convert_cartouche_command), tp/Texinfo/XS/convert/convert_html.c
+	(convert_cartouche_command): add CSS style for cartouche table with
+	border and round corners.  Remove border attribute.
+
 2024-09-13  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/Texinfo/Convert/HTML.pm (%defaults): do not set MISC_BUTTONS to

@@ -31,9 +31,18 @@ s/ *; *$//
 s/'$d//
 s/$b$b/$b//g"
 
+# In general there is no need to remove a carriage return explicitely,
+# either there is none to begin with (on Unix, with Cygwin Perl) or
+# the shell (case of mingw on MSYS) does it already.  When doing a
+# mingw on Cygwin 'fake' cross-compilation using native Perl, however,
+# the shell is the Cygwin shell that do not remove carriage returns
+# automatically, while the native Perl emits carriage returns.
+# we use something complicated because \r does not work in some
+# sed implementations.
+subst_cr=`printf 's/\r//g'`
 fetch_conf ()
 {
-          conf_value=`${PERL} -V:$1`
+          conf_value=`${PERL} -V:$1 | sed $subst_cr`
           conf_value=`echo $conf_value | sed "$sed_script"`
 } 
 
@@ -69,6 +78,7 @@ AC_ARG_VAR([PERL_EXT_CPPFLAGS], [C preprocessor flags for a Perl extension])
 AC_ARG_VAR([PERL_EXT_LDFLAGS], [Linker flags for a Perl extension])
 AC_ARG_VAR([PERL_EXT_CC], [Compiler for a Perl extension])
 
+platform_LDFLAGS=
 perl_conf_CFLAGS=
 perl_conf_LDFLAGS=
 XSUBPPARGS=
@@ -180,13 +190,22 @@ LDFLAGS=$PERL_EXT_LDFLAGS
 
 # Use the -no-undefined flag on MS-Windows.  See info node
 # `(gnulib)Libtool and Windows'.  The -L and -l options after it show
-# where to find the undefined symbols.
+# where to find the undefined symbols when linking against Perl.
 case "$host" in *-mingw32 | *-mingw64 | *-msdosdjgpp | *-cygwin )
-  perl_conf_LDFLAGS += -no-undefined -L$PERL_INC $PERL_CONF_libperl
+  perl_conf_LDFLAGS="$perl_conf_LDFLAGS -no-undefined -L$PERL_INC $PERL_CONF_libperl"
+  # used for shared libraries not linked against Perl.
+  platform_LDFLAGS='-no-undefined'
+  ;;
+ *)
+  # can be used to explicitly link against Perl when not in perl_conf_LDFLAGS
+  perl_conf_PERL_LINK="-L$PERL_INC $PERL_CONF_libperl"
+  ;;
 esac
 
 AC_SUBST([perl_conf_CFLAGS], [$perl_conf_CFLAGS])
 AC_SUBST([perl_conf_LDFLAGS], [$perl_conf_LDFLAGS])
+AC_SUBST([platform_LDFLAGS], [$platform_LDFLAGS])
+AC_SUBST([perl_conf_PERL_LINK], [$perl_conf_PERL_LINK])
 
 AC_CHECK_FUNCS(newlocale strxfrm_l)
 

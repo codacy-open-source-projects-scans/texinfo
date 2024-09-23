@@ -110,6 +110,8 @@ endif
 # in main but not the other way around.
 # Files in structuring_transfo depend only on the files in main and not
 # the other way around.
+# api_to_perl.c and call_perl_function.c functions are called in other
+# parts of the code and need to be linked against Perl
 libtexinfo_la_SOURCES= \
 		      main/tree_types.h \
 		      main/document_types.h \
@@ -200,7 +202,11 @@ libtexinfo_la_SOURCES= \
 		      parsetexi/source_marks.c \
 		      parsetexi/source_marks.h \
 		      structuring_transfo/structuring.c \
-		      structuring_transfo/structuring.h
+		      structuring_transfo/structuring.h \
+		      main/api_to_perl.c \
+		      main/api_to_perl.h \
+		      main/call_perl_function.c \
+		      main/call_perl_function.h
 
 EXTRA_DIST += main/accent_tables_8bit_codepoints.c
 EXTRA_DIST += main/command_data.c
@@ -212,9 +218,10 @@ EXTRA_DIST += main/global_multi_commands_case.c
 EXTRA_DIST += main/global_unique_commands_case.c
 
 # locate include files under out-of-source builds.
-libtexinfo_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/parsetexi $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
+libtexinfo_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/parsetexi $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) $(XSLIBS_CPPFLAGS)
+libtexinfo_la_CFLAGS = $(XSLIBS_CFLAGS)
 libtexinfo_la_LIBADD = $(top_builddir)/gnulib/lib/libgnu.la
-libtexinfo_la_LDFLAGS = -version-info 0:0:0 $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+libtexinfo_la_LDFLAGS = -version-info 0:0:0 $(perl_conf_LDFLAGS) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 
 BUILT_SOURCES=main/accent_tables_8bit_codepoints.c \
               main/cmd_normalization.c \
@@ -292,30 +299,58 @@ MAINTAINERCLEANFILES += main/options_init_free.c main/options_types.h \
                         main/options_get_perl.c
 
 ########################## shared perl XS library for texinfo XS codes
-# it is separate from libtexinfo because of different dependencies
-# and flags; it depends on perl and not on gnulib.  Both libraries
-# are used by following XS.
+# it is separate from libtexinfo because of different dependencies; it
+# does not depend on gnulib.  Both libraries are used by following XS.
 
 if HAVE_ICONV
 xs_LTLIBRARIES += libtexinfoxs.la
 endif
 
 libtexinfoxs_la_SOURCES= \
-		      main/api_to_perl.c \
-		      main/api_to_perl.h \
 		      main/build_perl_info.c \
 		      main/build_perl_info.h \
 		      main/get_perl_info.c \
 		      main/get_perl_info.h \
-		      main/call_perl_function.c \
-		      main/call_perl_function.h \
 		      main/options_get_perl.c
 
 # locate include files under out-of-source builds.
 libtexinfoxs_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/convert $(AM_CPPFLAGS) $(XSLIBS_CPPFLAGS)
 libtexinfoxs_la_CFLAGS = $(XSLIBS_CFLAGS)
 libtexinfoxs_la_LIBADD = libtexinfo.la
+# example to trigger errors associated with no undefined
+#libtexinfoxs_la_LDFLAGS = -version-info 0:0:0 -Wl,--no-undefined $(perl_conf_LDFLAGS) $(perl_conf_PERL_LINK) $(LTLIBINTL)
 libtexinfoxs_la_LDFLAGS = -version-info 0:0:0 $(perl_conf_LDFLAGS) $(LTLIBINTL)
+
+
+########################## shared C library for conversion
+# conversion to raw text and to Texinfo code is in the libtexinfo library.
+# Note that having a library and not reusing source files is important to
+# share converter data among the XS objects used for conversion.
+
+if HAVE_ICONV
+xs_LTLIBRARIES += libtexinfo-convert.la
+endif
+
+# call_html_perl_function.c functions are called in other
+# parts of the code and need to be linked against Perl.
+# build_html_perl_state.c functions are called from call_html_perl_function.c.
+libtexinfo_convert_la_SOURCES= \
+                       convert/converter.c \
+                       convert/converter.h \
+                       convert/convert_html.h \
+                       convert/convert_html.c \
+                       convert/build_html_perl_state.h \
+                       convert/build_html_perl_state.c \
+                       convert/call_html_perl_function.h \
+                       convert/call_html_perl_function.c
+
+# locate include files under out-of-source builds.
+# parsetexi will only be needed for texinfo.c
+libtexinfo_convert_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/structuring_transfo -I$(srcdir)/parsetexi $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) $(XSLIBS_CPPFLAGS)
+libtexinfo_convert_la_CFLAGS = $(XSLIBS_CFLAGS)
+libtexinfo_convert_la_LIBADD = libtexinfo.la libtexinfoxs.la $(top_builddir)/gnulib/lib/libgnu.la
+libtexinfo_convert_la_LDFLAGS = -version-info 0:0:0 $(perl_conf_LDFLAGS) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+#libtexinfo_convert_la_LDFLAGS = -version-info 0:0:0 -Wl,--no-undefined $(perl_conf_LDFLAGS) $(perl_conf_PERL_LINK) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 
 
 ########################## Parsetexi XS parser
@@ -384,17 +419,21 @@ xs_LTLIBRARIES += IndicesXS.la
 endif
 
 nodist_IndicesXS_la_SOURCES = \
-                    main/IndicesXS.c
+                    main/IndicesXS.c \
+                    convert/get_converter_perl_info.c \
+                    convert/get_converter_perl_info.h
+
 CLEANFILES += \
                     main/IndicesXS.c
 
 EXTRA_DIST += main/IndicesXS.xs
 
 # locate include files under out-of-source builds.
-IndicesXS_la_CPPFLAGS = -I$(srcdir)/main $(AM_CPPFLAGS) $(XSLIBS_CPPFLAGS)
+IndicesXS_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/convert $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) $(XSLIBS_CPPFLAGS)
 IndicesXS_la_CFLAGS = $(XSLIBS_CFLAGS)
-IndicesXS_la_LIBADD = libtexinfoxs.la libtexinfo.la $(top_builddir)/gnulib/lib/libgnu.la
+IndicesXS_la_LIBADD = libtexinfoxs.la libtexinfo-convert.la libtexinfo.la $(top_builddir)/gnulib/lib/libgnu.la
 IndicesXS_la_LDFLAGS = $(XSLIBS_LDFLAGS) $(LTLIBICONV) $(LTLIBUNISTRING)
+#IndicesXS_la_LDFLAGS = -Wl,--no-undefined $(XSLIBS_LDFLAGS) $(perl_conf_PERL_LINK) $(LTLIBICONV) $(LTLIBUNISTRING)
 
 ########################## ConvertXS
 
@@ -406,23 +445,17 @@ nodist_ConvertXS_la_SOURCES = convert/ConvertXS.c
 CLEANFILES += convert/ConvertXS.c
 
 ConvertXS_la_SOURCES = \
-                       convert/build_html_perl_state.h \
-                       convert/build_html_perl_state.c \
-                       convert/call_html_perl_function.h \
-                       convert/call_html_perl_function.c \
                        convert/get_html_perl_info.c \
                        convert/get_html_perl_info.h \
-                       convert/converter.h \
-                       convert/converter.c \
-                       convert/convert_html.h \
-                       convert/convert_html.c
+                       convert/get_converter_perl_info.c \
+                       convert/get_converter_perl_info.h
 
 EXTRA_DIST += convert/ConvertXS.xs
 
 # To locate include files under out-of-source builds.
 ConvertXS_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/structuring_transfo -I$(srcdir)/convert $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) $(XSLIBS_CPPFLAGS)
 ConvertXS_la_CFLAGS = $(XSLIBS_CFLAGS)
-ConvertXS_la_LIBADD = libtexinfoxs.la libtexinfo.la $(top_builddir)/gnulib/lib/libgnu.la
+ConvertXS_la_LIBADD = libtexinfoxs.la libtexinfo-convert.la libtexinfo.la $(top_builddir)/gnulib/lib/libgnu.la
 ConvertXS_la_LDFLAGS = $(XSLIBS_LDFLAGS) $(LTLIBICONV) $(LTLIBUNISTRING)
 
 

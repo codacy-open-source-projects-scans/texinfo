@@ -581,10 +581,17 @@ $result_converted{'html'}->{'chapter_between_nodes_texi2html'} = '<!DOCTYPE html
 a.copiable-link {visibility: hidden; text-decoration: none; line-height: 0em}
 span.program-in-footer {font-size: smaller}
 span:hover a.copiable-link {visibility: visible}
-td.button-direction-about {text-align:center}
-td.menu-entry-description {vertical-align: top}
+table.direction-about {border-collapse: collapse}
+td.button-direction-about {text-align: center; border-width: thin; border-right-style: solid}
+td.description-direction-about {border-width: thin; border-right-style: solid; border-left-style: solid}
+td.example-direction-about {border-width: thin; border-left-style: solid}
+td.menu-entry-description {vertical-align: top; padding-left: 1em}
 td.menu-entry-destination {vertical-align: top}
-td.name-direction-about {text-align:center}
+td.name-direction-about {text-align: center; border-width: thin; border-right-style: solid; border-left-style: solid}
+th.button-direction-about {border-width: thin; border-bottom-style: solid; border-right-style: solid}
+th.description-direction-about {border-width: thin; border-bottom-style: solid; border-right-style: solid; border-left-style: solid}
+th.example-direction-about {border-width: thin; border-bottom-style: solid; border-left-style: solid}
+th.name-direction-about {border-width: thin; border-bottom-style: solid; border-right-style: solid; border-left-style: solid}
 ul.toc-numbered-mark {list-style: none}
 -->
 </style>
@@ -594,38 +601,38 @@ ul.toc-numbered-mark {list-style: none}
 
 <body lang="en">
 <div class="top-level-extent" id="Top">
-<table class="nav-panel" cellpadding="1" cellspacing="1">
-<tr><td>[ &lt; ]</td>
-<td>[<a href="#Chapter" title="Next section in reading order"> &gt; </a>]</td>
-<td> &nbsp; </td>
-<td>[<a href="#SEC_Contents" title="Table of contents">Contents</a>]</td>
-<td>[Index]</td>
-<td>[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+<table class="nav-panel">
+<tr><td class="nav-button">[ &lt; ]</td>
+<td class="nav-button">[<a href="#Chapter" title="Next section in reading order"> &gt; </a>]</td>
+<td class="nav-button"> &nbsp; </td>
+<td class="nav-button">[<a href="#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td class="nav-button">[Index]</td>
+<td class="nav-button">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
 </tr></table>
 <h1 class="top" id="top-section"><span>top section<a class="copiable-link" href="#top-section"> &para;</a></span></h1>
 <p>Top node
 </p>
-<table class="menu" cellspacing="0">
-<tr><td class="menu-entry-destination"><a href="#section-node">1.1 section</a></td><td>&nbsp;&nbsp;</td><td class="menu-entry-description">
+<table class="menu">
+<tr><td class="menu-entry-destination"><a href="#section-node">1.1 section</a></td><td class="menu-entry-description">
 </td></tr>
 </table>
 
 <hr style="height: 6px;">
 <div class="chapter-level-extent" id="Chapter">
-<table class="nav-panel" cellpadding="1" cellspacing="1">
-<tr><td>[<a href="#Top" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
-<td>[<a href="#Top" title="Previous section in reading order"> &lt; </a>]</td>
-<td>[<a href="#Top" title="Up section"> Up </a>]</td>
-<td>[<a href="#section-node" title="Next section in reading order"> &gt; </a>]</td>
-<td>[ &gt;&gt; ]</td>
-<td> &nbsp; </td>
-<td> &nbsp; </td>
-<td> &nbsp; </td>
-<td> &nbsp; </td>
-<td>[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
-<td>[<a href="#SEC_Contents" title="Table of contents">Contents</a>]</td>
-<td>[Index]</td>
-<td>[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+<table class="nav-panel">
+<tr><td class="nav-button">[<a href="#Top" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td class="nav-button">[<a href="#Top" title="Previous section in reading order"> &lt; </a>]</td>
+<td class="nav-button">[<a href="#Top" title="Up section"> Up </a>]</td>
+<td class="nav-button">[<a href="#section-node" title="Next section in reading order"> &gt; </a>]</td>
+<td class="nav-button">[ &gt;&gt; ]</td>
+<td class="nav-button"> &nbsp; </td>
+<td class="nav-button"> &nbsp; </td>
+<td class="nav-button"> &nbsp; </td>
+<td class="nav-button"> &nbsp; </td>
+<td class="nav-button">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td class="nav-button">[<a href="#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td class="nav-button">[Index]</td>
+<td class="nav-button">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
 </tr></table>
 <h1 class="chapter"><span>1 Chapter<a class="copiable-link" href="#Chapter"> &para;</a></span></h1>
 
@@ -633,20 +640,20 @@ ul.toc-numbered-mark {list-style: none}
 </p>
 <hr>
 <div class="section-level-extent" id="section-node">
-<table class="nav-panel" cellpadding="1" cellspacing="1">
-<tr><td>[<a href="#Chapter" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
-<td>[<a href="#Chapter" title="Previous section in reading order"> &lt; </a>]</td>
-<td>[<a href="#Chapter" title="Up section"> Up </a>]</td>
-<td>[ &gt; ]</td>
-<td>[ &gt;&gt; ]</td>
-<td> &nbsp; </td>
-<td> &nbsp; </td>
-<td> &nbsp; </td>
-<td> &nbsp; </td>
-<td>[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
-<td>[<a href="#SEC_Contents" title="Table of contents">Contents</a>]</td>
-<td>[Index]</td>
-<td>[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+<table class="nav-panel">
+<tr><td class="nav-button">[<a href="#Chapter" title="Beginning of this chapter or previous chapter"> &lt;&lt; </a>]</td>
+<td class="nav-button">[<a href="#Chapter" title="Previous section in reading order"> &lt; </a>]</td>
+<td class="nav-button">[<a href="#Chapter" title="Up section"> Up </a>]</td>
+<td class="nav-button">[ &gt; ]</td>
+<td class="nav-button">[ &gt;&gt; ]</td>
+<td class="nav-button"> &nbsp; </td>
+<td class="nav-button"> &nbsp; </td>
+<td class="nav-button"> &nbsp; </td>
+<td class="nav-button"> &nbsp; </td>
+<td class="nav-button">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td class="nav-button">[<a href="#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td class="nav-button">[Index]</td>
+<td class="nav-button">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
 </tr></table>
 <h2 class="section" id="section"><span>1.1 section<a class="copiable-link" href="#section"> &para;</a></span></h2>
 
@@ -670,11 +677,11 @@ ul.toc-numbered-mark {list-style: none}
 </div>
 </div>
 <div class="element-about" id="SEC_About">
-<table class="nav-panel" cellpadding="1" cellspacing="1">
-<tr><td>[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
-<td>[<a href="#SEC_Contents" title="Table of contents">Contents</a>]</td>
-<td>[Index]</td>
-<td>[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
+<table class="nav-panel">
+<tr><td class="nav-button">[<a href="#Top" title="Cover (top) of document">Top</a>]</td>
+<td class="nav-button">[<a href="#SEC_Contents" title="Table of contents">Contents</a>]</td>
+<td class="nav-button">[Index]</td>
+<td class="nav-button">[<a href="#SEC_About" title="About (help)"> ? </a>]</td>
 </tr></table>
 <h1 class="about-heading">About This Document</h1>
 
@@ -684,66 +691,66 @@ ul.toc-numbered-mark {list-style: none}
 <p>
   The buttons in the navigation panels have the following meaning:
 </p>
-<table border="1">
+<table class="direction-about">
   <tr>
-    <th> Button </th>
-    <th> Name </th>
-    <th> Go to </th>
-    <th> From 1.2.3 go to</th>
+    <th class="button-direction-about"> Button </th>
+    <th class="name-direction-about"> Name </th>
+    <th class="description-direction-about"> Go to </th>
+    <th class="example-direction-about"> From 1.2.3 go to</th>
   </tr>
   <tr>
     <td class="button-direction-about"> [ &lt;&lt; ] </td>
     <td class="name-direction-about">FastBack</td>
-    <td>Beginning of this chapter or previous chapter</td>
-    <td>1</td>
+    <td class="description-direction-about">Beginning of this chapter or previous chapter</td>
+    <td class="example-direction-about">1</td>
   </tr>
   <tr>
     <td class="button-direction-about"> [ &lt; ] </td>
     <td class="name-direction-about">Back</td>
-    <td>Previous section in reading order</td>
-    <td>1.2.2</td>
+    <td class="description-direction-about">Previous section in reading order</td>
+    <td class="example-direction-about">1.2.2</td>
   </tr>
   <tr>
     <td class="button-direction-about"> [ Up ] </td>
     <td class="name-direction-about">Up</td>
-    <td>Up section</td>
-    <td>1.2</td>
+    <td class="description-direction-about">Up section</td>
+    <td class="example-direction-about">1.2</td>
   </tr>
   <tr>
     <td class="button-direction-about"> [ &gt; ] </td>
     <td class="name-direction-about">Forward</td>
-    <td>Next section in reading order</td>
-    <td>1.2.4</td>
+    <td class="description-direction-about">Next section in reading order</td>
+    <td class="example-direction-about">1.2.4</td>
   </tr>
   <tr>
     <td class="button-direction-about"> [ &gt;&gt; ] </td>
     <td class="name-direction-about">FastForward</td>
-    <td>Next chapter</td>
-    <td>2</td>
+    <td class="description-direction-about">Next chapter</td>
+    <td class="example-direction-about">2</td>
   </tr>
   <tr>
     <td class="button-direction-about"> [Top] </td>
     <td class="name-direction-about">Top</td>
-    <td>Cover (top) of document</td>
-    <td> &nbsp; </td>
+    <td class="description-direction-about">Cover (top) of document</td>
+    <td class="example-direction-about"> &nbsp; </td>
   </tr>
   <tr>
     <td class="button-direction-about"> [Contents] </td>
     <td class="name-direction-about">Contents</td>
-    <td>Table of contents</td>
-    <td> &nbsp; </td>
+    <td class="description-direction-about">Table of contents</td>
+    <td class="example-direction-about"> &nbsp; </td>
   </tr>
   <tr>
     <td class="button-direction-about"> [Index] </td>
     <td class="name-direction-about">Index</td>
-    <td>Index</td>
-    <td> &nbsp; </td>
+    <td class="description-direction-about">Index</td>
+    <td class="example-direction-about"> &nbsp; </td>
   </tr>
   <tr>
     <td class="button-direction-about"> [ ? ] </td>
     <td class="name-direction-about">About</td>
-    <td>About (help)</td>
-    <td> &nbsp; </td>
+    <td class="description-direction-about">About (help)</td>
+    <td class="example-direction-about"> &nbsp; </td>
   </tr>
 </table>
 

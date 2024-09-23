@@ -60,7 +60,7 @@ AC_ARG_VAR([PERL_EXT_LDFLAGS], [Linker flags for a Perl extension])
 AC_ARG_VAR([PERL_EXT_CC], [Compiler for a Perl extension])
 
 AC_MSG_CHECKING([Perl version and modules])
-if $PERL -e "use 5.008_001; use Encode; use Data::Dumper; use Getopt::Long qw(GetOptions); use Storable; use File::Spec; use File::Basename; use Unicode::Normalize" >/dev/null 2>&1; then
+if $PERL -e "use 5.008_001; use Encode; use Data::Dumper; use Getopt::Long qw(GetOptions); use Storable; use File::Spec; use File::Basename; use Unicode::Normalize" >/dev/null 2>&AS_MESSAGE_LOG_FD; then
   perl_version_requirement='yes'
 else
   perl_version_requirement='no'
@@ -248,8 +248,25 @@ AC_TYPE_OFF_T
 # Checks for library functions.
 AC_CHECK_FUNCS(setlocale sigaction sigprocmask posix_openpt)
 
-# Used for Info tests
-AM_CONDITIONAL([have_ptys], [test x$ac_cv_func_posix_openpt = xyes])
+ptys_tests='yes'
+AC_ARG_ENABLE([ptys-tests],
+    AS_HELP_STRING([--enable-ptys-tests],[run tests using pseudottys (default: detected)]),
+    [if test $enableval = 'no'; then
+       ptys_tests='no'
+     else
+       ptys_tests='yes'
+     fi],
+    [
+     if test x$ac_cv_func_posix_openpt = xyes; then
+       ptys_tests='yes'
+     else
+       ptys_tests='no'
+     fi
+    ])
+
+AC_MSG_CHECKING([pseudottys tests requirements])
+AC_MSG_RESULT([$ptys_tests])
+AM_CONDITIONAL([PTYS_TESTS], [test "z$ptys_tests" = 'zyes'])
 
 # We want to recognize djgpp to avoid the useless warning about no
 # term library.
@@ -521,9 +538,7 @@ AC_ARG_ENABLE([tp-tests],
        tp_tests='yes'
      fi],
     [
-     if test "z$PROVE" = 'z'; then
-       tp_tests='no'
-     elif $PERL -e "use 5.008_001; use Encode; use Test::More; use File::Compare qw(compare); use Data::Dumper; use Data::Compare; use Test::Deep; use Storable qw(dclone);" > /dev/null 2>&1;
+     if $PERL -e "use 5.008_001; use Encode; use Test::More; use File::Compare qw(compare); use Data::Dumper; use Data::Compare; use Test::Deep; use Storable qw(dclone);" > /dev/null 2>&AS_MESSAGE_LOG_FD;
      then
        tp_tests='yes'
      else
@@ -577,7 +592,7 @@ AC_ARG_ENABLE([pod-simple-texinfo-tests],
     [
      if test "z$PROVE" = 'z' ; then
        pod_simple_texinfo_tests='no'
-     elif $PERL -e "use 5.008_001; use Encode; use Test::More; use Pod::Simple::PullParser;" > /dev/null 2>&1;
+     elif $PERL -e "use 5.008_001; use Encode; use Test::More; use Pod::Simple::PullParser;" > /dev/null 2>&AS_MESSAGE_LOG_FD;
      then
        pod_simple_texinfo_tests='yes'
      else

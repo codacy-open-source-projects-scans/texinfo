@@ -46,7 +46,6 @@
 #include "translations.h"
 #include "convert_utils.h"
 #include "convert_to_text.h"
-#include "call_perl_function.h"
 #include "call_html_perl_function.h"
 /* for unregister_document_merge_with_document */
 #include "document.h"
@@ -7240,15 +7239,11 @@ file_header_information (CONVERTER *self, const ELEMENT *command,
                                 self->conf->MATHJAX_SCRIPT.o.string);
       text_printf (&text, "<script type='text/javascript'>\n"
 "MathJax = {\n"
-"  options: {\n"
-"    skipHtmlTags: {'[-]': ['pre']},\n"
-"    ignoreHtmlClass: 'tex2jax_ignore',\n"
-"    processHtmlClass: 'tex2jax_process'\n"
-"  },\n"
+"%s\n"
 "};\n"
 "</script><script type=\"text/javascript\" id=\"MathJax-script\" async\n"
 "  src=\"%s\">\n"
-"</script>", mathjax_script);
+"</script>", self->conf->MATHJAX_CONFIGURATION.o.string, mathjax_script);
       free (mathjax_script);
     }
   begin_info->extra_head = text.text;
@@ -7410,6 +7405,9 @@ format_begin_file (CONVERTER *self, const char *filename,
     }
 }
 
+static char *nav_icon_array[] = {"nav-icon"};
+static const STRING_LIST nav_icon_classes = {nav_icon_array, 1, 1};
+
 /* return string to be freed by the caller */
 char *
 html_default_format_button_icon_img (CONVERTER *self,
@@ -7418,13 +7416,19 @@ html_default_format_button_icon_img (CONVERTER *self,
 {
   TEXT result;
   char *icon_protected;
+  char *attribute_class;
 
   if (!icon)
     return strdup ("");
 
   text_init (&result);
 
-  text_append_n (&result, "<img src=\"", 10);
+  attribute_class = html_attribute_class (self, "img",
+                                          &nav_icon_classes);
+  text_append (&result, attribute_class);
+  free (attribute_class);
+
+  text_append_n (&result, " src=\"", 6);
   icon_protected = url_protect_url_text (self, icon);
   text_append (&result, icon_protected);
   free (icon_protected);
@@ -7440,7 +7444,7 @@ html_default_format_button_icon_img (CONVERTER *self,
   else if (button_name)
     text_append (&result, button_name);
 
-  text_append_n (&result, "\" align=\"middle\"", 16);
+  text_append_n (&result, "\"", 1);
   close_html_lone_element (self, &result);
 
   return result.text;
@@ -7835,6 +7839,20 @@ format_button (CONVERTER *self,
     }
 }
 
+static void
+open_element_with_class (CONVERTER *self, const char *element_name,
+                         const STRING_LIST *classes, TEXT *result)
+{
+  char *attribute_class = html_attribute_class (self, element_name,
+                                                classes);
+  text_append (result, attribute_class);
+  free (attribute_class);
+  text_append_n (result, ">", 1);
+}
+
+static char *nav_button_array[] = {"nav-button"};
+static const STRING_LIST nav_button_classes = {nav_button_array, 1, 1};
+
 static char *nav_panel_array[] = {"nav-panel"};
 static const STRING_LIST nav_panel_classes = {nav_panel_array, 1, 1};
 
@@ -7847,7 +7865,6 @@ html_default_format_navigation_panel (CONVERTER *self,
   int i;
   int nr_of_buttons_shown = 0;
   TEXT result_buttons;
-  char *attribute_class;
 
   if (!buttons)
     return;
@@ -7887,7 +7904,8 @@ html_default_format_navigation_panel (CONVERTER *self,
         {
           if (vertical)
             text_append_n (&result_buttons, "<tr>\n", 5);
-          text_append_n (&result_buttons, "<td>", 4);
+          open_element_with_class (self, "td", &nav_button_classes,
+                                   &result_buttons);
 
           if (active)
             text_append (&result_buttons, active);
@@ -7922,22 +7940,16 @@ html_default_format_navigation_panel (CONVERTER *self,
 
   if (self->conf->HEADER_IN_TABLE.o.integer > 0)
     {
-      attribute_class = html_attribute_class (self, "table",
-                                              &nav_panel_classes);
-      text_append (result, attribute_class);
-      text_append (result,
-                   " cellpadding=\"1\" cellspacing=\"1\">\n");
-      free (attribute_class);
+      open_element_with_class (self, "table", &nav_panel_classes, result);
+      text_append_n (result, "\n", 1);
 
       if (!vertical)
         text_append_n (result, "<tr>", 4);
     }
   else
     {
-      attribute_class = html_attribute_class (self, "div", &nav_panel_classes);
-      text_append (result, attribute_class);
-      text_append_n (result, ">\n", 2);
-      free (attribute_class);
+      open_element_with_class (self, "div", &nav_panel_classes, result);
+      text_append_n (result, "\n", 1);
 
       text_append_n (result, "<p>\n", 4);
     }
@@ -7982,6 +7994,10 @@ format_navigation_panel (CONVERTER *self,
     }
 }
 
+static char *vertical_navigation_array[] = {"vertical-navigation"};
+static const STRING_LIST vertical_navigation_classes
+    = {vertical_navigation_array, 1, 1};
+
 void
 html_default_format_navigation_header (CONVERTER *self,
                           const BUTTON_SPECIFICATION_LIST *buttons,
@@ -7993,9 +8009,15 @@ html_default_format_navigation_header (CONVERTER *self,
   if (self->conf->VERTICAL_HEAD_NAVIGATION.o.integer > 0)
     vertical = 1;
   if (vertical)
-    text_append (result,
-     "<table cellpadding=\"0\" cellspacing=\"0\">\n"
-     "<tr>\n<td>\n");
+    {
+      open_element_with_class (self, "table",
+                               &vertical_navigation_classes, result);
+      text_append_n (result, "\n", 1);
+      text_append (result, "<tr>\n");
+      open_element_with_class (self, "td",
+                               &vertical_navigation_classes, result);
+      text_append_n (result, "\n", 1);
+    }
 
   /* keep the current index in result to be able to determine if text was
      added by format_navigation_panel */
@@ -11265,7 +11287,7 @@ convert_menu_command (CONVERTER *self, const enum command_id cmd,
 
   attribute_class = html_attribute_class (self, "table", classes);
   text_append (result, attribute_class);
-  text_append (result, " cellspacing=\"0\">");
+  text_append_n (result, ">", 1);
   if (html_inside_preformatted (self))
     text_append_n (result, "<tr><td>", 8);
   text_append_n (result, "\n", 1);
@@ -11556,7 +11578,7 @@ convert_cartouche_command (CONVERTER *self, const enum command_id cmd,
 
   attribute_class = html_attribute_class (self, "table", classes);
   text_append (result, attribute_class);
-  text_append (result, " border=\"1\">");
+  text_append_n (result, ">", 1);
   if (do_title)
     {
       text_append_n (result, "<tr><th>\n", 9);
@@ -13780,7 +13802,6 @@ convert_def_command (CONVERTER *self, const enum command_id cmd,
                     const HTML_ARGS_FORMATTED *args_formatted,
                     const char *content, TEXT *result)
 {
-  char *attribute_class;
   STRING_LIST *classes;
   enum command_id original_cmd = cmd;
   char *class;
@@ -13825,29 +13846,25 @@ convert_def_command (CONVERTER *self, const enum command_id cmd,
   else
     add_string (builtin_command_name (cmd), classes);
 
+  add_string ("def-block", classes);
+
   if (self->conf->DEF_TABLE.o.integer <= 0)
     {
-      attribute_class = html_attribute_class (self, "dl", classes);
-      text_append (result, attribute_class);
-      text_append_n (result, ">\n", 2);
+      open_element_with_class (self, "dl", classes, result);
+      text_append_n (result, "\n", 1);
       if (content)
         text_append (result, content);
       text_append_n (result, "</dl>\n", 6);
     }
   else
     {
-      attribute_class = html_attribute_class (self, "table", classes);
-      text_append (result, attribute_class);
-      if (self->conf->_INLINE_STYLE_WIDTH.o.integer > 0)
-        text_append_n (result, " style=\"width: 100%\">\n", 22);
-      else
-        text_append_n (result, " width=\"100%\">\n", 15);
+      open_element_with_class (self, "table", classes, result);
+      text_append_n (result, "\n", 1);
       if (content)
         text_append (result, content);
       text_append_n (result, "</table>\n", 9);
     }
 
-  free (attribute_class);
   destroy_strings_list (classes);
 }
 
@@ -14706,15 +14723,11 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
     }
   else
     {
-      char *attribute_class;
       char *description = 0;
       char *name_no_number = 0;
       text_append_n (result, "<tr>", 4);
-      attribute_class = html_attribute_class (self, "td",
-                             &menu_entry_destination_classes);
-      text_append (result, attribute_class);
-      free (attribute_class);
-      text_append_n (result, ">", 1);
+      open_element_with_class (self, "td",
+                               &menu_entry_destination_classes, result);
 
       if (section && href)
         {
@@ -14805,20 +14818,10 @@ convert_menu_entry_type (CONVERTER *self, const enum element_type type,
 
       if (self->conf->MENU_ENTRY_COLON.o.string)
         text_append (result, self->conf->MENU_ENTRY_COLON.o.string);
-      text_append_n (result, "</td><td>", 9);
-      text_append_n (result,
-                self->special_character[SC_non_breaking_space].string,
-                self->special_character[SC_non_breaking_space].len);
-      text_append_n (result,
-                self->special_character[SC_non_breaking_space].string,
-                self->special_character[SC_non_breaking_space].len);
       text_append_n (result, "</td>", 5);
 
-      attribute_class = html_attribute_class (self, "td",
-                             &menu_entry_description_classes);
-      text_append (result, attribute_class);
-      free (attribute_class);
-      text_append_n (result, ">", 1);
+      open_element_with_class (self, "td",
+                               &menu_entry_description_classes, result);
 
       if (formatted_nodedescription_nr > 0)
         {
@@ -14895,7 +14898,7 @@ convert_menu_comment_type (CONVERTER *self, const enum element_type type,
                                 &menu_comment_classes);
   text_append (result, attribute_class);
   free (attribute_class);
-  text_append_n (result, " colspan=\"3\">", 13);
+  text_append_n (result, " colspan=\"2\">", 13);
 
   if (content)
     text_append (result, content);
@@ -15064,6 +15067,8 @@ convert_def_line_type (CONVERTER *self, const enum element_type type,
       add_string (class, classes);
       free (class);
     }
+
+  add_string ("def-line", classes);
 
   text_init (&def_call);
   text_append (&def_call, "");
@@ -15787,6 +15792,10 @@ default_format_special_body_footnotes (CONVERTER *self,
   format_footnotes_sequence (self, result);
 }
 
+static char *direction_about_array[] = {"direction-about"};
+static const STRING_LIST direction_about_classes
+    = {direction_about_array, 1, 1};
+
 static char *button_direction_about_array[] = {"button-direction-about"};
 static const STRING_LIST button_direction_about_classes
     = {button_direction_about_array, 1, 1};
@@ -15794,6 +15803,15 @@ static const STRING_LIST button_direction_about_classes
 static char *name_direction_about_array[] = {"name-direction-about"};
 static const STRING_LIST name_direction_about_classes
     = {name_direction_about_array, 1, 1};
+
+static char *description_direction_about_array[]
+    = {"description-direction-about"};
+static const STRING_LIST description_direction_about_classes
+    = {description_direction_about_array, 1, 1};
+
+static char *example_direction_about_array[] = {"example-direction-about"};
+static const STRING_LIST example_direction_about_classes
+    = {example_direction_about_array, 1, 1};
 
 void
 default_format_special_body_about (CONVERTER *self,
@@ -15827,13 +15845,28 @@ default_format_special_body_about (CONVERTER *self,
   translate_convert_to_html_internal (
    "  The buttons in the navigation panels have the following meaning:",
                                       self, 0, 0, result, "ABOUT");
-  text_append (result, "\n</p>\n<table border=\"1\">\n  <tr>\n    <th> ");
+
+  text_append_n (result, "\n</p>\n", 6);
+  open_element_with_class (self, "table", &direction_about_classes, result);
+  text_append (result, "\n  <tr>\n    ");
+  open_element_with_class (self, "th", &button_direction_about_classes,
+                           result);
+  text_append_n (result, " ", 1);
   translate_convert_to_html_internal ("Button", self, 0, 0, result, "ABOUT");
-  text_append (result, " </th>\n    <th> ");
+  text_append_n (result, " </th>\n    ", 11);
+  open_element_with_class (self, "th", &name_direction_about_classes,
+                           result);
+  text_append_n (result, " ", 1);
   translate_convert_to_html_internal ("Name", self, 0, 0, result, "ABOUT");
-  text_append (result, " </th>\n    <th> ");
+  text_append_n (result, " </th>\n    ", 11);
+  open_element_with_class (self, "th", &description_direction_about_classes,
+                           result);
+  text_append_n (result, " ", 1);
   translate_convert_to_html_internal ("Go to", self, 0, 0, result, "ABOUT");
-  text_append (result, " </th>\n    <th> ");
+  text_append_n (result, " </th>\n    ", 11);
+  open_element_with_class (self, "th", &example_direction_about_classes,
+                           result);
+  text_append_n (result, " ", 1);
   translate_convert_to_html_internal ("From 1.2.3 go to", self, 0, 0,
                                       result, "ABOUT");
   text_append (result, "</th>\n  </tr>\n");
@@ -15841,7 +15874,6 @@ default_format_special_body_about (CONVERTER *self,
   for (i = 0; i < buttons->number; i++)
     {
       const BUTTON_SPECIFICATION *button = &buttons->list[i];
-      char * attribute_class;
       int direction = -1;
       const char *button_name;
       const char *button_description;
@@ -15856,11 +15888,8 @@ default_format_special_body_about (CONVERTER *self,
         continue;
 
       text_append_n (result, "  <tr>\n    ", 11);
-      attribute_class = html_attribute_class (self, "td",
-                                              &button_direction_about_classes);
-      text_append (result, attribute_class);
-      free (attribute_class);
-      text_append_n (result, ">", 1);
+      open_element_with_class (self, "td", &button_direction_about_classes,
+                               result);
 
    /* if the button spec is an array we do not know what the button
       looks like, so we do not show the button but still show explanations. */
@@ -15891,21 +15920,23 @@ default_format_special_body_about (CONVERTER *self,
             }
         }
       text_append_n (result, "</td>\n    ", 10);
-      attribute_class = html_attribute_class (self, "td",
-                                              &name_direction_about_classes);
-      text_append (result, attribute_class);
-      free (attribute_class);
-      text_append_n (result, ">", 1);
+      open_element_with_class (self, "td", &name_direction_about_classes,
+                               result);
 
       button_name = direction_string (self, direction, TDS_type_button, 0);
       if (button_name)
         text_append (result, button_name);
-      text_append_n (result, "</td>\n    <td>", 14);
+      text_append_n (result, "</td>\n    ", 10);
+      open_element_with_class (self, "td",
+                               &description_direction_about_classes,
+                               result);
       button_description = direction_string (self, direction,
                                              TDS_type_description, 0);
       if (button_description)
         text_append (result, button_description);
-      text_append_n (result, "</td>\n    <td>", 14);
+      text_append_n (result, "</td>\n    ", 10);
+      open_element_with_class (self, "td", &example_direction_about_classes,
+                               result);
       button_example = direction_string (self, direction, TDS_type_example, 0);
       if (button_example)
         text_append (result, button_example);
