@@ -113,7 +113,7 @@ $result_trees{'float_copying'} = {
                                                   'extra' => {
                                                     'element_region' => 'copying'
                                                   },
-                                                  'type' => 'brace_command_arg'
+                                                  'type' => 'brace_arg'
                                                 }
                                               ],
                                               'cmdname' => 'anchor',
@@ -236,7 +236,7 @@ $result_trees{'float_copying'} = {
                                                     },
                                                     'normalized' => 'Copying-and-floats'
                                                   },
-                                                  'type' => 'brace_command_arg'
+                                                  'type' => 'brace_arg'
                                                 }
                                               ],
                                               'cmdname' => 'ref',
@@ -295,7 +295,7 @@ $result_trees{'float_copying'} = {
                                   'extra' => {
                                     'element_region' => 'copying'
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'anchor',
@@ -1102,7 +1102,7 @@ Copyright notice 1: The Public Domain notice(1)
 
    (1) The caption copying footnote
 
-   see *note Copying and floats::.
+   see Copying and floats.
 
 Appendix A Copying and floats
 *****************************
@@ -1135,11 +1135,11 @@ Copyright notice 1: The Public Domain notice(2)
 
    (1) The caption copying footnote
 
-   see *note Copying and floats::.
+   see Copying and floats.
 
    (2) The caption copying footnote
 
-   see *note Copying and floats::.
+   see Copying and floats.
 
 ';
 

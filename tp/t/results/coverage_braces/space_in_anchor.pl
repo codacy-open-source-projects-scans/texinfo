@@ -25,7 +25,7 @@ $result_trees{'space_in_anchor'} = {
                   'text' => '   '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             }
           ],
           'cmdname' => 'anchor',
@@ -78,5 +78,9 @@ $result_converted{'html_text'}->{'space_in_anchor'} = '<a class="anchor" id="anc
 $result_converted{'latex_text'}->{'space_in_anchor'} = '\\label{anchor:anchor-name}%
 .
 ';
+
+
+$result_converted{'docbook'}->{'space_in_anchor'} = '<anchor id="anchor-name"/><para>.
+</para>';
 
 1;

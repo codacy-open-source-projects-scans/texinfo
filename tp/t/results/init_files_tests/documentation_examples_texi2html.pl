@@ -39,7 +39,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                               'text' => 'example.com'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         },
                         {
                           'contents' => [
@@ -52,7 +52,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                               'text' => ' '
                             }
                           },
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'email',
@@ -71,7 +71,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                               'text' => 'in--title'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'sansserif',
@@ -85,7 +85,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'error',
@@ -99,7 +99,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'equiv',
@@ -288,7 +288,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                       'text' => 'in--text'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'sansserif',
@@ -308,7 +308,7 @@ $result_trees{'documentation_examples_texi2html'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'error',
@@ -322,7 +322,7 @@ $result_trees{'documentation_examples_texi2html'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'equiv',
@@ -350,7 +350,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                     },
                     'normalized' => 'my-node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',
@@ -395,7 +395,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                   'text' => 'in titlefont'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_container'
             }
           ],
           'cmdname' => 'titlefont',
@@ -424,7 +424,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                       'text' => 'b.c'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -437,7 +437,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'email',
@@ -457,7 +457,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                       'text' => 'in Sc'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'sc',
@@ -477,7 +477,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                       'text' => 'in var'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'var',
@@ -511,7 +511,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                               'text' => 'in--math'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'sansserif',
@@ -531,7 +531,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'error',
@@ -545,7 +545,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'equiv',
@@ -612,7 +612,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                               'text' => 'in--example'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'sansserif',
@@ -632,7 +632,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'error',
@@ -646,7 +646,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'equiv',
@@ -672,7 +672,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                               'text' => 'example'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'email',
@@ -792,7 +792,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                           'text' => 'display'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'email',
@@ -859,7 +859,7 @@ $result_trees{'documentation_examples_texi2html'} = {
                           'text' => 'e1'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'file',
@@ -1003,7 +1003,7 @@ $result_trees{'documentation_examples_texi2html'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'error',
@@ -1028,7 +1028,7 @@ $result_trees{'documentation_examples_texi2html'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'equiv',
@@ -1175,7 +1175,7 @@ $result_trees{'documentation_examples_texi2html'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'error',
@@ -1200,7 +1200,7 @@ $result_trees{'documentation_examples_texi2html'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'equiv',

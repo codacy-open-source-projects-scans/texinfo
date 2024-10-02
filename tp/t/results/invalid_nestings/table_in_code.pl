@@ -24,7 +24,7 @@ $result_trees{'table_in_code'} = {
 '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -43,8 +43,7 @@ $result_trees{'table_in_code'} = {
                   'cmdname' => 'emph',
                   'source_info' => {
                     'line_nr' => 3
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {

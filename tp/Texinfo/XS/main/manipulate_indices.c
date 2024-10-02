@@ -22,16 +22,20 @@
 #include "unictype.h"
 #include "unistr.h"
 
+#include "text.h"
+#include "command_ids.h"
+#include "element_types.h"
 #include "tree_types.h"
 #include "document_types.h"
 #include "converter_types.h"
 #include "tree.h"
-#include "utils.h"
 #include "extra.h"
+#include "builtin_commands.h"
+#include "utils.h"
 #include "errors.h"
 #include "debug.h"
-#include "document.h"
 #include "unicode.h"
+#include "document.h"
 #include "convert_to_text.h"
 #include "convert_to_texinfo.h"
 #include "call_perl_function.h"
@@ -179,23 +183,24 @@ destroy_indices_sorted_by_letter (
 ELEMENT *
 index_content_element (const ELEMENT *element, int prefer_reference_element)
 {
-  const char *def_command = lookup_extra_string (element, "def_command");
+  const char *def_command = lookup_extra_string (element, AI_key_def_command);
   if (def_command)
    {
      ELEMENT *def_index_element;
      if (prefer_reference_element)
        {
          ELEMENT *def_index_ref_element
-           = lookup_extra_element (element, "def_index_ref_element");
+           = lookup_extra_element_oot (element, AI_key_def_index_ref_element);
          if (def_index_ref_element)
            return def_index_ref_element;
        }
-     def_index_element = lookup_extra_element (element, "def_index_element");
+     def_index_element
+       = lookup_extra_element_oot (element, AI_key_def_index_element);
      return def_index_element;
    }
   else
    {
-     return element->args.list[0];
+     return element->e.c->args.list[0];
    }
 }
 
@@ -246,7 +251,7 @@ index_entry_element_sort_string (const INDEX_ENTRY *main_entry,
       fatal ("index_entry_element_sort_string: NUL element");
     }
 
-  char *sortas = lookup_extra_string (index_entry_element, "sortas");
+  char *sortas = lookup_extra_string (index_entry_element, AI_key_sortas);
   if (sortas)
     return strdup (sortas);
 
@@ -260,7 +265,7 @@ index_entry_element_sort_string (const INDEX_ENTRY *main_entry,
     options->code_state--;
 
   index_ignore_chars = lookup_extra_string (main_entry->entry_element,
-                                            "index_ignore_chars");
+                                            AI_key_index_ignore_chars);
   if (index_ignore_chars)
     {
       char *sort_string_text = strip_index_ignore_chars (sort_string,
@@ -419,7 +424,7 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
               INDEX_ENTRY_SORT_STRING entry_sort_string;
 
               ELEMENT *main_entry_element = index_entry->entry_element;
-              ELEMENT *subentry = main_entry_element;
+              const ELEMENT *subentry = main_entry_element;
 
               INDEX *entry_index
                 = indices_info_index_by_name (indices_information,
@@ -452,7 +457,7 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
                   if (!entry_cmdname)
                     {
                       entry_cmdname = lookup_extra_string (main_entry_element,
-                                                      "original_def_cmdname");
+                                                  AI_key_original_def_cmdname);
                     }
 
                   message_list_command_warn (error_messages, options,
@@ -467,8 +472,9 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
 
               while (1)
                 {
-                  ELEMENT *next_subentry = lookup_extra_element (subentry,
-                                                               "subentry");
+                  const ELEMENT *next_subentry
+                           = lookup_extra_element (subentry,
+                                                        AI_key_subentry);
                   if (!next_subentry)
                     break;
 
@@ -505,7 +511,7 @@ setup_index_entries_sort_strings (ERROR_MESSAGE_LIST *error_messages,
                         {
                           entry_cmdname
                              = lookup_extra_string (main_entry_element,
-                                                 "original_def_cmdname");
+                                                 AI_key_original_def_cmdname);
                         }
 
                       message_list_command_warn (error_messages, options,
@@ -1240,14 +1246,44 @@ idx_leading_text_or_command (ELEMENT *tree, const char *ignore_chars)
 {
   size_t i;
 
-  if (tree->contents.number <= 0)
+  if (tree->e.c->contents.number <= 0)
     return new_index_entry_text_or_command (0, 0);
 
-  for (i = 0; i < tree->contents.number; i++)
+  for (i = 0; i < tree->e.c->contents.number; i++)
     {
-      ELEMENT *content = tree->contents.list[i];
+      ELEMENT *content = tree->e.c->contents.list[i];
 
-      if (content->cmd)
+      if (content->type == ET_normal_text)
+        {
+          if (content->e.text->end > 0
+              && content->e.text->text[strspn
+                           (content->e.text->text, whitespace_chars)] != '\0')
+            {
+              char *p = content->e.text->text;
+              p += strspn (p, whitespace_chars);
+              if (ignore_chars)
+                {
+                  char *text = strip_index_ignore_chars (p, ignore_chars);
+                  INDEX_ENTRY_TEXT_OR_COMMAND *result = 0;
+
+                  if (text[strspn (text, whitespace_chars)] != '\0')
+                    result = new_index_entry_text_or_command (text, 0);
+
+                  free (text);
+
+                  if (result)
+                    return result;
+                  else
+                    continue;
+                }
+              else
+                return new_index_entry_text_or_command (p, 0);
+            }
+          else
+            continue;
+        }
+
+      if (content->e.c->cmd)
         {
           enum command_id data_cmd = element_builtin_data_cmd (content);
 
@@ -1280,10 +1316,10 @@ idx_leading_text_or_command (ELEMENT *tree, const char *ignore_chars)
                     }
                   else if (brace_command_type != BRACE_inline)
                     {
-                      if (content->args.number > 0)
+                      if (content->e.c->args.number > 0)
                         {
                           return idx_leading_text_or_command (
-                                                   content->args.list[0],
+                                                   content->e.c->args.list[0],
                                                               ignore_chars);
                         }
                     }
@@ -1291,10 +1327,11 @@ idx_leading_text_or_command (ELEMENT *tree, const char *ignore_chars)
                     {
                       int status;
                       int expand_index
-                       = lookup_extra_integer (content, "expand_index", &status);
+                       = lookup_extra_integer (content, AI_key_expand_index,
+                                               &status);
                       if (expand_index > 0)
                         return idx_leading_text_or_command (
-                                         content->args.list[expand_index],
+                                         content->e.c->args.list[expand_index],
                                                             ignore_chars);
 
                     }
@@ -1302,37 +1339,15 @@ idx_leading_text_or_command (ELEMENT *tree, const char *ignore_chars)
               else if ((builtin_command_data[data_cmd].other_flags
                         & CF_formatted_line)
                        && data_cmd != CM_page
-                       && content->args.number > 0)
+                       && content->e.c->args.number > 0)
                 {
                    return idx_leading_text_or_command (
-                                                   content->args.list[0],
+                                                   content->e.c->args.list[0],
                                                               ignore_chars);
                 }
             }
         }
-      else if (content->text.end > 0
-               && content->text.text[strspn (content->text.text,
-                                             whitespace_chars)] != '\0')
-        {
-          char *p = content->text.text;
-          p += strspn (p, whitespace_chars);
-          if (ignore_chars)
-            {
-              char *text = strip_index_ignore_chars (p, ignore_chars);
-              INDEX_ENTRY_TEXT_OR_COMMAND *result = 0;
-
-              if (text[strspn (text, whitespace_chars)] != '\0')
-                result = new_index_entry_text_or_command (text, 0);
-
-              free (text);
-
-              if (result)
-                return result;
-            }
-          else
-            return new_index_entry_text_or_command (p, 0);
-        }
-      else if (content->contents.number > 0)
+      else if (content->e.c->contents.number > 0)
         return idx_leading_text_or_command (content, ignore_chars);
     }
   return new_index_entry_text_or_command (0, 0);
@@ -1346,7 +1361,7 @@ INDEX_ENTRY_TEXT_OR_COMMAND *
 index_entry_first_letter_text_or_command (const INDEX_ENTRY *index_entry)
 {
   ELEMENT *index_entry_element = index_entry->entry_element;
-  char *sortas = lookup_extra_string (index_entry_element, "sortas");
+  char *sortas = lookup_extra_string (index_entry_element, AI_key_sortas);
 
   INDEX_ENTRY_TEXT_OR_COMMAND *result;
 
@@ -1359,10 +1374,10 @@ index_entry_first_letter_text_or_command (const INDEX_ENTRY *index_entry)
       ELEMENT *entry_tree_element
          = index_content_element (index_entry_element, 0);
       char *index_ignore_chars = lookup_extra_string (index_entry_element,
-                                                      "index_ignore_chars");
+                                                  AI_key_index_ignore_chars);
       ELEMENT *parsed_element;
 
-      if (entry_tree_element->contents.number <= 0)
+      if (entry_tree_element->e.c->contents.number <= 0)
         {
           parsed_element = new_element (ET_NONE);
           add_to_contents_as_array (parsed_element, index_entry_element);

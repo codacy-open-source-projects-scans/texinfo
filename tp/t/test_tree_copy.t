@@ -18,6 +18,11 @@ use Texinfo::ManipulateTree;
 use Texinfo::Structuring;
 
 my $srcdir = $ENV{'srcdir'};
+# fallback based on Texinfo::ModulePath $top_srcdir
+if (!defined($srcdir) and defined($Texinfo::ModulePath::top_srcdir)) {
+  $srcdir = File::Spec->catdir($Texinfo::ModulePath::top_srcdir, 'tp');
+}
+
 if (defined($srcdir)) {
   $srcdir =~ s/\/*$/\//;
 } else {
@@ -39,10 +44,10 @@ ok(1, "modules loading");
 # Not sure that it exists in real trees, so check it here
 my $tref = {'type' => 'document_root',
             'contents' => [{'text' => 'x'},
-                           {'text' => 'a',
+                           {'type' => 'paragraph',
                             'extra' => {'thing' =>
                               {'type' => 'container',
-                               'contents' => [{'text' => 'e1',
+                               'contents' => [{'type' => 'e1',
                                               'extra' => {}}
                                              ]
                               }

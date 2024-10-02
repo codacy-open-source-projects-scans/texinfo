@@ -22,7 +22,11 @@
 #include "tree_types.h"
 
 ELEMENT *copy_tree (ELEMENT *current);
-ELEMENT *copy_contents (ELEMENT *element, enum element_type type);
+ELEMENT *copy_contents (const ELEMENT *element, enum element_type type);
+
+
+
+ELEMENT *copy_container_contents (const ELEMENT *container);
 
 
 
@@ -52,5 +56,6 @@ ELEMENT *protect_node_after_label_in_tree (ELEMENT *tree);
 const char *normalized_menu_entry_internal_node (const ELEMENT *entry);
 ELEMENT *normalized_entry_associated_internal_node (const ELEMENT *entry,
                                                     const LABEL_LIST *identifiers_target);
-ELEMENT *first_menu_node (ELEMENT *node, LABEL_LIST *identifiers_target);
+const ELEMENT *first_menu_node (const ELEMENT *node,
+                                const LABEL_LIST *identifiers_target);
 #endif

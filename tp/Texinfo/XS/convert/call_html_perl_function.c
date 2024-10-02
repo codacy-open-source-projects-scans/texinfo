@@ -33,12 +33,14 @@
 #include "text.h"
 #include "option_types.h"
 #include "converter_types.h"
+#include "types_data.h"
+/* for element_command_name (or could be builtin_command_data) */
+#include "builtin_commands.h"
 #include "utils.h"
-/* for add_associated_info_integer */
-#include "extra.h"
+#include "debug.h"
 /* for newSVpv_utf8 build_texinfo_tree */
 #include "build_perl_info.h"
-#include "debug.h"
+/* build_html_formatting_state build_html_command_formatted_args */
 #include "build_html_perl_state.h"
 #include "call_html_perl_function.h"
 
@@ -554,11 +556,7 @@ call_formatting_function_format_comment (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -607,11 +605,7 @@ call_formatting_function_format_program_string (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -659,11 +653,7 @@ call_formatting_function_format_titlepage (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -711,11 +701,7 @@ call_formatting_function_format_title_titlepage (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -764,11 +750,7 @@ call_formatting_function_format_protect_text (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -817,11 +799,7 @@ call_formatting_function_format_footnotes_segment (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -872,11 +850,7 @@ call_formatting_function_format_single_footnote (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -929,11 +903,7 @@ call_formatting_function_format_footnotes_sequence (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -982,11 +952,7 @@ call_formatting_function_format_css_lines (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -1037,11 +1003,7 @@ call_formatting_function_format_end_file (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   if (output_unit)
     output_unit_sv = newRV_inc (output_unit->hv);
@@ -1099,11 +1061,7 @@ call_formatting_function_format_begin_file (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   if (output_unit)
     output_unit_sv = newRV_inc (output_unit->hv);
@@ -1160,11 +1118,7 @@ call_formatting_function_format_translate_message (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -1222,11 +1176,7 @@ call_formatting_function_format_button_icon_img (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1285,11 +1235,7 @@ call_formatting_function_format_button (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1366,11 +1312,7 @@ call_formatting_function_format_navigation_panel (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1427,11 +1369,7 @@ call_formatting_function_format_navigation_header (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1491,11 +1429,7 @@ call_formatting_function_format_heading_text (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1575,11 +1509,7 @@ call_formatting_function_format_contents (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1638,11 +1568,7 @@ call_formatting_function_format_separate_anchor (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1696,11 +1622,7 @@ call_formatting_function_format_element_header (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1756,11 +1678,7 @@ call_formatting_function_format_element_footer (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1817,11 +1735,7 @@ call_formatting_function_format_node_redirection_page (CONVERTER *self,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
 
@@ -1879,11 +1793,7 @@ call_types_conversion (CONVERTER *self, const enum element_type type,
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   if (!element->hv)
     {
@@ -1902,7 +1812,7 @@ call_types_conversion (CONVERTER *self, const enum element_type type,
   EXTEND(SP, 4);
 
   PUSHs(sv_2mortal (newRV_inc (self->hv)));
-  PUSHs(sv_2mortal (newSVpv (element_type_names[type], 0)));
+  PUSHs(sv_2mortal (newSVpv (type_data[type].name, 0)));
   PUSHs(sv_2mortal (newRV_inc (element->hv)));
   /* content == 0 is possible, hope that newSVpv result corresponds to
      undef in that case, but could also need to explicitely use newSV(0) */
@@ -1946,11 +1856,7 @@ call_types_open (CONVERTER *self, const enum element_type type,
 
   formatting_reference_sv = self->types_open[type].sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -1961,7 +1867,7 @@ call_types_open (CONVERTER *self, const enum element_type type,
   EXTEND(SP, 3);
 
   PUSHs(sv_2mortal (newRV_inc (self->hv)));
-  PUSHs(sv_2mortal (newSVpv (element_type_names[type], 0)));
+  PUSHs(sv_2mortal (newSVpv (type_data[type].name, 0)));
   PUSHs(sv_2mortal (newRV_inc (element->hv)));
   PUTBACK;
 
@@ -2005,16 +1911,16 @@ call_commands_conversion (CONVERTER *self, const enum command_id cmd,
 
   build_tree_to_build (&self->tree_to_build);
 
-  /* could also be builtin_command_data[cmd].cmdname) */
+  /* could also be builtin_command_data[cmd].cmdname as cmd
+     can only be < BUILTIN_CMD_NUMBER for two reasons:
+      - cmd is element_builtin_cmd (element) in convert_to_html_internal
+      - registered cmd are < BUILTIN_CMD_NUMBER
+   */
   command_name = element_command_name (element);
 
   formatting_reference_sv = formatting_reference->sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   args_formatted_sv = build_html_command_formatted_args (args_formatted);
 
@@ -2073,14 +1979,14 @@ call_commands_open (CONVERTER *self, const enum command_id cmd,
 
   formatting_reference_sv = self->commands_open[cmd].sv_reference;
 
-  /* could also be builtin_command_data[cmd].cmdname) */
+  /* could also be builtin_command_data[cmd].cmdname as cmd
+     can only be < BUILTIN_CMD_NUMBER for two reasons:
+      - cmd is element_builtin_cmd (element) in convert_to_html_internal
+      - registered cmd are < BUILTIN_CMD_NUMBER
+   */
   command_name = element_command_name (element);
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -2135,11 +2041,7 @@ call_output_units_conversion (CONVERTER *self,
   formatting_reference_sv
      = self->output_units_conversion[unit_type].sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -2199,11 +2101,7 @@ call_special_unit_body_formatting (CONVERTER *self,
   formatting_reference_sv
      = self->special_unit_body[special_unit_number -1].sv_reference;
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   dSP;
 
@@ -2255,11 +2153,7 @@ call_button_simple_function (CONVERTER *self,
 
   build_tree_to_build (&self->tree_to_build);
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   result = new_formatted_button_info ();
 
@@ -2318,11 +2212,7 @@ call_button_direction_function (CONVERTER *self,
 
   build_tree_to_build (&self->tree_to_build);
 
-  if (self->modified_state)
-    {
-      build_html_formatting_state (self, self->modified_state);
-      self->modified_state = 0;
-    }
+  build_html_formatting_state (self);
 
   result = new_formatted_button_info ();
 
@@ -2405,9 +2295,10 @@ call_latex_convert_to_latex_math (CONVERTER *self, const ELEMENT *element)
     }
   else
     {
+      /* NOTE this case should never happen.  If it does, we could set the
+         options here dynamically */
       options_latex_math = newSV (0);
     }
-
 
   ENTER;
   SAVETMPS;
@@ -2439,6 +2330,65 @@ call_latex_convert_to_latex_math (CONVERTER *self, const ELEMENT *element)
   LEAVE;
 
   return result;
+}
+
+int
+call_stage_handler (CONVERTER *self, void *stage_handler_sv,
+                    const char *stage_name)
+{
+  int count;
+  SV *document_sv = 0;
+  SV *result_sv;
+  int status;
+
+  dTHX;
+
+  if (self->document)
+    {
+      SV **document_ref_sv = hv_fetch (self->hv, "document",
+                                       strlen ("document"), 0);
+      if (document_ref_sv && *document_ref_sv)
+        {
+          document_sv = *document_ref_sv;
+          SvREFCNT_inc (document_sv);
+        }
+    }
+
+  if (!document_sv)
+    document_sv = newSV (0);
+
+  dSP;
+
+  ENTER;
+  SAVETMPS;
+
+  PUSHMARK(SP);
+  EXTEND(SP, 3);
+
+  PUSHs(sv_2mortal (newRV_inc (self->hv)));
+  PUSHs(sv_2mortal (document_sv));
+  PUSHs(sv_2mortal (newSVpv (stage_name, 0)));
+
+  PUTBACK;
+
+  count = call_sv ((SV *) stage_handler_sv,
+                   G_SCALAR);
+
+  SPAGAIN;
+
+  if (count != 1)
+    croak ("call_stage_handler should return 1 item\n");
+
+
+  result_sv = POPs;
+  status = (int) SvIV (result_sv);
+
+  PUTBACK;
+
+  FREETMPS;
+  LEAVE;
+
+  return status;
 }
 
 

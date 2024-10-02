@@ -40,7 +40,7 @@ $result_trees{'uref_in_ref'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -55,7 +55,7 @@ $result_trees{'uref_in_ref'} = {
                               'text' => 'href://http/myhost.com/index.html'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         },
                         {
                           'contents' => [
@@ -63,7 +63,7 @@ $result_trees{'uref_in_ref'} = {
                               'text' => 'uref1'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'uref',
@@ -77,7 +77,7 @@ $result_trees{'uref_in_ref'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -92,7 +92,7 @@ $result_trees{'uref_in_ref'} = {
                               'text' => 'href://http/myhost.com/index2.html'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         },
                         {
                           'contents' => [
@@ -100,7 +100,7 @@ $result_trees{'uref_in_ref'} = {
                               'text' => 'uref2'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'uref',
@@ -114,7 +114,7 @@ $result_trees{'uref_in_ref'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -129,7 +129,7 @@ $result_trees{'uref_in_ref'} = {
                               'text' => 'href://http/myhost.com/index3.html'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         },
                         {
                           'contents' => [
@@ -137,7 +137,7 @@ $result_trees{'uref_in_ref'} = {
                               'text' => 'uref3'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'uref',
@@ -151,7 +151,7 @@ $result_trees{'uref_in_ref'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -166,7 +166,7 @@ $result_trees{'uref_in_ref'} = {
                               'text' => 'href://http/myhost.com/index4.html'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         },
                         {
                           'contents' => [
@@ -174,7 +174,7 @@ $result_trees{'uref_in_ref'} = {
                               'text' => 'uref4'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'uref',
@@ -188,7 +188,7 @@ $result_trees{'uref_in_ref'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -226,21 +226,9 @@ $result_floats{'uref_in_ref'} = {};
 
 
 
-$result_converted{'plaintext'}->{'uref_in_ref'} = '*note cross ref with uref uref1 (href://http/myhost.com/index.html):
-(info file with uref3 uref3
-(href://http/myhost.com/index3.html))(file)node.
+$result_converted{'plaintext'}->{'uref_in_ref'} = 'cross ref with uref uref1 (href://http/myhost.com/index.html): (info
+file with uref3 uref3 (href://http/myhost.com/index3.html))(file)node
 ';
-
-$result_converted_errors{'plaintext'}->{'uref_in_ref'} = [
-  {
-    'error_line' => 'warning: @ref cross-reference name should not contain `:\'
-',
-    'line_nr' => 1,
-    'text' => '@ref cross-reference name should not contain `:\'',
-    'type' => 'warning'
-  }
-];
-
 
 
 $result_converted{'html_text'}->{'uref_in_ref'} = '<p><a data-manual="info file with uref3 href://http/myhost.com/index3.html (uref3)" href="index3.html%20%28uref3%29.html#node">title with uref2 <a class="uref" href="href://http/myhost.com/index2.html">uref2</a></a> in <cite class="cite">printed manual with uref4 <a class="uref" href="href://http/myhost.com/index4.html">uref4</a></cite>
@@ -249,5 +237,9 @@ $result_converted{'html_text'}->{'uref_in_ref'} = '<p><a data-manual="info file 
 
 $result_converted{'latex_text'}->{'uref_in_ref'} = 'Section ``title with uref2 \\href{href://http/myhost.com/index2.html}{uref2 (\\nolinkurl{href://http/myhost.com/index2.html})}\'\' in \\textsl{printed manual with uref4 \\href{href://http/myhost.com/index4.html}{uref4 (\\nolinkurl{href://http/myhost.com/index4.html})}}
 ';
+
+
+$result_converted{'docbook'}->{'uref_in_ref'} = '<para>section &#8220;title with uref2 <ulink url="href://http/myhost.com/index2.html">uref2</ulink>&#8221; in <citetitle>printed manual with uref4 <ulink url="href://http/myhost.com/index4.html">uref4</ulink></citetitle>
+</para>';
 
 1;

@@ -23,19 +23,32 @@
 #include <inttypes.h>
 #include <unistr.h>
 #include <unictype.h>
+/* for opendir */
+#include <dirent.h>
+#include <errno.h>
+/* mkdir */
+#include <sys/stat.h>
+#include <sys/types.h>
 
+#include "text.h"
 #include "command_ids.h"
+#include "element_types.h"
 #include "tree_types.h"
 #include "option_types.h"
 #include "options_types.h"
 #include "tree.h"
 #include "extra.h"
+/* for COMMAND_OPTION_DEFAULT ACCENTS_STACK
+   fatal xasprintf get_command_option ... */
 #include "utils.h"
 #include "errors.h"
 #include "builtin_commands.h"
+/* also for cmd_text data */
 #include "convert_to_text.h"
 #include "node_name_normalization.h"
+/* cdt_tree ... */
 #include "convert_utils.h"
+/* for NAMED_STRING_ELEMENT_LIST new_named_string_element_list ... */
 #include "translations.h"
 #include "manipulate_tree.h"
 #include "unicode.h"
@@ -57,9 +70,63 @@ enum command_id no_brace_command_accent_upper_case[][2] = {
   {0, 0},
 };
 
+/* can be used in converters */
+enum command_id default_upper_case_commands[] = {
+  CM_sc, 0,
+};
+
 static CONVERTER **converter_list;
 static size_t converter_number;
 static size_t converter_space;
+
+PATHS_INFORMATION conversion_paths_info;
+
+const char *xml_text_entity_no_arg_commands_formatting[BUILTIN_CMD_NUMBER];
+
+void
+converter_setup (void)
+{
+  int i;
+  for (i = 0; i < BUILTIN_CMD_NUMBER; i++)
+    {
+      if (xml_text_entity_no_arg_commands[i])
+        xml_text_entity_no_arg_commands_formatting[i]
+          = xml_text_entity_no_arg_commands[i];
+      else if (nobrace_symbol_text[i])
+        xml_text_entity_no_arg_commands_formatting[i] = nobrace_symbol_text[i];
+      else if (text_brace_no_arg_commands[i])
+        xml_text_entity_no_arg_commands_formatting[i]
+          = text_brace_no_arg_commands[i];
+    }
+
+  /* For translation of in document string. */
+  if (0)
+    {
+      /* TRANSLATORS: expansion of @error{} as Texinfo code */
+      (void) gdt_noop("error@arrow{}");
+    }
+}
+
+void
+setup_converter_paths_information (int texinfo_uninstalled,
+                                   const char *tp_builddir,
+                             const char *pkgdatadir, const char *top_srcdir)
+{
+  memset (&conversion_paths_info, 0, sizeof (PATHS_INFORMATION));
+  conversion_paths_info.texinfo_uninstalled = texinfo_uninstalled;
+  if (texinfo_uninstalled)
+    {
+      if (tp_builddir)
+        conversion_paths_info.p.uninstalled.tp_builddir
+          = strdup (tp_builddir);
+      if (top_srcdir)
+        conversion_paths_info.p.uninstalled.top_srcdir
+          = strdup (top_srcdir);
+    }
+  else
+    conversion_paths_info.p.installed.pkgdatadir
+      = strdup (pkgdatadir);
+}
 
 CONVERTER *
 retrieve_converter (int converter_descriptor)
@@ -123,29 +190,397 @@ unregister_converter_descriptor (int converter_descriptor)
     }
 }
 
-static void
-copy_option (OPTION *destination, OPTION *source)
+void
+converter_set_document (CONVERTER *converter, DOCUMENT *document)
 {
-  switch (source->type)
-   {
-     case GOT_integer:
-       destination->o.integer = source->o.integer;
-       break;
+   /*
+  if (document)
+    {
+      fprintf (stderr, "XS|CONVERTER %d: Document %d\n",
+           converter->converter_descriptor, document->descriptor);
+    }
+    */
 
-     case GOT_char:
-     case GOT_bytes:
-       free (destination->o.string);
-       if (!source->o.string)
-         destination->o.string = 0;
-       else
-         destination->o.string = strdup (source->o.string);
-       break;
+  converter->document = document;
 
-     default:
-       fprintf (stderr, "BUG: copy_option type not handled: %d\n",
-                source->type);
-   }
+  set_output_encoding (converter->conf, converter->document);
+
+  converter->convert_text_options
+    = copy_converter_options_for_convert_text (converter);
 }
+
+
+
+static void
+set_conf_internal (OPTION *option, int int_value, const char *char_value)
+{
+  switch (option->type)
+    {
+      case GOT_integer:
+        option->o.integer = int_value;
+        break;
+      case GOT_char:
+      case GOT_bytes:
+        free (option->o.string);
+        if (!char_value)
+          option->o.string = 0;
+        else
+          option->o.string = strdup (char_value);
+        break;
+
+      default:
+        fprintf (stderr, "BUG: set_conf type not handled: %d\n",
+                 option->type);
+    }
+}
+
+int
+set_conf (OPTION *option, int int_value, const char *char_value)
+{
+  if (option->configured > 0)
+    return 0;
+  set_conf_internal (option, int_value, char_value);
+  return 1;
+}
+
+void
+force_conf (OPTION *option, int int_value, const char *char_value)
+{
+  set_conf_internal (option, int_value, char_value);
+}
+
+
+
+/* result to be freed */
+static char *
+remove_extension (const char *input_string)
+{
+  char *result;
+  const char *p = strchr (input_string, '.');
+  if (p)
+    {
+      while (1)
+        {
+          const char *q = strchr (p + 1, '.');
+          if (q)
+            p = q;
+          else
+            break;
+        }
+      result = strndup (input_string, p - input_string);
+    }
+  else result = strdup (input_string);
+
+  return result;
+}
+
+/* try to do at least part of what File::Spec->canonpath does to have
+   tests passing */
+static char *
+canonpath (const char *input_file)
+{
+  TEXT result;
+  const char *p = strchr (input_file, '/');
+
+  if (p)
+    {
+      text_init (&result);
+      text_append_n (&result, input_file, p - input_file);
+      while (1)
+        {
+          const char *q;
+          p++;
+          while (*p == '/')
+            p++;
+          /* omit a / at the end of the path */
+          if (!*p)
+            return (result.text);
+          text_append_n (&result, "/", 1);
+          q = strchr (p, '/');
+          if (q)
+            {
+              text_append_n (&result, p, q - p);
+              p = q;
+            }
+          else
+            {
+              text_append (&result, p);
+              return (result.text);
+            }
+        }
+    }
+  else
+    return strdup (input_file);
+}
+
+typedef struct STRING_AND_LEN {
+    const char *string;
+    int len;
+} STRING_AND_LEN;
+
+/* in perl there is also .tx matched, but it is incorrect */
+static const STRING_AND_LEN texinfo_extensions[5] = {
+  {".texi", 5},
+  {".texinfo", 8},
+  {".txinfo", 7},
+  {".txi", 4},
+  {".tex", 4}
+};
+
+/* RESULT should be a char * array of dimension 5 */
+/* results to be freed by the caller */
+void
+determine_files_and_directory (CONVERTER *self, const char *output_format,
+                               char **result)
+{
+  char *input_basename = 0;
+  char *input_basefile;
+  GLOBAL_INFO *document_info = 0;
+  GLOBAL_COMMANDS *global_commands = 0;
+  const char *setfilename = 0;
+  const char *setfilename_for_outfile = 0;
+  char *input_basename_for_outfile;
+  /* the document path, in general the outfile without
+     extension and can be set from setfilename if outfile is not set */
+  char *document_path;
+  char *output_file;
+  const char *output_filepath;
+  char *document_name_and_directory[2];
+  char *output_filename_and_directory[2];
+  char *document_name;
+  char *output_filename;
+  char *destination_directory;
+
+  if (self->document)
+    {
+      document_info = &self->document->global_info;
+      global_commands = &self->document->global_commands;
+    }
+
+  if (document_info && document_info->input_file_name)
+    {
+    /* 'input_file_name' is not decoded, as it is derived from input
+       file which is not decoded either.  We want to return only
+       decoded (utf-8) character strings such that they can easily be mixed
+       with other character strings, so we decode here. */
+      const char *encoding = self->conf->COMMAND_LINE_ENCODING.o.string;
+      char *input_file_name;
+      char *input_file_name_and_directory[2];
+
+      if (encoding)
+        {
+          int status;
+          input_file_name = decode_string (document_info->input_file_name,
+                                           encoding, &status, 0);
+        }
+      else
+        input_file_name = strdup (document_info->input_file_name);
+
+  /* FIXME $input_file_name is already the base file name.  Not clear how
+     this is useful. */
+      parse_file_path (input_file_name, input_file_name_and_directory);
+      input_basefile = input_file_name_and_directory[0];
+      free (input_file_name_and_directory[1]);
+      free (input_file_name);
+    }
+  else /* This could happen if called on a piece of texinfo */
+    input_basefile = strdup ("");
+
+  if (!strcmp (input_basefile, "-"))
+    input_basename = strdup ("stdin");
+  else
+    {
+      int i;
+      int basefile_len = strlen (input_basefile);
+      for (i = 0; i < 5; i++)
+        {
+          int len = texinfo_extensions[i].len;
+          if (basefile_len >= len
+              && !memcmp (input_basefile + basefile_len - len,
+                          texinfo_extensions[i].string, len))
+            {
+              input_basename = strndup (input_basefile,
+                                        basefile_len - len);
+              break;
+            }
+        }
+      if (!input_basename)
+        input_basename = strdup (input_basefile);
+    }
+
+  if (self->conf->setfilename.o.string)
+    setfilename = self->conf->setfilename.o.string;
+  else if (global_commands && global_commands->setfilename)
+    setfilename = informative_command_value (global_commands->setfilename);
+
+  /* PREFIX overrides both setfilename and the input file base name */
+  if (self->conf->PREFIX.o.string)
+    {
+      setfilename_for_outfile = 0;
+      free (input_basename);
+      input_basename_for_outfile = strdup (self->conf->PREFIX.o.string);
+    }
+  else
+    {
+      input_basename_for_outfile = input_basename;
+      setfilename_for_outfile = setfilename;
+    }
+
+  /* determine output file and output file name */
+  if (!self->conf->OUTFILE.o.string)
+    {
+      if (setfilename_for_outfile)
+        {
+          document_path = remove_extension (setfilename_for_outfile);
+
+          if (self->conf->USE_SETFILENAME_EXTENSION.o.integer <= 0)
+            {
+              if (self->conf->EXTENSION.o.string
+                  && strlen (self->conf->EXTENSION.o.string))
+                {
+                  xasprintf (&output_file, "%s.%s", document_path,
+                             self->conf->EXTENSION.o.string);
+                }
+              else
+                output_file = strdup (document_path);
+            }
+          else
+            output_file = strdup (setfilename_for_outfile);
+        }
+      else if (strlen (input_basename_for_outfile))
+        {
+          document_path = strdup (input_basename_for_outfile);
+          if (self->conf->EXTENSION.o.string
+              && strlen (self->conf->EXTENSION.o.string))
+            {
+              xasprintf (&output_file, "%s.%s", input_basename_for_outfile,
+                         self->conf->EXTENSION.o.string);
+            }
+          else
+            output_file = strdup (input_basename_for_outfile);
+        }
+      else
+        {
+          output_file = strdup ("");
+          document_path = strdup ("");
+        }
+      if (self->conf->SUBDIR.o.string && strlen (output_file))
+        {
+          char *new_output_file;
+          char *dir = canonpath (self->conf->SUBDIR.o.string);
+          xasprintf (&new_output_file, "%s/%s", dir, output_file);
+          free (dir);
+          free (output_file);
+          output_file = new_output_file;
+        }
+    }
+  else
+    {
+      document_path = remove_extension (self->conf->OUTFILE.o.string);
+      output_file = strdup (self->conf->OUTFILE.o.string);
+    }
+
+  free (input_basename_for_outfile);
+
+  /* the output file path, output_filepath is in general the same as
+     the outfile but can be set from setfilename if outfile is not set. */
+  if (!strlen (output_file) && setfilename_for_outfile)
+    {
+    /* in this case one wants to get the result in a string and there
+       is a setfilename.  The setfilename is used to get something.
+       This happens in the test suite. */
+
+      output_filepath = setfilename_for_outfile;
+      free (document_path);
+      document_path = remove_extension (setfilename_for_outfile);
+    }
+  else
+    output_filepath = output_file;
+
+  /* $document_name is the name of the document, which is the output
+     file basename, $output_filename, without extension. */
+
+  parse_file_path (document_path, document_name_and_directory);
+  free (document_path);
+  document_name = document_name_and_directory[0];
+  free (document_name_and_directory[1]);
+  parse_file_path (output_filepath, output_filename_and_directory);
+  output_filename = output_filename_and_directory[0];
+  free (output_filename_and_directory[1]);
+
+  if (self->conf->SPLIT.o.string && strlen (self->conf->SPLIT.o.string))
+    {
+      if (self->conf->OUTFILE.o.string)
+        destination_directory = strdup (self->conf->OUTFILE.o.string);
+      else if (self->conf->SUBDIR.o.string)
+        destination_directory = strdup (self->conf->SUBDIR.o.string);
+      else
+        {
+          if (output_format && strlen (output_format))
+            xasprintf (&destination_directory, "%s_%s", document_name,
+                                               output_format);
+          else
+            destination_directory = strdup (document_name);
+        }
+    }
+  else
+    {
+      char *output_file_filename_and_directory[2];
+     /* the filename is not used, but $output_filename should be
+        the same as long as $output_file is the same as $output_filepath
+        which is the case except if $output_file is ''. */
+      parse_file_path (output_file, output_file_filename_and_directory);
+      destination_directory = output_file_filename_and_directory[1];
+      /* Perl returns . or ./ if there is no directory */
+      if (!destination_directory)
+        destination_directory = strdup (".");
+      free (output_file_filename_and_directory[0]);
+    }
+
+  if (strlen (destination_directory))
+    {
+      char *new_destination_directory = canonpath (destination_directory);
+      free (destination_directory);
+      destination_directory = new_destination_directory;
+    }
+
+  result[0] = output_file;
+  result[1] = destination_directory;
+  result[2] = output_filename;
+  result[3] = document_name;
+  result[4] = input_basefile;
+}
+
+int
+create_destination_directory (CONVERTER *self,
+                              const char *destination_directory_path,
+                              const char *destination_directory_name)
+{
+  if (destination_directory_path)
+    {
+      DIR *dir = opendir (destination_directory_path);
+      if (dir)
+        {
+          closedir (dir);
+        }
+      else if (errno == ENOENT)
+        {
+          int status = mkdir (destination_directory_path, S_IRWXU
+                             | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH);
+          if (status)
+            {
+              message_list_document_error (&self->error_messages,
+                                           self->conf, 0,
+                                  "could not create directory `%s': %s",
+                            destination_directory_name, strerror (errno));
+              return 0;
+            }
+        }
+    }
+  return 1;
+}
+
+
 
 /* freed by caller */
 static OPTION *
@@ -250,6 +685,8 @@ set_global_document_commands (CONVERTER *converter,
     }
 }
 
+
+
 static void
 id_to_filename (CONVERTER *self, char **id_ref)
 {
@@ -270,8 +707,8 @@ normalized_sectioning_command_filename (CONVERTER *self, const ELEMENT *command)
   TEXT filename;
   char *normalized_file_name;
   char *normalized_name
-    = normalize_transliterate_texinfo_contents (command->args.list[0],
-                                          (self->conf->TEST.o.integer > 0));
+    = normalize_transliterate_texinfo_contents (command->e.c->args.list[0],
+                                           (self->conf->TEST.o.integer > 0));
   normalized_file_name = strdup (normalized_name);
   id_to_filename (self, &normalized_file_name);
 
@@ -318,6 +755,8 @@ node_information_filename (CONVERTER *self, const char *normalized,
   return filename;
 }
 
+
+
 ELEMENT *
 float_type_number (CONVERTER *self, const ELEMENT *float_e)
 {
@@ -325,16 +764,16 @@ float_type_number (CONVERTER *self, const ELEMENT *float_e)
   ELEMENT *type_element = 0;
   NAMED_STRING_ELEMENT_LIST *replaced_substrings
      = new_named_string_element_list ();
-  char *float_type = lookup_extra_string (float_e, "float_type");
-  char *float_number = lookup_extra_string (float_e, "float_number");
+  char *float_type = lookup_extra_string (float_e, AI_key_float_type);
+  char *float_number = lookup_extra_string (float_e, AI_key_float_number);
 
   if (float_type && strlen (float_type))
-    type_element = float_e->args.list[0];
+    type_element = float_e->e.c->args.list[0];
 
   if (float_number)
     {
-      ELEMENT *e_number = new_element (ET_NONE);
-      text_append (&e_number->text, float_number);
+      ELEMENT *e_number = new_text_element (ET_normal_text);
+      text_append (e_number->e.text, float_number);
       add_element_to_named_string_element_list (replaced_substrings,
                                      "float_number", e_number);
     }
@@ -368,20 +807,21 @@ float_name_caption (CONVERTER *self, const ELEMENT *float_e)
   NAMED_STRING_ELEMENT_LIST *replaced_substrings
      = new_named_string_element_list ();
 
-  const char *float_type = lookup_extra_string (float_e, "float_type");
-  const char *float_number = lookup_extra_string (float_e, "float_number");
+  const char *float_type = lookup_extra_string (float_e, AI_key_float_type);
+  const char *float_number = lookup_extra_string (float_e, AI_key_float_number);
 
-  const ELEMENT *caption_element = lookup_extra_element (float_e, "caption");
+  const ELEMENT *caption_element = lookup_extra_element (float_e,
+                                                         AI_key_caption);
   if (!caption_element)
-    caption_element = lookup_extra_element (float_e, "shortcaption");
+    caption_element = lookup_extra_element (float_e, AI_key_shortcaption);
 
   if (float_type && strlen (float_type))
-    type_element = float_e->args.list[0];
+    type_element = float_e->e.c->args.list[0];
 
   if (float_number)
     {
-      ELEMENT *e_number = new_element (ET_NONE);
-      text_append (&e_number->text, float_number);
+      ELEMENT *e_number = new_text_element (ET_normal_text);
+      text_append (e_number->e.text, float_number);
       add_element_to_named_string_element_list (replaced_substrings,
                                      "float_number", e_number);
     }
@@ -430,6 +870,8 @@ float_name_caption (CONVERTER *self, const ELEMENT *float_e)
 
   return result;
 }
+
+
 
 TREE_ADDED_ELEMENTS *
 new_tree_added_elements (enum tree_added_elements_status status)
@@ -502,51 +944,102 @@ new_element_added (TREE_ADDED_ELEMENTS *added_elements, enum element_type type)
   return new;
 }
 
+ELEMENT *
+new_command_element_added (TREE_ADDED_ELEMENTS *added_elements,
+                           enum element_type type,
+                           enum command_id cmd)
+{
+  ELEMENT *new = new_command_element (type, cmd);
+  add_to_element_list (&added_elements->added, new);
+  return new;
+}
+
+ELEMENT *
+new_text_element_added (TREE_ADDED_ELEMENTS *added_elements,
+                        enum element_type type)
+{
+  ELEMENT *new = new_text_element (type);
+  add_to_element_list (&added_elements->added, new);
+  return new;
+}
+
+
+
 TREE_ADDED_ELEMENTS *
 table_item_content_tree (CONVERTER *self, const ELEMENT *element)
 {
-  ELEMENT *table_command = element->parent->parent->parent;
-  ELEMENT *command_as_argument = lookup_extra_element (table_command,
-                                               "command_as_argument");
+  const ELEMENT *table_command = element->parent->parent->parent;
+  const ELEMENT *command_as_argument = lookup_extra_element (table_command,
+                                               AI_key_command_as_argument);
 
-  if (element->args.number > 0 && command_as_argument)
+  if (element->e.c->args.number > 0 && command_as_argument)
     {
       TREE_ADDED_ELEMENTS *tree
         = new_tree_added_elements (tree_added_status_elements_added);
-      int status;
       int command_as_argument_kbd_code;
-      ELEMENT *command = new_element_added (tree, ET_NONE);
-      ELEMENT *arg = new_element_added (tree, ET_brace_command_arg);
+      ELEMENT *command;
+      ELEMENT *arg;
       enum command_id cmd = element_builtin_cmd (command_as_argument);
+      enum command_id data_cmd
+            = element_builtin_data_cmd (command_as_argument);
 
+      command
+        = new_command_element_added (tree, command_as_argument->type, cmd);
       tree->tree = command;
 
-      command->cmd = cmd;
-      command->source_info = element->source_info;
-      command_as_argument_kbd_code = lookup_extra_integer (table_command,
-                                 "command_as_argument_kbd_code", &status);
+      command->e.c->source_info = element->e.c->source_info;
+      command_as_argument_kbd_code
+        = (table_command->flags & EF_command_as_argument_kbd_code);
       if (command_as_argument_kbd_code > 0)
-        add_extra_integer (command, "code", 1);
+        command->flags |= EF_code;
 
       if (command_as_argument->type == ET_definfoenclose_command)
         {
-          char *begin = lookup_extra_string (command_as_argument, "begin");
-          char *end = lookup_extra_string (command_as_argument, "end");
-          char *command_name = lookup_info_string (command_as_argument,
-                                                   "command_name");
-          command->type = command_as_argument->type;
+          const char *begin = lookup_extra_string (command_as_argument,
+                                                   AI_key_begin);
+          const char *end = lookup_extra_string (command_as_argument,
+                                                 AI_key_end);
+          const char *command_name
+            = command_as_argument->e.c->string_info[sit_command_name];
+
           if (begin)
-            add_extra_string_dup (command, "begin", begin);
+            add_extra_string_dup (command, AI_key_begin, begin);
           if (end)
-            add_extra_string_dup (command, "end", end);
+            add_extra_string_dup (command, AI_key_end, end);
           if (command_name)
-            add_info_string_dup (command, "command_name", command_name);
+            command->e.c->string_info[sit_command_name] = strdup (command_name);
+        }
+      if (builtin_command_data[data_cmd].data == BRACE_context)
+        {
+    /* This corresponds to a bogus @*table line with command line @footnote
+       or @math.  We do not really care about the formatting of the result
+       but we want to avoid debug messages, so we setup expected trees
+       for those @-commands. */
+          arg = new_element_added (tree, ET_brace_command_context);
+          if (cmd == CM_math)
+            {
+              add_to_contents_as_array (arg, element->e.c->args.list[0]);
+            }
+          else
+            {
+              ELEMENT *paragraph = new_element_added (tree, ET_paragraph);
+              add_to_contents_as_array (paragraph, element->e.c->args.list[0]);
+              add_to_element_contents (arg, paragraph);
+            }
+        }
+      else if (builtin_command_data[data_cmd].data == BRACE_arguments)
+        {
+          arg = new_element_added (tree, ET_brace_arg);
+          add_to_contents_as_array (arg, element->e.c->args.list[0]);
+        }
+      else
+        {
+          arg = new_element_added (tree, ET_brace_container);
+          add_to_contents_as_array (arg, element->e.c->args.list[0]);
         }
       add_to_element_args (command, arg);
-      add_to_contents_as_array (arg, element->args.list[0]);
       return tree;
     }
-
   return 0;
 }
 
@@ -568,7 +1061,7 @@ convert_accents (CONVERTER *self, const ELEMENT *accent,
     {
       char *explanation;
       xasprintf (&explanation, "ACCENT ARG %s",
-                 builtin_command_name (accent->cmd));
+                 builtin_command_name (accent->e.c->cmd));
       arg_text = (*convert_tree) (self, accent_stack->argument, explanation);
       free (explanation);
     }
@@ -614,14 +1107,14 @@ comma_index_subentries_tree (const ELEMENT *current_entry,
   while (1)
     {
       const ELEMENT *subentry
-        = lookup_extra_element (current_entry, "subentry");
+        = lookup_extra_element (current_entry, AI_key_subentry);
       if (subentry)
         {
-          ELEMENT *separator = new_element (ET_NONE);
-          text_append (&separator->text, subentry_separator);
+          ELEMENT *separator = new_text_element (ET_normal_text);
+          text_append (separator->e.text, subentry_separator);
           current_entry = subentry;
           add_to_element_list (result, separator);
-          add_to_element_list (result, current_entry->args.list[0]);
+          add_to_element_list (result, current_entry->e.c->args.list[0]);
         }
       else
         break;
@@ -643,7 +1136,7 @@ free_comma_index_subentries_tree (ELEMENT_LIST *element_list)
   for (i = 0; i < element_list->number; i++)
     {
       ELEMENT *content = element_list->list[i];
-      if (content->type == ET_NONE)
+      if (content->type == ET_normal_text)
         destroy_element (content);
     }
   destroy_list (element_list);
@@ -728,6 +1221,8 @@ top_node_filename (const CONVERTER *self, const char *document_name)
     }
   return 0;
 }
+
+
 
 void
 initialize_output_units_files (CONVERTER *self)
@@ -933,6 +1428,8 @@ free_output_unit_files (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
   free (output_unit_files->list);
 }
 
+
+
 void
 free_generic_converter (CONVERTER *self)
 {
@@ -965,6 +1462,7 @@ free_generic_converter (CONVERTER *self)
   free_strings_list (&self->small_strings);
 }
 
+
 
 /* XML conversion functions */
 
@@ -1093,24 +1591,6 @@ char *
 xml_numeric_entity_accent (enum command_id cmd, const char *text)
 {
   char *result;
-  if (! builtin_command_data[cmd].flags & CF_accent)
-    {
-      return 0;
-    }
-
-  if (strlen (text) == 1 && isascii_alpha (*text))
-    {
-      int i;
-      for (i = 0; unicode_accented_letters[i].cmd; i++)
-        {
-          UNICODE_ACCENT_LETTER *letter = &unicode_accented_letters[i];
-          if (cmd == letter->cmd && ! strcmp (text, letter->letter))
-            {
-              xasprintf (&result, "&#%s;", letter->numerical_entity);
-              return result;
-            }
-        }
-    }
 
   if (unicode_diacritics[cmd].text)
     {
@@ -1178,6 +1658,20 @@ xml_numeric_entity_accent (enum command_id cmd, const char *text)
           return result;
         }
     }
+  else if (strlen (text) == 1 && isascii_alpha (*text))
+    {
+      int i;
+      for (i = 0; unicode_accented_letters[i].cmd; i++)
+        {
+          UNICODE_ACCENT_LETTER *letter = &unicode_accented_letters[i];
+          if (cmd == letter->cmd && ! strcmp (text, letter->letter))
+            {
+              xasprintf (&result, "&#%s;", letter->numerical_entity);
+              return result;
+            }
+        }
+    }
+
   return 0;
 }
 

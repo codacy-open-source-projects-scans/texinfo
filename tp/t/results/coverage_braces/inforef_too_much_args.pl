@@ -51,7 +51,7 @@ $result_trees{'inforef_too_much_args'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -64,7 +64,7 @@ $result_trees{'inforef_too_much_args'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -77,7 +77,7 @@ $result_trees{'inforef_too_much_args'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -153,7 +153,7 @@ $result_floats{'inforef_too_much_args'} = {};
 
 
 
-$result_converted{'plaintext'}->{'inforef_too_much_args'} = '*note cross ref name: (file name, spurious arg)chapter.
+$result_converted{'plaintext'}->{'inforef_too_much_args'} = 'See cross ref name: (file name, spurious arg)chapter
 ';
 
 
@@ -167,5 +167,11 @@ $result_converted{'latex_text'}->{'inforef_too_much_args'} = '\\label{anchor:cha
 
 Section ``chapter\'\' in \\texttt{file name,\\ spurious arg}
 ';
+
+
+$result_converted{'docbook'}->{'inforef_too_much_args'} = '<anchor id="chapter"/>
+
+<para>See section &#8220;cross ref name&#8221; in <filename>file name, spurious arg</filename>
+</para>';
 
 1;

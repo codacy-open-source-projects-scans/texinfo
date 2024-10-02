@@ -19,7 +19,7 @@ $result_trees{'spaces_after_braced_command'} = {
                       'text' => 'b'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -54,7 +54,7 @@ $result_trees{'spaces_after_braced_command'} = {
                       'text' => 'v'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'samp',
@@ -85,7 +85,7 @@ $result_trees{'spaces_after_braced_command'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'AA',
@@ -121,7 +121,7 @@ $result_trees{'spaces_after_braced_command'} = {
                       'text' => 'a'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -138,7 +138,7 @@ $result_trees{'spaces_after_braced_command'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'email',

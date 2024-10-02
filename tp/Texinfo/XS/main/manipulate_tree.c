@@ -25,6 +25,7 @@
 
 #include "tree_types.h"
 #include "command_ids.h"
+#include "types_data.h"
 #include "text.h"
 #include "tree.h"
 #include "extra.h"
@@ -35,22 +36,15 @@
 #include "manipulate_tree.h"
 #include "unicode.h"
 
+/* To do the copy, we do two pass.  First with copy_tree_internal, the tree is
+   copied and a flag and reference to the copy is put in all the elements,
+   taking care that each element is processed once only.
+   Then, remove_element_copy_info goes through the tree again and remove
+   the references to the copies.
+ */
+
 ELEMENT *
-copy_tree_internal (ELEMENT* current, ELEMENT *parent);
-
-void
-increase_ref_counter (ELEMENT *element)
-{
-  KEY_PAIR *k_counter;
-  int *counter_ptr;
-
-  k_counter = lookup_extra_by_index (element, "_counter", -1);
-  if (!k_counter)
-    add_extra_integer (element, "_counter", 0);
-  k_counter = lookup_extra_by_index (element, "_counter", -1);
-  counter_ptr = &k_counter->k.integer;
-  (*counter_ptr) ++;
-}
+copy_tree_internal (ELEMENT* current);
 
 void
 copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
@@ -59,12 +53,8 @@ copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
 
   for (i = 0; i < info->info_number; i++)
     {
-      KEY_PAIR *k_ref = &info->info[i];
-      const char *key = k_ref->key;
-      ELEMENT *f = k_ref->k.element;
-      ELEMENT *new_extra_element;
-      ELEMENT_LIST *new_extra_contents;
-      KEY_PAIR *k_copy = 0;
+      const KEY_PAIR *k_ref = &info->info[i];
+      enum ai_key_name key = k_ref->key;
       int j;
 
       if (k_ref->type == extra_deleted)
@@ -73,230 +63,67 @@ copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
       switch (k_ref->type)
         {
         case extra_element:
+          {
+            /* cast const off */
+            ELEMENT *f = (ELEMENT *)k_ref->k.const_element;
+            ELEMENT *copy = copy_tree_internal (f);
+            KEY_PAIR *k
+              = get_associated_info_key (new_info, key, k_ref->type);
+            k->k.const_element = copy;
+          }
         case extra_element_oot:
-          if (!strcmp (key, "_copy"))
-            break;
-          k_copy = lookup_extra_by_index (f, "_copy", -1);
-          if (k_copy)
-            {
-              KEY_PAIR *k
-                = get_associated_info_key (new_info, key, k_ref->type);
-              k->k.element = k_copy->k.element;
-            }
-          else
-            {
-              increase_ref_counter (f);
-            }
-          copy_tree_internal (f, 0);
+          {
+            ELEMENT *f = k_ref->k.element;
+            ELEMENT *copy = copy_tree_internal (f);
+            KEY_PAIR *k
+              = get_associated_info_key (new_info, key, k_ref->type);
+            k->k.element = copy;
+          }
           break;
         case extra_contents:
+          {
+          KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
+          CONST_ELEMENT_LIST *new_extra_contents = new_const_element_list ();
+          k->k.const_list = new_extra_contents;
+          for (j = 0; j < k_ref->k.const_list->number; j++)
+            {
+              /* cast to discard const, as the element needs to be modified
+                 transiently for copy */
+              ELEMENT *e = (ELEMENT *)k_ref->k.const_list->list[j];
+              ELEMENT *copy = copy_tree_internal (e);
+              add_to_const_element_list (new_extra_contents, copy);
+            }
+          break;
+          }
         case extra_directions:
           {
           KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
-          new_extra_contents = new_list ();
-          k->k.list = new_extra_contents;
-          for (j = 0; j < k_ref->k.list->number; j++)
+          const ELEMENT **new_d = new_directions ();
+          k->k.directions = new_d;
+          for (j = 0; j < directions_length; j++)
             {
-              ELEMENT *e = k_ref->k.list->list[j];
-              if (!e && info->info[i].type == extra_directions)
+              /* cast const off */
+              ELEMENT *e = (ELEMENT *)k_ref->k.directions[j];
+              if (e)
                 {
-                  add_to_element_list (new_extra_contents, 0);
-                }
-              else
-                {
-                  k_copy = lookup_extra_by_index (e, "_copy", -1);
-                  if (k_copy)
-                    add_to_element_list (new_extra_contents,
-                                         k_copy->k.element);
-                  else
-                    {
-                      increase_ref_counter (e);
-                      add_to_element_list (new_extra_contents, 0);
-                    }
-                  copy_tree_internal (e, 0);
+                  const ELEMENT *copy = copy_tree_internal (e);
+                  new_d[j] = copy;
                 }
             }
           break;
           }
         case extra_container:
           {
+          ELEMENT *f = k_ref->k.element;
           KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
-          new_extra_element = new_element (ET_NONE);
+          ELEMENT *new_extra_element = new_element (ET_NONE);
           k->k.element = new_extra_element;
-          for (j = 0; j < f->contents.number; j++)
+          for (j = 0; j < f->e.c->contents.number; j++)
             {
-              ELEMENT *e = f->contents.list[j];
-              k_copy = lookup_extra_by_index (e, "_copy", -1);
-              if (k_copy)
-                add_to_contents_as_array (new_extra_element,
-                                          k_copy->k.element);
-              else
-                {
-                  increase_ref_counter (e);
-                  add_to_contents_as_array (new_extra_element, 0);
-                }
-              copy_tree_internal (e, 0);
+              ELEMENT *e = f->e.c->contents.list[j];
+              ELEMENT *copy = copy_tree_internal (e);
+              add_to_contents_as_array (new_extra_element, copy);
             }
-            break;
-          }
-        default:
-          break;
-        }
-    }
-}
-
-ELEMENT *
-copy_tree_internal (ELEMENT* current, ELEMENT *parent)
-{
-  KEY_PAIR *k_copy = 0;
-  ELEMENT *new;
-  int i;
-
-  k_copy = lookup_extra_by_index (current, "_copy", -1);
-  if (k_copy)
-    {
-      new = k_copy->k.element;
-      if (parent && !new->parent)
-        new->parent = parent;
-      return new;
-    }
-
-  new = new_element (ET_NONE);
-  if (current->type)
-    new->type = current->type;
-  if (current->cmd)
-    new->cmd = current->cmd;
-  if (current->text.space > 0)
-    text_append (&new->text, current->text.text);
-
-  increase_ref_counter (current);
-  add_extra_element (current, "_copy", new);
-
-  /*
-  fprintf (stderr, "CTNEW %p %s %p\n", current,
-                                       print_element_debug (current, 0), new);
-  */
-
-  for (i = 0; i < current->args.number; i++)
-    add_to_element_args (new,
-                copy_tree_internal (current->args.list[i], new));
-  for (i = 0; i < current->contents.number; i++)
-    add_to_element_contents (new,
-                copy_tree_internal (current->contents.list[i], new));
-  copy_associated_info (&current->info_info, &new->info_info);
-  copy_associated_info (&current->extra_info, &new->extra_info);
-  return new;
-}
-
-ELEMENT *
-get_copy_ref (ELEMENT *element)
-{
-  KEY_PAIR *k_counter, *k_copy;
-  int *counter_ptr;
-  ELEMENT *result;
-
-  k_copy = lookup_extra_by_index (element, "_copy", -1);
-  result = k_copy->k.element;
-
-  k_counter = lookup_extra_by_index (element, "_counter", -2);
-  counter_ptr = &k_counter->k.integer;
-  (*counter_ptr) --;
-
-  if (*counter_ptr == 0)
-    {
-      element->extra_info.info_number -= 2;
-    }
-
-  return result;
-}
-
-void
-copy_extra_info (ELEMENT *current, ELEMENT *new);
-
-void
-associate_info_references (ASSOCIATED_INFO *info, ASSOCIATED_INFO *new_info)
-{
-  int i;
-
-  for (i = 0; i < info->info_number; i++)
-    {
-      KEY_PAIR *k_ref = &info->info[i];
-      const char *key = k_ref->key;
-      ELEMENT *f = k_ref->k.element;
-      ELEMENT *new_extra_element;
-      int j;
-
-      if (k_ref->type == extra_deleted)
-        continue;
-
-      switch (k_ref->type)
-        {
-        case extra_element:
-        case extra_element_oot:
-          if (!strcmp (key, "_copy"))
-            break;
-          {
-            KEY_PAIR *k;
-            KEY_PAIR *k_copy;
-            k = lookup_associated_info (new_info, key);
-            if (!k)
-              {
-                ELEMENT *e = get_copy_ref (f);
-                k = get_associated_info_key (new_info, key,
-                                             info->info[i].type);
-                k->k.element = e;
-              }
-            k_copy = lookup_extra_by_index (f, "_copy", -1);
-            if (k_copy)
-              copy_extra_info (f, k_copy->k.element);
-            break;
-          }
-        case extra_contents:
-        case extra_directions:
-          {
-            KEY_PAIR *k = lookup_associated_info (new_info, key);
-            ELEMENT_LIST *new_extra_contents = k->k.list;
-            for (j = 0; j < k_ref->k.list->number; j++)
-              {
-                KEY_PAIR *k_copy;
-                ELEMENT *e = k_ref->k.list->list[j];
-                ELEMENT *new_e = new_extra_contents->list[j];
-                if (!e && info->info[i].type == extra_directions)
-                  {
-                  }
-                else
-                  {
-                    if (!new_e)
-                      {
-                        ELEMENT *new_ref = get_copy_ref (e);
-                        new_extra_contents->list[j] = new_ref;
-                      }
-                    k_copy = lookup_extra_by_index (e, "_copy", -1);
-                    if (k_copy)
-                      copy_extra_info (e, k_copy->k.element);
-                  }
-              }
-            break;
-          }
-        case extra_container:
-          {
-            KEY_PAIR *k = lookup_associated_info (new_info, key);
-            new_extra_element = k->k.element;
-            for (j = 0; j < f->contents.number; j++)
-              {
-                KEY_PAIR *k_copy;
-                ELEMENT *e = f->contents.list[j];
-                ELEMENT *new_e = new_extra_element->contents.list[j];
-                if (!new_e)
-                  {
-                    ELEMENT *new_ref = get_copy_ref (e);
-                    new_extra_element->contents.list[j] = new_ref;
-                  }
-
-                k_copy = lookup_extra_by_index (e, "_copy", -1);
-                if (k_copy)
-                  copy_extra_info (e, k_copy->k.element);
-              }
             break;
           }
         case extra_string:
@@ -307,8 +134,6 @@ associate_info_references (ASSOCIATED_INFO *info, ASSOCIATED_INFO *new_info)
             break;
           }
         case extra_integer:
-          if (!strcmp (key, "_counter"))
-            break;
           { /* A simple integer. */
             KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
             k->k.integer = k_ref->k.integer;
@@ -316,75 +141,273 @@ associate_info_references (ASSOCIATED_INFO *info, ASSOCIATED_INFO *new_info)
           }
         case extra_misc_args:
           {
-          int j;
-          new_extra_element = new_element (ET_NONE);
           KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
-          k->k.element = new_extra_element;
-          for (j = 0; j < f->contents.number; j++)
-            {
-              ELEMENT *e = new_element (ET_NONE);
-              KEY_PAIR *k_integer = lookup_extra (f->contents.list[j], "integer");
-              if (k_integer)
-                {
-                  add_extra_integer (e, "integer", k_integer->k.integer);
-                }
-              else
-                {
-                  if (f->contents.list[j]->text.space > 0)
-                    text_append (&e->text, f->contents.list[j]->text.text);
-                }
-              add_to_contents_as_array (new_extra_element, e);
-            }
+          k->k.strings_list = new_string_list();
+          copy_strings (k->k.strings_list, k_ref->k.strings_list);
           break;
           }
+        case extra_index_entry:
+          {
+            KEY_PAIR *k = get_associated_info_key (new_info, key, k_ref->type);
+            k->k.index_entry = (INDEX_ENTRY_LOCATION *)
+                             malloc (sizeof (INDEX_ENTRY_LOCATION));
+            memcpy (k->k.index_entry, k_ref->k.index_entry,
+                    sizeof (INDEX_ENTRY_LOCATION));
+            break;
+          }
         default:
-          fatal ("associate_info_references: unknown extra type");
+          fatal ("copy_associated_info: unknown extra type");
+          break;
+        }
+    }
+}
+
+ELEMENT *
+copy_tree_internal (ELEMENT* current)
+{
+  ELEMENT *new;
+  int i;
+  int elt_info_nr = type_data[current->type].elt_info_number;
+
+  if (current->flags & EF_copy)
+    {
+      return current->elt_info[elt_info_nr];
+    }
+
+  if (type_data[current->type].flags & TF_text)
+    new = new_text_element (current->type);
+  else if (current->e.c->cmd)
+    new = new_command_element (current->type, current->e.c->cmd);
+  else
+    new = new_element (current->type);
+
+  new->flags = current->flags;
+
+  /* set that flag to mark that a copy of the element exists */
+  current->flags |= EF_copy;
+
+  /* point to the copy at the end of elt_info after the regular information */
+  current->elt_info = (ELEMENT **) realloc (current->elt_info,
+                               sizeof (ELEMENT *) * (elt_info_nr + 1));
+  if (!current->elt_info)
+    fatal ("realloc failed");
+
+  current->elt_info[elt_info_nr] = new;
+
+  /*
+  fprintf (stderr, "CTNEW %p %s %p\n", current,
+                                       print_element_debug (current, 1), new);
+  */
+
+  if (type_data[current->type].flags & TF_text)
+    {
+      text_append_n (new->e.text, current->e.text->text, current->e.text->end);
+      return new;
+    }
+
+  /* the parent of new is set in add_to_element* */
+  for (i = 0; i < current->e.c->args.number; i++)
+    {
+      ELEMENT *added = copy_tree_internal (current->e.c->args.list[i]);
+      add_to_element_args (new, added);
+    }
+  for (i = 0; i < current->e.c->contents.number; i++)
+    {
+      ELEMENT *added = copy_tree_internal (current->e.c->contents.list[i]);
+      add_to_element_contents (new, added);
+    }
+
+  if (elt_info_nr > 0)
+    {
+      for (i = 0; i < elt_info_nr; i++)
+        if (current->elt_info[i])
+          {
+            ELEMENT *copy = copy_tree_internal (current->elt_info[i]);
+            new->elt_info[i] = copy;
+          }
+    }
+
+  if (current->e.c->string_info)
+    {
+      int string_info_nr = 1;
+      if (current->type == ET_definfoenclose_command
+          || current->type == ET_index_entry_command
+          || current->type == ET_lineraw_command
+          || current->e.c->cmd == CM_verb)
+        string_info_nr = 2;
+      for (i = 0; i < string_info_nr; i++)
+        if (current->e.c->string_info[i])
+          new->e.c->string_info[i] = strdup (current->e.c->string_info[i]);
+    }
+
+  copy_associated_info (&current->e.c->extra_info, &new->e.c->extra_info);
+  return new;
+}
+
+void
+remove_element_copy_info (ELEMENT *current);
+
+void
+remove_associated_copy_info (ASSOCIATED_INFO *info)
+{
+  int i;
+
+  for (i = 0; i < info->info_number; i++)
+    {
+      const KEY_PAIR *k_ref = &info->info[i];
+      int j;
+
+      if (k_ref->type == extra_deleted)
+        continue;
+
+      switch (k_ref->type)
+        {
+        case extra_element:
+          {
+            /* cast to discard const, as the element needs to be modified
+               transiently for copy */
+            ELEMENT *f = (ELEMENT *)k_ref->k.element;
+            remove_element_copy_info (f);
+            break;
+          }
+        case extra_element_oot:
+          {
+            ELEMENT *f = k_ref->k.element;
+            remove_element_copy_info (f);
+            break;
+          }
+        case extra_contents:
+          {
+            for (j = 0; j < k_ref->k.const_list->number; j++)
+              {
+              /* cast to discard const, as the element needs to be modified
+                 transiently for copy */
+                ELEMENT *e = (ELEMENT *)k_ref->k.const_list->list[j];
+                remove_element_copy_info (e);
+              }
+            break;
+          }
+        case extra_directions:
+          {
+            for (j = 0; j < directions_length; j++)
+              {
+                /* cast const off */
+                ELEMENT *e = (ELEMENT *) k_ref->k.directions[j];
+                if (e)
+                  {
+                    remove_element_copy_info (e);
+                  }
+              }
+            break;
+          }
+        case extra_container:
+          {
+            const ELEMENT *f = k_ref->k.element;
+            for (j = 0; j < f->e.c->contents.number; j++)
+              {
+                ELEMENT *e = f->e.c->contents.list[j];
+                remove_element_copy_info (e);
+              }
+            break;
+          }
+        default:
           break;
         }
     }
 }
 
 void
-copy_extra_info (ELEMENT *current, ELEMENT *new)
+remove_element_copy_info (ELEMENT *current)
 {
-  KEY_PAIR *k_copy = 0;
   int i;
+  int elt_info_nr;
 
-  k_copy = lookup_extra_by_index (current, "_copy", -1);
-  if (!k_copy)
+  if (! (current->flags & EF_copy))
     /* already done */
     return;
-  get_copy_ref (current);
 
-  for (i = 0; i < current->args.number; i++)
-    copy_extra_info (current->args.list[i], new->args.list[i]);
-  for (i = 0; i < current->contents.number; i++)
-    copy_extra_info (current->contents.list[i], new->contents.list[i]);
+  elt_info_nr = type_data[current->type].elt_info_number;
+  /* mark as copied by unsetting the flag and deallocate pointer to the copy */
+  current->flags &= ~EF_copy;
+  if (elt_info_nr > 0)
+    {
+      current->elt_info = (ELEMENT **) realloc (current->elt_info,
+                               sizeof (ELEMENT *) * elt_info_nr);
+      if (!current->elt_info)
+        fatal ("realloc failed");
+    }
+  else
+    {
+      free (current->elt_info);
+      current->elt_info = 0;
+    }
 
-  associate_info_references (&current->info_info, &new->info_info);
-  associate_info_references (&current->extra_info, &new->extra_info);
+  if (! (type_data[current->type].flags & TF_text))
+    {
+      for (i = 0; i < current->e.c->args.number; i++)
+        remove_element_copy_info (current->e.c->args.list[i]);
+      for (i = 0; i < current->e.c->contents.number; i++)
+        remove_element_copy_info (current->e.c->contents.list[i]);
+
+      if (type_data[current->type].elt_info_number > 0)
+        {
+          int j;
+          for (j = 0; j < type_data[current->type].elt_info_number; j++)
+            {
+              if (current->elt_info[j])
+                {
+                  ELEMENT *f = current->elt_info[j];
+                  remove_element_copy_info (f);
+                }
+            }
+        }
+      remove_associated_copy_info (&current->e.c->extra_info);
+    }
 }
 
 ELEMENT *
 copy_tree (ELEMENT *current)
 {
-  ELEMENT *copy = copy_tree_internal (current, 0);
-  copy_extra_info (current, copy);
+  ELEMENT *copy = copy_tree_internal (current);
+  remove_element_copy_info (current);
   return copy;
 }
 
 ELEMENT *
-copy_contents (ELEMENT *element, enum element_type type)
+copy_contents (const ELEMENT *element, enum element_type type)
 {
   ELEMENT *tmp = new_element (type);
   ELEMENT *result;
-  tmp->contents = element->contents;
+  tmp->e.c->contents = element->e.c->contents;
 
   result = copy_tree (tmp);
 
-  tmp->contents.list = 0;
+  tmp->e.c->contents.list = 0;
   destroy_element (tmp);
 
+  return result;
+}
+
+
+
+/* This function is designed to create a new element passed in
+   argument of add_extra_container to be registered as extra_container,
+   with CONTAINER contents.  The new element (but not the contents) will
+   be destroyed when the element it is registered in with
+   add_extra_container is destroyed.
+ */
+ELEMENT *
+copy_container_contents (const ELEMENT *container)
+{
+  ELEMENT *result;
+  if (container->e.c->cmd)
+    result = new_command_element (container->e.c->cmd,
+                                  container->type);
+  else
+    result = new_element (container->type);
+
+  insert_slice_into_contents (result, 0, container,
+                              0, container->e.c->contents.number);
   return result;
 }
 
@@ -393,7 +416,16 @@ copy_contents (ELEMENT *element, enum element_type type)
 void
 add_source_mark (SOURCE_MARK *source_mark, ELEMENT *e)
 {
-  SOURCE_MARK_LIST *s_mark_list = &e->source_mark_list;
+  SOURCE_MARK_LIST *s_mark_list;
+
+  if (!e->source_mark_list)
+    {
+      e->source_mark_list = (SOURCE_MARK_LIST *) malloc (sizeof (SOURCE_MARK_LIST));
+      memset (e->source_mark_list, 0, sizeof (SOURCE_MARK_LIST));
+    }
+
+  s_mark_list = e->source_mark_list;
+
   if (s_mark_list->number == s_mark_list->space)
     {
       s_mark_list->space++;
@@ -426,10 +458,15 @@ remove_from_source_mark_list (SOURCE_MARK_LIST *list, size_t where)
 }
 
 /* In Texinfo::Common */
-/* relocate SOURCE_MARKS source marks with position between
+/* relocate SOURCE_MARK_LIST source marks with position between
    BEGIN_POSITION and BEGIN_POSITION + LEN to be relative to BEGIN_POSITION,
-   and move to element E.
+   and move to element NEW_E.
    Returns BEGIN_POSITION + LEN if there were source marks.
+
+   Even if it is emptied, SOURCE_MARK_LIST is not freed.  If all the source
+   marks are relocated and the element is destroyed, the SOURCE_MARK_LIST
+   will be freed, otherwise it is up to the caller to call
+   destroy_element_empty_source_mark_list on the element.
 */
 size_t
 relocate_source_marks (SOURCE_MARK_LIST *source_mark_list, ELEMENT *new_e,
@@ -437,11 +474,15 @@ relocate_source_marks (SOURCE_MARK_LIST *source_mark_list, ELEMENT *new_e,
 {
   size_t i = 0;
   size_t j;
-  size_t list_number = source_mark_list->number;
+  size_t list_number;
   size_t *indices_to_remove;
   size_t end_position;
 
-  if (list_number == 0)
+  if (!source_mark_list)
+    return 0;
+
+  list_number = source_mark_list->number;
+  if (list_number <= 0)
     return 0;
 
   end_position = begin_position + len;
@@ -458,7 +499,7 @@ relocate_source_marks (SOURCE_MARK_LIST *source_mark_list, ELEMENT *new_e,
               && source_mark->position <= end_position))
         {
           indices_to_remove[i] = 1;
-          if (new_e->text.space > 0)
+          if (type_data[new_e->type].flags & TF_text)
             {
               source_mark->position
                 = source_mark->position - begin_position;
@@ -500,7 +541,7 @@ relocate_source_marks (SOURCE_MARK_LIST *source_mark_list, ELEMENT *new_e,
 
 
 /* In Texinfo::Common */
-/* NODE->contents is the Texinfo for the specification of a node.  This
+/* NODE->e.c->contents is the Texinfo for the specification of a node.  This
    function sets two fields on the returned object:
 
      manual_content - Texinfo tree for a manual name extracted from the
@@ -527,7 +568,7 @@ parse_node_manual (ELEMENT *node, int modify_node)
 {
   NODE_SPEC_EXTRA *result;
   ELEMENT *node_content = 0;
-  int idx = 0; /* index into node->contents */
+  int idx = 0; /* index into node->e.c->contents */
 
   result = malloc (sizeof (NODE_SPEC_EXTRA));
   result->manual_content = result->node_content = 0;
@@ -540,8 +581,10 @@ parse_node_manual (ELEMENT *node, int modify_node)
   result->out_of_tree_elements = 0;
 
   /* If the content starts with a '(', try to get a manual name. */
-  if (node->contents.number > 0 && node->contents.list[0]->text.end > 0
-      && node->contents.list[0]->text.text[0] == '(')
+  if (node->e.c->contents.number > 0
+      && node->e.c->contents.list[0]->type == ET_normal_text
+      && node->e.c->contents.list[0]->e.text->end > 0
+      && node->e.c->contents.list[0]->e.text->text[0] == '(')
     {
       ELEMENT *manual, *first;
       ELEMENT *new_first = 0;
@@ -555,16 +598,17 @@ parse_node_manual (ELEMENT *node, int modify_node)
 
       /* If the first contents element is "(" followed by more text, split
          the leading "(" into its own element. */
-      first = node->contents.list[0];
-      if (first->text.end > 1)
+      first = node->e.c->contents.list[0];
+      if (first->e.text->end > 1)
         {
           if (modify_node)
             {
-              opening_brace = new_element (0);
-              text_append_n (&opening_brace->text, "(", 1);
+              opening_brace = new_text_element (ET_normal_text);
+              text_append_n (opening_brace->e.text, "(", 1);
             }
-          new_first = new_element (0);
-          text_append_n (&new_first->text, first->text.text +1, first->text.end -1);
+          new_first = new_text_element (ET_normal_text);
+          text_append_n (new_first->e.text, first->e.text->text +1,
+                         first->e.text->end -1);
         }
       else
         {
@@ -572,7 +616,7 @@ parse_node_manual (ELEMENT *node, int modify_node)
           idx++;
         }
 
-      for (; idx < node->contents.number; idx++)
+      for (; idx < node->e.c->contents.number; idx++)
         {
           ELEMENT *e;
           char *p, *q;
@@ -580,16 +624,16 @@ parse_node_manual (ELEMENT *node, int modify_node)
           if (idx == 0)
             e = new_first;
           else
-            e = node->contents.list[idx];
+            e = node->e.c->contents.list[idx];
 
-          if (e->text.end == 0)
+          if (e->type != ET_normal_text)
             {
               /* Put this element in the manual contents. */
               add_to_contents_as_array (manual, e);
               continue;
             }
-          p = e->text.text;
-          while (p < e->text.text + e->text.end
+          p = e->e.text->text;
+          while (p < e->e.text->text + e->e.text->end
                  && bracket_count > 0)
             {
               opening_bracket = strchr (p, '(');
@@ -641,15 +685,15 @@ parse_node_manual (ELEMENT *node, int modify_node)
                       insert_into_contents (node, new_first, 0);
                       insert_into_contents (node, opening_brace, 0);
                       idx++;
-                      if (first->source_mark_list.number > 0)
+                      if (first->source_mark_list)
                         {
                           size_t current_position
-                            = relocate_source_marks (&(first->source_mark_list),
+                            = relocate_source_marks (first->source_mark_list,
                                                      opening_brace, 0,
-                                   count_multibyte (opening_brace->text.text));
-                          relocate_source_marks (&(first->source_mark_list),
+                                   count_multibyte (opening_brace->e.text->text));
+                          relocate_source_marks (first->source_mark_list,
                                                  new_first, current_position,
-                                       count_multibyte (new_first->text.text));
+                                       count_multibyte (new_first->e.text->text));
                         }
                       destroy_element (first);
                     }
@@ -664,21 +708,22 @@ parse_node_manual (ELEMENT *node, int modify_node)
                     result->out_of_tree_elements[0] = new_first;
                 }
               p--; /* point at ) */
-              if (p > e->text.text)
+              if (p > e->e.text->text)
                 {
                   /* text before ), part of the manual name */
-                  ELEMENT *last_manual_element = new_element (ET_NONE);
-                  text_append_n (&last_manual_element->text, e->text.text,
-                                 p - e->text.text);
+                  ELEMENT *last_manual_element
+                                      = new_text_element (ET_normal_text);
+                  text_append_n (last_manual_element->e.text, e->e.text->text,
+                                 p - e->e.text->text);
                   add_to_contents_as_array (manual, last_manual_element);
                   if (modify_node)
                     {
                       insert_into_contents (node, last_manual_element, idx++);
                       current_position
-                        = relocate_source_marks (&(e->source_mark_list),
+                        = relocate_source_marks (e->source_mark_list,
                                                  last_manual_element,
                                                  current_position,
-                            count_multibyte (last_manual_element->text.text));
+                            count_multibyte (last_manual_element->e.text->text));
                     }
                   else
                     result->out_of_tree_elements[1] = last_manual_element;
@@ -686,14 +731,14 @@ parse_node_manual (ELEMENT *node, int modify_node)
 
               if (modify_node)
                 {
-                  ELEMENT *closing_brace = new_element (0);
-                  text_append_n (&closing_brace->text, ")", 1);
+                  ELEMENT *closing_brace = new_text_element (ET_normal_text);
+                  text_append_n (closing_brace->e.text, ")", 1);
                   insert_into_contents (node, closing_brace, idx++);
                   current_position
-                    = relocate_source_marks (&(e->source_mark_list),
+                    = relocate_source_marks (e->source_mark_list,
                                              closing_brace,
                                              current_position,
-                        count_multibyte (closing_brace->text.text));
+                        count_multibyte (closing_brace->e.text->text));
                 }
 
               /* Skip ')' and any following whitespace.
@@ -703,34 +748,35 @@ parse_node_manual (ELEMENT *node, int modify_node)
               q = p + strspn (p, whitespace_chars);
               if (q > p && modify_node)
                 {
-                  ELEMENT *spaces_element = new_element (0);
-                  text_append_n (&spaces_element->text, p, q - p);
+                  ELEMENT *spaces_element = new_text_element (ET_normal_text);
+                  text_append_n (spaces_element->e.text, p, q - p);
                   insert_into_contents (node, spaces_element, idx++);
                   current_position
-                    = relocate_source_marks (&(e->source_mark_list),
+                    = relocate_source_marks (e->source_mark_list,
                                              spaces_element,
                                              current_position,
-                        count_multibyte (spaces_element->text.text));
+                        count_multibyte (spaces_element->e.text->text));
                 }
 
               p = q;
               if (*p)
                 {
                   /* text after ), part of the node name. */
-                  ELEMENT *leading_node_content = new_element (ET_NONE);
-                  text_append_n (&leading_node_content->text, p,
-                                 e->text.text + e->text.end - p);
+                  ELEMENT *leading_node_content
+                      = new_text_element (ET_normal_text);
+                  text_append_n (leading_node_content->e.text, p,
+                                 e->e.text->text + e->e.text->end - p);
                   /* start node_content */
-                  node_content = new_element (0);
+                  node_content = new_element (ET_NONE);
                   add_to_contents_as_array (node_content, leading_node_content);
                   if (modify_node)
                     {
                       insert_into_contents (node, leading_node_content, idx);
                       current_position
-                        = relocate_source_marks (&(e->source_mark_list),
+                        = relocate_source_marks (e->source_mark_list,
                                                  leading_node_content,
                                                  current_position,
-                            count_multibyte (leading_node_content->text.text));
+                            count_multibyte (leading_node_content->e.text->text));
                     }
                   else
                     result->out_of_tree_elements[2] = leading_node_content;
@@ -761,12 +807,13 @@ parse_node_manual (ELEMENT *node, int modify_node)
     }
 
   /* If anything left, it is part of the node name. */
-  if (idx < node->contents.number)
+  if (idx < node->e.c->contents.number)
     {
       if (!node_content)
-        node_content = new_element (0);
-      insert_slice_into_contents (node_content, node_content->contents.number,
-                                  node, idx, node->contents.number);
+        node_content = new_element (ET_NONE);
+      insert_slice_into_contents (node_content,
+                                  node_content->e.c->contents.number,
+                                  node, idx, node->e.c->contents.number);
     }
 
   if (node_content)
@@ -777,18 +824,23 @@ parse_node_manual (ELEMENT *node, int modify_node)
 
 
 
+/* the caller should make sure that the tree is not a text element */
+/* NOTE there is no recursion in modified elements.  If this becomes relevant,
+   OPERATION should be changed such that it becomes possible to signal that
+   a recursion is needed */
 ELEMENT *
 modify_tree (ELEMENT *tree,
              ELEMENT_LIST *(*operation)(const char *type, ELEMENT *element, void* argument),
              void *argument)
 {
-  if (tree->args.number > 0)
+  if (tree->e.c->args.number > 0)
     {
       int i;
-      for (i = 0; i < tree->args.number; i++)
+      for (i = 0; i < tree->e.c->args.number; i++)
         {
           ELEMENT_LIST *new_args;
-          new_args = (*operation) ("arg", tree->args.list[i], argument);
+          ELEMENT *content = tree->e.c->args.list[i];
+          new_args = (*operation) ("arg", content, argument);
           if (new_args)
             {
               /* *operation should take care of destroying removed element */
@@ -799,18 +851,18 @@ modify_tree (ELEMENT *tree,
               i += new_args->number -1;
               destroy_list (new_args);
             }
-          else
-            modify_tree (tree->args.list[i], operation, argument);
+          else if (! (type_data[content->type].flags & TF_text))
+            modify_tree (content, operation, argument);
         }
     }
-  if (tree->contents.number > 0)
+  if (tree->e.c->contents.number > 0)
     {
       int i;
-      for (i = 0; i < tree->contents.number; i++)
+      for (i = 0; i < tree->e.c->contents.number; i++)
         {
+          ELEMENT *content = tree->e.c->contents.list[i];
           ELEMENT_LIST *new_contents;
-          new_contents = (*operation) ("content", tree->contents.list[i],
-                                       argument);
+          new_contents = (*operation) ("content", content, argument);
           if (new_contents)
             {
               /* *operation should take care of destroying removed element */
@@ -821,25 +873,25 @@ modify_tree (ELEMENT *tree,
               i += new_contents->number -1;
               destroy_list (new_contents);
             }
-          else
-            modify_tree (tree->contents.list[i], operation, argument);
+          else if (! (type_data[content->type].flags & TF_text))
+            modify_tree (content, operation, argument);
         }
     }
-  if (tree->source_mark_list.number > 0)
+  if (tree->source_mark_list != 0)
     {
       int i;
-      for (i = 0; i < tree->source_mark_list.number; i++)
+      for (i = 0; i < tree->source_mark_list->number; i++)
         {
-          if (tree->source_mark_list.list[i]->element)
+          if (tree->source_mark_list->list[i]->element)
             {
               ELEMENT_LIST *new_element;
               new_element = (*operation) ("source_mark",
-                                     tree->source_mark_list.list[i]->element,
+                                     tree->source_mark_list->list[i]->element,
                                           argument);
               if (new_element)
                 {
                /* *operation should take care of destroying removed element */
-                  tree->source_mark_list.list[i]->element
+                  tree->source_mark_list->list[i]->element
                       = new_element->list[0];
                   destroy_list (new_element);
                 }
@@ -853,33 +905,35 @@ ELEMENT *
 new_asis_command_with_text (const char *text, ELEMENT *parent,
                             enum element_type type)
 {
-  ELEMENT *new_command = new_element (ET_NONE);
-  ELEMENT *brace_command_arg = new_element (ET_brace_command_arg);
-  ELEMENT *text_elt = new_element (type);
-  new_command->cmd = CM_asis;
+  ELEMENT *new_command = new_command_element (ET_brace_command, CM_asis);
+  ELEMENT *brace_container = new_element (ET_brace_container);
+  ELEMENT *text_elt = new_text_element (type);
   new_command->parent = parent;
-  add_to_element_args (new_command, brace_command_arg);
-  text_append (&text_elt->text, text);
-  add_to_element_contents (brace_command_arg, text_elt);
+  add_to_element_args (new_command, brace_container);
+  text_append (text_elt->e.text, text);
+  add_to_element_contents (brace_container, text_elt);
   return new_command;
 }
 
 static ELEMENT_LIST *
 protect_text (ELEMENT *current, const char *to_protect)
 {
-  if (current->text.end > 0 && !(current->type == ET_raw
-                                 || current->type == ET_rawline_arg)
-      && strpbrk (current->text.text, to_protect))
+  /* we accept any non raw text as text to be protected, including whitespaces
+     only text elements */
+  if (type_data[current->type].flags & TF_text
+      && current->e.text->end > 0 && !(current->type == ET_raw
+                                    || current->type == ET_rawline_arg)
+      && strpbrk (current->e.text->text, to_protect))
     {
       ELEMENT_LIST *container = new_list ();
-      char *p = current->text.text;
+      char *p = current->e.text->text;
       /* count UTF-8 encoded Unicode characters for source marks locations */
       uint8_t *u8_text = 0;
       size_t current_position;
       const uint8_t *u8_p = 0;
       size_t u8_len;
 
-      if (current->source_mark_list.number)
+      if (current->source_mark_list)
         {
           u8_text = utf8_from_string (p);
           u8_p = u8_text;
@@ -890,11 +944,11 @@ protect_text (ELEMENT *current, const char *to_protect)
       while (*p)
         {
           size_t leading_nr = strcspn (p, to_protect);
-          ELEMENT *text_elt = new_element (current->type);
+          ELEMENT *text_elt = new_text_element (current->type);
           text_elt->parent = current->parent;
           if (leading_nr)
             {
-              text_append_n (&text_elt->text, p, leading_nr);
+              text_append_n (text_elt->e.text, p, leading_nr);
               p += leading_nr;
             }
           /*
@@ -908,12 +962,12 @@ protect_text (ELEMENT *current, const char *to_protect)
               u8_p += u8_len;
 
               current_position
-                = relocate_source_marks (&current->source_mark_list,
+                = relocate_source_marks (current->source_mark_list,
                                         text_elt,
                                         current_position, u8_len);
             }
 
-          if (leading_nr || text_elt->source_mark_list.number)
+          if (leading_nr || text_elt->source_mark_list)
             add_to_element_list (container, text_elt);
           else
             destroy_element (text_elt);
@@ -926,12 +980,13 @@ protect_text (ELEMENT *current, const char *to_protect)
                   size_t i;
                   for (i = 0; i < to_protect_nr; i++)
                     {
-                      ELEMENT *comma = new_element (ET_NONE);
-                      ELEMENT *brace_command_arg
-                           = new_element (ET_brace_command_arg);
-                      comma->cmd = CM_comma;
+                      ELEMENT *comma
+                       = new_command_element (ET_brace_noarg_command,
+                                              CM_comma);
+                      ELEMENT *brace_container
+                           = new_element (ET_brace_container);
                       comma->parent = current->parent;
-                      add_to_element_args (comma, brace_command_arg);
+                      add_to_element_args (comma, brace_container);
                       add_to_element_list (container, comma);
                       if (u8_text)
                         {
@@ -939,7 +994,7 @@ protect_text (ELEMENT *current, const char *to_protect)
                           u8_p += u8_len;
 
                         current_position
-                          = relocate_source_marks (&current->source_mark_list,
+                          = relocate_source_marks (current->source_mark_list,
                                                    comma,
                                                    current_position, u8_len);
                         }
@@ -960,8 +1015,8 @@ protect_text (ELEMENT *current, const char *to_protect)
                       u8_p += u8_len;
 
                       current_position
-                       = relocate_source_marks (&current->source_mark_list,
-                                new_command->args.list[0]->contents.list[0],
+                       = relocate_source_marks (current->source_mark_list,
+                           new_command->e.c->args.list[0]->e.c->contents.list[0],
                                               current_position, u8_len);
                     }
                   p += to_protect_nr;
@@ -1019,14 +1074,14 @@ const char *
 normalized_menu_entry_internal_node (const ELEMENT *entry)
 {
   int i;
-  for (i = 0; i < entry->contents.number; i++)
+  for (i = 0; i < entry->e.c->contents.number; i++)
     {
-      const ELEMENT *content = entry->contents.list[i];
+      const ELEMENT *content = entry->e.c->contents.list[i];
       if (content->type == ET_menu_entry_node)
         {
-          if (!lookup_extra_element (content, "manual_content"))
+          if (!lookup_extra_container (content, AI_key_manual_content))
             {
-              return lookup_extra_string (content, "normalized");
+              return lookup_extra_string (content, AI_key_normalized);
             }
           return 0;
         }
@@ -1048,10 +1103,10 @@ normalized_entry_associated_internal_node (const ELEMENT *entry,
   return 0;
 }
 
-ELEMENT *
-first_menu_node (ELEMENT *node, LABEL_LIST *identifiers_target)
+const ELEMENT *
+first_menu_node (const ELEMENT *node, const LABEL_LIST *identifiers_target)
 {
-  const ELEMENT_LIST *menus = lookup_extra_contents (node, "menus");
+  const CONST_ELEMENT_LIST *menus = lookup_extra_contents (node, AI_key_menus);
   if (menus)
     {
       int i;
@@ -1059,26 +1114,28 @@ first_menu_node (ELEMENT *node, LABEL_LIST *identifiers_target)
         {
           const ELEMENT *menu = menus->list[i];
           int j;
-          for (j = 0; j < menu->contents.number; j++)
+          for (j = 0; j < menu->e.c->contents.number; j++)
             {
-              ELEMENT *menu_content = menu->contents.list[j];
+              const ELEMENT *menu_content = menu->e.c->contents.list[j];
               if (menu_content->type == ET_menu_entry)
                 {
                   int k;
-                  ELEMENT *menu_node
+                  const ELEMENT *menu_node
                     = normalized_entry_associated_internal_node (menu_content,
                                                           identifiers_target);
                   /* an internal node */
                   if (menu_node)
                     return menu_node;
 
-                  for (k = 0; menu_content->contents.number; k++)
+                  for (k = 0; menu_content->e.c->contents.number; k++)
                     {
-                      ELEMENT *content = menu_content->contents.list[k];
+                      const ELEMENT *content
+                        = menu_content->e.c->contents.list[k];
                       if (content->type == ET_menu_entry_node)
                         {
-                          ELEMENT *manual_content
-                           = lookup_extra_element (content, "manual_content");
+                          const ELEMENT *manual_content
+                           = lookup_extra_container (content,
+                                                  AI_key_manual_content);
                           /* a reference to an external manual */
                           if (manual_content)
                             return content;

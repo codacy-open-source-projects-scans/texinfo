@@ -50,7 +50,7 @@ $result_trees{'ref_in_multitable'} = {
                     },
                     'normalized' => 'XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XX'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -169,7 +169,7 @@ $result_trees{'ref_in_multitable'} = {
                                     },
                                     'normalized' => 'RRR-RRR-RRR-RRR-RRR-RRR-RRR-RRR-RRR-RRRR'
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'ref',
@@ -252,7 +252,7 @@ $result_trees{'ref_in_multitable'} = {
                                     },
                                     'normalized' => 'SSS-SSS-SSS-SSS-SSS-SSS-SSS-SSS-SSS-SSS-SSS-SSS-SSSSS'
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'ref',
@@ -322,7 +322,7 @@ $result_trees{'ref_in_multitable'} = {
                                                 },
                                                 'normalized' => 'XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XX'
                                               },
-                                              'type' => 'brace_command_arg'
+                                              'type' => 'brace_arg'
                                             }
                                           ],
                                           'cmdname' => 'ref',
@@ -463,7 +463,7 @@ $result_trees{'ref_in_multitable'} = {
                     },
                     'normalized' => 'XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XXX-XX'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -535,7 +535,9 @@ $result_floats{'ref_in_multitable'} = {};
 
 
 
-$result_converted{'plaintext'}->{'ref_in_multitable'} = '*note XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XX XXX XXX XXX XXX
+$result_converted{'info'}->{'ref_in_multitable'} = 'This is , produced from .
+
+*note XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XX XXX XXX XXX XXX
 XXX XXX XXX XXX XXX XXX XXX XXX XX::.
 
 XXX XXX XXX XXX XXX XXX   See
@@ -553,6 +555,54 @@ XXX XXX XXX XXX XXX XXX XXX XXX XXX XX::.
 
    (1) *note XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XX XXX XXX
 XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XX::
+
+
+Tag Table:
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:
+';
+
+$result_converted_errors{'info'}->{'ref_in_multitable'} = [
+  {
+    'error_line' => 'warning: document without nodes
+',
+    'text' => 'document without nodes',
+    'type' => 'warning'
+  },
+  {
+    'error_line' => 'warning: @footnote outside of any node
+',
+    'line_nr' => 11,
+    'text' => '@footnote outside of any node',
+    'type' => 'warning'
+  }
+];
+
+
+
+$result_converted{'plaintext'}->{'ref_in_multitable'} = 'XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XX XXX XXX XXX XXX XXX
+XXX XXX XXX XXX XXX XXX XXX XX.
+
+XXX XXX XXX XXX XXX XXX   See RRR RRR RRR RRR RRR RRR RRR RRR RRR RRRR.
+XXX XXX XXX XXX XXX XXX
+XX
+XXX XXX XXX XXX XXX XXX   See SSS SSS SSS SSS SSS SSS SSS SSS SSS SSS
+XXX XXX XXX XXX XXX XXX   SSS SSS SSSSS.
+XX
+adsf(1)                   second column
+
+   XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XX XXX XXX XXX XXX
+XXX XXX XXX XXX XXX XXX XXX XXX XX.
+
+   ---------- Footnotes ----------
+
+   (1) XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XXX XX XXX XXX XXX
+XXX XXX XXX XXX XXX XXX XXX XXX XXX XX
 
 ';
 

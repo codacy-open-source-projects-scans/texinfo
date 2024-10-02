@@ -3,23 +3,25 @@
 #define BUILD_PERL_INFO_H
 
 #include <stddef.h>
-#include <stdarg.h>
 
 #include "EXTERN.h"
 #include "perl.h"
 
-#include "global_commands_types.h"
 #include "tree_types.h"
+#include "options_types.h"
 #include "document_types.h"
 #include "converter_types.h"
-#include "options_types.h"
+
+/* to avoid a dependency on "convert_to_text.h" */
+struct TEXT_OPTIONS;
 
 void perl_only_free (void *ptr);
 void *perl_only_malloc (size_t size);
 char *perl_only_strdup (const char *s);
 char *perl_only_strndup (const char *s, size_t n);
 
-int init (int texinfo_uninstalled, char *srcdir_in);
+int init (int texinfo_uninstalled, SV *pkgdatadir_sv, SV *builddir_sv,
+          SV *top_srcdir_sv);
 
 /* in options_get_perl.c */
 SV *build_sv_option (const OPTIONS *options, const char *key,
@@ -57,16 +59,20 @@ SV *document_labels_list (SV *document_in);
 
 SV *document_global_information (SV *document_in);
 
-void pass_document_parser_errors_to_registrar (int document_descriptor,
+void pass_document_parser_errors_to_registrar (size_t document_descriptor,
                                                SV *parser_sv);
 SV *pass_errors_to_registrar (const ERROR_MESSAGE_LIST *error_messages,
                               SV *object_sv,
                               SV **errors_warnings_out, SV **error_nrs_out);
 
-SV *build_output_units_list (size_t output_units_descriptor);
-void rebuild_output_units_list (SV *output_units_sv,
+SV *build_output_units_list (const DOCUMENT *document,
+                             size_t output_units_descriptor);
+void rebuild_output_units_list (const DOCUMENT *document, SV *output_units_sv,
                                 size_t output_units_descriptor);
-SV *setup_output_units_handler (size_t output_units_descriptor);
+SV *setup_output_units_handler (const DOCUMENT *document,
+                                size_t output_units_descriptor);
+void output_units_list_to_perl_hash (const DOCUMENT *document,
+                                     size_t output_units_descriptor);
 
 AV *build_integer_stack (const INTEGER_STACK *integer_stack);
 AV *build_string_list (const STRING_LIST *strings_list, enum sv_string_type);
@@ -89,7 +95,17 @@ HV *build_sorted_indices_by_index (
 
 SV *html_build_direction_icons (const CONVERTER *converter,
                             const DIRECTION_ICON_LIST *direction_icons);
+
+void pass_document_to_converter_sv (const CONVERTER *converter,
+                                    SV *converter_sv, SV *document_in);
+
 SV *get_conf (const CONVERTER *converter, const char *option_name);
+
+HV *build_expanded_formats (const EXPANDED_FORMAT *expanded_formats);
+
+SV *build_convert_text_options (struct TEXT_OPTIONS *text_options);
+
+HV *latex_build_options_for_convert_to_latex_math (const CONVERTER *converter);
 
 void build_tree_to_build (ELEMENT_LIST *tree_to_build);
 

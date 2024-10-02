@@ -71,8 +71,6 @@ our $module_loaded = 0;
 
 my %XS_overrides = (
   # XS only called if there is an associated XS converter
-  "Texinfo::Convert::Converter::_XS_converter_initialize",
-   => "Texinfo::Convert::ConvertXS::converter_initialize",
   "Texinfo::Convert::Converter::_XS_set_conf"
    => "Texinfo::Convert::ConvertXS::set_conf",
   "Texinfo::Convert::Converter::_XS_force_conf"
@@ -83,6 +81,8 @@ my %XS_overrides = (
    => "Texinfo::Convert::ConvertXS::converter_set_document",
 
   # fully overriden for all the converters
+  "Texinfo::Convert::Converter::_internal_converter_initialize",
+   => "Texinfo::Convert::ConvertXS::converter_initialize",
   "Texinfo::Convert::Converter::get_converter_errors"
    => "Texinfo::Convert::ConvertXS::get_converter_errors",
   "Texinfo::Convert::Converter::converter_line_error"
@@ -106,7 +106,7 @@ my %XS_overrides = (
   "Texinfo::Convert::Converter::destroy"
    => "Texinfo::Convert::ConvertXS::destroy",
 
-  "Texinfo::Convert::Converter::_XS_get_unclosed_stream"
+  "Texinfo::Convert::Converter::XS_get_unclosed_stream"
    => "Texinfo::Convert::ConvertXS::get_unclosed_stream",
 );
 
@@ -229,11 +229,6 @@ sub conversion_finalization($)
   #my $converter = shift;
 }
 
-# initialize generic XS converter
-sub _XS_converter_initialize($)
-{
-}
-
 sub output_internal_links($)
 {
   my $self = shift;
@@ -249,16 +244,38 @@ sub set_document($$)
   my $converter = shift;
   my $document = shift;
 
-  if ($converter->{'converter_descriptor'} and $XS_convert) {
+  if ($converter->{'converter_descriptor'}) {
     _XS_set_document($converter, $document);
+  } else {
+    $converter->{'document'} = $document;
+
+    Texinfo::Common::set_output_encoding($converter, $document);
+
+    $converter->{'convert_text_options'}
+     = Texinfo::Convert::Text::copy_options_for_convert_text($converter);
   }
 
-  $converter->{'document'} = $document;
+  # In general, OUTPUT_PERL_ENCODING set below is needed for the output()
+  # entry point through Texinfo::Common::output_files_open_out.  It is
+  # also sometime needed for the converter itself.  If not, in general it
+  # is not needed for the convert() entry point, so the call could also be
+  # done more finely in converters, but it is not really important.
+  Texinfo::Common::set_output_perl_encoding($converter);
+}
 
-  Texinfo::Common::set_output_encodings($converter, $document);
+# initialization either in generic XS converter or in Perl
+sub _internal_converter_initialize($)
+{
+  my $converter = shift;
 
-  $converter->{'convert_text_options'}
-   = Texinfo::Convert::Text::copy_options_for_convert_text($converter);
+  # turn the array to a hash.
+  my $expanded_formats = $converter->{'conf'}->{'EXPANDED_FORMATS'};
+  $converter->{'expanded_formats'} = {};
+  if (defined($expanded_formats)) {
+    foreach my $expanded_format (@$expanded_formats) {
+      $converter->{'expanded_formats'}->{$expanded_format} = 1;
+    }
+  }
 }
 
 # this function is designed so as to be used in specific Converters
@@ -304,29 +321,20 @@ sub converter($;$)
   # the customization passed as argument.
   $converter->{'converter_init_conf'} = { %{$converter->{'conf'}} };
 
-  # turn the array to a hash.
-  my $expanded_formats = $converter->{'conf'}->{'EXPANDED_FORMATS'};
-  $converter->{'expanded_formats'} = {};
-  if (defined($expanded_formats)) {
-    foreach my $expanded_format (@$expanded_formats) {
-      $converter->{'expanded_formats'}->{$expanded_format} = 1;
-    }
-  }
-
   # used for output files information, to register opened
   # and not closed files.  Accessed through output_files_information()
   $converter->{'output_files'} = Texinfo::Common::output_files_initialize();
 
   $converter->{'error_warning_messages'} = [];
 
-  # XS converter initialization.
+  # if with XS, XS converter initialization.
   # NOTE get_conf should not be used before that point, such that the conf is
   # initialized before it is called for the first time.
   # NOTE format specific information is not available at this point, such that
   # some options may not be obtained.  This is the case for HTML for instance.
   # In particular the special units information need to be known before buttons
   # information can be passed to C.
-  _XS_converter_initialize($converter);
+  _internal_converter_initialize($converter);
 
   $converter->converter_initialize();
 
@@ -665,6 +673,8 @@ sub determine_files_and_directory($$)
     } else {
       $input_file_name = $input_file_name_bytes;
     }
+    # FIXME $input_file_name is already the base file name.  Not clear how
+    # this is useful.
     my ($directories, $suffix);
     ($input_basefile, $directories, $suffix) = fileparse($input_file_name);
   } else {
@@ -702,14 +712,15 @@ sub determine_files_and_directory($$)
   my $output_file;
   if (!defined($self->get_conf('OUTFILE'))) {
     if (defined($setfilename_for_outfile)) {
-      $output_file = $setfilename_for_outfile;
       $document_path = $setfilename_for_outfile;
       $document_path =~ s/\.[^\.]*$//;
       if (!$self->get_conf('USE_SETFILENAME_EXTENSION')) {
-        $output_file =~ s/\.[^\.]*$//;
+        $output_file = $document_path;
         $output_file .= '.'.$self->get_conf('EXTENSION')
           if (defined($self->get_conf('EXTENSION'))
               and $self->get_conf('EXTENSION') ne '');
+      } else {
+        $output_file = $setfilename_for_outfile;
       }
     } elsif ($input_basename_for_outfile ne '') {
       $output_file = $input_basename_for_outfile;
@@ -1273,7 +1284,7 @@ sub present_bug_message($$;$)
   my $additional_information = '';
   if ($line_message.$current_element_message ne '') {
     $additional_information = "Additional information:\n".
-       $line_message.$current_element_message;
+       $line_message.$current_element_message."\n";
   }
   warn "You found a bug: $message\n\n".$additional_information;
 }
@@ -1470,25 +1481,55 @@ sub table_item_content_tree($$)
   my $element = shift;
 
   my $table_command = $element->{'parent'}->{'parent'}->{'parent'};
-  if (defined($element->{'args'}) and scalar(@{$element->{'args'}})
+  if ($element->{'args'}
       and $table_command->{'extra'}
       and $table_command->{'extra'}->{'command_as_argument'}) {
     my $command_as_argument
       = $table_command->{'extra'}->{'command_as_argument'};
-    my $command = {'cmdname' => $command_as_argument->{'cmdname'},
+    my $command_as_argument_cmdname = $command_as_argument->{'cmdname'};
+    my $command = {'cmdname' => $command_as_argument_cmdname,
                    'source_info' => $element->{'source_info'},};
     if ($table_command->{'extra'}->{'command_as_argument_kbd_code'}) {
       $command->{'extra'} = {'code' => 1};
     }
-    if ($command_as_argument->{'type'} eq 'definfoenclose_command') {
+    # command name for the Texinfo::Commands hashes tests
+    my $builtin_cmdname;
+    if ($command_as_argument->{'type'}
+        and $command_as_argument->{'type'} eq 'definfoenclose_command') {
       $command->{'type'} = $command_as_argument->{'type'};
       $command->{'extra'} = {} if (!$command->{'extra'});
       $command->{'extra'}->{'begin'} = $command_as_argument->{'extra'}->{'begin'};
       $command->{'extra'}->{'end'} = $command_as_argument->{'extra'}->{'end'};
+      $builtin_cmdname = 'definfoenclose_command';
+    } else {
+      $builtin_cmdname = $command_as_argument_cmdname;
     }
-    my $arg = {'type' => 'brace_command_arg',
-               'contents' => [$element->{'args'}->[0]],
-               'parent' => $command,};
+    my $arg;
+    if ($Texinfo::Commands::brace_commands{$builtin_cmdname} eq 'context') {
+      # This corresponds to a bogus @*table line with command line @footnote
+      # or @math.  We do not really care about the formatting of the result
+      # but we want to avoid debug messages, so we setup expected trees
+      # for those @-commands.
+      $arg = {'type' => 'brace_command_context',
+              'parent' => $command,};
+      if ($Texinfo::Commands::math_commands{$builtin_cmdname}) {
+        $arg->{'contents'} = [$element->{'args'}->[0]];
+      } else {
+        my $paragraph = {'type' => 'paragraph',
+                         'contents' => [$element->{'args'}->[0]],
+                         'parent' => $arg};
+        $arg->{'contents'} = [$paragraph];
+      }
+    } elsif ($Texinfo::Commands::brace_commands{$builtin_cmdname}
+                                                   eq 'arguments') {
+      $arg = {'type' => 'brace_arg',
+              'contents' => [$element->{'args'}->[0]],
+              'parent' => $command,};
+    } else {
+      $arg = {'type' => 'brace_container',
+              'contents' => [$element->{'args'}->[0]],
+              'parent' => $command,};
+    }
     $command->{'args'} = [$arg];
     return $command;
   }
@@ -1641,7 +1682,8 @@ sub sort_element_counts($$;$$)
     my $name;
     if ($output_unit->{'unit_command'}) {
       my $command = $output_unit->{'unit_command'};
-      if ($command->{'args'}->[0]->{'contents'}) {
+      if ($command->{'args'}
+          and $command->{'args'}->[0]->{'contents'}) {
         # convert contents to avoid outputting end of lines
         $name = "\@$command->{'cmdname'} "
           .Texinfo::Convert::Texinfo::convert_to_texinfo(
@@ -1670,37 +1712,10 @@ sub sort_element_counts($$;$$)
   return (\@sorted_name_counts_array, $result);
 }
 
-sub _XS_get_unclosed_stream($$)
+sub XS_get_unclosed_stream($$)
 {
   return undef;
 }
-
-# this method retrieves the file streams of all the unclosed file paths
-# that came from XS (normally through build_output_files_unclosed_files)
-# but are not associated to a stream yet, as they can't be directly
-# associated to a stream in C code, but the stream can be returned through
-# an XS interface, here Texinfo::Convert::ConvertXS::get_unclosed_stream.
-sub get_output_files_XS_unclosed_streams($)
-{
-  my $self = shift;
-
-  my $converter_unclosed_files
-       = Texinfo::Common::output_files_unclosed_files(
-                               $self->output_files_information());
-  if ($converter_unclosed_files) {
-    foreach my $unclosed_file (keys(%$converter_unclosed_files)) {
-      if (!defined($converter_unclosed_files->{$unclosed_file})) {
-        my $fh = _XS_get_unclosed_stream($self, $unclosed_file);
-        if (defined($fh)) {
-          $converter_unclosed_files->{$unclosed_file} = $fh;
-        } else {
-          delete $converter_unclosed_files->{$unclosed_file};
-        }
-      }
-    }
-  }
-}
-
 
 ########################################################################
 # XML related methods and variables that may be used in different
@@ -1743,77 +1758,104 @@ sub xml_protect_text($$)
 }
 
 # 'today' is not set here.
-our %xml_text_entity_no_arg_commands_formatting = (
-               'TeX'          => 'TeX',
-               'LaTeX'          => 'LaTeX',
-               'bullet'       => '&bull;',
-               'copyright'    => '&copy;',
-               'registeredsymbol'   => '&reg;',
-               'dots'         => '&hellip;',
-               'enddots'      => '...',
-               'equiv'        => '&equiv;',
+our %xml_text_entity_no_arg_commands = (
+               # nobrace_symbol_text
+               '&'             => '&amp;',
+
+# commands taken from %Texinfo::Common::text_brace_no_arg_commands
+# are kept in comments to ease visual comparisons.
+               # characters
+               #'atchar'        => '@',
+               'ampchar'       => '&amp;',
+               #'backslashchar' => '\\',
+               #'comma'         => ',',
+               #'hashchar'      => '#',
+               #'lbracechar'    => '{',
+               #'rbracechar'    => '}',
+
+               # symbols
+               'arrow'             => '&rarr;',
+               'bullet'            => '&bull;',
+               'copyright'         => '&copy;',
+               'dots'              => '&hellip;',
+               #'enddots'           => '...',
+               'equiv'             => '&equiv;',
+               'euro'              => '&euro;',
+               'exclamdown'        => '&iexcl;',
+               'expansion'         => '&rarr;',
+               'geq'               => '&ge;',
+               #'LaTeX'             => 'LaTeX',
+               'leq'               => '&le;',
+               'minus'             => '&minus;',
+               'ordf'              => '&ordf;',
+               'ordm'              => '&ordm;',
+               'point'             => '&lowast;',
+               'pounds'            => '&pound;',
+               #'print'             => '-|',
+               'questiondown'      => '&iquest;',
+               'registeredsymbol'  => '&reg;',
+               'result'            => '&rArr;',
+               #'TeX'               => 'TeX',
+               'textdegree'        => '&deg;',
+
+               # quotes
+               'guillemetleft'     => '&laquo;',
+               'guillemetright'    => '&raquo;',
+               'guillemotleft'     => '&laquo;',
+               'guillemotright'    => '&raquo;',
+               'guilsinglleft'     => '&lsaquo;',
+               'guilsinglright'    => '&rsaquo;',
+               'quotedblbase'      => '&bdquo;',
+               'quotedblleft'      => '&ldquo;',
+               'quotedblright'     => '&rdquo;',
+               'quoteleft'         => '&lsquo;',
+               'quoteright'        => '&rsquo;',
+               'quotesinglbase'    => '&sbquo;',
+
+               # letters
+               'AA'           => '&Aring;',
+               'aa'           => '&aring;',
+               'AE'           => '&AElig;',
+               'ae'           => '&aelig;',
+               'DH'           => '&ETH;',
+               'dh'           => '&eth;',
+               'L'            => '&#321;',
+               'l'            => '&#322;',
+               'OE'           => '&OElig;', # &OElig; not in html 3.2
+               'oe'           => '&oelig;', # &oelig; not in html 3.2
+               'O'            => '&Oslash;',
+               'o'            => '&oslash;',
+               'ss'           => '&szlig;',
+               'TH'           => '&THORN;',
+               'th'           => '&thorn;',
+
+               # other
+               'click'        => '&rarr;',
                # in general the following is not used since error
                # appears in 'translated_commands'
                'error'        => 'error--&gt;',
-               'expansion'    => '&rarr;',
-               'arrow'        => '&rarr;',
-               'click'        => '&rarr;',
-               'minus'        => '&minus;',
-               'point'        => '&lowast;',
-               'print'        => '-|',
-               'result'       => '&rArr;',
-               'aa'           => '&aring;',
-               'AA'           => '&Aring;',
-               'ae'           => '&aelig;',
-               'oe'           => '&oelig;', # &oelig; not in html 3.2
-               'AE'           => '&AElig;',
-               'OE'           => '&OElig;', # &OElig; not in html 3.2
-               'o'            => '&oslash;',
-               'O'            => '&Oslash;',
-               'ss'           => '&szlig;',
-               'DH'           => '&ETH;',
-               'dh'           => '&eth;',
-               'TH'           => '&THORN;',
-               'th'           => '&thorn;',
-               'l'            => '&#322;',
-               'L'            => '&#321;',
-               'exclamdown'   => '&iexcl;',
-               'questiondown' => '&iquest;',
-               'pounds'       => '&pound;',
-               'ordf'         => '&ordf;',
-               'ordm'         => '&ordm;',
-               'comma'        => ',',
-               'atchar'       => '@',
-               'ampchar'      => '&amp;',
-               'lbracechar'   => '{',
-               'rbracechar'   => '}',
-               'backslashchar' => '\\',
-               'hashchar' => '#',
-               'euro'         => '&euro;',
-               'geq'          => '&ge;',
-               'leq'          => '&le;',
                'tie'          => '&nbsp;',
-               'textdegree'          => '&deg;',
-               'quotedblleft'          => '&ldquo;',
-               'quotedblright'          => '&rdquo;',
-               'quoteleft'          => '&lsquo;',
-               'quoteright'          => '&rsquo;',
-               'quotedblbase'          => '&bdquo;',
-               'quotesinglbase'          => '&sbquo;',
-               'guillemetleft'          => '&laquo;',
-               'guillemetright'          => '&raquo;',
-               'guillemotleft'          => '&laquo;',
-               'guillemotright'          => '&raquo;',
-               'guilsinglleft'          => '&lsaquo;',
-               'guilsinglright'          => '&rsaquo;',
 );
 
-foreach my $no_brace_command (keys(%Texinfo::Common::nobrace_symbol_text)) {
-  $xml_text_entity_no_arg_commands_formatting{$no_brace_command}
-    = $Texinfo::Common::nobrace_symbol_text{$no_brace_command};
+our %xml_text_entity_no_arg_commands_formatting
+  = %xml_text_entity_no_arg_commands;
+
+foreach my $brace_no_arg_command
+     (keys(%Texinfo::Common::text_brace_no_arg_commands)) {
+  if (!defined($xml_text_entity_no_arg_commands_formatting{
+                                                $brace_no_arg_command})) {
+    $xml_text_entity_no_arg_commands_formatting{$brace_no_arg_command}
+      = $Texinfo::Common::text_brace_no_arg_commands{$brace_no_arg_command};
+  }
 }
 
-$xml_text_entity_no_arg_commands_formatting{'&'} = '&amp;';
+foreach my $no_brace_command (keys(%Texinfo::Common::nobrace_symbol_text)) {
+  if (!defined($xml_text_entity_no_arg_commands_formatting{
+                                                $no_brace_command})) {
+    $xml_text_entity_no_arg_commands_formatting{$no_brace_command}
+      = $Texinfo::Common::nobrace_symbol_text{$no_brace_command};
+  }
+}
 
 sub xml_comment($$)
 {

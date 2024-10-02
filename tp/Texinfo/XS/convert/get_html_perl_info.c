@@ -31,8 +31,10 @@
 
 #undef context
 
+#include "conversion_data.h"
 #include "command_ids.h"
 #include "converter_types.h"
+#include "types_data.h"
 /* also for non_perl_* */
 #include "utils.h"
 #include "builtin_commands.h"
@@ -52,13 +54,16 @@
 
 /* Following is HTML specific */
 static SV **
-register_formatting_reference_default (char *type_string,
+register_formatting_reference_default (const char *type_string,
                 FORMATTING_REFERENCE *formatting_reference,
                 const char *ref_name, HV *default_hv)
 {
-  SV **default_formatting_reference_sv;
+  SV **default_formatting_reference_sv = 0;
 
   dTHX;
+
+  if (!default_hv)
+    return 0;
 
   default_formatting_reference_sv
    = hv_fetch (default_hv, ref_name, strlen (ref_name), 0);
@@ -79,7 +84,7 @@ register_formatting_reference_default (char *type_string,
 }
 
 static void
-register_formatting_reference_with_default (char *type_string,
+register_formatting_reference_with_default (const char *type_string,
                 FORMATTING_REFERENCE *formatting_reference,
                 const char *ref_name, HV *default_hv, HV *customized_hv)
 {
@@ -90,6 +95,9 @@ register_formatting_reference_with_default (char *type_string,
 
   default_formatting_reference_sv = register_formatting_reference_default (
                  type_string, formatting_reference, ref_name, default_hv);
+
+  if (!customized_hv)
+    return;
 
   formatting_reference_sv
     = hv_fetch (customized_hv, ref_name, strlen (ref_name), 0);
@@ -132,8 +140,11 @@ html_converter_initialize_sv (SV *converter_sv,
                               SV *default_types_conversion,
                               SV *default_css_string_types_conversion,
                               SV *default_output_units_conversion,
-                              SV *default_no_arg_commands_formatting,
-                              SV *default_special_unit_body)
+                              SV *default_special_unit_body,
+                              SV *customized_upper_case_commands,
+                              SV *customized_special_unit_info,
+                              SV *default_converted_directions_strings
+                             )
 {
   int i;
   HV *converter_hv;
@@ -148,37 +159,211 @@ html_converter_initialize_sv (SV *converter_sv,
   HV *default_output_units_conversion_hv;
   SV **htmlxref_sv;
   SV **formatting_function_sv;
-  SV **sorted_special_unit_varieties_sv;
   SV **accent_entities_sv;
   SV **style_commands_formatting_sv;
+  SV **stage_handlers_sv;
+  SV **special_unit_body_sv;
   SV **types_open_sv;
   SV **types_conversion_sv;
   SV **commands_open_sv;
   SV **commands_conversion_sv;
+  SV **customized_no_arg_commands_formatting_sv;
   SV **output_units_conversion_sv;
   SV **file_id_setting_sv;
   SV **code_types_sv;
-  SV **upper_case_commands_sv;
   SV **pre_class_types_sv;
+  SV **translated_direction_strings_sv;
+  SV **customized_direction_strings_sv;
   HV *formatting_function_hv;
   HV *commands_open_hv;
   HV *commands_conversion_hv;
   HV *types_open_hv;
   HV *types_conversion_hv;
   HV *output_units_conversion_hv;
+  HV *translated_direction_strings_hv;
   CONVERTER *converter;
   int nr_accent_cmd = 0;
+  int nr_string_directions;
+  enum direction_string_type DS_type;
+  int nr_dir_str_contexts = TDS_context_string +1;
+  /* need to be passed as argument to get from Perl */
+  SV *default_css_element_class_styles = 0;
+  const STRING_LIST *special_unit_varieties;
 
   dTHX;
 
   converter = get_sv_converter (converter_sv, "html_converter_initialize_sv");
 
+  /* NOTE if the special units can be customized, then the
+     converter->special_unit_varieties should be set and used instead */
+  special_unit_varieties = &default_special_unit_varieties;
+  /*
+  special_unit_varieties = &converter->special_unit_varieties;
+   */
   converter_hv = (HV *)SvRV (converter_sv);
 
   default_formatting_references_hv
     = (HV *)SvRV (default_formatting_references);
   default_css_string_formatting_references_hv
     = (HV *)SvRV (default_css_string_formatting_references);
+
+  /* to get default_css_element_class_styles from Perl.
+     This code is never run as default_css_element_class_styles is always 0
+     as it is not passed from Perl but determined fully in C */
+  if (default_css_element_class_styles
+      && SvOK (default_css_element_class_styles))
+    {
+      I32 hv_number;
+      I32 i;
+
+      HV *css_element_class_styles_hv
+        = (HV *)SvRV (default_css_element_class_styles);
+
+      hv_number = hv_iterinit (css_element_class_styles_hv);
+
+      initialize_css_selector_style_list (&converter->css_element_class_styles,
+                                          hv_number);
+
+      for (i = 0; i < hv_number; i++)
+        {
+          HE *next = hv_iternext (css_element_class_styles_hv);
+          SV *selector_sv = hv_iterkeysv (next);
+          char *selector = (char *) SvPVutf8_nolen (selector_sv);
+          SV *style_sv = HeVAL(next);
+          char *style = (char *) SvPVutf8_nolen (style_sv);
+
+          CSS_SELECTOR_STYLE *selector_style
+            = &converter->css_element_class_styles.list[i];
+          selector_style->selector = non_perl_strdup (selector);
+          selector_style->style = non_perl_strdup (style);
+        }
+    }
+
+  if (customized_special_unit_info && SvOK (customized_special_unit_info))
+    {
+      enum special_unit_info_type j;
+      HV *special_unit_info_hv;
+
+      STRING_LIST *customized_special_unit_varieties
+        = &converter->customized_special_unit_varieties;
+      clear_strings_list (customized_special_unit_varieties);
+
+      special_unit_info_hv = (HV *) SvRV(customized_special_unit_info);
+
+      for (j = 0; j < SPECIAL_UNIT_INFO_TYPE_NR; j++)
+        {
+          SV **special_unit_info_type_sv;
+          const char *sui_type = special_unit_info_type_names[j];
+          special_unit_info_type_sv = hv_fetch (special_unit_info_hv,
+                                                sui_type, strlen (sui_type), 0);
+          if (special_unit_info_type_sv && SvOK (*special_unit_info_type_sv))
+            {
+              I32 hv_number;
+              I32 i;
+              HV *special_unit_info_type_hv;
+
+              special_unit_info_type_hv
+                   = (HV *) SvRV(*special_unit_info_type_sv);
+
+              hv_number = hv_iterinit (special_unit_info_type_hv);
+
+              for (i = 0; i < hv_number; i++)
+                {
+                  HE *next = hv_iternext (special_unit_info_type_hv);
+                  SV *variety_sv = hv_iterkeysv (next);
+                  char *variety = (char *) SvPVutf8_nolen (variety_sv);
+                  SV *value_sv = HeVAL(next);
+                  char *value = 0;
+                  /* the customized_special_unit_varieties are not used
+                     further but is filled to retain the information on
+                     the variety customized, even if they are ignored */
+                  size_t customized_variety_nr = find_string (
+                                         customized_special_unit_varieties,
+                                                   variety);
+                  size_t variety_nr = find_string (special_unit_varieties,
+                                                   variety);
+
+                  if (!customized_variety_nr)
+                    {
+                      add_string (variety, customized_special_unit_varieties);
+                    }
+
+                  if (variety_nr)
+                    {
+
+                      if (SvOK (value_sv))
+                        value = (char *) SvPVutf8_nolen (value_sv);
+
+                      html_add_special_unit_info (
+                          &converter->customized_special_unit_info, j,
+                          variety_nr, value);
+                    }
+                }
+            }
+        }
+    }
+
+  /* Should always be true */
+  if (default_converted_directions_strings
+      && SvOK (default_converted_directions_strings))
+    {
+      HV *default_converted_directions_strings_hv
+         = (HV *) SvRV (default_converted_directions_strings);
+      nr_string_directions = NON_SPECIAL_DIRECTIONS_NR - FIRSTINFILE_NR
+                            + special_unit_varieties->number;
+      int non_translated_directions_strings_nr
+          = (TDS_TYPE_MAX_NR) - (TDS_TRANSLATED_MAX_NR);
+      for (DS_type = 0; DS_type < non_translated_directions_strings_nr;
+           DS_type++)
+        {
+          const char *type_name
+             = direction_string_type_names[TDS_TRANSLATED_MAX_NR + DS_type];
+          SV **direction_sv
+             = hv_fetch (default_converted_directions_strings_hv,
+                                        type_name, strlen (type_name), 0);
+
+          converter->default_converted_directions_strings[DS_type]
+            = (char **) malloc (nr_string_directions * sizeof (char *));
+          memset (converter->default_converted_directions_strings[DS_type],
+                  0, nr_string_directions * sizeof (char *));
+
+          if (direction_sv)
+            {
+              int i;
+              HV *direction_hv = (HV *) SvRV (*direction_sv);
+
+              for (i = 0; i < nr_string_directions; i++)
+                {
+                  const char *direction_name;
+                  SV **spec_sv;
+
+                  if (i < FIRSTINFILE_MIN_IDX)
+                    direction_name = html_button_direction_names[i];
+                  else
+                    /* FIXME if special units are dynamic this is incorrect */
+                    direction_name
+                      = default_special_unit_info[SUI_type_direction]
+                                       [i - FIRSTINFILE_MIN_IDX];
+
+                  spec_sv = hv_fetch (direction_hv, direction_name,
+                                          strlen (direction_name), 0);
+
+                  if (spec_sv && SvOK (*spec_sv))
+                    {
+                      converter->default_converted_directions_strings[DS_type][i]
+                        = strdup (SvPVutf8_nolen (*spec_sv));
+                    }
+                    /*
+                       No direction strings for Footnotes
+                  else
+                    {
+                      fprintf (stderr, "NNN no string: %s\n", direction_name);
+                    }
+                     */
+                }
+            }
+        }
+    }
 
 #define FETCH(key) key##_sv = hv_fetch (converter_hv, #key, strlen (#key), 0);
   FETCH(htmlxref)
@@ -368,7 +553,7 @@ html_converter_initialize_sv (SV *converter_sv,
       if (i == 0)
         ref_name = "";
       else
-        ref_name = element_type_names[i];
+        ref_name = type_data[i].name;
       FORMATTING_REFERENCE *open_formatting_reference
        = &converter->types_open[i];
       FORMATTING_REFERENCE *conversion_formatting_reference
@@ -390,13 +575,14 @@ html_converter_initialize_sv (SV *converter_sv,
   memcpy (&converter->css_string_types_conversion,
           &converter->types_conversion,
       (TXI_TREE_TYPES_NUMBER) * sizeof (FORMATTING_REFERENCE));
+
   for (i = 0; i < TXI_TREE_TYPES_NUMBER; i++)
     {
       char *ref_name;
       if (i == 0)
         ref_name = "";
       else
-        ref_name = element_type_names[i];
+        ref_name = type_data[i].name;
       FORMATTING_REFERENCE *conversion_formatting_reference
        = &converter->css_string_types_conversion[i];
 
@@ -423,116 +609,18 @@ html_converter_initialize_sv (SV *converter_sv,
         output_units_conversion_hv);
     }
 
-  /* gather no_arg_formatted_cmd commands.  The formatting is gathered later
-     as it depends on the document encoding */
-  if (SvOK (default_no_arg_commands_formatting))
+  if (special_unit_varieties->number > 0)
     {
-      I32 hv_number;
-      I32 i;
-
-      HV *default_no_arg_commands_formatting_hv
-        = (HV*) SvRV (default_no_arg_commands_formatting);
-
-      hv_number = hv_iterinit (default_no_arg_commands_formatting_hv);
-      initialize_cmd_list (&converter->no_arg_formatted_cmd, hv_number, 0);
-
-      for (i = 0; i < hv_number; i++)
-        {
-          I32 retlen;
-          HE *convert_he = hv_iternext (default_no_arg_commands_formatting_hv);
-          char *cmdname = hv_iterkey (convert_he, &retlen);
-          enum command_id cmd = lookup_builtin_command (cmdname);
-
-          if (!cmd)
-            fprintf (stderr, "ERROR: %s: no arg command not found\n", cmdname);
-          else
-            {
-              converter->no_arg_formatted_cmd.list[
-                           converter->no_arg_formatted_cmd.number] = cmd;
-              converter->no_arg_formatted_cmd.number++;
-            }
-        }
-      qsort (converter->no_arg_formatted_cmd.list, hv_number,
-             sizeof (enum command_id), compare_ints);
-    }
-
-  FETCH(sorted_special_unit_varieties)
-
-  if (sorted_special_unit_varieties_sv)
-    {
-      int i;
-      enum special_unit_info_type j;
-      SV **simplified_special_unit_info_sv;
-      HV *special_unit_info_hv;
-      SV **special_unit_body_sv;
-      HV *special_unit_body_hv;
+      HV *special_unit_body_hv = 0;
       HV *default_special_unit_body_hv;
 
-      STRING_LIST *special_unit_varieties = &converter->special_unit_varieties;
-      if (sorted_special_unit_varieties_sv)
-        add_svav_to_string_list (*sorted_special_unit_varieties_sv,
-                                 special_unit_varieties, svt_char);
-
-      FETCH(simplified_special_unit_info);
-
-      special_unit_info_hv = (HV *) SvRV(*simplified_special_unit_info_sv);
-
-      for (j = 0; j < SUI_type_heading+1; j++)
-        {
-          SV **special_unit_info_type_sv;
-          const char *sui_type = special_unit_info_type_names[j];
-          special_unit_info_type_sv = hv_fetch (special_unit_info_hv,
-                                                sui_type, strlen (sui_type), 0);
-          if (special_unit_info_type_sv)
-            {
-              int k;
-              HV *special_unit_info_type_hv;
-
-              if (!SvOK (*special_unit_info_type_sv))
-                {
-                  fprintf (stderr, "BUG: special_unit_info: %s: undef\n",
-                                   sui_type);
-                }
-
-              special_unit_info_type_hv
-                   = (HV *) SvRV(*special_unit_info_type_sv);
-
-              converter->special_unit_info[j]
-                = new_special_unit_info_type (special_unit_varieties->number);
-
-              for (k = 0; k < special_unit_varieties->number; k++)
-                {
-                  char *variety_name = special_unit_varieties->list[k];
-                  SV **info_type_variety_sv
-                   = hv_fetch (special_unit_info_type_hv, variety_name,
-                               strlen (variety_name), 0);
-                  if (info_type_variety_sv)
-                    {
-                      /* can be undef if set undef in user init file */
-                      if (SvOK (*info_type_variety_sv))
-                        {
-                          const char *value
-                            = (char *) SvPVutf8_nolen (*info_type_variety_sv);
-                          converter->special_unit_info[j][k]
-                             = non_perl_strdup (value);
-                        }
-                      else
-                        converter->special_unit_info[j][k] = 0;
-                    }
-                    /*
-                  else
-                    fprintf (stderr, "Missing %d:%s %d:%s\n", j, sui_type, k, variety_name);
-                     */
-                }
-            }
-        }
-
       converter->special_unit_body
-       = new_special_unit_formatting_references
-                      (special_unit_varieties->number);
+        = new_special_unit_formatting_references
+                         (special_unit_varieties->number);
 
       FETCH(special_unit_body)
-      special_unit_body_hv = (HV *)SvRV (*special_unit_body_sv);
+      if (special_unit_body_sv)
+        special_unit_body_hv = (HV *)SvRV (*special_unit_body_sv);
       default_special_unit_body_hv = (HV *)SvRV (default_special_unit_body);
 
       for (i = 0; i < special_unit_varieties->number; i++)
@@ -595,7 +683,7 @@ html_converter_initialize_sv (SV *converter_sv,
              justified if finding the type index happens more often */
               for (j = 1; j < TXI_TREE_TYPES_NUMBER; j++)
                 {
-                  if (!strcmp (element_type_names[j], type_name))
+                  if (!strcmp (type_data[j].name, type_name))
                     {
                       type = j;
                       break;
@@ -645,16 +733,21 @@ html_converter_initialize_sv (SV *converter_sv,
         }
     }
 
-  FETCH(upper_case_commands)
-
-  if (upper_case_commands_sv)
+  if (customized_upper_case_commands && SvOK (customized_upper_case_commands))
     {
       I32 hv_number;
       I32 i;
+      int cmd_index = 0;
 
-      HV *upper_case_commands_hv = (HV *)SvRV (*upper_case_commands_sv);
+      HV *upper_case_commands_hv = (HV *)SvRV (customized_upper_case_commands);
 
       hv_number = hv_iterinit (upper_case_commands_hv);
+
+      converter->html_customized_upper_case_commands
+        = (COMMAND_INTEGER_INFORMATION *) malloc ((hv_number + 1)
+                                  * sizeof (COMMAND_INTEGER_INFORMATION));
+      memset (converter->html_customized_upper_case_commands, 0,
+              (hv_number + 1) * sizeof (COMMAND_INTEGER_INFORMATION));
 
       for (i = 0; i < hv_number; i++)
         {
@@ -669,7 +762,13 @@ html_converter_initialize_sv (SV *converter_sv,
               if (!cmd)
                 fprintf (stderr, "ERROR: %s: no upper-case command\n", cmdname);
               else
-                converter->upper_case[cmd] = upper_case_value;
+                {
+                  COMMAND_INTEGER_INFORMATION *customized_upper
+                    = &converter->html_customized_upper_case_commands[cmd_index];
+                  customized_upper->cmd = cmd;
+                  customized_upper->integer = upper_case_value;
+                  cmd_index++;
+                }
            }
        }
    }
@@ -823,6 +922,401 @@ html_converter_initialize_sv (SV *converter_sv,
         }
     }
 
+  FETCH(translated_direction_strings)
+
+  if (translated_direction_strings_sv)
+    translated_direction_strings_hv
+        = (HV *) SvRV (*translated_direction_strings_sv);
+
+  /* The corresponding direction without FirstInFile are used instead
+     of FirstInFile*, so the directions_strings are not set */
+  nr_string_directions = NON_SPECIAL_DIRECTIONS_NR - FIRSTINFILE_NR
+                     + special_unit_varieties->number;
+
+  for (DS_type = 0; DS_type < TDS_TRANSLATED_MAX_NR; DS_type++)
+    {
+      converter->translated_direction_strings[DS_type]
+        = new_directions_strings_translated_type (nr_string_directions);
+
+      if (translated_direction_strings_sv)
+        {
+          const char *type_name = direction_string_type_names[DS_type];
+          SV **direction_sv = hv_fetch (translated_direction_strings_hv,
+                                        type_name, strlen (type_name), 0);
+
+          if (direction_sv)
+            {
+              int i;
+              HV *direction_hv = (HV *) SvRV (*direction_sv);
+
+              for (i = 0; i < nr_string_directions; i++)
+                {
+                  const char *direction_name;
+                  SV **spec_sv;
+
+                  if (i < FIRSTINFILE_MIN_IDX)
+                    direction_name = html_button_direction_names[i];
+                  else
+                    /* FIXME if special units are dynamic this is incorrect */
+                    direction_name
+                      = default_special_unit_info[SUI_type_direction]
+                                       [i - FIRSTINFILE_MIN_IDX];
+
+                  spec_sv = hv_fetch (direction_hv, direction_name,
+                                              strlen (direction_name), 0);
+
+                  if (spec_sv)
+                    {
+                      HV *spec_hv = (HV *) SvRV (*spec_sv);
+
+                      SV **to_convert_sv = hv_fetch (spec_hv, "to_convert",
+                                                     strlen ("to_convert"), 0);
+                      /* can be undef if set through Config */
+                      if (to_convert_sv && SvOK (*to_convert_sv))
+                        {
+                          const char *to_convert
+                            = (char *) SvPVutf8_nolen (*to_convert_sv);
+                          converter
+                           ->translated_direction_strings[DS_type][i].to_convert
+                            = non_perl_strdup (to_convert);
+                        }
+                      else
+                        {
+                          SV **context_sv = hv_fetch (spec_hv, "converted",
+                                                     strlen ("converted"), 0);
+                          if (context_sv)
+                            {
+                              HV *context_hv = (HV *) SvRV (*context_sv);
+                              int j;
+
+                              for (j = 0; j < nr_dir_str_contexts; j++)
+                                {
+                                  const char *context_name
+                                    = direction_string_context_names[j];
+
+                                  SV **value_sv
+                                    = hv_fetch (context_hv, context_name,
+                                                  strlen (context_name), 0);
+
+                                  if (value_sv)
+                                    {
+                                      const char *value
+                                        = (char *) SvPVutf8_nolen (*value_sv);
+                                      converter
+                     ->translated_direction_strings[DS_type][i].converted[j]
+                               = non_perl_strdup (value);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+  FETCH(customized_no_arg_commands_formatting)
+  if (customized_no_arg_commands_formatting_sv)
+    {
+      int max_context = HCC_type_css_string;
+      I32 hv_number;
+      I32 i;
+      HV *customized_no_arg_commands_formatting_hv
+        = (HV *) SvRV (*customized_no_arg_commands_formatting_sv);
+
+      hv_number = hv_iterinit (customized_no_arg_commands_formatting_hv);
+
+      for (i = 0; i < hv_number; i++)
+        {
+          char *cmdname;
+          I32 retlen;
+          SV *context_sv
+              = hv_iternextsv (customized_no_arg_commands_formatting_hv,
+                                          &cmdname, &retlen);
+          if (SvOK (context_sv))
+            {
+              HV *context_hv = (HV *)SvRV (context_sv);
+              enum command_id cmd = lookup_builtin_command (cmdname);
+
+              if (!cmd)
+                fprintf (stderr, "ERROR: %s: no no arg command\n", cmdname);
+              else
+                {
+                  I32 context_nr;
+                  I32 j;
+
+                  context_nr = hv_iterinit (context_hv);
+                  for (j = 0; j < context_nr; j++)
+                    {
+                      char *context_name;
+                      I32 retlen;
+                      enum conversion_context k;
+                      int context_idx = -1;
+                      SV *format_spec_sv = hv_iternextsv (context_hv,
+                                                 &context_name, &retlen);
+                      for (k = 0; k < max_context +1; k++)
+                        {
+                          if (!strcmp (context_name,
+                                html_conversion_context_type_names[k]))
+                            {
+                              context_idx = k;
+                              break;
+                            }
+                        }
+                      if (context_idx < 0)
+                        {
+                          fprintf (stderr,
+                              "ERROR: %s: %s: unknown no arg context\n",
+                                         cmdname, context_name);
+                          break;
+                        }
+                      if (SvOK (format_spec_sv))
+                        {
+                          I32 spec_number;
+                          I32 s;
+                          HTML_COMMAND_CONVERSION *format_spec;
+
+                          HV *format_spec_hv = (HV *)SvRV (format_spec_sv);
+
+                          format_spec = (HTML_COMMAND_CONVERSION *)
+                            malloc (sizeof (HTML_COMMAND_CONVERSION));
+                          memset (format_spec, 0,
+                                  sizeof (HTML_COMMAND_CONVERSION));
+                          converter->customized_no_arg_commands_formatting
+                                              [cmd][context_idx] = format_spec;
+
+                          spec_number = hv_iterinit (format_spec_hv);
+                          for (s = 0; s < spec_number; s++)
+                            {
+                              char *key;
+                              I32 retlen;
+                              SV *spec_sv = hv_iternextsv (format_spec_hv,
+                                                           &key, &retlen);
+                              if (!strcmp (key, "element"))
+                                {
+                                  const char *tmp_spec
+                                    = (char *) SvPVutf8_nolen (spec_sv);
+                                  format_spec->element
+                                    = non_perl_strdup (tmp_spec);
+                                }
+                              else if (!strcmp (key, "unset"))
+                                format_spec->unset = SvIV (spec_sv);
+                              else if (!strcmp (key, "text"))
+                                {
+                                  const char *tmp_spec
+                                    = (char *) SvPVutf8_nolen (spec_sv);
+                                  format_spec->text
+                                    = non_perl_strdup (tmp_spec);
+                                }
+                              else if (!strcmp (key, "translated_converted"))
+                                {
+                                  const char *tmp_spec
+                                    = (char *) SvPVutf8_nolen (spec_sv);
+                                  format_spec->translated_converted
+                                    = non_perl_strdup (tmp_spec);
+                                }
+                              else if (!strcmp (key, "translated_to_convert"))
+                                {
+                                  const char *tmp_spec
+                                    = (char *) SvPVutf8_nolen (spec_sv);
+                                  format_spec->translated_to_convert
+                                    = non_perl_strdup (tmp_spec);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+  FETCH(customized_direction_strings)
+  if (customized_direction_strings_sv)
+    {
+      HV *customized_direction_strings_hv
+        = (HV *) SvRV (*customized_direction_strings_sv);
+
+      for (DS_type = TDS_TRANSLATED_MAX_NR;
+           DS_type < TDS_TYPE_MAX_NR; DS_type++)
+        {
+          int i;
+          const char *type_name;
+          HV *direction_hv = 0;
+          SV **direction_sv;
+          size_t customized_type = DS_type - (TDS_TRANSLATED_MAX_NR);
+
+          /* do not use new_directions_strings_type as a 0 for a direction array
+             is allowed here, it means that there is a customized value undef */
+          converter->customized_directions_strings[customized_type]
+            = (char ***) malloc (nr_string_directions * sizeof (char **));
+          memset (converter->customized_directions_strings[customized_type], 0,
+               nr_string_directions * sizeof (char **));
+
+          type_name = direction_string_type_names[DS_type];
+
+          direction_sv = hv_fetch (customized_direction_strings_hv, type_name,
+                                   strlen (type_name), 0);
+          if (direction_sv && SvOK (*direction_sv))
+            direction_hv = (HV *) SvRV (*direction_sv);
+
+          for (i = 0; i < nr_string_directions; i++)
+            {
+              const char *direction_name;
+              if (direction_hv)
+                {
+                  SV **context_sv;
+
+                  if (i < FIRSTINFILE_MIN_IDX)
+                    direction_name = html_button_direction_names[i];
+                  else
+                    /* FIXME if special units are dynamic this is incorrect */
+                    direction_name
+                      = default_special_unit_info[SUI_type_direction]
+                                       [i - FIRSTINFILE_MIN_IDX];
+
+                  context_sv = hv_fetch (direction_hv, direction_name,
+                                          strlen (direction_name), 0);
+                  if (context_sv)
+                    {
+                      if (SvOK (*context_sv))
+                        {
+                          HV *context_hv = (HV *) SvRV (*context_sv);
+                          SV **converted_sv = hv_fetch (context_hv, "converted",
+                                                        strlen ("converted"), 0);
+
+                          converter->
+                           customized_directions_strings[customized_type][i]
+                            = (char **)
+                               malloc (nr_dir_str_contexts * sizeof (char *));
+                          memset (converter->
+                             customized_directions_strings[customized_type][i], 0,
+                             nr_dir_str_contexts * sizeof (char *));
+
+                          if (converted_sv && SvOK (*converted_sv))
+                            {
+                              int j;
+
+                              for (j = 0; j < nr_dir_str_contexts; j++)
+                                {
+                                  const char *context_name
+                                    = direction_string_context_names[j];
+
+                                  SV **value_sv
+                                     = hv_fetch (context_hv, context_name,
+                                                 strlen (context_name), 0);
+
+                                  if (value_sv && SvOK (*value_sv))
+                                    {
+                                       const char *value
+                                          = (char *) SvPVutf8_nolen (*value_sv);
+                          converter->customized_directions_strings
+                                                       [customized_type][i][j]
+                                          = strdup (value);
+                                    }
+                                }
+                            }
+                          continue;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+  FETCH(stage_handlers)
+
+  if (stage_handlers_sv)
+    {
+      I32 hv_number;
+      I32 i;
+
+      HV *stage_handlers_hv
+        = (HV *)SvRV (*stage_handlers_sv);
+
+      hv_number = hv_iterinit (stage_handlers_hv);
+
+      for (i = 0; i < hv_number; i++)
+        {
+          int j;
+          enum html_stage_handler_stage_type stage = HSHT_type_none;
+          char *stage_name;
+          I32 retlen;
+          SV *stage_sv = hv_iternextsv (stage_handlers_hv,
+                                        &stage_name, &retlen);
+          for (j = 0; j < HSHT_type_finish +1; j++)
+            {
+              if (!strcmp (stage_name, html_stage_handler_stage_type_names[j]))
+                {
+                  stage = j;
+                  break;
+                }
+            }
+          if (stage == HSHT_type_none)
+            {
+              fprintf (stderr, "ERROR: %s: unknown handler stage\n",
+                               stage_name);
+              break;
+            }
+
+          if (SvOK (stage_sv))
+            {
+              size_t k;
+              AV *stage_av = (AV *)SvRV (stage_sv);
+              HTML_STAGE_HANDLER_INFO_LIST *stage_handler_list
+                = &converter->html_stage_handlers[stage];
+              SSize_t stage_handlers_info_nr = av_top_index (stage_av) +1;
+
+              if (stage_handlers_info_nr == 0)
+                continue;
+
+              stage_handler_list->number = stage_handlers_info_nr;
+              stage_handler_list->list = (HTML_STAGE_HANDLER_INFO *)
+                 malloc (sizeof (HTML_STAGE_HANDLER_INFO)
+                                                  * stage_handlers_info_nr);
+
+              for (k = 0; k < stage_handlers_info_nr; k++)
+                {
+                  HTML_STAGE_HANDLER_INFO *handler_info
+                        = &stage_handler_list->list[k];
+                  SV **stage_info_sv = av_fetch (stage_av, k, 0);
+                  memset (handler_info, 0, sizeof (HTML_STAGE_HANDLER_INFO));
+
+                  if (stage_info_sv && SvOK (*stage_info_sv))
+                    {
+                      AV *stage_info_av = (AV *)SvRV (*stage_info_sv);
+                      SV **handler_sv;
+                      SV **priority_sv;
+
+                      SSize_t stage_info_nr = av_top_index (stage_info_av) +1;
+                      if (stage_info_nr != 2)
+                        {
+                          fprintf (stderr,
+                            "BUG: %s: %zu: stage handler info need 2 item: %zu\n",
+                                   stage_name, k, stage_info_nr);
+                          continue;
+                        }
+                      handler_sv = av_fetch (stage_info_av, 0, 0);
+                      if (handler_sv && SvOK (*handler_sv))
+                        {
+                          handler_info->sv = *handler_sv;
+                        }
+                      priority_sv = av_fetch (stage_info_av, 1, 0);
+                      if (priority_sv && SvOK (*priority_sv))
+                        {
+                          const char *priority
+                            = (char *) SvPVutf8_nolen (*priority_sv);
+                          handler_info->priority = non_perl_strdup (priority);
+                        }
+                       /*
+                      fprintf (stderr, "REGISTER handler %s: %s %p\n", stage_name,
+                               handler_info->priority, handler_info->sv);
+                        */
+                    }
+                }
+            }
+        }
+    }
+
   html_converter_initialize (converter);
 
   /* at that point, the format specific informations, in particular the number
@@ -833,24 +1327,32 @@ html_converter_initialize_sv (SV *converter_sv,
                           &converter->conf, "conf", 1);
 }
 
+/* not used, the initialization is done in C, with customization taken
+   from Perl when initializing the converter */
 void
 html_conversion_initialization_sv (SV *converter_sv, CONVERTER *converter)
 {
   HV *converter_hv;
   SV **no_arg_commands_formatting_sv;
   SV **directions_strings_sv;
-  SV **translated_direction_strings_sv;
-  SV **css_element_class_styles_sv;
-  HV *translated_direction_strings_hv;
   HV *directions_strings_hv;
   enum direction_string_type DS_type;
   int nr_string_directions;
   int nr_dir_str_contexts = TDS_context_string +1;
+  /*
+   */
 
   dTHX;
 
+  /* The corresponding direction without FirstInFile are used instead
+     of FirstInFile*, so the directions_strings are not set */
+  nr_string_directions = NON_SPECIAL_DIRECTIONS_NR - FIRSTINFILE_NR
+                     + converter->special_unit_varieties.number;
+
   converter_hv = (HV *)SvRV (converter_sv);
 
+  /* To get converter->html_command_conversion for no brace at commands
+     from $self->{'no_arg_commands_formatting'} */
   FETCH(no_arg_commands_formatting)
 
   if (no_arg_commands_formatting_sv)
@@ -963,12 +1465,10 @@ html_conversion_initialization_sv (SV *converter_sv, CONVERTER *converter)
             }
         }
     }
+  else
+    fprintf (stderr, "BUG: NO no_arg_commands_formatting\n");
 
-  /* The corresponding direction without FirstInFile are used instead
-     of FirstInFile*, so the directions_strings are not set */
-  nr_string_directions = NON_SPECIAL_DIRECTIONS_NR - FIRSTINFILE_NR
-                     + converter->special_unit_varieties.number;
-
+  /* To get converter->directions_strings from $self->{'directions_strings'} */
   FETCH(directions_strings)
 
   if (directions_strings_sv)
@@ -1035,222 +1535,101 @@ html_conversion_initialization_sv (SV *converter_sv, CONVERTER *converter)
             }
         }
     }
-
-  FETCH(translated_direction_strings)
-
-  if (translated_direction_strings_sv)
-    translated_direction_strings_hv
-        = (HV *) SvRV (*translated_direction_strings_sv);
-
-  for (DS_type = 0; DS_type < TDS_TRANSLATED_MAX_NR; DS_type++)
-    {
-      converter->translated_direction_strings[DS_type]
-        = new_directions_strings_translated_type (nr_string_directions);
-
-      if (translated_direction_strings_sv)
-        {
-          const char *type_name = direction_string_type_names[DS_type];
-          SV **direction_sv = hv_fetch (translated_direction_strings_hv,
-                                        type_name, strlen (type_name), 0);
-
-          if (direction_sv)
-            {
-              int i;
-              HV *direction_hv = (HV *) SvRV (*direction_sv);
-
-              for (i = 0; i < nr_string_directions; i++)
-                {
-                  const char *direction_name;
-                  SV **spec_sv;
-
-                  if (i < FIRSTINFILE_MIN_IDX)
-                    direction_name = html_button_direction_names[i];
-                  else
-                    direction_name
-                      = converter->special_unit_info[SUI_type_direction]
-                                       [i - FIRSTINFILE_MIN_IDX];
-
-                  spec_sv = hv_fetch (direction_hv, direction_name,
-                                              strlen (direction_name), 0);
-
-                  if (spec_sv)
-                    {
-                      HV *spec_hv = (HV *) SvRV (*spec_sv);
-
-                      SV **to_convert_sv = hv_fetch (spec_hv, "to_convert",
-                                                     strlen ("to_convert"), 0);
-                      /* can be undef if set through Config */
-                      if (to_convert_sv && SvOK (*to_convert_sv))
-                        {
-                          const char *to_convert
-                            = (char *) SvPVutf8_nolen (*to_convert_sv);
-                          converter
-                           ->translated_direction_strings[DS_type][i].to_convert
-                            = non_perl_strdup (to_convert);
-                        }
-                      else
-                        {
-                          SV **context_sv = hv_fetch (spec_hv, "converted",
-                                                     strlen ("converted"), 0);
-                          if (context_sv)
-                            {
-                              HV *context_hv = (HV *) SvRV (*context_sv);
-                              int j;
-
-                              for (j = 0; j < nr_dir_str_contexts; j++)
-                                {
-                                  const char *context_name
-                                    = direction_string_context_names[j];
-
-                                  SV **value_sv
-                                    = hv_fetch (context_hv, context_name,
-                                                  strlen (context_name), 0);
-
-                                  if (value_sv)
-                                    {
-                                      const char *value
-                                        = (char *) SvPVutf8_nolen (*value_sv);
-                                      converter
-                     ->translated_direction_strings[DS_type][i].converted[j]
-                               = non_perl_strdup (value);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-  FETCH(css_element_class_styles)
-
-  if (css_element_class_styles_sv)
-    {
-      I32 hv_number;
-      I32 i;
-
-      HV *css_element_class_styles_hv
-        = (HV *)SvRV (*css_element_class_styles_sv);
-
-      hv_number = hv_iterinit (css_element_class_styles_hv);
-
-      initialize_css_selector_style_list (&converter->css_element_class_styles,
-                                          hv_number);
-
-      for (i = 0; i < hv_number; i++)
-        {
-          HE *next = hv_iternext (css_element_class_styles_hv);
-          SV *selector_sv = hv_iterkeysv (next);
-          char *selector = (char *) SvPVutf8_nolen (selector_sv);
-          SV *style_sv = HeVAL(next);
-          char *style = (char *) SvPVutf8_nolen (style_sv);
-
-          CSS_SELECTOR_STYLE *selector_style
-            = &converter->css_element_class_styles.list[i];
-          selector_style->selector = non_perl_strdup (selector);
-          selector_style->style = non_perl_strdup (style);
-        }
-    }
+#undef FETCH
 }
 
+/* get jslicenses from Perl */
+/* currently unused, as jslicenses are setup in C.  Could be called like:
+  SV **jslicenses_sv = hv_fetch (converter_info_hv, "jslicenses",
+                                 strlen ("jslicenses"), 0);
+  if (jslicenses_sv)
+    html_get_jslicenses_sv (*jslicenses_sv, converter);
+ */
 void
-html_converter_prepare_output_sv (SV *converter_sv, CONVERTER *converter)
+html_get_jslicenses_sv (SV *jslicenses_sv, CONVERTER *converter)
 {
-  HV *converter_hv;
-  SV **jslicenses_sv;
+  I32 hv_number;
+  I32 i;
+  HV *jslicenses_hv;
 
   dTHX;
 
-  converter_hv = (HV *)SvRV (converter_sv);
+  jslicenses_hv = (HV *)SvRV (jslicenses_sv);
 
-  FETCH(jslicenses)
+  hv_number = hv_iterinit (jslicenses_hv);
 
-  if (jslicenses_sv)
+  if (hv_number > 0)
     {
-      I32 hv_number;
-      I32 i;
+      initialize_js_categories_list (&converter->jslicenses, hv_number);
 
-      HV *jslicenses_hv = (HV *)SvRV (*jslicenses_sv);
-
-      hv_number = hv_iterinit (jslicenses_hv);
-
-      if (hv_number > 0)
+      for (i = 0; i < hv_number; i++)
         {
-          initialize_js_categories_list (&converter->jslicenses, hv_number);
+          I32 hv_files_number;
+          I32 j;
+          HE *next = hv_iternext (jslicenses_hv);
+          SV *category_sv = hv_iterkeysv (next);
+          const char *category = (char *) SvPVutf8_nolen (category_sv);
+          SV *files_info_sv = HeVAL(next);
+          HV *files_info_hv = (HV *)SvRV (files_info_sv);
 
-          for (i = 0; i < hv_number; i++)
+          JSLICENSE_FILE_INFO_LIST *jslicences_files_info
+            = &converter->jslicenses.list[i];
+
+          hv_files_number = hv_iterinit (files_info_hv);
+
+          initialize_jslicense_files (jslicences_files_info, category,
+                                      hv_files_number);
+
+          for (j = 0; j < hv_files_number; j++)
             {
-              I32 hv_files_number;
-              I32 j;
-              HE *next = hv_iternext (jslicenses_hv);
-              SV *category_sv = hv_iterkeysv (next);
-              const char *category = (char *) SvPVutf8_nolen (category_sv);
-              SV *files_info_sv = HeVAL(next);
-              HV *files_info_hv = (HV *)SvRV (files_info_sv);
+              HE *next_file = hv_iternext (files_info_hv);
+              SV *filename_sv = hv_iterkeysv (next);
+              char *filename = (char *) SvPVutf8_nolen (filename_sv);
+              SV *file_info_sv = HeVAL(next_file);
+              AV *file_info_av = (AV *)SvRV (file_info_sv);
+              SSize_t file_info_nr;
+              SV **license_sv;
+              SV **url_sv;
+              SV **source_sv;
 
-              JSLICENSE_FILE_INFO_LIST *jslicences_files_info
-                = &converter->jslicenses.list[i];
+              JSLICENSE_FILE_INFO *jslicense_file_info
+                = &jslicences_files_info->list[j];
+              jslicense_file_info->filename = non_perl_strdup (filename);
 
-              hv_files_number = hv_iterinit (files_info_hv);
-
-              initialize_jslicense_files (jslicences_files_info, category,
-                                          hv_files_number);
-
-              for (j = 0; j < hv_files_number; j++)
+              file_info_nr = av_top_index (file_info_av) +1;
+              if (file_info_nr != 3)
                 {
-                  HE *next_file = hv_iternext (files_info_hv);
-                  SV *filename_sv = hv_iterkeysv (next);
-                  char *filename = (char *) SvPVutf8_nolen (filename_sv);
-                  SV *file_info_sv = HeVAL(next_file);
-                  AV *file_info_av = (AV *)SvRV (file_info_sv);
-                  SSize_t file_info_nr;
-                  SV **license_sv;
-                  SV **url_sv;
-                  SV **source_sv;
-
-                  JSLICENSE_FILE_INFO *jslicense_file_info
-                    = &jslicences_files_info->list[j];
-                  jslicense_file_info->filename = non_perl_strdup (filename);
-
-                  file_info_nr = av_top_index (file_info_av) +1;
-                  if (file_info_nr != 3)
-                    {
-                      fprintf (stderr,
-                               "BUG: %s: %s: jslicence file needs 3 item: %zu\n",
-                               category, filename, file_info_nr);
-                      continue;
-                    }
-                  license_sv = av_fetch (file_info_av, 0, 0);
-                  if (license_sv && SvOK (*license_sv))
-                    {
-                      const char *license
-                        = (char *) SvPVutf8_nolen (*license_sv);
-                      jslicense_file_info->license
-                        = non_perl_strdup (license);
-                    }
-                  url_sv = av_fetch (file_info_av, 0, 0);
-                  if (url_sv && SvOK (*url_sv))
-                    {
-                      const char *url = (char *) SvPVutf8_nolen (*url_sv);
-                      jslicense_file_info->url = non_perl_strdup (url);
-                    }
-                  source_sv = av_fetch (file_info_av, 0, 0);
-                  if (source_sv && SvOK (*source_sv))
-                    {
-                      const char *source
-                        = (char *) SvPVutf8_nolen (*source_sv);
-                      jslicense_file_info->source
-                        = non_perl_strdup (source);
-                    }
+                  fprintf (stderr,
+                           "BUG: %s: %s: jslicence file needs 3 item: %zu\n",
+                           category, filename, file_info_nr);
+                  continue;
+                }
+              license_sv = av_fetch (file_info_av, 0, 0);
+              if (license_sv && SvOK (*license_sv))
+                {
+                  const char *license
+                    = (char *) SvPVutf8_nolen (*license_sv);
+                  jslicense_file_info->license
+                    = non_perl_strdup (license);
+                }
+              url_sv = av_fetch (file_info_av, 1, 0);
+              if (url_sv && SvOK (*url_sv))
+                {
+                  const char *url = (char *) SvPVutf8_nolen (*url_sv);
+                  jslicense_file_info->url = non_perl_strdup (url);
+                }
+              source_sv = av_fetch (file_info_av, 2, 0);
+              if (source_sv && SvOK (*source_sv))
+                {
+                  const char *source
+                    = (char *) SvPVutf8_nolen (*source_sv);
+                  jslicense_file_info->source
+                    = non_perl_strdup (source);
                 }
             }
         }
     }
-  html_converter_prepare_output (converter);
 }
-
-#undef FETCH
 
 #define FETCH(key) key##_sv = hv_fetch (element_hv, #key, strlen (#key), 0);
 
@@ -1298,7 +1677,7 @@ html_find_element_from_sv (CONVERTER *converter, const SV *element_sv,
                   const OUTPUT_UNIT *special_unit
             = converter->global_units_directions[special_unit_direction_index];
                   if (special_unit)
-                    return special_unit->unit_command;
+                    return special_unit->uc.special_unit_command;
                 }
             }
         }

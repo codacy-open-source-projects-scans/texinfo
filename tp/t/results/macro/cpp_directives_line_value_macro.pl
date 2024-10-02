@@ -77,25 +77,6 @@ $result_trees{'cpp_directives_line_value_macro'} = {
               }
             },
             {
-              'source_marks' => [
-                {
-                  'counter' => 1,
-                  'element' => {
-                    'args' => [
-                      {
-                        'type' => 'brace_command_arg'
-                      }
-                    ],
-                    'info' => {
-                      'command_name' => 'vvv'
-                    },
-                    'type' => 'macro_call'
-                  },
-                  'position' => 1,
-                  'sourcemark_type' => 'macro_expansion',
-                  'status' => 'start'
-                }
-              ],
               'text' => '
 ',
               'type' => 'empty_line'
@@ -107,6 +88,22 @@ $result_trees{'cpp_directives_line_value_macro'} = {
           'contents' => [
             {
               'source_marks' => [
+                {
+                  'counter' => 1,
+                  'element' => {
+                    'args' => [
+                      {
+                        'type' => 'brace_arg'
+                      }
+                    ],
+                    'info' => {
+                      'command_name' => 'vvv'
+                    },
+                    'type' => 'macro_call'
+                  },
+                  'sourcemark_type' => 'macro_expansion',
+                  'status' => 'start'
+                },
                 {
                   'counter' => 1,
                   'position' => 15,
@@ -181,25 +178,6 @@ $result_trees{'cpp_directives_line_value_macro'} = {
           }
         },
         {
-          'source_marks' => [
-            {
-              'counter' => 2,
-              'element' => {
-                'args' => [
-                  {
-                    'type' => 'brace_command_arg'
-                  }
-                ],
-                'info' => {
-                  'command_name' => 'machash'
-                },
-                'type' => 'macro_call'
-              },
-              'position' => 1,
-              'sourcemark_type' => 'macro_expansion',
-              'status' => 'start'
-            }
-          ],
           'text' => '
 ',
           'type' => 'empty_line'
@@ -208,6 +186,22 @@ $result_trees{'cpp_directives_line_value_macro'} = {
           'contents' => [
             {
               'source_marks' => [
+                {
+                  'counter' => 2,
+                  'element' => {
+                    'args' => [
+                      {
+                        'type' => 'brace_arg'
+                      }
+                    ],
+                    'info' => {
+                      'command_name' => 'machash'
+                    },
+                    'type' => 'macro_call'
+                  },
+                  'sourcemark_type' => 'macro_expansion',
+                  'status' => 'start'
+                },
                 {
                   'counter' => 2,
                   'position' => 1,
@@ -304,7 +298,7 @@ $result_trees{'cpp_directives_line_value_macro'} = {
                             'text' => '900'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -352,28 +346,6 @@ $result_trees{'cpp_directives_line_value_macro'} = {
           }
         },
         {
-          'source_marks' => [
-            {
-              'counter' => 1,
-              'element' => {
-                'args' => [
-                  {
-                    'contents' => [
-                      {
-                        'text' => 'hash'
-                      }
-                    ],
-                    'type' => 'brace_command_arg'
-                  }
-                ],
-                'cmdname' => 'value'
-              },
-              'line' => '#',
-              'position' => 1,
-              'sourcemark_type' => 'value_expansion',
-              'status' => 'start'
-            }
-          ],
           'text' => '
 ',
           'type' => 'empty_line'
@@ -382,6 +354,25 @@ $result_trees{'cpp_directives_line_value_macro'} = {
           'contents' => [
             {
               'source_marks' => [
+                {
+                  'counter' => 1,
+                  'element' => {
+                    'args' => [
+                      {
+                        'contents' => [
+                          {
+                            'text' => 'hash'
+                          }
+                        ],
+                        'type' => 'brace_container'
+                      }
+                    ],
+                    'cmdname' => 'value'
+                  },
+                  'line' => '#',
+                  'sourcemark_type' => 'value_expansion',
+                  'status' => 'start'
+                },
                 {
                   'counter' => 1,
                   'position' => 1,

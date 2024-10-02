@@ -62,6 +62,7 @@ BEGIN
 use Texinfo::Common;
 use Texinfo::Convert::Unicode;
 use Texinfo::Convert::Text;
+use Texinfo::Convert::Converter;
 
 
 my @commands_order = ('');
@@ -131,11 +132,11 @@ die "Need a file for unicode tables\n" if (!defined($unicode_file));
 my $structuring_file = $ARGV[2];
 die "Need a file for structuring tables\n" if (!defined($structuring_file));
 
-my $symbol_file = $ARGV[3];
-die "Need a file for symbols tables\n" if (!defined($symbol_file));
-
-my $text_file = $ARGV[4];
+my $text_file = $ARGV[3];
 die "Need a file for text tables\n" if (!defined($text_file));
+
+my $converter_file = $ARGV[4];
+die "Need a file for converter tables\n" if (!defined($converter_file));
 
 my %unicode_diacritics = %Texinfo::Convert::Unicode::unicode_diacritics;
 my %unicode_character_brace_no_arg_commands
@@ -147,14 +148,13 @@ open(UNIC, '>', $unicode_file) or die "Open $unicode_file: $!\n";
 
 print UNIC "/* Automatically generated from $program_name */\n\n";
 
-print UNIC '#include "unicode.h"'."\n\n";
-print UNIC "DIACRITIC_UNICODE unicode_diacritics[] = {\n";
+print UNIC "#include \"unicode.h\"\n\n";
+print UNIC "const DIACRITIC_UNICODE unicode_diacritics[] = {\n";
 foreach my $command_name (@commands_order) {
   my $command = $command_name;
   if (exists($name_commands{$command_name})) {
     $command = $name_commands{$command_name};
   }
-  #print UNIC "$command; ";
 
   if (defined($unicode_diacritics{$command_name})) {
     my $numeric_codepoint = hex($unicode_diacritics{$command_name});
@@ -168,7 +168,7 @@ foreach my $command_name (@commands_order) {
 }
 print UNIC "};\n\n";
 
-print UNIC "COMMAND_UNICODE unicode_character_brace_no_arg_commands[] = {\n";
+print UNIC "const COMMAND_UNICODE unicode_character_brace_no_arg_commands[] = {\n";
 foreach my $command_name (@commands_order) {
   my $command = $command_name;
   if (exists($name_commands{$command_name})) {
@@ -176,25 +176,20 @@ foreach my $command_name (@commands_order) {
   }
   #print UNIC "$command; ";
 
-  if (defined($unicode_map{$command_name})
-      or defined($unicode_character_brace_no_arg_commands{$command_name})) {
-    my $result = 0;
-    my $protected = 0;
-    if (defined($unicode_character_brace_no_arg_commands{$command_name})) {
-      $result = $unicode_character_brace_no_arg_commands{$command_name};
-      $protected = '"'.join ('', map {_protect_char($_)} split ('', $result)).'"';
-    }
-    my $codepoint = 0;
-    if (defined($unicode_map{$command_name})) {
-      $codepoint = '"'.$unicode_map{$command_name}.'"';
-    }
+  if (defined($unicode_map{$command_name})) {
+    my $result = $unicode_character_brace_no_arg_commands{$command_name};
+    my $protected = '"'.join ('', map {_protect_char($_)} split ('', $result)).'"';
+    my $codepoint = '"'.$unicode_map{$command_name}.'"';
+    # note that this is not used for ASCII characters and some specific
+    # characters
+    my $css_string = '"\\\\'.$unicode_map{$command_name}.' "';
     my $is_extra = 0;
     if (defined($extra_unicode_map{$command_name})) {
       $is_extra = 1;
     }
-    print UNIC "{$codepoint, $protected, $is_extra},   /* $command */\n";
+    print UNIC "{$codepoint, $protected, $css_string, $is_extra},   /* $command */\n";
   } else {
-    print UNIC "{0, 0, -1},\n";
+    print UNIC "{0, 0, 0, -1},\n";
   }
 }
 print UNIC "};\n\n";
@@ -210,7 +205,7 @@ open(STRUC, '>', $structuring_file) or die "Open $structuring_file: $!\n";
 print STRUC "/* Automatically generated from $program_name */\n\n";
 
 print STRUC "#include \"command_ids.h\"\n\n";
-print STRUC "int command_structuring_level[] = {\n";
+print STRUC "int const command_structuring_level[] = {\n";
 foreach my $command_name (@commands_order) {
   my $command = $command_name;
   if (exists($name_commands{$command_name})) {
@@ -224,7 +219,7 @@ foreach my $command_name (@commands_order) {
 }
 print STRUC "};\n\n";
 
-print STRUC "enum command_id level_to_structuring_command[][5] = {\n";
+print STRUC "enum command_id const level_to_structuring_command[][5] = {\n";
 foreach my $command_name (@commands_order) {
   my $command = $command_name;
   if (exists($name_commands{$command_name})) {
@@ -247,11 +242,14 @@ print STRUC "};\n\n";
 
 close (STRUC);
 
-open(SYMB, '>', $symbol_file) or die "Open $symbol_file: $!\n";
+open(TEXT, '>', $text_file) or die "Open $text_file: $!\n";
 
-print SYMB "/* Automatically generated from $program_name */\n\n";
+print TEXT "/* Automatically generated from $program_name */\n\n";
 
-print SYMB "char *nobrace_symbol_text[] = {\n";
+print TEXT "#include <config.h>\n\n";
+print TEXT "#include \"convert_to_text.h\"\n\n";
+
+print TEXT "const char *nobrace_symbol_text[] = {\n";
 foreach my $command_name (@commands_order) {
   my $command = $command_name;
   if (exists($name_commands{$command_name})) {
@@ -260,20 +258,16 @@ foreach my $command_name (@commands_order) {
   if (defined($Texinfo::Common::nobrace_symbol_text{$command_name})) {
     my $symbol = $Texinfo::Common::nobrace_symbol_text{$command_name};
     my $protected = join ('', map {_protect_char($_)} split ('', $symbol));
-    print SYMB "\"$protected\",   /* $command */\n";
+    print TEXT "\"$protected\",   /* $command */\n";
   } else {
-    print SYMB "0,\n";
+    print TEXT "0,\n";
   }
 }
-print SYMB "};\n\n";
-
-close(SYMB);
-
-open(TEXT, '>', $text_file) or die "Open $text_file: $!\n";
+print TEXT "};\n\n";
 
 print TEXT "/* Automatically generated from $program_name */\n\n";
 
-print TEXT "char *text_brace_no_arg_commands[] = {\n";
+print TEXT "const char *text_brace_no_arg_commands[] = {\n";
 foreach my $command_name (@commands_order) {
   my $command = $command_name;
   if (exists($name_commands{$command_name})) {
@@ -289,7 +283,7 @@ foreach my $command_name (@commands_order) {
 }
 print TEXT "};\n\n";
 
-print TEXT "char *sort_brace_no_arg_commands[] = {\n";
+print TEXT "const char *sort_brace_no_arg_commands[] = {\n";
 foreach my $command_name (@commands_order) {
   my $command = $command_name;
   if (exists($name_commands{$command_name})) {
@@ -311,7 +305,7 @@ open(NORM, '>', $normalization_file) or die "Open $normalization_file: $!\n";
 
 print NORM "/* Automatically generated from $program_name */\n\n";
 
-print NORM "char * command_normalization_text[] = {\n";
+print NORM "const char *command_normalization_text[] = {\n";
 foreach my $command_name (@commands_order) {
   my $command = $command_name;
   if (exists($name_commands{$command_name})) {
@@ -336,4 +330,34 @@ foreach my $command_name (@commands_order) {
 print NORM "};\n\n";
 
 close(NORM);
+
+
+my %xml_text_entity_no_arg_commands
+ = %Texinfo::Convert::Converter::xml_text_entity_no_arg_commands;
+
+open(CONV, '>', $converter_file) or die "Open $converter_file: $!\n";
+
+print CONV "/* Automatically generated from $0 */\n\n";
+
+print CONV "const char *xml_text_entity_no_arg_commands[] = {\n";
+foreach my $command_name (@commands_order) {
+  my $command = $command_name;
+  if (exists($name_commands{$command_name})) {
+    $command = $name_commands{$command_name};
+  }
+  #print CONV "$command; ";
+
+  my $result = $xml_text_entity_no_arg_commands{$command_name};
+
+  if (defined($result)) {
+    my $protected = join ('', map {_protect_char($_)} split ('', $result));
+    print CONV "\"$protected\",  /* $command */\n";
+  } else {
+    print CONV "0,\n";
+  }
+}
+print CONV "};\n\n";
+
+close(CONV);
+
 

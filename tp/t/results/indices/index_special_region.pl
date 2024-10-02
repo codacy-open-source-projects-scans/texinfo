@@ -93,7 +93,7 @@ $result_trees{'index_special_region'} = {
                       'extra' => {
                         'element_region' => 'copying'
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'anchor',
@@ -140,7 +140,7 @@ $result_trees{'index_special_region'} = {
                                   'extra' => {
                                     'element_region' => 'copying'
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'anchor',
@@ -382,7 +382,7 @@ $result_trees{'index_special_region'} = {
                       'extra' => {
                         'element_region' => 'titlepage'
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'anchor',
@@ -425,7 +425,7 @@ $result_trees{'index_special_region'} = {
                                   'extra' => {
                                     'element_region' => 'titlepage'
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'anchor',
@@ -892,8 +892,7 @@ $result_trees{'index_special_region'} = {
               'source_info' => {
                 'file_name' => 'index_special_region.texi',
                 'line_nr' => 46
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -945,8 +944,7 @@ $result_trees{'index_special_region'} = {
               'source_info' => {
                 'file_name' => 'index_special_region.texi',
                 'line_nr' => 47
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -996,8 +994,7 @@ $result_trees{'index_special_region'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'info' => {
@@ -1419,7 +1416,7 @@ $result_trees{'index_special_region'} = {
                     },
                     'normalized' => 'Copying-information'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1448,7 +1445,7 @@ $result_trees{'index_special_region'} = {
                     },
                     'normalized' => 'Public-domain-reference'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1487,7 +1484,7 @@ $result_trees{'index_special_region'} = {
                     },
                     'normalized' => 'Titlepage-anchor'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1516,7 +1513,7 @@ $result_trees{'index_special_region'} = {
                     },
                     'normalized' => 'Titlepage-footnote-anchor'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',

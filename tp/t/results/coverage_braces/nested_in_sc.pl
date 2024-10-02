@@ -44,7 +44,7 @@ $result_trees{'nested_in_sc'} = {
                             {
                               'args' => [
                                 {
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'aa',
@@ -58,7 +58,7 @@ $result_trees{'nested_in_sc'} = {
                             {
                               'args' => [
                                 {
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'TeX',
@@ -76,7 +76,7 @@ $result_trees{'nested_in_sc'} = {
                                     {
                                       'args' => [
                                         {
-                                          'type' => 'brace_command_arg'
+                                          'type' => 'brace_container'
                                         }
                                       ],
                                       'cmdname' => 'aa',
@@ -85,7 +85,7 @@ $result_trees{'nested_in_sc'} = {
                                       }
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => '~',
@@ -129,7 +129,7 @@ $result_trees{'nested_in_sc'} = {
                                       'text' => 'ABr'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 },
                                 {
                                   'contents' => [
@@ -142,7 +142,7 @@ $result_trees{'nested_in_sc'} = {
                                       'text' => ' '
                                     }
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'abbr',
@@ -163,7 +163,7 @@ $result_trees{'nested_in_sc'} = {
                                       'type' => 'raw'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'verb',
@@ -175,7 +175,7 @@ $result_trees{'nested_in_sc'} = {
                               }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'sc',
@@ -184,7 +184,7 @@ $result_trees{'nested_in_sc'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'sc',
@@ -251,5 +251,10 @@ $result_converted{'html_text'}->{'nested_in_sc'} = '<p><small class="sc"><small 
 $result_converted{'latex_text'}->{'nested_in_sc'} = '\\textsc{\\textsc{aaa \\~{n} \\aa{} \\TeX{} \\~{\\aa{}} \\footnote{In footnote}, ABr (expl), 
 \\verb:in verb:}}
 ';
+
+
+$result_converted{'docbook'}->{'nested_in_sc'} = '<para>AAA &#209; &#197; &tex; &#197;&#771; <footnote><para>In footnote</para></footnote>, <abbrev>ABR</abbrev> (EXPL), 
+<literal>IN VERB</literal>
+</para>';
 
 1;

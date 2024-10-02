@@ -85,7 +85,7 @@ $result_trees{'protect_colon_source_mark'} = {
                             'text' => 'nop'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -108,7 +108,7 @@ $result_trees{'protect_colon_source_mark'} = {
                       'text' => ':'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'asis'

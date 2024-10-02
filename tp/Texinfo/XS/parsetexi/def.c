@@ -20,11 +20,10 @@
 #include <iconv.h>
 #include "unistr.h"
 
-/* for isolate_last_space and global_documentlanguage */
-#include "parser.h"
 #include "command_ids.h"
 #include "tree_types.h"
 #include "text.h"
+#include "types_data.h"
 #include "tree.h"
 #include "builtin_commands.h"
 #include "extra.h"
@@ -32,62 +31,71 @@
 #include "utils.h"
 /* for relocate_source_marks */
 #include "manipulate_tree.h"
-#include "source_marks.h"
-#include "commands.h"
 #include "unicode.h"
+#include "debug_parser.h"
+#include "commands.h"
+#include "source_marks.h"
+/* for isolate_last_space and global_documentlanguage */
+#include "parser.h"
 
 void
 gather_def_item (ELEMENT *current, enum command_id next_command)
 {
-  enum element_type type;
-  ELEMENT *def_item;
   int contents_count, i;
 
-  if (next_command
-      && next_command != CM_defline && next_command != CM_deftypeline)
-    type = ET_inter_def_item; /* Between @def*x and @def*. */
-  else
-    type = ET_def_item;
-
-  if (!current->cmd)
+  if (!current->e.c->cmd)
     return;
 
   /* Check this isn't an "x" type command.
      "This may happen for a construct like:
      @deffnx a b @section
      but otherwise the end of line will lead to the command closing." */
-  if (command_data(current->cmd).flags & CF_line)
+  if (command_data(current->e.c->cmd).flags & CF_line)
     return;
 
-  contents_count = current->contents.number;
+  contents_count = current->e.c->contents.number;
   if (contents_count == 0)
     return;
 
-  /* Starting from the end, collect everything that is not a ET_def_line and
-     put it into the ET_def_item. */
-  def_item = new_element (type);
+  /* Starting from the end, determine the number of elements that are not
+     an ET_def_line */
   for (i = 0; i < contents_count; i++)
     {
-      ELEMENT *last_child, *item_content;
-      last_child = last_contents_child (current);
-      if (last_child->type == ET_def_line)
+      ELEMENT *last_child = contents_child_by_index (current, -(i+1));
+      if (last_child->flags & EF_def_line)
         break;
-      item_content = pop_element_from_contents (current);
-      insert_into_contents (def_item, item_content, 0);
     }
 
-  if (def_item->contents.number > 0)
+  if (i > 0)
     {
-      if (current->cmd == CM_defblock
-        /* all content between @defblock and first @def*line */
-          && def_item->contents.number == contents_count)
+      /* there are elements after def_line, put them in a def item */
+      enum element_type type;
+      int j;
+      ELEMENT *def_item;
+
+      if (current->e.c->cmd == CM_defblock
+       /* all content between @defblock and first @def*line */
+          && i == contents_count)
+        type = ET_before_defline;
+      else if (next_command
+          && next_command != CM_defline && next_command != CM_deftypeline)
+        type = ET_inter_def_item; /* Between @def*x and @def*. */
+      else
+        type = ET_def_item;
+
+      def_item = new_element (type);
+
+      insert_slice_into_contents (def_item, 0, current,
+                           contents_count -i, contents_count);
+      for (j = 0; j < i; j++)
         {
-          def_item->type = ET_before_defline;
+          ELEMENT *e = contents_child_by_index (current, -(j+1));
+          e->parent = def_item;
         }
+      remove_slice_from_contents (current,
+                           contents_count -i, contents_count);
       add_to_element_contents (current, def_item);
     }
-  else
-    destroy_element (def_item);
 }
 
 
@@ -102,9 +110,9 @@ next_bracketed_or_word_agg (ELEMENT *current, int *i)
   int j;
   while (1)
     {
-      if (*i == current->contents.number)
+      if (*i == current->e.c->contents.number)
         break;
-      e = current->contents.list[*i];
+      e = current->e.c->contents.list[*i];
       if (e->type == ET_spaces
           || e->type == ET_delimiter)
         {
@@ -128,7 +136,7 @@ next_bracketed_or_word_agg (ELEMENT *current, int *i)
 
   if (num == 1)
     {
-      e = current->contents.list[*i - 1];
+      e = current->e.c->contents.list[*i - 1];
 
       /* there is only one bracketed element */
       if (e->type == ET_bracketed_arg
@@ -195,9 +203,9 @@ split_delimiters (ELEMENT *current, int starting_idx)
 {
   int i;
   static char *chars = "[](),";
-  for (i = starting_idx; i < current->contents.number; i++)
+  for (i = starting_idx; i < current->e.c->contents.number; i++)
     {
-      ELEMENT *e = current->contents.list[i];
+      ELEMENT *e = current->e.c->contents.list[i];
       char *p;
       ELEMENT *new;
       int len;
@@ -207,21 +215,20 @@ split_delimiters (ELEMENT *current, int starting_idx)
       uint8_t *u8_p;
       size_t u8_len;
 
-      if (e->type != ET_NONE && (e->type == ET_bracketed_arg
-                                 || e->text.end > 0))
+      if (e->type == ET_spaces || e->type == ET_bracketed_arg)
         continue;
-      else if (e->text.end == 0)
+      else if (e->type != ET_normal_text)
         {
           new = new_element (ET_def_line_arg);
           new->parent = e->parent;
           add_to_element_contents (new, e);
-          current->contents.list[i] = new;
+          current->e.c->contents.list[i] = new;
           continue;
         }
 
-      p = e->text.text;
+      p = e->e.text->text;
 
-      if (e->source_mark_list.number)
+      if (e->source_mark_list)
         {
           u8_text = utf8_from_string (p);
           u8_p = u8_text;
@@ -233,8 +240,8 @@ split_delimiters (ELEMENT *current, int starting_idx)
         {
           if (strchr (chars, *p))
             {
-              new = new_element (ET_delimiter);
-              text_append_n (&new->text, p, 1);
+              new = new_text_element (ET_delimiter);
+              text_append_n (new->e.text, p, 1);
 
               if (u8_text)
                 {
@@ -242,8 +249,8 @@ split_delimiters (ELEMENT *current, int starting_idx)
                   u8_p += u8_len;
 
                   current_position
-                   = relocate_source_marks (&(e->source_mark_list), new,
-                                                 current_position, u8_len);
+                   = relocate_source_marks (e->source_mark_list, new,
+                                            current_position, u8_len);
                 }
 
               insert_into_contents (current, new, i++);
@@ -252,9 +259,9 @@ split_delimiters (ELEMENT *current, int starting_idx)
               continue;
             }
 
-          ELEMENT *new_text = new_element (ET_NONE);
+          ELEMENT *new_text = new_text_element (ET_normal_text);
           len = strcspn (p, chars);
-          text_append_n (&new_text->text, p, len);
+          text_append_n (new_text->e.text, p, len);
 
           if (u8_text)
             {
@@ -262,8 +269,8 @@ split_delimiters (ELEMENT *current, int starting_idx)
               u8_p += u8_len;
 
              current_position
-               = relocate_source_marks (&(e->source_mark_list), new_text,
-                                          current_position, u8_len);
+               = relocate_source_marks (e->source_mark_list, new_text,
+                                        current_position, u8_len);
             }
 
           new = new_element (ET_def_line_arg);
@@ -285,9 +292,9 @@ static void
 split_def_args (ELEMENT *current, int starting_idx)
 {
   int i;
-  for (i = starting_idx; i < current->contents.number; i++)
+  for (i = starting_idx; i < current->e.c->contents.number; i++)
     {
-      ELEMENT *e = current->contents.list[i];
+      ELEMENT *e = current->e.c->contents.list[i];
       char *p;
       ELEMENT *new;
       int len;
@@ -303,20 +310,12 @@ split_def_args (ELEMENT *current, int starting_idx)
           continue;
         }
 
-      if (e->text.end == 0)
+      if (e->type != ET_normal_text)
         continue;
 
-      if (e->type == ET_spaces)
-        {
-          int status;
-          int inserted = lookup_info_integer (e, "inserted", &status);
-          if (inserted > 0)
-            continue;
-        }
+      p = e->e.text->text;
 
-      p = e->text.text;
-
-      if (e->source_mark_list.number)
+      if (e->source_mark_list)
         {
           u8_text = utf8_from_string (p);
           u8_p = u8_text;
@@ -329,15 +328,15 @@ split_def_args (ELEMENT *current, int starting_idx)
           len = strspn (p, whitespace_chars);
           if (len)
             {
-              new = new_element (ET_spaces);
+              new = new_text_element (ET_spaces);
             }
           else
             {
               len = strcspn (p, whitespace_chars);
-              new = new_element (ET_NONE);
+              new = new_text_element (ET_normal_text);
             }
 
-          text_append_n (&new->text, p, len);
+          text_append_n (new->e.text, p, len);
 
           if (u8_text)
             {
@@ -345,7 +344,7 @@ split_def_args (ELEMENT *current, int starting_idx)
               u8_p += u8_len;
 
               current_position
-                = relocate_source_marks (&(e->source_mark_list), new,
+                = relocate_source_marks (e->source_mark_list, new,
                                          current_position, u8_len);
             }
           insert_into_contents (current, new, i++);
@@ -357,7 +356,7 @@ split_def_args (ELEMENT *current, int starting_idx)
     }
 }
 
-ELEMENT **
+void
 parse_def (enum command_id command, ELEMENT *current)
 {
   int contents_idx = 0;
@@ -365,7 +364,6 @@ parse_def (enum command_id command, ELEMENT *current)
   int i, i_def;
   int arg_types_nr;
   ELEMENT *e, *e1;
-  ELEMENT **result;
   enum command_id *arguments_types_list;
   int inserted_category = 0;
 
@@ -392,23 +390,23 @@ parse_def (enum command_id command, ELEMENT *current)
       inserted_category = 1;
       e = new_element (ET_def_line_arg);
       insert_into_contents (current, e, contents_idx);
-      e1 = new_element (ET_NONE);
-      text_append_n (&e1->text, category, strlen (category));
+      e1 = new_text_element (ET_normal_text);
+      text_append_n (e1->e.text, category, strlen (category));
       add_to_element_contents (e, e1);
       if (global_documentlanguage && *global_documentlanguage)
         {
           e->type = ET_untranslated_def_line_arg;
           e1->type = ET_untranslated;
-          add_extra_string_dup (e, "documentlanguage",
+          add_extra_string_dup (e, AI_key_documentlanguage,
                                 global_documentlanguage);
           if (def_aliases[i].translation_context)
-            add_extra_string_dup (e, "translation_context",
+            add_extra_string_dup (e, AI_key_translation_context,
                                   def_aliases[i].translation_context);
         }
 
-      e = new_element (ET_spaces);
-      text_append_n (&e->text, " ", 1);
-      add_info_integer (e, "inserted", 1);
+      e = new_text_element (ET_spaces);
+      text_append_n (e->e.text, " ", 1);
+      e->flags |= EF_inserted;
       insert_into_contents (current, e, contents_idx + 1);
     }
 
@@ -433,7 +431,6 @@ parse_def (enum command_id command, ELEMENT *current)
         break;
       arg_types_nr++;
     }
-  result = malloc ((arg_types_nr+1) * sizeof (ELEMENT *));
 
   for (i = 0; i < arg_types_nr; i++)
     {
@@ -445,19 +442,16 @@ parse_def (enum command_id command, ELEMENT *current)
           ELEMENT *new_def_type = new_element (arg_type);
 
           new_def_type->parent = e->parent;
-          current->contents.list[contents_idx - 1] = new_def_type;
+          current->e.c->contents.list[contents_idx - 1] = new_def_type;
           add_to_element_contents (new_def_type, e);
-          result[i] = new_def_type;
         }
       else
         break;
     }
 
-  result[i] = 0;
-
   if (inserted_category)
     {
-      add_info_integer (current->contents.list[0], "inserted", 1);
+      current->e.c->contents.list[0]->flags |= EF_inserted;
     }
 
   /* Process args */
@@ -474,7 +468,7 @@ parse_def (enum command_id command, ELEMENT *current)
     set_type_not_arg = 1;
 
   type = set_type_not_arg;
-  for (i = contents_idx; i < current->contents.number; i++)
+  for (i = contents_idx; i < current->e.c->contents.number; i++)
     {
       enum element_type def_arg_type = ET_def_arg;
       e = contents_child_by_index (current, i);
@@ -487,8 +481,10 @@ parse_def (enum command_id command, ELEMENT *current)
           type = set_type_not_arg;
           continue;
         }
-      if (e->type == ET_def_line_arg && e->contents.number == 1
-          && e->contents.list[0]->cmd && e->contents.list[0]->cmd != CM_code)
+      if (e->type == ET_def_line_arg && e->e.c->contents.number == 1
+          && !(type_data[e->e.c->contents.list[0]->type].flags & TF_text)
+          && e->e.c->contents.list[0]->e.c->cmd
+          && e->e.c->contents.list[0]->e.c->cmd != CM_code)
         {
           type = set_type_not_arg;
         }
@@ -502,7 +498,6 @@ parse_def (enum command_id command, ELEMENT *current)
       ELEMENT *new_def_type = new_element (def_arg_type);
       new_def_type->parent = e->parent;
       add_to_element_contents (new_def_type, e);
-      current->contents.list[i] = new_def_type;
+      current->e.c->contents.list[i] = new_def_type;
     }
-  return result;
 }

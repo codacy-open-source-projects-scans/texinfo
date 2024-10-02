@@ -27,7 +27,7 @@ GNULIB_CPPFLAGS = -I$(srcdir)/gnulib/lib \
 
 ACLOCAL_AMFLAGS = -I gnulib/m4
 
-SUBDIRS=gnulib/lib
+SUBDIRS=gnulib/lib gnulib/po
 
 EXTRA_DIST+=gnulib/m4/gnulib-cache.m4
 
@@ -124,6 +124,7 @@ libtexinfo_la_SOURCES= \
 		      main/command_ids.h \
 		      main/builtin_commands.c \
 		      main/builtin_commands.h \
+		      main/types_data.h \
 		      main/debug.c \
 		      main/debug.h \
 		      main/errors.c \
@@ -136,6 +137,8 @@ libtexinfo_la_SOURCES= \
 		      main/convert_to_text.h \
 		      main/convert_utils.c \
 		      main/convert_utils.h \
+		      main/conversion_data.c \
+		      main/conversion_data.h \
 		      main/floats.c \
 		      main/floats.h \
 		      main/manipulate_tree.c \
@@ -145,6 +148,7 @@ libtexinfo_la_SOURCES= \
 		      main/command_stack.c \
 		      main/command_stack.h \
 		      main/cmd_structuring.c \
+		      main/cmd_text.c \
 		      main/parser_conf.c \
 		      main/parser_conf.h \
 		      main/targets.c \
@@ -210,9 +214,10 @@ libtexinfo_la_SOURCES= \
 
 EXTRA_DIST += main/accent_tables_8bit_codepoints.c
 EXTRA_DIST += main/command_data.c
+EXTRA_DIST += main/conversion_data.c
+EXTRA_DIST += main/conversion_data.h
 EXTRA_DIST += main/cmd_normalization.c
 EXTRA_DIST += main/cmd_unicode.c
-EXTRA_DIST += main/cmd_symbol.c
 EXTRA_DIST += main/cmd_text.c
 EXTRA_DIST += main/global_multi_commands_case.c
 EXTRA_DIST += main/global_unique_commands_case.c
@@ -223,26 +228,29 @@ libtexinfo_la_CFLAGS = $(XSLIBS_CFLAGS)
 libtexinfo_la_LIBADD = $(top_builddir)/gnulib/lib/libgnu.la
 libtexinfo_la_LDFLAGS = -version-info 0:0:0 $(perl_conf_LDFLAGS) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 
-BUILT_SOURCES=main/accent_tables_8bit_codepoints.c \
-              main/cmd_normalization.c \
-              main/cmd_unicode.c \
-              main/cmd_structuring.c \
-              main/cmd_symbol.c \
-              main/cmd_text.c \
-              main/command_data.c \
-              main/command_ids.h \
-              main/element_types.c \
-              main/element_types.h \
-              main/global_commands_types.h \
-              main/global_multi_commands_case.c \
-              main/global_unique_commands_case.c \
-              main/options_init_free.c \
-              main/options_get_perl.c \
-              main/options_types.h
+BUILT_SOURCES = main/accent_tables_8bit_codepoints.c \
+                convert/cmd_converter.c \
+                main/cmd_normalization.c \
+                main/cmd_structuring.c \
+                main/cmd_text.c \
+                main/cmd_unicode.c \
+                main/command_data.c \
+                main/command_ids.h \
+                main/conversion_data.c \
+                main/conversion_data.h \
+                main/element_types.c \
+                main/element_types.h \
+                main/global_commands_types.h \
+                main/global_multi_commands_case.c \
+                main/global_unique_commands_case.c \
+                main/options_init_free.c \
+                main/options_get_perl.c \
+                main/options_types.h
 
 # Need to be distributed
 EXTRA_DIST+=main/element_types.txt main/element_types.awk \
 	   main/command_data.awk
+EXTRA_DIST += convert/cmd_converter.c
 
 $(srcdir)/main/element_types.c $(srcdir)/main/element_types.h: main/element_types.txt main/element_types.awk
 	$(GAWK) -v srcdir=$(srcdir)/main -f $(srcdir)/main/element_types.awk \
@@ -269,14 +277,14 @@ $(srcdir)/../Commands.pm: ../command_data.txt $(srcdir)/../../maintain/regenerat
 $(srcdir)/../Options.pm: $(srcdir)/../options_data.txt $(srcdir)/../../maintain/regenerate_perl_options_info.pl
 	$(PERL) $(srcdir)/../../maintain/regenerate_perl_options_info.pl $(srcdir)/../Options.pm < $(srcdir)/../options_data.txt
 
-$(srcdir)/main/cmd_normalization.c $(srcdir)/main/cmd_unicode.c $(srcdir)/main/cmd_structuring.c $(srcdir)/main/cmd_symbol.c $(srcdir)/main/cmd_text.c: main/command_data.c ../Commands.pm ../Options.pm $(srcdir)/../../maintain/setup_converters_code_tables.pl
+$(srcdir)/main/cmd_normalization.c $(srcdir)/main/cmd_unicode.c $(srcdir)/main/cmd_structuring.c $(srcdir)/main/cmd_text.c $(srcdir)/convert/cmd_converter.c: main/command_data.c ../Commands.pm ../Options.pm $(srcdir)/../../maintain/setup_converters_code_tables.pl
 	$(TXI_MODULES_ENV) $(PERL) $(srcdir)/../../maintain/setup_converters_code_tables.pl \
 	    < $(srcdir)/main/command_data.c \
 	      $(srcdir)/main/cmd_normalization.c \
 	      $(srcdir)/main/cmd_unicode.c \
 	      $(srcdir)/main/cmd_structuring.c \
-	      $(srcdir)/main/cmd_symbol.c \
-	      $(srcdir)/main/cmd_text.c
+	      $(srcdir)/main/cmd_text.c \
+	      $(srcdir)/convert/cmd_converter.c
 
 MAINTAINERCLEANFILES += main/cmd_normalization.c main/cmd_unicode.c \
                 main/cmd_structuring.c main/cmd_symbol.c main/cmd_text.c
@@ -297,6 +305,19 @@ $(srcdir)/main/options_init_free.c $(srcdir)/main/options_types.h $(srcdir)/main
 
 MAINTAINERCLEANFILES += main/options_init_free.c main/options_types.h \
                         main/options_get_perl.c
+
+$(srcdir)/main/conversion_data.c $(srcdir)/main/conversion_data.h: main/command_data.c $(srcdir)/../Data/default_css_element_class_styles.csv $(srcdir)/../Data/default_direction_strings.csv $(srcdir)/../Data/default_special_unit_info.csv $(srcdir)/../Data/html_style_commands_element.csv $(srcdir)/../../maintain/generate_code_convert_data.pl
+	$(PERL) $(srcdir)/../../maintain/generate_code_convert_data.pl \
+	        < $(srcdir)/main/command_data.c \
+	            $(srcdir)/../Data/default_css_element_class_styles.csv \
+	            $(srcdir)/../Data/default_direction_strings.csv \
+	            $(srcdir)/../Data/default_special_unit_info.csv \
+	            $(srcdir)/../Data/html_style_commands_element.csv \
+	            C $(srcdir)/main/conversion_data.c \
+	            $(srcdir)/main/conversion_data.h
+
+MAINTAINERCLEANFILES += main/conversion_data.c main/conversion_data.h
+
 
 ########################## shared perl XS library for texinfo XS codes
 # it is separate from libtexinfo because of different dependencies; it
@@ -337,12 +358,15 @@ endif
 libtexinfo_convert_la_SOURCES= \
                        convert/converter.c \
                        convert/converter.h \
+                       convert/cmd_converter.c \
                        convert/convert_html.h \
                        convert/convert_html.c \
                        convert/build_html_perl_state.h \
                        convert/build_html_perl_state.c \
                        convert/call_html_perl_function.h \
-                       convert/call_html_perl_function.c
+                       convert/call_html_perl_function.c \
+                       convert/get_converter_perl_info.c \
+                       convert/get_converter_perl_info.h
 
 # locate include files under out-of-source builds.
 # parsetexi will only be needed for texinfo.c
@@ -419,9 +443,7 @@ xs_LTLIBRARIES += IndicesXS.la
 endif
 
 nodist_IndicesXS_la_SOURCES = \
-                    main/IndicesXS.c \
-                    convert/get_converter_perl_info.c \
-                    convert/get_converter_perl_info.h
+                    main/IndicesXS.c
 
 CLEANFILES += \
                     main/IndicesXS.c
@@ -446,9 +468,7 @@ CLEANFILES += convert/ConvertXS.c
 
 ConvertXS_la_SOURCES = \
                        convert/get_html_perl_info.c \
-                       convert/get_html_perl_info.h \
-                       convert/get_converter_perl_info.c \
-                       convert/get_converter_perl_info.h
+                       convert/get_html_perl_info.h
 
 EXTRA_DIST += convert/ConvertXS.xs
 

@@ -145,7 +145,7 @@ $result_trees{'multiple_index_text_sortas_seeentry_seealso'} = {
                           'text' => 'A---S'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'sortas',
@@ -171,7 +171,7 @@ $result_trees{'multiple_index_text_sortas_seeentry_seealso'} = {
                           'text' => 'other second'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -198,7 +198,7 @@ $result_trees{'multiple_index_text_sortas_seeentry_seealso'} = {
                           'text' => 'toto'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -256,7 +256,7 @@ $result_trees{'multiple_index_text_sortas_seeentry_seealso'} = {
                           'text' => 'BB'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'sortas',
@@ -319,7 +319,7 @@ $result_trees{'multiple_index_text_sortas_seeentry_seealso'} = {
                           'text' => 'something else'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -589,7 +589,9 @@ File: ,  Node: chapter index,  Prev: Top,  Up: Top
  [index ]
 * Menu:
 
+  aaa continue aagain, See other second.
 * other second:                          chapter index.         (line 6)
+  entry secret, See something else.
 
 
 Tag Table:
@@ -610,7 +612,9 @@ $result_converted{'plaintext'}->{'multiple_index_text_sortas_seeentry_seealso'} 
 
 * Menu:
 
+  aaa continue aagain, See other second.
 * other second:                          chapter index.         (line 3)
+  entry secret, See something else.
 
 ';
 

@@ -98,8 +98,7 @@ $result_trees{'formats_in_menu'} = {
                               'cmdname' => 'asis',
                               'source_info' => {
                                 'line_nr' => 5
-                              },
-                              'type' => 'command_as_argument'
+                              }
                             }
                           ],
                           'info' => {
@@ -506,7 +505,7 @@ $result_trees{'formats_in_menu'} = {
                                   'text' => '* acronym::'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_arg'
                             }
                           ],
                           'cmdname' => 'acronym',

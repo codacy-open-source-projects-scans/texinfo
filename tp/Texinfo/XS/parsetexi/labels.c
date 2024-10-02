@@ -18,18 +18,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "parser.h"
 #include "tree_types.h"
 #include "tree.h"
-#include "errors_parser.h"
+#include "extra.h"
+/* for element_command_name */
+#include "builtin_commands.h"
 /* for whitespace_chars and count_multibyte */
 #include "utils.h"
 /* for parse_node_manual */
 #include "manipulate_tree.h"
+/* for compare_labels */
+#include "targets.h"
 #include "convert_to_texinfo.h"
 #include "node_name_normalization.h"
+#include "errors_parser.h"
 #include "source_marks.h"
-#include "extra.h"
+/* for parsed_document */
+#include "parser.h"
 #include "labels.h"
 
 /* Register a target element associated to a label that may be the target of
@@ -63,7 +68,7 @@ check_register_target_element_label (ELEMENT *label_element,
                                      ELEMENT *target_element)
 {
   char *normalized = 0;
-  if (label_element && label_element->contents.number > 0)
+  if (label_element && label_element->e.c->contents.number > 0)
     {
       char *non_hyphen_char;
       /* check that the label used as an anchor for link target has no
@@ -82,7 +87,7 @@ check_register_target_element_label (ELEMENT *label_element,
       if (!*non_hyphen_char)
         {
           char *label_texi = convert_contents_to_texinfo (label_element);
-          line_error_ext (MSG_error, 0, &target_element->source_info,
+          line_error_ext (MSG_error, 0, &target_element->e.c->source_info,
                           "empty node name after expansion `%s'",
                            label_texi);
           free (label_texi);
@@ -91,10 +96,85 @@ check_register_target_element_label (ELEMENT *label_element,
         }
       else
         {
-          add_extra_string (target_element, "normalized", normalized);
+          add_extra_string (target_element, AI_key_normalized, normalized);
         }
     }
   register_label (target_element, normalized);
+}
+
+/* fill a LABEL_LIST that is sorted with unique identifiers such that
+   elements are easy to find.
+   Called from parser */
+void
+set_labels_identifiers_target (const LABEL_LIST *labels,
+                               LABEL_LIST *result)
+{
+  size_t labels_number = labels->number;
+  LABEL *targets = malloc (labels_number * sizeof (LABEL));
+  size_t targets_number = labels_number;
+  size_t i;
+
+  memcpy (targets, labels->list, labels_number * sizeof (LABEL));
+  qsort (targets, labels_number, sizeof (LABEL), compare_labels);
+
+  i = 0;
+  while (i < targets_number)
+    {
+      /* reached the end of the labels with identifiers */
+      if (targets[i].identifier == 0)
+        {
+          targets_number = i;
+          break;
+        }
+      targets[i].element->flags |= EF_is_target;
+      if (i < targets_number - 1)
+        {
+          /* find redundant labels with the same identifiers and
+             eliminate them */
+          size_t j = i;
+          while (j < targets_number - 1 && targets[j+1].identifier
+                 && !strcmp (targets[i].identifier, targets[j+1].identifier))
+            {
+              labels->list[targets[j+1].label_number].reference
+                                   = targets[i].element;
+              j++;
+            }
+          if (j > i)
+            {
+              size_t n;
+              for (n = i+1; n < j + 1; n++)
+                {
+                  const ELEMENT *label_element
+                     = get_label_element (targets[n].element);
+                  char *texi_str = convert_contents_to_texinfo (label_element);
+                  line_error_ext (MSG_error, 0,
+                                  &targets[n].element->e.c->source_info,
+                                  "@%s `%s' previously defined",
+                                  element_command_name (targets[n].element),
+                                  texi_str);
+                  free (texi_str);
+                  line_error_ext (MSG_error, 1,
+                                  &targets[i].element->e.c->source_info,
+                                  "here is the previous definition as @%s",
+                                  element_command_name (targets[i].element));
+
+                }
+              if (j < targets_number - 1)
+                {
+                  memmove (&targets[i+1], &targets[j+1],
+                         (targets_number - (j + 1))* sizeof (LABEL));
+                }
+              targets_number -= (j - i);
+            }
+          i++;
+        }
+      else
+        break;
+    }
+
+  result->list = targets;
+  result->number = targets_number;
+  result->space = labels_number;
 }
 
 

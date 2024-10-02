@@ -156,7 +156,7 @@ $result_trees{'same_only_seealso_seeentry'} = {
                           'text' => 'sss'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -213,7 +213,7 @@ $result_trees{'same_only_seealso_seeentry'} = {
                           'text' => '123'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -275,7 +275,7 @@ $result_trees{'same_only_seealso_seeentry'} = {
                           'text' => 'yyy'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -332,7 +332,7 @@ $result_trees{'same_only_seealso_seeentry'} = {
                           'text' => 'ttt'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -394,7 +394,7 @@ $result_trees{'same_only_seealso_seeentry'} = {
                           'text' => 'also'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -451,7 +451,7 @@ $result_trees{'same_only_seealso_seeentry'} = {
                           'text' => 'entry'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -720,6 +720,16 @@ File: ,  Node: node,  Prev: Top,  Up: Top
 1 chap
 ******
 
+ [index ]
+* Menu:
+
+  aaa:                                   See also sss.
+  aaa:                                   See also 123.
+  bbb, See yyy.
+  bbb, See ttt.
+  ccc:                                   See also also.
+  ccc, See entry.
+
 
 Tag Table:
 Node: Top27
@@ -739,6 +749,15 @@ $result_converted{'plaintext'}->{'same_only_seealso_seeentry'} = 'top
 
 1 chap
 ******
+
+* Menu:
+
+  aaa:                                   See also sss.
+  aaa:                                   See also 123.
+  bbb, See yyy.
+  bbb, See ttt.
+  ccc:                                   See also also.
+  ccc, See entry.
 
 ';
 

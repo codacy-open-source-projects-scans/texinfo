@@ -224,11 +224,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                         'text' => '@mymac'
                       }
                     ],
-                    'info' => {
-                      'spaces_before_argument' => {
-                        'text' => ' '
-                      }
-                    }
+                    'type' => 'line_arg'
                   },
                   {
                     'contents' => [
@@ -241,7 +237,8 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                       'spaces_before_argument' => {
                         'text' => ' '
                       }
-                    }
+                    },
+                    'type' => 'line_arg'
                   },
                   {
                     'contents' => [
@@ -253,11 +250,15 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                       'spaces_before_argument' => {
                         'text' => ' '
                       }
-                    }
+                    },
+                    'type' => 'line_arg'
                   }
                 ],
                 'info' => {
-                  'command_name' => 'mylinecommand'
+                  'command_name' => 'mylinecommand',
+                  'spaces_before_argument' => {
+                    'text' => ' '
+                  }
                 },
                 'type' => 'linemacro_call'
               },
@@ -327,7 +328,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                                     'info' => {
                                       'command_name' => 'mymac'
                                     },
-                                    'type' => 'macro_call'
+                                    'type' => 'macro_call_line'
                                   },
                                   'sourcemark_type' => 'macro_expansion',
                                   'status' => 'start'
@@ -343,7 +344,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                                       'text' => 'arg1'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'samp',
@@ -382,7 +383,38 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => ''
+                        },
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'arg1'
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => 'samp'
+                        }
+                      ],
+                      'info' => {
+                        'spaces_after_argument' => {
+                          'text' => '
+'
+                        }
+                      },
+                      'type' => 'bracketed_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -393,8 +425,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
               'source_info' => {
                 'line_nr' => 15,
                 'macro' => 'mylinecommand'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -453,11 +484,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                         'text' => '@mylinemac'
                       }
                     ],
-                    'info' => {
-                      'spaces_before_argument' => {
-                        'text' => ' '
-                      }
-                    }
+                    'type' => 'line_arg'
                   },
                   {
                     'contents' => [
@@ -470,7 +497,8 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                       'spaces_before_argument' => {
                         'text' => ' '
                       }
-                    }
+                    },
+                    'type' => 'line_arg'
                   },
                   {
                     'contents' => [
@@ -482,11 +510,15 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                       'spaces_before_argument' => {
                         'text' => ' '
                       }
-                    }
+                    },
+                    'type' => 'line_arg'
                   }
                 ],
                 'info' => {
-                  'command_name' => 'mylinecommand'
+                  'command_name' => 'mylinecommand',
+                  'spaces_before_argument' => {
+                    'text' => ' '
+                  }
                 },
                 'type' => 'linemacro_call'
               },
@@ -549,7 +581,8 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                                           {
                                             'text' => '}'
                                           }
-                                        ]
+                                        ],
+                                        'type' => 'line_arg'
                                       },
                                       {
                                         'contents' => [
@@ -561,7 +594,8 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
                                           'spaces_before_argument' => {
                                             'text' => ' '
                                           }
-                                        }
+                                        },
+                                        'type' => 'line_arg'
                                       }
                                     ],
                                     'info' => {
@@ -722,8 +756,7 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
               'source_info' => {
                 'line_nr' => 17,
                 'macro' => 'mylinecommand'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -781,7 +814,6 @@ $result_trees{'spaces_after_macro_linemacro_commands_in_call'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'spaces_after_macro_linemacro_commands_in_call'}{'contents'}[0]{'contents'}[6]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'spaces_after_macro_linemacro_commands_in_call'}{'contents'}[0]{'contents'}[6]{'contents'}[0]{'args'}[0]{'contents'}[2];
 
 $result_texis{'spaces_after_macro_linemacro_commands_in_call'} = '@linemacro mylinecommand {first, second, rest}
 @defblock

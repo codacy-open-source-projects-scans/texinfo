@@ -118,25 +118,6 @@ $result_trees{'star_at_command_formatting'} = {
           }
         },
         {
-          'source_marks' => [
-            {
-              'counter' => 1,
-              'element' => {
-                'args' => [
-                  {
-                    'type' => 'brace_command_arg'
-                  }
-                ],
-                'info' => {
-                  'command_name' => 'mymacro'
-                },
-                'type' => 'macro_call'
-              },
-              'position' => 1,
-              'sourcemark_type' => 'macro_expansion',
-              'status' => 'start'
-            }
-          ],
           'text' => '
 ',
           'type' => 'empty_line'
@@ -144,6 +125,24 @@ $result_trees{'star_at_command_formatting'} = {
         {
           'contents' => [
             {
+              'source_marks' => [
+                {
+                  'counter' => 1,
+                  'element' => {
+                    'args' => [
+                      {
+                        'type' => 'brace_arg'
+                      }
+                    ],
+                    'info' => {
+                      'command_name' => 'mymacro'
+                    },
+                    'type' => 'macro_call'
+                  },
+                  'sourcemark_type' => 'macro_expansion',
+                  'status' => 'start'
+                }
+              ],
               'text' => 'Some text '
             },
             {
@@ -249,7 +248,7 @@ $result_trees{'star_at_command_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'asis',
@@ -273,7 +272,7 @@ $result_trees{'star_at_command_formatting'} = {
                       'text' => ' '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'asis',
@@ -301,7 +300,7 @@ $result_trees{'star_at_command_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'asis',
@@ -337,7 +336,7 @@ $result_trees{'star_at_command_formatting'} = {
                       'text' => ' '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'asis',
@@ -387,13 +386,17 @@ $result_trees{'star_at_command_formatting'} = {
             {
               'contents' => [
                 {
+                  'text' => 'Example
+'
+                },
+                {
                   'source_marks' => [
                     {
                       'counter' => 2,
                       'element' => {
                         'args' => [
                           {
-                            'type' => 'brace_command_arg'
+                            'type' => 'brace_arg'
                           }
                         ],
                         'info' => {
@@ -401,15 +404,10 @@ $result_trees{'star_at_command_formatting'} = {
                         },
                         'type' => 'macro_call'
                       },
-                      'position' => 8,
                       'sourcemark_type' => 'macro_expansion',
                       'status' => 'start'
                     }
                   ],
-                  'text' => 'Example
-'
-                },
-                {
                   'text' => 'Some text '
                 },
                 {
@@ -510,7 +508,7 @@ $result_trees{'star_at_command_formatting'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'asis',
@@ -534,7 +532,7 @@ $result_trees{'star_at_command_formatting'} = {
                           'text' => ' '
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'asis',
@@ -562,7 +560,7 @@ $result_trees{'star_at_command_formatting'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'asis',
@@ -598,7 +596,7 @@ $result_trees{'star_at_command_formatting'} = {
                           'text' => ' '
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'asis',
@@ -683,13 +681,17 @@ $result_trees{'star_at_command_formatting'} = {
             {
               'contents' => [
                 {
+                  'text' => 'Quotation
+'
+                },
+                {
                   'source_marks' => [
                     {
                       'counter' => 3,
                       'element' => {
                         'args' => [
                           {
-                            'type' => 'brace_command_arg'
+                            'type' => 'brace_arg'
                           }
                         ],
                         'info' => {
@@ -697,15 +699,10 @@ $result_trees{'star_at_command_formatting'} = {
                         },
                         'type' => 'macro_call'
                       },
-                      'position' => 10,
                       'sourcemark_type' => 'macro_expansion',
                       'status' => 'start'
                     }
                   ],
-                  'text' => 'Quotation
-'
-                },
-                {
                   'text' => 'Some text '
                 },
                 {
@@ -811,7 +808,7 @@ $result_trees{'star_at_command_formatting'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'asis',
@@ -835,7 +832,7 @@ $result_trees{'star_at_command_formatting'} = {
                           'text' => ' '
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'asis',
@@ -863,7 +860,7 @@ $result_trees{'star_at_command_formatting'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'asis',
@@ -899,7 +896,7 @@ $result_trees{'star_at_command_formatting'} = {
                           'text' => ' '
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'asis',

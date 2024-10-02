@@ -172,8 +172,7 @@ foreach my $command ('item', 'headitem', 'tab') {
   delete $nobrace_commands{$command};
 }
 
-foreach my $command ('item', 'itemx',
-                      keys(%Texinfo::Commands::def_commands)) {
+foreach my $command ('item', 'itemx') {
   delete $line_commands{$command};
 }
 
@@ -257,6 +256,15 @@ my %type_elements = (
   'def_item' => 'definitionitem',
   'before_item' => 'beforefirstitem',
   'before_defline' => 'beforefirstdefline',
+);
+
+# Empty containers do not happen often, mainly when a source mark
+# needs to be kept.  However, it is more robust to remove explictely
+# empty containers that we want to remove instead of relying on a
+# specific tree.
+my %container_ignored_if_empty = (
+  'preformatted' => 1,
+  'menu_comment' => 1,
 );
 
 my %default_context_block_commands = (
@@ -575,6 +583,87 @@ sub _convert_comment_at_end
   return '';
 }
 
+sub _convert_def_line($$)
+{
+  my $self = shift;
+  my $element = shift;
+
+  my $result = '';
+
+  if ($element->{'cmdname'}) {
+    # @def*x command has the command associated with def_line.
+    my $attribute = [];
+    push @$attribute, _leading_spaces_arg($element);
+    $result .= $self->txi_markup_open_element($element->{'cmdname'},
+                                              $attribute);
+  }
+  $result .= $self->txi_markup_open_element('definitionterm');
+  $result .= $self->_index_entry($element);
+  push @{$self->{'document_context'}->[-1]->{'monospace'}}, 1;
+  my $def_command = $element->{'extra'}->{'def_command'};
+  if ($element->{'args'} and @{$element->{'args'}}
+      and $element->{'args'}->[0]->{'contents'}) {
+    my $main_command;
+    my $alias;
+    if ($Texinfo::Common::def_aliases{$def_command}) {
+      $main_command
+        = $Texinfo::Common::def_aliases{$def_command};
+      $alias = 1;
+    } else {
+      $main_command = $def_command;
+      $alias = 0;
+    }
+    foreach my $arg (@{$element->{'args'}->[0]->{'contents'}}) {
+      my $type = $arg->{'type'};
+      # should only happen for dubious trees in which the def line
+      # was not split in def roles
+      next if (!defined($type));
+      my $content = $self->_convert($arg);
+      if ($type eq 'spaces') {
+        $content =~ s/\n$//;
+        $result .= $content;
+      } else {
+        my $attribute = [];
+        if ($type eq 'def_category' and $alias) {
+          push @$attribute, ['automatic', 'on'];
+        }
+        my $format_element;
+        if ($type eq 'def_name') {
+          $format_element = $defcommand_name_type{$main_command};
+        } elsif ($type eq 'def_arg') {
+          $format_element = 'param';
+        } elsif ($type eq 'def_typearg') {
+          $format_element = 'paramtype';
+        } else {
+          $format_element = $type;
+          $format_element =~ s/^def_//;
+        }
+        if ($arg->{'contents'} and scalar($arg->{'contents'})
+            and $arg->{'contents'}->[0]->{'type'}
+            and $arg->{'contents'}->[0]->{'type'} eq 'bracketed_arg') {
+          push @$attribute, ['bracketed', 'on'];
+          push @$attribute,
+             _leading_trailing_spaces_arg($arg->{'contents'}->[0]);
+        }
+        $result
+          .= $self->txi_markup_open_element("def$format_element", $attribute)
+                  .$content
+                  .$self->txi_markup_close_element("def$format_element");
+      }
+    }
+  }
+  pop @{$self->{'document_context'}->[-1]->{'monospace'}};
+  $result .= _end_line_spaces($self, $element);
+  $result .= $self->txi_markup_close_element('definitionterm');
+  if ($element->{'cmdname'}) {
+    $result .= $self->txi_markup_close_element($element->{'cmdname'});
+  }
+  chomp ($result);
+  $result .= "\n";
+
+  return $result;
+}
+
 my @node_directions = ('Next', 'Prev', 'Up');
 
 # not used here, but it is consistent with other %commands_args_elements
@@ -593,7 +682,7 @@ sub _convert($$;$)
 
   if (0) {
   #if (1) { #}
-    print STDERR "root\n";
+    print STDERR "element\n";
     print STDERR "  Command: $element->{'cmdname'}\n" if ($element->{'cmdname'});
     print STDERR "  Type: $element->{'type'}\n" if ($element->{'type'});
     print STDERR "  Text: $element->{'text'}\n" if (defined($element->{'text'}));
@@ -629,8 +718,8 @@ sub _convert($$;$)
         return $self->txi_markup_element('click',
                         [['command', $element->{'extra'}->{'clickstyle'}]]);
       }
-      if ($self->{'itemize_line'} and $element->{'type'}
-          and $element->{'type'} eq 'command_as_argument'
+      if ($self->{'itemize_command_as_argument'}
+          and $element eq $self->{'itemize_command_as_argument'}
           and !$element->{'args'}) {
         my $arguments = [['command', $element->{'cmdname'}]];
         push @$arguments, ['automatic', 'on']
@@ -653,7 +742,8 @@ sub _convert($$;$)
             push @$attributes, ['spacesaftercmd',
                $element->{'info'}->{'spaces_after_cmd_before_arg'}->{'text'}];
           }
-          if ($element->{'args'}->[0]->{'type'} ne 'brace_command_arg') {
+          if ($element->{'args'}->[0]->{'type'} ne 'brace_container'
+              and $element->{'args'}->[0]->{'type'} ne 'brace_arg') {
             push @$attributes, ['bracketed', 'off'];
           }
         }
@@ -890,6 +980,8 @@ sub _convert($$;$)
           } else {
             $result .= $closed_section_element;
           }
+        } elsif ($Texinfo::Commands::def_commands{$cmdname}) {
+          $result .= _convert_def_line($self, $element);
         } else {
           my $attribute = [_leading_spaces_arg($element)];
           if ($cmdname eq 'listoffloats') {
@@ -1253,9 +1345,11 @@ sub _convert($$;$)
       }
       my $prepended_elements = '';
       my $attribute = [];
-      $self->{'itemize_line'} = 1 if ($element->{'cmdname'} eq 'itemize');
       if ($element->{'extra'} and $element->{'extra'}->{'command_as_argument'}) {
         my $command_as_arg = $element->{'extra'}->{'command_as_argument'};
+        if ($element->{'cmdname'} eq 'itemize') {
+          $self->{'itemize_command_as_argument'} = $command_as_arg;
+        }
         push @$attribute,
          (['commandarg', $command_as_arg->{'cmdname'}],
              $self->_infoenclose_attribute($command_as_arg));
@@ -1479,10 +1573,17 @@ sub _convert($$;$)
         }
         unshift @close_format_elements, $element->{'cmdname'};
       }
-      delete $self->{'itemize_line'} if ($self->{'itemize_line'});
+      delete $self->{'itemize_command_as_argument'}
+        if ($self->{'itemize_command_as_argument'});
     }
   }
   if ($element->{'type'}) {
+
+    if ($container_ignored_if_empty{$element->{'type'}}
+        and !$element->{'contents'}) {
+      return $result;
+    }
+
     if (defined($type_elements{$element->{'type'}})) {
       my $attribute = [];
       if ($element->{'type'} eq 'preformatted') {
@@ -1492,76 +1593,7 @@ sub _convert($$;$)
         .= $self->txi_markup_open_element($type_elements{$element->{'type'}},
                                           $attribute);
     } elsif ($element->{'type'} eq 'def_line') {
-      if ($element->{'cmdname'}) {
-        # @def*x command has the command associated with def_line.
-        my $attribute = [];
-        push @$attribute, _leading_spaces_arg($element);
-        $result .= $self->txi_markup_open_element($element->{'cmdname'},
-                                                  $attribute);
-      }
-      $result .= $self->txi_markup_open_element('definitionterm');
-      $result .= $self->_index_entry($element);
-      push @{$self->{'document_context'}->[-1]->{'monospace'}}, 1;
-      my $def_command = $element->{'extra'}->{'def_command'};
-      if ($element->{'args'} and @{$element->{'args'}}
-          and $element->{'args'}->[0]->{'contents'}) {
-        my $main_command;
-        my $alias;
-        if ($Texinfo::Common::def_aliases{$def_command}) {
-          $main_command
-            = $Texinfo::Common::def_aliases{$def_command};
-          $alias = 1;
-        } else {
-          $main_command = $def_command;
-          $alias = 0;
-        }
-        foreach my $arg (@{$element->{'args'}->[0]->{'contents'}}) {
-          my $type = $arg->{'type'};
-          # should only happen for dubious trees in which the def line
-          # was not split in def roles
-          next if (!defined($type));
-          my $content = $self->_convert($arg);
-          if ($type eq 'spaces') {
-            $content =~ s/\n$//;
-            $result .= $content;
-          } else {
-            my $attribute = [];
-            if ($type eq 'def_category' and $alias) {
-              push @$attribute, ['automatic', 'on'];
-            }
-            my $format_element;
-            if ($type eq 'def_name') {
-              $format_element = $defcommand_name_type{$main_command};
-            } elsif ($type eq 'def_arg') {
-              $format_element = 'param';
-            } elsif ($type eq 'def_typearg') {
-              $format_element = 'paramtype';
-            } else {
-              $format_element = $type;
-              $format_element =~ s/^def_//;
-            }
-            if ($arg->{'contents'} and scalar($arg->{'contents'})
-                and $arg->{'contents'}->[0]->{'type'}
-                and $arg->{'contents'}->[0]->{'type'} eq 'bracketed_arg') {
-              push @$attribute, ['bracketed', 'on'];
-              push @$attribute,
-                 _leading_trailing_spaces_arg($arg->{'contents'}->[0]);
-            }
-            $result
-              .= $self->txi_markup_open_element("def$format_element", $attribute)
-                      .$content
-                      .$self->txi_markup_close_element("def$format_element");
-          }
-        }
-      }
-      pop @{$self->{'document_context'}->[-1]->{'monospace'}};
-      $result .= _end_line_spaces($self, $element);
-      $result .= $self->txi_markup_close_element('definitionterm');
-      if ($element->{'cmdname'}) {
-        $result .= $self->txi_markup_close_element($element->{'cmdname'});
-      }
-      chomp ($result);
-      $result .= "\n";
+      $result .= _convert_def_line($self, $element);
     # case of bracketed in def line not corresponding to a def* argument
     # by itself, for example, in the following '{a b}{c d}' is the
     # argument, it is not a bracketed by itself, but contains two

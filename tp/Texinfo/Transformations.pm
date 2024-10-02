@@ -185,7 +185,7 @@ sub fill_gaps_in_sectioning($;$)
         } else {
           my $asis_command = {'cmdname' => 'asis',
                               'parent' => $line_arg};
-          $asis_command->{'args'} = [{'type' => 'brace_command_arg',
+          $asis_command->{'args'} = [{'type' => 'brace_container',
                                       'parent' => $asis_command}];
           $line_content = $asis_command;
         }
@@ -511,6 +511,7 @@ sub _prepend_new_menu_in_node_section($$$)
     cluck "input menu undef";
   }
   push @{$section->{'contents'}}, $current_menu;
+  $current_menu->{'parent'} = $section;
   push @{$section->{'contents'}}, {'type' => 'empty_line',
                                    'text' => "\n",
                                    'parent' => $section};
@@ -901,7 +902,7 @@ sub _protect_hashchar_at_line_beginning($$$)
             }
 
             $e = {'cmdname' => 'hashchar', 'parent' => $parent};
-            my $arg = {'type' => 'brace_command_arg', 'parent' => $e};
+            my $arg = {'type' => 'brace_container', 'parent' => $e};
             $e->{'args'} = [$arg];
             $current_position = Texinfo::Common::relocate_source_marks(
                                           $remaining_source_marks, $e,

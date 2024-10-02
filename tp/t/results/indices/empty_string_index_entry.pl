@@ -77,7 +77,7 @@ $result_trees{'empty_string_index_entry'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'w',
@@ -127,8 +127,7 @@ $result_trees{'empty_string_index_entry'} = {
                   'cmdname' => 'code',
                   'source_info' => {
                     'line_nr' => 6
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -153,7 +152,7 @@ $result_trees{'empty_string_index_entry'} = {
                             {
                               'args' => [
                                 {
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'w',
@@ -279,7 +278,7 @@ $result_trees{'empty_string_index_entry'} = {
                             {
                               'args' => [
                                 {
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'w',
@@ -338,7 +337,24 @@ $result_trees{'empty_string_index_entry'} = {
               ],
               'extra' => {
                 'def_command' => 'defun',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'args' => [
+                            {
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => 'w'
+                        }
+                      ],
+                      'type' => 'bracketed_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'element_node' => {},
                 'index_entry' => [
                   'fn',
@@ -385,7 +401,7 @@ $result_trees{'empty_string_index_entry'} = {
                             {
                               'args' => [
                                 {
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'w',
@@ -445,7 +461,24 @@ $result_trees{'empty_string_index_entry'} = {
               'cmdname' => 'defunx',
               'extra' => {
                 'def_command' => 'defun',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'args' => [
+                            {
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => 'w'
+                        }
+                      ],
+                      'type' => 'bracketed_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'element_node' => {},
                 'index_entry' => [
                   'fn',
@@ -460,8 +493,7 @@ $result_trees{'empty_string_index_entry'} = {
               },
               'source_info' => {
                 'line_nr' => 11
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -561,9 +593,7 @@ $result_trees{'empty_string_index_entry'} = {
 $result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[1]{'extra'}{'element_node'} = $result_trees{'empty_string_index_entry'}{'contents'}[2];
 $result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[3]{'contents'}[0]{'contents'}[0]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'empty_string_index_entry'}{'contents'}[2];
 $result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[3]{'extra'}{'command_as_argument'} = $result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[3]{'args'}[0]{'contents'}[0];
-$result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[5]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[5]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[5]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'empty_string_index_entry'}{'contents'}[2];
-$result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[5]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[5]{'contents'}[1]{'args'}[0]{'contents'}[2];
 $result_trees{'empty_string_index_entry'}{'contents'}[2]{'contents'}[5]{'contents'}[1]{'extra'}{'element_node'} = $result_trees{'empty_string_index_entry'}{'contents'}[2];
 
 $result_texis{'empty_string_index_entry'} = '@node Top
@@ -678,8 +708,8 @@ File: ,  Node: chap,  Prev: Top
 
 ‘’
 
- -- Function: 
- -- Function: 
+ - Function: 
+ - Function: 
 
 
 Tag Table:
@@ -697,8 +727,8 @@ End:
 
 $result_converted{'plaintext'}->{'empty_string_index_entry'} = '‘’
 
- -- Function: 
- -- Function: 
+ - Function: 
+ - Function: 
 
 ';
 

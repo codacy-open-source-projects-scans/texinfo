@@ -22,6 +22,7 @@
 #include "command_ids.h"
 #include "element_types.h"
 #include "tree_types.h"
+#include "types_data.h"
 #include "extra.h"
 #include "debug.h"
 #include "builtin_commands.h"
@@ -67,15 +68,17 @@ lookup_builtin_command (const char *cmdname)
 const char *
 element_command_name (const ELEMENT *e)
 {
-  if (e->cmd && e->cmd < BUILTIN_CMD_NUMBER
+  if (e->e.c->cmd && e->e.c->cmd < BUILTIN_CMD_NUMBER
     /* this can happen if a tree portion is copied and to simplify
        following code the generic command is used in the copy */
-      && e->cmd != CM_index_entry_command
-      && e->cmd != CM_definfoenclose_command)
-    return builtin_command_data[e->cmd].cmdname;
-  else
+      && e->e.c->cmd != CM_index_entry_command
+      && e->e.c->cmd != CM_definfoenclose_command)
+    return builtin_command_data[e->e.c->cmd].cmdname;
+  else if (e->type == ET_definfoenclose_command
+           || e->type == ET_index_entry_command
+           || type_data[e->type].flags & TF_macro_call)
     {
-      char *cmdname = lookup_info_string (e, "command_name");
+      const char *cmdname = e->e.c->string_info[sit_command_name];
       return cmdname;
     }
 
@@ -87,13 +90,13 @@ element_command_name (const ELEMENT *e)
 enum command_id
 element_builtin_cmd (const ELEMENT *e)
 {
-  if (e->cmd && e->cmd < BUILTIN_CMD_NUMBER)
-    return e->cmd;
+  if (e->e.c->cmd && e->e.c->cmd < BUILTIN_CMD_NUMBER)
+    return e->e.c->cmd;
   else if (e->type == ET_definfoenclose_command)
     return CM_definfoenclose_command;
   else if (e->type == ET_index_entry_command)
     return CM_index_entry_command;
-  else if (e->cmd)
+  else if (e->e.c->cmd)
     {
       char *debug_str = print_element_debug (e, 0);
       fprintf (stderr, "BUG: element_builtin_cmd: unexpected %s; add code?\n",
@@ -101,10 +104,7 @@ element_builtin_cmd (const ELEMENT *e)
       free (debug_str);
       /* The e->cmd value being outside of the command id tables
          it is likely that it would be associated with incorrect access
-         to memory is returned */
-      /*
-      return e->cmd;
-       */
+         to memory if returned */
       return 0;
     }
   /* should never reach here */
@@ -116,7 +116,7 @@ element_builtin_cmd (const ELEMENT *e)
 enum command_id
 element_builtin_data_cmd (const ELEMENT *e)
 {
-  if (e->cmd == CM_item
+  if (e->e.c->cmd == CM_item
       && e->parent->type == ET_table_term)
     return CM_item_LINE;
 
@@ -146,7 +146,7 @@ set_element_type_name_info (void)
   int i;
   for (i = 1; i < TXI_TREE_TYPES_NUMBER; i++)
     {
-      type_name_index[i-1].name = element_type_names[i];
+      type_name_index[i-1].name = type_data[i].name;
       type_name_index[i-1].type = i;
     }
 

@@ -29,19 +29,21 @@
 #include "uniwidth.h"
 #include <unictype.h>
 
-#include "global_commands_types.h"
+#include "conversion_data.h"
+/* also for xvasprintf */
+#include "text.h"
+#include "command_ids.h"
+#include "element_types.h"
 #include "tree_types.h"
+#include "global_commands_types.h"
 #include "option_types.h"
 #include "options_types.h"
 #include "converter_types.h"
-#include "command_ids.h"
-#include "text.h"
-/* also for xvasprintf */
+#include "types_data.h"
 #include "tree.h"
 #include "extra.h"
-#include "errors.h"
-#include "debug.h"
 #include "builtin_commands.h"
+#include "debug.h"
 #include "api_to_perl.h"
 #include "unicode.h"
 #include "utils.h"
@@ -49,21 +51,52 @@
 #define min_level command_structuring_level[CM_chapter]
 #define max_level command_structuring_level[CM_subsubsection]
 
+/* FIXME not sure if __CYGWIN__ is correctly handled here, like a UNIX. */
+const char *null_device_names[] = {
+#ifdef __MSDOS__
+# ifdef __DJGPP__
+ "NUL", "/dev/null",
+# else
+ "NUL",
+# endif
+#elif _WIN32
+ "NUL",
+#else
+ "/dev/null",
+#endif
+ 0};
+
 const char *whitespace_chars = " \t\v\f\r\n";
 const char *digit_chars = "0123456789";
 
 DEF_ALIAS def_aliases[] = {
-  CM_defun, CM_deffn, "Function", "category of functions for @defun",
-  CM_defmac, CM_deffn, "Macro", 0,
-  CM_defspec, CM_deffn, "Special Form", 0,
-  CM_defvar, CM_defvr, "Variable", "category of variables for @defvar",
-  CM_defopt, CM_defvr, "User Option", 0,
-  CM_deftypefun, CM_deftypefn, "Function", "category of functions for @deftypefun",
-  CM_deftypevar, CM_deftypevr, "Variable", "category of variables in typed languages for @deftypevar",
-  CM_defivar, CM_defcv, "Instance Variable", "category of instance variables in object-oriented programming for @defivar",
-  CM_deftypeivar, CM_deftypecv, "Instance Variable", "category of instance variables with data type in object-oriented programming for @deftypeivar",
-  CM_defmethod, CM_defop, "Method", "category of methods in object-oriented programming for @defmethod",
-  CM_deftypemethod, CM_deftypeop, "Method", "category of methods with data type in object-oriented programming for @deftypemethod",
+  CM_defun, CM_deffn, pgdt_context_noop("category of functions for @defun",
+                                        "Function"),
+  /* TRANSLATORS: category of macros for @defmac */
+  CM_defmac, CM_deffn, gdt_noop("Macro"), 0,
+  /* TRANSLATORS: category of special forms for @defspec */
+  CM_defspec, CM_deffn, gdt_noop("Special Form"), 0,
+  CM_defvar, CM_defvr, pgdt_context_noop("category of variables for @defvar",
+                                         "Variable"),
+  /* TRANSLATORS: category of user-modifiable options for @defopt */
+  CM_defopt, CM_defvr, gdt_noop("User Option"), 0,
+  CM_deftypefun, CM_deftypefn,
+       pgdt_context_noop("category of functions for @deftypefun", "Function"),
+  CM_deftypevar, CM_deftypevr,
+   pgdt_context_noop("category of variables in typed languages for @deftypevar",
+                     "Variable"),
+  CM_defivar, CM_defcv,
+   pgdt_context_noop("category of instance variables in object-oriented programming for @defivar",
+                     "Instance Variable"),
+  CM_deftypeivar, CM_deftypecv,
+   pgdt_context_noop("category of instance variables with data type in object-oriented programming for @deftypeivar",
+                     "Instance Variable"),
+  CM_defmethod, CM_defop,
+   pgdt_context_noop("category of methods in object-oriented programming for @defmethod",
+                     "Method"),
+  CM_deftypemethod, CM_deftypeop,
+   pgdt_context_noop("category of methods with data type in object-oriented programming for @deftypemethod",
+                     "Method"),
 
   /* the following aliases are not used in the XS parser */
   CM_defunx, CM_deffnx, "Function", "category of functions for @defun",
@@ -641,20 +674,24 @@ item_line_parent (ELEMENT *current)
   /* this code handles current being a user defined command even tough
      it is not clear that it may happen */
   cmd = element_builtin_cmd (current);
-  if (builtin_command_data[cmd].data == BLOCK_item_line)
+  if (cmd == CM_table
+      || cmd == CM_ftable
+      || cmd == CM_vtable)
     return current;
 
   return 0;
 }
 
+/* The caller should take care not to call get_label_element on a text
+   element */
 ELEMENT *
 get_label_element (const ELEMENT *e)
 {
-  if ((e->cmd == CM_node || e->cmd == CM_anchor)
-      && e->args.number > 0)
-    return e->args.list[0];
-  else if (e->cmd == CM_float && e->args.number >= 2)
-    return e->args.list[1];
+  if ((e->e.c->cmd == CM_node || e->e.c->cmd == CM_anchor)
+      && e->e.c->args.number > 0)
+    return e->e.c->args.list[0];
+  else if (e->e.c->cmd == CM_float && e->e.c->args.number >= 2)
+    return e->e.c->args.list[1];
   return 0;
 }
 
@@ -849,6 +886,36 @@ normalize_encoding_name (const char *text, int *possible_encoding)
   return normalized_text;
 }
 
+/* RESULT should be an array of size two.  Upon return, it holds
+   the file name in the first position and directory, if any, in
+   the second position.  The file name and directory should be
+   freed.
+ */
+void
+parse_file_path (const char *input_file_path, char **result)
+{
+  /* Strip off a leading directory path, by looking for the last
+     '/' in input_file_path. */
+  const char *p = 0;
+  const char *q = strchr (input_file_path, '/');
+  while (q)
+    {
+      p = q;
+      q = strchr (q + 1, '/');
+    }
+
+  if (p)
+    {
+      result[0] = strdup (p + 1);
+      result[1] = strndup (input_file_path, (p - input_file_path) + 1);
+    }
+  else
+    {
+      result[0] = strdup (input_file_path);
+      result[1] = 0;
+    }
+}
+
 
 /* index related functions used in diverse situations, not only in parser */
 void
@@ -916,7 +983,7 @@ add_string (const char *string, STRING_LIST *strings_list)
 void
 merge_strings (STRING_LIST *strings_list, const STRING_LIST *merged_strings)
 {
-  int i;
+  size_t i;
   if (strings_list->number + merged_strings->number > strings_list->space)
     {
       strings_list->space = strings_list->number + merged_strings->number +5;
@@ -933,7 +1000,7 @@ merge_strings (STRING_LIST *strings_list, const STRING_LIST *merged_strings)
 void
 copy_strings (STRING_LIST *dest_list, const STRING_LIST *source_list)
 {
-  int i;
+  size_t i;
   if (dest_list->number + source_list->number > dest_list->space)
     {
       dest_list->space = dest_list->number + source_list->number +5;
@@ -1031,7 +1098,8 @@ destroy_strings_list (STRING_LIST *strings)
 
 
 
-void
+/* FIXME does something similar as set_conf in converter.c */
+static void
 set_conf_string (OPTION *option, const char *value)
 {
   if (option->type != GOT_char && option->type != GOT_bytes)
@@ -1045,7 +1113,7 @@ set_conf_string (OPTION *option, const char *value)
 }
 
 /* In perl, OUTPUT_PERL_ENCODING is set too.  Note that if the perl
-   version is called later on, the OUTPUT_PERL_ENCODING value will be re-set */
+   version is called later on, the OUTPUT_ENCODING_NAME value will be re-set */
 void
 set_output_encoding (OPTIONS *customization_information, DOCUMENT *document)
 {
@@ -1074,20 +1142,25 @@ wipe_values (VALUE_LIST *values)
 
 /* code related to document global info used both in parser and other codes */
 void
-delete_global_info (GLOBAL_INFO *global_info_ref)
+delete_global_info (GLOBAL_INFO *global_info)
 {
-  GLOBAL_INFO global_info = *global_info_ref;
+  int i;
+  free_strings_list (&global_info->included_files);
 
-  free_strings_list (&global_info.included_files);
+  free (global_info->input_encoding_name);
+  free (global_info->input_file_name);
+  free (global_info->input_directory);
 
-  free (global_info.input_encoding_name);
-  free (global_info.input_file_name);
-  free (global_info.input_directory);
-
-  destroy_associated_info (&global_info.other_info);
+  for (i = 0; i < global_info->other_info.info_number; i++)
+    {
+      const KEY_STRING_PAIR *k = &global_info->other_info.info[i];
+      free (k->key);
+      free (k->string);
+    }
+  free (global_info->other_info.info);
 
   /* perl specific information */
-  free (global_info.input_perl_encoding);
+  free (global_info->input_perl_encoding);
 }
 
 void
@@ -1155,7 +1228,7 @@ get_cmd_global_uniq_command (const GLOBAL_COMMANDS *global_commands_ref,
 char *
 informative_command_value (const ELEMENT *element)
 {
-  ELEMENT *misc_args;
+  const STRING_LIST *misc_args;
   char *text_arg;
 
   enum command_id cmd = element_builtin_data_cmd (element);
@@ -1168,24 +1241,25 @@ informative_command_value (const ELEMENT *element)
          We handle this case with TEXT text, but do not free memory
          as should be, as this case should never happen.
        */
-      else if (element->args.number > 0)
+      else if (element->e.c->args.number > 0)
         {
           TEXT text;
           int i;
           char *text_seen = 0;
-          for (i = 0; i < element->args.number; i++)
+          for (i = 0; i < element->e.c->args.number; i++)
             {
-              ELEMENT *arg = element->args.list[i];
-              if (arg->text.end)
+              /* only text elements in lineraw args */
+              ELEMENT *arg = element->e.c->args.list[i];
+              if (arg->e.text->end)
                 {
                   if (!text_seen)
-                    text_seen = arg->text.text;
+                    text_seen = arg->e.text->text;
                   else
                     {
                       text_init (&text);
                       text_append (&text, text_seen);
                       text_append (&text, " ");
-                      text_append (&text, arg->text.text);
+                      text_append (&text, arg->e.text->text);
                     }
                 }
             }
@@ -1197,18 +1271,19 @@ informative_command_value (const ELEMENT *element)
             return text_seen;
         }
     }
-  text_arg = lookup_extra_string (element, "text_arg");
+  text_arg = lookup_extra_string (element, AI_key_text_arg);
   if (text_arg)
     return text_arg;
-  misc_args = lookup_extra_element (element, "misc_args");
-  if (misc_args && misc_args->contents.number > 0)
-    return misc_args->contents.list[0]->text.text;
+  misc_args = lookup_extra_misc_args (element, AI_key_misc_args);
+  if (misc_args && misc_args->number > 0)
+    return misc_args->list[0];
   if (builtin_command_data[cmd].flags & CF_line
       && builtin_command_data[cmd].data == LINE_line
-      && element->args.number >= 1
-      && element->args.list[0]->contents.number >= 1
-      && element->args.list[0]->contents.list[0]->text.end > 0)
-    return element->args.list[0]->contents.list[0]->text.text;
+      && element->e.c->args.number >= 1
+      && element->e.c->args.list[0]->e.c->contents.number >= 1
+      && element->e.c->args.list[0]->e.c->contents.list[0]->type == ET_normal_text
+      && element->e.c->args.list[0]->e.c->contents.list[0]->e.text->end > 0)
+    return element->e.c->args.list[0]->e.c->contents.list[0]->e.text->text;
 
   return 0;
 }
@@ -1356,16 +1431,16 @@ destroy_accent_stack (ACCENTS_STACK *accent_stack)
 int
 section_level (const ELEMENT *section)
 {
-  int level = command_structuring_level[section->cmd];
+  int level = command_structuring_level[section->e.c->cmd];
   int status;
-  int section_modifier = lookup_extra_integer (section, "level_modifier",
+  int section_modifier = lookup_extra_integer (section, AI_key_level_modifier,
                                                &status);
   if (!status && level >= 0)
     {
       level -= section_modifier;
       if (level < min_level)
-        if (command_structuring_level[section->cmd] < min_level)
-          level = command_structuring_level[section->cmd];
+        if (command_structuring_level[section->e.c->cmd] < min_level)
+          level = command_structuring_level[section->e.c->cmd];
         else
           level = min_level;
       else if (level > max_level)
@@ -1380,19 +1455,19 @@ section_level_adjusted_command_name (const ELEMENT *element)
   int status;
   int heading_level;
 
-  heading_level = lookup_extra_integer (element, "section_level", &status);
+  heading_level = lookup_extra_integer (element, AI_key_section_level, &status);
 
   /* the following condition should only be false if sectioning_structure was
      not called */
   if (status == 0)
     {
-      if (command_structuring_level[element->cmd] != heading_level)
+      if (command_structuring_level[element->e.c->cmd] != heading_level)
         {
-          return level_to_structuring_command[element->cmd][heading_level];
+          return level_to_structuring_command[element->e.c->cmd][heading_level];
         }
     }
 
-  return element->cmd;
+  return element->e.c->cmd;
 }
 
 /* corresponding perl function in Common.pm */
@@ -1400,14 +1475,30 @@ int
 is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries)
 {
   int i;
-  if (!tree || !tree->contents.number)
+  if (!tree || !tree->e.c->contents.number)
     return 1;
 
-  for (i = 0; i < tree->contents.number; i++)
+  for (i = 0; i < tree->e.c->contents.number; i++)
     {
-      const ELEMENT *content = tree->contents.list[i];
-      enum command_id data_cmd = element_builtin_data_cmd (content);
+      const ELEMENT *content = tree->e.c->contents.list[i];
+      enum command_id data_cmd;
 
+      if (type_data[content->type].flags & TF_text)
+        {
+          if (content->e.text->end == 0)
+            return 1;
+          else
+            {
+              const char *text = content->e.text->text;
+              /* only whitespace characters */
+              if (! text[strspn (text, whitespace_chars)] == '\0')
+                return 0;
+              else
+                continue;
+            }
+        }
+
+      data_cmd = element_builtin_data_cmd (content);
       if (data_cmd)
         {
           unsigned long flags = builtin_command_data[data_cmd].flags;
@@ -1444,13 +1535,6 @@ is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries)
         }
       if (content->type == ET_paragraph)
         return 0;
-      if (content->text.end > 0)
-        {
-          char *text = element_text (content);
-          /* only whitespace characters */
-          if (! text[strspn (text, whitespace_chars)] == '\0')
-            return 0;
-        }
       if (! is_content_empty (content, do_not_ignore_index_entries))
         return 0;
     }
@@ -1573,6 +1657,8 @@ html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons)
 
   html_clear_direction_icons (direction_icons);
   free (direction_icons->list);
+  direction_icons->number = 0;
+  direction_icons->list = 0;
 }
 
 
@@ -1616,7 +1702,7 @@ clear_option (OPTION *option)
         option->o.integer = -1;
 
       default:
-	break;
+        break;
     }
 }
 
@@ -1648,7 +1734,7 @@ free_option (OPTION *option)
 
       case GOT_integer:
       default:
-	break;
+        break;
     }
 }
 
@@ -1684,7 +1770,135 @@ initialize_option (OPTION *option, enum global_option_type type)
         break;
 
       default:
-	break;
+        break;
+    }
+}
+
+void
+copy_option (OPTION *destination, const OPTION *source)
+{
+  switch (source->type)
+    {
+      case GOT_integer:
+        destination->o.integer = source->o.integer;
+        break;
+
+      case GOT_char:
+      case GOT_bytes:
+        free (destination->o.string);
+        if (!source->o.string)
+          destination->o.string = 0;
+        else
+          destination->o.string = strdup (source->o.string);
+        break;
+
+      case GOT_bytes_string_list:
+      case GOT_file_string_list:
+      case GOT_char_string_list:
+        clear_strings_list (destination->o.strlist);
+        copy_strings (destination->o.strlist, source->o.strlist);
+        break;
+
+      case GOT_icons:
+        {
+          DIRECTION_ICON_LIST *dest_icons = destination->o.icons;
+          DIRECTION_ICON_LIST *source_icons = source->o.icons;
+          html_free_direction_icons (dest_icons);
+          if (source_icons)
+            {
+              dest_icons->number = source_icons->number;
+              if (dest_icons->number)
+                {
+                  size_t i;
+                  dest_icons->list = (char **) malloc
+                               (dest_icons->number * sizeof (char *));
+                  for (i = 0; i < dest_icons->number; i++)
+                    {
+                      if (!source_icons->list[i])
+                        dest_icons->list[i] = 0;
+                      else
+                        dest_icons->list[i] = strdup (source_icons->list[i]);
+                    }
+                }
+            }
+        }
+        break;
+
+      case GOT_buttons:
+        { /* Note that the caller should adjust BIT_user_function_number
+             of the options holding the buttons */
+          html_free_button_specification_list (destination->o.buttons);
+          if (source->o.buttons)
+            {
+              size_t i;
+              BUTTON_SPECIFICATION_LIST *result;
+              BUTTON_SPECIFICATION_LIST *s_buttons = source->o.buttons;
+              result = (BUTTON_SPECIFICATION_LIST *)
+                malloc (sizeof (BUTTON_SPECIFICATION_LIST));
+
+              result->BIT_user_function_number
+                = s_buttons->BIT_user_function_number;
+              result->number = s_buttons->number;
+              result->list = (BUTTON_SPECIFICATION *)
+                     malloc (result->number * sizeof (BUTTON_SPECIFICATION));
+              /* TODO seems like we could simply memcpy the whole list
+                 as we only copy, there is no reallocation at all */
+              memset (result->list, 0,
+                      result->number * sizeof (BUTTON_SPECIFICATION));
+              for (i = 0; i < result->number; i++)
+                {
+                  BUTTON_SPECIFICATION *button = &result->list[i];
+                  BUTTON_SPECIFICATION *s_button = &s_buttons->list[i];
+
+                  button->sv = s_button->sv;
+                  /* need to increase the counter, as it is decreased upon
+                     destroying the button */
+                  register_perl_button (button);
+                  button->type = s_button->type;
+                  if (button->type == BST_function)
+                    button->b.sv_reference = s_button->b.sv_reference;
+                  else if (button->type == BST_string)
+                    button->b.sv_string = s_button->b.sv_string;
+                  else if (button->type == BST_direction)
+                    button->b.direction = s_button->b.direction;
+                  else if (button->type == BST_direction_info)
+                    {
+                      BUTTON_SPECIFICATION_INFO *s_button_spec
+                        = s_button->b.button_info;
+                      BUTTON_SPECIFICATION_INFO *button_spec
+                        = (BUTTON_SPECIFICATION_INFO *)
+                         malloc (sizeof (BUTTON_SPECIFICATION_INFO));
+                      memset (button_spec, 0,
+                              sizeof (BUTTON_SPECIFICATION_INFO));
+                      button->b.button_info = button_spec;
+                      button_spec->type = s_button_spec->type;
+                      button_spec->direction = s_button_spec->direction;
+                      if (button_spec->type == BIT_function)
+                        {
+                          button_spec->bi.button_function.type
+                            = s_button_spec->bi.button_function.type;
+                          button_spec->bi.button_function.sv_reference
+                            = s_button_spec->bi.button_function.sv_reference;
+                        }
+                      else if (button_spec->type == BIT_string)
+                        button_spec->bi.sv_string
+                          = s_button_spec->bi.sv_string;
+                      else /* BIT_selected_direction_information_type
+                            and BIT_href_direction_information_type */
+                        button_spec->bi.direction_information_type
+                          = s_button_spec->bi.direction_information_type;
+                    }
+                }
+              destination->o.buttons = result;
+            }
+          else
+            destination->o.buttons = 0;
+        }
+        break;
+
+      default:
+        fprintf (stderr, "BUG: copy_option type not handled: %d\n",
+                source->type);
     }
 }
 

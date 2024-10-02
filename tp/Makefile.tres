@@ -56,6 +56,7 @@ test_tap_files_generated_list = \
   t/reference_to_text_in_tree.t \
   t/same_parser_multiple_files.t \
   t/test_brace_count.t \
+  t/test_document.t \
   t/test_fill_gaps_in_sectioning.t \
   t/test_is_content_empty.t \
   t/test_parse_texi_line.t \
@@ -158,6 +159,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/conditionals/text_on_conditional_line_expanded.pl \
   t/results/conditionals/txiinternalvalue.pl \
   t/results/conditionals/user_defined_txiinternalvalue.pl \
+  t/results/conditionals/value_on_ifset.pl \
   t/results/converters_tests/accent_with_text.pl \
   t/results/converters_tests/at_commands_in_raw.pl \
   t/results/converters_tests/combined_fonts.pl \
@@ -248,6 +250,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/converters_tests/minimal_empty_with_input/res_info \
   t/results/converters_tests/minimal_empty_with_input/res_latex \
   t/results/converters_tests/minimal_empty_with_input/res_xml \
+  t/results/converters_tests/multitable_prototypes.pl \
   t/results/converters_tests/non_empty_part.pl \
   t/results/converters_tests/non_empty_part_no_top_node_output.pl \
   t/results/converters_tests/normal_font_in_monospace.pl \
@@ -282,6 +285,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/converters_tests/simplest_test_prefix/res_latex \
   t/results/converters_tests/simplest_test_prefix/res_xml \
   t/results/converters_tests/some_at_commands_in_ref_nodes.pl \
+  t/results/converters_tests/sp_empty_lines_1_no_arg_zero.pl \
   t/results/converters_tests/sp_in_example.pl \
   t/results/converters_tests/spaces_in_empty_node_names.pl \
   t/results/converters_tests/spaces_in_node_names.pl \
@@ -294,6 +298,8 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/converters_tests/things_before_setfilename_no_element.pl \
   t/results/converters_tests/top_in_ref.pl \
   t/results/converters_tests/unknown_value.pl \
+  t/results/converters_tests/various_itemize_command_as_argument.pl \
+  t/results/converters_tests/various_vtable_command_as_argument.pl \
   t/results/coverage/accent_and_dash.pl \
   t/results/coverage/accent_no_closed.pl \
   t/results/coverage/accent_no_closed_comment.pl \
@@ -377,13 +383,22 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/coverage/unknown_accents.pl \
   t/results/coverage/unknown_commands.pl \
   t/results/coverage/verbatiminclude.pl \
+  t/results/coverage_braces/U_no_braces.pl \
   t/results/coverage_braces/abbr_acronym.pl \
+  t/results/coverage_braces/abbr_no_braces.pl \
   t/results/coverage_braces/anchor_not_closed.pl \
+  t/results/coverage_braces/brace_command_no_braces.pl \
   t/results/coverage_braces/brace_opened_no_command.pl \
+  t/results/coverage_braces/caption_no_braces.pl \
   t/results/coverage_braces/caption_not_closed.pl \
   t/results/coverage_braces/code_not_closed.pl \
+  t/results/coverage_braces/command_in_U.pl \
+  t/results/coverage_braces/command_in_dotless.pl \
   t/results/coverage_braces/contain_plain_text_nestings.pl \
+  t/results/coverage_braces/definfoenclose_bad_argument.pl \
+  t/results/coverage_braces/definfoenclose_no_braces.pl \
   t/results/coverage_braces/definfoenclose_texinfo_commands.pl \
+  t/results/coverage_braces/email_no_braces.pl \
   t/results/coverage_braces/email_possibilities.pl \
   t/results/coverage_braces/empty_commands.pl \
   t/results/coverage_braces/empty_images.pl \
@@ -397,18 +412,23 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/coverage_braces/end_line_in_anchor.pl \
   t/results/coverage_braces/footnote.pl \
   t/results/coverage_braces/footnote_ending_on_empty_line.pl \
+  t/results/coverage_braces/footnote_ending_on_empty_line_spaces.pl \
   t/results/coverage_braces/footnote_in_command_not_closed.pl \
+  t/results/coverage_braces/footnote_no_braces.pl \
   t/results/coverage_braces/footnote_no_node.pl \
   t/results/coverage_braces/footnote_not_closed.pl \
   t/results/coverage_braces/form_feed_in_brace_commands.pl \
   t/results/coverage_braces/format_on_first_footnote_line.pl \
   t/results/coverage_braces/heading_in_footnote.pl \
+  t/results/coverage_braces/hyphenation_no_braces.pl \
+  t/results/coverage_braces/image_no_braces.pl \
   t/results/coverage_braces/inforef_too_much_args.pl \
   t/results/coverage_braces/kbd.pl \
   t/results/coverage_braces/math_bracketed_inside_not_closed.pl \
   t/results/coverage_braces/math_bracketed_not_closed.pl \
   t/results/coverage_braces/math_bracketed_not_closed_next_line.pl \
   t/results/coverage_braces/math_leading_trailing_spaces.pl \
+  t/results/coverage_braces/math_no_braces.pl \
   t/results/coverage_braces/math_not_closed.pl \
   t/results/coverage_braces/nested.pl \
   t/results/coverage_braces/nested_args.pl \
@@ -420,13 +440,16 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/coverage_braces/recursive_acronym_definition.pl \
   t/results/coverage_braces/ref_empty_node.pl \
   t/results/coverage_braces/ref_in_style_command.pl \
+  t/results/coverage_braces/seeentry_no_braces.pl \
   t/results/coverage_braces/simple.pl \
   t/results/coverage_braces/space_command_in_image.pl \
   t/results/coverage_braces/space_in_anchor.pl \
   t/results/coverage_braces/space_in_footnote.pl \
   t/results/coverage_braces/space_in_image.pl \
+  t/results/coverage_braces/strong_no_braces.pl \
   t/results/coverage_braces/test_image.pl \
   t/results/coverage_braces/test_w.pl \
+  t/results/coverage_braces/titlefont_no_braces.pl \
   t/results/coverage_braces/too_much_args.pl \
   t/results/coverage_braces/two_footnotes_in_nodes.pl \
   t/results/coverage_braces/two_footnotes_in_nodes_separate.pl \
@@ -436,6 +459,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/coverage_braces/uref_in_ref.pl \
   t/results/coverage_braces/uref_url.pl \
   t/results/coverage_braces/uref_with_commands_characters.pl \
+  t/results/coverage_braces/url_no_braces.pl \
   t/results/coverage_braces/verb_in_xref.pl \
   t/results/coverage_braces/w_end_sentence.pl \
   t/results/def/adjacent_defline.pl \
@@ -738,6 +762,10 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/node_footnote_use_node/res_html \
   t/results/html_tests/node_footnote_use_node_separate.pl \
   t/results/html_tests/node_footnote_use_node_separate/res_html \
+  t/results/html_tests/nodedescription_description.pl \
+  t/results/html_tests/nodedescription_description/res_html \
+  t/results/html_tests/nodedescription_description_no_use_nodes.pl \
+  t/results/html_tests/nodedescription_description_no_use_nodes/res_html \
   t/results/html_tests/raw_html.pl \
   t/results/html_tests/redirection_same_labels.pl \
   t/results/html_tests/redirection_same_labels/res_html \
@@ -806,6 +834,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/html_tests/utf8_enable_encoding_use_numeric_entity.pl \
   t/results/html_tests/utf8_use_numeric_entity.pl \
   t/results/html_tests/verbatim_in_multitable_in_example.pl \
+  t/results/html_tests/xhtml_rule_element_already_closed.pl \
   t/results/html_tests/xml_protected_in_verb.pl \
   t/results/htmlxref/htmlxref.pl \
   t/results/htmlxref/htmlxref/res_html \
@@ -1002,6 +1031,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/info_tests/colons_in_index_entries_and_node_no_quoting.pl \
   t/results/info_tests/colons_in_index_entries_and_node_no_quoting/res_info \
   t/results/info_tests/def_in_copying.pl \
+  t/results/info_tests/del_quote_linebreaking.pl \
   t/results/info_tests/direntry_dircategory.pl \
   t/results/info_tests/direntry_dircategory/res_info \
   t/results/info_tests/direntry_dircategory_and_commands.pl \
@@ -1049,6 +1079,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/info_tests/quote_node_names_info/res_info \
   t/results/info_tests/recursive_down_menu.pl \
   t/results/info_tests/ref_tests.pl \
+  t/results/info_tests/similar_external_and_internal_node.pl \
   t/results/info_tests/space_at_menu_end.pl \
   t/results/info_tests/space_in_menu.pl \
   t/results/info_tests/space_in_setfilename.pl \
@@ -1067,7 +1098,10 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/info_tests/two_paragraphindent_in_preamble.pl \
   t/results/info_tests/two_paragraphindent_in_preamble_and_in_document.pl \
   t/results/info_tests/unknown_encoding.pl \
+  t/results/info_tests/xref_quote_long_item.pl \
   t/results/info_tests/xref_test.pl \
+  t/results/init_files_tests/access_document_name_in_handler.pl \
+  t/results/init_files_tests/access_document_name_in_handler/res_html \
   t/results/init_files_tests/customize_special_element.pl \
   t/results/init_files_tests/customize_special_element/res_html \
   t/results/init_files_tests/customize_translations.pl \
@@ -1572,7 +1606,9 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/misc_commands/command_in_heading_footing.pl \
   t/results/misc_commands/command_line_in_paragraph.pl \
   t/results/misc_commands/command_not_closed_in_documentencoding.pl \
+  t/results/misc_commands/command_not_closed_on_center_line.pl \
   t/results/misc_commands/comment_space_command_on_line.pl \
+  t/results/misc_commands/comment_without_line.pl \
   t/results/misc_commands/comments_in_text.pl \
   t/results/misc_commands/contents.pl \
   t/results/misc_commands/defindex_too_much_args.pl \
@@ -1585,11 +1621,14 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/misc_commands/empty_center.pl \
   t/results/misc_commands/empty_center_with_arg.pl \
   t/results/misc_commands/empty_documentencoding.pl \
+  t/results/misc_commands/exdent_no_line.pl \
   t/results/misc_commands/footnote_in_center.pl \
   t/results/misc_commands/heading_command_in_commands.pl \
   t/results/misc_commands/incorrect_allowcodebreaks_argument.pl \
   t/results/misc_commands/indent_in_command_in_paragraph.pl \
   t/results/misc_commands/indent_in_quotation.pl \
+  t/results/misc_commands/indent_with_command_after_without_space.pl \
+  t/results/misc_commands/indent_with_text_after_without_space.pl \
   t/results/misc_commands/index_entries.pl \
   t/results/misc_commands/invalid_clickstyle.pl \
   t/results/misc_commands/invalid_documentencoding.pl \
@@ -1705,6 +1744,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/paragraph/comment_in_quotation.pl \
   t/results/paragraph/double_style_paragraph.pl \
   t/results/paragraph/image_in_paragraph.pl \
+  t/results/paragraph/indent_before_macro_definition_and_other.pl \
   t/results/paragraph/no_paragraph_commands.pl \
   t/results/paragraph/paragraph_command.pl \
   t/results/paragraph/paragraph_count_and_example.pl \
@@ -1726,13 +1766,13 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/plaintext_tests/at_commands_glued_in_example.pl \
   t/results/plaintext_tests/at_commands_glued_in_paragraph.pl \
   t/results/plaintext_tests/before_accent_punctuation.pl \
+  t/results/plaintext_tests/cartouche_and_paragraph_indentation.pl \
   t/results/plaintext_tests/characters_and_commands_in_var.pl \
   t/results/plaintext_tests/chinese_mixed_with_en.pl \
   t/results/plaintext_tests/chinese_mixed_with_en/res_plaintext \
   t/results/plaintext_tests/code_commands_and_punctuation.pl \
   t/results/plaintext_tests/command_brace_no_arg_punctuation.pl \
   t/results/plaintext_tests/commands_and_punctuation.pl \
-  t/results/plaintext_tests/del_quote_linebreaking.pl \
   t/results/plaintext_tests/east_asian_in_w.pl \
   t/results/plaintext_tests/east_asian_in_w/res_plaintext \
   t/results/plaintext_tests/empty_line_in_example_end.pl \
@@ -1819,7 +1859,6 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/plaintext_tests/tab_in_table_in_example.pl \
   t/results/plaintext_tests/tab_item_in_example.pl \
   t/results/plaintext_tests/transparent_text.pl \
-  t/results/plaintext_tests/xref_quote_long_item.pl \
   t/results/preformatted/caption_in_example.pl \
   t/results/preformatted/comment_example_and_blank_lines.pl \
   t/results/preformatted/comments_in_example.pl \
@@ -1851,13 +1890,16 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/quotation/standard_quotations.pl \
   t/results/raw/beginning_and_end_on_line.pl \
   t/results/raw/braces_in_tex.pl \
+  t/results/raw/comments_on_raw_block_line.pl \
   t/results/raw/displaymath.pl \
   t/results/raw/displaymath_not_closed.pl \
+  t/results/raw/empty_line_in_command_in_expanded_not_expanded.pl \
   t/results/raw/inline_in_example.pl \
   t/results/raw/inline_missing_first_arg.pl \
   t/results/raw/inlinefmt.pl \
   t/results/raw/inlinefmt_with_empty_line.pl \
   t/results/raw/inlineraw.pl \
+  t/results/raw/inlineraw_not_closed.pl \
   t/results/raw/inlineraw_with_empty_line.pl \
   t/results/raw/lone_braces_in_html.pl \
   t/results/raw/misc_raw.pl \
@@ -2094,6 +2136,7 @@ test_files_generated_list = $(test_tap_files_generated_list) \
   t/results/value/set_on_item_line.pl \
   t/results/value/simple.pl \
   t/results/value/spaces_before_value.pl \
+  t/results/value/unknown_value_after_spaces.pl \
   t/results/value/value_after_accent.pl \
   t/results/value/value_after_brace_command.pl \
   t/results/value/value_in_index_commands.pl \

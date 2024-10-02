@@ -233,6 +233,10 @@ $result_trees{'test_allowcodebreaks'} = {
         {
           'contents' => [
             {
+              'text' => 'Before first allowcodebreaks
+'
+            },
+            {
               'source_marks' => [
                 {
                   'counter' => 1,
@@ -244,7 +248,7 @@ $result_trees{'test_allowcodebreaks'} = {
                             'text' => '0'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -252,15 +256,10 @@ $result_trees{'test_allowcodebreaks'} = {
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 29,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
                 }
               ],
-              'text' => 'Before first allowcodebreaks
-'
-            },
-            {
               'text' => 'Out of code --- out-of-code.
 '
             },
@@ -272,7 +271,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '1aaa'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -292,7 +291,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '2aaa-'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -312,7 +311,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '-3bbb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -332,7 +331,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '4aaa-bbb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -353,7 +352,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => ' 5aaa-bb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -373,7 +372,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '6aaa-bb '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -393,7 +392,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => 'ccc 7aaa-bbb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -413,7 +412,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => 'ccc 8aaa-bbb ddd'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -434,7 +433,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '9aaa-bbb rrr_vv'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -457,7 +456,7 @@ $result_trees{'test_allowcodebreaks'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'minus',
@@ -497,7 +496,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => 'r-oman'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'r',
@@ -521,7 +520,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => 'A node0'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'anchor',
@@ -535,7 +534,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'samp',
@@ -565,7 +564,7 @@ $result_trees{'test_allowcodebreaks'} = {
               'element' => {
                 'args' => [
                   {
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {
@@ -605,7 +604,7 @@ $result_trees{'test_allowcodebreaks'} = {
                           'text' => 'in-example'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',
@@ -706,6 +705,10 @@ $result_trees{'test_allowcodebreaks'} = {
         {
           'contents' => [
             {
+              'text' => 'After false
+'
+            },
+            {
               'source_marks' => [
                 {
                   'counter' => 3,
@@ -717,7 +720,7 @@ $result_trees{'test_allowcodebreaks'} = {
                             'text' => '1'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -725,15 +728,10 @@ $result_trees{'test_allowcodebreaks'} = {
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 12,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
                 }
               ],
-              'text' => 'After false
-'
-            },
-            {
               'text' => 'Out of code --- out-of-code.
 '
             },
@@ -745,7 +743,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '1aaa'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -765,7 +763,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '2aaa-'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -785,7 +783,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '-3bbb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -805,7 +803,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '4aaa-bbb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -826,7 +824,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => ' 5aaa-bb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -846,7 +844,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '6aaa-bb '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -866,7 +864,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => 'ccc 7aaa-bbb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -886,7 +884,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => 'ccc 8aaa-bbb ddd'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -907,7 +905,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '9aaa-bbb rrr_vv'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -930,7 +928,7 @@ $result_trees{'test_allowcodebreaks'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'minus',
@@ -970,7 +968,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => 'r-oman'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'r',
@@ -994,7 +992,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => 'A node1'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'anchor',
@@ -1008,7 +1006,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'samp',
@@ -1038,7 +1036,7 @@ $result_trees{'test_allowcodebreaks'} = {
               'element' => {
                 'args' => [
                   {
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {
@@ -1078,7 +1076,7 @@ $result_trees{'test_allowcodebreaks'} = {
                           'text' => 'in-example'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',
@@ -1166,7 +1164,7 @@ $result_trees{'test_allowcodebreaks'} = {
                                     'text' => 'w'
                                   }
                                 ],
-                                'type' => 'brace_command_arg'
+                                'type' => 'brace_arg'
                               }
                             ],
                             'info' => {
@@ -1189,7 +1187,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => '1aaa'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -1209,7 +1207,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => '2aaa-'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -1229,7 +1227,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => '-3bbb'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -1249,7 +1247,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => '4aaa-bbb'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -1270,7 +1268,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => ' 5aaa-bb'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -1290,7 +1288,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => '6aaa-bb '
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -1310,7 +1308,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => 'ccc 7aaa-bbb'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -1330,7 +1328,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => 'ccc 8aaa-bbb ddd'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -1351,7 +1349,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => '9aaa-bbb rrr_vv'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -1374,7 +1372,7 @@ $result_trees{'test_allowcodebreaks'} = {
                             {
                               'args' => [
                                 {
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'minus',
@@ -1414,7 +1412,7 @@ $result_trees{'test_allowcodebreaks'} = {
                                       'text' => 'r-oman'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'r',
@@ -1438,7 +1436,7 @@ $result_trees{'test_allowcodebreaks'} = {
                                       'text' => 'A nodew'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'anchor',
@@ -1452,7 +1450,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'samp',
@@ -1473,7 +1471,7 @@ $result_trees{'test_allowcodebreaks'} = {
 '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'w',
@@ -1521,7 +1519,7 @@ $result_trees{'test_allowcodebreaks'} = {
                                   'text' => 'in-example'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'code',
@@ -1530,7 +1528,7 @@ $result_trees{'test_allowcodebreaks'} = {
                           }
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'w',
@@ -1620,6 +1618,10 @@ $result_trees{'test_allowcodebreaks'} = {
         {
           'contents' => [
             {
+              'text' => 'After true
+'
+            },
+            {
               'source_marks' => [
                 {
                   'counter' => 6,
@@ -1631,7 +1633,7 @@ $result_trees{'test_allowcodebreaks'} = {
                             'text' => '2'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -1639,15 +1641,10 @@ $result_trees{'test_allowcodebreaks'} = {
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 11,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
                 }
               ],
-              'text' => 'After true
-'
-            },
-            {
               'text' => 'Out of code --- out-of-code.
 '
             },
@@ -1659,7 +1656,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '1aaa'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1679,7 +1676,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '2aaa-'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1699,7 +1696,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '-3bbb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1719,7 +1716,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '4aaa-bbb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1740,7 +1737,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => ' 5aaa-bb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1760,7 +1757,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '6aaa-bb '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1780,7 +1777,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => 'ccc 7aaa-bbb'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1800,7 +1797,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => 'ccc 8aaa-bbb ddd'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1821,7 +1818,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       'text' => '9aaa-bbb rrr_vv'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1844,7 +1841,7 @@ $result_trees{'test_allowcodebreaks'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'minus',
@@ -1884,7 +1881,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => 'r-oman'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'r',
@@ -1908,7 +1905,7 @@ $result_trees{'test_allowcodebreaks'} = {
                               'text' => 'A node2'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'anchor',
@@ -1922,7 +1919,7 @@ $result_trees{'test_allowcodebreaks'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'samp',
@@ -1952,7 +1949,7 @@ $result_trees{'test_allowcodebreaks'} = {
               'element' => {
                 'args' => [
                   {
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {
@@ -1992,7 +1989,7 @@ $result_trees{'test_allowcodebreaks'} = {
                           'text' => 'in-example'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',

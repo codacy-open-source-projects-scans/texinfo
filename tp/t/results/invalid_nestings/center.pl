@@ -31,7 +31,7 @@ $result_trees{'center'} = {
                           'text' => 'in titlefont'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'titlefont',
@@ -51,7 +51,7 @@ $result_trees{'center'} = {
                           'text' => 'in anchor'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'anchor',
@@ -286,7 +286,7 @@ $result_trees{'center'} = {
 '
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',
@@ -335,7 +335,7 @@ $result_trees{'center'} = {
                           'text' => 'in code in center '
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',
@@ -404,7 +404,7 @@ $result_trees{'center'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -455,8 +455,7 @@ $result_trees{'center'} = {
                   'cmdname' => 'asis',
                   'source_info' => {
                     'line_nr' => 21
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -565,8 +564,7 @@ $result_trees{'center'} = {
                   'cmdname' => 'emph',
                   'source_info' => {
                     'line_nr' => 25
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -765,7 +763,7 @@ $result_trees{'center'} = {
                           'text' => 'something '
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'samp',
@@ -829,7 +827,7 @@ $result_trees{'center'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'samp',
@@ -1130,8 +1128,7 @@ $result_trees{'center'} = {
                           'cmdname' => 'asis',
                           'source_info' => {
                             'line_nr' => 45
-                          },
-                          'type' => 'command_as_argument'
+                          }
                         }
                       ],
                       'info' => {
@@ -1340,6 +1337,13 @@ $result_errors{'center'} = [
     'type' => 'warning'
   },
   {
+    'error_line' => 'warning: @quotation should only appear at the beginning of a line
+',
+    'line_nr' => 5,
+    'text' => '@quotation should only appear at the beginning of a line',
+    'type' => 'warning'
+  },
+  {
     'error_line' => 'warning: @quotation should not appear in @center
 ',
     'line_nr' => 5,
@@ -1471,6 +1475,13 @@ $result_errors{'center'} = [
     'line_nr' => 27,
     'text' => '@item outside of table or list',
     'type' => 'error'
+  },
+  {
+    'error_line' => 'warning: @center should only appear at the beginning of a line
+',
+    'line_nr' => 31,
+    'text' => '@center should only appear at the beginning of a line',
+    'type' => 'warning'
   },
   {
     'error_line' => 'warning: @center should not appear in @center

@@ -20,37 +20,36 @@
 #include <dirent.h>
 #include <string.h>
 #include <errno.h>
+#include <stddef.h>
 
 #include "global_commands_types.h"
 #include "tree_types.h"
-#include "parser.h"
-/* for set_debug_output */
-#include "debug_parser.h"
 /* reset_obstacks */
 #include "tree.h"
-/* for set_input_file_name_encoding ... */
-#include "input.h"
-#include "source_marks.h"
-#include "errors.h"
 /* for wipe_values ... */
 #include "utils.h"
-/* for wipe_user_commands */
-#include "commands.h"
 #include "command_stack.h"
-#include "context_stack.h"
-/* for wipe_macros store_value init_values */
-#include "macro.h"
+#include "errors.h"
 #include "document.h"
-/* for reset_conf */
-#include "conf.h"
 /* for global_parser_conf */
 #include "parser_conf.h"
+/* for wipe_user_commands */
+#include "commands.h"
+#include "context_stack.h"
+/* for set_input_file_name_encoding ... */
+#include "source_marks.h"
+#include "input.h"
+/* for wipe_macros store_value init_values */
+#include "macro.h"
+/* for reset_conf */
+#include "conf.h"
+#include "parser.h"
 /* for init_index_commands */
 #include "indices.h"
 #include "api.h"
 
-static int
-initialize_parsing (void)
+static size_t
+initialize_parsing (enum context root_ct)
 {
   parsed_document = new_document ();
 
@@ -82,17 +81,17 @@ initialize_parsing (void)
   global_clickstyle = strdup ("arrow");
   global_kbdinputstyle = kbd_distinct;
 
-  current_node = current_section = current_part = 0;
+  current_node = 0;
+  current_section = 0;
+  current_part = 0;
   source_marks_reset_counters ();
 
-  /* it is not totally obvious that is it better to reset the
-     list to avoid memory leaks rather than reuse the iconv
-     opened handlers */
   parser_reset_encoding_list ();
   set_input_encoding ("utf-8");
 
   /* initialize parsing state */
   reset_context_stack ();
+  push_context (root_ct, CM_NONE);
   reset_command_stack (&nesting_context.basic_inline_stack);
   reset_command_stack (&nesting_context.basic_inline_stack_on_line);
   reset_command_stack (&nesting_context.basic_inline_stack_block);
@@ -122,37 +121,6 @@ reset_parser (int local_debug_output)
   reset_parser_conf ();
 }
 
-/* RESULT should be an array of size two.  Upon return, it holds
-   the file name in the first position and directory, if any, in
-   the second position.  The file name and directory should be
-   freed.
- */
-static void
-parse_file_path (const char *input_file_path, char **result)
-{
-  /* Strip off a leading directory path, by looking for the last
-     '/' in input_file_path. */
-  const char *p = 0;
-  const char *q = strchr (input_file_path, '/');
-  while (q)
-    {
-      p = q;
-      q = strchr (q + 1, '/');
-    }
-
-  if (p)
-    {
-      result[0] = strdup (p + 1);
-      result[1] = strndup (input_file_path, (p - input_file_path) + 1);
-    }
-  else
-    {
-      result[0] = strdup (input_file_path);
-      /* FIXME or strdup ("") */
-      result[1] = 0;
-    }
-}
-
 /* Determine directory path based on file name.
    Return a DOCUMENT_DESCRIPTOR that can be used to retrieve the
    tree and document obtained by parsing INPUT_FILE_PATH.
@@ -161,10 +129,10 @@ parse_file_path (const char *input_file_path, char **result)
    messages and destroy the document.
 
    Used for parse_texi_file. */
-int
+size_t
 parse_file (const char *input_file_path, int *status)
 {
-  int document_descriptor = initialize_parsing ();
+  size_t document_descriptor = initialize_parsing (ct_base);
   GLOBAL_INFO *global_info;
   char *input_file_name_and_directory[2];
   int input_error;
@@ -209,10 +177,10 @@ parse_file (const char *input_file_path, int *status)
 }
 
 /* Used for parse_texi_text.  STRING should be a UTF-8 buffer. */
-int
+size_t
 parse_text (const char *string, int line_nr)
 {
-  int document_descriptor = initialize_parsing ();
+  size_t document_descriptor = initialize_parsing (ct_base);
 
   input_push_text (strdup (string), line_nr, 0, 0);
   parse_texi_document ();
@@ -222,11 +190,11 @@ parse_text (const char *string, int line_nr)
 /* Set DOCUMENT_DESCRIPTOR to the value corresponding to the tree
    obtained by parsing the Texinfo code in STRING.
    STRING should be a UTF-8 buffer.  Used for parse_texi_line. */
-int
+size_t
 parse_string (const char *string, int line_nr)
 {
   ELEMENT *root_elt;
-  int document_descriptor = initialize_parsing ();
+  size_t document_descriptor = initialize_parsing (ct_line);
 
   root_elt = new_element (ET_root_line);
 
@@ -236,10 +204,10 @@ parse_string (const char *string, int line_nr)
 }
 
 /* Used for parse_texi_piece.  STRING should be a UTF-8 buffer. */
-int
+size_t
 parse_piece (const char *string, int line_nr)
 {
-  int document_descriptor = initialize_parsing ();
+  size_t document_descriptor = initialize_parsing (ct_base);
   ELEMENT *before_node_section, *document_root;
 
   before_node_section = setup_document_root_and_before_node_section ();

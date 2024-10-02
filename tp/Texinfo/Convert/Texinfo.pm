@@ -196,8 +196,7 @@ sub _convert_to_texinfo($)
      if (ref($element) ne 'HASH');
   my $result = '';
 
-  return '' if ($element->{'type'}
-                and $element->{'info'}
+  return '' if ($element->{'info'}
                 and $element->{'info'}->{'inserted'});
   if (defined($element->{'text'})) {
     $result .= $element->{'text'};
@@ -261,7 +260,8 @@ sub _expand_cmd_args_to_texi($) {
     my $braces;
     $braces = 1 if (scalar(@{$cmd->{'args'}})
                     and ($cmd->{'args'}->[0]->{'type'}
-                          and ($cmd->{'args'}->[0]->{'type'} eq 'brace_command_arg'
+                          and ($cmd->{'args'}->[0]->{'type'} eq 'brace_container'
+                               or $cmd->{'args'}->[0]->{'type'} eq 'brace_arg'
                                or $cmd->{'args'}->[0]->{'type'} eq 'brace_command_context')));
     $result .= '{' if ($braces);
     if ($cmdname eq 'verb') {
@@ -281,8 +281,7 @@ sub _expand_cmd_args_to_texi($) {
     }
     my $arg_nr = 0;
     foreach my $arg (@{$cmd->{'args'}}) {
-      next if ($arg->{'type'} and $arg->{'info'}
-               and $arg->{'info'}->{'inserted'});
+      next if ($arg->{'info'} and $arg->{'info'}->{'inserted'});
       if ($with_commas) {
         $result .= ',' if ($arg_nr);
         $arg_nr++;

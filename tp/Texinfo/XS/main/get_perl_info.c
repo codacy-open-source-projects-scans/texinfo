@@ -29,14 +29,16 @@
 
 #undef context
 
+#include "text.h"
+#include "command_ids.h"
+#include "tree_types.h"
 #include "options_types.h"
 #include "document_types.h"
 #include "converter_types.h"
-#include "text.h"
 #include "extra.h"
+#include "builtin_commands.h"
 #include "debug.h"
 #include "utils.h"
-#include "builtin_commands.h"
 #include "errors.h"
 #include "targets.h"
 #include "parser_conf.h"
@@ -110,7 +112,7 @@ debug_print_element_sv (SV *element_sv)
 DOCUMENT *
 get_document_or_warn (SV *sv_in, char *key, char *warn_string)
 {
-  int document_descriptor;
+  size_t document_descriptor;
   DOCUMENT *document = 0;
   SV** document_descriptor_sv;
   HV *hv_in;
@@ -126,7 +128,8 @@ get_document_or_warn (SV *sv_in, char *key, char *warn_string)
   document_descriptor_sv = hv_fetch (hv_in, key, strlen (key), 0);
   if (document_descriptor_sv && SvOK (*document_descriptor_sv))
     {
-      document_descriptor = SvIV (*document_descriptor_sv);
+      /* NOTE if size_t size is more than IV we could have overflow here */
+      document_descriptor = (size_t) SvIV (*document_descriptor_sv);
       document = retrieve_document (document_descriptor);
     }
   else if (warn_string)
@@ -136,7 +139,7 @@ get_document_or_warn (SV *sv_in, char *key, char *warn_string)
     }
   if (! document && warn_string)
     {
-      fprintf (stderr, "ERROR: %s: no document %d\n", warn_string,
+      fprintf (stderr, "ERROR: %s: no document %zu\n", warn_string,
                                                       document_descriptor);
     }
   return document;
@@ -214,14 +217,15 @@ get_sv_output_units_descriptor (SV *output_units_in, char *warn_string)
 
 
 OUTPUT_UNIT_LIST *
-get_sv_output_units (SV *output_units_in, char *warn_string)
+get_sv_output_units (const DOCUMENT *document, SV *output_units_in,
+                     char *warn_string)
 {
   OUTPUT_UNIT_LIST *output_units = 0;
   int output_units_descriptor
      = get_sv_output_units_descriptor (output_units_in, warn_string);
   if (output_units_descriptor)
     {
-      output_units = retrieve_output_units (output_units_descriptor);
+      output_units = retrieve_output_units (document, output_units_descriptor);
       if (!output_units && warn_string)
         fprintf (stderr, "ERROR: %s: no units %d\n", warn_string,
                                              output_units_descriptor);
@@ -277,7 +281,7 @@ void
 add_svav_to_string_list (const SV *sv, STRING_LIST *string_list,
                          enum sv_string_type type)
 {
-  int i;
+  size_t i;
   SSize_t strings_nr;
 
   dTHX;
@@ -289,7 +293,7 @@ add_svav_to_string_list (const SV *sv, STRING_LIST *string_list,
   strings_nr = av_top_index (av) +1;
   for (i = 0; i < strings_nr; i++)
     {
-      SV** string_sv = av_fetch (av, i, 0);
+      SV **string_sv = av_fetch (av, i, 0);
       if (string_sv)
         {
           const char *string;
@@ -715,7 +719,7 @@ get_sv_index_entries_sorted_by_letter (INDEX_LIST *indices_info,
 }
 
 void
-set_conf (CONVERTER *converter, const char *conf, SV *value)
+set_sv_conf (CONVERTER *converter, const char *conf, SV *value)
 {
   if (converter->conf)
     get_sv_option (converter->conf, conf, value, 0, converter);
@@ -726,7 +730,7 @@ set_conf (CONVERTER *converter, const char *conf, SV *value)
 }
 
 void
-force_conf (CONVERTER *converter, const char *conf, SV *value)
+force_sv_conf (CONVERTER *converter, const char *conf, SV *value)
 {
   if (converter->conf)
     get_sv_option (converter->conf, conf, value, 1, converter);
@@ -794,7 +798,7 @@ html_get_button_specification_list (const CONVERTER *converter,
 
   for (i = 0; i < buttons_nr; i++)
     {
-      SV** button_sv = av_fetch (buttons_av, i, 0);
+      SV **button_sv = av_fetch (buttons_av, i, 0);
       BUTTON_SPECIFICATION *button = &result->list[i];
 
       button->sv = *button_sv;
@@ -1084,7 +1088,7 @@ find_root_command (const DOCUMENT *document, HV *element_hv,
             {
               int unit_index = SvIV (*unit_index_sv);
               const OUTPUT_UNIT_LIST *output_units
-               = retrieve_output_units (output_units_descriptor);
+               = retrieve_output_units (document, output_units_descriptor);
 
               if (output_units && unit_index < output_units->number)
                 {
@@ -1103,9 +1107,9 @@ find_root_command (const DOCUMENT *document, HV *element_hv,
 
   /* if there are no output units go through the root element children */
   root = document->tree;
-  for (i = 0; i < root->contents.number; i++)
+  for (i = 0; i < root->e.c->contents.number; i++)
     {
-      ELEMENT *content = root->contents.list[i];
+      ELEMENT *content = root->e.c->contents.list[i];
       if (content->hv == element_hv)
         return content;
     }
@@ -1121,7 +1125,7 @@ find_index_entry_subentry (const ELEMENT *index_element, HV *element_hv)
   while (1)
     {
       const ELEMENT *subentry = lookup_extra_element (current_element,
-                                                      "subentry");
+                                                      AI_key_subentry);
       if (subentry)
         {
           if (subentry->hv == element_hv)

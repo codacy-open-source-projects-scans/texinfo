@@ -21,32 +21,30 @@
 
 #include <stddef.h>
 
+#include "command_ids.h"
 #include "tree_types.h"
-#include "tree.h"
-#include "context_stack.h"
-#include "commands.h"
-#include "handle_commands.h"
+#include "document_types.h"
 #include "counter.h"
-#include "macro.h"
-#include "conf.h"
 
+
+extern const ELEMENT *internal_space_holder;
 
 /* In close.c */
-int is_container_empty (ELEMENT *current);
 void remove_empty_content (ELEMENT *current);
 ELEMENT *close_container (ELEMENT *current);
 void close_command_cleanup (ELEMENT *current);
-ELEMENT *close_commands (ELEMENT *current, enum command_id closed_block_command,
-                         ELEMENT **closed_element, enum command_id);
+ELEMENT *close_commands (ELEMENT *current, enum command_id closed_block_cmd,
+                         ELEMENT **closed_element,
+                         enum command_id interrupting_cmd);
 ELEMENT *close_all_style_commands (ELEMENT *current,
-                               enum command_id closed_block_command,
-                               enum command_id interrupting_command);
+                               enum command_id closed_block_cmd,
+                               enum command_id interrupting_cmd);
 ELEMENT *close_current (ELEMENT *current,
-                        enum command_id closed_block_command,
-                        enum command_id interrupting_command);
+                        enum command_id closed_block_cmd,
+                        enum command_id interrupting_cmd);
 ELEMENT *close_brace_command (ELEMENT *current,
-                              enum command_id closed_block_command,
-                              enum command_id interrupting_command,
+                              enum command_id closed_block_cmd,
+                              enum command_id interrupting_cmd,
                               int missing_brace);
 void close_ignored_block_conditional (ELEMENT *current);
 
@@ -67,37 +65,38 @@ typedef struct {
 } CONDITIONAL_STACK_ITEM;
 
 ELEMENT *setup_document_root_and_before_node_section (void);
-int parse_texi (ELEMENT *root_elt, ELEMENT *current_elt);
-int parse_texi_document (void);
+size_t parse_texi (ELEMENT *root_elt, ELEMENT *current_elt);
+void parse_texi_document (void);
 
 void push_conditional_stack (enum command_id cond, SOURCE_MARK *source_mark);
 CONDITIONAL_STACK_ITEM *pop_conditional_stack (void);
 CONDITIONAL_STACK_ITEM *top_conditional_stack (void);
 extern size_t conditional_number;
 
-int abort_empty_line (ELEMENT **current_inout, const char *additional_spaces,
-                      size_t len_text);
+void move_last_space_to_element (ELEMENT *current);
+void abort_empty_line (ELEMENT *current);
 ELEMENT *end_paragraph (ELEMENT *current,
-                        enum command_id closed_block_command,
-                        enum command_id interrupting_command);
+                        enum command_id closed_block_cmd,
+                        enum command_id interrupting_cmd);
+ELEMENT *end_paragraph_preformatted (ELEMENT *current,
+                                 enum command_id closed_block_cmd,
+                                 enum command_id interrupting_cmd);
 void isolate_last_space (ELEMENT *current);
+void isolate_trailing_space (ELEMENT *current, enum element_type spaces_type);
 int kbd_formatted_as_code (ELEMENT *current);
 int parent_of_command_as_argument (ELEMENT *current);
 void register_command_as_argument (ELEMENT *cmd_as_arg);
 ELEMENT *begin_preformatted (ELEMENT *current);
 ELEMENT *end_preformatted (ELEMENT *current,
-                           enum command_id closed_block_command,
-                           enum command_id interrupting_command);
+                           enum command_id closed_block_cmd,
+                           enum command_id interrupting_cmd);
 char *read_command_name (const char **ptr);
 const char *read_comment (const char *line, int *has_comment);
 char *text_contents_to_plain_text (ELEMENT *e, int *superfluous_arg);
 ELEMENT *merge_text (ELEMENT *current, const char *text, size_t text_len,
                      ELEMENT *transfer_marks_element);
 void start_empty_line_after_command (ELEMENT *current, const char **line_inout,
-                                     ELEMENT *command);
-ELEMENT *begin_paragraph (ELEMENT *current);
-int is_end_current_command (ELEMENT *current, const char **line,
-                            enum command_id *end_cmd);
+                                     const ELEMENT *command);
 int check_space_element (ELEMENT *e);
 void gather_spaces_after_cmd_before_arg (ELEMENT *current);
 char *parse_command_name (const char **ptr, int *single_char);
@@ -113,7 +112,7 @@ extern const char *linecommand_expansion_delimiters;
 extern DOCUMENT *parsed_document;
 
 extern ELEMENT *current_node;
-extern ELEMENT *current_section;
+extern const ELEMENT *current_section;
 extern ELEMENT *current_part;
 
 extern char *global_clickstyle;

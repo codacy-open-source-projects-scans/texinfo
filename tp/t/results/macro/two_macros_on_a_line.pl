@@ -174,13 +174,17 @@ $result_trees{'two_macros_on_a_line'} = {
               'cmdname' => '}'
             },
             {
+              'text' => '
+'
+            },
+            {
               'source_marks' => [
                 {
                   'counter' => 1,
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -188,16 +192,9 @@ $result_trees{'two_macros_on_a_line'} = {
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 1,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
-                }
-              ],
-              'text' => '
-'
-            },
-            {
-              'source_marks' => [
+                },
                 {
                   'counter' => 1,
                   'position' => 10,
@@ -209,7 +206,7 @@ $result_trees{'two_macros_on_a_line'} = {
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -260,6 +257,10 @@ $result_trees{'two_macros_on_a_line'} = {
               'cmdname' => '}'
             },
             {
+              'text' => '
+'
+            },
+            {
               'source_marks' => [
                 {
                   'counter' => 3,
@@ -269,16 +270,9 @@ $result_trees{'two_macros_on_a_line'} = {
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 1,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
-                }
-              ],
-              'text' => '
-'
-            },
-            {
-              'source_marks' => [
+                },
                 {
                   'counter' => 3,
                   'position' => 10,
@@ -290,7 +284,7 @@ $result_trees{'two_macros_on_a_line'} = {
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -341,13 +335,17 @@ $result_trees{'two_macros_on_a_line'} = {
               'cmdname' => '@'
             },
             {
+              'text' => 'mymacro
+'
+            },
+            {
               'source_marks' => [
                 {
                   'counter' => 5,
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -355,16 +353,9 @@ $result_trees{'two_macros_on_a_line'} = {
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 8,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
-                }
-              ],
-              'text' => 'mymacro
-'
-            },
-            {
-              'source_marks' => [
+                },
                 {
                   'counter' => 5,
                   'position' => 10,
@@ -404,6 +395,10 @@ $result_trees{'two_macros_on_a_line'} = {
         {
           'contents' => [
             {
+              'text' => 'with args
+'
+            },
+            {
               'source_marks' => [
                 {
                   'counter' => 7,
@@ -418,7 +413,7 @@ arg
 in macro'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -429,15 +424,10 @@ in macro'
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 10,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
                 }
               ],
-              'text' => 'with args
-'
-            },
-            {
               'text' => 'in with args
 '
             },
@@ -476,7 +466,7 @@ in macro'
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {

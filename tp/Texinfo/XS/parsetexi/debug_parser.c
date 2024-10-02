@@ -18,13 +18,16 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "commands.h"
-#include "tree_types.h"
 #include "text.h"
+#include "command_ids.h"
 #include "element_types.h"
+#include "tree_types.h"
+#include "types_data.h"
 #include "debug.h"
 /* for global_parser_conf */
 #include "parser_conf.h"
+/* command_name */
+#include "commands.h"
 #include "debug_parser.h"
 
 /* debug functions used in parser, depending on global_parser_conf.debug */
@@ -97,35 +100,42 @@ char *
 print_element_debug_parser (const ELEMENT *e, int print_parent)
 {
   TEXT text;
-  char *result;
 
   text_init (&text);
   text_append (&text, "");
-  if (e->cmd)
-    text_printf (&text, "@%s", debug_parser_command_name (e->cmd));
   if (e->type)
-    text_printf (&text, "(%s)", element_type_names[e->type]);
-  if (e->text.end > 0)
+    text_printf (&text, "(%s)", type_data[e->type].name);
+  if (type_data[e->type].flags & TF_text)
     {
-      char *element_text = debug_protect_eol (e->text.text);
-      text_printf (&text, "[T: %s]", element_text);
-      free (element_text);
+      if (e->e.text->end == 0)
+        {
+          text_append_n (&text, "[T]", 3);
+        }
+      else
+        {
+          char *element_text = debug_protect_eol (e->e.text->text);
+          text_printf (&text, "[T: %s]", element_text);
+          free (element_text);
+        }
     }
-  if (e->args.number)
-    text_printf (&text, "[A%d]", e->args.number);
-  if (e->contents.number)
-    text_printf (&text, "[C%d]", e->contents.number);
+  else
+    {
+      if (e->e.c->cmd)
+        text_printf (&text, "@%s", debug_parser_command_name (e->e.c->cmd));
+      if (e->e.c->args.number)
+        text_printf (&text, "[A%d]", e->e.c->args.number);
+      if (e->e.c->contents.number)
+        text_printf (&text, "[C%d]", e->e.c->contents.number);
+    }
   if (print_parent && e->parent)
     {
       text_append (&text, " <- ");
-      if (e->parent->cmd)
-        text_printf (&text, "@%s", command_name (e->parent->cmd));
+      if (e->parent->e.c->cmd)
+        text_printf (&text, "@%s", command_name (e->parent->e.c->cmd));
       if (e->parent->type)
-        text_printf (&text, "(%s)", element_type_names[e->parent->type]);
+        text_printf (&text, "(%s)", type_data[e->parent->type].name);
     }
-  result = strdup (text.text);
-  free (text.text);
-  return result;
+  return text.text;
 }
 
 void

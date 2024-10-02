@@ -195,7 +195,19 @@ $result_trees{'omit_def_space'} = {
               ],
               'extra' => {
                 'def_command' => 'defun',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'function'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'element_node' => {},
                 'index_entry' => [
                   'fn',
@@ -287,7 +299,19 @@ $result_trees{'omit_def_space'} = {
               'cmdname' => 'defunx',
               'extra' => {
                 'def_command' => 'defun',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'another'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'element_node' => {},
                 'index_entry' => [
                   'fn',
@@ -303,8 +327,7 @@ $result_trees{'omit_def_space'} = {
               },
               'source_info' => {
                 'line_nr' => 8
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -377,9 +400,7 @@ $result_trees{'omit_def_space'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'omit_def_space'}{'contents'}[2]{'contents'}[3]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'omit_def_space'}{'contents'}[2]{'contents'}[3]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'omit_def_space'}{'contents'}[2]{'contents'}[3]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'omit_def_space'}{'contents'}[2];
-$result_trees{'omit_def_space'}{'contents'}[2]{'contents'}[3]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'omit_def_space'}{'contents'}[2]{'contents'}[3]{'contents'}[1]{'args'}[0]{'contents'}[2];
 $result_trees{'omit_def_space'}{'contents'}[2]{'contents'}[3]{'contents'}[1]{'extra'}{'element_node'} = $result_trees{'omit_def_space'}{'contents'}[2];
 
 $result_texis{'omit_def_space'} = '@node Top
@@ -454,8 +475,8 @@ $result_indices_sort_strings{'omit_def_space'} = {
 
 
 
-$result_converted{'plaintext'}->{'omit_def_space'} = ' -- Function: function(arg1, arg2)
- -- Function: another(aarg)
+$result_converted{'plaintext'}->{'omit_def_space'} = ' - Function: function(arg1, arg2)
+ - Function: another(aarg)
      explain
 ';
 

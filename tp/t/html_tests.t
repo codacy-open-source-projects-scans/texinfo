@@ -64,6 +64,22 @@ my $itemize_arguments_text = '
 @item item @{
 @end itemize
 
+@itemize @&
+@item item @&
+@end itemize
+
+@itemize @ampchar
+@item item @ampchar{}
+@end itemize
+
+@itemize @& a
+@item item @& a
+@end itemize
+
+@itemize @ampchar{} a
+@item item @ampchar{} a
+@end itemize
+
 @itemize @registeredsymbol{}
 @item item registeredsymbol @registeredsymbol{}
 @end itemize
@@ -739,8 +755,7 @@ in html
 ', {'FORMAT_MENU' => 'menu'}, {'FORMAT_MENU' => 'menu'},],
 ['mathjax_with_texinfo',
 $mathjax_with_texinfo,
-{},
-{'HTML_MATH' => 'mathjax'}],
+{}, {'HTML_MATH' => 'mathjax'}],
 ['mathjax_with_texinfo_enable_encoding',
 $mathjax_with_texinfo, {'test_formats' => ['latex_text', 'file_latex'],
                         'full_document' => 1,
@@ -826,6 +841,16 @@ ccc|}
 ', {'init_files' => ['spaces_in_line_breaks.init'],
     'skip' => $XS_convert ? 'Direct perl data change test' : undef,},
 ],
+['xhtml_rule_element_already_closed',
+'@node Top
+@top top
+
+@node chap
+@chapter Chapter
+', {},
+# BIG_RULE is actually used
+ {'DEFAULT_RULE' => '<hr/>', 'BIG_RULE' => '<hr/>',
+  'USE_XML_SYNTAX' => 1,}],
 );
 
 my $test_accents_sc_no_brace_commands_quotes = '@u{--a}
@@ -984,6 +1009,31 @@ my $css_init_file_texinfo = '@node Top
 @code{@r{in r in code}}
 
 @titlefont{in a new heading}
+';
+
+my $nodedescription_description_texinfo = '@node Top
+@top test of descriptions with nodedescription*
+
+@node toto
+@chapter Toto
+
+@nodedescription toto is there:: and the @emph{is a description}@w{slightly long} and @verb{:vv somewhat:} @ringaccent anexpected
+
+@nodedescriptionblock
+Block along line node description for toto
+@end nodedescriptionblock
+
+@node titi
+@chapter Titi
+
+@nodedescriptionblock
+description of titi in block
+@end nodedescriptionblock
+
+@node other
+@chapter Other
+
+@nodedescription other comes here
 ';
 
 my @file_tests = (
@@ -1534,6 +1584,16 @@ undef, {'test_file' => 'simple_only_special_spaces_node.texi',
 ', {}, {'USE_NODES' => 0,
         # needed for the test
         'SPLIT' => 'node'}],
+['nodedescription_description',
+$nodedescription_description_texinfo, {}, {'FORMAT_MENU' => 'menu',
+        # needed for the test
+        'SPLIT' => 'node'}],
+['nodedescription_description_no_use_nodes',
+$nodedescription_description_texinfo, {}, {'FORMAT_MENU' => 'menu',
+        'USE_NODES' => 0,
+        # needed for the test
+        'SPLIT' => 'node'}],
+
 );
 
 

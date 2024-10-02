@@ -66,7 +66,7 @@ $result_trees{'double_recursive_self_section_reference'} = {
                     },
                     'normalized' => 'n2'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -155,7 +155,7 @@ $result_trees{'double_recursive_self_section_reference'} = {
                     },
                     'normalized' => 'n1'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -308,11 +308,11 @@ $result_floats{'double_recursive_self_section_reference'} = {};
 
 
 
-$result_converted{'plaintext'}->{'double_recursive_self_section_reference'} = '1 *note n2::
-************
+$result_converted{'plaintext'}->{'double_recursive_self_section_reference'} = '1 n2
+****
 
-2 *note n1::
-************
+2 n1
+****
 
 ';
 

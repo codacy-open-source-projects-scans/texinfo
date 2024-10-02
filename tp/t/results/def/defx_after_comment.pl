@@ -45,7 +45,7 @@ $result_trees{'defx_after_comment'} = {
                                       'text' => 'i'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'var',
@@ -105,7 +105,29 @@ $result_trees{'defx_after_comment'} = {
               ],
               'extra' => {
                 'def_command' => 'deffn',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'i'
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => 'var'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'index_entry' => [
                   'fn',
                   1
@@ -199,7 +221,19 @@ $result_trees{'defx_after_comment'} = {
               'cmdname' => 'deffnx',
               'extra' => {
                 'def_command' => 'deffn',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'bidulr'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'index_entry' => [
                   'fn',
                   2
@@ -213,8 +247,7 @@ $result_trees{'defx_after_comment'} = {
               },
               'source_info' => {
                 'line_nr' => 3
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -256,8 +289,6 @@ $result_trees{'defx_after_comment'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'defx_after_comment'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'defx_after_comment'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'defx_after_comment'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'extra'}{'def_index_element'} = $result_trees{'defx_after_comment'}{'contents'}[0]{'contents'}[0]{'contents'}[2]{'args'}[0]{'contents'}[2];
 
 $result_texis{'defx_after_comment'} = '@deffn fset @var{i} a g
 @c comment
@@ -299,8 +330,8 @@ $result_indices_sort_strings{'defx_after_comment'} = {
 
 
 
-$result_converted{'plaintext'}->{'defx_after_comment'} = ' -- fset: I a g
- -- truc: bidulr machin...
+$result_converted{'plaintext'}->{'defx_after_comment'} = ' - fset: I a g
+ - truc: bidulr machin...
 ';
 
 1;

@@ -27,7 +27,7 @@ $result_trees{'empty_line_in_email'} = {
 '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'email',
@@ -123,5 +123,12 @@ $result_converted{'latex_text'}->{'empty_line_in_email'} = '\\href{mailto:
 
 text
 ';
+
+
+$result_converted{'docbook'}->{'empty_line_in_email'} = '<para><email>
+</email></para><para>mail,
+</para>
+<para>text
+</para>';
 
 1;

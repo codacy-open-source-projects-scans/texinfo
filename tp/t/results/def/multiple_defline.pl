@@ -98,7 +98,19 @@ $result_trees{'multiple_defline'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'foo'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -108,8 +120,7 @@ $result_trees{'multiple_defline'} = {
               },
               'source_info' => {
                 'line_nr' => 2
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -222,7 +233,19 @@ $result_trees{'multiple_defline'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'foo2'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -232,8 +255,7 @@ $result_trees{'multiple_defline'} = {
               },
               'source_info' => {
                 'line_nr' => 5
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -294,8 +316,6 @@ $result_trees{'multiple_defline'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'multiple_defline'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'multiple_defline'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'multiple_defline'}{'contents'}[0]{'contents'}[1]{'contents'}[2]{'extra'}{'def_index_element'} = $result_trees{'multiple_defline'}{'contents'}[0]{'contents'}[1]{'contents'}[2]{'args'}[0]{'contents'}[2];
 
 $result_texis{'multiple_defline'} = '@defblock
 @defline Funoid foo (bar)
@@ -323,10 +343,10 @@ $result_floats{'multiple_defline'} = {};
 
 
 
-$result_converted{'plaintext'}->{'multiple_defline'} = ' -- Funoid: foo (bar)
+$result_converted{'plaintext'}->{'multiple_defline'} = ' - Funoid: foo (bar)
      description1 description1 description1 description1 description1
      description1 description1 description1 description1 description1
- -- Funnyoid: foo2 (bar2, baz2)
+ - Funnyoid: foo2 (bar2, baz2)
      description2 description2 description2 description2 description2
      description2 description2 description2 description2 description2
 ';

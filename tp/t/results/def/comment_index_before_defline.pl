@@ -172,7 +172,19 @@ $result_trees{'comment_index_before_defline'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'b'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -182,8 +194,7 @@ $result_trees{'comment_index_before_defline'} = {
               },
               'source_info' => {
                 'line_nr' => 6
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -226,7 +237,6 @@ $result_trees{'comment_index_before_defline'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'comment_index_before_defline'}{'contents'}[0]{'contents'}[1]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'comment_index_before_defline'}{'contents'}[0]{'contents'}[1]{'contents'}[1]{'args'}[0]{'contents'}[2];
 
 $result_texis{'comment_index_before_defline'} = '@defblock
 @c a comment
@@ -264,7 +274,7 @@ $result_indices_sort_strings{'comment_index_before_defline'} = {
 
 
 
-$result_converted{'plaintext'}->{'comment_index_before_defline'} = ' -- a: b c d
+$result_converted{'plaintext'}->{'comment_index_before_defline'} = ' - a: b c d
 ';
 
 

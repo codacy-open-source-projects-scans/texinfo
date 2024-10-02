@@ -113,8 +113,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
                   'cmdname' => 'samp',
                   'source_info' => {
                     'line_nr' => 6
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -182,7 +181,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
                               'text' => 'foo'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'anchor',
@@ -212,7 +211,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
                                   'text' => 'foo'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'samp',
@@ -282,7 +281,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
                               'text' => 'Foo'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'anchor',
@@ -312,7 +311,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
                                   'text' => 'Foo'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'samp',
@@ -404,7 +403,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
                     },
                     'normalized' => 'foo'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',
@@ -442,7 +441,7 @@ $result_trees{'file_name_case_insensitive_conflict_redirections'} = {
                     },
                     'normalized' => 'Foo'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',

@@ -87,8 +87,7 @@ $result_trees{'blockitem_no_item'} = {
                   'cmdname' => 'bullet',
                   'info' => {
                     'inserted' => 1
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -107,6 +106,10 @@ $result_trees{'blockitem_no_item'} = {
                 {
                   'contents' => [
                     {
+                      'text' => 'AA
+'
+                    },
+                    {
                       'source_marks' => [
                         {
                           'counter' => 1,
@@ -118,11 +121,7 @@ $result_trees{'blockitem_no_item'} = {
                                     'text' => 'd'
                                   }
                                 ],
-                                'info' => {
-                                  'spaces_before_argument' => {
-                                    'text' => ' '
-                                  }
-                                }
+                                'type' => 'line_arg'
                               },
                               {
                                 'contents' => [
@@ -134,7 +133,8 @@ $result_trees{'blockitem_no_item'} = {
                                   'spaces_before_argument' => {
                                     'text' => ' '
                                   }
-                                }
+                                },
+                                'type' => 'line_arg'
                               },
                               {
                                 'contents' => [
@@ -147,23 +147,22 @@ $result_trees{'blockitem_no_item'} = {
                                   'spaces_before_argument' => {
                                     'text' => ' '
                                   }
-                                }
+                                },
+                                'type' => 'line_arg'
                               }
                             ],
                             'info' => {
-                              'command_name' => 'mycommand'
+                              'command_name' => 'mycommand',
+                              'spaces_before_argument' => {
+                                'text' => ' '
+                              }
                             },
                             'type' => 'linemacro_call'
                           },
-                          'position' => 3,
                           'sourcemark_type' => 'linemacro_expansion',
                           'status' => 'start'
                         }
                       ],
-                      'text' => 'AA
-'
-                    },
-                    {
                       'text' => 'd, e f '
                     },
                     {

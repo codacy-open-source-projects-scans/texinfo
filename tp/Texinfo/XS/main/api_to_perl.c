@@ -33,6 +33,7 @@
 #include "tree_types.h"
 #include "option_types.h"
 #include "converter_types.h"
+#include "document_types.h"
 /* non_perl_* */
 #include "utils.h"
 
@@ -61,14 +62,33 @@ unregister_perl_button (BUTTON_SPECIFICATION *button)
   SvREFCNT_dec (button->sv);
 }
 
-char *
-get_perl_scalar_reference_value (const void *sv_string)
+void
+register_perl_button (BUTTON_SPECIFICATION *button)
 {
   dTHX;
 
-  const char *value_tmp = (char *) SvPVutf8_nolen (SvRV ((SV *) sv_string));
-  char *value = non_perl_strdup (value_tmp);
-  return value;
+  SvREFCNT_inc (button->sv);
+}
+
+char *
+get_perl_scalar_reference_value (const void *sv_string)
+{
+  const SV *string_ref_sv;
+
+  dTHX;
+
+  string_ref_sv = (SV *) sv_string;
+  if (SvOK (string_ref_sv) && SvROK (string_ref_sv))
+    {
+      SV *string_sv = SvRV (string_ref_sv);
+      if (SvOK (string_sv))
+        {
+          const char *value_tmp = (char *) SvPVutf8_nolen (string_sv);
+          char *value = non_perl_strdup (value_tmp);
+          return value;
+        }
+    }
+  return 0;
 }
 
 void
@@ -97,4 +117,29 @@ void
 croak_message (char *message)
 {
   croak ("%s\n", message);
+}
+
+/* HTML specific */
+void
+unregister_html_converter_perl_hv (CONVERTER *converter)
+{
+  dTHX;
+
+  if (converter->pl_info_hv)
+    {
+      SvREFCNT_dec ((SV *)converter->pl_info_hv);
+      converter->pl_info_hv = 0;
+    }
+}
+
+void
+unregister_document_hv (DOCUMENT *document)
+{
+  dTHX;
+
+  if (document->hv)
+    {
+      SvREFCNT_dec ((SV *)document->hv);
+      document->hv = 0;
+    }
 }

@@ -4,11 +4,9 @@
 
 #include <stddef.h>
 
-#include "tree_types.h"
 #include "command_ids.h"
+#include "tree_types.h"
 #include "converter_types.h"
-/* for TARGET_FILENAME */
-#include "utils.h"
 
 /* piece of code that can be inlined in text parsing codes */
 #define OTXI_PROTECT_XML_CASES(var) \
@@ -73,11 +71,54 @@ typedef struct FLOAT_CAPTION_PREPENDED_ELEMENT {
     ELEMENT *prepended;
 } FLOAT_CAPTION_PREPENDED_ELEMENT;
 
+typedef struct INSTALLED_PATHS {
+    const char *pkgdatadir;
+} INSTALLED_PATHS;
+
+typedef struct UNINSTALLED_PATHS {
+    const char *tp_builddir;
+    const char *top_srcdir;
+} UNINSTALLED_PATHS;
+
+typedef struct PATHS_INFORMATION {
+    int texinfo_uninstalled;
+    union {
+      INSTALLED_PATHS installed;
+      UNINSTALLED_PATHS uninstalled;
+    } p;
+} PATHS_INFORMATION;
+
 extern enum command_id no_brace_command_accent_upper_case[][2];
+
+extern enum command_id default_upper_case_commands[];
+
+/* in generated cmd_converter.c */
+extern const char * xml_text_entity_no_arg_commands[];
+
+/* in converter.c */
+extern const char *xml_text_entity_no_arg_commands_formatting[];
+
+extern PATHS_INFORMATION conversion_paths_info;
+
+void converter_setup (void);
+void setup_converter_paths_information (int texinfo_uninstalled,
+                                        const char *tp_builddir,
+                             const char *pkgdatadir, const char *top_srcdir);
 
 CONVERTER *retrieve_converter (int converter_descriptor);
 size_t new_converter (void);
 void unregister_converter_descriptor (int converter_descriptor);
+
+void converter_set_document (CONVERTER *converter, DOCUMENT *document);
+
+int set_conf (OPTION *option, int int_value, const char *char_value);
+void force_conf (OPTION *option, int int_value, const char *char_value);
+
+void determine_files_and_directory (CONVERTER *self, const char *output_format,
+                                    char **result);
+int create_destination_directory (CONVERTER *self,
+                                  const char *destination_directory_path,
+                                  const char *destination_directory_name);
 
 void set_global_document_commands (CONVERTER *converter,
                                   const enum command_location location,
@@ -90,6 +131,8 @@ TREE_ADDED_ELEMENTS *new_tree_added_elements
                       (enum tree_added_elements_status status);
 ELEMENT *new_element_added (TREE_ADDED_ELEMENTS *added_elements,
                             enum element_type type);
+ELEMENT *new_text_element_added (TREE_ADDED_ELEMENTS *added_elements,
+                                 enum element_type type);
 void clear_tree_added_elements (CONVERTER *self,
                                 TREE_ADDED_ELEMENTS *tree_elements);
 void free_tree_added_elements (CONVERTER *self,

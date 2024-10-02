@@ -41,6 +41,7 @@ use Texinfo::XSLoader;
 
 use Texinfo::Commands;
 use Texinfo::Common;
+use Texinfo::Data;
 use Texinfo::ManipulateTree;
 
 require Exporter;
@@ -74,6 +75,7 @@ my %XS_convert_overrides = (
   #    => "Texinfo::StructTransfXS::split_by_node");
   #  "Texinfo::OutputUnits::split_by_section"
   #    => "Texinfo::StructTransfXS::split_by_section");
+  # TODO the split_pages XS takes also a document as argument
   #  "Texinfo::OutputUnits::split_pages"
   #    => "Texinfo::StructTransfXS::split_pages"
 );
@@ -237,8 +239,9 @@ sub unsplit($)
 }
 
 # does nothing in perl, the XS version reexports the output units
-sub rebuild_output_units($)
+sub rebuild_output_units($$)
 {
+  my $document = shift;
   my $output_units = shift;
 }
 
@@ -636,7 +639,7 @@ sub output_unit_texi($)
   my $unit_command = $output_unit->{'unit_command'};
 
   if ($output_unit->{'unit_type'} eq 'external_node_unit') {
-    return Texinfo::Convert::Texinfo::convert_to_texinfo(
+    return "_EXT_NODE: ".Texinfo::Convert::Texinfo::convert_to_texinfo(
                             {'contents' => $unit_command->{'contents'}});
   } elsif ($output_unit->{'unit_type'} eq 'special_unit') {
     return "_SPECIAL_UNIT: $output_unit->{'special_unit_variety'}";
@@ -650,12 +653,10 @@ sub output_unit_texi($)
                                                           $unit_command);
 }
 
-# Should be in the same order as relative_unit_direction_name
-# in main/output_unit.c
-my @relative_directions_order = ('This', 'Forward', 'Back', 'FastForward',
- 'FastBack', 'Next', 'Prev', 'Up', 'SectionNext', 'SectionPrev',
- 'SectionUp', 'NodeNext', 'NodePrev', 'NodeUp', 'NodeForward', 'NodeBack');
-my @file_directions_order = ('PrevFile', 'NextFile');
+my $direction_orders = Texinfo::Data::get_directions_order();
+# 'global', 'relative', 'file'
+my @relative_directions_order = @{$direction_orders->[1]};
+my @file_directions_order = @{$direction_orders->[2]};
 my @all_directions_order
     = (@relative_directions_order, @file_directions_order,
        map {'FirstInFile'.$_} @relative_directions_order);

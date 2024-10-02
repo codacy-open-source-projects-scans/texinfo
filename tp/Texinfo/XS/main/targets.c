@@ -18,30 +18,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stddef.h>
 
 #include "tree_types.h"
 #include "document_types.h"
 #include "tree.h"
 #include "errors.h"
-#include "errors_parser.h"
 #include "debug.h"
 #include "builtin_commands.h"
 /* for get_label_element and fatal */
-#include "utils.h"
 #include "extra.h"
+#include "utils.h"
 #include "convert_to_texinfo.h"
+/* for retrieve_document */
 #include "document.h"
 #include "targets.h"
 
-void
-destroy_label_list (LABEL_LIST *label_list)
-{
-  if (label_list->space > 0)
-    free (label_list->list);
-  free (label_list);
-}
-
-int
+static int
 compare_targets (const void *a, const void *b)
 {
   const LABEL *label_a = (const LABEL *) a;
@@ -87,82 +80,6 @@ compare_labels (const void *a, const void *b)
     return -1;
   else
     return 1;
-/*
-  return (*da > *db) - (*da < *db);
-*/
-}
-
-/* fill a LABEL_LIST that is sorted with unique identifiers such that
-   elements are easy to find.
-   Called from parser */
-void
-set_labels_identifiers_target (const LABEL_LIST *labels,
-                               LABEL_LIST *result)
-{
-  size_t labels_number = labels->number;
-  LABEL *targets = malloc (labels_number * sizeof (LABEL));
-  size_t targets_number = labels_number;
-  size_t i;
-
-  memcpy (targets, labels->list, labels_number * sizeof (LABEL));
-  qsort (targets, labels_number, sizeof (LABEL), compare_labels);
-
-  i = 0;
-  while (i < targets_number)
-    {
-      /* reached the end of the labels with identifiers */
-      if (targets[i].identifier == 0)
-        {
-          targets_number = i;
-          break;
-        }
-      add_extra_integer (targets[i].element, "is_target", 1);
-      if (i < targets_number - 1)
-        {
-          /* find redundant labels with the same identifiers and
-             eliminate them */
-          size_t j = i;
-          while (j < targets_number - 1 && targets[j+1].identifier
-                 && !strcmp (targets[i].identifier, targets[j+1].identifier))
-            {
-              labels->list[targets[j+1].label_number].reference
-                                   = targets[i].element;
-              j++;
-            }
-          if (j > i)
-            {
-              size_t n;
-              for (n = i+1; n < j + 1; n++)
-                {
-                  const ELEMENT *label_element
-                     = get_label_element (targets[n].element);
-                  char *texi_str = convert_contents_to_texinfo (label_element);
-                  line_error_ext (MSG_error, 0, &targets[n].element->source_info,
-                                  "@%s `%s' previously defined",
-                                  element_command_name (targets[n].element),
-                                  texi_str);
-                  free (texi_str);
-                  line_error_ext (MSG_error, 1, &targets[i].element->source_info,
-                                 "here is the previous definition as @%s",
-                                  element_command_name (targets[i].element));
-
-                }
-              if (j < targets_number - 1)
-                {
-                  memmove (&targets[i+1], &targets[j+1],
-                         (targets_number - (j + 1))* sizeof (LABEL));
-                }
-              targets_number -= (j - i);
-            }
-          i++;
-        }
-      else
-        break;
-    }
-
-  result->list = targets;
-  result->number = targets_number;
-  result->space = labels_number;
 }
 
 static LABEL *
@@ -178,7 +95,7 @@ sort_labels_identifiers_target (const LABEL *list_of_labels,
 }
 
 
-void
+static void
 register_label_in_list (LABEL_LIST *labels_list, ELEMENT *element,
                         char *normalized)
 {
@@ -199,11 +116,11 @@ register_label_in_list (LABEL_LIST *labels_list, ELEMENT *element,
 }
 
 /* *STATUS 0 means success, 1 or 2 means error */
-char *
+static char *
 add_element_to_identifiers_target (DOCUMENT *document, ELEMENT *element,
                                    int *status)
 {
-  char *normalized = lookup_extra_string (element, "normalized");
+  char *normalized = lookup_extra_string (element, AI_key_normalized);
   *status = 2;
   if (normalized)
     {
@@ -214,7 +131,7 @@ add_element_to_identifiers_target (DOCUMENT *document, ELEMENT *element,
         {
           LABEL *sorted_identifiers_target;
 
-          add_extra_integer (element, "is_target", 1);
+          element->flags |= EF_is_target;
           register_label_in_list (identifiers_target, element,
                                   normalized);
           sorted_identifiers_target
@@ -252,19 +169,19 @@ existing_label_error (DOCUMENT* document, ELEMENT *element, char *normalized,
       char *label_element_texi = convert_contents_to_texinfo (label_element);
       message_list_command_error (error_messages, document->options,
                      element, "@%s `%s' previously defined",
-                     builtin_command_name (element->cmd),
+                     builtin_command_name (element->e.c->cmd),
                      label_element_texi);
       message_list_line_error_ext (error_messages, document->options,
-                      MSG_error, 1, &existing_target->source_info,
+                      MSG_error, 1, &existing_target->e.c->source_info,
                       "here is the previous definition as @%s",
-                      builtin_command_name (existing_target->cmd));
+                      builtin_command_name (existing_target->e.c->cmd));
       free (label_element_texi);
     }
 }
 
 /* return value is 1 for success, 0 for failure */
 int
-register_label_element (int document_descriptor, ELEMENT *element,
+register_label_element (size_t document_descriptor, ELEMENT *element,
                         ERROR_MESSAGE_LIST *error_messages)
 {
   int status;

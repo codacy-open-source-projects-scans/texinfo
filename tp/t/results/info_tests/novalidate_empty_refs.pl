@@ -76,7 +76,7 @@ $result_trees{'novalidate_empty_refs'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',
@@ -100,7 +100,7 @@ $result_trees{'novalidate_empty_refs'} = {
                               'text' => ' '
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'asis',
@@ -117,7 +117,7 @@ $result_trees{'novalidate_empty_refs'} = {
                     },
                     'normalized' => '-'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',
@@ -212,7 +212,7 @@ $result_trees{'novalidate_empty_refs'} = {
                       'text' => ' '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'asis',

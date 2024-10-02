@@ -16,14 +16,13 @@ $result_trees{'section_on_itemize_line'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'minus',
                   'source_info' => {
                     'line_nr' => 1
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -81,7 +80,7 @@ $result_trees{'section_on_itemize_line'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'minus',
@@ -156,8 +155,7 @@ $result_trees{'section_on_itemize_line'} = {
                   'cmdname' => 'bullet',
                   'info' => {
                     'inserted' => 1
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'type' => 'block_line_arg'
@@ -420,6 +418,13 @@ $result_errors{'section_on_itemize_line'} = [
     'line_nr' => 3,
     'text' => '@section seen before @end itemize',
     'type' => 'error'
+  },
+  {
+    'error_line' => 'warning: @section should only appear at the beginning of a line
+',
+    'line_nr' => 5,
+    'text' => '@section should only appear at the beginning of a line',
+    'type' => 'warning'
   },
   {
     'error_line' => 'warning: @section should not appear on @itemize line

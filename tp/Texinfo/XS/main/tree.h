@@ -8,7 +8,12 @@ void reset_obstacks (void);
 
 ASSOCIATED_INFO *new_associated_info (void);
 ELEMENT *new_element (enum element_type type);
+ELEMENT *new_command_element (enum element_type type, enum command_id cmd);
+ELEMENT *new_text_element (enum element_type type);
 ELEMENT_LIST *new_list (void);
+CONST_ELEMENT_LIST *new_const_element_list (void);
+const ELEMENT **new_directions (void);
+void add_to_const_element_list (CONST_ELEMENT_LIST *list, const ELEMENT *e);
 void add_to_element_list (ELEMENT_LIST *list, ELEMENT *e);
 void add_to_element_contents (ELEMENT *parent, ELEMENT *e);
 void add_to_contents_as_array (ELEMENT *parent, ELEMENT *e);
@@ -28,6 +33,8 @@ void insert_list_slice_into_args (ELEMENT *to, int where, ELEMENT_LIST *from,
                                       int start, int end);
 void list_set_empty_contents (ELEMENT_LIST *e_list, int n);
 ELEMENT *remove_from_element_list (ELEMENT_LIST *list, int where);
+const ELEMENT *remove_from_const_element_list (CONST_ELEMENT_LIST *list,
+                                               int where);
 ELEMENT *remove_from_contents (ELEMENT *parent, int where);
 ELEMENT *remove_from_args (ELEMENT *parent, int where);
 void remove_slice_from_contents (ELEMENT *parent, int start, int end);
@@ -38,6 +45,7 @@ ELEMENT *pop_element_from_contents (ELEMENT *parent);
 ELEMENT *contents_child_by_index (const ELEMENT *e, int index);
 ELEMENT *args_child_by_index (const ELEMENT *e, int index);
 void destroy_list (ELEMENT_LIST *list);
+void destroy_const_element_list (CONST_ELEMENT_LIST *list);
 void destroy_element (ELEMENT *e);
 void destroy_element_and_children (ELEMENT *e);
 int replace_element_in_contents (ELEMENT *parent, ELEMENT *removed,
@@ -46,7 +54,8 @@ int replace_element_in_list (ELEMENT_LIST *list, ELEMENT *removed,
                              ELEMENT *added);
 void destroy_node_spec (NODE_SPEC_EXTRA *nse);
 void destroy_associated_info (ASSOCIATED_INFO *a);
-
+void free_element_source_mark_list (ELEMENT *e);
+void destroy_element_empty_source_mark_list (ELEMENT *e);
 
 #define element_contents_number(e) ((e)->contents.number)
 #define element_args_number(e) ((e)->args.number)

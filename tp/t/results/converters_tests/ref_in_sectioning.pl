@@ -85,7 +85,7 @@ $result_trees{'ref_in_sectioning'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -112,7 +112,7 @@ $result_trees{'ref_in_sectioning'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'pxref',
@@ -138,13 +138,13 @@ $result_trees{'ref_in_sectioning'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -157,7 +157,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -170,7 +170,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'pxref',
@@ -405,10 +405,10 @@ $result_trees{'ref_in_sectioning'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -416,7 +416,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -429,7 +429,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -442,7 +442,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',
@@ -534,7 +534,7 @@ $result_trees{'ref_in_sectioning'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -598,7 +598,7 @@ $result_trees{'ref_in_sectioning'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -625,7 +625,7 @@ $result_trees{'ref_in_sectioning'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'pxref',
@@ -651,13 +651,13 @@ $result_trees{'ref_in_sectioning'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -670,7 +670,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -683,7 +683,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'pxref',
@@ -744,7 +744,7 @@ $result_trees{'ref_in_sectioning'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -757,7 +757,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -814,7 +814,7 @@ $result_trees{'ref_in_sectioning'} = {
                               'text' => 'node'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -831,10 +831,10 @@ $result_trees{'ref_in_sectioning'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -846,7 +846,7 @@ $result_trees{'ref_in_sectioning'} = {
                               'text' => 'title'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'samp',
@@ -860,7 +860,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -917,7 +917,7 @@ $result_trees{'ref_in_sectioning'} = {
                               'text' => 'node'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -933,13 +933,13 @@ $result_trees{'ref_in_sectioning'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -952,7 +952,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1012,16 +1012,16 @@ $result_trees{'ref_in_sectioning'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1037,7 +1037,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1097,16 +1097,16 @@ $result_trees{'ref_in_sectioning'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1122,7 +1122,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1170,16 +1170,16 @@ $result_trees{'ref_in_sectioning'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1195,7 +1195,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1243,13 +1243,13 @@ $result_trees{'ref_in_sectioning'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1262,7 +1262,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1322,7 +1322,7 @@ $result_trees{'ref_in_sectioning'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1335,7 +1335,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1348,7 +1348,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -1419,13 +1419,13 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1441,7 +1441,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'pxref',
@@ -1492,13 +1492,13 @@ $result_trees{'ref_in_sectioning'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1514,7 +1514,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'pxref',
@@ -1574,13 +1574,13 @@ $result_trees{'ref_in_sectioning'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1588,7 +1588,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => 'filename'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',
@@ -1636,13 +1636,13 @@ $result_trees{'ref_in_sectioning'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1650,7 +1650,7 @@ $result_trees{'ref_in_sectioning'} = {
                       'text' => 'filename'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',
@@ -2164,70 +2164,70 @@ $result_floats{'ref_in_sectioning'} = {};
 
 
 
-$result_converted{'plaintext'}->{'ref_in_sectioning'} = 'for example *note node:: (*note node::) (*note (file)Top::)
-1 *Note title: (file name)node.
-2 *note node:: just node
-  2.1 for example *note node:: (*note node::) (*note (file)Top::)
-  2.2 *note cross ref name: node. node, crossref arg2
-  2.3 *note ‘title’: node. code node, samptitle arg3
-  2.4 *note (file name)node:: code node, file name
-  2.5 *note ()node:: node and manual
-  2.6 *note ()Top:: Top and manual
-  2.7 *note ()Top:: no node just manual
-  2.8 *note (file name)Top:: no node just file name
-  2.9 *note b: (c)a. inforef a b c
-  2.10 (*note (file name)Top::) pxref Top file name, spaces
-  2.11 (*note (file name)Top::) pxref file name only, spaces
-  2.12 *Note (filename)Top::, xref Top filename only, no spaces
-  2.13 *Note (filename)Top::. xref filename only, no spaces
+$result_converted{'plaintext'}->{'ref_in_sectioning'} = 'for example node (see node) (see (file)Top)
+1 See title: (file name)node.
+2 node just node
+  2.1 for example node (see node) (see (file)Top)
+  2.2 cross ref name: node node, crossref arg2
+  2.3 ‘title’: node code node, samptitle arg3
+  2.4 (file name)node code node, file name
+  2.5 node in ‘Manual’ node and manual
+  2.6 Top in ‘Manual’ Top and manual
+  2.7 ‘Manual’ no node just manual
+  2.8 (file name) no node just file name
+  2.9 See b: (c)a inforef a b c
+  2.10 (see (file name)Top) pxref Top file name, spaces
+  2.11 (see (file name)) pxref file name only, spaces
+  2.12 See (filename)Top, xref Top filename only, no spaces
+  2.13 See (filename). xref filename only, no spaces
 
-for example *note node:: (*note node::) (*note (file)Top::)
-***********************************************************
+for example node (see node) (see (file)Top)
+*******************************************
 
-1 *Note title: (file name)node.
-*******************************
+1 See title: (file name)node.
+*****************************
 
-2 *note node:: just node
-************************
+2 node just node
+****************
 
-2.1 for example *note node:: (*note node::) (*note (file)Top::)
-===============================================================
+2.1 for example node (see node) (see (file)Top)
+===============================================
 
-2.2 *note cross ref name: node. node, crossref arg2
-===================================================
+2.2 cross ref name: node node, crossref arg2
+============================================
 
-2.3 *note ‘title’: node. code node, samptitle arg3
-==================================================
+2.3 ‘title’: node code node, samptitle arg3
+===========================================
 
-2.4 *note (file name)node:: code node, file name
-================================================
+2.4 (file name)node code node, file name
+========================================
 
-2.5 *note ()node:: node and manual
+2.5 node in ‘Manual’ node and manual
+====================================
+
+2.6 Top in ‘Manual’ Top and manual
 ==================================
 
-2.6 *note ()Top:: Top and manual
+2.7 ‘Manual’ no node just manual
 ================================
 
-2.7 *note ()Top:: no node just manual
-=====================================
+2.8 (file name) no node just file name
+======================================
 
-2.8 *note (file name)Top:: no node just file name
-=================================================
+2.9 See b: (c)a inforef a b c
+=============================
 
-2.9 *note b: (c)a. inforef a b c
-================================
+2.10 (see (file name)Top) pxref Top file name, spaces
+=====================================================
 
-2.10 (*note (file name)Top::) pxref Top file name, spaces
+2.11 (see (file name)) pxref file name only, spaces
+===================================================
+
+2.12 See (filename)Top, xref Top filename only, no spaces
 =========================================================
 
-2.11 (*note (file name)Top::) pxref file name only, spaces
-==========================================================
-
-2.12 *Note (filename)Top::, xref Top filename only, no spaces
-=============================================================
-
-2.13 *Note (filename)Top::. xref filename only, no spaces
-=========================================================
+2.13 See (filename). xref filename only, no spaces
+==================================================
 
 ';
 
@@ -2514,6 +2514,85 @@ $result_converted{'latex_text'}->{'ref_in_sectioning'} = '
 
 \\section{{See \\texttt{filename}. xref filename only, no spaces}}
 
+';
+
+
+$result_converted{'info'}->{'ref_in_sectioning'} = 'This is , produced from .
+
+
+File: ,  Node: Top,  Next: node,  Up: (dir)
+
+for example *note node:: (*note node::) (*note (file)Top::)
+***********************************************************
+
+* Menu:
+
+* node::
+* chap::
+
+
+File: ,  Node: node,  Next: chap,  Prev: Top,  Up: Top
+
+1 *Note title: (file name)node.
+*******************************
+
+
+File: ,  Node: chap,  Prev: node,  Up: Top
+
+2 *note node:: just node
+************************
+
+2.1 for example *note node:: (*note node::) (*note (file)Top::)
+===============================================================
+
+2.2 *note cross ref name: node. node, crossref arg2
+===================================================
+
+2.3 *note ‘title’: node. code node, samptitle arg3
+==================================================
+
+2.4 *note (file name)node:: code node, file name
+================================================
+
+2.5 *note ()node:: node and manual
+==================================
+
+2.6 *note ()Top:: Top and manual
+================================
+
+2.7 *note ()Top:: no node just manual
+=====================================
+
+2.8 *note (file name)Top:: no node just file name
+=================================================
+
+2.9 *note b: (c)a. inforef a b c
+================================
+
+2.10 (*note (file name)Top::) pxref Top file name, spaces
+=========================================================
+
+2.11 (*note (file name)Top::) pxref file name only, spaces
+==========================================================
+
+2.12 *Note (filename)Top::, xref Top filename only, no spaces
+=============================================================
+
+2.13 *Note (filename)Top::. xref filename only, no spaces
+=========================================================
+
+
+Tag Table:
+Node: Top27
+Node: node223
+Node: chap346
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:
 ';
 
 1;

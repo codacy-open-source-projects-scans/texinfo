@@ -179,11 +179,7 @@ $result_trees{'nested_linemacro_calls'} = {
                                 'type' => 'bracketed_linemacro_arg'
                               }
                             ],
-                            'info' => {
-                              'spaces_before_argument' => {
-                                'text' => ' '
-                              }
-                            }
+                            'type' => 'line_arg'
                           },
                           {
                             'contents' => [
@@ -196,7 +192,8 @@ $result_trees{'nested_linemacro_calls'} = {
                               'spaces_before_argument' => {
                                 'text' => ' '
                               }
-                            }
+                            },
+                            'type' => 'line_arg'
                           },
                           {
                             'contents' => [
@@ -208,11 +205,15 @@ $result_trees{'nested_linemacro_calls'} = {
                               'spaces_before_argument' => {
                                 'text' => ' '
                               }
-                            }
+                            },
+                            'type' => 'line_arg'
                           }
                         ],
                         'info' => {
-                          'command_name' => 'outside'
+                          'command_name' => 'outside',
+                          'spaces_before_argument' => {
+                            'text' => ' '
+                          }
                         },
                         'type' => 'linemacro_call'
                       },
@@ -263,11 +264,7 @@ $result_trees{'nested_linemacro_calls'} = {
                                             'type' => 'bracketed_linemacro_arg'
                                           }
                                         ],
-                                        'info' => {
-                                          'spaces_before_argument' => {
-                                            'text' => ' '
-                                          }
-                                        }
+                                        'type' => 'line_arg'
                                       },
                                       {
                                         'contents' => [
@@ -279,11 +276,15 @@ $result_trees{'nested_linemacro_calls'} = {
                                           'spaces_before_argument' => {
                                             'text' => ' '
                                           }
-                                        }
+                                        },
+                                        'type' => 'line_arg'
                                       }
                                     ],
                                     'info' => {
-                                      'command_name' => 'inside'
+                                      'command_name' => 'inside',
+                                      'spaces_before_argument' => {
+                                        'text' => ' '
+                                      }
                                     },
                                     'type' => 'linemacro_call'
                                   },
@@ -291,9 +292,6 @@ $result_trees{'nested_linemacro_calls'} = {
                                   'status' => 'start'
                                 }
                               ],
-                              'text' => ''
-                            },
-                            {
                               'text' => 'inside X operator Y'
                             }
                           ],
@@ -398,7 +396,19 @@ $result_trees{'nested_linemacro_calls'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'inside X operator Y'
+                        }
+                      ],
+                      'type' => 'bracketed_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -409,8 +419,7 @@ $result_trees{'nested_linemacro_calls'} = {
               'source_info' => {
                 'line_nr' => 11,
                 'macro' => 'outside'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -461,11 +470,7 @@ $result_trees{'nested_linemacro_calls'} = {
                                     'type' => 'bracketed_linemacro_arg'
                                   }
                                 ],
-                                'info' => {
-                                  'spaces_before_argument' => {
-                                    'text' => ' '
-                                  }
-                                }
+                                'type' => 'line_arg'
                               },
                               {
                                 'contents' => [
@@ -486,11 +491,15 @@ $result_trees{'nested_linemacro_calls'} = {
                                   'spaces_before_argument' => {
                                     'text' => ' '
                                   }
-                                }
+                                },
+                                'type' => 'line_arg'
                               }
                             ],
                             'info' => {
-                              'command_name' => 'inside'
+                              'command_name' => 'inside',
+                              'spaces_before_argument' => {
+                                'text' => ' '
+                              }
                             },
                             'type' => 'linemacro_call'
                           },
@@ -552,7 +561,6 @@ $result_trees{'nested_linemacro_calls'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'nested_linemacro_calls'}{'contents'}[0]{'contents'}[4]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'nested_linemacro_calls'}{'contents'}[0]{'contents'}[4]{'contents'}[1]{'args'}[0]{'contents'}[2];
 
 $result_texis{'nested_linemacro_calls'} = '@linemacro inside {a, b}
 inside {\\a\\ operator \\b\\}

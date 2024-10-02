@@ -12,7 +12,7 @@ $result_trees{'empty_commands'} = {
         {
           'args' => [
             {
-              'type' => 'brace_command_arg'
+              'type' => 'brace_container'
             }
           ],
           'cmdname' => 'titlefont',
@@ -35,7 +35,7 @@ $result_trees{'empty_commands'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'uref',
@@ -49,7 +49,7 @@ $result_trees{'empty_commands'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'abbr',
@@ -63,7 +63,7 @@ $result_trees{'empty_commands'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'email',
@@ -77,7 +77,7 @@ $result_trees{'empty_commands'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -103,7 +103,7 @@ $result_trees{'empty_commands'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => '~',
@@ -117,7 +117,7 @@ $result_trees{'empty_commands'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'dotless',
@@ -131,7 +131,7 @@ $result_trees{'empty_commands'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'verb',
@@ -208,5 +208,11 @@ $result_converted{'latex_text'}->{'empty_commands'} = '
 
    \\texttt{}\\footnote{} \\~{}  
 ';
+
+
+$result_converted{'docbook'}->{'empty_commands'} = '
+
+<para><ulink url=""></ulink>   <literal></literal><footnote></footnote> &#771;  <literal></literal>
+</para>';
 
 1;

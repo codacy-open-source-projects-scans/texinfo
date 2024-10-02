@@ -28,7 +28,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                           ]
                         }
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
                       'contents' => [
@@ -36,7 +36,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                           'text' => 'b'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
                       'contents' => [
@@ -44,7 +44,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                           'text' => 'c'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
                       'contents' => [
@@ -52,7 +52,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                           'text' => 'd'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'ref',
@@ -76,7 +76,7 @@ $result_trees{'example_invalid_at_commands_arguments'} = {
                           'text' => 'an anchor'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'anchor',
@@ -211,6 +211,13 @@ $result_errors{'example_invalid_at_commands_arguments'} = [
 ',
     'line_nr' => 1,
     'text' => '@anchor should not appear on @example line',
+    'type' => 'warning'
+  },
+  {
+    'error_line' => 'warning: @center should only appear at the beginning of a line
+',
+    'line_nr' => 1,
+    'text' => '@center should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {

@@ -146,7 +146,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                           'text' => 'A---S'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'sortas',
@@ -178,7 +178,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                               'text' => 'C---S1'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'sortas',
@@ -201,8 +201,8 @@ $result_trees{'subentry_and_sortas_spaces'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
                 'sortas' => 'C---S1',
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {
@@ -262,7 +262,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                               'text' => 'B---S1'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'sortas',
@@ -282,8 +282,8 @@ $result_trees{'subentry_and_sortas_spaces'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
                 'sortas' => 'B---S1',
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'source_info' => {
@@ -339,7 +339,6 @@ $result_trees{'subentry_and_sortas_spaces'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
                 'subentry' => {
                   'args' => [
                     {
@@ -355,7 +354,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                                   'text' => 'D'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_arg'
                             }
                           ],
                           'cmdname' => 'sortas',
@@ -375,8 +374,8 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                   ],
                   'cmdname' => 'subentry',
                   'extra' => {
-                    'level' => 2,
                     'sortas' => 'D',
+                    'subentry_level' => 2,
                     'subentry_parent' => {}
                   },
                   'info' => {
@@ -388,6 +387,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                     'line_nr' => 9
                   }
                 },
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {
@@ -449,7 +449,6 @@ $result_trees{'subentry_and_sortas_spaces'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
                 'subentry' => {
                   'args' => [
                     {
@@ -469,7 +468,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                   ],
                   'cmdname' => 'subentry',
                   'extra' => {
-                    'level' => 2,
+                    'subentry_level' => 2,
                     'subentry_parent' => {}
                   },
                   'info' => {
@@ -481,6 +480,7 @@ $result_trees{'subentry_and_sortas_spaces'} = {
                     'line_nr' => 10
                   }
                 },
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {

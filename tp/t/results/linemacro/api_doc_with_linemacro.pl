@@ -330,7 +330,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'text' => 'None'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'code',
@@ -377,7 +377,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'text' => '-1'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'code',
@@ -424,7 +424,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'text' => 'None'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'code',
@@ -455,7 +455,19 @@ $result_trees{'api_doc_with_linemacro'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'fft.fft'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'omit_def_name_space' => 1,
                 'original_def_cmdname' => 'defline'
               },
@@ -466,8 +478,7 @@ $result_trees{'api_doc_with_linemacro'} = {
               },
               'source_info' => {
                 'line_nr' => 15
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -513,11 +524,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                         'text' => 'a'
                                       }
                                     ],
-                                    'info' => {
-                                      'spaces_before_argument' => {
-                                        'text' => ' '
-                                      }
-                                    }
+                                    'type' => 'line_arg'
                                   },
                                   {
                                     'contents' => [
@@ -529,11 +536,15 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'spaces_before_argument' => {
                                         'text' => ' '
                                       }
-                                    }
+                                    },
+                                    'type' => 'line_arg'
                                   }
                                 ],
                                 'info' => {
-                                  'command_name' => 'param'
+                                  'command_name' => 'param',
+                                  'spaces_before_argument' => {
+                                    'text' => ' '
+                                  }
                                 },
                                 'type' => 'linemacro_call'
                               },
@@ -579,7 +590,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                               'text' => 'a'
                                             }
                                           ],
-                                          'type' => 'brace_command_arg'
+                                          'type' => 'brace_container'
                                         }
                                       ],
                                       'cmdname' => 'var',
@@ -610,7 +621,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                               'text' => ' : array_like'
                                             }
                                           ],
-                                          'type' => 'brace_command_arg'
+                                          'type' => 'brace_container'
                                         }
                                       ],
                                       'cmdname' => 'code',
@@ -645,7 +656,29 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'cmdname' => 'defline',
                       'extra' => {
                         'def_command' => 'defline',
-                        'def_index_element' => {},
+                        'def_index_element' => {
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'a'
+                                        }
+                                      ],
+                                      'type' => 'brace_container'
+                                    }
+                                  ],
+                                  'cmdname' => 'var'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_name'
+                        },
                         'omit_def_name_space' => 1,
                         'original_def_cmdname' => 'defline'
                       },
@@ -657,8 +690,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'source_info' => {
                         'line_nr' => 19,
                         'macro' => 'param'
-                      },
-                      'type' => 'def_line'
+                      }
                     },
                     {
                       'contents' => [
@@ -683,11 +715,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                         'text' => 'n'
                                       }
                                     ],
-                                    'info' => {
-                                      'spaces_before_argument' => {
-                                        'text' => ' '
-                                      }
-                                    }
+                                    'type' => 'line_arg'
                                   },
                                   {
                                     'contents' => [
@@ -699,11 +727,15 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'spaces_before_argument' => {
                                         'text' => ' '
                                       }
-                                    }
+                                    },
+                                    'type' => 'line_arg'
                                   }
                                 ],
                                 'info' => {
-                                  'command_name' => 'param'
+                                  'command_name' => 'param',
+                                  'spaces_before_argument' => {
+                                    'text' => ' '
+                                  }
                                 },
                                 'type' => 'linemacro_call'
                               },
@@ -752,7 +784,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                               'text' => 'n'
                                             }
                                           ],
-                                          'type' => 'brace_command_arg'
+                                          'type' => 'brace_container'
                                         }
                                       ],
                                       'cmdname' => 'var',
@@ -783,7 +815,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                               'text' => ' : int, optional'
                                             }
                                           ],
-                                          'type' => 'brace_command_arg'
+                                          'type' => 'brace_container'
                                         }
                                       ],
                                       'cmdname' => 'code',
@@ -818,7 +850,29 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'cmdname' => 'defline',
                       'extra' => {
                         'def_command' => 'defline',
-                        'def_index_element' => {},
+                        'def_index_element' => {
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'n'
+                                        }
+                                      ],
+                                      'type' => 'brace_container'
+                                    }
+                                  ],
+                                  'cmdname' => 'var'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_name'
+                        },
                         'omit_def_name_space' => 1,
                         'original_def_cmdname' => 'defline'
                       },
@@ -830,8 +884,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'source_info' => {
                         'line_nr' => 22,
                         'macro' => 'param'
-                      },
-                      'type' => 'def_line'
+                      }
                     },
                     {
                       'contents' => [
@@ -852,7 +905,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'text' => 'n'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'var',
@@ -879,11 +932,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                         'text' => 'axis'
                                       }
                                     ],
-                                    'info' => {
-                                      'spaces_before_argument' => {
-                                        'text' => ' '
-                                      }
-                                    }
+                                    'type' => 'line_arg'
                                   },
                                   {
                                     'contents' => [
@@ -895,11 +944,15 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'spaces_before_argument' => {
                                         'text' => ' '
                                       }
-                                    }
+                                    },
+                                    'type' => 'line_arg'
                                   }
                                 ],
                                 'info' => {
-                                  'command_name' => 'param'
+                                  'command_name' => 'param',
+                                  'spaces_before_argument' => {
+                                    'text' => ' '
+                                  }
                                 },
                                 'type' => 'linemacro_call'
                               },
@@ -948,7 +1001,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                               'text' => 'axis'
                                             }
                                           ],
-                                          'type' => 'brace_command_arg'
+                                          'type' => 'brace_container'
                                         }
                                       ],
                                       'cmdname' => 'var',
@@ -979,7 +1032,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                               'text' => ' : int, optional'
                                             }
                                           ],
-                                          'type' => 'brace_command_arg'
+                                          'type' => 'brace_container'
                                         }
                                       ],
                                       'cmdname' => 'code',
@@ -1014,7 +1067,29 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'cmdname' => 'defline',
                       'extra' => {
                         'def_command' => 'defline',
-                        'def_index_element' => {},
+                        'def_index_element' => {
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'axis'
+                                        }
+                                      ],
+                                      'type' => 'brace_container'
+                                    }
+                                  ],
+                                  'cmdname' => 'var'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_name'
+                        },
                         'omit_def_name_space' => 1,
                         'original_def_cmdname' => 'defline'
                       },
@@ -1026,8 +1101,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'source_info' => {
                         'line_nr' => 26,
                         'macro' => 'param'
-                      },
-                      'type' => 'def_line'
+                      }
                     },
                     {
                       'contents' => [
@@ -1052,11 +1126,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                         'text' => 'out'
                                       }
                                     ],
-                                    'info' => {
-                                      'spaces_before_argument' => {
-                                        'text' => ' '
-                                      }
-                                    }
+                                    'type' => 'line_arg'
                                   },
                                   {
                                     'contents' => [
@@ -1068,11 +1138,15 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'spaces_before_argument' => {
                                         'text' => ' '
                                       }
-                                    }
+                                    },
+                                    'type' => 'line_arg'
                                   }
                                 ],
                                 'info' => {
-                                  'command_name' => 'returns'
+                                  'command_name' => 'returns',
+                                  'spaces_before_argument' => {
+                                    'text' => ' '
+                                  }
                                 },
                                 'type' => 'linemacro_call'
                               },
@@ -1125,7 +1199,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                               'text' => 'out'
                                             }
                                           ],
-                                          'type' => 'brace_command_arg'
+                                          'type' => 'brace_container'
                                         }
                                       ],
                                       'cmdname' => 'var',
@@ -1156,7 +1230,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                               'text' => ' : complex ndarray'
                                             }
                                           ],
-                                          'type' => 'brace_command_arg'
+                                          'type' => 'brace_container'
                                         }
                                       ],
                                       'cmdname' => 'code',
@@ -1191,7 +1265,29 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'cmdname' => 'defline',
                       'extra' => {
                         'def_command' => 'defline',
-                        'def_index_element' => {},
+                        'def_index_element' => {
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'out'
+                                        }
+                                      ],
+                                      'type' => 'brace_container'
+                                    }
+                                  ],
+                                  'cmdname' => 'var'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_name'
+                        },
                         'omit_def_name_space' => 1,
                         'original_def_cmdname' => 'defline'
                       },
@@ -1203,8 +1299,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'source_info' => {
                         'line_nr' => 29,
                         'macro' => 'returns'
-                      },
-                      'type' => 'def_line'
+                      }
                     },
                     {
                       'contents' => [
@@ -1229,15 +1324,14 @@ $result_trees{'api_doc_with_linemacro'} = {
                                         'text' => 'IndexError'
                                       }
                                     ],
-                                    'info' => {
-                                      'spaces_before_argument' => {
-                                        'text' => ' '
-                                      }
-                                    }
+                                    'type' => 'line_arg'
                                   }
                                 ],
                                 'info' => {
-                                  'command_name' => 'raises'
+                                  'command_name' => 'raises',
+                                  'spaces_before_argument' => {
+                                    'text' => ' '
+                                  }
                                 },
                                 'type' => 'linemacro_call'
                               },
@@ -1312,7 +1406,19 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'cmdname' => 'defline',
                       'extra' => {
                         'def_command' => 'defline',
-                        'def_index_element' => {},
+                        'def_index_element' => {
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'IndexError'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_name'
+                        },
                         'omit_def_name_space' => 1,
                         'original_def_cmdname' => 'defline'
                       },
@@ -1324,8 +1430,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                       'source_info' => {
                         'line_nr' => 32,
                         'macro' => 'raises'
-                      },
-                      'type' => 'def_line'
+                      }
                     },
                     {
                       'contents' => [
@@ -1342,7 +1447,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'text' => 'axis'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'var',
@@ -1361,7 +1466,7 @@ $result_trees{'api_doc_with_linemacro'} = {
                                       'text' => 'a'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'var',
@@ -1468,12 +1573,6 @@ $result_trees{'api_doc_with_linemacro'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[1]{'args'}[0]{'contents'}[2];
-$result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[3]{'extra'}{'def_index_element'} = $result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[3]{'args'}[0]{'contents'}[2];
-$result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[5]{'extra'}{'def_index_element'} = $result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[5]{'args'}[0]{'contents'}[2];
-$result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[7]{'extra'}{'def_index_element'} = $result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[7]{'args'}[0]{'contents'}[2];
-$result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[9]{'extra'}{'def_index_element'} = $result_trees{'api_doc_with_linemacro'}{'contents'}[0]{'contents'}[7]{'contents'}[1]{'contents'}[2]{'contents'}[9]{'args'}[0]{'contents'}[2];
 
 $result_texis{'api_doc_with_linemacro'} = '@linemacro param {param, type}
 @defline Parameter @var{\\param\\} @code{ : \\type\\}

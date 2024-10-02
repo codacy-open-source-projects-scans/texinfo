@@ -22,7 +22,7 @@ $result_trees{'in_errormsg'} = {
                   'text' => 'in ref'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             }
           ],
           'cmdname' => 'anchor',
@@ -56,7 +56,7 @@ $result_trees{'in_errormsg'} = {
                               'text' => 'in anchor'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'anchor',
@@ -88,7 +88,7 @@ $result_trees{'in_errormsg'} = {
                             },
                             'normalized' => 'in-ref'
                           },
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'ref',
@@ -97,7 +97,7 @@ $result_trees{'in_errormsg'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'errormsg',
@@ -126,7 +126,7 @@ $result_trees{'in_errormsg'} = {
 '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             }
           ],
           'cmdname' => 'errormsg',
@@ -142,8 +142,7 @@ $result_trees{'in_errormsg'} = {
                   'cmdname' => 'asis',
                   'source_info' => {
                     'line_nr' => 6
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -277,6 +276,13 @@ $result_errors{'in_errormsg'} = [
     'line_nr' => 3,
     'text' => '@ref should not appear anywhere inside @errormsg',
     'type' => 'warning'
+  },
+  {
+    'error_line' => '
+',
+    'line_nr' => 3,
+    'text' => '',
+    'type' => 'error'
   },
   {
     'error_line' => '@errormsg missing closing brace

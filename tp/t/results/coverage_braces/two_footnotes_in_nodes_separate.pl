@@ -815,9 +815,9 @@ End:
 $result_converted{'plaintext'}->{'two_footnotes_in_nodes_separate'} = '2 footnotes in 2 nodes
 **********************
 
-A(1) (*note Top-Footnote-1::)
+A(1) (see Top-Footnote-1)
 
-   B(2) (*note Top-Footnote-2::)
+   B(2) (see Top-Footnote-2)
 
    (1) Footnote Top/1
 
@@ -830,9 +830,9 @@ A(1) (*note Top-Footnote-1::)
 1 chapter
 *********
 
-C(1) (*note chapter-Footnote-1::)
+C(1) (see chapter-Footnote-1)
 
-   D(2) (*note chapter-Footnote-2::)
+   D(2) (see chapter-Footnote-2)
 
    (1) Footnote chapter/1
 
@@ -858,6 +858,21 @@ D\\footnote{Footnote chapter/2
 
 para2}
 
+';
+
+
+$result_converted{'docbook'}->{'two_footnotes_in_nodes_separate'} = '<chapter label="1" id="chapter">
+<title>chapter</title>
+
+<para>C<footnote><para>Footnote chapter/1
+</para>
+<para>para2</para></footnote>
+</para>
+<para>D<footnote><para>Footnote chapter/2
+</para>
+<para>para2</para></footnote>
+</para>
+</chapter>
 ';
 
 1;

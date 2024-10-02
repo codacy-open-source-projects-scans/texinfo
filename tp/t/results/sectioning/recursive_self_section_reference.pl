@@ -66,7 +66,7 @@ $result_trees{'recursive_self_section_reference'} = {
                     },
                     'normalized' => 'sharp'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -167,8 +167,8 @@ $result_floats{'recursive_self_section_reference'} = {};
 
 
 
-$result_converted{'plaintext'}->{'recursive_self_section_reference'} = '1 *note sharp:: tuple
-*********************
+$result_converted{'plaintext'}->{'recursive_self_section_reference'} = '1 sharp tuple
+*************
 
 ';
 

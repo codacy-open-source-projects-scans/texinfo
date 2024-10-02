@@ -19,7 +19,7 @@ $result_trees{'commands_in_abbr'} = {
                       'text' => 'A'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -31,7 +31,7 @@ $result_trees{'commands_in_abbr'} = {
                               'text' => 'abbr'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'b',
@@ -48,7 +48,7 @@ $result_trees{'commands_in_abbr'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'abbr',
@@ -92,7 +92,7 @@ $result_trees{'commands_in_abbr'} = {
                           'text' => 'A'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
                       'contents' => [
@@ -104,7 +104,7 @@ $result_trees{'commands_in_abbr'} = {
                                   'text' => 'abbr'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'b',
@@ -121,7 +121,7 @@ $result_trees{'commands_in_abbr'} = {
                           'text' => ' '
                         }
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'abbr',

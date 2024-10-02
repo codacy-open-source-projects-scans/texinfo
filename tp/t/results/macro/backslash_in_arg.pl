@@ -143,7 +143,7 @@ $result_trees{'backslash_in_arg'} = {
                     'text' => ' '
                   }
                 },
-                'type' => 'macro_call'
+                'type' => 'macro_call_line'
               },
               'position' => 1,
               'sourcemark_type' => 'macro_expansion',
@@ -208,7 +208,7 @@ $result_trees{'backslash_in_arg'} = {
                         'text' => '\\r'
                       }
                     ],
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {
@@ -285,7 +285,7 @@ $result_trees{'backslash_in_arg'} = {
                     'text' => ' '
                   }
                 },
-                'type' => 'macro_call'
+                'type' => 'macro_call_line'
               },
               'sourcemark_type' => 'macro_expansion',
               'status' => 'start'
@@ -347,7 +347,7 @@ $result_trees{'backslash_in_arg'} = {
                         'text' => '\\r'
                       }
                     ],
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {

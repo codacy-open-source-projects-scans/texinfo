@@ -23,16 +23,19 @@
 #include <errno.h>
 #include <time.h>
 
-#include "options_types.h"
+#include "text.h"
+#include "command_ids.h"
 #include "element_types.h"
 #include "tree_types.h"
-#include "command_ids.h"
+#include "options_types.h"
+#include "types_data.h"
 #include "builtin_commands.h"
 #include "tree.h"
 #include "extra.h"
 #include "command_stack.h"
 #include "errors.h"
 #include "debug.h"
+/* ACCENTS_STACK ENCODING_CONVERSION encode_string locate_include_file ... */
 #include "utils.h"
 #include "manipulate_tree.h"
 #include "translations.h"
@@ -40,16 +43,18 @@
 #include "convert_utils.h"
 
 char *convert_utils_month_name[12] = {
-       "January", "February", "March", "April", "May",
-     "June", "July", "August", "September", "October",
-     "November", "December"
+  gdt_noop("January"), gdt_noop("February"), gdt_noop("March"),
+  gdt_noop("April"), gdt_noop("May"), gdt_noop("June"), gdt_noop("July"),
+  gdt_noop("August"), gdt_noop("September"), gdt_noop("October"),
+  gdt_noop("November"), gdt_noop("December")
 };
 
 /* in Texinfo::Common */
 char *
 element_associated_processing_encoding (const ELEMENT *element)
 {
-  char *input_encoding = lookup_extra_string (element, "input_encoding_name");
+  char *input_encoding = lookup_extra_string (element,
+                                              AI_key_input_encoding_name);
   return input_encoding;
 }
 
@@ -68,8 +73,8 @@ expand_today (OPTIONS *options)
 
   if (options->TEST.o.integer > 0)
     {
-      result = new_element (ET_NONE);
-      text_append (&result->text, "a sunny day");
+      result = new_text_element (ET_normal_text);
+      text_append (result->e.text, "a sunny day");
       return result;
     }
 
@@ -94,10 +99,10 @@ expand_today (OPTIONS *options)
   month_tree = gdt_tree (convert_utils_month_name[time_tm->tm_mon], 0,
                          options->documentlanguage.o.string, 0,
                          options->DEBUG.o.integer, 0);
-  day_element = new_element (ET_NONE);
-  year_element = new_element (ET_NONE);
-  text_printf (&day_element->text, "%d", time_tm->tm_mday);
-  text_printf (&year_element->text, "%d", year);
+  day_element = new_text_element (ET_normal_text);
+  year_element = new_text_element (ET_normal_text);
+  text_printf (day_element->e.text, "%d", time_tm->tm_mday);
+  text_printf (year_element->e.text, "%d", year);
 
   substrings = new_named_string_element_list ();
   add_element_to_named_string_element_list (substrings, "month", month_tree);
@@ -116,7 +121,7 @@ ACCENTS_STACK *
 find_innermost_accent_contents (const ELEMENT *element)
 {
   const ELEMENT *current = element;
-  ELEMENT *argument = 0;
+  static ELEMENT_LIST argument;
   ACCENTS_STACK *accent_stack = (ACCENTS_STACK *)
          malloc (sizeof (ACCENTS_STACK));
   memset (accent_stack, 0, sizeof (ACCENTS_STACK));
@@ -125,56 +130,69 @@ find_innermost_accent_contents (const ELEMENT *element)
     {
       const ELEMENT *arg;
       int i;
-      enum command_id data_cmd = element_builtin_data_cmd (current);
-      unsigned long flags = builtin_command_data[data_cmd].flags;
+      enum command_id data_cmd;
+      unsigned long flags;
+
+      if (current->type != ET_brace_command)
+        return accent_stack;
+
+      data_cmd = element_builtin_data_cmd (current);
+      flags = builtin_command_data[data_cmd].flags;
 
       /* the following can happen if called with a bad tree */
       if (!data_cmd || !(flags & CF_accent))
         return accent_stack;
+
       push_stack_element (&accent_stack->stack, current);
       /* A bogus accent, that may happen */
-      if (current->args.number <= 0)
+      if (current->e.c->args.number <= 0)
         return accent_stack;
-      arg = current->args.list[0];
-      if (arg->contents.number <= 0)
+      arg = current->e.c->args.list[0];
+      if (arg->e.c->contents.number <= 0)
         return accent_stack;
-      for (i = 0; i < arg->contents.number; i++)
+      for (i = 0; i < arg->e.c->contents.number; i++)
         {
-          ELEMENT *content = arg->contents.list[i];
-          enum command_id content_data_cmd
-             = element_builtin_data_cmd (content);
-          unsigned long content_flags
-            = builtin_command_data[content_data_cmd].flags;
+          ELEMENT *content = arg->e.c->contents.list[i];
 
-          if (!(content_data_cmd && (content_data_cmd == CM_c
-                                     || content_data_cmd == CM_comment)))
+          if (! (type_data[content->type].flags & TF_text))
             {
+              enum command_id content_data_cmd
+                = element_builtin_data_cmd (content);
+              if (content_data_cmd)
+                {
+                  unsigned long content_flags
+                     = builtin_command_data[content_data_cmd].flags;
+                  if (content_flags & CF_accent)
+                    {
          /* if accent is tieaccent, keep everything and do not try to
             nest more */
-              if (current->cmd != CM_tieaccent
-                  && content_data_cmd && content_flags & CF_accent)
-                {
-                  current = content;
-                  if (argument)
-                    {
-                      destroy_element (argument);
-                      argument = 0;
+                      if (current->e.c->cmd != CM_tieaccent)
+                        {
+                          current = content;
+                          argument.number = 0;
+                          break;
+                        }
                     }
-                  break;
-                }
-              else
-                {
-                  if (!argument)
-                    argument = new_element (ET_NONE);
-                  add_to_contents_as_array (argument, content);
+              /* should be very rare and considered as undefined */
+                  else if (content_data_cmd == CM_c
+                           || content_data_cmd == CM_comment)
+                    {
+                      continue;
+                    }
                 }
             }
+          add_to_element_list (&argument, content);
         }
-      if (argument)
+      if (argument.number > 0)
         break;
     }
-  if (argument)
-    accent_stack->argument = argument;
+  if (argument.number > 0)
+    {
+      accent_stack->argument = new_element (ET_NONE);
+      insert_list_slice_into_contents (accent_stack->argument,
+                             0, &argument, 0, argument.number);
+      argument.number = 0;
+    }
   return accent_stack;
 }
 
@@ -191,7 +209,7 @@ add_heading_number (OPTIONS *options, const ELEMENT *current, char *text,
   TEXT result;
   char *number = 0;
   if (numbered != 0)
-    number = lookup_extra_string (current, "section_number");
+    number = lookup_extra_string (current, AI_key_section_number);
 
   text_init (&result);
 
@@ -206,11 +224,11 @@ add_heading_number (OPTIONS *options, const ELEMENT *current, char *text,
                                                   "number", number);
           add_string_to_named_string_element_list (substrings,
                                              "section_title", text);
-          if (current->cmd == CM_appendix)
+          if (current->e.c->cmd == CM_appendix)
             {
               int status;
               int section_level
-                    = lookup_extra_integer (current, "section_level",
+                    = lookup_extra_integer (current, AI_key_section_level,
                                             &status);
               if (section_level == 1)
                 {
@@ -235,10 +253,11 @@ add_heading_number (OPTIONS *options, const ELEMENT *current, char *text,
     }
   else
     {
-      if (current->cmd == CM_appendix)
+      if (current->e.c->cmd == CM_appendix)
         {
           int status;
-          int section_level = lookup_extra_integer (current, "section_level",
+          int section_level = lookup_extra_integer (current,
+                                                    AI_key_section_level,
                                                     &status);
           if (section_level == 1)
             text_append (&result, "Appendix ");
@@ -282,8 +301,8 @@ encoded_input_file_name (const OPTIONS *options,
 
   if (options && options->INPUT_FILE_NAME_ENCODING.o.string)
     encoding = options->INPUT_FILE_NAME_ENCODING.o.string;
-  else if (options && options->DOC_ENCODING_FOR_INPUT_FILE_NAME.o.integer != 0
-           || (!options))
+  else if (!options
+           || options->DOC_ENCODING_FOR_INPUT_FILE_NAME.o.integer != 0)
     {
       if (input_file_encoding)
         encoding = input_file_encoding;
@@ -316,8 +335,8 @@ encoded_output_file_name (const OPTIONS *options,
 
   if (options && options->OUTPUT_FILE_NAME_ENCODING.o.string)
     encoding = options->OUTPUT_FILE_NAME_ENCODING.o.string;
-  else if (options && options->DOC_ENCODING_FOR_OUTPUT_FILE_NAME.o.integer != 0
-           || (!options))
+  else if (!options
+           || options->DOC_ENCODING_FOR_OUTPUT_FILE_NAME.o.integer != 0)
     {
       if (global_information && global_information->input_encoding_name)
         encoding = global_information->input_encoding_name;
@@ -341,7 +360,7 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
 {
   ELEMENT *verbatiminclude = 0;
   char *file_name_encoding;
-  char *file_name_text = lookup_extra_string (current, "text_arg");
+  char *file_name_text = lookup_extra_string (current, AI_key_text_arg);
   char *file_name;
   char *file;
   STRING_LIST *include_directories = 0;
@@ -354,7 +373,7 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
   file_name = encoded_input_file_name (options, global_information,
                                        file_name_text, input_encoding,
                                        &file_name_encoding,
-                                       &current->source_info);
+                                       &current->e.c->source_info);
 
   if (options)
     include_directories = options->INCLUDE_DIRECTORIES.o.strlist;
@@ -375,7 +394,7 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
               char *decoded_file;
               if (file_name_encoding)
                 decoded_file = decode_string (file, file_name_encoding,
-                                              &status, &current->source_info);
+                                         &status, &current->e.c->source_info);
               else
                 decoded_file = file;
               message_list_command_error (error_messages, options, current,
@@ -389,8 +408,7 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
         {
           conversion
            = get_encoding_conversion (input_encoding, &input_conversions);
-          verbatiminclude = new_element (ET_NONE);
-          verbatiminclude->cmd = CM_verbatim;
+          verbatiminclude = new_command_element (ET_block_command, CM_verbatim);
           verbatiminclude->parent = current->parent;
           while (1)
             {
@@ -406,10 +424,10 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
                 }
 
               text = convert_to_utf8_verbatiminclude
-                       (line, conversion, &current->source_info);
+                       (line, conversion, &current->e.c->source_info);
               free (line);
-              raw = new_element (ET_raw);
-              text_append (&raw->text, text);
+              raw = new_text_element (ET_raw);
+              text_append (raw->e.text, text);
               add_to_element_contents (verbatiminclude, raw);
               free (text);
             }
@@ -422,7 +440,7 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
                   if (file_name_encoding)
                     decoded_file = decode_string (file, file_name_encoding,
                                                   &status,
-                                                  &current->source_info);
+                                                  &current->e.c->source_info);
                   else
                     decoded_file = file;
                   message_list_command_error (error_messages, options, current,
@@ -439,7 +457,7 @@ expand_verbatiminclude (ERROR_MESSAGE_LIST *error_messages,
     {
       message_list_command_error (error_messages, options, current,
                                   "@%s: could not find %s",
-                                  builtin_command_name (current->cmd),
+                                  builtin_command_name (current->e.c->cmd),
                                   file_name_text);
     }
   free (file_name);
@@ -452,15 +470,15 @@ definition_arguments_content (const ELEMENT *element)
 {
   PARSED_DEF *result = malloc (sizeof (PARSED_DEF));
   memset (result, 0, sizeof (PARSED_DEF));
-  if (element->args.number >= 0)
+  if (element->e.c->args.number >= 0)
     {
       int i;
-      const ELEMENT *def_line = element->args.list[0];
-      if (def_line->contents.number > 0)
+      const ELEMENT *def_line = element->e.c->args.list[0];
+      if (def_line->e.c->contents.number > 0)
         {
-          for (i = 0; i < def_line->contents.number; i++)
+          for (i = 0; i < def_line->e.c->contents.number; i++)
             {
-              ELEMENT *arg = def_line->contents.list[i];
+              ELEMENT *arg = def_line->e.c->contents.list[i];
               if (arg->type == ET_def_class)
                 result->class = arg;
               else if (arg->type == ET_def_category)
@@ -476,11 +494,11 @@ definition_arguments_content (const ELEMENT *element)
                   break;
                 }
             }
-          if (i < def_line->contents.number - 1)
+          if (i < def_line->e.c->contents.number - 1)
             {
               ELEMENT *args = new_element (ET_NONE);
               insert_slice_into_contents (args, 0, def_line,
-                                          i + 1, def_line->contents.number);
+                                          i + 1, def_line->e.c->contents.number);
               result->args = args;
             }
         }
@@ -508,13 +526,13 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
   ELEMENT *class_copy;
   char *def_command;
 
-  if (current->args.number >= 0)
+  if (current->e.c->args.number >= 0)
     {
       int i;
-      const ELEMENT *def_line = current->args.list[0];
-      for (i = 0; i < def_line->contents.number; i++)
+      const ELEMENT *def_line = current->e.c->args.list[0];
+      for (i = 0; i < def_line->e.c->contents.number; i++)
         {
-          ELEMENT *arg = def_line->contents.list[i];
+          ELEMENT *arg = def_line->e.c->contents.list[i];
           if (arg->type == ET_def_class)
             arg_class = arg;
           else if (arg->type == ET_def_category)
@@ -543,15 +561,14 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
   /*
   if (!options)
     {
-      ELEMENT *brace_command_arg = new_element (ET_brace_command_arg);
-      arg_class_code = new_element (ET_NONE);
-      arg_class_code->cmd = CM_code;
-      add_to_element_contents (brace_command_arg, class_copy);
-      add_to_element_args (arg_class_code, brace_command_arg);
+      ELEMENT *brace_container = new_element (ET_brace_container);
+      arg_class_code = new_command_element (ET_brace_command, CM_code);
+      add_to_element_contents (brace_container, class_copy);
+      add_to_element_args (arg_class_code, brace_container);
     }
    */
 
-  def_command = lookup_extra_string (current, "def_command");
+  def_command = lookup_extra_string (current, AI_key_def_command);
 
   /* do something more efficient */
   if (!strcmp (def_command, "defop")
@@ -568,11 +585,9 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
                                                 "class", class_copy);
       if (options)
         {
-          /*
-          TRANSLATORS: association of a method or operation name with a class
-          in descriptions of object-oriented programming methods or operations.
-           */
-
+    /*
+     TRANSLATORS: association of a method or operation name with a class
+     in descriptions of object-oriented programming methods or operations. */
           result = gdt_tree ("{category} on @code{{class}}", 0,
                              options->documentlanguage.o.string, substrings,
                              options->DEBUG.o.integer, 0);
@@ -580,14 +595,14 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
       else
         {
           const char *documentlanguage
-                = lookup_extra_string (current, "documentlanguage");
+                = lookup_extra_string (current, AI_key_documentlanguage);
           result = gdt_tree ("{category} on @code{{class}}", 0,
                              documentlanguage, substrings, 0, 0);
           /*
           result = new_element (ET_NONE);
-          ELEMENT *text_element = new_element (ET_NONE);
+          ELEMENT *text_element = new_text_element (ET_normal_text);
           add_to_element_contents (result, category_copy);
-          text_append (&text_element->text, " on ");
+          text_append (text_element->e.text, " on ");
           add_to_element_contents (result, text_element);
           add_to_element_contents (result, arg_class_code);
            */
@@ -607,11 +622,10 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
                                                 "class", class_copy);
       if (options)
         {
-          /*
-          TRANSLATORS: association of a method or operation name with a class
-          in descriptions of object-oriented programming methods or operations.
-           */
-
+    /*
+      TRANSLATORS: association of a variable or instance variable with
+      a class in descriptions of object-oriented programming variables
+      or instance variable. */
           result = gdt_tree ("{category} of @code{{class}}", 0,
                              options->documentlanguage.o.string, substrings,
                              options->DEBUG.o.integer, 0);
@@ -619,14 +633,14 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
       else
         {
           const char *documentlanguage
-                = lookup_extra_string (current, "documentlanguage");
+                = lookup_extra_string (current, AI_key_documentlanguage);
           result = gdt_tree ("{category} of @code{{class}}", 0,
                              documentlanguage, substrings, 0, 0);
           /*
           result = new_element (ET_NONE);
-          ELEMENT *text_element = new_element (ET_NONE);
+          ELEMENT *text_element = new_text_element (ET_normal_text);
           add_to_element_contents (result, category_copy);
-          text_append (&text_element->text, " of ");
+          text_append (text_element->e.text, " of ");
           add_to_element_contents (result, text_element);
           add_to_element_contents (result, arg_class_code);
            */
@@ -854,13 +868,36 @@ find_root_command_next_heading_command (const ELEMENT *root,
 {
   size_t i;
 
-  if (root->contents.number <= 0)
+  if (root->e.c->contents.number <= 0)
     return 0;
 
-  for (i = 0; i < root->contents.number; i++)
+  for (i = 0; i < root->e.c->contents.number; i++)
     {
-      const ELEMENT *content = root->contents.list[i];
-      enum command_id data_cmd = element_builtin_data_cmd (content);
+      const ELEMENT *content = root->e.c->contents.list[i];
+      enum command_id data_cmd;
+
+      if (type_data[content->type].flags & TF_text)
+        {
+         /* do not happen and should not happen, as normal text should never
+           be in top level root command contents, only empty_line,
+           spaces_after_close_brace... that only contain whitespace_chars */
+          if (content->type == ET_normal_text && content->e.text->end > 0)
+            {
+              const char *text = content->e.text->text;
+              fprintf (stderr,
+                       "BUG: in top level unexpected normal_text: '%s'\n",
+                       text);
+            /* only whitespace characters */
+              if (text[strspn (text, whitespace_chars)] == '\0')
+                continue;
+              else
+                return 0;
+            }
+          else
+            continue;
+        }
+
+      data_cmd = element_builtin_data_cmd (content);
 
       if (data_cmd)
         {
@@ -881,9 +918,9 @@ find_root_command_next_heading_command (const ELEMENT *root,
               if (other_flags & CF_formatted_line
                   || other_flags & CF_formattable_line
                   || (do_not_ignore_contents
-                      && (content->cmd == CM_contents
-                          || content->cmd == CM_shortcontents
-                          || content->cmd == CM_summarycontents)))
+                      && (content->e.c->cmd == CM_contents
+                          || content->e.c->cmd == CM_shortcontents
+                          || content->e.c->cmd == CM_summarycontents)))
                 return 0;
               else
                 continue;
@@ -918,13 +955,6 @@ find_root_command_next_heading_command (const ELEMENT *root,
         }
       if (content->type == ET_paragraph)
         return 0;
-      if (content->text.end > 0)
-        {
-          const char *text = element_text (content);
-          /* only whitespace characters */
-          if (! text[strspn (text, whitespace_chars)] == '\0')
-            return 0;
-        }
     }
   return 0;
 }

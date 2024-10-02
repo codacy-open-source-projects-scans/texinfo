@@ -119,13 +119,17 @@ $result_trees{'macro_definition_in_include'} = {
         {
           'contents' => [
             {
+              'text' => 'Call macro
+'
+            },
+            {
               'source_marks' => [
                 {
                   'counter' => 1,
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -133,16 +137,9 @@ $result_trees{'macro_definition_in_include'} = {
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 11,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
-                }
-              ],
-              'text' => 'Call macro
-'
-            },
-            {
-              'source_marks' => [
+                },
                 {
                   'counter' => 1,
                   'position' => 11,

@@ -210,7 +210,7 @@ $result_trees{'itemize_arguments'} = {
                           'text' => 'a\'\'b\'c'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',
@@ -250,7 +250,7 @@ $result_trees{'itemize_arguments'} = {
                               'text' => 'a\'\'b\'c'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -590,8 +590,7 @@ $result_trees{'itemize_arguments'} = {
                   'cmdname' => 'today',
                   'source_info' => {
                     'line_nr' => 26
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -620,7 +619,7 @@ $result_trees{'itemize_arguments'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'today',
@@ -698,7 +697,7 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'aa',
@@ -716,7 +715,7 @@ $result_trees{'itemize_arguments'} = {
                         {
                           'args' => [
                             {
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'aa',
@@ -725,7 +724,7 @@ $result_trees{'itemize_arguments'} = {
                           }
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'sc',
@@ -760,7 +759,7 @@ $result_trees{'itemize_arguments'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'aa',
@@ -778,7 +777,7 @@ $result_trees{'itemize_arguments'} = {
                             {
                               'args' => [
                                 {
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'aa',
@@ -787,7 +786,7 @@ $result_trees{'itemize_arguments'} = {
                               }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'sc',
@@ -862,14 +861,13 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'tie',
                   'source_info' => {
                     'line_nr' => 34
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -898,7 +896,7 @@ $result_trees{'itemize_arguments'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'tie',
@@ -976,7 +974,7 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'tie',
@@ -1014,7 +1012,7 @@ $result_trees{'itemize_arguments'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'tie',
@@ -1090,8 +1088,7 @@ $result_trees{'itemize_arguments'} = {
                   'cmdname' => 'atchar',
                   'source_info' => {
                     'line_nr' => 42
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -1184,7 +1181,7 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'atchar',
@@ -1222,7 +1219,7 @@ $result_trees{'itemize_arguments'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'atchar',
@@ -1483,16 +1480,7 @@ $result_trees{'itemize_arguments'} = {
             {
               'contents' => [
                 {
-                  'args' => [
-                    {
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'registeredsymbol',
-                  'source_info' => {
-                    'line_nr' => 58
-                  },
-                  'type' => 'command_as_argument'
+                  'cmdname' => '&'
                 }
               ],
               'info' => {
@@ -1516,18 +1504,10 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item registeredsymbol '
+                      'text' => 'item '
                     },
                     {
-                      'args' => [
-                        {
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'registeredsymbol',
-                      'source_info' => {
-                        'line_nr' => 59
-                      }
+                      'cmdname' => '&'
                     },
                     {
                       'text' => '
@@ -1575,9 +1555,6 @@ $result_trees{'itemize_arguments'} = {
               }
             }
           ],
-          'extra' => {
-            'command_as_argument' => {}
-          },
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -1597,18 +1574,10 @@ $result_trees{'itemize_arguments'} = {
             {
               'contents' => [
                 {
-                  'args' => [
-                    {
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'registeredsymbol',
+                  'cmdname' => 'ampchar',
                   'source_info' => {
                     'line_nr' => 62
                   }
-                },
-                {
-                  'text' => ' a'
                 }
               ],
               'info' => {
@@ -1632,21 +1601,21 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item registeredsymbol '
+                      'text' => 'item '
                     },
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
-                      'cmdname' => 'registeredsymbol',
+                      'cmdname' => 'ampchar',
                       'source_info' => {
                         'line_nr' => 63
                       }
                     },
                     {
-                      'text' => ' a
+                      'text' => '
 '
                     }
                   ],
@@ -1691,6 +1660,9 @@ $result_trees{'itemize_arguments'} = {
               }
             }
           ],
+          'extra' => {
+            'command_as_argument' => {}
+          },
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -1710,16 +1682,10 @@ $result_trees{'itemize_arguments'} = {
             {
               'contents' => [
                 {
-                  'args' => [
-                    {
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'enddots',
-                  'source_info' => {
-                    'line_nr' => 66
-                  },
-                  'type' => 'command_as_argument'
+                  'cmdname' => '&'
+                },
+                {
+                  'text' => ' a'
                 }
               ],
               'info' => {
@@ -1743,21 +1709,13 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item dots '
+                      'text' => 'item '
                     },
                     {
-                      'args' => [
-                        {
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'enddots',
-                      'source_info' => {
-                        'line_nr' => 67
-                      }
+                      'cmdname' => '&'
                     },
                     {
-                      'text' => '
+                      'text' => ' a
 '
                     }
                   ],
@@ -1802,9 +1760,6 @@ $result_trees{'itemize_arguments'} = {
               }
             }
           ],
-          'extra' => {
-            'command_as_argument' => {}
-          },
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -1826,10 +1781,10 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
-                  'cmdname' => 'enddots',
+                  'cmdname' => 'ampchar',
                   'source_info' => {
                     'line_nr' => 70
                   }
@@ -1859,15 +1814,15 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item dots '
+                      'text' => 'item '
                     },
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
-                      'cmdname' => 'enddots',
+                      'cmdname' => 'ampchar',
                       'source_info' => {
                         'line_nr' => 71
                       }
@@ -1939,47 +1894,10 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'contents' => [
-                        {
-                          'text' => 'e'
-                        }
-                      ],
-                      'type' => 'following_arg'
+                      'type' => 'brace_container'
                     }
                   ],
-                  'cmdname' => '^',
-                  'source_info' => {
-                    'line_nr' => 74
-                  }
-                },
-                {
-                  'text' => ' '
-                },
-                {
-                  'args' => [
-                    {
-                      'contents' => [
-                        {
-                          'args' => [
-                            {
-                              'contents' => [
-                                {
-                                  'text' => 'e'
-                                }
-                              ],
-                              'type' => 'following_arg'
-                            }
-                          ],
-                          'cmdname' => '^',
-                          'source_info' => {
-                            'line_nr' => 74
-                          }
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'sc',
+                  'cmdname' => 'registeredsymbol',
                   'source_info' => {
                     'line_nr' => 74
                   }
@@ -2006,52 +1924,15 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item e '
+                      'text' => 'item registeredsymbol '
                     },
                     {
                       'args' => [
                         {
-                          'contents' => [
-                            {
-                              'text' => 'e'
-                            }
-                          ],
-                          'type' => 'following_arg'
+                          'type' => 'brace_container'
                         }
                       ],
-                      'cmdname' => '^',
-                      'source_info' => {
-                        'line_nr' => 75
-                      }
-                    },
-                    {
-                      'text' => ' '
-                    },
-                    {
-                      'args' => [
-                        {
-                          'contents' => [
-                            {
-                              'args' => [
-                                {
-                                  'contents' => [
-                                    {
-                                      'text' => 'e'
-                                    }
-                                  ],
-                                  'type' => 'following_arg'
-                                }
-                              ],
-                              'cmdname' => '^',
-                              'source_info' => {
-                                'line_nr' => 75
-                              }
-                            }
-                          ],
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'sc',
+                      'cmdname' => 'registeredsymbol',
                       'source_info' => {
                         'line_nr' => 75
                       }
@@ -2102,6 +1983,9 @@ $result_trees{'itemize_arguments'} = {
               }
             }
           ],
+          'extra' => {
+            'command_as_argument' => {}
+          },
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -2123,50 +2007,16 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'contents' => [
-                        {
-                          'text' => 'E'
-                        }
-                      ],
-                      'type' => 'following_arg'
+                      'type' => 'brace_container'
                     }
                   ],
-                  'cmdname' => '^',
+                  'cmdname' => 'registeredsymbol',
                   'source_info' => {
                     'line_nr' => 78
                   }
                 },
                 {
-                  'text' => ' '
-                },
-                {
-                  'args' => [
-                    {
-                      'contents' => [
-                        {
-                          'args' => [
-                            {
-                              'contents' => [
-                                {
-                                  'text' => 'E'
-                                }
-                              ],
-                              'type' => 'following_arg'
-                            }
-                          ],
-                          'cmdname' => '^',
-                          'source_info' => {
-                            'line_nr' => 78
-                          }
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'sc',
-                  'source_info' => {
-                    'line_nr' => 78
-                  }
+                  'text' => ' a'
                 }
               ],
               'info' => {
@@ -2190,58 +2040,21 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item E '
+                      'text' => 'item registeredsymbol '
                     },
                     {
                       'args' => [
                         {
-                          'contents' => [
-                            {
-                              'text' => 'E'
-                            }
-                          ],
-                          'type' => 'following_arg'
+                          'type' => 'brace_container'
                         }
                       ],
-                      'cmdname' => '^',
+                      'cmdname' => 'registeredsymbol',
                       'source_info' => {
                         'line_nr' => 79
                       }
                     },
                     {
-                      'text' => ' '
-                    },
-                    {
-                      'args' => [
-                        {
-                          'contents' => [
-                            {
-                              'args' => [
-                                {
-                                  'contents' => [
-                                    {
-                                      'text' => 'E'
-                                    }
-                                  ],
-                                  'type' => 'following_arg'
-                                }
-                              ],
-                              'cmdname' => '^',
-                              'source_info' => {
-                                'line_nr' => 79
-                              }
-                            }
-                          ],
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'sc',
-                      'source_info' => {
-                        'line_nr' => 79
-                      }
-                    },
-                    {
-                      'text' => '
+                      'text' => ' a
 '
                     }
                   ],
@@ -2307,111 +2120,10 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'contents' => [
-                        {
-                          'args' => [
-                            {
-                              'contents' => [
-                                {
-                                  'text' => 'i'
-                                }
-                              ],
-                              'type' => 'brace_command_arg'
-                            }
-                          ],
-                          'cmdname' => 'dotless',
-                          'source_info' => {
-                            'line_nr' => 82
-                          }
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
-                  'cmdname' => '~',
-                  'source_info' => {
-                    'line_nr' => 82
-                  }
-                },
-                {
-                  'text' => ' '
-                },
-                {
-                  'args' => [
-                    {
-                      'contents' => [
-                        {
-                          'text' => 'i'
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'dotless',
-                  'source_info' => {
-                    'line_nr' => 82
-                  }
-                },
-                {
-                  'text' => ' '
-                },
-                {
-                  'args' => [
-                    {
-                      'contents' => [
-                        {
-                          'args' => [
-                            {
-                              'contents' => [
-                                {
-                                  'args' => [
-                                    {
-                                      'contents' => [
-                                        {
-                                          'text' => 'i'
-                                        }
-                                      ],
-                                      'type' => 'brace_command_arg'
-                                    }
-                                  ],
-                                  'cmdname' => 'dotless',
-                                  'source_info' => {
-                                    'line_nr' => 82
-                                  }
-                                }
-                              ],
-                              'type' => 'brace_command_arg'
-                            }
-                          ],
-                          'cmdname' => '~',
-                          'source_info' => {
-                            'line_nr' => 82
-                          }
-                        },
-                        {
-                          'text' => ' '
-                        },
-                        {
-                          'args' => [
-                            {
-                              'contents' => [
-                                {
-                                  'text' => 'i'
-                                }
-                              ],
-                              'type' => 'brace_command_arg'
-                            }
-                          ],
-                          'cmdname' => 'dotless',
-                          'source_info' => {
-                            'line_nr' => 82
-                          }
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'sc',
+                  'cmdname' => 'enddots',
                   'source_info' => {
                     'line_nr' => 82
                   }
@@ -2438,116 +2150,15 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item dotless '
+                      'text' => 'item dots '
                     },
                     {
                       'args' => [
                         {
-                          'contents' => [
-                            {
-                              'args' => [
-                                {
-                                  'contents' => [
-                                    {
-                                      'text' => 'i'
-                                    }
-                                  ],
-                                  'type' => 'brace_command_arg'
-                                }
-                              ],
-                              'cmdname' => 'dotless',
-                              'source_info' => {
-                                'line_nr' => 83
-                              }
-                            }
-                          ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
-                      'cmdname' => '~',
-                      'source_info' => {
-                        'line_nr' => 83
-                      }
-                    },
-                    {
-                      'text' => ' '
-                    },
-                    {
-                      'args' => [
-                        {
-                          'contents' => [
-                            {
-                              'text' => 'i'
-                            }
-                          ],
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'dotless',
-                      'source_info' => {
-                        'line_nr' => 83
-                      }
-                    },
-                    {
-                      'text' => ' '
-                    },
-                    {
-                      'args' => [
-                        {
-                          'contents' => [
-                            {
-                              'args' => [
-                                {
-                                  'contents' => [
-                                    {
-                                      'args' => [
-                                        {
-                                          'contents' => [
-                                            {
-                                              'text' => 'i'
-                                            }
-                                          ],
-                                          'type' => 'brace_command_arg'
-                                        }
-                                      ],
-                                      'cmdname' => 'dotless',
-                                      'source_info' => {
-                                        'line_nr' => 83
-                                      }
-                                    }
-                                  ],
-                                  'type' => 'brace_command_arg'
-                                }
-                              ],
-                              'cmdname' => '~',
-                              'source_info' => {
-                                'line_nr' => 83
-                              }
-                            },
-                            {
-                              'text' => ' '
-                            },
-                            {
-                              'args' => [
-                                {
-                                  'contents' => [
-                                    {
-                                      'text' => 'i'
-                                    }
-                                  ],
-                                  'type' => 'brace_command_arg'
-                                }
-                              ],
-                              'cmdname' => 'dotless',
-                              'source_info' => {
-                                'line_nr' => 83
-                              }
-                            }
-                          ],
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'sc',
+                      'cmdname' => 'enddots',
                       'source_info' => {
                         'line_nr' => 83
                       }
@@ -2598,6 +2209,9 @@ $result_trees{'itemize_arguments'} = {
               }
             }
           ],
+          'extra' => {
+            'command_as_argument' => {}
+          },
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -2619,114 +2233,16 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'contents' => [
-                        {
-                          'text' => 'r'
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
-                  'cmdname' => 'udotaccent',
+                  'cmdname' => 'enddots',
                   'source_info' => {
                     'line_nr' => 86
                   }
                 },
                 {
-                  'text' => ' '
-                },
-                {
-                  'args' => [
-                    {
-                      'contents' => [
-                        {
-                          'args' => [
-                            {
-                              'contents' => [
-                                {
-                                  'text' => 'r'
-                                }
-                              ],
-                              'type' => 'brace_command_arg'
-                            }
-                          ],
-                          'cmdname' => '\'',
-                          'source_info' => {
-                            'line_nr' => 86
-                          }
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'v',
-                  'source_info' => {
-                    'line_nr' => 86
-                  }
-                },
-                {
-                  'text' => ' '
-                },
-                {
-                  'args' => [
-                    {
-                      'contents' => [
-                        {
-                          'args' => [
-                            {
-                              'contents' => [
-                                {
-                                  'text' => 'r'
-                                }
-                              ],
-                              'type' => 'brace_command_arg'
-                            }
-                          ],
-                          'cmdname' => 'udotaccent',
-                          'source_info' => {
-                            'line_nr' => 86
-                          }
-                        },
-                        {
-                          'text' => ' '
-                        },
-                        {
-                          'args' => [
-                            {
-                              'contents' => [
-                                {
-                                  'args' => [
-                                    {
-                                      'contents' => [
-                                        {
-                                          'text' => 'r'
-                                        }
-                                      ],
-                                      'type' => 'brace_command_arg'
-                                    }
-                                  ],
-                                  'cmdname' => '\'',
-                                  'source_info' => {
-                                    'line_nr' => 86
-                                  }
-                                }
-                              ],
-                              'type' => 'brace_command_arg'
-                            }
-                          ],
-                          'cmdname' => 'v',
-                          'source_info' => {
-                            'line_nr' => 86
-                          }
-                        }
-                      ],
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'sc',
-                  'source_info' => {
-                    'line_nr' => 86
-                  }
+                  'text' => ' a'
                 }
               ],
               'info' => {
@@ -2750,122 +2266,21 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item complex a '
+                      'text' => 'item dots '
                     },
                     {
                       'args' => [
                         {
-                          'contents' => [
-                            {
-                              'text' => 'r'
-                            }
-                          ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
-                      'cmdname' => 'udotaccent',
+                      'cmdname' => 'enddots',
                       'source_info' => {
                         'line_nr' => 87
                       }
                     },
                     {
-                      'text' => ' '
-                    },
-                    {
-                      'args' => [
-                        {
-                          'contents' => [
-                            {
-                              'args' => [
-                                {
-                                  'contents' => [
-                                    {
-                                      'text' => 'r'
-                                    }
-                                  ],
-                                  'type' => 'brace_command_arg'
-                                }
-                              ],
-                              'cmdname' => '\'',
-                              'source_info' => {
-                                'line_nr' => 87
-                              }
-                            }
-                          ],
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'v',
-                      'source_info' => {
-                        'line_nr' => 87
-                      }
-                    },
-                    {
-                      'text' => ' '
-                    },
-                    {
-                      'args' => [
-                        {
-                          'contents' => [
-                            {
-                              'args' => [
-                                {
-                                  'contents' => [
-                                    {
-                                      'text' => 'r'
-                                    }
-                                  ],
-                                  'type' => 'brace_command_arg'
-                                }
-                              ],
-                              'cmdname' => 'udotaccent',
-                              'source_info' => {
-                                'line_nr' => 87
-                              }
-                            },
-                            {
-                              'text' => ' '
-                            },
-                            {
-                              'args' => [
-                                {
-                                  'contents' => [
-                                    {
-                                      'args' => [
-                                        {
-                                          'contents' => [
-                                            {
-                                              'text' => 'r'
-                                            }
-                                          ],
-                                          'type' => 'brace_command_arg'
-                                        }
-                                      ],
-                                      'cmdname' => '\'',
-                                      'source_info' => {
-                                        'line_nr' => 87
-                                      }
-                                    }
-                                  ],
-                                  'type' => 'brace_command_arg'
-                                }
-                              ],
-                              'cmdname' => 'v',
-                              'source_info' => {
-                                'line_nr' => 87
-                              }
-                            }
-                          ],
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'sc',
-                      'source_info' => {
-                        'line_nr' => 87
-                      }
-                    },
-                    {
-                      'text' => '
+                      'text' => ' a
 '
                     }
                   ],
@@ -2933,39 +2348,13 @@ $result_trees{'itemize_arguments'} = {
                     {
                       'contents' => [
                         {
-                          'args' => [
-                            {
-                              'contents' => [
-                                {
-                                  'args' => [
-                                    {
-                                      'contents' => [
-                                        {
-                                          'text' => 'n'
-                                        }
-                                      ],
-                                      'type' => 'brace_command_arg'
-                                    }
-                                  ],
-                                  'cmdname' => '~',
-                                  'source_info' => {
-                                    'line_nr' => 90
-                                  }
-                                }
-                              ],
-                              'type' => 'brace_command_arg'
-                            }
-                          ],
-                          'cmdname' => ',',
-                          'source_info' => {
-                            'line_nr' => 90
-                          }
+                          'text' => 'e'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'following_arg'
                     }
                   ],
-                  'cmdname' => '=',
+                  'cmdname' => '^',
                   'source_info' => {
                     'line_nr' => 90
                   }
@@ -2978,52 +2367,23 @@ $result_trees{'itemize_arguments'} = {
                     {
                       'contents' => [
                         {
-                          'text' => ' '
-                        },
-                        {
                           'args' => [
                             {
                               'contents' => [
                                 {
-                                  'args' => [
-                                    {
-                                      'contents' => [
-                                        {
-                                          'args' => [
-                                            {
-                                              'contents' => [
-                                                {
-                                                  'text' => 'n'
-                                                }
-                                              ],
-                                              'type' => 'brace_command_arg'
-                                            }
-                                          ],
-                                          'cmdname' => '~',
-                                          'source_info' => {
-                                            'line_nr' => 90
-                                          }
-                                        }
-                                      ],
-                                      'type' => 'brace_command_arg'
-                                    }
-                                  ],
-                                  'cmdname' => ',',
-                                  'source_info' => {
-                                    'line_nr' => 90
-                                  }
+                                  'text' => 'e'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'following_arg'
                             }
                           ],
-                          'cmdname' => '=',
+                          'cmdname' => '^',
                           'source_info' => {
                             'line_nr' => 90
                           }
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'sc',
@@ -3053,46 +2413,20 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item complex n '
+                      'text' => 'item e '
                     },
                     {
                       'args' => [
                         {
                           'contents' => [
                             {
-                              'args' => [
-                                {
-                                  'contents' => [
-                                    {
-                                      'args' => [
-                                        {
-                                          'contents' => [
-                                            {
-                                              'text' => 'n'
-                                            }
-                                          ],
-                                          'type' => 'brace_command_arg'
-                                        }
-                                      ],
-                                      'cmdname' => '~',
-                                      'source_info' => {
-                                        'line_nr' => 91
-                                      }
-                                    }
-                                  ],
-                                  'type' => 'brace_command_arg'
-                                }
-                              ],
-                              'cmdname' => ',',
-                              'source_info' => {
-                                'line_nr' => 91
-                              }
+                              'text' => 'e'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'following_arg'
                         }
                       ],
-                      'cmdname' => '=',
+                      'cmdname' => '^',
                       'source_info' => {
                         'line_nr' => 91
                       }
@@ -3105,52 +2439,23 @@ $result_trees{'itemize_arguments'} = {
                         {
                           'contents' => [
                             {
-                              'text' => ' '
-                            },
-                            {
                               'args' => [
                                 {
                                   'contents' => [
                                     {
-                                      'args' => [
-                                        {
-                                          'contents' => [
-                                            {
-                                              'args' => [
-                                                {
-                                                  'contents' => [
-                                                    {
-                                                      'text' => 'n'
-                                                    }
-                                                  ],
-                                                  'type' => 'brace_command_arg'
-                                                }
-                                              ],
-                                              'cmdname' => '~',
-                                              'source_info' => {
-                                                'line_nr' => 91
-                                              }
-                                            }
-                                          ],
-                                          'type' => 'brace_command_arg'
-                                        }
-                                      ],
-                                      'cmdname' => ',',
-                                      'source_info' => {
-                                        'line_nr' => 91
-                                      }
+                                      'text' => 'e'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'following_arg'
                                 }
                               ],
-                              'cmdname' => '=',
+                              'cmdname' => '^',
                               'source_info' => {
                                 'line_nr' => 91
                               }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'sc',
@@ -3223,11 +2528,52 @@ $result_trees{'itemize_arguments'} = {
             {
               'contents' => [
                 {
-                  'cmdname' => 'asis',
+                  'args' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'E'
+                        }
+                      ],
+                      'type' => 'following_arg'
+                    }
+                  ],
+                  'cmdname' => '^',
                   'source_info' => {
                     'line_nr' => 94
-                  },
-                  'type' => 'command_as_argument'
+                  }
+                },
+                {
+                  'text' => ' '
+                },
+                {
+                  'args' => [
+                    {
+                      'contents' => [
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'E'
+                                }
+                              ],
+                              'type' => 'following_arg'
+                            }
+                          ],
+                          'cmdname' => '^',
+                          'source_info' => {
+                            'line_nr' => 94
+                          }
+                        }
+                      ],
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'sc',
+                  'source_info' => {
+                    'line_nr' => 94
+                  }
                 }
               ],
               'info' => {
@@ -3251,15 +2597,52 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item asis '
+                      'text' => 'item E '
                     },
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'contents' => [
+                            {
+                              'text' => 'E'
+                            }
+                          ],
+                          'type' => 'following_arg'
                         }
                       ],
-                      'cmdname' => 'asis',
+                      'cmdname' => '^',
+                      'source_info' => {
+                        'line_nr' => 95
+                      }
+                    },
+                    {
+                      'text' => ' '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'E'
+                                    }
+                                  ],
+                                  'type' => 'following_arg'
+                                }
+                              ],
+                              'cmdname' => '^',
+                              'source_info' => {
+                                'line_nr' => 95
+                              }
+                            }
+                          ],
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'sc',
                       'source_info' => {
                         'line_nr' => 95
                       }
@@ -3310,9 +2693,6 @@ $result_trees{'itemize_arguments'} = {
               }
             }
           ],
-          'extra' => {
-            'command_as_argument' => {}
-          },
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -3334,17 +2714,114 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'contents' => [
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'i'
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => 'dotless',
+                          'source_info' => {
+                            'line_nr' => 98
+                          }
+                        }
+                      ],
+                      'type' => 'brace_container'
                     }
                   ],
-                  'cmdname' => 'click',
-                  'extra' => {
-                    'clickstyle' => 'arrow'
-                  },
+                  'cmdname' => '~',
                   'source_info' => {
                     'line_nr' => 98
-                  },
-                  'type' => 'command_as_argument'
+                  }
+                },
+                {
+                  'text' => ' '
+                },
+                {
+                  'args' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'i'
+                        }
+                      ],
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'dotless',
+                  'source_info' => {
+                    'line_nr' => 98
+                  }
+                },
+                {
+                  'text' => ' '
+                },
+                {
+                  'args' => [
+                    {
+                      'contents' => [
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'i'
+                                        }
+                                      ],
+                                      'type' => 'brace_container'
+                                    }
+                                  ],
+                                  'cmdname' => 'dotless',
+                                  'source_info' => {
+                                    'line_nr' => 98
+                                  }
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => '~',
+                          'source_info' => {
+                            'line_nr' => 98
+                          }
+                        },
+                        {
+                          'text' => ' '
+                        },
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'i'
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => 'dotless',
+                          'source_info' => {
+                            'line_nr' => 98
+                          }
+                        }
+                      ],
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'sc',
+                  'source_info' => {
+                    'line_nr' => 98
+                  }
                 }
               ],
               'info' => {
@@ -3368,18 +2845,116 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item click '
+                      'text' => 'item dotless '
                     },
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'i'
+                                    }
+                                  ],
+                                  'type' => 'brace_container'
+                                }
+                              ],
+                              'cmdname' => 'dotless',
+                              'source_info' => {
+                                'line_nr' => 99
+                              }
+                            }
+                          ],
+                          'type' => 'brace_container'
                         }
                       ],
-                      'cmdname' => 'click',
-                      'extra' => {
-                        'clickstyle' => 'arrow'
-                      },
+                      'cmdname' => '~',
+                      'source_info' => {
+                        'line_nr' => 99
+                      }
+                    },
+                    {
+                      'text' => ' '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'i'
+                            }
+                          ],
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'dotless',
+                      'source_info' => {
+                        'line_nr' => 99
+                      }
+                    },
+                    {
+                      'text' => ' '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'args' => [
+                                        {
+                                          'contents' => [
+                                            {
+                                              'text' => 'i'
+                                            }
+                                          ],
+                                          'type' => 'brace_container'
+                                        }
+                                      ],
+                                      'cmdname' => 'dotless',
+                                      'source_info' => {
+                                        'line_nr' => 99
+                                      }
+                                    }
+                                  ],
+                                  'type' => 'brace_container'
+                                }
+                              ],
+                              'cmdname' => '~',
+                              'source_info' => {
+                                'line_nr' => 99
+                              }
+                            },
+                            {
+                              'text' => ' '
+                            },
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'i'
+                                    }
+                                  ],
+                                  'type' => 'brace_container'
+                                }
+                              ],
+                              'cmdname' => 'dotless',
+                              'source_info' => {
+                                'line_nr' => 99
+                              }
+                            }
+                          ],
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'sc',
                       'source_info' => {
                         'line_nr' => 99
                       }
@@ -3430,9 +3005,6 @@ $result_trees{'itemize_arguments'} = {
               }
             }
           ],
-          'extra' => {
-            'command_as_argument' => {}
-          },
           'info' => {
             'spaces_before_argument' => {
               'text' => ' '
@@ -3454,19 +3026,114 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'contents' => [
+                        {
+                          'text' => 'r'
+                        }
+                      ],
+                      'type' => 'brace_container'
                     }
                   ],
-                  'cmdname' => 'click',
-                  'extra' => {
-                    'clickstyle' => 'arrow'
-                  },
+                  'cmdname' => 'udotaccent',
                   'source_info' => {
                     'line_nr' => 102
                   }
                 },
                 {
-                  'text' => ' a'
+                  'text' => ' '
+                },
+                {
+                  'args' => [
+                    {
+                      'contents' => [
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'r'
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => '\'',
+                          'source_info' => {
+                            'line_nr' => 102
+                          }
+                        }
+                      ],
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'v',
+                  'source_info' => {
+                    'line_nr' => 102
+                  }
+                },
+                {
+                  'text' => ' '
+                },
+                {
+                  'args' => [
+                    {
+                      'contents' => [
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'r'
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => 'udotaccent',
+                          'source_info' => {
+                            'line_nr' => 102
+                          }
+                        },
+                        {
+                          'text' => ' '
+                        },
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'r'
+                                        }
+                                      ],
+                                      'type' => 'brace_container'
+                                    }
+                                  ],
+                                  'cmdname' => '\'',
+                                  'source_info' => {
+                                    'line_nr' => 102
+                                  }
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => 'v',
+                          'source_info' => {
+                            'line_nr' => 102
+                          }
+                        }
+                      ],
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'sc',
+                  'source_info' => {
+                    'line_nr' => 102
+                  }
                 }
               ],
               'info' => {
@@ -3490,24 +3157,122 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item click '
+                      'text' => 'item complex a '
                     },
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'contents' => [
+                            {
+                              'text' => 'r'
+                            }
+                          ],
+                          'type' => 'brace_container'
                         }
                       ],
-                      'cmdname' => 'click',
-                      'extra' => {
-                        'clickstyle' => 'arrow'
-                      },
+                      'cmdname' => 'udotaccent',
                       'source_info' => {
                         'line_nr' => 103
                       }
                     },
                     {
-                      'text' => ' a
+                      'text' => ' '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'r'
+                                    }
+                                  ],
+                                  'type' => 'brace_container'
+                                }
+                              ],
+                              'cmdname' => '\'',
+                              'source_info' => {
+                                'line_nr' => 103
+                              }
+                            }
+                          ],
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'v',
+                      'source_info' => {
+                        'line_nr' => 103
+                      }
+                    },
+                    {
+                      'text' => ' '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'r'
+                                    }
+                                  ],
+                                  'type' => 'brace_container'
+                                }
+                              ],
+                              'cmdname' => 'udotaccent',
+                              'source_info' => {
+                                'line_nr' => 103
+                              }
+                            },
+                            {
+                              'text' => ' '
+                            },
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'args' => [
+                                        {
+                                          'contents' => [
+                                            {
+                                              'text' => 'r'
+                                            }
+                                          ],
+                                          'type' => 'brace_container'
+                                        }
+                                      ],
+                                      'cmdname' => '\'',
+                                      'source_info' => {
+                                        'line_nr' => 103
+                                      }
+                                    }
+                                  ],
+                                  'type' => 'brace_container'
+                                }
+                              ],
+                              'cmdname' => 'v',
+                              'source_info' => {
+                                'line_nr' => 103
+                              }
+                            }
+                          ],
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'sc',
+                      'source_info' => {
+                        'line_nr' => 103
+                      }
+                    },
+                    {
+                      'text' => '
 '
                     }
                   ],
@@ -3569,15 +3334,287 @@ $result_trees{'itemize_arguments'} = {
         {
           'args' => [
             {
-              'text' => '@result',
-              'type' => 'rawline_arg'
+              'contents' => [
+                {
+                  'args' => [
+                    {
+                      'contents' => [
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'text' => 'n'
+                                        }
+                                      ],
+                                      'type' => 'brace_container'
+                                    }
+                                  ],
+                                  'cmdname' => '~',
+                                  'source_info' => {
+                                    'line_nr' => 106
+                                  }
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => ',',
+                          'source_info' => {
+                            'line_nr' => 106
+                          }
+                        }
+                      ],
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => '=',
+                  'source_info' => {
+                    'line_nr' => 106
+                  }
+                },
+                {
+                  'text' => ' '
+                },
+                {
+                  'args' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => ' '
+                        },
+                        {
+                          'args' => [
+                            {
+                              'contents' => [
+                                {
+                                  'args' => [
+                                    {
+                                      'contents' => [
+                                        {
+                                          'args' => [
+                                            {
+                                              'contents' => [
+                                                {
+                                                  'text' => 'n'
+                                                }
+                                              ],
+                                              'type' => 'brace_container'
+                                            }
+                                          ],
+                                          'cmdname' => '~',
+                                          'source_info' => {
+                                            'line_nr' => 106
+                                          }
+                                        }
+                                      ],
+                                      'type' => 'brace_container'
+                                    }
+                                  ],
+                                  'cmdname' => ',',
+                                  'source_info' => {
+                                    'line_nr' => 106
+                                  }
+                                }
+                              ],
+                              'type' => 'brace_container'
+                            }
+                          ],
+                          'cmdname' => '=',
+                          'source_info' => {
+                            'line_nr' => 106
+                          }
+                        }
+                      ],
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'sc',
+                  'source_info' => {
+                    'line_nr' => 106
+                  }
+                }
+              ],
+              'info' => {
+                'spaces_after_argument' => {
+                  'text' => '
+'
+                }
+              },
+              'type' => 'block_line_arg'
             }
           ],
-          'cmdname' => 'clickstyle',
-          'extra' => {},
-          'info' => {
-            'arg_line' => ' @result
+          'cmdname' => 'itemize',
+          'contents' => [
+            {
+              'cmdname' => 'item',
+              'contents' => [
+                {
+                  'text' => ' ',
+                  'type' => 'ignorable_spaces_after_command'
+                },
+                {
+                  'contents' => [
+                    {
+                      'text' => 'item complex n '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'args' => [
+                                        {
+                                          'contents' => [
+                                            {
+                                              'text' => 'n'
+                                            }
+                                          ],
+                                          'type' => 'brace_container'
+                                        }
+                                      ],
+                                      'cmdname' => '~',
+                                      'source_info' => {
+                                        'line_nr' => 107
+                                      }
+                                    }
+                                  ],
+                                  'type' => 'brace_container'
+                                }
+                              ],
+                              'cmdname' => ',',
+                              'source_info' => {
+                                'line_nr' => 107
+                              }
+                            }
+                          ],
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => '=',
+                      'source_info' => {
+                        'line_nr' => 107
+                      }
+                    },
+                    {
+                      'text' => ' '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => ' '
+                            },
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'args' => [
+                                        {
+                                          'contents' => [
+                                            {
+                                              'args' => [
+                                                {
+                                                  'contents' => [
+                                                    {
+                                                      'text' => 'n'
+                                                    }
+                                                  ],
+                                                  'type' => 'brace_container'
+                                                }
+                                              ],
+                                              'cmdname' => '~',
+                                              'source_info' => {
+                                                'line_nr' => 107
+                                              }
+                                            }
+                                          ],
+                                          'type' => 'brace_container'
+                                        }
+                                      ],
+                                      'cmdname' => ',',
+                                      'source_info' => {
+                                        'line_nr' => 107
+                                      }
+                                    }
+                                  ],
+                                  'type' => 'brace_container'
+                                }
+                              ],
+                              'cmdname' => '=',
+                              'source_info' => {
+                                'line_nr' => 107
+                              }
+                            }
+                          ],
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'sc',
+                      'source_info' => {
+                        'line_nr' => 107
+                      }
+                    },
+                    {
+                      'text' => '
 '
+                    }
+                  ],
+                  'type' => 'paragraph'
+                }
+              ],
+              'extra' => {
+                'item_number' => 1
+              },
+              'source_info' => {
+                'line_nr' => 107
+              }
+            },
+            {
+              'args' => [
+                {
+                  'contents' => [
+                    {
+                      'text' => 'itemize'
+                    }
+                  ],
+                  'info' => {
+                    'spaces_after_argument' => {
+                      'text' => '
+'
+                    }
+                  },
+                  'type' => 'line_arg'
+                }
+              ],
+              'cmdname' => 'end',
+              'extra' => {
+                'text_arg' => 'itemize'
+              },
+              'info' => {
+                'spaces_before_argument' => {
+                  'text' => ' '
+                }
+              },
+              'source_info' => {
+                'line_nr' => 108
+              }
+            }
+          ],
+          'info' => {
+            'spaces_before_argument' => {
+              'text' => ' '
+            }
           },
           'source_info' => {
             'line_nr' => 106
@@ -3593,19 +3630,10 @@ $result_trees{'itemize_arguments'} = {
             {
               'contents' => [
                 {
-                  'args' => [
-                    {
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'click',
-                  'extra' => {
-                    'clickstyle' => 'result'
-                  },
+                  'cmdname' => 'asis',
                   'source_info' => {
-                    'line_nr' => 108
-                  },
-                  'type' => 'command_as_argument'
+                    'line_nr' => 110
+                  }
                 }
               ],
               'info' => {
@@ -3629,20 +3657,17 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item result click '
+                      'text' => 'item asis '
                     },
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
-                      'cmdname' => 'click',
-                      'extra' => {
-                        'clickstyle' => 'result'
-                      },
+                      'cmdname' => 'asis',
                       'source_info' => {
-                        'line_nr' => 109
+                        'line_nr' => 111
                       }
                     },
                     {
@@ -3657,7 +3682,7 @@ $result_trees{'itemize_arguments'} = {
                 'item_number' => 1
               },
               'source_info' => {
-                'line_nr' => 109
+                'line_nr' => 111
               }
             },
             {
@@ -3687,7 +3712,7 @@ $result_trees{'itemize_arguments'} = {
                 }
               },
               'source_info' => {
-                'line_nr' => 110
+                'line_nr' => 112
               }
             }
           ],
@@ -3700,7 +3725,7 @@ $result_trees{'itemize_arguments'} = {
             }
           },
           'source_info' => {
-            'line_nr' => 108
+            'line_nr' => 110
           }
         },
         {
@@ -3715,15 +3740,134 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'click',
                   'extra' => {
-                    'clickstyle' => 'result'
+                    'clickstyle' => 'arrow'
                   },
                   'source_info' => {
-                    'line_nr' => 112
+                    'line_nr' => 114
+                  }
+                }
+              ],
+              'info' => {
+                'spaces_after_argument' => {
+                  'text' => '
+'
+                }
+              },
+              'type' => 'block_line_arg'
+            }
+          ],
+          'cmdname' => 'itemize',
+          'contents' => [
+            {
+              'cmdname' => 'item',
+              'contents' => [
+                {
+                  'text' => ' ',
+                  'type' => 'ignorable_spaces_after_command'
+                },
+                {
+                  'contents' => [
+                    {
+                      'text' => 'item click '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'click',
+                      'extra' => {
+                        'clickstyle' => 'arrow'
+                      },
+                      'source_info' => {
+                        'line_nr' => 115
+                      }
+                    },
+                    {
+                      'text' => '
+'
+                    }
+                  ],
+                  'type' => 'paragraph'
+                }
+              ],
+              'extra' => {
+                'item_number' => 1
+              },
+              'source_info' => {
+                'line_nr' => 115
+              }
+            },
+            {
+              'args' => [
+                {
+                  'contents' => [
+                    {
+                      'text' => 'itemize'
+                    }
+                  ],
+                  'info' => {
+                    'spaces_after_argument' => {
+                      'text' => '
+'
+                    }
+                  },
+                  'type' => 'line_arg'
+                }
+              ],
+              'cmdname' => 'end',
+              'extra' => {
+                'text_arg' => 'itemize'
+              },
+              'info' => {
+                'spaces_before_argument' => {
+                  'text' => ' '
+                }
+              },
+              'source_info' => {
+                'line_nr' => 116
+              }
+            }
+          ],
+          'extra' => {
+            'command_as_argument' => {}
+          },
+          'info' => {
+            'spaces_before_argument' => {
+              'text' => ' '
+            }
+          },
+          'source_info' => {
+            'line_nr' => 114
+          }
+        },
+        {
+          'text' => '
+',
+          'type' => 'empty_line'
+        },
+        {
+          'args' => [
+            {
+              'contents' => [
+                {
+                  'args' => [
+                    {
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'click',
+                  'extra' => {
+                    'clickstyle' => 'arrow'
+                  },
+                  'source_info' => {
+                    'line_nr' => 118
                   }
                 },
                 {
@@ -3751,247 +3895,20 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'contents' => [
                     {
-                      'text' => 'item result click '
+                      'text' => 'item click '
                     },
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'click',
                       'extra' => {
-                        'clickstyle' => 'result'
+                        'clickstyle' => 'arrow'
                       },
                       'source_info' => {
-                        'line_nr' => 113
-                      }
-                    },
-                    {
-                      'text' => '
-'
-                    }
-                  ],
-                  'type' => 'paragraph'
-                }
-              ],
-              'extra' => {
-                'item_number' => 1
-              },
-              'source_info' => {
-                'line_nr' => 113
-              }
-            },
-            {
-              'args' => [
-                {
-                  'contents' => [
-                    {
-                      'text' => 'itemize'
-                    }
-                  ],
-                  'info' => {
-                    'spaces_after_argument' => {
-                      'text' => '
-'
-                    }
-                  },
-                  'type' => 'line_arg'
-                }
-              ],
-              'cmdname' => 'end',
-              'extra' => {
-                'text_arg' => 'itemize'
-              },
-              'info' => {
-                'spaces_before_argument' => {
-                  'text' => ' '
-                }
-              },
-              'source_info' => {
-                'line_nr' => 114
-              }
-            }
-          ],
-          'info' => {
-            'spaces_before_argument' => {
-              'text' => ' '
-            }
-          },
-          'source_info' => {
-            'line_nr' => 112
-          }
-        },
-        {
-          'text' => '
-',
-          'type' => 'empty_line'
-        },
-        {
-          'args' => [
-            {
-              'contents' => [
-                {
-                  'args' => [
-                    {
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'error',
-                  'source_info' => {
-                    'line_nr' => 116
-                  },
-                  'type' => 'command_as_argument'
-                }
-              ],
-              'info' => {
-                'spaces_after_argument' => {
-                  'text' => '
-'
-                }
-              },
-              'type' => 'block_line_arg'
-            }
-          ],
-          'cmdname' => 'itemize',
-          'contents' => [
-            {
-              'cmdname' => 'item',
-              'contents' => [
-                {
-                  'text' => ' ',
-                  'type' => 'ignorable_spaces_after_command'
-                },
-                {
-                  'contents' => [
-                    {
-                      'text' => 'item error '
-                    },
-                    {
-                      'args' => [
-                        {
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'error',
-                      'source_info' => {
-                        'line_nr' => 117
-                      }
-                    },
-                    {
-                      'text' => '
-'
-                    }
-                  ],
-                  'type' => 'paragraph'
-                }
-              ],
-              'extra' => {
-                'item_number' => 1
-              },
-              'source_info' => {
-                'line_nr' => 117
-              }
-            },
-            {
-              'args' => [
-                {
-                  'contents' => [
-                    {
-                      'text' => 'itemize'
-                    }
-                  ],
-                  'info' => {
-                    'spaces_after_argument' => {
-                      'text' => '
-'
-                    }
-                  },
-                  'type' => 'line_arg'
-                }
-              ],
-              'cmdname' => 'end',
-              'extra' => {
-                'text_arg' => 'itemize'
-              },
-              'info' => {
-                'spaces_before_argument' => {
-                  'text' => ' '
-                }
-              },
-              'source_info' => {
-                'line_nr' => 118
-              }
-            }
-          ],
-          'extra' => {
-            'command_as_argument' => {}
-          },
-          'info' => {
-            'spaces_before_argument' => {
-              'text' => ' '
-            }
-          },
-          'source_info' => {
-            'line_nr' => 116
-          }
-        },
-        {
-          'text' => '
-',
-          'type' => 'empty_line'
-        },
-        {
-          'args' => [
-            {
-              'contents' => [
-                {
-                  'args' => [
-                    {
-                      'type' => 'brace_command_arg'
-                    }
-                  ],
-                  'cmdname' => 'error',
-                  'source_info' => {
-                    'line_nr' => 120
-                  }
-                },
-                {
-                  'text' => ' a'
-                }
-              ],
-              'info' => {
-                'spaces_after_argument' => {
-                  'text' => '
-'
-                }
-              },
-              'type' => 'block_line_arg'
-            }
-          ],
-          'cmdname' => 'itemize',
-          'contents' => [
-            {
-              'cmdname' => 'item',
-              'contents' => [
-                {
-                  'text' => ' ',
-                  'type' => 'ignorable_spaces_after_command'
-                },
-                {
-                  'contents' => [
-                    {
-                      'text' => 'item error '
-                    },
-                    {
-                      'args' => [
-                        {
-                          'type' => 'brace_command_arg'
-                        }
-                      ],
-                      'cmdname' => 'error',
-                      'source_info' => {
-                        'line_nr' => 121
+                        'line_nr' => 119
                       }
                     },
                     {
@@ -4006,7 +3923,7 @@ $result_trees{'itemize_arguments'} = {
                 'item_number' => 1
               },
               'source_info' => {
-                'line_nr' => 121
+                'line_nr' => 119
               }
             },
             {
@@ -4036,7 +3953,7 @@ $result_trees{'itemize_arguments'} = {
                 }
               },
               'source_info' => {
-                'line_nr' => 122
+                'line_nr' => 120
               }
             }
           ],
@@ -4046,7 +3963,493 @@ $result_trees{'itemize_arguments'} = {
             }
           },
           'source_info' => {
-            'line_nr' => 120
+            'line_nr' => 118
+          }
+        },
+        {
+          'text' => '
+',
+          'type' => 'empty_line'
+        },
+        {
+          'args' => [
+            {
+              'text' => '@result',
+              'type' => 'rawline_arg'
+            }
+          ],
+          'cmdname' => 'clickstyle',
+          'extra' => {},
+          'info' => {
+            'arg_line' => ' @result
+'
+          },
+          'source_info' => {
+            'line_nr' => 122
+          }
+        },
+        {
+          'text' => '
+',
+          'type' => 'empty_line'
+        },
+        {
+          'args' => [
+            {
+              'contents' => [
+                {
+                  'args' => [
+                    {
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'click',
+                  'extra' => {
+                    'clickstyle' => 'result'
+                  },
+                  'source_info' => {
+                    'line_nr' => 124
+                  }
+                }
+              ],
+              'info' => {
+                'spaces_after_argument' => {
+                  'text' => '
+'
+                }
+              },
+              'type' => 'block_line_arg'
+            }
+          ],
+          'cmdname' => 'itemize',
+          'contents' => [
+            {
+              'cmdname' => 'item',
+              'contents' => [
+                {
+                  'text' => ' ',
+                  'type' => 'ignorable_spaces_after_command'
+                },
+                {
+                  'contents' => [
+                    {
+                      'text' => 'item result click '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'click',
+                      'extra' => {
+                        'clickstyle' => 'result'
+                      },
+                      'source_info' => {
+                        'line_nr' => 125
+                      }
+                    },
+                    {
+                      'text' => '
+'
+                    }
+                  ],
+                  'type' => 'paragraph'
+                }
+              ],
+              'extra' => {
+                'item_number' => 1
+              },
+              'source_info' => {
+                'line_nr' => 125
+              }
+            },
+            {
+              'args' => [
+                {
+                  'contents' => [
+                    {
+                      'text' => 'itemize'
+                    }
+                  ],
+                  'info' => {
+                    'spaces_after_argument' => {
+                      'text' => '
+'
+                    }
+                  },
+                  'type' => 'line_arg'
+                }
+              ],
+              'cmdname' => 'end',
+              'extra' => {
+                'text_arg' => 'itemize'
+              },
+              'info' => {
+                'spaces_before_argument' => {
+                  'text' => ' '
+                }
+              },
+              'source_info' => {
+                'line_nr' => 126
+              }
+            }
+          ],
+          'extra' => {
+            'command_as_argument' => {}
+          },
+          'info' => {
+            'spaces_before_argument' => {
+              'text' => ' '
+            }
+          },
+          'source_info' => {
+            'line_nr' => 124
+          }
+        },
+        {
+          'text' => '
+',
+          'type' => 'empty_line'
+        },
+        {
+          'args' => [
+            {
+              'contents' => [
+                {
+                  'args' => [
+                    {
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'click',
+                  'extra' => {
+                    'clickstyle' => 'result'
+                  },
+                  'source_info' => {
+                    'line_nr' => 128
+                  }
+                },
+                {
+                  'text' => ' a'
+                }
+              ],
+              'info' => {
+                'spaces_after_argument' => {
+                  'text' => '
+'
+                }
+              },
+              'type' => 'block_line_arg'
+            }
+          ],
+          'cmdname' => 'itemize',
+          'contents' => [
+            {
+              'cmdname' => 'item',
+              'contents' => [
+                {
+                  'text' => ' ',
+                  'type' => 'ignorable_spaces_after_command'
+                },
+                {
+                  'contents' => [
+                    {
+                      'text' => 'item result click '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'click',
+                      'extra' => {
+                        'clickstyle' => 'result'
+                      },
+                      'source_info' => {
+                        'line_nr' => 129
+                      }
+                    },
+                    {
+                      'text' => '
+'
+                    }
+                  ],
+                  'type' => 'paragraph'
+                }
+              ],
+              'extra' => {
+                'item_number' => 1
+              },
+              'source_info' => {
+                'line_nr' => 129
+              }
+            },
+            {
+              'args' => [
+                {
+                  'contents' => [
+                    {
+                      'text' => 'itemize'
+                    }
+                  ],
+                  'info' => {
+                    'spaces_after_argument' => {
+                      'text' => '
+'
+                    }
+                  },
+                  'type' => 'line_arg'
+                }
+              ],
+              'cmdname' => 'end',
+              'extra' => {
+                'text_arg' => 'itemize'
+              },
+              'info' => {
+                'spaces_before_argument' => {
+                  'text' => ' '
+                }
+              },
+              'source_info' => {
+                'line_nr' => 130
+              }
+            }
+          ],
+          'info' => {
+            'spaces_before_argument' => {
+              'text' => ' '
+            }
+          },
+          'source_info' => {
+            'line_nr' => 128
+          }
+        },
+        {
+          'text' => '
+',
+          'type' => 'empty_line'
+        },
+        {
+          'args' => [
+            {
+              'contents' => [
+                {
+                  'args' => [
+                    {
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'error',
+                  'source_info' => {
+                    'line_nr' => 132
+                  }
+                }
+              ],
+              'info' => {
+                'spaces_after_argument' => {
+                  'text' => '
+'
+                }
+              },
+              'type' => 'block_line_arg'
+            }
+          ],
+          'cmdname' => 'itemize',
+          'contents' => [
+            {
+              'cmdname' => 'item',
+              'contents' => [
+                {
+                  'text' => ' ',
+                  'type' => 'ignorable_spaces_after_command'
+                },
+                {
+                  'contents' => [
+                    {
+                      'text' => 'item error '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'error',
+                      'source_info' => {
+                        'line_nr' => 133
+                      }
+                    },
+                    {
+                      'text' => '
+'
+                    }
+                  ],
+                  'type' => 'paragraph'
+                }
+              ],
+              'extra' => {
+                'item_number' => 1
+              },
+              'source_info' => {
+                'line_nr' => 133
+              }
+            },
+            {
+              'args' => [
+                {
+                  'contents' => [
+                    {
+                      'text' => 'itemize'
+                    }
+                  ],
+                  'info' => {
+                    'spaces_after_argument' => {
+                      'text' => '
+'
+                    }
+                  },
+                  'type' => 'line_arg'
+                }
+              ],
+              'cmdname' => 'end',
+              'extra' => {
+                'text_arg' => 'itemize'
+              },
+              'info' => {
+                'spaces_before_argument' => {
+                  'text' => ' '
+                }
+              },
+              'source_info' => {
+                'line_nr' => 134
+              }
+            }
+          ],
+          'extra' => {
+            'command_as_argument' => {}
+          },
+          'info' => {
+            'spaces_before_argument' => {
+              'text' => ' '
+            }
+          },
+          'source_info' => {
+            'line_nr' => 132
+          }
+        },
+        {
+          'text' => '
+',
+          'type' => 'empty_line'
+        },
+        {
+          'args' => [
+            {
+              'contents' => [
+                {
+                  'args' => [
+                    {
+                      'type' => 'brace_container'
+                    }
+                  ],
+                  'cmdname' => 'error',
+                  'source_info' => {
+                    'line_nr' => 136
+                  }
+                },
+                {
+                  'text' => ' a'
+                }
+              ],
+              'info' => {
+                'spaces_after_argument' => {
+                  'text' => '
+'
+                }
+              },
+              'type' => 'block_line_arg'
+            }
+          ],
+          'cmdname' => 'itemize',
+          'contents' => [
+            {
+              'cmdname' => 'item',
+              'contents' => [
+                {
+                  'text' => ' ',
+                  'type' => 'ignorable_spaces_after_command'
+                },
+                {
+                  'contents' => [
+                    {
+                      'text' => 'item error '
+                    },
+                    {
+                      'args' => [
+                        {
+                          'type' => 'brace_container'
+                        }
+                      ],
+                      'cmdname' => 'error',
+                      'source_info' => {
+                        'line_nr' => 137
+                      }
+                    },
+                    {
+                      'text' => ' a
+'
+                    }
+                  ],
+                  'type' => 'paragraph'
+                }
+              ],
+              'extra' => {
+                'item_number' => 1
+              },
+              'source_info' => {
+                'line_nr' => 137
+              }
+            },
+            {
+              'args' => [
+                {
+                  'contents' => [
+                    {
+                      'text' => 'itemize'
+                    }
+                  ],
+                  'info' => {
+                    'spaces_after_argument' => {
+                      'text' => '
+'
+                    }
+                  },
+                  'type' => 'line_arg'
+                }
+              ],
+              'cmdname' => 'end',
+              'extra' => {
+                'text_arg' => 'itemize'
+              },
+              'info' => {
+                'spaces_before_argument' => {
+                  'text' => ' '
+                }
+              },
+              'source_info' => {
+                'line_nr' => 138
+              }
+            }
+          ],
+          'info' => {
+            'spaces_before_argument' => {
+              'text' => ' '
+            }
+          },
+          'source_info' => {
+            'line_nr' => 136
           }
         },
         {
@@ -4081,7 +4484,7 @@ $result_trees{'itemize_arguments'} = {
             }
           },
           'source_info' => {
-            'line_nr' => 124
+            'line_nr' => 140
           }
         },
         {
@@ -4091,14 +4494,13 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'error',
                   'source_info' => {
-                    'line_nr' => 125
-                  },
-                  'type' => 'command_as_argument'
+                    'line_nr' => 141
+                  }
                 }
               ],
               'info' => {
@@ -4127,12 +4529,12 @@ $result_trees{'itemize_arguments'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'error',
                       'source_info' => {
-                        'line_nr' => 126
+                        'line_nr' => 142
                       }
                     },
                     {
@@ -4147,7 +4549,7 @@ $result_trees{'itemize_arguments'} = {
                 'item_number' => 1
               },
               'source_info' => {
-                'line_nr' => 126
+                'line_nr' => 142
               }
             },
             {
@@ -4177,7 +4579,7 @@ $result_trees{'itemize_arguments'} = {
                 }
               },
               'source_info' => {
-                'line_nr' => 127
+                'line_nr' => 143
               }
             }
           ],
@@ -4190,7 +4592,7 @@ $result_trees{'itemize_arguments'} = {
             }
           },
           'source_info' => {
-            'line_nr' => 125
+            'line_nr' => 141
           }
         },
         {
@@ -4205,12 +4607,12 @@ $result_trees{'itemize_arguments'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'error',
                   'source_info' => {
-                    'line_nr' => 129
+                    'line_nr' => 145
                   }
                 },
                 {
@@ -4243,12 +4645,12 @@ $result_trees{'itemize_arguments'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'error',
                       'source_info' => {
-                        'line_nr' => 130
+                        'line_nr' => 146
                       }
                     },
                     {
@@ -4263,7 +4665,7 @@ $result_trees{'itemize_arguments'} = {
                 'item_number' => 1
               },
               'source_info' => {
-                'line_nr' => 130
+                'line_nr' => 146
               }
             },
             {
@@ -4293,7 +4695,7 @@ $result_trees{'itemize_arguments'} = {
                 }
               },
               'source_info' => {
-                'line_nr' => 131
+                'line_nr' => 147
               }
             }
           ],
@@ -4303,7 +4705,7 @@ $result_trees{'itemize_arguments'} = {
             }
           },
           'source_info' => {
-            'line_nr' => 129
+            'line_nr' => 145
           }
         },
         {
@@ -4320,13 +4722,14 @@ $result_trees{'itemize_arguments'} = {
 $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[14]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[14]{'args'}[0]{'contents'}[0];
 $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[18]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[18]{'args'}[0]{'contents'}[0];
 $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[22]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[22]{'args'}[0]{'contents'}[0];
-$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[30]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[30]{'args'}[0]{'contents'}[0];
-$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[34]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[34]{'args'}[0]{'contents'}[0];
-$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[48]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[48]{'args'}[0]{'contents'}[0];
-$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[50]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[50]{'args'}[0]{'contents'}[0];
+$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[32]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[32]{'args'}[0]{'contents'}[0];
+$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[38]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[38]{'args'}[0]{'contents'}[0];
+$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[42]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[42]{'args'}[0]{'contents'}[0];
 $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[56]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[56]{'args'}[0]{'contents'}[0];
-$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[60]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[60]{'args'}[0]{'contents'}[0];
-$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[65]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[65]{'args'}[0]{'contents'}[0];
+$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[58]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[58]{'args'}[0]{'contents'}[0];
+$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[64]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[64]{'args'}[0]{'contents'}[0];
+$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[68]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[68]{'args'}[0]{'contents'}[0];
+$result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[73]{'extra'}{'command_as_argument'} = $result_trees{'itemize_arguments'}{'contents'}[0]{'contents'}[73]{'args'}[0]{'contents'}[0];
 
 $result_texis{'itemize_arguments'} = '
 @itemize ---
@@ -4383,6 +4786,22 @@ $result_texis{'itemize_arguments'} = '
 
 @itemize @{
 @item item @{
+@end itemize
+
+@itemize @&
+@item item @&
+@end itemize
+
+@itemize @ampchar
+@item item @ampchar{}
+@end itemize
+
+@itemize @& a
+@item item @& a
+@end itemize
+
+@itemize @ampchar{} a
+@item item @ampchar{} a
 @end itemize
 
 @itemize @registeredsymbol{}
@@ -4492,6 +4911,14 @@ item *
 
 item {
 
+item &
+
+item &
+
+item & a
+
+item & a
+
 item registeredsymbol (R)
 
 item registeredsymbol (R) a
@@ -4535,7 +4962,7 @@ $result_errors{'itemize_arguments'} = [
   {
     'error_line' => 'warning: @asis expected braces
 ',
-    'line_nr' => 94,
+    'line_nr' => 110,
     'text' => '@asis expected braces',
     'type' => 'warning'
   }

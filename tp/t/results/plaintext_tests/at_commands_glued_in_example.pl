@@ -41,7 +41,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'TeX',
@@ -64,7 +64,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                           'text' => 'in code'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',
@@ -87,7 +87,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                           'text' => 'ABC'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
                       'contents' => [
@@ -100,7 +100,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                           'text' => ' '
                         }
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'acronym',
@@ -123,7 +123,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                           'text' => 'ABC'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'acronym',
@@ -146,7 +146,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                           'text' => 'somebody'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
                       'contents' => [
@@ -159,7 +159,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                           'text' => ' '
                         }
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'email',
@@ -190,7 +190,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                         },
                         'normalized' => 'Top'
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'ref',
@@ -246,7 +246,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                                   'text' => 'i'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'dotless',
@@ -255,7 +255,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                           }
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => '^',
@@ -340,7 +340,7 @@ $result_trees{'at_commands_glued_in_example'} = {
                           'text' => 'anchor'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'anchor',
@@ -527,7 +527,7 @@ $result_converted{'plaintext'}->{'at_commands_glued_in_example'} = '     at@.
      acronymABC (aaa bb cc)acronym.
      acronym2ABCacronym.
      emailmali <somebody>email.
-     ref*note Top::ref.
+     refTopref.
      Foornote(1)after footnote.
      accentîaccent.
      and star

@@ -206,7 +206,7 @@ $result_trees{'value_expansion_in_include'} = {
                                       'text' => 'testvar'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'value'
@@ -229,7 +229,10 @@ $result_trees{'value_expansion_in_include'} = {
                   'status' => 'start'
                 }
               ],
-              'text' => 'testvar include: This is the '
+              'text' => 'testvar include: '
+            },
+            {
+              'text' => 'This is the '
             },
             {
               'args' => [
@@ -239,7 +242,7 @@ $result_trees{'value_expansion_in_include'} = {
                       'text' => 'included'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'emph',
@@ -319,7 +322,7 @@ $result_trees{'value_expansion_in_include'} = {
                             'text' => 'testvar'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_container'
                       }
                     ],
                     'cmdname' => 'value'
@@ -395,7 +398,7 @@ $result_trees{'value_expansion_in_include'} = {
                                       'text' => 'test-var'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'value'
@@ -418,7 +421,10 @@ $result_trees{'value_expansion_in_include'} = {
                   'status' => 'start'
                 }
               ],
-              'text' => 'test-var include: This is the '
+              'text' => 'test-var include: '
+            },
+            {
+              'text' => 'This is the '
             },
             {
               'args' => [
@@ -428,7 +434,7 @@ $result_trees{'value_expansion_in_include'} = {
                       'text' => 'included'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'emph',
@@ -508,7 +514,7 @@ $result_trees{'value_expansion_in_include'} = {
                             'text' => 'test-var'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_container'
                       }
                     ],
                     'cmdname' => 'value'
@@ -558,7 +564,7 @@ $result_trees{'value_expansion_in_include'} = {
                                           'text' => 'test_var'
                                         }
                                       ],
-                                      'type' => 'brace_command_arg'
+                                      'type' => 'brace_container'
                                     }
                                   ],
                                   'cmdname' => 'value'
@@ -605,7 +611,10 @@ $result_trees{'value_expansion_in_include'} = {
                   'status' => 'start'
                 }
               ],
-              'text' => 'test_var include: This is the '
+              'text' => 'test_var include: '
+            },
+            {
+              'text' => 'This is the '
             },
             {
               'args' => [
@@ -615,7 +624,7 @@ $result_trees{'value_expansion_in_include'} = {
                       'text' => 'included'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'emph',
@@ -668,7 +677,7 @@ $result_trees{'value_expansion_in_include'} = {
                                 'text' => 'test_var'
                               }
                             ],
-                            'type' => 'brace_command_arg'
+                            'type' => 'brace_container'
                           }
                         ],
                         'cmdname' => 'value'

@@ -485,63 +485,68 @@ our %unicode_simple_character_map = (
 #http://www.alanwood.net/unicode/general_punctuation.html 20**
 #http://www.alanwood.net/unicode/mathematical_operators.html 22**
 
+# 'today' is not set here.
 our %unicode_map = (
-               'today'             => '',
-               'aa'                => '00E5',
-               'AA'                => '00C5',
-               'ae'                => '00E6',
-               'oe'                => '0153',
-               'AE'                => '00C6',
-               'OE'                => '0152',
-               'o'                 => '00F8',
-               'O'                 => '00D8',
-               'ss'                => '00DF',
-               'DH'                => '00D0',
-               'dh'                => '00F0',
-               'TH'                => '00DE',
-               'th'                => '00FE',
-               'l'                 => '0142',
-               'L'                 => '0141',
-               'exclamdown'        => '00A1',
-               'questiondown'      => '00BF',
-               'pounds'            => '00A3',
-               'ordf'              => '00AA',
-               'ordm'              => '00BA',
-               'comma'             => '002C',
+               # characters
                'atchar'            => '0040',
                'ampchar'           => '0026',
+               'backslashchar'     => '005C',
+               'comma'             => '002C',
+               'hashchar'          => '0023',
                'lbracechar'        => '007B',
                'rbracechar'        => '007D',
-               'backslashchar'     => '005C',
-               'hashchar'          => '0023',
+
+               # symbols (9)
                'euro'              => '20AC',
+               'exclamdown'        => '00A1',
                'geq'               => '2265',
                'leq'               => '2264',
-               'tie'               => '',
-#               'tie'               => '0020',
+               'ordf'              => '00AA',
+               'ordm'              => '00BA',
+               'pounds'            => '00A3',
+               'questiondown'      => '00BF',
                'textdegree'        => '00B0',
-               'quotedblbase'      => '201E',
-               'quotesinglbase'    => '201A',
+
+               # quotes
                'guillemetleft'     => '00AB',
                'guillemetright'    => '00BB',
                'guillemotleft'     => '00AB',
                'guillemotright'    => '00BB',
                'guilsinglleft'     => '2039',
                'guilsinglright'    => '203A',
+               'quotedblbase'      => '201E',
+               'quotesinglbase'    => '201A',
+
+               # letters
+               'AA'                => '00C5',
+               'aa'                => '00E5',
+               'AE'                => '00C6',
+               'ae'                => '00E6',
+               'DH'                => '00D0',
+               'dh'                => '00F0',
+               'L'                 => '0141',
+               'l'                 => '0142',
+               'O'                 => '00D8',
+               'o'                 => '00F8',
+               'OE'                => '0152',
+               'oe'                => '0153',
+               'ss'                => '00DF',
+               'TH'                => '00DE',
+               'th'                => '00FE',
              );
 
 # For commands where ASCII output is acceptable and may be wanted by the users
 # as ASCII instead of encoded characters
 our %extra_unicode_map = (
+               # symbols (11 + 3)
+               'arrow'             => '2192',
                'bullet'            => '2022',
                'copyright'         => '00A9',
-               'registeredsymbol'  => '00AE',
                'dots'              => '2026',
-               'enddots'           => '',
+               #'enddots'           => '',
                'equiv'             => '2261',
-               'error'             => '',
                'expansion'         => '21A6',
-               'arrow'             => '2192',
+               #'LaTeX'
                'minus'             => '2212', # in mathematical operators
 #               'minus'             => '002D', # in latin1
                'point'             => '22C6', # another candidate is 2605
@@ -550,14 +555,23 @@ our %extra_unicode_map = (
                                               # but less consistent with TeX
                                               # \star
                'print'             => '22A3',
+               'registeredsymbol'  => '00AE',
                'result'            => '21D2',
+               #'TeX'
+
+               # quotes
                'quotedblleft'      => '201C',
                'quotedblright'     => '201D',
                'quoteleft'         => '2018',
                'quoteright'        => '2019',
+
+               # other
                # this should only happen if the @clickstyle argument isn't a
                # command with braces and no argument.
                'click'             => '2192',
+               #'error'             => '',
+               #'tie'               => '',
+#               'tie'               => '0020',
 );
 
 %unicode_map = (%unicode_map, %extra_unicode_map);
@@ -566,23 +580,21 @@ our %extra_unicode_map = (
 # corresponding to the textual hex value in %unicode_map.
 our %unicode_character_brace_no_arg_commands;
 foreach my $command (keys(%unicode_map)) {
-  if ($unicode_map{$command} ne '') {
 # FIXME Using charnames::vianame as in the following is the clean documented
 # way to create an unicode character at runtime.  However, in tests of perl
 # 5.10.1 (on solaris), if charnames::vianame is used for @aa{} '00E5', uc()
 # on the resulting character does not leads to \x{00C5} (@AA{}) (when
 # formatting @sc{@aa{}} or @var{@aa{}} in plaintext).
-#    $unicode_character_brace_no_arg_commands{$command}
-#      = charnames::vianame("U+$unicode_map{$command}");
-    my $char_nr = hex($unicode_map{$command});
-    if ($char_nr > 126 and $char_nr < 255) {
-      # this is very strange, indeed.  The reason lies certainly in the
-      # magic backward compatibility support in Perl for 8bit encodings.
-      $unicode_character_brace_no_arg_commands{$command} =
-         Encode::decode("iso-8859-1", chr($char_nr));
-    } else {
-      $unicode_character_brace_no_arg_commands{$command} = chr($char_nr);
-    }
+#  $unicode_character_brace_no_arg_commands{$command}
+#    = charnames::vianame("U+$unicode_map{$command}");
+  my $char_nr = hex($unicode_map{$command});
+  if ($char_nr > 126 and $char_nr < 255) {
+    # this is very strange, indeed.  The reason lies certainly in the
+    # magic backward compatibility support in Perl for 8bit encodings.
+    $unicode_character_brace_no_arg_commands{$command} =
+       Encode::decode("iso-8859-1", chr($char_nr));
+  } else {
+    $unicode_character_brace_no_arg_commands{$command} = chr($char_nr);
   }
 }
 
@@ -590,8 +602,7 @@ our %unicode_entities;
 # set entities corresponding to unicode_map
 foreach my $command (keys(%unicode_map)) {
   $unicode_entities{$command}
-   = '&#'.hex($unicode_map{$command}).';'
-    if ($unicode_map{$command} ne '');
+   = '&#'.hex($unicode_map{$command}).';';
 }
 
 
@@ -711,8 +722,7 @@ our %transliterate_map = (
 
 our %no_transliterate_map;
 foreach my $symbol(keys(%unicode_map)) {
-  if ($unicode_map{$symbol} ne ''
-      and !exists($transliterate_map{$symbol})) {
+  if (!exists($transliterate_map{$symbol})) {
     $no_transliterate_map{$unicode_map{$symbol}} = 1;
   }
 }

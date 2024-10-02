@@ -15,8 +15,7 @@ $result_trees{'accent_on_table_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'contents' => [
@@ -94,7 +93,7 @@ $result_trees{'accent_on_table_line'} = {
                                       'text' => 'code'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'code',
@@ -182,22 +181,20 @@ $result_trees{'accent_on_table_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'contents' => [
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => '~',
                   'source_info' => {
                     'line_nr' => 6
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -267,7 +264,7 @@ $result_trees{'accent_on_table_line'} = {
                                       'text' => 'code acc brace'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'code',
@@ -355,8 +352,7 @@ $result_trees{'accent_on_table_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'contents' => [
@@ -475,8 +471,7 @@ $result_trees{'accent_on_table_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'contents' => [
@@ -589,8 +584,7 @@ $result_trees{'accent_on_table_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'contents' => [
@@ -703,22 +697,20 @@ $result_trees{'accent_on_table_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'contents' => [
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'ringaccent',
                   'source_info' => {
                     'line_nr' => 23
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -823,8 +815,7 @@ $result_trees{'accent_on_table_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'contents' => [
@@ -836,7 +827,7 @@ $result_trees{'accent_on_table_line'} = {
                           'text' => 'a'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'ringaccent',

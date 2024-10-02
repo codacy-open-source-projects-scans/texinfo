@@ -143,7 +143,19 @@ $result_trees{'printindex_index_entry_in_copying'} = {
                       ],
                       'extra' => {
                         'def_command' => 'defun',
-                        'def_index_element' => {},
+                        'def_index_element' => {
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'fun'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_name'
+                        },
                         'element_region' => 'copying',
                         'index_entry' => [
                           'fn',
@@ -226,7 +238,19 @@ $result_trees{'printindex_index_entry_in_copying'} = {
                       'cmdname' => 'defunx',
                       'extra' => {
                         'def_command' => 'defun',
-                        'def_index_element' => {},
+                        'def_index_element' => {
+                          'contents' => [
+                            {
+                              'contents' => [
+                                {
+                                  'text' => 'xf'
+                                }
+                              ],
+                              'type' => 'def_line_arg'
+                            }
+                          ],
+                          'type' => 'def_name'
+                        },
                         'element_region' => 'copying',
                         'index_entry' => [
                           'fn',
@@ -241,8 +265,7 @@ $result_trees{'printindex_index_entry_in_copying'} = {
                       },
                       'source_info' => {
                         'line_nr' => 6
-                      },
-                      'type' => 'def_line'
+                      }
                     },
                     {
                       'contents' => [
@@ -311,8 +334,7 @@ $result_trees{'printindex_index_entry_in_copying'} = {
                           'cmdname' => 'asis',
                           'source_info' => {
                             'line_nr' => 10
-                          },
-                          'type' => 'command_as_argument'
+                          }
                         }
                       ],
                       'info' => {
@@ -857,8 +879,6 @@ $result_trees{'printindex_index_entry_in_copying'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'printindex_index_entry_in_copying'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[3]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'printindex_index_entry_in_copying'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[3]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'printindex_index_entry_in_copying'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[3]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'printindex_index_entry_in_copying'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[3]{'contents'}[1]{'args'}[0]{'contents'}[2];
 $result_trees{'printindex_index_entry_in_copying'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[5]{'extra'}{'command_as_argument'} = $result_trees{'printindex_index_entry_in_copying'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[5]{'args'}[0]{'contents'}[0];
 $result_trees{'printindex_index_entry_in_copying'}{'contents'}[2]{'contents'}[4]{'contents'}[0]{'contents'}[1]{'extra'}{'node_content'}{'contents'}[0] = $result_trees{'printindex_index_entry_in_copying'}{'contents'}[2]{'contents'}[4]{'contents'}[0]{'contents'}[1]{'contents'}[0];
 
@@ -1040,8 +1060,8 @@ $result_indices_sort_strings{'printindex_index_entry_in_copying'} = {
 
 $result_converted{'info'}->{'printindex_index_entry_in_copying'} = 'This is , produced from .
 
- -- Function: fun arg
- -- Function: xf arg
+ - Function: fun arg
+ - Function: xf arg
      Defun
 
 ftable item
@@ -1055,8 +1075,8 @@ top
 
 Top.
 
- -- Function: fun arg
- -- Function: xf arg
+ - Function: fun arg
+ - Function: xf arg
      Defun
 
 ftable item
@@ -1081,8 +1101,8 @@ File: ,  Node: chapter,  Prev: Top,  Up: Top
 1 Chapter
 *********
 
- -- Function: fun arg
- -- Function: xf arg
+ - Function: fun arg
+ - Function: xf arg
      Defun
 
 ftable item
@@ -1108,8 +1128,8 @@ xftable xitem
 
 
 Tag Table:
-Node: Top109
-Node: chapter665
+Node: Top107
+Node: chapter661
 
 End Tag Table
 
@@ -1125,8 +1145,8 @@ $result_converted{'plaintext'}->{'printindex_index_entry_in_copying'} = 'top
 
 Top.
 
- -- Function: fun arg
- -- Function: xf arg
+ - Function: fun arg
+ - Function: xf arg
      Defun
 
 ftable item
@@ -1143,8 +1163,8 @@ xftable xitem
 1 Chapter
 *********
 
- -- Function: fun arg
- -- Function: xf arg
+ - Function: fun arg
+ - Function: xf arg
      Defun
 
 ftable item

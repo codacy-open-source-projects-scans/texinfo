@@ -29,7 +29,7 @@ $result_trees{'nested_args'} = {
                               'text' => 'in samp'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'samp',
@@ -47,7 +47,7 @@ $result_trees{'nested_args'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -62,7 +62,7 @@ $result_trees{'nested_args'} = {
                               'text' => 'in b'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'b',
@@ -76,7 +76,7 @@ $result_trees{'nested_args'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -91,7 +91,7 @@ $result_trees{'nested_args'} = {
                               'text' => 'e'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => '~',
@@ -108,7 +108,7 @@ $result_trees{'nested_args'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -120,7 +120,7 @@ $result_trees{'nested_args'} = {
                               'text' => 'manual'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'cite',
@@ -135,7 +135,7 @@ $result_trees{'nested_args'} = {
 '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',
@@ -172,7 +172,7 @@ $result_floats{'nested_args'} = {};
 
 
 
-$result_converted{'plaintext'}->{'nested_args'} = '*Note descr in b: (‘manual’)@ in samp.
+$result_converted{'plaintext'}->{'nested_args'} = 'See descr in b: (‘manual’)@ in samp.
 ';
 
 
@@ -180,5 +180,8 @@ $result_converted{'html_text'}->{'nested_args'} = '<p>See <a data-manual="manual
 
 
 $result_converted{'latex_text'}->{'nested_args'} = 'See Section ``S\\~{e}ction\'\' in \\texttt{\\Texinfocommandstyletextcite{manual}}.';
+
+
+$result_converted{'docbook'}->{'nested_args'} = '<para>See section &#8220;S&#7869;ction&#8221; in <filename><citetitle>manual</citetitle></filename>.</para>';
 
 1;

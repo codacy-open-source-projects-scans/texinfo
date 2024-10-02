@@ -17,13 +17,13 @@ $result_trees{'commands_in_alt'} = {
                   'text' => 'f--ile'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -38,7 +38,7 @@ $result_trees{'commands_in_alt'} = {
                           'text' => 'in b'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'b',
@@ -47,7 +47,7 @@ $result_trees{'commands_in_alt'} = {
                   }
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             }
           ],
           'cmdname' => 'image',
@@ -91,13 +91,13 @@ $result_trees{'commands_in_alt'} = {
                           'text' => 'f--ile'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
                       'contents' => [
@@ -112,7 +112,7 @@ $result_trees{'commands_in_alt'} = {
                                   'text' => 'in b'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'b',
@@ -121,7 +121,7 @@ $result_trees{'commands_in_alt'} = {
                           }
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'image',

@@ -34,7 +34,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                       'text' => 'An anchor'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'anchor',
@@ -79,7 +79,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                         },
                         'normalized' => 'An-anchor'
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'ref',
@@ -122,7 +122,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                         },
                         'normalized' => 'Anchor-in-footnote'
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'ref',
@@ -171,7 +171,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                                   'text' => 'Anchor in footnote'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_arg'
                             }
                           ],
                           'cmdname' => 'anchor',
@@ -216,7 +216,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                                     },
                                     'normalized' => 'An-anchor'
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'ref',
@@ -363,7 +363,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                         },
                         'normalized' => 'float-anchor'
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'ref',
@@ -815,7 +815,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                     },
                     'normalized' => 'An-anchor'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -858,7 +858,7 @@ $result_trees{'things_before_setfilename_no_element'} = {
                     },
                     'normalized' => 'Anchor-in-footnote'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1042,9 +1042,9 @@ $result_indices_sort_strings{'things_before_setfilename_no_element'} = {
 
 
 
-$result_converted{'plaintext'}->{'things_before_setfilename_no_element'} = 'Ref to anchor *note An anchor::
+$result_converted{'plaintext'}->{'things_before_setfilename_no_element'} = 'Ref to anchor An anchor
 
-   Ref to footnote anchor *note Anchor in footnote::
+   Ref to footnote anchor Anchor in footnote
 
 ';
 

@@ -16,8 +16,10 @@
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 
 #include "tree_types.h"
+/* for fatal */
 #include "utils.h"
 #include "debug.h"
 #include "counter.h"
@@ -104,7 +106,25 @@ counter_value (COUNTER *c, ELEMENT *elt)
     return -1;
 }
 
-/* If NOT_EMPTY_LESSAGE is set, check that the counter values list
+int
+counter_element_value (COUNTER *c, ELEMENT *elt)
+{
+  int i;
+
+  if (c->nvalues > 0)
+    {
+      for (i = 0; i < c->nvalues; i++)
+        {
+          if (c->elts[i] == elt)
+            {
+              return c->values[i];
+            }
+        }
+    }
+  return -1;
+}
+
+/* If NOT_EMPTY_MESSAGE is set, check that the counter values list
    is empty, if not, show a debugging message */
 void
 counter_reset (COUNTER *c, const char* not_empty_message)
@@ -128,4 +148,22 @@ counter_reset (COUNTER *c, const char* not_empty_message)
     }
 
   c->nvalues = 0;
+}
+
+/* for debugging */
+void
+print_counter_top (COUNTER *c)
+{
+  if (c->nvalues > 0)
+    {
+      ELEMENT *top_elt = c->elts[c->nvalues - 1];
+      char *element_string = print_element_debug (top_elt, 0);
+      int value = counter_value (c, top_elt);
+      fprintf (stderr, "COUNTER %p: %s: %d\n", c, element_string, value);
+      free (element_string);
+    }
+  else
+    {
+      fprintf (stderr, "COUNTER %p: no values\n", c);
+    }
 }

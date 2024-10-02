@@ -382,69 +382,77 @@ our %nobrace_symbol_text;
 
 # used by Texinfo::Convert::Text, Texinfo::Convert::NodeNormalization
 # and Texinfo::Convert::TextContent.
+# 'today' is not set here.
 our %text_brace_no_arg_commands = (
-               'TeX'                => 'TeX',
-               'LaTeX'              => 'LaTeX',
+               # characters
+               'atchar'        => '@',
+               'ampchar'       => '&',
+               'backslashchar' => '\\',
+               'comma'         => ',',
+               'hashchar'      => '#',
+               'lbracechar'    => '{',
+               'rbracechar'    => '}',
+
+               # symbols (22)
+               'arrow'              => '->',
                'bullet'             => '*',
                'copyright'          => '(C)',
+               'dots'               => '...',
+               'enddots'            => '...',
+               'equiv'              => '==',
+               'euro'               => 'Euro',
+               'exclamdown'         => '!',
+               'expansion'          => '==>',
+               'geq'                => '>=',
+               'LaTeX'              => 'LaTeX',
+               'leq'                => '<=',
+               'minus'              => '-',
+               'ordf'               => 'a',
+               'ordm'               => 'o',
+               'point'              => '-!-',
+               'pounds'             => '#',
+               'print'              => '-|',
+               'questiondown'       => '?',
                'registeredsymbol'   => '(R)',
-               'dots'         => '...',
-               'enddots'      => '...',
-               'equiv'        => '==',
-               'error'        => 'error-->',
-               'expansion'    => '==>',
-               'arrow'        => '->',
-               'minus'        => '-',
-               'point'        => '-!-',
-               'print'        => '-|',
-               'result'       => '=>',
-               'today'        => '',
-               'aa'           => 'aa',
-               'AA'           => 'AA',
-               'ae'           => 'ae',
-               'oe'           => 'oe',
-               'AE'           => 'AE',
-               'OE'           => 'OE',
-               'o'            => '/o',
-               'O'            => '/O',
-               'ss'           => 'ss',
-               'l'            => '/l',
-               'L'            => '/L',
-               'DH'           => 'D',
-               'dh'           => 'd',
-               'TH'           => 'TH', # http://www.evertype.com/standards/wynnyogh/thorn.html
+               'result'             => '=>',
+               'TeX'                => 'TeX',
+               'textdegree'         => 'o',
 
-               'th'           => 'th',
-               'exclamdown'   => '!',
-               'questiondown' => '?',
-               'pounds'       => '#',
-               'ordf'         => 'a',
-               'ordm'         => 'o',
-               'comma'        => ',',
-               'atchar'       => '@',
-               'ampchar'      => '&',
-               'lbracechar'   => '{',
-               'rbracechar'   => '}',
-               'backslashchar' => '\\',
-               'hashchar'      => '#',
-               'euro'         => 'Euro',
-               'geq'          => '>=',
-               'leq'          => '<=',
-               'tie'          => ' ',
-               'textdegree'      => 'o',
-               'quotedblleft'    => '"',
-               'quotedblright'   => '"',
-               'quoteleft'       => '`',
-               'quoteright'      => "'",
-               'quotedblbase'    => ',,',
-               'quotesinglbase'  => ',',
+               # quotes
                'guillemetleft'   => '<<',
                'guillemetright'  => '>>',
                'guillemotleft'   => '<<',
                'guillemotright'  => '>>',
                'guilsinglleft'   => '<',
                'guilsinglright'  => '>',
-               'click'           => '', # specially treated
+               'quotedblbase'    => ',,',
+               'quotedblleft'    => '"',
+               'quotedblright'   => '"',
+               'quoteleft'       => '`',
+               'quoteright'      => "'",
+               'quotesinglbase'  => ',',
+
+               # letters
+               'AA'           => 'AA',
+               'aa'           => 'aa',
+               'AE'           => 'AE',
+               'ae'           => 'ae',
+               'DH'           => 'D',
+               'dh'           => 'd',
+               'L'            => '/L',
+               'l'            => '/l',
+               'OE'           => 'OE',
+               'oe'           => 'oe',
+               'O'            => '/O',
+               'o'            => '/o',
+               'ss'           => 'ss',
+               'TH'           => 'TH', # http://www.evertype.com/standards/wynnyogh/thorn.html
+               'th'           => 'th',
+
+               # other
+               'click'        => '', # specially treated
+               'error'              => 'error-->',
+               'tie'          => ' ',
 );
 
 our %def_map = (
@@ -587,6 +595,9 @@ foreach my $command (
   keys(%Texinfo::Commands::nobrace_commands),
  ) {
   $all_commands{$command} = 1;
+  foreach my $internal_command (keys(%Texinfo::Commands::internal_commands)) {
+    delete $all_commands{$internal_command};
+  }
 }
 
 
@@ -789,7 +800,8 @@ sub relocate_source_marks($$$$)
          and (!defined($source_mark->{'position'})
               # this should never happen
               or $source_mark->{'position'} == 0))
-        or ($source_mark->{'position'} > $begin_position
+        or (defined($source_mark->{'position'})
+            and $source_mark->{'position'} > $begin_position
             and $source_mark->{'position'} <= $end_position)) {
       unshift @indices_to_remove, $i;
       if (defined($e->{'text'})) {
@@ -813,7 +825,8 @@ sub relocate_source_marks($$$$)
       }
       $e->{'source_marks'} = [] if (! defined($e->{'source_marks'}));
       push @{$e->{'source_marks'}}, $source_mark;
-    } elsif ($source_marks->[$i]->{'position'} > $end_position) {
+    } elsif (defined($source_marks->[$i]->{'position'})
+             and $source_marks->[$i]->{'position'} > $end_position) {
       # only correct if positions are always monotonically increasing
       # but should be the case for now
       last;
@@ -1055,7 +1068,8 @@ sub output_files_open_out($$$;$$)
    # leave $encoding undefined
   } elsif (defined($output_encoding)) {
     $encoding = $output_encoding;
-  } elsif (defined($customization_information->get_conf('OUTPUT_PERL_ENCODING'))) {
+  } elsif (defined(
+             $customization_information->get_conf('OUTPUT_PERL_ENCODING'))) {
     $encoding = $customization_information->get_conf('OUTPUT_PERL_ENCODING');
   }
 
@@ -1472,7 +1486,7 @@ sub remove_from_array($$)
   return undef;
 }
 
-sub set_output_encodings($$)
+sub set_output_encoding($$)
 {
   my $customization_information = shift;
   my $document = shift;
@@ -1485,6 +1499,12 @@ sub set_output_encodings($$)
                $document_information->{'input_encoding_name'})
      if ($document_information
          and $document_information->{'input_encoding_name'});
+}
+
+sub set_output_perl_encoding($)
+{
+  my $customization_information = shift;
+
   if (not defined($customization_information->get_conf('OUTPUT_PERL_ENCODING'))
       and defined($customization_information->get_conf('OUTPUT_ENCODING_NAME'))) {
     my $conversion_encoding
@@ -1571,6 +1591,13 @@ sub is_content_empty($;$)
     return 1;
   }
   foreach my $content (@{$tree->{'contents'}}) {
+    if (defined($content->{'text'})) {
+      if ($content->{'text'} =~ /\S/) {
+        return 0;
+      } else {
+        next;
+      }
+    }
     if ($content->{'cmdname'}) {
       if ($content->{'type'} and $content->{'type'} eq 'index_entry_command') {
         if ($do_not_ignore_index_entries) {
@@ -1603,9 +1630,6 @@ sub is_content_empty($;$)
       if ($content->{'type'} eq 'paragraph') {
         return 0;
       }
-    }
-    if (defined($content->{'text'}) and $content->{'text'} =~ /\S/) {
-      return 0;
     }
     if (not is_content_empty($content, $do_not_ignore_index_entries)) {
       return 0;
@@ -1680,6 +1704,9 @@ sub normalize_top_node_name($)
 my $Encode_encoding_object;
 my $last_encoding;
 
+# Only used in the unmaintained IXIN converter, but could be useful in
+# other converters, so it is better to keep it to get an idea of the type of
+# code that needs the output perl encoding information.
 sub count_bytes($$;$)
 {
   my $self = shift;
@@ -1981,20 +2008,25 @@ sub debug_print_element($;$)
   my $type = '';
   my $cmd = '';
   my $text = '';
-  $type = "($current->{'type'})" if (defined($current->{'type'}));
-  if (defined($current->{'cmdname'})) {
-    $cmd = '@' . debug_command_name($current->{'cmdname'});
-  }
-  if (defined($current->{'text'}) and $current->{'text'} ne '') {
-    my $text_str = $current->{'text'};
-    $text_str =~ s/\n/\\n/g;
-    $text = "[T: $text_str]";
-  }
   my $args = '';
   my $contents = '';
-  $args = "[A".scalar(@{$current->{'args'}}).']' if $current->{'args'};
-  $contents = "[C".scalar(@{$current->{'contents'}}).']'
-    if $current->{'contents'};
+  $type = "($current->{'type'})" if (defined($current->{'type'}));
+  if (defined($current->{'text'})) {
+    if ($current->{'text'} eq '') {
+      $text = "[T]";
+    } else {
+      my $text_str = $current->{'text'};
+      $text_str =~ s/\n/\\n/g;
+      $text = "[T: $text_str]";
+    }
+  } else {
+    if (defined($current->{'cmdname'})) {
+      $cmd = '@' . debug_command_name($current->{'cmdname'});
+    }
+    $args = "[A".scalar(@{$current->{'args'}}).']' if $current->{'args'};
+    $contents = "[C".scalar(@{$current->{'contents'}}).']'
+       if $current->{'contents'};
+  }
   my $parent_string = '';
   if ($print_parent) {
     $parent_string = _parent_string($current);
@@ -2458,14 +2490,18 @@ a command that sets some information, such as C<@documentlanguage>,
 C<@contents> or C<@footnotestyle> for example.  Return true if the command
 argument was found and the customization variable was set.
 
-=item set_output_encodings($customization_information, $document)
-X<C<set_output_encodings>>
+=item set_output_encoding($customization_information, $document)
+X<C<set_output_encoding>>
 
 If not already set, set C<OUTPUT_ENCODING_NAME> based on input file
-encoding.  Also set C<OUTPUT_PERL_ENCODING> accordingly which is used
-to output in the correct encoding.  In general, C<OUTPUT_PERL_ENCODING>
-should not be set directly by user-defined code such that it corresponds
-to C<OUTPUT_ENCODING_NAME>.
+encoding.
+
+=item set_output_perl_encoding($customization_information)
+X<C<set_output_perl_encoding>>
+
+Set C<OUTPUT_PERL_ENCODING> based on C<OUTPUT_ENCODING_NAME>.  In general,
+C<OUTPUT_PERL_ENCODING> should not be set directly by user-defined code such
+that it corresponds to C<OUTPUT_ENCODING_NAME>.
 
 =item $split_contents = split_custom_heading_command_contents($element)
 X<C<split_custom_heading_command_contents>>

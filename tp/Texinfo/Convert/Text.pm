@@ -78,7 +78,7 @@ sub import {
 
 
 # this is in fact not needed for 'footnote', 'shortcaption', 'caption'
-# when they have no brace_command_arg, see below.
+# as they have no brace_container, see below.
 my %ignored_brace_commands;
 foreach my $ignored_brace_command (#'xref','ref','pxref','inforef',
    'anchor', 'sortas', 'seealso', 'seeentry',
@@ -111,6 +111,7 @@ foreach my $accent_letter ('o','O','l','L') {
 my %accent_commands = %Texinfo::Commands::accent_commands;
 my %nobrace_symbol_text = %Texinfo::Common::nobrace_symbol_text;
 my %formatted_line_commands = %Texinfo::Commands::formatted_line_commands;
+my %def_commands = %Texinfo::Commands::def_commands;
 # 'page' is a formatted_line_commands and therefore is replaced by an empty
 # line.
 
@@ -119,16 +120,25 @@ foreach my $command ('verbatiminclude', 'sp') {
   $converted_formattable_line_commands{$command} = 1;
 }
 
+foreach my $command (keys(%def_commands)) {
+  if ($Texinfo::Commands::line_commands{$command}) {
+    $converted_formattable_line_commands{$command} = 1;
+  }
+}
+
 my %ignored_types;
-foreach my $type ('ignorable_spaces_after_command',
-            'postamble_after_end',
-            'preamble_before_beginning',
-            'spaces_at_end',
-            'spaces_before_paragraph',
-            'spaces_after_close_brace') {
+foreach my $type ('postamble_after_end',
+            'preamble_before_beginning') {
   $ignored_types{$type} = 1;
 }
 
+my %ignored_text_types;
+foreach my $type ('ignorable_spaces_after_command',
+            'spaces_at_end',
+            'spaces_before_paragraph',
+            'spaces_after_close_brace') {
+  $ignored_text_types{$type} = 1;
+}
 
 my @text_indicator_converter_options
       = ('ASCII_GLYPH', 'NUMBER_SECTIONS', 'TEST');
@@ -152,7 +162,7 @@ sub _initialize_options_encoding($$)
 # Setup options as used by Texinfo::Convert::Text::convert_to_text
 # based on the converter information.
 # This is relevant for file names, for instance.
-# $OPTIONS_IN can be used to pass additional options.
+# $OPTIONS_IN can be used to pass additional options, for now 'sort_string'.
 sub copy_options_for_convert_text($;$)
 {
   my $self = shift;
@@ -332,8 +342,8 @@ sub brace_no_arg_command($;$)
   $encoding = $options->{'enabled_encoding'}
     if ($options and defined($options->{'enabled_encoding'}));
 
-  my $command = $element->{'cmdname'};
-  $command = $element->{'extra'}->{'clickstyle'}
+  my $command_name = $element->{'cmdname'};
+  $command_name = $element->{'extra'}->{'clickstyle'}
      if ($element->{'extra'}
       and defined($element->{'extra'}->{'clickstyle'})
       and defined($Texinfo::Common::text_brace_no_arg_commands{
@@ -341,27 +351,28 @@ sub brace_no_arg_command($;$)
   my $result;
   if (defined($encoding) and
       (!($options and $options->{'ASCII_GLYPH'})
-       or !exists($Texinfo::Convert::Unicode::extra_unicode_map{$command}))) {
+       or !exists($Texinfo::Convert::Unicode::extra_unicode_map{$command_name}))) {
     $result
-       = Texinfo::Convert::Unicode::brace_no_arg_command($command, $encoding);
+      = Texinfo::Convert::Unicode::brace_no_arg_command($command_name,
+                                                        $encoding);
   }
   if (!defined($result) and $options and $options->{'converter'}) {
     my $tree
      = Texinfo::Convert::Utils::translated_command_tree($options->{'converter'},
-                                                        $command);
+                                                        $command_name);
     if ($tree) {
       $result = _convert($options, $tree);
     }
   }
   if (!defined($result)) {
     if ($options and $options->{'sort_string'}
-        and $sort_brace_no_arg_commands{$command}) {
-      $result = $sort_brace_no_arg_commands{$command};
+        and $sort_brace_no_arg_commands{$command_name}) {
+      $result = $sort_brace_no_arg_commands{$command_name};
     } else {
-      $result = $Texinfo::Common::text_brace_no_arg_commands{$command};
+      $result = $Texinfo::Common::text_brace_no_arg_commands{$command_name};
     }
   }
-  if ($options and $Texinfo::Commands::letter_no_arg_commands{$command}) {
+  if ($options and $Texinfo::Commands::letter_no_arg_commands{$command_name}) {
     if ($options->{'set_case'}) {
       if ($options->{'set_case'} > 0) {
         $result = uc($result);
@@ -422,6 +433,42 @@ sub _text_heading($$$;$$)
   return $result;
 }
 
+sub _convert_def_line($$)
+{
+  my $options = shift;
+  my $element = shift;
+
+  my $result = '';
+
+  #print STDERR "DEF: $element->{'extra'}->{'def_command'}\n";
+  my ($category_element, $class_element,
+      $type_element, $name_element, $arguments)
+       = Texinfo::Convert::Utils::definition_arguments_content($element);
+
+  my $parsed_definition_category
+    = Texinfo::Convert::Utils::definition_category_tree(
+                                        $options->{'converter'}, $element);
+  if (defined($parsed_definition_category)) {
+    my $converted_element = {'contents' =>
+                    [$parsed_definition_category, {'text' => ': '}]};
+    my $contents = $converted_element->{'contents'};
+    if ($type_element) {
+      push @$contents, ($type_element, {'text' => ' '});
+    }
+    if ($name_element) {
+      push @$contents, $name_element;
+    }
+
+    if ($arguments) {
+      push @$contents, ({'text' => ' '}, $arguments);
+    }
+    push @$contents, {'text' => "\n"};
+    $options->{'_code_state'}++;
+    $result = _convert($options, $converted_element);
+    $options->{'_code_state'}--;
+  }
+  return $result;
+}
 
 # Will never be called, used for the override.
 sub _convert_tree_with_XS($$)
@@ -443,39 +490,11 @@ sub _convert($$)
     confess("Texinfo::Convert::Text::_convert: element undef");
   }
 
-  return '' if (!($element->{'type'} and $element->{'type'} eq 'def_line')
-     and (($element->{'type'} and $ignored_types{$element->{'type'}})
-          or ($element->{'cmdname'}
-             and ($ignored_brace_commands{$element->{'cmdname'}}
-                 or $ignored_block_commands{$element->{'cmdname'}}
-                 or ($ignored_format_raw_commands{$element->{'cmdname'}}
-                     and !(defined($options->{'expanded_formats'})
-                           and $options->{'expanded_formats'}
-                                                    ->{$element->{'cmdname'}}))
-                 or ($Texinfo::Commands::brace_commands{$element->{'cmdname'}}
-                     and $Texinfo::Commands::brace_commands{
-                                             $element->{'cmdname'}} eq 'inline'
-                     and $element->{'cmdname'} ne 'inlinefmtifelse'
-                     and (($Texinfo::Commands::inline_format_commands{
-                                                         $element->{'cmdname'}}
-                           and (!$element->{'extra'}->{'format'}
-                                or !$options->{'expanded_formats'}
-                                or !$options->{'expanded_formats'}
-                                           ->{$element->{'extra'}->{'format'}}))
-                         or (!$Texinfo::Commands::inline_format_commands{
-                                                          $element->{'cmdname'}}
-                             and !defined($element->{'extra'}->{'expand_index'}))))
-             # here ignore most of the line commands
-                 or ($element->{'args'} and $element->{'args'}->[0]
-                     and $element->{'args'}->[0]->{'type'}
-                     and ($element->{'args'}->[0]->{'type'} eq 'line_arg'
-                         or $element->{'args'}->[0]->{'type'} eq 'rawline_arg')
-                     and !$formatted_line_commands{$element->{'cmdname'}}
-                     and !$converted_formattable_line_commands{
-                                                    $element->{'cmdname'}})))));
-  my $result = '';
   if (defined($element->{'text'})) {
-    $result = $element->{'text'};
+    if ($element->{'type'} and $ignored_text_types{$element->{'type'}}) {
+      return '';
+    }
+    my $result = $element->{'text'};
     if ((! defined($element->{'type'})
          or $element->{'type'} ne 'raw')
         and !$options->{'_raw_state'}) {
@@ -496,14 +515,51 @@ sub _convert($$)
     }
     return $result;
   }
-  if ($element->{'cmdname'}) {
-    my $command = $element->{'cmdname'};
-    if (defined($nobrace_symbol_text{$element->{'cmdname'}})) {
-      return $nobrace_symbol_text{$element->{'cmdname'}};
-    } elsif ($element->{'cmdname'} eq 'today') {
+
+  my $cmdname;
+  if (defined($element->{'cmdname'})) {
+    $cmdname = $element->{'cmdname'};
+  }
+
+  return '' if (!($element->{'type'} and $element->{'type'} eq 'def_line')
+     and (($element->{'type'} and $ignored_types{$element->{'type'}})
+          or ($cmdname
+             and ($ignored_brace_commands{$cmdname}
+                 or $ignored_block_commands{$cmdname}
+                 or ($ignored_format_raw_commands{$cmdname}
+                     and !(defined($options->{'expanded_formats'})
+                           and $options->{'expanded_formats'}->{$cmdname}))
+                 or ($Texinfo::Commands::brace_commands{$cmdname}
+                     and $Texinfo::Commands::brace_commands{
+                                             $cmdname} eq 'inline'
+                     and $cmdname ne 'inlinefmtifelse'
+                     and (($Texinfo::Commands::inline_format_commands{$cmdname}
+                           and (!$element->{'extra'}
+                                or !$element->{'extra'}->{'format'}
+                                or !$options->{'expanded_formats'}
+                                or !$options->{'expanded_formats'}
+                                           ->{$element->{'extra'}->{'format'}}))
+                         or (!$Texinfo::Commands::inline_format_commands{
+                                                                       $cmdname}
+                             and (!$element->{'extra'}
+                                  or !defined($element->{'extra'}
+                                                         ->{'expand_index'})))))
+             # here ignore most of the line commands
+                 or ($element->{'args'}
+                     and $element->{'args'}->[0]->{'type'}
+                     and ($element->{'args'}->[0]->{'type'} eq 'line_arg'
+                         or $element->{'args'}->[0]->{'type'} eq 'rawline_arg')
+                     and !$formatted_line_commands{$cmdname}
+                     and !$converted_formattable_line_commands{$cmdname})))));
+
+  my $result = '';
+  if (defined($cmdname)) {
+    if (defined($nobrace_symbol_text{$cmdname})) {
+      return $nobrace_symbol_text{$cmdname};
+    } elsif ($cmdname eq 'today') {
       if ($options->{'sort_string'}
-          and $sort_brace_no_arg_commands{$element->{'cmdname'}}) {
-        return $sort_brace_no_arg_commands{$element->{'cmdname'}};
+          and $sort_brace_no_arg_commands{$cmdname}) {
+        return $sort_brace_no_arg_commands{$cmdname};
       } elsif ($options->{'converter'}) {
         return _convert($options,
                         Texinfo::Convert::Utils::expand_today(
@@ -516,60 +572,74 @@ sub _convert($$)
         $year += ($year < 70) ? 2000 : 1900;
         return "$Texinfo::Convert::Utils::month_name[$mon] $mday, $year";
       }
-    } elsif (defined($Texinfo::Common::text_brace_no_arg_commands{
-                                                 $element->{'cmdname'}})) {
+    } elsif (defined($Texinfo::Common::text_brace_no_arg_commands{$cmdname})) {
       return brace_no_arg_command($element, $options);
     # commands with braces
-    } elsif ($accent_commands{$element->{'cmdname'}}) {
+    } elsif ($accent_commands{$cmdname}) {
       my $result = text_accents($element, $options->{'enabled_encoding'},
                                 $options->{'set_case'});
       return $result;
-    } elsif ($element->{'cmdname'} eq 'image') {
-      $options->{'_code_state'}++;
-      my $text = _convert($options, $element->{'args'}->[0]);
-      $options->{'_code_state'}--;
-      return $text;
-    } elsif ($element->{'cmdname'} eq 'email') {
-      my $text;
-      $text = _convert($options, $element->{'args'}->[1])
-         if (defined($element->{'args'}->[1]));
-      return $text if (defined($text) and ($text ne ''));
-      $options->{'_code_state'}++;
-      my $mail = _convert($options, $element->{'args'}->[0]);
-      $options->{'_code_state'}--;
-      return $mail;
-    } elsif ($element->{'cmdname'} eq 'uref' or $element->{'cmdname'} eq 'url') {
-      my $replacement;
-      $replacement = _convert($options, $element->{'args'}->[2])
-        if (defined($element->{'args'}->[2]));
-      return $replacement if (defined($replacement) and $replacement ne '');
-      my $text;
-      $text = _convert($options, $element->{'args'}->[1])
-        if (defined($element->{'args'}->[1]));
-      $options->{'_code_state'}++;
-      my $url = _convert($options, $element->{'args'}->[0]);
-      $options->{'_code_state'}--;
-      if (defined($text) and $text ne '') {
-        return "$url ($text)";
+    } elsif ($cmdname eq 'image') {
+      if ($element->{'args'}) {
+        $options->{'_code_state'}++;
+        my $text = _convert($options, $element->{'args'}->[0]);
+        $options->{'_code_state'}--;
+        return $text;
       } else {
-        return $url;
+        return '';
       }
-    } elsif ($Texinfo::Commands::explained_commands{$element->{'cmdname'}}
-             and $element->{'args'} and $element->{'args'}->[1]) {
+    } elsif ($cmdname eq 'email') {
+      if ($element->{'args'}) {
+        my $text;
+        $text = _convert($options, $element->{'args'}->[1])
+           if (defined($element->{'args'}->[1]));
+        return $text if (defined($text) and ($text ne ''));
+        $options->{'_code_state'}++;
+        my $mail = _convert($options, $element->{'args'}->[0]);
+        $options->{'_code_state'}--;
+        return $mail;
+      } else {
+        return '';
+      }
+    } elsif ($cmdname eq 'uref' or $cmdname eq 'url') {
+      if ($element->{'args'}) {
+        my $replacement;
+        $replacement = _convert($options, $element->{'args'}->[2])
+          if (defined($element->{'args'}->[2]));
+        return $replacement if (defined($replacement) and $replacement ne '');
+        my $text;
+        $text = _convert($options, $element->{'args'}->[1])
+          if (defined($element->{'args'}->[1]));
+        $options->{'_code_state'}++;
+        my $url = _convert($options, $element->{'args'}->[0]);
+        $options->{'_code_state'}--;
+        if (defined($text) and $text ne '') {
+          return "$url ($text)";
+        } else {
+          return $url;
+        }
+      } else {
+        return '';
+      }
+    # if there is only one argument, it is processed below with the other
+    # brace commands
+    } elsif ($Texinfo::Commands::explained_commands{$cmdname}
+             and $element->{'args'} and scalar(@{$element->{'args'}}) >= 2) {
       my $explanation = _convert($options, $element->{'args'}->[1]);
       if ($explanation ne '') {
         return _convert($options, $element->{'args'}->[0]) ." ($explanation)";
       } else {
         return _convert($options, $element->{'args'}->[0]);
       }
-    } elsif ($Texinfo::Commands::brace_commands{$element->{'cmdname'}}
-             and $Texinfo::Commands::brace_commands{$element->{'cmdname'}} eq 'inline') {
-      if ($element->{'cmdname'} eq 'inlineraw') {
+    } elsif ($Texinfo::Commands::brace_commands{$cmdname}
+             and $Texinfo::Commands::brace_commands{$cmdname} eq 'inline') {
+      if ($cmdname eq 'inlineraw') {
         $options->{'_raw_state'}++;
       }
       my $arg_index = 1;
-      if ($element->{'cmdname'} eq 'inlinefmtifelse'
-          and (!$element->{'extra'}->{'format'}
+      if ($cmdname eq 'inlinefmtifelse'
+          and (!$element->{'extra'}
+               or !$element->{'extra'}->{'format'}
                or !$options->{'expanded_formats'}
                or !$options->{'expanded_formats'}
                                    ->{$element->{'extra'}->{'format'}})) {
@@ -579,33 +649,33 @@ sub _convert($$)
       if (scalar(@{$element->{'args'}}) > $arg_index) {
         $result = _convert($options, $element->{'args'}->[$arg_index]);
       }
-      if ($element->{'cmdname'} eq 'inlineraw') {
+      if ($cmdname eq 'inlineraw') {
         $options->{'_raw_state'}--;
       }
       return $result;
-    } elsif ($element->{'args'} and $element->{'args'}->[0]
+    } elsif ($element->{'args'}
            and (($element->{'args'}->[0]->{'type'}
-                and $element->{'args'}->[0]->{'type'} eq 'brace_command_arg')
-                or ($Texinfo::Commands::math_commands{$element->{'cmdname'}}
-                    and defined($Texinfo::Commands::brace_commands{
-                                                  $element->{'cmdname'}})))) {
+                and ($element->{'args'}->[0]->{'type'} eq 'brace_container'
+                     or $element->{'args'}->[0]->{'type'} eq 'brace_arg'))
+                or ($Texinfo::Commands::math_commands{$cmdname}
+                    and $Texinfo::Commands::brace_commands{$cmdname}))) {
       my $result;
       my $in_code;
-      $options->{'set_case'}++ if ($element->{'cmdname'} eq 'sc');
-      if ($Texinfo::Commands::brace_code_commands{$element->{'cmdname'}}
-               or $Texinfo::Commands::math_commands{$element->{'cmdname'}}) {
+      $options->{'set_case'}++ if ($cmdname eq 'sc');
+      if ($Texinfo::Commands::brace_code_commands{$cmdname}
+          or $Texinfo::Commands::math_commands{$cmdname}) {
         $in_code = 1;
       }
       $options->{'_code_state'}++ if ($in_code);
       $result = _convert($options, $element->{'args'}->[0]);
       $options->{'_code_state'}-- if ($in_code);
-      $options->{'set_case'}-- if ($element->{'cmdname'} eq 'sc');
+      $options->{'set_case'}-- if ($cmdname eq 'sc');
       return $result;
     # block commands
-    } elsif ($element->{'cmdname'} eq 'quotation'
-             or $element->{'cmdname'} eq 'smallquotation'
-             or $element->{'cmdname'} eq 'float'
-             or $element->{'cmdname'} eq 'cartouche') {
+    } elsif ($cmdname eq 'quotation'
+             or $cmdname eq 'smallquotation'
+             or $cmdname eq 'float'
+             or $cmdname eq 'cartouche') {
       if ($element->{'args'}) {
         foreach my $arg (@{$element->{'args'}}) {
           my $converted_arg = _convert($options, $arg);
@@ -617,16 +687,15 @@ sub _convert($$)
         chomp ($result);
         $result .= "\n" if ($result =~ /\S/);
       }
-    } elsif ($formatted_line_commands{$element->{'cmdname'}}
+    } elsif ($formatted_line_commands{$cmdname}
              and $element->{'args'}) {
-      if ($element->{'cmdname'} ne 'node') {
-        if ($element->{'cmdname'} eq 'page') {
+      if ($cmdname ne 'node') {
+        if ($cmdname eq 'page') {
           $result = '';
         } else {
           $result = _convert($options, $element->{'args'}->[0]);
         }
-        if ($Texinfo::Commands::sectioning_heading_commands{
-                                                    $element->{'cmdname'}}) {
+        if ($Texinfo::Commands::sectioning_heading_commands{$cmdname}) {
           $result = _text_heading($element, $result, $options->{'converter'},
                                  $options->{'NUMBER_SECTIONS'});
         } else {
@@ -635,16 +704,18 @@ sub _convert($$)
           $result .= "\n";
         }
       }
-    } elsif ($converted_formattable_line_commands{$element->{'cmdname'}}
+    } elsif ($converted_formattable_line_commands{$cmdname}
              and $element->{'args'}) {
-      if ($element->{'cmdname'} eq 'sp') {
+      if ($def_commands{$cmdname}) {
+        $result = _convert_def_line($options, $element);
+      } elsif ($cmdname eq 'sp') {
         if ($element->{'extra'} and $element->{'extra'}->{'misc_args'}
             and $element->{'extra'}->{'misc_args'}->[0]) {
           # this useless copy avoids perl changing the type to integer!
           my $sp_nr = $element->{'extra'}->{'misc_args'}->[0];
           $result = "\n" x $sp_nr;
         }
-      } elsif ($element->{'cmdname'} eq 'verbatiminclude') {
+      } elsif ($cmdname eq 'verbatiminclude') {
         my $verbatim_include_verbatim;
         if ($options->{'converter'}) {
           # NOTE we use $options->{'converter'} both for error registration
@@ -661,7 +732,7 @@ sub _convert($$)
           $result .= _convert($options, $verbatim_include_verbatim);
         }
       }
-    } elsif ($element->{'cmdname'} eq 'item'
+    } elsif ($cmdname eq 'item'
             and $element->{'parent'}->{'cmdname'}
             and $element->{'parent'}->{'cmdname'} eq 'enumerate') {
       $result .= Texinfo::Common::enumerate_item_representation(
@@ -671,33 +742,7 @@ sub _convert($$)
   }
   if ($element->{'type'}) {
     if ($element->{'type'} eq 'def_line') {
-      #print STDERR "DEF: $element->{'extra'}->{'def_command'}\n";
-      my ($category_element, $class_element,
-          $type_element, $name_element, $arguments)
-           = Texinfo::Convert::Utils::definition_arguments_content($element);
-
-      my $parsed_definition_category
-        = Texinfo::Convert::Utils::definition_category_tree(
-                                            $options->{'converter'}, $element);
-      if (defined($parsed_definition_category)) {
-        my $converted_element = {'contents' =>
-                        [$parsed_definition_category, {'text' => ': '}]};
-        my $contents = $converted_element->{'contents'};
-        if ($type_element) {
-          push @$contents, ($type_element, {'text' => ' '});
-        }
-        if ($name_element) {
-          push @$contents, $name_element;
-        }
-
-        if ($arguments) {
-          push @$contents, ({'text' => ' '}, $arguments);
-        }
-        push @$contents, {'text' => "\n"};
-        $options->{'_code_state'}++;
-        $result = _convert($options, $converted_element);
-        $options->{'_code_state'}--;
-      }
+      $result = _convert_def_line($options, $element);
     } elsif ($element->{'type'} eq 'untranslated_def_line_arg') {
       my $tree;
       my $category_text = $element->{'contents'}->[0]->{'text'};
@@ -732,19 +777,16 @@ sub _convert($$)
   if ($element->{'contents'}) {
     my $in_code;
     my $in_raw;
-    if (($element->{'cmdname'}
-         and ($Texinfo::Commands::preformatted_code_commands{
-                                                         $element->{'cmdname'}}
-              or $Texinfo::Commands::math_commands{$element->{'cmdname'}}
-              or (defined($Texinfo::Commands::block_commands{
-                                                        $element->{'cmdname'}})
-                  and $Texinfo::Commands::block_commands{$element->{'cmdname'}} eq 'raw')))
+    if (($cmdname
+         and ($Texinfo::Commands::preformatted_code_commands{$cmdname}
+              or $Texinfo::Commands::math_commands{$cmdname}
+              or (defined($Texinfo::Commands::block_commands{$cmdname})
+                  and $Texinfo::Commands::block_commands{$cmdname} eq 'raw')))
          or ($element->{'type'} and $element->{'type'} eq 'menu_entry_node')) {
       $in_code = 1;
-    } elsif ($element->{'cmdname'}
-             and $Texinfo::Commands::block_commands{$element->{'cmdname'}}
-             and $Texinfo::Commands::block_commands{
-                                       $element->{'cmdname'}} eq 'format_raw') {
+    } elsif ($cmdname
+             and $Texinfo::Commands::block_commands{$cmdname}
+             and $Texinfo::Commands::block_commands{$cmdname} eq 'format_raw') {
       $in_raw = 1;
     }
     if (ref($element->{'contents'}) ne 'ARRAY') {
@@ -848,7 +890,7 @@ sub convert($$)
   my $self = shift;
   my $document = shift;
 
-  Texinfo::Common::set_output_encodings($self, $document);
+  Texinfo::Common::set_output_encoding($self, $document);
   # Cf comment in output() on using $self for options.
   _initialize_options_encoding($self, $self);
 
@@ -878,7 +920,9 @@ sub output($$)
     $document_info = $document->global_information();
   }
 
-  Texinfo::Common::set_output_encodings($self, $document);
+  Texinfo::Common::set_output_encoding($self, $document);
+  # sets OUTPUT_PERL_ENCODING needed for output_files_open_out below
+  Texinfo::Common::set_output_perl_encoding($self);
 
   # Text options and converter are of different nature.
   # It could have been possible to set up the options by calling
@@ -1015,7 +1059,7 @@ sub get_conf($$)
   return $self->{$key};
 }
 
-# used in Texinfo::Common::set_output_encodings
+# used in Texinfo::Common::set_output_encoding
 sub set_conf($$$)
 {
   my $self = shift;

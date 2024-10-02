@@ -19,7 +19,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => 'html'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -43,7 +43,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                               'text' => 'html'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -52,7 +52,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inlinefmtifelse',
@@ -86,7 +86,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => 'plaintext'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -110,7 +110,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                               'text' => 'plaintext'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'emph',
@@ -119,7 +119,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inlinefmtifelse',
@@ -153,7 +153,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => 'xml'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -177,7 +177,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                               'text' => 'else'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'env',
@@ -191,7 +191,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inlinefmtifelse',
@@ -233,7 +233,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -257,7 +257,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                               'text' => 'docbook spaces'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'strong',
@@ -274,7 +274,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inlinefmtifelse',
@@ -308,7 +308,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => 'tex'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -329,7 +329,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                               'text' => 'else'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'var',
@@ -341,7 +341,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => ' tex'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inlinefmtifelse',
@@ -375,7 +375,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => 'latex'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -396,7 +396,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                               'text' => 'else'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'sc',
@@ -408,7 +408,7 @@ $result_trees{'inlinefmtifelse_with_commands'} = {
                       'text' => ' latex'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inlinefmtifelse',

@@ -389,38 +389,60 @@ my $conf_file_name = 'texi2any-config.pm';
 #  $HOME/texinfo should be $XDG_CONFIG_HOME default: $HOME/.config/texinfo
 my %deprecated_directories;
 
-# We use first the environment variable, then the installation directory
-# and last the SDG basedir specification default, even if the environment
-# variable was set, to be sure to have implementation independent locations
-# used.
-sub add_config_paths($$$$) {
+# We use first the installation directory, and then the environment variable
+# directories.
+sub add_config_paths($$$$;$$) {
   my $env_string = shift;
   my $subdir = shift;
   my $default_base_dirs = shift;
   my $installation_dir = shift;
+  my $overriding_dirs = shift;
+  my $deprecated_dirs = shift;
 
-  my @result_dirs;
-  my %used_base_dirs;
+  # read the env directories to avoid setting the overriding_dirs
+  # as deprecated if they are explicitely specified in the environnement
+  # variable.
+  my @xdg_result_dirs;
+  my %used_xdg_base_dirs;
   if (defined($ENV{$env_string}) and $ENV{$env_string} ne '') {
     foreach my $dir (split(':', $ENV{$env_string})) {
       if ($dir ne '') {
-        push @result_dirs, File::Spec->catdir($dir, $subdir);
-        $used_base_dirs{$dir} = 1;
+        push @xdg_result_dirs, File::Spec->catdir($dir, $subdir);
+        $used_xdg_base_dirs{$dir} = 1;
       }
     }
   }
-  if (defined($installation_dir)
-      and not $used_base_dirs{$installation_dir}) {
+  my @result_dirs;
+  my %used_base_dirs;
+  if (defined($installation_dir)) {
+      #and not $used_base_dirs{$installation_dir}) {
     my $install_result_dir = File::Spec->catdir($installation_dir, $subdir);
     push @result_dirs, $install_result_dir;
     $used_base_dirs{$installation_dir} = 1;
-  }
-
-  foreach my $dir (@$default_base_dirs) {
-    if (!$used_base_dirs{$dir}) {
-      push @result_dirs, File::Spec->catdir($dir, $subdir);
+    if ($overriding_dirs and $overriding_dirs->{$installation_dir}) {
+      my $deprecated_dir
+       = File::Spec->catdir($overriding_dirs->{$installation_dir}, $subdir);
+      if (not $used_xdg_base_dirs{$deprecated_dir}) {
+        $deprecated_dirs->{$deprecated_dir} = $install_result_dir;
+        push @result_dirs, $deprecated_dir;
+        $used_base_dirs{$deprecated_dir} = 1;
+      }
     }
   }
+
+  foreach my $dir (@xdg_result_dirs) {
+    if (!$used_base_dirs{$dir}) {
+      push @result_dirs, File::Spec->catdir($dir, $subdir);
+      $used_base_dirs{$dir} = 1;
+    }
+  }
+
+  # to also use XDG Base Directory Specification defaults
+  #foreach my $dir (@$default_base_dirs) {
+  #  if (!$used_base_dirs{$dir}) {
+  #    push @result_dirs, File::Spec->catdir($dir, $subdir);
+  #  }
+  #}
   return \@result_dirs;
 }
 
@@ -447,14 +469,26 @@ sub set_subdir_directories($$) {
   push @result, $deprecated_config_home
     if (defined($deprecated_config_home));
 
+  my $sysconf_install_dir = File::Spec->catdir($sysconfdir, 'xdg');
+  # associate new location to deprecated location
+  my $overriding_dirs = {$sysconf_install_dir => $sysconfdir};
+  # in 2024, mark $sysconfdir overriden by $sysconfdir/xdg.
   my $config_dirs = add_config_paths('XDG_CONFIG_DIRS', $subdir,
-                       ['/etc/xdg'], $sysconfdir);
+                       ['/etc/xdg'], File::Spec->catdir($sysconfdir, 'xdg'),
+                       $overriding_dirs, $deprecated_dirs);
   push @result, @$config_dirs;
 
-  my $data_dirs = add_config_paths('XDG_DATA_DIRS', 'texinfo',
-      ['/usr/local/share/', '/usr/share/'], $datadir);
+  # the following code could have been used to use XDG_DATA_DIRS for
+  # datadir directories and files too
+  #my $data_dirs = add_config_paths('XDG_DATA_DIRS', $subdir,
+  #    ['/usr/local/share/', '/usr/share/'], $datadir);
 
-  push @result, @$data_dirs;
+  #push @result, @$data_dirs;
+  # Do not use XDG base specification for directories and files in
+  # datadir, there is no need for customization of those directories
+  # since the sysconfdir directories are already customized, just use
+  # the installation directory.
+  push @result, File::Spec->catdir($datadir, $subdir);
 
   return \@result;
 }
@@ -490,7 +524,7 @@ my $program_config_dirs_array_ref
 #  if (defined($datadir));
 
 @program_init_dirs = @program_config_dirs;
-foreach my $texinfo_config_dir ($curdir, @texinfo_language_config_dirs) {
+foreach my $texinfo_config_dir (@texinfo_language_config_dirs) {
   my $init_dir = File::Spec->catdir($texinfo_config_dir, 'init');
   push @program_init_dirs, $init_dir;
   if ($deprecated_directories{$texinfo_config_dir}) {
@@ -502,6 +536,9 @@ foreach my $texinfo_config_dir ($curdir, @texinfo_language_config_dirs) {
 # add texi2any extensions dir too, such as the init files there
 # can also be loaded as regular init files.
 push @program_init_dirs, $extensions_dir;
+
+#print STDERR join("\n", @program_init_dirs)."\n\n";
+#print STDERR join("\n", sort(keys(%deprecated_directories)))."\n";
 
 
 sub _decode_i18n_string($$)
@@ -1489,7 +1526,7 @@ if (get_conf('TREE_TRANSFORMATIONS')) {
 # not the case, the converted format is set here.  For example, for
 # the epub3 format, the converted format is html.  The converted format
 # should be the format actually used for conversion, in practice
-# this means that the module associated to the converted format in
+# this means that the module associated with the converted format in
 # $format_table will be used to find the converter methods.
 my $converted_format = $format;
 if ($formats_table{$format}->{'converted_format'}) {
@@ -1703,8 +1740,9 @@ while(@input_files) {
   # Structuring/Transformations methods needing access to configuration
   # information.
   #
-  # OUTPUT_ENCODING_NAME is set and accessed in set_output_encodings.
-  # OUTPUT_PERL_ENCODING is set and accessed in set_output_encodings and
+  # OUTPUT_ENCODING_NAME is set in set_output_encoding and accessed
+  # in set_output_perl_encoding.
+  # OUTPUT_PERL_ENCODING is set in set_output_perl_encoding and
   # accessed in output_files_open_out for the MACRO_EXPAND file name.
   # The following variables are used in Structuring/Transformations:
   # novalidate, FORMAT_MENU, CHECK_NORMAL_MENU_STRUCTURE,
@@ -1715,7 +1753,8 @@ while(@input_files) {
 
   # encoding is needed for output files
   # documentlanguage is needed for gdt() in regenerate_master_menu
-  Texinfo::Common::set_output_encodings($main_configuration, $document);
+  Texinfo::Common::set_output_encoding($main_configuration, $document);
+  Texinfo::Common::set_output_perl_encoding($main_configuration);
   if (not defined($main_configuration->get_conf('documentlanguage'))
       and defined ($document_information->{'documentlanguage'})) {
     $main_configuration->set_conf('documentlanguage',
@@ -1944,11 +1983,23 @@ while(@input_files) {
                                $converter->output_files_information());
   if ($converter_unclosed_files) {
     foreach my $unclosed_file (keys(%$converter_unclosed_files)) {
+      my $fh = $converter_unclosed_files->{$unclosed_file};
+      # undefined file handle means that the path comes from XS (normally
+      # through build_output_files_unclosed_files) but is not associated
+      # with a file handle yet, as a file handle can't be directly associated
+      # with a stream in C code, but the stream can be returned through
+      # an XS interface, here
+      # Texinfo::Convert::ConvertXS::get_unclosed_stream.
+      if (!defined($fh)) {
+        $fh = $converter->XS_get_unclosed_stream($unclosed_file);
+        if (!defined($fh)) {
+          next;
+        }
+      }
       if ($unclosed_file eq '-') {
-        $main_unclosed_files{$unclosed_file}
-          = $converter_unclosed_files->{$unclosed_file};
+        $main_unclosed_files{$unclosed_file} = $fh;
       } else {
-        if (!close($converter_unclosed_files->{$unclosed_file})) {
+        if (!close($fh)) {
           warn(sprintf(__("%s: error on closing %s: %s\n"),
                            $real_command_name, $unclosed_file, $!));
           $error_count++;

@@ -146,7 +146,7 @@ $result_trees{'subentry_and_sortas'} = {
                           'text' => 'A---S'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'sortas',
@@ -183,7 +183,7 @@ $result_trees{'subentry_and_sortas'} = {
                               'text' => 'B---S1'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'sortas',
@@ -210,8 +210,8 @@ $result_trees{'subentry_and_sortas'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
                 'sortas' => 'B---S1',
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {
@@ -260,7 +260,7 @@ $result_trees{'subentry_and_sortas'} = {
                           'text' => 'X---S'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'sortas',
@@ -297,7 +297,7 @@ $result_trees{'subentry_and_sortas'} = {
                               'text' => 'X---S1'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'sortas',
@@ -324,8 +324,8 @@ $result_trees{'subentry_and_sortas'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
                 'sortas' => 'X---S1',
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {

@@ -19,13 +19,14 @@ void html_converter_initialize_sv (SV *converter_sv,
                                   SV *default_types_conversion,
                                   SV *default_css_string_types_conversion,
                                   SV *default_output_units_conversion,
-                                  SV *default_no_arg_commands_formatting,
-                                  SV *default_special_unit_body);
+                                  SV *default_special_unit_body,
+                                  SV *customized_upper_case_commands,
+                                  SV *customized_special_unit_info,
+                                  SV *default_converted_directions_strings
+                                  );
 
 void html_conversion_initialization_sv (SV *converter_sv,
                                         CONVERTER *converter);
-
-void html_converter_prepare_output_sv (SV *converter_sv, CONVERTER *converter);
 
 const ELEMENT *html_find_element_from_sv (CONVERTER *converter,
                                     const SV *element_sv,

@@ -202,7 +202,7 @@ $result_trees{'indices_disable_encoding'} = {
                           'text' => 'o'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => '"',
@@ -505,7 +505,7 @@ $result_trees{'indices_disable_encoding'} = {
                           'text' => 'o'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => '"',
@@ -592,7 +592,7 @@ $result_trees{'indices_disable_encoding'} = {
                               'text' => 'o'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => '"',
@@ -601,7 +601,7 @@ $result_trees{'indices_disable_encoding'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'seealso',
@@ -627,7 +627,7 @@ $result_trees{'indices_disable_encoding'} = {
                               'text' => 'b'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'sortas',
@@ -700,7 +700,7 @@ $result_trees{'indices_disable_encoding'} = {
                               'text' => 'o'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => '"',
@@ -725,8 +725,8 @@ $result_trees{'indices_disable_encoding'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
                 'sortas' => 'a!"@b',
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {
@@ -807,7 +807,7 @@ $result_trees{'indices_disable_encoding'} = {
                           'text' => '\\cmd'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'sortas',
@@ -884,7 +884,7 @@ $result_trees{'indices_disable_encoding'} = {
                           'text' => 'file'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'file',
@@ -950,7 +950,7 @@ $result_trees{'indices_disable_encoding'} = {
                           'text' => 'person'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'r',
@@ -969,7 +969,7 @@ $result_trees{'indices_disable_encoding'} = {
                           'text' => 'aa'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'file',

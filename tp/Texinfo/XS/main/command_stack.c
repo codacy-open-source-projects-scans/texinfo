@@ -19,6 +19,9 @@
 
 #include "tree_types.h"
 #include "command_ids.h"
+/*
+#include "commands.h"
+ */
 #include "utils.h"
 #include "command_stack.h"
 
@@ -43,6 +46,10 @@ push_command (COMMAND_STACK *stack, enum command_id cmd)
                    (stack->space += 5) * sizeof (enum command_id));
     }
 
+  /*
+  fprintf (stderr, "---STPUSH %p (%ld) %d %s\n", stack, stack->top,
+                                            cmd, command_name(cmd));
+   */
   stack->stack[stack->top] = cmd;
   stack->top++;
 }
@@ -53,6 +60,10 @@ pop_command (COMMAND_STACK *stack)
   if (stack->top == 0)
     fatal ("command stack empty");
 
+  /*
+  fprintf (stderr, "---STPOP %p (%ld) %d %s\n", stack, stack->top,
+   stack->stack[stack->top-1], command_name(stack->stack[stack->top-1]));
+   */
   return stack->stack[--stack->top];
 }
 
@@ -127,7 +138,10 @@ push_string_stack_string (STRING_STACK *stack, const char *string)
                    (stack->space += 5) * sizeof (char *));
     }
 
-  stack->stack[stack->top] = strdup (string);
+  if (string)
+    stack->stack[stack->top] = strdup (string);
+  else
+    stack->stack[stack->top] = 0;
 
   stack->top++;
 }
@@ -259,8 +273,8 @@ command_is_in_referred_command_stack (const ELEMENT_REFERENCE_STACK *stack,
   for (i = 0; i < stack->top; i++)
     {
       ELEMENT_REFERENCE *element_reference = &stack->stack[i];
-      if (e && element_reference->element == e
-          || hv && element_reference->hv == hv)
+      if ((e && element_reference->element == e)
+          || (hv && element_reference->hv == hv))
         {
           return 1;
         }

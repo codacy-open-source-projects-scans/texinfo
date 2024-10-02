@@ -18,28 +18,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "tree_types.h"
+#include "text.h"
 #include "command_ids.h"
+#include "tree_types.h"
 /* document used in complete_indices */
 #include "document_types.h"
+#include "types_data.h"
 #include "tree.h"
-#include "errors_parser.h"
-#include "command_stack.h"
-#include "context_stack.h"
-#include "builtin_commands.h"
 #include "extra.h"
+#include "builtin_commands.h"
 /* for ultimate_index xasprintf */
 #include "utils.h"
+#include "command_stack.h"
 /* for copy_tree */
 #include "manipulate_tree.h"
-#include "commands.h"
-#include "translations.h"
-#include "document.h"
+/* for global_parser_conf */
+#include "parser_conf.h"
 /*
 #include "convert_to_texinfo.h"
 */
-/* for global_parser_conf */
-#include "parser_conf.h"
+#include "document.h"
+#include "translations.h"
+#include "commands.h"
+#include "errors_parser.h"
+#include "context_stack.h"
+/* parsed_document current_node current_section check_space_element */
 #include "parser.h"
 #include "indices.h"
 
@@ -278,30 +281,28 @@ enter_index_entry (enum command_id index_type_cmd,
     text_append (&ignored_chars, "@");
   if (ignored_chars.end > 0)
     {
-      add_extra_string_dup (element, "index_ignore_chars", ignored_chars.text);
+      add_extra_string_dup (element, AI_key_index_ignore_chars, ignored_chars.text);
       free (ignored_chars.text);
     }
 
   /* index_entry is an array with two elements.  Use
      extra_misc_args to pass that information as an array */
   {
-    ELEMENT *index_entry = new_element (ET_NONE);
-    ELEMENT *e = new_element (ET_NONE);
-    text_append (&e->text, idx->name);
-    add_to_element_contents (index_entry, e);
-    e = new_element (ET_NONE);
-    add_extra_integer (e, "integer", idx->entries_number);
-    add_to_element_contents (index_entry, e);
-    add_extra_misc_args (element, "index_entry", index_entry);
+    /* put in extra "misc_args" */
+    INDEX_ENTRY_LOCATION *index_entry = (INDEX_ENTRY_LOCATION *)
+           malloc (sizeof (INDEX_ENTRY_LOCATION));
+    index_entry->index_name = idx->name;
+    index_entry->number = idx->entries_number;
+    add_extra_index_entry (element, AI_key_index_entry, index_entry);
   }
 
   if (nesting_context.regions_stack.top > 0)
     {
       enum command_id region = top_command (&nesting_context.regions_stack);
-      add_extra_string_dup (element, "element_region", command_name (region));
+      add_extra_string_dup (element, AI_key_element_region, command_name (region));
     }
   else if (current_node)
-    add_extra_element (element, "element_node", current_node);
+    add_extra_element (element, AI_key_element_node, current_node);
 
   if (nesting_context.regions_stack.top == 0
       && !current_node && !current_section)
@@ -317,26 +318,28 @@ set_non_ignored_space_in_index_before_command (ELEMENT *content)
   ELEMENT *e;
   ELEMENT *pending_spaces_element = 0;
   int i;
-  for (i = 0; i < content->contents.number; i++)
+  for (i = 0; i < content->e.c->contents.number; i++)
     {
       /* could also be, but it does not seems to be needed here:
          e = contents_child_by_index (content, i); */
-      e = content->contents.list[i];
+      e = content->e.c->contents.list[i];
       if (e->type == ET_internal_spaces_before_brace_in_index)
         {
           pending_spaces_element = e;
           /* set to "spaces_at_end" in case there are only spaces after */
           e->type = ET_spaces_at_end;
         }
-      else if (pending_spaces_element
-                && ! (e->cmd == CM_sortas
-                       || e->cmd == CM_seeentry
-                       || e->cmd == CM_seealso
-                       || e->type == ET_spaces_after_close_brace)
-                && (! check_space_element (e)))
+      else if (pending_spaces_element)
         {
-          pending_spaces_element->type = ET_NONE;
-          pending_spaces_element = 0;
+          if (! (!(type_data[e->type].flags & TF_text)
+                 && (e->e.c->cmd == CM_sortas
+                     || e->e.c->cmd == CM_seeentry
+                     || e->e.c->cmd == CM_seealso))
+              && (! check_space_element (e)))
+            {
+              pending_spaces_element->type = ET_normal_text;
+              pending_spaces_element = 0;
+            }
         }
     }
 }
@@ -394,21 +397,21 @@ complete_indices (DOCUMENT *document, int debug_level)
               main_entry_element = entry->entry_element;
 
               def_cmdname = lookup_extra_string (main_entry_element,
-                                                 "def_command");
+                                                 AI_key_def_command);
 
-              idx_element = lookup_extra_element (main_entry_element,
-                                                  "def_index_element");
+              idx_element = lookup_extra_element_oot (main_entry_element,
+                                                      AI_key_def_index_element);
               if (def_cmdname && !idx_element)
                 {
                   ELEMENT *name = 0;
                   ELEMENT *class = 0;
-                  ELEMENT *def_l_e = main_entry_element->args.list[0];
-                  if (def_l_e->contents.number > 0)
+                  ELEMENT *def_l_e = main_entry_element->e.c->args.list[0];
+                  if (def_l_e->e.c->contents.number > 0)
                     {
                       int ic;
-                      for (ic = 0; ic < def_l_e->contents.number; ic++)
+                      for (ic = 0; ic < def_l_e->e.c->contents.number; ic++)
                         {
-                          ELEMENT *arg = def_l_e->contents.list[ic];
+                          ELEMENT *arg = def_l_e->e.c->contents.list[ic];
                           if (arg->type == ET_def_name)
                             name = arg;
                           else if (arg->type == ET_def_class)
@@ -423,10 +426,11 @@ complete_indices (DOCUMENT *document, int debug_level)
                   if (name && class)
                     {
                       char *lang = lookup_extra_string (main_entry_element,
-                                                       "documentlanguage");
+                                                       AI_key_documentlanguage);
                       ELEMENT *index_entry;
+                  /* container without type in extra "def_index_ref_element" */
                       ELEMENT *index_entry_normalized = new_element (ET_NONE);
-                      ELEMENT *text_element = new_element (ET_NONE);
+                      ELEMENT *text_element = new_text_element (ET_normal_text);
                       enum command_id def_command
                         = lookup_command (def_cmdname);
                       NAMED_STRING_ELEMENT_LIST *substrings
@@ -449,7 +453,7 @@ complete_indices (DOCUMENT *document, int debug_level)
                                                   document, lang, substrings,
                                                   debug_level, 0);
 
-                          text_append (&text_element->text, " on ");
+                          text_append (text_element->e.text, " on ");
                         }
                       else if (def_command == CM_defcv
                                || def_command == CM_defivar
@@ -460,7 +464,7 @@ complete_indices (DOCUMENT *document, int debug_level)
                                                   document, lang, substrings,
                                                   debug_level, 0);
 
-                          text_append (&text_element->text, " of ");
+                          text_append (text_element->e.text, " of ");
                         }
                       destroy_named_string_element_list (substrings);
 
@@ -476,10 +480,10 @@ complete_indices (DOCUMENT *document, int debug_level)
                       index_entry->type = ET_NONE;
 
                       add_extra_element_oot (main_entry_element,
-                                             "def_index_element",
+                                             AI_key_def_index_element,
                                              index_entry);
                       add_extra_element_oot (main_entry_element,
-                                             "def_index_ref_element",
+                                             AI_key_def_index_ref_element,
                                              index_entry_normalized);
                     }
                 }

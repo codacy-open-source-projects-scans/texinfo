@@ -41,7 +41,7 @@ $result_trees{'closing_brace_in_value_in_ignored_inline'} = {
                       'text' => 'html'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -57,7 +57,7 @@ $result_trees{'closing_brace_in_value_in_ignored_inline'} = {
                                     'text' => 'closebrace'
                                   }
                                 ],
-                                'type' => 'brace_command_arg'
+                                'type' => 'brace_container'
                               }
                             ],
                             'cmdname' => 'value'
@@ -77,7 +77,7 @@ $result_trees{'closing_brace_in_value_in_ignored_inline'} = {
 '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inlinefmt',
@@ -122,7 +122,7 @@ $result_trees{'closing_brace_in_value_in_ignored_inline'} = {
                       'text' => 'tex'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [

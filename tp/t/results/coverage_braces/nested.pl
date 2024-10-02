@@ -29,7 +29,7 @@ $result_trees{'nested'} = {
                               'text' => 'RET'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'key',
@@ -38,7 +38,7 @@ $result_trees{'nested'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'kbd',
@@ -79,5 +79,8 @@ $result_converted{'html_text'}->{'nested'} = '<p>type the characters <kbd class=
 
 
 $result_converted{'latex_text'}->{'nested'} = 'type the characters \\Texinfocommandstyletextkbd{l o g o u t \\texttt{RET}}.';
+
+
+$result_converted{'docbook'}->{'nested'} = '<para>type the characters <userinput>l o g o u t <keycap>RET</keycap></userinput>.</para>';
 
 1;

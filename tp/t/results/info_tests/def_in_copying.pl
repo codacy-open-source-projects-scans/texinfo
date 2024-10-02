@@ -164,7 +164,7 @@ $result_trees{'def_in_copying'} = {
                       'element' => {
                         'args' => [
                           {
-                            'type' => 'brace_command_arg'
+                            'type' => 'brace_arg'
                           }
                         ],
                         'info' => {
@@ -249,7 +249,19 @@ $result_trees{'def_in_copying'} = {
                   ],
                   'extra' => {
                     'def_command' => 'deffn',
-                    'def_index_element' => {},
+                    'def_index_element' => {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'bb'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
                     'element_region' => 'copying',
                     'index_entry' => [
                       'fn',
@@ -327,7 +339,19 @@ $result_trees{'def_in_copying'} = {
                   'cmdname' => 'deffnx',
                   'extra' => {
                     'def_command' => 'deffn',
-                    'def_index_element' => {},
+                    'def_index_element' => {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'bbx'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
                     'element_region' => 'copying',
                     'index_entry' => [
                       'fn',
@@ -343,8 +367,7 @@ $result_trees{'def_in_copying'} = {
                   'source_info' => {
                     'line_nr' => 13,
                     'macro' => 'mymacro'
-                  },
-                  'type' => 'def_line'
+                  }
                 },
                 {
                   'contents' => [
@@ -459,7 +482,7 @@ $result_trees{'def_in_copying'} = {
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -544,7 +567,19 @@ $result_trees{'def_in_copying'} = {
               ],
               'extra' => {
                 'def_command' => 'deffn',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'bb'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'element_node' => {},
                 'index_entry' => [
                   'fn',
@@ -622,7 +657,19 @@ $result_trees{'def_in_copying'} = {
               'cmdname' => 'deffnx',
               'extra' => {
                 'def_command' => 'deffn',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'bbx'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'element_node' => {},
                 'index_entry' => [
                   'fn',
@@ -638,8 +685,7 @@ $result_trees{'def_in_copying'} = {
               'source_info' => {
                 'line_nr' => 17,
                 'macro' => 'mymacro'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -756,11 +802,7 @@ $result_trees{'def_in_copying'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[1]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[1]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[1]{'contents'}[1]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[1]{'contents'}[1]{'contents'}[1]{'args'}[0]{'contents'}[2];
-$result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[4]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[4]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[4]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'def_in_copying'}{'contents'}[1];
-$result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[4]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[4]{'contents'}[1]{'args'}[0]{'contents'}[2];
 $result_trees{'def_in_copying'}{'contents'}[2]{'contents'}[4]{'contents'}[1]{'extra'}{'element_node'} = $result_trees{'def_in_copying'}{'contents'}[1];
 
 $result_texis{'def_in_copying'} = '@macro mymacro
@@ -868,8 +910,8 @@ $result_indices_sort_strings{'def_in_copying'} = {
 $result_converted{'info'}->{'def_in_copying'} = 'This is , produced from .
 
 In copying
- -- aa: bb cc
- -- aax: bbx ccx
+ - aa: bb cc
+ - aax: bbx ccx
      deffnx lines
 
 
@@ -879,8 +921,8 @@ Test for definition commands
 ****************************
 
 In text
- -- aa: bb cc
- -- aax: bbx ccx
+ - aa: bb cc
+ - aax: bbx ccx
      deffnx lines
 
  [index ]
@@ -891,7 +933,7 @@ In text
 
 
 Tag Table:
-Node: Top88
+Node: Top86
 
 End Tag Table
 

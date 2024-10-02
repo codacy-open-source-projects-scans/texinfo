@@ -31,6 +31,7 @@
 #undef context
 
 #include "converter_types.h"
+#include "builtin_commands.h"
 #include "utils.h"
 #include "converter.h"
 #include "get_perl_info.h"
@@ -67,50 +68,21 @@ get_sv_converter (SV *sv_in, const char *warn_string)
   return converter;
 }
 
-void
-converter_set_document (SV *converter_in, SV *document_in)
+CONVERTER *
+converter_set_document_from_sv (SV *converter_in, SV *document_in)
 {
   CONVERTER *converter;
-  DOCUMENT *document;
+  DOCUMENT *document = 0;
 
   dTHX;
 
   converter = get_sv_converter (converter_in, "converter_set_document");
-  document = get_sv_document_document (document_in, 0);
+  if (document_in)
+    document = get_sv_document_document (document_in, 0);
 
-   /*
-  if (document)
-    {
-      fprintf (stderr, "XS|CONVERTER %d: Document %d\n",
-           converter->converter_descriptor, document->descriptor);
-    }
-    */
+  converter_set_document (converter, document);
 
-  converter->document = document;
-
-  set_output_encoding (converter->conf, converter->document);
-
-  converter->convert_text_options
-    = copy_converter_options_for_convert_text (converter);
-}
-
-/* reset output_init_conf.  Can be called after it has been modified */
-void
-reset_output_init_conf (SV *sv_in)
-{
-  CONVERTER *converter;
-
-  dTHX;
-
-  converter = get_sv_converter (sv_in, "reset_output_init_conf");
-
-  if (converter)
-    {
-      HV *hv_in = (HV *)SvRV (sv_in);
-
-      copy_converter_conf_sv (hv_in, converter, &converter->init_conf,
-                             "output_init_conf", 1);
-    }
+  return converter;
 }
 
 void
@@ -206,7 +178,7 @@ converter_initialize (SV *converter_sv)
   HV *hv_in;
   SV **configured_sv;
   SV **output_format_sv;
-  int converter_descriptor = 0;
+  size_t converter_descriptor = 0;
   CONVERTER *converter;
 
   dTHX;
@@ -226,8 +198,8 @@ converter_initialize (SV *converter_sv)
     }
 
    /*
-  fprintf (stderr, "XS|CONVERTER Init: %d; doc %d; %s\n", converter_descriptor,
-                   converter->document->descriptor, converter->output_format);
+  fprintf (stderr, "XS|CONVERTER Init: %zu; %s\n", converter_descriptor,
+                   converter->output_format);
     */
 
   converter->conf = new_options ();
@@ -249,7 +221,9 @@ converter_initialize (SV *converter_sv)
 #undef FETCH
   set_translated_commands (converter, hv_in);
 
-  get_expanded_formats (hv_in, &converter->expanded_formats);
+  converter->expanded_formats = new_expanded_formats ();
+  set_expanded_formats_from_options (converter->expanded_formats,
+                                     converter->conf);
 
   converter->hv = hv_in;
 
@@ -259,6 +233,26 @@ converter_initialize (SV *converter_sv)
             newSViv (converter_descriptor), 0);
 
   return converter_descriptor;
+}
+
+/* currently unused */
+/* reset output_init_conf.  Can be called after it has been modified */
+void
+reset_output_init_conf (SV *sv_in)
+{
+  CONVERTER *converter;
+
+  dTHX;
+
+  converter = get_sv_converter (sv_in, "reset_output_init_conf");
+
+  if (converter)
+    {
+      HV *hv_in = (HV *)SvRV (sv_in);
+
+      copy_converter_conf_sv (hv_in, converter, &converter->init_conf,
+                             "output_init_conf", 1);
+    }
 }
 
 /* output format specific */

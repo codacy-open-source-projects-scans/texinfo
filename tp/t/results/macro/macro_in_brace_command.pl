@@ -133,8 +133,7 @@ $result_trees{'macro_in_brace_command'} = {
                   'cmdname' => 'bullet',
                   'source_info' => {
                     'line_nr' => 9
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -168,7 +167,7 @@ $result_trees{'macro_in_brace_command'} = {
                                   'element' => {
                                     'args' => [
                                       {
-                                        'type' => 'brace_command_arg'
+                                        'type' => 'brace_arg'
                                       }
                                     ],
                                     'info' => {
@@ -178,12 +177,7 @@ $result_trees{'macro_in_brace_command'} = {
                                   },
                                   'sourcemark_type' => 'macro_expansion',
                                   'status' => 'start'
-                                }
-                              ],
-                              'text' => ''
-                            },
-                            {
-                              'source_marks' => [
+                                },
                                 {
                                   'counter' => 1,
                                   'position' => 13,
@@ -201,7 +195,7 @@ $result_trees{'macro_in_brace_command'} = {
                                   'element' => {
                                     'args' => [
                                       {
-                                        'type' => 'brace_command_arg'
+                                        'type' => 'brace_arg'
                                       }
                                     ],
                                     'info' => {
@@ -226,7 +220,7 @@ $result_trees{'macro_in_brace_command'} = {
                               'text' => 'bar-expansion'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'email',

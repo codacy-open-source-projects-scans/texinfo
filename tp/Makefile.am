@@ -10,7 +10,9 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-# Generated lists of tests and of test result files
+# Generated lists of tests and of test result files.  If tests results are
+# added it should be regenerated manually, as the rule below is only
+# triggered by change in the generating script.
 include $(srcdir)/Makefile.tres
 
 # Generated list of document string locale files and associated rules.
@@ -68,6 +70,7 @@ dist_modules_DATA = \
  Texinfo/Common.pm \
  Texinfo/Commands.pod \
  Texinfo/Commands.pm \
+ Texinfo/Data.pm \
  Texinfo/DebugTree.pm \
  Texinfo/Document.pm \
  Texinfo/DocumentXS.pm \
@@ -89,7 +92,11 @@ dist_modules_DATA = \
  Texinfo/XSLoader.pm
 
 dist_noinst_DATA = \
- Texinfo/ModulePath.pm.in
+ Texinfo/ModulePath.pm.in \
+ Texinfo/Data/default_css_element_class_styles.csv \
+ Texinfo/Data/default_direction_strings.csv \
+ Texinfo/Data/default_special_unit_info.csv \
+ Texinfo/Data/html_style_commands_element.csv
 
 modules_DATA = \
  Texinfo/ModulePath.pm
@@ -178,6 +185,7 @@ test_files = \
  t/include/section_file.texi \
  t/include/section_file_no_node.texi \
  t/include/section_file_no_node_include.texi \
+ t/init/access_document_name_in_handler.pm \
  t/init/command_translation_modified.init \
  t/init/css_in_node_redirection_page.pm \
  t/init/cvs.init \
@@ -196,6 +204,7 @@ test_files = \
  t/init/redirection_file_collision_with_user_def.init \
  t/init/set_unit_file_name_filepath.pm \
  t/init/special_element_customization.pm \
+ t/init/t2h_buttons.pm \
  t/init/t2h_singular.init \
  t/init/test_css_info_functions.pm \
  t/init/test_directions.init \
@@ -215,6 +224,8 @@ test_files = \
  t/input_files/character_and_spaces_in_refs_text.texi \
  t/input_files/chinese_mixed_with_en.texi \
  t/input_files/chinese_mixed_with_en_EUC_CN.texi \
+ t/input_files/command_non_break_spaces_koi8-r.texi \
+ t/input_files/command_non_break_spaces_utf8.texi \
  t/input_files/complex_sectioning_case.texi \
  t/input_files/cond.texi \
  t/input_files/contents_at_document_begin.texi \
@@ -295,6 +306,7 @@ test_files = \
  t/input_files/htmlxref-split.cnf \
  #
 
+# used in Makefile.docstr, in particular in document_strings_mo_files
 document_domain = $(PACKAGE)_document
 
 # $(document_strings_mo_files) comes from the generated Makefile.docstr.
@@ -310,13 +322,14 @@ T_LOG_DRIVER = env AM_TAP_AWK='$(AWK)' $(SHELL) \
 T_LOG_COMPILER = $(PERL)
 AM_T_LOG_FLAGS = -w
 
-AM_TESTS_ENVIRONMENT = srcdir="$(srcdir)"; export srcdir; top_srcdir="$(top_srcdir)"; export top_srcdir; builddir="$(builddir)"; export buildir; top_builddir="$(top_builddir)"; export top_builddir;
+AM_TESTS_ENVIRONMENT = srcdir="$(srcdir)"; export srcdir; top_srcdir="$(top_srcdir)"; export top_srcdir; top_builddir="$(top_builddir)"; export top_builddir;
 
 maintenance_files = \
   maintain/all_tests.sh \
   maintain/change_perl_modules_version.sh \
   maintain/copy_change_file_name_encoding.pl \
   maintain/language-subtag-registry \
+  maintain/generate_code_convert_data.pl \
   maintain/regenerate_cmd_tests.sh \
   maintain/regenerate_converters_documentation.sh \
   maintain/regenerate_docstr.sh \
@@ -331,6 +344,7 @@ maintenance_files = \
   maintain/template.pod \
   maintain/catalog.xml.in
 
+# test_files_generated_list comes from the generated Makefile.tres
 EXTRA_DIST = \
   texi2any.pl \
   texi2any.supp \
@@ -370,6 +384,14 @@ $(srcdir)/Texinfo/Commands.pm: Texinfo/command_data.txt $(srcdir)/maintain/regen
 
 $(srcdir)/Texinfo/Options.pm: Texinfo/options_data.txt $(srcdir)/maintain/regenerate_perl_options_info.pl
 	$(srcdir)/maintain/regenerate_perl_options_info.pl $(srcdir)/Texinfo/Options.pm < $(srcdir)/Texinfo/options_data.txt
+
+$(srcdir)/Texinfo/Data.pm: Texinfo/Data/default_css_element_class_styles.csv Texinfo/Data/default_direction_strings.csv Texinfo/Data/default_special_unit_info.csv Texinfo/Data/html_style_commands_element.csv $(srcdir)/maintain/generate_code_convert_data.pl
+	$(srcdir)/maintain/generate_code_convert_data.pl \
+	      $(srcdir)/Texinfo/Data/default_css_element_class_styles.csv \
+	      $(srcdir)/Texinfo/Data/default_direction_strings.csv \
+	      $(srcdir)/Texinfo/Data/default_special_unit_info.csv \
+	      $(srcdir)/Texinfo/Data/html_style_commands_element.csv \
+	      perl $@
 
 libsrcdir = $(srcdir)/maintain/lib
 

@@ -44,7 +44,7 @@ $result_trees{'ref_in_style_command'} = {
                               ]
                             }
                           },
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'ref',
@@ -53,7 +53,7 @@ $result_trees{'ref_in_style_command'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'samp',
@@ -88,7 +88,7 @@ $result_floats{'ref_in_style_command'} = {};
 
 
 
-$result_converted{'plaintext'}->{'ref_in_style_command'} = '‘*note (manula)other node::’.
+$result_converted{'plaintext'}->{'ref_in_style_command'} = '‘(manula)other node’.
 ';
 
 
@@ -96,5 +96,8 @@ $result_converted{'html_text'}->{'ref_in_style_command'} = '<p>&lsquo;<samp clas
 
 
 $result_converted{'latex_text'}->{'ref_in_style_command'} = '`\\texttt{(manula)other node}\'.';
+
+
+$result_converted{'docbook'}->{'ref_in_style_command'} = '<para>&#8216;<literal><link>(manula)other node</link></literal>&#8217;.</para>';
 
 1;

@@ -18,21 +18,29 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include <stddef.h>
+#include <stdarg.h>
+/* for iconv_t */
 #include <iconv.h>
 
-#include "global_commands_types.h"
 #include "command_ids.h"
 #include "tree_types.h"
+#include "global_commands_types.h"
 #include "option_types.h"
 #include "options_types.h"
 #include "document_types.h"
 #include "converter_types.h"
-#include "builtin_commands.h"
+
+#define gdt_noop(String) String
+/* only used for def_aliases.  Inverse the arguments to match with the
+   C structure */
+#define pgdt_context_noop(Context,String) String, Context
+
+extern const char *null_device_names[];
 
 extern const char *whitespace_chars;
 extern const char *digit_chars;
-extern enum command_id level_to_structuring_command[][5];
-extern int command_structuring_level[];
+extern enum command_id const level_to_structuring_command[][5];
+extern int const command_structuring_level[];
 
 extern const char *direction_names[];
 extern const char *direction_texts[];
@@ -90,14 +98,6 @@ extern COMMAND_OPTION_DEFAULT command_option_default_table[];
 
 extern const enum command_id small_block_associated_command[][2];
 
-/* enum needed for set_global_document_command */
-enum command_location {
-   CL_before,
-   CL_last,
-   CL_preamble,
-   CL_preamble_or_first,
-};
-
 /* HTML modified state flags */
 #define HMSF_current_root            0x0001
 /*
@@ -115,21 +115,14 @@ enum command_location {
 #define HMSF_     0x0400
 #define HMSF_        0x0800
 #define HMSF_           0x1000
+#define HMSF_           0x2000
 */
-#define HMSF_multiple_pass           0x2000
 #define HMSF_translations            0x4000
 /*
 #define HMSF_            0x8000
 #define HMSF_            0x00010000
 #define HMSF_  0x00020000
  */
-
-typedef struct TARGET_FILENAME {
-    char *target;
-    char *filename;
-} TARGET_FILENAME;
-
-extern const char *html_argument_formatting_type_names[];
 
 typedef struct ACCENTS_STACK {
     ELEMENT_STACK stack;
@@ -194,6 +187,7 @@ int section_level (const ELEMENT *section);
 enum command_id section_level_adjusted_command_name (const ELEMENT *element);
 char *collapse_spaces (const char *text);
 char *parse_line_directive (const char *line, int *retval, int *out_line_no);
+void parse_file_path (const char *input_file_path, char **result);
 int is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries);
 
 STRING_LIST *new_string_list (void);
@@ -215,6 +209,8 @@ void free_indices_info (INDEX_LIST *indices_info);
 void initialize_options (OPTIONS *options);
 void clear_options (OPTIONS *options);
 void free_options (OPTIONS *options);
+void copy_options (OPTIONS *destination, const OPTIONS *source);
+
 
 OPTIONS *new_options (void);
 void set_output_encoding (OPTIONS *customization_information,
@@ -269,6 +265,7 @@ void html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons);
 void initialize_option (OPTION *option, enum global_option_type type);
 void clear_option (OPTION *option);
 void free_option (OPTION *option);
+void copy_option (OPTION *destination, const OPTION *source);
 
 TARGET_FILENAME *new_target_filename (void);
 TARGET_CONTENTS_FILENAME *new_target_contents_filename (void);

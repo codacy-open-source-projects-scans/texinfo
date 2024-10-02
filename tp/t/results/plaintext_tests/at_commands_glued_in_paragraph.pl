@@ -27,7 +27,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'TeX',
@@ -50,7 +50,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                       'text' => 'in code'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -73,7 +73,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                       'text' => 'ABC'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -86,7 +86,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'acronym',
@@ -109,7 +109,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                       'text' => 'ABC'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'acronym',
@@ -132,7 +132,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                       'text' => 'somebody'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -145,7 +145,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'email',
@@ -176,7 +176,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                     },
                     'normalized' => 'Top'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -232,7 +232,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                               'text' => 'i'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'dotless',
@@ -241,7 +241,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => '^',
@@ -331,7 +331,7 @@ $result_trees{'at_commands_glued_in_paragraph'} = {
                       'text' => 'anchor'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'anchor',
@@ -483,7 +483,7 @@ $result_indices_sort_strings{'at_commands_glued_in_paragraph'} = {
 
 
 $result_converted{'plaintext'}->{'at_commands_glued_in_paragraph'} = 'at@.  TeXTeXTeX. code‘in code’code.  acronymABC (aaa bb cc)acronym.
-acronym2ABCacronym.  emailmali <somebody>email.  ref*note Top::ref.
+acronym2ABCacronym.  emailmali <somebody>email.  refTopref.
 Foornote(1)after footnote.  accentîaccent.  and star
 star.  noindentafter noindent sp
 

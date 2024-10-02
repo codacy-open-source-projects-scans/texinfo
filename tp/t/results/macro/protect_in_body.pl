@@ -89,7 +89,12 @@ $result_trees{'protect_in_body'} = {
                             'text' => '@samp{f\\irst arg}'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'info' => {
+                          'spaces_before_argument' => {
+                            'text' => ' '
+                          }
+                        },
+                        'type' => 'brace_arg'
                       },
                       {
                         'contents' => [
@@ -102,15 +107,12 @@ $result_trees{'protect_in_body'} = {
                             'text' => ' '
                           }
                         },
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
                       'command_name' => 'macroone',
                       'spaces_after_cmd_before_arg' => {
-                        'text' => ' '
-                      },
-                      'spaces_before_argument' => {
                         'text' => ' '
                       }
                     },
@@ -135,7 +137,7 @@ $result_trees{'protect_in_body'} = {
                               'text' => 'f\\irst arg'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'samp',
@@ -145,7 +147,7 @@ $result_trees{'protect_in_body'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'emph',
@@ -165,7 +167,7 @@ $result_trees{'protect_in_body'} = {
                       'text' => 'second arg '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'emph',

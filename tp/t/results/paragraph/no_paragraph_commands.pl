@@ -24,7 +24,7 @@ $result_trees{'no_paragraph_commands'} = {
                   'text' => 'title font'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_container'
             }
           ],
           'cmdname' => 'titlefont',
@@ -45,7 +45,7 @@ $result_trees{'no_paragraph_commands'} = {
                   'text' => 'aa'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -53,7 +53,7 @@ $result_trees{'no_paragraph_commands'} = {
                   'text' => 'bb'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -61,7 +61,7 @@ $result_trees{'no_paragraph_commands'} = {
                   'text' => 'cc'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -69,7 +69,7 @@ $result_trees{'no_paragraph_commands'} = {
                   'text' => 'dd'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -77,7 +77,7 @@ $result_trees{'no_paragraph_commands'} = {
                   'text' => '.ee'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             }
           ],
           'cmdname' => 'image',

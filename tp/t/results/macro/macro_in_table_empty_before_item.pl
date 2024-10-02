@@ -70,8 +70,7 @@ $result_trees{'macro_in_table_empty_before_item'} = {
                   'cmdname' => 'code',
                   'source_info' => {
                     'line_nr' => 4
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -94,7 +93,7 @@ $result_trees{'macro_in_table_empty_before_item'} = {
                       'element' => {
                         'args' => [
                           {
-                            'type' => 'brace_command_arg'
+                            'type' => 'brace_arg'
                           }
                         ],
                         'info' => {

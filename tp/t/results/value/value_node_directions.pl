@@ -79,7 +79,7 @@ $result_trees{'value_node_directions'} = {
                             'text' => 'a--foo'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_container'
                       }
                     ],
                     'cmdname' => 'value'
@@ -182,7 +182,7 @@ $result_trees{'value_node_directions'} = {
                             'text' => 'a--foo'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_container'
                       }
                     ],
                     'cmdname' => 'value'
@@ -214,33 +214,28 @@ $result_trees{'value_node_directions'} = {
       'cmdname' => 'top',
       'contents' => [
         {
-          'source_marks' => [
-            {
-              'counter' => 3,
-              'element' => {
-                'args' => [
-                  {
-                    'contents' => [
-                      {
-                        'text' => 'a--foo'
-                      }
-                    ],
-                    'type' => 'brace_command_arg'
-                  }
-                ],
-                'cmdname' => 'value'
-              },
-              'line' => 'bar',
-              'sourcemark_type' => 'value_expansion',
-              'status' => 'start'
-            }
-          ],
-          'text' => ''
-        },
-        {
           'contents' => [
             {
               'source_marks' => [
+                {
+                  'counter' => 3,
+                  'element' => {
+                    'args' => [
+                      {
+                        'contents' => [
+                          {
+                            'text' => 'a--foo'
+                          }
+                        ],
+                        'type' => 'brace_container'
+                      }
+                    ],
+                    'cmdname' => 'value'
+                  },
+                  'line' => 'bar',
+                  'sourcemark_type' => 'value_expansion',
+                  'status' => 'start'
+                },
                 {
                   'counter' => 3,
                   'position' => 3,
@@ -379,7 +374,7 @@ $result_trees{'value_node_directions'} = {
                         'text' => 'a--foo'
                       }
                     ],
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_container'
                   }
                 ],
                 'cmdname' => 'value'
@@ -487,7 +482,7 @@ $result_trees{'value_node_directions'} = {
                             'text' => 'a--foo'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_container'
                       }
                     ],
                     'cmdname' => 'value'

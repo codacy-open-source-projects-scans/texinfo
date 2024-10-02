@@ -28,6 +28,8 @@
 #include "tree_types.h"
 #include "text.h"
 #include "errors.h"
+/* for element_builtin_cmd */
+#include "builtin_commands.h"
 /* for xasprintf */
 #include "utils.h"
 #include "unicode.h"
@@ -103,9 +105,9 @@ unicode_accent (const char *text, const ELEMENT *e)
   what is going on for that character.
   */
 
-  if (e->cmd == CM_dotless)
+  if (e->e.c->cmd == CM_dotless)
     {
-      if (!e->parent || !e->parent->parent || !e->parent->parent->cmd
+      if (!e->parent || !e->parent->parent || !e->parent->parent->e.c->cmd
           || !unicode_diacritics[element_builtin_cmd (e->parent->parent)].text)
         {
           if (!strcmp (text, "i"))
@@ -118,10 +120,10 @@ unicode_accent (const char *text, const ELEMENT *e)
       return strdup (text);
     }
 
-  if (unicode_diacritics[e->cmd].text)
+  if (unicode_diacritics[e->e.c->cmd].text)
     {
       static TEXT accented_text;
-      if (e->cmd == CM_tieaccent)
+      if (e->e.c->cmd == CM_tieaccent)
         {
           /* tieaccent diacritic is naturally and correctly composed
              between two characters */
@@ -152,7 +154,7 @@ unicode_accent (const char *text, const ELEMENT *e)
                   text_init (&accented_text);
                   text_append (&accented_text, first_char_text);
                   free (first_char_text);
-                  text_append (&accented_text, unicode_diacritics[e->cmd].text);
+                  text_append (&accented_text, unicode_diacritics[e->e.c->cmd].text);
                   next_text = string_from_utf8 (next);
                   text_append (&accented_text, next_text);
                   free (next_text);
@@ -166,7 +168,7 @@ unicode_accent (const char *text, const ELEMENT *e)
         }
       text_init (&accented_text);
       text_append (&accented_text, text);
-      text_append (&accented_text, unicode_diacritics[e->cmd].text);
+      text_append (&accented_text, unicode_diacritics[e->e.c->cmd].text);
       result = normalize_NFC (accented_text.text);
       free (accented_text.text);
     }
@@ -250,10 +252,10 @@ format_eight_bit_accents_stack (CONVERTER *self, const char *text,
           if (first_char <= 0xFFFF)
             {
               xasprintf (&codepoint, "%04lX", first_char);
-              char *found = (char *)bsearch (&codepoint,
+              const char *found = (const char *)bsearch (&codepoint,
                              unicode_to_eight_bit[encoding_index].codepoints,
                              unicode_to_eight_bit[encoding_index].number,
-                             sizeof (char *), compare_strings);
+                             sizeof (const char *), compare_strings);
               if (found)
                 new_eight_bit = strdup (found);
 
@@ -283,7 +285,7 @@ format_eight_bit_accents_stack (CONVERTER *self, const char *text,
     #    underbar.
     */
       if (!strcmp (new_eight_bit, prev_eight_bit)
-          && !(stack->stack[j]->cmd == CM_dotless
+          && !(stack->stack[j]->e.c->cmd == CM_dotless
                && !strcmp (results_stack[j], "i")))
         {
           free (new_eight_bit);
@@ -466,7 +468,7 @@ int unicode_point_decoded_in_encoding (const char *encoding,
   return 0;
 }
 
-char *
+const char *
 unicode_brace_no_arg_command (enum command_id cmd, const char *encoding)
 {
   if (unicode_character_brace_no_arg_commands[cmd].text

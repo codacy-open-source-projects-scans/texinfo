@@ -95,7 +95,19 @@ $result_trees{'def_in_example'} = {
                   ],
                   'extra' => {
                     'def_command' => 'defun',
-                    'def_index_element' => {},
+                    'def_index_element' => {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'name'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
                     'index_entry' => [
                       'fn',
                       1
@@ -202,7 +214,6 @@ $result_trees{'def_in_example'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'def_in_example'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'def_in_example'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[2];
 
 $result_texis{'def_in_example'} = '@example
 @defun name arg
@@ -238,7 +249,7 @@ $result_indices_sort_strings{'def_in_example'} = {
 
 
 
-$result_converted{'plaintext'}->{'def_in_example'} = '      -- Function: name arg
+$result_converted{'plaintext'}->{'def_in_example'} = '      - Function: name arg
           in defun
 ';
 

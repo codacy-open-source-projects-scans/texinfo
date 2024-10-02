@@ -146,7 +146,7 @@ $result_trees{'macro_in_early_commands'} = {
                                 'text' => 'info'
                               }
                             ],
-                            'type' => 'brace_command_arg'
+                            'type' => 'brace_arg'
                           }
                         ],
                         'info' => {
@@ -189,7 +189,7 @@ $result_trees{'macro_in_early_commands'} = {
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -387,7 +387,7 @@ $result_trees{'macro_in_early_commands'} = {
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -745,25 +745,6 @@ $result_trees{'macro_in_early_commands'} = {
           'type' => 'paragraph'
         },
         {
-          'source_marks' => [
-            {
-              'counter' => 6,
-              'element' => {
-                'args' => [
-                  {
-                    'type' => 'brace_command_arg'
-                  }
-                ],
-                'info' => {
-                  'command_name' => 'themacro'
-                },
-                'type' => 'macro_call'
-              },
-              'position' => 1,
-              'sourcemark_type' => 'macro_expansion',
-              'status' => 'start'
-            }
-          ],
           'text' => '
 ',
           'type' => 'empty_line'
@@ -772,6 +753,22 @@ $result_trees{'macro_in_early_commands'} = {
           'contents' => [
             {
               'source_marks' => [
+                {
+                  'counter' => 6,
+                  'element' => {
+                    'args' => [
+                      {
+                        'type' => 'brace_arg'
+                      }
+                    ],
+                    'info' => {
+                      'command_name' => 'themacro'
+                    },
+                    'type' => 'macro_call'
+                  },
+                  'sourcemark_type' => 'macro_expansion',
+                  'status' => 'start'
+                },
                 {
                   'counter' => 6,
                   'position' => 11,
@@ -805,6 +802,10 @@ $result_trees{'macro_in_early_commands'} = {
               'cmdname' => '}'
             },
             {
+              'text' => '
+'
+            },
+            {
               'source_marks' => [
                 {
                   'counter' => 7,
@@ -816,7 +817,7 @@ $result_trees{'macro_in_early_commands'} = {
                             'text' => 'info'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -824,16 +825,9 @@ $result_trees{'macro_in_early_commands'} = {
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 1,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
-                }
-              ],
-              'text' => '
-'
-            },
-            {
-              'source_marks' => [
+                },
                 {
                   'counter' => 7,
                   'position' => 18,

@@ -1,3 +1,4557 @@
+2024-07-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_default_format_footnotes_sequence): free footnote_location_href.
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(register_formatting_reference_default)
+	(register_formatting_reference_with_default): handle HV set to 0 in
+	argument.
+
+	* tp/maintain/generate_code_convert_data.pl: add
+	SPECIAL_UNIT_INFO_TYPE_NR and default_special_unit_info declarations.
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_converter_initialize_sv),
+	tp/Texinfo/XS/convert/convert_html.c (html_add_special_unit_info)
+	(html_converter_initialize, reset_special_unit_info_list)
+	(html_reset_converter, html_free_converter),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(SPECIAL_UNIT_INFO, SPECIAL_UNIT_INFO_LIST, CONVERTER): get
+	customized_special_unit_info in argument of
+	html_converter_initialize_sv, put it in SPECIAL_UNIT_INFO_LIST new
+	type in customized_special_unit_info field of converter.  Also get the
+	customized_special_unit_varieties in converter, although this
+	information is not used for now.  Set special_unit_varieties based on
+	defaults in conversion_data.c and set special_unit_info default in
+	html_converter_initialize before applying customization.
+
+2024-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/generate_code_convert_data.pl: add
+	BASE_DEFAULT_CSS_ELEMENT_CLASS_STYLE_NR in main/conversion_data.h.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_css_set_selector_style)
+	(sort_css_element_class_styles, find_css_selector_style): use a
+	CSS_SELECTOR_STYLE_LIST pointer as first argument.  Update callers.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_attribute_class)
+	(convert_itemize_command): check that style in selector_style is set.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(get_special_list_mark_css_string_no_arg_command): add based on
+	html_initialize_output_state code.  Use in
+	html_initialize_output_state.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_format_setup)
+	(default_css_element_class_styles): set
+	default_css_element_class_styles based on
+	base_default_css_element_class_styles set in main/conversion_data.c,
+	add and remove selectors with styles. 
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_initialize_output_state): 
+	initializeself->css_element_class_styles with
+	default_css_element_class_styles.
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_converter_initialize_sv),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv): remove
+	default_css_element_class_styles argument.  Set
+	default_css_element_class_styles as a variable set to 0 in
+	html_converter_initialize_sv such that the code can be left but is not
+	run.
+
+2024-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (main/conversion_data.c),
+	maintain/generate_code_convert_data.pl: read C commands data on STDIN.
+	Generate default_translated_directions_strings and
+	html_style_commands_element C data.
+
+	* tp/Makefile.am (Texinfo/Data.pm): reformat.
+
+2024-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Data/default_direction_strings.csv,
+	tp/Texinfo/Data/default_special_unit_info.csv,
+	tp/maintain/generate_code_convert_data.pl: determine translation
+	context automatically.  Remove columns from data files.
+
+	* tp/Makefile.am (maintenance_files, Texinfo/Data.pm),
+	tp/Texinfo/XS/Makefile.am (libtexinfo_la_SOURCES, EXTRA_DIST)
+	(BUILT_SOURCES, main/conversion_data.c, MAINTAINERCLEANFILES),
+	tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/main/converter_types.h,
+	tp/Texinfo/XS/main/option_types.h, tp/Texinfo/XS/main/tree_types.h,
+	tp/maintain/generate_code_convert_data.pl: generate automatically C
+	code files based on tp/Texinfo/Data/*.csv in
+	generate_code_convert_data.pl in parallel with Perl code generation.
+	Replace from manually set enum, arrays and macros
+	special_unit_info_type_names, translated_special_unit_info,
+	direction_type_translation_context, enum special_unit_info_type, enum
+	special_unit_info_tree, TDS_TRANSLATED_TYPES_LIST,
+	TDS_NON_TRANSLATED_TYPES_LIST, TDS_TYPE_MAX_NR, FIRSTINFILE_MIN_IDX,
+	FIRSTINFILE_MAX_IDX, HTML_GLOBAL_DIRECTIONS_LIST,
+	RUD_DIRECTIONS_TYPES_LIST and RUD_FILE_DIRECTIONS_TYPES.
+
+2024-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Data/default_direction_strings.csv: fix order.
+
+	* tp/maintain/generate_convert_data_perl_code.pl,
+	tp/Texinfo/Convert/HTML.pm, tp/Texinfo/OutputUnits.pm: gather
+	directions orders from one place only, in
+	generate_convert_data_perl_code.pl, setup get_directions_order in
+	Texingo::Data.
+
+2024-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Directions), tp/Texinfo/OutputUnits.pm
+	(@relative_directions_order), tp/Texinfo/XS/main/tree_types.h
+	(RUD_DIRECTIONS_TYPES_LIST): remove SectionNext, SectionPrev and
+	SectionUp, they have no associated strings and have not be set for a
+	long time.
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h,
+	tp/Texinfo/XS/main/option_types.h: add comment, move code around.
+
+2024-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/generate_convert_data_perl_code.pl: process special
+	units before directions.  Change in spacing.
+
+	* tp/Texinfo/Data/default_direction_strings.csv: change order to match
+	better order in C enum.
+
+	* tp/Texinfo/XS/main/utils.c: change in spacing.
+
+2024-07-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl: get file handle from XS for - too.
+
+2024-10-01  Patrice Dumas  <pertusus@free.fr>
+
+	* Makefile.am, ChangeLog: remove spurious references to
+	copy-file_but_owner.c. copy-file_but_owner.c never existed in this
+	timeline.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po_document/Makevars (XGETTEXT_OPTIONS): add cdt_tree and
+	translate_convert_to_html_internal keywords.
+
+	* Makefile.am (po_document-check): match
+	translate_convert_to_html_internal.
+
+	* tp/Texinfo/XS/convert/converter.c: mark @error translation as
+	Texinfo code as a translated string with gdt_noop.
+
+	* tp/Texinfo/XS/main/convert_utils.c (convert_utils_month_name): mark
+	months for translation with gdt_noop.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po_document/Makevars (XGETTEXT_OPTIONS), tp/Texinfo/XS/main/utils.h
+	(gdt_noop, pgdt_context_noop), tp/Texinfo/XS/main/utils.c
+	(def_aliases), po_document/POTFILES.in: add gdt_noop and
+	pgdt_context_noop cpp macros to mark strings for translation.  Use in
+	utils.c for def_aliases.  Add to XGETTEXT_OPTIONS, and add
+	main/utils.c to po_document/POTFILES.in.
+
+	* Makefile.am (po_document-check): match gdt_noop and pgdt_context_noop.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* Makefile.am (po_document-check), po_document/POTFILES.in: add an
+	exception for main/DocumentXS.c in po_document-check, remove from
+	POTFILES.in.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_utils.c (definition_category_tree):
+	remove empty lines between TRANSLATORS comment and function call.
+
+	* Makefile.am (po_document-check): consider C files, update matching
+	to get functions used in C.
+
+	* po_document/Makevars (XGETTEXT_OPTIONS): add C only keywords
+	html_cdt_tree and gdt_tree.
+
+	* po_document/POTFILES.in: add converter C files.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po/Makevars (XGETTEXT_OPTIONS): add pass-perl-format flag for __p.
+
+	* Makefile.am (po-check): add missing keywords.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po/Makevars (XGETTEXT_OPTIONS): add c-format flag for
+	line_error_ext.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po/Makevars (XGETTEXT_OPTIONS): fix line_error_ext argument number.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po/Makevars (XGETTEXT_OPTIONS): set pass-perl-format for __.  Add
+	c-format and perl-format for functions involved in error reporting.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po/Makevars (XGETTEXT_OPTIONS): remove --flag options of removed
+	functions.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po_document/Makevars (XGETTEXT_OPTIONS): remove --language=Perl, it
+	can be detemrined automatically, and could be C too.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po_document/Makevars (XGETTEXT_OPTIONS): disable default keywords.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po/Makevars (XGETTEXT_OPTIONS): disable default keywords.  Add
+	ngettext.  Reorder.  Remove unused keywords.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* po/POTFILES.in: add tp/Texinfo/XS/convert/converter.c.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	Use separate po files for tp/Texinfo/XS gnulib
+
+	* tp/Texinfo/XS/main/build_perl_info.c (init): call
+	bindtextdomain for the texinfo_tp-gnulib separate domain.
+
+	* po/POTFILES.in: remove tp/Texinfo/XS/gnulib/lib file.
+
+	* Makefile.am (po-check): ignore tp/Texinfo/XS/gnulib/lib/*.
+
+2024-10-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (HTML Xref Link Basics, HTML Xref Configuration):
+	Edit.
+
+	Patch to documentation posted by Patrice, bug-texinfo 2024-08-23 and
+	revised by Gavin.
+
+2024-10-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/generate_convert_data_perl_code.pl: import
+	File::Basename.
+
+2024-10-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/generate_convert_data_perl_code.pl: use generating file
+	basename in comment.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* gnulib/m4: remove obsolete gnulib gettext module m4 files.
+
+2024-10-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/gnulib/lib/Makefile.am,
+	tp/Texinfo/XS/gnulib/m4/gnulib-cache.m4,
+	tp/Texinfo/XS/gnulib/po/POTFILES.in: update tp/Texinfo/XS gnulib.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	Setup separate po files directory for tp/Texinfo/XS directory gnulib
+
+	* tp/Texinfo/XS: run
+	  gnulib-tool --add-import --po-base=gnulib/po --po-domain=texinfo_tp
+
+	* tp/Texinfo/XS/Makefile.am (SUBDIRS), tp/Texinfo/XS/configure.ac
+	(AC_CONFIG_FILES): update for tp/Texinfo/XS/gnulib/po/.
+
+	* tp/Texinfo/XS/gnulib/m4: remove obsolete gnulib gettext module m4 files.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	Use separate po files for gnulib in info and install-info
+	
+	* info/info.c (main), install-info/install-info.c (main): call
+	bindtextdomain for the PACKAGE "-gnulib" separate domain.
+
+	* po/POTFILES.in: remove gnulib/lib files.
+
+	* Makefile.am (po-check): ignore gnulib/lib/*.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	Setup separate po files directory for base directory gnulib
+
+	run
+	  gnulib/gnulib-tool --add-import --po-base=gnulib/po --po-domain=texinfo
+
+	* Makefile.am (SUBDIRS), configure.ac (AC_CONFIG_FILES): update for
+	gnulib/po/.
+
+2024-07-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (default_upper_case_commands):
+	add, with @sc.
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_converter_initialize_sv),
+	tp/Texinfo/XS/convert/convert_html.c (html_converter_initialize)
+	(html_free_converter), tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(COMMAND_INTEGER_INFORMATION, CONVERTER): add
+	html_customized_upper_case_commands field in converter.  Pass
+	customized_upper_case_commands to converter_initialize instead of
+	getting upper_case_commands directly from Perl converter.  Initialize
+	converter upper_case in html_converter_initialize based on defaults in
+	default_upper_case_commands, and add
+	html_customized_upper_case_commands information on top.
+
+2024-07-27  Patrice Dumas  <pertusus@free.fr>
+
+	* po_document/POTFILES.in: add tp/Texinfo/Data.pm.
+
+2024-07-27  Patrice Dumas  <pertusus@free.fr>
+
+	Use CSV files to store data relevant for Perl and C
+
+	* tp/Texinfo/Data/default_css_element_class_styles.csv,
+	tp/Texinfo/Data/default_direction_strings.csv,
+	tp/Texinfo/Data/default_special_unit_info.csv,
+	tp/Texinfo/Data/html_style_commands_element.csv,
+	tp/maintain/generate_convert_data_perl_code.pl, tp/Makefile.am
+	(dist_modules_DATA, dist_noinst_DATA, maintenance_files)
+	(Texinfo/Data.pm), tp/Texinfo/Convert/HTML.pm: move
+	%default_special_unit_info, %default_translated_special_unit_info,
+	%default_converted_directions_strings,
+	%default_translated_directions_strings,
+	%default_css_element_class_styles and %style_commands_element to CSV
+	files separated by | in tp/Texinfo/Data/.  Add
+	maintain/generate_convert_data_perl_code.pl to generate Perl data
+	in Texinfo/Data.pm based on the CSV files data.
+
+2024-10-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (HTML Xref Configuration): edit description
+	of splitting search order.
+
+2024-07-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (html_get_css_elements_classes)
+	(%default_css_element_class_styles): remove unused %css_rules_not_collected.
+
+2024-10-01  Patrice Dumas  <pertusus@free.fr>
+
+	update gnulib in tp/Texinfo/XS
+
+2024-10-01  Patrice Dumas  <pertusus@free.fr>
+
+	update gnulib in base directory
+
+2024-07-27  Patrice Dumas  <pertusus@free.fr>
+
+	* po/Makevars (XGETTEXT_OPTIONS): remove redundant keyword option.
+
+2024-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_heading_command),
+	tp/Texinfo/XS/convert/convert_html.c (convert_heading_command),
+	tp/init/book.pm (book_convert_heading_command): use only one variable
+	for toc and mini toc or menu.
+
+2024-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/input.c (set_input_encoding)
+	(encode_file_name): add filename_encoding_conversion to cache the
+	encoding conversion like reverse_iconv did previously.  Reset in
+	set_input_encoding.  Call directly encode_with_iconv instead of
+	encode_string.
+
+2024-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/input.c (set_input_encoding)
+	(encode_file_name): use encode_string to encode the file name.  Remove
+	reverse_iconv.
+
+2024-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/input.c (set_input_encoding)
+	(parser_reset_encoding_list): use the general input_conversions from
+	utils.c in the parser.  Remove parser_input_conversions.  Do not call
+	reset_encoding_list in parser_reset_encoding_list such that conversion
+	code can reuse the converter setup for the parsing.
+
+2024-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document.c (remove_document_descriptor): call
+	unregister_document_hv.
+
+2024-07-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_conversion_initialization),
+	tp/Texinfo/XS/convert/convert_html.c (html_free_converter),
+	tp/Texinfo/XS/main/api_to_perl.c (unregister_html_converter_perl_hv),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER): register the
+	converter_info_hv in pl_info_hv field in converter to get a stable
+	caching from C in Perl data, even if the Perl data changes.
+
+	* tp/Texinfo/XS/main/api_to_perl.c (unregister_document_hv),
+	tp/Texinfo/XS/main/build_perl_info.c (get_document, fill_document_hv),
+	tp/Texinfo/XS/main/document_types.h (DOCUMENT): register the document
+	HV in document to get a stable caching from C in Perl data, even if
+	the Perl data changes.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(get_converter_indices_sorted_by_index)
+	(get_converter_indices_sorted_by_letter),
+	tp/Texinfo/XS/main/build_perl_info.c (BUILD_PERL_DOCUMENT_ITEM)
+	(BUILD_PERL_DOCUMENT_LIST, document_global_information): use the
+	C document hv field to cache Perl data instead of the passde document,
+	in case it changed.  A changed document happens for DOcBook in tests
+	as a copy of the document is made, with the same document descriptor
+	and another object.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(pass_sv_converter_info): use the Perl object in C to cache.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/03coverage_braces.t (nested_in_sc): do not set docbook as
+	test_formats in the test specification, as docbook is already output.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): call explicitely
+	Texinfo::Common::set_output_perl_encoding for HTML for outputting
+	result files, as OUTPUT_PERL_ENCODING is not set if with XS and
+	there is no user-defined functions called through the HTML
+	customization API.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/call_perl_function.c
+	(call_common_set_output_perl_encoding): add a call to
+	Texinfo::Common::set_output_perl_encoding to be able to set
+	OUTPUT_PERL_ENCODING from C.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_conversion_initialization): call
+	call_common_set_output_perl_encoding if
+	converter->external_references_number > 0.
+
+	* tp/Texinfo/Common.pm (output_files_open_out): remove call to
+	set_output_perl_encoding.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_prepare_converted_output_info, html_do_js_files): free
+	default_document_language and preamble_document_language.  Free jsdir.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	XS override for HTML::convert
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_convert): add an XS override
+	for convert.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_output_units_global_targets),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_output_units_global_targets): remove code used in
+	html_prepare_output_units_global_targets to pass data to Perl, put in
+	html_pass_output_units_global_targets new function.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	XS override for HTML::output
+
+	* tp/Texinfo/XS/convert/convert_html.c (do_jslicenses_file): remove a
+	spurious end of line.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_do_js_files): rename
+	do_js_files as html_do_js_files.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_finish_output): add.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_output): add an XS override
+	for output.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_conversion_units),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_conversion_output_units): move code setting Perl data from
+	html_prepare_conversion_units to a new function,
+	html_pass_conversion_output_units.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_units_directions_files),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_units_directions_files): move code setting Perl data from
+	html_prepare_units_directions_files to a new function,
+	html_pass_units_directions_files.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_prepare_converted_output_info)
+	(output), tp/Texinfo/XS/convert/convert_html.c
+	(html_prepare_converted_output_info): move call of structure handler
+	to the beginning of _prepare_converted_output_info out of output.
+
+	* tp/Texinfo/Convert/HTML.pm (_finish_output, output): move code
+	occuring at the end of output to a new function, _finish_output.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (XS_get_unclosed_stream): rename
+	_XS_get_unclosed_stream as XS_get_unclosed_stream.
+	
+	* tp/Texinfo/Convert/Converter.pm, tp/Texinfo/Convert/HTML.pm
+	(output), tp/t/test_utils.pl (close_files), tp/texi2any.pl: handle
+	undef converter_unclosed_files in texi2any.pl and test_utils.pl
+	when processing the output of
+	Texinfo::Common::output_files_unclosed_files by calling
+	XS_get_unclosed_stream.  Remove get_output_files_XS_unclosed_streams,
+	now unneeded.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_prepare_converted_output_info)
+	(output), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_converted_output_info),
+	tp/Texinfo/XS/convert/convert_html.c
+	(html_prepare_converted_output_info): move code from output, before
+	and after _prepare_converted_output_info to
+	_prepare_converted_output_info, including call of
+	prepare_title_titlepage.  Add arguments for prepare_title_titlepage.
+	Update XS override and C code.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_conversion_finalization)
+	(html_prepare_title_titlepage): remove calls of
+	build_html_formatting_state, the functions do not set anything passed
+	in build_html_formatting_state.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_title_titlepage),
+	tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/convert/get_html_perl_info.c: remove
+	html_converter_prepare_output, which does nothing.  Do not get
+	jslicenses from Perl as they are setup in C.  Remove
+	html_converter_prepare_output_sv, which now does nothing.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c (html_get_jslicenses_sv)
+	(html_converter_prepare_output_sv): split html_get_jslicenses_sv out
+	of html_converter_prepare_output_sv.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_internal_command_text):
+	do not call build_html_formatting_state, there is nothing set in C
+	that needs to be passed.
+
+2024-09-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_command_description),
+	tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_formatting_function_format_single_footnote): check and reset
+	flags in build_html_formatting_state.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_formatting_state): check and reset flags in
+	build_html_formatting_state.  Update callers.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_initialization_state): pass converter HV, not SV.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_conversion_initialization),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_conversion_initialization): move code passing information
+	to Perl to html_pass_conversion_initialization from
+	html_conversion_initialization.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_initialization_state): rename
+	html_pass_converter_output_state as
+	html_pass_converter_initialization_state.  Update caller.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_conversion_units):
+	use C converter document name instead of document name coming from
+	Perl.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides, _setup_output)
+	(output), tp/Texinfo/XS/convert/ConvertXS.xs (html_setup_output):
+	rename _init_output as _setup_output.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides)
+	(_setup_convert, convert), tp/Texinfo/XS/convert/convert_html.c
+	(html_setup_convert), tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_output_state, html_pass_converter_setup_state),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_setup_output)
+	(html_setup_convert, html_prepare_conversion_units): add
+	_setup_convert call at the beginning of convert, that calls
+	_init_conversion_after_setup_handler.  Add an XS override for
+	_setup_convert.  Add html_pass_converter_setup_state to pass to Perl
+	the information set in _setup_output or _setup_convert.  Move setting
+	use_unicode_text for Perl from html_pass_converter_output_state to
+	html_pass_converter_setup_state.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_setup_output): rename
+	setup_status as setup_handler_status.
+
+2024-07-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (file_error_or_write_close):
+	return -2 if the file stream is 0.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_node_redirections): do
+	not return an error immediately from the function in case of open
+	error, as in Perl.
+
+2024-09-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (do_js_files): use
+	copy_file_to.
+
+2024-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_do_jslicenses_file): check path before
+	gathering the output.
+
+	* tp/Texinfo/XS/convert/convert_html.c (file_error_or_write_close)
+	(do_jslicenses_file, do_js_files, html_convert_output): add
+	file_error_or_write_close with code from html_convert_output.
+	Implement do_jslicenses_file and do_js_files in C.
+
+2024-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (output_files_open_out),
+	tp/Texinfo/Convert/HTML.pm (convert, output): do not call
+	set_output_perl_encoding in convert nor output, but in
+	output_files_open_out just before it is needed.
+
+	* tp/Texinfo/Convert/HTML.pm (_do_js_files): close FH only if it was
+	opened.
+
+2024-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_conversion_initialization),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_output_state): always set converter_info in Perl
+	converter for calls to get_info in Perl, which can happen anywhere.
+
+2024-09-30  Patrice Dumas  <pertusus@free.fr>
+
+	Add gnulib copy-file module
+
+	* tp/Texinfo/XS:
+	Run "gnulib-tool --add-import copy-file"
+
+2024-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_do_js_files): encode $jsdir before
+	creating the directory.  Create the directory by calling
+	create_destination_directory().
+
+2024-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.h (PATHS_INFORMATION)
+	(conversion_paths_info), tp/Texinfo/XS/convert/converter.c: rename
+	conversion_paths_information as conversion_paths_info and
+	PATHS_INFORMATION union paths as p.
+
+2024-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/command_data.awk (BEGIN, END),
+	tp/maintain/regenerate_C_options_info.pl: add/remove newlines and add
+	a comment in generated C files.
+
+2024-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (init),
+	tp/Texinfo/XS/convert/converter.c (setup_converter_paths_information),
+	tp/Texinfo/XS/convert/converter.h (INSTALLED_PATHS, UNINSTALLED_PATHS)
+	(PATHS_INFORMATION), tp/Texinfo/XS/main/build_perl_info.c (init),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (init), tp/Texinfo/XSLoader.pm
+	(init): exchange second and third paths argument of init called from
+	XSLoader.pm and setup_converter_paths_information for more logical
+	groupings.  Consider paths in XS init functions as SV * as some are
+	necessarily undef.  In ConvertXS.xs init, convert only some SV * path
+	to char based on texinfo_uninstalled, other remain NULL.  Modify
+	PATHS_INFORMATION struct to ba a union of INSTALLED_PATHS and
+	UNINSTALLED_PATHS.  Setup conversion_paths_information accordingly in
+	setup_converter_paths_information.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (init),
+	tp/Texinfo/XS/convert/converter.c (setup_converter_paths_information)
+	(conversion_paths_information), tp/Texinfo/XS/convert/converter.h
+	(PATHS_INFORMATION): add the PATHS_INFORMATION structure and a global
+	variable conversion_paths_information.  Fill the paths with
+	setup_converter_paths_information called from ConvertXS.xs init.
+
+2024-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/TestXS.xs (PREFIX, xstest_init): use xstest_ as
+	prefix.  Update xstest_init call.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (init),
+	tp/Texinfo/XS/main/build_perl_info.c (init),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (init), tp/Texinfo/XSLoader.pm
+	(init): pass more ModulePath paths to init functions called by
+	XSLoader.pm when initializing XS modules.
+
+2024-09-30  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* INSTALL.generic: sync from gnulib
+
+2024-07-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/XSParagraph.xs, tp/Texinfo/XS/xspara.c: remove
+	xspara_init, as it does nothing.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (test_files): fix file name.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (init),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (init): add const for path.  Use
+	the same names for path everywhere.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_converted_output_info): remove unused variable.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(pass_sv_converter_info): call bug if the converter_info is not known.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(pass_sv_converter_info): replace redundant non_breaking_space by
+	missing line_break_element.
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_output_state): remove code setting converter_info
+	Perl data, as it is now done in pass_sv_converter_info on demand.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_init_output)
+	(html_prepare_simpletitle, html_prepare_converted_output_info)
+	(html_prepare_title_titlepage): remove code setting converter_info
+	Perl data, as it is now done in pass_sv_converter_info on demand.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(set_special_units_targets_files): reuse a TEXT for all the file
+	names.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(pass_sv_converter_info): increase new_sv ref count when storing.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	XS override for HTML::get_info
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_conversion_initialization):
+	always set the Perl document hash reference in the Perl converter, as
+	it is not stored in C data.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_get_info),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(pass_sv_converter_info): XS override for get_info, with caching in
+	$self->{'converter_info'}.  Note that either Perl code or XS code is
+	used, so this is for consistency not really for interoperability.
+
+	* tp/Makefile.am (test_files), tp/Makefile.tres,
+	tp/t/init_files_tests.t (access_document_name_in_handler): add a test
+	accessing document_name through get_info() in an handler and using it
+	as a scalar reference in buttons.  This tests that get_info gives a
+	correct information even if there is no Perl external reference
+	called from XS, and nothing is exported to Perl,
+	self->external_references_number == 0.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides)
+	(conversion_initialization), tp/Texinfo/XS/convert/ConvertXS.xs:
+	merge _initialize_output_state in conversion_initialization in Perl.
+	Remvoe _initialize_output_state override and remove
+	html_initialize_output_state from ConvertXS.xs.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	XS override for HTML::conversion_initialization
+
+	* tp/Texinfo/Convert/HTML.pm (conversion_initialization, convert)
+	(output), tp/t/accents.t: pass context as second argument of
+	conversion_initialization.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (converter_set_document),
+	tp/Texinfo/XS/main/build_perl_info.c (pass_document_to_converter_sv):
+	move setting Perl data code out of converter_set_document to a new
+	function pass_document_to_converter_sv in build_perl_info.c.
+
+	* tp/Texinfo/XS/main/get_perl_info.c (converter_set_document_from_sv):
+	allow a NULL document_in argument.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_initialize_output_state),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_output_state): set use_unicode_text in
+	build_html_perl_state.c.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides, convert)
+	(output), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_conversion_initialization, html_init_output)
+	(html_prepare_simpletitle),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_output_state): add an XS override for
+	conversion_initialization.  Update html_pass_converter_output_state
+	with a document_in argument to set converter_info and other Perl data.
+	Call Texinfo::Common::set_output_perl_encoding in Perl convert and
+	output as there is no corresponding code in C/XS.  Export to Perl only
+	if self->external_references_number > 0, except for jslicenses that
+	are always passed, as they are always used in Perl.
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c: add const.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/api_to_perl.c (get_perl_scalar_reference_value):
+	return 0 if the reference is undef or the value is undef.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_initialize_output_state):
+	pass information to Perl only if Perl code will be called from C.
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides, _init_output):
+	remove call to _XS_reset_output_init_conf, the function and the
+	override.  The whole _init_output function is already overriden.
+
+2024-09-30  Patrice Dumas  <pertusus@free.fr>
+
+	Update test results
+
+2024-07-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_initialize_output_state)
+	(_init_output), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_initialize_output_state), tp/Texinfo/XS/convert/convert_html.c
+	(html_initialize_output_state, html_init_output): move code completing
+	configuration from _init_output to _initialize_output_state such that
+	it is set for convert() too.
+
+	* tp/Texinfo/Convert/HTML.pm (_init_conversion_after_setup_handler)
+	(_init_output, convert), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_initialize_output_state, html_init_output)
+	(html_prepare_conversion_units), tp/Texinfo/XS/convert/convert_html.c
+	(init_conversion_after_setup_handler): add
+	init_conversion_after_setup_handler for code common to output and
+	convert, that is better run, in output(), after the first stage
+	handler.
+
+	* tp/Texinfo/Convert/HTML.pm (_init_output),
+	tp/Texinfo/XS/convert/convert_html.c (html_init_output): move code
+	around to register output_init_conf late after setting more
+	customization variables, including based on document.
+
+2024-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_html_formatting_state), tp/Texinfo/XS/convert/convert_html.c
+	(convert_tree_new_formatting_context): no need for transmission of
+	multiple_pass to Perl anymore.
+
+2024-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/command_stack.c (push_string_stack_string):
+	handle pushing NULL on a string_stack.
+
+	* tp/Texinfo/Convert/HTML.pm (_internal_command_text)
+	(convert_tree_new_formatting_context, _set_multiple_conversions)
+	(_unset_multiple_conversions), tp/Texinfo/XS/convert/convert_html.c
+	(html_set_multiple_conversions, html_unset_multiple_conversions)
+	(convert_tree_new_formatting_context, html_internal_command_text): 
+	add multiple pass string argument to set_multiple_conversions,
+	push on multiple_pass stack in the function and pop in
+	unset_multiple_conversions.  Add html_set_multiple_conversions and
+	html_unset_multiple_conversions to C.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	(_initialize_output_state, conversion_initialization),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_set_multiple_conversions)
+	(html_unset_multiple_conversions, html_in_multi_expanded): add XS
+	override for in_multi_expanded, update XS overrides for the changes in
+	html_unset_multiple_conversions and html_set_multiple_conversions.
+
+2024-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_initialize_output_state),
+	(conversion_initialization), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_units_directions_files)
+	(html_prepare_output_units_global_targets): initialize
+	global_units_directions in _initialize_output_state and remove call of
+	pass_html_global_units_directions from
+	html_prepare_units_directions_files and
+	html_prepare_output_units_global_targets as the hash is not accessed
+	at all from Perl with XS with the global_direction_unit override.
+
+2024-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	XS override for HTML::global_direction_unit
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_global_direction_unit)
+	(html_prepare_units_directions_files)
+	(html_prepare_output_units_global_targets),
+	tp/Texinfo/XS/convert/convert_html.c
+	(compare_global_units_direction_name)
+	(html_setup_global_units_direction_names)
+	(html_find_direction_name_global_unit, html_reset_converter),
+	tp/Texinfo/XS/main/converter_types.h (SPECIAL_UNIT_DIRECTION_LIST)
+	(CONVERTER): setup a sorted list of SPECIAL_UNIT_DIRECTION with
+	direction name and output unit for global directions, including
+	of special output units with html_setup_global_units_direction_names,
+	called from html_prepare_units_directions_files and
+	html_prepare_output_units_global_targets.  Add an XS override for
+	global_direction_unit that uses a bsearch to find the output unit
+	and the associated Perl object.
+
+2024-09-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_converter_perl_info.h: move back
+	get_converter_perl_info.c functions declarations to
+	get_converter_perl_info.h.
+
+2024-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (set_document): remove a redundant
+	condition on $XS_convert.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (converter_initialize):
+	converter_descriptor is necessarily set.
+
+	* tp/Texinfo/XS/main/get_perl_info.c (converter_set_document_from_sv):
+	return the converter.
+
+	* tp/Texinfo/Convert/Converter.pm (set_document),
+	tp/Texinfo/XS/convert/ConvertXS.xs (converter_set_document),
+	tp/Texinfo/XS/main/build_perl_info.c (build_convert_text_options): add
+	build_convert_text_options.  Setup more Perl structures in
+	converter_set_document in ConvertXS.xs, renaming
+	converter_set_document_from_sv to converter_set_document.
+
+2024-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (converter_set_document_from_sv),
+	tp/Texinfo/XS/convert/converter.c (converter_set_document),
+	tp/Texinfo/XS/main/get_perl_info.c (converter_set_document_from_sv):
+	rename converter_set_document as converter_set_document_from_sv in
+	get_perl_info.c.  Add converter_set_document in converter.c to do the
+	C part of converter_set_document_from_sv.
+
+2024-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (set_output_encoding)
+	(set_output_perl_encoding), tp/Texinfo/Convert/Converter.pm
+	(set_document), tp/Texinfo/Convert/Text.pm (output) tp/texi2any.pl:
+	split set_output_perl_encoding out of set_output_encodings.  Rename
+	set_output_encodings as set_output_encoding, update callers.
+
+2024-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_text)
+	(_initialize_output_state), tp/t/init/spaces_in_line_breaks.init
+	_texi2any_tests_set_line_break_element),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_output_state): access 'line_break_element'
+	through get_info only.
+
+2024-07-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (substitute_html_non_breaking_space)
+	(_initialize_output_state),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_output_state): access 'non_breaking_space'
+	through get_info only.
+
+2024-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(special_characters_formatting): fix right quote numerical entity.
+
+	* tp/Texinfo/Convert/HTML.pm (_initialize_output_state)
+	(conversion_initialization): move Perl code related to setting up
+	non_breaking_space, paragraph_symbol, resetting some configuration
+	based on special characters and line_break_element from
+	conversion_initialization to _initialize_output_state.
+
+2024-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_initialize_output_state)
+	(conversion_initialization),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_directions_strings, html_pass_converter_output_state): build
+	directions_strings from XS.  Move Perl code related to setting up
+	directions_strings from conversion_initialization to
+	_initialize_output_state.
+
+2024-09-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (ConvertXS_la_SOURCES): remove
+	convert_html.c to only use shared data in libtexinfo-convert.
+
+2024-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (no_arg_formatted_cmd),
+	tp/Texinfo/XS/convert/convert_html.h (no_arg_formatted_cmd): make
+	extern.
+
+	* tp/Texinfo/Convert/HTML.pm (_initialize_output_state)
+	(conversion_initialization),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(build_no_arg_commands_formatting, html_pass_converter_output_state):
+	build no_arg_commands_formatting from XS.  Move Perl code related
+	to setting up no_arg_commands_formatting from
+	conversion_initialization to _initialize_output_state.
+
+2024-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_xhtml_re_close_lone_element): do not
+	close again an already closed lone element.  Do not match < to find
+	the closing >.
+
+	* tp/Texinfo/XS/convert/convert_html.c (xhtml_re_close_lone_element):
+	implement in C.
+
+	* tp/Texinfo/XS/convert/converter.c (set_conf): return a status.
+
+	* tp/Texinfo/XS/convert/convert_html.c (close_lone_conf_element)
+	(html_initialize_output_state): do all the initializations as in Perl.
+
+	* tp/Makefile.tres, tp/t/html_tests.t
+	(xhtml_rule_element_already_closed): new test.
+
+2024-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_free_converter): free
+	self->html_stage_handlers lists and handlers priority information.
+
+2024-07-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER), tp/Texinfo/XS/convert/convert_html.c
+	(free_html_command_conversion, html_free_converter): get
+	customized_no_arg_commands_formatting from Perl.  Add
+	free_html_command_conversion based on html_free_converter code.
+	Free customized_no_arg_commands_formatting in html_free_converter.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(reset_unset_no_arg_commands_formatting_context)
+	(complete_no_arg_commands_formatting): move code above.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_initialize_output_state),
+	tp/Texinfo/XS/convert/convert_html.c (set_no_arg_commands_formatting)
+	(html_format_setup, copy_html_command_conversion)
+	(html_initialize_output_state): set unset in
+	default_no_arg_commands_formatting for preformatted and string context
+	when needed, fix * command formatting, use
+	unicode_character_brace_no_arg_commands[cmd].text for ASCII
+	characters.  Set self->html_command_conversion for no arg commands
+	based on self->customized_no_arg_commands_formatting,
+	output_no_arg_commands_formatting, and possibly unicode characters.
+	Reset ul.mark-* css_strings if needed.  Do not call
+	html_conversion_initialization_sv in html_initialize_output_state as
+	Perl information is not needed anymore there.
+
+2024-07-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (clear_direction_string_type)
+	(html_free_converter), tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER): get customized_direction_strings from Perl.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_initialize_output_state),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_conversion_initialization_sv): setup directions_strings in C
+	only, in html_initialize_output_state, using
+	customized_direction_strings.
+
+2024-07-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (unicode_entities)
+	(html_format_setup): setup unicode_entities.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_format_setup),
+	tp/Texinfo/XS/main/unicode.h (ENCODING_CODEPOINTS),
+	tp/maintain/setup_converters_code_tables.pl: add
+	unicode_character_brace_no_arg_commands css_string field.  Set it up
+	with Perl code.  Set default_no_arg_commands_formatting css_string
+	based on unicode_character_brace_no_arg_commands css_string and on
+	othere existing @-commands formatting tables to text.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_initialize_output_state):
+	use unicode_entities and line_break_element to setup
+	output_no_arg_commands_formatting
+
+2024-07-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_initialize_output_state):
+	strdup special character for output_no_arg_commands_formatting.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_initialize_output_state):
+	call html_conversion_initialization_sv after
+	html_initialize_output_state to have self->special_character set.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(substitute_html_non_breaking_space): initialize result to an empty
+	string.
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_conversion_initialization_sv): setup
+	converter->directions_strings based on Perl
+	$self->{'customized_direction_strings'} or
+	converter->default_converted_directions_strings, not from Perl
+	$self->{'direction_strings'}.
+
+2024-07-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_prepare_css): initialize
+	css_import_lines and css_rule_lines only if there are css files, from
+	valgrind.
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv): initialize stage handlers only if
+	there is at least one.
+
+	* tp/Texinfo/Convert/HTML.pm (_XS_html_converter_initialize)
+	(converter_initialize), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_converter_initialize_sv), tp/Texinfo/XS/convert/convert_html.c
+	(html_free_converter), tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER): pass default_converted_directions_strings from Perl to
+	default_converted_directions_strings in converter.
+
+2024-07-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (determine_files_and_directory):
+	free input_file_name, input_basename_for_outfile and document_path,
+	found with valgrind.
+
+2024-07-14  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%special_characters)
+	(conversion_initialization): remove _set_non_breaking_space.  Add
+	$xml_named_entity_nbsp as entity of non_breaking_space.  Simplify code
+	setting conf_default_no_arg_commands_formatting_normal to
+	non_breaking_space for space commands.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_expanded_formats):
+	return an HV, not an SV.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_is_format_expanded): add an
+	XS override for is_format_expanded.
+
+	* tp/Texinfo/Convert/Converter.pm (_internal_converter_initialize)
+	(converter), tp/Texinfo/XS/convert/ConvertXS.xs
+	(converter_initialize, html_converter_initialize_sv),
+	tp/Texinfo/XS/main/get_perl_info.c (converter_initialize): rename
+	_XS_converter_initialize as _internal_converter_initialize.  Add code
+	in _internal_converter_initialize for initialization either in generic
+	XS converter or in Perl.  Build expanded_formats in XS in
+	converter_initialize.  Use _internal_converter_initialize for code
+	setting $converter->{'expanded_formats'} in Perl.
+
+	* tp/Texinfo/Convert/HTML.pm (%default_css_element_class_styles):
+	rename  %css_element_class_styles as
+	%default_css_element_class_styles.
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize),
+	tp/Texinfo/Convert/HTML.pm (conversion_initialization),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv, html_conversion_initialization_sv):
+	pass default_css_element_class_styles to html_converter_initialize_sv.
+	Use css_set_selector_style call instead of modifying directly
+	$self->{'css_element_class_styles'}.
+
+	* tp/Texinfo/XS/convert/convert_html.c (spaces_cmd)
+	(html_initialize_output_state): preliminary code setting
+	output_no_arg_commands_formatting in C based on
+	default_no_arg_commands_formatting and non-breaking spaces.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_initialize_output_state),
+	tp/Texinfo/XS/convert/build_html_perl_state.c
+	(html_pass_converter_output_state): pass non-breaking space,
+	paragraph_symbol, line_break element and expanded_formats in
+	converter_info in XS.  For now this is redundant with Perl, but this
+	should change.
+
+	* tp/Texinfo/Convert/HTML.pm (conversion_initialization): reorder
+	code.
+
+2024-07-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv, html_conversion_initialization_sv):
+	move setup of translated_direction_strings out of
+	html_conversion_initialization_sv to html_converter_initialize_sv.
+
+2024-07-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_XS_html_converter_initialize)
+	(converter_initialize), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_converter_initialize_sv),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv): remove
+	default_no_arg_commands_formatting argument.
+
+2024-09-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_convert_la_SOURCES)
+	(nodist_IndicesXS_la_SOURCES, ConvertXS_la_SOURCES): put converter C
+	files in libtexinfo_convert_la_SOURCES.
+
+2024-07-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_la_SOURCES, EXTRA_DIST)
+	(BUILT_SOURCES), tp/Texinfo/XS/main/convert_to_text.c,
+	tp/maintain/setup_converters_code_tables.pl: merge cmd_symbol.c in
+	cmd_text.c and setup cmd_text.c as a separately built file.
+
+	* tp/Texinfo/XS/Makefile.am (ConvertXS_la_SOURCES, EXTRA_DIST),
+	tp/Texinfo/Convert/Converter.pm (%xml_text_entity_no_arg_commands),
+	tp/maintain/setup_converters_code_tables.pl: make
+	%xml_text_entity_no_arg_commands our.  Setup cmd_converter.c with
+	xml_text_entity_no_arg_commands in C.
+
+	* tp/Texinfo/XS/convert/converter.c
+	(xml_text_entity_no_arg_commands_formatting, converter_setup),
+	tp/Texinfo/XS/convert/ConvertXS.xs (init): setup
+	xml_text_entity_no_arg_commands_formatting.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides)
+	(_XS_format_setup, import), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_format_setup), tp/Texinfo/XS/convert/convert_html.c
+	(html_format_setup): rename _XS_format_init as _XS_format_setup
+	and html_format_init as html_format_setup.  Rename
+	nr_default_commands_args variable as default_commands_args_nr.
+
+	* tp/Texinfo/XS/convert/convert_html.c (no_arg_formatted_cmd)
+	(html_format_setup, html_free_converter),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(no_arg_formatted_cmd): make no_arg_formatted_cmd a
+	static variable instead of being in a converter, and setup
+	no_arg_formatted_cmd in html_format_setup.  Update users.
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(default_no_arg_commands_formatting, html_format_setup): prepare
+	default_no_arg_commands_formatting.
+
+2024-07-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.c, tp/Texinfo/XS/main/unicode.c,
+	tp/Texinfo/XS/main/unicode.h (ENCODING_CODEPOINTS, COMMAND_UNICODE)
+	(DIACRITIC_UNICODE), tp/Texinfo/XS/main/utils.h,
+	tp/maintain/setup_accent_tables.pl,
+	tp/maintain/setup_converters_code_tables.pl: add const.
+
+	* tp/maintain/setup_converters_code_tables.pl: simplify code for
+	unicode now that there are no empty strings anymore.
+
+2024-07-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm, tp/Texinfo/Convert/Unicode.pm: no more
+	empty strings in %unicode_map values.
+
+2024-07-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize)
+	(conversion_initialization): get customization from
+	GNUT_get_direction_string_info in converter_initialize, set
+	$self->{'customized_direction_strings'} and use it in
+	conversion_initialization.
+
+2024-07-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize)
+	(conversion_initialization): get customization from
+	GNUT_get_no_arg_command_formatting in converter_initialize, set
+	$self->{'customized_no_arg_commands_formatting'} and use
+	it in conversion_initialization.
+
+2024-07-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize)
+	(conversion_initialization): move setup of
+	$self->{'translated_direction_strings'} based on defaults and user
+	defined customization to converter_initialize.
+
+2024-07-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/input_files/command_non_break_spaces_koi8.texi,
+	tp/t/input_files/command_non_break_spaces_utf8.texi, tp/Makefile.am
+	(test_files), tp/t/init/t2h_buttons.pm,
+	tp/tests/many_input_files/for_nbspaces_different_encodings.sh: add
+	buttons with non-breaking spaces to the test.
+
+2024-07-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (test_files),
+	tp/t/input_files/command_non_break_spaces_koi8.texi,
+	tp/t/input_files/command_non_break_spaces_utf8.texi,
+	tests/many_input_files/for_nbspaces_different_encodings.sh,
+	tp/tests/many_input_files/Makefile.am (TESTS, tests_dirs): add test of
+	expansion of non-breaking space in HTML with OUTPUT_CHARACTERS=1 and a
+	file with a non-breaking space in the character set followed by
+	another with the character set, to check that for the second an
+	entity is output for the non-breaking space.
+
+2024-07-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%css_no_arg_commands): remove tie, as
+	the Texinfo::Common::text_brace_no_arg_commands value is ok, and
+	remove 'today' as it is useless.
+
+2024-07-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Unicode.pm (%unicode_map, %extra_unicode_map):
+	remove commands associated with empty string.  Add all the commands in
+	comment to simplify visual comparison with other similar maps.
+
+2024-07-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%css_no_arg_commands): add error as
+	undef and do not set if %css_no_arg_commands command value is undef.
+	Use Texinfo::Common::text_brace_no_arg_commands instead of other
+	values of default_no_arg_commands_formatting.
+
+2024-07-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (%text_brace_no_arg_commands): reorder.
+
+	* tp/Texinfo/Convert/Converter.pm (%xml_text_entity_no_arg_commands)
+	(%xml_text_entity_no_arg_commands_formatting): add
+	%xml_text_entity_no_arg_commands with specific commands previously set
+	in %xml_text_entity_no_arg_commands_formatting, and &.  Reorder.
+	Comment out commands that are the same as in
+	%Texinfo::Common::text_brace_no_arg_commands.  Complete
+	%xml_text_entity_no_arg_commands_formatting with
+	Texinfo::Common::text_brace_no_arg_commands and
+	Texinfo::Common::nobrace_symbol_text for commands not already set.
+
+	* tp/Texinfo/Common.pm (%text_brace_no_arg_commands)
+	(%xml_text_entity_no_arg_commands): remove today.
+	* tp/Texinfo/Convert/HTML.pm (%css_no_arg_commands),
+	tp/Texinfo/Convert/NodeNameNormalization.pm
+	(%normalize_node_nobrace_symbol_text): add today.
+
+	* tp/Texinfo/Convert/HTML.pm (_translate_names): remove a useless
+	possibility in a condition.
+
+2024-07-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%default_no_arg_commands_formatting):
+	for css_string preset explicitly @tie and @* values, and use
+	nobrace_symbol_text preferentially to preformatted/normal values.
+
+2024-07-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%default_no_arg_commands_formatting):
+	reset explicitly & value.
+
+	* tp/t/html_tests.t ($itemize_arguments_text): add @& and
+	@ampchar to tests.
+
+2024-07-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (remove_extension, canonpath)
+	(STRING_AND_LEN, texinfo_extensions, determine_files_and_directory)
+	(create_destination_directory): implement
+	determine_files_and_directory and create_destination_directory in C.
+
+	* tp/Texinfo/Convert/HTML.pm (_init_output, output),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_init_output), 
+	tp/Texinfo/XS/convert/convert_html.c (html_init_output)
+	(html_reset_converter), tp/Texinfo/XS/main/converter_types.h
+	(CONVERTER): add determine_files_and_directory,
+	create_destination_directory and destination_directory and
+	document_name registering to _init_output instead of output
+	and implement in C/XS.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_process_css_file): remove
+	a useless strdup.
+
+2024-07-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.c (parse_file_path),
+	tp/Texinfo/XS/parsetexi/api.c: move parse_file_path to utils.c.
+
+2024-07-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (init): set encoding conversion
+	for input_conversions to utf-8 before anything else, to be sure that
+	the conversion to utf-8 gets initialized.
+
+2024-07-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (determine_files_and_directory):
+	reuse document_path for output_file instead of removing the extension
+	again.
+
+2024-07-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_init_output, output),
+	tp/Texinfo/XS/convert/convert_html.c (html_process_css_file)
+	(html_prepare_css, html_init_output): move _prepare_css call to
+	_init_output.  Implement in C.
+
+2024-07-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_prepare_simpletitle):
+	call build_simpletitle with converter_info.
+
+	* tp/Texinfo/Convert/HTML.pm (_init_output, output),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_init_output),
+	tp/Texinfo/XS/convert/build_html_perl_state.c (pass_jslicenses),
+	tp/Texinfo/XS/convert/convert_html.c (contents_elements_options)
+	(conf_for_documentlanguage, fill_jslicense_file_info)
+	(html_init_output): move BODY_ELEMENT_ATTRIBUTES setting and
+	some set_global_document_commands calls to init_output.  Move
+	jslicences data setting to init_output, add to XS interface and add
+	pass_jslicenses to build jslicense data from C to Perl.
+
+2024-09-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_converter_perl_info.c
+	(converter_set_document, converter_initialize)
+	(reset_output_init_conf), tp/Texinfo/XS/main/get_perl_info.c: move
+	converter_set_document, converter_initialize and
+	reset_output_init_conf to get_converter_perl_info.c.
+
+2024-07-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.c (html_free_direction_icons): reset number
+	and list to 0 as the icon list structure may be reused.
+
+	* tp/Texinfo/XS/convert/converter.c, tp/Texinfo/XS/main/utils.c
+	(copy_option), tp/Texinfo/XS/main/api_to_perl.c
+	(register_perl_button): move copy_option to utils.c and add the
+	missing types.  For the list buttons, add register_perl_button to be
+	able to increase the reference counter of a copied button Perl
+	reference.
+
+	* tp/maintain/regenerate_C_options_info.pl: add copy_options
+	automatically generated function to copy a whole OPTIONS structure.
+
+	* tp/Texinfo/Convert/HTML.pm (_init_output, output),
+	tp/Texinfo/XS/convert/convert_html.c (html_init_output): move
+	init_conf setup to _init_output, using copy_options.
+
+	* tp/Texinfo/XS/main/get_perl_info.c: minor changes.
+
+2024-09-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_init_output): set
+	MATHJAX_CONFIGURATION.
+
+2024-07-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (set_conf, force_conf)
+	(set_conf_internal), tp/Texinfo/XS/main/get_perl_info.c (set_sv_conf)
+	(force_sv_conf): add set_conf and force_conf in converter.c.  rename
+	set_conf as set_sv_conf and force_conf as force_sv_conf in
+	get_perl_info.c.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_reset_converter): free
+	shared_conversion_state.formatted_index_entries only if it was set.
+
+	* tp/Texinfo/XS/main/utils.c (null_device_names): add.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides, _init_output)
+	(output), tp/Texinfo/XS/convert/ConvertXS.xs (html_init_output)
+	(html_prepare_conversion_units), tp/Texinfo/XS/convert/convert_html.c
+	(html_init_output), tp/Texinfo/XS/main/build_perl_info.c
+	(latex_build_options_for_convert_to_latex_math): split the beginning
+	of output in _init_output.  Add an implemenation in C of init_output
+	and an XS interface.  Add
+	latex_build_options_for_convert_to_latex_math for the XS interface.
+	Increase external_references_number based on INTERNAL_LINKS and
+	CONVERT_TO_LATEX_IN_MATH in html_init_output instead of
+	html_prepare_conversion_units.
+
+	* tp/Texinfo/XS/convert/converter.c (copy_option): reindent.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_prepare_output_sv): fix the index in AV of the
+	jslicense file info data.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_stage_handler), tp/Texinfo/XS/convert/convert_html.c
+	(html_stage_handler_stage_type_names, run_stage_handlers),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/converter_types.h
+	(enum html_stage_handler_stage_type, HTML_STAGE_HANDLER_INFO)
+	(HTML_STAGE_HANDLER_INFO_LIST, CONVERTER): get stage handlers from
+	Perl and put them in HTML_STAGE_HANDLER_INFO_LIST structure in
+	converter.  Add run_stage_handlers and call_stage_handler to call Perl
+	registered stage handlers references.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.h, tp/Texinfo/XS/convert/convert_html.h:
+	move declaration of html_argument_formatting_type_names to
+	convert_html.h.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (converter_initialize, output): move the
+	call of Texinfo::Config::GNUT_get_stage_handlers to
+	converter_initialize.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/init/book.pm (book_unit_file_name),
+	tp/t/init/misc_file_collision.init (test_misc_file_name),
+	tp/t/init/only_toc_out.init (toc_out_element_file_name): access
+	'document_name' through get_info API only.
+
+	* tp/Texinfo/Convert/HTML.pm (_set_non_breaking_space)
+	(conversion_initialization, _prepare_title_titlepage)
+	(_prepare_simpletitle, convert, _prepare_converted_output_info)
+	(output, get_info), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_converted_output_info, html_prepare_title_titlepage),
+	tp/Texinfo/XS/convert/build_html_perl_state.c (build_simpletitle),
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_prepare_output_sv): set converter_info information
+	directly, not from the converter hash, as soon as the information is
+	ready.  Do not set the converter_info information in converter hash
+	unless it is directly accessed for speed.  Also do not set
+	converter_info information as a reference on string, always set a
+	string directly.  Remove _reset_info.
+
+	* tp/Texinfo/Convert/HTML.pm: remove $xml_numeric_entity_nbsp, it is
+	unused.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm: call internal functions as
+	subroutines, not as object oriented methods.  Reindent.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/MiscXS.xs (xs_process_text, xs_unicode_text)
+	(xs_entity_text, xs_default_format_protect_text): use SvPVutf8_nolen
+	to get SV argument and convert to text more simply.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/MiscXS.xs (xs_process_text),
+	tp/Texinfo/Convert/Plaintext.pm (_process_text_internal): add
+	prototype.
+
+	* tp/Texinfo/Convert/Plaintext.pm: call internal functions as
+	subroutines, not as object oriented methods.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Info.pm (_convert): add _suppress_styles type
+	that sets suppress_styles.
+
+	* tp/Texinfo/Convert/Info.pm (format_ref): convert @*ref using
+	translations for all the possible cases of arguments of @*ref.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Info.pm (format_ref),
+	tp/Texinfo/Convert/Plaintext.pm (format_ref): double check that a
+	reference is an internal reference before using the normalized
+	reference as label.
+
+	* tp/Makefile.tres, tp/t/info_tests.t
+	(similar_external_and_internal_node): add a test with external and
+	internal references with the same normalized node names.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/21multitable.t (ref_in_multitable), tp/t/converters_tests.t
+	(refs_formatting, top_in_ref, ref_error_formatting)
+	(ref_in_sectioning): add info as formatted output.
+
+	* tp/t/info_tests.t (del_quote_linebreaking, xref_quote_long_item),
+	tp/t/plaintext_tests.t, tp/Makefile.tres: move tests from
+	plaintext_tests to info_tests.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (format_ref): do not prepend :: at
+	the end of a reference.  Move code auround.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (format_ref): no see for @ref.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (format_ref): use see and See
+	instead of *note and *Note.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (format_ref): simplify output of
+	reference name.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (format_ref): never quote node
+	names and labels.  Do not add Top if there is no node.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (format_ref): do not add a full stop
+	after a ref command not followed by a comma or full stop.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (format_ref, _convert),
+	tp/Texinfo/Convert/Info.pm (format_ref): split format_ref function out
+	of _convert to format *ref commands.  Put format_ref both in
+	Plaintext.pm and Info.pm to be able to format cross references
+	differently in both formats.
+
+	* tp/Texinfo/Convert/Plaintext.pm (format_ref): do not treat reference
+	in multitable as if they were in @w.  Do not disallow breaks.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	Convert definition line parts in plaintext in code style only when needed
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert_def_line), NEWS:
+	explicitly convert definition  name, class and arguments in code
+	style.  Do not convert category nor leading dashes in code style.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm: reindent.  Change FIXMEs to TODO.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): common if for type
+	defined for text elements.  Bug message if in top level and the text
+	element is not normal text (without type).
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): ignore space types only
+	when checking if an index command is last in node, as the ignored
+	special containers cannot happen in that situation.  Remove
+	%ignorable_types.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert, converter_initialize):
+	use directly %ignored_types and %ignorable_space_types.
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert, %ignorable_space_types): 
+	handle text elements before other elements.  Remove
+	spaces_before_paragraph from %ignorable_space_types and handle it
+	in one place only.
+
+2024-07-06  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm: remove an obsolete FIXME.
+
+2024-07-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm: remove a FIXME on @cartouche, the
+	output is already correct.
+
+	* tp/Makefile.tres, tp/t/plaintext_tests.t
+	(cartouche_and_paragraph_indentation): add a test for cartouche and
+	paragraph indentation.
+
+2024-07-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): do not copy
+	$self->{'current_roots'}, iterate over it starting from the end.
+
+2024-07-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): use directly
+	$self->{'current_roots'} element contents instead of using
+	$self->{'current_contents'}.  Remove $self->{'current_contents'}.
+
+2024-07-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): use parent contents to
+	get the contents a ref command is in.
+
+2024-07-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): remove an obsolete
+	FIXME.  Add a comment with an explanation why there is a warning for
+	@xref not followed by comma or full stop.
+
+2024-07-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): try to make code finding
+	next @*ref element more straightforward.
+
+2024-07-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (process_printindex): output for
+	@seeentry and @seealso.
+
+2024-07-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): remove condition on
+	line definition command now that it is handled directly.
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert): remove FIXME.
+
+2024-07-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert): use direcly braced element
+	for multitable prototype.  Other minor changes.
+
+	* tp/Makefile.tres, tp/t/converters_tests.t (multitable_prototypes):
+	add a test with multitable prototypes, including @-commands, spaces
+	and erroneus construct, for output in all the conversion formats.
+
+2024-07-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert): rearrange conditions
+	nesting for clearer code.
+
+2024-07-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_sp_command),
+	tp/Texinfo/Convert/Plaintext.pm (_convert),
+	tp/Texinfo/XS/convert/convert_html.c (convert_sp_command): consider
+	empty @sp argument to be 1, to have an output more consistent with
+	Texinfo TeX.
+
+	* tp/Texinfo/Convert/LaTeX.pm (_convert): consider empty @sp argument
+	to be empty.
+
+	* tp/Makefile.tres, tp/t/converters_tests.t
+	(sp_empty_lines_1_no_arg_zero): test of @sp, @sp 0 and @sp 1 with
+	diverse possibilities for empty lines.
+
+2024-07-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert_def_line, _convert):
+	rename $command as $cmdname. 
+
+2024-07-02  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm, tp/Texinfo/Convert/Plaintext.pm:
+	simplify conditions on args.
+
+	* tp/Texinfo/Convert/Plaintext.pm (process_footnotes): add types to
+	node and anchor element generated for a separate footnote.
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): check if there are args
+	for @link.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_line_command_args): remove a
+	useless argument of sprintf.
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert): handle better @-command
+	defined with definfoenclose missing braces and with 0 args.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t
+	(definfoenclose_bad_argument, definfoenclose_no_braces): new tests.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (_convert): simplify args
+	conditions, use element instead of element contents.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (_convert): set and use $cmdname earlier.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (brace_no_arg_command): rename $command
+	as $command_name.
+
+	* tp/Texinfo/Convert/Text.pm (_convert): set $cmdname based on
+	$element->{'cmdname'} and use it instead.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (%ignored_types, %ignored_text_types)
+	(_convert): process text elements first.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/08misc_commands.t (comment_without_line): add
+	test with @comment without argument at the very end of a document.
+
+	* tp/t/08misc_commands.t (command_not_closed_on_center_line): move to
+	@converted_test_cases.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert): use $cmdname instead of
+	$element->{'cmdname'} and $command_name instead of $cmdname.
+	Reindent.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_index_entry): use element
+	instead of contents.
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert_def_line): remove useless
+	impossible condition.  Reindent.
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert): simplify conditions on
+	args.  Use elements instead of contents.  Use variables for
+	$substituted_strings.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line): close a bogus brace
+	@-command without argument followed by spaces only, and not by
+	newlinewithout argument followed by spaces only, and not by newline.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (seeentry_no_braces):
+	test of @seeentry without braces at end of document, on an index entry
+	command line.
+
+	* tp/Makefile.tres, tp/t/08misc_commands.t
+	(command_not_closed_on_center_line): add test.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_prepare_converted_output_info),
+	tp/Texinfo/Convert/LaTeX.pm (_title_font),
+	tp/Texinfo/Convert/Plaintext.pm (_convert),
+	tp/Texinfo/XS/convert/convert_html.c (convert_titlefont_command):
+	simplify args conditions for titlefont and/or handle titlefont element
+	without braces and with 0 args.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (titlefont_no_braces):
+	test of @titlefont without braces at end of document.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (U_no_braces): test of
+	@U without braces at end of document.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert), tp/Texinfo/Convert/HTML.pm
+	(_convert_U_command), tp/Texinfo/Convert/LaTeX.pm (_convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert): reorganize slightly U
+	formatting code, simplify args conditions.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert): simplify conditions on
+	element args for @U.  Remove error message for empty @U as there is
+	already the same message output un Parser.
+
+	* tp/t/03coverage_braces.t: add docbook as test_formats for all the
+	tests in @test_cases.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm: simplify conditions on element args.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (math_no_braces)
+	(strong_no_braces, caption_no_braces, footnote_no_braces)
+	(hyphenation_no_braces): test of brace commands without braces at end
+	of document.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (_convert): revert a change on
+	explained_commands conversion, if the number of args is >= 2, handle
+	them especially.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (_convert),
+	tp/Texinfo/XS/convert/convert_html.c (convert_uref_command),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal):
+	handle @url without braces, with 0 args.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (url_no_braces): test of
+	@url without braces at end of document.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert),
+	tp/Texinfo/Convert/LaTeX.pm (_convert): simplify condition for element
+	args.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_exdent_command): handle better
+	exdent with empty argument text.
+
+	* tp/Texinfo/XS/convert/convert_html.c: minor changes.
+
+	* tp/Makefile.tres, tp/t/08misc_commands.t (exdent_no_line): add a
+	test with exdent not followed by anything.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (_convert),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal),
+	tp/Texinfo/XS/convert/convert_html.c (convert_email_command): handle
+	@email with no brace and 0 args.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (email_no_braces): test of
+	@email without braces at end of document.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert),
+	tp/Texinfo/Convert/LaTeX.pm (_convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert): simplify conditions on
+	element args, convert arg and not arg contents.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/LaTeX.pm (_convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert): simplify conditions.
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert), tp/Texinfo/Convert/HTML.pm
+	(_convert_explained_command), tp/Texinfo/XS/convert/convert_html.c
+	(convert_explained_command): handle bogus 'explanation' commands abbr
+	and acronym without braces, with 0 args, at end of document.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (abbr_no_braces): test of
+	@abbr without braces at end of document.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Text.pm (_convert),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal):
+	handle @image without brace, with 0 args.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (image_no_braces): test
+	of @image without braces at end of document.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (_convert): simplify condition.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_convert_xref_commands),
+	tp/Texinfo/Convert/LaTeX.pm (_convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert),
+	tp/Texinfo/XS/convert/convert_html.c (convert_xref_commands): handle
+	@*ref command without brace.
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_comma),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_comma): return @inline*
+	argument container element instead of the command element if the
+	braces have been seen.
+
+	* tp/Texinfo/ParserNonXS.pm (_close_commands),
+	tp/Texinfo/XS/parsetexi/close.c (close_commands): handle explicitly
+	@-command without brace there when close_commands is called.  Should
+	mainly correspond with bogus brace @-command without brace at the end
+	of a document followed by spaces only and no newline.
+
+	* tp/Texinfo/ParserNonXS.pm (_close_brace_command): print debug
+	message if the basic_inline_commands popped is not the current
+	command.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t
+	(brace_command_no_braces): test of @xref without brace at the end of
+	the document.
+
+2024-07-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/command_stack.c,
+	tp/Texinfo/XS/parsetexi/counter.c (print_counter_top): debugging code.
+
+2024-06-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace): fix @U
+	argument checking code.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (command_in_U): add test.
+
+2024-06-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace): fix
+	@dotless argument checking code.
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t (command_in_dotless): add
+	test.
+
+2024-06-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_comma): rename a missed arg_text
+	as arg_text_e.
+
+2024-06-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/macro.c (handle_macro): remove a useless
+	setting of internal_space_holder.
+
+	Add const.
+
+2024-06-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_close_brace),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace): reorganize
+	code, add variables, change variable names for clearer code. Remove
+	impossible cases code of args not set, since we are in args. Close
+	command before adding spaces_after_close_brace.
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_comma),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_comma): rename arg_text as
+	arg_text_e.
+
+2024-06-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_comma),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_comma): make code clearer.
+	Decrease remaining_args right after seeing a comma.  Use different
+	variables for elements instead or using input current element.  Use
+	input current element as the first argument if the comma is is the
+	first seen for a BRACE_inline command.
+
+2024-06-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_block_command),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_block_command):
+	reorganize code, change variable names for clearer code, better
+	separation of def* and other block commands, and try to finish
+	modifying an element before registering it as an arg or content.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/debug.c (print_associate_info_debug),
+	tp/Texinfo/XS/main/extra.c (add_extra_element, lookup_extra_element),
+	tp/Texinfo/XS/main/manipulate_tree.c (copy_associated_info)
+	(remove_associated_copy_info), tp/Texinfo/XS/main/tree_types.h
+	(KEY_PAIR), tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(complete_node_menu, complete_tree_nodes_missing_menu): add a new
+	const_element field to the union in KEY_PAIR.  Use it for
+	extra_element to make extra_element const.  Update
+	build_additional_info, print_associate_info_debug and tree copy code
+	accordingly  Cast to remove the const in handle_close_brace as the
+	element is modified to add an extra information, and in
+	complete_node_menu and complete_tree_nodes_missing_menu as the element
+	is modified to have a menu or menu entry inserted.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Transformations.pm (_prepend_new_menu_in_node_section):
+	set menu parent.
+
+	* tp/Texinfo/Structuring.pm (new_complete_node_menu),
+	tp/Texinfo/XS/structuring_transfo/structuring.c
+	(new_complete_node_menu): do not set new menu parent, it is better to
+	set it downstream, as in many case there should not be a parent.
+
+	Add const.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/debug.c (print_associate_info_debug),
+	tp/Texinfo/XS/main/extra.c (add_extra_contents)
+	(lookup_extra_contents), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_associated_info, remove_associated_copy_info),
+	tp/Texinfo/XS/main/tree.c (destroy_associated_info): rename
+	extra_load as extra_contents, lookup_extra_load as
+	lookup_extra_contents and add_extra_load as add_extra_contents.
+	Remove the previous lookup_extra_contents and add_extra_contents
+	now that they are not used anymore.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c (remove_from_const_element_list): add.
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (handle_block_command),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(reassociate_to_node, prepend_new_menu_in_node_section)
+	(complete_node_menu, regenerate_master_menu): use extra_load for menus
+	extra information. Remove const by casting in menu generation code
+	since elements are modified when tree is transformed.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_perl_array): rename e as
+	e_l.
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(build_perl_const_element_array, build_additional_info),
+	tp/Texinfo/XS/main/debug.c (print_associate_info_debug),
+	tp/Texinfo/XS/main/extra.c (add_extra_load, lookup_extra_load),
+	tp/Texinfo/XS/main/manipulate_tree.c (copy_associated_info)
+	(remove_associated_copy_info), tp/Texinfo/XS/main/tree.c
+	(destroy_associated_info), tp/Texinfo/XS/main/tree_types.h
+	(enum extra_type, KEY_PAIR): add extra_load extra type with
+	CONST_ELEMENT_LIST, add the const_list field in key pair union.
+	Add build_perl_const_element_array to build Perl array from a
+	CONST_ELEMENT_LIST.  Add handling of extra_load to
+	print_associate_info_debug, destroy_associated_info and tree copy.
+	Use it for section_childs and authors extra information. Update
+	callers for those extra information keys.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	Reindent enum declarations
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/output_unit.c (units_directions),
+	tp/Texinfo/XS/main/tree_types.h (OUTPUT_UNIT): make OUTPUT_UNIT
+	directions field an array on const output units pointers.  Cast to
+	remove the const in units_directions in the cases where the directions
+	are set based on other directions.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (relocate_source_marks): check if source_mark
+	position is defined before comparing with positions, if not it is as
+	if it was 0.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (output_unit_to_perl_hash):
+	move unit_command storing earlier.  Return after unit_command storing
+	if the unit_type is external_node_unit since there isn't anything else
+	of interest in such output units.
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_units_directions_files),
+	tp/Texinfo/XS/main/build_perl_info.c (output_units_list_to_perl_hash):
+	build external_node_unit Perl hashes especially when they are ready,
+	using a new function output_units_list_to_perl_hash that sets up Perl
+	hashes for output units but do not put the output units in an array.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (output_unit_to_perl_hash):
+	assume that all the output units in directions have a reference to a
+	Perl object now that external_node_unit are built before directions in
+	other output units are.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	Add const.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/structuring.c
+	(get_node_node_childs_from_sectioning): return a CONST_ELEMENT_LIST.
+	Update callers.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (complete_node_tree_with_menus),
+	tp/Texinfo/XS/structuring_transfo/structuring.c
+	(complete_node_tree_with_menus): determine the next of Top node with
+	the Top node, but set the prev as the Top node when looking at each
+	node.  This avoids setting prev for non-node commands, or for nodes
+	without automatic directions.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c (new_const_element_list)
+	(destroy_const_element_list, reallocate_const_element_list)
+	(add_to_const_element_list), tp/Texinfo/XS/main/tree_types.h
+	(CONST_ELEMENT_LIST): add a list of const ELEMENT *, to be used in
+	cases the elements in the list are not to be modified.
+
+	* tp/Texinfo/XS/main/document_types.h (DOCUMENT),
+	tp/Texinfo/XS/structuring_transfo/structuring.c
+	(sectioning_structure, complete_node_tree_with_menus, nodes_tree): set
+	document nodes list and sections list to be CONST_ELEMENT_LIST.  Use a
+	cast to remove const in complete_node_tree_with_menus where, as an
+	exception to the rule, the node from nodes list is modified.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/structuring.c
+	(sectioning_structure): use only one TEXT for section numbers for all
+	the sections, to reuse memory.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (nodes_tree),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (nodes_tree):
+	determine top node section child when processing top node, but set
+	the direction in top node section child when processing the node,
+	as done for other nodes.
+
+2024-06-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_perl_directions),
+	tp/Texinfo/XS/main/extra.c (add_extra_directions)
+	(lookup_extra_directions), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_associated_info, remove_associated_copy_info),
+	tp/Texinfo/XS/main/tree.c (destroy_associated_info, new_directions),
+	tp/Texinfo/XS/main/tree_types.h (KEY_PAIR): use a simple list for
+	directions in extra info with elements const.  The elements are set to
+	const because directions are set after the tree is and, as a rule, the
+	elements should not be modified when accessed from directions.  cast
+	to remove the const where the element accessed through directions need
+	to be modified, in build_perl_directions and for tree copying code.
+	Update users/callers.
+
+2024-06-27  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_xref_commands),
+	tp/Texinfo/XS/main/extra.c (lookup_extra_element)
+	(lookup_extra_container), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_container_contents): separate extra_container from
+	extra_element, by adding a specific function to lookup extra
+	container, lookup_extra_container.  Add copy_container_contents to
+	create a new element to be used as extra_container and refer to the
+	contents of another element.  Use it to add containers instead of
+	elements.  Replace lookup_extra_element by lookup_extra_container for
+	all the callers with extra_container keys.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	Add some const
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree_types.h (OUTPUT_UNIT): use a union for
+	unit_command and special_unit_command.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/OutputUnits.pm (output_unit_texi),
+	tp/Texinfo/XS/main/output_unit.c (output_unit_texi): prepend
+	'_EXT_NODE: ' to external node output unit debug string output.
+
+	* tp/Texinfo/XS/main/output_unit.c (units_directions): use a
+	ELEMENT_STACK for up list instead of an ELEMENT_LIST and reuse is for
+	all the elements.
+
+	* tp/Texinfo/XS/main/tree_types.h (OUTPUT_UNIT),
+	tp/Texinfo/XS/convert/convert_html.c (from_element_direction)
+	(html_default_format_begin_file), tp/Texinfo/XS/main/build_perl_info.c
+	(output_unit_to_perl_hash), tp/Texinfo/XS/main/output_unit.c
+	(output_unit_texi, label_target_unit_element, split_by_node)
+	(split_by_section): distinguish unit_command for an output unit
+	unit_command found in the tree and special_unit_command for a special
+	output unit unit_command, which is added.  Update uses of
+	unit_command.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_default_format_contents),
+	tp/Texinfo/XS/main/extra.c (lookup_extra_element)
+	(lookup_extra_element_oot), tp/Texinfo/XS/main/manipulate_indices.c
+	(index_content_element), tp/Texinfo/XS/parsetexi/indices.c
+	(complete_indices): add lookup_extra_element_oot and use it
+	exclusively for extra_element_oot.  Modify lookup_extra_element to
+	accept only extra_element and extra_container.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_def_line),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_def_line): copy element
+	used as 'def_index_element' extra information, even if it is not
+	translated.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/tp_api/texi2any_internals.texi, doc/tp_api/api_includes/*.texi:
+	add to version control to have reference versions, but also to have
+	something for users who cannot regenerate the files but have access to
+	version control files.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* configure.ac: fix --enable-pod-simple-texinfo-tests help string.
+
+	* configure.ac: rearrange code.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (AM_TESTS_ENVIRONMENT), tp/tests/Makefile.am
+	(AM_TESTS_ENVIRONMENT), tp/tests/many_input_files/Makefile.am
+	(AM_TESTS_ENVIRONMENT), Pod-Simple-Texinfo/Makefile.am
+	(AM_TESTS_ENVIRONMENT): do not set builddir (nor buildir) it should
+	not be used anywhere.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am (EXTRA_DIST): remove tp_tests variable.  Change in
+	comments.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/prove.sh: remove -I that are not needed with Texinfo::ModulePath
+	anymore.  Comments on use of srcdir.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/no_structure_test.t, tp/t/same_parser_multiple_files.t,
+	tp/t/test_tree_copy.t, tp/t/test_utils.pl: add fallback for $srcdir
+	based on Texinfo::ModulePath $top_srcdir.
+
+2024-06-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_utils.pl (test): reset ir create output directories early.
+	Set parser errors only once.  Do not abort if input file is not found
+	and $document is undef.  Skip structuring and conversion with a goto
+	if there is no $document.  Skip most of test out file output if there
+	is no $document.  Call $document methods in comparisons only if
+	$document is not undef.
+
+2024-06-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_close_brace_command)
+	(_handle_close_brace), tp/Texinfo/XS/parsetexi/close.c
+	(close_brace_command), tp/Texinfo/XS/parsetexi/separator.c
+	(handle_close_brace): pop ct_inlineraw context in close_brace_command
+	instead of handle_close_brace, such that it is done when the command
+	is closed although there is no closing brace.
+
+	* tp/Makefile.tres, tp/t/16raw.t (inlineraw_not_closed): add test of
+	@inlineraw not closed.
+
+	* tp/Texinfo/XS/parsetexi/api.c, tp/Texinfo/XS/parsetexi/macro.c:
+	change in FIXMEs.
+
+2024-06-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_perl_directions): rename
+	e as e_l, set an ELEMENT called e for more readable code.
+
+	* tp/Texinfo/XS/main/debug.c (print_associate_info_debug): add
+	extra_index_entry and extra_directions.  Minor code improvements.
+
+	* tp/Texinfo/XS/main/debug.c (print_element_debug_details): access
+	extra_info only if not text element.  Minor changes.
+
+2024-06-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.h (TEXT_OPTIONS): use size_t for
+	document_descriptor.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (parse_texi_document): return void.
+
+	* tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/main/DocumentXS.xs,
+	tp/Texinfo/XS/main/build_perl_info.c, tp/Texinfo/XS/main/document.c,
+	tp/Texinfo/XS/main/get_perl_info.c, tp/Texinfo/XS/main/translations.c,
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs, tp/Texinfo/XS/parsetexi/api.c,
+	tp/Texinfo/XS/parsetexi/parser.c: use size_t more for document
+	descriptors.
+
+2024-06-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/targets.c, tp/Texinfo/XS/parsetexi/labels.c
+	(set_labels_identifiers_target): move set_labels_identifiers_target to
+	labels.c.
+
+	* tp/Texinfo/XS/main/targets.c: remove destroy_label_list.  Add
+	static for functions.
+
+	* tp/Texinfo/XS/parsetexi/api.c,
+	tp/Texinfo/XS/structuring_transfo/transformations.c: use size_t for
+	document descriptor more.
+
+2024-06-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%leading_space_types, _merge_text)
+	(_abort_empty_line): use a hash for special spaces text types in
+	merge_text and abort_empty_line.
+
+	* tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/parsetexi/parser.c (merge_text),
+	tp/Texinfo/XS/parsetexi/parser.c (abort_empty_line): add a new
+	TF_leading_space flag, and use it for special spaces text types in
+	merge_text and abort_empty_line.
+
+2024-06-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_verb_contents): use
+	delimiter_len instead of calling strlen.  Use break instead of goto.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (isolate_last_space): check the
+	debug conditional when there are several debug function calls.
+
+	Change in comments.
+
+2024-06-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (isolate_trailing_spaces_element)
+	(isolate_trailing_space, isolate_last_space): have
+	isolate_trailing_spaces_element return the input element if it
+	consists only of spaces.  Use that information to determine that the
+	element text is only space in isolate_last_space and
+	isolate_trailing_space instead of calling strspn.
+
+2024-06-24  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_isolate_trailing_space)
+	(_register_extra_menu_entry_information, _isolate_last_space)
+	(_process_remaining_on_line), tp/Texinfo/XS/parsetexi/menus.c
+	(register_extra_menu_entry_information),
+	tp/Texinfo/XS/parsetexi/parser.c (isolate_trailing_space)
+	(isolate_last_space, process_remaining_on_line): check if there is
+	content and the last content is text in isolate_trailing_space.  Call
+	directly isolate_trailing_space in
+	register_extra_menu_entry_information.  Remove call of
+	isolate_trailing_space from isolate_last_space.
+
+	* tp/Texinfo/ParserNonXS.pm (_isolate_trailing_spaces_element)
+	(_isolate_trailing_space, _isolate_last_space),
+	tp/Texinfo/XS/parsetexi/parser.c (isolate_trailing_spaces_element)
+	(isolate_trailing_space, isolate_last_space): split
+	isolate_trailing_spaces_element out of isolate_last_space, and use it
+	in isolate_trailing_space to correctly transfer source marks.
+	Reorganize isolate_last_space code to be more like
+	isolate_trailing_space code, in particular do not check separately
+	that the text ends with spaces.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): call
+	close_container instead of end_paragraph to close a paragraph when
+	directly in the paragraph.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%close_paragraph_not_preformatted)
+	(_end_paragraph_preformatted, _close_commands)
+	(_process_remaining_on_line), tp/Texinfo/XS/parsetexi/close.c
+	(close_commands), tp/Texinfo/XS/parsetexi/parser.c
+	(end_paragraph_preformatted, process_remaining_on_line): add
+	_end_paragraph_preformatted that closes preofrmatted or paragraph.
+	Use it in close_commands.  In process_remaining_on_line, handle
+	especially @-command closing paragraph and not preformatted, and
+	@-command closing both, calling end_paragraph_preformatted in that
+	case.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Customization Variables and Options): put @vindex
+	at beginning of line.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_close_commands),
+	tp/Texinfo/XS/parsetexi/close.c (close_commands): instead of calling
+	end_paragraph and end_preformatted, call close_all_style_commands once
+	and close paragraph or preformatted, depending on the one present.
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line, _handle_close_brace),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace): call
+	close_container instead of end_paragraph to close a paragraph when
+	directly in the paragraph.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): remove
+	a useless check of cmd being non-zero.
+
+	* tp/Texinfo/XS/parsetexi/close.c, tp/Texinfo/XS/parsetexi/parser.c:
+	rename closed_block_command as closed_block_cmd and
+	interrupting_command as interrupting_cmd.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_abort_empty_line),
+	tp/Texinfo/XS/parsetexi/parser.c (abort_empty_line): remove returned
+	status from abort_empty_line.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	Stricter check of @-commands not appearing at the beginning of a line
+
+	* tp/Texinfo/ParserNonXS.pm (_process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): check
+	that an @-command is opened at the beginning of a line by checking
+	that the previous element is an empty_line text element.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_in_begin_paragraph),
+	tp/Texinfo/XS/parsetexi/parser.c (in_begin_paragraph): rename
+	begin_paragraph_p as in_begin_paragraph.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_begin_paragraph_p, _begin_paragraph),
+	tp/Texinfo/XS/parsetexi/parser.c (begin_paragraph): add
+	_begin_paragraph_p in Perl code.  Do not call begin_paragraph_p in
+	begin_paragraph, instead let the caller call begin_paragraph is
+	begin_paragraph_p returns true.  Update callers.
+
+	* tp/Texinfo/ParserNonXS.pm (_merge_text): rename
+	$last_element_type as $last_elt_type.
+
+	* tp/Texinfo/ParserNonXS.pm (_merge_text),
+	tp/Texinfo/XS/parsetexi/parser.c (merge_text): instead of calling
+	*abort_empty_line, inline the corresponding code, mixing with
+	paragraph opening, and without the case of last_element text empty,
+	already handled.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/03coverage_braces.t
+	(footnote_ending_on_empty_line_spaces): test with footnote with end
+	line and spaces after end line before closing brace.
+
+	* tp/Makefile.tres, tp/t/08misc_commands.t
+	(indent_with_command_after_without_space)
+	(indent_with_text_after_without_space): tests with indent followed by
+	command starting a paragraph or text (through a @value expansion)
+	without space in-between.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_merge_text),
+	tp/Texinfo/XS/parsetexi/parser.c (merge_text): handle especially the
+	case of no last element, as there cannot be paragraph or special text
+	elements handling in that case.
+
+	* tp/Texinfo/ParserNonXS.pm (_close_current)
+	(_move_last_space_to_element, _abort_empty_line, _end_line),
+	tp/Texinfo/XS/parsetexi/close.c (close_current),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line),
+	tp/Texinfo/XS/parsetexi/parser.c (move_last_space_to_element)
+	(do_abort_empty_line): separate code moving a last space children as
+	info spaces_before_argument in element out of abort_empty_line to
+	move_last_space_to_element, and call directly
+	move_last_space_to_element when relevant.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_abort_empty_line): define more variables
+	and add separate if.
+
+	* tp/Texinfo/ParserNonXS.pm (_merge_text, _abort_empty_line)
+	(_end_line, _handle_open_brace), tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line, do_abort_empty_line)
+	(merge_text, abort_empty_line), tp/Texinfo/XS/parsetexi/separator.c
+	(handle_open_brace): add a new internal text type,
+	internal_spaces_before_context_argument, for context brace commands
+	only, otherwise very similar with internal_spaces_before_argument.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_utils.c (find_innermost_accent_contents)
+	(find_root_command_next_heading_command): fix type_data text flag
+	symbol.
+
+2024-06-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_texi): call _pop_context at the
+	end of document parsing.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (parse_texi): check that the
+	context popped at the end of the document is base or line.
+
+	* tp/Texinfo/ParserNonXS.pm: do not call _pop_context with an object
+	oriented syntax.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_to_html_internal):
+	types not known in Perl cannot be set to ignored as types in Perl, so
+	consider only their ignored status as commands.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%default_commands_conversion): ignore
+	explicitly seealso, seeentry and sortas.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_abort_empty_line),
+	tp/Texinfo/XS/parsetexi/parser.c (do_abort_empty_line): simplify debug
+	message.
+	
+	Changes in comments.
+
+2024-09-29  Patrice Dumas  <pertusus@free.fr>
+
+	Update/fix test result
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%type_without_paragraph),
+	tp/Texinfo/XS/parsetexi/parser.c (begin_paragraph_p): remove explicit
+	check for root_line as non-paragraph type, as it is in ct_line context
+	now.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_current_context_command): rename
+	_top_context_command as _current_context_command to match C code.
+
+	* tp/Texinfo/ParserNonXS.pm (%parsing_state_initialization)
+	(_initialize_parsing, parse_texi_piece, parse_texi_line)
+	(parse_texi_text, parse_texi_file, _parse_texi),
+	tp/Texinfo/XS/parsetexi/api.c (initialize_parsing, parse_file)
+	(parse_text, parse_string, parse_piece),
+	tp/Texinfo/XS/parsetexi/context_stack.c (current_context_command)
+	(top_context_command, current_context),
+	tp/Texinfo/XS/parsetexi/parser.c (parse_texi): add the root context as
+	argument to initialize_parsing.  Set root context to ct_line if in
+	parse_texi_line, and to ct_base otherwise.  Modify C code to have an
+	explicit root context.
+
+	* tp/Texinfo/ParserNonXS.pm (_current_context_command)
+	(_end_line, _handle_other_command, _process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_other_command)
+	(process_remaining_on_line): verify that the top context command is
+	defined when checking that we are in line context on a command line
+	argument.
+
+	* tp/Texinfo/XS/parsetexi/context_stack.c: remove in_context.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (text_contents_to_plain_text): use
+	text_append_n in ADD, as we always know the text length.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (text_contents_to_plain_text): do
+	not check that the element is not NULL, it should never happen.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (is_end_current_command): remove
+	end_cmd argument is it is always set to the cmd argument.  Update
+	callers.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm, tp/Texinfo/XS/parsetexi/parser.c
+	(macro_block_stack, macro_block_number, macro_block_space)
+	(push_macro_block_stack, pop_macro_block_stack)
+	(macro_block_stack_top): rename raw_block_stack as macro_block_stack,
+	other raw_block_* variables as macro_block_*, push_raw_block_stack as
+	push_macro_block_stack, pop_raw_block_stack as pop_macro_block_stack
+	and raw_block_stack_top as macro_block_stack_top.  Update callers.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_macro_block_contents)
+	(_parse_tex), tp/Texinfo/XS/parsetexi/parser.c
+	(process_macro_block_contents, parse_texi): emit errors on unclosed
+	raw block commands (except for the first level) in
+	process_macro_block_contents if the block is not finished instead of
+	checking at the end of the parsing.
+
+2024-06-22  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_remaining_on_line, _parse_texi),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line)
+	(parse_texi): process a definition line continuation right where it is
+	seen.  Get the next line immediately too.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (handle_block_command):
+	minor changes.  avoid setting current twice.  use else if for
+	conditions that are exclusive instead of series of if.
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_block_command): update to be more
+	like C code.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_block_command)
+	(_process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_block_command),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): remove
+	the code related to @*macro from handle_block_command and put it
+	directly in process_remaining_on_line.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_macro_block_contents)
+	(process_raw_block_contents)
+	(process_ignored_raw_format_block_contents)
+	(process_remaining_on_line): free and set allocated_text in functions,
+	as soon as next_line is called.  Pass line as out parameter by
+	reference.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_remaining_on_line, _parse_texi),
+	tp/Texinfo/XS/parsetexi/parser.c (process_verb_contents)
+	(process_remaining_on_line, parse_texi): process verb contents right
+	after brace opening.  Do it in the process_verb_contents function in
+	C.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(html_prepare_units_directions_files),
+	tp/Texinfo/XS/main/converter_types.h
+	(enum output_units_descriptor_type, CONVERTER),
+	tp/Texinfo/XS/main/output_unit.c (label_target_unit_element)
+	(units_directions): create an output unit list in
+	html_prepare_units_directions_files to register external nodes special
+	output units created in label_target_unit_element.  This is such that
+	the output units can be freed when the document is destroyed.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/structuring.c (number_floats): do
+	not use a static TEXT variable, instead initialize the TEXT variable
+	at the beginning of the function and reuse the storage.  The function
+	should only be called once per document.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c
+	(process_ignored_raw_format_block_contents): use next_text instead of
+	next_line to get a new line within contents.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_macro_block_contents)
+	(process_raw_block_contents)
+	(process_ignored_raw_format_block_contents): free the line returned by
+	next_text.  free and reallocate the line when the line is returned
+	without leading spaces.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): free
+	allocated before storing and store the lines returned by
+	process_*_block_contents functions in allocated_text to avoid memory
+	leaks.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_raw_block_contents): fix
+	detection of @end to gather the whole command name.
+
+	* tp/Texinfo/ParserNonXS.pm (_process_remaining_on_line)
+	(_parse_texi), tp/Texinfo/XS/parsetexi/parser.c
+	(process_remaining_on_line, parse_texi): use process_raw_block_contents
+	to process ignored conditional block commands.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_raw_block_contents)
+	(_process_macro_block_contents, _process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/parser.c (process_macro_block_contents)
+	(process_raw_block_contents, process_remaining_on_line): create
+	process_macro_block_contents out of process_raw_block_contents for
+	macro specific code.  Change C code to separate better determination
+	of nested command beginning and detection of @end line.
+
+2024-06-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/55conditionals.t (value_on_ifset): add test with @value on
+	@ifset line.
+
+2024-06-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm
+	(_process_ignored_raw_format_block_contents)
+	(_process_remaining_on_line), tp/Texinfo/XS/parsetexi/parser.c
+	(process_ignored_raw_format_block_contents)
+	(process_remaining_on_line): add
+	process_ignored_raw_format_block_contents to process contents of an
+	ignored raw format block command until the @end line.  Call it after a
+	command line to catch raw format block command with a comment on
+	the line.
+
+	* tp/Makefile.tres, tp/t/16raw.t (comments_on_raw_block_line): test
+	with comments on raw format block command lines with contents, with an
+	expanded format and an ignored format.
+
+2024-06-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_raw_block_contents)
+	(_process_remaining_on_line, _parse_texi),
+	tp/Texinfo/XS/parsetexi/parser.c (process_raw_block_contents)
+	(process_remaining_on_line, parse_texi): add
+	process_raw_block_contents to process a raw block command contents
+	until @end line.  Use it right after the block command opening.
+
+2024-06-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_remaining_on_line, _parse_texi),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line)
+	(parse_texi): handle ignored format raw command right after end_line
+	call, by calling next_text within process_remaining_on_line and
+	processing until @end instead of returning.  @end is then processed by
+	the next call of process_remaining_on_line without going through
+	the parse_texi lines loop.
+
+2024-06-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_process_remaining_on_line, _parse_texi),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line)
+	(parse_texi): no need to check explicitly that a fprmat raw block
+	command is ignored, as if directly in the command it is necessarily
+	ignored, otherwise there would be a rawpreformatted container.
+
+	* tp/Makefile.tres, tp/t/16raw.t
+	(empty_line_in_command_in_expanded_not_expanded): add test of empty
+	line in brace commands in raw format blocks.
+
+2024-06-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line, _parse_texi),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line, parse_texi): call
+	abort_empty_line for an internal_spaces_before_argument at end of line
+	in end_line and not in parse_texi.
+
+2024-06-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Structuring.pm (set_menus_node_directions): handle
+	undef FORMAT_MENU.
+
+2024-06-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%parsing_state_initialization)
+	(%begin_paragraph_contexts, _pop_context, _end_line)
+	(_get_context_stack, _handle_open_brace, _parse_texi),
+	tp/Texinfo/XS/parsetexi/close.c (close_brace_command),
+	tp/Texinfo/XS/parsetexi/context_stack.c (current_context)
+	(is_context_empty), tp/Texinfo/XS/parsetexi/context_stack.h
+	(begin_paragraph_context, enum context),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line),
+	tp/Texinfo/XS/parsetexi/parser.c (parse_texi),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace): do not
+	differentiate base context and ct_brace_command. Rename ct_NONE as
+	ct_base and push ct_base instead of ct_brace_command when opening a
+	context brace command (that do not start math context).  Add
+	is_context_empty in C to determine that the context is empty since
+	the base context can now appear in the context stack and modify
+	similarly Perl code.
+
+2024-06-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_parse_texi),
+	tp/Texinfo/XS/parsetexi/parser.c (parse_texi): do not abort an empty
+	line which is not an empty string at the end of the document.
+
+2024-06-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_menu_entry_separators),
+	tp/Texinfo/XS/parsetexi/menus.c (handle_menu_entry_separators): reuse
+	the empty_line as the internal_menu_star element.  Setup last_element
+	at the beginning of the function.
+
+2024-06-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%parsing_state_initialization): call
+	toplevel context ct_NONE as in C.
+
+	* tp/Texinfo/ParserNonXS.pm (_close_container): add source_info
+	argument to _close_container, update callers.
+
+	* tp/Texinfo/ParserNonXS.pm: remove unused _remove_empty_arg.
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_macro),
+	tp/Texinfo/XS/parsetexi/macro.c (handle_macro): do not call
+	_merge_text, setup more simply the macro_call_element contents
+	when a macro is called with the whole line as argument.
+
+	* tp/Texinfo/ParserNonXS.pm (%type_without_paragraph)
+	(%begin_paragraph_contexts, _begin_paragraph, _close_container)
+	(_abort_empty_line, _end_line), tp/Texinfo/XS/parsetexi/close.c
+	(close_container), tp/Texinfo/XS/parsetexi/context_stack.h
+	(begin_paragraph_context, enum context),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line),
+	tp/Texinfo/XS/parsetexi/parser.c (begin_paragraph_p, begin_paragraph):
+	add paragraph in context.  Change the logic of determination of
+	paragraph beginning and treatment of empty lines at end of line.
+
+	* tp/Makefile.tres, tp/t/50value.t (unknown_value_after_spaces): add
+	test with unknown @value after spaces on a line and not in a
+	paragraph.
+
+2024-06-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line):
+	simplify code related to deprecated commands, make it more like Perl.
+
+2024-06-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_merge_text): also use
+	_transfer_source_marks when merging with existing $last_element.
+
+2024-06-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (merge_text): no need to retrieve
+	the last element with empty_line anymore, as it is not removed in
+	do_abort_empty_line anymore, as the case of empty text is handled
+	before.
+
+	* tp/Texinfo/ParserNonXS.pm (_merge_text): update to match C code.
+
+2024-06-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_merge_text),
+	tp/Texinfo/XS/parsetexi/parser.c (merge_text): if a special space text
+	element is empty and there is non space text merged, reuse the element
+	as a normal text element.  This is different from before if there are
+	source marks as now they are kept as is, previously, a call to
+	*_abort_empty_line followed by adding a new element led to an empty
+	text element added to store the source marks.
+
+2024-06-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (merge_text),
+	tp/Texinfo/XS/parsetexi/source_marks.c (transfer_source_marks): add an
+	added length argument to transfer_source_marks, to use the function in
+	merge_text when merging with existing text.  Update
+	transfer_source_marks callers.
+
+2024-06-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (abort_empty_line): call with a
+	pointer on element, not a pointer on pointer.  Update callers.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (abort_empty_line)
+	(do_abort_empty_line, merge_text): move do_abort_empty_line out of
+	abort_empty_line and call it directly in merge_text instead of redoing
+	the same check of elements again in abort_empty_line.  Change
+	merge_text code to be simpler.
+
+2024-06-17  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (merge_text): modify code to have
+	the new_text label before a statement and not a declaration.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line):
+	comment out unused value_valid label.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/output_unit.c (destroy_output_unit): destroy the
+	unit_command if the output_unit is a special_unit_variety as in that
+	case the element is not in the main document Texinfo tree and will not
+	be freed.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/output_unit.c (retrieve_output_units)
+	(new_output_units_descriptor): rename output_units variable as
+	output_units_lists.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/document.c
+	(destroy_document_information_except_tree),
+	tp/Texinfo/XS/main/output_unit.c (destroy_output_unit)
+	(free_output_unit_list, free_output_units_lists): free output units.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	Associate output units lists with document in XS
+
+	* tp/Texinfo/Convert/Plaintext.pm (output), tp/Texinfo/OutputUnits.pm
+	(rebuild_output_units), tp/Texinfo/XS/convert/ConvertXS.xs
+	(html_prepare_conversion_units, html_prepare_units_directions_files)
+	(html_prepare_output_units_global_targets),
+	tp/Texinfo/XS/convert/convert_html.c (html_get_tree_root_element),
+	tp/Texinfo/XS/convert/convert_html.c (prepare_special_units)
+	(set_special_units_targets_files)
+	(prepare_associated_special_units_targets)
+	(html_internal_command_href, html_prepare_output_units_global_targets)
+	(html_prepare_units_directions_files, html_convert_convert)
+	(html_prepare_title_titlepage, html_convert_output),
+	tp/Texinfo/XS/main/build_perl_info.c (fill_output_units_descriptor_av)
+	(build_output_units_list, setup_output_units_handler)
+	(rebuild_output_units_list), tp/Texinfo/XS/main/document_types.h
+	(OUTPUT_UNIT_LISTS, DOCUMENT), tp/Texinfo/XS/main/get_perl_info.c
+	(get_sv_output_units), tp/Texinfo/XS/main/output_unit.c
+	(retrieve_output_units, new_output_units_descriptor, split_by_node)
+	(split_by_section),
+	tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.xs
+	(split_by_node, split_by_section, rebuild_output_units, split_pages),
+	tp/t/test_utils.pl (test): add output_units_lists in DOCUMENT, and put
+	and retrieve output units from there. Remove output_units_list,
+	output_units_number and output_units_space in output_unit.c.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_associated_info): use
+	the newly initialized string list instead of allocating another one.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/command_stack.c
+	(command_is_in_referred_command_stack): add braces for better code
+	readability.
+
+	* tp/Texinfo/XS/main/convert_utils.c (encoded_input_file_name)
+	(encoded_output_file_name): simpler conditions.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (xml_numeric_entity_accent):
+	remove condition on cmd being an accent command, there is no specific
+	reason to test it especially.  Rearrange code.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal): use
+	data_cmd instead of element->e.c->cmd more.
+
+	* tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal):
+	use more flags and command data in conditions and rearrange.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(move_index_entries_after_items): fix condition.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(protect_first_parenthesis_in_targets_internal): check that the
+	element is an @-command element before calling get_label_element.
+
+2024-09-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_command_description):
+	update for move of cmd to CONTAINER.
+
+2024-06-16  Patrice Dumas  <pertusus@free.fr>
+
+	Turn source_mark_list to a pointer
+
+	* tp/Texinfo/XS/main/tree_types.h (ELEMENT),
+	tp/Texinfo/XS/main/build_perl_info.c (store_source_mark_list),
+	tp/Texinfo/XS/main/manipulate_tree.c (add_source_mark)
+	(relocate_source_marks, parse_node_manual, modify_tree, protect_text),
+	tp/Texinfo/XS/main/tree.c (free_element_source_mark_list)
+	(destroy_element_empty_source_mark_list, destroy_element),
+	tp/Texinfo/XS/parsetexi/close.c (close_container)
+	(close_command_cleanup), tp/Texinfo/XS/parsetexi/def.c
+	(split_delimiters, split_def_args), tp/Texinfo/XS/parsetexi/parser.c
+	(merge_text, abort_empty_line, isolate_last_space_internal),
+	tp/Texinfo/XS/parsetexi/source_marks.c (transfer_source_marks),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(protect_first_parenthesis)
+	(protect_hashchar_at_line_beginning_internal): turn the
+	source_mark_list field of ELEMENT to a pointer.  Add
+	free_element_source_mark_list and
+	destroy_element_empty_source_mark_list.
+
+2024-06-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_close_command_cleanup): separate
+	multitable head and body only if the multitable has contents.
+
+	* tp/Texinfo/ParserNonXS.pm (_close_command_cleanup),
+	tp/Texinfo/XS/parsetexi/close.c (close_command_cleanup): update code
+	taking into account that
+	i) there cannot be ignorable_spaces_after_command before before_item,
+	as it is added only after commands, and inside commands arguments.
+	ii) there cannot be an @end in before_item, as soon as an @end is seen
+	it is popped from the element it is in, before closing.
+	iii) there can only be before_item or elements associated with @*item
+	directly in block item at commands.
+
+	* tp/Texinfo/XS/parsetexi/utils.c (item_line_parent): use explicit
+	command enums.
+
+	* tp/Texinfo/XS/main/convert_utils.c
+	(find_root_command_next_heading_command): fix condition.
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_macro_arguments): fix condition.
+
+	* tp/Texinfo/Document.pm (new_document): do not initialize explicitly
+	'included_files' to give the same output as with XS.
+
+	* tp/Texinfo/XS/main/manipulate_indices.c
+	(idx_leading_text_or_command), tp/Texinfo/Indices.pm
+	(_idx_leading_text_or_command), tp/Texinfo/XS/main/utils.c
+	(is_content_empty), tp/Texinfo/Common.pm (is_content_empty): handle
+	text element first.
+
+	* tp/Texinfo/XS/main/node_name_normalization.c
+	(convert_to_normalized_internal),
+	tp/Texinfo/Convert/NodeNameNormalization.pm (%ignored_text_types)
+	(_convert): handle text first, including ignored text types, and the
+	remaining elements afterwards.
+
+	* tp/Texinfo/Translations.pm (_substitute_element_array),
+	tp/Texinfo/XS/main/translations.c (substitute_element_array): check
+	for text first, as there is no recursion in that case.
+
+	* tp/Texinfo/XS/main/tree_types.h (CONTAINER, ELEMENT),
+	tp/Texinfo/XS/main/tree.c (new_command_element),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block),
+	tp/Texinfo/XS/parsetexi/indices.c
+	(set_non_ignored_space_in_index_before_command): move cmd from
+	ELEMENT to CONTAINER, as text element do not have a command name.
+	Update users, making sure in particular that element_command_name,
+	element_builtin_cmd, element_builtin_data_cmd and similar functions
+	and macros are never called for a text element.
+
+	* tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace): rename
+	command variable as cmd.
+
+	* tp/t/test_document.t: fix the calls to is().
+
+	* tp/Makefile.tres, tp/t/05paragraph.t
+	(indent_before_macro_definition_and_other): add test with command that
+	are skipped between @indent and the next paragraph.
+
+2024-06-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree_types.h (KEY_PAIR),
+	tp/Texinfo/XS/main/extra.c (get_associated_info_key),
+	tp/Texinfo/XS/parsetexi/end_line.c,
+	tp/Texinfo/XS/structuring_transfo/transformations.c: remove the skey
+	field of KEY_PAIR, now that it is not used anywhere anymore.
+
+2024-06-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (set_document_global_info),
+	tp/Texinfo/XS/main/build_perl_info.c (build_global_info),
+	tp/Texinfo/XS/main/document.c (add_other_global_info_string),
+	tp/Texinfo/XS/main/document_types.h (KEY_STRING_PAIR)
+	(OTHER_GLOBAL_INFO, GLOBAL_INFO): do not use ASSOCIATED_INFO for
+	global_info.other_info, use specific structures and
+	add_other_global_info_string to add a key, string pair.
+
+	* tp/Texinfo/XS/main/extra.c: remove get_associated_info_skey and
+	add_associated_info_string_dup.
+
+	* tp/Makefile.tres, t/test_document.t: add test of Texinfo::Document
+	set_document_global_info.
+
+2024-09-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_command_description):
+	use integer key lookup_extra_element.
+
+2024-06-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/debug.c (print_associate_info_debug),
+	tp/Texinfo/XS/main/extra.c (add_extra_misc_args)
+	(add_extra_index_entry, lookup_extra_misc_args)
+	(lookup_extra_index_entry), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_associated_info): use an integer key for extra_misc_args and
+	extra_index_entry.  Remove lookup_associated_sinfo and lookup_extras.
+	Update callers.
+
+2024-06-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/extra.c (add_extra_contents, add_extra_directions)
+	(lookup_extra_contents, lookup_extra_directions),
+	tp/Texinfo/XS/main/manipulate_tree.c (copy_associated_info),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (direction_bases)
+	(section_direction_associated_node): use an integer key for
+	extra_contents and extra_directions.  Update callers.
+
+2024-06-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.c (delete_global_info): use the pointer
+	directly.
+
+	* tp/Texinfo/XS/main/debug.c (print_associate_info_debug),
+	tp/Texinfo/XS/main/extra.c (add_extra_string, add_extra_string_dup)
+	(lookup_extra_string), tp/Texinfo/XS/main/build_perl_info.c
+	(build_additional_info): use an integer key for extra_string.  Update
+	callers.
+
+2024-06-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/debug.c (print_associate_info_debug): update for
+	change in misc_args.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/debug.c (print_associate_info_debug),
+	tp/Texinfo/XS/main/extra.c (add_extra_element, add_extra_element_oot)
+	(add_extra_container, lookup_extra_element, lookup_extra)
+	(lookup_extras): use an integer key for extra_element,
+	extra_element_oot and extra_container.  Update callers.
+
+2024-06-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_register_file_information):
+	really use the string stored in small_strings.
+
+2024-06-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c
+	(add_associated_file_info_integer, html_register_file_information)
+	(lookup_associated_file_info, html_get_file_information)
+	(html_set_pages_files, setup_output_simple_page)
+	(html_conversion_finalization), tp/Texinfo/XS/main/converter_types.h
+	(FILE_INFO_KEY_PAIR, FILE_ASSOCIATED_INFO, FILE_ASSOCIATED_INFO_LIST)
+	(CONVERTER), tp/Texinfo/XS/main/extra.c: add a specific structure for
+	information associated to a file instead of using the generic
+	ASSOCIATED_INFO structures.  Remove add_associated_info_integer.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/debug.c (print_associate_info_debug),
+	tp/Texinfo/XS/main/extra.c (get_associated_info_skey)
+	(get_associated_info_key, lookup_associated_info)
+	(lookup_associated_sinfo, add_extra_integer, lookup_extra_by_index)
+	(lookup_extra_integer), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_associated_info), tp/Texinfo/XS/main/tree.c (ai_key_names),
+	tp/Texinfo/XS/main/tree_types.h (AI_KEYS_LIST),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(reassociate_to_node): use an integer key for extra info integer.
+	Duplicate some functions to still use string as key for other
+	extra types.  Update callers.
+
+2024-06-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/ConvertXS.xs (html_register_file_information):
+	make sure that the key is saved on the heap by adding to converter
+	small_strings.
+
+2024-06-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_line_command),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command):
+	rename extra key level as subentry_level.
+
+2024-06-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_gather_def_item, _end_line_misc_line)
+	(_end_line_starting_block, _end_line, _handle_line_command)
+	(_handle_block_command, _handle_open_brace),
+	tp/Texinfo/XS/main/tree_types.h, tp/Texinfo/XS/parsetexi/def.c
+	(gather_def_item), tp/Texinfo/XS/parsetexi/end_line.c
+	(end_line_starting_block, end_line_misc_line, end_line),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command)
+	(handle_block_command), tp/Texinfo/XS/parsetexi/parser.c
+	(check_valid_nesting), tp/Texinfo/XS/parsetexi/separator.c
+	(handle_open_brace),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(reassociate_to_node): do not set def_line as type for @def*x and
+	@def*line.  Use extra def_command to determine that an element is
+	either a @def* line command or a def_line type in Perl.  Set and use
+	EF_def_line flag to determine that an element is either a @def* line
+	command or a def_line type in C.
+
+	* tp/Texinfo/Convert/DocBook.pm (%docbook_line_commands)
+	(_convert_def_line, _convert), tp/Texinfo/Convert/HTML.pm
+	(default_type_conversion), tp/Texinfo/Convert/LaTeX.pm
+	(%def_line_commands, _convert_def_line, _convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert_def_line, _convert),
+	tp/Texinfo/Convert/TexinfoMarkup.pm (%line_commands)
+	(_convert_def_line, _convert), tp/Texinfo/Convert/Text.pm
+	(%converted_formattable_line_commands, _convert_def_line)
+	(_convert), tp/Texinfo/Convert/TextContent.pm
+	(%formatted_line_commands, converter_initialize),
+	tp/Texinfo/XS/convert/convert_html.c (convert_def_command),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_def_line)
+	(convert_to_text_internal), : convert
+	@def* line command in addition to def_line type.
+
+2024-06-10  Patrice Dumas  <pertusus@free.fr>
+
+	Use a string list for extra_misc_args
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_sp_command)
+	(convert_tab_command, convert_printindex_command),
+	tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal),
+	tp/Texinfo/XS/main/extra.c (add_extra_misc_args)
+	(lookup_extra_misc_args), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_associated_info), tp/Texinfo/XS/main/tree.c
+	(destroy_associated_info), tp/Texinfo/XS/main/utils.c
+	(informative_command_value), tp/Texinfo/XS/parsetexi/end_line.c
+	(parse_line_command_args, end_line_starting_block)
+	(end_line_misc_line), tp/Texinfo/XS/parsetexi/handle_commands.c
+	(handle_line_command): use a STRING_LIST for extra_misc_args.
+
+2024-06-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_printindex_command),
+	tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/extra.c (add_extra_index_entry)
+	(lookup_extra_index_entry), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_associated_info), tp/Texinfo/XS/main/tree.c
+	(destroy_associated_info), tp/Texinfo/XS/main/tree_types.h
+	(INDEX_ENTRY_LOCATION, KEY_PAIR, enum extra_type),
+	tp/Texinfo/XS/parsetexi/indices.c (enter_index_entry),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(lookup_index_entry, relate_index_entries_to_table_items_in): add
+	extra_index_entry extra type that represents the location of an index
+	entry, with index name and number in index.  Use it instead of
+	misc_args for index entries.
+
+2024-06-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash): nest
+	conditions to avoid calling the conditions on setting Perl data for
+	all the elements.
+
+2024-06-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (store_info_element): check if
+	element to store is 0 in store_info_element.  Update callers.
+
+2024-06-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (store_additional_info)
+	(store_info_integer, element_to_perl_hash): add store_info_integer.
+	Modify store_additional_info to take a reference on a hv in argument
+	and not a number.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_default_format_contents)
+	(convert_style_command, convert_menu_entry_type)
+	(convert_def_line_type), tp/Texinfo/XS/convert/converter.c
+	(table_item_content_tree), tp/Texinfo/XS/main/build_perl_info.c
+	(element_to_perl_hash), tp/Texinfo/XS/main/targets.c
+	(set_labels_identifiers_target, add_element_to_identifiers_target),
+	tp/Texinfo/XS/main/tree_types.h (ELEMENT),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command)
+	(handle_block_command, handle_brace_command),
+	tp/Texinfo/XS/parsetexi/macro.c (parse_macro_command_line),
+	tp/Texinfo/XS/parsetexi/parser.c (begin_paragraph)
+	(register_command_as_argument, process_remaining_on_line),
+	tp/Texinfo/XS/structuring_transfo/structuring.c
+	(check_nodes_are_referenced, complete_node_tree_with_menus, nodes_tree)
+	(new_node_menu_entry),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(insert_nodes_for_sectioning_commands): set un flags extra code,
+	isindex, is_target, omit_def_name_space, not_after_command,
+	invalid_syntax, command_as_argument_kbd_code, indent, noindent.
+
+2024-06-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_utils.c (find_innermost_accent_contents):
+	use a static ELEMENT_LIST for arguments and copy in the end.
+
+	* tp/Texinfo/Convert/Utils.pm (find_innermost_accent_contents),
+	tp/Texinfo/XS/main/convert_utils.c (find_innermost_accent_contents):
+	check text first as accent argument and rearrange code.
+
+	* tp/Texinfo/XS/main/convert_utils.c
+	(find_root_command_next_heading_command): check text first.
+
+2024-06-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/main/types_data.h: add at_command flag.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_to_html_internal),
+	tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal):
+	do text element more separately from other elements.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash):
+	use flag for condition that select types only if needed in Perl.
+
+	* tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal):
+	use types to separate classes of ignored commands.
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (handle_brace_command):
+	put BRACE_inline in ET_brace_args_command.
+
+2024-06-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/counter.c (counter_element_value): add.
+
+	* tp/Texinfo/XS/parsetexi/macro.c (argument_brace_groups)
+	(expand_linemacro_arguments): use an COUNTER counter instead of a
+	counter in element, there are few elements, there is no issue with
+	linear searching in the counter.
+
+	* tp/Texinfo/XS/main/tree_types.h (ELEMENT): remove counter.
+
+2024-06-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ManipulateTree.pm (_copy_tree): modify code to take into
+	acocunt that there is no command name in text and be more similar with
+	C code.
+
+2024-06-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(reassociate_to_node): select elements with "element_node" before
+	accessing it.
+
+	* tp/Texinfo/XS/main/tree_types.h (CONTAINER, ELEMENT): move
+	ASSOCIATED_INFO extra_info to CONTAINER now that it is never used by
+	text elements.  Update code accessing this field.
+
+2024-06-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ManipulateTree.pm (_copy_tree)
+	(_remove_element_copy_info): update to be like the C implementation.
+	Rename _copy_extra_info as _remove_element_copy_info.
+
+2024-06-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/test_tree_copy.t ($tref): do have mix text elements with
+	extra/contents, as it is not a valid tree, make them containers.
+
+2024-06-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_associated_info)
+	(associate_info_references): move string, integer and misc_arg copying
+	to copy_associated_info.
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_tree_internal)
+	(copy_associated_info, get_copy_ref): directly copy an element that has
+	not been copied before and is seen in the tree.  Remove
+	copy_tree_internal.  No need for counter anymore as all the elements
+	are copied when needed.  Remove increase_ref_counter.
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (remove_associated_copy_info)
+	(remove_element_copy_info): since there are no reference to resolve
+	anymore in the second step, it is now only used to remove the
+	reference to the copy element in each element in the copied tree.
+	Rename associate_info_references as remove_associated_copy_info and
+	copy_extra_info as remove_element_copy_info.
+
+2024-06-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_extra_info): remove 'new'
+	argument as it can always be obtained from the element being copied.
+
+2024-06-09  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_element)
+	(copy_associated_info, copy_tree_internal, associate_info_references)
+	(copy_extra_info): use the element flags to mark that the copy of an
+	element was done, and put the pointer to the copy in the element
+	elt_info after the usual information.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree_types.h (ELEMENT): add a counter in element.
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_tree_internal)
+	(get_copy_ref, associate_info_references): use element counter instead
+	of "_counter" extra information.
+
+	* tp/Texinfo/XS/parsetexi/macro.c (expand_linemacro_arguments): use
+	the element counter to count the top level matching braces.  Remove
+	set_toplevel_braces_nr and count_toplevel_braces.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (setup_info_hv)
+	(store_info_element, store_info_string, element_to_perl_hash): add
+	setup_info_hv that only sets up the info hash in the Perl element.
+	Remove store_info_sv and call hv_store in the functions that called
+	store_info_sv before.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (store_info_sv)
+	(store_info_element, store_info_string, element_to_perl_hash):
+	pass directly a pointer on an HV * instead of a number of info added.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	Remove info_info ASSOCIATED_INFO from CONTAINER
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/debug.c (print_element_debug_details),
+	tp/Texinfo/XS/main/manipulate_tree.c (copy_tree_internal)
+	(copy_extra_info), tp/Texinfo/XS/main/tree.c (destroy_element),
+	tp/Texinfo/XS/main/tree_types.h (CONTAINER),
+	tp/Texinfo/XS/parsetexi/close.c (is_container_empty): remove
+	completely the info_info ASSOCIATED_INFO information from CONTAINER
+	in ELEMENT now that everything is in other data structures, mainly
+	elt_info and string_info.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/extra.c: remove add_info_string,
+	add_info_string_dup, lookup_info and lookup_info_string.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_to_html_internal): fix
+	a condition.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (store_info_sv)
+	(store_info_element, store_info_string): split store_info_sv out of
+	store_info_element and add store_info_string to strore string in info.
+
+	* tp/Texinfo/XS/convert/converter.c (table_item_content_tree),
+	tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/builtin_commands.c (element_command_name),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi),
+	tp/Texinfo/XS/main/manipulate_tree.c (copy_tree_internal),
+	tp/Texinfo/XS/main/tree.c (new_element, new_command_element)
+	(destroy_element), tp/Texinfo/XS/parsetexi/close.c
+	(close_brace_command), tp/Texinfo/XS/parsetexi/end_line.c
+	(end_line_misc_line), tp/Texinfo/XS/parsetexi/handle_commands.c
+	(handle_line_command, handle_brace_command),
+	tp/Texinfo/XS/parsetexi/macro.c (parse_macro_command_line)
+	(handle_macro), tp/Texinfo/XS/parsetexi/parser.c
+	(process_remaining_on_line), tp/Texinfo/XS/parsetexi/separator.c
+	(handle_open_brace): remove "delimiter", "alias_of" and "command_name"
+	info string from the info structure and add them to the string_info
+	array.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (parse_rawline_command)
+	(handle_line_command): return an ELEMENT_LIST from
+	parse_rawline_command.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (parse_rawline_command)
+	(handle_line_command): set rawline command text type to ET_rawline_arg
+	directly in parse_rawline_command.
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command):
+	create a raw line command only if not ignored.
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command):
+	set ET_def_line type early, when calling new_element.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/def.c (gather_def_item): check first if
+	there is content for a def item before creating the element.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/DocBook.pm (%container_ignored_if_empty)
+	(_convert), tp/Texinfo/Convert/LaTeX.pm (%container_ignored_if_empty)
+	(_convert), tp/Texinfo/Convert/TexinfoMarkup.pm
+	(%container_ignored_if_empty, _convert): ignore explicitly some
+	empty containers instead of relying on the tree to be without those
+	empty containers.
+
+	* tp/Texinfo/ParserNonXS.pm (_close_container),
+	tp/Texinfo/XS/parsetexi/close.c (close_container): keep the original
+	element type when an element is kept for the source marks.
+
+	* tp/Texinfo/XS/convert/converter.c (table_item_content_tree): do not
+	reset the type it is already set.
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line): set
+	ET_index_entry_command type when creating the element.
+
+2024-09-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_command_description),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (new_node_menu_entry):
+	use the union e name.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	Do not use unnamed union for ELEMENT
+
+	* tp/Texinfo/XS/main/tree_types.h (ELEMENT): rename the union as e.
+	Update codes using the corresponding union fields.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/main/types_data.h: add macro_call type flag.
+
+	* tp/Texinfo/XS/main/tree_types.h (CONTAINER): move string_info to
+	CONTAINER.
+
+	* tp/Texinfo/XS/main/tree_types.h (enum string_info_type): add
+	sit_command_name.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_tree_internal),
+	tp/Texinfo/XS/structuring_transfo/transformations.c (correct_level)
+	(protect_hashchar_at_line_beginning_internal): use new_command_element
+	to create a new command element.  Set correctly types of new command
+	elements.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (is_end_current_command): pass
+	directly an enum command_id as argument.  Update callers.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): remove
+	top_stack_raw_element.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (new_command_element_added)
+	(table_item_content_tree): add new_command_element_added and use it in
+	table_item_content_tree.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_brace_command),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_brace_command): have
+	definfoenclose always takes precedence.  Rearrange code.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/extra.c: remove add_info_element_oot,
+	add_info_integer, lookup_info_integer and lookup_info_element.
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c (destroy_element_and_children): fix
+	condition (found with valgrind).
+
+2024-06-08  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (convert_to_texinfo_internal),
+	tp/Texinfo/XS/main/tree_types.h (enum elt_info_type),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command),
+	tp/Texinfo/XS/parsetexi/parser.c (isolate_last_space_internal),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (new_block_command),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(fill_gaps_in_sectioning, new_node): put spaces_after_argument in
+	elt_info.
+
+2024-06-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_macro),
+	tp/Texinfo/XS/main/element_types.txt, tp/Texinfo/XS/parsetexi/macro.c
+	(handle_macro): set macro_call_line or rmacro_call_line as type for
+	macro call argument when there are no braces and the whole line is the
+	argument.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command),
+	tp/Texinfo/XS/parsetexi/macro.c (expand_macro_arguments)
+	(expand_linemacro_arguments), tp/Texinfo/XS/parsetexi/parser.c
+	(abort_empty_line), tp/Texinfo/XS/structuring_transfo/structuring.c
+	(new_block_command),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(fill_gaps_in_sectioning, new_node): put spaces_before_argument in
+	elt_info.
+
+2024-06-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.awk,
+	tp/Texinfo/XS/main/element_types.txt, tp/Texinfo/XS/main/tree_types.h
+	(enum elt_info_type), tp/Texinfo/XS/main/types_data.h: add
+	spaces_before and spaces_after flags.  Rearrange indices of element in
+	elt_info.
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(fill_gaps_in_sectioning): add the correct types to the created
+	command elements.
+
+	* tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal): expand spaces_before_argument only in
+	elements which can have the info.
+
+2024-06-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_macro_arguments),
+	tp/Texinfo/XS/parsetexi/macro.c (expand_macro_arguments): associate
+	spaces_before_argument with brace argument, not with command call.
+
+	* tp/Texinfo/ParserNonXS.pm (_expand_linemacro_arguments),
+	tp/Texinfo/XS/parsetexi/macro.c (expand_linemacro_arguments): set
+	argument type to line_arg.  Put first spaces_before_argument in
+	linemacro_call, similar to other line commands.
+
+2024-06-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.awk,
+	tp/Texinfo/XS/main/element_types.txt, tp/Texinfo/XS/main/tree_types.h:
+	add braces type flag, use it in element_types.awk.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi),
+	tp/Texinfo/XS/parsetexi/macro.c (handle_macro),
+	tp/Texinfo/XS/parsetexi/parser.c (gather_spaces_after_cmd_before_arg)
+	(new_value_element): put spaces_after_cmd_before_arg in elt_info
+	instead of info.
+
+2024-06-07  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.awk: block_line_arg and line_arg
+	hold spaces_after_cmd_before_arg and comment_at_end, not the commands.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (store_info_element)
+	(element_to_perl_hash), tp/Texinfo/XS/main/convert_to_texinfo.c
+	(convert_to_texinfo_internal), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_element, copy_associated_info, copy_tree_internal)
+	(copy_extra_info), tp/Texinfo/XS/main/tree.c (new_element)
+	(destroy_element), tp/Texinfo/XS/main/tree_types.h
+	(enum elt_info_type), tp/Texinfo/XS/parsetexi/parser.c
+	(isolate_last_space),
+	tp/Texinfo/XS/structuring_transfo/transformations.c (new_node):
+	initialize, free, copy elt_info list of elements meant to replace
+	the elements in info.  Put comment_at_end in that list instead of
+	in the info structure and pass it to Perl.
+
+	* tp/Texinfo/XS/main/tree_types.h (enum string_info_type, ELEMENT):
+	prepare string information in element to replace information in info.
+
+2024-06-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c (destroy_associated_info): use k_pair
+	variable.
+
+2024-06-05  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_brace_command):
+	add brace_args_command type for BRACE_arguments in C.
+
+	* tp/Texinfo/XS/main/builtin_commands.h (COMMAND),
+	tp/Texinfo/XS/main/command_data.awk,
+	tp/Texinfo/XS/main/element_types.awk: set elt_info_number in
+	element_types.awk only.
+
+2024-06-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Plaintext.pm (process_footnotes): rename
+	variables and fields.
+
+	* tp/Texinfo/Convert/LaTeX.pm (_convert), tp/Texinfo/Convert/Info.pm
+	(format_image), tp/Texinfo/Convert/Plaintext.pm (process_footnotes)
+	(format_image, _convert), tp/Texinfo/Convert/Text.pm (_convert),
+	tp/Texinfo/XS/convert/convert_html.c (convert_image_command): check
+	that extra, info, args and args_formatted exist before accessing
+	them.
+
+	* tp/Makefile.tres, tp/t/converters_tests.t
+	(various_itemize_command_as_argument): add test of various brace
+	commands, without braces, as @itemize argument.
+
+2024-06-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_starting_block): check
+	that the command_as_argument on @itemize line is alone without
+	modifying an array, by looping over the contents as in C.
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_starting_block),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block): simplify
+	the code checking that the command as arg is brace noarg or has
+	braces.
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_close_brace): simplify condition
+	on args and contents.
+
+2024-06-04  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (table_item_content_tree): determine
+	the command name usable as Texinfo::Commands key by using the
+	generic definfoenclose one if the type is definfoenclose.  Similar to
+	using element_builtin_cmd in C.
+
+2024-06-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (begin_paragraph_p): select types
+	that could contain paragraphs only.  Improve documentation of the
+	code by listing the types that are avoided.
+
+2024-06-03  Patrice Dumas  <pertusus@free.fr>
+
+	Rename brace_command_container type as brace_arg
+
+2024-09-28  Patrice Dumas  <pertusus@free.fr>
+
+	Update test results
+
+2024-06-03  Patrice Dumas  <pertusus@free.fr>
+
+	Rename brace_command_arg type as brace_container
+
+2024-06-03  Patrice Dumas  <pertusus@free.fr>
+
+	Remove command_as_argument element type
+
+	* tp/Texinfo/Convert/Text.pm (_convert): fix parentheses of brace
+	command argument type test.
+
+	* tp/Texinfo/Convert/LaTeX.pm (_convert): determine if a command as
+	argument is the default for itemize by checking the parents and not
+	the type.
+
+	* tp/Texinfo/Convert/TexinfoMarkup.pm (_convert): determine that the
+	command_as_argument element by comparing with the itemize parent extra
+	value instead of using the type.
+
+	* tp/Texinfo/Convert/Converter.pm (table_item_content_tree),
+	tp/Texinfo/Convert/Texinfo.pm (_convert_to_texinfo)
+	(_expand_cmd_args_to_texi): check that type is set before accessing
+	and do not access type if not needed.
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_starting_block)
+	(_register_command_as_argument), tp/Texinfo/XS/main/build_perl_info.c
+	(element_to_perl_hash), tp/Texinfo/XS/parsetexi/end_line.c
+	(end_line_starting_block), tp/Texinfo/XS/parsetexi/parser.c
+	(register_command_as_argument): do not set a special type for the
+	command_as_argument, and do not set a flag in C.
+
+2024-06-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/element_types.txt, tp/Texinfo/XS/parsetexi/parser.c
+	(begin_paragraph_p): add more types for commands.
+
+	* tp/Texinfo/XS/main/tree.c (new_command_element): new function to add
+	a command element, for clearer code.
+
+	* tp/Texinfo/XS/structuring_transfo/structuring.c (new_block_command)
+	(new_complete_node_menu, new_detailmenu),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(complete_node_menu): pass only an element to new_block_command, the
+	caller should have called new_command_element already to set the
+	command.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_float_command)
+	(convert_printindex_command, html_convert_output),
+	tp/Texinfo/XS/convert/converter.c (table_item_content_tree),
+	tp/Texinfo/XS/main/convert_utils.c (expand_verbatiminclude)
+	(definition_category_tree), tp/Texinfo/XS/main/manipulate_tree.c
+	(new_asis_command_with_text, protect_text),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_other_command)
+	(handle_line_command, handle_block_command, handle_brace_command),
+	tp/Texinfo/XS/parsetexi/macro.c (parse_macro_command_line),
+	tp/Texinfo/XS/parsetexi/parser.c (new_value_element)
+	(process_remaining_on_line),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (new_block_command),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(fill_gaps_in_sectioning, new_node) : set command elements types, use
+	new_command_element.
+	
+	* tp/Texinfo/XS/convert/convert_html.c (convert_printindex_command):
+	call directly new_element with the correct type instead of modifying
+	afterwards.
+
+2024-06-03  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c: remove completly spare_element, to avoid
+	the complexity. Also elements are now more reused.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_tree_internal), tp/Texinfo/XS/main/tree_types.h (ELEMENT),
+	tp/Texinfo/XS/parsetexi/def.c (parse_def): replace inserted field by
+	flags and add a corresponding flag.
+
+	* tp/Texinfo/XS/convert/converter.c (table_item_content_tree),
+	tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block),
+	tp/Texinfo/XS/parsetexi/parser.c (register_command_as_argument): put
+	command_as_argument as a flag.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command)
+	(handle_brace_command), tp/Texinfo/XS/parsetexi/macro.c
+	(parse_macro_command_line, handle_macro),
+	tp/Texinfo/XS/parsetexi/parser.c (begin_paragraph_p)
+	(new_value_element, process_remaining_on_line),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace): add types for
+	@-commands in C.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/builtin_commands.h (COMMAND),
+	tp/Texinfo/XS/main/command_data.awk,
+	tp/Texinfo/XS/main/element_types.awk, tp/Texinfo/XS/main/tree_types.h
+	(ELEMENT), tp/Texinfo/XS/main/types_data.h (TYPE_DATA): prepare
+	information on the number of elements needed to have the info_info
+	associated info elements information.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_to_html_internal): do
+	not call element_command_name for text elements.
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_extra_info),
+	tp/Texinfo/XS/main/tree.c (destroy_element),
+	tp/Texinfo/XS/main/tree_types.h (CONTAINER, ELEMENT): move info_info
+	to CONTAINER, as it is not used in text elements anymore.
+
+	* tp/Texinfo/XS/main/build_perl_info.c, tp/Texinfo/XS/main/debug.c,
+	tp/Texinfo/XS/main/extra.c, tp/Texinfo/XS/parsetexi/close.c: update to
+	use info_info in CONTAINER and not directly in ELEMENT.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (store_additional_info)
+	(element_to_perl_hash): pass the number of information to
+	store_additional_info, and if some information is already set reuse
+	the HV.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal), tp/Texinfo/XS/main/manipulate_tree.c
+	(copy_tree_internal), tp/Texinfo/XS/main/tree_types.h (ELEMENT),
+	tp/Texinfo/XS/parsetexi/def.c (parse_def),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block): set
+	inserted directly in the ELEMENT structure instead of in the info
+	additional information.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	Type brace_command_container for brace_command_arg without spaces
+
+	* tp/Texinfo/Convert/Converter.pm (table_item_content_tree),
+	tp/Texinfo/Convert/NodeNameNormalization.pm (_convert),
+	tp/Texinfo/Convert/Plaintext.pm (_convert),
+	tp/Texinfo/Convert/Texinfo.pm (_expand_cmd_args_to_texi),
+	tp/Texinfo/Convert/TexinfoMarkup.pm (_convert),
+	tp/Texinfo/Convert/Text.pm b/tp/Texinfo/Convert/Text.pm (_convert),
+	tp/Texinfo/ParserNonXS.pm (_print_command_args_texi)
+	(_expand_macro_arguments, _isolate_last_space, _handle_open_brace),
+	tp/Texinfo/XS/convert/converter.c (table_item_content_tree),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal),
+	tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/main/node_name_normalization.c
+	(convert_to_normalized_internal), tp/Texinfo/XS/parsetexi/end_line.c
+	(end_line_starting_block), tp/Texinfo/XS/parsetexi/macro.c
+	(expand_macro_arguments), tp/Texinfo/XS/parsetexi/parser.c
+	(isolate_last_space), tp/Texinfo/XS/parsetexi/separator.c
+	(handle_open_brace): use a different container for brace commands args
+	if the brace command is of the arguments type and the spaces are in
+	the info dataof the brace commands args, called
+	brace_command_container.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/def.c (parse_def),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_def_line): use directly
+	the definition line arguments to determine the class/category/name for
+	the index entry.  Remove the returned information from parse_def.
+
+	* tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace): remove an
+	impossible condition, as the linemacro call bracketed type is a
+	different type now.
+
+	* tp/Texinfo/XS/parsetexi/def.c (split_def_args): remove a redundant
+	condition.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.txt: remove unused
+	space_command_arg.  Reorder.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (%all_commands), tp/Texinfo/command_data.txt:
+	as the internal commands also are in another category, they need to
+	have a data field that can be compared to the category.  The internal
+	commands therefore need to be removed explicitly from the %all_commands
+	hash.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_to_html_internal):
+	consider that an element with both a type and a command to be ignored
+	if it is ignored both as a type element and as a command element.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c: add const.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (present_bug_message): add an end of
+	line at the end of the additional_information, to avoid addition of
+	the location of the error in present_bug_message.
+
+2024-09-28  Patrice Dumas  <pertusus@free.fr>
+
+	Update test result
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Converter.pm (table_item_content_tree),
+	tp/Texinfo/XS/convert/converter.c (table_item_content_tree): if the
+	command_as_argument is a context brace command, such as @math or
+	@footnote, corresponding to an arguably bogus @*table line, as @*table
+	argument should only be indicatric commands, setup expected trees for
+	these @-commands, to avoid debug messages/converter crashes.
+
+	* tp/t/03coverage_braces.t (one_argument_leading_trailing_spaces): add
+	noarg brace commands to the test.
+
+	* tp/Makefile.tres, tp/t/converters_tests.t
+	(various_vtable_command_as_argument): text with various non indicatric
+	brace @-commands as @vtable argument.
+
+2024-06-01  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/t/03coverage_braces.t (one_argument_leading_trailing_spaces): add
+	accent commands to the test.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	Separate memory use in ELEMENT between text elements and other elements
+
+	* tp/Texinfo/XS/main/tree_types.h (ELEMENT): make a union for TEXT and
+	CONTAINER.
+
+2024-09-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_command_description)
+	(html_default_format_single_footnote),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (new_node_menu_entry):
+	add missing ELEMENT c union.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_extra_info)
+	(modify_tree), tp/Texinfo/XS/main/translations.c
+	(substitute_element_array), tp/Texinfo/XS/main/tree.c
+	(destroy_element_and_children): do not recurse if in a text element.
+
+	* tp/Texinfo/XS/parsetexi/macro.c (expand_macro_arguments): create
+	ET_brace_command_arg element with new_element as it is not a text
+	element.
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(insert_nodes_for_sectioning_commands): new_node_tree is not text, set
+	it to ET_NONE and create with new_element.
+
+	* tp/Texinfo/XS/main/tree.c (new_element, destroy_element),
+	tp/Texinfo/XS/main/tree_types.h (CONTAINER, ELEMENT): add a CONTAINER
+	structure for the information only relevant in container elements, and
+	not in text elements.  Remove from the ELEMENT and replace by a
+	pointer to the CONTAINER structure.
+
+	* tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/convert/converter.c,
+	tp/Texinfo/XS/main/build_perl_info.c,
+	tp/Texinfo/XS/main/convert_to_texinfo.c,
+	tp/Texinfo/XS/main/convert_to_text.c,
+	tp/Texinfo/XS/main/convert_utils.c, tp/Texinfo/XS/main/debug.c,
+	tp/Texinfo/XS/main/errors.c, tp/Texinfo/XS/main/floats.c,
+	tp/Texinfo/XS/main/get_perl_info.c,
+	tp/Texinfo/XS/main/manipulate_indices.c,
+	tp/Texinfo/XS/main/manipulate_tree.c,
+	tp/Texinfo/XS/main/node_name_normalization.c,
+	tp/Texinfo/XS/main/output_unit.c, tp/Texinfo/XS/main/targets.c,
+	tp/Texinfo/XS/main/translations.c, tp/Texinfo/XS/main/tree.c,
+	tp/Texinfo/XS/main/utils.c, tp/Texinfo/XS/parsetexi/debug_parser.c,
+	tp/Texinfo/XS/parsetexi/def.c, tp/Texinfo/XS/parsetexi/end_line.c,
+	tp/Texinfo/XS/parsetexi/errors_parser.c,
+	tp/Texinfo/XS/parsetexi/handle_commands.c,
+	tp/Texinfo/XS/parsetexi/indices.c, tp/Texinfo/XS/parsetexi/labels.c,
+	tp/Texinfo/XS/parsetexi/macro.c, tp/Texinfo/XS/parsetexi/menus.c,
+	tp/Texinfo/XS/parsetexi/multitable.c,
+	tp/Texinfo/XS/parsetexi/parser.c,
+	tp/Texinfo/XS/parsetexi/source_marks.c,
+	tp/Texinfo/XS/structuring_transfo/structuring.c,
+	tp/Texinfo/XS/structuring_transfo/transformations.c: update for the
+	change in ELEMENT by adding a ->c indirection to the container field.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_handle_close_brace),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_close_brace): if the
+	argument of @errormsg is not text, still give an empty string as error
+	message.
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (parse_line_command_args): check
+	if the argument is text before accessing the text length.
+
+	* tp/Texinfo/XS/main/tree.c (new_text_element, destroy_element),
+	tp/Texinfo/XS/main/tree_types.h (ELEMENT): setup the text field in
+	ELEMENT to be a pointer, such as to be able later on to have it in an
+	union along with another structure pointer for other elements.
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (end_line_def_line): check that
+	the element type is text before accessing the text.
+
+	* tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/convert/converter.c,
+	tp/Texinfo/XS/main/build_perl_info.c,
+	tp/Texinfo/XS/main/convert_to_texinfo.c,
+	tp/Texinfo/XS/main/convert_to_text.c,
+	tp/Texinfo/XS/main/manipulate_indices.c,
+	tp/Texinfo/XS/main/manipulate_tree.c,
+	tp/Texinfo/XS/main/node_name_normalization.c,
+	tp/Texinfo/XS/main/translations.c, tp/Texinfo/XS/main/utils.c,
+	p/Texinfo/XS/parsetexi/close.c,
+	tp/Texinfo/XS/parsetexi/debug_parser.c, tp/Texinfo/XS/parsetexi/def.c,
+	tp/Texinfo/XS/parsetexi/end_line.c,
+	tp/Texinfo/XS/parsetexi/handle_commands.c,
+	tp/Texinfo/XS/parsetexi/indices.c, tp/Texinfo/XS/parsetexi/macro.c,
+	tp/Texinfo/XS/parsetexi/menus.c, tp/Texinfo/XS/parsetexi/parser.c,
+	tp/Texinfo/XS/parsetexi/separator.c,
+	tp/Texinfo/XS/parsetexi/source_marks.c,
+	tp/Texinfo/XS/structuring_transfo/structuring.c,
+	tp/Texinfo/XS/structuring_transfo/transformations.c: update for change
+	in ELEMENT text.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (new_text_element_added),
+	tp/Texinfo/XS/main/tree.c (new_text_element): add a new function to
+	setup a text element, to prepare for a different initialization and
+	different struct union field use.  Update calls.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.awk,
+	tp/Texinfo/XS/main/types_data.h (TYPE_DATA): rename TYPE type as
+	TYPE_DATA.
+
+	* tp/Texinfo/XS/main/element_types.awk, tp/Texinfo/XS/Makefile.am
+	(libtexinfo_la_SOURCES): generate types data in element_types.c
+	instead of in types_data.c.  Remove main/types_data.c and
+	element_type_names.
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c
+	(call_types_conversion, call_types_open),
+	tp/Texinfo/XS/convert/convert_html.c,
+	tp/Texinfo/XS/convert/get_html_perl_info.c
+	(html_converter_initialize_sv), tp/Texinfo/XS/main/build_perl_info.c
+	(element_to_perl_hash), tp/Texinfo/XS/main/builtin_commands.c
+	(set_element_type_name_info), tp/Texinfo/XS/main/debug.c
+	(print_element_debug), tp/Texinfo/XS/parsetexi/close.c
+	(close_current), tp/Texinfo/XS/parsetexi/handle_commands.c
+	(handle_block_command), tp/Texinfo/XS/parsetexi/parser.c (merge_text)
+	(abort_empty_line): use type_data[type].name instead of
+	element_type_names[type].
+
+2024-09-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/extra.c (lookup_extra_misc_args),
+	tp/Texinfo/XS/main/manipulate_tree.c (associate_info_references),
+	tp/Texinfo/XS/main/tree.c (destroy_associated_info): add missing
+	KEY_PAIR union name k.
+
+	Reorder ChangeLog to correspond to commits order.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_sp_command)
+	(convert_tab_command, convert_printindex_command),
+	tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal),
+	tp/Texinfo/XS/main/debug.c (print_associate_info_debug),
+	tp/Texinfo/XS/main/extra.c (add_extra_misc_args)
+	(lookup_extra_misc_args), tp/Texinfo/XS/main/manipulate_tree.c
+	(associate_info_references), tp/Texinfo/XS/main/tree.c
+	(destroy_associated_info), tp/Texinfo/XS/main/utils.c
+	(informative_command_value), tp/Texinfo/XS/parsetexi/end_line.c
+	(parse_line_command_args, end_line_starting_block)
+	(end_line_misc_line), tp/Texinfo/XS/parsetexi/handle_commands.c
+	(handle_line_command), tp/Texinfo/XS/parsetexi/indices.c
+	(enter_index_entry),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(lookup_index_entry, relate_index_entries_to_table_items_in):
+	use an ELEMENT_LIST for extra_misc_args.  Add lookup_extra_misc_args.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/indices.c (enter_index_entry),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(relate_index_entries_to_table_items_in): set type as ET_other_text
+	instead of ET_NONE.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_additional_info),
+	tp/Texinfo/XS/main/debug.c (print_associate_info_debug),
+	tp/Texinfo/XS/main/manipulate_tree.c (associate_info_references):
+	always use text element with type ET_other_text in extra_misc_args.
+	Use the type to determine if the element represents text or an
+	integer.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/debug.c (print_element_debug): text element never
+	have contents nor arg, nor command.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_to_html_internal),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (convert_to_texinfo_internal),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal),
+	tp/Texinfo/XS/main/debug.c (print_element_debug),
+	tp/Texinfo/XS/main/manipulate_tree.c (copy_tree_internal)
+	(relocate_source_marks, protect_text),
+	tp/Texinfo/XS/main/node_name_normalization.c
+	(convert_to_normalized_internal), tp/Texinfo/XS/main/utils.c
+	(is_content_empty),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(protect_hashchar_at_line_beginning_internal): use type flags to
+	determine if an element is a text element.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.txt: add more text flags for text
+	elements.
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_tree_internal): text
+	elements may have inserted info set, so copy info.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash):
+	reorganize to take into account that text element do not args nor
+	contents nor extras.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (isolate_trailing_space)
+	(isolate_last_space, process_remaining_on_line): pass last contents
+	element as isolate_trailing_space argument.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/parsetexi/parser.c (check_space_element)
+	(text_contents_to_plain_text, merge_text, isolate_trailing_space),
+	(process_remaining_on_line), tp/Texinfo/XS/parsetexi/source_marks.c
+	(place_source_mark): use type flags to determine if an element
+	is a text element.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.awk: order correctly the types.
+
+	* tp/Texinfo/XS/Makefile.am (libtexinfo_la_SOURCES): add
+	main/types_data.c as a normal built source file.
+
+	* tp/Texinfo/XS/convert/converter.c (float_type_number, float_name_caption)
+	(comma_index_subentries_tree, free_comma_index_subentries_tree),
+	tp/Texinfo/XS/main/convert_utils.c (definition_category_tree): set
+	ET_normal_text as type for normal text instead of ET_NONE.
+
+	* tp/Texinfo/Common.pm (debug_print_element),
+	tp/Texinfo/XS/parsetexi/debug_parser.c (print_element_debug_parser):
+	text element never have contents nor arg, nor command.
+
+	* tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash): add
+	other_text type to detect text not in regular converted tree elements.
+
+	* tp/Texinfo/XS/parsetexi/end_line.c (parse_line_command_args),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (parse_rawline_command)
+	(handle_line_command), tp/Texinfo/XS/parsetexi/macro.c
+	(expand_macro_arguments, expand_linemacro_arguments, handle_macro),
+	tp/Texinfo/XS/parsetexi/parser.c (abort_empty_line)
+	(isolate_last_space_internal, gather_spaces_after_cmd_before_arg)
+	(process_remaining_on_line),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (new_block_command),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(fill_gaps_in_sectioning): set type as ET_other_text instead of ET_NONE.
+
+	* tp/Texinfo/XS/main/types_data.h (TYPE): rename type_name field as
+	name.
+
+	* tp/Texinfo/XS/parsetexi/close.c (is_container_empty),
+	tp/Texinfo/XS/parsetexi/debug_parser.c (print_element_debug_parser):
+	use type flags to determine if an element is a text element.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	Add data structure for information on types in C
+
+	* tp/Texinfo/XS/main/types_data.h (TYPES), tp/Texinfo/XS/Makefile.am
+	(BUILT_SOURCES, libtexinfo_la_SOURCES, EXTRA_DIST),
+	tp/Texinfo/XS/main/element_types.awk,
+	tp/Texinfo/XS/main/element_types.txt: add code in element_types.awk to
+	setup a TYPE structure for information on types, similar to the
+	COMMAND data, but with flags only.  Add flags information in
+	element_types.txt, to mark text elements.  Generate the structure
+	array with information on all the types in main/types_data.c.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/command_data.awk (END): initialize flags_str and
+	other_flags_str for each command.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/parser.c (check_space_element): fix
+	conditional to detect better space elements.
+
+	* tp/Texinfo/XS/convert/convert_html.c (html_internal_command_tree)
+	(html_external_command_tree, html_default_format_program_string)
+	(convert_value_command, convert_printindex_command),
+	tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal),
+	tp/Texinfo/XS/main/convert_utils.c (expand_today),
+	tp/Texinfo/XS/main/manipulate_tree.c (parse_node_manual),
+	tp/Texinfo/XS/parsetexi/parser.c (new_value_element),
+	tp/Texinfo/XS/structuring_transfo/structuring.c (new_block_command)
+	(new_node_menu_entry, new_detailmenu),
+	tp/Texinfo/XS/structuring_transfo/transformations.c (new_node)
+	(insert_nodes_for_sectioning_commands)
+	(protect_hashchar_at_line_beginning_internal): set ET_normal_text as
+	type for normal text instead of ET_NONE.
+
+	* tp/Texinfo/XS/convert/convert_html.c (convert_menu_entry_type),
+	tp/Texinfo/XS/main/manipulate_indices.c (idx_leading_text_or_command),
+	tp/Texinfo/XS/main/manipulate_tree.c (parse_node_manual),
+	tp/Texinfo/XS/main/utils.c (informative_command_value),
+	tp/Texinfo/XS/parsetexi/handle_commands.c (check_no_text),
+	tp/Texinfo/XS/parsetexi/menus.c (end_line_menu_entry),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_comma),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(protect_first_parenthesis, new_node): use
+	type ET_normal_text to determine that an element is text instead of
+	element text.space or text.end.
+
+	* tp/Texinfo/XS/parsetexi/menus.c (end_line_menu_entry): use types
+	ET_menu_entry_leading_text and ET_menu_entry_separator to determine
+	that an element is text in menu entry.
+
+	* tp/Texinfo/XS/main/manipulate_tree.c (copy_tree_internal): rearrange
+	code and exit sooner if the element is a text element as there are
+	no additional information nor contents nor args.
+
+	* tp/Texinfo/XS/main/convert_utils.c
+	(find_root_command_next_heading_command): add a bug message if normal
+	text appears directly in top level (should be in a paragraph).
+
+2024-09-28  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Tweak config paths for Info
+
+	* info/infomap.c (locate_init_file):
+	Check ~/.infokey before checking XDG_CONFIG_HOME,
+	simililar to how GNU Emacs does it.   Do not use /etc/xdg as
+	a default for XDG_CONFIG_DIRS.  Check in $sysconfdir/xdg/texinfo
+	before XDG_CONFIG_DIRS, as with recent changes to texi2any.
+	* info/Makefile.am (AM_CPPFLAGS): propagate sysconfdir
+
+	* NEWS, doc/info-stnd.texi (Custom Key Bindings): update.
+
+2024-05-31  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_split_delimiters): remove undefined
+	warnings.
+
+	* tp/Texinfo/ParserNonXS.pm (_end_line_menu_entry): update code now
+	that contents are removed if empty.
+
+2024-05-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_split_delimiters),
+	tp/Texinfo/XS/parsetexi/def.c (split_delimiters): more readable check
+	of already split elements.
+
+	* tp/Texinfo/XS/parsetexi/close.c (close_current),
+	tp/Texinfo/XS/parsetexi/def.c (split_delimiters, split_def_args)
+	(parse_def), tp/Texinfo/XS/parsetexi/handle_commands.c
+	(handle_line_command), tp/Texinfo/XS/parsetexi/indices.c
+	(set_non_ignored_space_in_index_before_command, complete_indices),
+	tp/Texinfo/XS/parsetexi/parser.c (process_remaining_on_line): use
+	ET_normal_text for normal text instead of ET_NONE.  Mark special texts
+	with a comment.
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (handle_line_command):
+	for raw line arguments parsing, reuse the elements in args instead of
+	allocating new ones.
+
+	* tp/Texinfo/XS/parsetexi/def.c (split_delimiters, split_def_args),
+	tp/Texinfo/XS/parsetexi/end_line.c (parse_line_command_args)
+	(end_line_starting_block), :
+	use type to determine if an element is a text element when possible.
+
+2024-05-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_merge_text),
+	tp/Texinfo/XS/parsetexi/parser.c (merge_text): rename last_child as
+	last_element.  Set last_element in _merge_text to check type.
+
+	* tp/Texinfo/ParserNonXS.pm (_merge_text, _abort_empty_line),
+	tp/Texinfo/XS/parsetexi/parser.c (merge_text, abort_empty_line): add
+	the leading empty text in merge_text instead of abort_empty_line, to
+	clarify the code.  Update abort_empty_line callers in C.
+
+2024-05-30  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (%parser_document_state_initialization)
+	(_abort_empty_line, _start_empty_line_after_command, _handle_macro)
+	(_handle_open_brace, _handle_comma): instead of putting the command
+	associated to internal spaces in the extra information of the space,
+	put it in the state as internal_space_holder.  Add the parser as
+	_start_empty_line_after_command argument, update callers.
+	Also reuse the internal space as the info spaces_before_argument
+	of the command associated with the internal space in _abort_empty_line.
+
+	* tp/Texinfo/ParserNonXS.pm (_isolate_last_space),
+	tp/Texinfo/XS/parsetexi/parser.c (isolate_last_space): always isolate the
+	last space independentely of its type and type of the current
+	container.
+
+	* tp/Texinfo/ParserNonXS.pm (_isolate_last_space),
+	tp/Texinfo/XS/parsetexi/parser.c (isolate_last_space_internal): reuse
+	the internal space as the info spaces_after_argument.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (begin_paragraph, merge_text):
+	return 0 if the paragraph was not started.  Shortcut the code merging
+	text if a paragraph was started in merge_text.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/parsetexi/menus.c (handle_menu_entry_separators),
+	tp/Texinfo/XS/parsetexi/parser.c (merge_text, abort_empty_line),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace),
+	tp/Texinfo/XS/parsetexi/source_marks.c (place_source_mark): add a text
+	type, normal_text, used internally in XS parser for regular text,
+	instead of using ET_NONE.
+
+	* tp/Texinfo/XS/parsetexi/parser.c (isolate_last_space_internal): do
+	not use an intermediate TEXT, directly set the new element text.  Add
+	last_elt as argument to isolate_last_space_internal.
+
+2024-09-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/get_converter_perl_info.c: add missing
+	#include.
+
+2024-05-28  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/converter_types.h (TARGET_FILENAME)
+	(enum command_location), tp/Texinfo/XS/main/utils.h: move
+	TARGET_FILENAME and enum command_location to converter_types.h.
+
+	* tp/Texinfo/XS/main/convert_utils.h,
+	tp/Texinfo/XS/main/manipulate_indices.h: avoid dependencies on other
+	header files defining also functions by using struct instead of types.
+
+	Update includes.  Order includes by starting from the most generic.
+
+2024-09-28  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Loading Init Files), doc/texinfo.texi (HTML
+	Xref Configuration), tp/texi2any.pl (add_config_paths)
+	(set_subdir_directories): search in $sysconfdir/xdg before
+	XDG_CONFIG_DIRS.  Do not search in XDG_DATA_DIRS.  Agreement on Gavin
+	report.
+
+2024-09-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_formatted_nodedescription_nr)
+	(_convert_menu_entry_type): add _formatted_nodedescription_nr based on
+	_convert_menu_entry_type code.
+
+	* tp/Texinfo/Convert/HTML.pm (command_description, _translate_names)
+	(_file_header_information), tp/Texinfo/XS/convert/convert_html.c
+	(html_command_description, file_header_information)
+	(reset_html_targets_list, html_translate_names),
+	tp/Texinfo/XS/main/converter_types.h (HTML_TARGET): add
+	command_description to get the description associated to a node or
+	sectioning command node.  Use it to set description if there is no
+	documentdescription (and to set keywords).  Inspired by Benjamin
+	Kalish report.
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tp/Texinfo/XS/convert/ConvertXS.xs (html_command_description): XS
+	override for html_command_description.
+
+	* tp/Makefile.tres, tp/t/html_tests.t
+	($nodedescription_description_texinfo)
+	(nodedescription_description)
+	(nodedescription_description_no_use_nodes): test nodedescription used
+	as meta description.
+
+2024-09-26  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (_file_header_information)
+	(_default_format_begin_file, _default_format_node_redirection_page),
+	tp/Texinfo/XS/convert/convert_html.c (BEGIN_FILE_INFORMATION)
+	(destroy_begin_file_information, file_header_information)
+	(html_default_format_begin_file)
+	(html_default_format_node_redirection_page): add keywords to
+	file_header_information returned information.
+
+2024-09-25  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Loading Init Files), doc/texinfo.texi (HTML
+	Xref Configuration): hint that we do not follow strictly the XDG Base
+	Directory Specification for defaults.
+
+2024-09-25  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl (add_config_paths, set_subdir_directories): mark
+	$sysconfdir as deprecated by $sysconfdir/xdg.
+
+2024-09-24  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Loading Init Files), doc/texinfo.texi (HTML
+	Xref Configuration), tp/texi2any.pl (add_config_paths)
+	(set_subdir_directories): use $sysconfdir/xdg instead of $sysconfdir
+	in search paths.  Remove default absolute XDG Base Directory
+	Specification system configuration and system data irectories from
+	search path.
+
+	* tp/texi2any.pl: do not add ./init to init files search path.
+
+2024-09-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* contrib/EPUB_conformance: Remove subdirectory as patches are
+	no longer useful - the issues they fixed have been fixed in the
+	main program.
+
+2024-09-23  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/refcard/txivarcheck (read_tp): ignore customization variable
+	names beginning with _ that are internal variables.
+
+2024-09-23  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/refcard/Makefile.am (ccheck, vcheck), doc/refcard/txicmdcheck
+	(main), doc/refcard/txivarcheck (main): use srcdir to find programs
+	and input files for out of source build.
+
+	* util/txicmdlist (BEGIN), util/txicustomvars (BEGIN): use
+	top_builddir to find Texinfo::ModulePath for out of source build.
+
 2024-09-22  Gavin Smith <gavinsmith0123@gmail.com>
 
 	* NEWS: remove bug-fix item that was in 7.1.1.
@@ -255,7 +4809,7 @@
 
 	* tp/Texinfo/Convert/HTML.pm (%defaults): do not set MISC_BUTTONS to
 	SECTION_BUTTONS in the default case, as there are no regular
-	directions set for special output units.  Add Top button instead of 
+	directions set for special output units.  Add Top button instead of
 	regular directions, with default now being the same as with TEXI2HTML
 	style.  Report from Rudolf Adamkovič.
 
@@ -473,7 +5027,7 @@
 2024-09-05  Patrice Dumas  <pertusus@free.fr>
 
 	* tp/ext/epub3.pm (epub_convert_special_unit_type): rename
-	$element variable as $output_unit. 
+	$element variable as $output_unit.
 
 2024-09-05  Patrice Dumas  <pertusus@free.fr>
 
@@ -631,7 +5185,7 @@
 
 	* tp/texi2any.pl (%converter_format_expanded_region_name)
 	(set_format): more explicit code and variable names to distinguish
-	output format, converter format and expanded region. 
+	output format, converter format and expanded region.
 
 2024-08-25  Patrice Dumas  <pertusus@free.fr>
 
@@ -749,6 +5303,7 @@
 	is likely stopping IFS from being reset correctly, leading
 	to subsequent errors.
 
+
 2024-08-21  Patrice Dumas  <pertusus@free.fr>
 
 	* doc/texinfo.texi: modify, reassociate and comment out
@@ -844,6 +5399,7 @@
 
 	* autogen.sh: Run autoreconf under tp/Texinfo/XS/ with
 	AUTOPOINT=true.  From Bruno.
+
 
 2024-08-10  Patrice Dumas  <pertusus@free.fr>
 
@@ -991,6 +5547,23 @@
 	* tp/Texinfo/XS/configure.ac: Specify the same GNU gettext
 	version as the top-level configure.ac. Add comments about use
 	of autopoint.
+
+2024-08-04  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: Remove out-of-date information about running
+	"make" before "make dist".
+
+2024-08-04  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/tp_api/Makefile.am (tp/Texinfo/ModulePath.pm):
+	Add rule to allow running "make dist" without running "make"
+	first.  Report from Bruno Haible.
+
+2024-08-04  Patrice Dumas  <pertusus@free.fr>
+
+	* info/Makefile.am (../gnulib/lib/libgnu.a):
+	Add rule to allow running "make dist" without running "make"
+	first.  Report from Bruno Haible.
 
 2024-07-27  Patrice Dumas  <pertusus@free.fr>
 
@@ -1249,7 +5822,7 @@
 	(indices_sort_strings), tp/Texinfo/XS/main/build_perl_info.c
 	(BUILD_PERL_DOCUMENT_ITEM, BUILD_PERL_DOCUMENT_LIST)
 	(document_global_information): rename sv_ref to avoid false positiver
-	reported by ppport.h as sv_ref is also exported as part of Perl API as 
+	reported by ppport.h as sv_ref is also exported as part of Perl API as
 	a function.  Report by Gavin.
 
 2024-06-06  Patrice Dumas  <pertusus@free.fr>
@@ -1418,6 +5991,29 @@
 
 2024-05-29  Patrice Dumas  <pertusus@free.fr>
 
+	* tp/Texinfo/XS/parsetexi/parser.c (merge_text): remove unused
+	variable.
+
+2024-05-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/macro.c (handle_macro),
+	tp/Texinfo/XS/parsetexi/parser.c (internal_space_holder)
+	(abort_empty_line, start_empty_line_after_command),
+	tp/Texinfo/XS/parsetexi/separator.c (handle_open_brace, handle_comma):
+	instead of putting the command associated to internal spaces in the
+	extra information of the space, put it in a global element,
+	internal_space_holder.
+	Also reuse the internal space as the info spaces_before_argument
+	of the command associated with the internal space.
+
+2024-05-29  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/close.c (is_container_empty),
+	tp/Texinfo/XS/parsetexi/macro.c: remove unused remove_empty_arg
+	functions.  Make is_container_empty static.
+
+2024-05-29  Patrice Dumas  <pertusus@free.fr>
+
 	* tp/Texinfo/XS/parsetexi/api.c (parse_file): cast the decode_string
 	argument to char* to remove the const, as, even if decode_string do
 	not modify its argument, it cannot be marked const if iconv input
@@ -1445,7 +6041,7 @@
 	* tp/Texinfo/XS/main/document.c
 	(destroy_document_information_except_tree)
 	(remove_document_descriptor): destroy the document structure fields
-	and the small_strings even if the tree is not set. 
+	and the small_strings even if the tree is not set.
 
 	* tp/Texinfo/XS/main/document.c
 	(unregister_document_merge_with_document): free the removed document
@@ -1774,7 +6370,7 @@
 	(parse_string, parse_text), tp/Texinfo/XS/parsetexi/conf.c
 	(reset_parser_conf): pass parser to parser_* functions in Parsetexi.xs
 	to retrieve the parser_conf_descriptor kept in the parser with
-	apply_sv_parser_conf.  Replace the current global_parser_conf with the 
+	apply_sv_parser_conf.  Replace the current global_parser_conf with the
 	parser_conf associated with the parser by calling apply_conf.
 	Do not clear global_parser_conf structures in reset_parser_conf if the
 	global_parser_conf is registered.  Inline clear_global_parser_conf.
@@ -2135,7 +6731,7 @@
 	value_list, value_number and value_space that are removed.  Add
 	store_parser_value that does the same as store_value previously by
 	calling store_value with parser_values.  Update fetch_value and
-	clear_value to use parser_values.  
+	clear_value to use parser_values.
 
 	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser),
 	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parser_store_values),
@@ -2983,7 +7579,7 @@
 2024-05-01  Patrice Dumas  <pertusus@free.fr>
 
 	* doc/texi2any_api.texi (Simple Navigation Panel Customization):
-	comment out documentation of buttons specification that is not used in 
+	comment out documentation of buttons specification that is not used in
 	code nor tests.
 
 2024-05-01  Patrice Dumas  <pertusus@free.fr>
@@ -3351,7 +7947,7 @@
 
 2024-04-16  Patrice Dumas  <pertusus@free.fr>
 
-	* doc/texinfo.texi (@LaTeX{} Customization Variables), 
+	* doc/texinfo.texi (@LaTeX{} Customization Variables),
 	tp/Texinfo/Convert/LaTeX.pm (%defaults, _latex_header),
 	tp/Texinfo/options_data.txt: add new customization variable
 	LATEX_FLOATS_FILE_EXTENSION.

@@ -17,8 +17,7 @@ $result_trees{'item_in_ref'} = {
                   'cmdname' => 'asis',
                   'source_info' => {
                     'line_nr' => 1
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -92,10 +91,10 @@ $result_trees{'item_in_ref'} = {
                                   'text' => 'Top'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_arg'
                             },
                             {
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_arg'
                             },
                             {
                               'contents' => [
@@ -109,7 +108,7 @@ $result_trees{'item_in_ref'} = {
                                   'text' => ' '
                                 }
                               },
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_arg'
                             }
                           ],
                           'cmdname' => 'ref',

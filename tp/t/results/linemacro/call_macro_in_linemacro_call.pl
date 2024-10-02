@@ -166,11 +166,7 @@ $result_trees{'call_macro_in_linemacro_call'} = {
                         'type' => 'bracketed_linemacro_arg'
                       }
                     ],
-                    'info' => {
-                      'spaces_before_argument' => {
-                        'text' => ' '
-                      }
-                    }
+                    'type' => 'line_arg'
                   },
                   {
                     'contents' => [
@@ -182,11 +178,15 @@ $result_trees{'call_macro_in_linemacro_call'} = {
                       'spaces_before_argument' => {
                         'text' => ' '
                       }
-                    }
+                    },
+                    'type' => 'line_arg'
                   }
                 ],
                 'info' => {
-                  'command_name' => 'lm'
+                  'command_name' => 'lm',
+                  'spaces_before_argument' => {
+                    'text' => ' '
+                  }
                 },
                 'type' => 'linemacro_call'
               },
@@ -230,7 +230,7 @@ $result_trees{'call_macro_in_linemacro_call'} = {
                             'text' => '@emph '
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       },
                       {
                         'contents' => [
@@ -244,7 +244,7 @@ $result_trees{'call_macro_in_linemacro_call'} = {
 '
                           }
                         },
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -269,8 +269,7 @@ $result_trees{'call_macro_in_linemacro_call'} = {
                       'source_info' => {
                         'line_nr' => 14,
                         'macro' => 'mymacro'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -388,7 +387,7 @@ $result_trees{'call_macro_in_linemacro_call'} = {
                           'text' => 'T'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'var',

@@ -20,18 +20,19 @@
 #include <string.h>
 #include <stddef.h>
 
-#include "global_commands_types.h"
-#include "options_types.h"
 #include "tree_types.h"
+#include "options_types.h"
 #include "document_types.h"
 #include "tree.h"
-#include "floats.h"
 #include "errors.h"
 #include "debug.h"
 /* for delete_global_info and wipe_index */
 #include "utils.h"
-#include "convert_to_text.h"
+#include "floats.h"
 #include "manipulate_indices.h"
+#include "convert_to_text.h"
+#include "output_unit.h"
+#include "api_to_perl.h"
 #include "document.h"
 
 static DOCUMENT **document_list;
@@ -39,7 +40,7 @@ static size_t document_number;
 static size_t document_space;
 
 DOCUMENT *
-retrieve_document (int document_descriptor)
+retrieve_document (size_t document_descriptor)
 {
   if (document_descriptor <= document_number
       && document_list[document_descriptor -1] != 0)
@@ -98,7 +99,8 @@ new_document (void)
 }
 
 void
-register_document_nodes_list (DOCUMENT *document, ELEMENT_LIST *nodes_list)
+register_document_nodes_list (DOCUMENT *document,
+                              CONST_ELEMENT_LIST *nodes_list)
 {
   document->nodes_list = nodes_list;
   document->modified_information |= F_DOCM_nodes_list;
@@ -106,7 +108,7 @@ register_document_nodes_list (DOCUMENT *document, ELEMENT_LIST *nodes_list)
 
 void
 register_document_sections_list (DOCUMENT *document,
-                                 ELEMENT_LIST *sections_list)
+                                 CONST_ELEMENT_LIST *sections_list)
 {
   document->sections_list = sections_list;
   document->modified_information |= F_DOCM_sections_list;
@@ -398,9 +400,9 @@ destroy_document_information_except_tree (DOCUMENT *document)
   wipe_error_message_list (&document->error_messages);
   wipe_error_message_list (&document->parser_error_messages);
   if (document->nodes_list)
-    destroy_list (document->nodes_list);
+    destroy_const_element_list (document->nodes_list);
   if (document->sections_list)
-    destroy_list (document->sections_list);
+    destroy_const_element_list (document->sections_list);
   if (document->options)
     {
       free_options (document->options);
@@ -408,6 +410,9 @@ destroy_document_information_except_tree (DOCUMENT *document)
     }
   if (document->convert_index_text_options)
     destroy_text_options (document->convert_index_text_options);
+
+  free_output_units_lists (&document->output_units_lists);
+
   if (document->merged_indices)
     destroy_merged_indices (document->merged_indices);
   if (document->indices_sort_strings)
@@ -451,7 +456,7 @@ destroy_document_information_except_tree (DOCUMENT *document)
 }
 
 void
-remove_document_descriptor (int document_descriptor)
+remove_document_descriptor (size_t document_descriptor)
 {
   DOCUMENT *document = 0;
 
@@ -470,8 +475,10 @@ remove_document_descriptor (int document_descriptor)
   if (document->small_strings)
     destroy_strings_list (document->small_strings);
 
+  unregister_document_hv (document);
+
   /*
-  fprintf (stderr, "REMOVE %d %p\n", document_descriptor, document);
+  fprintf (stderr, "REMOVE %zu %p\n", document_descriptor, document);
    */
 
   free (document);
@@ -481,7 +488,7 @@ remove_document_descriptor (int document_descriptor)
 /* destroy everything except for the tree and merge small string to
    DOCUMENT */
 ELEMENT *
-unregister_document_merge_with_document (int document_descriptor,
+unregister_document_merge_with_document (size_t document_descriptor,
                                          DOCUMENT *document)
 {
   DOCUMENT *removed_document = retrieve_document (document_descriptor);
@@ -496,7 +503,7 @@ unregister_document_merge_with_document (int document_descriptor,
   removed_document->tree = 0;
 
   /*
-  fprintf (stderr, "UNREGISTER %p (%d)\n", removed_document,
+  fprintf (stderr, "UNREGISTER %p (%zu)\n", removed_document,
                                            document_descriptor);
    */
 
@@ -517,9 +524,36 @@ unregister_document_merge_with_document (int document_descriptor,
   return tree;
 }
 
+void
+add_other_global_info_string (OTHER_GLOBAL_INFO *other_global_info,
+                              const char *key, const char *value)
+{
+  int i;
+  for (i = 0; i < other_global_info->info_number; i++)
+    {
+      if (!strcmp (other_global_info->info[i].key, key))
+        break;
+    }
+  if (i == other_global_info->info_number)
+    {
+      if (other_global_info->info_number == other_global_info->info_space)
+        {
+          other_global_info->info = realloc (other_global_info->info,
+             (other_global_info->info_space += 5) * sizeof (KEY_STRING_PAIR));
+          if (!other_global_info->info)
+            fatal ("realloc failed");
+        }
+      other_global_info->info_number++;
+
+      other_global_info->info[i].key = strdup (key);
+    }
+
+  other_global_info->info[i].string = strdup (value);
+}
+
 /* does not seems to be used */
 void
-wipe_document_errors (int document_descriptor)
+wipe_document_errors (size_t document_descriptor)
 {
   DOCUMENT *document = retrieve_document (document_descriptor);
   if (document)
@@ -527,7 +561,7 @@ wipe_document_errors (int document_descriptor)
 }
 
 void
-wipe_document_parser_errors (int document_descriptor)
+wipe_document_parser_errors (size_t document_descriptor)
 {
   DOCUMENT *document = retrieve_document (document_descriptor);
   if (document)

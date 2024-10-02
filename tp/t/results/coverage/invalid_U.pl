@@ -25,7 +25,7 @@ $result_trees{'invalid_U'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -44,7 +44,7 @@ $result_trees{'invalid_U'} = {
                       'text' => 'z'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -63,7 +63,7 @@ $result_trees{'invalid_U'} = {
                       'text' => 'abc'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -82,7 +82,7 @@ $result_trees{'invalid_U'} = {
                       'text' => '9999999999999'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -101,7 +101,7 @@ $result_trees{'invalid_U'} = {
                       'text' => '110000'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -120,7 +120,7 @@ $result_trees{'invalid_U'} = {
                       'text' => '10FFFF'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -148,7 +148,7 @@ $result_trees{'invalid_U'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -167,7 +167,7 @@ $result_trees{'invalid_U'} = {
                       'text' => 'FFFD'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -194,7 +194,7 @@ $result_trees{'invalid_U'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -304,16 +304,5 @@ $result_converted{'latex_text'}->{'invalid_U'} = ' U+z ઼ U+9999999999999 U+110
 $result_converted{'docbook'}->{'invalid_U'} = '<para> &#xz; &#xabc; &#x9999999999999; &#x110000; &#x10FFFF;
 &#x0023; &#xFFFD; &#xwxyz;
 </para>';
-
-$result_converted_errors{'docbook'}->{'invalid_U'} = [
-  {
-    'error_line' => 'warning: no argument specified for @U
-',
-    'line_nr' => 1,
-    'text' => 'no argument specified for @U',
-    'type' => 'warning'
-  }
-];
-
 
 1;

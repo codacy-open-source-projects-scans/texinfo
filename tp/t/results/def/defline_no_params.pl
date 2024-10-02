@@ -73,7 +73,19 @@ $result_trees{'defline_no_params'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'truc'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -83,8 +95,7 @@ $result_trees{'defline_no_params'} = {
               },
               'source_info' => {
                 'line_nr' => 2
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -141,7 +152,6 @@ $result_trees{'defline_no_params'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'defline_no_params'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'defline_no_params'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
 
 $result_texis{'defline_no_params'} = '@defblock
 @defline Builtin truc
@@ -161,7 +171,7 @@ $result_floats{'defline_no_params'} = {};
 
 
 
-$result_converted{'plaintext'}->{'defline_no_params'} = ' -- Builtin: truc
+$result_converted{'plaintext'}->{'defline_no_params'} = ' - Builtin: truc
      Description of truc
 ';
 

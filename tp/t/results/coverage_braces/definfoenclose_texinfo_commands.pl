@@ -161,7 +161,7 @@ $result_trees{'definfoenclose_texinfo_commands'} = {
                       'type' => 'raw'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'verb',
@@ -189,7 +189,7 @@ $result_trees{'definfoenclose_texinfo_commands'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'TeX',
@@ -208,7 +208,7 @@ $result_trees{'definfoenclose_texinfo_commands'} = {
                       'text' => 'in strong'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'strong',
@@ -420,5 +420,14 @@ $result_converted{'latex_text'}->{'definfoenclose_texinfo_commands'} = '
 \\textbf{important:} in quotation
 \\end{quote}
 ';
+
+
+$result_converted{'docbook'}->{'definfoenclose_texinfo_commands'} = '
+<para><literal>aaa</literal>.
+</para>
+<para>&tex;. in strong.
+</para>
+<important><para>in quotation
+</para></important>';
 
 1;

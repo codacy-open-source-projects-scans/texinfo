@@ -36,7 +36,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -63,7 +63,7 @@ $result_trees{'ref_error_formatting'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -105,7 +105,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -119,7 +119,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -127,7 +127,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -159,7 +159,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -173,10 +173,10 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -184,7 +184,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -216,7 +216,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -230,13 +230,13 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -244,7 +244,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -276,7 +276,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -290,16 +290,16 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -307,7 +307,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -339,7 +339,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -366,7 +366,7 @@ $result_trees{'ref_error_formatting'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -374,7 +374,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -406,7 +406,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -433,10 +433,10 @@ $result_trees{'ref_error_formatting'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -444,7 +444,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -476,7 +476,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -502,13 +502,13 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -516,7 +516,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -548,7 +548,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -574,16 +574,16 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -591,7 +591,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -623,7 +623,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -650,7 +650,7 @@ $result_trees{'ref_error_formatting'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -658,7 +658,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -666,10 +666,10 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -701,7 +701,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -727,7 +727,7 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -735,10 +735,10 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -746,7 +746,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -778,7 +778,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -804,7 +804,7 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -812,13 +812,13 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -826,7 +826,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -858,7 +858,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -884,7 +884,7 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -892,7 +892,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -900,7 +900,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -908,7 +908,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -940,7 +940,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -966,7 +966,7 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -974,7 +974,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -982,10 +982,10 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -993,7 +993,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1025,7 +1025,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1051,7 +1051,7 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1059,7 +1059,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1067,7 +1067,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1080,7 +1080,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1093,7 +1093,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1125,7 +1125,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1151,10 +1151,10 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1162,7 +1162,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1170,7 +1170,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1202,7 +1202,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1228,10 +1228,10 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1239,10 +1239,10 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1250,7 +1250,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1282,7 +1282,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1308,10 +1308,10 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1319,7 +1319,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1332,7 +1332,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1345,7 +1345,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1377,7 +1377,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1403,13 +1403,13 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1417,7 +1417,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1425,7 +1425,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1457,7 +1457,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1471,7 +1471,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1479,7 +1479,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1487,10 +1487,10 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1522,7 +1522,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1536,7 +1536,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1544,10 +1544,10 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1555,7 +1555,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1587,7 +1587,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1601,7 +1601,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1609,13 +1609,13 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1623,7 +1623,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1655,7 +1655,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1669,7 +1669,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1677,7 +1677,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1685,7 +1685,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1693,7 +1693,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1725,7 +1725,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1739,7 +1739,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1747,7 +1747,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1755,10 +1755,10 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1766,7 +1766,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1798,7 +1798,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1812,7 +1812,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1820,7 +1820,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1828,7 +1828,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1841,7 +1841,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1854,7 +1854,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1886,7 +1886,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1900,10 +1900,10 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1911,7 +1911,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1919,7 +1919,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1951,7 +1951,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -1965,10 +1965,10 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1976,10 +1976,10 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -1987,7 +1987,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -2019,7 +2019,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2033,10 +2033,10 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2044,7 +2044,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'title'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2057,7 +2057,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2070,7 +2070,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -2102,7 +2102,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2116,13 +2116,13 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2130,7 +2130,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2138,7 +2138,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'manual'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -2180,7 +2180,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2194,7 +2194,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2207,7 +2207,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -2239,7 +2239,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2253,10 +2253,10 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2264,7 +2264,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -2296,7 +2296,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2310,7 +2310,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2318,7 +2318,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'cross ref name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2331,7 +2331,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -2360,7 +2360,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2374,7 +2374,7 @@ $result_trees{'ref_error_formatting'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -2416,7 +2416,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2442,7 +2442,7 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2455,7 +2455,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2468,7 +2468,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -2500,7 +2500,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2527,7 +2527,7 @@ $result_trees{'ref_error_formatting'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -2559,7 +2559,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2586,7 +2586,7 @@ $result_trees{'ref_error_formatting'} = {
                     },
                     'normalized' => 'node'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2599,7 +2599,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -2631,7 +2631,7 @@ $result_trees{'ref_error_formatting'} = {
                       'cmdname' => '}'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -2657,10 +2657,10 @@ $result_trees{'ref_error_formatting'} = {
                       ]
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -2668,7 +2668,7 @@ $result_trees{'ref_error_formatting'} = {
                       'text' => 'file name'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inforef',
@@ -2937,42 +2937,39 @@ $result_floats{'ref_error_formatting'} = {};
 
 
 
-$result_converted{'plaintext'}->{'ref_error_formatting'} = '‘@ref{node}’ *note node::
+$result_converted{'plaintext'}->{'ref_error_formatting'} = '‘@ref{node}’ node
 
-   ‘@ref{,cross ref name}’ *note cross ref name: . ‘@ref{,,title}’ *note
-title: . ‘@ref{,,,file name}’ *note (file name)Top:: ‘@ref{,,,,manual}’
-*note ()Top:: ‘@ref{node,cross ref name}’ *note cross ref name: node.
-‘@ref{node,,title}’ *note title: node. ‘@ref{node,,,file name}’ *note
-(file name)node:: ‘@ref{node,,,,manual}’ *note ()node:: ‘@ref{node,cross
-ref name,title,}’ *note cross ref name: node. ‘@ref{node,cross ref
-name,,file name}’ *note cross ref name: (file name)node.
-‘@ref{node,cross ref name,,,manual}’ *note cross ref name: ()node.
-‘@ref{node,cross ref name,title,file name}’ *note cross ref name: (file
-name)node. ‘@ref{node,cross ref name,title,,manual}’ *note cross ref
-name: ()node. ‘@ref{node,cross ref name,title, file name, manual}’ *note
-cross ref name: (file name)node. ‘@ref{node,,title,file name}’ *note
-title: (file name)node. ‘@ref{node,,title,,manual}’ *note title: ()node.
-‘@ref{node,,title, file name, manual}’ *note title: (file name)node.
-‘@ref{node,,,file name,manual}’ *note (file name)node:: ‘@ref{,cross ref
-name,title,}’ *note cross ref name: . ‘@ref{,cross ref name,,file name}’
-*note cross ref name: (file name)Top. ‘@ref{,cross ref name,,,manual}’
-*note cross ref name: ()Top. ‘@ref{,cross ref name,title,file name}’
-*note cross ref name: (file name)Top. ‘@ref{,cross ref
-name,title,,manual}’ *note cross ref name: ()Top. ‘@ref{,cross ref
-name,title, file name, manual}’ *note cross ref name: (file name)Top.
-‘@ref{,,title,file name}’ *note title: (file name)Top.
-‘@ref{,,title,,manual}’ *note title: ()Top. ‘@ref{,,title, file name,
-manual}’ *note title: (file name)Top. ‘@ref{,,,file name,manual}’ *note
-(file name)Top::
+   ‘@ref{,cross ref name}’ cross ref name ‘@ref{,,title}’ title
+‘@ref{,,,file name}’ (file name) ‘@ref{,,,,manual}’ ‘manual’
+‘@ref{node,cross ref name}’ cross ref name: node ‘@ref{node,,title}’
+title: node ‘@ref{node,,,file name}’ (file name)node
+‘@ref{node,,,,manual}’ node in ‘manual’ ‘@ref{node,cross ref
+name,title,}’ cross ref name: node ‘@ref{node,cross ref name,,file
+name}’ cross ref name: (file name)node ‘@ref{node,cross ref
+name,,,manual}’ cross ref name: node in ‘manual’ ‘@ref{node,cross ref
+name,title,file name}’ cross ref name: (file name)node ‘@ref{node,cross
+ref name,title,,manual}’ cross ref name: node in ‘manual’
+‘@ref{node,cross ref name,title, file name, manual}’ cross ref name:
+(file name)node ‘@ref{node,,title,file name}’ title: (file name)node
+‘@ref{node,,title,,manual}’ title: node in ‘manual’ ‘@ref{node,,title,
+file name, manual}’ title: (file name)node ‘@ref{node,,,file
+name,manual}’ (file name)node ‘@ref{,cross ref name,title,}’ cross ref
+name ‘@ref{,cross ref name,,file name}’ cross ref name(file name)
+‘@ref{,cross ref name,,,manual}’ cross ref name in ‘manual’ ‘@ref{,cross
+ref name,title,file name}’ cross ref name(file name) ‘@ref{,cross ref
+name,title,,manual}’ cross ref name in ‘manual’ ‘@ref{,cross ref
+name,title, file name, manual}’ cross ref name(file name)
+‘@ref{,,title,file name}’ title(file name) ‘@ref{,,title,,manual}’ title
+in ‘manual’ ‘@ref{,,title, file name, manual}’ title(file name)
+‘@ref{,,,file name,manual}’ (file name)
 
-   ‘@inforef{,cross ref name }’ *note cross ref name: . ‘@inforef{,,file
-name}’ *note (file name)Top:: ‘@inforef{,cross ref name, file name}’
-*note cross ref name: (file name)Top. ‘@inforef{}’ *note ::
+   ‘@inforef{,cross ref name }’ See cross ref name ‘@inforef{,,file
+name}’ See (file name) ‘@inforef{,cross ref name, file name}’ See cross
+ref name(file name) ‘@inforef{}’ See Top
 
-   ‘@inforef{node, cross ref name, file name}’ *note cross ref name:
-(file name)node. ‘@inforef{node}’ *note node:: ‘@inforef{node, cross ref
-name}’ *note cross ref name: node. ‘@inforef{node,,file name}’ *note
-(file name)node::
+   ‘@inforef{node, cross ref name, file name}’ See cross ref name: (file
+name)node ‘@inforef{node}’ See node ‘@inforef{node, cross ref name}’ See
+cross ref name: node ‘@inforef{node,,file name}’ See (file name)node
 ';
 
 
@@ -3150,5 +3147,65 @@ $result_converted{'latex_text'}->{'ref_error_formatting'} = '
 \\texttt{@inforef\\{node,\\ cross ref name\\}} node
 \\texttt{@inforef\\{node{,}{,}file name\\}} Section ``node\'\' in \\texttt{file name}
 ';
+
+
+$result_converted{'info'}->{'ref_error_formatting'} = 'This is , produced from .
+
+‘@ref{node}’ *note node::
+
+   ‘@ref{,cross ref name}’ *note cross ref name: . ‘@ref{,,title}’ *note
+title: . ‘@ref{,,,file name}’ *note (file name)Top:: ‘@ref{,,,,manual}’
+*note ()Top:: ‘@ref{node,cross ref name}’ *note cross ref name: node.
+‘@ref{node,,title}’ *note title: node. ‘@ref{node,,,file name}’ *note
+(file name)node:: ‘@ref{node,,,,manual}’ *note ()node:: ‘@ref{node,cross
+ref name,title,}’ *note cross ref name: node. ‘@ref{node,cross ref
+name,,file name}’ *note cross ref name: (file name)node.
+‘@ref{node,cross ref name,,,manual}’ *note cross ref name: ()node.
+‘@ref{node,cross ref name,title,file name}’ *note cross ref name: (file
+name)node. ‘@ref{node,cross ref name,title,,manual}’ *note cross ref
+name: ()node. ‘@ref{node,cross ref name,title, file name, manual}’ *note
+cross ref name: (file name)node. ‘@ref{node,,title,file name}’ *note
+title: (file name)node. ‘@ref{node,,title,,manual}’ *note title: ()node.
+‘@ref{node,,title, file name, manual}’ *note title: (file name)node.
+‘@ref{node,,,file name,manual}’ *note (file name)node:: ‘@ref{,cross ref
+name,title,}’ *note cross ref name: . ‘@ref{,cross ref name,,file name}’
+*note cross ref name: (file name)Top. ‘@ref{,cross ref name,,,manual}’
+*note cross ref name: ()Top. ‘@ref{,cross ref name,title,file name}’
+*note cross ref name: (file name)Top. ‘@ref{,cross ref
+name,title,,manual}’ *note cross ref name: ()Top. ‘@ref{,cross ref
+name,title, file name, manual}’ *note cross ref name: (file name)Top.
+‘@ref{,,title,file name}’ *note title: (file name)Top.
+‘@ref{,,title,,manual}’ *note title: ()Top. ‘@ref{,,title, file name,
+manual}’ *note title: (file name)Top. ‘@ref{,,,file name,manual}’ *note
+(file name)Top::
+
+   ‘@inforef{,cross ref name }’ *note cross ref name: . ‘@inforef{,,file
+name}’ *note (file name)Top:: ‘@inforef{,cross ref name, file name}’
+*note cross ref name: (file name)Top. ‘@inforef{}’ *note ::
+
+   ‘@inforef{node, cross ref name, file name}’ *note cross ref name:
+(file name)node. ‘@inforef{node}’ *note node:: ‘@inforef{node, cross ref
+name}’ *note cross ref name: node. ‘@inforef{node,,file name}’ *note
+(file name)node::
+
+Tag Table:
+
+End Tag Table
+
+
+Local Variables:
+coding: utf-8
+End:
+';
+
+$result_converted_errors{'info'}->{'ref_error_formatting'} = [
+  {
+    'error_line' => 'warning: document without nodes
+',
+    'text' => 'document without nodes',
+    'type' => 'warning'
+  }
+];
+
 
 1;

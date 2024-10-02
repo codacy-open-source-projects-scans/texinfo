@@ -82,7 +82,7 @@ $result_trees{'seealso_duplicate'} = {
                           'text' => 'awk'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'command',
@@ -125,7 +125,7 @@ $result_trees{'seealso_duplicate'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {
@@ -162,7 +162,7 @@ $result_trees{'seealso_duplicate'} = {
                           'text' => 'awk'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'command',
@@ -201,7 +201,7 @@ $result_trees{'seealso_duplicate'} = {
                               'text' => 'awk'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'command',
@@ -210,7 +210,7 @@ $result_trees{'seealso_duplicate'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'seealso',
@@ -242,7 +242,7 @@ $result_trees{'seealso_duplicate'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {
@@ -312,7 +312,7 @@ $result_trees{'seealso_duplicate'} = {
                           'text' => 'awk'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'command',
@@ -344,7 +344,7 @@ $result_trees{'seealso_duplicate'} = {
                       'text' => 'Another entry'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'seeentry',
@@ -376,7 +376,7 @@ $result_trees{'seealso_duplicate'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {
@@ -562,6 +562,8 @@ b
 * Menu:
 
 * awk, POSIX and:                        chap.                  (line 3)
+  awk, POSIX and:                        See also POSIX awk.
+  awk, POSIX and, See Another entry.
 
 
 Tag Table:
@@ -584,6 +586,8 @@ $result_converted{'plaintext'}->{'seealso_duplicate'} = 'b
 * Menu:
 
 * awk, POSIX and:                        chap.                  (line 0)
+  awk, POSIX and:                        See also POSIX awk.
+  awk, POSIX and, See Another entry.
 
 ';
 

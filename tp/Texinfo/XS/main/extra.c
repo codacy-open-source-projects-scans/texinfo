@@ -19,22 +19,21 @@
 #include <stdio.h>
 
 #include "tree_types.h"
-/* for new_element */
+/* for new_list list_set_empty_contents */
 #include "tree.h"
 /* for fatal and directions_length */
 #include "utils.h"
 #include "debug.h"
 #include "extra.h"
 
-/* directly used in tree copy, but should not be directly used in general */
 KEY_PAIR *
-get_associated_info_key (ASSOCIATED_INFO *a, const char *key,
+get_associated_info_key (ASSOCIATED_INFO *a, enum ai_key_name key,
                          const enum extra_type type)
 {
   int i;
   for (i = 0; i < a->info_number; i++)
     {
-      if (!strcmp (a->info[i].key, key))
+      if (a->info[i].key == key)
         break;
     }
   if (i == a->info_number)
@@ -47,9 +46,10 @@ get_associated_info_key (ASSOCIATED_INFO *a, const char *key,
             fatal ("realloc failed");
         }
       a->info_number++;
+
+      a->info[i].key = key;
     }
 
-  a->info[i].key = key;
   a->info[i].type = type;
 
   return &a->info[i];
@@ -57,23 +57,35 @@ get_associated_info_key (ASSOCIATED_INFO *a, const char *key,
 
 /* Add an extra key that is a reference to another element (for example,
    'associated_section' on a node command element. */
-/* TODO would be good to have ELEMENT be const */
+/* The extra element is marked as const because, as a general rule, an
+   extra element should not be modified when accessed through
+   lookup_extra_element as it refers to another part of the tree.
+   In addition, tree elements should not be modified in converters.
+   Having the element registered here as const and lookup_extra_element
+   return const helps guarding against errors.
+
+   However, during the structuring/tree transformation phase, an element
+   obtained through lookup_extra_element could need to be modified (addition
+   of menus, for example).  The element could also be modified when a
+   reference to Perl is needed when building to Perl.  When the tree is
+   copied, the source tree elements are temporarily modified.  For those
+   cases, a cast should be (and is) used to remove the const.
+ */
 void
-add_extra_element (ELEMENT *e, const char *key, ELEMENT *value)
+add_extra_element (ELEMENT *e, enum ai_key_name key, const ELEMENT *value)
 {
-  KEY_PAIR *k = get_associated_info_key (&e->extra_info, key,
+  KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key,
                                          extra_element);
-  k->k.element = value;
+  k->k.const_element = value;
 }
 
 /* Add an extra key that is a reference to another element that is
    out-of-tree, i.e., not referenced anywhere in the tree.
-   Unused in the parser in 2023, but used in other codes.
 */
 void
-add_extra_element_oot (ELEMENT *e, char *key, ELEMENT *value)
+add_extra_element_oot (ELEMENT *e, enum ai_key_name key, ELEMENT *value)
 {
-  KEY_PAIR *k = get_associated_info_key (&e->extra_info, key,
+  KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key,
                                          extra_element_oot);
   k->k.element = value;
 }
@@ -85,18 +97,10 @@ add_extra_element_oot (ELEMENT *e, char *key, ELEMENT *value)
    contents.
  */
 void
-add_extra_container (ELEMENT *e, char *key, ELEMENT *value)
+add_extra_container (ELEMENT *e, enum ai_key_name key, ELEMENT *value)
 {
-  KEY_PAIR *k = get_associated_info_key (&e->extra_info, key,
+  KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key,
                                          extra_container);
-  k->k.element = value;
-}
-
-void
-add_info_element_oot (ELEMENT *e, char *key, ELEMENT *value)
-{
-  KEY_PAIR *k = get_associated_info_key (&e->info_info, key,
-                                         extra_element_oot);
   k->k.element = value;
 }
 
@@ -105,115 +109,97 @@ add_info_element_oot (ELEMENT *e, char *key, ELEMENT *value)
    Check if it already exists, unless NO_LOOKUP is set
    if the caller knows that the array has not been set
    already.
+
+   A list of const elements is used as the extra contents
+   contain elements from elsewhere in the tree.  See the comment
+   before add_extra_element for more on that subject and on casting
+   the elements from the list to remove const if needed.
 */
-ELEMENT_LIST *
-add_extra_contents (ELEMENT *e, const char *key, int no_lookup)
+CONST_ELEMENT_LIST *
+add_extra_contents (ELEMENT *e, enum ai_key_name key, int no_lookup)
 {
-  ELEMENT_LIST *n_list;
+  CONST_ELEMENT_LIST *n_list;
   if (!no_lookup)
     {
-      ELEMENT_LIST *e_list = lookup_extra_contents (e, key);
+      CONST_ELEMENT_LIST *e_list = lookup_extra_contents (e, key);
       if (e_list)
         return e_list;
     }
 
-  n_list = new_list ();
-  KEY_PAIR *k = get_associated_info_key (&e->extra_info, key,
+  n_list = new_const_element_list ();
+  KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key,
                                          extra_contents);
-  k->k.list = n_list;
+  k->k.const_list = n_list;
   return n_list;
 }
 
 /* Holds 3 elements corresponding to directions in enum directions.
-   A general difference other element lists, is that an element
-   pointer set to 0 is ok, it means that there is no such direction
-   In general, all the pointer elements are non NULL in element lists
-   for the first number elements.
+
+  The elements are set const because directions are set after the tree is
+  done and, as a rule, the elements should not be modified when accessed
+  from directions.  When the element need to be modified, the const is removed
+  with a cast.  This happens when associating to a reference on a Perl
+  object when building the Perl tree, and when copying the tree, as the
+  element is temporarily modified in that case.
 */
-const ELEMENT_LIST *
-add_extra_directions (ELEMENT *e, const char *key)
+const ELEMENT **
+add_extra_directions (ELEMENT *e, enum ai_key_name key)
 {
-  const ELEMENT_LIST *e_list = lookup_extra_directions (e, key);
+  const ELEMENT **e_list = lookup_extra_directions (e, key);
   if (e_list)
     return e_list;
   else
     {
-      ELEMENT_LIST *n_list = new_list ();
-      list_set_empty_contents (n_list, directions_length);
-      KEY_PAIR *k = get_associated_info_key (&e->extra_info, key,
+      const ELEMENT **n_list = new_directions ();
+      KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key,
                                              extra_directions);
-      k->k.list = n_list;
+      k->k.directions = n_list;
       return n_list;
     }
 }
 
 void
-add_extra_misc_args (ELEMENT *e, char *key, ELEMENT *value)
+add_extra_misc_args (ELEMENT *e, enum ai_key_name key, STRING_LIST *value)
 {
   if (!value) return;
-  KEY_PAIR *k = get_associated_info_key (&e->extra_info, key, extra_misc_args);
-  k->k.element = value;
+  KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key,
+                                         extra_misc_args);
+  k->k.strings_list = value;
 }
 
 void
-add_extra_string (ELEMENT *e, const char *key, char *value)
+add_extra_index_entry (ELEMENT *e, enum ai_key_name key,
+                       INDEX_ENTRY_LOCATION *value)
 {
-  KEY_PAIR *k = get_associated_info_key (&e->extra_info, key, extra_string);
+  if (!value) return;
+  KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key,
+                                         extra_index_entry);
+  k->k.index_entry = value;
+}
+
+void
+add_extra_string (ELEMENT *e, enum ai_key_name key, char *value)
+{
+  KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key, extra_string);
   k->k.string = value;
 }
 
 void
-add_info_string (ELEMENT *e, char *key, char *value)
+add_extra_string_dup (ELEMENT *e, enum ai_key_name key, const char *value)
 {
-  KEY_PAIR *k = get_associated_info_key (&e->info_info, key, extra_string);
-  k->k.string = value;
-}
-
-void
-add_extra_string_dup (ELEMENT *e, const char *key, const char *value)
-{
-  KEY_PAIR *k = get_associated_info_key (&e->extra_info, key, extra_string);
+  KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key, extra_string);
   k->k.string = strdup (value);
 }
 
 void
-add_info_string_dup (ELEMENT *e, const char *key, const char *value)
+add_extra_integer (ELEMENT *e, enum ai_key_name key, int value)
 {
-  KEY_PAIR *k = get_associated_info_key (&e->info_info, key, extra_string);
-  k->k.string = strdup (value);
-}
-
-void
-add_associated_info_integer (ASSOCIATED_INFO *a, const char *key, int value)
-{
-  KEY_PAIR *k = get_associated_info_key (a, key, extra_integer);
-  k->k.integer = value;
-}
-
-void
-add_associated_info_string_dup (ASSOCIATED_INFO *a, const char *key,
-                                const char *value)
-{
-  KEY_PAIR *k = get_associated_info_key (a, key, extra_string);
-  k->k.string = strdup (value);
-}
-
-void
-add_extra_integer (ELEMENT *e, char *key, long value)
-{
-  KEY_PAIR *k = get_associated_info_key (&e->extra_info, key, extra_integer);
-  k->k.integer = value;
-}
-
-void
-add_info_integer (ELEMENT *e, char *key, long value)
-{
-  KEY_PAIR *k = get_associated_info_key (&e->info_info, key, extra_integer);
+  KEY_PAIR *k = get_associated_info_key (&e->e.c->extra_info, key, extra_integer);
   k->k.integer = value;
 }
 
 KEY_PAIR *
-lookup_associated_info (const ASSOCIATED_INFO *a, const char *key)
+lookup_associated_info (const ASSOCIATED_INFO *a, enum ai_key_name key)
 {
   int i;
   for (i = 0; i < a->info_number; i++)
@@ -221,25 +207,60 @@ lookup_associated_info (const ASSOCIATED_INFO *a, const char *key)
       /* We could reuse extra_deleted slots by keeping the extra_deleted
          key and checking here the type, but in the current code the
          extra_deleted keys will never be set again */
-      if (!strcmp (a->info[i].key, key))
+      if (a->info[i].key == key)
         return &a->info[i];
     }
   return 0;
 }
 
-ELEMENT *
-lookup_extra_element (const ELEMENT *e, const char *key)
+const ELEMENT *
+lookup_extra_element (const ELEMENT *e, enum ai_key_name key)
 {
   const KEY_PAIR *k;
-  k = lookup_associated_info (&e->extra_info, key);
+  k = lookup_associated_info (&e->e.c->extra_info, key);
   if (!k)
     return 0;
-  else if (k->type == extra_string || k->type == extra_integer
-           || k->type == extra_contents || k->type == extra_directions)
+  else if (k->type != extra_element)
     {
       char *msg;
       xasprintf (&msg, "Bad type for lookup_extra_element: %s: %d",
-                key, k->type);
+                ai_key_names[key], k->type);
+      fatal (msg);
+      free (msg);
+    }
+  return k->k.element;
+}
+
+ELEMENT *
+lookup_extra_element_oot (const ELEMENT *e, enum ai_key_name key)
+{
+  const KEY_PAIR *k;
+  k = lookup_associated_info (&e->e.c->extra_info, key);
+  if (!k)
+    return 0;
+  else if (k->type != extra_element_oot)
+    {
+      char *msg;
+      xasprintf (&msg, "Bad type for lookup_extra_element: %s: %d",
+                ai_key_names[key], k->type);
+      fatal (msg);
+      free (msg);
+    }
+  return k->k.element;
+}
+
+ELEMENT *
+lookup_extra_container (const ELEMENT *e, enum ai_key_name key)
+{
+  const KEY_PAIR *k;
+  k = lookup_associated_info (&e->e.c->extra_info, key);
+  if (!k)
+    return 0;
+  else if (k->type != extra_container)
+    {
+      char *msg;
+      xasprintf (&msg, "Bad type for lookup_extra_element: %s: %d",
+                ai_key_names[key], k->type);
       fatal (msg);
       free (msg);
     }
@@ -247,10 +268,10 @@ lookup_extra_element (const ELEMENT *e, const char *key)
 }
 
 char *
-lookup_extra_string (const ELEMENT *e, const char *key)
+lookup_extra_string (const ELEMENT *e, enum ai_key_name key)
 {
   const KEY_PAIR *k;
-  k = lookup_associated_info (&e->extra_info, key);
+  k = lookup_associated_info (&e->e.c->extra_info, key);
   if (!k)
     return 0;
   else
@@ -259,7 +280,7 @@ lookup_extra_string (const ELEMENT *e, const char *key)
         {
           char *msg;
           xasprintf (&msg, "Bad type for lookup_extra_string: %s: %d",
-                     key, k->type);
+                     ai_key_names[key], k->type);
           fatal (msg);
           free (msg);
         }
@@ -270,14 +291,14 @@ lookup_extra_string (const ELEMENT *e, const char *key)
 }
 
 KEY_PAIR *
-lookup_extra (const ELEMENT *e, const char *key)
+lookup_extra (const ELEMENT *e, enum ai_key_name key)
 {
-  return lookup_associated_info (&e->extra_info, key);
+  return lookup_associated_info (&e->e.c->extra_info, key);
 }
 
 /* *ret is negative if not found or not an integer */
 static int
-lookup_key_pair_integer (const KEY_PAIR *k, const char *key, int *ret)
+lookup_key_pair_integer (const KEY_PAIR *k, enum ai_key_name key, int *ret)
 {
   if (!k)
     {
@@ -287,8 +308,8 @@ lookup_key_pair_integer (const KEY_PAIR *k, const char *key, int *ret)
   if (k->type != extra_integer)
     {
       char *msg;
-      xasprintf (&msg, "Bad type for lookup_extra_integer: %s: %d",
-                 key, k->type);
+      xasprintf (&msg, "Bad type for lookup_key_pair_integer: %s: %d",
+                 ai_key_names[key], k->type);
       fatal (msg);
       free (msg);
     }
@@ -298,24 +319,15 @@ lookup_key_pair_integer (const KEY_PAIR *k, const char *key, int *ret)
 
 /* *ret is negative if not found or not an integer */
 int
-lookup_extra_integer (const ELEMENT *e, const char *key, int *ret)
+lookup_extra_integer (const ELEMENT *e, enum ai_key_name key, int *ret)
 {
   const KEY_PAIR *k;
-  k = lookup_associated_info (&e->extra_info, key);
+  k = lookup_associated_info (&e->e.c->extra_info, key);
   return lookup_key_pair_integer (k, key, ret);
 }
 
-/* *ret is negative if not found or not an integer */
-int
-lookup_info_integer (const ELEMENT *e, const char *key, int *ret)
-{
-  const KEY_PAIR *k;
-  k = lookup_associated_info (&e->info_info, key);
-  return lookup_key_pair_integer (k, key, ret);
-}
-
-ELEMENT_LIST *
-lookup_extra_contents (const ELEMENT *e, const char *key)
+CONST_ELEMENT_LIST *
+lookup_extra_contents (const ELEMENT *e, enum ai_key_name key)
 {
   KEY_PAIR *k = lookup_extra (e, key);
   if (!k)
@@ -324,15 +336,15 @@ lookup_extra_contents (const ELEMENT *e, const char *key)
     {
       char *msg;
       xasprintf (&msg, "Bad type for lookup_extra_contents: %s: %d",
-                 key, k->type);
+                 ai_key_names[key], k->type);
       fatal (msg);
       free (msg);
     }
-  return k->k.list;
+  return k->k.const_list;
 }
 
-const ELEMENT_LIST *
-lookup_extra_directions (const ELEMENT *e, const char *key)
+const ELEMENT **
+lookup_extra_directions (const ELEMENT *e, enum ai_key_name key)
 {
   KEY_PAIR *k = lookup_extra (e, key);
   if (!k)
@@ -341,44 +353,52 @@ lookup_extra_directions (const ELEMENT *e, const char *key)
     {
       char *msg;
       xasprintf (&msg, "Bad type for lookup_extra_directions: %s: %d",
-                 key, k->type);
+                 ai_key_names[key], k->type);
       fatal (msg);
       free (msg);
     }
-  return k->k.list;
+  return k->k.directions;
 }
 
-ELEMENT *
-lookup_info_element (const ELEMENT *e, const char *key)
+const STRING_LIST *
+lookup_extra_misc_args (const ELEMENT *e, enum ai_key_name key)
 {
-  const KEY_PAIR *k;
-  k = lookup_associated_info (&e->info_info, key);
+  KEY_PAIR *k = lookup_extra (e, key);
   if (!k)
     return 0;
-  return k->k.element;
+  else if (k->type != extra_misc_args)
+    {
+      char *msg;
+      xasprintf (&msg, "Bad type for lookup_extra_misc_args: %s: %d",
+                 ai_key_names[key], k->type);
+      fatal (msg);
+      free (msg);
+    }
+  return k->k.strings_list;
 }
 
-
-KEY_PAIR *
-lookup_info (const ELEMENT *e, const char *key)
+const INDEX_ENTRY_LOCATION *
+lookup_extra_index_entry (const ELEMENT *e, enum ai_key_name key)
 {
-  return lookup_associated_info (&e->info_info, key);
-}
-
-char *
-lookup_info_string (const ELEMENT *e, const char *key)
-{
-  const KEY_PAIR *k;
-  k = lookup_associated_info (&e->info_info, key);
-  if (!k || !k->k.string)
+  KEY_PAIR *k = lookup_extra (e, key);
+  if (!k)
     return 0;
-  return k->k.string;
+  else if (k->type != extra_index_entry)
+    {
+      char *msg;
+      xasprintf (&msg, "Bad type for lookup_extra_misc_args: %s: %d",
+                 ai_key_names[key], k->type);
+      fatal (msg);
+      free (msg);
+    }
+  return k->k.index_entry;
 }
 
-/* only called in tree copy to optimize for speed */
+/* called in tree copy to optimize for speed in the past, not used
+   for now */
 KEY_PAIR *
 lookup_associated_info_by_index (const ASSOCIATED_INFO *a,
-                                 const char *key, int index)
+                                 enum ai_key_name key, int index)
 {
   if (index < 0)
     index = a->info_number + index;
@@ -386,14 +406,14 @@ lookup_associated_info_by_index (const ASSOCIATED_INFO *a,
   if (index < 0 || index >= a->info_number)
     return 0;
 
-  if (!strcmp (a->info[index].key, key))
+  if (a->info[index].key == key)
     return &a->info[index];
 
   return 0;
 }
 
 KEY_PAIR *
-lookup_extra_by_index (const ELEMENT *e, const char *key, int index)
+lookup_extra_by_index (const ELEMENT *e, enum ai_key_name key, int index)
 {
-  return lookup_associated_info_by_index (&e->extra_info, key, index);
+  return lookup_associated_info_by_index (&e->e.c->extra_info, key, index);
 }

@@ -4,6 +4,7 @@
 
 #include "command_ids.h"
 #include "element_types.h"
+#include "tree_types.h"
 #include "converter_types.h"
 
 enum count_elements_in_filename_type {
@@ -18,10 +19,16 @@ enum css_info_type {
    CI_css_info_rules,
 };
 
+/* in main/conversion_data.c */
+extern const STRING_LIST default_special_unit_varieties;
+
+
 extern const char *html_conversion_context_type_names[];
 extern const char *html_global_unit_direction_names[];
 
 extern const char *html_formatting_reference_names[];
+
+extern const char *html_argument_formatting_type_names[];
 
 extern const TRANSLATED_SUI_ASSOCIATION translated_special_unit_info[];
 extern const char *special_unit_info_type_names[SUI_type_heading + 1];
@@ -34,17 +41,24 @@ extern const char *direction_string_context_names[];
 
 extern const char *count_elements_in_filename_type_names[];
 
-void html_format_init (void);
+extern const char *html_stage_handler_stage_type_names[];
+extern COMMAND_ID_LIST no_arg_formatted_cmd;
+
+void html_format_setup (void);
 
 void html_converter_initialize (CONVERTER *self);
 
 void html_initialize_output_state (CONVERTER *self, const char *context);
+void init_conversion_after_setup_handler (CONVERTER *self);
 void html_conversion_finalization (CONVERTER *self);
 
-void html_converter_prepare_output (CONVERTER* self);
+int html_setup_output (CONVERTER *self, char **paths);
+void html_setup_convert (CONVERTER *self);
 
 void initialize_cmd_list (COMMAND_ID_LIST *cmd_list, size_t size,
                           size_t number);
+
+char *substitute_html_non_breaking_space (CONVERTER *self, const char *text);
 
 HTMLXREF_MANUAL *new_htmlxref_manual_list (size_t size);
 void initialize_js_categories_list (JSLICENSE_CATEGORY_LIST *js_files_info,
@@ -62,6 +76,10 @@ char ***new_directions_strings_type (int nr_string_directions,
 FORMATTING_REFERENCE *new_special_unit_formatting_references
                                       (int special_units_varieties_nr);
 char **new_special_unit_info_type (int special_units_varieties_nr);
+
+SPECIAL_UNIT_INFO *html_add_special_unit_info (
+                            SPECIAL_UNIT_INFO_LIST *special_unit_info_list,
+                            int type, size_t variety_nr, const char *value);
 
 int html_id_is_registered (CONVERTER *self, const char *string);
 void html_register_id (CONVERTER *self, const char *string);
@@ -83,6 +101,8 @@ void html_set_string_context (CONVERTER *self);
 void html_unset_string_context (CONVERTER *self);
 void html_set_raw_context (CONVERTER *self);
 void html_unset_raw_context (CONVERTER *self);
+void html_set_multiple_conversions (CONVERTER *self, const char *multiple_pass);
+void html_unset_multiple_conversions (CONVERTER *self);
 
 int html_in_math (const CONVERTER *self);
 int html_in_preformatted_context (const CONVERTER *self);
@@ -100,6 +120,7 @@ enum command_id html_top_block_command (const CONVERTER *self);
 const COMMAND_OR_TYPE_STACK *html_preformatted_classes_stack
                                     (const CONVERTER *self);
 enum command_id html_in_align (const CONVERTER *self);
+const char *html_in_multi_expanded (CONVERTER *self);
 
 char *debug_print_html_contexts (const CONVERTER *self);
 
@@ -141,6 +162,8 @@ TREE_ADDED_ELEMENTS *html_internal_command_tree (CONVERTER *self,
                             const ELEMENT *command, int no_number);
 char *html_internal_command_text (CONVERTER *self, const ELEMENT *command,
                                   const enum html_text_type type);
+char *html_command_description (CONVERTER *self, const ELEMENT *command,
+                                const enum html_text_type type);
 
 EXPLAINED_COMMAND_TYPE *find_explained_command_string
                       (const EXPLAINED_COMMAND_TYPE_LIST *type_explanations,
@@ -171,7 +194,9 @@ STRING_LIST *html_get_css_elements_classes (CONVERTER *self,
 void html_css_add_info (CONVERTER *self, enum css_info_type type,
                         const char *css_info);
 const STRING_LIST *html_css_get_info (CONVERTER *self, enum css_info_type type);
-void html_css_set_selector_style (CONVERTER* self, const char *css_info,
+void html_css_set_selector_style (
+                       CSS_SELECTOR_STYLE_LIST *css_element_class_styles,
+                                  const char *css_info,
                                   const char *css_style);
 const char *html_css_get_selector_style (CONVERTER* self, const char *css_info);
 
@@ -209,11 +234,16 @@ FILE_SOURCE_INFO_LIST * html_prepare_units_directions_files (CONVERTER *self,
           const char *output_filename, const char *document_name);
 
 void html_prepare_output_units_global_targets (CONVERTER *self);
+void html_setup_global_units_direction_names (CONVERTER *self);
+const OUTPUT_UNIT *html_find_direction_name_global_unit (const CONVERTER *self,
+                                                   const char *direction_name);
 
 void html_translate_names (CONVERTER *self);
 
 void html_prepare_simpletitle (CONVERTER *self);
-void html_prepare_converted_output_info (CONVERTER *self);
+int html_prepare_converted_output_info (CONVERTER *self,
+                                        const char *output_file,
+                                        const char *output_filename);
 void html_prepare_title_titlepage (CONVERTER *self, const char *output_file,
                                    const char *output_filename);
 
@@ -227,11 +257,16 @@ char *html_convert_output (CONVERTER *self, const ELEMENT *root,
                            const char *output_filename,
                            const char *document_name);
 
+void html_do_js_files (CONVERTER *self);
+
 char *html_prepare_node_redirection_page (CONVERTER *self,
                                           const ELEMENT *element,
                                           const char *filename);
 int html_node_redirections (CONVERTER *self,
             const char *output_file, const char *destination_directory);
+
+int html_finish_output (CONVERTER *self, const char *output_file,
+                        const char *destination_directory);
 
 void html_check_transfer_state_finalization (CONVERTER *self);
 void html_free_converter (CONVERTER *self);

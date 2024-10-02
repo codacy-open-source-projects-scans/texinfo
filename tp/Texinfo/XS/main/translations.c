@@ -22,24 +22,27 @@
 #include <stdlib.h>
 #include <locale.h>
 #include <errno.h>
+#include <stddef.h>
 
 #ifdef ENABLE_NLS
 #include <gettext.h>
 #include <libintl.h>
 #endif
 
-#include "options_types.h"
-#include "tree_types.h"
-#include "command_ids.h"
 #include "text.h"
-#include "utils.h"
+#include "command_ids.h"
+#include "tree_types.h"
+#include "options_types.h"
+#include "types_data.h"
 #include "tree.h"
+#include "utils.h"
+#include "api_to_perl.h"
 #include "debug.h"
+#include "document.h"
 #include "conf.h"
 #include "api.h"
-#include "document.h"
+/* for debugging */
 #include "convert_to_texinfo.h"
-#include "api_to_perl.h"
 #include "translations.h"
 
 /*
@@ -392,46 +395,50 @@ substitute_element_array (ELEMENT_LIST *list,
   for (; idx < list->number; idx++)
     {
       ELEMENT *e = list->list[idx];
-      if (e->cmd == CM_txiinternalvalue)
+      if (! (type_data[e->type].flags & TF_text))
         {
-          char *name = e->args.list[0]->contents.list[0]->text.text;
-          int i;
-          for (i = 0; i < replaced_substrings->number; i++)
+          if (e->e.c->cmd == CM_txiinternalvalue)
             {
-              if (!strcmp (name, replaced_substrings->list[i].name))
+              char *name = e->e.c->args.list[0]->e.c->contents.list[0]
+                                                            ->e.text->text;
+              int i;
+              for (i = 0; i < replaced_substrings->number; i++)
                 {
-                  list->list[idx] = replaced_substrings->list[i].element;
-                  destroy_element_and_children (e);
-                  break;
+                  if (!strcmp (name, replaced_substrings->list[i].name))
+                    {
+                      list->list[idx] = replaced_substrings->list[i].element;
+                      destroy_element_and_children (e);
+                      break;
+                    }
                 }
             }
+          else
+            substitute (e, replaced_substrings);
         }
-      else
-        substitute (e, replaced_substrings);
     }
 }
 
 ELEMENT *
 substitute (ELEMENT *tree, NAMED_STRING_ELEMENT_LIST *replaced_substrings)
 {
-  if (tree->contents.number > 0)
-    substitute_element_array (&tree->contents, replaced_substrings);
-  if (tree->args.number > 0)
-    substitute_element_array (&tree->args, replaced_substrings);
+  if (tree->e.c->contents.number > 0)
+    substitute_element_array (&tree->e.c->contents, replaced_substrings);
+  if (tree->e.c->args.number > 0)
+    substitute_element_array (&tree->e.c->args, replaced_substrings);
 
   return tree;
 }
 
 /* the caller should have made sure that the
    inserted elements do not appear elsewhere in the tree. */
-int
+size_t
 replace_convert_substrings (char *translated_string,
                             NAMED_STRING_ELEMENT_LIST *replaced_substrings,
                             int debug_level)
 {
   int i;
   char *texinfo_line;
-  int document_descriptor;
+  size_t document_descriptor;
   int parser_debug_level = 0;
   DOCUMENT *document;
 
@@ -521,17 +528,17 @@ replace_convert_substrings (char *translated_string,
 }
 
 /* returns a document descriptor. */
-int
+size_t
 gdt (const char *string, const char *lang,
      NAMED_STRING_ELEMENT_LIST *replaced_substrings,
      int debug_level, const char *translation_context)
 {
-  int document_descriptor;
+  size_t document_descriptor;
 
   char *translated_string = translate_string (string, lang,
                                               translation_context);
 
-  document_descriptor  = replace_convert_substrings (translated_string,
+  document_descriptor = replace_convert_substrings (translated_string,
                                   replaced_substrings, debug_level);
   free (translated_string);
   return document_descriptor;
@@ -546,8 +553,8 @@ gdt_tree (const char *string, DOCUMENT *document,
           const char *lang, NAMED_STRING_ELEMENT_LIST *replaced_substrings,
           int debug_level, const char *translation_context)
 {
-  int gdt_document_descriptor = gdt (string, lang, replaced_substrings,
-                                    debug_level, translation_context);
+  size_t gdt_document_descriptor = gdt (string, lang, replaced_substrings,
+                                        debug_level, translation_context);
   ELEMENT *tree
     = unregister_document_merge_with_document (gdt_document_descriptor,
                                                document);

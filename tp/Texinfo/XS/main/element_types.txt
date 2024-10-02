@@ -15,27 +15,44 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+# The first column holds type names, second column contains flags for types
+
 # Types for @-commands
-command_as_argument
-index_entry_command
-following_arg
-space_command_arg
-definfoenclose_command
+index_entry_command                    spaces_before,at_command
+definfoenclose_command                 braces,at_command
+
+# only in C
+nobrace_command                        at_command
+brace_noarg_command                    braces,at_command
+# @item, @tab
+container_command                      at_command
+lineraw_command                        at_command
+line_command                           spaces_before,at_command
+block_command                          spaces_before,at_command
+brace_command                          braces,at_command
+# BRACE_arguments and BRACE_inline commands
+brace_args_command                     braces,at_command
+# BRACE_context commands
+context_brace_command                  braces,spaces_before,at_command
 
 # For text elements
-empty_line
-raw
-ignorable_spaces_after_command
-spaces_at_end
-spaces_after_close_brace
-spaces_before_paragraph
-text_after_end
-text_before_beginning
-space_at_end_menu_node
-after_menu_description_line
-spaces_after_cmd_before_arg
+empty_line                                text,leading_space
+raw                                       text
+ignorable_spaces_after_command            text,leading_space
+spaces_at_end                             text
+spaces_after_close_brace                  text,leading_space
+spaces_before_paragraph                   text
+text_after_end                            text
+text_before_beginning                     text
+space_at_end_menu_node                    text
+after_menu_description_line               text
+spaces_after_cmd_before_arg               text
+normal_text                               text
+# text not in the regular converted tree elements.
+# In special spaces elements in info, as informative command arguments...
+other_text                                text
 
-# Other special types
+# Containers
 document_root
 root_line
 before_node_section
@@ -46,43 +63,57 @@ preamble_before_content
 paragraph
 preformatted
 rawpreformatted
-brace_command_arg
+
+# @-commands arguments containers
+brace_container
 brace_command_context
-block_line_arg
-line_arg
-rawline_arg
+# with separate leading spaces in info, and trailing (if not in inline)
+brace_arg                                  spaces_before,spaces_after
+# with comment_at_end
+block_line_arg                             spaces_before,spaces_after
+line_arg                                   spaces_before,spaces_after
+following_arg
+
+rawline_arg                                text
 
 menu_entry
-menu_entry_leading_text
+menu_entry_leading_text                    text
 menu_entry_name
-menu_entry_separator
+menu_entry_separator                       text
 menu_entry_node
 menu_entry_description
 menu_comment
-# Used internally
-internal_menu_star
-internal_spaces_after_command
-internal_spaces_before_argument
-internal_spaces_before_brace_in_index
-internal_spaces_after_cmd_before_arg
 
-macro_name
-macro_arg
+# Used internally
+internal_menu_star                         text
+# right after a line command or block command
+internal_spaces_after_command              text,leading_space
+# after opening brace or comma
+internal_spaces_before_argument            text,leading_space
+internal_spaces_before_context_argument    text,leading_space
+# on @*index commands line before brace specific @-command
+internal_spaces_before_brace_in_index      text
+internal_spaces_after_cmd_before_arg       text
+
+macro_name                                 text
+macro_arg                                  text
+
+# structure of block commands
 before_item
 table_entry
 table_term
 table_definition
 inter_item
-def_line
+def_line                              spaces_before
 def_item
 inter_def_item
 before_defline
 multitable_head
 multitable_body
 row
+
 balanced_braces
-bracketed_arg
-bracketed_linemacro_arg
+bracketed_arg                         spaces_before,spaces_after
 
 # container of definition line argument content
 def_line_arg
@@ -100,19 +131,23 @@ def_typearg
 def_arg
 
 # text for def commands, definition line direct arguments
-delimiter
-spaces
+delimiter                                 text
+spaces                                    text
 # type of text element inserted in untranslated_def_line_arg
-untranslated
+untranslated                              text
 
 # for unexpanded parts of conditionals
 elided_rawpreformatted
 elided_brace_command_arg
 
 # for macro expansion source marks
-macro_call
-rmacro_call
-linemacro_call
+macro_call                                braces,macro_call
+rmacro_call                               braces,macro_call
+macro_call_line                           spaces_before,macro_call
+rmacro_call_line                          spaces_before,macro_call
+linemacro_call                            spaces_before,macro_call
+
+bracketed_linemacro_arg                    text
 
 # virtual type not corresponding to a specific element in tree, but
 # used for all the elements that hold text, typically in converters.
@@ -120,7 +155,7 @@ text
 
 # for HTML converter
 _code
-_converted
+_converted                                text
 _string
 
 # not in parser, for virtual element associated to special output units

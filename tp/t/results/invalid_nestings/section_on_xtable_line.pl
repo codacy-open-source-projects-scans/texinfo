@@ -15,8 +15,7 @@ $result_trees{'section_on_xtable_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'type' => 'block_line_arg'
@@ -68,8 +67,7 @@ $result_trees{'section_on_xtable_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'contents' => [
@@ -77,8 +75,7 @@ $result_trees{'section_on_xtable_line'} = {
                   'cmdname' => 'TeX',
                   'source_info' => {
                     'line_nr' => 3
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -147,8 +144,7 @@ $result_trees{'section_on_xtable_line'} = {
                   'cmdname' => 'code',
                   'source_info' => {
                     'line_nr' => 5
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -215,8 +211,7 @@ $result_trees{'section_on_xtable_line'} = {
               'cmdname' => 'asis',
               'info' => {
                 'inserted' => 1
-              },
-              'type' => 'command_as_argument'
+              }
             },
             {
               'contents' => [
@@ -387,6 +382,13 @@ $result_sectioning{'section_on_xtable_line'}{'extra'}{'section_childs'}[3]{'extr
 $result_sectioning{'section_on_xtable_line'}{'extra'}{'section_childs'}[3]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'section_on_xtable_line'}{'extra'}{'section_childs'}[2];
 
 $result_errors{'section_on_xtable_line'} = [
+  {
+    'error_line' => 'warning: @section should only appear at the beginning of a line
+',
+    'line_nr' => 1,
+    'text' => '@section should only appear at the beginning of a line',
+    'type' => 'warning'
+  },
   {
     'error_line' => 'warning: @section should not appear on @vtable line
 ',

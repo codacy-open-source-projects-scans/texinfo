@@ -17,7 +17,7 @@ $result_trees{'verb_in_xref'} = {
                   'text' => 'point'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             }
           ],
           'cmdname' => 'anchor',
@@ -57,7 +57,7 @@ $result_trees{'verb_in_xref'} = {
                     },
                     'normalized' => 'point'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -85,7 +85,7 @@ $result_trees{'verb_in_xref'} = {
                               'type' => 'raw'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'verb',
@@ -102,7 +102,7 @@ $result_trees{'verb_in_xref'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',
@@ -153,7 +153,7 @@ $result_floats{'verb_in_xref'} = {};
 
 
 
-$result_converted{'plaintext'}->{'verb_in_xref'} = '*Note with
+$result_converted{'plaintext'}->{'verb_in_xref'} = 'See with
 verb
 
 ggg : point.
@@ -169,5 +169,13 @@ $result_converted{'latex_text'}->{'verb_in_xref'} = '\\label{anchor:point}%
 
 See \\hyperref[anchor:point]{[point], page~\\pageref*{anchor:point}}.
 ';
+
+
+$result_converted{'docbook'}->{'verb_in_xref'} = '<anchor id="point"/>
+<para>See <link linkend="point"><literal>with
+verb
+
+ggg </literal></link>.
+</para>';
 
 1;

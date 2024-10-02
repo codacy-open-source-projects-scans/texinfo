@@ -19,6 +19,7 @@
 
 #include <stddef.h>
 
+#include "conversion_data.h"
 #include "tree_types.h"
 
 enum global_option_type {
@@ -51,39 +52,39 @@ enum direction_unit_direction {
   #undef rud_type
 };
 
-#define FIRSTINFILE_MIN_IDX D_direction_FirstInFileThis
-#define FIRSTINFILE_MAX_IDX D_direction_FirstInFileNodeBack
 #define FIRSTINFILE_OFFSET (D_direction_This - D_direction_FirstInFileThis)
 #define FIRSTINFILE_NR (FIRSTINFILE_MAX_IDX - FIRSTINFILE_MIN_IDX +1)
+/* used for the three directions like D_direction_Next to retrieve the
+   node direction (independentely) if USE_NODE_DIRECTIONS is set */
 #define NODE_DIRECTIONS_OFFSET (D_direction_NodeNext - D_direction_Next)
 
 #define NON_SPECIAL_DIRECTIONS_NR (FIRSTINFILE_MAX_IDX +1)
 
 enum button_specification_type {
-  BST_direction,
-  BST_function,
-  BST_string,
-  BST_direction_info,
+   BST_direction,
+   BST_function,
+   BST_string,
+   BST_direction_info,
 };
 
 enum button_information_type {
-  BIT_string,
-  BIT_function,
-  BIT_selected_direction_information_type,
-  BIT_href_direction_information_type,
+   BIT_string,
+   BIT_function,
+   BIT_selected_direction_information_type,
+   BIT_href_direction_information_type,
 };
 
 /* enum value corresponding to a default button formatting function
    used later on to select a C function to replace the default function */
 /* longest strings first to avoid ambiguity */
 enum button_function_type {
-  BFT_type_none,
+   BFT_type_none,
   /* _default_panel_button_dynamic_direction_section_footer */
-  BFT_type_panel_section_footer,
+   BFT_type_panel_section_footer,
   /* _default_panel_button_dynamic_direction_node_footer */
-  BFT_type_panel_node_footer,
+   BFT_type_panel_node_footer,
   /* _default_panel_button_dynamic_direction */
-  BFT_type_panel_directions,
+   BFT_type_panel_directions,
 };
 
 typedef struct BUTTON_FUNCTION {

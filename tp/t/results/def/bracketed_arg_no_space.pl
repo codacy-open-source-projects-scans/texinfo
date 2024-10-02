@@ -162,7 +162,27 @@ $result_trees{'bracketed_arg_no_space'} = {
               ],
               'extra' => {
                 'def_command' => 'deffn',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'e g'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
+                        },
+                        {
+                          'text' => 'h'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'index_entry' => [
                   'fn',
                   1
@@ -220,7 +240,6 @@ $result_trees{'bracketed_arg_no_space'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'bracketed_arg_no_space'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'bracketed_arg_no_space'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[2];
 
 $result_texis{'bracketed_arg_no_space'} = '@deffn {a b}{c d} {e g}h m{ll } {rest}{and more}
 @end deffn
@@ -254,7 +273,7 @@ $result_indices_sort_strings{'bracketed_arg_no_space'} = {
 
 $result_converted{'info'}->{'bracketed_arg_no_space'} = 'This is , produced from .
 
- -- a bc d: e gh mll restand more
+ - a bc d: e gh mll restand more
 
 Tag Table:
 

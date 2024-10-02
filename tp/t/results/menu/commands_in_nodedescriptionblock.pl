@@ -229,7 +229,7 @@ $result_trees{'commands_in_nodedescriptionblock'} = {
                     },
                     'normalized' => 'in-nodescription'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -256,7 +256,7 @@ $result_trees{'commands_in_nodedescriptionblock'} = {
                     },
                     'normalized' => 'f1'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -329,7 +329,7 @@ $result_trees{'commands_in_nodedescriptionblock'} = {
                       'text' => 'in nodescription'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'anchor',
@@ -369,7 +369,7 @@ $result_trees{'commands_in_nodedescriptionblock'} = {
                         },
                         'normalized' => 'node2'
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'ref',
@@ -417,7 +417,7 @@ $result_trees{'commands_in_nodedescriptionblock'} = {
                           'text' => 'in w'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'w',
@@ -511,7 +511,7 @@ $result_trees{'commands_in_nodedescriptionblock'} = {
                           'text' => 'float_image'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'image',
@@ -779,7 +779,7 @@ $result_trees{'commands_in_nodedescriptionblock'} = {
                     },
                     'normalized' => 'in-nodescription'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -806,7 +806,7 @@ $result_trees{'commands_in_nodedescriptionblock'} = {
                     },
                     'normalized' => 'f1'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -1318,8 +1318,8 @@ $result_converted{'plaintext'}->{'commands_in_nodedescriptionblock'} = 'test com
 * Menu:
 
 * node1::
-               *note node2::.  Footnote(1).  Some text to see where the max column could
-               be.  in w.
+               node2.  Footnote(1).  Some text to see where the max column could be.
+               in w.
 
 [float_image]
 
@@ -1328,7 +1328,7 @@ $result_converted{'plaintext'}->{'commands_in_nodedescriptionblock'} = 'test com
 
 * node2::
 
-*note in nodescription::, *note tfloat 1.1: f1.
+in nodescription, tfloat 1.1: f1.
 
    ---------- Footnotes ----------
 
@@ -1340,13 +1340,13 @@ $result_converted{'plaintext'}->{'commands_in_nodedescriptionblock'} = 'test com
 2 chap2
 *******
 
-*note in nodescription::, *note tfloat 1.1: f1.
+in nodescription, tfloat 1.1: f1.
 
 * Menu:
 
 * node1::
-               *note node2::.  Footnote(1).  Some text to see where the max column could
-               be.  in w.
+               node2.  Footnote(1).  Some text to see where the max column could be.
+               in w.
 
 [float_image]
 

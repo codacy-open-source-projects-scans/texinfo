@@ -117,7 +117,7 @@ $result_trees{'deftypeline'} = {
                                       'text' => 'bar'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'var',
@@ -168,7 +168,7 @@ $result_trees{'deftypeline'} = {
                                       'text' => 'baz'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'var',
@@ -199,7 +199,19 @@ $result_trees{'deftypeline'} = {
               'cmdname' => 'deftypeline',
               'extra' => {
                 'def_command' => 'deftypeline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'foo'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'deftypeline'
               },
               'info' => {
@@ -209,8 +221,7 @@ $result_trees{'deftypeline'} = {
               },
               'source_info' => {
                 'line_nr' => 2
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -219,7 +230,7 @@ $result_trees{'deftypeline'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'dots',
@@ -278,7 +289,6 @@ $result_trees{'deftypeline'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'deftypeline'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'deftypeline'}{'contents'}[0]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[4];
 
 $result_texis{'deftypeline'} = '@defblock
 @deftypeline Function {long int} foo (int @var{bar}, int @var{baz})
@@ -298,7 +308,7 @@ $result_floats{'deftypeline'} = {};
 
 
 
-$result_converted{'plaintext'}->{'deftypeline'} = ' -- Function: long int foo (int BAR, int BAZ)
+$result_converted{'plaintext'}->{'deftypeline'} = ' - Function: long int foo (int BAR, int BAZ)
      ...
 ';
 

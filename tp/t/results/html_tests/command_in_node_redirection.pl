@@ -61,7 +61,7 @@ $result_trees{'command_in_node_redirection'} = {
                       'text' => 'in r'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'r',
@@ -94,7 +94,7 @@ $result_trees{'command_in_node_redirection'} = {
                   'text' => 'yyyy'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             }
           ],
           'cmdname' => 'anchor',

@@ -21,21 +21,18 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "unistr.h"
-/*
-#include "xvasprintf.h"
-*/
 
-/* for whitespace_chars, isascii_alnum and bug */
-#include "utils.h"
-#include "tree_types.h"
-#include "tree.h"
-#include "element_types.h"
-/* for xasprintf */
-#include "errors.h"
 /* also for xvasprintf */
 #include "text.h"
+#include "command_ids.h"
+#include "element_types.h"
+#include "tree_types.h"
+#include "types_data.h"
+#include "tree.h"
 #include "extra.h"
 #include "builtin_commands.h"
+/* for xasprintf whitespace_chars, isascii_alnum and bug */
+#include "utils.h"
 #include "debug.h"
 #include "call_perl_function.h"
 #include "unicode.h"
@@ -51,41 +48,47 @@ int ref_5_args_order[] = {0, 1, 2, 4, 3, -1};
 void
 convert_to_normalized_internal (const ELEMENT *e, TEXT *result)
 {
-  if ((e->type == ET_ignorable_spaces_after_command
-       || e->type == ET_postamble_after_end
-       || e->type == ET_preamble_before_beginning
-       || e->type == ET_spaces_at_end
-       || e->type == ET_spaces_before_paragraph
-       || e->type == ET_space_at_end_menu_node
-       || e->type == ET_spaces_after_close_brace)
-      || (e->cmd
-          && ((e->cmd == CM_anchor
-               || e->cmd == CM_footnote
-               || e->cmd == CM_shortcaption
-               || e->cmd == CM_caption
-               || e->cmd == CM_hyphenation
-               || e->cmd == CM_sortas
-               || e->cmd == CM_seealso
-               || e->cmd == CM_seeentry)
-             /* here ignore the line commands */
-              || (e->args.number > 0
-                  && (e->args.list[0]->type == ET_line_arg
-                      || e->args.list[0]->type == ET_rawline_arg)))))
-    return;
-  else if (e->text.end > 0)
+  if (type_data[e->type].flags & TF_text)
     {
-      char *text_norm_spaces = collapse_spaces (e->text.text);
-      ADD(text_norm_spaces);
-      free (text_norm_spaces);
+      if (e->type != ET_ignorable_spaces_after_command
+          && e->type != ET_spaces_at_end
+          && e->type != ET_spaces_before_paragraph
+          && e->type != ET_space_at_end_menu_node
+          && e->type != ET_spaces_after_close_brace
+          && e->e.text->end > 0)
+        {
+          char *text_norm_spaces = collapse_spaces (e->e.text->text);
+          ADD(text_norm_spaces);
+          free (text_norm_spaces);
+        }
+      return;
     }
-  if (e->cmd)
+
+  if ((e->type == ET_postamble_after_end
+       || e->type == ET_preamble_before_beginning)
+      || (e->e.c->cmd
+          && ((e->e.c->cmd == CM_anchor
+               || e->e.c->cmd == CM_footnote
+               || e->e.c->cmd == CM_shortcaption
+               || e->e.c->cmd == CM_caption
+               || e->e.c->cmd == CM_hyphenation
+               || e->e.c->cmd == CM_sortas
+               || e->e.c->cmd == CM_seealso
+               || e->e.c->cmd == CM_seeentry)
+             /* here ignore the line commands */
+              || (e->e.c->args.number > 0
+                  && (e->e.c->args.list[0]->type == ET_line_arg
+                      || e->e.c->args.list[0]->type == ET_rawline_arg)))))
+    return;
+
+  if (e->e.c->cmd)
     {
-      if (command_normalization_text[e->cmd])
-        ADD(command_normalization_text[e->cmd]);
-      else if (e->cmd == CM_click)
+      if (command_normalization_text[e->e.c->cmd])
+        ADD(command_normalization_text[e->e.c->cmd]);
+      else if (e->e.c->cmd == CM_click)
         {
           enum command_id cmd;
-          char *command_name = lookup_extra_string (e, "clickstyle");
+          char *command_name = lookup_extra_string (e, AI_key_clickstyle);
           if (command_name)
             {
               cmd = lookup_builtin_command (command_name);
@@ -93,15 +96,15 @@ convert_to_normalized_internal (const ELEMENT *e, TEXT *result)
                 ADD(command_normalization_text[cmd]);
             }
         }
-      else if (builtin_command_data[e->cmd].flags & CF_accent)
+      else if (builtin_command_data[e->e.c->cmd].flags & CF_accent)
         {
-          if (e->args.number > 0)
+          if (e->e.c->args.number > 0)
             {
               TEXT accent_text;
               char *accented_char;
 
               text_init (&accent_text);
-              convert_to_normalized_internal (e->args.list[0], &accent_text);
+              convert_to_normalized_internal (e->e.c->args.list[0], &accent_text);
               accented_char = unicode_accent (accent_text.text, e);
               if (accented_char)
                 {
@@ -115,21 +118,21 @@ convert_to_normalized_internal (const ELEMENT *e, TEXT *result)
               free (accent_text.text);
             }
         }
-      else if (builtin_command_data[e->cmd].flags & CF_ref)
+      else if (builtin_command_data[e->e.c->cmd].flags & CF_ref)
         {
           int index = 0;
           int *arguments_order = ref_5_args_order;
-          if (e->cmd == CM_inforef || e->cmd == CM_link)
+          if (e->e.c->cmd == CM_inforef || e->e.c->cmd == CM_link)
             arguments_order = ref_3_args_order;
           while (arguments_order[index] >= 0)
             {
-              if (e->args.number > arguments_order[index])
+              if (e->e.c->args.number > arguments_order[index])
                 {
                   TEXT arg_text;
 
                   text_init (&arg_text);
                   convert_to_normalized_internal (
-                    e->args.list[arguments_order[index]], &arg_text);
+                    e->e.c->args.list[arguments_order[index]], &arg_text);
                   if (arg_text.end > 0)
                     {
                       char *non_space_char = arg_text.text
@@ -145,19 +148,20 @@ convert_to_normalized_internal (const ELEMENT *e, TEXT *result)
               index++;
             }
         }
-      else if (e->args.number > 0
-               && (e->args.list[0]->type == ET_brace_command_arg
-                   || e->cmd == CM_math))
+      else if (e->e.c->args.number > 0
+               && (e->e.c->args.list[0]->type == ET_brace_container
+                   || e->e.c->args.list[0]->type == ET_brace_arg
+                   || e->e.c->cmd == CM_math))
         {
-          convert_to_normalized_internal (e->args.list[0], result);
+          convert_to_normalized_internal (e->e.c->args.list[0], result);
           return;
         }
     }
-  if (e->contents.number > 0)
+  if (e->e.c->contents.number > 0)
     {
       int i;
-      for (i = 0; i < e->contents.number; i++)
-        convert_to_normalized_internal (e->contents.list[i], result);
+      for (i = 0; i < e->e.c->contents.number; i++)
+        convert_to_normalized_internal (e->e.c->contents.list[i], result);
     }
 }
 #undef ADD
@@ -302,9 +306,9 @@ convert_contents_to_identifier (const ELEMENT *e)
   ELEMENT *tmp = new_element (ET_NONE);
   char *result;
 
-  tmp->contents = e->contents;
+  tmp->e.c->contents = e->e.c->contents;
   result = convert_to_identifier (tmp);
-  tmp->contents.list = 0;
+  tmp->e.c->contents.list = 0;
   destroy_element (tmp);
 
   return result;
@@ -345,9 +349,9 @@ normalize_transliterate_texinfo_contents (const ELEMENT *e,
   ELEMENT *tmp = new_element (ET_NONE);
   char *result;
 
-  tmp->contents = e->contents;
+  tmp->e.c->contents = e->e.c->contents;
   result = normalize_transliterate_texinfo (tmp, external_translit);
-  tmp->contents.list = 0;
+  tmp->e.c->contents.list = 0;
   destroy_element (tmp);
 
   return result;

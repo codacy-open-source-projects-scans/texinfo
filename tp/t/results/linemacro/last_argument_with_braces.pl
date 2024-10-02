@@ -109,11 +109,7 @@ $result_trees{'last_argument_with_braces'} = {
                                 'type' => 'bracketed_linemacro_arg'
                               }
                             ],
-                            'info' => {
-                              'spaces_before_argument' => {
-                                'text' => ' '
-                              }
-                            }
+                            'type' => 'line_arg'
                           },
                           {
                             'contents' => [
@@ -125,11 +121,15 @@ $result_trees{'last_argument_with_braces'} = {
                               'spaces_before_argument' => {
                                 'text' => ' '
                               }
-                            }
+                            },
+                            'type' => 'line_arg'
                           }
                         ],
                         'info' => {
-                          'command_name' => 'defbuiltin'
+                          'command_name' => 'defbuiltin',
+                          'spaces_before_argument' => {
+                            'text' => ' '
+                          }
                         },
                         'type' => 'linemacro_call'
                       },
@@ -223,7 +223,19 @@ $result_trees{'last_argument_with_braces'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'foo'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -234,8 +246,7 @@ $result_trees{'last_argument_with_braces'} = {
               'source_info' => {
                 'line_nr' => 7,
                 'macro' => 'defbuiltin'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -392,7 +403,19 @@ $result_trees{'last_argument_with_braces'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'Builtin'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -403,8 +426,7 @@ $result_trees{'last_argument_with_braces'} = {
               'source_info' => {
                 'line_nr' => 7,
                 'macro' => 'defbuiltin'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -421,11 +443,7 @@ $result_trees{'last_argument_with_braces'} = {
                                 'type' => 'bracketed_linemacro_arg'
                               }
                             ],
-                            'info' => {
-                              'spaces_before_argument' => {
-                                'text' => ' '
-                              }
-                            }
+                            'type' => 'line_arg'
                           },
                           {
                             'contents' => [
@@ -437,11 +455,15 @@ $result_trees{'last_argument_with_braces'} = {
                               'spaces_before_argument' => {
                                 'text' => ' '
                               }
-                            }
+                            },
+                            'type' => 'line_arg'
                           }
                         ],
                         'info' => {
-                          'command_name' => 'defbuiltin'
+                          'command_name' => 'defbuiltin',
+                          'spaces_before_argument' => {
+                            'text' => ' '
+                          }
                         },
                         'type' => 'linemacro_call'
                       },
@@ -538,7 +560,19 @@ $result_trees{'last_argument_with_braces'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'foo'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -549,8 +583,7 @@ $result_trees{'last_argument_with_braces'} = {
               'source_info' => {
                 'line_nr' => 9,
                 'macro' => 'defbuiltin'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -655,7 +688,19 @@ $result_trees{'last_argument_with_braces'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'Builtin'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -666,8 +711,7 @@ $result_trees{'last_argument_with_braces'} = {
               'source_info' => {
                 'line_nr' => 9,
                 'macro' => 'defbuiltin'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'contents' => [
@@ -684,11 +728,7 @@ $result_trees{'last_argument_with_braces'} = {
                                 'type' => 'bracketed_linemacro_arg'
                               }
                             ],
-                            'info' => {
-                              'spaces_before_argument' => {
-                                'text' => ' '
-                              }
-                            }
+                            'type' => 'line_arg'
                           },
                           {
                             'contents' => [
@@ -700,11 +740,15 @@ $result_trees{'last_argument_with_braces'} = {
                               'spaces_before_argument' => {
                                 'text' => ' '
                               }
-                            }
+                            },
+                            'type' => 'line_arg'
                           }
                         ],
                         'info' => {
-                          'command_name' => 'defbuiltin'
+                          'command_name' => 'defbuiltin',
+                          'spaces_before_argument' => {
+                            'text' => ' '
+                          }
                         },
                         'type' => 'linemacro_call'
                       },
@@ -801,7 +845,19 @@ $result_trees{'last_argument_with_braces'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'foo'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -812,8 +868,7 @@ $result_trees{'last_argument_with_braces'} = {
               'source_info' => {
                 'line_nr' => 11,
                 'macro' => 'defbuiltin'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -962,7 +1017,19 @@ $result_trees{'last_argument_with_braces'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'Builtin'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -973,8 +1040,7 @@ $result_trees{'last_argument_with_braces'} = {
               'source_info' => {
                 'line_nr' => 11,
                 'macro' => 'defbuiltin'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -1017,12 +1083,6 @@ $result_trees{'last_argument_with_braces'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[1]{'args'}[0]{'contents'}[2];
-$result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[2]{'extra'}{'def_index_element'} = $result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[2]{'args'}[0]{'contents'}[2];
-$result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[4]{'extra'}{'def_index_element'} = $result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[4]{'args'}[0]{'contents'}[2];
-$result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[5]{'extra'}{'def_index_element'} = $result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[5]{'args'}[0]{'contents'}[2];
-$result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[7]{'extra'}{'def_index_element'} = $result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[7]{'args'}[0]{'contents'}[2];
-$result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[8]{'extra'}{'def_index_element'} = $result_trees{'last_argument_with_braces'}{'contents'}[0]{'contents'}[2]{'contents'}[8]{'args'}[0]{'contents'}[2];
 
 $result_texis{'last_argument_with_braces'} = '@linemacro defbuiltin {symbol, rest}
 @defline \\symbol\\ f r

@@ -22,7 +22,7 @@ $result_trees{'kbd'} = {
                       'text' => 'in kbd'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -62,7 +62,7 @@ $result_trees{'kbd'} = {
                               'text' => 'in nested kbd'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'kbd',
@@ -71,7 +71,7 @@ $result_trees{'kbd'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -111,7 +111,7 @@ $result_trees{'kbd'} = {
                               'text' => 'in nested kbd'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'kbd',
@@ -120,7 +120,7 @@ $result_trees{'kbd'} = {
                       }
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'kbd',
@@ -188,7 +188,7 @@ $result_trees{'kbd'} = {
                           'text' => 'in example in kbd'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',
@@ -291,7 +291,7 @@ $result_trees{'kbd'} = {
                           'text' => 'in format in kbd'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',
@@ -456,5 +456,23 @@ in format
 \\texttt{in format in kbd}.
 \\end{Texinfopreformatted}
 ';
+
+
+$result_converted{'docbook'}->{'kbd'} = '<para>kbd: <literal>in kbd</literal>.
+</para>
+<para>kbd in code: <literal>in first <userinput>in nested kbd</userinput></literal>.
+</para>
+<para>kbd in kbd: <userinput>in top kbd <userinput>in nested kbd</userinput></userinput>.
+</para>
+<para>kbd in @example:
+</para>
+<screen>in example
+<literal>in example in kbd</literal>.
+</screen>
+<para>kbd in @format:
+</para>
+<literallayout>in format
+<literal>in format in kbd</literal>.
+</literallayout>';
 
 1;

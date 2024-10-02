@@ -35,7 +35,7 @@ $result_trees{'on_section_line'} = {
                       'text' => 'in titlefont'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'titlefont',
@@ -55,7 +55,7 @@ $result_trees{'on_section_line'} = {
                       'text' => 'in anchor'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'anchor',

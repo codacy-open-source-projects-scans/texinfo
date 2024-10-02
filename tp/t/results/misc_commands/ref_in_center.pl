@@ -156,7 +156,7 @@ $result_trees{'ref_in_center'} = {
                         },
                         'normalized' => 'Top'
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'ref',
@@ -201,7 +201,7 @@ $result_trees{'ref_in_center'} = {
                           'text' => 'Top'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
                       'info' => {
@@ -209,7 +209,7 @@ $result_trees{'ref_in_center'} = {
                           'text' => ' '
                         }
                       },
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     },
                     {
                       'contents' => [
@@ -218,7 +218,7 @@ $result_trees{'ref_in_center'} = {
 '
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'ref',
@@ -416,10 +416,10 @@ $result_converted{'plaintext'}->{'ref_in_center'} = 'top
 1 Chapter
 *********
 
-                              *note Top::
+                                  Top
 
-                              *note title
-                                : Top.
+                                 title
+                                 : Top
    very long
 ';
 

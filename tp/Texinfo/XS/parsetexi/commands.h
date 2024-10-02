@@ -16,6 +16,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
+#include "command_ids.h"
 #include "builtin_commands.h"
 
 extern COMMAND *user_defined_command_data;
@@ -30,7 +31,7 @@ enum command_id lookup_command (const char *cmdname);
    ? builtin_command_data[(id)] \
    : user_defined_command_data[(id) & ~USER_COMMAND_BIT])
 
-#define command_flags(e) (!(e) ? 0 : (command_data((e)->cmd).flags))
+#define command_flags(elt) (!(elt) ? 0 : (command_data((elt)->e.c->cmd).flags))
 #define command_name(cmd) (command_data(cmd).cmdname)
 
 int close_preformatted_command (enum command_id cmd_id);

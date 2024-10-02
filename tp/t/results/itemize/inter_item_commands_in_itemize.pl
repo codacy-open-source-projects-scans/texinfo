@@ -144,8 +144,7 @@ $result_trees{'inter_item_commands_in_itemize'} = {
                   'cmdname' => 'minus',
                   'source_info' => {
                     'line_nr' => 7
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -290,8 +289,7 @@ $result_trees{'inter_item_commands_in_itemize'} = {
                   'cmdname' => 'bullet',
                   'source_info' => {
                     'line_nr' => 13
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -492,8 +490,7 @@ $result_trees{'inter_item_commands_in_itemize'} = {
                   'cmdname' => 'bullet',
                   'info' => {
                     'inserted' => 1
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -792,7 +789,15 @@ $result_menus{'inter_item_commands_in_itemize'} = [
   }
 ];
 
-$result_errors{'inter_item_commands_in_itemize'} = [];
+$result_errors{'inter_item_commands_in_itemize'} = [
+  {
+    'error_line' => 'warning: @cindex should only appear at the beginning of a line
+',
+    'line_nr' => 16,
+    'text' => '@cindex should only appear at the beginning of a line',
+    'type' => 'warning'
+  }
+];
 
 
 $result_floats{'inter_item_commands_in_itemize'} = {};

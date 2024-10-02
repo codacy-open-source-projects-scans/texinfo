@@ -22,16 +22,18 @@ EXTRA_DIST = $(TESTS) \
 
 TESTS = tex_l2h.sh tex_t4ht.sh \
   different_encodings.sh different_languages_gen_master_menu.sh \
+  for_nbspaces_different_encodings.sh \
   input_dir_non_ascii.sh output_dir_non_ascii.sh \
   output_dir_file_non_ascii.sh tex_t4ht_output_dir_non_ascii.sh \
   tex_l2h_output_dir_non_ascii.sh
 
-AM_TESTS_ENVIRONMENT = srcdir="$(srcdir)"; export srcdir; top_srcdir="$(top_srcdir)"; export top_srcdir; builddir="$(builddir)"; export buildir; top_builddir="$(top_builddir)"; export top_builddir;
+AM_TESTS_ENVIRONMENT = srcdir="$(srcdir)"; export srcdir; top_srcdir="$(top_srcdir)"; export top_srcdir; top_builddir="$(top_builddir)"; export top_builddir;
 
 tex_html_dirs = tex_l2h tex_t4ht tex_t4ht_output_dir_non_ascii \
   tex_l2h_output_dir_non_ascii
 
 tests_dirs = different_encodings different_languages_gen_master_menu \
+  for_nbspaces_different_encodings \
   input_dir_non_ascii output_dir_non_ascii output_dir_file_non_ascii
 
 long-checks: all

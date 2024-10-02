@@ -26,11 +26,11 @@ char *
 parse_float_type (ELEMENT *current)
 {
   char *normalized;
-  if (current->args.number > 0)
-    normalized = convert_to_normalized (current->args.list[0]);
+  if (current->e.c->args.number > 0)
+    normalized = convert_to_normalized (current->e.c->args.list[0]);
   else
     normalized = strdup ("");
-  add_extra_string (current, "float_type", normalized);
+  add_extra_string (current, AI_key_float_type, normalized);
   return normalized;
 }
 

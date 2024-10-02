@@ -340,7 +340,7 @@ $result_trees{'commands_and_spaces'} = {
                   'text' => ' '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -348,7 +348,7 @@ $result_trees{'commands_and_spaces'} = {
                   'text' => 'b'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -361,7 +361,7 @@ $result_trees{'commands_and_spaces'} = {
                   'text' => ' '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -374,7 +374,7 @@ $result_trees{'commands_and_spaces'} = {
                   'text' => ' '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -387,7 +387,7 @@ $result_trees{'commands_and_spaces'} = {
                   'text' => ' '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             }
           ],
           'cmdname' => 'image',
@@ -423,7 +423,7 @@ $result_trees{'commands_and_spaces'} = {
                   'text' => ' '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -437,7 +437,7 @@ $result_trees{'commands_and_spaces'} = {
 '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -450,7 +450,7 @@ $result_trees{'commands_and_spaces'} = {
                   'text' => ' '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -463,7 +463,7 @@ $result_trees{'commands_and_spaces'} = {
                   'text' => ' '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             },
             {
               'contents' => [
@@ -476,7 +476,7 @@ $result_trees{'commands_and_spaces'} = {
                   'text' => ' '
                 }
               },
-              'type' => 'brace_command_arg'
+              'type' => 'brace_arg'
             }
           ],
           'cmdname' => 'image',
@@ -877,7 +877,7 @@ $result_trees{'commands_and_spaces'} = {
                           'text' => 'cmd'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'var',
@@ -1141,8 +1141,7 @@ $result_trees{'commands_and_spaces'} = {
                   'cmdname' => 'strong',
                   'source_info' => {
                     'line_nr' => 54
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -1347,7 +1346,7 @@ $result_trees{'commands_and_spaces'} = {
                       'text' => ' http://ggg '
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'indicateurl',
@@ -1522,7 +1521,27 @@ $result_trees{'commands_and_spaces'} = {
               ],
               'extra' => {
                 'def_command' => 'deffn',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'machin'
+                        }
+                      ],
+                      'info' => {
+                        'spaces_after_argument' => {
+                          'text' => ' '
+                        },
+                        'spaces_before_argument' => {
+                          'text' => ' '
+                        }
+                      },
+                      'type' => 'bracketed_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'element_node' => {},
                 'index_entry' => [
                   'fn',
@@ -1620,7 +1639,6 @@ $result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[23]{'extra'}{'ca
 $result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[23]{'extra'}{'shortcaption'} = $result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[23]{'contents'}[3];
 $result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[25]{'extra'}{'columnfractions'} = $result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[25]{'args'}[0]{'contents'}[0];
 $result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[35]{'extra'}{'command_as_argument'} = $result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[35]{'args'}[0]{'contents'}[0];
-$result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[43]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[43]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'commands_and_spaces'}{'contents'}[1]{'contents'}[43]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'commands_and_spaces'}{'contents'}[1];
 
 $result_texis{'commands_and_spaces'} = '@set  foo   some @value

@@ -36,7 +36,7 @@ $result_trees{'paragraph_command'} = {
                       'text' => 'aaa'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'b',
@@ -66,7 +66,7 @@ $result_trees{'paragraph_command'} = {
                       'text' => 'i'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'dotless',
@@ -96,7 +96,7 @@ $result_trees{'paragraph_command'} = {
                       'text' => '0075'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'U',
@@ -126,7 +126,7 @@ $result_trees{'paragraph_command'} = {
                       'text' => 'm1'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'email',
@@ -193,7 +193,7 @@ $result_trees{'paragraph_command'} = {
                       'text' => 'definfoenclose'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'foo',

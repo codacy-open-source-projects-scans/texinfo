@@ -81,8 +81,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                   'cmdname' => 'asis',
                   'source_info' => {
                     'line_nr' => 5
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -638,7 +637,7 @@ $result_trees{'punctuation_in_line_commands'} = {
                   'text' => 'titlefont! After punc'
                 }
               ],
-              'type' => 'brace_command_arg'
+              'type' => 'brace_container'
             }
           ],
           'cmdname' => 'titlefont',

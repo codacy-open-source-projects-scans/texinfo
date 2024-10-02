@@ -582,7 +582,8 @@ sub set_menus_node_directions($)
   return undef unless ($nodes_list and scalar(@{$nodes_list}));
 
   my $check_menu_entries = (!$customization_information->get_conf('novalidate')
-      and $customization_information->get_conf('FORMAT_MENU') eq 'menu');
+      and (!defined($customization_information->get_conf('FORMAT_MENU'))
+           or $customization_information->get_conf('FORMAT_MENU') eq 'menu'));
 
   # First go through all the menus and set menu up, menu next and menu prev,
   # and warn for unknown nodes.
@@ -715,6 +716,9 @@ sub complete_node_tree_with_menus($)
 
   return unless ($nodes_list and @{$nodes_list});
 
+  my $top_node_next;
+  my $top_node;
+
   my %cached_menu_nodes;
   # Go through all the nodes
   foreach my $node (@{$nodes_list}) {
@@ -730,14 +734,15 @@ sub complete_node_tree_with_menus($)
 
       if ($normalized ne 'Top') {
         foreach my $direction (@node_directions_names) {
-          # prev already defined for the node first Top node menu entry
-          if ($direction eq 'prev' and $node_directions
-              and $node_directions->{$direction}
-              and $node_directions->{$direction}->{'extra'}
-              and $node_directions->{$direction}
-                                      ->{'extra'}->{'normalized'}
-              and $node_directions->{$direction}
-                                      ->{'extra'}->{'normalized'} eq 'Top') {
+          # prev defined as first Top node menu entry node
+          if ($direction eq 'prev' and $top_node_next
+              and $node eq $top_node_next) {
+            $node->{'extra'}->{'node_directions'} = {}
+              if (!$node->{'extra'}->{'node_directions'});
+            if (!$node->{'extra'}->{'node_directions'}->{'prev'}) {
+              $node->{'extra'}->{'node_directions'}->{'prev'}
+                = $top_node;
+            }
             next;
           }
           my $section = $node->{'extra'}->{'associated_section'};
@@ -819,37 +824,25 @@ sub complete_node_tree_with_menus($)
         my $menu_child = Texinfo::ManipulateTree::first_menu_node($node,
                                                       $identifier_target);
         if ($menu_child) {
-          $node->{'extra'}->{'node_directions'} = {}
-             if (!$node->{'extra'}->{'node_directions'});
-          $node->{'extra'}->{'node_directions'}->{'next'}
-             = $menu_child;
-          if (!$menu_child->{'extra'}->{'manual_content'}) {
-            $menu_child->{'extra'}->{'node_directions'} = {}
-              if (!$menu_child->{'extra'}->{'node_directions'});
-            if (!$menu_child->{'extra'}->{'node_directions'}->{'prev'}) {
-              $menu_child->{'extra'}->{'node_directions'}->{'prev'}
-                = $node;
-            }
-          }
+          $top_node_next = $menu_child;
         } else {
           # use the first non top node as next for Top
           foreach my $first_non_top_node (@{$nodes_list}) {
             if ($first_non_top_node ne $node) {
-              $node->{'extra'}->{'node_directions'} = {}
-                 if (!$node->{'extra'}->{'node_directions'});
-              $node->{'extra'}->{'node_directions'}->{'next'}
-                  = $first_non_top_node;
-              my $first_non_top_automatic
-                = (not ($first_non_top_node->{'args'}
-                        and scalar(@{$first_non_top_node->{'args'}}) > 1));
-              if ($first_non_top_automatic) {
-                $first_non_top_node->{'extra'}->{'node_directions'} = {}
-                   if (!$first_non_top_node->{'extra'}->{'node_directions'});
-                $first_non_top_node->{'extra'}->{'node_directions'}->{'prev'}
-                    = $node;
-              }
+              $top_node_next = $first_non_top_node;
               last;
             }
+          }
+        }
+        if ($top_node_next) {
+          $node->{'extra'}->{'node_directions'} = {}
+             if (!$node->{'extra'}->{'node_directions'});
+          $node->{'extra'}->{'node_directions'}->{'next'}
+            = $top_node_next;
+          if ($top_node_next->{'extra'}->{'manual_content'}) {
+            $top_node_next = undef;
+          } else {
+            $top_node = $node;
           }
         }
       }
@@ -931,7 +924,8 @@ sub nodes_tree($)
   my $identifier_target = $document->labels_information();
   my $registrar = $document->registrar();
 
-  my $top_node;
+  my $top_node = $identifier_target->{'Top'};
+  my $top_node_section_child;
   my @nodes_list = ();
   # Go through all the nodes and set directions.
   foreach my $node (@{$root->{'contents'}}) {
@@ -941,24 +935,19 @@ sub nodes_tree($)
       next;
     }
     push @nodes_list, $node;
-    if ($node->{'extra'}->{'normalized'} eq 'Top'
-        and $node->{'extra'}->{'is_target'}) {
-      $top_node = $node;
-    }
+
     my $automatic_directions
       = (not ($node->{'args'} and scalar(@{$node->{'args'}}) > 1));
 
     if ($automatic_directions) {
       if (!$top_node or $node ne $top_node) {
         foreach my $direction (@node_directions_names) {
-          # prev already defined for the node first Top node menu entry
-          if ($direction eq 'prev' and $node->{'extra'}->{'node_directions'}
-              and $node->{'extra'}->{'node_directions'}->{$direction}
-              and $node->{'extra'}->{'node_directions'}->{$direction}->{'extra'}
-              and $node->{'extra'}->{'node_directions'}->{$direction}
-                                        ->{'extra'}->{'normalized'}
-              and $node->{'extra'}->{'node_directions'}->{$direction}
-                                        ->{'extra'}->{'normalized'} eq 'Top') {
+          # prev defined as Top for the first Top node menu entry node
+          if ($direction eq 'prev' and $top_node_section_child
+              and $node eq $top_node_section_child) {
+            $node->{'extra'}->{'node_directions'} = {}
+              if (! $node->{'extra'}->{'node_directions'});
+            $node->{'extra'}->{'node_directions'}->{'prev'} = $top_node;
             next;
           }
           if ($node->{'extra'}->{'associated_section'}) {
@@ -991,7 +980,7 @@ sub nodes_tree($)
             and $node->{'extra'}->{'associated_section'}
                           ->{'extra'}->{'section_childs'}->[0]
                                              ->{'extra'}->{'associated_node'}) {
-          my $top_node_section_child
+          $top_node_section_child
             = $node->{'extra'}->{'associated_section'}
                         ->{'extra'}->{'section_childs'}->[0]
                                              ->{'extra'}->{'associated_node'};
@@ -1000,16 +989,6 @@ sub nodes_tree($)
           $node->{'extra'}->{'node_directions'}->{'next'}
              = $top_node_section_child;
 
-          my $first_section_child_automatic
-             = (not ($top_node_section_child->{'args'}
-                     and scalar(@{$top_node_section_child->{'args'}}) > 1));
-
-          if ($first_section_child_automatic) {
-            $top_node_section_child->{'extra'}->{'node_directions'} = {}
-              if (! $top_node_section_child->{'extra'}->{'node_directions'});
-            $top_node_section_child->{'extra'}->{'node_directions'}->{'prev'}
-               = $node;
-          }
         }
       }
     } else { # explicit directions
@@ -1369,7 +1348,7 @@ sub new_complete_node_menu
   # only holds contents here, will be turned into a proper block
   # command in new_block_command below
   my $section = $node->{'extra'}->{'associated_section'};
-  my $new_menu = {'contents' => [], 'parent' => $section};
+  my $new_menu = {'contents' => []};
   foreach my $child (@node_childs) {
     my $entry = new_node_menu_entry($child, $use_sections);
     if (defined($entry)) {
@@ -1526,6 +1505,7 @@ sub new_complete_menu_master_menu($$$)
   return $menu_node;
 }
 
+# returns menu contents
 sub _print_down_menus($$$$$;$);
 sub _print_down_menus($$$$$;$)
 {
@@ -1536,6 +1516,8 @@ sub _print_down_menus($$$$$;$)
   my $identifier_target = shift;
   my $use_sections = shift;
 
+  # NOTE the menus are not used directly, the entry of the menus are copied
+  # and returned in @master_menu_contents.
   my @menus;
 
   my @master_menu_contents;

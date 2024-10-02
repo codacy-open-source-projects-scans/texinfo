@@ -146,7 +146,7 @@ $result_trees{'seeentry'} = {
                           'text' => 'bbb'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -196,7 +196,7 @@ $result_trees{'seeentry'} = {
                           'text' => 'ccc'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -265,7 +265,7 @@ $result_trees{'seeentry'} = {
                           'text' => 'f---bbb'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -315,7 +315,7 @@ $result_trees{'seeentry'} = {
                           'text' => 'f---ccc'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -626,6 +626,18 @@ File: ,  Node: chapter index,  Prev: Top,  Up: Top
 1 Index
 *******
 
+ [index ]
+* Menu:
+
+  aaa, See bbb.
+  ddd:                                   See also ccc.
+
+ [index ]
+* Menu:
+
+  f---aaa, See f---bbb.
+  f---ddd:                               See also f---ccc.
+
 
 Tag Table:
 Node: Top27
@@ -642,6 +654,16 @@ End:
 
 $result_converted{'plaintext'}->{'seeentry'} = '1 Index
 *******
+
+* Menu:
+
+  aaa, See bbb.
+  ddd:                                   See also ccc.
+
+* Menu:
+
+  f---aaa, See f---bbb.
+  f---ddd:                               See also f---ccc.
 
 ';
 

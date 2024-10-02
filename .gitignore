@@ -93,6 +93,14 @@ gnulib/lib/unicase.h
 gnulib/lib/unictype.h
 gnulib/lib/uninorm.h
 
+gnulib/lib/**/.dirstamp
+
+gnulib/po/*.gmo
+gnulib/po/POTFILES
+gnulib/po/remove-potcdate.sed
+gnulib/po/stamp-po
+gnulib/po/texinfo-gnulib.pot
+
 tp/Texinfo/XS/gnulib/lib/float.h
 tp/Texinfo/XS/gnulib/lib/locale.h
 tp/Texinfo/XS/gnulib/lib/iconv.h
@@ -108,8 +116,17 @@ tp/Texinfo/XS/gnulib/lib/wctype.h
 
 tp/Texinfo/XS/gnulib/lib/uniconv/*.lo
 
+tp/Texinfo/XS/gnulib/m4/libtool.m4
+tp/Texinfo/XS/gnulib/m4/ltoptions.m4
+tp/Texinfo/XS/gnulib/m4/ltsugar.m4
+tp/Texinfo/XS/gnulib/m4/ltversion.m4
+tp/Texinfo/XS/gnulib/m4/lt~obsolete.m4
 
-gnulib/lib/**/.dirstamp
+tp/Texinfo/XS/gnulib/po/*.gmo
+tp/Texinfo/XS/gnulib/po/POTFILES
+tp/Texinfo/XS/gnulib/po/remove-potcdate.sed
+tp/Texinfo/XS/gnulib/po/stamp-po
+tp/Texinfo/XS/gnulib/po/texinfo_tp-gnulib.pot
 
 doc/*.html
 doc/*_html
@@ -182,9 +199,7 @@ doc/refcard/*.ps
 
 doc/tp_api/*.t2p
 doc/tp_api/*.info
-doc/tp_api/api_includes
 doc/tp_api/texi2any_internals.pdf
-doc/tp_api/texi2any_internals.texi
 
 man/info.1
 man/install-info.1
@@ -257,6 +272,7 @@ tp/tests/built_input
 
 tp/tests/many_input_files/different_encodings
 tp/tests/many_input_files/different_languages_gen_master_menu
+tp/tests/many_input_files/for_nbspaces_different_encodings
 tp/tests/many_input_files/input_dir_non_ascii
 tp/tests/many_input_files/output_dir_non_ascii
 tp/tests/many_input_files/output_dir_file_non_ascii
@@ -327,12 +343,6 @@ tp/Texinfo/XS/gnulib/lib/uniwidth.h
 tp/Texinfo/XS/gnulib/lib/wchar.h
 tp/Texinfo/XS/gnulib/lib/sys/types.h
 
-tp/Texinfo/XS/gnulib/m4/libtool.m4
-tp/Texinfo/XS/gnulib/m4/ltoptions.m4
-tp/Texinfo/XS/gnulib/m4/ltsugar.m4
-tp/Texinfo/XS/gnulib/m4/ltversion.m4
-tp/Texinfo/XS/gnulib/m4/lt~obsolete.m4
-
 tp/Texinfo/XS/main/DocumentXS.c
 tp/Texinfo/XS/main/IndicesXS.c
 tp/Texinfo/XS/main/accent_tables_8bit_codepoints.c
@@ -356,20 +366,13 @@ tp/Texinfo/XS/structuring_transfo/StructuringTransfoXS.c
 tp/Texinfo/XS/structuring_transfo/*.lo
 
 tp/Texinfo/XS/parsetexi/Parsetexi.c
-tp/Texinfo/XS/parsetexi/config.h
-tp/Texinfo/XS/parsetexi/config.log
-tp/Texinfo/XS/parsetexi/config.guess
-tp/Texinfo/XS/parsetexi/config.in
-tp/Texinfo/XS/parsetexi/config.sub
-tp/Texinfo/XS/parsetexi/libtool
-tp/Texinfo/XS/parsetexi/ltmain.sh
-tp/Texinfo/XS/parsetexi/stamp-h1
 
 tp/Texinfo/XS/parsetexi/.libs
 tp/Texinfo/XS/parsetexi/*.la
 tp/Texinfo/XS/parsetexi/*.lo
 
 tp/Texinfo/XS/convert/ConvertXS.c
+tp/Texinfo/XS/convert/cmd_converter.c
 
 tp/Texinfo/XS/convert/.libs
 tp/Texinfo/XS/convert/*.la

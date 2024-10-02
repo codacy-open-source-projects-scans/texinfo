@@ -84,7 +84,7 @@ $result_trees{'include_after_empty_line_arg'} = {
                 'info' => {
                   'command_name' => 'mymacro'
                 },
-                'type' => 'macro_call'
+                'type' => 'macro_call_line'
               },
               'position' => 1,
               'sourcemark_type' => 'macro_expansion',
@@ -100,7 +100,7 @@ $result_trees{'include_after_empty_line_arg'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',

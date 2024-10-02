@@ -197,7 +197,7 @@ $result_trees{'table_nested'} = {
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -220,8 +220,7 @@ $result_trees{'table_nested'} = {
                       'source_info' => {
                         'line_nr' => 27,
                         'macro' => 'myvtable'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -517,8 +516,7 @@ $result_trees{'table_nested'} = {
                       'source_info' => {
                         'line_nr' => 27,
                         'macro' => 'myvtable'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -768,7 +766,7 @@ $result_trees{'table_nested'} = {
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -779,7 +777,8 @@ $result_trees{'table_nested'} = {
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
                 }
-              ]
+              ],
+              'type' => 'preformatted'
             },
             {
               'args' => [
@@ -790,8 +789,7 @@ $result_trees{'table_nested'} = {
                       'source_info' => {
                         'line_nr' => 32,
                         'macro' => 'myvtable'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -1087,8 +1085,7 @@ $result_trees{'table_nested'} = {
                       'source_info' => {
                         'line_nr' => 32,
                         'macro' => 'myvtable'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -1352,7 +1349,7 @@ $result_trees{'table_nested'} = {
                       'element' => {
                         'args' => [
                           {
-                            'type' => 'brace_command_arg'
+                            'type' => 'brace_arg'
                           }
                         ],
                         'info' => {
@@ -1375,8 +1372,7 @@ $result_trees{'table_nested'} = {
                           'source_info' => {
                             'line_nr' => 38,
                             'macro' => 'myvtable'
-                          },
-                          'type' => 'command_as_argument'
+                          }
                         }
                       ],
                       'info' => {
@@ -1672,8 +1668,7 @@ $result_trees{'table_nested'} = {
                           'source_info' => {
                             'line_nr' => 38,
                             'macro' => 'myvtable'
-                          },
-                          'type' => 'command_as_argument'
+                          }
                         }
                       ],
                       'info' => {

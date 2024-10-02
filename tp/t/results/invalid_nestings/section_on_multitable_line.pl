@@ -67,7 +67,7 @@ $result_trees{'section_on_multitable_line'} = {
                           'text' => 'this'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'code',
@@ -300,6 +300,13 @@ $result_sectioning{'section_on_multitable_line'}{'extra'}{'section_childs'}[2]{'
 $result_sectioning{'section_on_multitable_line'}{'extra'}{'section_childs'}[2]{'extra'}{'toplevel_directions'}{'prev'} = $result_sectioning{'section_on_multitable_line'}{'extra'}{'section_childs'}[1];
 
 $result_errors{'section_on_multitable_line'} = [
+  {
+    'error_line' => 'warning: @section should only appear at the beginning of a line
+',
+    'line_nr' => 1,
+    'text' => '@section should only appear at the beginning of a line',
+    'type' => 'warning'
+  },
   {
     'error_line' => 'warning: @section should not appear on @multitable line
 ',

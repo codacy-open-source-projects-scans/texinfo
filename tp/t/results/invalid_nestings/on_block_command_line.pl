@@ -23,7 +23,7 @@ $result_trees{'on_block_command_line'} = {
                               'text' => 'in anchor'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'anchor',
@@ -52,7 +52,7 @@ $result_trees{'on_block_command_line'} = {
                           'text' => 'in titlefont'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'titlefont',
@@ -92,7 +92,7 @@ $result_trees{'on_block_command_line'} = {
                                   'text' => 'in titlefont'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'titlefont',
@@ -192,7 +192,7 @@ $result_trees{'on_block_command_line'} = {
                           'text' => 'in titlefont'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'titlefont',
@@ -212,7 +212,7 @@ $result_trees{'on_block_command_line'} = {
                           'text' => 'in quotation anchor'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'anchor',

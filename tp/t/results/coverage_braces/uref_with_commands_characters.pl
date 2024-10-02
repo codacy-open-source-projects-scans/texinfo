@@ -26,7 +26,7 @@ $result_trees{'uref_with_commands_characters'} = {
                               'text' => 'toto'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'strong',
@@ -56,7 +56,7 @@ $result_trees{'uref_with_commands_characters'} = {
                       'text' => 's\\s p+h#aaa'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -70,7 +70,7 @@ $result_trees{'uref_with_commands_characters'} = {
                             {
                               'args' => [
                                 {
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'LaTeX',
@@ -79,7 +79,7 @@ $result_trees{'uref_with_commands_characters'} = {
                               }
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'strong',
@@ -93,7 +93,7 @@ $result_trees{'uref_with_commands_characters'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'uref',
@@ -140,5 +140,9 @@ $result_converted{'html_text'}->{'uref_with_commands_characters'} = '<p><a class
 
 $result_converted{'latex_text'}->{'uref_with_commands_characters'} = '\\href{http://my-host.com/~toto\\%5Cs\'q"a&e?b\\}b\\{ba@s\\\\s p+h\\#aaa}{see that \\textbf{\\LaTeX{}} (\\nolinkurl{http://my-host.com/~toto\\%5Cs\'q"a&e?b\\}b\\{ba@s\\\\s p+h\\#aaa})}
 ';
+
+
+$result_converted{'docbook'}->{'uref_with_commands_characters'} = '<para><ulink url="http://my-host.com/~toto%5Cs\'q&quot;a&amp;e?b}b{ba@s\\s p+h#aaa">see that <emphasis role="bold">&latex;</emphasis></ulink>
+</para>';
 
 1;

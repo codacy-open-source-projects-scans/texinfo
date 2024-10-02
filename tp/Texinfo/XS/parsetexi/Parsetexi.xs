@@ -15,6 +15,8 @@
 
 #include <config.h>
 
+#include <stddef.h>
+
 /* Avoid namespace conflicts. */
 #define context perl_context
 
@@ -53,11 +55,9 @@ PROTOTYPES: ENABLE
 # and passed as byte strings.
 
 # Called from Texinfo::XSLoader.pm.  The arguments are not actually used.
-# file path, can be in any encoding
+# File paths are byte strings and can be in any encoding.
 int
-init (texinfo_uninstalled, tp_builddir)
-     int texinfo_uninstalled
-     char *tp_builddir = (char *)SvPVbyte_nolen ($arg);
+init (int texinfo_uninstalled, SV *pkgdatadir, SV *tp_builddir, SV *top_srcdir)
 
 void
 reset_parser (int debug_output)
@@ -75,12 +75,12 @@ register_parser_conf (SV *parser)
                 newSViv (parser_conf->descriptor), 0);
 
 # file path, can be in any encoding
-int
+size_t
 parse_file (SV *parser, input_file_path)
         char *input_file_path = (char *)SvPVbyte_nolen ($arg);
     PREINIT:
         int status;
-        int document_descriptor = 0;
+        size_t document_descriptor = 0;
       CODE:
         apply_sv_parser_conf (parser);
         document_descriptor = parse_file (input_file_path, &status);
@@ -97,7 +97,7 @@ parse_file (SV *parser, input_file_path)
       OUTPUT:
         RETVAL
 
-int
+size_t
 parse_piece (SV *parser, string, line_nr)
         char *string = (char *)SvPVutf8_nolen ($arg);
         int line_nr
@@ -107,7 +107,7 @@ parse_piece (SV *parser, string, line_nr)
       OUTPUT:
         RETVAL
 
-int
+size_t
 parse_string (SV *parser, string, line_nr)
         char *string = (char *)SvPVutf8_nolen ($arg);
         int line_nr
@@ -117,7 +117,7 @@ parse_string (SV *parser, string, line_nr)
       OUTPUT:
         RETVAL
 
-int
+size_t
 parse_text (SV *parser, string, line_nr)
         char *string = (char *)SvPVutf8_nolen ($arg);
         int line_nr
@@ -132,7 +132,7 @@ parse_text (SV *parser, string, line_nr)
 # would have been nice, but in that case an undef value cannot be passed
 # and leads to a perl warning
 SV *
-build_document (int document_descriptor, ...)
+build_document (size_t document_descriptor, ...)
       PROTOTYPE: $;$
       PREINIT:
         int no_store = 0;
@@ -145,10 +145,10 @@ build_document (int document_descriptor, ...)
         RETVAL
 
 SV *
-get_document (int document_descriptor)
+get_document (size_t document_descriptor)
 
 void
-pass_document_parser_errors_to_registrar (int document_descriptor, SV *parser_sv)
+pass_document_parser_errors_to_registrar (size_t document_descriptor, SV *parser_sv)
 
 void
 parser_store_values (SV *values)

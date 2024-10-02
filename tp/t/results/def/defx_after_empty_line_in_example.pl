@@ -59,7 +59,7 @@ $result_trees{'defx_after_empty_line_in_example'} = {
                                           'text' => 'i'
                                         }
                                       ],
-                                      'type' => 'brace_command_arg'
+                                      'type' => 'brace_container'
                                     }
                                   ],
                                   'cmdname' => 'var',
@@ -119,7 +119,29 @@ $result_trees{'defx_after_empty_line_in_example'} = {
                   ],
                   'extra' => {
                     'def_command' => 'deffn',
-                    'def_index_element' => {},
+                    'def_index_element' => {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'args' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'i'
+                                    }
+                                  ],
+                                  'type' => 'brace_container'
+                                }
+                              ],
+                              'cmdname' => 'var'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
                     'index_entry' => [
                       'fn',
                       1
@@ -238,7 +260,19 @@ $result_trees{'defx_after_empty_line_in_example'} = {
                   'cmdname' => 'deffnx',
                   'extra' => {
                     'def_command' => 'deffn',
-                    'def_index_element' => {},
+                    'def_index_element' => {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'bidulr'
+                            }
+                          ],
+                          'type' => 'def_line_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
                     'index_entry' => [
                       'fn',
                       2
@@ -252,8 +286,7 @@ $result_trees{'defx_after_empty_line_in_example'} = {
                   },
                   'source_info' => {
                     'line_nr' => 7
-                  },
-                  'type' => 'def_line'
+                  }
                 },
                 {
                   'args' => [
@@ -336,8 +369,6 @@ $result_trees{'defx_after_empty_line_in_example'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'defx_after_empty_line_in_example'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'defx_after_empty_line_in_example'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[2];
-$result_trees{'defx_after_empty_line_in_example'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[2]{'extra'}{'def_index_element'} = $result_trees{'defx_after_empty_line_in_example'}{'contents'}[0]{'contents'}[0]{'contents'}[0]{'contents'}[2]{'args'}[0]{'contents'}[2];
 
 $result_texis{'defx_after_empty_line_in_example'} = '@example
 @deffn fset @var{i} a g
@@ -387,10 +418,10 @@ $result_indices_sort_strings{'defx_after_empty_line_in_example'} = {
 
 
 
-$result_converted{'plaintext'}->{'defx_after_empty_line_in_example'} = '      -- fset: I a g
+$result_converted{'plaintext'}->{'defx_after_empty_line_in_example'} = '      - fset: I a g
 
 
-      -- truc: bidulr machin...
+      - truc: bidulr machin...
 ';
 
 1;

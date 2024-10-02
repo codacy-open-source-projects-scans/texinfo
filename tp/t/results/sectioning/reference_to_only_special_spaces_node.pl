@@ -172,7 +172,7 @@ $result_trees{'reference_to_only_special_spaces_node'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -185,7 +185,7 @@ $result_trees{'reference_to_only_special_spaces_node'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -232,7 +232,7 @@ $result_trees{'reference_to_only_special_spaces_node'} = {
                       'text' => "\x{2000}\x{2001}\x{2002}"
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -277,7 +277,7 @@ $result_trees{'reference_to_only_special_spaces_node'} = {
                       'text' => "EN QUAD|\x{2000}| EM QUAD|\x{2001}| EN SPACE|\x{2002}|"
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'code',
@@ -317,7 +317,7 @@ $result_trees{'reference_to_only_special_spaces_node'} = {
                               'text' => "\x{2000}\x{2001}\x{2002}"
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -335,7 +335,7 @@ $result_trees{'reference_to_only_special_spaces_node'} = {
                     },
                     'normalized' => '_2002_2003_2002'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -347,7 +347,7 @@ $result_trees{'reference_to_only_special_spaces_node'} = {
                               'text' => "\x{2000}\x{2001}\x{2002}"
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -362,7 +362,7 @@ $result_trees{'reference_to_only_special_spaces_node'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',

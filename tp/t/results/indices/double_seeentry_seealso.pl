@@ -156,7 +156,7 @@ $result_trees{'double_seeentry_seealso'} = {
                           'text' => 'bbb'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -176,7 +176,7 @@ $result_trees{'double_seeentry_seealso'} = {
                           'text' => 'ccc'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -226,7 +226,7 @@ $result_trees{'double_seeentry_seealso'} = {
                           'text' => 'ccc'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -253,7 +253,7 @@ $result_trees{'double_seeentry_seealso'} = {
                           'text' => 'eee'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -310,7 +310,7 @@ $result_trees{'double_seeentry_seealso'} = {
                           'text' => 'hhh'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seeentry',
@@ -330,7 +330,7 @@ $result_trees{'double_seeentry_seealso'} = {
                           'text' => 'iii'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -381,7 +381,7 @@ $result_trees{'double_seeentry_seealso'} = {
                           'text' => 'fff'
                         }
                       ],
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_arg'
                     }
                   ],
                   'cmdname' => 'seealso',
@@ -414,7 +414,7 @@ $result_trees{'double_seeentry_seealso'} = {
                       'text' => 'subhhh'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'seeentry',
@@ -446,7 +446,7 @@ $result_trees{'double_seeentry_seealso'} = {
               ],
               'cmdname' => 'subentry',
               'extra' => {
-                'level' => 1,
+                'subentry_level' => 1,
                 'subentry_parent' => {}
               },
               'info' => {
@@ -714,6 +714,14 @@ File: ,  Node: node index,  Prev: Top,  Up: Top
 1 Chapter Index
 ***************
 
+ [index ]
+* Menu:
+
+  , subggg, See subhhh.
+  aaa, See ccc.
+  ddd:                                   See also eee.
+  ggg, See hhh.
+
 
 Tag Table:
 Node: Top27
@@ -733,6 +741,13 @@ $result_converted{'plaintext'}->{'double_seeentry_seealso'} = 'top
 
 1 Chapter Index
 ***************
+
+* Menu:
+
+  , subggg, See subhhh.
+  aaa, See ccc.
+  ddd:                                   See also eee.
+  ggg, See hhh.
 
 ';
 

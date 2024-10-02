@@ -203,7 +203,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
               'element' => {
                 'args' => [
                   {
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {
@@ -232,8 +232,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                   'source_info' => {
                     'line_nr' => 25,
                     'macro' => 'codekbdmacro'
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -343,7 +342,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'kbd',
@@ -353,8 +352,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                   'source_info' => {
                     'line_nr' => 25,
                     'macro' => 'codekbdmacro'
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -492,8 +490,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                       'source_info' => {
                         'line_nr' => 25,
                         'macro' => 'codekbdmacro'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -598,7 +595,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'kbd',
@@ -608,8 +605,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                       'source_info' => {
                         'line_nr' => 25,
                         'macro' => 'codekbdmacro'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -813,7 +809,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
               'element' => {
                 'args' => [
                   {
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {
@@ -842,8 +838,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                   'source_info' => {
                     'line_nr' => 31,
                     'macro' => 'codekbdmacro'
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -953,7 +948,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'kbd',
@@ -963,8 +958,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                   'source_info' => {
                     'line_nr' => 31,
                     'macro' => 'codekbdmacro'
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -1099,8 +1093,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                       'source_info' => {
                         'line_nr' => 31,
                         'macro' => 'codekbdmacro'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -1204,15 +1197,14 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'kbd',
                       'source_info' => {
                         'line_nr' => 31,
                         'macro' => 'codekbdmacro'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -1415,7 +1407,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
               'element' => {
                 'args' => [
                   {
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {
@@ -1441,8 +1433,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                   'source_info' => {
                     'line_nr' => 37,
                     'macro' => 'codekbdmacro'
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -1551,15 +1542,14 @@ $result_trees{'kbdinputstyle_in_table'} = {
                 {
                   'args' => [
                     {
-                      'type' => 'brace_command_arg'
+                      'type' => 'brace_container'
                     }
                   ],
                   'cmdname' => 'kbd',
                   'source_info' => {
                     'line_nr' => 37,
                     'macro' => 'codekbdmacro'
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -1693,8 +1683,7 @@ $result_trees{'kbdinputstyle_in_table'} = {
                       'source_info' => {
                         'line_nr' => 37,
                         'macro' => 'codekbdmacro'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {
@@ -1798,15 +1787,14 @@ $result_trees{'kbdinputstyle_in_table'} = {
                     {
                       'args' => [
                         {
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'kbd',
                       'source_info' => {
                         'line_nr' => 37,
                         'macro' => 'codekbdmacro'
-                      },
-                      'type' => 'command_as_argument'
+                      }
                     }
                   ],
                   'info' => {

@@ -91,7 +91,7 @@ $result_trees{'verb_with_brace_in_macro_call'} = {
                         'text' => '@verb{: in }'
                       }
                     ],
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   },
                   {
                     'contents' => [
@@ -104,7 +104,7 @@ $result_trees{'verb_with_brace_in_macro_call'} = {
                         'text' => ' '
                       }
                     },
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {
@@ -153,7 +153,7 @@ $result_trees{'verb_with_brace_in_macro_call'} = {
                       'type' => 'raw'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'verb',

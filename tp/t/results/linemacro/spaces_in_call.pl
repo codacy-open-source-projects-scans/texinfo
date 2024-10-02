@@ -95,7 +95,8 @@ $result_trees{'spaces_in_call'} = {
                       {
                         'text' => '{a b}{c d}{rest}'
                       }
-                    ]
+                    ],
+                    'type' => 'line_arg'
                   }
                 ],
                 'info' => {
@@ -240,7 +241,40 @@ $result_trees{'spaces_in_call'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'a b'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
+                        },
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'c d'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
+                        },
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'rest'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -251,8 +285,7 @@ $result_trees{'spaces_in_call'} = {
               'source_info' => {
                 'line_nr' => 7,
                 'macro' => 'mylinecommand'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -305,7 +338,6 @@ $result_trees{'spaces_in_call'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'spaces_in_call'}{'contents'}[0]{'contents'}[2]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'spaces_in_call'}{'contents'}[0]{'contents'}[2]{'contents'}[0]{'args'}[0]{'contents'}[2];
 
 $result_texis{'spaces_in_call'} = '@linemacro mylinecommand {first, second, rest}
 @defblock

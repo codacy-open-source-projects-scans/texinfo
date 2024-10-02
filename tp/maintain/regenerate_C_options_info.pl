@@ -134,7 +134,7 @@ print CODE "/* Automatically generated from $program_name */\n\n";
 
 print CODE '#include <config.h>'."\n\n";
 
-print CODE '#include <stdlib.h>'."\n\n";
+print CODE '#include <stdlib.h>'."\n";
 print CODE '#include <string.h>'."\n\n";
 
 print CODE '#include "options_types.h"'."\n";
@@ -170,6 +170,17 @@ foreach my $category (sort(keys(%option_categories))) {
   foreach my $option_info (@{$option_categories{$category}}) {
     my ($option, $value, $type) = @$option_info;
     print CODE "  clear_option (&options->$option);\n";
+  }
+}
+print CODE "}\n\n";
+
+print CODE "void\ncopy_options (OPTIONS *destination, const OPTIONS *source)\n{\n";
+print CODE "  destination->BIT_user_function_number = source->BIT_user_function_number;\n";
+foreach my $category (sort(keys(%option_categories))) {
+  print CODE "\n/* ${category} */\n\n";
+  foreach my $option_info (@{$option_categories{$category}}) {
+    my ($option, $value, $type) = @$option_info;
+    print CODE "  copy_option (&destination->$option, &source->$option);\n";
   }
 }
 print CODE "}\n\n";

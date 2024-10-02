@@ -85,7 +85,7 @@ Before samp. @samp{a}. after samp, w @w{in   w. after dot}  afterw
 @end quotation
 '],
 # This tests all the possibilities for end sentence related characters
-# ans splitting by commands (also tested in other tests)
+# and splitting by commands (also tested in other tests)
 ['split_punctuation_detection_in_commands',
 'Before @asis{B}@asis{)}@asis{.}]]? Afte@strong{R}@emph{"!}\'? Last'],
 ['html_expanded',
@@ -520,6 +520,39 @@ Para
 Para indented.
 
 '],
+['cartouche_and_paragraph_indentation',
+'@node top
+@top top
+
+@node chap
+@chapter chap
+
+aa
+
+bb
+
+@cartouche toto
+
+cc
+
+dd
+
+@end cartouche
+
+@node chap2
+@chapter c2
+
+@cartouche titi
+
+ll m
+
+mm
+
+@end cartouche
+
+oo
+
+'],
 ['nested_code_commands',
 '@code{aA @kbd{fg}}.
 @code{cc @code{gg}}.
@@ -637,38 +670,6 @@ HHH
 @image{figure} JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ
 @end flushright
 '],
-['del_quote_linebreaking',
-'first para
-
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx @xref{noxde,,, manual,Manual}
-
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx @xref{noxde,,, manual,Manual}
-
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx @xref{noxde,,, manual,Manual}
-
-%
-
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx @xref{no:de,,, manual,Manual}
-
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx @xref{no:de,,, manual,Manual}
-
-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx @xref{no:de,,, manual,Manual}
-
-', undef,
-{'INFO_SPECIAL_CHARS_QUOTE' => 1,
- 'INFO_SPECIAL_CHARS_WARNING' => 0,}
-],
-['xref_quote_long_item',
-'@table @asis
-
-@item @code{@@verbatiminclude}
-@xref{Texinfo::Convert::Utils $tree = expand_verbatiminclude($registrar@comma{} $configuration_information@comma{} $verbatiminclude),,
-Texinfo::Convert::Utils::expand_verbatiminclude, tp_api}.
-
-@end table
-',{},
-{'INFO_SPECIAL_CHARS_QUOTE' => 1,
- 'INFO_SPECIAL_CHARS_WARNING' => 0,}],
 );
 
 my $insert_copying_and_paragraph = 

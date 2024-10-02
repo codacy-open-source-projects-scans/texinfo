@@ -243,7 +243,7 @@ macroseven defined
 '
                       }
                     ],
-                    'type' => 'brace_command_arg'
+                    'type' => 'brace_arg'
                   }
                 ],
                 'info' => {
@@ -271,7 +271,7 @@ macroseven defined
                       'type' => 'raw'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'verb',
@@ -308,7 +308,7 @@ macroseven defined
                           'element' => {
                             'args' => [
                               {
-                                'type' => 'brace_command_arg'
+                                'type' => 'brace_arg'
                               }
                             ],
                             'info' => {
@@ -375,7 +375,7 @@ macroseven defined
                           'element' => {
                             'args' => [
                               {
-                                'type' => 'brace_command_arg'
+                                'type' => 'brace_arg'
                               }
                             ],
                             'info' => {
@@ -731,13 +731,19 @@ macroseven defined
                   },
                   'position' => 19,
                   'sourcemark_type' => 'ignored_conditional_block'
-                },
+                }
+              ],
+              'text' => 'macroseven defined
+'
+            },
+            {
+              'source_marks' => [
                 {
                   'counter' => 4,
                   'element' => {
                     'args' => [
                       {
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -745,15 +751,10 @@ macroseven defined
                     },
                     'type' => 'macro_call'
                   },
-                  'position' => 19,
                   'sourcemark_type' => 'macro_expansion',
                   'status' => 'start'
                 }
               ],
-              'text' => 'macroseven defined
-'
-            },
-            {
               'text' => '1
 '
             },
@@ -821,7 +822,7 @@ macroseven defined
                             'text' => 'aaa'
                           }
                         ],
-                        'type' => 'brace_command_arg'
+                        'type' => 'brace_arg'
                       }
                     ],
                     'info' => {
@@ -845,7 +846,7 @@ macroseven defined
                       'text' => 'aaa'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'emph',

@@ -19,7 +19,7 @@ $result_trees{'form_feed_in_brace_commands'} = {
                       'text' => ' aa'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'option',
@@ -38,7 +38,7 @@ $result_trees{'form_feed_in_brace_commands'} = {
                       'text' => 'aa'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'anchor',
@@ -79,7 +79,7 @@ $result_trees{'form_feed_in_brace_commands'} = {
                       'text' => ''
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -92,7 +92,7 @@ $result_trees{'form_feed_in_brace_commands'} = {
                       'text' => '  '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'email',
@@ -246,5 +246,9 @@ something \\href{mailto:aaa}{fff}\\footnote{ f1 \\par{}
 } \\footnote{gg\\par{}
 jj}.
 ';
+
+
+$result_converted{'docbook'}->{'form_feed_in_brace_commands'} = '<para><option>  aa</option> <anchor id="aa"/></para> <para>something <ulink url="mailto:aaa">fff</ulink><footnote><para>f1 </para> </footnote> <footnote><para>gg</para> <para>jj</para></footnote>.
+</para>';
 
 1;

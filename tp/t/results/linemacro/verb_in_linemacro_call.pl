@@ -115,76 +115,75 @@ $result_trees{'verb_in_linemacro_call'} = {
             {
               'contents' => [
                 {
-                  'source_marks' => [
-                    {
-                      'counter' => 1,
-                      'element' => {
-                        'args' => [
-                          {
-                            'contents' => [
-                              {
-                                'text' => 'Name',
-                                'type' => 'bracketed_linemacro_arg'
-                              }
-                            ],
-                            'info' => {
-                              'spaces_before_argument' => {
-                                'text' => ' '
-                              }
-                            }
-                          },
-                          {
-                            'contents' => [
-                              {
-                                'text' => '@verb{: in verb :}'
-                              }
-                            ],
-                            'info' => {
-                              'spaces_before_argument' => {
-                                'text' => ' '
-                              }
-                            }
-                          },
-                          {
-                            'contents' => [
-                              {
-                                'text' => 'A @verb{| in bracketed |} ',
-                                'type' => 'bracketed_linemacro_arg'
-                              }
-                            ],
-                            'info' => {
-                              'spaces_before_argument' => {
-                                'text' => ' '
-                              }
-                            }
-                          },
-                          {
-                            'contents' => [
-                              {
-                                'text' => 'other {j}'
-                              }
-                            ],
-                            'info' => {
-                              'spaces_before_argument' => {
-                                'text' => ' '
-                              }
-                            }
-                          }
-                        ],
-                        'info' => {
-                          'command_name' => 'mycommand'
-                        },
-                        'type' => 'linemacro_call'
-                      },
-                      'sourcemark_type' => 'linemacro_expansion',
-                      'status' => 'start'
-                    }
-                  ],
-                  'text' => ''
-                },
-                {
                   'contents' => [
                     {
+                      'source_marks' => [
+                        {
+                          'counter' => 1,
+                          'element' => {
+                            'args' => [
+                              {
+                                'contents' => [
+                                  {
+                                    'text' => 'Name',
+                                    'type' => 'bracketed_linemacro_arg'
+                                  }
+                                ],
+                                'type' => 'line_arg'
+                              },
+                              {
+                                'contents' => [
+                                  {
+                                    'text' => '@verb{: in verb :}'
+                                  }
+                                ],
+                                'info' => {
+                                  'spaces_before_argument' => {
+                                    'text' => ' '
+                                  }
+                                },
+                                'type' => 'line_arg'
+                              },
+                              {
+                                'contents' => [
+                                  {
+                                    'text' => 'A @verb{| in bracketed |} ',
+                                    'type' => 'bracketed_linemacro_arg'
+                                  }
+                                ],
+                                'info' => {
+                                  'spaces_before_argument' => {
+                                    'text' => ' '
+                                  }
+                                },
+                                'type' => 'line_arg'
+                              },
+                              {
+                                'contents' => [
+                                  {
+                                    'text' => 'other {j}'
+                                  }
+                                ],
+                                'info' => {
+                                  'spaces_before_argument' => {
+                                    'text' => ' '
+                                  }
+                                },
+                                'type' => 'line_arg'
+                              }
+                            ],
+                            'info' => {
+                              'command_name' => 'mycommand',
+                              'spaces_before_argument' => {
+                                'text' => ' '
+                              }
+                            },
+                            'type' => 'linemacro_call'
+                          },
+                          'sourcemark_type' => 'linemacro_expansion',
+                          'status' => 'start'
+                        }
+                      ],
                       'text' => 'first Name
 '
                     },
@@ -200,7 +199,7 @@ $result_trees{'verb_in_linemacro_call'} = {
                               'type' => 'raw'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'verb',
@@ -228,7 +227,7 @@ $result_trees{'verb_in_linemacro_call'} = {
                               'type' => 'raw'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'verb',
@@ -325,7 +324,19 @@ $result_trees{'verb_in_linemacro_call'} = {
               'cmdname' => 'defline',
               'extra' => {
                 'def_command' => 'defline',
-                'def_index_element' => {},
+                'def_index_element' => {
+                  'contents' => [
+                    {
+                      'contents' => [
+                        {
+                          'text' => 'other'
+                        }
+                      ],
+                      'type' => 'def_line_arg'
+                    }
+                  ],
+                  'type' => 'def_name'
+                },
                 'original_def_cmdname' => 'defline'
               },
               'info' => {
@@ -336,8 +347,7 @@ $result_trees{'verb_in_linemacro_call'} = {
               'source_info' => {
                 'line_nr' => 9,
                 'macro' => 'mycommand'
-              },
-              'type' => 'def_line'
+              }
             },
             {
               'args' => [
@@ -380,7 +390,6 @@ $result_trees{'verb_in_linemacro_call'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'verb_in_linemacro_call'}{'contents'}[0]{'contents'}[2]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'verb_in_linemacro_call'}{'contents'}[0]{'contents'}[2]{'contents'}[1]{'args'}[0]{'contents'}[2];
 
 $result_texis{'verb_in_linemacro_call'} = '@linemacro mycommand {a, b, c, d}
 first \\a\\

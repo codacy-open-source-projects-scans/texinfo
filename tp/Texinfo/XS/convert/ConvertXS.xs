@@ -36,18 +36,21 @@
 
 #include "command_ids.h"
 #include "element_types.h"
+#include "tree_types.h"
 #include "converter_types.h"
 #include "builtin_commands.h"
 #include "errors.h"
 #include "convert_to_text.h"
 #include "convert_to_texinfo.h"
 #include "manipulate_indices.h"
+/* for command_location_names non_perl_free new_string_list ... */
+#include "utils.h"
 #include "command_stack.h"
 #include "document.h"
+#include "converter.h"
 #include "get_perl_info.h"
 #include "build_perl_info.h"
 #include "build_html_perl_state.h"
-#include "converter.h"
 #include "convert_html.h"
 #include "get_converter_perl_info.h"
 #include "get_html_perl_info.h"
@@ -61,24 +64,58 @@ MODULE = Texinfo::Convert::ConvertXS	PACKAGE = Texinfo::Convert::ConvertXS
 # they are enabled, and they can/may need to be overriden in a declaration
 PROTOTYPES: ENABLE
 
-# Called from Texinfo::XSLoader.pm.  The arguments are not actually used.
-# file path, can be in any encoding
-#        int texinfo_uninstalled
-#        char *builddir = (char *)SvPVbyte_nolen($arg);
+# Called from Texinfo::XSLoader.pm.
+# File paths are byte strings and can be in any encoding.
 int
-init (...)
+init (int texinfo_uninstalled, SV *pkgdatadir_sv, SV *tp_builddir_sv, SV *top_srcdir_sv)
+      PREINIT:
+        const char *tp_builddir = 0;
+        const char *top_srcdir = 0;
+        const char *pkgdatadir = 0;
       CODE:
+        if (texinfo_uninstalled)
+          {
+            if (SvOK (tp_builddir_sv))
+              tp_builddir = SvPVbyte_nolen (tp_builddir_sv);
+            if (SvOK (top_srcdir_sv))
+              top_srcdir = SvPVbyte_nolen (top_srcdir_sv);
+          }
+        else
+          pkgdatadir = SvPVbyte_nolen (pkgdatadir_sv);
+        setup_converter_paths_information (texinfo_uninstalled,
+                             pkgdatadir, tp_builddir, top_srcdir);
         set_element_type_name_info ();
+        converter_setup ();
         RETVAL = 1;
     OUTPUT:
         RETVAL
 
 void
 converter_initialize (SV *converter_in)
+      PREINIT:
+         size_t converter_descriptor;
+         const CONVERTER *self;
+         HV *converter_hv;
+         HV *expanded_formats_hv;
+      CODE:
+         converter_descriptor = converter_initialize (converter_in);
+         self = retrieve_converter (converter_descriptor);
+         converter_hv = (HV *)SvRV (converter_in);
+         expanded_formats_hv
+           = build_expanded_formats (self->expanded_formats);
+         hv_store (converter_hv, "expanded_formats",
+                   strlen ("expanded_formats"),
+                   newRV_inc ((SV *) expanded_formats_hv), 0);
 
 void
 converter_set_document (SV *converter_in, SV *document_in)
-
+      PREINIT:
+        CONVERTER *self;
+      CODE:
+        /* if a converter is properly initialized, the XS converter should
+           always be found when XS is used */
+        self = converter_set_document_from_sv (converter_in, document_in);
+        pass_document_to_converter_sv (self, converter_in, document_in);
 
 void
 set_conf (SV *converter_in, conf, SV *value)
@@ -89,7 +126,7 @@ set_conf (SV *converter_in, conf, SV *value)
          /* Calling code checks 'converter_descriptor' is set */
          self = get_sv_converter (converter_in, 0);
          if (self)
-           set_conf (self, conf, value);
+           set_sv_conf (self, conf, value);
 
 void
 force_conf (SV *converter_in, conf, SV *value)
@@ -100,7 +137,7 @@ force_conf (SV *converter_in, conf, SV *value)
          /* Calling code checks 'converter_descriptor' is set */
          self = get_sv_converter (converter_in, 0);
          if (self)
-           force_conf (self, conf, value);
+           force_sv_conf (self, conf, value);
 
 SV *
 get_conf (SV *converter_in, conf)
@@ -265,9 +302,10 @@ get_converter_indices_sorted_by_index (SV *converter_sv)
         document_sv = hv_fetch (converter_hv, "document",
                                 strlen ("document"), 0);
         RETVAL = 0;
-        if (document_sv)
+        if (document_sv && self->document->hv)
           {
-            /* The sorted indices are cached in the same place as in Perl code.
+            /* The sorted indices are cached in the same place as in Perl code
+               gathered at document initialization.
                Either Perl code or XS code is used, so this is for consistency
                not really for interoperability */
             /* set to document "sorted_indices_by_index" */
@@ -279,11 +317,11 @@ get_converter_indices_sorted_by_index (SV *converter_sv)
                not found */
             if (language)
               {
-                HV *document_hv = (HV *) SvRV (*document_sv);
+                HV *document_hv = (HV *) self->document->hv;
                 SV *index_entries_by_index_sv
                  = get_language_document_hv_sorted_indices (document_hv,
                                     "sorted_indices_by_index", language,
-                                  &language_document_sorted_indices_hv); 
+                                  &language_document_sorted_indices_hv);
                 if (index_entries_by_index_sv)
                   RETVAL = SvREFCNT_inc (index_entries_by_index_sv);
               }
@@ -338,9 +376,10 @@ get_converter_indices_sorted_by_letter (SV *converter_sv)
         document_sv = hv_fetch (converter_hv, "document",
                                 strlen ("document"), 0);
         RETVAL = 0;
-        if (document_sv)
+        if (document_sv && self->document->hv)
           {
-            /* The sorted indices are cached in the same place as in Perl code.
+            /* The sorted indices are cached in the same place as in Perl code
+               gathered at document initialization.
                Either Perl code or XS code is used, so this is for consistency
                not really for interoperability */
             /* set to document "sorted_indices_by_letter" */
@@ -352,11 +391,11 @@ get_converter_indices_sorted_by_letter (SV *converter_sv)
                not found */
             if (language)
               {
-                HV *document_hv = (HV *) SvRV (*document_sv);
+                HV *document_hv = (HV *) self->document->hv;
                 SV *index_entries_by_index_sv
                  = get_language_document_hv_sorted_indices (document_hv,
                                     "sorted_indices_by_letter", language,
-                                  &language_document_sorted_indices_hv); 
+                                  &language_document_sorted_indices_hv);
                 if (index_entries_by_index_sv)
                   RETVAL = SvREFCNT_inc (index_entries_by_index_sv);
               }
@@ -537,21 +576,76 @@ text_convert_tree (SV *options_in, SV *tree_in)
 # HTML
 
 void
-html_format_init ()
+html_format_setup ()
 
 void
-html_converter_initialize_sv (SV *converter_in, SV *default_formatting_references, SV *default_css_string_formatting_references, SV *default_commands_open, SV *default_commands_conversion, SV *default_css_string_commands_conversion, SV *default_types_open, SV *default_types_conversion, SV *default_css_string_types_conversion, SV *default_output_units_conversion, SV *default_no_arg_commands_formatting, SV *default_special_unit_body)
+html_converter_initialize_sv (SV *converter_in, SV *default_formatting_references, SV *default_css_string_formatting_references, SV *default_commands_open, SV *default_commands_conversion, SV *default_css_string_commands_conversion, SV *default_types_open, SV *default_types_conversion, SV *default_css_string_types_conversion, SV *default_output_units_conversion, SV *default_special_unit_body, SV *customized_upper_case_commands, SV *customized_special_unit_info, SV *default_converted_directions_strings)
 
 void
-html_initialize_output_state (SV *converter_in, char *context)
+html_conversion_initialization (SV *converter_in, const char *context, SV *document_in=0)
+      PREINIT:
+        CONVERTER *self;
+      CODE:
+        /* if a converter is properly initialized, the XS converter should
+           always be found when XS is used */
+        self = converter_set_document_from_sv (converter_in, document_in);
+        if (self)
+          {
+            html_initialize_output_state (self, context);
+            /* could be useful if something from Perl is needed
+            html_conversion_initialization_sv (converter_in, self);
+             */
+          }
+
+        html_pass_conversion_initialization (self, converter_in, document_in);
+
+SV *
+html_setup_output (SV *converter_in)
+      PREINIT:
+         CONVERTER *self;
+         int status = 0;
+      CODE:
+         self = get_sv_converter (converter_in, "html_setup_output");
+         RETVAL = newSV (0);
+         if (self)
+           {
+             char *paths[5];
+
+             status = html_setup_output (self, paths);
+             if (status)
+               {
+                 AV *result_av = newAV ();
+                 int i;
+
+                 for (i = 0; i < 4; i++)
+                   {
+                     SV *sv = newSVpv_utf8 (paths[i], 0);
+                     av_push (result_av, sv);
+                   }
+                 RETVAL = newRV_noinc ((SV *) result_av);
+
+                 for (i = 0; i < 5; i++)
+                   {
+                     free (paths[i]);
+                   }
+               }
+
+             html_pass_converter_setup_state (self, converter_in);
+           }
+    OUTPUT:
+         RETVAL
+
+void
+html_setup_convert (SV *converter_in)
       PREINIT:
          CONVERTER *self;
       CODE:
-         self = get_sv_converter (converter_in, "html_initialize_output_state");
+         self = get_sv_converter (converter_in, "html_setup_convert");
+
          if (self)
            {
-             html_conversion_initialization_sv (converter_in, self);
-             html_initialize_output_state (self, context);
+             html_setup_convert (self);
+             html_pass_converter_setup_state (self, converter_in);
            }
 
 void
@@ -564,13 +658,218 @@ html_conversion_finalization (SV *converter_in)
            {
              html_conversion_finalization (self);
 
-             if (self->modified_state)
-               {
-                 build_html_formatting_state (self, self->modified_state);
-                 self->modified_state = 0;
-               }
              html_check_transfer_state_finalization (self);
            }
+
+SV *
+html_output (SV *converter_in, SV *document_in)
+      PREINIT:
+        CONVERTER *self;
+        char *paths[5];
+        int status;
+        char *result = 0;
+        int i;
+        const char *output_file;
+        const char *destination_directory;
+        const char *output_filename;
+        const char *document_name;
+        SV *output_units_sv;
+        SV *special_units_sv;
+        SV *associated_special_units_sv;
+      CODE:
+        /* html_conversion_initialization */
+        self = converter_set_document_from_sv (converter_in, document_in);
+
+        html_initialize_output_state (self, "_output");
+        /* could be useful if something from Perl is needed
+        html_conversion_initialization_sv (converter_in, self);
+         */
+
+        html_pass_conversion_initialization (self, converter_in, document_in);
+
+        /* html_setup_output */
+        status = html_setup_output (self, paths);
+        if (!status)
+          {
+            memset (paths, 0, 5 * sizeof (char *));
+            goto finalization;
+          }
+
+        html_pass_converter_setup_state (self, converter_in);
+
+        output_file = paths[0];
+        destination_directory = paths[1];
+        output_filename = paths[2];
+        document_name = paths[3];
+
+        /* html_prepare_conversion_units */
+        html_prepare_conversion_units (self);
+
+        html_pass_conversion_output_units (self, converter_in,
+                                     &output_units_sv, &special_units_sv,
+                                     &associated_special_units_sv);
+
+        /* calls Perl customization functions, so need to be done after
+            build_output_units_list calls to be able to retrieve Perl
+            output units references */
+        html_prepare_conversion_units_targets (self, self->document_name);
+
+        /* html_translate_names */
+        html_translate_names (self);
+        build_html_formatting_state (self);
+
+        /* html_prepare_units_directions_files */
+        html_prepare_units_directions_files (self,
+                   output_file, destination_directory, output_filename,
+                                document_name);
+
+        html_pass_units_directions_files (self, converter_in, output_units_sv,
+                                          special_units_sv,
+                                          associated_special_units_sv);
+
+        /* html_prepare_converted_output_info */
+        status = html_prepare_converted_output_info (self, output_file,
+                                                     output_filename);
+
+        if (!status)
+          goto finalization;
+
+        /* html_convert_output */
+        if (self->document)
+          {
+            result = html_convert_output (self, self->document->tree,
+                        output_file, destination_directory, output_filename,
+                        document_name);
+
+            build_html_formatting_state (self);
+
+            build_output_files_information (converter_in,
+                                            &self->output_files_information);
+          }
+
+        if (!result)
+          goto finalization;
+
+        if (strlen (result) && !strlen (output_file))
+          {
+            if (self->conf->TEST.o.integer <= 0 )
+              {
+    /* This case is unlikely to happen, as there is no output file
+       only if formatting is called as convert, which only happens in tests.
+     */
+                html_do_js_files (self);
+              }
+            goto finalization;
+          }
+
+        /* output to a file only */
+        free (result);
+        result = 0;
+
+        status = html_finish_output (self, output_file, destination_directory);
+
+      finalization:
+        for (i = 0; i < 5; i++)
+          {
+            free (paths[i]);
+          }
+        /* html_conversion_finalization */
+        html_conversion_finalization (self);
+
+        html_check_transfer_state_finalization (self);
+
+        if (result)
+          {
+            RETVAL = newSVpv_utf8 (result, 0);
+            free (result);
+          }
+        else
+          RETVAL = newSV (0);
+    OUTPUT:
+        RETVAL
+
+
+SV *
+html_convert (SV *converter_in, SV *document_in)
+      PREINIT:
+        CONVERTER *self;
+        char *result;
+        SV *output_units_sv;
+        SV *special_units_sv;
+        SV *associated_special_units_sv;
+      CODE:
+        /* html_conversion_initialization */
+        self = converter_set_document_from_sv (converter_in, document_in);
+
+        html_initialize_output_state (self, "_convert");
+        /* could be useful if something from Perl is needed
+        html_conversion_initialization_sv (converter_in, self);
+         */
+
+        html_pass_conversion_initialization (self, converter_in, document_in);
+
+        /* html_setup_convert */
+        html_setup_convert (self);
+        html_pass_converter_setup_state (self, converter_in);
+
+        /* html_prepare_conversion_units */
+        html_prepare_conversion_units (self);
+
+        html_pass_conversion_output_units (self, converter_in,
+                                     &output_units_sv, &special_units_sv,
+                                     &associated_special_units_sv);
+
+        /* calls Perl customization functions, so need to be done after
+           build_output_units_list calls to be able to retrieve Perl
+           output units references */
+        html_prepare_conversion_units_targets (self, self->document_name);
+
+        /* html_prepare_output_units_global_targets */
+        /* setup global targets.  It is not clearly relevant to have those
+           global targets when called as convert, but the Top global
+           unit directions is often referred to in code, so at least this
+           global target needs to be setup.
+           Since the relative directions are not set, this leads to lone
+           global direction buttons such as [Contents] or [Index] appearing
+           in otherwise empty navigation headings if those global directions
+           are set and present in the buttons, as is the case in the default
+           buttons.  For example in converters_tests/ref_in_sectioning
+           or converters_tests/sections_and_printindex.
+         */
+        html_prepare_output_units_global_targets (self);
+
+        html_pass_output_units_global_targets (self, output_units_sv,
+                               special_units_sv, associated_special_units_sv);
+
+        /* html_translate_names */
+        /* setup untranslated strings */
+        html_translate_names (self);
+        build_html_formatting_state (self);
+
+        /* html_prepare_simpletitle */
+        html_prepare_simpletitle (self);
+
+        /* html_prepare_title_titlepage */
+        /* title.  Not often set in the default case, as convert() is only
+           used in the *.t tests, and a title requires both simpletitle_tree
+           and SHOW_TITLE set, with the default formatting function.
+         */
+        html_prepare_title_titlepage (self, "", "");
+
+        /* html_convert_convert */
+        /* main conversion here */
+        result = html_convert_convert (self, self->document->tree);
+        build_html_formatting_state (self);
+
+        /* html_conversion_finalization */
+        html_conversion_finalization (self);
+
+        html_check_transfer_state_finalization (self);
+
+        RETVAL = newSVpv_utf8 (result, 0);
+        free (result);
+    OUTPUT:
+        RETVAL
 
 void
 html_register_id (SV *converter_in, id)
@@ -584,7 +883,8 @@ html_register_id (SV *converter_in, id)
            html_register_id (self, id);
 
 
-int html_id_is_registered (SV *converter_in, id)
+int
+html_id_is_registered (SV *converter_in, id)
          const char *id = (char *)SvPVutf8_nolen($arg);
       PREINIT:
          CONVERTER *self;
@@ -747,14 +1047,21 @@ html_unset_raw_context (SV *converter_in)
            html_unset_raw_context (self);
 
 void
-html_set_multiple_conversions (SV *converter_in)
+html_set_multiple_conversions (SV *converter_in, SV *multiple_pass_sv)
      PREINIT:
          CONVERTER *self;
      CODE:
          self = get_sv_converter (converter_in,
                                   "html_set_multiple_conversions");
          if (self)
-           self->multiple_conversions++;
+           {
+             char *multiple_pass;
+             if (SvOK (multiple_pass_sv))
+               multiple_pass = SvPVutf8_nolen (multiple_pass_sv);
+             else
+               multiple_pass = 0;
+             html_set_multiple_conversions (self, multiple_pass);
+           }
 
 void
 html_unset_multiple_conversions (SV *converter_in)
@@ -764,7 +1071,26 @@ html_unset_multiple_conversions (SV *converter_in)
          self = get_sv_converter (converter_in,
                                   "html_unset_multiple_conversions");
          if (self)
-           self->multiple_conversions--;
+           html_unset_multiple_conversions (self);
+
+SV *
+html_in_multi_expanded (SV *converter_in)
+     PREINIT:
+         CONVERTER *self;
+         const char *multi_expanded = 0;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_in_multi_expanded");
+         if (self)
+           multi_expanded = html_in_multi_expanded (self);
+
+         if (multi_expanded)
+           RETVAL = newSVpv_utf8 (multi_expanded, 0);
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
 
 SV *
 html_debug_print_html_contexts (SV *converter_in)
@@ -781,6 +1107,17 @@ html_debug_print_html_contexts (SV *converter_in)
            }
          else
            RETVAL = newSVpv_utf8 ("", 0);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_get_info (SV *converter_in, const char *converter_info)
+     PREINIT:
+         const CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_get_info");
+         RETVAL = pass_sv_converter_info (self, converter_info, converter_in);
     OUTPUT:
          RETVAL
 
@@ -1036,6 +1373,24 @@ html_count_elements_in_filename (SV *converter_in, const char *spec, filename)
     OUTPUT:
          RETVAL
 
+SV *
+html_is_format_expanded (SV *converter_in, format)
+         char *format = (char *)SvPVutf8_nolen($arg);
+     PREINIT:
+         CONVERTER *self;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_is_format_expanded");
+         if (self)
+           {
+             int expanded = format_expanded_p (self->expanded_formats, format);
+             RETVAL = newSViv ((IV)expanded);
+           }
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
 void
 html_register_file_information (SV *converter_in, key, int value)
          char *key = (char *)SvPVutf8_nolen($arg);
@@ -1046,7 +1401,8 @@ html_register_file_information (SV *converter_in, key, int value)
                                   "html_register_file_information");
          if (self)
            {
-             html_register_file_information (self, key, value);
+             char *stored_key = add_string (key, &self->small_strings);
+             html_register_file_information (self, stored_key, value);
            }
 
 void
@@ -1079,7 +1435,7 @@ html_get_file_information (SV *converter_in, key, ...)
          if (found)
            result_sv = newSViv ((IV)result);
          else
-           result_sv = newSV(0);
+           result_sv = newSV (0);
 
          EXTEND(SP, 2);
          PUSHs(sv_2mortal(found_sv));
@@ -1403,11 +1759,6 @@ html_internal_command_text (SV *converter_in, SV *element_sv, const char *type)
                }
              text
                = html_internal_command_text (self, element, text_type);
-             if (self->modified_state)
-               {
-                 build_html_formatting_state (self, self->modified_state);
-                 self->modified_state = 0;
-               }
            }
 
          if (text)
@@ -1415,6 +1766,65 @@ html_internal_command_text (SV *converter_in, SV *element_sv, const char *type)
              RETVAL = newSVpv_utf8 (text, 0);
              non_perl_free (text);
            }
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_command_description (SV *converter_in, SV *element_sv, const char *type=0)
+     PREINIT:
+         CONVERTER *self;
+         char *text = 0;
+         const ELEMENT *element;
+     CODE:
+         element = element_converter_from_sv (converter_in, element_sv,
+                                         "html_command_description", &self);
+         if (element)
+           {
+             int j;
+             enum html_text_type text_type = 0;
+             for (j = 0; j < HTT_string +1; j++)
+               {
+                 if (!strcmp (html_command_text_type_name[j], type))
+                   {
+                     text_type = j;
+                     break;
+                   }
+               }
+             text
+               = html_command_description (self, element, text_type);
+
+             build_html_formatting_state (self);
+           }
+
+         if (text)
+           {
+             RETVAL = newSVpv_utf8 (text, 0);
+             non_perl_free (text);
+           }
+         else
+           RETVAL = newSV (0);
+    OUTPUT:
+         RETVAL
+
+SV *
+html_global_direction_unit (SV *converter_in, direction_name)
+         const char *direction_name = (char *)SvPVutf8_nolen($arg);
+     PREINIT:
+         CONVERTER *self;
+         const OUTPUT_UNIT *output_unit = 0;
+     CODE:
+         self = get_sv_converter (converter_in,
+                                  "html_global_direction_unit");
+         if (self)
+           {
+             output_unit
+               = html_find_direction_name_global_unit (self, direction_name);
+           }
+         if (output_unit && output_unit->hv)
+           RETVAL = newRV_inc ((SV *) output_unit->hv);
+         /* should not happen */
          else
            RETVAL = newSV (0);
     OUTPUT:
@@ -1617,11 +2027,12 @@ html_css_set_selector_style (SV *converter_in, css_info, SV *css_style_sv)
                                   "html_css_set_selector_style");
          if (self)
            {
-             char *css_style = 0;
+             const char *css_style = 0;
              if (SvOK (css_style_sv))
                css_style = (char *)SvPVutf8_nolen (css_style_sv);
 
-             html_css_set_selector_style (self, css_info, css_style);
+             html_css_set_selector_style (&self->css_element_class_styles,
+                                          css_info, css_style);
            }
 
 SV *
@@ -1911,6 +2322,7 @@ html_check_htmlxref_already_warned (SV *converter_in, manual_name, SV *source_in
     OUTPUT:
          RETVAL
 
+# currently unused
 void
 reset_output_init_conf (SV *sv_in)
 
@@ -1920,79 +2332,31 @@ void
 html_prepare_conversion_units (SV *converter_in, ...)
       PROTOTYPE: $$$
       PREINIT:
-         HV *converter_hv;
-         const char *document_name = 0;
          CONVERTER *self;
          SV *output_units_sv;
          SV *special_units_sv;
          SV *associated_special_units_sv;
-         HV *output_units_hv;
       PPCODE:
-         if (items > 2 && SvOK(ST(2)))
-           document_name = SvPVutf8_nolen (ST(2));
-
          self = get_sv_converter (converter_in,
                                   "html_prepare_conversion_units");
 
-         if (self->conf->OUTPUT_CHARACTERS.o.integer > 0
-             && self->conf->OUTPUT_ENCODING_NAME.o.string
-             /* not sure if strcasecmp is needed or not */
-             && !strcasecmp (self->conf->OUTPUT_ENCODING_NAME.o.string, "utf-8"))
-           self->use_unicode_text = 1;
-
          html_prepare_conversion_units (self);
-         converter_hv = (HV *) SvRV (converter_in);
 
-         /* internal links code is in Perl */
-         if (self->conf->INTERNAL_LINKS.o.string)
-           self->external_references_number++;
-         /* Conversion to LaTeX is in Perl */
-         if (self->conf->CONVERT_TO_LATEX_IN_MATH.o.integer > 0)
-           self->external_references_number++;
+         html_pass_conversion_output_units (self, converter_in,
+                                      &output_units_sv, &special_units_sv,
+                                      &associated_special_units_sv);
 
-         if (self->external_references_number > 0)
-           {
-         /* need to setup the Perl tree before rebuilding the output units as
-            they refer to Perl root command elements */
-             SV **document_sv
-               = hv_fetch (converter_hv, "document", strlen ("document"), 0);
-             if (document_sv)
-               {
-                 HV *document_hv = (HV *) SvRV (*document_sv);
-                 store_texinfo_tree (self->document, document_hv);
-               }
-
-             output_units_sv = build_output_units_list
-               (self->output_units_descriptors[OUDT_units]);
-             special_units_sv = build_output_units_list
-               (self->output_units_descriptors[OUDT_special_units]);
-             associated_special_units_sv = build_output_units_list
-               (self->output_units_descriptors[OUDT_associated_special_units]);
-           }
-         else
-           {
-             output_units_sv = setup_output_units_handler
-               (self->output_units_descriptors[OUDT_units]);
-             special_units_sv = setup_output_units_handler
-               (self->output_units_descriptors[OUDT_special_units]);
-             associated_special_units_sv = setup_output_units_handler
-               (self->output_units_descriptors[OUDT_associated_special_units]);
-           }
-
-         output_units_hv = (HV *) SvRV (output_units_sv);
-         hv_store (converter_hv, "document_units", strlen ("document_units"),
-                   newRV_inc ((SV *) output_units_hv), 0);
-
-         /* calls perl customization functions, so need to be done after
+         /* calls Perl customization functions, so need to be done after
             build_output_units_list calls to be able to retrieve Perl
             output units references */
-         html_prepare_conversion_units_targets (self, document_name);
+         html_prepare_conversion_units_targets (self, self->document_name);
 
          EXTEND(SP, 3);
          PUSHs(sv_2mortal(output_units_sv));
          PUSHs(sv_2mortal(special_units_sv));
          PUSHs(sv_2mortal(associated_special_units_sv));
 
+# Called in output, not in convert
 # the return value is not really used with XS, it is passed to another
 # XS function, but the value is ignored there.
 SV *
@@ -2010,29 +2374,17 @@ html_prepare_units_directions_files (SV *converter_in, SV *output_units_in, SV *
                     output_file, destination_directory, output_filename,
                                  document_name);
 
-         if (self->external_references_number > 0)
-           {
-             rebuild_output_units_list (output_units_in,
-                           self->output_units_descriptors[OUDT_units]);
-             rebuild_output_units_list (special_units_in,
-                      self->output_units_descriptors[OUDT_special_units]);
-             rebuild_output_units_list (associated_special_units_in,
-                self->output_units_descriptors[OUDT_associated_special_units]);
-
-             pass_html_global_units_directions (converter_in,
-                                            self->global_units_directions,
-                                            self->special_units_direction_name);
-             pass_html_elements_in_file_count (converter_in,
-                                               &self->output_unit_files);
-
-             /* file names API */
-             pass_output_unit_files (converter_in, &self->output_unit_files);
-           }
+         html_pass_units_directions_files (self, converter_in, output_units_in,
+                                           special_units_in,
+                                           associated_special_units_in);
 
          RETVAL = newSV (0);
     OUTPUT:
          RETVAL
 
+# Called in convert.
+# Not called through output, as the Perl function is only called from
+# an overriden function in that case.
 void
 html_prepare_output_units_global_targets (SV *converter_in, SV *output_units_in, SV *special_units_in, SV *associated_special_units_in)
   PREINIT:
@@ -2042,20 +2394,8 @@ html_prepare_output_units_global_targets (SV *converter_in, SV *output_units_in,
                                   "html_prepare_output_units_global_targets");
          html_prepare_output_units_global_targets (self);
 
-         if (self->external_references_number > 0)
-           {
-             rebuild_output_units_list (output_units_in,
-                                self->output_units_descriptors[OUDT_units]);
-             rebuild_output_units_list (special_units_in,
-                        self->output_units_descriptors[OUDT_special_units]);
-             rebuild_output_units_list (associated_special_units_in,
-               self->output_units_descriptors[OUDT_associated_special_units]);
-
-             pass_html_global_units_directions (converter_in,
-                                            self->global_units_directions,
-                                            self->special_units_direction_name);
-           }
-
+         html_pass_output_units_global_targets (self, output_units_in,
+                               special_units_in, associated_special_units_in);
 
 void
 html_translate_names (SV *converter_in)
@@ -2065,15 +2405,7 @@ html_translate_names (SV *converter_in)
          self = get_sv_converter (converter_in, "html_translate_names");
 
          html_translate_names (self);
-         /*
-         build_html_translated_names ((HV *)SvRV (converter_in), self);
-          */
-         if (self->modified_state)
-           {
-             build_html_formatting_state (self, self->modified_state);
-             self->modified_state = 0;
-           }
-
+         build_html_formatting_state (self);
 
 void
 html_prepare_simpletitle (SV *converter_in)
@@ -2084,50 +2416,26 @@ html_prepare_simpletitle (SV *converter_in)
          if (self)
            {
              html_prepare_simpletitle (self);
-             if (self->simpletitle_tree)
-               {
-                 HV *converter_hv = (HV *) SvRV (converter_in);
-                 build_simpletitle (self, converter_hv);
-               }
            }
 
-void
-html_prepare_converted_output_info (SV *converter_in)
+int
+html_prepare_converted_output_info (SV *converter_in, output_file, output_filename, ...)
+         const char *output_file = (char *)SvPVutf8_nolen($arg);
+         const char *output_filename = (char *)SvPVutf8_nolen($arg);
+  PROTOTYPE: $$$$
   PREINIT:
          CONVERTER *self = 0;
+         int status = 0;
     CODE:
          self = get_sv_converter (converter_in,
                                   "html_prepare_converted_output_info");
          if (self)
-           {
-             HV *converter_hv = (HV *) SvRV (converter_in);
+           status = html_prepare_converted_output_info (self, output_file,
+                                                        output_filename);
+         RETVAL = status;
+    OUTPUT:
+        RETVAL
 
-             html_prepare_converted_output_info (self);
-
-             if (self->external_references_number > 0)
-               {
-                 if (self->added_title_tree)
-                   build_texinfo_tree (self->title_tree, 1);
-
-                 if (self->simpletitle_tree)
-                   build_simpletitle (self, converter_hv);
-
-                 hv_store (converter_hv, "title_tree", strlen ("title_tree"),
-                           newRV_inc ((SV *) self->title_tree->hv), 0);
-                 hv_store (converter_hv, "title_string",
-                           strlen ("title_string"),
-                           newSVpv_utf8 (self->title_string, 0), 0);
-
-                 if (self->copying_comment)
-                   hv_store (converter_hv, "copying_comment",
-                             strlen ("copying_comment"),
-                             newSVpv_utf8 (self->copying_comment, 0), 0);
-                 if (self->documentdescription_string)
-                   hv_store (converter_hv, "documentdescription_string",
-                             strlen ("documentdescription_string"),
-                      newSVpv_utf8 (self->documentdescription_string, 0), 0);
-               }
-           }
 
 # $output_units
 void
@@ -2141,26 +2449,7 @@ html_prepare_title_titlepage (SV *converter_in, output_file, output_filename, ..
          self = get_sv_converter (converter_in, "html_prepare_title_titlepage");
          if (self)
            {
-             html_converter_prepare_output_sv (converter_in, self);
-
              html_prepare_title_titlepage (self, output_file, output_filename);
-             if (self->modified_state)
-               {
-                 build_html_formatting_state (self, self->modified_state);
-                 self->modified_state = 0;
-               }
-             if (self->external_references_number > 0)
-               {
- /* should always happen as a string is always returned, possibly empty */
-                 if (self->title_titlepage)
-                   {
-                     HV *converter_hv = (HV *) SvRV (converter_in);
-                     SV *title_titlepage_sv
-                         = newSVpv_utf8 (self->title_titlepage, 0);
-                     hv_store (converter_hv, "title_titlepage",
-                           strlen ("title_titlepage"), title_titlepage_sv, 0);
-                   }
-               }
            }
 
 # $document, $output_units, $special_units
@@ -2175,11 +2464,7 @@ html_convert_convert (SV *converter_in, ...)
          /* there could be strange results if the document and the converter document
             do not match.  There is no reason why it would happen, though */
          result = html_convert_convert (self, self->document->tree);
-         if (self->modified_state)
-           {
-             build_html_formatting_state (self, self->modified_state);
-             self->modified_state = 0;
-           }
+         build_html_formatting_state (self);
          RETVAL = newSVpv_utf8 (result, 0);
          free (result);
     OUTPUT:
@@ -2233,11 +2518,7 @@ html_convert_output (SV *converter_in, output_file, destination_directory, outpu
                         output_file, destination_directory, output_filename,
                         document_name);
 
-             if (self->modified_state)
-               {
-                 build_html_formatting_state (self, self->modified_state);
-                 self->modified_state = 0;
-               }
+             build_html_formatting_state (self);
 
              if (result)
                {

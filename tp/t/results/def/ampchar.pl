@@ -89,7 +89,7 @@ $result_trees{'ampchar'} = {
                                       'cmdname' => '&'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'code',
@@ -250,7 +250,7 @@ $result_trees{'ampchar'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'ampchar',
@@ -322,7 +322,7 @@ $result_indices_sort_strings{'ampchar'} = {
 
 
 
-$result_converted{'plaintext'}->{'ampchar'} = ' -- Constructor on a: b (const std::vector<int>&)
+$result_converted{'plaintext'}->{'ampchar'} = ' - Constructor on a: b (const std::vector<int>&)
    & & & { } @
 ';
 

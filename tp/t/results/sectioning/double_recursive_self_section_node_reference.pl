@@ -132,7 +132,7 @@ $result_trees{'double_recursive_self_section_node_reference'} = {
                     },
                     'normalized' => 'to-node1'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -193,7 +193,7 @@ $result_trees{'double_recursive_self_section_node_reference'} = {
                     },
                     'normalized' => 'node1'
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'ref',
@@ -381,21 +381,10 @@ $result_floats{'double_recursive_self_section_node_reference'} = {};
 $result_converted{'plaintext'}->{'double_recursive_self_section_node_reference'} = 'top
 ***
 
-1 *note to *note node1::::
-**************************
+1 to node1
+**********
 
 ';
-
-$result_converted_errors{'plaintext'}->{'double_recursive_self_section_node_reference'} = [
-  {
-    'error_line' => 'warning: @ref node name should not contain `:\'
-',
-    'line_nr' => 5,
-    'text' => '@ref node name should not contain `:\'',
-    'type' => 'warning'
-  }
-];
-
 
 
 $result_converted{'html'}->{'double_recursive_self_section_node_reference'} = '<!DOCTYPE html>

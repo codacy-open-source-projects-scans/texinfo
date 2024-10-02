@@ -307,218 +307,213 @@ f-ormat
 
 s-mallformat
 
- -- c--ategory: d--effn_name a--rguments...
+ - c-ategory: d--effn_name a--rguments...
      d-effn
 
- -- cate--gory: de--ffn_name ar--guments more args
+ - cate-gory: de--ffn_name ar--guments more args
           even more so
      def-fn
 
- -- fset: I a g
- -- cmde: truc
- -- Command: log trap
- -- Command: log trap1
- -- Command: log trap2
- -- cmde: id ule truc
- -- cmde2: id i ule truc
- -- :
- -- : machin
- -- : bidule machin
- -- truc: machin
- -- truc:
- -- truc: followed by a comment
- -- :
- -- truc: a b c d e f g h i
- -- truc: deffnx before end deffn
+ - fset: I a g
+ - cmde: truc
+ - Command: log trap
+ - Command: log trap1
+ - Command: log trap2
+ - cmde: id ule truc
+ - cmde2: id i ule truc
+ - :
+ - : machin
+ - : bidule machin
+ - truc: machin
+ - truc:
+ - truc: followed by a comment
+ - :
+ - truc: a b c d e f g h i
+ - truc: deffnx before end deffn
 
- -- empty: deffn
+ - empty: deffn
 
- -- empty: deffn with deffnx
- -- empty: deffnx
+ - empty: deffn with deffnx
+ - empty: deffnx
 
- -- fset: I a g
- -- cmde: truc
+ - fset: I a g
+ - cmde: truc
      text in def item for second def item
 
- -- c--ategory: d--efvr_name
+ - c-ategory: d--efvr_name
      d-efvr
 
- -- c--ategory: n--ame a--rguments...
+ - c-ategory: n--ame a--rguments...
      d-effn
 
- -- c--ategory: n--ame
+ - c-ategory: n--ame
      d-effn no arg
 
- -- c--ategory: t--ype d--eftypefn_name a--rguments...
+ - c-ategory: t--ype d--eftypefn_name a--rguments...
      d-eftypefn
 
- -- c--ategory: t--ype d--eftypefn_name
+ - c-ategory: t--ype d--eftypefn_name
      d-eftypefn no arg
 
- -- c--ategory on c--lass: t--ype d--eftypeop_name a--rguments...
+ - c-ategory on c--lass: t--ype d--eftypeop_name a--rguments...
      d-eftypeop
 
- -- c--ategory on c--lass: t--ype d--eftypeop_name
+ - c-ategory on c--lass: t--ype d--eftypeop_name
      d-eftypeop no arg
 
- -- c--ategory: t--ype d--eftypevr_name
+ - c-ategory: t--ype d--eftypevr_name
      d-eftypevr
 
- -- c--ategory of c--lass: d--efcv_name
+ - c-ategory of c--lass: d--efcv_name
      d-efcv
 
- -- c--ategory of c--lass: d--efcv_name a--rguments...
+ - c-ategory of c--lass: d--efcv_name a--rguments...
      d-efcv with arguments
 
- -- c--ategory of c--lass: t--ype d--eftypecv_name
+ - c-ategory of c--lass: t--ype d--eftypecv_name
      d-eftypecv
 
- -- c--ategory of c--lass: t--ype d--eftypecv_name a--rguments...
+ - c-ategory of c--lass: t--ype d--eftypecv_name a--rguments...
      d-eftypecv with arguments
 
- -- c--ategory on c--lass: d--efop_name a--rguments...
+ - c-ategory on c--lass: d--efop_name a--rguments...
      d-efop
 
- -- c--ategory on c--lass: d--efop_name
+ - c-ategory on c--lass: d--efop_name
      d-efop no arg
 
- -- c--ategory: d--eftp_name a--ttributes...
+ - c-ategory: d--eftp_name a--ttributes...
      d-eftp
 
- -- Function: d--efun_name a--rguments...
+ - Function: d--efun_name a--rguments...
      d-efun
 
- -- Macro: d--efmac_name a--rguments...
+ - Macro: d--efmac_name a--rguments...
      d-efmac
 
- -- Special Form: d--efspec_name a--rguments...
+ - Special Form: d--efspec_name a--rguments...
      d-efspec
 
- -- Variable: d--efvar_name
+ - Variable: d--efvar_name
      d-efvar
 
- -- Variable: d--efvar_name arg--var arg--var1
+ - Variable: d--efvar_name arg--var arg--var1
      d-efvar with args
 
- -- User Option: d--efopt_name
+ - User Option: d--efopt_name
      d-efopt
 
- -- Function: t--ype d--eftypefun_name a--rguments...
+ - Function: t--ype d--eftypefun_name a--rguments...
      d-eftypefun
 
- -- Variable: t--ype d--eftypevar_name
+ - Variable: t--ype d--eftypevar_name
      d-eftypevar
 
- -- Instance Variable of c--lass: d--efivar_name
+ - Instance Variable of c--lass: d--efivar_name
      d-efivar
 
- -- Instance Variable of c--lass: t--ype d--eftypeivar_name
+ - Instance Variable of c--lass: t--ype d--eftypeivar_name
      d-eftypeivar
 
- -- Method on c--lass: d--efmethod_name a--rguments...
+ - Method on c--lass: d--efmethod_name a--rguments...
      d-efmethod
 
- -- Method on c--lass: t--ype d--eftypemethod_name a--rguments...
+ - Method on c--lass: t--ype d--eftypemethod_name a--rguments...
      d-eftypemethod
 
- -- Function:
+ - Function:
           data-type2
           name2 arguments2...
      aaa2
 
- -- c--ategory2:
+ - c-ategory2:
           t--ype2
           d--eftypefn_name2
      d-eftypefn no arg2
 
- -- c--ategory2 on c--lass2:
+ - c-ategory2 on c--lass2:
           t--ype2
           d--eftypeop_name2 a--rguments2...
      d-eftypeop2
 
- -- c--ategory2 on c--lass2:
+ - c-ategory2 on c--lass2:
           t--ype2
           d--eftypeop_name2
      d-eftypeop no arg2
 
- -- c--ategory2 of c--lass2: t--ype2 d--eftypecv_name2
+ - c-ategory2 of c--lass2: t--ype2 d--eftypecv_name2
      d-eftypecv2
 
- -- c--ategory2 of c--lass2: t--ype2 d--eftypecv_name2 a--rguments2...
+ - c-ategory2 of c--lass2: t--ype2 d--eftypecv_name2 a--rguments2...
      d-eftypecv with arguments2
 
- -- fun2: arg2
+ - fun2: arg2
      fff2
 
    ‘@xref{c---hapter@@, cross r---ef name@@, t---itle@@, file n---ame@@,
-ma---nual@@}’ *Note cross r--ef name@: (file n---ame@)c---hapter@.
-‘@ref{chapter, cross ref name, title, file name, manual}’ *note cross
-ref name: (file name)chapter. ‘@pxref{chapter, cross ref name, title,
-file name, manual}’ *note cross ref name: (file name)chapter.
-‘@inforef{chapter, cross ref name, file name}’ *note cross ref name:
-(file name)chapter.
+ma---nual@@}’ See cross r--ef name@: (file n---ame@)c---hapter@.
+‘@ref{chapter, cross ref name, title, file name, manual}’ cross ref
+name: (file name)chapter ‘@pxref{chapter, cross ref name, title, file
+name, manual}’ see cross ref name: (file name)chapter ‘@inforef{chapter,
+cross ref name, file name}’ See cross ref name: (file name)chapter
 
-   ‘@ref{chapter}’ *note chapter:: ‘@xref{chapter}’ *Note chapter::.
-‘@pxref{chapter}’ *note chapter:: ‘@ref{s--ect@comma{}ion}’ *note
-s--ect,ion::
+   ‘@ref{chapter}’ chapter ‘@xref{chapter}’ See chapter.
+‘@pxref{chapter}’ see chapter ‘@ref{s--ect@comma{}ion}’ s--ect,ion
 
    ‘@ref{s--ect@comma{}ion, a @comma{} in cross ref, a comma@comma{} in
-title, a comma@comma{} in file, a @comma{} in manual name }’ *note a ,
-in cross ref: (a comma, in file)s--ect,ion.
+title, a comma@comma{} in file, a @comma{} in manual name }’ a , in
+cross ref: (a comma, in file)s--ect,ion
 
-   ‘@ref{chapter,cross ref name}’ *note cross ref name: chapter.
-‘@ref{chapter,,title}’ *note title: chapter. ‘@ref{chapter,,,file name}’
-*note (file name)chapter:: ‘@ref{chapter,,,,manual}’ *note ()chapter::
-‘@ref{chapter,cross ref name,title,}’ *note cross ref name: chapter.
-‘@ref{chapter,cross ref name,,file name}’ *note cross ref name: (file
-name)chapter. ‘@ref{chapter,cross ref name,,,manual}’ *note cross ref
-name: ()chapter. ‘@ref{chapter,cross ref name,title,file name}’ *note
-cross ref name: (file name)chapter. ‘@ref{chapter,cross ref
-name,title,,manual}’ *note cross ref name: ()chapter.
-‘@ref{chapter,cross ref name,title, file name, manual}’ *note cross ref
-name: (file name)chapter. ‘@ref{chapter,,title,file name}’ *note title:
-(file name)chapter. ‘@ref{chapter,,title,,manual}’ *note title:
-()chapter. ‘@ref{chapter,,title, file name, manual}’ *note title: (file
-name)chapter. ‘@ref{chapter,,,file name,manual}’ *note (file
-name)chapter::
+   ‘@ref{chapter,cross ref name}’ cross ref name: chapter
+‘@ref{chapter,,title}’ title: chapter ‘@ref{chapter,,,file name}’ (file
+name)chapter ‘@ref{chapter,,,,manual}’ chapter in ‘manual’
+‘@ref{chapter,cross ref name,title,}’ cross ref name: chapter
+‘@ref{chapter,cross ref name,,file name}’ cross ref name: (file
+name)chapter ‘@ref{chapter,cross ref name,,,manual}’ cross ref name:
+chapter in ‘manual’ ‘@ref{chapter,cross ref name,title,file name}’ cross
+ref name: (file name)chapter ‘@ref{chapter,cross ref
+name,title,,manual}’ cross ref name: chapter in ‘manual’
+‘@ref{chapter,cross ref name,title, file name, manual}’ cross ref name:
+(file name)chapter ‘@ref{chapter,,title,file name}’ title: (file
+name)chapter ‘@ref{chapter,,title,,manual}’ title: chapter in ‘manual’
+‘@ref{chapter,,title, file name, manual}’ title: (file name)chapter
+‘@ref{chapter,,,file name,manual}’ (file name)chapter
 
-   ‘@ref{(pman)anode,cross ref name}’ *note cross ref name: (pman)anode.
-‘@ref{(pman)anode,,title}’ *note title: (pman)anode.
-‘@ref{(pman)anode,,,file name}’ *note (file name)(pman)anode::
-‘@ref{(pman)anode,,,,manual}’ *note ()(pman)anode::
-‘@ref{(pman)anode,cross ref name,title,}’ *note cross ref name:
-(pman)anode. ‘@ref{(pman)anode,cross ref name,,file name}’ *note cross
-ref name: (file name)(pman)anode. ‘@ref{(pman)anode,cross ref
-name,,,manual}’ *note cross ref name: ()(pman)anode.
-‘@ref{(pman)anode,cross ref name,title,file name}’ *note cross ref name:
-(file name)(pman)anode. ‘@ref{(pman)anode,cross ref name,title,,manual}’
-*note cross ref name: ()(pman)anode. ‘@ref{(pman)anode,cross ref
-name,title, file name, manual}’ *note cross ref name: (file
-name)(pman)anode. ‘@ref{(pman)anode,,title,file name}’ *note title:
-(file name)(pman)anode. ‘@ref{(pman)anode,,title,,manual}’ *note title:
-()(pman)anode. ‘@ref{(pman)anode,,title, file name, manual}’ *note
-title: (file name)(pman)anode. ‘@ref{(pman)anode,,,file name,manual}’
-*note (file name)(pman)anode::
+   ‘@ref{(pman)anode,cross ref name}’ cross ref name: (pman)anode
+‘@ref{(pman)anode,,title}’ title: (pman)anode ‘@ref{(pman)anode,,,file
+name}’ (file name)(pman)anode ‘@ref{(pman)anode,,,,manual}’ (pman)anode
+in ‘manual’ ‘@ref{(pman)anode,cross ref name,title,}’ cross ref name:
+(pman)anode ‘@ref{(pman)anode,cross ref name,,file name}’ cross ref
+name: (file name)(pman)anode ‘@ref{(pman)anode,cross ref name,,,manual}’
+cross ref name: (pman)anode in ‘manual’ ‘@ref{(pman)anode,cross ref
+name,title,file name}’ cross ref name: (file name)(pman)anode
+‘@ref{(pman)anode,cross ref name,title,,manual}’ cross ref name:
+(pman)anode in ‘manual’ ‘@ref{(pman)anode,cross ref name,title, file
+name, manual}’ cross ref name: (file name)(pman)anode
+‘@ref{(pman)anode,,title,file name}’ title: (file name)(pman)anode
+‘@ref{(pman)anode,,title,,manual}’ title: (pman)anode in ‘manual’
+‘@ref{(pman)anode,,title, file name, manual}’ title: (file
+name)(pman)anode ‘@ref{(pman)anode,,,file name,manual}’ (file
+name)(pman)anode
 
-   ‘@inforef{chapter, cross ref name, file name}’ *note cross ref name:
-(file name)chapter. ‘@inforef{chapter}’ *note chapter::
-‘@inforef{chapter, cross ref name}’ *note cross ref name: chapter.
-‘@inforef{chapter,,file name}’ *note (file name)chapter::
-‘@inforef{node, cross ref name, file name}’ *note cross ref name: (file
-name)node. ‘@inforef{node}’ *note node:: ‘@inforef{node, cross ref
-name}’ *note cross ref name: node. ‘@inforef{node,,file name}’ *note
-(file name)node:: ‘@inforef{chapter, cross ref name, file name, spurious
-arg}’ *note cross ref name: (file name, spurious arg)chapter.
+   ‘@inforef{chapter, cross ref name, file name}’ See cross ref name:
+(file name)chapter ‘@inforef{chapter}’ See chapter ‘@inforef{chapter,
+cross ref name}’ See cross ref name: chapter ‘@inforef{chapter,,file
+name}’ See (file name)chapter ‘@inforef{node, cross ref name, file
+name}’ See cross ref name: (file name)node ‘@inforef{node}’ See node
+‘@inforef{node, cross ref name}’ See cross ref name: node
+‘@inforef{node,,file name}’ See (file name)node ‘@inforef{chapter, cross
+ref name, file name, spurious arg}’ See cross ref name: (file name,
+spurious arg)chapter
 
    ‘@inforef{s--ect@comma{}ion, a @comma{} in cross ref, a comma@comma{}
-in file}’ *note a , in cross ref: (a comma, in file)s--ect,ion.
+in file}’ See a , in cross ref: (a comma, in file)s--ect,ion
 
-   ‘*note chapter::’.
+   ‘chapter’.
 
-   *note cross ref with uref uref1 (href://http/myhost.com/index.html):
-(info file with uref3 uref3 (href://http/myhost.com/index3.html))ext.
-*note cross ref with uref uref1 (href://http/myhost.com/index.html):
-chapter.
+   cross ref with uref uref1 (href://http/myhost.com/index.html): (info
+file with uref3 uref3 (href://http/myhost.com/index3.html))ext cross ref
+with uref uref1 (href://http/myhost.com/index.html): chapter
 
 *a-strong*
      l-ine
@@ -631,6 +626,7 @@ aaa
 aaa
 ‘@image{file@verb{:jk _" %@:},,,alt@verb{:jk _" %@:}}’ [altjk _" %@]
 
+
 ü Ü ñ â é ō ì é Ḕ
 Ḉ Ḉ a̋ ȧ å a͡
 ă ǎ
@@ -660,55 +656,53 @@ a
 b
      l-ine
 
- -- fun:
- -- truc: machin bidule chose and
- -- truc: machin bidule chose and after
- -- truc: machin bidule chose and
- -- truc: machin bidule chose and and after
- -- truc: followed by a comment
+ - fun:
+ - truc: machin bidule chose and
+ - truc: machin bidule chose and after
+ - truc: machin bidule chose and
+ - truc: machin bidule chose and and after
+ - truc: followed by a comment
      Various deff lines
- -- truc: after a deff item
+ - truc: after a deff item
 
- -- fsetinv: INVALID a g
- -- id i ule:
- -- aaa:
- -- :
- -- truc:
+ - fsetinv: INVALID a g
+ - id i ule:
+ - aaa:
+ - :
+ - truc:
 
    g-roupe
 
-   ‘@ref{node}’ *note node::
+   ‘@ref{node}’ node
 
-   ‘@ref{,cross ref name}’ *note cross ref name: . ‘@ref{,,title}’ *note
-title: . ‘@ref{,,,file name}’ *note (file name)Top:: ‘@ref{,,,,manual}’
-*note ()Top:: ‘@ref{node,cross ref name}’ *note cross ref name: node.
-‘@ref{node,,title}’ *note title: node. ‘@ref{node,,,file name}’ *note
-(file name)node:: ‘@ref{node,,,,manual}’ *note ()node:: ‘@ref{node,cross
-ref name,title,}’ *note cross ref name: node. ‘@ref{node,cross ref
-name,,file name}’ *note cross ref name: (file name)node.
-‘@ref{node,cross ref name,,,manual}’ *note cross ref name: ()node.
-‘@ref{node,cross ref name,title,file name}’ *note cross ref name: (file
-name)node. ‘@ref{node,cross ref name,title,,manual}’ *note cross ref
-name: ()node. ‘@ref{node,cross ref name,title, file name, manual}’ *note
-cross ref name: (file name)node. ‘@ref{node,,title,file name}’ *note
-title: (file name)node. ‘@ref{node,,title,,manual}’ *note title: ()node.
-‘@ref{chapter,,title, file name, manual}’ *note title: (file
-name)chapter. ‘@ref{node,,title, file name, manual}’ *note title: (file
-name)node. ‘@ref{node,,,file name,manual}’ *note (file name)node::
-‘@ref{,cross ref name,title,}’ *note cross ref name: . ‘@ref{,cross ref
-name,,file name}’ *note cross ref name: (file name)Top. ‘@ref{,cross ref
-name,,,manual}’ *note cross ref name: ()Top. ‘@ref{,cross ref
-name,title,file name}’ *note cross ref name: (file name)Top.
-‘@ref{,cross ref name,title,,manual}’ *note cross ref name: ()Top.
-‘@ref{,cross ref name,title, file name, manual}’ *note cross ref name:
-(file name)Top. ‘@ref{,,title,file name}’ *note title: (file name)Top.
-‘@ref{,,title,,manual}’ *note title: ()Top. ‘@ref{,,title, file name,
-manual}’ *note title: (file name)Top. ‘@ref{,,,file name,manual}’ *note
-(file name)Top::
+   ‘@ref{,cross ref name}’ cross ref name ‘@ref{,,title}’ title
+‘@ref{,,,file name}’ (file name) ‘@ref{,,,,manual}’ ‘manual’
+‘@ref{node,cross ref name}’ cross ref name: node ‘@ref{node,,title}’
+title: node ‘@ref{node,,,file name}’ (file name)node
+‘@ref{node,,,,manual}’ node in ‘manual’ ‘@ref{node,cross ref
+name,title,}’ cross ref name: node ‘@ref{node,cross ref name,,file
+name}’ cross ref name: (file name)node ‘@ref{node,cross ref
+name,,,manual}’ cross ref name: node in ‘manual’ ‘@ref{node,cross ref
+name,title,file name}’ cross ref name: (file name)node ‘@ref{node,cross
+ref name,title,,manual}’ cross ref name: node in ‘manual’
+‘@ref{node,cross ref name,title, file name, manual}’ cross ref name:
+(file name)node ‘@ref{node,,title,file name}’ title: (file name)node
+‘@ref{node,,title,,manual}’ title: node in ‘manual’
+‘@ref{chapter,,title, file name, manual}’ title: (file name)chapter
+‘@ref{node,,title, file name, manual}’ title: (file name)node
+‘@ref{node,,,file name,manual}’ (file name)node ‘@ref{,cross ref
+name,title,}’ cross ref name ‘@ref{,cross ref name,,file name}’ cross
+ref name(file name) ‘@ref{,cross ref name,,,manual}’ cross ref name in
+‘manual’ ‘@ref{,cross ref name,title,file name}’ cross ref name(file
+name) ‘@ref{,cross ref name,title,,manual}’ cross ref name in ‘manual’
+‘@ref{,cross ref name,title, file name, manual}’ cross ref name(file
+name) ‘@ref{,,title,file name}’ title(file name) ‘@ref{,,title,,manual}’
+title in ‘manual’ ‘@ref{,,title, file name, manual}’ title(file name)
+‘@ref{,,,file name,manual}’ (file name)
 
-   ‘@inforef{,cross ref name }’ *note cross ref name: . ‘@inforef{,,file
-name}’ *note (file name)Top:: ‘@inforef{,cross ref name, file name}’
-*note cross ref name: (file name)Top. ‘@inforef{}’ *note ::
+   ‘@inforef{,cross ref name }’ See cross ref name ‘@inforef{,,file
+name}’ See (file name) ‘@inforef{,cross ref name, file name}’ See cross
+ref name(file name) ‘@inforef{}’ See Top
 
    Normal text
 
@@ -1003,218 +997,213 @@ f-ormat
 
 s-mallformat
 
- -- c--ategory: d--effn_name a--rguments...
+ - c-ategory: d--effn_name a--rguments...
      d-effn
 
- -- cate--gory: de--ffn_name ar--guments more args
+ - cate-gory: de--ffn_name ar--guments more args
           even more so
      def-fn
 
- -- fset: I a g
- -- cmde: truc
- -- Command: log trap
- -- Command: log trap1
- -- Command: log trap2
- -- cmde: id ule truc
- -- cmde2: id i ule truc
- -- :
- -- : machin
- -- : bidule machin
- -- truc: machin
- -- truc:
- -- truc: followed by a comment
- -- :
- -- truc: a b c d e f g h i
- -- truc: deffnx before end deffn
+ - fset: I a g
+ - cmde: truc
+ - Command: log trap
+ - Command: log trap1
+ - Command: log trap2
+ - cmde: id ule truc
+ - cmde2: id i ule truc
+ - :
+ - : machin
+ - : bidule machin
+ - truc: machin
+ - truc:
+ - truc: followed by a comment
+ - :
+ - truc: a b c d e f g h i
+ - truc: deffnx before end deffn
 
- -- empty: deffn
+ - empty: deffn
 
- -- empty: deffn with deffnx
- -- empty: deffnx
+ - empty: deffn with deffnx
+ - empty: deffnx
 
- -- fset: I a g
- -- cmde: truc
+ - fset: I a g
+ - cmde: truc
      text in def item for second def item
 
- -- c--ategory: d--efvr_name
+ - c-ategory: d--efvr_name
      d-efvr
 
- -- c--ategory: n--ame a--rguments...
+ - c-ategory: n--ame a--rguments...
      d-effn
 
- -- c--ategory: n--ame
+ - c-ategory: n--ame
      d-effn no arg
 
- -- c--ategory: t--ype d--eftypefn_name a--rguments...
+ - c-ategory: t--ype d--eftypefn_name a--rguments...
      d-eftypefn
 
- -- c--ategory: t--ype d--eftypefn_name
+ - c-ategory: t--ype d--eftypefn_name
      d-eftypefn no arg
 
- -- c--ategory on c--lass: t--ype d--eftypeop_name a--rguments...
+ - c-ategory on c--lass: t--ype d--eftypeop_name a--rguments...
      d-eftypeop
 
- -- c--ategory on c--lass: t--ype d--eftypeop_name
+ - c-ategory on c--lass: t--ype d--eftypeop_name
      d-eftypeop no arg
 
- -- c--ategory: t--ype d--eftypevr_name
+ - c-ategory: t--ype d--eftypevr_name
      d-eftypevr
 
- -- c--ategory of c--lass: d--efcv_name
+ - c-ategory of c--lass: d--efcv_name
      d-efcv
 
- -- c--ategory of c--lass: d--efcv_name a--rguments...
+ - c-ategory of c--lass: d--efcv_name a--rguments...
      d-efcv with arguments
 
- -- c--ategory of c--lass: t--ype d--eftypecv_name
+ - c-ategory of c--lass: t--ype d--eftypecv_name
      d-eftypecv
 
- -- c--ategory of c--lass: t--ype d--eftypecv_name a--rguments...
+ - c-ategory of c--lass: t--ype d--eftypecv_name a--rguments...
      d-eftypecv with arguments
 
- -- c--ategory on c--lass: d--efop_name a--rguments...
+ - c-ategory on c--lass: d--efop_name a--rguments...
      d-efop
 
- -- c--ategory on c--lass: d--efop_name
+ - c-ategory on c--lass: d--efop_name
      d-efop no arg
 
- -- c--ategory: d--eftp_name a--ttributes...
+ - c-ategory: d--eftp_name a--ttributes...
      d-eftp
 
- -- Function: d--efun_name a--rguments...
+ - Function: d--efun_name a--rguments...
      d-efun
 
- -- Macro: d--efmac_name a--rguments...
+ - Macro: d--efmac_name a--rguments...
      d-efmac
 
- -- Special Form: d--efspec_name a--rguments...
+ - Special Form: d--efspec_name a--rguments...
      d-efspec
 
- -- Variable: d--efvar_name
+ - Variable: d--efvar_name
      d-efvar
 
- -- Variable: d--efvar_name arg--var arg--var1
+ - Variable: d--efvar_name arg--var arg--var1
      d-efvar with args
 
- -- User Option: d--efopt_name
+ - User Option: d--efopt_name
      d-efopt
 
- -- Function: t--ype d--eftypefun_name a--rguments...
+ - Function: t--ype d--eftypefun_name a--rguments...
      d-eftypefun
 
- -- Variable: t--ype d--eftypevar_name
+ - Variable: t--ype d--eftypevar_name
      d-eftypevar
 
- -- Instance Variable of c--lass: d--efivar_name
+ - Instance Variable of c--lass: d--efivar_name
      d-efivar
 
- -- Instance Variable of c--lass: t--ype d--eftypeivar_name
+ - Instance Variable of c--lass: t--ype d--eftypeivar_name
      d-eftypeivar
 
- -- Method on c--lass: d--efmethod_name a--rguments...
+ - Method on c--lass: d--efmethod_name a--rguments...
      d-efmethod
 
- -- Method on c--lass: t--ype d--eftypemethod_name a--rguments...
+ - Method on c--lass: t--ype d--eftypemethod_name a--rguments...
      d-eftypemethod
 
- -- Function:
+ - Function:
           data-type2
           name2 arguments2...
      aaa2
 
- -- c--ategory2:
+ - c-ategory2:
           t--ype2
           d--eftypefn_name2
      d-eftypefn no arg2
 
- -- c--ategory2 on c--lass2:
+ - c-ategory2 on c--lass2:
           t--ype2
           d--eftypeop_name2 a--rguments2...
      d-eftypeop2
 
- -- c--ategory2 on c--lass2:
+ - c-ategory2 on c--lass2:
           t--ype2
           d--eftypeop_name2
      d-eftypeop no arg2
 
- -- c--ategory2 of c--lass2: t--ype2 d--eftypecv_name2
+ - c-ategory2 of c--lass2: t--ype2 d--eftypecv_name2
      d-eftypecv2
 
- -- c--ategory2 of c--lass2: t--ype2 d--eftypecv_name2 a--rguments2...
+ - c-ategory2 of c--lass2: t--ype2 d--eftypecv_name2 a--rguments2...
      d-eftypecv with arguments2
 
- -- fun2: arg2
+ - fun2: arg2
      fff2
 
    ‘@xref{c---hapter@@, cross r---ef name@@, t---itle@@, file n---ame@@,
-ma---nual@@}’ *Note cross r--ef name@: (file n---ame@)c---hapter@.
-‘@ref{chapter, cross ref name, title, file name, manual}’ *note cross
-ref name: (file name)chapter. ‘@pxref{chapter, cross ref name, title,
-file name, manual}’ *note cross ref name: (file name)chapter.
-‘@inforef{chapter, cross ref name, file name}’ *note cross ref name:
-(file name)chapter.
+ma---nual@@}’ See cross r--ef name@: (file n---ame@)c---hapter@.
+‘@ref{chapter, cross ref name, title, file name, manual}’ cross ref
+name: (file name)chapter ‘@pxref{chapter, cross ref name, title, file
+name, manual}’ see cross ref name: (file name)chapter ‘@inforef{chapter,
+cross ref name, file name}’ See cross ref name: (file name)chapter
 
-   ‘@ref{chapter}’ *note chapter:: ‘@xref{chapter}’ *Note chapter::.
-‘@pxref{chapter}’ *note chapter:: ‘@ref{s--ect@comma{}ion}’ *note
-s--ect,ion::
+   ‘@ref{chapter}’ chapter ‘@xref{chapter}’ See chapter.
+‘@pxref{chapter}’ see chapter ‘@ref{s--ect@comma{}ion}’ s--ect,ion
 
    ‘@ref{s--ect@comma{}ion, a @comma{} in cross ref, a comma@comma{} in
-title, a comma@comma{} in file, a @comma{} in manual name }’ *note a ,
-in cross ref: (a comma, in file)s--ect,ion.
+title, a comma@comma{} in file, a @comma{} in manual name }’ a , in
+cross ref: (a comma, in file)s--ect,ion
 
-   ‘@ref{chapter,cross ref name}’ *note cross ref name: chapter.
-‘@ref{chapter,,title}’ *note title: chapter. ‘@ref{chapter,,,file name}’
-*note (file name)chapter:: ‘@ref{chapter,,,,manual}’ *note ()chapter::
-‘@ref{chapter,cross ref name,title,}’ *note cross ref name: chapter.
-‘@ref{chapter,cross ref name,,file name}’ *note cross ref name: (file
-name)chapter. ‘@ref{chapter,cross ref name,,,manual}’ *note cross ref
-name: ()chapter. ‘@ref{chapter,cross ref name,title,file name}’ *note
-cross ref name: (file name)chapter. ‘@ref{chapter,cross ref
-name,title,,manual}’ *note cross ref name: ()chapter.
-‘@ref{chapter,cross ref name,title, file name, manual}’ *note cross ref
-name: (file name)chapter. ‘@ref{chapter,,title,file name}’ *note title:
-(file name)chapter. ‘@ref{chapter,,title,,manual}’ *note title:
-()chapter. ‘@ref{chapter,,title, file name, manual}’ *note title: (file
-name)chapter. ‘@ref{chapter,,,file name,manual}’ *note (file
-name)chapter::
+   ‘@ref{chapter,cross ref name}’ cross ref name: chapter
+‘@ref{chapter,,title}’ title: chapter ‘@ref{chapter,,,file name}’ (file
+name)chapter ‘@ref{chapter,,,,manual}’ chapter in ‘manual’
+‘@ref{chapter,cross ref name,title,}’ cross ref name: chapter
+‘@ref{chapter,cross ref name,,file name}’ cross ref name: (file
+name)chapter ‘@ref{chapter,cross ref name,,,manual}’ cross ref name:
+chapter in ‘manual’ ‘@ref{chapter,cross ref name,title,file name}’ cross
+ref name: (file name)chapter ‘@ref{chapter,cross ref
+name,title,,manual}’ cross ref name: chapter in ‘manual’
+‘@ref{chapter,cross ref name,title, file name, manual}’ cross ref name:
+(file name)chapter ‘@ref{chapter,,title,file name}’ title: (file
+name)chapter ‘@ref{chapter,,title,,manual}’ title: chapter in ‘manual’
+‘@ref{chapter,,title, file name, manual}’ title: (file name)chapter
+‘@ref{chapter,,,file name,manual}’ (file name)chapter
 
-   ‘@ref{(pman)anode,cross ref name}’ *note cross ref name: (pman)anode.
-‘@ref{(pman)anode,,title}’ *note title: (pman)anode.
-‘@ref{(pman)anode,,,file name}’ *note (file name)(pman)anode::
-‘@ref{(pman)anode,,,,manual}’ *note ()(pman)anode::
-‘@ref{(pman)anode,cross ref name,title,}’ *note cross ref name:
-(pman)anode. ‘@ref{(pman)anode,cross ref name,,file name}’ *note cross
-ref name: (file name)(pman)anode. ‘@ref{(pman)anode,cross ref
-name,,,manual}’ *note cross ref name: ()(pman)anode.
-‘@ref{(pman)anode,cross ref name,title,file name}’ *note cross ref name:
-(file name)(pman)anode. ‘@ref{(pman)anode,cross ref name,title,,manual}’
-*note cross ref name: ()(pman)anode. ‘@ref{(pman)anode,cross ref
-name,title, file name, manual}’ *note cross ref name: (file
-name)(pman)anode. ‘@ref{(pman)anode,,title,file name}’ *note title:
-(file name)(pman)anode. ‘@ref{(pman)anode,,title,,manual}’ *note title:
-()(pman)anode. ‘@ref{(pman)anode,,title, file name, manual}’ *note
-title: (file name)(pman)anode. ‘@ref{(pman)anode,,,file name,manual}’
-*note (file name)(pman)anode::
+   ‘@ref{(pman)anode,cross ref name}’ cross ref name: (pman)anode
+‘@ref{(pman)anode,,title}’ title: (pman)anode ‘@ref{(pman)anode,,,file
+name}’ (file name)(pman)anode ‘@ref{(pman)anode,,,,manual}’ (pman)anode
+in ‘manual’ ‘@ref{(pman)anode,cross ref name,title,}’ cross ref name:
+(pman)anode ‘@ref{(pman)anode,cross ref name,,file name}’ cross ref
+name: (file name)(pman)anode ‘@ref{(pman)anode,cross ref name,,,manual}’
+cross ref name: (pman)anode in ‘manual’ ‘@ref{(pman)anode,cross ref
+name,title,file name}’ cross ref name: (file name)(pman)anode
+‘@ref{(pman)anode,cross ref name,title,,manual}’ cross ref name:
+(pman)anode in ‘manual’ ‘@ref{(pman)anode,cross ref name,title, file
+name, manual}’ cross ref name: (file name)(pman)anode
+‘@ref{(pman)anode,,title,file name}’ title: (file name)(pman)anode
+‘@ref{(pman)anode,,title,,manual}’ title: (pman)anode in ‘manual’
+‘@ref{(pman)anode,,title, file name, manual}’ title: (file
+name)(pman)anode ‘@ref{(pman)anode,,,file name,manual}’ (file
+name)(pman)anode
 
-   ‘@inforef{chapter, cross ref name, file name}’ *note cross ref name:
-(file name)chapter. ‘@inforef{chapter}’ *note chapter::
-‘@inforef{chapter, cross ref name}’ *note cross ref name: chapter.
-‘@inforef{chapter,,file name}’ *note (file name)chapter::
-‘@inforef{node, cross ref name, file name}’ *note cross ref name: (file
-name)node. ‘@inforef{node}’ *note node:: ‘@inforef{node, cross ref
-name}’ *note cross ref name: node. ‘@inforef{node,,file name}’ *note
-(file name)node:: ‘@inforef{chapter, cross ref name, file name, spurious
-arg}’ *note cross ref name: (file name, spurious arg)chapter.
+   ‘@inforef{chapter, cross ref name, file name}’ See cross ref name:
+(file name)chapter ‘@inforef{chapter}’ See chapter ‘@inforef{chapter,
+cross ref name}’ See cross ref name: chapter ‘@inforef{chapter,,file
+name}’ See (file name)chapter ‘@inforef{node, cross ref name, file
+name}’ See cross ref name: (file name)node ‘@inforef{node}’ See node
+‘@inforef{node, cross ref name}’ See cross ref name: node
+‘@inforef{node,,file name}’ See (file name)node ‘@inforef{chapter, cross
+ref name, file name, spurious arg}’ See cross ref name: (file name,
+spurious arg)chapter
 
    ‘@inforef{s--ect@comma{}ion, a @comma{} in cross ref, a comma@comma{}
-in file}’ *note a , in cross ref: (a comma, in file)s--ect,ion.
+in file}’ See a , in cross ref: (a comma, in file)s--ect,ion
 
-   ‘*note chapter::’.
+   ‘chapter’.
 
-   *note cross ref with uref uref1 (href://http/myhost.com/index.html):
-(info file with uref3 uref3 (href://http/myhost.com/index3.html))ext.
-*note cross ref with uref uref1 (href://http/myhost.com/index.html):
-chapter.
+   cross ref with uref uref1 (href://http/myhost.com/index.html): (info
+file with uref3 uref3 (href://http/myhost.com/index3.html))ext cross ref
+with uref uref1 (href://http/myhost.com/index.html): chapter
 
 *a-strong*
      l-ine
@@ -1327,6 +1316,7 @@ aaa
 aaa
 ‘@image{file@verb{:jk _" %@:},,,alt@verb{:jk _" %@:}}’ [altjk _" %@]
 
+
 ü Ü ñ â é ō ì é Ḕ
 Ḉ Ḉ a̋ ȧ å a͡
 ă ǎ
@@ -1356,55 +1346,53 @@ a
 b
      l-ine
 
- -- fun:
- -- truc: machin bidule chose and
- -- truc: machin bidule chose and after
- -- truc: machin bidule chose and
- -- truc: machin bidule chose and and after
- -- truc: followed by a comment
+ - fun:
+ - truc: machin bidule chose and
+ - truc: machin bidule chose and after
+ - truc: machin bidule chose and
+ - truc: machin bidule chose and and after
+ - truc: followed by a comment
      Various deff lines
- -- truc: after a deff item
+ - truc: after a deff item
 
- -- fsetinv: INVALID a g
- -- id i ule:
- -- aaa:
- -- :
- -- truc:
+ - fsetinv: INVALID a g
+ - id i ule:
+ - aaa:
+ - :
+ - truc:
 
    g-roupe
 
-   ‘@ref{node}’ *note node::
+   ‘@ref{node}’ node
 
-   ‘@ref{,cross ref name}’ *note cross ref name: . ‘@ref{,,title}’ *note
-title: . ‘@ref{,,,file name}’ *note (file name)Top:: ‘@ref{,,,,manual}’
-*note ()Top:: ‘@ref{node,cross ref name}’ *note cross ref name: node.
-‘@ref{node,,title}’ *note title: node. ‘@ref{node,,,file name}’ *note
-(file name)node:: ‘@ref{node,,,,manual}’ *note ()node:: ‘@ref{node,cross
-ref name,title,}’ *note cross ref name: node. ‘@ref{node,cross ref
-name,,file name}’ *note cross ref name: (file name)node.
-‘@ref{node,cross ref name,,,manual}’ *note cross ref name: ()node.
-‘@ref{node,cross ref name,title,file name}’ *note cross ref name: (file
-name)node. ‘@ref{node,cross ref name,title,,manual}’ *note cross ref
-name: ()node. ‘@ref{node,cross ref name,title, file name, manual}’ *note
-cross ref name: (file name)node. ‘@ref{node,,title,file name}’ *note
-title: (file name)node. ‘@ref{node,,title,,manual}’ *note title: ()node.
-‘@ref{chapter,,title, file name, manual}’ *note title: (file
-name)chapter. ‘@ref{node,,title, file name, manual}’ *note title: (file
-name)node. ‘@ref{node,,,file name,manual}’ *note (file name)node::
-‘@ref{,cross ref name,title,}’ *note cross ref name: . ‘@ref{,cross ref
-name,,file name}’ *note cross ref name: (file name)Top. ‘@ref{,cross ref
-name,,,manual}’ *note cross ref name: ()Top. ‘@ref{,cross ref
-name,title,file name}’ *note cross ref name: (file name)Top.
-‘@ref{,cross ref name,title,,manual}’ *note cross ref name: ()Top.
-‘@ref{,cross ref name,title, file name, manual}’ *note cross ref name:
-(file name)Top. ‘@ref{,,title,file name}’ *note title: (file name)Top.
-‘@ref{,,title,,manual}’ *note title: ()Top. ‘@ref{,,title, file name,
-manual}’ *note title: (file name)Top. ‘@ref{,,,file name,manual}’ *note
-(file name)Top::
+   ‘@ref{,cross ref name}’ cross ref name ‘@ref{,,title}’ title
+‘@ref{,,,file name}’ (file name) ‘@ref{,,,,manual}’ ‘manual’
+‘@ref{node,cross ref name}’ cross ref name: node ‘@ref{node,,title}’
+title: node ‘@ref{node,,,file name}’ (file name)node
+‘@ref{node,,,,manual}’ node in ‘manual’ ‘@ref{node,cross ref
+name,title,}’ cross ref name: node ‘@ref{node,cross ref name,,file
+name}’ cross ref name: (file name)node ‘@ref{node,cross ref
+name,,,manual}’ cross ref name: node in ‘manual’ ‘@ref{node,cross ref
+name,title,file name}’ cross ref name: (file name)node ‘@ref{node,cross
+ref name,title,,manual}’ cross ref name: node in ‘manual’
+‘@ref{node,cross ref name,title, file name, manual}’ cross ref name:
+(file name)node ‘@ref{node,,title,file name}’ title: (file name)node
+‘@ref{node,,title,,manual}’ title: node in ‘manual’
+‘@ref{chapter,,title, file name, manual}’ title: (file name)chapter
+‘@ref{node,,title, file name, manual}’ title: (file name)node
+‘@ref{node,,,file name,manual}’ (file name)node ‘@ref{,cross ref
+name,title,}’ cross ref name ‘@ref{,cross ref name,,file name}’ cross
+ref name(file name) ‘@ref{,cross ref name,,,manual}’ cross ref name in
+‘manual’ ‘@ref{,cross ref name,title,file name}’ cross ref name(file
+name) ‘@ref{,cross ref name,title,,manual}’ cross ref name in ‘manual’
+‘@ref{,cross ref name,title, file name, manual}’ cross ref name(file
+name) ‘@ref{,,title,file name}’ title(file name) ‘@ref{,,title,,manual}’
+title in ‘manual’ ‘@ref{,,title, file name, manual}’ title(file name)
+‘@ref{,,,file name,manual}’ (file name)
 
-   ‘@inforef{,cross ref name }’ *note cross ref name: . ‘@inforef{,,file
-name}’ *note (file name)Top:: ‘@inforef{,cross ref name, file name}’
-*note cross ref name: (file name)Top. ‘@inforef{}’ *note ::
+   ‘@inforef{,cross ref name }’ See cross ref name ‘@inforef{,,file
+name}’ See (file name) ‘@inforef{,cross ref name, file name}’ See cross
+ref name(file name) ‘@inforef{}’ See Top
 
    In example.
 
@@ -1833,220 +1821,220 @@ name}’ *note (file name)Top:: ‘@inforef{,cross ref name, file name}’
 
      s--mallformat
 
-      -- c--ategory: d--effn_name a--rguments...
+      - c-ategory: d--effn_name a--rguments...
           d--effn
 
-      -- cate--gory: de--ffn_name ar--guments more args
+      - cate-gory: de--ffn_name ar--guments more args
                even more so
           def--fn
 
-      -- fset: I a g
-      -- cmde: truc
-      -- Command: log trap
-      -- Command: log trap1
-      -- Command: log trap2
-      -- cmde: id ule truc
-      -- cmde2: id i ule truc
-      -- :
-      -- : machin
-      -- : bidule machin
-      -- truc: machin
-      -- truc:
-      -- truc: followed by a comment
-      -- :
-      -- truc: a b c d e f g h i
-      -- truc: deffnx before end deffn
+      - fset: I a g
+      - cmde: truc
+      - Command: log trap
+      - Command: log trap1
+      - Command: log trap2
+      - cmde: id ule truc
+      - cmde2: id i ule truc
+      - :
+      - : machin
+      - : bidule machin
+      - truc: machin
+      - truc:
+      - truc: followed by a comment
+      - :
+      - truc: a b c d e f g h i
+      - truc: deffnx before end deffn
 
 
-      -- empty: deffn
+      - empty: deffn
 
-      -- empty: deffn with deffnx
-      -- empty: deffnx
+      - empty: deffn with deffnx
+      - empty: deffnx
 
-      -- fset: I a g
-      -- cmde: truc
+      - fset: I a g
+      - cmde: truc
           text in def item for second def item
 
 
-      -- c--ategory: d--efvr_name
+      - c-ategory: d--efvr_name
           d--efvr
 
-      -- c--ategory: n--ame a--rguments...
+      - c-ategory: n--ame a--rguments...
           d--effn
 
-      -- c--ategory: n--ame
+      - c-ategory: n--ame
           d--effn no arg
 
-      -- c--ategory: t--ype d--eftypefn_name a--rguments...
+      - c-ategory: t--ype d--eftypefn_name a--rguments...
           d--eftypefn
 
-      -- c--ategory: t--ype d--eftypefn_name
+      - c-ategory: t--ype d--eftypefn_name
           d--eftypefn no arg
 
-      -- c--ategory on c--lass: t--ype d--eftypeop_name a--rguments...
+      - c-ategory on c--lass: t--ype d--eftypeop_name a--rguments...
           d--eftypeop
 
-      -- c--ategory on c--lass: t--ype d--eftypeop_name
+      - c-ategory on c--lass: t--ype d--eftypeop_name
           d--eftypeop no arg
 
-      -- c--ategory: t--ype d--eftypevr_name
+      - c-ategory: t--ype d--eftypevr_name
           d--eftypevr
 
-      -- c--ategory of c--lass: d--efcv_name
+      - c-ategory of c--lass: d--efcv_name
           d--efcv
 
-      -- c--ategory of c--lass: d--efcv_name a--rguments...
+      - c-ategory of c--lass: d--efcv_name a--rguments...
           d--efcv with arguments
 
-      -- c--ategory of c--lass: t--ype d--eftypecv_name
+      - c-ategory of c--lass: t--ype d--eftypecv_name
           d--eftypecv
 
-      -- c--ategory of c--lass: t--ype d--eftypecv_name a--rguments...
+      - c-ategory of c--lass: t--ype d--eftypecv_name a--rguments...
           d--eftypecv with arguments
 
-      -- c--ategory on c--lass: d--efop_name a--rguments...
+      - c-ategory on c--lass: d--efop_name a--rguments...
           d--efop
 
-      -- c--ategory on c--lass: d--efop_name
+      - c-ategory on c--lass: d--efop_name
           d--efop no arg
 
-      -- c--ategory: d--eftp_name a--ttributes...
+      - c-ategory: d--eftp_name a--ttributes...
           d--eftp
 
-      -- Function: d--efun_name a--rguments...
+      - Function: d--efun_name a--rguments...
           d--efun
 
-      -- Macro: d--efmac_name a--rguments...
+      - Macro: d--efmac_name a--rguments...
           d--efmac
 
-      -- Special Form: d--efspec_name a--rguments...
+      - Special Form: d--efspec_name a--rguments...
           d--efspec
 
-      -- Variable: d--efvar_name
+      - Variable: d--efvar_name
           d--efvar
 
-      -- Variable: d--efvar_name arg--var arg--var1
+      - Variable: d--efvar_name arg--var arg--var1
           d--efvar with args
 
-      -- User Option: d--efopt_name
+      - User Option: d--efopt_name
           d--efopt
 
-      -- Function: t--ype d--eftypefun_name a--rguments...
+      - Function: t--ype d--eftypefun_name a--rguments...
           d--eftypefun
 
-      -- Variable: t--ype d--eftypevar_name
+      - Variable: t--ype d--eftypevar_name
           d--eftypevar
 
-      -- Instance Variable of c--lass: d--efivar_name
+      - Instance Variable of c--lass: d--efivar_name
           d--efivar
 
-      -- Instance Variable of c--lass: t--ype d--eftypeivar_name
+      - Instance Variable of c--lass: t--ype d--eftypeivar_name
           d--eftypeivar
 
-      -- Method on c--lass: d--efmethod_name a--rguments...
+      - Method on c--lass: d--efmethod_name a--rguments...
           d--efmethod
 
-      -- Method on c--lass: t--ype d--eftypemethod_name a--rguments...
+      - Method on c--lass: t--ype d--eftypemethod_name a--rguments...
           d--eftypemethod
 
 
-      -- Function:
+      - Function:
                data-type2
                name2 arguments2...
           aaa2
 
-      -- c--ategory2:
+      - c-ategory2:
                t--ype2
                d--eftypefn_name2
           d--eftypefn no arg2
 
-      -- c--ategory2 on c--lass2:
+      - c-ategory2 on c--lass2:
                t--ype2
                d--eftypeop_name2 a--rguments2...
           d--eftypeop2
 
-      -- c--ategory2 on c--lass2:
+      - c-ategory2 on c--lass2:
                t--ype2
                d--eftypeop_name2
           d--eftypeop no arg2
 
-      -- c--ategory2 of c--lass2: t--ype2 d--eftypecv_name2
+      - c-ategory2 of c--lass2: t--ype2 d--eftypecv_name2
           d--eftypecv2
 
-      -- c--ategory2 of c--lass2: t--ype2 d--eftypecv_name2
+      - c-ategory2 of c--lass2: t--ype2 d--eftypecv_name2
                a--rguments2...
           d--eftypecv with arguments2
 
-      -- fun2: arg2
+      - fun2: arg2
           fff2
 
 
-     @xref{c---hapter@@, cross r---ef name@@, t---itle@@, file n---ame@@, ma---nual@@} *Note cross r---ef name@: (file n---ame@)c---hapter@.
-     @ref{chapter, cross ref name, title, file name, manual} *note cross ref name: (file name)chapter.
-     @pxref{chapter, cross ref name, title, file name, manual} *note cross ref name: (file name)chapter.
-     @inforef{chapter, cross ref name, file name} *note cross ref name: (file name)chapter.
+     @xref{c---hapter@@, cross r---ef name@@, t---itle@@, file n---ame@@, ma---nual@@} See cross r---ef name@: (file n---ame@)c---hapter@.
+     @ref{chapter, cross ref name, title, file name, manual} cross ref name: (file name)chapter
+     @pxref{chapter, cross ref name, title, file name, manual} see cross ref name: (file name)chapter
+     @inforef{chapter, cross ref name, file name} See cross ref name: (file name)chapter
 
-     @ref{chapter} *note chapter::
-     @xref{chapter} *Note chapter::.
-     @pxref{chapter} *note chapter::
-     @ref{s--ect@comma{}ion} *note s--ect,ion::
+     @ref{chapter} chapter
+     @xref{chapter} See chapter.
+     @pxref{chapter} see chapter
+     @ref{s--ect@comma{}ion} s--ect,ion
 
      @ref{s--ect@comma{}ion, a @comma{} in cross
      ref, a comma@comma{} in title, a comma@comma{} in file, a @comma{} in manual name }
-     *note a , in cross
-     ref: (a comma, in file)s--ect,ion.
+     a , in cross
+     ref: (a comma, in file)s--ect,ion
 
-     @ref{chapter,cross ref name} *note cross ref name: chapter.
-     @ref{chapter,,title} *note title: chapter.
-     @ref{chapter,,,file name} *note (file name)chapter::
-     @ref{chapter,,,,manual} *note ()chapter::
-     @ref{chapter,cross ref name,title,} *note cross ref name: chapter.
-     @ref{chapter,cross ref name,,file name} *note cross ref name: (file name)chapter.
-     @ref{chapter,cross ref name,,,manual} *note cross ref name: ()chapter.
-     @ref{chapter,cross ref name,title,file name} *note cross ref name: (file name)chapter.
-     @ref{chapter,cross ref name,title,,manual} *note cross ref name: ()chapter.
-     @ref{chapter,cross ref name,title, file name, manual} *note cross ref name: (file name)chapter.
-     @ref{chapter,,title,file name} *note title: (file name)chapter.
-     @ref{chapter,,title,,manual} *note title: ()chapter.
-     @ref{chapter,,title, file name, manual} *note title: (file name)chapter.
-     @ref{chapter,,,file name,manual} *note (file name)chapter::
-
-
-     @ref{(pman)anode,cross ref name} *note cross ref name: (pman)anode.
-     @ref{(pman)anode,,title} *note title: (pman)anode.
-     @ref{(pman)anode,,,file name} *note (file name)(pman)anode::
-     @ref{(pman)anode,,,,manual} *note ()(pman)anode::
-     @ref{(pman)anode,cross ref name,title,} *note cross ref name: (pman)anode.
-     @ref{(pman)anode,cross ref name,,file name} *note cross ref name: (file name)(pman)anode.
-     @ref{(pman)anode,cross ref name,,,manual} *note cross ref name: ()(pman)anode.
-     @ref{(pman)anode,cross ref name,title,file name} *note cross ref name: (file name)(pman)anode.
-     @ref{(pman)anode,cross ref name,title,,manual} *note cross ref name: ()(pman)anode.
-     @ref{(pman)anode,cross ref name,title, file name, manual} *note cross ref name: (file name)(pman)anode.
-     @ref{(pman)anode,,title,file name} *note title: (file name)(pman)anode.
-     @ref{(pman)anode,,title,,manual} *note title: ()(pman)anode.
-     @ref{(pman)anode,,title, file name, manual} *note title: (file name)(pman)anode.
-     @ref{(pman)anode,,,file name,manual} *note (file name)(pman)anode::
+     @ref{chapter,cross ref name} cross ref name: chapter
+     @ref{chapter,,title} title: chapter
+     @ref{chapter,,,file name} (file name)chapter
+     @ref{chapter,,,,manual} chapter in ‘manual’
+     @ref{chapter,cross ref name,title,} cross ref name: chapter
+     @ref{chapter,cross ref name,,file name} cross ref name: (file name)chapter
+     @ref{chapter,cross ref name,,,manual} cross ref name: chapter in ‘manual’
+     @ref{chapter,cross ref name,title,file name} cross ref name: (file name)chapter
+     @ref{chapter,cross ref name,title,,manual} cross ref name: chapter in ‘manual’
+     @ref{chapter,cross ref name,title, file name, manual} cross ref name: (file name)chapter
+     @ref{chapter,,title,file name} title: (file name)chapter
+     @ref{chapter,,title,,manual} title: chapter in ‘manual’
+     @ref{chapter,,title, file name, manual} title: (file name)chapter
+     @ref{chapter,,,file name,manual} (file name)chapter
 
 
-     @inforef{chapter, cross ref name, file name} *note cross ref name: (file name)chapter.
-     @inforef{chapter} *note chapter::
-     @inforef{chapter, cross ref name} *note cross ref name: chapter.
-     @inforef{chapter,,file name} *note (file name)chapter::
-     @inforef{node, cross ref name, file name} *note cross ref name: (file name)node.
-     @inforef{node} *note node::
-     @inforef{node, cross ref name} *note cross ref name: node.
-     @inforef{node,,file name} *note (file name)node::
-     @inforef{chapter, cross ref name, file name, spurious arg} *note cross ref name: (file name, spurious arg)chapter.
+     @ref{(pman)anode,cross ref name} cross ref name: (pman)anode
+     @ref{(pman)anode,,title} title: (pman)anode
+     @ref{(pman)anode,,,file name} (file name)(pman)anode
+     @ref{(pman)anode,,,,manual} (pman)anode in ‘manual’
+     @ref{(pman)anode,cross ref name,title,} cross ref name: (pman)anode
+     @ref{(pman)anode,cross ref name,,file name} cross ref name: (file name)(pman)anode
+     @ref{(pman)anode,cross ref name,,,manual} cross ref name: (pman)anode in ‘manual’
+     @ref{(pman)anode,cross ref name,title,file name} cross ref name: (file name)(pman)anode
+     @ref{(pman)anode,cross ref name,title,,manual} cross ref name: (pman)anode in ‘manual’
+     @ref{(pman)anode,cross ref name,title, file name, manual} cross ref name: (file name)(pman)anode
+     @ref{(pman)anode,,title,file name} title: (file name)(pman)anode
+     @ref{(pman)anode,,title,,manual} title: (pman)anode in ‘manual’
+     @ref{(pman)anode,,title, file name, manual} title: (file name)(pman)anode
+     @ref{(pman)anode,,,file name,manual} (file name)(pman)anode
+
+
+     @inforef{chapter, cross ref name, file name} See cross ref name: (file name)chapter
+     @inforef{chapter} See chapter
+     @inforef{chapter, cross ref name} See cross ref name: chapter
+     @inforef{chapter,,file name} See (file name)chapter
+     @inforef{node, cross ref name, file name} See cross ref name: (file name)node
+     @inforef{node} See node
+     @inforef{node, cross ref name} See cross ref name: node
+     @inforef{node,,file name} See (file name)node
+     @inforef{chapter, cross ref name, file name, spurious arg} See cross ref name: (file name, spurious arg)chapter
 
      @inforef{s--ect@comma{}ion, a @comma{} in cross
      ref, a comma@comma{} in file}
-     *note a , in cross
-     ref: (a comma, in file)s--ect,ion.
+     See a , in cross
+     ref: (a comma, in file)s--ect,ion
 
-     ‘*note chapter::’.
+     ‘chapter’.
 
-     *note cross ref with uref uref1 (href://http/myhost.com/index.html): (info file with uref3 uref3 (href://http/myhost.com/index3.html))ext.
-     *note cross ref with uref uref1 (href://http/myhost.com/index.html): chapter.
+     cross ref with uref uref1 (href://http/myhost.com/index.html): (info file with uref3 uref3 (href://http/myhost.com/index3.html))ext
+     cross ref with uref uref1 (href://http/myhost.com/index.html): chapter
 
      *a-strong*
           l--ine
@@ -2192,6 +2180,7 @@ aaa
 
 
 
+
      ü Ü ñ â é ō ì é Ḕ
      Ḉ Ḉ a̋ ȧ å a͡
      ă ǎ
@@ -2221,59 +2210,59 @@ aaa
      b
           l--ine
 
-      -- fun:
-      -- truc: machin bidule chose and
-      -- truc: machin bidule chose and after
-      -- truc: machin bidule chose and
-      -- truc: machin bidule chose and and after
-      -- truc: followed by a comment
+      - fun:
+      - truc: machin bidule chose and
+      - truc: machin bidule chose and after
+      - truc: machin bidule chose and
+      - truc: machin bidule chose and and after
+      - truc: followed by a comment
           Various deff lines
-      -- truc: after a deff item
+      - truc: after a deff item
 
-      -- fsetinv: INVALID a g
-      -- id i ule:
-      -- aaa:
-      -- :
-      -- truc:
+      - fsetinv: INVALID a g
+      - id i ule:
+      - aaa:
+      - :
+      - truc:
 
      g--roupe
 
-     @ref{node} *note node::
+     @ref{node} node
 
-     @ref{,cross ref name} *note cross ref name: .
-     @ref{,,title} *note title: .
-     @ref{,,,file name} *note (file name)Top::
-     @ref{,,,,manual} *note ()Top::
-     @ref{node,cross ref name} *note cross ref name: node.
-     @ref{node,,title} *note title: node.
-     @ref{node,,,file name} *note (file name)node::
-     @ref{node,,,,manual} *note ()node::
-     @ref{node,cross ref name,title,} *note cross ref name: node.
-     @ref{node,cross ref name,,file name} *note cross ref name: (file name)node.
-     @ref{node,cross ref name,,,manual} *note cross ref name: ()node.
-     @ref{node,cross ref name,title,file name} *note cross ref name: (file name)node.
-     @ref{node,cross ref name,title,,manual} *note cross ref name: ()node.
-     @ref{node,cross ref name,title, file name, manual} *note cross ref name: (file name)node.
-     @ref{node,,title,file name} *note title: (file name)node.
-     @ref{node,,title,,manual} *note title: ()node.
-     @ref{chapter,,title, file name, manual} *note title: (file name)chapter.
-     @ref{node,,title, file name, manual} *note title: (file name)node.
-     @ref{node,,,file name,manual} *note (file name)node::
-     @ref{,cross ref name,title,} *note cross ref name: .
-     @ref{,cross ref name,,file name} *note cross ref name: (file name)Top.
-     @ref{,cross ref name,,,manual} *note cross ref name: ()Top.
-     @ref{,cross ref name,title,file name} *note cross ref name: (file name)Top.
-     @ref{,cross ref name,title,,manual} *note cross ref name: ()Top.
-     @ref{,cross ref name,title, file name, manual} *note cross ref name: (file name)Top.
-     @ref{,,title,file name} *note title: (file name)Top.
-     @ref{,,title,,manual} *note title: ()Top.
-     @ref{,,title, file name, manual} *note title: (file name)Top.
-     @ref{,,,file name,manual} *note (file name)Top::
+     @ref{,cross ref name} cross ref name
+     @ref{,,title} title
+     @ref{,,,file name} (file name)
+     @ref{,,,,manual} ‘manual’
+     @ref{node,cross ref name} cross ref name: node
+     @ref{node,,title} title: node
+     @ref{node,,,file name} (file name)node
+     @ref{node,,,,manual} node in ‘manual’
+     @ref{node,cross ref name,title,} cross ref name: node
+     @ref{node,cross ref name,,file name} cross ref name: (file name)node
+     @ref{node,cross ref name,,,manual} cross ref name: node in ‘manual’
+     @ref{node,cross ref name,title,file name} cross ref name: (file name)node
+     @ref{node,cross ref name,title,,manual} cross ref name: node in ‘manual’
+     @ref{node,cross ref name,title, file name, manual} cross ref name: (file name)node
+     @ref{node,,title,file name} title: (file name)node
+     @ref{node,,title,,manual} title: node in ‘manual’
+     @ref{chapter,,title, file name, manual} title: (file name)chapter
+     @ref{node,,title, file name, manual} title: (file name)node
+     @ref{node,,,file name,manual} (file name)node
+     @ref{,cross ref name,title,} cross ref name
+     @ref{,cross ref name,,file name} cross ref name(file name)
+     @ref{,cross ref name,,,manual} cross ref name in ‘manual’
+     @ref{,cross ref name,title,file name} cross ref name(file name)
+     @ref{,cross ref name,title,,manual} cross ref name in ‘manual’
+     @ref{,cross ref name,title, file name, manual} cross ref name(file name)
+     @ref{,,title,file name} title(file name)
+     @ref{,,title,,manual} title in ‘manual’
+     @ref{,,title, file name, manual} title(file name)
+     @ref{,,,file name,manual} (file name)
 
-     @inforef{,cross ref name } *note cross ref name: .
-     @inforef{,,file name} *note (file name)Top::
-     @inforef{,cross ref name, file name} *note cross ref name: (file name)Top.
-     @inforef{} *note ::
+     @inforef{,cross ref name } See cross ref name
+     @inforef{,,file name} See (file name)
+     @inforef{,cross ref name, file name} See cross ref name(file name)
+     @inforef{} See Top
 
 
    Text(7)
@@ -2282,300 +2271,306 @@ aaa
 
 * Menu:
 
-* truc:                                  chapter.            (line 2278)
+* truc:                                  chapter.            (line 2267)
 
    codeidx
 
 * Menu:
 
-* a INDEX---ENTRY tẽ --- î:              chapter.            (line 2278)
+* a INDEX---ENTRY tẽ --- î:              chapter.            (line 2267)
 
    cp
 
 * Menu:
 
 * -option:                               chapter.            (line   28)
-* -option <1>:                           chapter.            (line  724)
-* -option <2>:                           chapter.            (line 1431)
-* ?:                                     chapter.            (line 2278)
-* .:                                     chapter.            (line 2278)
+* -option <1>:                           chapter.            (line  718)
+* -option <2>:                           chapter.            (line 1419)
+* ?:                                     chapter.            (line 2267)
+* .:                                     chapter.            (line 2267)
 * ":                                     chapter.            (line   28)
-* " <1>:                                 chapter.            (line  724)
-* " <2>:                                 chapter.            (line 1431)
-* a:                                     chapter.            (line 2278)
-* aaa, bbb:                              chapter.            (line 2278)
-* a--a:                                  chapter.            (line 2278)
-* a--asis:                               chapter.            (line  525)
-* a--asis <1>:                           chapter.            (line 1221)
-* a--asis <2>:                           chapter.            (line 2053)
-* b:                                     chapter.            (line  526)
-* b <1>:                                 chapter.            (line 1222)
-* b <2>:                                 chapter.            (line 2054)
-* b--b, c--c:                            chapter.            (line 2278)
+* " <1>:                                 chapter.            (line  718)
+* " <2>:                                 chapter.            (line 1419)
+* a:                                     chapter.            (line 2267)
+* aaa, bbb:                              chapter.            (line 2267)
+* a--a:                                  chapter.            (line 2267)
+* a--asis:                               chapter.            (line  520)
+* a--asis <1>:                           chapter.            (line 1210)
+* a--asis <2>:                           chapter.            (line 2041)
+  aaa, See bbb.
+* b:                                     chapter.            (line  521)
+* b <1>:                                 chapter.            (line 1211)
+* b <2>:                                 chapter.            (line 2042)
+* b--b, c--c:                            chapter.            (line 2267)
 * counting entry:                        chapter.            (line    0)
-* d--dd, e--ee, f--ff:                   chapter.            (line 2278)
+* d--dd, e--ee, f--ff:                   chapter.            (line 2267)
 * d--efcv_name:                          chapter.            (line  366)
 * d--efcv_name <1>:                      chapter.            (line  369)
-* d--efcv_name <2>:                      chapter.            (line 1062)
-* d--efcv_name <3>:                      chapter.            (line 1065)
-* d--efcv_name <4>:                      chapter.            (line 1894)
-* d--efcv_name <5>:                      chapter.            (line 1897)
+* d--efcv_name <2>:                      chapter.            (line 1056)
+* d--efcv_name <3>:                      chapter.            (line 1059)
+* d--efcv_name <4>:                      chapter.            (line 1882)
+* d--efcv_name <5>:                      chapter.            (line 1885)
 * d--efivar_name of c--lass:             chapter.            (line  411)
-* d--efivar_name of c--lass <1>:         chapter.            (line 1107)
-* d--efivar_name of c--lass <2>:         chapter.            (line 1939)
+* d--efivar_name of c--lass <1>:         chapter.            (line 1101)
+* d--efivar_name of c--lass <2>:         chapter.            (line 1927)
 * d--efopt_name:                         chapter.            (line  402)
-* d--efopt_name <1>:                     chapter.            (line 1098)
-* d--efopt_name <2>:                     chapter.            (line 1930)
+* d--efopt_name <1>:                     chapter.            (line 1092)
+* d--efopt_name <2>:                     chapter.            (line 1918)
 * d--eftypecv_name of c--lass:           chapter.            (line  372)
 * d--eftypecv_name of c--lass <1>:       chapter.            (line  375)
-* d--eftypecv_name of c--lass <2>:       chapter.            (line 1068)
-* d--eftypecv_name of c--lass <3>:       chapter.            (line 1071)
-* d--eftypecv_name of c--lass <4>:       chapter.            (line 1900)
-* d--eftypecv_name of c--lass <5>:       chapter.            (line 1903)
+* d--eftypecv_name of c--lass <2>:       chapter.            (line 1062)
+* d--eftypecv_name of c--lass <3>:       chapter.            (line 1065)
+* d--eftypecv_name of c--lass <4>:       chapter.            (line 1888)
+* d--eftypecv_name of c--lass <5>:       chapter.            (line 1891)
 * d--eftypecv_name2 of c--lass2:         chapter.            (line  443)
 * d--eftypecv_name2 of c--lass2 <1>:     chapter.            (line  446)
-* d--eftypecv_name2 of c--lass2 <2>:     chapter.            (line 1139)
-* d--eftypecv_name2 of c--lass2 <3>:     chapter.            (line 1142)
-* d--eftypecv_name2 of c--lass2 <4>:     chapter.            (line 1972)
-* d--eftypecv_name2 of c--lass2 <5>:     chapter.            (line 1975)
+* d--eftypecv_name2 of c--lass2 <2>:     chapter.            (line 1133)
+* d--eftypecv_name2 of c--lass2 <3>:     chapter.            (line 1136)
+* d--eftypecv_name2 of c--lass2 <4>:     chapter.            (line 1960)
+* d--eftypecv_name2 of c--lass2 <5>:     chapter.            (line 1963)
 * d--eftypeivar_name of c--lass:         chapter.            (line  414)
-* d--eftypeivar_name of c--lass <1>:     chapter.            (line 1110)
-* d--eftypeivar_name of c--lass <2>:     chapter.            (line 1942)
+* d--eftypeivar_name of c--lass <1>:     chapter.            (line 1104)
+* d--eftypeivar_name of c--lass <2>:     chapter.            (line 1930)
 * d--eftypevar_name:                     chapter.            (line  408)
-* d--eftypevar_name <1>:                 chapter.            (line 1104)
-* d--eftypevar_name <2>:                 chapter.            (line 1936)
+* d--eftypevar_name <1>:                 chapter.            (line 1098)
+* d--eftypevar_name <2>:                 chapter.            (line 1924)
 * d--eftypevr_name:                      chapter.            (line  363)
-* d--eftypevr_name <1>:                  chapter.            (line 1059)
-* d--eftypevr_name <2>:                  chapter.            (line 1891)
+* d--eftypevr_name <1>:                  chapter.            (line 1053)
+* d--eftypevr_name <2>:                  chapter.            (line 1879)
 * d--efvar_name:                         chapter.            (line  396)
 * d--efvar_name <1>:                     chapter.            (line  399)
-* d--efvar_name <2>:                     chapter.            (line 1092)
-* d--efvar_name <3>:                     chapter.            (line 1095)
-* d--efvar_name <4>:                     chapter.            (line 1924)
-* d--efvar_name <5>:                     chapter.            (line 1927)
+* d--efvar_name <2>:                     chapter.            (line 1086)
+* d--efvar_name <3>:                     chapter.            (line 1089)
+* d--efvar_name <4>:                     chapter.            (line 1912)
+* d--efvar_name <5>:                     chapter.            (line 1915)
 * d--efvr_name:                          chapter.            (line  342)
-* d--efvr_name <1>:                      chapter.            (line 1038)
-* d--efvr_name <2>:                      chapter.            (line 1870)
-* g--gg, h--hh jjj, k--kk, l--ll:        chapter.            (line 2278)
-* index entry between item and itemx:    chapter.            (line  530)
-* index entry between item and itemx <1>: chapter.           (line  659)
-* index entry between item and itemx <2>: chapter.           (line 1226)
-* index entry between item and itemx <3>: chapter.           (line 1355)
-* index entry between item and itemx <4>: chapter.           (line 2058)
-* index entry between item and itemx <5>: chapter.           (line 2220)
+* d--efvr_name <1>:                      chapter.            (line 1032)
+* d--efvr_name <2>:                      chapter.            (line 1858)
+  ddd:                                   See also ccc.
+  ddd:                                   See also ccc.
+* g--gg, h--hh jjj, k--kk, l--ll:        chapter.            (line 2267)
+* index entry between item and itemx:    chapter.            (line  525)
+* index entry between item and itemx <1>: chapter.           (line  655)
+* index entry between item and itemx <2>: chapter.           (line 1215)
+* index entry between item and itemx <3>: chapter.           (line 1345)
+* index entry between item and itemx <4>: chapter.           (line 2046)
+* index entry between item and itemx <5>: chapter.           (line 2209)
 * index entry in footnote:               chapter.            (line    0)
 * index entry within deffn:              chapter.            (line  317)
-* index entry within deffn <1>:          chapter.            (line 1013)
-* index entry within deffn <2>:          chapter.            (line 1843)
+* index entry within deffn <1>:          chapter.            (line 1007)
+* index entry within deffn <2>:          chapter.            (line 1831)
 * index entry within itemize:            chapter.            (line  228)
-* index entry within itemize <1>:        chapter.            (line  924)
-* index entry within itemize <2>:        chapter.            (line 1754)
+* index entry within itemize <1>:        chapter.            (line  918)
+* index entry within itemize <2>:        chapter.            (line 1742)
 * index entry within multitable:         chapter.            (line  250)
-* index entry within multitable <1>:     chapter.            (line  946)
-* index entry within multitable <2>:     chapter.            (line 1777)
-* t-ruc:                                 chapter.            (line 2278)
-* T-ruc:                                 chapter.            (line 2278)
+* index entry within multitable <1>:     chapter.            (line  940)
+* index entry within multitable <2>:     chapter.            (line 1765)
+* t-ruc:                                 chapter.            (line 2267)
+* T-ruc:                                 chapter.            (line 2267)
 * vtable i--tem code kbdinputstyle:      chapter.            (line  152)
-* vtable i--tem code kbdinputstyle <1>:  chapter.            (line  848)
-* vtable i--tem code kbdinputstyle <2>:  chapter.            (line 1677)
+* vtable i--tem code kbdinputstyle <1>:  chapter.            (line  842)
+* vtable i--tem code kbdinputstyle <2>:  chapter.            (line 1665)
 * vtable i--tem default kbdinputstyle:   chapter.            (line  147)
-* vtable i--tem default kbdinputstyle <1>: chapter.          (line  843)
-* vtable i--tem default kbdinputstyle <2>: chapter.          (line 1672)
+* vtable i--tem default kbdinputstyle <1>: chapter.          (line  837)
+* vtable i--tem default kbdinputstyle <2>: chapter.          (line 1660)
 * vtable i--tem distinct kbdinputstyle:  chapter.            (line  162)
-* vtable i--tem distinct kbdinputstyle <1>: chapter.         (line  858)
-* vtable i--tem distinct kbdinputstyle <2>: chapter.         (line 1687)
+* vtable i--tem distinct kbdinputstyle <1>: chapter.         (line  852)
+* vtable i--tem distinct kbdinputstyle <2>: chapter.         (line 1675)
 * vtable i--tem example kbdinputstyle:   chapter.            (line  157)
-* vtable i--tem example kbdinputstyle <1>: chapter.          (line  853)
-* vtable i--tem example kbdinputstyle <2>: chapter.          (line 1682)
+* vtable i--tem example kbdinputstyle <1>: chapter.          (line  847)
+* vtable i--tem example kbdinputstyle <2>: chapter.          (line 1670)
 * vtable i--tem in example code kbdinputstyle: chapter.      (line  154)
-* vtable i--tem in example code kbdinputstyle <1>: chapter.  (line  850)
-* vtable i--tem in example code kbdinputstyle <2>: chapter.  (line 1679)
+* vtable i--tem in example code kbdinputstyle <1>: chapter.  (line  844)
+* vtable i--tem in example code kbdinputstyle <2>: chapter.  (line 1667)
 * vtable i--tem in example default kbdinputstyle: chapter.   (line  149)
 * vtable i--tem in example default kbdinputstyle <1>: chapter.
-                                                             (line  845)
+                                                             (line  839)
 * vtable i--tem in example default kbdinputstyle <2>: chapter.
-                                                             (line 1674)
+                                                             (line 1662)
 * vtable i--tem in example distinct kbdinputstyle: chapter.  (line  164)
 * vtable i--tem in example distinct kbdinputstyle <1>: chapter.
-                                                             (line  860)
+                                                             (line  854)
 * vtable i--tem in example distinct kbdinputstyle <2>: chapter.
-                                                             (line 1689)
+                                                             (line 1677)
 * vtable i--tem in example example kbdinputstyle: chapter.   (line  159)
 * vtable i--tem in example example kbdinputstyle <1>: chapter.
-                                                             (line  855)
+                                                             (line  849)
 * vtable i--tem in example example kbdinputstyle <2>: chapter.
-                                                             (line 1684)
+                                                             (line 1672)
 
    fn
 
 * Menu:
 
 * --foption:                             chapter.            (line   28)
-* --foption <1>:                         chapter.            (line  724)
-* --foption <2>:                         chapter.            (line 1431)
-* ?:                                     chapter.            (line 2278)
-* .:                                     chapter.            (line 2278)
+* --foption <1>:                         chapter.            (line  718)
+* --foption <2>:                         chapter.            (line 1419)
+* ?:                                     chapter.            (line 2267)
+* .:                                     chapter.            (line 2267)
 * ``:                                    chapter.            (line   28)
-* `` <1>:                                chapter.            (line  724)
-* `` <2>:                                chapter.            (line 1431)
+* `` <1>:                                chapter.            (line  718)
+* `` <2>:                                chapter.            (line 1419)
 * a:                                     chapter.            (line  330)
-* a <1>:                                 chapter.            (line  529)
-* a <2>:                                 chapter.            (line  658)
-* a <3>:                                 chapter.            (line 1026)
-* a <4>:                                 chapter.            (line 1225)
-* a <5>:                                 chapter.            (line 1354)
-* a <6>:                                 chapter.            (line 1856)
-* a <7>:                                 chapter.            (line 2057)
-* a <8>:                                 chapter.            (line 2219)
-* a <9>:                                 chapter.            (line 2278)
-* after:                                 chapter.            (line  669)
-* after <1>:                             chapter.            (line 1365)
-* after <2>:                             chapter.            (line 2230)
+* a <1>:                                 chapter.            (line  524)
+* a <2>:                                 chapter.            (line  654)
+* a <3>:                                 chapter.            (line 1020)
+* a <4>:                                 chapter.            (line 1214)
+* a <5>:                                 chapter.            (line 1344)
+* a <6>:                                 chapter.            (line 1844)
+* a <7>:                                 chapter.            (line 2045)
+* a <8>:                                 chapter.            (line 2208)
+* a <9>:                                 chapter.            (line 2267)
+* after:                                 chapter.            (line  665)
+* after <1>:                             chapter.            (line 1355)
+* after <2>:                             chapter.            (line 2219)
 * arg2:                                  chapter.            (line  449)
-* arg2 <1>:                              chapter.            (line 1145)
-* arg2 <2>:                              chapter.            (line 1979)
-* b:                                     chapter.            (line  530)
-* b <1>:                                 chapter.            (line  659)
-* b <2>:                                 chapter.            (line 1226)
-* b <3>:                                 chapter.            (line 1355)
-* b <4>:                                 chapter.            (line 2058)
-* b <5>:                                 chapter.            (line 2220)
+* arg2 <1>:                              chapter.            (line 1139)
+* arg2 <2>:                              chapter.            (line 1967)
+* b:                                     chapter.            (line  525)
+* b <1>:                                 chapter.            (line  655)
+* b <2>:                                 chapter.            (line 1215)
+* b <3>:                                 chapter.            (line 1345)
+* b <4>:                                 chapter.            (line 2046)
+* b <5>:                                 chapter.            (line 2209)
 * bidule machin:                         chapter.            (line  325)
-* bidule machin <1>:                     chapter.            (line 1021)
-* bidule machin <2>:                     chapter.            (line 1851)
+* bidule machin <1>:                     chapter.            (line 1015)
+* bidule machin <2>:                     chapter.            (line 1839)
 * d--effn_name:                          chapter.            (line  309)
-* d--effn_name <1>:                      chapter.            (line 1005)
-* d--effn_name <2>:                      chapter.            (line 1835)
+* d--effn_name <1>:                      chapter.            (line  999)
+* d--effn_name <2>:                      chapter.            (line 1823)
 * d--efmac_name:                         chapter.            (line  390)
-* d--efmac_name <1>:                     chapter.            (line 1086)
-* d--efmac_name <2>:                     chapter.            (line 1918)
+* d--efmac_name <1>:                     chapter.            (line 1080)
+* d--efmac_name <2>:                     chapter.            (line 1906)
 * d--efmethod_name on c--lass:           chapter.            (line  417)
-* d--efmethod_name on c--lass <1>:       chapter.            (line 1113)
-* d--efmethod_name on c--lass <2>:       chapter.            (line 1945)
+* d--efmethod_name on c--lass <1>:       chapter.            (line 1107)
+* d--efmethod_name on c--lass <2>:       chapter.            (line 1933)
 * d--efop_name on c--lass:               chapter.            (line  378)
 * d--efop_name on c--lass <1>:           chapter.            (line  381)
-* d--efop_name on c--lass <2>:           chapter.            (line 1074)
-* d--efop_name on c--lass <3>:           chapter.            (line 1077)
-* d--efop_name on c--lass <4>:           chapter.            (line 1906)
-* d--efop_name on c--lass <5>:           chapter.            (line 1909)
+* d--efop_name on c--lass <2>:           chapter.            (line 1068)
+* d--efop_name on c--lass <3>:           chapter.            (line 1071)
+* d--efop_name on c--lass <4>:           chapter.            (line 1894)
+* d--efop_name on c--lass <5>:           chapter.            (line 1897)
 * d--efspec_name:                        chapter.            (line  393)
-* d--efspec_name <1>:                    chapter.            (line 1089)
-* d--efspec_name <2>:                    chapter.            (line 1921)
+* d--efspec_name <1>:                    chapter.            (line 1083)
+* d--efspec_name <2>:                    chapter.            (line 1909)
 * d--eftypefn_name:                      chapter.            (line  351)
 * d--eftypefn_name <1>:                  chapter.            (line  354)
-* d--eftypefn_name <2>:                  chapter.            (line 1047)
-* d--eftypefn_name <3>:                  chapter.            (line 1050)
-* d--eftypefn_name <4>:                  chapter.            (line 1879)
-* d--eftypefn_name <5>:                  chapter.            (line 1882)
+* d--eftypefn_name <2>:                  chapter.            (line 1041)
+* d--eftypefn_name <3>:                  chapter.            (line 1044)
+* d--eftypefn_name <4>:                  chapter.            (line 1867)
+* d--eftypefn_name <5>:                  chapter.            (line 1870)
 * d--eftypefn_name2:                     chapter.            (line  428)
-* d--eftypefn_name2 <1>:                 chapter.            (line 1124)
-* d--eftypefn_name2 <2>:                 chapter.            (line 1957)
+* d--eftypefn_name2 <1>:                 chapter.            (line 1118)
+* d--eftypefn_name2 <2>:                 chapter.            (line 1945)
 * d--eftypefun_name:                     chapter.            (line  405)
-* d--eftypefun_name <1>:                 chapter.            (line 1101)
-* d--eftypefun_name <2>:                 chapter.            (line 1933)
+* d--eftypefun_name <1>:                 chapter.            (line 1095)
+* d--eftypefun_name <2>:                 chapter.            (line 1921)
 * d--eftypemethod_name on c--lass:       chapter.            (line  420)
-* d--eftypemethod_name on c--lass <1>:   chapter.            (line 1116)
-* d--eftypemethod_name on c--lass <2>:   chapter.            (line 1948)
+* d--eftypemethod_name on c--lass <1>:   chapter.            (line 1110)
+* d--eftypemethod_name on c--lass <2>:   chapter.            (line 1936)
 * d--eftypeop_name on c--lass:           chapter.            (line  357)
 * d--eftypeop_name on c--lass <1>:       chapter.            (line  360)
-* d--eftypeop_name on c--lass <2>:       chapter.            (line 1053)
-* d--eftypeop_name on c--lass <3>:       chapter.            (line 1056)
-* d--eftypeop_name on c--lass <4>:       chapter.            (line 1885)
-* d--eftypeop_name on c--lass <5>:       chapter.            (line 1888)
+* d--eftypeop_name on c--lass <2>:       chapter.            (line 1047)
+* d--eftypeop_name on c--lass <3>:       chapter.            (line 1050)
+* d--eftypeop_name on c--lass <4>:       chapter.            (line 1873)
+* d--eftypeop_name on c--lass <5>:       chapter.            (line 1876)
 * d--eftypeop_name2 on c--lass2:         chapter.            (line  433)
 * d--eftypeop_name2 on c--lass2 <1>:     chapter.            (line  438)
-* d--eftypeop_name2 on c--lass2 <2>:     chapter.            (line 1129)
-* d--eftypeop_name2 on c--lass2 <3>:     chapter.            (line 1134)
-* d--eftypeop_name2 on c--lass2 <4>:     chapter.            (line 1962)
-* d--eftypeop_name2 on c--lass2 <5>:     chapter.            (line 1967)
+* d--eftypeop_name2 on c--lass2 <2>:     chapter.            (line 1123)
+* d--eftypeop_name2 on c--lass2 <3>:     chapter.            (line 1128)
+* d--eftypeop_name2 on c--lass2 <4>:     chapter.            (line 1950)
+* d--eftypeop_name2 on c--lass2 <5>:     chapter.            (line 1955)
 * d--efun_name:                          chapter.            (line  387)
-* d--efun_name <1>:                      chapter.            (line 1083)
-* d--efun_name <2>:                      chapter.            (line 1915)
+* d--efun_name <1>:                      chapter.            (line 1077)
+* d--efun_name <2>:                      chapter.            (line 1903)
 * de--ffn_name:                          chapter.            (line  312)
-* de--ffn_name <1>:                      chapter.            (line 1008)
-* de--ffn_name <2>:                      chapter.            (line 1838)
+* de--ffn_name <1>:                      chapter.            (line 1002)
+* de--ffn_name <2>:                      chapter.            (line 1826)
 * deffn:                                 chapter.            (line  333)
 * deffn <1>:                             chapter.            (line  335)
-* deffn <2>:                             chapter.            (line 1029)
-* deffn <3>:                             chapter.            (line 1031)
-* deffn <4>:                             chapter.            (line 1860)
-* deffn <5>:                             chapter.            (line 1862)
+* deffn <2>:                             chapter.            (line 1023)
+* deffn <3>:                             chapter.            (line 1025)
+* deffn <4>:                             chapter.            (line 1848)
+* deffn <5>:                             chapter.            (line 1850)
 * deffnx:                                chapter.            (line  331)
 * deffnx <1>:                            chapter.            (line  336)
-* deffnx <2>:                            chapter.            (line 1027)
-* deffnx <3>:                            chapter.            (line 1032)
-* deffnx <4>:                            chapter.            (line 1857)
-* deffnx <5>:                            chapter.            (line 1863)
-* f---aa:                                chapter.            (line 2278)
-* f---bb, f---cc:                        chapter.            (line 2278)
-* f---ddd, f---eee, ffff:                chapter.            (line 2278)
-* f---ggg, f---hhh fjjj, f---kkk, f---lll: chapter.          (line 2278)
+* deffnx <2>:                            chapter.            (line 1021)
+* deffnx <3>:                            chapter.            (line 1026)
+* deffnx <4>:                            chapter.            (line 1845)
+* deffnx <5>:                            chapter.            (line 1851)
+* f---aa:                                chapter.            (line 2267)
+  f---aaa, See f---bbb.
+* f---bb, f---cc:                        chapter.            (line 2267)
+  f---ddd:                               See also f---ccc.
+  f---ddd:                               See also f---ccc.
+* f---ddd, f---eee, ffff:                chapter.            (line 2267)
+* f---ggg, f---hhh fjjj, f---kkk, f---lll: chapter.          (line 2267)
 * followed:                              chapter.            (line  328)
-* followed <1>:                          chapter.            (line  667)
-* followed <2>:                          chapter.            (line 1024)
-* followed <3>:                          chapter.            (line 1363)
-* followed <4>:                          chapter.            (line 1854)
-* followed <5>:                          chapter.            (line 2228)
+* followed <1>:                          chapter.            (line  663)
+* followed <2>:                          chapter.            (line 1018)
+* followed <3>:                          chapter.            (line 1353)
+* followed <4>:                          chapter.            (line 1842)
+* followed <5>:                          chapter.            (line 2217)
 * I:                                     chapter.            (line  316)
 * I <1>:                                 chapter.            (line  338)
-* I <2>:                                 chapter.            (line 1012)
-* I <3>:                                 chapter.            (line 1034)
-* I <4>:                                 chapter.            (line 1842)
-* I <5>:                                 chapter.            (line 1865)
+* I <2>:                                 chapter.            (line 1006)
+* I <3>:                                 chapter.            (line 1028)
+* I <4>:                                 chapter.            (line 1830)
+* I <5>:                                 chapter.            (line 1853)
 * id i ule:                              chapter.            (line  322)
-* id i ule <1>:                          chapter.            (line 1018)
-* id i ule <2>:                          chapter.            (line 1848)
+* id i ule <1>:                          chapter.            (line 1012)
+* id i ule <2>:                          chapter.            (line 1836)
 * id ule:                                chapter.            (line  321)
-* id ule <1>:                            chapter.            (line 1017)
-* id ule <2>:                            chapter.            (line 1847)
-* INVALID:                               chapter.            (line  671)
-* INVALID <1>:                           chapter.            (line 1367)
-* INVALID <2>:                           chapter.            (line 2232)
+* id ule <1>:                            chapter.            (line 1011)
+* id ule <2>:                            chapter.            (line 1835)
+* INVALID:                               chapter.            (line  667)
+* INVALID <1>:                           chapter.            (line 1357)
+* INVALID <2>:                           chapter.            (line 2221)
 * log trap:                              chapter.            (line  318)
-* log trap <1>:                          chapter.            (line 1014)
-* log trap <2>:                          chapter.            (line 1844)
+* log trap <1>:                          chapter.            (line 1008)
+* log trap <2>:                          chapter.            (line 1832)
 * log trap1:                             chapter.            (line  319)
-* log trap1 <1>:                         chapter.            (line 1015)
-* log trap1 <2>:                         chapter.            (line 1845)
+* log trap1 <1>:                         chapter.            (line 1009)
+* log trap1 <2>:                         chapter.            (line 1833)
 * log trap2:                             chapter.            (line  320)
-* log trap2 <1>:                         chapter.            (line 1016)
-* log trap2 <2>:                         chapter.            (line 1846)
+* log trap2 <1>:                         chapter.            (line 1010)
+* log trap2 <2>:                         chapter.            (line 1834)
 * machin:                                chapter.            (line  324)
 * machin <1>:                            chapter.            (line  326)
-* machin <2>:                            chapter.            (line  663)
-* machin <3>:                            chapter.            (line  664)
-* machin <4>:                            chapter.            (line  665)
-* machin <5>:                            chapter.            (line  666)
-* machin <6>:                            chapter.            (line 1020)
-* machin <7>:                            chapter.            (line 1022)
-* machin <8>:                            chapter.            (line 1359)
-* machin <9>:                            chapter.            (line 1360)
-* machin <10>:                           chapter.            (line 1361)
-* machin <11>:                           chapter.            (line 1362)
-* machin <12>:                           chapter.            (line 1850)
-* machin <13>:                           chapter.            (line 1852)
-* machin <14>:                           chapter.            (line 2224)
-* machin <15>:                           chapter.            (line 2225)
-* machin <16>:                           chapter.            (line 2226)
-* machin <17>:                           chapter.            (line 2227)
+* machin <2>:                            chapter.            (line  659)
+* machin <3>:                            chapter.            (line  660)
+* machin <4>:                            chapter.            (line  661)
+* machin <5>:                            chapter.            (line  662)
+* machin <6>:                            chapter.            (line 1014)
+* machin <7>:                            chapter.            (line 1016)
+* machin <8>:                            chapter.            (line 1349)
+* machin <9>:                            chapter.            (line 1350)
+* machin <10>:                           chapter.            (line 1351)
+* machin <11>:                           chapter.            (line 1352)
+* machin <12>:                           chapter.            (line 1838)
+* machin <13>:                           chapter.            (line 1840)
+* machin <14>:                           chapter.            (line 2213)
+* machin <15>:                           chapter.            (line 2214)
+* machin <16>:                           chapter.            (line 2215)
+* machin <17>:                           chapter.            (line 2216)
 * n--ame:                                chapter.            (line  345)
 * n--ame <1>:                            chapter.            (line  348)
-* n--ame <2>:                            chapter.            (line 1041)
-* n--ame <3>:                            chapter.            (line 1044)
-* n--ame <4>:                            chapter.            (line 1873)
-* n--ame <5>:                            chapter.            (line 1876)
+* n--ame <2>:                            chapter.            (line 1035)
+* n--ame <3>:                            chapter.            (line 1038)
+* n--ame <4>:                            chapter.            (line 1861)
+* n--ame <5>:                            chapter.            (line 1864)
 * name2:                                 chapter.            (line  423)
-* name2 <1>:                             chapter.            (line 1119)
-* name2 <2>:                             chapter.            (line 1952)
-* t--ruc:                                chapter.            (line 2278)
-* T--ruc:                                chapter.            (line 2278)
+* name2 <1>:                             chapter.            (line 1113)
+* name2 <2>:                             chapter.            (line 1940)
+* t--ruc:                                chapter.            (line 2267)
+* T--ruc:                                chapter.            (line 2267)
 * truc:                                  chapter.            (line  317)
 * truc <1>:                              chapter.            (line  339)
-* truc <2>:                              chapter.            (line 1013)
-* truc <3>:                              chapter.            (line 1035)
-* truc <4>:                              chapter.            (line 1843)
-* truc <5>:                              chapter.            (line 1866)
-* xxx, zzz:                              chapter.            (line 2278)
+* truc <2>:                              chapter.            (line 1007)
+* truc <3>:                              chapter.            (line 1029)
+* truc <4>:                              chapter.            (line 1831)
+* truc <5>:                              chapter.            (line 1854)
+* xxx, zzz:                              chapter.            (line 2267)
 
    vr
 
@@ -2588,8 +2583,8 @@ aaa
 * Menu:
 
 * d--eftp_name:                          chapter.            (line  384)
-* d--eftp_name <1>:                      chapter.            (line 1080)
-* d--eftp_name <2>:                      chapter.            (line 1912)
+* d--eftp_name <1>:                      chapter.            (line 1074)
+* d--eftp_name <2>:                      chapter.            (line 1900)
 
    (8)
 
@@ -2633,285 +2628,291 @@ chapter 2
 * Menu:
 
 * -option:                               chapter.            (line   28)
-* -option <1>:                           chapter.            (line  724)
-* -option <2>:                           chapter.            (line 1431)
-* ?:                                     chapter.            (line 2278)
-* .:                                     chapter.            (line 2278)
+* -option <1>:                           chapter.            (line  718)
+* -option <2>:                           chapter.            (line 1419)
+* ?:                                     chapter.            (line 2267)
+* .:                                     chapter.            (line 2267)
 * ":                                     chapter.            (line   28)
-* " <1>:                                 chapter.            (line  724)
-* " <2>:                                 chapter.            (line 1431)
-* a:                                     chapter.            (line 2278)
-* aaa, bbb:                              chapter.            (line 2278)
-* a--a:                                  chapter.            (line 2278)
-* a--asis:                               chapter.            (line  525)
-* a--asis <1>:                           chapter.            (line 1221)
-* a--asis <2>:                           chapter.            (line 2053)
-* b:                                     chapter.            (line  526)
-* b <1>:                                 chapter.            (line 1222)
-* b <2>:                                 chapter.            (line 2054)
-* b--b, c--c:                            chapter.            (line 2278)
-* counting entry:                        chapter.            (line 2614)
-* d--dd, e--ee, f--ff:                   chapter.            (line 2278)
+* " <1>:                                 chapter.            (line  718)
+* " <2>:                                 chapter.            (line 1419)
+* a:                                     chapter.            (line 2267)
+* aaa, bbb:                              chapter.            (line 2267)
+* a--a:                                  chapter.            (line 2267)
+* a--asis:                               chapter.            (line  520)
+* a--asis <1>:                           chapter.            (line 1210)
+* a--asis <2>:                           chapter.            (line 2041)
+  aaa, See bbb.
+* b:                                     chapter.            (line  521)
+* b <1>:                                 chapter.            (line 1211)
+* b <2>:                                 chapter.            (line 2042)
+* b--b, c--c:                            chapter.            (line 2267)
+* counting entry:                        chapter.            (line 2609)
+* d--dd, e--ee, f--ff:                   chapter.            (line 2267)
 * d--efcv_name:                          chapter.            (line  366)
 * d--efcv_name <1>:                      chapter.            (line  369)
-* d--efcv_name <2>:                      chapter.            (line 1062)
-* d--efcv_name <3>:                      chapter.            (line 1065)
-* d--efcv_name <4>:                      chapter.            (line 1894)
-* d--efcv_name <5>:                      chapter.            (line 1897)
+* d--efcv_name <2>:                      chapter.            (line 1056)
+* d--efcv_name <3>:                      chapter.            (line 1059)
+* d--efcv_name <4>:                      chapter.            (line 1882)
+* d--efcv_name <5>:                      chapter.            (line 1885)
 * d--efivar_name of c--lass:             chapter.            (line  411)
-* d--efivar_name of c--lass <1>:         chapter.            (line 1107)
-* d--efivar_name of c--lass <2>:         chapter.            (line 1939)
+* d--efivar_name of c--lass <1>:         chapter.            (line 1101)
+* d--efivar_name of c--lass <2>:         chapter.            (line 1927)
 * d--efopt_name:                         chapter.            (line  402)
-* d--efopt_name <1>:                     chapter.            (line 1098)
-* d--efopt_name <2>:                     chapter.            (line 1930)
+* d--efopt_name <1>:                     chapter.            (line 1092)
+* d--efopt_name <2>:                     chapter.            (line 1918)
 * d--eftypecv_name of c--lass:           chapter.            (line  372)
 * d--eftypecv_name of c--lass <1>:       chapter.            (line  375)
-* d--eftypecv_name of c--lass <2>:       chapter.            (line 1068)
-* d--eftypecv_name of c--lass <3>:       chapter.            (line 1071)
-* d--eftypecv_name of c--lass <4>:       chapter.            (line 1900)
-* d--eftypecv_name of c--lass <5>:       chapter.            (line 1903)
+* d--eftypecv_name of c--lass <2>:       chapter.            (line 1062)
+* d--eftypecv_name of c--lass <3>:       chapter.            (line 1065)
+* d--eftypecv_name of c--lass <4>:       chapter.            (line 1888)
+* d--eftypecv_name of c--lass <5>:       chapter.            (line 1891)
 * d--eftypecv_name2 of c--lass2:         chapter.            (line  443)
 * d--eftypecv_name2 of c--lass2 <1>:     chapter.            (line  446)
-* d--eftypecv_name2 of c--lass2 <2>:     chapter.            (line 1139)
-* d--eftypecv_name2 of c--lass2 <3>:     chapter.            (line 1142)
-* d--eftypecv_name2 of c--lass2 <4>:     chapter.            (line 1972)
-* d--eftypecv_name2 of c--lass2 <5>:     chapter.            (line 1975)
+* d--eftypecv_name2 of c--lass2 <2>:     chapter.            (line 1133)
+* d--eftypecv_name2 of c--lass2 <3>:     chapter.            (line 1136)
+* d--eftypecv_name2 of c--lass2 <4>:     chapter.            (line 1960)
+* d--eftypecv_name2 of c--lass2 <5>:     chapter.            (line 1963)
 * d--eftypeivar_name of c--lass:         chapter.            (line  414)
-* d--eftypeivar_name of c--lass <1>:     chapter.            (line 1110)
-* d--eftypeivar_name of c--lass <2>:     chapter.            (line 1942)
+* d--eftypeivar_name of c--lass <1>:     chapter.            (line 1104)
+* d--eftypeivar_name of c--lass <2>:     chapter.            (line 1930)
 * d--eftypevar_name:                     chapter.            (line  408)
-* d--eftypevar_name <1>:                 chapter.            (line 1104)
-* d--eftypevar_name <2>:                 chapter.            (line 1936)
+* d--eftypevar_name <1>:                 chapter.            (line 1098)
+* d--eftypevar_name <2>:                 chapter.            (line 1924)
 * d--eftypevr_name:                      chapter.            (line  363)
-* d--eftypevr_name <1>:                  chapter.            (line 1059)
-* d--eftypevr_name <2>:                  chapter.            (line 1891)
+* d--eftypevr_name <1>:                  chapter.            (line 1053)
+* d--eftypevr_name <2>:                  chapter.            (line 1879)
 * d--efvar_name:                         chapter.            (line  396)
 * d--efvar_name <1>:                     chapter.            (line  399)
-* d--efvar_name <2>:                     chapter.            (line 1092)
-* d--efvar_name <3>:                     chapter.            (line 1095)
-* d--efvar_name <4>:                     chapter.            (line 1924)
-* d--efvar_name <5>:                     chapter.            (line 1927)
+* d--efvar_name <2>:                     chapter.            (line 1086)
+* d--efvar_name <3>:                     chapter.            (line 1089)
+* d--efvar_name <4>:                     chapter.            (line 1912)
+* d--efvar_name <5>:                     chapter.            (line 1915)
 * d--efvr_name:                          chapter.            (line  342)
-* d--efvr_name <1>:                      chapter.            (line 1038)
-* d--efvr_name <2>:                      chapter.            (line 1870)
-* g--gg, h--hh jjj, k--kk, l--ll:        chapter.            (line 2278)
-* index entry between item and itemx:    chapter.            (line  530)
-* index entry between item and itemx <1>: chapter.           (line  659)
-* index entry between item and itemx <2>: chapter.           (line 1226)
-* index entry between item and itemx <3>: chapter.           (line 1355)
-* index entry between item and itemx <4>: chapter.           (line 2058)
-* index entry between item and itemx <5>: chapter.           (line 2220)
-* index entry in footnote:               chapter.            (line 2609)
+* d--efvr_name <1>:                      chapter.            (line 1032)
+* d--efvr_name <2>:                      chapter.            (line 1858)
+  ddd:                                   See also ccc.
+  ddd:                                   See also ccc.
+* g--gg, h--hh jjj, k--kk, l--ll:        chapter.            (line 2267)
+* index entry between item and itemx:    chapter.            (line  525)
+* index entry between item and itemx <1>: chapter.           (line  655)
+* index entry between item and itemx <2>: chapter.           (line 1215)
+* index entry between item and itemx <3>: chapter.           (line 1345)
+* index entry between item and itemx <4>: chapter.           (line 2046)
+* index entry between item and itemx <5>: chapter.           (line 2209)
+* index entry in footnote:               chapter.            (line 2604)
 * index entry within deffn:              chapter.            (line  317)
-* index entry within deffn <1>:          chapter.            (line 1013)
-* index entry within deffn <2>:          chapter.            (line 1843)
+* index entry within deffn <1>:          chapter.            (line 1007)
+* index entry within deffn <2>:          chapter.            (line 1831)
 * index entry within itemize:            chapter.            (line  228)
-* index entry within itemize <1>:        chapter.            (line  924)
-* index entry within itemize <2>:        chapter.            (line 1754)
+* index entry within itemize <1>:        chapter.            (line  918)
+* index entry within itemize <2>:        chapter.            (line 1742)
 * index entry within multitable:         chapter.            (line  250)
-* index entry within multitable <1>:     chapter.            (line  946)
-* index entry within multitable <2>:     chapter.            (line 1777)
-* t-ruc:                                 chapter.            (line 2278)
-* T-ruc:                                 chapter.            (line 2278)
+* index entry within multitable <1>:     chapter.            (line  940)
+* index entry within multitable <2>:     chapter.            (line 1765)
+* t-ruc:                                 chapter.            (line 2267)
+* T-ruc:                                 chapter.            (line 2267)
 * vtable i--tem code kbdinputstyle:      chapter.            (line  152)
-* vtable i--tem code kbdinputstyle <1>:  chapter.            (line  848)
-* vtable i--tem code kbdinputstyle <2>:  chapter.            (line 1677)
+* vtable i--tem code kbdinputstyle <1>:  chapter.            (line  842)
+* vtable i--tem code kbdinputstyle <2>:  chapter.            (line 1665)
 * vtable i--tem default kbdinputstyle:   chapter.            (line  147)
-* vtable i--tem default kbdinputstyle <1>: chapter.          (line  843)
-* vtable i--tem default kbdinputstyle <2>: chapter.          (line 1672)
+* vtable i--tem default kbdinputstyle <1>: chapter.          (line  837)
+* vtable i--tem default kbdinputstyle <2>: chapter.          (line 1660)
 * vtable i--tem distinct kbdinputstyle:  chapter.            (line  162)
-* vtable i--tem distinct kbdinputstyle <1>: chapter.         (line  858)
-* vtable i--tem distinct kbdinputstyle <2>: chapter.         (line 1687)
+* vtable i--tem distinct kbdinputstyle <1>: chapter.         (line  852)
+* vtable i--tem distinct kbdinputstyle <2>: chapter.         (line 1675)
 * vtable i--tem example kbdinputstyle:   chapter.            (line  157)
-* vtable i--tem example kbdinputstyle <1>: chapter.          (line  853)
-* vtable i--tem example kbdinputstyle <2>: chapter.          (line 1682)
+* vtable i--tem example kbdinputstyle <1>: chapter.          (line  847)
+* vtable i--tem example kbdinputstyle <2>: chapter.          (line 1670)
 * vtable i--tem in example code kbdinputstyle: chapter.      (line  154)
-* vtable i--tem in example code kbdinputstyle <1>: chapter.  (line  850)
-* vtable i--tem in example code kbdinputstyle <2>: chapter.  (line 1679)
+* vtable i--tem in example code kbdinputstyle <1>: chapter.  (line  844)
+* vtable i--tem in example code kbdinputstyle <2>: chapter.  (line 1667)
 * vtable i--tem in example default kbdinputstyle: chapter.   (line  149)
 * vtable i--tem in example default kbdinputstyle <1>: chapter.
-                                                             (line  845)
+                                                             (line  839)
 * vtable i--tem in example default kbdinputstyle <2>: chapter.
-                                                             (line 1674)
+                                                             (line 1662)
 * vtable i--tem in example distinct kbdinputstyle: chapter.  (line  164)
 * vtable i--tem in example distinct kbdinputstyle <1>: chapter.
-                                                             (line  860)
+                                                             (line  854)
 * vtable i--tem in example distinct kbdinputstyle <2>: chapter.
-                                                             (line 1689)
+                                                             (line 1677)
 * vtable i--tem in example example kbdinputstyle: chapter.   (line  159)
 * vtable i--tem in example example kbdinputstyle <1>: chapter.
-                                                             (line  855)
+                                                             (line  849)
 * vtable i--tem in example example kbdinputstyle <2>: chapter.
-                                                             (line 1684)
+                                                             (line 1672)
 
 * Menu:
 
 * --foption:                             chapter.            (line   28)
-* --foption <1>:                         chapter.            (line  724)
-* --foption <2>:                         chapter.            (line 1431)
-* ?:                                     chapter.            (line 2278)
-* .:                                     chapter.            (line 2278)
+* --foption <1>:                         chapter.            (line  718)
+* --foption <2>:                         chapter.            (line 1419)
+* ?:                                     chapter.            (line 2267)
+* .:                                     chapter.            (line 2267)
 * ``:                                    chapter.            (line   28)
-* `` <1>:                                chapter.            (line  724)
-* `` <2>:                                chapter.            (line 1431)
+* `` <1>:                                chapter.            (line  718)
+* `` <2>:                                chapter.            (line 1419)
 * a:                                     chapter.            (line  330)
-* a <1>:                                 chapter.            (line  529)
-* a <2>:                                 chapter.            (line  658)
-* a <3>:                                 chapter.            (line 1026)
-* a <4>:                                 chapter.            (line 1225)
-* a <5>:                                 chapter.            (line 1354)
-* a <6>:                                 chapter.            (line 1856)
-* a <7>:                                 chapter.            (line 2057)
-* a <8>:                                 chapter.            (line 2219)
-* a <9>:                                 chapter.            (line 2278)
-* after:                                 chapter.            (line  669)
-* after <1>:                             chapter.            (line 1365)
-* after <2>:                             chapter.            (line 2230)
+* a <1>:                                 chapter.            (line  524)
+* a <2>:                                 chapter.            (line  654)
+* a <3>:                                 chapter.            (line 1020)
+* a <4>:                                 chapter.            (line 1214)
+* a <5>:                                 chapter.            (line 1344)
+* a <6>:                                 chapter.            (line 1844)
+* a <7>:                                 chapter.            (line 2045)
+* a <8>:                                 chapter.            (line 2208)
+* a <9>:                                 chapter.            (line 2267)
+* after:                                 chapter.            (line  665)
+* after <1>:                             chapter.            (line 1355)
+* after <2>:                             chapter.            (line 2219)
 * arg2:                                  chapter.            (line  449)
-* arg2 <1>:                              chapter.            (line 1145)
-* arg2 <2>:                              chapter.            (line 1979)
-* b:                                     chapter.            (line  530)
-* b <1>:                                 chapter.            (line  659)
-* b <2>:                                 chapter.            (line 1226)
-* b <3>:                                 chapter.            (line 1355)
-* b <4>:                                 chapter.            (line 2058)
-* b <5>:                                 chapter.            (line 2220)
+* arg2 <1>:                              chapter.            (line 1139)
+* arg2 <2>:                              chapter.            (line 1967)
+* b:                                     chapter.            (line  525)
+* b <1>:                                 chapter.            (line  655)
+* b <2>:                                 chapter.            (line 1215)
+* b <3>:                                 chapter.            (line 1345)
+* b <4>:                                 chapter.            (line 2046)
+* b <5>:                                 chapter.            (line 2209)
 * bidule machin:                         chapter.            (line  325)
-* bidule machin <1>:                     chapter.            (line 1021)
-* bidule machin <2>:                     chapter.            (line 1851)
+* bidule machin <1>:                     chapter.            (line 1015)
+* bidule machin <2>:                     chapter.            (line 1839)
 * d--effn_name:                          chapter.            (line  309)
-* d--effn_name <1>:                      chapter.            (line 1005)
-* d--effn_name <2>:                      chapter.            (line 1835)
+* d--effn_name <1>:                      chapter.            (line  999)
+* d--effn_name <2>:                      chapter.            (line 1823)
 * d--efmac_name:                         chapter.            (line  390)
-* d--efmac_name <1>:                     chapter.            (line 1086)
-* d--efmac_name <2>:                     chapter.            (line 1918)
+* d--efmac_name <1>:                     chapter.            (line 1080)
+* d--efmac_name <2>:                     chapter.            (line 1906)
 * d--efmethod_name on c--lass:           chapter.            (line  417)
-* d--efmethod_name on c--lass <1>:       chapter.            (line 1113)
-* d--efmethod_name on c--lass <2>:       chapter.            (line 1945)
+* d--efmethod_name on c--lass <1>:       chapter.            (line 1107)
+* d--efmethod_name on c--lass <2>:       chapter.            (line 1933)
 * d--efop_name on c--lass:               chapter.            (line  378)
 * d--efop_name on c--lass <1>:           chapter.            (line  381)
-* d--efop_name on c--lass <2>:           chapter.            (line 1074)
-* d--efop_name on c--lass <3>:           chapter.            (line 1077)
-* d--efop_name on c--lass <4>:           chapter.            (line 1906)
-* d--efop_name on c--lass <5>:           chapter.            (line 1909)
+* d--efop_name on c--lass <2>:           chapter.            (line 1068)
+* d--efop_name on c--lass <3>:           chapter.            (line 1071)
+* d--efop_name on c--lass <4>:           chapter.            (line 1894)
+* d--efop_name on c--lass <5>:           chapter.            (line 1897)
 * d--efspec_name:                        chapter.            (line  393)
-* d--efspec_name <1>:                    chapter.            (line 1089)
-* d--efspec_name <2>:                    chapter.            (line 1921)
+* d--efspec_name <1>:                    chapter.            (line 1083)
+* d--efspec_name <2>:                    chapter.            (line 1909)
 * d--eftypefn_name:                      chapter.            (line  351)
 * d--eftypefn_name <1>:                  chapter.            (line  354)
-* d--eftypefn_name <2>:                  chapter.            (line 1047)
-* d--eftypefn_name <3>:                  chapter.            (line 1050)
-* d--eftypefn_name <4>:                  chapter.            (line 1879)
-* d--eftypefn_name <5>:                  chapter.            (line 1882)
+* d--eftypefn_name <2>:                  chapter.            (line 1041)
+* d--eftypefn_name <3>:                  chapter.            (line 1044)
+* d--eftypefn_name <4>:                  chapter.            (line 1867)
+* d--eftypefn_name <5>:                  chapter.            (line 1870)
 * d--eftypefn_name2:                     chapter.            (line  428)
-* d--eftypefn_name2 <1>:                 chapter.            (line 1124)
-* d--eftypefn_name2 <2>:                 chapter.            (line 1957)
+* d--eftypefn_name2 <1>:                 chapter.            (line 1118)
+* d--eftypefn_name2 <2>:                 chapter.            (line 1945)
 * d--eftypefun_name:                     chapter.            (line  405)
-* d--eftypefun_name <1>:                 chapter.            (line 1101)
-* d--eftypefun_name <2>:                 chapter.            (line 1933)
+* d--eftypefun_name <1>:                 chapter.            (line 1095)
+* d--eftypefun_name <2>:                 chapter.            (line 1921)
 * d--eftypemethod_name on c--lass:       chapter.            (line  420)
-* d--eftypemethod_name on c--lass <1>:   chapter.            (line 1116)
-* d--eftypemethod_name on c--lass <2>:   chapter.            (line 1948)
+* d--eftypemethod_name on c--lass <1>:   chapter.            (line 1110)
+* d--eftypemethod_name on c--lass <2>:   chapter.            (line 1936)
 * d--eftypeop_name on c--lass:           chapter.            (line  357)
 * d--eftypeop_name on c--lass <1>:       chapter.            (line  360)
-* d--eftypeop_name on c--lass <2>:       chapter.            (line 1053)
-* d--eftypeop_name on c--lass <3>:       chapter.            (line 1056)
-* d--eftypeop_name on c--lass <4>:       chapter.            (line 1885)
-* d--eftypeop_name on c--lass <5>:       chapter.            (line 1888)
+* d--eftypeop_name on c--lass <2>:       chapter.            (line 1047)
+* d--eftypeop_name on c--lass <3>:       chapter.            (line 1050)
+* d--eftypeop_name on c--lass <4>:       chapter.            (line 1873)
+* d--eftypeop_name on c--lass <5>:       chapter.            (line 1876)
 * d--eftypeop_name2 on c--lass2:         chapter.            (line  433)
 * d--eftypeop_name2 on c--lass2 <1>:     chapter.            (line  438)
-* d--eftypeop_name2 on c--lass2 <2>:     chapter.            (line 1129)
-* d--eftypeop_name2 on c--lass2 <3>:     chapter.            (line 1134)
-* d--eftypeop_name2 on c--lass2 <4>:     chapter.            (line 1962)
-* d--eftypeop_name2 on c--lass2 <5>:     chapter.            (line 1967)
+* d--eftypeop_name2 on c--lass2 <2>:     chapter.            (line 1123)
+* d--eftypeop_name2 on c--lass2 <3>:     chapter.            (line 1128)
+* d--eftypeop_name2 on c--lass2 <4>:     chapter.            (line 1950)
+* d--eftypeop_name2 on c--lass2 <5>:     chapter.            (line 1955)
 * d--efun_name:                          chapter.            (line  387)
-* d--efun_name <1>:                      chapter.            (line 1083)
-* d--efun_name <2>:                      chapter.            (line 1915)
+* d--efun_name <1>:                      chapter.            (line 1077)
+* d--efun_name <2>:                      chapter.            (line 1903)
 * de--ffn_name:                          chapter.            (line  312)
-* de--ffn_name <1>:                      chapter.            (line 1008)
-* de--ffn_name <2>:                      chapter.            (line 1838)
+* de--ffn_name <1>:                      chapter.            (line 1002)
+* de--ffn_name <2>:                      chapter.            (line 1826)
 * deffn:                                 chapter.            (line  333)
 * deffn <1>:                             chapter.            (line  335)
-* deffn <2>:                             chapter.            (line 1029)
-* deffn <3>:                             chapter.            (line 1031)
-* deffn <4>:                             chapter.            (line 1860)
-* deffn <5>:                             chapter.            (line 1862)
+* deffn <2>:                             chapter.            (line 1023)
+* deffn <3>:                             chapter.            (line 1025)
+* deffn <4>:                             chapter.            (line 1848)
+* deffn <5>:                             chapter.            (line 1850)
 * deffnx:                                chapter.            (line  331)
 * deffnx <1>:                            chapter.            (line  336)
-* deffnx <2>:                            chapter.            (line 1027)
-* deffnx <3>:                            chapter.            (line 1032)
-* deffnx <4>:                            chapter.            (line 1857)
-* deffnx <5>:                            chapter.            (line 1863)
-* f---aa:                                chapter.            (line 2278)
-* f---bb, f---cc:                        chapter.            (line 2278)
-* f---ddd, f---eee, ffff:                chapter.            (line 2278)
-* f---ggg, f---hhh fjjj, f---kkk, f---lll: chapter.          (line 2278)
+* deffnx <2>:                            chapter.            (line 1021)
+* deffnx <3>:                            chapter.            (line 1026)
+* deffnx <4>:                            chapter.            (line 1845)
+* deffnx <5>:                            chapter.            (line 1851)
+* f---aa:                                chapter.            (line 2267)
+  f---aaa, See f---bbb.
+* f---bb, f---cc:                        chapter.            (line 2267)
+  f---ddd:                               See also f---ccc.
+  f---ddd:                               See also f---ccc.
+* f---ddd, f---eee, ffff:                chapter.            (line 2267)
+* f---ggg, f---hhh fjjj, f---kkk, f---lll: chapter.          (line 2267)
 * followed:                              chapter.            (line  328)
-* followed <1>:                          chapter.            (line  667)
-* followed <2>:                          chapter.            (line 1024)
-* followed <3>:                          chapter.            (line 1363)
-* followed <4>:                          chapter.            (line 1854)
-* followed <5>:                          chapter.            (line 2228)
+* followed <1>:                          chapter.            (line  663)
+* followed <2>:                          chapter.            (line 1018)
+* followed <3>:                          chapter.            (line 1353)
+* followed <4>:                          chapter.            (line 1842)
+* followed <5>:                          chapter.            (line 2217)
 * I:                                     chapter.            (line  316)
 * I <1>:                                 chapter.            (line  338)
-* I <2>:                                 chapter.            (line 1012)
-* I <3>:                                 chapter.            (line 1034)
-* I <4>:                                 chapter.            (line 1842)
-* I <5>:                                 chapter.            (line 1865)
+* I <2>:                                 chapter.            (line 1006)
+* I <3>:                                 chapter.            (line 1028)
+* I <4>:                                 chapter.            (line 1830)
+* I <5>:                                 chapter.            (line 1853)
 * id i ule:                              chapter.            (line  322)
-* id i ule <1>:                          chapter.            (line 1018)
-* id i ule <2>:                          chapter.            (line 1848)
+* id i ule <1>:                          chapter.            (line 1012)
+* id i ule <2>:                          chapter.            (line 1836)
 * id ule:                                chapter.            (line  321)
-* id ule <1>:                            chapter.            (line 1017)
-* id ule <2>:                            chapter.            (line 1847)
-* INVALID:                               chapter.            (line  671)
-* INVALID <1>:                           chapter.            (line 1367)
-* INVALID <2>:                           chapter.            (line 2232)
+* id ule <1>:                            chapter.            (line 1011)
+* id ule <2>:                            chapter.            (line 1835)
+* INVALID:                               chapter.            (line  667)
+* INVALID <1>:                           chapter.            (line 1357)
+* INVALID <2>:                           chapter.            (line 2221)
 * log trap:                              chapter.            (line  318)
-* log trap <1>:                          chapter.            (line 1014)
-* log trap <2>:                          chapter.            (line 1844)
+* log trap <1>:                          chapter.            (line 1008)
+* log trap <2>:                          chapter.            (line 1832)
 * log trap1:                             chapter.            (line  319)
-* log trap1 <1>:                         chapter.            (line 1015)
-* log trap1 <2>:                         chapter.            (line 1845)
+* log trap1 <1>:                         chapter.            (line 1009)
+* log trap1 <2>:                         chapter.            (line 1833)
 * log trap2:                             chapter.            (line  320)
-* log trap2 <1>:                         chapter.            (line 1016)
-* log trap2 <2>:                         chapter.            (line 1846)
+* log trap2 <1>:                         chapter.            (line 1010)
+* log trap2 <2>:                         chapter.            (line 1834)
 * machin:                                chapter.            (line  324)
 * machin <1>:                            chapter.            (line  326)
-* machin <2>:                            chapter.            (line  663)
-* machin <3>:                            chapter.            (line  664)
-* machin <4>:                            chapter.            (line  665)
-* machin <5>:                            chapter.            (line  666)
-* machin <6>:                            chapter.            (line 1020)
-* machin <7>:                            chapter.            (line 1022)
-* machin <8>:                            chapter.            (line 1359)
-* machin <9>:                            chapter.            (line 1360)
-* machin <10>:                           chapter.            (line 1361)
-* machin <11>:                           chapter.            (line 1362)
-* machin <12>:                           chapter.            (line 1850)
-* machin <13>:                           chapter.            (line 1852)
-* machin <14>:                           chapter.            (line 2224)
-* machin <15>:                           chapter.            (line 2225)
-* machin <16>:                           chapter.            (line 2226)
-* machin <17>:                           chapter.            (line 2227)
+* machin <2>:                            chapter.            (line  659)
+* machin <3>:                            chapter.            (line  660)
+* machin <4>:                            chapter.            (line  661)
+* machin <5>:                            chapter.            (line  662)
+* machin <6>:                            chapter.            (line 1014)
+* machin <7>:                            chapter.            (line 1016)
+* machin <8>:                            chapter.            (line 1349)
+* machin <9>:                            chapter.            (line 1350)
+* machin <10>:                           chapter.            (line 1351)
+* machin <11>:                           chapter.            (line 1352)
+* machin <12>:                           chapter.            (line 1838)
+* machin <13>:                           chapter.            (line 1840)
+* machin <14>:                           chapter.            (line 2213)
+* machin <15>:                           chapter.            (line 2214)
+* machin <16>:                           chapter.            (line 2215)
+* machin <17>:                           chapter.            (line 2216)
 * n--ame:                                chapter.            (line  345)
 * n--ame <1>:                            chapter.            (line  348)
-* n--ame <2>:                            chapter.            (line 1041)
-* n--ame <3>:                            chapter.            (line 1044)
-* n--ame <4>:                            chapter.            (line 1873)
-* n--ame <5>:                            chapter.            (line 1876)
+* n--ame <2>:                            chapter.            (line 1035)
+* n--ame <3>:                            chapter.            (line 1038)
+* n--ame <4>:                            chapter.            (line 1861)
+* n--ame <5>:                            chapter.            (line 1864)
 * name2:                                 chapter.            (line  423)
-* name2 <1>:                             chapter.            (line 1119)
-* name2 <2>:                             chapter.            (line 1952)
-* t--ruc:                                chapter.            (line 2278)
-* T--ruc:                                chapter.            (line 2278)
+* name2 <1>:                             chapter.            (line 1113)
+* name2 <2>:                             chapter.            (line 1940)
+* t--ruc:                                chapter.            (line 2267)
+* T--ruc:                                chapter.            (line 2267)
 * truc:                                  chapter.            (line  317)
 * truc <1>:                              chapter.            (line  339)
-* truc <2>:                              chapter.            (line 1013)
-* truc <3>:                              chapter.            (line 1035)
-* truc <4>:                              chapter.            (line 1843)
-* truc <5>:                              chapter.            (line 1866)
-* xxx, zzz:                              chapter.            (line 2278)
+* truc <2>:                              chapter.            (line 1007)
+* truc <3>:                              chapter.            (line 1029)
+* truc <4>:                              chapter.            (line 1831)
+* truc <5>:                              chapter.            (line 1854)
+* xxx, zzz:                              chapter.            (line 2267)
 
 Top section
 1 chapter

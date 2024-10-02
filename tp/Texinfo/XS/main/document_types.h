@@ -20,11 +20,11 @@
 #include <stddef.h>
 
 #include "tree_types.h"
+#include "global_commands_types.h"
 /*
 #include "options_types.h"
 #include "convert_to_text.h"
  */
-#include "global_commands_types.h"
 
 /* to avoid interdependency with options_types.h, including for
    other include files */
@@ -45,8 +45,12 @@ struct TEXT_OPTIONS;
 #define F_DOCM_merged_indices            0x0400
 #define F_DOCM_indices_sort_strings      0x0800
 
-enum error_type { MSG_error, MSG_warning,
-                  MSG_document_error, MSG_document_warning };
+enum error_type {
+   MSG_error,
+   MSG_warning,
+   MSG_document_error,
+   MSG_document_warning
+};
 
 typedef struct ERROR_MESSAGE {
     char *message;
@@ -62,6 +66,17 @@ typedef struct ERROR_MESSAGE_LIST {
     size_t space;
 } ERROR_MESSAGE_LIST;
 
+typedef struct KEY_STRING_PAIR {
+    char *key;
+    char *string;
+} KEY_STRING_PAIR;
+
+typedef struct OTHER_GLOBAL_INFO {
+    KEY_STRING_PAIR *info;
+    size_t info_number;
+    size_t info_space;
+} OTHER_GLOBAL_INFO;
+
 typedef struct GLOBAL_INFO {
     char *input_file_name;
     char *input_directory;
@@ -72,7 +87,7 @@ typedef struct GLOBAL_INFO {
     STRING_LIST included_files;
 
     /* remaining, in general passed to/from perl but not used in C */
-    ASSOCIATED_INFO other_info;
+    OTHER_GLOBAL_INFO other_info;
 
     /* perl specific */
     char *input_perl_encoding;
@@ -174,6 +189,12 @@ typedef struct COLLATIONS_INDICES_SORTED_BY_LETTER {
     COLLATION_INDICES_SORTED_BY_LETTER *collation_sorted_indices;
 } COLLATIONS_INDICES_SORTED_BY_LETTER;
 
+typedef struct OUTPUT_UNIT_LISTS {
+    OUTPUT_UNIT_LIST *output_units_lists;
+    size_t number;
+    size_t space;
+} OUTPUT_UNIT_LISTS;
+
 typedef struct DOCUMENT {
     size_t descriptor;
     ELEMENT *tree;
@@ -193,17 +214,26 @@ typedef struct DOCUMENT {
     STRING_LIST *small_strings;
     ERROR_MESSAGE_LIST error_messages;
     ERROR_MESSAGE_LIST parser_error_messages;
-    ELEMENT_LIST *nodes_list;
-    ELEMENT_LIST *sections_list;
+    CONST_ELEMENT_LIST *nodes_list;
+    CONST_ELEMENT_LIST *sections_list;
     struct OPTIONS *options; /* for options used in structuring */
     struct TEXT_OPTIONS *convert_index_text_options; /* for index
                                        sorting without converter */
     INDICES_SORT_STRINGS *indices_sort_strings;
     COLLATIONS_INDICES_SORTED_BY_INDEX *sorted_indices_by_index;
     COLLATIONS_INDICES_SORTED_BY_LETTER *sorted_indices_by_letter;
+    OUTPUT_UNIT_LISTS output_units_lists;
 
     /* flags for modified information not already passed to Perl */
     unsigned long modified_information;
+
+    /* reference to Perl document.  Should not be used to find the document
+       but to have a place where caching can happen reliably even if the
+       caller changes the hash associated to a descriptor.  There is/was a
+       practical case, in tests, a workaround for DocBook for tree
+       modifications with a copy of document hash.
+     */
+    void *hv;
 } DOCUMENT;
 
 /* following not in document, but used in parser */

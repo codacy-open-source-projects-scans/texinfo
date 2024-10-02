@@ -5,7 +5,7 @@
 #include "tree_types.h"
 #include "option_types.h"
 #include "converter_types.h"
-/* for TARGET_FILENAME TARGET_CONTENTS_FILENAME FILE_NAME_PATH
+/* for TARGET_CONTENTS_FILENAME FILE_NAME_PATH
    TARGET_DIRECTORY_FILENAME */
 #include "utils.h"
 #include "translations.h"
@@ -148,6 +148,8 @@ FORMATTED_BUTTON_INFO *call_button_direction_function (CONVERTER *self,
                              void *formatting_reference_sv,
                              int direction, const ELEMENT *element);
 
+int call_stage_handler (CONVERTER *self, void *stage_handler_sv,
+                        const char *stage_name);
 
 char *call_latex_convert_to_latex_math (CONVERTER *self,
                                         const ELEMENT *element);

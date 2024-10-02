@@ -21,18 +21,18 @@
 #include <iconv.h>
 #include <errno.h>
 
-/* for global_info */
-#include "parser.h"
+#include "text.h"
 /* for xasprintf and other */
 #include "utils.h"
-#include "errors_parser.h"
-#include "debug_parser.h"
-#include "input.h"
-#include "text.h"
-#include "commands.h"
-#include "source_marks.h"
 /* for global_parser_conf */
 #include "parser_conf.h"
+#include "errors_parser.h"
+#include "debug_parser.h"
+#include "commands.h"
+#include "source_marks.h"
+/* for parsed_document */
+#include "parser.h"
+#include "input.h"
 
 enum input_type { IN_file, IN_text };
 
@@ -55,11 +55,10 @@ typedef struct {
 
 static char *input_pushback_string;
 
-static iconv_t reverse_iconv; /* used in encode_file_name */
-
-static ENCODING_CONVERSION_LIST parser_input_conversions = {0, 0, 0, 1};
-
 static ENCODING_CONVERSION *current_encoding_conversion = 0;
+
+/* used in encode_file_name */
+static ENCODING_CONVERSION *filename_encoding_conversion = 0;
 
 /* ENCODING should always be lower cased */
 /* WARNING: it is very important for the first call to
@@ -70,14 +69,10 @@ set_input_encoding (const char *encoding)
 {
   int encoding_set = 0;
 
-  if (reverse_iconv)
-    {
-      iconv_close (reverse_iconv);
-      reverse_iconv = (iconv_t) 0;
-    }
+  filename_encoding_conversion = 0;
 
   current_encoding_conversion
-    = get_encoding_conversion (encoding, &parser_input_conversions);
+    = get_encoding_conversion (encoding, &input_conversions);
   if (current_encoding_conversion)
     {
       encoding_set = 1;
@@ -180,36 +175,36 @@ convert_to_utf8 (char *s)
 char *
 encode_file_name (char *filename)
 {
-  if (!reverse_iconv)
+
+  if (!filename_encoding_conversion)
     {
+      const char *encoding = 0;
+
       if (global_parser_conf.input_file_name_encoding)
-        {
-          reverse_iconv
-            = iconv_open (global_parser_conf.input_file_name_encoding, "UTF-8");
-        }
+        encoding = global_parser_conf.input_file_name_encoding;
       else if (global_parser_conf.doc_encoding_for_input_file_name)
         {
           if (current_encoding_conversion
               && strcmp (parsed_document->global_info.input_encoding_name,
                          "utf-8"))
-            {
-              char *conversion_encoding
-                = current_encoding_conversion->encoding_name;
-              reverse_iconv = iconv_open (conversion_encoding, "UTF-8");
-            }
+            encoding = current_encoding_conversion->encoding_name;
         }
       else if (global_parser_conf.locale_encoding)
-        {
-          reverse_iconv = iconv_open (global_parser_conf.locale_encoding, "UTF-8");
-        }
+        encoding = global_parser_conf.locale_encoding;
+
+      if (encoding)
+        filename_encoding_conversion = get_encoding_conversion (encoding,
+                                                    &output_conversions);
     }
-  if (reverse_iconv && reverse_iconv != (iconv_t) -1)
+
+  if (filename_encoding_conversion)
     {
-      char *s, *conv;
-      conv = encode_with_iconv (reverse_iconv, filename, &current_source_info);
-      s = save_string (conv);
-      free (conv);
-      return s;
+      char *result
+        = encode_with_iconv (filename_encoding_conversion->iconv,
+                             filename, &current_source_info);
+      char *saved_string = save_string (result);
+      free (result);
+      return saved_string;
     }
   else
     {
@@ -527,11 +522,8 @@ save_string (const char *string)
 void
 parser_reset_encoding_list (void)
 {
-  reset_encoding_list (&parser_input_conversions);
-  /* could be named global_encoding_conversion and reset in wipe_global_info,
-     but we prefer to keep it static as long as it is only used in one
-     file */
   current_encoding_conversion = 0;
+  filename_encoding_conversion = 0;
 }
 
 int

@@ -233,7 +233,7 @@ $result_trees{'complex_nestings'} = {
                                           'text' => 'arg'
                                         }
                                       ],
-                                      'type' => 'brace_command_arg'
+                                      'type' => 'brace_container'
                                     }
                                   ],
                                   'cmdname' => 'var',
@@ -258,7 +258,7 @@ $result_trees{'complex_nestings'} = {
                                 {
                                   'args' => [
                                     {
-                                      'type' => 'brace_command_arg'
+                                      'type' => 'brace_container'
                                     }
                                   ],
                                   'cmdname' => 'dots',
@@ -284,7 +284,19 @@ $result_trees{'complex_nestings'} = {
                   ],
                   'extra' => {
                     'def_command' => 'defun',
-                    'def_index_element' => {},
+                    'def_index_element' => {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'my def'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
                     'element_node' => {},
                     'index_entry' => [
                       'fn',
@@ -387,7 +399,19 @@ $result_trees{'complex_nestings'} = {
                   'cmdname' => 'defunx',
                   'extra' => {
                     'def_command' => 'defun',
-                    'def_index_element' => {},
+                    'def_index_element' => {
+                      'contents' => [
+                        {
+                          'contents' => [
+                            {
+                              'text' => 'other def'
+                            }
+                          ],
+                          'type' => 'bracketed_arg'
+                        }
+                      ],
+                      'type' => 'def_name'
+                    },
                     'element_node' => {},
                     'index_entry' => [
                       'fn',
@@ -402,8 +426,7 @@ $result_trees{'complex_nestings'} = {
                   },
                   'source_info' => {
                     'line_nr' => 10
-                  },
-                  'type' => 'def_line'
+                  }
                 },
                 {
                   'contents' => [
@@ -530,7 +553,19 @@ $result_trees{'complex_nestings'} = {
                           ],
                           'extra' => {
                             'def_command' => 'deffn',
-                            'def_index_element' => {},
+                            'def_index_element' => {
+                              'contents' => [
+                                {
+                                  'contents' => [
+                                    {
+                                      'text' => 'name'
+                                    }
+                                  ],
+                                  'type' => 'bracketed_arg'
+                                }
+                              ],
+                              'type' => 'def_name'
+                            },
                             'element_node' => {},
                             'index_entry' => [
                               'fn',
@@ -620,7 +655,19 @@ $result_trees{'complex_nestings'} = {
                                   ],
                                   'extra' => {
                                     'def_command' => 'defvar',
-                                    'def_index_element' => {},
+                                    'def_index_element' => {
+                                      'contents' => [
+                                        {
+                                          'contents' => [
+                                            {
+                                              'text' => 'variables'
+                                            }
+                                          ],
+                                          'type' => 'bracketed_arg'
+                                        }
+                                      ],
+                                      'type' => 'def_name'
+                                    },
                                     'element_node' => {},
                                     'index_entry' => [
                                       'vr',
@@ -721,7 +768,19 @@ $result_trees{'complex_nestings'} = {
                                   'cmdname' => 'defvarx',
                                   'extra' => {
                                     'def_command' => 'defvar',
-                                    'def_index_element' => {},
+                                    'def_index_element' => {
+                                      'contents' => [
+                                        {
+                                          'contents' => [
+                                            {
+                                              'text' => 'variables too'
+                                            }
+                                          ],
+                                          'type' => 'bracketed_arg'
+                                        }
+                                      ],
+                                      'type' => 'def_name'
+                                    },
                                     'element_node' => {},
                                     'index_entry' => [
                                       'vr',
@@ -736,8 +795,7 @@ $result_trees{'complex_nestings'} = {
                                   },
                                   'source_info' => {
                                     'line_nr' => 14
-                                  },
-                                  'type' => 'def_line'
+                                  }
                                 },
                                 {
                                   'contents' => [
@@ -767,8 +825,7 @@ $result_trees{'complex_nestings'} = {
                                               'cmdname' => 'asis',
                                               'source_info' => {
                                                 'line_nr' => 18
-                                              },
-                                              'type' => 'command_as_argument'
+                                              }
                                             }
                                           ],
                                           'info' => {
@@ -1126,15 +1183,10 @@ $result_trees{'complex_nestings'} = {
   ],
   'type' => 'document_root'
 };
-$result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'complex_nestings'}{'contents'}[3];
-$result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[1]{'extra'}{'def_index_element'} = $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[1]{'args'}[0]{'contents'}[2];
 $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[1]{'extra'}{'element_node'} = $result_trees{'complex_nestings'}{'contents'}[3];
-$result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'complex_nestings'}{'contents'}[3];
-$result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[1]{'contents'}[0]{'contents'}[0]{'extra'}{'def_index_element'} = $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[1]{'contents'}[0]{'contents'}[0]{'args'}[0]{'contents'}[2];
 $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[1]{'contents'}[0]{'contents'}[0]{'extra'}{'element_node'} = $result_trees{'complex_nestings'}{'contents'}[3];
-$result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[1]{'contents'}[0]{'contents'}[2]{'extra'}{'def_index_element'} = $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[1]{'contents'}[0]{'contents'}[2]{'args'}[0]{'contents'}[2];
 $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[1]{'contents'}[0]{'contents'}[2]{'extra'}{'element_node'} = $result_trees{'complex_nestings'}{'contents'}[3];
 $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[1]{'contents'}[0]{'contents'}[3]{'contents'}[1]{'extra'}{'command_as_argument'} = $result_trees{'complex_nestings'}{'contents'}[4]{'contents'}[1]{'contents'}[1]{'contents'}[2]{'contents'}[0]{'contents'}[1]{'contents'}[0]{'contents'}[3]{'contents'}[1]{'args'}[0]{'contents'}[0];
 
@@ -1321,12 +1373,12 @@ $result_converted{'plaintext'}->{'complex_nestings'} = 'top
 *********
 
      deffs
-      -- Function: my def args ARG ...
-      -- Function: other def no args
-           -- type: name and now the args
-                -- Variable: variables variable-name
+      - Function: my def args ARG ...
+      - Function: other def no args
+           - type: name and now the args
+                - Variable: variables variable-name
 
-                -- Variable: variables too other-variable
+                - Variable: variables too other-variable
                     THis is the defvar
 
                     A table within the def

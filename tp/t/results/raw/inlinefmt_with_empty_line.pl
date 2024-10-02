@@ -22,7 +22,7 @@ $result_trees{'inlinefmt_with_empty_line'} = {
                       'text' => 'plaintext'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -41,7 +41,7 @@ $result_trees{'inlinefmt_with_empty_line'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inlinefmt',
@@ -61,7 +61,7 @@ $result_trees{'inlinefmt_with_empty_line'} = {
             {
               'args' => [
                 {
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'lbracechar',
@@ -81,7 +81,7 @@ $result_trees{'inlinefmt_with_empty_line'} = {
                       'text' => 'html'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'contents' => [
@@ -100,7 +100,7 @@ $result_trees{'inlinefmt_with_empty_line'} = {
                       'text' => ' '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'inlinefmt',
@@ -128,7 +128,7 @@ $result_trees{'inlinefmt_with_empty_line'} = {
                       'text' => 'HTML'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'acronym',

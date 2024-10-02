@@ -44,7 +44,7 @@ $result_trees{'quotation_in_ref'} = {
                       'text' => 'first'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 },
                 {
                   'info' => {
@@ -53,7 +53,7 @@ $result_trees{'quotation_in_ref'} = {
 '
                     }
                   },
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'xref',

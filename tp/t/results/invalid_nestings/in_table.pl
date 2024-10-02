@@ -80,8 +80,7 @@ $result_trees{'in_table'} = {
                   'cmdname' => 'xref',
                   'source_info' => {
                     'line_nr' => 5
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -151,8 +150,7 @@ $result_trees{'in_table'} = {
                   'cmdname' => 'code',
                   'source_info' => {
                     'line_nr' => 8
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -192,7 +190,7 @@ $result_trees{'in_table'} = {
                                       'text' => 'in titlefont'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'titlefont',
@@ -212,7 +210,7 @@ $result_trees{'in_table'} = {
                                       'text' => 'in anchor'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'anchor',
@@ -351,10 +349,10 @@ $result_trees{'in_table'} = {
                                       'text' => 'Top'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 },
                                 {
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 },
                                 {
                                   'contents' => [
@@ -368,7 +366,7 @@ $result_trees{'in_table'} = {
                                       'text' => ' '
                                     }
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'ref',
@@ -585,8 +583,7 @@ $result_trees{'in_table'} = {
                   'cmdname' => 'asis',
                   'source_info' => {
                     'line_nr' => 17
-                  },
-                  'type' => 'command_as_argument'
+                  }
                 }
               ],
               'info' => {
@@ -680,7 +677,7 @@ $result_trees{'in_table'} = {
                                   'text' => 'opt'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'option',
@@ -785,7 +782,7 @@ $result_trees{'in_table'} = {
                                   'text' => 'nopt'
                                 }
                               ],
-                              'type' => 'brace_command_arg'
+                              'type' => 'brace_container'
                             }
                           ],
                           'cmdname' => 'option',
@@ -1086,10 +1083,24 @@ $result_errors{'in_table'} = [
     'type' => 'error'
   },
   {
+    'error_line' => 'warning: @center should only appear at the beginning of a line
+',
+    'line_nr' => 13,
+    'text' => '@center should only appear at the beginning of a line',
+    'type' => 'warning'
+  },
+  {
     'error_line' => 'warning: @center should not appear in @item
 ',
     'line_nr' => 13,
     'text' => '@center should not appear in @item',
+    'type' => 'warning'
+  },
+  {
+    'error_line' => 'warning: @cindex should only appear at the beginning of a line
+',
+    'line_nr' => 14,
+    'text' => '@cindex should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {
@@ -1100,10 +1111,24 @@ $result_errors{'in_table'} = [
     'type' => 'warning'
   },
   {
+    'error_line' => 'warning: @cindex should only appear at the beginning of a line
+',
+    'line_nr' => 18,
+    'text' => '@cindex should only appear at the beginning of a line',
+    'type' => 'warning'
+  },
+  {
     'error_line' => 'warning: @cindex should not appear in @item
 ',
     'line_nr' => 18,
     'text' => '@cindex should not appear in @item',
+    'type' => 'warning'
+  },
+  {
+    'error_line' => 'warning: @cindex should only appear at the beginning of a line
+',
+    'line_nr' => 21,
+    'text' => '@cindex should only appear at the beginning of a line',
     'type' => 'warning'
   },
   {

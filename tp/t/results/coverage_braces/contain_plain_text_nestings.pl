@@ -149,7 +149,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                               'text' => 'code in w'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -161,7 +161,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                       'text' => ' text'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'w',
@@ -185,7 +185,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                               'text' => 'code in hyphenation'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -197,7 +197,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                       'text' => ' text'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'hyphenation',
@@ -223,7 +223,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                               'text' => 'code in key'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_container'
                         }
                       ],
                       'cmdname' => 'code',
@@ -235,7 +235,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                       'text' => ' text'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'key',
@@ -270,7 +270,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                                       'text' => 'code in sortas'
                                     }
                                   ],
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_container'
                                 }
                               ],
                               'cmdname' => 'code',
@@ -282,7 +282,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                               'text' => ' text'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'sortas',
@@ -363,7 +363,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                             },
                             'normalized' => 'Top'
                           },
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         },
                         {
                           'contents' => [
@@ -376,7 +376,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                               'text' => ' '
                             }
                           },
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'ref',
@@ -388,7 +388,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                       'text' => ' text'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'w',
@@ -420,7 +420,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                             },
                             'normalized' => 'Top'
                           },
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         },
                         {
                           'contents' => [
@@ -433,7 +433,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                               'text' => ' '
                             }
                           },
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'ref',
@@ -445,7 +445,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                       'text' => ' text'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_arg'
                 }
               ],
               'cmdname' => 'hyphenation',
@@ -479,7 +479,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                             },
                             'normalized' => 'Top'
                           },
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         },
                         {
                           'contents' => [
@@ -492,7 +492,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                               'text' => ' '
                             }
                           },
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'ref',
@@ -504,7 +504,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                       'text' => ' text'
                     }
                   ],
-                  'type' => 'brace_command_arg'
+                  'type' => 'brace_container'
                 }
               ],
               'cmdname' => 'key',
@@ -547,7 +547,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                                     },
                                     'normalized' => 'Top'
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 },
                                 {
                                   'contents' => [
@@ -560,7 +560,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                                       'text' => ' '
                                     }
                                   },
-                                  'type' => 'brace_command_arg'
+                                  'type' => 'brace_arg'
                                 }
                               ],
                               'cmdname' => 'ref',
@@ -572,7 +572,7 @@ $result_trees{'contain_plain_text_nestings'} = {
                               'text' => ' text'
                             }
                           ],
-                          'type' => 'brace_command_arg'
+                          'type' => 'brace_arg'
                         }
                       ],
                       'cmdname' => 'sortas',
@@ -886,7 +886,7 @@ $result_converted{'plaintext'}->{'contain_plain_text_nestings'} = 'top
 
 Text ‘code in w’ text.  <‘code in key’ text>
 
-   Text *note cross in w: Top. text.  <*note cross in key: Top. text>
+   Text cross in w: Top text.  <cross in key: Top text>
 
 * Menu:
 
@@ -950,6 +950,23 @@ Text \\hbox{\\hyperref[anchor:Top]{\\chaptername~\\ref*{anchor:Top} [Top], page~
 \\index[cp]{ text@ii}%
 
 \\printindex[cp]
+';
+
+
+$result_converted{'docbook'}->{'contain_plain_text_nestings'} = '<chapter label="1" id="chap">
+<title>Chap</title>
+
+<para>Text <literal>code&amp;#160;in&amp;#160;w</literal>&amp;#160;text<!-- /@w -->.
+<keycap><literal>code in key</literal> text</keycap>
+<indexterm role="cp"><primary>ii</primary></indexterm>
+</para>
+<!-- no warning for @ref in @w -->
+<para>Text <link linkend="Top">cross&amp;#160;in&amp;#160;w</link>&amp;#160;text<!-- /@w -->.
+<keycap><link linkend="Top">cross in key</link> text</keycap>
+<indexterm role="cp"><primary>ii</primary></indexterm>
+</para>
+<index role="cp"></index>
+</chapter>
 ';
 
 1;

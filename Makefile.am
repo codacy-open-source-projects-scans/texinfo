@@ -65,8 +65,8 @@ if HOST_IS_WINDOWS
   SUBDIRS += info
 endif
 endif
-  SUBDIRS += install-info po po_document tp Pod-Simple-Texinfo texindex util \
-             doc man
+  SUBDIRS += gnulib/po install-info po po_document tp Pod-Simple-Texinfo \
+             texindex util doc man
   SUBDIRS += js
 endif
 
@@ -101,6 +101,9 @@ update-po:
 # Verify that all source files using _() are listed in po/POTFILES.in.
 # Run this before making pretests, as well as official releases, so that
 # translators will see changed strings.  See README-hacking.
+# Note that pgettext is not matched to avoid a false positive in
+# tp/Texinfo/Translations.pm, but it is not problematic as it appears
+# only in errors.c, which matches other function names.
 po-check:
 	@if test -f po/POTFILES.in; then				\
 	  grep -E -v '^(#|$$)' po/POTFILES.in				\
@@ -112,24 +115,29 @@ po-check:
 	    case $$file in						\
 	      contrib/* ) continue;;					\
 	      djgpp/* | man/* ) continue;;	\
+	      gnulib/lib/*) continue;;					\
 	      texinfo-*/*) continue;;					\
               tp/maintain/* ) continue;;				\
               tp/t/results* ) continue;;				\
+	      tp/Texinfo/XS/gnulib/lib/*) continue;;			\
 	    esac;							\
 	    files="$$files $$file";					\
 	  done;								\
 	  grep -E -l							\
-	    '\b(N?__?p?|gettext|line_error|line_error_ext|line_warn|command_error|command_warn|message_list_document_warn|message_list_document_error|message_list_command_warn|message_list_command_error) *\([^)"]*("|$$)'	\
+	    '\b(N?__?p?|ngettext|line_error|line_error_ext|line_warn|command_error|command_warn|message_list_document_warn|message_list_document_error|p?message_list_command_warn|message_list_command_error|message_list_line_error_ext) *\([^)"]*("|$$)'	\
 	    $$files | sort -u > $@-2;					\
 	  diff -u $@-1 $@-2 || exit 1;					\
 	  rm -f $@-1 $@-2;						\
 	fi
 
+# false positive in tp/Texinfo/XS/main/DocumentXS.c with function definition
+# but no translated strings
 po_document-check:
 	@if test -f po_document/POTFILES.in; then			\
 	  grep -E -v '^(#|$$)' po_document/POTFILES.in | sort > $@-1;	\
 	  files=;							\
-	  for file in `find [a-z]* -name '*.p[lm]'`; do 		\
+	  for file in `find [a-z]* -name '*.[ch]' \
+	                           -o -name '*.p[lm]'`; do 		\
 	    # don't look at sources from some subdirs.			\
 	    case $$file in						\
 	      contrib/* ) continue;;					\
@@ -137,11 +145,12 @@ po_document-check:
 	      texinfo-*/*) continue;;					\
 	      tp/maintain/*) continue;;					\
 	      tp/init/documentation_examples.pm) continue;;		\
+	      tp/Texinfo/XS/main/DocumentXS.c) continue;;		\
 	    esac;							\
 	    files="$$files $$file";					\
 	  done;								\
 	  grep -E -l							\
-	    '\b(p?[cg]dt(_string)?) *\([^)$$]*("|'"'"'|$$)'	\
+	    '\b((html_)?p?[cg]dt(_string|_tree|_noop)?|pgdt_context_noop|translate_convert_to_html_internal) *\([^)$$]*("|'"'"'|$$)'	\
 	    $$files | sort -u > $@-2;					\
 	  diff -u $@-1 $@-2 || exit 1;					\
 	  rm -f $@-1 $@-2;						\

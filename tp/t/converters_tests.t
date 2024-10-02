@@ -446,6 +446,56 @@ sp after para
 @sp 1
 @end example
 '],
+# NOTE comparison of TeX/LaTeX output with Plaintext show differences.
+# In TeX/LaTeX with @sp 1, and irrespective of the number of empty line
+# the vertical space is always the same, interparagraph small space + 1
+# character.  In plaintext trailing empty lines do not produce an empty
+# line (as in TeX), but leading empty line do.  Also, @sp 0 without empty
+# lines lead to no empty line between paragraphs in Plaintext.
+# This is not of practical concern, as both @sp 0 (and @sp without
+# argument) behaviour are undefined, and both TeX and Plaintext output
+# are consistent with the documentation.  Also @sp should rarely, if ever,
+# be used in Plaintext.
+['sp_empty_lines_1_no_arg_zero',
+'A
+
+A010
+@sp 1
+A110
+
+@sp 1
+A011
+
+@sp 1
+A111
+
+@sp 1
+
+A000
+@sp 0
+A100
+
+@sp 0
+A001
+
+@sp 0
+A101
+
+@sp 0
+
+A0 0
+@sp
+A1 0
+
+@sp 
+A0 1
+
+@sp
+A1 1
+
+@sp 
+
+B'],
 ['line_breaks',
 '@documentdescription 
 a document @* yes!
@@ -687,6 +737,15 @@ explanation
 
 @end example
 '],
+['multitable_prototypes',
+'@multitable  {aa b}  { r } {j @code{some code} } @var{cmd}gg hh j 
+@item cc d
+@tab s
+@tab k @samp{same samp}
+@tab Invalid tab
+@end multitable
+
+'],
 ['image_with_spaces',
 '@image{f--ile,,,@ }.
 @image{f--ile,,,@:}.
@@ -865,6 +924,101 @@ text2
 @item www-discuss@@gnu.org
 discussion
 @end table
+'],
+['various_vtable_command_as_argument',
+'@node Top
+@top top
+
+@node chap
+@chapter Chap
+
+@vtable @inlineraw
+@item html
+@item docbook
+@item titi
+@end vtable
+
+@vtable @image
+@item first
+@itemx second
+@end vtable
+
+@vtable @footnote
+@item aa
+@itemx bb
+@end vtable
+
+@vtable @caption
+@item caa
+@itemx cbb
+@end vtable
+
+@vtable @math
+@item a + b
+@item a@sup{c}
+@end vtable
+
+@vtable @anchor
+@item anchor 1
+@itemx anchor 2
+@end vtable
+
+@vtable @verb
+@item :uu:
+@itemx ?nn?
+@end vtable
+
+@node Indices
+@appendix Print the index
+
+@printindex vr
+',],
+['various_itemize_command_as_argument',
+'@node Top
+@top top
+
+@node chap
+@chapter Chap
+
+@itemize @inlineraw
+@item Inlineraw
+@end itemize
+
+@itemize @image
+@item Image
+@item Second
+@end itemize
+
+@itemize @footnote
+@item aa
+@item F2
+aa
+
+T
+
+@end itemize
+
+@itemize @caption
+@item Caption
+@end itemize
+
+@itemize @math
+@item a + b
+@item a@sup{c}
+
+2
+
+@end itemize
+
+@itemize @anchor
+@item anchor 1
+@item anchor 2
+@end itemize
+
+@itemize @verb
+@item :uu:
+@end itemize
+
 '],
 ['at_commands_in_raw',
 '@node Top
@@ -1428,6 +1582,10 @@ my %info_tests = (
  'contents_at_document_begin_inline' => 1,
  'contents_at_document_begin_separate_element' => 1,
  'commands_in_sc' => 1,
+ 'refs_formatting' => 1,
+ 'top_in_ref' => 1,
+ 'ref_error_formatting' => 1,
+ 'ref_in_sectioning' => 1,
 );
 
 my %html_tests = (
