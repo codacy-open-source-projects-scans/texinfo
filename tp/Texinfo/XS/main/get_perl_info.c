@@ -39,13 +39,12 @@
 #include "builtin_commands.h"
 #include "debug.h"
 #include "utils.h"
+#include "customization_options.h"
 #include "errors.h"
 #include "targets.h"
 #include "parser_conf.h"
 #include "document.h"
 #include "output_unit.h"
-#include "convert_to_text.h"
-#include "converter.h"
 #include "get_perl_info.h"
 
  /* See the NOTE in build_perl_info.c on use of functions related to
@@ -128,7 +127,6 @@ get_document_or_warn (SV *sv_in, char *key, char *warn_string)
   document_descriptor_sv = hv_fetch (hv_in, key, strlen (key), 0);
   if (document_descriptor_sv && SvOK (*document_descriptor_sv))
     {
-      /* NOTE if size_t size is more than IV we could have overflow here */
       document_descriptor = (size_t) SvIV (*document_descriptor_sv);
       document = retrieve_document (document_descriptor);
     }
@@ -163,17 +161,24 @@ get_sv_document_document (SV *document_in, char *warn_string)
                                warn_string);
 }
 
-/* caller should ensure that OUTPUT_UNIT_IN is defined */
-int
-get_sv_output_units_descriptor (SV *output_units_in, char *warn_string)
+/* caller should ensure that OUTPUT_UNIT_IN is defined.
+   If DOCUMENT_OUT is set, find the document associated with the output units
+   too.
+ */
+size_t
+get_sv_output_units_descriptor (SV *output_units_in, char *warn_string,
+                                const DOCUMENT **document_out)
 {
-  int output_units_descriptor = 0;
+  size_t output_units_descriptor = 0;
   AV *av_in;
   SSize_t output_units_nr;
   SV** first_output_unit_sv;
   char *key = "output_units_descriptor";
 
   dTHX;
+
+  if (document_out)
+    *document_out = 0;
 
   if (!SvOK (output_units_in))
     {
@@ -195,14 +200,24 @@ get_sv_output_units_descriptor (SV *output_units_in, char *warn_string)
             = hv_fetch (hv_in, key, strlen (key), 0);
           if (output_units_descriptor_sv)
             {
-              output_units_descriptor = SvIV (*output_units_descriptor_sv);
+              output_units_descriptor
+                 = (size_t) SvIV (*output_units_descriptor_sv);
 
               if (!output_units_descriptor && warn_string)
-                fprintf (stderr, "ERROR: %s: units descriptor %d\n",
+                fprintf (stderr, "ERROR: %s: units descriptor %zu\n",
                                 warn_string, output_units_descriptor);
             }
           else if (warn_string)
             fprintf (stderr, "ERROR: %s: no %s\n", warn_string, key);
+
+          if (document_out)
+            {
+              DOCUMENT *document
+               = get_document_or_warn (*first_output_unit_sv,
+                                       "output_units_document_descriptor",
+                                       warn_string);
+              *document_out = document;
+            }
         }
       else
         fprintf (stderr, "BUG: get_sv_output_units: av_fetch failed\n");
@@ -215,19 +230,39 @@ get_sv_output_units_descriptor (SV *output_units_in, char *warn_string)
   return output_units_descriptor;
 }
 
-
+/* If DOCUMENT is NULL, it is found using the descriptor associated with
+   the first output unit in SV along with the output_units descriptor.
+   In general, the DOCUMENT is not NULL in current codes call to
+   get_sv_output_units, as previously there was no document descriptor
+   availalble.  In the future, it could make sense to get the document
+   from the output units SV instead. */
 OUTPUT_UNIT_LIST *
-get_sv_output_units (const DOCUMENT *document, SV *output_units_in,
-                     char *warn_string)
+get_sv_output_units (const DOCUMENT *document,
+                     SV *output_units_in, char *warn_string)
 {
   OUTPUT_UNIT_LIST *output_units = 0;
-  int output_units_descriptor
-     = get_sv_output_units_descriptor (output_units_in, warn_string);
-  if (output_units_descriptor)
+  const DOCUMENT *document_found = 0;
+  size_t output_units_descriptor = 0;
+
+  if (document)
     {
-      output_units = retrieve_output_units (document, output_units_descriptor);
+      document_found = document;
+      output_units_descriptor
+        = get_sv_output_units_descriptor (output_units_in, warn_string, 0);
+    }
+  else
+    {
+      output_units_descriptor
+        = get_sv_output_units_descriptor (output_units_in, warn_string,
+                                          &document_found);
+    }
+
+  if (output_units_descriptor && document_found)
+    {
+      output_units = retrieve_output_units (document_found,
+                                            output_units_descriptor);
       if (!output_units && warn_string)
-        fprintf (stderr, "ERROR: %s: no units %d\n", warn_string,
+        fprintf (stderr, "ERROR: %s: no units %zu\n", warn_string,
                                              output_units_descriptor);
     }
   return output_units;
@@ -247,7 +282,8 @@ apply_sv_parser_conf (SV *parser_sv)
   parser_conf_descriptor_sv = hv_fetch (hv_in, key, strlen (key), 0);
   if (parser_conf_descriptor_sv && SvOK (*parser_conf_descriptor_sv))
     {
-      int parser_conf_descriptor = SvIV (*parser_conf_descriptor_sv);
+      size_t parser_conf_descriptor
+        = (size_t) SvIV (*parser_conf_descriptor_sv);
 
       if (parser_conf_descriptor == global_parser_conf.descriptor)
         {
@@ -266,7 +302,7 @@ apply_sv_parser_conf (SV *parser_sv)
 
       if (!parser_conf)
         {
-          fprintf (stderr, "ERROR: get_sv_parser_conf: descriptor %d not found\n",
+          fprintf (stderr, "ERROR: get_sv_parser_conf: descriptor %zu not found\n",
                            parser_conf_descriptor);
           return;
         }
@@ -281,7 +317,7 @@ void
 add_svav_to_string_list (const SV *sv, STRING_LIST *string_list,
                          enum sv_string_type type)
 {
-  size_t i;
+  SSize_t i;
   SSize_t strings_nr;
 
   dTHX;
@@ -379,9 +415,103 @@ get_line_message (CONVERTER *self, enum error_type type, int continuation,
   non_perl_free (source_info);
 }
 
-void
-get_sv_options (SV *sv, OPTIONS *options, CONVERTER *converter,
-                int force)
+/* return values:
+  0: success
+  -1: already set (only if !force)
+  -3: type error
+ */
+int
+get_sv_option (OPTION *option, SV *value, int force,
+               OPTIONS *options, const CONVERTER *converter)
+{
+  dTHX;
+
+  if (force <= 0 && option->configured > 0)
+    return -1;
+
+  switch (option->type)
+    {
+      case GOT_integer:
+        if (SvOK (value))
+          {
+            if (looks_like_number (value))
+              option->o.integer = SvIV (value);
+          else
+            {
+              fprintf (stderr, "BUG: %s: not an integer: %s\n",
+                       option->name, SvPVutf8_nolen (value));
+              option->o.integer = -1;
+              return -3;
+            }
+          }
+        else
+          option->o.integer = -1;
+
+        break;
+
+      case GOT_char:
+        non_perl_free (option->o.string);
+        if (SvOK (value))
+          option->o.string = non_perl_strdup (SvPVutf8_nolen (value));
+        else
+          option->o.string = 0;
+        break;
+
+      case GOT_bytes:
+        non_perl_free (option->o.string);
+        if (SvOK (value))
+          option->o.string = non_perl_strdup (SvPVbyte_nolen (value));
+        else
+          option->o.string = 0;
+        break;
+
+      case GOT_bytes_string_list:
+        clear_strings_list (option->o.strlist);
+        add_svav_to_string_list (value, option->o.strlist, svt_byte);
+        break;
+
+      case GOT_file_string_list:
+        clear_strings_list (option->o.strlist);
+        add_svav_to_string_list (value, option->o.strlist, svt_dir);
+        break;
+
+      case GOT_char_string_list:
+        clear_strings_list (option->o.strlist);
+        add_svav_to_string_list (value, option->o.strlist, svt_char);
+        break;
+
+      case GOT_buttons:
+        if (option->o.buttons)
+          {
+            if (options)
+              options->BIT_user_function_number
+                -= option->o.buttons->BIT_user_function_number;
+            html_free_button_specification_list (option->o.buttons);
+          }
+
+        option->o.buttons
+           = html_get_button_specification_list (converter, value);
+        if (option->o.buttons && options)
+          options->BIT_user_function_number
+            += option->o.buttons->BIT_user_function_number;
+        break;
+
+      case GOT_icons:
+        html_free_direction_icons (option->o.icons);
+        html_get_direction_icons_sv (converter, option->o.icons, value);
+
+        break;
+
+      default:
+        break;
+    }
+
+  return 0;
+}
+
+static void
+get_sv_options (SV *sv, OPTIONS *options, OPTION **sorted_options,
+                CONVERTER *converter, int force)
 {
   I32 hv_number;
   I32 i;
@@ -397,66 +527,26 @@ get_sv_options (SV *sv, OPTIONS *options, CONVERTER *converter,
       char *key;
       I32 retlen;
       SV *value = hv_iternextsv (hv, &key, &retlen);
-      if (value && SvOK (value))
-        {
-          get_sv_option (options, key, value, force, converter);
-        }
+      OPTION *option = find_option_string (sorted_options, key);
+
+      if (option)
+        get_sv_option (option, value, force, options, converter);
     }
 }
 
-void
-get_sv_configured_options (SV *configured_sv_in, OPTIONS *options)
-{
-  I32 hv_number;
-  I32 i;
-  HV *configured_hv;
-
-  dTHX;
-
-  configured_hv = (HV *)SvRV (configured_sv_in);
-
-  hv_number = hv_iterinit (configured_hv);
-  for (i = 0; i < hv_number; i++)
-    {
-      char *key;
-      I32 retlen;
-      SV *value = hv_iternextsv (configured_hv, &key, &retlen);
-      if (value && SvOK (value))
-        {
-          int configured = SvIV (value);
-          set_option_key_configured (options, key, configured);
-        }
-    }
-}
-
-
+/* pass sorted options to SORTED_OPTIONS_OUT, if set */
 OPTIONS *
-init_copy_sv_options (SV *sv_in, CONVERTER *converter, int force)
+init_copy_sv_options (SV *sv_in, CONVERTER *converter, int force,
+                      OPTION ***sorted_options_out)
 {
   OPTIONS *options = new_options ();
-  get_sv_options (sv_in, options, converter, force);
+  OPTION **sorted_options = new_sorted_options (options);
+  get_sv_options (sv_in, options, sorted_options, converter, force);
+  if (sorted_options_out)
+    *sorted_options_out = sorted_options;
+  else
+    free (sorted_options);
   return options;
-}
-
-void
-copy_converter_conf_sv (HV *hv, CONVERTER *converter,
-                        OPTIONS **conf, const char *conf_key, int force)
-{
-  SV **conf_sv;
-
-  dTHX;
-
-  conf_sv = hv_fetch (hv, conf_key, strlen (conf_key), 0);
-
-  if (conf_sv && SvOK(*conf_sv))
-    {
-      if (*conf)
-        clear_options (*conf);
-      else
-        *conf = new_options ();
-
-      get_sv_options (*conf_sv, *conf, converter, force);
-    }
 }
 
 INDEX_ENTRY *
@@ -467,7 +557,7 @@ find_index_entry_sv (const SV *index_entry_sv, INDEX_LIST *indices_info,
   HV *index_entry_hv;
   SV **index_name_sv;
   SV **entry_number_sv;
-  int entry_idx_in_index;
+  size_t entry_idx_in_index;
   const char *entry_index_name = 0;
   const INDEX *idx;
 
@@ -489,7 +579,7 @@ find_index_entry_sv (const SV *index_entry_sv, INDEX_LIST *indices_info,
       fatal (msg);
     }
   entry_index_name = (const char *) SvPVutf8_nolen (*index_name_sv);
-  *entry_number = SvIV (*entry_number_sv);
+  *entry_number = (size_t) SvIV (*entry_number_sv);
   entry_idx_in_index = *entry_number - 1;
 
   idx = indices_info_index_by_name (indices_info, entry_index_name);
@@ -718,41 +808,10 @@ get_sv_index_entries_sorted_by_letter (INDEX_LIST *indices_info,
   return indices_entries_by_letter;
 }
 
-void
-set_sv_conf (CONVERTER *converter, const char *conf, SV *value)
-{
-  if (converter->conf)
-    get_sv_option (converter->conf, conf, value, 0, converter);
-   /* Too early to have options set
-  else
-    fprintf (stderr, "HHH no converter conf %s\n", conf);
-    */
-}
-
-void
-force_sv_conf (CONVERTER *converter, const char *conf, SV *value)
-{
-  if (converter->conf)
-    get_sv_option (converter->conf, conf, value, 1, converter);
-}
-
-static int
-html_get_direction_index (const CONVERTER *converter, const char *direction)
-{
-  int i;
-  if (converter && converter->direction_unit_direction_name)
-    {
-      for (i = 0; converter->direction_unit_direction_name[i]; i++)
-        {
-          if (!strcmp (direction, converter->direction_unit_direction_name[i]))
-            return i;
-        }
-    }
-  return -1;
-}
+/* output format specific */
 
 /* should be consistent with enum button_function_type */
-static const char *button_function_type_string[] = {
+const char *html_button_function_type_string[] = {
   0,
   "::_default_panel_button_dynamic_direction_section_footer",
   "::_default_panel_button_dynamic_direction_node_footer",
@@ -760,7 +819,58 @@ static const char *button_function_type_string[] = {
   0,
 };
 
+/* set directions.  To be called after direction names have been collected */
+void
+html_fill_button_sv_specification_list (const CONVERTER *converter,
+                                     BUTTON_SPECIFICATION_LIST *result)
+{
+  size_t i;
+  dTHX;
+
+  for (i = 0; i < result->number; i++)
+    {
+      BUTTON_SPECIFICATION *button = &result->list[i];
+
+      if (button->type == BST_direction_info)
+        {
+          if (button->sv)
+            {
+              const char *direction_name;
+              AV *button_spec_info_av = (AV *) SvRV((SV *)button->sv);
+              SV **direction_sv = av_fetch (button_spec_info_av, 0, 0);
+
+              if (!direction_sv || !SvOK (*direction_sv))
+                {
+                  fprintf (stderr,
+                           "ERROR: missing direction in button %zu array\n",
+                           i);
+                  continue;
+                }
+
+              direction_name = SvPVutf8_nolen (*direction_sv);
+
+              if (direction_name)
+                button->b.button_info->direction
+                 = html_get_direction_index (converter, direction_name);
+            }
+        }
+      else if (button->type == BST_direction)
+        {
+          if (button->sv)
+            {
+              const char *direction_name = SvPVutf8_nolen ((SV *)button->sv);
+              if (direction_name)
+                button->b.direction = html_get_direction_index (converter,
+                                                              direction_name);
+            }
+        }
+    }
+}
+
 /* HTML specific, but needs to be there for options_get_perl.c */
+/* it is expected that directions are not found as the directions list
+   is not setup already.  A call of html_fill_button_specification_list
+   should be needed afterwards */
 BUTTON_SPECIFICATION_LIST *
 html_get_button_specification_list (const CONVERTER *converter,
                                     const SV *buttons_sv)
@@ -768,7 +878,7 @@ html_get_button_specification_list (const CONVERTER *converter,
   BUTTON_SPECIFICATION_LIST *result;
   AV *buttons_av;
   SSize_t buttons_nr;
-  SSize_t i;
+  size_t i;
 
   dTHX;
 
@@ -778,28 +888,36 @@ html_get_button_specification_list (const CONVERTER *converter,
       || SvTYPE (SvRV (buttons_sv)) != SVt_PVAV)
     return 0;
 
-  result = (BUTTON_SPECIFICATION_LIST *)
-            malloc (sizeof (BUTTON_SPECIFICATION_LIST));
-
   buttons_av = (AV *)SvRV (buttons_sv);
-  /* In contrast with other cases, we do not add a reference to the array
-     associated to result->av to make sure that the av is not destroyed
-     while still needed, as we assume that the Perl converter will hold
-     a reference longer than we need the av for */
-  result->av = buttons_av;
 
   buttons_nr = av_top_index (buttons_av) +1;
 
-  result->BIT_user_function_number = 0;
+  if (buttons_nr == 0)
+    return 0;
+
+  result = (BUTTON_SPECIFICATION_LIST *)
+            malloc (sizeof (BUTTON_SPECIFICATION_LIST));
+
+  result->av = buttons_av;
+  SvREFCNT_inc ((SV *)result->av);
+
   result->number = (size_t) buttons_nr;
+
+  result->BIT_user_function_number = 0;
+
   result->list = (BUTTON_SPECIFICATION *)
     malloc (result->number * sizeof (BUTTON_SPECIFICATION));
   memset (result->list, 0, result->number * sizeof (BUTTON_SPECIFICATION));
 
-  for (i = 0; i < buttons_nr; i++)
+  for (i = 0; i < result->number; i++)
     {
-      SV **button_sv = av_fetch (buttons_av, i, 0);
+      SV **button_sv = av_fetch (result->av, (SSize_t) i, 0);
       BUTTON_SPECIFICATION *button = &result->list[i];
+
+      if (!button_sv || !SvOK (*button_sv))
+        {
+          fprintf (stderr, "ERROR: missing button %zu\n", i);
+        }
 
       button->sv = *button_sv;
       SvREFCNT_inc (button->sv);
@@ -811,12 +929,13 @@ html_get_button_specification_list (const CONVERTER *converter,
               button->type = BST_function;
               button->b.sv_reference = *button_sv;
             }
-          else if (SvTYPE (SvRV(*button_sv)) == SVt_PVAV)
+          else if (SvTYPE (SvRV(*button_sv)) == SVt_PVAV) /* ARRAY */
             {
               AV *button_spec_info_av = (AV *) SvRV(*button_sv);
               SV **direction_sv = av_fetch (button_spec_info_av, 0, 0);
               SV **button_spec_info_type
                  = av_fetch (button_spec_info_av, 1, 0);
+              const char *direction_name;
 
               BUTTON_SPECIFICATION_INFO *button_spec
                 = (BUTTON_SPECIFICATION_INFO *)
@@ -826,9 +945,32 @@ html_get_button_specification_list (const CONVERTER *converter,
               button->type = BST_direction_info;
               button->b.button_info = button_spec;
 
+              if (!direction_sv || !SvOK (*direction_sv))
+                {
+                  fprintf (stderr,
+                           "ERROR: missing direction in button %zu array\n",
+                           i);
+                  continue;
+                }
+              if (!button_spec_info_type || !SvOK (*button_spec_info_type))
+                {
+                  fprintf (stderr,
+                           "ERROR: missing specification in button %zu array\n",
+                           i);
+                  continue;
+                }
+
+              direction_name = SvPVutf8_nolen (*direction_sv);
               button_spec->direction
-                = html_get_direction_index (converter,
-                                            SvPVutf8_nolen (*direction_sv));
+                = html_get_direction_index (converter, direction_name);
+               /* to debug
+              if (button_spec->direction < 0)
+                {
+                  fprintf (stderr,
+                      "REMARK: unknown button %zu array direction: %d: %s\n",
+                           i, button_spec->direction, direction_name);
+                }
+                */
 
               if (SvROK (*button_spec_info_type))
                 {
@@ -845,9 +987,9 @@ html_get_button_specification_list (const CONVERTER *converter,
                       button_fun_name
                        = SvPV_nolen (cv_name ((CV *) SvRV (*button_spec_info_type),
                                               0, 0));
-                      for (j = 1; button_function_type_string[j]; j++)
+                      for (j = 1; html_button_function_type_string[j]; j++)
                         if (strstr (button_fun_name,
-                                    button_function_type_string[j]))
+                                    html_button_function_type_string[j]))
                           {
                             button_fun_type = j;
                             break;
@@ -860,7 +1002,7 @@ html_get_button_specification_list (const CONVERTER *converter,
                     }
                   else
                     {
-                      button_spec->type = BIT_string;
+                      button_spec->type = BIT_external_string;
                       button_spec->bi.sv_string = *button_spec_info_type;
                     }
                 }
@@ -898,39 +1040,38 @@ html_get_button_specification_list (const CONVERTER *converter,
             }
           else
             {
-              button->type = BST_string;
+              button->type = BST_external_string;
               button->b.sv_string = *button_sv;
             }
         }
       else
         {
+          const char *direction_name = SvPVutf8_nolen (*button_sv);
           button->type = BST_direction;
           button->b.direction = html_get_direction_index (converter,
-                                              SvPVutf8_nolen (*button_sv));
+                                                          direction_name);
+           /* To debug
+          if (button->b.direction == -2)
+            fprintf (stderr, "REMARK: unknown button %zu string direction: %s\n",
+                             i, direction_name);
+            */
         }
     }
-
   return result;
 }
 
-/* HTML specific, but needs to be there for options_get_perl.c */
+/* set direction icons.
+   To be called after direction names have been collected */
 void
-html_get_direction_icons_sv (const CONVERTER *converter,
-                             DIRECTION_ICON_LIST *direction_icons,
-                             const SV *icons_sv)
+html_fill_direction_icons (const CONVERTER *converter,
+                           DIRECTION_ICON_LIST *direction_icons)
 {
   HV *icons_hv;
   int i;
 
   dTHX;
 
-  if (!SvOK (icons_sv))
-    return;
-
-  if (!converter || !converter->direction_unit_direction_name
-       /* the following is for consistency, but is not possible */
-      || converter->special_unit_varieties.number
-          + NON_SPECIAL_DIRECTIONS_NR <= 0)
+  if (!direction_icons->sv)
     return;
 
   if (direction_icons->number == 0)
@@ -942,7 +1083,7 @@ html_get_direction_icons_sv (const CONVERTER *converter,
            (direction_icons->number * sizeof (char *));
     }
 
-  icons_hv = (HV *)SvRV (icons_sv);
+  icons_hv = (HV *)SvRV ((SV *)direction_icons->sv);
 
   for (i = 0; converter->direction_unit_direction_name[i]; i++)
     {
@@ -958,6 +1099,31 @@ html_get_direction_icons_sv (const CONVERTER *converter,
       else
         direction_icons->list[i] = 0;
     }
+}
+
+/* HTML specific, but needs to be there for options_get_perl.c */
+void
+html_get_direction_icons_sv (const CONVERTER *converter,
+                             DIRECTION_ICON_LIST *direction_icons,
+                             SV *icons_sv)
+{
+  dTHX;
+
+  if (!SvOK (icons_sv))
+    return;
+
+  /* the following is for consistency, but is not possible */
+  if (converter && converter->special_unit_varieties.number
+                     + NON_SPECIAL_DIRECTIONS_NR <= 0)
+    return;
+
+  SvREFCNT_inc ((SV *) icons_sv);
+  direction_icons->sv = icons_sv;
+
+  if (!converter || !converter->direction_unit_direction_name)
+    return;
+
+  html_fill_direction_icons (converter, direction_icons);
 }
 
 static const INDEX_ENTRY *
@@ -1062,9 +1228,9 @@ find_element_extra_index_entry_sv (const DOCUMENT *document,
 
 #define FETCH(key) key##_sv = hv_fetch (element_hv, #key, strlen (#key), 0);
 /* find C tree root element corresponding to perl tree element element_hv */
-const ELEMENT *
+static const ELEMENT *
 find_root_command (const DOCUMENT *document, HV *element_hv,
-                   int output_units_descriptor)
+                   size_t output_units_descriptor)
 {
   SV **associated_unit_sv;
   const ELEMENT *root;
@@ -1086,7 +1252,7 @@ find_root_command (const DOCUMENT *document, HV *element_hv,
 
           if (unit_index_sv)
             {
-              int unit_index = SvIV (*unit_index_sv);
+              size_t unit_index = (size_t) SvIV (*unit_index_sv);
               const OUTPUT_UNIT_LIST *output_units
                = retrieve_output_units (document, output_units_descriptor);
 
@@ -1193,7 +1359,7 @@ find_subentry_index_command_sv (const DOCUMENT *document, HV *element_hv)
 /* find the INDEX_ENTRY associated element matching ELEMENT_HV.
 
    If the index entry was reassociated, the tree element the
-   index entry is reassociated to is not index_entry->entry_element
+   index entry is reassociated with is not index_entry->entry_element
    but index_entry->entry_associated_element.  The original
    tree element that was associated is index_entry->entry_element.
    Depending on the situation one or the other may be looked for
@@ -1203,7 +1369,7 @@ find_subentry_index_command_sv (const DOCUMENT *document, HV *element_hv)
    when doing a link to the tree from the index entry.  But it may
    also be the original tree element that is used, for example
    to get the index entry tree element content, for instance
-   when going through the elements associated to indices to setup
+   when going through the elements associated with indices to setup
    index entries sort strings.
  */
 static const ELEMENT *
@@ -1235,7 +1401,7 @@ find_index_entry_associated_hv (const INDEX_ENTRY *index_entry,
  */
 const ELEMENT *
 find_element_from_sv (const CONVERTER *converter, const DOCUMENT *document_in,
-                      const SV *element_sv, int output_units_descriptor)
+                      const SV *element_sv, size_t output_units_descriptor)
 {
   enum command_id cmd = 0;
   HV *element_hv;
@@ -1294,7 +1460,8 @@ find_element_from_sv (const CONVERTER *converter, const DOCUMENT *document_in,
           EXTRA(global_command_number)
           if (global_command_number_sv)
             {
-              int global_command_number = SvIV (*global_command_number_sv);
+              size_t global_command_number
+                = (size_t) SvIV (*global_command_number_sv);
               const ELEMENT_LIST *global_cmd_list
                 = get_cmd_global_multi_command (
                               &document->global_commands, cmd);
@@ -1359,7 +1526,7 @@ find_element_from_sv (const CONVERTER *converter, const DOCUMENT *document_in,
 
 /* returns the sorted index for a LANGUAGE if found.
    Also returns the hash containing the sorted index languages,
-   associated to KEY in the DOCUMENT_HV, created if it did not exist */
+   associated with KEY in the DOCUMENT_HV, created if it did not exist */
 SV *
 get_language_document_hv_sorted_indices (HV *document_hv, const char *key,
                       const char *language, HV **out_sorted_indices_hv)

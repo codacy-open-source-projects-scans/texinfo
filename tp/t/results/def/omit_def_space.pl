@@ -475,15 +475,15 @@ $result_indices_sort_strings{'omit_def_space'} = {
 
 
 
-$result_converted{'plaintext'}->{'omit_def_space'} = ' - Function: function(arg1, arg2)
- - Function: another(aarg)
+$result_converted{'plaintext'}->{'omit_def_space'} = ' -- Function: function(arg1, arg2)
+ -- Function: another(aarg)
      explain
 ';
 
 
 $result_converted{'html'}->{'omit_def_space'} = '<!DOCTYPE html>
 <html>
-<!-- Created by texinfo, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by texinfo, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Untitled Document</title>

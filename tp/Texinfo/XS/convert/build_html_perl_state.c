@@ -48,14 +48,73 @@
 #include "build_perl_info.h"
 /* for NAMED_STRING_ELEMENT_LIST */
 #include "translations.h"
-/* also for html_argument_formatting_type_names */
-#include "convert_html.h"
+/* for no_arg_formatted_cmd direction_string_type_names
+   direction_string_context_names html_conversion_context_type_names
+   html_argument_formatting_type_names translated_special_unit_info */
+#include "html_converter_types.h"
+/* for special_unit_info_type_names html_global_unit_direction_names
+   html_setup_global_units_direction_names */
+#include "html_prepare_converter.h"
 #include "build_html_perl_state.h"
 
 #define LOCALEDIR DATADIR "/locale"
 
  /* See the NOTE in build_perl_info.c on use of functions related to
     memory allocation */
+
+static HV *
+build_htmlxref (HTMLXREF_MANUAL_LIST *htmlxref_list)
+{
+  HV *htmlxref_hv;
+  size_t i;
+
+  dTHX;
+
+  htmlxref_hv = newHV ();
+
+  for (i = 0; i < htmlxref_list->number; i++)
+    {
+      HTMLXREF_MANUAL *htmlxref_manual = &htmlxref_list->list[i];
+      const char *manual_name = htmlxref_manual->manual;
+      SV *manual_name_sv = newSVpv_utf8 (manual_name, 0);
+      HV *htmlxref_manual_hv = newHV ();
+      SV *htmlxref_manual_sv = newRV_noinc ((SV *) htmlxref_manual_hv);
+      enum htmlxref_split_type j;
+
+      hv_store_ent (htmlxref_hv, manual_name_sv, htmlxref_manual_sv, 0);
+
+      for (j = 0; j < htmlxref_split_type_chapter+1; j++)
+        {
+          if (htmlxref_manual->urlprefix[j])
+            {
+              const char *split_type_name = htmlxref_split_type_names[j];
+              const char *href = htmlxref_manual->urlprefix[j];
+
+              hv_store (htmlxref_manual_hv, split_type_name,
+                        strlen (split_type_name),
+                        newSVpv_utf8 (href, 0), 0);
+            }
+        }
+    }
+
+  return htmlxref_hv;
+}
+
+void
+html_pass_xtmlxref (HTMLXREF_MANUAL_LIST *htmlxref_list, SV *converter_sv)
+{
+  HV *converter_hv;
+  HV *htmlxref_hv;
+
+  dTHX;
+
+  converter_hv = (HV *) SvRV (converter_sv);
+
+  htmlxref_hv = build_htmlxref (htmlxref_list);
+
+  hv_store (converter_hv, "htmlxref", strlen ("htmlxref"),
+            newRV_noinc ((SV *) htmlxref_hv), 0);
+}
 
 #define STORE(key, sv) hv_store (html_target_hv, key, strlen (key), sv, 0)
 HV *
@@ -94,7 +153,7 @@ SV *
 build_no_arg_commands_formatting (const CONVERTER *converter)
 {
   HV *no_arg_commands_formatting_hv;
-  int i;
+  size_t i;
 
   dTHX;
 
@@ -110,10 +169,10 @@ build_no_arg_commands_formatting (const CONVERTER *converter)
       hv_store (no_arg_commands_formatting_hv, command_name,
                 strlen (command_name), newRV_noinc ((SV *) context_hv), 0);
 
-      for (cctx = 0; cctx < HCC_type_css_string+1; cctx++)
+      for (cctx = 0; cctx < NO_ARG_COMMAND_CONTEXT_NR; cctx++)
         {
-          const HTML_COMMAND_CONVERSION *no_arg_format
-            = &converter->html_command_conversion[cmd][cctx];
+          const HTML_NO_ARG_COMMAND_CONVERSION *no_arg_format
+            = &converter->html_no_arg_command_conversion[cmd][cctx];
           const char *context_name = html_conversion_context_type_names[cctx];
 
           HV *spec_hv = newHV ();
@@ -303,7 +362,7 @@ html_pass_converter_setup_state (const CONVERTER *converter,
 SV *
 build_html_files_source_info (const FILE_SOURCE_INFO_LIST *files_source_info)
 {
-  int i;
+  size_t i;
   HV *hv;
 
   dTHX;
@@ -435,7 +494,7 @@ html_pass_conversion_output_units (CONVERTER *converter, SV *converter_sv,
       if (document_sv)
         {
           HV *document_hv = (HV *) SvRV (*document_sv);
-          store_texinfo_tree (converter->document, document_hv);
+          store_document_texinfo_tree (converter->document, document_hv);
         }
 
       *output_units_sv = build_output_units_list
@@ -468,7 +527,7 @@ HV *
 build_html_elements_in_file_count (
                  FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 {
-  int i;
+  size_t i;
   HV *hv;
 
   dTHX;
@@ -608,8 +667,7 @@ build_html_translated_names (HV *hv, CONVERTER *converter)
   /* pass all the information for each context for translated commands */
   if (converter->no_arg_formatted_cmd_translated.number)
     {
-      int max_context = HCC_type_css_string +1;
-      int j;
+      size_t j;
       HV *no_arg_commands_formatting_hv;
       FETCH(no_arg_commands_formatting);
       no_arg_commands_formatting_hv
@@ -619,17 +677,15 @@ build_html_translated_names (HV *hv, CONVERTER *converter)
           int k;
           enum command_id cmd
             = converter->no_arg_formatted_cmd_translated.list[j];
-          HTML_COMMAND_CONVERSION *conversion_contexts
-                = converter->html_command_conversion[cmd];
           const char *cmdname = builtin_command_data[cmd].cmdname;
           SV **no_arg_command_sv
              = hv_fetch (no_arg_commands_formatting_hv,
                          cmdname, strlen (cmdname), 0);
           HV *no_arg_command_hv = (HV *) SvRV (*no_arg_command_sv);
-          for (k = 0; k < max_context; k++)
+          for (k = 0; k < NO_ARG_COMMAND_CONTEXT_NR; k++)
             {
-              HTML_COMMAND_CONVERSION *no_arg_cmd_context
-                  = &conversion_contexts[k];
+              HTML_NO_ARG_COMMAND_CONVERSION *no_arg_cmd_context
+                  = &converter->html_no_arg_command_conversion[cmd][k];
 
               const char *context_name = html_conversion_context_type_names[k];
               SV **context_sv = hv_fetch (no_arg_command_hv,
@@ -731,7 +787,7 @@ SV *
 build_html_command_formatted_args (const HTML_ARGS_FORMATTED *args_formatted)
 {
   AV *av;
-  int i;
+  size_t i;
 
   dTHX;
 
@@ -774,7 +830,7 @@ SV *
 build_replaced_substrings (NAMED_STRING_ELEMENT_LIST *replaced_substrings)
 {
   HV *hv;
-  int i;
+  size_t i;
 
   dTHX;
 

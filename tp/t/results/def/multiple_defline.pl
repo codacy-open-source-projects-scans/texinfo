@@ -343,10 +343,10 @@ $result_floats{'multiple_defline'} = {};
 
 
 
-$result_converted{'plaintext'}->{'multiple_defline'} = ' - Funoid: foo (bar)
+$result_converted{'plaintext'}->{'multiple_defline'} = ' -- Funoid: foo (bar)
      description1 description1 description1 description1 description1
      description1 description1 description1 description1 description1
- - Funnyoid: foo2 (bar2, baz2)
+ -- Funnyoid: foo2 (bar2, baz2)
      description2 description2 description2 description2 description2
      description2 description2 description2 description2 description2
 ';
@@ -354,7 +354,7 @@ $result_converted{'plaintext'}->{'multiple_defline'} = ' - Funoid: foo (bar)
 
 $result_converted{'html'}->{'multiple_defline'} = '<!DOCTYPE html>
 <html>
-<!-- Created by texinfo, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by texinfo, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Untitled Document</title>

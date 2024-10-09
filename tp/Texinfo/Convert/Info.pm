@@ -44,23 +44,25 @@ our $VERSION = '7.1.90';
 
 my $STDIN_DOCU_NAME = 'stdin';
 
-my %defaults = Texinfo::Convert::Plaintext::converter_defaults(undef, undef);
+my $plaintext_defaults
+  = Texinfo::Convert::Plaintext::converter_defaults(undef, undef);
+my $defaults = { %$plaintext_defaults };
 # Customization option variables
-$defaults{'FORMAT_MENU'} = 'menu';
-$defaults{'EXTENSION'} = 'info';
-$defaults{'USE_SETFILENAME_EXTENSION'} = 1;
-$defaults{'OUTFILE'} = undef;
+$defaults->{'FORMAT_MENU'} = 'menu';
+$defaults->{'EXTENSION'} = 'info';
+$defaults->{'USE_SETFILENAME_EXTENSION'} = 1;
+$defaults->{'OUTFILE'} = undef;
 # in the Emacs Info reader and in old readers, DEL character will appear,
 # but the node names are problematic in those readers, so it is not
 # such an issue to have them marked that way.
-$defaults{'INFO_SPECIAL_CHARS_QUOTE'} = 1;
+$defaults->{'INFO_SPECIAL_CHARS_QUOTE'} = 1;
 # set as default independently of INFO_SPECIAL_CHARS_QUOTE as long
 # as the Emacs Info reader does not support node names quoting.
-$defaults{'INFO_SPECIAL_CHARS_WARNING'} = 1;
+$defaults->{'INFO_SPECIAL_CHARS_WARNING'} = 1;
 
 sub converter_defaults($$)
 {
-  return %defaults;
+  return $defaults;
 }
 
 sub output($$)
@@ -74,7 +76,8 @@ sub output($$)
 
   my ($output_file, $destination_directory, $output_filename,
       $document_name, $input_basefile)
-        = $self->determine_files_and_directory($self->{'output_format'});
+        = $self->determine_files_and_directory(
+                               $self->get_conf('TEXINFO_OUTPUT_FORMAT'));
   my ($encoded_destination_directory, $dir_encoding)
     = $self->encoded_output_file_name($destination_directory);
   my ($succeeded, $created_directory)
@@ -370,7 +373,7 @@ sub output($$)
   return $result;
 }
 
-# Wrapper around Texinfo::Common::output_files_open_out.  Open the file
+# Wrapper around Texinfo::Convert::Utils::output_files_open_out.  Open the file
 # with any CR-LF conversion disabled.  We need this for tag tables to
 # be correct under MS-Windows.   Return filehandle or undef on failure.
 sub _open_info_file($$)
@@ -383,7 +386,7 @@ sub _open_info_file($$)
 
   # the third return information, set if the file has already been used
   # in this files_information is not checked as this cannot happen.
-  my ($fh, $error_message) = Texinfo::Common::output_files_open_out(
+  my ($fh, $error_message) = Texinfo::Convert::Utils::output_files_open_out(
                                $self->output_files_information(), $self,
                                $encoded_filename, 'use_binmode');
 
@@ -404,7 +407,7 @@ sub _register_closed_info_file($$)
   my ($encoded_filename, $path_encoding)
       = $self->encoded_output_file_name($filename);
 
-  Texinfo::Common::output_files_register_closed(
+  Texinfo::Convert::Utils::output_files_register_closed(
              $self->output_files_information(), $encoded_filename)
 }
 
@@ -475,6 +478,11 @@ sub _info_header($$$)
   $result = $self->_stream_result();
   pop @{$self->{'count_context'}};
   return $result;
+}
+
+sub format_warn_strong_note($)
+{
+  return 1;
 }
 
 sub format_contents($$$)

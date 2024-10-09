@@ -24,6 +24,7 @@ use strict;
 
 use warnings;
 
+# in Perl core standard modules
 use File::Basename;
 use Text::Wrap;
 
@@ -100,6 +101,8 @@ if ($perl_format) {
   print OUT "my %base_default_css_element_class_styles = (\n";
 
 } else {
+  # C format
+
   my $header_file = $ARGV[6];
 
   die "Need an output header\n" if (!defined($header_file));
@@ -113,6 +116,7 @@ if ($perl_format) {
 
   print OUT "#include <config.h>\n\n";
   print OUT "#include \"conversion_data.h\"\n";
+  print OUT "#include \"tree_types.h\"\n";
   print OUT "#include \"converter_types.h\"\n\n";
 
   print OUT "const CSS_SELECTOR_STYLE base_default_css_element_class_styles[] = {\n";
@@ -325,7 +329,7 @@ if ($perl_format) {
    .'  return \%default_translated_special_unit_info;'."\n"
    ."}\n\n";
 } else {
-
+  # C format
 
   print OUT "static char *default_special_unit_varieties_array[] = {\n";
   foreach my $special_units (@su_ordered) {
@@ -335,7 +339,7 @@ if ($perl_format) {
 
   print OUT "const STRING_LIST default_special_unit_varieties = {default_special_unit_varieties_array, $special_units_nr, $special_units_nr};\n\n";
 
-  # FIXME somewhere else?
+  # For now, this define is not used anywhere else.  Keep it here only.
   print OUT "#define pgdt_noop(Context,String) String\n";
 
   print OUT "const char * const default_special_unit_info[SPECIAL_UNIT_INFO_TYPE_NR][$special_units_nr] = {\n";
@@ -548,6 +552,7 @@ if ($perl_format) {
    .'  return \%default_translated_directions_strings;'."\n"
    ."}\n\n";
 } else {
+  # C format
 
   print HDR "#define HTML_GLOBAL_DIRECTIONS_LIST \\\n";
   foreach my $direction (@{$direction_orders{'global'}}) {
@@ -578,6 +583,10 @@ if ($perl_format) {
      .$direction_orders{'relative'}[-1]."\n\n";
 
   my $nr_string_directions = scalar(@ordered_directions);
+
+  print HDR "extern const char * const default_converted_directions_strings[]["
+                            ."$nr_string_directions];\n\n";
+
   print OUT "const char * const default_converted_directions_strings[]["
                             ."$nr_string_directions] = {\n";
   foreach my $type (@d_ordered_untranslated_hashes) {
@@ -594,6 +603,9 @@ if ($perl_format) {
     print OUT "  },\n";
   }
   print OUT "};\n\n";
+
+  print HDR "extern const HTML_DEFAULT_DIRECTION_STRING_TRANSLATED "
+     ."default_translated_directions_strings[][$nr_string_directions];\n\n";
 
   print OUT "const HTML_DEFAULT_DIRECTION_STRING_TRANSLATED "
      ."default_translated_directions_strings[][$nr_string_directions] = {\n";
@@ -686,6 +698,8 @@ if ($perl_format) {
 
   print OUT "1;\n";
 } else {
+  # C format
+
   print HDR "extern const char *html_style_commands_element[];\n\n";
 
   print HDR "#endif\n";

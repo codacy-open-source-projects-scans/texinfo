@@ -353,9 +353,6 @@ foreach my $command ('var', 'cite', 'dmn', keys(%brace_code_commands)) {
 }
 
 my %defaults = (
-  # Not a customization option variable
-  'converted_format'     => '',
-
   # Customization options
   'ENABLE_ENCODING'      => 1,
   'ASCII_DASHES_AND_QUOTES' => 1,
@@ -410,7 +407,7 @@ sub pop_top_formatter($)
 
 sub converter_defaults($$)
 {
-  return %defaults;
+  return \%defaults;
 }
 
 sub conversion_initialization($;$)
@@ -448,7 +445,7 @@ sub conversion_initialization($;$)
 
   %{$self->{'style_map'}} = %style_map;
 
-  Texinfo::Common::output_files_disable_output_encoding
+  Texinfo::Convert::Utils::output_files_disable_output_encoding
     ($self->{'output_files'}, 1);
 
   if ($self->get_conf('ENABLE_ENCODING')
@@ -681,7 +678,8 @@ sub output($$)
 
   my ($output_file, $destination_directory, $output_filename,
        $document_name)
-      = $self->determine_files_and_directory($self->{'output_format'});
+      = $self->determine_files_and_directory(
+                          $self->get_conf('TEXINFO_OUTPUT_FORMAT'));
   my ($encoded_destination_directory, $dir_encoding)
     = $self->encoded_output_file_name($destination_directory);
   my $succeeded
@@ -738,7 +736,7 @@ sub output($$)
       my $error_message;
       # the third return information, set if the file has already been used
       # in this files_information is not checked as this cannot happen.
-      ($fh, $error_message) = Texinfo::Common::output_files_open_out(
+      ($fh, $error_message) = Texinfo::Convert::Utils::output_files_open_out(
                     $self->output_files_information(), $self,
                     $encoded_outfile_name);
       if (!$fh) {
@@ -760,7 +758,7 @@ sub output($$)
     # NOTE do not close STDOUT now to avoid a perl warning.
     # TODO is it still true that there is such a warning?
     if ($fh and $outfile_name ne '-') {
-      Texinfo::Common::output_files_register_closed(
+      Texinfo::Convert::Utils::output_files_register_closed(
                   $self->output_files_information(), $encoded_outfile_name);
       if (!close($fh)) {
         $self->converter_document_error(
@@ -785,7 +783,7 @@ sub output($$)
       # open the file and output the elements
       if (!exists($files_filehandle{$output_unit_filename})) {
         my $error_message;
-        ($file_fh, $error_message) = Texinfo::Common::output_files_open_out(
+        ($file_fh, $error_message) = Texinfo::Convert::Utils::output_files_open_out(
                              $self->output_files_information(), $self,
                              $out_filepath);
         if (!$file_fh) {
@@ -805,7 +803,7 @@ sub output($$)
       if ($self->{'file_counters'}->{$output_unit_filename} == 0) {
         # NOTE do not close STDOUT here to avoid a perl warning
         if ($out_filepath ne '-') {
-          Texinfo::Common::output_files_register_closed(
+          Texinfo::Convert::Utils::output_files_register_closed(
             $self->output_files_information(), $out_filepath);
           if (!close($file_fh)) {
             $self->converter_document_error(
@@ -876,9 +874,7 @@ sub new_formatter($$;$)
       = $indent_length*($self->{'format_context'}->[-1]->{'indent_level'});
   }
 
-  my $frenchspacing_conf = $self->{'conf'}->{'frenchspacing'};
-  #my $frenchspacing_conf = $self->get_conf('frenchspacing');
-  # access 'conf' hash directly for efficiency
+  my $frenchspacing_conf = $self->get_conf('frenchspacing');
 
   $container_conf->{'frenchspacing'} = 1
     if ($frenchspacing_conf eq 'on');
@@ -1503,6 +1499,11 @@ sub _align_environment($$$$)
   push @{$self->{'count_context'}->[-1]->{'locations'}},
                        @{$counts->{'locations'}};
   return $result;
+}
+
+sub format_warn_strong_note($)
+{
+  return 0;
 }
 
 # format @contents or @shortcontents
@@ -2374,14 +2375,14 @@ sub _convert_def_line($$)
          'name' => $formatted_name,
          'arguments' => $formatted_arguments};
         if ($omit_def_space) {
-          $tree = $self->cdt('@tie{}-- {category}: {name}{arguments}',
+          $tree = $self->cdt('@tie{}--- {category}: {name}{arguments}',
                              $strings);
         } else {
-          $tree = $self->cdt('@tie{}-- {category}: {name} {arguments}',
+          $tree = $self->cdt('@tie{}--- {category}: {name} {arguments}',
                              $strings);
         }
       } else {
-        $tree = $self->cdt('@tie{}-- {category}: {name}', {
+        $tree = $self->cdt('@tie{}--- {category}: {name}', {
              'category' => $category,
              'name' => $formatted_name});
       }
@@ -2399,21 +2400,21 @@ sub _convert_def_line($$)
             and $cmdname eq 'deftypefn') {
           if ($omit_def_space) {
             $tree
-              = $self->cdt('@tie{}-- {category}:@*{type}@*{name}{arguments}',
+              = $self->cdt('@tie{}--- {category}:@*{type}@*{name}{arguments}',
                            $strings);
           } else {
             $tree
-              = $self->cdt('@tie{}-- {category}:@*{type}@*{name} {arguments}',
+              = $self->cdt('@tie{}--- {category}:@*{type}@*{name} {arguments}',
                            $strings);
           }
         } else {
           if ($omit_def_space) {
             $tree
-              = $self->cdt('@tie{}-- {category}: {type} {name}{arguments}',
+              = $self->cdt('@tie{}--- {category}: {type} {name}{arguments}',
                            $strings);
           } else {
             $tree
-              = $self->cdt('@tie{}-- {category}: {type} {name} {arguments}',
+              = $self->cdt('@tie{}--- {category}: {type} {name} {arguments}',
                            $strings);
           }
         }
@@ -2425,10 +2426,10 @@ sub _convert_def_line($$)
         if ($self->get_conf('deftypefnnewline')
             and $self->get_conf('deftypefnnewline') eq 'on'
             and $cmdname eq 'deftypefn') {
-          $tree = $self->cdt('@tie{}-- {category}:@*{type}@*{name}',
+          $tree = $self->cdt('@tie{}--- {category}:@*{type}@*{name}',
                              $strings);
         } else {
-          $tree = $self->cdt('@tie{}-- {category}: {type} {name}',
+          $tree = $self->cdt('@tie{}--- {category}: {type} {name}',
                              $strings);
         }
       }
@@ -2443,15 +2444,15 @@ sub _convert_def_line($$)
          'arguments' => $formatted_arguments};
         if ($omit_def_space) {
           $tree
-           = $self->cdt('@tie{}-- {category} of {class}: {name}{arguments}',
+           = $self->cdt('@tie{}--- {category} of {class}: {name}{arguments}',
                         $strings);
         } else {
           $tree
-           = $self->cdt('@tie{}-- {category} of {class}: {name} {arguments}',
+           = $self->cdt('@tie{}--- {category} of {class}: {name} {arguments}',
                         $strings);
         }
       } else {
-        $tree = $self->cdt('@tie{}-- {category} of {class}: {name}', {
+        $tree = $self->cdt('@tie{}--- {category} of {class}: {name}', {
          'category' => $category,
          'class' => {'type' => '_code', 'contents' => [$class]},
          'name' => $formatted_name});
@@ -2467,15 +2468,15 @@ sub _convert_def_line($$)
          'arguments' => $formatted_arguments};
         if ($omit_def_space) {
           $tree
-            = $self->cdt('@tie{}-- {category} on {class}: {name}{arguments}',
+            = $self->cdt('@tie{}--- {category} on {class}: {name}{arguments}',
                          $strings);
         } else {
           $tree
-            = $self->cdt('@tie{}-- {category} on {class}: {name} {arguments}',
+            = $self->cdt('@tie{}--- {category} on {class}: {name} {arguments}',
                          $strings);
         }
       } else {
-        $tree = $self->cdt('@tie{}-- {category} on {class}: {name}', {
+        $tree = $self->cdt('@tie{}--- {category} on {class}: {name}', {
          'category' => $category,
          'class' => {'type' => '_code', 'contents' => [$class]},
          'name' => $formatted_name});
@@ -2493,24 +2494,24 @@ sub _convert_def_line($$)
           if ($omit_def_space) {
             $tree
               = $self->cdt(
-               '@tie{}-- {category} on {class}:@*{type}@*{name}{arguments}',
+               '@tie{}--- {category} on {class}:@*{type}@*{name}{arguments}',
                            $strings);
           } else {
             $tree
               = $self->cdt(
-               '@tie{}-- {category} on {class}:@*{type}@*{name} {arguments}',
+               '@tie{}--- {category} on {class}:@*{type}@*{name} {arguments}',
                            $strings);
           }
         } else {
           if ($omit_def_space) {
             $tree
               = $self->cdt(
-             '@tie{}-- {category} on {class}: {type} {name}{arguments}',
+             '@tie{}--- {category} on {class}: {type} {name}{arguments}',
                            $strings);
           } else {
             $tree
               = $self->cdt(
-              '@tie{}-- {category} on {class}: {type} {name} {arguments}',
+              '@tie{}--- {category} on {class}: {type} {name} {arguments}',
                            $strings);
           }
         }
@@ -2523,11 +2524,11 @@ sub _convert_def_line($$)
         if ($self->get_conf('deftypefnnewline')
             and $self->get_conf('deftypefnnewline') eq 'on') {
           $tree
-            = $self->cdt('@tie{}-- {category} on {class}:@*{type}@*{name}',
+            = $self->cdt('@tie{}--- {category} on {class}:@*{type}@*{name}',
                          $strings);
         } else {
           $tree
-            = $self->cdt('@tie{}-- {category} on {class}: {type} {name}',
+            = $self->cdt('@tie{}--- {category} on {class}: {type} {name}',
                          $strings);
         }
       }
@@ -2542,12 +2543,12 @@ sub _convert_def_line($$)
         if ($omit_def_space) {
           $tree
             = $self->cdt(
-                 '@tie{}-- {category} of {class}: {type} {name}{arguments}',
+                 '@tie{}--- {category} of {class}: {type} {name}{arguments}',
                          $strings);
         } else {
           $tree
             = $self->cdt(
-               '@tie{}-- {category} of {class}: {type} {name} {arguments}',
+               '@tie{}--- {category} of {class}: {type} {name} {arguments}',
                          $strings);
         }
       } else {
@@ -2557,7 +2558,7 @@ sub _convert_def_line($$)
          'class' => {'type' => '_code', 'contents' => [$class]},
          'name' => $formatted_name};
         $tree
-          = $self->cdt('@tie{}-- {category} of {class}: {type} {name}',
+          = $self->cdt('@tie{}--- {category} of {class}: {type} {name}',
                          $strings);
       }
     }
@@ -2914,8 +2915,7 @@ sub _convert($$)
               and defined($element->{'args'}->[0]->{'contents'}->[0]->{'text'})
               and $element->{'args'}->[0]->{'contents'}->[0]->{'text'}
                     =~ /^Note\s/i
-              and $self->{'converted_format'}
-              and $self->{'converted_format'} eq 'info') {
+              and $self->format_warn_strong_note()) {
             $self->plaintext_line_warn($self, __(
       "\@strong{Note...} produces a spurious cross-reference in Info; reword to avoid that"),
                              $element->{'source_info'});

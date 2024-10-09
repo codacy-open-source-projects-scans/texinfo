@@ -53,6 +53,8 @@ static void get_tags_of_indirect_tags_table (FILE_BUFFER *file_buffer,
 static void free_file_buffer_tags (FILE_BUFFER *file_buffer);
 static void free_info_tag (TAG *tag);
 
+#define DEFAULT_INFO_TAG_TABLE_RANGE 1000
+
 /* Grovel FILE_BUFFER->contents finding tags and nodes, and filling in the
    various slots.  This can also be used to rebuild a tag or node table. */
 void
@@ -60,7 +62,7 @@ build_tags_and_nodes (FILE_BUFFER *file_buffer)
 {
   SEARCH_BINDING binding;
   long position;
-  long tags_table_begin, tags_table_end;
+  size_t tags_table_begin, tags_table_end;
 
   free_file_buffer_tags (file_buffer);
   file_buffer->flags &= ~N_HasTagsTable;
@@ -68,9 +70,10 @@ build_tags_and_nodes (FILE_BUFFER *file_buffer)
   /* See if there is a tags table in this info file. */
   binding.buffer = file_buffer->contents;
   binding.start = file_buffer->filesize;
-  binding.end = binding.start - 1000;
-  if (binding.end < 0)
+  if (binding.start < DEFAULT_INFO_TAG_TABLE_RANGE)
     binding.end = 0;
+  else
+    binding.end = binding.start - DEFAULT_INFO_TAG_TABLE_RANGE;
   binding.flags = S_FoldCase;
 
   position = find_file_section (&binding, TAGS_TABLE_END_LABEL);
@@ -266,6 +269,7 @@ get_nodes_of_tags_table (FILE_BUFFER *file_buffer,
       char *nodedef;
       unsigned p;
       int anchor = 0;
+      long nodestart;
 
       /* Prepare to skip this line. */
       s.start = position;
@@ -309,11 +313,20 @@ get_nodes_of_tags_table (FILE_BUFFER *file_buffer,
           continue;
         }
 
+      nodestart = atol (nodedef + p + 1);
+
+      /* Ignore node with bogus negative offset. */
+      if (nodestart < 0)
+        {
+          free (entry);
+          continue;
+        }
+
       entry->nodename = xmalloc (p + 1);
       strncpy (entry->nodename, nodedef, p);
       entry->nodename[p] = 0;
-      p++;
-      entry->nodestart = atol (nodedef + p);
+
+      entry->nodestart = nodestart;
 
       /* If a node, we don't know the length yet, but if it's an
          anchor, the length is 0. */
@@ -337,13 +350,13 @@ static void
 get_tags_of_indirect_tags_table (FILE_BUFFER *file_buffer,
     SEARCH_BINDING *indirect_binding, SEARCH_BINDING *tags_binding)
 {
-  int i;
+  size_t i;
 
   /* A structure used only in `get_tags_of_indirect_tags_table' to hold onto
      an intermediate value. */
   typedef struct {
     char *filename;
-    long first_byte;
+    long first_byte;          /* Should never be negative */
   } SUBFILE;
 
   SUBFILE **subfiles = NULL;
@@ -372,17 +385,24 @@ get_tags_of_indirect_tags_table (FILE_BUFFER *file_buffer,
   while (line < end)
     {
       int colon;
+      long line_first_byte;
 
       colon = string_in_line (":", line);
 
       if (colon == -1)
         break;
 
+      line_first_byte = atol (line + colon);
+
+      /* ignore an entry with a bogus negative offset */
+      if (line_first_byte < 0)
+        continue;
+
       subfile = xmalloc (sizeof (SUBFILE));
       subfile->filename = xmalloc (colon);
       strncpy (subfile->filename, line, colon - 1);
       subfile->filename[colon - 1] = 0;
-      subfile->first_byte = (long) atol (line + colon);
+      subfile->first_byte = line_first_byte;
 
       add_pointer_to_array (subfile, subfiles_index, subfiles, 
                             subfiles_slots, 10);
@@ -400,13 +420,13 @@ get_tags_of_indirect_tags_table (FILE_BUFFER *file_buffer,
     }
 
   {
-  int tags_index;
+  size_t tags_index;
   long header_length;
   SEARCH_BINDING binding;
 
   char *containing_dir;
   char *temp;
-  int len_containing_dir;
+  size_t len_containing_dir;
 
   /* Find the length of the header of the file containing the indirect
      tags table.  This header appears at the start of every file.  We
@@ -761,15 +781,17 @@ get_file_character_encoding (FILE_BUFFER *fb)
   SEARCH_BINDING binding;
   long position;
 
-  long int enc_start, enc_len;
+  long int enc_start;
+  size_t enc_len;
   char *enc_string;
 
   /* See if there is a local variables section in this info file. */
   binding.buffer = fb->contents;
   binding.start = fb->filesize;
-  binding.end = binding.start - 1000;
-  if (binding.end < 0)
+  if (binding.start < DEFAULT_INFO_TAG_TABLE_RANGE)
     binding.end = 0;
+  else
+    binding.end = binding.start - DEFAULT_INFO_TAG_TABLE_RANGE;
   binding.flags = S_FoldCase;
 
   /* Null means the encoding is unknown. */
@@ -848,7 +870,7 @@ info_reload_file_buffer_contents (FILE_BUFFER *fb)
 
 /* Functions for node creation and retrieval. */
 
-static long get_node_length (SEARCH_BINDING *binding);
+static size_t get_node_length (SEARCH_BINDING *binding);
 static void node_set_body_start (NODE *node);
 static int adjust_nodestart (FILE_BUFFER *file_buffer, TAG *tag);
 
@@ -862,7 +884,7 @@ info_create_tag (void)
   memset (t, 0, sizeof (TAG));
   t->filename = 0;
   t->nodename = 0;
-  t->nodestart = -1;
+  t->nodestart = 0;
   t->nodestart_adjusted = -1;
   t->cache.nodelen = -1;
 
@@ -892,10 +914,10 @@ info_create_node (void)
 }
 
 /* Return the length of the node which starts at BINDING. */
-static long
+static size_t
 get_node_length (SEARCH_BINDING *binding)
 {
-  int i;
+  size_t i;
   char *body;
 
   /* [A node] ends with either a ^_, a ^L, or end of file.  */
@@ -1104,7 +1126,7 @@ adjust_nodestart (FILE_BUFFER *fb, TAG *node)
   s.end = s.start + 1;
 
   /* Check that the given nodestart is in fact inside the file buffer. */
-  if (s.start >= 0 && s.start < fb->filesize)
+  if (s.start < fb->filesize)
     {
       /* Check for node separator at node->nodestart
          introducting this node. */
@@ -1124,13 +1146,16 @@ adjust_nodestart (FILE_BUFFER *fb, TAG *node)
          that accumulates throughout the file. */
       fudge += s.start >> 5;
 
-      s.start -= fudge;
       s.end += fudge;
 
-      if (s.start < 0)
+      if (s.start < fudge)
         s.start = 0;
-      else if (s.start > fb->filesize)
-        s.start = fb->filesize;
+      else
+        {
+          s.start -= fudge;
+          if (s.start > fb->filesize)
+            s.start = fb->filesize;
+        }
       if (s.end > fb->filesize)
         s.end = fb->filesize;
 
@@ -1221,7 +1246,7 @@ info_node_of_tag_ext (FILE_BUFFER *fb, TAG **tag_ptr, int fast)
 
   /* If we were able to find this file and load it, then return
      the node within it. */
-  if (!(tag->nodestart >= 0 && tag->nodestart < subfile->filesize))
+  if (!(tag->nodestart < subfile->filesize))
     return NULL;
 
   node = 0;

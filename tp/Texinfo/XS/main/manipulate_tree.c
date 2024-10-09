@@ -49,13 +49,13 @@ copy_tree_internal (ELEMENT* current);
 void
 copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < info->info_number; i++)
     {
       const KEY_PAIR *k_ref = &info->info[i];
       enum ai_key_name key = k_ref->key;
-      int j;
+      size_t j;
 
       if (k_ref->type == extra_deleted)
         continue;
@@ -71,6 +71,7 @@ copy_associated_info (ASSOCIATED_INFO *info, ASSOCIATED_INFO* new_info)
               = get_associated_info_key (new_info, key, k_ref->type);
             k->k.const_element = copy;
           }
+          break;
         case extra_element_oot:
           {
             ELEMENT *f = k_ref->k.element;
@@ -166,7 +167,7 @@ ELEMENT *
 copy_tree_internal (ELEMENT* current)
 {
   ELEMENT *new;
-  int i;
+  size_t i;
   int elt_info_nr = type_data[current->type].elt_info_number;
 
   if (current->flags & EF_copy)
@@ -219,25 +220,27 @@ copy_tree_internal (ELEMENT* current)
 
   if (elt_info_nr > 0)
     {
-      for (i = 0; i < elt_info_nr; i++)
-        if (current->elt_info[i])
+      int j;
+      for (j = 0; j < elt_info_nr; j++)
+        if (current->elt_info[j])
           {
-            ELEMENT *copy = copy_tree_internal (current->elt_info[i]);
-            new->elt_info[i] = copy;
+            ELEMENT *copy = copy_tree_internal (current->elt_info[j]);
+            new->elt_info[j] = copy;
           }
     }
 
   if (current->e.c->string_info)
     {
+      int j;
       int string_info_nr = 1;
       if (current->type == ET_definfoenclose_command
           || current->type == ET_index_entry_command
           || current->type == ET_lineraw_command
           || current->e.c->cmd == CM_verb)
         string_info_nr = 2;
-      for (i = 0; i < string_info_nr; i++)
-        if (current->e.c->string_info[i])
-          new->e.c->string_info[i] = strdup (current->e.c->string_info[i]);
+      for (j = 0; j < string_info_nr; j++)
+        if (current->e.c->string_info[j])
+          new->e.c->string_info[j] = strdup (current->e.c->string_info[j]);
     }
 
   copy_associated_info (&current->e.c->extra_info, &new->e.c->extra_info);
@@ -250,12 +253,12 @@ remove_element_copy_info (ELEMENT *current);
 void
 remove_associated_copy_info (ASSOCIATED_INFO *info)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < info->info_number; i++)
     {
       const KEY_PAIR *k_ref = &info->info[i];
-      int j;
+      size_t j;
 
       if (k_ref->type == extra_deleted)
         continue;
@@ -319,7 +322,7 @@ remove_associated_copy_info (ASSOCIATED_INFO *info)
 void
 remove_element_copy_info (ELEMENT *current)
 {
-  int i;
+  size_t i;
   int elt_info_nr;
 
   if (! (current->flags & EF_copy))
@@ -401,8 +404,7 @@ copy_container_contents (const ELEMENT *container)
 {
   ELEMENT *result;
   if (container->e.c->cmd)
-    result = new_command_element (container->e.c->cmd,
-                                  container->type);
+    result = new_command_element (container->type, container->e.c->cmd);
   else
     result = new_element (container->type);
 
@@ -444,10 +446,7 @@ remove_from_source_mark_list (SOURCE_MARK_LIST *list, size_t where)
 {
   SOURCE_MARK *removed;
 
-  if (where < 0)
-    where = list->number + where;
-
-  if (where < 0 || where > list->number)
+  if (where > list->number)
     fatal ("source marks list index out of bounds");
 
   removed = list->list[where];
@@ -568,9 +567,9 @@ parse_node_manual (ELEMENT *node, int modify_node)
 {
   NODE_SPEC_EXTRA *result;
   ELEMENT *node_content = 0;
-  int idx = 0; /* index into node->e.c->contents */
+  size_t idx = 0; /* index into node->e.c->contents */
 
-  result = malloc (sizeof (NODE_SPEC_EXTRA));
+  result = (NODE_SPEC_EXTRA *) malloc (sizeof (NODE_SPEC_EXTRA));
   result->manual_content = result->node_content = 0;
   /* if not modifying the tree, and there is a manual name, the elements
      added for the manual name and for the node content that are based
@@ -835,7 +834,7 @@ modify_tree (ELEMENT *tree,
 {
   if (tree->e.c->args.number > 0)
     {
-      int i;
+      size_t i;
       for (i = 0; i < tree->e.c->args.number; i++)
         {
           ELEMENT_LIST *new_args;
@@ -857,7 +856,7 @@ modify_tree (ELEMENT *tree,
     }
   if (tree->e.c->contents.number > 0)
     {
-      int i;
+      size_t i;
       for (i = 0; i < tree->e.c->contents.number; i++)
         {
           ELEMENT *content = tree->e.c->contents.list[i];
@@ -879,7 +878,7 @@ modify_tree (ELEMENT *tree,
     }
   if (tree->source_mark_list != 0)
     {
-      int i;
+      size_t i;
       for (i = 0; i < tree->source_mark_list->number; i++)
         {
           if (tree->source_mark_list->list[i]->element)
@@ -1073,7 +1072,7 @@ protect_node_after_label_in_tree (ELEMENT *tree)
 const char *
 normalized_menu_entry_internal_node (const ELEMENT *entry)
 {
-  int i;
+  size_t i;
   for (i = 0; i < entry->e.c->contents.number; i++)
     {
       const ELEMENT *content = entry->e.c->contents.list[i];
@@ -1109,17 +1108,17 @@ first_menu_node (const ELEMENT *node, const LABEL_LIST *identifiers_target)
   const CONST_ELEMENT_LIST *menus = lookup_extra_contents (node, AI_key_menus);
   if (menus)
     {
-      int i;
+      size_t i;
       for (i = 0; i < menus->number; i++)
         {
           const ELEMENT *menu = menus->list[i];
-          int j;
+          size_t j;
           for (j = 0; j < menu->e.c->contents.number; j++)
             {
               const ELEMENT *menu_content = menu->e.c->contents.list[j];
               if (menu_content->type == ET_menu_entry)
                 {
-                  int k;
+                  size_t k;
                   const ELEMENT *menu_node
                     = normalized_entry_associated_internal_node (menu_content,
                                                           identifiers_target);

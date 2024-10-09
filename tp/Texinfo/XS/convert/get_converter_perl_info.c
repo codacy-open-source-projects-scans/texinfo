@@ -30,17 +30,23 @@
 
 #undef context
 
+#include "command_ids.h"
+#include "option_types.h"
+#include "options_types.h"
 #include "converter_types.h"
 #include "builtin_commands.h"
 #include "utils.h"
-#include "converter.h"
+#include "customization_options.h"
+#include "convert_to_text.h"
 #include "get_perl_info.h"
+#include "converter.h"
 #include "get_converter_perl_info.h"
+
 
 CONVERTER *
 get_sv_converter (SV *sv_in, const char *warn_string)
 {
-  int converter_descriptor = 0;
+  size_t converter_descriptor = 0;
   CONVERTER *converter = 0;
   SV** converter_descriptor_sv;
   HV *hv_in;
@@ -52,7 +58,7 @@ get_sv_converter (SV *sv_in, const char *warn_string)
   converter_descriptor_sv = hv_fetch (hv_in, key, strlen (key), 0);
   if (converter_descriptor_sv)
     {
-      converter_descriptor = SvIV (*converter_descriptor_sv);
+      converter_descriptor = (size_t) SvIV (*converter_descriptor_sv);
       converter = retrieve_converter (converter_descriptor);
     }
   else if (warn_string)
@@ -62,8 +68,48 @@ get_sv_converter (SV *sv_in, const char *warn_string)
     }
   if (! converter && warn_string)
     {
-      fprintf (stderr, "ERROR: %s: no converter %d\n", warn_string,
+      fprintf (stderr, "ERROR: %s: no converter %zu\n", warn_string,
                                                       converter_descriptor);
+    }
+  return converter;
+}
+
+CONVERTER *
+get_or_create_sv_converter (SV *converter_in, const char *input_class)
+{
+  size_t converter_descriptor = 0;
+  CONVERTER *converter = 0;
+
+  dTHX;
+
+  converter = get_sv_converter (converter_in, 0);
+  if (!converter)
+    {
+      const char *class_name = 0;
+      enum converter_format converter_format = COF_none;
+
+      if (input_class)
+        class_name = input_class;
+      else
+        {
+          HV *stash;
+          stash = SvSTASH (SvRV (converter_in));
+          class_name = HvNAME (stash);
+        }
+
+      if (class_name)
+        {
+          /* determine the converter format, if handled in C */
+          converter_format
+             = find_perl_converter_class_converter_format (class_name);
+        }
+
+      converter_descriptor = new_converter (converter_format,
+                                            CONVF_perl_hashmap);
+                                             /*
+                                            CONVF_string_list);
+                                              */
+      converter = retrieve_converter (converter_descriptor);
     }
   return converter;
 }
@@ -85,29 +131,60 @@ converter_set_document_from_sv (SV *converter_in, SV *document_in)
   return converter;
 }
 
+/* add to converter hash the INIT_INFO_SV key values that are
+   not customization variables, listed in NO_VALID_CUSTOMIZATION */
 void
-set_translated_commands (CONVERTER *converter, HV *hv_in)
+set_non_customization_sv (HV *converter_hv, SV *init_info_sv,
+                          STRING_LIST *non_valid_customization)
 {
-  SV **translated_commands_sv;
+  dTHX;
+
+  if (non_valid_customization->number > 0)
+    {
+      HV *init_info_hv = (HV *) SvRV (init_info_sv);
+      size_t i;
+      for (i = 0; i < non_valid_customization->number; i++)
+        {
+          const char *key
+               = non_valid_customization->list[i];
+          /* not a customization variable, set in converter */
+          SV **value = hv_fetch (init_info_hv, key, strlen (key), 0);
+          if (*value)
+            {
+              if (SvOK (*value))
+                SvREFCNT_inc (*value);
+              hv_store (converter_hv, key, strlen (key), *value, 0);
+            }
+        }
+    }
+}
+
+TRANSLATED_COMMAND *
+set_translated_commands (SV *translated_commands_sv)
+{
+  TRANSLATED_COMMAND *translated_commands = 0;
 
   dTHX;
 
-  translated_commands_sv = hv_fetch (hv_in, "translated_commands",
-                                     strlen ("translated_commands"), 0);
-
   if (translated_commands_sv)
     {
+      HV *translated_commands_hv = 0;
       I32 hv_number;
       I32 i;
 
-      HV *translated_commands_hv
-        = (HV *)SvRV (*translated_commands_sv);
+      if (!SvOK (translated_commands_sv))
+        hv_number = 0;
+      else
+        {
+          HV *translated_commands_hv
+            = (HV *)SvRV (translated_commands_sv);
 
-      hv_number = hv_iterinit (translated_commands_hv);
+          hv_number = hv_iterinit (translated_commands_hv);
+        }
 
-      converter->translated_commands = (TRANSLATED_COMMAND *)
+      translated_commands = (TRANSLATED_COMMAND *)
         malloc ((hv_number +1) * sizeof (TRANSLATED_COMMAND));
-      memset (converter->translated_commands, 0,
+      memset (translated_commands, 0,
               (hv_number +1) * sizeof (TRANSLATED_COMMAND));
 
       for (i = 0; i < hv_number; i++)
@@ -126,13 +203,109 @@ set_translated_commands (CONVERTER *converter, HV *hv_in)
                 {
                   char *tmp_spec = (char *) SvPVutf8_nolen (translation_sv);
                   TRANSLATED_COMMAND *translated_command
-                    = &converter->translated_commands[i];
+                    = &translated_commands[i];
                   translated_command->translation = non_perl_strdup (tmp_spec);
                   translated_command->cmd = cmd;
                 }
             }
         }
     }
+  return translated_commands;
+}
+
+static OPTION *
+new_numbered_option_from_sv (SV *option_sv, CONVERTER *converter,
+                    OPTION **sorted_options, const char *option_name,
+                    int *status)
+{
+  OPTION *option = 0;
+
+  const OPTION *ref_option = find_option_string (sorted_options, option_name);
+  if (!ref_option)
+    *status = -2;
+  else
+    {
+      option
+        = new_option (ref_option->type, ref_option->name, ref_option->number);
+
+      *status = get_sv_option (option, option_sv, 0, 0, converter);
+    }
+
+  return option;
+}
+
+/* CLASS_NAME is Perl converter class for warning message.  If NULL, no message.
+   CONVERTER may be NULL (when called from converter_defaults). */
+CONVERTER_INITIALIZATION_INFO *
+get_converter_info_from_sv (SV *conf_sv, const char *class_name,
+                            CONVERTER *converter,
+                            OPTION **sorted_options)
+{
+  CONVERTER_INITIALIZATION_INFO *initialization_info = 0;
+
+  dTHX;
+
+  if (conf_sv && SvOK (conf_sv))
+    {
+      I32 hv_number;
+      I32 i;
+
+      HV *conf_hv = (HV *)SvRV (conf_sv);
+
+      initialization_info = new_converter_initialization_info ();
+
+      hv_number = hv_iterinit (conf_hv);
+
+      if (!hv_number)
+        return initialization_info;
+
+      initialize_options_list (&initialization_info->conf, hv_number);
+      initialization_info->conf.number = 0;
+
+      for (i = 0; i < hv_number; i++)
+        {
+          int status;
+          char *key;
+          I32 retlen;
+          SV *value = hv_iternextsv (conf_hv, &key, &retlen);
+          OPTION *option = new_numbered_option_from_sv (value, converter,
+                                               sorted_options, key, &status);
+
+          if (!status)
+            {
+              initialization_info->conf.list[initialization_info->conf.number]
+                = option;
+              initialization_info->conf.number++;
+            }
+          else
+            {
+              if (status == -2)
+                {
+                  add_string (key,
+                    &initialization_info->non_valid_customization);
+
+                  if (!strcmp (key, "translated_commands"))
+                    initialization_info->translated_commands
+                      = set_translated_commands (value);
+                  /* FIXME get deprecated_config_directories if needed */
+                  else if (!strcmp (key, "deprecated_config_directories"))
+                    {}
+                  else if (class_name)
+                    {
+                      fprintf (stderr,
+                               "%s: %s not a possible configuration\n",
+                               class_name, key);
+                    }
+                }
+              else
+                {
+                  free_option (option);
+                  fprintf (stderr, "ERROR: %s unexpected conf error\n", key);
+                }
+            }
+        }
+    }
+  return initialization_info;
 }
 
 void
@@ -168,94 +341,6 @@ get_expanded_formats (HV *hv, EXPANDED_FORMAT **expanded_formats)
         }
     }
 }
-
-/* Texinfo::Convert::Converter generic initialization for all the converters */
-/* Called early, in particuliar before any format specific code has been
-   called */
-int
-converter_initialize (SV *converter_sv)
-{
-  HV *hv_in;
-  SV **configured_sv;
-  SV **output_format_sv;
-  size_t converter_descriptor = 0;
-  CONVERTER *converter;
-
-  dTHX;
-
-  converter_descriptor = new_converter ();
-  converter = retrieve_converter (converter_descriptor);
-
-  hv_in = (HV *)SvRV (converter_sv);
-
-#define FETCH(key) key##_sv = hv_fetch (hv_in, #key, strlen (#key), 0);
-  FETCH(output_format)
-
-  if (output_format_sv && SvOK (*output_format_sv))
-    {
-      converter->output_format
-         = non_perl_strdup (SvPVutf8_nolen (*output_format_sv));
-    }
-
-   /*
-  fprintf (stderr, "XS|CONVERTER Init: %zu; %s\n", converter_descriptor,
-                   converter->output_format);
-    */
-
-  converter->conf = new_options ();
-  /* force is not set, but at this point, the configured field should not
-     be set, so it would not have an effect anyway */
-  copy_converter_conf_sv (hv_in, converter, &converter->conf, "conf", 0);
-
-  converter->init_conf = new_options ();
-  copy_converter_conf_sv (hv_in, converter, &converter->init_conf,
-                                              "converter_init_conf", 1);
-
-  FETCH(configured);
-
-  if (configured_sv && SvOK (*configured_sv))
-    {
-      get_sv_configured_options (*configured_sv, converter->conf);
-    }
-
-#undef FETCH
-  set_translated_commands (converter, hv_in);
-
-  converter->expanded_formats = new_expanded_formats ();
-  set_expanded_formats_from_options (converter->expanded_formats,
-                                     converter->conf);
-
-  converter->hv = hv_in;
-
-  /* store converter_descriptor in perl converter */
-  hv_store (hv_in, "converter_descriptor",
-            strlen ("converter_descriptor"),
-            newSViv (converter_descriptor), 0);
-
-  return converter_descriptor;
-}
-
-/* currently unused */
-/* reset output_init_conf.  Can be called after it has been modified */
-void
-reset_output_init_conf (SV *sv_in)
-{
-  CONVERTER *converter;
-
-  dTHX;
-
-  converter = get_sv_converter (sv_in, "reset_output_init_conf");
-
-  if (converter)
-    {
-      HV *hv_in = (HV *)SvRV (sv_in);
-
-      copy_converter_conf_sv (hv_in, converter, &converter->init_conf,
-                             "output_init_conf", 1);
-    }
-}
-
-/* output format specific */
 
 /* map hash reference of Convert::Text options to TEXT_OPTIONS */
 /* _raw_state is not fetched, as it is not documented as an option,
@@ -333,16 +418,15 @@ copy_sv_options_for_convert_text (SV *sv_in)
           SV **conf_sv = hv_fetch (converter_hv, "conf", strlen ("conf"), 0);
           if (conf_sv)
             text_options->other_converter_options
-              = init_copy_sv_options (*conf_sv, 0, 1);
+              = init_copy_sv_options (*conf_sv, 0, 1, 0);
         }
     }
   else
     {
       text_options->self_converter_options
-       = init_copy_sv_options (sv_in, 0, 1);
+       = init_copy_sv_options (sv_in, 0, 1, 0);
     }
 
   return text_options;
 }
 #undef FETCH
-

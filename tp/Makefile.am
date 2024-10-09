@@ -186,6 +186,7 @@ test_files = \
  t/include/section_file_no_node.texi \
  t/include/section_file_no_node_include.texi \
  t/init/access_document_name_in_handler.pm \
+ t/init/button_replacement_for_special_unit_direction.pm \
  t/init/command_translation_modified.init \
  t/init/css_in_node_redirection_page.pm \
  t/init/cvs.init \
@@ -204,6 +205,8 @@ test_files = \
  t/init/redirection_file_collision_with_user_def.init \
  t/init/set_unit_file_name_filepath.pm \
  t/init/special_element_customization.pm \
+ t/init/special_unit_direction_customization.pm \
+ t/init/special_unit_direction_string_info_customization.pm \
  t/init/t2h_buttons.pm \
  t/init/t2h_singular.init \
  t/init/test_css_info_functions.pm \
@@ -354,7 +357,8 @@ EXTRA_DIST = \
   $(maintenance_files) \
   maintain/lib \
   Texinfo/command_data.txt \
-  Texinfo/options_data.txt
+  Texinfo/options_data.txt \
+  Texinfo/Convert/converters_defaults.txt
 
 # template.pod is the basis for the .pm documentation, and the script
 # invoked here updates them; to be run when template.pod changes.
@@ -380,10 +384,13 @@ Texinfo/ModulePath.pm: Texinfo/ModulePath.pm.in Makefile
 
 # FIXME duplicated in Texinfo/XS/Makefile.am. Remove from here?
 $(srcdir)/Texinfo/Commands.pm: Texinfo/command_data.txt $(srcdir)/maintain/regenerate_commands_perl_info.pl
-	$(srcdir)/maintain/regenerate_commands_perl_info.pl $(srcdir)/Texinfo/Commands.pm < $(srcdir)/Texinfo/command_data.txt
+	$(PERL) $(srcdir)/maintain/regenerate_commands_perl_info.pl $(srcdir)/Texinfo/Commands.pm < $(srcdir)/Texinfo/command_data.txt
 
-$(srcdir)/Texinfo/Options.pm: Texinfo/options_data.txt $(srcdir)/maintain/regenerate_perl_options_info.pl
-	$(srcdir)/maintain/regenerate_perl_options_info.pl $(srcdir)/Texinfo/Options.pm < $(srcdir)/Texinfo/options_data.txt
+$(srcdir)/Texinfo/Options.pm: Texinfo/Convert/converters_defaults.txt Texinfo/options_data.txt $(srcdir)/maintain/regenerate_perl_options_info.pl
+	$(PERL) $(srcdir)/maintain/regenerate_perl_options_info.pl \
+	    $(srcdir)/Texinfo/Convert/converters_defaults.txt \
+	    $(srcdir)/Texinfo/Options.pm \
+	       < $(srcdir)/Texinfo/options_data.txt
 
 $(srcdir)/Texinfo/Data.pm: Texinfo/Data/default_css_element_class_styles.csv Texinfo/Data/default_direction_strings.csv Texinfo/Data/default_special_unit_info.csv Texinfo/Data/html_style_commands_element.csv $(srcdir)/maintain/generate_code_convert_data.pl
 	$(srcdir)/maintain/generate_code_convert_data.pl \
@@ -438,4 +445,4 @@ distclean-local:
 
 CLEANFILES = texi2any makeinfo Texinfo/ModulePath.pm
 DISTCLEANFILES = maintain/catalog.xml
-MAINTAINERCLEANFILES = Texinfo/Commands.pm Texinfo/Options.pm
+MAINTAINERCLEANFILES = Texinfo/Commands.pm Texinfo/Options.pm Texinfo/Data.pm

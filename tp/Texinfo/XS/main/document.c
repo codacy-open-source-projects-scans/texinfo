@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stddef.h>
 
+#include "command_ids.h"
 #include "tree_types.h"
 #include "options_types.h"
 #include "document_types.h"
@@ -28,6 +29,10 @@
 #include "debug.h"
 /* for delete_global_info and wipe_index */
 #include "utils.h"
+#include "customization_options.h"
+/* for library initialization, not for document code.
+   set_element_type_name_info */
+#include "builtin_commands.h"
 #include "floats.h"
 #include "manipulate_indices.h"
 #include "convert_to_text.h"
@@ -38,6 +43,20 @@
 static DOCUMENT **document_list;
 static size_t document_number;
 static size_t document_space;
+
+
+/* Call code only called once needed for the library data initialization.
+   This function is not related to the Texinfo document, but needs to be
+   in a code file that can include all the headers needed for the
+   initialization, and is included in all the codes that need to initialize
+   the library, so the current file was chosen.
+ */
+void
+txi_setup_lib_data (void)
+{
+  set_element_type_name_info ();
+  txi_initialise_base_options ();
+}
 
 DOCUMENT *
 retrieve_document (size_t document_descriptor)
@@ -115,9 +134,47 @@ register_document_sections_list (DOCUMENT *document,
 }
 
 void
-register_document_options (DOCUMENT *document, OPTIONS *options)
+register_document_options (DOCUMENT *document, OPTIONS *options,
+                           OPTION **sorted_options)
 {
   document->options = options;
+  document->sorted_options = sorted_options;
+}
+
+/* In perl, OUTPUT_PERL_ENCODING is set too.  Note that if the perl
+   version is called later on, the OUTPUT_ENCODING_NAME value will be re-set */
+void
+set_output_encoding (OPTIONS *customization_information, DOCUMENT *document)
+{
+  if (customization_information
+      && document && document->global_info.input_encoding_name) {
+    option_set_conf (&customization_information->OUTPUT_ENCODING_NAME, -1,
+                     document->global_info.input_encoding_name);
+  }
+}
+
+/* not used when document options are set from Perl */
+void
+initialize_document_options (DOCUMENT *document)
+{
+  OPTIONS *options = new_options ();
+  OPTION **sorted_options = new_sorted_options (options);
+  const ELEMENT *document_language;
+
+  register_document_options (document, options, sorted_options);
+
+  if (document->global_commands.novalidate)
+    document->options->novalidate.o.integer = 1;
+
+  document_language
+    = get_global_document_command (&document->global_commands,
+                                   CM_documentlanguage, CL_preamble);
+  if (document_language)
+    {
+      const char *language = informative_command_value (document_language);
+      option_set_conf (&document->options->documentlanguage, -1, language);
+    }
+  set_output_encoding (document->options, document);
 }
 
 const MERGED_INDICES *
@@ -408,6 +465,8 @@ destroy_document_information_except_tree (DOCUMENT *document)
       free_options (document->options);
       free (document->options);
     }
+  if (document->sorted_options)
+    free (document->sorted_options);
   if (document->convert_index_text_options)
     destroy_text_options (document->convert_index_text_options);
 
@@ -475,7 +534,11 @@ remove_document_descriptor (size_t document_descriptor)
   if (document->small_strings)
     destroy_strings_list (document->small_strings);
 
-  unregister_document_hv (document);
+  if (document->hv)
+    {
+      unregister_perl_data (document->hv);
+      document->hv = 0;
+    }
 
   /*
   fprintf (stderr, "REMOVE %zu %p\n", document_descriptor, document);
@@ -528,7 +591,7 @@ void
 add_other_global_info_string (OTHER_GLOBAL_INFO *other_global_info,
                               const char *key, const char *value)
 {
-  int i;
+  size_t i;
   for (i = 0; i < other_global_info->info_number; i++)
     {
       if (!strcmp (other_global_info->info[i].key, key))

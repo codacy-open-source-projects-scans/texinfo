@@ -21,15 +21,33 @@
 /* for FILE */
 #include <stdio.h>
 
+/* for enum special_unit_info_type SPECIAL_UNIT_INFO_TYPE_NR ... */
 #include "conversion_data.h"
 #include "element_types.h"
 #include "command_ids.h"
 #include "tree_types.h"
 #include "document_types.h"
+#include "option_types.h"
 #include "options_types.h"
 
 /* for interdependency with convert_to_text.h */
 struct TEXT_OPTIONS;
+
+enum converter_format {
+   COF_none = -1,
+   COF_html,
+};
+
+enum ids_data_type {
+   IDT_perl_hashmap,
+   IDT_cxx_hashmap,
+   IDT_string_list,
+};
+
+/* converter low level customization */
+#define CONVF_perl_hashmap        0x0001
+#define CONVF_string_list         0x0002
+#define CONVF_cxx_hashmap         0x0004
 
 /* for string information passing to/from perl */
 enum sv_string_type {
@@ -77,6 +95,9 @@ enum conversion_context {
    HCC_CONTEXT_TYPES_LIST
   #undef cctx_type
 };
+
+#define STYLE_COMMAND_CONTEXT_NR HCC_type_preformatted +1
+#define NO_ARG_COMMAND_CONTEXT_NR HCC_type_css_string +1
 
 enum special_target_type {
    ST_footnote_location,
@@ -163,17 +184,6 @@ enum html_special_character {
    SC_right_quote,
    SC_bullet,
    SC_non_breaking_space,
-};
-
-enum html_text_type {
-   HTT_text,
-   HTT_text_nonumber,
-   HTT_string,
-   HTT_string_nonumber, /* not sure that it is set/used */
-   /* not only used for element text, also for direction text */
-   HTT_href,
-   HTT_node,
-   HTT_section,
 };
 
 enum htmlxref_split_type {
@@ -323,16 +333,24 @@ typedef struct HTML_SHARED_CONVERSION_STATE {
     /* formatted_nodedescriptions */
 } HTML_SHARED_CONVERSION_STATE;
 
-typedef struct HTML_COMMAND_CONVERSION {
+typedef struct HTML_NO_ARG_COMMAND_CONVERSION {
     char *element;
-    int quote; /* for style commands formatting only */
-    /* following is only for no arg command formatting */
     int unset;
     char *text;
     ELEMENT *translated_tree;
     char *translated_converted;
     char *translated_to_convert;
-} HTML_COMMAND_CONVERSION;
+} HTML_NO_ARG_COMMAND_CONVERSION;
+
+typedef struct HTML_STYLE_COMMAND_CONVERSION {
+    char *element;
+    int quote;
+} HTML_STYLE_COMMAND_CONVERSION;
+
+typedef struct COMMAND_HTML_STYLE_COMMAND_CONVERSION {
+    enum command_id cmd;
+    HTML_STYLE_COMMAND_CONVERSION *conversion[STYLE_COMMAND_CONTEXT_NR];
+} COMMAND_HTML_STYLE_COMMAND_CONVERSION;
 
 typedef struct HTML_DIRECTION_STRING_TRANSLATED {
     char *to_convert;
@@ -388,6 +406,11 @@ typedef struct COMMAND_INTEGER_INFORMATION {
     enum command_id cmd;
     int integer;
 } COMMAND_INTEGER_INFORMATION;
+
+typedef struct TYPE_INTEGER_INFORMATION {
+    enum element_type type;
+    int integer;
+} TYPE_INTEGER_INFORMATION;
 
 typedef struct FILE_NAME_PATH_COUNTER {
     char *filename;
@@ -549,6 +572,11 @@ typedef struct ACCENT_ENTITY_INFO {
     char *characters;
 } ACCENT_ENTITY_INFO;
 
+typedef struct COMMAND_ACCENT_ENTITY_INFO {
+    enum command_id cmd;
+    ACCENT_ENTITY_INFO accent_entity_info;
+} COMMAND_ACCENT_ENTITY_INFO;
+
 typedef struct COMMAND_CONVERSION_FUNCTION {
     enum formatting_reference_status status;
     /* points to the perl formatting reference if it is used for
@@ -650,6 +678,7 @@ typedef struct HTMLXREF_MANUAL {
 
 typedef struct HTMLXREF_MANUAL_LIST {
     size_t number;
+    size_t space;
     HTMLXREF_MANUAL *list;
 } HTMLXREF_MANUAL_LIST;
 
@@ -726,15 +755,38 @@ typedef struct SPECIAL_UNIT_INFO_LIST {
     SPECIAL_UNIT_INFO *list;
 } SPECIAL_UNIT_INFO_LIST;
 
+typedef struct PRE_CLASS_TYPE_INFO {
+    enum element_type type;
+    char *pre_class;
+} PRE_CLASS_TYPE_INFO;
+
+/* information on converter configuration from a source of configuration
+   (either output format or user customization) */
+typedef struct CONVERTER_INITIALIZATION_INFO {
+    TRANSLATED_COMMAND *translated_commands;
+    OPTIONS_LIST conf;
+    /* gather strings that are not customization options */
+    STRING_LIST non_valid_customization;
+} CONVERTER_INITIALIZATION_INFO;
+
 typedef struct CONVERTER {
     int converter_descriptor;
   /* perl converter. This should be HV *hv,
      but we don't want to include the Perl headers everywhere; */
     void *hv;
 
+  /* this is the type of the converter, not of the output.  (Similar to
+     a module name in Perl).  Should only be used to determine which
+     functions are to be called */
+    enum converter_format format;
+    /* used to pass converter_defaults result, if going through XS and
+       destroyed shortly after */
+    CONVERTER_INITIALIZATION_INFO *format_defaults;
     OPTIONS *conf;
+    /* an array containing the fields of conf ordered by name */
+    OPTION **sorted_options;
     OPTIONS *init_conf;
-    char *output_format;
+    OPTIONS *format_defaults_conf;
     EXPANDED_FORMAT *expanded_formats;
     TRANSLATED_COMMAND *translated_commands;
 
@@ -760,12 +812,12 @@ typedef struct CONVERTER {
 
   /* HTML specific */
     /* set for a converter */
+    enum ids_data_type ids_data_type;
     int external_references_number; /* total number of external references
                                        that could be called */
-    COMMAND_ID_LIST style_formatted_cmd;
-    COMMAND_ID_LIST accent_cmd;
     int code_types[TXI_TREE_TYPES_NUMBER];
     COMMAND_INTEGER_INFORMATION *html_customized_upper_case_commands;
+    TYPE_INTEGER_INFORMATION *html_customized_code_types;
     char *pre_class_types[TXI_TREE_TYPES_NUMBER];
     ACCENT_ENTITY_INFO accent_entities[BUILTIN_CMD_NUMBER];
     FIXED_STRING_WITH_LEN special_character[SC_non_breaking_space+1];
@@ -805,17 +857,21 @@ typedef struct CONVERTER {
     OUTPUT_UNIT_CONVERSION_FUNCTION output_unit_conversion_function[OU_special_unit+1];
     SPECIAL_UNIT_BODY_FORMATTING *special_unit_body_formatting;
     HTML_DIRECTION_STRING_TRANSLATED *translated_direction_strings[TDS_TRANSLATED_MAX_NR];
+    HTML_DIRECTION_STRING_TRANSLATED **customized_translated_direction_strings[TDS_TRANSLATED_MAX_NR];
     HTML_STAGE_HANDLER_INFO_LIST html_stage_handlers[HSHT_type_finish +1];
-    HTML_COMMAND_CONVERSION *customized_no_arg_commands_formatting[BUILTIN_CMD_NUMBER][HCC_type_css_string+1];
-    /* set for a converter, modified in a document */
-    HTML_COMMAND_CONVERSION html_command_conversion[BUILTIN_CMD_NUMBER][HCC_type_css_string+1];
+    HTML_NO_ARG_COMMAND_CONVERSION *customized_no_arg_commands_formatting[BUILTIN_CMD_NUMBER][NO_ARG_COMMAND_CONTEXT_NR];
     char ***customized_directions_strings[(TDS_TYPE_MAX_NR) - (TDS_TRANSLATED_MAX_NR)];
+    PRE_CLASS_TYPE_INFO *html_customized_pre_class_types;
+    COMMAND_ACCENT_ENTITY_INFO *html_customized_accent_entity_info;
+    HTML_STYLE_COMMAND_CONVERSION html_style_command_conversion[BUILTIN_CMD_NUMBER][STYLE_COMMAND_CONTEXT_NR];
+    COMMAND_HTML_STYLE_COMMAND_CONVERSION *html_customized_style_commands;
+    /* set for a converter, modified in a document */
+    HTML_NO_ARG_COMMAND_CONVERSION html_no_arg_command_conversion[BUILTIN_CMD_NUMBER][NO_ARG_COMMAND_CONTEXT_NR];
     char ***directions_strings[TDS_TYPE_MAX_NR];
-    char **default_converted_directions_strings[TDS_TYPE_MAX_NR];
     const char **direction_unit_direction_name;
 
     /* set for a document */
-    int output_units_descriptors[OUDT_external_nodes_units+1];
+    size_t output_units_descriptors[OUDT_external_nodes_units+1];
     enum htmlxref_split_type document_htmlxref_split_type;
     const OUTPUT_UNIT **global_units_directions;
     SPECIAL_UNIT_DIRECTION *special_units_direction_name;
@@ -824,11 +880,13 @@ typedef struct CONVERTER {
     SPECIAL_UNIT_DIRECTION_LIST global_units_direction_name;
     ELEMENT **special_unit_info_tree[SUIT_type_heading+1];
     SORTED_INDEX_NAMES sorted_index_names;
-    union {
-      STRING_LIST *registered_ids;
-      /* actually HV * but we do not want to drag in Perl headers */
-      void *registered_ids_hv;
-    } rid;
+    STRING_LIST *registered_ids;
+    /* actually HV * but we do not want to drag in Perl headers */
+    void *registered_ids_hv;
+#ifdef HAVE_CXX_HASHMAP
+    /* a pointer on C++ data */
+    void *registered_ids_hashmap;
+#endif
     /* potentially one target list per command (only for some actually) */
     HTML_TARGET_LIST html_targets[BUILTIN_CMD_NUMBER];
     HTML_TARGET_LIST html_special_targets[ST_footnote_location+1];
@@ -901,19 +959,30 @@ typedef struct TRANSLATED_SUI_ASSOCIATION {
     enum special_unit_info_type string_type;
 } TRANSLATED_SUI_ASSOCIATION;
 
-/* used in several converter codes, but not in this file */
+/* following types used in several converter codes, but not in this file */
 typedef struct TARGET_FILENAME {
     char *target;
     char *filename;
 } TARGET_FILENAME;
 
-/* enum needed in converters codes, but not in this file */
-enum command_location {
-   CL_before,
-   CL_last,
-   CL_preamble,
-   CL_preamble_or_first,
-};
+typedef struct TARGET_CONTENTS_FILENAME {
+    char *target;
+    char *filename;
+    char *target_contents;
+    char *target_shortcontents;
+} TARGET_CONTENTS_FILENAME;
+
+typedef struct FILE_NAME_PATH {
+    char *filename;
+    char *filepath;
+} FILE_NAME_PATH;
+
+typedef struct TARGET_DIRECTORY_FILENAME {
+    char *filename;
+    char *directory;
+    char *target;
+} TARGET_DIRECTORY_FILENAME;
+
 
 #endif
 

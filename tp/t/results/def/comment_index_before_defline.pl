@@ -274,13 +274,13 @@ $result_indices_sort_strings{'comment_index_before_defline'} = {
 
 
 
-$result_converted{'plaintext'}->{'comment_index_before_defline'} = ' - a: b c d
+$result_converted{'plaintext'}->{'comment_index_before_defline'} = ' -- a: b c d
 ';
 
 
 $result_converted{'html'}->{'comment_index_before_defline'} = '<!DOCTYPE html>
 <html>
-<!-- Created by texinfo, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by texinfo, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Untitled Document</title>

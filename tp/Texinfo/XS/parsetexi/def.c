@@ -41,15 +41,16 @@
 void
 gather_def_item (ELEMENT *current, enum command_id next_command)
 {
-  int contents_count, i;
+  size_t contents_count;
+  size_t pos;
 
   if (!current->e.c->cmd)
     return;
 
   /* Check this isn't an "x" type command.
-     "This may happen for a construct like:
+     This may happen for a construct like:
      @deffnx a b @section
-     but otherwise the end of line will lead to the command closing." */
+     but otherwise the end of line will lead to the command closing. */
   if (command_data(current->e.c->cmd).flags & CF_line)
     return;
 
@@ -59,23 +60,23 @@ gather_def_item (ELEMENT *current, enum command_id next_command)
 
   /* Starting from the end, determine the number of elements that are not
      an ET_def_line */
-  for (i = 0; i < contents_count; i++)
+  for (pos = contents_count; pos > 0; pos--)
     {
-      ELEMENT *last_child = contents_child_by_index (current, -(i+1));
+      ELEMENT *last_child = contents_child_by_index (current, pos -1);
       if (last_child->flags & EF_def_line)
         break;
     }
 
-  if (i > 0)
+  if (pos < contents_count)
     {
       /* there are elements after def_line, put them in a def item */
       enum element_type type;
-      int j;
+      size_t j;
       ELEMENT *def_item;
 
       if (current->e.c->cmd == CM_defblock
        /* all content between @defblock and first @def*line */
-          && i == contents_count)
+          && pos == 0)
         type = ET_before_defline;
       else if (next_command
           && next_command != CM_defline && next_command != CM_deftypeline)
@@ -85,15 +86,13 @@ gather_def_item (ELEMENT *current, enum command_id next_command)
 
       def_item = new_element (type);
 
-      insert_slice_into_contents (def_item, 0, current,
-                           contents_count -i, contents_count);
-      for (j = 0; j < i; j++)
+      insert_slice_into_contents (def_item, 0, current, pos, contents_count);
+      for (j = contents_count; j > pos; j--)
         {
-          ELEMENT *e = contents_child_by_index (current, -(j+1));
+          ELEMENT *e = contents_child_by_index (current, j-1);
           e->parent = def_item;
         }
-      remove_slice_from_contents (current,
-                           contents_count -i, contents_count);
+      remove_slice_from_contents (current, pos, contents_count);
       add_to_element_contents (current, def_item);
     }
 }
@@ -102,12 +101,12 @@ gather_def_item (ELEMENT *current, enum command_id next_command)
 /* Starting at I in the contents, return the next non-whitespace element,
    incrementing I.  Return null if no more elements. */
 ELEMENT *
-next_bracketed_or_word_agg (ELEMENT *current, int *i)
+next_bracketed_or_word_agg (ELEMENT *current, size_t *i)
 {
-  int num = 0;
+  size_t num = 0;
   ELEMENT *new;
   ELEMENT *e;
-  int j;
+  size_t j;
   while (1)
     {
       if (*i == current->e.c->contents.number)
@@ -160,7 +159,7 @@ next_bracketed_or_word_agg (ELEMENT *current, int *i)
 
 typedef struct {
     enum command_id command;
-    enum command_id *argument_types;
+    enum element_type *argument_types;
 } DEF_MAP;
 
   /*
@@ -171,16 +170,16 @@ typedef struct {
      NAME - name of entity being documented
      ARGUMENTS - arguments to a function or macro                  */
 
-enum command_id defline_types[] = {ET_def_category, ET_def_name, ET_def_arg, 0};
-enum command_id deftypeline_types[] = {ET_def_category, ET_def_type, ET_def_name, ET_def_typearg, 0};
-enum command_id defvr_types[] = {ET_def_category, ET_def_name, 0};
-enum command_id deftypefn_types[] = {ET_def_category, ET_def_type, ET_def_name, ET_def_typearg, 0};
-enum command_id deftypeop_types[] = {ET_def_category, ET_def_class , ET_def_type, ET_def_name, ET_def_typearg, 0};
-enum command_id deftypevr_types[] = {ET_def_category, ET_def_type, ET_def_name, 0};
-enum command_id defcv_types[] = {ET_def_category, ET_def_class , ET_def_name, 0};
-enum command_id deftypecv_types[] = {ET_def_category, ET_def_class , ET_def_type, ET_def_name, 0};
-enum command_id defop_types[] = {ET_def_category, ET_def_class , ET_def_name, ET_def_arg, 0};
-enum command_id deftp_types[] = {ET_def_category, ET_def_name, ET_def_typearg, 0};
+enum element_type defline_types[] = {ET_def_category, ET_def_name, ET_def_arg, 0};
+enum element_type deftypeline_types[] = {ET_def_category, ET_def_type, ET_def_name, ET_def_typearg, 0};
+enum element_type defvr_types[] = {ET_def_category, ET_def_name, 0};
+enum element_type deftypefn_types[] = {ET_def_category, ET_def_type, ET_def_name, ET_def_typearg, 0};
+enum element_type deftypeop_types[] = {ET_def_category, ET_def_class , ET_def_type, ET_def_name, ET_def_typearg, 0};
+enum element_type deftypevr_types[] = {ET_def_category, ET_def_type, ET_def_name, 0};
+enum element_type defcv_types[] = {ET_def_category, ET_def_class , ET_def_name, 0};
+enum element_type deftypecv_types[] = {ET_def_category, ET_def_class , ET_def_type, ET_def_name, 0};
+enum element_type defop_types[] = {ET_def_category, ET_def_class , ET_def_name, ET_def_arg, 0};
+enum element_type deftp_types[] = {ET_def_category, ET_def_name, ET_def_typearg, 0};
 
 DEF_MAP def_maps[] = {
   CM_defline, defline_types,
@@ -199,9 +198,9 @@ DEF_MAP def_maps[] = {
 /* Split non-space text elements into strings without [ ] ( ) , and single
    character strings with one of them. */
 static void
-split_delimiters (ELEMENT *current, int starting_idx)
+split_delimiters (ELEMENT *current, size_t starting_idx)
 {
-  int i;
+  size_t i;
   static char *chars = "[](),";
   for (i = starting_idx; i < current->e.c->contents.number; i++)
     {
@@ -211,8 +210,8 @@ split_delimiters (ELEMENT *current, int starting_idx)
       int len;
       /* count UTF-8 encoded Unicode characters for source marks locations */
       uint8_t *u8_text = 0;
-      size_t current_position;
-      uint8_t *u8_p;
+      size_t current_position = 0;
+      uint8_t *u8_p = 0;
       size_t u8_len;
 
       if (e->type == ET_spaces || e->type == ET_bracketed_arg)
@@ -232,8 +231,6 @@ split_delimiters (ELEMENT *current, int starting_idx)
         {
           u8_text = utf8_from_string (p);
           u8_p = u8_text;
-
-          current_position = 0;
         }
 
       while (1)
@@ -289,9 +286,9 @@ split_delimiters (ELEMENT *current, int starting_idx)
 /* Divide any text elements into separate elements, separating whitespace
    and non-whitespace. */
 static void
-split_def_args (ELEMENT *current, int starting_idx)
+split_def_args (ELEMENT *current, size_t starting_idx)
 {
-  int i;
+  size_t i;
   for (i = starting_idx; i < current->e.c->contents.number; i++)
     {
       ELEMENT *e = current->e.c->contents.list[i];
@@ -300,8 +297,8 @@ split_def_args (ELEMENT *current, int starting_idx)
       int len;
       /* count UTF-8 encoded Unicode characters for source marks locations */
       uint8_t *u8_text = 0;
-      size_t current_position;
-      uint8_t *u8_p;
+      size_t current_position = 0;
+      uint8_t *u8_p = 0;
       size_t u8_len;
 
       if (e->type == ET_bracketed_arg)
@@ -319,8 +316,6 @@ split_def_args (ELEMENT *current, int starting_idx)
         {
           u8_text = utf8_from_string (p);
           u8_p = u8_text;
-
-          current_position = 0;
         }
 
       while (1)
@@ -359,12 +354,13 @@ split_def_args (ELEMENT *current, int starting_idx)
 void
 parse_def (enum command_id command, ELEMENT *current)
 {
-  int contents_idx = 0;
+  size_t contents_idx = 0;
   int type, set_type_not_arg;
-  int i, i_def;
-  int arg_types_nr;
+  size_t i;
+  size_t i_def;
+  size_t arg_types_nr;
   ELEMENT *e, *e1;
-  enum command_id *arguments_types_list;
+  enum element_type *arguments_types_list;
   int inserted_category = 0;
 
   split_def_args (current, contents_idx);

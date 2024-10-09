@@ -10,14 +10,14 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
-AC_INIT([texinfo], [0])
+AC_INIT([GNU Texinfo], [7.1.90])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([gnulib/m4])
 
 b='\'
 d='$'
-o='@<:@' dnl quadrigraph for [ - see autoconf documentatoin
+o='@<:@' dnl quadrigraph for [ - see autoconf documentation
 c='@:>@' dnl quadrigraph for ]
 
 # This turns a string like "cc='cc';" into a string like "cc".
@@ -57,6 +57,13 @@ AC_DEFUN([lookup_perl_conf_values],
           [m4_foreach([var], [$1], [lookup_perl_conf(var)])
 ])
 
+AC_ARG_ENABLE([additional-checks],
+    AS_HELP_STRING([--enable-additional-checks], [run tests on non-distributed components]),
+    [ enable_additional_tests=$enableval],
+    [ enable_additional_tests=no])
+
+AM_CONDITIONAL([DISABLE_ADDITIONAL_CHECKS], [test "z$enable_additional_tests" = zno])
+
 AC_ARG_ENABLE([perl-xs],
     AS_HELP_STRING([--enable-perl-xs],
               [build Perl XS modules for speed (default: yes)]),
@@ -83,12 +90,16 @@ perl_conf_CFLAGS=
 perl_conf_LDFLAGS=
 XSUBPPARGS=
 PERL_INC=
+PACKAGE_XS_VERSION=0
 
 # See (automake)Conditional Subdirectories.  Even if --disable-perl-xs
 # is given, we still need to configure this directory minimally, so that
 # "make dist" will work.
 if test x$disable_xs != xyes; then
   AC_PATH_PROG([PERL], [perl])
+
+  #PACKAGE_XS_VERSION=`${PERL} -e 'use version; print version->declare('"$PACKAGE_VERSION"')->numify;'`
+  PACKAGE_XS_VERSION=`echo $PACKAGE_VERSION | sed 's/-/./g'`
 
   if test -n "$PERL_EXT_CC" ; then
     CC=$PERL_EXT_CC
@@ -139,8 +150,11 @@ fi # not disable_xs
 AC_SUBST([PERL_INC], [$PERL_INC])
 AC_SUBST([XSUBPPARGS], [$XSUBPPARGS])
 
+AC_SUBST([XS_VERSION], [$PACKAGE_XS_VERSION])
 
 AC_PROG_CC
+
+AC_PROG_CXX
 
 gl_EARLY
 
@@ -167,6 +181,31 @@ LT_INIT([disable-static])
 
 # Note that the above have to be outside the disable_xs block
 # otherwise it causes an error with configure.
+
+AC_LANG_PUSH([C++])
+
+AC_CACHE_CHECK([if C++ hashmap can be used], [texinfo_cv_cxx_hashmap],
+[
+texinfo_cv_cxx_hashmap=no
+
+AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
+#include <unordered_map>
+#include <string>
+
+void
+init_registered_ids_hashmap (void)
+{
+  std::unordered_map<std::string, int> registered_ids_hashmap;
+  registered_ids_hashmap["toto"] = 1;
+}
+]])], [texinfo_cv_cxx_hashmap=yes])
+])
+
+AM_CONDITIONAL([TXI_HAVE_CXX_HASHMAP],
+               [test "x$texinfo_cv_cxx_hashmap" = "xyes"])
+
+AC_LANG_POP([C++])
+
 
 # Disable gnulib provision of "Microsoft deprecated alias" functions on
 # MS-Windows to prevent a clash with definitions in Perl header files

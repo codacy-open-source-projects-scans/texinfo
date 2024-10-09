@@ -843,7 +843,7 @@ window_line_of_point (WINDOW *window)
 }
 
 /* Get and return the printed column offset of the cursor in this window. */
-int
+long
 window_get_cursor_column (WINDOW *window)
 {
   return window_point_to_column (window, window->point, &window->point);
@@ -1179,8 +1179,8 @@ calculate_line_starts (WINDOW *win)
        mbi_avail (iter);
        mbi_advance (iter))
     {
-      size_t pchars = 0; /* Screen columns for this character. */
-      size_t pbytes = 0; /* Not used. */
+      int pchars = 0; /* Screen columns for this character. */
+      int pbytes = 0; /* Not used. */
       int delim = 0;
 
       /* Set pchars. */
@@ -1304,7 +1304,7 @@ window_compute_line_map (WINDOW *win)
        !delim && mbi_avail (iter);
        mbi_advance (iter))
     {
-      size_t pchars, pbytes;
+      int pchars, pbytes;
       cur_ptr = mbi_cur_ptr (iter);
 
       if (cur_ptr >= endp)
@@ -1323,10 +1323,10 @@ window_compute_line_map (WINDOW *win)
    store there the value of point corresponding to the beginning of a
    multibyte character in this column.  If the character at POINT spans 
    multiple columns (e.g. a tab), return the leftmost column it occupies. */
-int
+size_t
 window_point_to_column (WINDOW *win, long point, long *np)
 {
-  int i;
+  size_t i;
   
   window_compute_line_map (win);
   if (!win->line_map.map || point < win->line_map.map[0])

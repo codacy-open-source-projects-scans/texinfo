@@ -782,9 +782,6 @@ foreach my $command (keys(%{$LaTeX_style_brace_commands{'cmd_text'}})) {
 
 
 my %defaults = (
-  # Not customization option variables
-  'converted_format'     => 'latex',
-
   # For LaTeX in general, it could make sense to have some customization,
   # for example of packages, fonts, document type, to be discussed/though
   # about how to setup this customization.
@@ -800,7 +797,7 @@ my %defaults = (
 
 sub converter_defaults($$)
 {
-  return %defaults;
+  return \%defaults;
 }
 
 # Converter state keys:
@@ -1076,7 +1073,8 @@ sub output($$)
   my $root = $document->tree();
 
   my ($output_file, $destination_directory, $output_filename)
-    = $self->determine_files_and_directory($self->{'output_format'});
+    = $self->determine_files_and_directory(
+                                  $self->get_conf('TEXINFO_OUTPUT_FORMAT'));
 
   my ($encoded_destination_directory, $dir_encoding)
     = $self->encoded_output_file_name($destination_directory);
@@ -1094,7 +1092,7 @@ sub output($$)
     my $error_message;
     # the third return information, set if the file has already been used
     # in this files_information is not checked as this cannot happen.
-    ($fh, $error_message) = Texinfo::Common::output_files_open_out(
+    ($fh, $error_message) = Texinfo::Convert::Utils::output_files_open_out(
                              $self->output_files_information(), $self,
                              $encoded_output_file);
     if (!$fh) {
@@ -1164,7 +1162,7 @@ sub output($$)
 
   #print STDERR "OUTPUT fh:$fh|F:$output_file|$result";
   if ($fh and $output_file ne '-') {
-    Texinfo::Common::output_files_register_closed(
+    Texinfo::Convert::Utils::output_files_register_closed(
                   $self->output_files_information(), $encoded_output_file);
     if (!close ($fh)) {
       $self->converter_document_error(

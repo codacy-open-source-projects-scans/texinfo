@@ -33,7 +33,7 @@ EXTRA_DIST+=gnulib/m4/gnulib-cache.m4
 
 ################### End Gnulib section #########################
 
-AM_CPPFLAGS += -DDATADIR=\"$(datadir)\"
+AM_CPPFLAGS += -DDATADIR=\"$(datadir)\" -DSYSCONFDIR=\"$(sysconfdir)\"
 
 ######################## Perl ################################
 
@@ -44,7 +44,9 @@ xsdir = $(pkglibdir)
 
 # -------------------------------------------------------
 
-XSLIBS_CPPFLAGS = -DVERSION=\"$(VERSION)\" -DXS_VERSION=\"$(VERSION)\"
+# XS_VERSION is used in version check in the bootstrap function created
+# by xsubpp in C code generated from .xs, and called in XSLoader.pm
+XSLIBS_CPPFLAGS = -DVERSION=\"$(VERSION)\" -DXS_VERSION=\"$(XS_VERSION)\"
 XSLIBS_CPPFLAGS += -I$(PERL_INC)
 
 XSLIBS_CFLAGS = $(perl_conf_CFLAGS)
@@ -110,9 +112,7 @@ endif
 # in main but not the other way around.
 # Files in structuring_transfo depend only on the files in main and not
 # the other way around.
-# api_to_perl.c and call_perl_function.c functions are called in other
-# parts of the code and need to be linked against Perl
-libtexinfo_la_SOURCES= \
+C_libtexinfo_sources = \
 		      main/tree_types.h \
 		      main/document_types.h \
 		      main/tree.c \
@@ -137,6 +137,8 @@ libtexinfo_la_SOURCES= \
 		      main/convert_to_text.h \
 		      main/convert_utils.c \
 		      main/convert_utils.h \
+		      main/customization_options.c \
+		      main/customization_options.h \
 		      main/conversion_data.c \
 		      main/conversion_data.h \
 		      main/floats.c \
@@ -154,6 +156,8 @@ libtexinfo_la_SOURCES= \
 		      main/targets.c \
 		      main/targets.h \
 		      main/options_init_free.c \
+		      main/options_defaults.c \
+		      main/options_defaults.h \
 		      main/option_types.h \
 		      main/options_types.h \
 		      main/global_commands_types.h \
@@ -207,6 +211,12 @@ libtexinfo_la_SOURCES= \
 		      parsetexi/source_marks.h \
 		      structuring_transfo/structuring.c \
 		      structuring_transfo/structuring.h \
+		      structuring_transfo/transformations.c \
+		      structuring_transfo/transformations.h
+
+# api_to_perl.c and call_perl_function.c functions are called in other
+# parts of the code and need to be linked against Perl
+XS_libtexinfo_sources = \
 		      main/api_to_perl.c \
 		      main/api_to_perl.h \
 		      main/call_perl_function.c \
@@ -222,14 +232,21 @@ EXTRA_DIST += main/cmd_text.c
 EXTRA_DIST += main/global_multi_commands_case.c
 EXTRA_DIST += main/global_unique_commands_case.c
 
+libtexinfo_la_SOURCES = \
+   $(C_libtexinfo_sources) \
+   $(XS_libtexinfo_sources)
+
 # locate include files under out-of-source builds.
 libtexinfo_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/parsetexi $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) $(XSLIBS_CPPFLAGS)
 libtexinfo_la_CFLAGS = $(XSLIBS_CFLAGS)
 libtexinfo_la_LIBADD = $(top_builddir)/gnulib/lib/libgnu.la
 libtexinfo_la_LDFLAGS = -version-info 0:0:0 $(perl_conf_LDFLAGS) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+#libtexinfo_la_LDFLAGS = -version-info 0:0:0 -Wl,--no-undefined $(perl_conf_LDFLAGS) $(perl_conf_PERL_LINK) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 
 BUILT_SOURCES = main/accent_tables_8bit_codepoints.c \
                 convert/cmd_converter.c \
+                convert/converters_options.c \
+                convert/converters_options.h \
                 main/cmd_normalization.c \
                 main/cmd_structuring.c \
                 main/cmd_text.c \
@@ -244,6 +261,8 @@ BUILT_SOURCES = main/accent_tables_8bit_codepoints.c \
                 main/global_multi_commands_case.c \
                 main/global_unique_commands_case.c \
                 main/options_init_free.c \
+                main/options_defaults.c \
+                main/options_defaults.h \
                 main/options_get_perl.c \
                 main/options_types.h
 
@@ -251,6 +270,8 @@ BUILT_SOURCES = main/accent_tables_8bit_codepoints.c \
 EXTRA_DIST+=main/element_types.txt main/element_types.awk \
 	   main/command_data.awk
 EXTRA_DIST += convert/cmd_converter.c
+EXTRA_DIST += convert/converters_options.c
+EXTRA_DIST += convert/converters_options.h
 
 $(srcdir)/main/element_types.c $(srcdir)/main/element_types.h: main/element_types.txt main/element_types.awk
 	$(GAWK) -v srcdir=$(srcdir)/main -f $(srcdir)/main/element_types.awk \
@@ -271,11 +292,16 @@ MAINTAINERCLEANFILES += main/global_commands_types.h
 
 # NOTE duplicate of a rule in ../../Makefile.am
 $(srcdir)/../Commands.pm: ../command_data.txt $(srcdir)/../../maintain/regenerate_commands_perl_info.pl
-	$(PERL) $(srcdir)/../../maintain/regenerate_commands_perl_info.pl $(srcdir)/../Commands.pm < $(srcdir)/../command_data.txt
+	$(PERL) $(srcdir)/../../maintain/regenerate_commands_perl_info.pl \
+	  $(srcdir)/../Commands.pm \
+	    < $(srcdir)/../command_data.txt
 
 # NOTE duplicate of a rule in ../../Makefile.am
-$(srcdir)/../Options.pm: $(srcdir)/../options_data.txt $(srcdir)/../../maintain/regenerate_perl_options_info.pl
-	$(PERL) $(srcdir)/../../maintain/regenerate_perl_options_info.pl $(srcdir)/../Options.pm < $(srcdir)/../options_data.txt
+$(srcdir)/../Options.pm: ../Convert/converters_defaults.txt ../options_data.txt $(srcdir)/../../maintain/regenerate_perl_options_info.pl
+	$(PERL) $(srcdir)/../../maintain/regenerate_perl_options_info.pl \
+	  $(srcdir)/../Convert/converters_defaults.txt \
+	  $(srcdir)/../Options.pm \
+	    < $(srcdir)/../options_data.txt
 
 $(srcdir)/main/cmd_normalization.c $(srcdir)/main/cmd_unicode.c $(srcdir)/main/cmd_structuring.c $(srcdir)/main/cmd_text.c $(srcdir)/convert/cmd_converter.c: main/command_data.c ../Commands.pm ../Options.pm $(srcdir)/../../maintain/setup_converters_code_tables.pl
 	$(TXI_MODULES_ENV) $(PERL) $(srcdir)/../../maintain/setup_converters_code_tables.pl \
@@ -295,15 +321,23 @@ $(srcdir)/main/accent_tables_8bit_codepoints.c: $(srcdir)/../../maintain/setup_a
 
 MAINTAINERCLEANFILES += main/accent_tables_8bit_codepoints.c
 
-$(srcdir)/main/options_init_free.c $(srcdir)/main/options_types.h $(srcdir)/main/options_get_perl.c: ../options_data.txt main/command_data.c $(srcdir)/../../maintain/regenerate_C_options_info.pl
+$(srcdir)/main/options_init_free.c $(srcdir)/main/options_types.h $(srcdir)/main/options_defaults.c $(srcdir)/main/options_defaults.h $(srcdir)/convert/converters_options.c $(srcdir)/convert/converters_options.h $(srcdir)/main/options_get_perl.c: ../options_data.txt ../Convert/converters_defaults.txt main/command_data.c $(srcdir)/../../maintain/regenerate_C_options_info.pl
 	$(PERL) $(srcdir)/../../maintain/regenerate_C_options_info.pl \
 	        < $(srcdir)/../options_data.txt \
 	              $(srcdir)/main/command_data.c \
+	              $(srcdir)/../Convert/converters_defaults.txt \
 	              $(srcdir)/main/options_init_free.c \
 	              $(srcdir)/main/options_types.h \
+	              $(srcdir)/main/options_defaults.c \
+	              $(srcdir)/main/options_defaults.h \
+	              $(srcdir)/convert/converters_options.c \
+	              $(srcdir)/convert/converters_options.h \
 	              $(srcdir)/main/options_get_perl.c
 
 MAINTAINERCLEANFILES += main/options_init_free.c main/options_types.h \
+                        main/options_defaults.c main/options_defaults.h \
+                        convert/converters_options.c \
+                        convert/converters_options.h \
                         main/options_get_perl.c
 
 $(srcdir)/main/conversion_data.c $(srcdir)/main/conversion_data.h: main/command_data.c $(srcdir)/../Data/default_css_element_class_styles.csv $(srcdir)/../Data/default_direction_strings.csv $(srcdir)/../Data/default_special_unit_info.csv $(srcdir)/../Data/html_style_commands_element.csv $(srcdir)/../../maintain/generate_code_convert_data.pl
@@ -355,12 +389,32 @@ endif
 # call_html_perl_function.c functions are called in other
 # parts of the code and need to be linked against Perl.
 # build_html_perl_state.c functions are called from call_html_perl_function.c.
-libtexinfo_convert_la_SOURCES= \
+C_libtexinfo_convert_sources = \
                        convert/converter.c \
                        convert/converter.h \
                        convert/cmd_converter.c \
+                       convert/converters_options.c \
+                       convert/converters_options.h \
+                       convert/create_buttons.c \
+                       convert/create_buttons.h \
                        convert/convert_html.h \
                        convert/convert_html.c \
+                       convert/format_html.h \
+                       convert/format_html.c \
+                       convert/html_converter_types.h \
+                       convert/html_converter_init_options.c \
+                       convert/html_converter_finish.c \
+                       convert/html_conversion_state.c \
+                       convert/html_conversion_state.h \
+                       convert/html_prepare_converter.c \
+                       convert/html_prepare_converter.h \
+                       convert/html_conversion_api.h \
+                       convert/html_converter_api.c \
+                       convert/html_converter_api.h \
+                       convert/texinfo.c \
+                       convert/texinfo.h
+
+XS_libtexinfo_convert_sources = \
                        convert/build_html_perl_state.h \
                        convert/build_html_perl_state.c \
                        convert/call_html_perl_function.h \
@@ -368,13 +422,18 @@ libtexinfo_convert_la_SOURCES= \
                        convert/get_converter_perl_info.c \
                        convert/get_converter_perl_info.h
 
+libtexinfo_convert_la_SOURCES = \
+   $(C_libtexinfo_convert_sources) \
+   $(XS_libtexinfo_convert_sources)
+
 # locate include files under out-of-source builds.
-# parsetexi will only be needed for texinfo.c
-libtexinfo_convert_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/structuring_transfo -I$(srcdir)/parsetexi $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) $(XSLIBS_CPPFLAGS)
+# parsetexi is only needed for texinfo.c
+libtexinfo_convert_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/convert -I$(srcdir)/structuring_transfo -I$(srcdir)/parsetexi $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) $(XSLIBS_CPPFLAGS)
 libtexinfo_convert_la_CFLAGS = $(XSLIBS_CFLAGS)
-libtexinfo_convert_la_LIBADD = libtexinfo.la libtexinfoxs.la $(top_builddir)/gnulib/lib/libgnu.la
-libtexinfo_convert_la_LDFLAGS = -version-info 0:0:0 $(perl_conf_LDFLAGS) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
-#libtexinfo_convert_la_LDFLAGS = -version-info 0:0:0 -Wl,--no-undefined $(perl_conf_LDFLAGS) $(perl_conf_PERL_LINK) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+libtexinfo_convert_la_LIBADD = libtexinfoxs.la libtexinfo.la $(top_builddir)/gnulib/lib/libgnu.la
+libtexinfo_convert_la_LDFLAGS = -version-info 0:0:0 $(perl_conf_LDFLAGS) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+# example to trigger errors associated with no undefined
+#libtexinfo_convert_la_LDFLAGS = -version-info 0:0:0 -Wl,--no-undefined $(perl_conf_LDFLAGS) $(perl_conf_PERL_LINK) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 
 
 ########################## Parsetexi XS parser
@@ -424,9 +483,6 @@ nodist_StructuringTransfoXS_la_SOURCES = \
                     structuring_transfo/StructuringTransfoXS.c
 CLEANFILES += \
                     structuring_transfo/StructuringTransfoXS.c
-StructuringTransfoXS_la_SOURCES = \
-                    structuring_transfo/transformations.c \
-                    structuring_transfo/transformations.h
 
 EXTRA_DIST += structuring_transfo/StructuringTransfoXS.xs
 
@@ -478,4 +534,36 @@ ConvertXS_la_CFLAGS = $(XSLIBS_CFLAGS)
 ConvertXS_la_LIBADD = libtexinfoxs.la libtexinfo-convert.la libtexinfo.la $(top_builddir)/gnulib/lib/libgnu.la
 ConvertXS_la_LDFLAGS = $(XSLIBS_LDFLAGS) $(LTLIBICONV) $(LTLIBUNISTRING)
 
+
+############################################### demonstrator of the API
+
+if ! DISABLE_ADDITIONAL_CHECKS
+if HAVE_ICONV
+noinst_PROGRAMS = teximakehtml
+endif
+endif
+
+teximakehtml_SOURCES = \
+                       $(C_libtexinfo_sources) \
+                       $(C_libtexinfo_convert_sources) \
+                       teximakehtml.c \
+                       main/replace_perl_api_call.c \
+                       convert/replace_perl_call_html_function.c
+
+teximakehtml_LDADD = $(top_builddir)/gnulib/lib/libgnu.la
+teximakehtml_LDFLAGS = $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+
+if TXI_HAVE_CXX_HASHMAP
+teximakehtml_SOURCES += convert/call_html_cxx_function.cpp \
+                        convert/call_html_cxx_function.h
+TXI_CXX_CPPFLAGS = -DHAVE_CXX_HASHMAP=1
+teximakehtml_LINK = $(CXXLINK) $(teximakehtml_CXXFLAGS) $(teximakehtml_LDFLAGS)
+else
+EXTRA_DIST += convert/call_html_cxx_function.cpp \
+              convert/call_html_cxx_function.h
+TXI_CXX_CPPFLAGS = 
+teximakehtml_LINK = $(LINK) $(teximakehtml_CFLAGS) $(teximakehtml_LDFLAGS)
+endif
+
+teximakehtml_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(TXI_CXX_CPPFLAGS) $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
 

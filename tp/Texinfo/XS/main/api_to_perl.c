@@ -40,34 +40,27 @@
  /* See the NOTE in build_perl_info.c on use of functions related to
     memory allocation */
 
-/* to be called when a tree element is destroyed, to remove the reference
-   of the association with the C tree */
-void
-unregister_perl_tree_element (ELEMENT *e)
+/* for debugging */
+int
+get_refcount (void *sv)
 {
-  dTHX;
-
-  if (e->hv)
-    {
-      SvREFCNT_dec ((SV *) e->hv);
-      e->hv = 0;
-    }
+  return SvREFCNT ((SV *) sv);
 }
 
 void
-unregister_perl_button (BUTTON_SPECIFICATION *button)
+unregister_perl_data (void *sv)
 {
   dTHX;
 
-  SvREFCNT_dec (button->sv);
+  SvREFCNT_dec (sv);
 }
 
 void
-register_perl_button (BUTTON_SPECIFICATION *button)
+register_perl_data (void *sv)
 {
   dTHX;
 
-  SvREFCNT_inc (button->sv);
+  SvREFCNT_inc (sv);
 }
 
 char *
@@ -119,27 +112,3 @@ croak_message (char *message)
   croak ("%s\n", message);
 }
 
-/* HTML specific */
-void
-unregister_html_converter_perl_hv (CONVERTER *converter)
-{
-  dTHX;
-
-  if (converter->pl_info_hv)
-    {
-      SvREFCNT_dec ((SV *)converter->pl_info_hv);
-      converter->pl_info_hv = 0;
-    }
-}
-
-void
-unregister_document_hv (DOCUMENT *document)
-{
-  dTHX;
-
-  if (document->hv)
-    {
-      SvREFCNT_dec ((SV *)document->hv);
-      document->hv = 0;
-    }
-}

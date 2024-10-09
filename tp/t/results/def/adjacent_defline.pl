@@ -315,15 +315,15 @@ $result_floats{'adjacent_defline'} = {};
 
 
 
-$result_converted{'plaintext'}->{'adjacent_defline'} = ' - Funoid: foo (bar)
- - Funnyoid: foo2 (bar2, baz2)
+$result_converted{'plaintext'}->{'adjacent_defline'} = ' -- Funoid: foo (bar)
+ -- Funnyoid: foo2 (bar2, baz2)
      description
 ';
 
 
 $result_converted{'html'}->{'adjacent_defline'} = '<!DOCTYPE html>
 <html>
-<!-- Created by texinfo, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by texinfo, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Untitled Document</title>

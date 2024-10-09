@@ -52,13 +52,13 @@ my $DEFAULT_ENCODING = 'utf-8';
 static char *working_locale = 0;
 static char *locale_command = 0;
 
-static char *strings_textdomain = "texinfo_document";
+static const char *strings_textdomain = "texinfo_document";
 
 void
-configure_output_strings_translations (char *localesdir,
-                                       char *strings_textdomain_in)
+configure_output_strings_translations (const char *localesdir,
+                                       const char *strings_textdomain_in)
 {
-  char *textdomain_directory;
+  const char *textdomain_directory;
   if (strings_textdomain_in)
     strings_textdomain = strings_textdomain_in;
 
@@ -351,7 +351,7 @@ replace_substrings (const char *string,
             {
               if (*(q + flag_len) == '}')
                 {
-                  int i;
+                  size_t i;
                   char *flag = strndup (q, flag_len);
 
                   /* past } */
@@ -390,7 +390,7 @@ void
 substitute_element_array (ELEMENT_LIST *list,
                           NAMED_STRING_ELEMENT_LIST *replaced_substrings)
 {
-  int idx = 0;
+  size_t idx = 0;
 
   for (; idx < list->number; idx++)
     {
@@ -401,7 +401,7 @@ substitute_element_array (ELEMENT_LIST *list,
             {
               char *name = e->e.c->args.list[0]->e.c->contents.list[0]
                                                             ->e.text->text;
-              int i;
+              size_t i;
               for (i = 0; i < replaced_substrings->number; i++)
                 {
                   if (!strcmp (name, replaced_substrings->list[i].name))
@@ -436,7 +436,7 @@ replace_convert_substrings (char *translated_string,
                             NAMED_STRING_ELEMENT_LIST *replaced_substrings,
                             int debug_level)
 {
-  int i;
+  size_t i;
   char *texinfo_line;
   size_t document_descriptor;
   int parser_debug_level = 0;

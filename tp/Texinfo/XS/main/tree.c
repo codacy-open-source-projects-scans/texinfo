@@ -180,7 +180,7 @@ destroy_const_element_list (CONST_ELEMENT_LIST *list)
 void
 destroy_associated_info (ASSOCIATED_INFO *a)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < a->info_number; i++)
     {
@@ -229,7 +229,7 @@ destroy_source_mark (SOURCE_MARK *source_mark)
 void
 destroy_source_mark_list (SOURCE_MARK_LIST *source_mark_list)
 {
-  int i;
+  size_t i;
   for (i = 0; i < source_mark_list->number; i++)
     destroy_source_mark (source_mark_list->list[i]);
 
@@ -256,7 +256,12 @@ destroy_element_empty_source_mark_list (ELEMENT *e)
 void
 destroy_element (ELEMENT *e)
 {
-  unregister_perl_tree_element (e);
+  /* remove the reference of the association with the C tree */
+  if (e->hv)
+    {
+      unregister_perl_data (e->hv);
+      e->hv = 0;
+    }
 
   if (e->source_mark_list)
     destroy_source_mark_list (e->source_mark_list);
@@ -305,7 +310,7 @@ destroy_element (ELEMENT *e)
 void
 destroy_element_and_children (ELEMENT *e)
 {
-  int i;
+  size_t i;
 
   if (! (type_data[e->type].flags & TF_text))
     {
@@ -345,7 +350,7 @@ reallocate_const_element_list (CONST_ELEMENT_LIST *list)
 
 /* Make sure there is space for at least N more elements. */
 static void
-reallocate_list_for (int n, ELEMENT_LIST *list)
+reallocate_list_for (size_t n, ELEMENT_LIST *list)
 {
   if (list->number + n >= list->space)
     {
@@ -367,6 +372,9 @@ add_to_const_element_list (CONST_ELEMENT_LIST *list, const ELEMENT *e)
 void
 add_to_element_list (ELEMENT_LIST *list, ELEMENT *e)
 {
+  /* NOTE there could be theoretically an overflow if
+     list->number + 1 > SIZE_MAX.  The numbers are big, this is unlikely
+     to happen */
   reallocate_list (list);
 
   list->list[list->number++] = e;
@@ -399,14 +407,11 @@ add_to_element_args (ELEMENT *parent, ELEMENT *e)
 
 /* Add the element E into the LIST at index WHERE. */
 void
-insert_into_element_list (ELEMENT_LIST *list, ELEMENT *e, int where)
+insert_into_element_list (ELEMENT_LIST *list, ELEMENT *e, size_t where)
 {
   reallocate_list (list);
 
-  if (where < 0)
-    where = list->number + where;
-
-  if (where < 0 || where > list->number)
+  if (where > list->number)
     fatal ("elements list index out of bounds");
 
   memmove (&list->list[where + 1], &list->list[where],
@@ -417,7 +422,7 @@ insert_into_element_list (ELEMENT_LIST *list, ELEMENT *e, int where)
 
 /* Add the element E into the contents of PARENT at index WHERE. */
 void
-insert_into_contents (ELEMENT *parent, ELEMENT *e, int where)
+insert_into_contents (ELEMENT *parent, ELEMENT *e, size_t where)
 {
   ELEMENT_LIST *list = &parent->e.c->contents;
   insert_into_element_list (list, e, where);
@@ -426,7 +431,7 @@ insert_into_contents (ELEMENT *parent, ELEMENT *e, int where)
 
 /* Add the element E into the arguments of PARENT at index WHERE. */
 void
-insert_into_args (ELEMENT *parent, ELEMENT *e, int where)
+insert_into_args (ELEMENT *parent, ELEMENT *e, size_t where)
 {
   ELEMENT_LIST *list = &parent->e.c->args;
   insert_into_element_list (list, e, where);
@@ -436,10 +441,13 @@ insert_into_args (ELEMENT *parent, ELEMENT *e, int where)
 /* Insert elements to TO at position WHERE from FROM from START inclusive
    to END exclusive. */
 void
-insert_list_slice_into_list (ELEMENT_LIST *to, int where, const ELEMENT_LIST *from,
-                             int start, int end)
+insert_list_slice_into_list (ELEMENT_LIST *to, size_t where,
+                             const ELEMENT_LIST *from, size_t start, size_t end)
 {
-  int num = end - start;
+  /* NOTE there could be theoretically an overflow if
+     list->number + num > SIZE_MAX.  The numbers are big, this is unlikely
+     to happen */
+  size_t num = end - start;
   reallocate_list_for (num, to);
 
   memmove (&to->list[where + num],
@@ -455,8 +463,8 @@ insert_list_slice_into_list (ELEMENT_LIST *to, int where, const ELEMENT_LIST *fr
 /* Insert elements to the contents of TO at position WHERE from FROM contents
    from START inclusive to END exclusive.  Do not set the parent fields. */
 void
-insert_slice_into_contents (ELEMENT *to, int where, const ELEMENT *from,
-                            int start, int end)
+insert_slice_into_contents (ELEMENT *to, size_t where, const ELEMENT *from,
+                            size_t start, size_t end)
 {
   insert_list_slice_into_list (&to->e.c->contents, where,
                                &from->e.c->contents, start, end);
@@ -465,8 +473,9 @@ insert_slice_into_contents (ELEMENT *to, int where, const ELEMENT *from,
 /* Insert elements to the args of TO at position WHERE from FROM
    from START inclusive to END exclusive. */
 void
-insert_list_slice_into_args (ELEMENT *to, int where, ELEMENT_LIST *from,
-                             int start, int end)
+insert_list_slice_into_args (ELEMENT *to, size_t where,
+                             const ELEMENT_LIST *from,
+                             size_t start, size_t end)
 {
   insert_list_slice_into_list (&to->e.c->args, where, from, start, end);
 }
@@ -474,17 +483,19 @@ insert_list_slice_into_args (ELEMENT *to, int where, ELEMENT_LIST *from,
 /* Insert elements to the contents of TO at position WHERE from FROM
    from START inclusive to END exclusive. */
 void
-insert_list_slice_into_contents (ELEMENT *to, int where, ELEMENT_LIST *from,
-                                 int start, int end)
+insert_list_slice_into_contents (ELEMENT *to, size_t where,
+                                 const ELEMENT_LIST *from,
+                                 size_t start, size_t end)
 {
   insert_list_slice_into_list (&to->e.c->contents, where, from, start, end);
 }
 
 /* ensure that there are n slots, and void them */
+/* Unused */
 void
-list_set_empty_contents (ELEMENT_LIST *e_list, int n)
+list_set_empty_contents (ELEMENT_LIST *e_list, size_t n)
 {
-  int i;
+  size_t i;
   if (n <= 0)
     return;
 
@@ -498,14 +509,11 @@ list_set_empty_contents (ELEMENT_LIST *e_list, int n)
 }
 
 ELEMENT *
-remove_from_element_list (ELEMENT_LIST *list, int where)
+remove_from_element_list (ELEMENT_LIST *list, size_t where)
 {
   ELEMENT *removed;
 
-  if (where < 0)
-    where = list->number + where;
-
-  if (where < 0 || where > list->number -1)
+  if (where > list->number -1)
     fatal ("element list index out of bounds");
 
   removed = list->list[where];
@@ -517,14 +525,11 @@ remove_from_element_list (ELEMENT_LIST *list, int where)
 }
 
 const ELEMENT *
-remove_from_const_element_list (CONST_ELEMENT_LIST *list, int where)
+remove_from_const_element_list (CONST_ELEMENT_LIST *list, size_t where)
 {
   const ELEMENT *removed;
 
-  if (where < 0)
-    where = list->number + where;
-
-  if (where < 0 || where > list->number -1)
+  if (where > list->number -1)
     fatal ("element list index out of bounds");
 
   removed = list->list[where];
@@ -536,14 +541,14 @@ remove_from_const_element_list (CONST_ELEMENT_LIST *list, int where)
 }
 
 ELEMENT *
-remove_from_contents (ELEMENT *parent, int where)
+remove_from_contents (ELEMENT *parent, size_t where)
 {
   ELEMENT_LIST *list = &parent->e.c->contents;
   return remove_from_element_list (list, where);
 }
 
 ELEMENT *
-remove_from_args (ELEMENT *parent, int where)
+remove_from_args (ELEMENT *parent, size_t where)
 {
   ELEMENT_LIST *list = &parent->e.c->args;
   return remove_from_element_list (list, where);
@@ -552,18 +557,18 @@ remove_from_args (ELEMENT *parent, int where)
 ELEMENT *
 remove_element_from_list (ELEMENT_LIST *list, const ELEMENT *e)
 {
-  int i;
-  int index = -1;
+  size_t i;
+  int found = 0;
   for (i = 0; i < list->number; i++)
     {
       if (list->list[i] == e)
         {
-          index = i;
+          found = 1;
           break;
         }
     }
-  if (index >= 0)
-    return remove_from_element_list (list, index);
+  if (found)
+    return remove_from_element_list (list, i);
 
   return 0;
 }
@@ -571,7 +576,7 @@ remove_element_from_list (ELEMENT_LIST *list, const ELEMENT *e)
 void
 add_element_if_not_in_list (ELEMENT_LIST *list, ELEMENT *e)
 {
-  int i;
+  size_t i;
   for (i = 0; i < list->number; i++)
     {
       if (list->list[i] == e)
@@ -585,7 +590,7 @@ add_element_if_not_in_list (ELEMENT_LIST *list, ELEMENT *e)
 /* Remove elements from START inclusive to END exclusive.  Do not
    free any of them. */
 void
-remove_slice_from_contents (ELEMENT *parent, int start, int end)
+remove_slice_from_contents (ELEMENT *parent, size_t start, size_t end)
 {
   memmove (&parent->e.c->contents.list[start],
            &parent->e.c->contents.list[end],
@@ -633,24 +638,18 @@ last_contents_child (const ELEMENT *current)
 }
 
 ELEMENT *
-contents_child_by_index (const ELEMENT *e, int index)
+contents_child_by_index (const ELEMENT *e, size_t index)
 {
-  if (index < 0)
-    index = e->e.c->contents.number + index;
-
-  if (index < 0 || index >= e->e.c->contents.number)
+  if (index >= e->e.c->contents.number)
     return 0;
 
   return e->e.c->contents.list[index];
 }
 
 ELEMENT *
-args_child_by_index (const ELEMENT *e, int index)
+args_child_by_index (const ELEMENT *e, size_t index)
 {
-  if (index < 0)
-    index = e->e.c->args.number + index;
-
-  if (index < 0 || index >= e->e.c->args.number)
+  if (index >= e->e.c->args.number)
     return 0;
 
   return e->e.c->args.list[index];
@@ -659,7 +658,7 @@ args_child_by_index (const ELEMENT *e, int index)
 int replace_element_in_list (ELEMENT_LIST *list, ELEMENT *removed,
                              ELEMENT *added)
 {
-  int i;
+  size_t i;
 
   if (!list || !list->number)
     return 0;
@@ -691,7 +690,7 @@ void
 destroy_node_spec (NODE_SPEC_EXTRA *nse)
 {
   if (nse->out_of_tree_elements)
-    {
+    {/* always 3 elements maximum added, to be freed */
       int i;
       for (i = 0; i < 3; i++)
         if (nse->out_of_tree_elements[i])

@@ -71,8 +71,9 @@ register_parser_conf (SV *parser)
     CODE:
       hv_in = (HV *)SvRV (parser);
       parser_conf = register_conf ();
+      /* NOTE unlikely IV overflow if PERL_QUAD_MAX < SIZE_MAX */
       hv_store (hv_in, key, strlen (key),
-                newSViv (parser_conf->descriptor), 0);
+                newSViv ((IV) parser_conf->descriptor), 0);
 
 # file path, can be in any encoding
 size_t

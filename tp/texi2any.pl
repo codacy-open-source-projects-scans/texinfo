@@ -269,13 +269,13 @@ if ($configured_version ne $Texinfo::Common::VERSION
 }
 
 my $configured_package = '@PACKAGE@';
-$configured_package = 'Texinfo' if ($configured_package eq '@' . 'PACKAGE@');
+$configured_package = 'texinfo' if ($configured_package eq '@' . 'PACKAGE@');
 my $configured_name = '@PACKAGE_NAME@';
-$configured_name = $configured_package
+$configured_name = 'GNU Texinfo'
   if ($configured_name eq '@' .'PACKAGE_NAME@');
 my $configured_name_version = "$configured_name $configured_version";
 my $configured_url = '@PACKAGE_URL@';
-$configured_url = 'http://www.gnu.org/software/texinfo/'
+$configured_url = 'https://www.gnu.org/software/texinfo/'
   if ($configured_url eq '@' .'PACKAGE_URL@');
 
 my $texinfo_dtd_version = '@TEXINFO_DTD_VERSION@';
@@ -339,7 +339,9 @@ my $main_program_set_options = {
     'TEXINFO_DTD_VERSION' => $texinfo_dtd_version,
     'COMMAND_LINE_ENCODING' => $locale_encoding,
     'MESSAGE_ENCODING' => $locale_encoding,
-    'LOCALE_ENCODING' => $locale_encoding
+    'LOCALE_ENCODING' => $locale_encoding,
+ # better than making it the default value independently of the implementation
+    'TEXINFO_OUTPUT_FORMAT' => 'info',
 };
 
 # set configure information as constants
@@ -702,11 +704,6 @@ my $cmdline_options = { 'CSS_FILES' => \@css_files,
                             => \@texinfo_language_config_dirs,
                         'EXPANDED_FORMATS' => \@expanded_formats };
 
-my $format = 'info';
-# this is the format associated with the output format, which is replaced
-# when the output format changes.  It may also be removed if there is the
-# corresponding --no-ifformat.
-my $default_expanded_format = [ $format ];
 my @conf_dirs = ();
 my @prepend_dirs = ();
 
@@ -759,6 +756,7 @@ if (defined($set_translations_encoding)
 
 
 # Parse command line
+my %ignored_formats;
 
 sub set_expansion($$) {
   my $region = shift;
@@ -766,10 +764,10 @@ sub set_expansion($$) {
   $set = 1 if (!defined($set));
   if ($set) {
     add_to_option_list('EXPANDED_FORMATS', [$region]);
+    delete $ignored_formats{$region};
   } else {
     remove_from_option_list('EXPANDED_FORMATS', [$region]);
-    @{$default_expanded_format}
-       = grep {$_ ne $region} @{$default_expanded_format};
+    $ignored_formats{$region} = 1;
   }
 }
 
@@ -886,14 +884,15 @@ my %formats_table = (
 my $call_texi2dvi = 0;
 my @texi2dvi_args = ();
 
-# previous_format should be in argument if there is a possibility of error.
-# as a fallback, the $format global variable is used.
-sub set_format($;$$)
+sub set_cmdline_format($)
 {
   my $set_format = shift;
-  my $previous_format = shift;
-  $previous_format = $format if (!defined($previous_format));
-  my $do_not_override_command_line = shift;
+  set_from_cmdline('TEXINFO_OUTPUT_FORMAT', $set_format);
+}
+
+sub set_format($)
+{
+  my $set_format = shift;
 
   my $new_output_format;
   if ($format_command_line_names{$set_format}) {
@@ -905,44 +904,47 @@ sub set_format($;$$)
     document_warn(sprintf(__(
                    "ignoring unrecognized TEXINFO_OUTPUT_FORMAT value `%s'\n"),
                          $set_format));
-    $new_output_format = $previous_format;
   } else {
-    if ($format_from_command_line and $do_not_override_command_line) {
-      $new_output_format = $previous_format;
+    Texinfo::Config::texinfo_set_from_init_file('TEXINFO_OUTPUT_FORMAT',
+                                                $new_output_format);
+  }
+}
+
+sub _format_expanded_formats($)
+{
+  my $new_output_format = shift;
+
+  my $default_expanded_formats = {};
+
+  my $converter_format;
+  my $expanded_region;
+
+  if ($formats_table{$new_output_format}->{'texi2dvi_format'}) {
+    $call_texi2dvi = 1;
+    push @texi2dvi_args, '--'.$new_output_format;
+    $converter_format = 'tex';
+  } elsif ($formats_table{$new_output_format}->{'converted_format'}) {
+    $converter_format
+      = $formats_table{$new_output_format}->{'converted_format'};
+  } else {
+    $converter_format = $new_output_format;
+  }
+
+  if ($converter_format_expanded_region_name{$converter_format}) {
+    $expanded_region
+      = $converter_format_expanded_region_name{$converter_format};
+  } else {
+    $expanded_region = $converter_format;
+  }
+
+  if ($Texinfo::Common::texinfo_output_formats{$expanded_region}) {
+    if ($expanded_region eq 'plaintext') {
+      $default_expanded_formats = {$expanded_region => 1, 'info' => 1};
     } else {
-      my $converter_format;
-      my $expanded_region;
-
-      if ($formats_table{$new_output_format}->{'texi2dvi_format'}) {
-        $call_texi2dvi = 1;
-        push @texi2dvi_args, '--'.$new_output_format;
-        $converter_format = 'tex';
-      } elsif ($formats_table{$new_output_format}->{'converted_format'}) {
-        $converter_format
-          = $formats_table{$new_output_format}->{'converted_format'};
-      } else {
-        $converter_format = $new_output_format;
-      }
-
-      if ($converter_format_expanded_region_name{$converter_format}) {
-        $expanded_region
-          = $converter_format_expanded_region_name{$converter_format};
-      } else {
-        $expanded_region = $converter_format;
-      }
-
-      if ($Texinfo::Common::texinfo_output_formats{$expanded_region}) {
-        if ($expanded_region eq 'plaintext') {
-          $default_expanded_format = [$expanded_region, 'info'];
-        } else {
-          $default_expanded_format = [$expanded_region];
-        }
-      }
-      $format_from_command_line = 1
-        unless ($do_not_override_command_line);
+      $default_expanded_formats = {$expanded_region => 1};
     }
   }
-  return $new_output_format;
+  return $default_expanded_formats;
 }
 
 sub _get_converter_default($)
@@ -1182,7 +1184,12 @@ There is NO WARRANTY, to the extent permitted by law.\n"), "2024");
                        set_from_cmdline('FORMAT_MENU',
                                   'set_format_menu_from_cmdline_header_option');
                      }
-                     $format = 'plaintext' if (!$_[1] and $format eq 'info'); },
+                     if (!$_[1]
+                         and get_conf('TEXINFO_OUTPUT_FORMAT') eq 'info') {
+                       set_main_program_default('TEXINFO_OUTPUT_FORMAT',
+                                                'plaintext');
+                     }
+                   },
  'output|out|o=s' => sub {
     my $var = 'OUTFILE';
     if ($_[1] ne '-' and ($_[1] =~ m:/$: or -d $_[1])) {
@@ -1244,7 +1251,21 @@ There is NO WARRANTY, to the extent permitted by law.\n"), "2024");
      if ($value =~ /^undef$/i) {
        $value = undef;
      }
-     set_from_cmdline($var, $value);
+     # TODO verify that it is the best.  It is inconsistent with other
+     # customization options that have the same precedence as command
+     # line option when specified on the command line.  This is because
+     # in the manual, it is said:
+     # "The customization variable of the same name is also read; if set,
+     # that overrides an environment variable setting, but not a command-line
+     # option."
+     # If read means "read from an init file" then we could change here, but
+     # if it means "read from the command line or an init file" we should
+     # keep it as it is.
+     if ($var eq 'TEXINFO_OUTPUT_FORMAT') {
+       set_format($value);
+     } else {
+       set_from_cmdline($var, $value);
+     }
    }
  },
  'css-include=s' => \@css_files,
@@ -1276,17 +1297,17 @@ There is NO WARRANTY, to the extent permitted by law.\n"), "2024");
  'reference-limit=i' => sub { ;},
  'Xopt=s' => sub {push @texi2dvi_args, $_[1]; $Xopt_arg_nr++},
  'silent|quiet' => sub { push @texi2dvi_args, '--'.$_[0];},
- 'plaintext' => sub {$format = set_format($_[0].'');},
- 'html' => sub {$format = set_format($_[0].'');},
- 'epub3' => sub {$format = set_format($_[0].'');},
- 'latex' => sub {$format = set_format($_[0].'');},
- 'info' => sub {$format = set_format($_[0].'');},
- 'docbook' => sub {$format = set_format($_[0].'');},
- 'xml' => sub {$format = set_format($_[0].'');},
- 'dvi' => sub {$format = set_format($_[0].'');},
- 'dvipdf' => sub {$format = set_format($_[0].'');},
- 'ps' => sub {$format = set_format($_[0].'');},
- 'pdf' => sub {$format = set_format($_[0].'');},
+ 'plaintext' => sub {set_cmdline_format($_[0].'');},
+ 'html' => sub {set_cmdline_format($_[0].'');},
+ 'epub3' => sub {set_cmdline_format($_[0].'');},
+ 'latex' => sub {set_cmdline_format($_[0].'');},
+ 'info' => sub {set_cmdline_format($_[0].'');},
+ 'docbook' => sub {set_cmdline_format($_[0].'');},
+ 'xml' => sub {set_cmdline_format('texinfoxml');},
+ 'dvi' => sub {set_cmdline_format($_[0].'');},
+ 'dvipdf' => sub {set_cmdline_format($_[0].'');},
+ 'ps' => sub {set_cmdline_format($_[0].'');},
+ 'pdf' => sub {set_cmdline_format($_[0].'');},
  'debug=i' => sub {set_from_cmdline('DEBUG', $_[1]);
                    push @texi2dvi_args, '--'.$_[0]; },
 );
@@ -1308,13 +1329,11 @@ if (defined($set_translations_encoding)
 }
 
 # Change some options depending on the settings of other ones set formats
-sub process_config {
+sub process_config($) {
   my $conf = shift;
 
-  if (defined($conf->{'TEXINFO_OUTPUT_FORMAT'})) {
-    $format = set_format($conf->{'TEXINFO_OUTPUT_FORMAT'}, $format, 1);
-  } elsif (defined($conf->{'TEXI2HTML'})) {
-    $format = set_format('html', $format, 1);
+  if (defined($conf->{'TEXI2HTML'})) {
+    set_format('html');
     $parser_options->{'values'}->{'texi2html'} = 1;
   }
 }
@@ -1343,9 +1362,9 @@ if ($cmdline_options->{'HIGHLIGHT_SYNTAX'}) {
 my %test_conf = (
     'PACKAGE_VERSION' => '',
     'PACKAGE' => 'texinfo',
-    'PACKAGE_NAME' => 'texinfo',
+    'PACKAGE_NAME' => 'GNU Texinfo',
     'PACKAGE_AND_VERSION' => 'texinfo',
-    'PACKAGE_URL' => 'http://www.gnu.org/software/texinfo/',
+    'PACKAGE_URL' => 'https://www.gnu.org/software/texinfo/',
 # maybe don't set this?
     'PROGRAM' => 'texi2any',
 );
@@ -1378,18 +1397,18 @@ sub format_name($)
 
 my $init_file_format = Texinfo::Config::GNUT_get_format_from_init_file();
 if (defined($init_file_format)) {
-  $format = set_format($init_file_format, $format, 1);
+  set_format($init_file_format);
 }
 
 if (defined($ENV{'TEXINFO_OUTPUT_FORMAT'})
     and $ENV{'TEXINFO_OUTPUT_FORMAT'} ne '') {
-  $format = set_format(_decode_input($ENV{'TEXINFO_OUTPUT_FORMAT'}),
-                       $format, 1);
+  set_format(_decode_input($ENV{'TEXINFO_OUTPUT_FORMAT'}));
 }
 
+my $output_format = get_conf('TEXINFO_OUTPUT_FORMAT');
 # for a format setup with an init file
-if (defined ($formats_table{$format}->{'init_file'})) {
-  locate_and_load_extension_file($formats_table{$format}->{'init_file'},
+if (defined ($formats_table{$output_format}->{'init_file'})) {
+  locate_and_load_extension_file($formats_table{$output_format}->{'init_file'},
                                  $internal_extension_dirs);
 }
 
@@ -1398,7 +1417,7 @@ if ($call_texi2dvi) {
     die _encode_message(
       sprintf(
  __('%s: when generating %s, only one input FILE may be specified with -o'."\n"),
-                $real_command_name, format_name($format)));
+                $real_command_name, format_name($output_format)));
   }
 } elsif($Xopt_arg_nr) {
   document_warn(__('--Xopt option without printed output'));
@@ -1495,6 +1514,8 @@ require Texinfo::Structuring;
 Texinfo::Structuring->import();
 require Texinfo::Transformations;
 Texinfo::Transformations->import();
+require Texinfo::Convert::Utils;
+Texinfo::Convert::Utils->import();
 
 if ($Texinfo::ModulePath::texinfo_uninstalled) {
   my $locales_dir = File::Spec->catdir($Texinfo::ModulePath::tp_builddir,
@@ -1525,19 +1546,19 @@ if (get_conf('TREE_TRANSFORMATIONS')) {
 # in general the format name is the format being converted.  If this is
 # not the case, the converted format is set here.  For example, for
 # the epub3 format, the converted format is html.  The converted format
-# should be the format actually used for conversion, in practice
+# should be the format actually used for conversion code, in practice
 # this means that the module associated with the converted format in
 # $format_table will be used to find the converter methods.
-my $converted_format = $format;
-if ($formats_table{$format}->{'converted_format'}) {
-  $converted_format = $formats_table{$format}->{'converted_format'};
+my $converted_format = $output_format;
+if ($formats_table{$output_format}->{'converted_format'}) {
+  $converted_format = $formats_table{$output_format}->{'converted_format'};
 }
 
 if (get_conf('SPLIT') and !$formats_table{$converted_format}->{'split'}) {
-  if ($converted_format ne $format) {
+  if ($converted_format ne $output_format) {
     document_warn(sprintf(
               __('ignoring splitting for converted format %s (for %s)'),
-                      format_name($converted_format), format_name($format)));
+                format_name($converted_format), format_name($output_format)));
   } else {
     document_warn(sprintf(__('ignoring splitting for format %s'),
                           format_name($converted_format)));
@@ -1545,9 +1566,11 @@ if (get_conf('SPLIT') and !$formats_table{$converted_format}->{'split'}) {
   set_from_cmdline('SPLIT', '');
 }
 
-add_to_option_list('EXPANDED_FORMATS', $default_expanded_format);
-
-my %converter_defaults;
+my $default_expanded_formats = _format_expanded_formats($output_format);
+foreach my $ignored_format (keys(%ignored_formats)) {
+  delete $default_expanded_formats->{$ignored_format};
+}
+add_to_option_list('EXPANDED_FORMATS', [sort(keys(%$default_expanded_formats))]);
 
 if (defined($formats_table{$converted_format}->{'module'})) {
   # Speed up initialization by only loading the module we need.
@@ -1579,13 +1602,15 @@ if (defined($formats_table{$converted_format}->{'module'})) {
   # $cmdline_options is passed to have command line settings, here
   # in practice TEXI2HTML set, for conversion to HTML to select
   # possibly different customization variable values.
-  %converter_defaults = $converter_class->converter_defaults($cmdline_options);
-  if (defined($converter_defaults{'FORMAT_MENU'})) {
+  my $converter_defaults
+     = $converter_class->converter_defaults($cmdline_options);
+  if (defined($converter_defaults->{'FORMAT_MENU'})) {
     # could be done for other customization options
-    set_main_program_default('FORMAT_MENU', $converter_defaults{'FORMAT_MENU'});
+    set_main_program_default('FORMAT_MENU',
+                             $converter_defaults->{'FORMAT_MENU'});
     # for FORMAT_MENU need in addition to have the value if
     # command-line set to 'set_format_menu_from_cmdline_header_option'
-    $conversion_format_menu_default = $converter_defaults{'FORMAT_MENU'};
+    $conversion_format_menu_default = $converter_defaults->{'FORMAT_MENU'};
   } else {
     # this happens for the plaintexinfo format for which nothing
     # is set.
@@ -1714,7 +1739,7 @@ while(@input_files) {
     print STDERR Data::Dumper->Dump([$tree]);
   }
   # object registering errors and warnings
-  if (!defined($document) or $format eq 'parse') {
+  if (!defined($document) or $output_format eq 'parse') {
     handle_errors($parser->errors(), $error_count, \%opened_files);
     goto NEXT;
   }
@@ -1788,17 +1813,17 @@ while(@input_files) {
     my $encoded_macro_expand_file_name = get_conf('MACRO_EXPAND');
     my $macro_expand_file_name = _decode_input($encoded_macro_expand_file_name);
     my $macro_expand_files_information
-          = Texinfo::Common::output_files_initialize();
+          = Texinfo::Convert::Utils::output_files_initialize();
     # the third return information, set if the file has already been used
     # in this files_information is not checked as this cannot happen.
     my ($macro_expand_fh, $error_message)
-          = Texinfo::Common::output_files_open_out(
+          = Texinfo::Convert::Utils::output_files_open_out(
                           $macro_expand_files_information, $document,
                           $encoded_macro_expand_file_name);
     my $error_macro_expand_file;
     if (defined($macro_expand_fh)) {
       print $macro_expand_fh $texinfo_text;
-      Texinfo::Common::output_files_register_closed(
+      Texinfo::Convert::Utils::output_files_register_closed(
                              $macro_expand_files_information,
                              $encoded_macro_expand_file_name);
       if (!close($macro_expand_fh)) {
@@ -1812,7 +1837,7 @@ while(@input_files) {
       $error_macro_expand_file = 1;
     }
     my $macro_expand_opened_file =
-      Texinfo::Common::output_files_opened_files(
+      Texinfo::Convert::Utils::output_files_opened_files(
                            $macro_expand_files_information);
     $error_macro_expand_file
          = merge_opened_files($error_macro_expand_file, \%opened_files,
@@ -1826,7 +1851,8 @@ while(@input_files) {
       _exit($error_count, \%opened_files);
     }
   }
-  if (get_conf('DUMP_TEXI') or $formats_table{$format}->{'texi2dvi_format'}) {
+  if (get_conf('DUMP_TEXI')
+      or $formats_table{$output_format}->{'texi2dvi_format'}) {
     handle_errors($parser->errors(), $error_count, \%opened_files);
     goto NEXT;
   }
@@ -1916,7 +1942,7 @@ while(@input_files) {
   _handle_errors($errors);
   _exit($error_count, \%opened_files);
 
-  if ($format eq 'structure') {
+  if ($output_format eq 'structure') {
     goto NEXT;
   }
   # a shallow copy is not sufficient for arrays and hashes to make
@@ -1946,8 +1972,6 @@ while(@input_files) {
   # It could be possible to pass some information if it allows
   # for instance to have some consistent information for Structuring
   # and Converters.
-  $converter_options->{'output_format'} = $format;
-  $converter_options->{'converted_format'} = $converted_format;
   $converter_options->{'deprecated_config_directories'}
      = \%deprecated_directories;
   unshift @{$converter_options->{'INCLUDE_DIRECTORIES'}},
@@ -1973,13 +1997,13 @@ while(@input_files) {
   }
 
   my $converter_opened_files
-    = Texinfo::Common::output_files_opened_files(
+    = Texinfo::Convert::Utils::output_files_opened_files(
                     $converter->output_files_information());
   $error_count = merge_opened_files($error_count, \%opened_files,
                                     $converter_opened_files);
   handle_errors($converter_registrar->errors(), $error_count, \%opened_files);
   my $converter_unclosed_files
-       = Texinfo::Common::output_files_unclosed_files(
+       = Texinfo::Convert::Utils::output_files_unclosed_files(
                                $converter->output_files_information());
   if ($converter_unclosed_files) {
     foreach my $unclosed_file (keys(%$converter_unclosed_files)) {
@@ -2019,11 +2043,11 @@ while(@input_files) {
     my $internal_links_file_name
         = _decode_input($encoded_internal_links_file_name);
     my $internal_links_files_information
-         = Texinfo::Common::output_files_initialize();
+         = Texinfo::Convert::Utils::output_files_initialize();
     # the third return information, set if the file has already been used
     # in this files_information is not checked as this cannot happen.
     my ($internal_links_fh, $error_message)
-            = Texinfo::Common::output_files_open_out(
+            = Texinfo::Convert::Utils::output_files_open_out(
                               $internal_links_files_information, $converter,
                               $encoded_internal_links_file_name);
     my $error_internal_links_file;
@@ -2035,7 +2059,7 @@ while(@input_files) {
                       $real_command_name, $internal_links_file_name, $!));
         $error_internal_links_file = 1;
       }
-      Texinfo::Common::output_files_register_closed(
+      Texinfo::Convert::Utils::output_files_register_closed(
                                      $internal_links_files_information,
                                      $encoded_internal_links_file_name);
     } else {
@@ -2046,7 +2070,7 @@ while(@input_files) {
     }
 
     my $internal_links_opened_file
-        = Texinfo::Common::output_files_opened_files(
+        = Texinfo::Convert::Utils::output_files_opened_files(
                               $internal_links_files_information);
     $error_internal_links_file
            = merge_opened_files($error_internal_links_file,
@@ -2074,12 +2098,6 @@ while(@input_files) {
                                            %$file_cmdline_options,
                                          };
 
-    # This is not clear that this is correct.  On the one hand it could
-    # be more consistent with the formatting to have nothing here or a
-    # format corresponding to Texinfo::Convert::TextContent.  On the other
-    # hand, the information of the format could be useful.  Not very
-    # important as long as this information is not used.
-    $sort_element_converter_options->{'converted_format'} = $converted_format;
     unshift @{$sort_element_converter_options->{'INCLUDE_DIRECTORIES'}},
             @prepended_include_directories;
 
@@ -2087,8 +2105,9 @@ while(@input_files) {
       = Texinfo::Convert::TextContent->converter(
                                          $sort_element_converter_options);
 
-    # here could be $format or $converted_format.  Since $converted_format
-    # is used above for ->{'nodes_tree'}, use it here again.
+    # here could be $output_format or $converted_format.
+    # Since $converted_format is used above for ->{'nodes_tree'}, use it
+    # here again.
     my $use_sections
         = (! $formats_table{$converted_format}->{'nodes_tree'}
            or (defined($converter_element_count->get_conf('USE_NODES'))
@@ -2102,11 +2121,11 @@ while(@input_files) {
        = $converter_element_count->encoded_output_file_name(
                                              $sort_element_count_file_name);
     my $sort_elem_files_information
-          = Texinfo::Common::output_files_initialize();
+          = Texinfo::Convert::Utils::output_files_initialize();
     # the third return information, set if the file has already been used
     # in this files_information is not checked as this cannot happen.
     my ($sort_element_count_fh, $error_message)
-                = Texinfo::Common::output_files_open_out(
+                = Texinfo::Convert::Utils::output_files_open_out(
                        $sort_elem_files_information, $converter_element_count,
                                         $encoded_sort_element_count_file_name);
     my $error_sort_element_count_file;
@@ -2118,7 +2137,7 @@ while(@input_files) {
                       $real_command_name, $sort_element_count_file_name, $!));
         $error_sort_element_count_file = 1;
       }
-      Texinfo::Common::output_files_register_closed(
+      Texinfo::Convert::Utils::output_files_register_closed(
                                         $sort_elem_files_information,
                                         $encoded_sort_element_count_file_name);
     } else {
@@ -2128,7 +2147,7 @@ while(@input_files) {
     }
 
     my $sort_element_count_file_opened_file
-      = Texinfo::Common::output_files_opened_files(
+      = Texinfo::Convert::Utils::output_files_opened_files(
                                 $sort_elem_files_information);
     $error_sort_element_count_file
            = merge_opened_files($error_sort_element_count_file,

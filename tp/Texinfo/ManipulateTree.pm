@@ -93,8 +93,8 @@ sub import {
   goto &Exporter::import;
 }
 
-
 
+
 # copy a Texinfo tree.
 
 # TODO document in POD?
@@ -338,6 +338,7 @@ sub copy_contentsNonXS($;$)
 }
 
 
+
 # Texinfo tree transformations used in main output formats conversion.
 
 sub modify_tree($$;$);
@@ -609,7 +610,9 @@ sub move_index_entries_after_items($)
           $last_entry_idx = $i;
         } elsif (not $content->{'cmdname'}
                  or ($content->{'cmdname'} ne 'c'
-                     and $content->{'cmdname'} ne 'comment')) {
+                     and $content->{'cmdname'} ne 'comment'
+                     # subentry is not within the index entry in the tree
+                     and $content->{'cmdname'} ne 'subentry')) {
           last;
         }
       }

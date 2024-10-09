@@ -259,6 +259,8 @@ sub valid_customization_option($)
 
 # not documented on purpose, should not be directly called in user-defined
 # codes
+# FIXME not implementable in XS, would need a type, dynamically added
+# customization variables...
 sub add_valid_customization_option($)
 {
   my $option = shift;
@@ -1019,139 +1021,6 @@ sub parse_node_manual($;$)
 
 # misc functions used in diverse contexts and useful in converters
 
-# API to open, set encoding and register files.  Used in main program
-# and converters.
-# In general $SELF is stored as $converter->{'output_files'}
-# and should be accessed through $converter->output_files_information();
-
-# TODO next four functions not documented anywhere, probably relevant to
-# document both in POD and in HTML Customization API.
-sub output_files_initialize
-{
-  return {'unclosed_files' => {}, 'opened_files' => {}};
-}
-
-sub output_files_disable_output_encoding($$)
-{
-  my ($self, $no_output_encoding) = @_;
-
-  $self->{'output_encoding_disabled'} = $no_output_encoding;
-}
-
-# All the opened files are registered, except for stdout,
-# and the closing of files should be registered too with
-# output_files_register_closed() below.  This makes possible to
-# unlink all the opened files and close the files not already
-# closed.
-#
-# $FILE_PATH is the file path, it should be a binary string.
-# If $USE_BINMODE is set, call binmode() to set binary mode.
-# $OUTPUT_ENCODING argument overrides the output encoding.
-# Returns
-#  - the opened filehandle, or undef if opening failed,
-#  - the $! error message or undef if opening succeeded.
-#  - 1 if the $FILE_PATH was already opened, which means overwritting.
-sub output_files_open_out($$$;$$)
-{
-  my $self = shift;
-  my $customization_information = shift;
-  my $file_path = shift;
-  my $use_binmode = shift;
-  my $output_encoding = shift;
-
-  #if (!defined($file_path)) {
-  #  cluck('output_files_open_out: file_path undef');
-  #}
-
-  my $encoding;
-  if ($self->{'output_encoding_disabled'}) {
-   # leave $encoding undefined
-  } elsif (defined($output_encoding)) {
-    $encoding = $output_encoding;
-  } elsif (defined(
-             $customization_information->get_conf('OUTPUT_PERL_ENCODING'))) {
-    $encoding = $customization_information->get_conf('OUTPUT_PERL_ENCODING');
-  }
-
-  if ($file_path eq '-') {
-    binmode(STDOUT) if $use_binmode;
-    binmode(STDOUT, ":encoding($encoding)") if (defined($encoding));
-    if ($self) {
-      $self->{'unclosed_files'}->{$file_path} = \*STDOUT;
-    }
-    return \*STDOUT, undef;
-  }
-
-  # Check that this file has not already been registered
-  # as opened_file.  If yes, it will be overwritten if open succeeds.
-  # It is not possible to use the file name twice in converters
-  # for regular output as files are only closed when all the output
-  # units have been written.  It could be possible in HTML with js
-  # scripts licence file set by the user to the same name as an output
-  # file.
-  my $overwritten_file = 0;
-  # NOTE paths are not normalized, therefore different paths names
-  # that refers to the same file will not be found.
-  if (exists($self->{'opened_files'}->{$file_path})) {
-    $overwritten_file = 1;
-  }
-  my $filehandle = do { local *FH };
-  if (!open($filehandle, '>', $file_path)) {
-    my $error_message = $!;
-    return undef, $error_message, $overwritten_file;
-  }
-  # If $use_binmode is true, we run binmode to turn off outputting LF as CR LF
-  # under MS-Windows, so that Info tag tables will have correct offsets.  This
-  # must be done before setting the encoding filters with binmode.
-  binmode($filehandle) if $use_binmode;
-  if ($encoding) {
-    binmode($filehandle, ":encoding($encoding)");
-  }
-  if ($self) {
-    if ($self->{'unclosed_files'}->{$file_path}) {
-      warn "BUG: already open: $file_path\n";
-    } else {
-      $self->{'opened_files'}->{$file_path} = 1;
-    }
-    $self->{'unclosed_files'}->{$file_path} = $filehandle;
-  }
-  return $filehandle, undef, $overwritten_file;
-}
-
-# see the description of $SELF in comment above output_files_open_out.
-#
-# $FILE_PATH is the file path, it should be a binary string.
-sub output_files_register_closed($$)
-{
-  my $self = shift;
-  my $file_path = shift;
-  if ($self->{'unclosed_files'}->{$file_path}) {
-    delete $self->{'unclosed_files'}->{$file_path};
-  } else {
-    cluck "BUG: $file_path not opened\n";
-  }
-}
-
-# The next two functions should not be called from user-defined
-# code, only from the main program.  They are defined here for
-# consistency of the API and clarity of the code.
-#
-# see the description of $SELF in comment above output_files_open_out.
-sub output_files_opened_files($)
-{
-  my $self = shift;
-  return $self->{'opened_files'};
-}
-
-# see the description of $SELF in comment above output_files_open_out.
-sub output_files_unclosed_files($)
-{
-  my $self = shift;
-  return $self->{'unclosed_files'};
-}
-# end of output_files API
-
-
 # Used in main program, tests and HTML Converter.
 # TODO document?
 #
@@ -1256,8 +1125,8 @@ sub encode_file_name($$)
   } else {
     $encoding = $input_encoding;
   }
-  $file_name = Encode::encode($encoding, $file_name);
-  return ($file_name, $encoding);
+  my $encoded_file_name = Encode::encode($encoding, $file_name);
+  return ($encoded_file_name, $encoding);
 }
 
 sub locate_include_file($;$)
@@ -1359,7 +1228,8 @@ sub set_informative_command_value($$)
   my $value = informative_command_value($element);
 
   if (defined($value)) {
-    return $self->set_conf($cmdname, $value);
+    my $set = $self->set_conf($cmdname, $value);
+    return $set;
   }
   return 0;
 }

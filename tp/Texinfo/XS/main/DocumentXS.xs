@@ -33,6 +33,7 @@
 #include "extra.h"
 /* for non_perl_* */
 #include "utils.h"
+#include "customization_options.h"
 /* for clear_error_message_list */
 #include "errors.h"
 #include "document.h"
@@ -158,24 +159,33 @@ register_document_options (SV *document_in, SV *sv_options_in)
                                              "set_document_options");
         if (document)
           {
-            OPTIONS *options = init_copy_sv_options (sv_options_in, 0, 0);
-            register_document_options (document, options);
+            OPTION **sorted_options;
+            OPTIONS *options = init_copy_sv_options (sv_options_in, 0, 0,
+                                                     &sorted_options);
+            register_document_options (document, options, sorted_options);
           }
 
 SV *
-document_get_conf (SV *document_in, conf)
-         const char *conf = (char *)SvPVbyte_nolen($arg);
-    PREINIT:
-        DOCUMENT *document = 0;
-     CODE:
-        document = get_sv_document_document (document_in,
-                                             "document_get_conf");
-        if (document && document->options)
-           RETVAL = build_sv_option (document->options, conf, 0);
-        else
-           RETVAL = newSV (0);
-    OUTPUT:
-        RETVAL
+document_get_conf (SV *document_in, option_name)
+      const char *option_name = (char *)SvPVbyte_nolen($arg);
+ PREINIT:
+      DOCUMENT *document = 0;
+    CODE:
+      document = get_sv_document_document (document_in,
+                                           "document_get_conf");
+      if (document && document->sorted_options)
+        {
+          const OPTION *option
+            = find_option_string (document->sorted_options, option_name);
+          if (option)
+            RETVAL = build_sv_option (option, 0);
+          else
+            RETVAL = newSV (0);
+        }
+      else
+        RETVAL = newSV (0);
+  OUTPUT:
+      RETVAL
 
 void
 set_document_global_info (SV *document_in, char *key, SV *value_sv)
@@ -230,9 +240,7 @@ document_tree (SV *document_in, int handler_only=0)
           {
             DOCUMENT *document = get_sv_document_document (document_in, 0);
             if (document)
-              {
-                result_sv = store_texinfo_tree (document, document_hv);
-              }
+              result_sv = store_document_texinfo_tree (document, document_hv);
           }
 
         if (!result_sv)

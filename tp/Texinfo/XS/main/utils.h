@@ -129,24 +129,6 @@ typedef struct ACCENTS_STACK {
     ELEMENT *argument;
 } ACCENTS_STACK;
 
-typedef struct TARGET_CONTENTS_FILENAME {
-    char *target;
-    char *filename;
-    char *target_contents;
-    char *target_shortcontents;
-} TARGET_CONTENTS_FILENAME;
-
-typedef struct FILE_NAME_PATH {
-    char *filename;
-    char *filepath;
-} FILE_NAME_PATH;
-
-typedef struct TARGET_DIRECTORY_FILENAME {
-    char *filename;
-    char *directory;
-    char *target;
-} TARGET_DIRECTORY_FILENAME;
-
 void non_perl_free (void *ptr);
 void *non_perl_malloc (size_t size);
 char *non_perl_strdup (const char *s);
@@ -206,21 +188,15 @@ void wipe_index (INDEX *idx);
 void free_indices_info (INDEX_LIST *indices_info);
 
 /* in options_init_free.c */
-void initialize_options (OPTIONS *options);
-void clear_options (OPTIONS *options);
-void free_options (OPTIONS *options);
-void copy_options (OPTIONS *destination, const OPTIONS *source);
-
-
-OPTIONS *new_options (void);
-void set_output_encoding (OPTIONS *customization_information,
-                          DOCUMENT *document);
 OPTION *get_command_option (OPTIONS *options, enum command_id cmd);
 
 void add_include_directory (const char *filename,
                             STRING_LIST *include_dirs_list);
 char *locate_include_file (const char *filename,
                            const STRING_LIST *include_dirs_list);
+char *locate_file_in_dirs (const char *filename,
+                           const STRING_LIST *directories,
+                           STRING_LIST *all_files);
 
 ENCODING_CONVERSION *get_encoding_conversion (const char *encoding,
                                     ENCODING_CONVERSION_LIST *encodings_list);
@@ -236,7 +212,7 @@ EXPANDED_FORMAT *new_expanded_formats (void);
 void clear_expanded_formats (EXPANDED_FORMAT *formats);
 void add_expanded_format (EXPANDED_FORMAT *formats, const char *format);
 int format_expanded_p (const EXPANDED_FORMAT *formats, const char *format);
-int expanded_formats_number (void);
+size_t expanded_formats_number (void);
 void set_expanded_formats_from_options (EXPANDED_FORMAT *formats,
                                         const OPTIONS *options);
 
@@ -247,10 +223,6 @@ const ELEMENT *get_global_document_command (
                                       enum command_id cmd,
                                       enum command_location command_location);
 char *informative_command_value (const ELEMENT *element);
-void set_informative_command_value (OPTIONS *options, const ELEMENT *element);
-const ELEMENT *set_global_document_command (GLOBAL_COMMANDS *global_commands,
-                             OPTIONS *options, enum command_id cmd,
-                             enum command_location command_location);
 const ELEMENT_LIST *get_cmd_global_multi_command (
                                     const GLOBAL_COMMANDS *global_commands_ref,
                                     enum command_id cmd);
@@ -258,14 +230,15 @@ const ELEMENT *get_cmd_global_uniq_command (
                                     const GLOBAL_COMMANDS *global_commands_ref,
                                     enum command_id cmd);
 
+void html_fill_button_directions_specification_list (const CONVERTER *converter,
+                                              BUTTON_SPECIFICATION_LIST *buttons);
 void html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons);
 void html_clear_direction_icons (DIRECTION_ICON_LIST *direction_icons);
 void html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons);
-
-void initialize_option (OPTION *option, enum global_option_type type);
-void clear_option (OPTION *option);
-void free_option (OPTION *option);
-void copy_option (OPTION *destination, const OPTION *source);
+int html_get_direction_index (const CONVERTER *converter,
+                              const char *direction);
+const char *direction_unit_direction_name (int direction,
+                                           const CONVERTER *converter);
 
 TARGET_FILENAME *new_target_filename (void);
 TARGET_CONTENTS_FILENAME *new_target_contents_filename (void);

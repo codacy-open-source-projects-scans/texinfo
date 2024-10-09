@@ -30,17 +30,23 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include "conversion_data.h"
 #include "text.h"
 #include "command_ids.h"
 #include "element_types.h"
 #include "tree_types.h"
 #include "option_types.h"
 #include "options_types.h"
+#include "document_types.h"
+#include "converter_types.h"
+#include "options_defaults.h"
+#include "converters_options.h"
 #include "tree.h"
 #include "extra.h"
 /* for COMMAND_OPTION_DEFAULT ACCENTS_STACK
    fatal xasprintf get_command_option ... */
 #include "utils.h"
+#include "customization_options.h"
 #include "errors.h"
 #include "builtin_commands.h"
 /* also for cmd_text data */
@@ -54,8 +60,16 @@
 #include "unicode.h"
 #include "manipulate_indices.h"
 #include "document.h"
-#include "call_perl_function.h"
+#include "html_converter_api.h"
 #include "converter.h"
+
+/* table used to dispatch format specific functions.
+   Same purpose as inherited methods in Texinfo::Convert::Converter */
+CONVERTER_FORMAT_DATA converter_format_data[] = {
+  {"html", "Texinfo::Convert::HTML", &html_converter_defaults,
+   &html_converter_initialize, &html_reset_converter,
+   &html_free_converter},
+};
 
 /* associate lower case no brace accent command to the upper case
    corresponding commands */
@@ -75,6 +89,25 @@ enum command_id default_upper_case_commands[] = {
   CM_sc, 0,
 };
 
+/* In sync with Convert/Converter.pm %xml_accent_entities and
+   %xml_accent_text_with_entities */
+COMMAND_ACCENT_ENTITY_INFO xml_accent_text_entities[] = {
+  {CM_DOUBLE_QUOTE,  {"uml",   "aeiouyAEIOU"}},
+  {CM_TILDE,         {"tilde", "nNaoAO"}},
+  {CM_CIRCUMFLEX,    {"circ",  "aeiouAEIOU"}},
+  {CM_BACKQUOTE,     {"grave", "aeiouAEIOU"}},
+  {CM_APOSTROPHE,    {"acute", "aeiouyAEIOUY"}},
+  {CM_COMMA,         {"cedil", "cC"}},
+  {CM_ringaccent,    {"ring",  "aA"}},
+/* according to http://www2.lib.virginia.edu/small/vhp/download/ISO.txt
+   however this doesn't seems to work in firefox
+   ogonek:  "aeiuAEIU"
+ */
+  {CM_ogonek,        {"ogon",  0}},
+  {CM_dotless,       {"nodot", "i"}},
+  {0,                {0,       0}}
+};
+
 static CONVERTER **converter_list;
 static size_t converter_number;
 static size_t converter_space;
@@ -83,10 +116,42 @@ PATHS_INFORMATION conversion_paths_info;
 
 const char *xml_text_entity_no_arg_commands_formatting[BUILTIN_CMD_NUMBER];
 
+static void
+setup_converter_paths_information (int texinfo_uninstalled,
+                                   const char *tp_builddir,
+                             const char *pkgdatadir, const char *top_srcdir)
+{
+  memset (&conversion_paths_info, 0, sizeof (PATHS_INFORMATION));
+  conversion_paths_info.texinfo_uninstalled = texinfo_uninstalled;
+  if (texinfo_uninstalled)
+    {
+      if (tp_builddir)
+        conversion_paths_info.p.uninstalled.tp_builddir
+          = strdup (tp_builddir);
+      if (top_srcdir)
+        conversion_paths_info.p.uninstalled.top_srcdir
+          = strdup (top_srcdir);
+    }
+  else
+    {
+      if (pkgdatadir)
+        conversion_paths_info.p.installed.pkgdatadir
+          = strdup (pkgdatadir);
+    }
+}
+
+/* called only once */
 void
-converter_setup (void)
+converter_setup (int texinfo_uninstalled, const char *tp_builddir,
+                 const char *pkgdatadir, const char *top_srcdir)
 {
   int i;
+
+  setup_converter_paths_information (texinfo_uninstalled,
+                             pkgdatadir, tp_builddir, top_srcdir);
+
+  txi_setup_lib_data ();
+
   for (i = 0; i < BUILTIN_CMD_NUMBER; i++)
     {
       if (xml_text_entity_no_arg_commands[i])
@@ -107,29 +172,37 @@ converter_setup (void)
     }
 }
 
-void
-setup_converter_paths_information (int texinfo_uninstalled,
-                                   const char *tp_builddir,
-                             const char *pkgdatadir, const char *top_srcdir)
+
+
+enum converter_format
+find_format_name_converter_format (const char *format)
 {
-  memset (&conversion_paths_info, 0, sizeof (PATHS_INFORMATION));
-  conversion_paths_info.texinfo_uninstalled = texinfo_uninstalled;
-  if (texinfo_uninstalled)
+  int i;
+
+  for (i = 0; i < TXI_CONVERSION_FORMAT_NR; i++)
+    if (!strcmp (converter_format_data[i].default_format, format))
+      return i;
+
+  return COF_none;
+}
+
+enum converter_format
+find_perl_converter_class_converter_format (const char *class_name)
+{
+  int i;
+
+  if (class_name)
     {
-      if (tp_builddir)
-        conversion_paths_info.p.uninstalled.tp_builddir
-          = strdup (tp_builddir);
-      if (top_srcdir)
-        conversion_paths_info.p.uninstalled.top_srcdir
-          = strdup (top_srcdir);
+      for (i = 0; i < TXI_CONVERSION_FORMAT_NR; i++)
+        if (!strcmp (converter_format_data[i].perl_converter_class, class_name))
+          return i;
     }
-  else
-    conversion_paths_info.p.installed.pkgdatadir
-      = strdup (pkgdatadir);
+
+  return COF_none;
 }
 
 CONVERTER *
-retrieve_converter (int converter_descriptor)
+retrieve_converter (size_t converter_descriptor)
 {
   if (converter_descriptor <= converter_number
       && converter_list[converter_descriptor -1] != 0)
@@ -137,14 +210,50 @@ retrieve_converter (int converter_descriptor)
   return 0;
 }
 
+static void
+set_generic_converter_options (OPTIONS *options)
+{
+  set_converter_cmdline_options_defaults (options);
+  set_converter_customization_options_defaults (options);
+  set_unique_at_command_options_defaults (options);
+  set_multiple_at_command_options_defaults (options);
+  set_common_regular_options_defaults (options);
+}
+
+/* initialize the converter */
+static void
+init_generic_converter (CONVERTER *self)
+{
+  self->conf = new_options ();
+  self->sorted_options = new_sorted_options (self->conf);
+
+  set_generic_converter_options (self->conf);
+
+  self->init_conf = new_options ();
+
+  self->expanded_formats = new_expanded_formats ();
+
+  /* set 'translated_commands'  => {'error' => 'error@arrow{}',}, */
+
+  self->translated_commands = (TRANSLATED_COMMAND *)
+        malloc ((1 +1) * sizeof (TRANSLATED_COMMAND));
+  memset (self->translated_commands, 0,
+              (1 +1) * sizeof (TRANSLATED_COMMAND));
+
+  self->translated_commands[0].cmd = CM_error;
+  self->translated_commands[0].translation = strdup ("error@arrow{}");
+}
+
 /* descriptor starts at 1, 0 is not found or an error */
+/* flags set low-level implementation choices, currently using Perl hash
+   map or (slower) string lists */
 size_t
-new_converter (void)
+new_converter (enum converter_format format, unsigned long flags)
 {
   size_t converter_index;
   int slot_found = 0;
-  int i;
-  CONVERTER *registered_converter;
+  size_t i;
+  CONVERTER *converter;
 
   for (i = 0; i < converter_number; i++)
     {
@@ -166,28 +275,218 @@ new_converter (void)
       converter_index = converter_number;
       converter_number++;
     }
-  registered_converter = (CONVERTER *) malloc (sizeof (CONVERTER));
-  memset (registered_converter, 0, sizeof (CONVERTER));
+  converter = (CONVERTER *) malloc (sizeof (CONVERTER));
+  memset (converter, 0, sizeof (CONVERTER));
 
-  converter_list[converter_index] = registered_converter;
-  registered_converter->converter_descriptor = converter_index +1;
+  converter->format = format;
+
+  /* set low level data representations options */
+  if (flags & CONVF_string_list)
+    converter->ids_data_type = IDT_string_list;
+#ifdef HAVE_CXX_HASHMAP
+  else if (flags & CONVF_cxx_hashmap)
+    converter->ids_data_type = IDT_cxx_hashmap;
+#endif
+  else
+    converter->ids_data_type = IDT_perl_hashmap;
+
+  init_generic_converter (converter);
+
+  converter_list[converter_index] = converter;
+  converter->converter_descriptor = converter_index +1;
 
   /*
-  fprintf (stderr, "REGISTER CONVERTER %zu %p %p %p\n", converter_index +1,
-                       converter, registered_converter, converter->document);
+  fprintf (stderr, "REGISTER CONVERTER %zu %d %p %p\n", converter_index +1,
+                                   format, converter, converter->document);
    */
   return converter_index +1;
 }
 
 void
-unregister_converter_descriptor (int converter_descriptor)
+destroy_translated_commands (TRANSLATED_COMMAND *translated_commands)
 {
-  CONVERTER *converter = retrieve_converter (converter_descriptor);
-  if (converter)
+  TRANSLATED_COMMAND *translated_command;
+
+  for (translated_command = translated_commands;
+       translated_command->translation; translated_command++)
     {
-      converter_list[converter_descriptor-1] = 0;
-      free (converter);
+      free (translated_command->translation);
     }
+  free (translated_commands);
+}
+
+/* apply initialization information from one source */
+static void
+apply_converter_info (CONVERTER *converter,
+              CONVERTER_INITIALIZATION_INFO *init_info, int set_configured)
+{
+  copy_numbered_options_list_options (converter->conf,
+                             converter->sorted_options,
+                             &init_info->conf, set_configured);
+
+  if (init_info->translated_commands)
+    {
+      destroy_translated_commands (converter->translated_commands);
+      converter->translated_commands = init_info->translated_commands;
+      init_info->translated_commands = 0;
+    }
+}
+
+/* apply format_defaults and user_conf initialization information.
+   Corresponds to Perl _generic_converter_init.
+ */
+void
+set_converter_init_information (CONVERTER *converter,
+                            CONVERTER_INITIALIZATION_INFO *format_defaults,
+                            CONVERTER_INITIALIZATION_INFO *user_conf)
+{
+  OPTION **format_defaults_sorted_options;
+
+  apply_converter_info (converter, format_defaults, 0);
+
+  /* Also keep format_defaults options as an OPTIONS structure */
+  converter->format_defaults_conf = new_options ();
+  format_defaults_sorted_options
+    = new_sorted_options (converter->format_defaults_conf);
+  copy_numbered_options_list_options (converter->format_defaults_conf,
+                                      format_defaults_sorted_options,
+                                      &format_defaults->conf, 0);
+  free (format_defaults_sorted_options);
+
+  if (user_conf)
+    apply_converter_info (converter, user_conf, 1);
+
+  /* in Perl sets converter_init_conf, but in C we use only one
+     structure for converter_init_conf and output_init_conf, which
+     is overwritten to set the similar values as output_init_conf
+     in specific converters.
+   */
+  copy_options (converter->init_conf, converter->conf);
+
+  set_expanded_formats_from_options (converter->expanded_formats,
+                                     converter->conf);
+
+  /*
+  fprintf (stderr, "XS|CONVERTER Fill conf: %d; %s, %s\n",
+                   converter->converter_descriptor,
+                   converter->conf->TEXINFO_OUTPUT_FORMAT.o.string);
+   */
+}
+
+CONVERTER_INITIALIZATION_INFO *
+new_converter_initialization_info (void)
+{
+  CONVERTER_INITIALIZATION_INFO *result = (CONVERTER_INITIALIZATION_INFO *)
+     malloc (sizeof (CONVERTER_INITIALIZATION_INFO));
+  memset (result, 0, sizeof (CONVERTER_INITIALIZATION_INFO));
+  return result;
+}
+
+void
+destroy_converter_initialization_info (CONVERTER_INITIALIZATION_INFO *init_info)
+{
+  if (init_info->translated_commands)
+    destroy_translated_commands (init_info->translated_commands);
+
+  free_options_list (&init_info->conf);
+
+  free_strings_list (&init_info->non_valid_customization);
+  free (init_info);
+}
+
+static void
+copy_converter_initialization_info (CONVERTER_INITIALIZATION_INFO *dst_info,
+                               const CONVERTER_INITIALIZATION_INFO *src_info)
+{
+  copy_strings (&dst_info->non_valid_customization,
+                &src_info->non_valid_customization);
+
+  copy_options_list (&dst_info->conf, &src_info->conf);
+}
+
+/* Next three functions are not called from Perl as the Perl equivalent
+   functions are already called (and possibly overriden).  Inheritance
+   in Perl is replaced by dispatching using a table here.
+
+   converter_initialize cannot be overriden fully in HTML because Perl
+   code is needed to setup customization in Perl.  Therefore, there is
+   no prospect of overriding converter_initialize fully, and therefore
+   of overridding converter_converter.  Those functions are only meant
+   for pure C.
+ */
+/* corresponds to Perl $converter->converter_defaults() Converter */
+CONVERTER_INITIALIZATION_INFO *
+converter_defaults (enum converter_format converter_format,
+                    CONVERTER_INITIALIZATION_INFO *user_conf)
+{
+  if (converter_format != COF_none
+      && converter_format_data[converter_format].converter_defaults)
+    {
+      CONVERTER_INITIALIZATION_INFO *
+         (* format_converter_defaults) (enum converter_format format,
+                                  CONVERTER_INITIALIZATION_INFO *conf)
+        = converter_format_data[converter_format].converter_defaults;
+      return format_converter_defaults (converter_format, user_conf);
+    }
+  return 0;
+}
+
+/* corresponds to Perl $converter->converter_initialize() Converter */
+static void
+converter_initialize (CONVERTER *converter)
+{
+  if (converter->format != COF_none
+      && converter_format_data[converter->format].converter_initialize)
+    {
+      void (* format_converter_initialize) (CONVERTER *self)
+        = converter_format_data[converter->format].converter_initialize;
+      format_converter_initialize (converter);
+    }
+}
+
+/* Texinfo::Convert::XXXX->converter($conf) in Perl */
+/* only called from C, not from Perl */
+CONVERTER *
+converter_converter (enum converter_format format,
+                     const CONVERTER_INITIALIZATION_INFO *input_user_conf,
+                     unsigned long converter_flags)
+{
+  CONVERTER_INITIALIZATION_INFO *format_defaults;
+  unsigned long flags;
+
+  /* NOTE if HAVE_CXX_HASHMAP is not set, even with CONVF_cxx_hashmap
+     string lists will be used */
+  if (!converter_flags)
+    flags = CONVF_cxx_hashmap;
+   /*
+   To use a string list.  Slower.
+    flags = CONVF_string_list;
+    */
+  else
+    flags = converter_flags;
+
+  size_t converter_descriptor = new_converter (format, flags);
+  CONVERTER *converter = retrieve_converter (converter_descriptor);
+
+  CONVERTER_INITIALIZATION_INFO *user_conf
+     = new_converter_initialization_info ();
+
+  copy_converter_initialization_info (user_conf, input_user_conf);
+  number_options_list (&user_conf->conf, converter->sorted_options);
+
+  format_defaults = converter_defaults (converter->format, user_conf);
+
+  number_options_list (&format_defaults->conf, converter->sorted_options);
+
+  set_converter_init_information (converter, format_defaults, user_conf);
+
+  destroy_converter_initialization_info (format_defaults);
+
+  destroy_converter_initialization_info (user_conf);
+
+  converter_initialize (converter);
+
+  return converter;
 }
 
 void
@@ -207,46 +506,6 @@ converter_set_document (CONVERTER *converter, DOCUMENT *document)
 
   converter->convert_text_options
     = copy_converter_options_for_convert_text (converter);
-}
-
-
-
-static void
-set_conf_internal (OPTION *option, int int_value, const char *char_value)
-{
-  switch (option->type)
-    {
-      case GOT_integer:
-        option->o.integer = int_value;
-        break;
-      case GOT_char:
-      case GOT_bytes:
-        free (option->o.string);
-        if (!char_value)
-          option->o.string = 0;
-        else
-          option->o.string = strdup (char_value);
-        break;
-
-      default:
-        fprintf (stderr, "BUG: set_conf type not handled: %d\n",
-                 option->type);
-    }
-}
-
-int
-set_conf (OPTION *option, int int_value, const char *char_value)
-{
-  if (option->configured > 0)
-    return 0;
-  set_conf_internal (option, int_value, char_value);
-  return 1;
-}
-
-void
-force_conf (OPTION *option, int int_value, const char *char_value)
-{
-  set_conf_internal (option, int_value, char_value);
 }
 
 
@@ -656,7 +915,7 @@ set_global_document_commands (CONVERTER *converter,
       int i;
       for (i = 0; cmd_list[i] > 0; i++)
         {
-          const ELEMENT *element;
+          const ELEMENT *element = 0;
           enum command_id cmd = cmd_list[i];
           if (converter->conf->DEBUG.o.integer > 0)
             {
@@ -664,10 +923,14 @@ set_global_document_commands (CONVERTER *converter,
                        command_location_names[location],
                        builtin_command_data[cmd].cmdname);
             }
-          element
-          = set_global_document_command (&converter->document->global_commands,
+          if (converter->document)
+            {
+              element
+                = set_global_document_command (
+                                     &converter->document->global_commands,
                                          converter->conf,
                                          cmd, location);
+            }
           if (!element)
             {
               OPTION *option_value = command_init (cmd,
@@ -693,7 +956,7 @@ id_to_filename (CONVERTER *self, char **id_ref)
   if (self->conf->BASEFILENAME_LENGTH.o.integer < 0)
     return;
   char *id = *id_ref;
-  if (strlen (id) > self->conf->BASEFILENAME_LENGTH.o.integer)
+  if (strlen (id) > (size_t) self->conf->BASEFILENAME_LENGTH.o.integer)
     {
       id[self->conf->BASEFILENAME_LENGTH.o.integer] = '\0';
     }
@@ -1132,7 +1395,7 @@ void
 free_comma_index_subentries_tree (ELEMENT_LIST *element_list)
 {
   /* destroy separator elements */
-  int i;
+  size_t i;
   for (i = 0; i < element_list->number; i++)
     {
       ELEMENT *content = element_list->list[i];
@@ -1236,7 +1499,7 @@ find_output_unit_file (const CONVERTER *self, const char *filename, int *status)
 {
   const FILE_NAME_PATH_COUNTER_LIST *output_unit_files
     = &self->output_unit_files;
-  int i;
+  size_t i;
   *status = 0;
 
   for (i = 0; i < output_unit_files->number; i++)
@@ -1402,7 +1665,7 @@ set_file_path (CONVERTER *self, const char *filename, const char *filepath,
 static void
 free_output_unit_files_file (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 {
-  int i;
+  size_t i;
   for (i = 0; i < output_unit_files->number; i++)
     {
       FILE_NAME_PATH_COUNTER *output_unit_file = &output_unit_files->list[i];
@@ -1430,24 +1693,80 @@ free_output_unit_files (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 
 
 
+/* reset parser structures tied to a document to be ready for a
+   new conversion */
+void
+reset_generic_converter (CONVERTER *self)
+{
+  clear_output_files_information (&self->output_files_information);
+  clear_output_unit_files (&self->output_unit_files);
+}
+
+void
+reset_converter (CONVERTER *self)
+{
+  enum converter_format converter_format = self->format;
+
+  if (converter_format != COF_none
+      && converter_format_data[converter_format].converter_reset)
+    {
+      void (* format_converter_reset) (CONVERTER *self)
+        = converter_format_data[converter_format].converter_reset;
+      format_converter_reset (self);
+    }
+
+  reset_generic_converter (self);
+}
+
 void
 free_generic_converter (CONVERTER *self)
 {
+  size_t i;
+
+  if (self->error_messages.number)
+    {
+      const char *converter_name;
+      if (self->format >= 0)
+        converter_name = converter_format_data[self->format].default_format;
+      else
+        converter_name = "generic";
+
+      fprintf (stderr, "BUG: %zu ignored messages in %s converter\n",
+                       self->error_messages.number, converter_name);
+      for (i = 0; i < self->error_messages.number; i++)
+        {
+          const ERROR_MESSAGE *error_message = &self->error_messages.list[i];
+          fprintf (stderr, " %zu: %s", i, error_message->error_line);
+        }
+    }
+
   if (self->translated_commands)
     {
       destroy_translated_commands (self->translated_commands);
     }
 
-  free (self->output_format);
   free (self->expanded_formats);
 
   if (self->init_conf)
-    free_options (self->init_conf);
-  free (self->init_conf);
+    {
+      free_options (self->init_conf);
+      free (self->init_conf);
+    }
+
+  if (self->sorted_options)
+    free (self->sorted_options);
 
   if (self->conf)
-    free_options (self->conf);
-  free (self->conf);
+    {
+      free_options (self->conf);
+      free (self->conf);
+    }
+
+  if (self->format_defaults_conf)
+    {
+      free_options (self->format_defaults_conf);
+      free (self->format_defaults_conf);
+    }
 
   if (self->convert_index_text_options)
     destroy_text_options (self->convert_index_text_options);
@@ -1455,11 +1774,41 @@ free_generic_converter (CONVERTER *self)
   free_output_files_information (&self->output_files_information);
   free_output_unit_files (&self->output_unit_files);
 
-  destroy_text_options (self->convert_text_options);
+  if (self->convert_text_options)
+    destroy_text_options (self->convert_text_options);
 
   wipe_error_message_list (&self->error_messages);
 
   free_strings_list (&self->small_strings);
+}
+
+void
+free_converter (CONVERTER *self)
+{
+  enum converter_format converter_format = self->format;
+
+  if (converter_format != COF_none
+      && converter_format_data[converter_format].converter_free)
+    {
+      void (* format_converter_free) (CONVERTER *self)
+        = converter_format_data[converter_format].converter_free;
+      format_converter_free (self);
+    }
+
+  free_generic_converter (self);
+}
+
+void
+destroy_converter (CONVERTER *converter)
+{
+  size_t converter_descriptor = converter->converter_descriptor;
+
+  free_converter (converter);
+
+  if (converter_descriptor)
+    converter_list[converter_descriptor-1] = 0;
+
+  free (converter);
 }
 
 

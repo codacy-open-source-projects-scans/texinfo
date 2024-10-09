@@ -18,32 +18,35 @@ void add_to_element_list (ELEMENT_LIST *list, ELEMENT *e);
 void add_to_element_contents (ELEMENT *parent, ELEMENT *e);
 void add_to_contents_as_array (ELEMENT *parent, ELEMENT *e);
 void add_to_element_args (ELEMENT *parent, ELEMENT *e);
-void insert_into_element_list (ELEMENT_LIST *list, ELEMENT *e, int where);
-void insert_into_contents (ELEMENT *parent, ELEMENT *e, int where);
-void insert_into_args (ELEMENT *parent, ELEMENT *e, int where);
+void insert_into_element_list (ELEMENT_LIST *list, ELEMENT *e, size_t where);
+void insert_into_contents (ELEMENT *parent, ELEMENT *e, size_t where);
+void insert_into_args (ELEMENT *parent, ELEMENT *e, size_t where);
 ELEMENT *remove_element_from_list (ELEMENT_LIST *list, const ELEMENT *e);
 void add_element_if_not_in_list (ELEMENT_LIST *list, ELEMENT *e);
-void insert_list_slice_into_list (ELEMENT_LIST *to, int where,
-                                  const ELEMENT_LIST *from, int start, int end);
-void insert_slice_into_contents (ELEMENT *to, int idx, const ELEMENT *from,
-                                 int start, int end);
-void insert_list_slice_into_contents (ELEMENT *to, int idx, ELEMENT_LIST *from,
-                                      int start, int end);
-void insert_list_slice_into_args (ELEMENT *to, int where, ELEMENT_LIST *from,
-                                      int start, int end);
-void list_set_empty_contents (ELEMENT_LIST *e_list, int n);
-ELEMENT *remove_from_element_list (ELEMENT_LIST *list, int where);
+void insert_list_slice_into_list (ELEMENT_LIST *to, size_t where,
+                                  const ELEMENT_LIST *from,
+                                  size_t start, size_t end);
+void insert_slice_into_contents (ELEMENT *to, size_t idx, const ELEMENT *from,
+                                 size_t start, size_t end);
+void insert_list_slice_into_contents (ELEMENT *to, size_t idx,
+                                      const ELEMENT_LIST *from,
+                                      size_t start, size_t end);
+void insert_list_slice_into_args (ELEMENT *to, size_t where,
+                                  const ELEMENT_LIST *from,
+                                  size_t start, size_t end);
+void list_set_empty_contents (ELEMENT_LIST *e_list, size_t n);
+ELEMENT *remove_from_element_list (ELEMENT_LIST *list, size_t where);
 const ELEMENT *remove_from_const_element_list (CONST_ELEMENT_LIST *list,
-                                               int where);
-ELEMENT *remove_from_contents (ELEMENT *parent, int where);
-ELEMENT *remove_from_args (ELEMENT *parent, int where);
-void remove_slice_from_contents (ELEMENT *parent, int start, int end);
+                                               size_t where);
+ELEMENT *remove_from_contents (ELEMENT *parent, size_t where);
+ELEMENT *remove_from_args (ELEMENT *parent, size_t where);
+void remove_slice_from_contents (ELEMENT *parent, size_t start, size_t end);
 ELEMENT *last_args_child (const ELEMENT *current);
 ELEMENT *last_contents_child (const ELEMENT *current);
 ELEMENT *pop_element_from_args (ELEMENT *parent);
 ELEMENT *pop_element_from_contents (ELEMENT *parent);
-ELEMENT *contents_child_by_index (const ELEMENT *e, int index);
-ELEMENT *args_child_by_index (const ELEMENT *e, int index);
+ELEMENT *contents_child_by_index (const ELEMENT *e, size_t index);
+ELEMENT *args_child_by_index (const ELEMENT *e, size_t index);
 void destroy_list (ELEMENT_LIST *list);
 void destroy_const_element_list (CONST_ELEMENT_LIST *list);
 void destroy_element (ELEMENT *e);

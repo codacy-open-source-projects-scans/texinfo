@@ -1,20 +1,20 @@
 # t/* test support for the Perl modules.
 #
 # Copyright 2010-2024 Free Software Foundation, Inc.
-# 
+#
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License,
 # or (at your option) any later version.
-# 
+#
 # This program is distributed in the hope that it will be useful,
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-# 
+#
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
-# 
+#
 # Original author: Patrice Dumas <pertusus@free.fr>
 
 use strict;
@@ -324,7 +324,12 @@ my @contents_keys = ('contents', 'args', 'parent', 'source_info',
   'node_description', 'node_long_description', 'is_target',
   'unit_contents', 'global_command_number',
   # only set with the XS parser
-  'tree_document_descriptor', 'output_units_descriptor');
+  'tree_document_descriptor',
+  # only set with the XS.  Since there is no XS involved for the compared
+  # output units, currently there is no descriptor ending up associated
+  # with output units.
+  #'output_units_descriptor', 'output_units_document_descriptor'
+  );
 my @menus_keys = ('menu_directions', 'menus', 'menu_up_hash');
 # 'section_number' is kept in other results as it may be the only clue
 # to know which section element it is.
@@ -344,7 +349,12 @@ my @avoided_keys_tree = (@sections_keys, @menus_keys, @node_keys,
     'associated_unit', 'global_command_number',
     'parent',
     # only set with the XS parser
-    'tree_document_descriptor', 'output_units_descriptor');
+    'tree_document_descriptor',
+    # only set with the XS.  Since there is no XS involved for the compared
+    # output units, currently there is no descriptor ending up associated
+    # with output units.
+    #'output_units_descriptor', 'output_units_document_descriptor'
+   );
 foreach my $avoided_key(@avoided_keys_tree) {
   $avoided_keys_tree{$avoided_key} = 1;
 }
@@ -405,12 +415,12 @@ sub set_converter_option_defaults($$;$)
   if (!defined($converter_options->{'EXPANDED_FORMATS'})) {
     $converter_options->{'EXPANDED_FORMATS'} = [$format];
   }
-  if (!defined($converter_options->{'output_format'})) {
-    $converter_options->{'output_format'} = $format;
-  }
-  if (!defined($converter_options->{'converted_format'})) {
-    $converter_options->{'converted_format'} = $format;
-  }
+
+  # NOTE not the same as in texi2any if the format and the output
+  # format name do not match, the case of xml, which output format
+  # name is texinfoxml.
+  $converter_options->{'TEXINFO_OUTPUT_FORMAT'} = $format;
+
   if (!defined($converter_options->{'DEBUG'})) {
     $converter_options->{'DEBUG'} = $debug;
   }
@@ -424,7 +434,7 @@ sub close_files($)
 {
   my $converter = shift;
   my $converter_unclosed_files
-       = Texinfo::Common::output_files_unclosed_files(
+       = Texinfo::Convert::Utils::output_files_unclosed_files(
                                $converter->output_files_information());
   if ($converter_unclosed_files) {
     my $close_error_nr = 0;
@@ -1419,6 +1429,9 @@ sub test($$)
   # (units_directions has not, though there is an implementation in C),
   # otherwise some information will be missing in the rebuild_output_units
   # output units.
+  # Since there is no XS involved in setting up the output_units compared
+  # with reference, there are no descriptor (allowing to retrieve output units
+  # list and document) associated with the first output unit.
   my $output_units;
   if ($test_split eq 'node') {
     $output_units = Texinfo::OutputUnits::split_by_node($document);
@@ -1507,10 +1520,12 @@ sub test($$)
       goto END_OUT_FILE;
     }
 
-    my $converter_to_texinfo = Texinfo::Convert::PlainTexinfo->converter();
-    my $texi_string_result = $converter_to_texinfo->convert($document);
-    #my $texi_string_result
-    #    = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
+    #my $converter_to_texinfo = Texinfo::Convert::PlainTexinfo->converter();
+    #my $texi_string_result = $converter_to_texinfo->convert($document);
+    #$converter_to_texinfo->reset_converter();
+    #$converter_to_texinfo->destroy();
+    my $texi_string_result
+        = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
     $out_result .= "\n".'$result_texis{\''.$test_name.'\'} = \''
           .protect_perl_string($texi_string_result)."';\n\n";
     $out_result .= "\n".'$result_texts{\''.$test_name.'\'} = \''
@@ -1643,13 +1658,17 @@ sub test($$)
         $test_name.' indices sort');
     # NOTE either a PlainTexinfo converter or a direct call to
     # convert_to_texinfo can be used to test conversion to raw text,
-    # both for pure Perl and XS.
-    my $converter_to_texinfo = Texinfo::Convert::PlainTexinfo->converter();
-    my $texi_result;
-    if ($document) {
-      $texi_result = $converter_to_texinfo->convert($document);
-    }
-    #my $texi_result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
+    # both for pure Perl and XS.  We use convert_to_texinfo as is should
+    # require less resources as there is no need to create a converter.
+    my $texi_result = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
+    #my $converter_to_texinfo = Texinfo::Convert::PlainTexinfo->converter();
+    #my $texi_result;
+    #if ($document) {
+    #  $texi_result = $converter_to_texinfo->convert($document);
+    #}
+    #$converter_to_texinfo->reset_converter();
+    #$converter_to_texinfo->destroy();
+
     is ($texi_result, $result_texis{$test_name}, $test_name.' texi');
     if ($todos{'text'}) {
       SKIP: {

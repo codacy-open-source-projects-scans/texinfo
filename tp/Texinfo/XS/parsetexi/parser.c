@@ -200,7 +200,8 @@ text_contents_to_plain_text (ELEMENT *e, int *superfluous_arg)
 {
 #define ADD(x,n) text_append_n (&result, x, n)
 
-  TEXT result; int i;
+  TEXT result;
+  size_t i;
 
   text_init (&result);
   for (i = 0; i < e->e.c->contents.number; i++)
@@ -587,15 +588,15 @@ begin_paragraph (ELEMENT *current)
 {
   ELEMENT *e;
   enum command_id indent = 0;
+  size_t j;
 
   /* Check if an @indent precedes the paragraph (to record it
      in the 'extra' key). */
   if (current->e.c->contents.number > 0)
     {
-      int i = current->e.c->contents.number - 1;
-      while (i >= 0)
+      for (j = current->e.c->contents.number; j > 0; j--)
         {
-          ELEMENT *child = contents_child_by_index (current, i);
+          ELEMENT *child = contents_child_by_index (current, j - 1);
           if (child->type == ET_empty_line
               || child->type == ET_paragraph)
             break;
@@ -621,7 +622,6 @@ begin_paragraph (ELEMENT *current)
             fprintf(stderr, "INDENT search skipping through %s\n",
                     print_element_debug_parser(child, 0));
             */
-          i--;
         }
     }
 
@@ -755,7 +755,7 @@ do_abort_empty_line (ELEMENT *current, ELEMENT *last_elt)
         {
           SOURCE_MARK_LIST *source_mark_list = e->source_mark_list;
 
-          int i;
+          size_t i;
           for (i = 0; i < source_mark_list->number; i++)
             place_source_mark (current, source_mark_list->list[i]);
           free_element_source_mark_list (e);
@@ -786,7 +786,7 @@ ELEMENT *
 merge_text (ELEMENT *current, const char *text, size_t len_text,
             ELEMENT *transfer_marks_element)
 {
-  int leading_spaces = 0;
+  size_t leading_spaces = 0;
   ELEMENT *e;
   ELEMENT *last_element = last_contents_child (current);
 
@@ -1527,7 +1527,7 @@ process_macro_block_contents (ELEMENT *current, const char **line_out)
                   ELEMENT *e;
                   char *name;
                   enum command_id existing;
-                  int n;
+                  size_t n;
 
                   n = strspn (line, whitespace_chars);
 
@@ -2665,7 +2665,7 @@ parse_texi (ELEMENT *root_elt, ELEMENT *current_elt)
   ELEMENT *current = current_elt;
   static char *allocated_line;
   const char *line;
-  int status;
+  int status = STILL_MORE_TO_PROCESS;
   DOCUMENT *document = parsed_document;
   enum context top_context;
 

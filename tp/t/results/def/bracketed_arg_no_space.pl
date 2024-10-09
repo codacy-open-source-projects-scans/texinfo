@@ -273,7 +273,7 @@ $result_indices_sort_strings{'bracketed_arg_no_space'} = {
 
 $result_converted{'info'}->{'bracketed_arg_no_space'} = 'This is , produced from .
 
- - a bc d: e gh mll restand more
+ -- a bc d: e gh mll restand more
 
 Tag Table:
 
@@ -298,7 +298,7 @@ $result_converted_errors{'info'}->{'bracketed_arg_no_space'} = [
 
 $result_converted{'html'}->{'bracketed_arg_no_space'} = '<!DOCTYPE html>
 <html>
-<!-- Created by texinfo, http://www.gnu.org/software/texinfo/ -->
+<!-- Created by texinfo, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <title>Untitled Document</title>

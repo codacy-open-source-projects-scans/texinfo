@@ -55,7 +55,7 @@ lookup_index_entry (const INDEX_ENTRY_LOCATION *index_entry_info,
                     INDEX_LIST *indices_info)
 {
   INDEX_ENTRY_AND_INDEX *result = 0;
-  int entry_number = index_entry_info->number;
+  size_t entry_number = index_entry_info->number;
   const char *entry_index_name = index_entry_info->index_name;
   INDEX *index_info;
 
@@ -79,7 +79,7 @@ lookup_index_entry (const INDEX_ENTRY_LOCATION *index_entry_info,
 void
 protect_first_parenthesis (ELEMENT *element)
 {
-  int i;
+  size_t i;
 
   if (element->e.c->contents.number <= 0)
     return;
@@ -195,9 +195,10 @@ ELEMENT_LIST *
 fill_gaps_in_sectioning (ELEMENT *root, ELEMENT *commands_heading_content)
 {
   ELEMENT_LIST *added_sections = new_list ();
-  int idx_current_section = -1;
-  int idx_next_section = -1;
+  size_t nr_current_section = 0;
+  size_t nr_next_section = 0;
   size_t idx = 0;
+  size_t idx_current_section, idx_next_section;
 
   while (idx < root->e.c->contents.number)
     {
@@ -208,21 +209,24 @@ fill_gaps_in_sectioning (ELEMENT *root, ELEMENT *commands_heading_content)
       if (!data_cmd || data_cmd == CM_node || !(CF_root & flags))
         {
         }
-      else if (idx_current_section < 0)
-        idx_current_section = idx;
-      else if (idx_next_section < 0)
+      else if (nr_current_section == 0)
+        nr_current_section = idx +1;
+      else if (nr_next_section == 0)
         {
-          idx_next_section = idx;
+          nr_next_section = idx +1;
           break;
         }
       idx++;
     }
 
-  if (idx_current_section < 0)
+  if (nr_current_section == 0)
     return 0;
 
-  if (idx_next_section < 0)
+  if (nr_next_section == 0)
     return added_sections;
+
+  idx_current_section = nr_current_section -1;
+  idx_next_section = nr_next_section -1;
 
   while (1)
     {
@@ -316,7 +320,7 @@ void
 relate_index_entries_to_table_items_in (ELEMENT *table,
                                         INDEX_LIST *indices_info)
 {
-  int i;
+  size_t i;
 
   if (table->e.c->contents.number <= 0)
     return;
@@ -343,7 +347,7 @@ relate_index_entries_to_table_items_in (ELEMENT *table,
           && table_entry->e.c->contents.list[1]->type == ET_table_definition)
         {
           size_t nr_index_entry_command = 0;
-          int j;
+          size_t j;
           definition = table_entry->e.c->contents.list[1];
 
           for (j = 0; j < definition->e.c->contents.number; j++)
@@ -368,7 +372,7 @@ relate_index_entries_to_table_items_in (ELEMENT *table,
       if (term->type == ET_table_term)
         {
           INDEX_ENTRY_AND_INDEX *entry_idx_info = 0;
-          int j;
+          size_t j;
          /*
          Relate the first index_entry_command in the 'table_term' to
          the term itself.
@@ -453,7 +457,7 @@ void
 move_index_entries_after_items (ELEMENT *current)
 {
   ELEMENT *previous = 0;
-  int i;
+  size_t i;
 
   for (i = 0; i < current->e.c->contents.number; i++)
     {
@@ -464,8 +468,8 @@ move_index_entries_after_items (ELEMENT *current)
         {
           ELEMENT *previous_ending_container;
           ELEMENT *prev_last_child = last_contents_child (previous);
-          int last_entry_idx = -1;
-          int j;
+          size_t last_entry_nr = 0;
+          size_t j;
           size_t contents_nr;
 
           if (prev_last_child->type == ET_paragraph
@@ -475,20 +479,25 @@ move_index_entries_after_items (ELEMENT *current)
             previous_ending_container = previous;
 
           contents_nr = previous_ending_container->e.c->contents.number;
-          for (j = contents_nr - 1; j >= 0; j--)
+          for (j = contents_nr; j > 0; j--)
             {
-              ELEMENT *content = previous_ending_container->e.c->contents.list[j];
+              ELEMENT *content
+                = previous_ending_container->e.c->contents.list[j-1];
               if (content->type == ET_index_entry_command)
-                last_entry_idx = j;
+                last_entry_nr = j;
               else if ((!(type_data[content->type].flags & TF_at_command))
                        || (content->e.c->cmd != CM_comment
-                           && content->e.c->cmd != CM_c))
+                           && content->e.c->cmd != CM_c
+                      /* subentry is not within the index entry in the tree */
+                           && content->e.c->cmd != CM_subentry))
                 break;
             }
 
-          if (last_entry_idx >= 0)
+          if (last_entry_nr > 0)
             {
               size_t insertion_idx = 0;
+              size_t last_entry_idx = last_entry_nr -1;
+              size_t k;
               ELEMENT *item_container;
 
               if (item->e.c->contents.number
@@ -497,8 +506,8 @@ move_index_entries_after_items (ELEMENT *current)
               else
                 item_container = item;
 
-              for (j = last_entry_idx; j < contents_nr; j++)
-                previous_ending_container->e.c->contents.list[j]->parent
+              for (k = last_entry_idx; k < contents_nr; k++)
+                previous_ending_container->e.c->contents.list[k]->parent
                   = item_container;
 
               if (item_container->e.c->contents.number
@@ -627,7 +636,7 @@ new_node (ERROR_MESSAGE_LIST *error_messages, ELEMENT *node_tree,
 
   while (1)
     {
-      int i;
+      size_t i;
       char *non_hyphen_char;
       ELEMENT *target = 0;
       ELEMENT *appended_text = 0;
@@ -702,24 +711,25 @@ reassociate_to_node (const char *type, ELEMENT *current, void *argument)
         {
           CONST_ELEMENT_LIST *menus
             = lookup_extra_contents (previous_node, AI_key_menus);
-          int previous_idx = -1;
+          size_t previous_nr = 0;
           if (menus)
             {
-              int i;
+              size_t i;
               for (i = 0; i < menus->number; i++)
                 {
                   if (menus->list[i] == current)
                     {
-                      previous_idx = i;
+                      previous_nr = i + 1;
                       break;
                     }
                 }
             }
-          if (previous_idx < 0)
+          if (previous_nr == 0)
             fprintf (stderr, "BUG: menu %p not in previous node %p\n",
                              current, previous_node);
           else
             {
+              size_t previous_idx = previous_nr -1;
               /* removed element should be current */
               remove_from_const_element_list (menus, previous_idx);
               if (menus->number <= 0)
@@ -779,7 +789,7 @@ insert_nodes_for_sectioning_commands (DOCUMENT *document)
 {
   ELEMENT *root = document->tree;
   ELEMENT_LIST *added_nodes = new_list ();
-  int idx;
+  size_t idx;
   ELEMENT *previous_node = 0;
 
   for (idx = 0; idx < root->e.c->contents.number; idx++)
@@ -845,10 +855,6 @@ insert_nodes_for_sectioning_commands (DOCUMENT *document)
   return added_nodes;
 }
 
-/* also in node_name_normalization.c */
-int ref_3_args_order[] = {0, 1, 2, -1};
-int ref_5_args_order[] = {0, 1, 2, 4, 3, -1};
-
 /*
  This converts a reference @-command to simple text using one of the
  arguments.  This is used to remove reference @-command from
@@ -865,7 +871,7 @@ reference_to_arg_internal (const char *type,
       && builtin_command_data[e->e.c->cmd].flags & CF_ref)
     {
       DOCUMENT *document = (DOCUMENT *) argument;
-      int index = 0;
+      int order_index = 0;
       int *arguments_order = ref_5_args_order;
       /* container for the new elements to insert, will be destroyed
          by the caller */
@@ -875,11 +881,12 @@ reference_to_arg_internal (const char *type,
       add_to_element_list (container, new);
       if (e->e.c->cmd == CM_inforef || e->e.c->cmd == CM_link)
         arguments_order = ref_3_args_order;
-      while (arguments_order[index] >= 0)
+      while (arguments_order[order_index] >= 0)
         {
-          if (e->e.c->args.number > arguments_order[index])
+          size_t idx = (size_t) arguments_order[order_index];
+          if (e->e.c->args.number > idx)
             {
-              ELEMENT *arg = e->e.c->args.list[arguments_order[index]];
+              ELEMENT *arg = e->e.c->args.list[idx];
             /*
              this will not detect if the content expands as spaces only, like
              @asis{ }, @ , but it is not an issue or could even be considered
@@ -887,9 +894,8 @@ reference_to_arg_internal (const char *type,
              */
               if (!is_content_empty (arg, 0))
                 {
-                  ELEMENT *removed
-                      = remove_from_args (e, arguments_order[index]);
-                  int i;
+                  ELEMENT *removed = remove_from_args (e, idx);
+                  size_t i;
                   if (removed != arg)
                     fatal ("BUG: reference_to_arg_internal removed != arg");
                   /* avoid the type and spaces by getting only the contents */
@@ -902,7 +908,7 @@ reference_to_arg_internal (const char *type,
                   break;
                 }
             }
-          index++;
+          order_index++;
         }
       if (document && document->internal_references.number > 0)
         {
@@ -954,15 +960,16 @@ complete_node_menu (ELEMENT *node, int use_sections)
 
   if (node_childs->number)
     {
-      int existing_entries_nr = 0;
-      int existing_entries_space = 5;
+      size_t existing_entries_nr = 0;
+      size_t existing_entries_space = 5;
       EXISTING_ENTRY *existing_entries = 0;
 
       ELEMENT_LIST *pending = new_list ();
       ELEMENT *current_menu = 0;
 
-      int i;
-      const CONST_ELEMENT_LIST *menus = lookup_extra_contents (node, AI_key_menus);
+      size_t i;
+      const CONST_ELEMENT_LIST *menus
+        = lookup_extra_contents (node, AI_key_menus);
 
       if (menus)
         {
@@ -973,7 +980,7 @@ complete_node_menu (ELEMENT *node, int use_sections)
             {
               /* cast to remove the const, as the menu is to be modified */
               ELEMENT *menu = (ELEMENT *)menus->list[i];
-              int j;
+              size_t j;
               for (j = 0; j < menu->e.c->contents.number; j++)
                 {
                   ELEMENT *entry = menu->e.c->contents.list[j];
@@ -1007,7 +1014,7 @@ complete_node_menu (ELEMENT *node, int use_sections)
                                                         AI_key_normalized);
           if (normalized)
             {
-              int j;
+              size_t j;
               ELEMENT *entry = 0;
 
               for (j = 0; j < existing_entries_nr; j++)
@@ -1023,7 +1030,7 @@ complete_node_menu (ELEMENT *node, int use_sections)
                 {
                   if (pending->number)
                     {
-                      int k;
+                      size_t k;
                       for (j = 0; j < current_menu->e.c->contents.number; j++)
                       if (current_menu->e.c->contents.list[j] == entry)
                         break;
@@ -1051,7 +1058,7 @@ complete_node_menu (ELEMENT *node, int use_sections)
 
       if (pending->number)
         {
-          int j;
+          size_t j;
           if (!current_menu)
             {
   /* cast to remove const, as the section is modified, with the new menu
@@ -1096,7 +1103,7 @@ static ELEMENT_LIST *
 get_non_automatic_nodes_with_sections (const ELEMENT *root)
 {
   ELEMENT_LIST *non_automatic_nodes = new_list ();
-  int i;
+  size_t i;
 
   for (i = 0; i < root->e.c->contents.number; i++)
     {
@@ -1119,7 +1126,7 @@ complete_tree_nodes_menus (const ELEMENT *root, int use_sections)
 {
   ELEMENT_LIST *non_automatic_nodes
      = get_non_automatic_nodes_with_sections (root);
-  int i;
+  size_t i;
   for (i = 0; i < non_automatic_nodes->number; i++)
     {
       ELEMENT *node = non_automatic_nodes->list[i];
@@ -1135,7 +1142,7 @@ complete_tree_nodes_missing_menu (DOCUMENT *document, int use_sections)
   OPTIONS *options = document->options;
   ELEMENT_LIST *non_automatic_nodes
      = get_non_automatic_nodes_with_sections (root);
-  int i;
+  size_t i;
   for (i = 0; i < non_automatic_nodes->number; i++)
     {
       ELEMENT *node = non_automatic_nodes->list[i];
@@ -1168,8 +1175,8 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
   ELEMENT *new_detailmenu_e;
   ELEMENT *last_menu;
   const ELEMENT *last_content;
-  int i;
-  int index;
+  size_t i;
+  size_t index;
 
   if (top_node)
     {
@@ -1192,7 +1199,7 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
 
   for (i = 0; i < menus->number; i++)
     {
-      int detailmenu_index = 0;
+      size_t detailmenu_index;
       /* cast to remove const to be able to replace the detailmenu */
       ELEMENT *menu = (ELEMENT *)menus->list[i];
       for (detailmenu_index = 0; detailmenu_index < menu->e.c->contents.number;
@@ -1328,7 +1335,7 @@ protect_hashchar_at_line_beginning_internal (const char *type,
       by a new line
       */
           ELEMENT *parent = current->parent;
-          int i;
+          size_t i;
 
           if (filename)
             free (filename);

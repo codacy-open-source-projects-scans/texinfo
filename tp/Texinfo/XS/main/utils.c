@@ -28,6 +28,8 @@
 #include "unicase.h"
 #include "uniwidth.h"
 #include <unictype.h>
+/* for euidaccess.  Not portable, use gnulib */
+#include <unistd.h>
 
 #include "conversion_data.h"
 /* also for xvasprintf */
@@ -38,6 +40,8 @@
 #include "global_commands_types.h"
 #include "option_types.h"
 #include "options_types.h"
+/* for CL_* */
+#include "document_types.h"
 #include "converter_types.h"
 #include "types_data.h"
 #include "tree.h"
@@ -268,7 +272,9 @@ isascii_upper (int c)
 }
 
 
+
 /* operations on strings considered as multibytes.  Use libunistring */
+
 /* count characters, not bytes. */
 size_t
 count_multibyte (const char *text)
@@ -358,7 +364,9 @@ word_bytes_len_multibyte (const char *text)
 }
 
 
+
 /* encoding and decoding. Use iconv. */
+
 /* conversion to or from utf-8 should always be set before other
    conversion */
 ENCODING_CONVERSION *
@@ -366,7 +374,9 @@ get_encoding_conversion (const char *encoding,
                          ENCODING_CONVERSION_LIST *encodings_list)
 {
   const char *conversion_encoding = encoding;
-  int encoding_index = -1;
+  size_t encoding_nr = 0;
+  size_t encoding_index = 0;
+  int utf8_missing = 0;
 
   /* should correspond to
      Texinfo::Common::encoding_name_conversion_map.
@@ -379,31 +389,30 @@ get_encoding_conversion (const char *encoding,
   if (!strcasecmp (encoding, "utf-8"))
     {
       if (encodings_list->number > 0)
-        encoding_index = 0;
+        encoding_nr = 1;
       else
-        encoding_index = -2;
+        utf8_missing = 1;
     }
   else if (encodings_list->number > 1)
     {
-      int i;
+      size_t i;
       for (i = 1; i < encodings_list->number; i++)
         {
           if (!strcasecmp (conversion_encoding,
                            encodings_list->list[i].encoding_name))
             {
-              encoding_index = i;
+              encoding_nr = i+1;
               break;
             }
         }
     }
 
-  if (encoding_index < 0)
+  if (encoding_nr == 0)
     {
       if (encodings_list->number == 0)
         encodings_list->number++;
-      if (encoding_index == -2) /* utf-8 */
-        encoding_index = 0;
-      else
+
+      if (!utf8_missing) /* !utf-8 */
         {
           encoding_index = encodings_list->number;
           encodings_list->number++;
@@ -414,7 +423,6 @@ get_encoding_conversion (const char *encoding,
           encodings_list->list = realloc (encodings_list->list,
               (encodings_list->space += 3) * sizeof (ENCODING_CONVERSION));
         }
-
       encodings_list->list[encoding_index].encoding_name
            = strdup (conversion_encoding);
       /* Initialize conversions for the first time.  iconv_open returns
@@ -426,6 +434,8 @@ get_encoding_conversion (const char *encoding,
         encodings_list->list[encoding_index].iconv
            = iconv_open (conversion_encoding, "UTF-8");
     }
+  else
+   encoding_index = encoding_nr - 1;
 
   if (encodings_list->list[encoding_index].iconv == (iconv_t) -1)
     return 0;
@@ -441,7 +451,7 @@ get_encoding_conversion (const char *encoding,
 void
 reset_encoding_list (ENCODING_CONVERSION_LIST *encodings_list)
 {
-  int i;
+  size_t i;
   /* never reset the utf-8 encoding in position 0 */
   if (encodings_list->number > 1)
     {
@@ -582,12 +592,14 @@ encode_string (char *input_string, const char *encoding, int *status,
 }
 
 
+
 /* code related to the EXPANDED_FORMAT structure holding informations on the
    expanded formats (html, info, tex...) */
+
 void
 clear_expanded_formats (EXPANDED_FORMAT *formats)
 {
-  int i;
+  size_t i;
   for (i = 0; i < sizeof (default_expanded_formats)
                             / sizeof (*default_expanded_formats);
        i++)
@@ -599,7 +611,7 @@ clear_expanded_formats (EXPANDED_FORMAT *formats)
 void
 add_expanded_format (EXPANDED_FORMAT *formats, const char *format)
 {
-  int i;
+  size_t i;
   for (i = 0; i < sizeof (default_expanded_formats)
                       / sizeof (*default_expanded_formats);
        i++)
@@ -627,7 +639,7 @@ new_expanded_formats (void)
 int
 format_expanded_p (const EXPANDED_FORMAT *formats, const char *format)
 {
-  int i;
+  size_t i;
   for (i = 0; i < sizeof (default_expanded_formats)
                            / sizeof (*default_expanded_formats);
        i++)
@@ -638,7 +650,7 @@ format_expanded_p (const EXPANDED_FORMAT *formats, const char *format)
   return 0;
 }
 
-int
+size_t
 expanded_formats_number (void)
 {
   return sizeof (default_expanded_formats)
@@ -1028,6 +1040,35 @@ find_string (const STRING_LIST *strings_list, const char *target)
   return 0;
 }
 
+void
+clear_strings_list (STRING_LIST *strings)
+{
+  size_t i;
+  for (i = 0; i < strings->number; i++)
+    {
+      free (strings->list[i]);
+    }
+  strings->number = 0;
+}
+
+void
+free_strings_list (STRING_LIST *strings)
+{
+  size_t i;
+  for (i = 0; i < strings->number; i++)
+    {
+      free (strings->list[i]);
+    }
+  free (strings->list);
+}
+
+void
+destroy_strings_list (STRING_LIST *strings)
+{
+  free_strings_list (strings);
+  free (strings);
+}
+
 /* Return value to be freed by caller. */
 /* try to locate a file called FILENAME, looking for it in the list of include
    directories. */
@@ -1036,7 +1077,8 @@ locate_include_file (const char *filename, const STRING_LIST *include_dirs_list)
 {
   char *fullpath;
   struct stat dummy;
-  int i, status;
+  int status;
+  size_t i;
 
   /* Checks if filename is absolute or relative to current directory. */
   /* Note: the Perl code (in Common.pm, 'locate_include_file') handles
@@ -1067,64 +1109,61 @@ locate_include_file (const char *filename, const STRING_LIST *include_dirs_list)
   return 0;
 }
 
-void
-clear_strings_list (STRING_LIST *strings)
-{
-  int i;
-  for (i = 0; i < strings->number; i++)
-    {
-      free (strings->list[i]);
-    }
-  strings->number = 0;
-}
+/* Return value to be freed by caller. */
+/* Used in main program, tests and HTML Converter.
 
-void
-free_strings_list (STRING_LIST *strings)
-{
-  size_t i;
-  for (i = 0; i < strings->number; i++)
-    {
-      free (strings->list[i]);
-    }
-  free (strings->list);
-}
+ FILENAME     file name to locate. It can be a file path. Binary string.
+ DIRECTORIES  list of directories to search the file in. Binary strings.
+ ALL_FILES    if set collect all the files with that name, otherwise stop
+              at first match.
 
-void
-destroy_strings_list (STRING_LIST *strings)
+ If ALL_FILES is not set:
+   - if FILENAME is an absolute path: if found, return it;
+   - otherwise return the first file found in the directories;
+   - otherwise return NULL.
+ If ALL_FILES is set return NULL and:
+   - if FILENAME is an absolute path: if found, add to ALL_FILES;
+   - otherwise add all files found to ALL_FILES.
+ */
+
+char *
+locate_file_in_dirs (const char *filename,
+                     const STRING_LIST *directories,
+                     STRING_LIST *all_files)
 {
-  free_strings_list (strings);
-  free (strings);
+  if (!memcmp (filename, "/", 1))
+    {
+      if (euidaccess (filename, R_OK) == 0)
+        {
+          if (all_files)
+            add_string (filename, all_files);
+          else
+            return strdup (filename);
+        }
+    }
+  else
+    {
+      size_t i;
+      for (i = 0; i < directories->number; i++)
+        {
+          char *fullpath;
+
+          xasprintf (&fullpath, "%s/%s", directories->list[i], filename);
+          if (euidaccess (fullpath, R_OK) == 0)
+            {
+              if (all_files)
+                add_string (fullpath, all_files);
+              else
+                return fullpath;
+            }
+          free (fullpath);
+        }
+    }
+  return 0;
 }
 
 
 
-/* FIXME does something similar as set_conf in converter.c */
-static void
-set_conf_string (OPTION *option, const char *value)
-{
-  if (option->type != GOT_char && option->type != GOT_bytes)
-    fatal ("set_conf_string bad option type\n");
-
-  if (option->configured > 0)
-    return;
-
-  free (option->o.string);
-  option->o.string = strdup (value);
-}
-
-/* In perl, OUTPUT_PERL_ENCODING is set too.  Note that if the perl
-   version is called later on, the OUTPUT_ENCODING_NAME value will be re-set */
-void
-set_output_encoding (OPTIONS *customization_information, DOCUMENT *document)
-{
-  if (customization_information
-      && document && document->global_info.input_encoding_name) {
-    set_conf_string (&customization_information->OUTPUT_ENCODING_NAME,
-                      document->global_info.input_encoding_name);
-  }
-}
-
-
 /* code related to values used in files not in parsetexi */
 void
 wipe_values (VALUE_LIST *values)
@@ -1144,7 +1183,7 @@ wipe_values (VALUE_LIST *values)
 void
 delete_global_info (GLOBAL_INFO *global_info)
 {
-  int i;
+  size_t i;
   free_strings_list (&global_info->included_files);
 
   free (global_info->input_encoding_name);
@@ -1244,7 +1283,7 @@ informative_command_value (const ELEMENT *element)
       else if (element->e.c->args.number > 0)
         {
           TEXT text;
-          int i;
+          size_t i;
           char *text_seen = 0;
           for (i = 0; i < element->e.c->args.number; i++)
             {
@@ -1288,34 +1327,6 @@ informative_command_value (const ELEMENT *element)
   return 0;
 }
 
-void
-set_informative_command_value (OPTIONS *options, const ELEMENT *element)
-{
-  char *value = 0;
-
-  value = informative_command_value (element);
-
-  if (value)
-    {
-      OPTION *option;
-      enum command_id cmd = element_builtin_cmd (element);
-      if (cmd == CM_summarycontents)
-        cmd = CM_shortcontents;
-
-      option = get_command_option (options, cmd);
-      if (option)
-        {
-          if (option->type == GOT_integer)
-            {
-              if (option->configured <= 0)
-                option->o.integer = strtoul (value, NULL, 10);
-            }
-          else
-            set_conf_string (option, value);
-        }
-    }
-}
-
 static int
 in_preamble (ELEMENT *element)
 {
@@ -1350,10 +1361,11 @@ get_global_document_command (const GLOBAL_COMMANDS *global_commands,
     fprintf (stderr, "BUG: get_global_document_command: unknown CL: %d\n",
                      command_location);
 
-  const ELEMENT_LIST *command_list
-     = get_cmd_global_multi_command (global_commands, cmd);
   if (builtin_command_data[cmd].flags & CF_global)
     {
+      const ELEMENT_LIST *command_list
+        = get_cmd_global_multi_command (global_commands, cmd);
+
       if (command_list->number)
         {
           if (command_location == CL_last)
@@ -1369,7 +1381,7 @@ get_global_document_command (const GLOBAL_COMMANDS *global_commands,
                 }
               else
                 {
-                  int i;
+                  size_t i;
                   for (i = 0; i < command_list->number; i++)
                     {
                       ELEMENT *command_element = command_list->list[i];
@@ -1391,24 +1403,6 @@ get_global_document_command (const GLOBAL_COMMANDS *global_commands,
       if (command)
         element = command;
     }
-  return element;
-}
-
-/*
-  Notice that the only effect is to use set_conf (directly or through
-  set_informative_command_value), no @-commands setting side effects are done
-  and associated customization variables are not set/reset either.
- */
-const ELEMENT *
-set_global_document_command (GLOBAL_COMMANDS *global_commands, OPTIONS *options,
-                             enum command_id cmd,
-                             enum command_location command_location)
-{
-  const ELEMENT *element
-     = get_global_document_command (global_commands, cmd,
-                                    command_location);
-  if (element)
-    set_informative_command_value (options, element);
   return element;
 }
 
@@ -1474,7 +1468,7 @@ section_level_adjusted_command_name (const ELEMENT *element)
 int
 is_content_empty (const ELEMENT *tree, int do_not_ignore_index_entries)
 {
-  int i;
+  size_t i;
   if (!tree || !tree->e.c->contents.number)
     return 1;
 
@@ -1612,6 +1606,9 @@ enumerate_item_representation (char *specification, int number)
   return result.text;
 }
 
+
+/* html options */
+
 void
 html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons)
 {
@@ -1625,11 +1622,20 @@ html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons)
         {
           BUTTON_SPECIFICATION *button = &buttons->list[i];
           if (button->type == BST_direction_info)
-            free (button->b.button_info);
-          unregister_perl_button (button);
+            {
+              if (button->b.button_info->type == BIT_string)
+                free (button->b.button_info->bi.string);
+              free (button->b.button_info);
+            }
+          else if (button->type == BST_string)
+            free (button->b.string);
+          if (button->sv)
+            unregister_perl_data (button->sv);
         }
     }
   free (buttons->list);
+  if (buttons->av)
+    unregister_perl_data (buttons->av);
   free (buttons);
 }
 
@@ -1659,246 +1665,92 @@ html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons)
   free (direction_icons->list);
   direction_icons->number = 0;
   direction_icons->list = 0;
+  if (direction_icons->sv)
+    unregister_perl_data (direction_icons->sv);
+}
+
+/* here because it is used in main/get_perl_info.c */
+
+/* return -2 if there are info and not found. */
+int
+html_get_direction_index (const CONVERTER *converter, const char *direction)
+{
+  int i;
+  if (converter && converter->direction_unit_direction_name)
+    {
+      for (i = 0; converter->direction_unit_direction_name[i]; i++)
+        {
+          if (!strcmp (direction, converter->direction_unit_direction_name[i]))
+            return i;
+        }
+      return -2;
+    }
+  return -1;
+}
+
+const char *
+direction_unit_direction_name (int direction, const CONVERTER *converter)
+{
+  if (direction < 0)
+    return 0;
+  else if (direction < NON_SPECIAL_DIRECTIONS_NR)
+    return html_button_direction_names[direction];
+  else if (converter && converter->direction_unit_direction_name)
+    return converter->direction_unit_direction_name[direction];
+  else
+   return 0;
 }
 
 
-/* options and converters */
-OPTIONS *
-new_options (void)
-{
-  OPTIONS *options = (OPTIONS *) malloc (sizeof (OPTIONS));
-  memset (options, 0, sizeof (OPTIONS));
-  initialize_options (options);
-  return options;
-}
 
 void
-clear_option (OPTION *option)
+html_fill_button_directions_specification_list (const CONVERTER *converter,
+                                              BUTTON_SPECIFICATION_LIST *result)
 {
-  switch (option->type)
+  size_t i;
+
+  for (i = 0; i < result->number; i++)
     {
-      case GOT_char:
-      case GOT_bytes:
-        free (option->o.string);
-        option->o.string = 0;
-        break;
+      BUTTON_SPECIFICATION *button = &result->list[i];
 
-      case GOT_bytes_string_list:
-      case GOT_file_string_list:
-      case GOT_char_string_list:
-        clear_strings_list (option->o.strlist);
-        break;
-
-      case GOT_buttons:
-        html_free_button_specification_list (option->o.buttons);
-        option->o.buttons = 0;
-        break;
-
-      case GOT_icons:
-        html_clear_direction_icons (option->o.icons);
-        break;
-
-      case GOT_integer:
-        option->o.integer = -1;
-
-      default:
-        break;
-    }
-}
-
-/* option is not supposed to be accessed again */
-void
-free_option (OPTION *option)
-{
-  switch (option->type)
-    {
-      case GOT_char:
-      case GOT_bytes:
-        free (option->o.string);
-        break;
-
-      case GOT_bytes_string_list:
-      case GOT_file_string_list:
-      case GOT_char_string_list:
-        destroy_strings_list (option->o.strlist);
-        break;
-
-      case GOT_buttons:
-        html_free_button_specification_list (option->o.buttons);
-        break;
-
-      case GOT_icons:
-        html_free_direction_icons (option->o.icons);
-        free (option->o.icons);
-        break;
-
-      case GOT_integer:
-      default:
-        break;
-    }
-}
-
-void
-initialize_option (OPTION *option, enum global_option_type type)
-{
-  option->type = type;
-  switch (type)
-    {
-      case GOT_integer:
-        option->o.integer = -1;
-        break;
-
-      case GOT_bytes_string_list:
-      case GOT_file_string_list:
-      case GOT_char_string_list:
-        option->o.strlist = new_string_list ();
-        break;
-
-      case GOT_char:
-      case GOT_bytes:
-        option->o.string = 0;
-        break;
-
-      case GOT_buttons:
-        option->o.buttons = 0;
-        break;
-
-      case GOT_icons:
-        option->o.icons = (DIRECTION_ICON_LIST *)
-                          malloc (sizeof (DIRECTION_ICON_LIST));
-        memset (option->o.icons, 0, sizeof (DIRECTION_ICON_LIST));
-        break;
-
-      default:
-        break;
-    }
-}
-
-void
-copy_option (OPTION *destination, const OPTION *source)
-{
-  switch (source->type)
-    {
-      case GOT_integer:
-        destination->o.integer = source->o.integer;
-        break;
-
-      case GOT_char:
-      case GOT_bytes:
-        free (destination->o.string);
-        if (!source->o.string)
-          destination->o.string = 0;
-        else
-          destination->o.string = strdup (source->o.string);
-        break;
-
-      case GOT_bytes_string_list:
-      case GOT_file_string_list:
-      case GOT_char_string_list:
-        clear_strings_list (destination->o.strlist);
-        copy_strings (destination->o.strlist, source->o.strlist);
-        break;
-
-      case GOT_icons:
+      if (button->type == BST_direction_info)
         {
-          DIRECTION_ICON_LIST *dest_icons = destination->o.icons;
-          DIRECTION_ICON_LIST *source_icons = source->o.icons;
-          html_free_direction_icons (dest_icons);
-          if (source_icons)
+          const char *direction_name = 0;
+
+          if (button->b.button_info->direction < 0)
+            direction_name = button->direction_string;
+
+          if (direction_name)
+            button->b.button_info->direction
+              = html_get_direction_index (converter, direction_name);
+        /* this happens in test with redefined special unit direction
+          if (button->b.button_info->direction < 0)
             {
-              dest_icons->number = source_icons->number;
-              if (dest_icons->number)
-                {
-                  size_t i;
-                  dest_icons->list = (char **) malloc
-                               (dest_icons->number * sizeof (char *));
-                  for (i = 0; i < dest_icons->number; i++)
-                    {
-                      if (!source_icons->list[i])
-                        dest_icons->list[i] = 0;
-                      else
-                        dest_icons->list[i] = strdup (source_icons->list[i]);
-                    }
-                }
+              fprintf (stderr,
+                  "BUG: %p: still unknown button %zu array direction: %d: %s\n",
+                     button, i, button->b.button_info->direction,
+                     direction_name);
             }
+         */
         }
-        break;
-
-      case GOT_buttons:
-        { /* Note that the caller should adjust BIT_user_function_number
-             of the options holding the buttons */
-          html_free_button_specification_list (destination->o.buttons);
-          if (source->o.buttons)
+      else if (button->type == BST_direction)
+        {
+          const char *direction_name = 0;
+          if (button->b.direction < 0)
             {
-              size_t i;
-              BUTTON_SPECIFICATION_LIST *result;
-              BUTTON_SPECIFICATION_LIST *s_buttons = source->o.buttons;
-              result = (BUTTON_SPECIFICATION_LIST *)
-                malloc (sizeof (BUTTON_SPECIFICATION_LIST));
-
-              result->BIT_user_function_number
-                = s_buttons->BIT_user_function_number;
-              result->number = s_buttons->number;
-              result->list = (BUTTON_SPECIFICATION *)
-                     malloc (result->number * sizeof (BUTTON_SPECIFICATION));
-              /* TODO seems like we could simply memcpy the whole list
-                 as we only copy, there is no reallocation at all */
-              memset (result->list, 0,
-                      result->number * sizeof (BUTTON_SPECIFICATION));
-              for (i = 0; i < result->number; i++)
-                {
-                  BUTTON_SPECIFICATION *button = &result->list[i];
-                  BUTTON_SPECIFICATION *s_button = &s_buttons->list[i];
-
-                  button->sv = s_button->sv;
-                  /* need to increase the counter, as it is decreased upon
-                     destroying the button */
-                  register_perl_button (button);
-                  button->type = s_button->type;
-                  if (button->type == BST_function)
-                    button->b.sv_reference = s_button->b.sv_reference;
-                  else if (button->type == BST_string)
-                    button->b.sv_string = s_button->b.sv_string;
-                  else if (button->type == BST_direction)
-                    button->b.direction = s_button->b.direction;
-                  else if (button->type == BST_direction_info)
-                    {
-                      BUTTON_SPECIFICATION_INFO *s_button_spec
-                        = s_button->b.button_info;
-                      BUTTON_SPECIFICATION_INFO *button_spec
-                        = (BUTTON_SPECIFICATION_INFO *)
-                         malloc (sizeof (BUTTON_SPECIFICATION_INFO));
-                      memset (button_spec, 0,
-                              sizeof (BUTTON_SPECIFICATION_INFO));
-                      button->b.button_info = button_spec;
-                      button_spec->type = s_button_spec->type;
-                      button_spec->direction = s_button_spec->direction;
-                      if (button_spec->type == BIT_function)
-                        {
-                          button_spec->bi.button_function.type
-                            = s_button_spec->bi.button_function.type;
-                          button_spec->bi.button_function.sv_reference
-                            = s_button_spec->bi.button_function.sv_reference;
-                        }
-                      else if (button_spec->type == BIT_string)
-                        button_spec->bi.sv_string
-                          = s_button_spec->bi.sv_string;
-                      else /* BIT_selected_direction_information_type
-                            and BIT_href_direction_information_type */
-                        button_spec->bi.direction_information_type
-                          = s_button_spec->bi.direction_information_type;
-                    }
-                }
-              destination->o.buttons = result;
+              direction_name = button->direction_string;
+              if (direction_name)
+                button->b.direction = html_get_direction_index (converter,
+                                                                direction_name);
             }
-          else
-            destination->o.buttons = 0;
-        }
-        break;
 
-      default:
-        fprintf (stderr, "BUG: copy_option type not handled: %d\n",
-                source->type);
+        /* this would happen in test with redefined special unit direction
+          if (button->b.direction < 0)
+            fprintf (stderr,
+                     "BUG: %p: still unknown button %zu string direction: %s\n",
+                     button, i, direction_name);
+         */
+        }
     }
 }
 

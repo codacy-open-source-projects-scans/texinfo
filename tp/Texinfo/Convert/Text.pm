@@ -1007,7 +1007,7 @@ sub output($$)
     }
   }
   my $fh;
-  $self->{'output_files'} = Texinfo::Common::output_files_initialize();
+  $self->{'output_files'} = Texinfo::Convert::Utils::output_files_initialize();
   my ($encoded_outfile, $outfile_encoding);
   if (defined($outfile)) {
     ($encoded_outfile, $outfile_encoding)
@@ -1015,7 +1015,7 @@ sub output($$)
     my $error_message;
     # the third return information, set if the file has already been used
     # in this files_information is not checked as this cannot happen.
-    ($fh, $error_message) = Texinfo::Common::output_files_open_out(
+    ($fh, $error_message) = Texinfo::Convert::Utils::output_files_open_out(
                              $self->{'output_files'}, $self,
                              $encoded_outfile);
     if (!$fh) {
@@ -1038,7 +1038,7 @@ sub output($$)
 
   if ($fh) {
     print $fh $result;
-    Texinfo::Common::output_files_register_closed(
+    Texinfo::Convert::Utils::output_files_register_closed(
                   $self->{'output_files'}, $encoded_outfile);
     return undef if (!close($fh));
     $result = '';
@@ -1086,7 +1086,7 @@ sub get_converter_errors($)
 
 sub converter_defaults()
 {
-  return ();
+  return undef;
 }
 
 sub output_files_information($)
@@ -1132,7 +1132,7 @@ The conversion is very simple, and, in the default case, cannot handle
 error handling nor some output strings translation.
 
 Converters derived from L<Texinfo::Convert::Converter> should have conversion
-text options associated to the C<convert_text_options> key.
+text options preset associated to the C<convert_text_options> key.
 
 The main function is C<convert_to_text>.  The text conversion options
 can be modified with the C<set_*> functions before calling C<convert_to_text>,
@@ -1150,9 +1150,9 @@ options.  The converter is very simple, and has almost no internal state
 besides the options.  It cannot handle as is output strings translation or
 error storing.
 
-If the I<converter> option is set, some additional features may be available
-for the conversion of some @-commands, like output strings translation or
-error reporting.
+If the I<converter> option is set in I<$text_options>, some additional features
+may be available for the conversion of some @-commands, like output strings
+translation or error reporting.
 
 The C<NUMBER_SECTIONS>, C<ASCII_GLYPH> and C<TEST> options corresponding to
 customization variables may be set in I<$text_options>.  The following options

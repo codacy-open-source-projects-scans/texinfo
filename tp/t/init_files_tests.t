@@ -109,6 +109,15 @@ my $documentation_examples_text = '
 
 ';
 
+my $special_unit_direction_customization_text = '@contents
+
+@node Top
+@top top
+
+@node chapter
+@chapter chap
+';
+
 my @file_tests = (
 ['customize_translations',
 '
@@ -253,6 +262,30 @@ In quotation
 @node chap
 @chapter Chap
 ', {'init_files' => ['access_document_name_in_handler.pm']},
+],
+# a series of tests with special unit direction customization showing the
+# effect of adding customization information needed by the change.
+['ref_for_special_unit_direction',
+$special_unit_direction_customization_text,
+],
+['special_unit_direction_customization',
+$special_unit_direction_customization_text,
+{'init_files' => ['special_unit_direction_customization.pm']},
+],
+['button_replacement_for_special_unit_direction',
+$special_unit_direction_customization_text,
+{'init_files' => ['button_replacement_for_special_unit_direction.pm']},
+],
+['button_replacement_and_direction_customization',
+$special_unit_direction_customization_text,
+{'init_files' => ['special_unit_direction_customization.pm',
+                  'button_replacement_for_special_unit_direction.pm']},
+],
+['button_replacement_direction_strings_customization',
+$special_unit_direction_customization_text,
+{'init_files' => ['special_unit_direction_customization.pm',
+                  'button_replacement_for_special_unit_direction.pm',
+                  'special_unit_direction_string_info_customization.pm']},
 ],
 );
 

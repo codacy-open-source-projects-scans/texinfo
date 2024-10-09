@@ -5,11 +5,15 @@
 #include <stddef.h>
 
 #include "tree_types.h"
+#include "option_types.h"
 #include "options_types.h"
 #include "document_types.h"
 
 /* avoid an interdependency with convert_to_text.h */
 struct TEXT_OPTIONS;
+
+/* library data initialization */
+void txi_setup_lib_data (void);
 
 
 DOCUMENT *retrieve_document (size_t document_descriptor);
@@ -18,9 +22,12 @@ void register_document_nodes_list (DOCUMENT *document,
                                    CONST_ELEMENT_LIST *nodes_list);
 void register_document_sections_list (DOCUMENT *document,
                                       CONST_ELEMENT_LIST *sections_list);
-void register_document_options (DOCUMENT *document, OPTIONS *options);
+void register_document_options (DOCUMENT *document, OPTIONS *options,
+                                OPTION **sorted_options);
 void register_document_convert_index_text_options (DOCUMENT *document,
                                          struct TEXT_OPTIONS *text_options);
+
+void initialize_document_options (DOCUMENT *document);
 
 const MERGED_INDICES *document_merged_indices (DOCUMENT *document);
 const INDICES_SORT_STRINGS *document_indices_sort_strings (
@@ -47,6 +54,9 @@ ELEMENT *unregister_document_merge_with_document (size_t document_descriptor,
 
 void add_other_global_info_string (OTHER_GLOBAL_INFO *other_global_info,
                                    const char *key, const char *value);
+
+void set_output_encoding (OPTIONS *customization_information,
+                          DOCUMENT *document);
 
 void wipe_document_parser_errors (size_t document_descriptor);
 void wipe_document_errors (size_t document_descriptor);

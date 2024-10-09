@@ -77,6 +77,18 @@ enum output_unit_type {
    OU_special_unit,
 };
 
+/* here because it is used both in option_types.h and ConvertXS.xs */
+enum html_text_type {
+   HTT_text,
+   HTT_text_nonumber,
+   HTT_string,
+   HTT_string_nonumber, /* not sure that it is set/used */
+   /* not only used for element text, also for direction text */
+   HTT_href,
+   HTT_node,
+   HTT_section,
+};
+
 #define AI_KEYS_LIST \
   ai_key(cell_number) \
   ai_key(item_number) \
@@ -201,7 +213,7 @@ typedef struct CONST_ELEMENT_LIST {
    should outlive the INDEX_ENTRY_LOCATION */
 typedef struct INDEX_ENTRY_LOCATION {
     const char *index_name;
-    int number; /* position in the original index.  May be different in
+    size_t number; /* position in the original index.  May be different in
                    merged index */
 } INDEX_ENTRY_LOCATION;
 

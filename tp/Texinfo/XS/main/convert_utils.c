@@ -129,7 +129,7 @@ find_innermost_accent_contents (const ELEMENT *element)
   while (1)
     {
       const ELEMENT *arg;
-      int i;
+      size_t i;
       enum command_id data_cmd;
       unsigned long flags;
 
@@ -470,9 +470,10 @@ definition_arguments_content (const ELEMENT *element)
 {
   PARSED_DEF *result = malloc (sizeof (PARSED_DEF));
   memset (result, 0, sizeof (PARSED_DEF));
-  if (element->e.c->args.number >= 0)
+  /* this condition is most probably always true */
+  if (element->e.c->args.number > 0)
     {
-      int i;
+      size_t i;
       const ELEMENT *def_line = element->e.c->args.list[0];
       if (def_line->e.c->contents.number > 0)
         {
@@ -526,9 +527,9 @@ definition_category_tree (OPTIONS * options, const ELEMENT *current)
   ELEMENT *class_copy;
   char *def_command;
 
-  if (current->e.c->args.number >= 0)
+  if (current->e.c->args.number > 0)
     {
-      int i;
+      size_t i;
       const ELEMENT *def_line = current->e.c->args.list[0];
       for (i = 0; i < def_line->e.c->contents.number; i++)
         {
@@ -681,18 +682,6 @@ translated_command_tree (CONVERTER *self, enum command_id cmd)
   return 0;
 }
 
-void
-destroy_translated_commands (TRANSLATED_COMMAND *translated_commands)
-{
-  TRANSLATED_COMMAND *translated_command;
-
-  for (translated_command = translated_commands;
-       translated_command->translation; translated_command++)
-    {
-      free (translated_command->translation);
-    }
-  free (translated_commands);
-}
 
 /*
   API to open, set encoding and register files.
@@ -837,16 +826,16 @@ output_files_register_closed (OUTPUT_FILES_INFORMATION *self,
   if (unclosed_files_nr)
     {
       size_t j;
-      for (j = unclosed_files_nr -1; j >= 0; j--)
+      for (j = unclosed_files_nr; j > 0; j--)
         {
-          FILE_STREAM *file_stream = &self->unclosed_files.list[j];
+          FILE_STREAM *file_stream = &self->unclosed_files.list[j -1];
           if (file_stream->file_path)
             {
               if (!strcmp (file_path, file_stream->file_path))
                 {
                   free (file_stream->file_path);
                   file_stream->file_path = 0;
-                  if (j == unclosed_files_nr -1)
+                  if (j == unclosed_files_nr)
                     {
                       self->unclosed_files.number--;
                     }

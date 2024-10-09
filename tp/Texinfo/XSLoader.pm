@@ -21,6 +21,8 @@ use warnings;
 
 use DynaLoader;
 
+#use version;
+
 BEGIN {
   eval 'require Texinfo::ModulePath';
   if ($@ ne '') {
@@ -34,6 +36,12 @@ BEGIN {
 our $TEXINFO_XS;
 
 our $VERSION = '7.1.90';
+
+# used for comparison with XS_VERSION passed through configure and make.
+# The github CI adds the date after a hyphen, turn the hyphen to a dot.
+my $xs_version = $VERSION;
+$xs_version =~ s/-/./g;
+#my $xs_version = version->declare($VERSION)->numify;
 
 sub XS_parser_enabled {
   return ((not defined($ENV{TEXINFO_XS})
@@ -90,11 +98,9 @@ sub _find_file($) {
   return undef;
 }
 
-# Load module $module, either from XS implementation in
+# Load module $MODULE, either from XS implementation in
 # Libtool file $MODULE_NAME and Perl file $PERL_EXTRA_FILE,
 # or non-XS implementation $FALLBACK_MODULE.
-# $INTERFACE_VERSION is a module interface number, to be changed when the XS
-# interface changes.
 # The package loaded is returned or undef if there is no fallback and the
 # XS package was not loaded.
 sub init {
@@ -102,7 +108,6 @@ sub init {
      $fallback_module,
      $module_name,
      $perl_extra_file,
-     $interface_version,
    ) = @_;
 
   # Possible values for TEXINFO_XS environment variable:
@@ -207,8 +212,15 @@ sub init {
 
   # This is the module bootstrap function, which causes all the other
   # functions (XSUB's) provided by the module to become available to
-  # be called from Perl code.
-  &$boot_fn($module, $interface_version);
+  # be called from Perl code, after a check that the version argument
+  # matches the XS object XS_VERSION value.  In our case, XS_VERSION
+  # is set based on tp/Texinfo/XS/configure.ac AC_INIT version passed
+  # through Makefile.am.  The tp/Texinfo/XS/configure.ac AC_INIT version
+  # and thePerl modules VERSION should be synchronized with the top-level
+  # configure.ac version.  The check therefore ensures that the XS objects
+  # and the Perl module come from the same GNU Texinfo distribution.
+  #print STDERR "REMARK: XS version: $xs_version\n";
+  &$boot_fn($module, $xs_version);
 
   # This makes it easier to refer to packages and symbols by name.
   no strict 'refs';

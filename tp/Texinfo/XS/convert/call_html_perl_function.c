@@ -31,11 +31,17 @@
 #undef context
 
 #include "text.h"
+#include "tree_types.h"
+/* *BUTTON* */
 #include "option_types.h"
 #include "converter_types.h"
 #include "types_data.h"
 /* for element_command_name (or could be builtin_command_data) */
 #include "builtin_commands.h"
+/* new_target_filename non_perl_strndup new_target_contents_filename
+   new_file_name_path new_target_directory_filename non_perl_free
+   new_formatted_button_info output_unit_type_names enum output_unit_type
+ */
 #include "utils.h"
 #include "debug.h"
 /* for newSVpv_utf8 build_texinfo_tree */
@@ -1297,7 +1303,7 @@ call_formatting_function_format_button (CONVERTER *self,
 char *
 call_formatting_function_format_navigation_panel (CONVERTER *self,
                          const FORMATTING_REFERENCE *formatting_reference,
-                                  const BUTTON_SPECIFICATION_LIST *buttons,
+                                  BUTTON_SPECIFICATION_LIST *buttons,
                                   const char *cmdname, const ELEMENT *element,
                                   int vertical)
 {
@@ -1315,6 +1321,9 @@ call_formatting_function_format_navigation_panel (CONVERTER *self,
   build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
+
+  if (!buttons->av)
+    html_build_buttons_specification (self, buttons);
 
   dSP;
 
@@ -1354,7 +1363,7 @@ call_formatting_function_format_navigation_panel (CONVERTER *self,
 char *
 call_formatting_function_format_navigation_header (CONVERTER *self,
                          const FORMATTING_REFERENCE *formatting_reference,
-                                  const BUTTON_SPECIFICATION_LIST *buttons,
+                                  BUTTON_SPECIFICATION_LIST *buttons,
                                   const char *cmdname,
                                   const ELEMENT *element)
 {
@@ -1372,6 +1381,9 @@ call_formatting_function_format_navigation_header (CONVERTER *self,
   build_html_formatting_state (self);
 
   build_tree_to_build (&self->tree_to_build);
+
+  if (!buttons->av)
+    html_build_buttons_specification (self, buttons);
 
   dSP;
 
@@ -1771,7 +1783,6 @@ call_formatting_function_format_node_redirection_page (CONVERTER *self,
 
   return result;
 }
-
 
 
 
@@ -2399,7 +2410,7 @@ init_registered_ids_hv (CONVERTER *self)
 {
   dTHX;
 
-  self->rid.registered_ids_hv = newHV ();
+  self->registered_ids_hv = newHV ();
 }
 
 int
@@ -2407,7 +2418,7 @@ is_hv_registered_id (CONVERTER *self, const char *string)
 {
   dTHX;
 
-  return hv_exists (self->rid.registered_ids_hv, string, strlen (string));
+  return hv_exists (self->registered_ids_hv, string, strlen (string));
 }
 
 void
@@ -2415,7 +2426,7 @@ hv_register_id (CONVERTER *self, const char *string)
 {
   dTHX;
 
-  hv_store (self->rid.registered_ids_hv, string, strlen (string),
+  hv_store (self->registered_ids_hv, string, strlen (string),
             newSViv (1), 0);
 }
 
@@ -2424,7 +2435,8 @@ clear_registered_ids_hv (CONVERTER *self)
 {
   dTHX;
 
-  hv_clear (self->rid.registered_ids_hv);
+  if (self->registered_ids_hv)
+    hv_clear (self->registered_ids_hv);
 }
 
 void
@@ -2432,5 +2444,6 @@ free_registered_ids_hv (CONVERTER *self)
 {
   dTHX;
 
-  hv_undef (self->rid.registered_ids_hv);
+  if (self->registered_ids_hv)
+    hv_undef (self->registered_ids_hv);
 }

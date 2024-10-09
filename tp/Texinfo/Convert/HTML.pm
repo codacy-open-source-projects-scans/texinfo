@@ -64,6 +64,7 @@ use Texinfo::Convert::ConvertXS;
 use Texinfo::XSLoader;
 
 use Texinfo::Commands;
+use Texinfo::Options;
 use Texinfo::Common;
 use Texinfo::Data;
 use Texinfo::Config;
@@ -102,6 +103,8 @@ my %XS_overrides = (
 );
 
 my %XS_conversion_overrides = (
+  "Texinfo::Convert::HTML::converter_defaults"
+   => "Texinfo::Convert::ConvertXS::converter_defaults",
   "Texinfo::Convert::HTML::output"
    => "Texinfo::Convert::ConvertXS::html_output",
   "Texinfo::Convert::HTML::convert"
@@ -110,8 +113,10 @@ my %XS_conversion_overrides = (
   # following are not called when output and convert are overriden
   "Texinfo::Convert::HTML::_XS_format_setup"
    => "Texinfo::Convert::ConvertXS::html_format_setup",
-  "Texinfo::Convert::HTML::_XS_html_converter_initialize"
-   => "Texinfo::Convert::ConvertXS::html_converter_initialize_sv",
+  "Texinfo::Convert::HTML::_XS_html_converter_initialize_beginning"
+   => "Texinfo::Convert::ConvertXS::html_converter_initialize_beginning",
+  "Texinfo::Convert::HTML::_XS_html_converter_get_customization"
+   => "Texinfo::Convert::ConvertXS::html_converter_get_customization_sv",
   "Texinfo::Convert::HTML::conversion_initialization"
    => "Texinfo::Convert::ConvertXS::html_conversion_initialization",
   "Texinfo::Convert::HTML::_setup_convert"
@@ -418,9 +423,7 @@ sub html_attribute_class($$;$)
     confess("html_attribute_class: $classes not an array ref (for $element)");
   }
   if (!defined($classes) or scalar(@$classes) == 0
-      # API info: get_conf() API code conforming would be:
-      #  or $self->get_conf('NO_CSS')) {
-        or $self->{'conf'}->{'NO_CSS'}) {
+      or $self->get_conf('NO_CSS')) {
     if ($element eq 'span') {
       return '';
     } else {
@@ -430,9 +433,7 @@ sub html_attribute_class($$;$)
 
   my $style = '';
 
-  # API info: get_conf() API code conforming would be:
-  #  if ($self->get_conf('INLINE_CSS_STYLE')) {
-  if ($self->{'conf'}->{'INLINE_CSS_STYLE'}) {
+  if ($self->get_conf('INLINE_CSS_STYLE')) {
     my @styles = ();
     foreach my $style_class (@$classes) {
       if (not defined($style_class)) {
@@ -2511,65 +2512,13 @@ sub convert_tree_new_formatting_context($$$;$$$)
   return $result;
 }
 
-my %defaults = (
-  # Not a customization option variable
-  'converted_format'   => 'html',
+# values for integer and string options in code generated from
+# Texinfo/Convert/converters_defaults.txt
+my $regular_defaults = Texinfo::Options::get_converter_regular_options('html');
 
+my %defaults = (
   # Customization option variables
-  'BIG_RULE'              => '<hr>',
-  'BODY_ELEMENT_ATTRIBUTES' => undef,
-  'CHAPTER_HEADER_LEVEL'  => 2,
-  'CLOSE_QUOTE_SYMBOL'    => undef,
-  'CONTENTS_OUTPUT_LOCATION' => 'after_top',
-  'CONVERT_TO_LATEX_IN_MATH' => undef,
-  'INDENTED_BLOCK_COMMANDS_IN_TABLE' => 0,
-  'COPIABLE_LINKS'        => 1,
-  'DATE_IN_HEADER'        => 0,
-  'DEFAULT_RULE'          => '<hr>',
-  'documentlanguage'      => 'en',
-  'DOCTYPE'               => '<!DOCTYPE html>',
-  'DO_ABOUT'              => 0,
-  'OUTPUT_CHARACTERS'     => 0,
-  'EXTENSION'             => 'html',
-  'EXTERNAL_CROSSREF_EXTENSION' => undef, # based on EXTENSION
-  'FOOTNOTE_END_HEADER_LEVEL' => 4,
-  'FOOTNOTE_SEPARATE_HEADER_LEVEL' => 4,
-  'FORMAT_MENU'           => 'sectiontoc',
-  'HEADERS'               => 1,
-  'INDEX_ENTRY_COLON'     => '',
-# if set style is added in attribute.
-  'INLINE_CSS_STYLE'      => 0,
-  'JS_WEBLABELS'          => 'generate',
-  'JS_WEBLABELS_FILE'     => 'js_licenses.html', # no clash with node name
-  'MAX_HEADER_LEVEL'      => 4,
-  'MENU_ENTRY_COLON'      => ':',
-  'MENU_SYMBOL'           => undef,
-  'MONOLITHIC'            => 1,
-  'NO_CUSTOM_HTML_ATTRIBUTE' => 0,
-# if set, no css is used.
-  'NO_CSS'                => 0,
-  'NO_NUMBER_FOOTNOTE_SYMBOL' => '*',
-  'NODE_NAME_IN_MENU'     => 1,
-  'OPEN_QUOTE_SYMBOL'     => undef,
-  'OUTPUT_ENCODING_NAME'  => 'utf-8',
-  'SECTION_NAME_IN_TITLE' => 0,
-  'SHORT_TOC_LINK_TO_TOC' => 1,
-  'SHOW_TITLE'            => undef,
-  'SPLIT'                 => 'node',
-  'TOP_FILE'              => 'index.html', # ignores EXTENSION
-  'TOP_NODE_FILE_TARGET'  => 'index.html', # ignores EXTENSION
-  'USE_ACCESSKEY'         => 1,
-  'USE_NEXT_HEADING_FOR_LONE_NODE' => 1,
-  'USE_ISO'               => 1,
-  'USE_LINKS'             => 1,
-  'USE_NODES'             => 1,
-  'USE_NODE_DIRECTIONS'   => undef,
-  'USE_REL_REV'           => 1,
-  'USE_TITLEPAGE_FOR_TITLE' => 1,
-  'WORDS_IN_PAGE'         => 300,
-  'XREF_USE_NODE_NAME_ARG' => undef, # for internal cross references
-  'XREF_USE_FLOAT_LABEL'   => 0,
-  'xrefautomaticsectiontitle' => 'on',
+  %{$regular_defaults},
 
   # Non-string customization variables
   # _default_panel_button_dynamic_direction use nodes direction based on USE_NODE_DIRECTIONS
@@ -2615,14 +2564,12 @@ my $direction_orders = Texinfo::Data::get_directions_order();
 # 'global', 'relative', 'file'
 # include space direction
 my @global_directions_order = @{$direction_orders->[0]};
-my %global_and_special_directions;
-foreach my $global_direction (@global_directions_order) {
-  $global_and_special_directions{$global_direction} = 1;
+my @all_directions_except_special_units;
+foreach my $direction_order (@$direction_orders) {
+  push @all_directions_except_special_units, @$direction_order;
 }
-foreach my $special_direction (values(
-                   %{$default_special_unit_info{'direction'}})) {
-  $global_and_special_directions{$special_direction} = 1;
-}
+
+#print STDERR join('|', @all_directions_except_special_units)."\n";
 
 # for rel, see http://www.w3.org/TR/REC-html40/types.html#type-links
 my %default_converted_directions_strings
@@ -2634,6 +2581,10 @@ my %default_converted_directions_strings
 # For now 'This' becomes 'This (current section)'.
 my %default_translated_directions_strings
    = %{ Texinfo::Data::get_default_translated_directions_strings() };
+
+my @style_commands_contexts = ('normal', 'preformatted');
+my @no_args_commands_contexts
+    = ('normal', 'preformatted', 'string', 'css_string');
 
 sub _translate_names($)
 {
@@ -2681,7 +2632,7 @@ sub _translate_names($)
   }
   my %translated_commands;
   foreach my $command (keys(%{$self->{'no_arg_commands_formatting'}})) {
-    foreach my $context ('normal', 'preformatted', 'string', 'css_string') {
+    foreach my $context (@no_args_commands_contexts) {
       if (defined($self->{'no_arg_commands_formatting'}
                          ->{$command}->{$context}->{'translated_converted'})
           and not $self->{'no_arg_commands_formatting'}
@@ -2769,11 +2720,11 @@ sub converter_defaults($$)
   my $conf = shift;
   if ($conf and defined($conf->{'TEXI2HTML'})) {
     my $default_ref = { %defaults };
-    my %texi2html_defaults = %$default_ref;
-    _set_variables_texi2html(\%texi2html_defaults);
-    return %texi2html_defaults;
+    my $texi2html_defaults = { %$default_ref };
+    _set_variables_texi2html($texi2html_defaults);
+    return $texi2html_defaults;
   }
-  return %defaults;
+  return \%defaults;
 }
 
 my %default_css_element_class_styles
@@ -3151,7 +3102,7 @@ my %default_upper_case_commands = ( 'sc' => 1 );
 my %style_commands_element
    = %{ Texinfo::Data::get_html_style_commands_element() };
 
-my %style_commands_formatting;
+my %default_style_commands_formatting;
 
 my %style_brace_types = map {$_ => 1} ('style_other', 'style_code',
                                        'style_no_code');
@@ -3165,30 +3116,33 @@ my @all_style_commands = keys %{{ map { $_ => 1 }
     ((grep {$style_brace_types{$brace_commands{$_}}} keys(%brace_commands)),
       keys(%style_commands_element), keys(%quoted_style_commands)) }};
 
+# NOTE only normal and preformatted contexts are used.  css strings
+# are formatted in string context, and in string context the argument
+# is returned as is.
 foreach my $command (@all_style_commands) {
   # indicateurl is formatted with a specific function
   next if ($command eq 'indicateurl');
-  $style_commands_formatting{$command} = {};
+  $default_style_commands_formatting{$command} = {};
   # default is no element.
-  foreach my $context ('normal', 'string', 'preformatted') {
-    $style_commands_formatting{$command}->{$context} = {}
+  foreach my $context (@style_commands_contexts) {
+    $default_style_commands_formatting{$command}->{$context} = {}
   }
   if (exists($style_commands_element{$command})) {
     my $html_element = $style_commands_element{$command};
-    foreach my $context ('normal', 'preformatted') {
-      $style_commands_formatting{$command}->{$context}
+    foreach my $context (@style_commands_contexts) {
+      $default_style_commands_formatting{$command}->{$context}
                            = {'element' => $html_element};
     }
   }
   if ($quoted_style_commands{$command}) {
-    foreach my $context ('normal', 'string', 'preformatted') {
-      $style_commands_formatting{$command}->{$context}->{'quote'} = 1;
+    foreach my $context (@style_commands_contexts) {
+      $default_style_commands_formatting{$command}->{$context}->{'quote'} = 1;
     }
   }
   $default_commands_conversion{$command} = \&_convert_style_command;
 }
 
-$style_commands_formatting{'sc'}->{'preformatted'}->{'element'} = 'span';
+$default_style_commands_formatting{'sc'}->{'preformatted'}->{'element'} = 'span';
 
 # currently unused, could be re-used if there is a need to have attributes
 # specified in %style_commands_element
@@ -6188,6 +6142,7 @@ sub _convert_printindex_command($$$$)
 
   }
 
+  # FIXME not part of the API
   $self->_new_document_context($cmdname);
 
   my $rule = $self->get_conf('DEFAULT_RULE');
@@ -7134,13 +7089,9 @@ sub _convert_text($$$)
     $text = Texinfo::Convert::Unicode::unicode_text($text,
                                         (in_code($self) or in_math($self)));
   } elsif (!in_code($self) and !in_math($self)) {
-    # API info: get_conf() API code conforming would be:
-    #if ($self->get_conf('USE_NUMERIC_ENTITY')) {
-    if ($self->{'conf'}->{'USE_NUMERIC_ENTITY'}) {
+    if ($self->get_conf('USE_NUMERIC_ENTITY')) {
       $text = $self->xml_format_text_with_numeric_entities($text);
-    # API info: get_conf() API code conforming would be:
-    #} elsif ($self->get_conf('USE_ISO')) {
-    } elsif ($self->{'conf'}->{'USE_ISO'}) {
+    } elsif ($self->get_conf('USE_ISO')) {
       $text = _entity_text($text);
     } else {
       $text =~ s/``/&quot;/g;
@@ -8524,9 +8475,14 @@ sub _parse_htmlxref_files($$)
       $htmlxref->{$manual}->{$split_or_mono} = $href;
     }
     if (!close (HTMLXREF)) {
+      my $htmlxref_file_name = $file;
+      my $encoding = $self->get_conf('COMMAND_LINE_ENCODING');
+      if (defined($encoding)) {
+        $htmlxref_file_name = decode($encoding, $htmlxref_file_name);
+      }
       $self->converter_document_warn(sprintf(__(
                        "error on closing html refs config file %s: %s"),
-                             $file, $!));
+                             $htmlxref_file_name, $!));
     }
   }
   return $htmlxref;
@@ -8740,7 +8696,11 @@ my %special_characters = (
   'non_breaking_space' => [$xml_named_entity_nbsp, '00A0'],
 );
 
-sub _XS_html_converter_initialize($$$$$$$$$$$$$$)
+sub _XS_html_converter_initialize_beginning($)
+{
+}
+
+sub _XS_html_converter_get_customization($$$$$$$$$$$$$$$$$$)
 {
 }
 
@@ -8750,7 +8710,46 @@ sub converter_initialize($)
 {
   my $self = shift;
 
-  _load_htmlxref_files($self);
+  # beginning of initialization done either in Perl or XS
+  if ($self->{'converter_descriptor'} and $XS_convert) {
+    _XS_html_converter_initialize_beginning($self);
+  } else {
+    # used in initialization.  Set if undef
+    if (!defined($self->get_conf('FORMAT_MENU'))) {
+      $self->force_conf('FORMAT_MENU', '');
+    }
+
+    # NOTE we reset silently if the split specification is not one known.
+    # The main program warns if the specific command line option value is
+    # not known.  We could add a warning here to catch mistakes in init
+    # files.  Wait for user reports.
+    my $split = $self->get_conf('SPLIT');
+    if ($split and $split ne 'chapter'
+        and $split ne 'section'
+        and $split ne 'node') {
+      $self->force_conf('SPLIT', 'node');
+    }
+
+    my $max_header_level = $self->get_conf('MAX_HEADER_LEVEL');
+    if (!defined($max_header_level)) {
+      $self->force_conf('MAX_HEADER_LEVEL', $defaults{'MAX_HEADER_LEVEL'});
+    } elsif ($max_header_level < 1) {
+      $self->force_conf('MAX_HEADER_LEVEL', 1);
+    }
+
+    # For CONTENTS_OUTPUT_LOCATION
+    # should lead to contents not output, but if not, it is not an issue,
+    # the way to set contents to be output or not should be through the
+    # contents and shortcontents @-commands and customization options.
+    foreach my $conf ('CONTENTS_OUTPUT_LOCATION', 'INDEX_ENTRY_COLON',
+                      'MENU_ENTRY_COLON') {
+      if (!defined($self->get_conf($conf))) {
+        $self->force_conf($conf, '');
+      }
+    }
+
+    _load_htmlxref_files($self);
+  }
 
   $self->{'output_units_conversion'} = {};
   my $customized_output_units_conversion
@@ -8820,11 +8819,6 @@ sub converter_initialize($)
       = $customized_upper_case_commands->{$command};
   }
 
-  # used just below.  Set if undef
-  if (!defined($self->get_conf('FORMAT_MENU'))) {
-    $self->force_conf('FORMAT_MENU', '');
-  }
-
   $self->{'commands_conversion'} = {};
   my $customized_commands_conversion
      = Texinfo::Config::GNUT_get_commands_conversion();
@@ -8861,19 +8855,47 @@ sub converter_initialize($)
     }
   }
 
-  $self->{'style_commands_formatting'} = {};
-  foreach my $command (keys(%style_commands_formatting)) {
-    $self->{'style_commands_formatting'}->{$command} = {};
-    foreach my $context (keys(%{$style_commands_formatting{$command}})) {
+  # get all the customization
+  my %style_commands_customized_formatting_info = ();
+  foreach my $command (keys(%default_style_commands_formatting)) {
+    foreach my $context (@style_commands_contexts) {
       my $style_commands_formatting_info
         = Texinfo::Config::GNUT_get_style_command_formatting($command, $context);
       if (defined($style_commands_formatting_info)) {
-        $self->{'style_commands_formatting'}->{$command}->{$context}
-           = $style_commands_formatting_info;
-      } elsif (exists($style_commands_formatting{$command}->{$context})) {
-        $self->{'style_commands_formatting'}->{$command}->{$context}
-           = $style_commands_formatting{$command}->{$context};
+        if (!$style_commands_customized_formatting_info{$command}) {
+          $style_commands_customized_formatting_info{$command} = {};
+        }
+        $style_commands_customized_formatting_info{$command}->{$context}
+          = $style_commands_formatting_info;
       }
+    }
+  }
+
+  $self->{'style_commands_formatting'} = {};
+  foreach my $command (keys(%default_style_commands_formatting)) {
+    $self->{'style_commands_formatting'}->{$command} = {};
+    foreach my $context (@style_commands_contexts) {
+      if ($style_commands_customized_formatting_info{$command}
+          and $style_commands_customized_formatting_info{$command}->{$context}) {
+        $self->{'style_commands_formatting'}->{$command}->{$context}
+          = $style_commands_customized_formatting_info{$command}->{$context};
+      } elsif (exists($default_style_commands_formatting{$command}->{$context})) {
+        $self->{'style_commands_formatting'}->{$command}->{$context}
+          = $default_style_commands_formatting{$command}->{$context};
+      }
+    }
+  }
+
+  my %customized_accent_entities;
+
+  foreach my $accent_command
+     (keys(%Texinfo::Convert::Converter::xml_accent_entities)) {
+    my ($accent_command_entity, $accent_command_text_with_entities)
+      = Texinfo::Config::GNUT_get_accent_command_formatting($accent_command);
+    if (defined($accent_command_entity)
+        or defined($accent_command_text_with_entities)) {
+      $customized_accent_entities{$accent_command} = [$accent_command_entity,
+                                           $accent_command_text_with_entities];
     }
   }
 
@@ -8881,8 +8903,13 @@ sub converter_initialize($)
   foreach my $accent_command
      (keys(%Texinfo::Convert::Converter::xml_accent_entities)) {
     $self->{'accent_entities'}->{$accent_command} = [];
-    my ($accent_command_entity, $accent_command_text_with_entities)
-      = Texinfo::Config::GNUT_get_accent_command_formatting($accent_command);
+
+    my ($accent_command_entity, $accent_command_text_with_entities);
+    if ($customized_accent_entities{$accent_command}) {
+      ($accent_command_entity, $accent_command_text_with_entities)
+        = @{$customized_accent_entities{$accent_command}};
+    }
+
     if (not defined($accent_command_entity)
         and defined($Texinfo::Convert::Converter::xml_accent_text_with_entities{
                                                               $accent_command})) {
@@ -8905,19 +8932,22 @@ sub converter_initialize($)
 
   # get customization only at that point, as the defaults may be changed
   # with the encoding
-  $self->{'customized_no_arg_commands_formatting'} = {};
+  my $customized_no_arg_commands_formatting = {};
   foreach my $command (keys(%{$default_no_arg_commands_formatting{'normal'}})) {
-    $self->{'customized_no_arg_commands_formatting'}->{$command} = {};
-    foreach my $context ('normal', 'preformatted', 'string', 'css_string') {
+    $customized_no_arg_commands_formatting->{$command} = {};
+    foreach my $context (@no_args_commands_contexts) {
       my $no_arg_command_customized_formatting
         = Texinfo::Config::GNUT_get_no_arg_command_formatting($command,
                                                               $context);
       if (defined($no_arg_command_customized_formatting)) {
-        $self->{'customized_no_arg_commands_formatting'}->{$command}->{$context}
+        $customized_no_arg_commands_formatting->{$command}->{$context}
            = $no_arg_command_customized_formatting;
       }
     }
   }
+
+  $self->{'customized_no_arg_commands_formatting'}
+    = $customized_no_arg_commands_formatting;
 
   $self->{'file_id_setting'} = {};
   my $customized_file_id_setting_references
@@ -9014,6 +9044,15 @@ sub converter_initialize($)
       = $customized_special_unit_body->{$special_unit_variety};
   }
 
+  my @all_directions = @all_directions_except_special_units;
+  foreach my $variety (keys(%{$self->{'special_unit_info'}->{'direction'}})) {
+    my $direction = $self->{'special_unit_info'}->{'direction'}->{$variety};
+    if (defined($direction)) {
+      push @all_directions, $direction;
+    }
+  }
+  #print STDERR join('|', @all_directions)."\n";
+
   # Fill the translated direction strings information, corresponding to:
   #   - strings already converted
   #   - strings not already converted
@@ -9024,15 +9063,15 @@ sub converter_initialize($)
   $self->{'translated_direction_strings'} = {};
   foreach my $string_type (keys(%default_translated_directions_strings)) {
     $self->{'translated_direction_strings'}->{$string_type} = {};
-    foreach my $direction
-           (keys(%{$default_translated_directions_strings{$string_type}})) {
+    foreach my $direction (@all_directions) {
       if ($customized_direction_strings->{$string_type}
             and $customized_direction_strings->{$string_type}->{$direction}) {
         $self->{'translated_direction_strings'}->{$string_type}->{$direction}
           = $customized_direction_strings->{$string_type}->{$direction};
       } else {
         if ($default_translated_directions_strings{$string_type}->{$direction}
-                                                              ->{'converted'}) {
+            and $default_translated_directions_strings{$string_type}
+                                           ->{$direction}->{'converted'}) {
           $self->{'translated_direction_strings'}->{$string_type}
                   ->{$direction} = {'converted' => {}};
           foreach my $context ('normal', 'string') {
@@ -9051,76 +9090,15 @@ sub converter_initialize($)
 
   # the customization information are not used further here, as
   # substitute_html_non_breaking_space is used and it depends on the document
-  $self->{'customized_direction_strings'}
-      = Texinfo::Config::GNUT_get_direction_string_info();
+  $self->{'customized_direction_strings'} = $customized_direction_strings;
 
   $self->{'stage_handlers'} = Texinfo::Config::GNUT_get_stage_handlers();
 
-  # NOTE we reset silently if the split specification is not one known.
-  # The main program warns if the specific command line option value is
-  # not known.  We could add a warning here to catch mistakes in init
-  # files.  Wait for user reports.
-  my $split = $self->get_conf('SPLIT');
-  if ($split and $split ne 'chapter'
-      and $split ne 'section'
-      and $split ne 'node') {
-    $self->force_conf('SPLIT', 'node');
-  }
-
-  my $max_header_level = $self->get_conf('MAX_HEADER_LEVEL');
-  if (!defined($max_header_level)) {
-    $self->force_conf('MAX_HEADER_LEVEL', $defaults{'MAX_HEADER_LEVEL'});
-  } elsif ($max_header_level < 1) {
-    $self->force_conf('MAX_HEADER_LEVEL', 1);
-  }
-
-  # For CONTENTS_OUTPUT_LOCATION
-  # should lead to contents not output, but if not, it is not an issue,
-  # the way to set contents to be output or not should be through the
-  # contents and shortcontents @-commands and customization options.
-  foreach my $conf ('CONTENTS_OUTPUT_LOCATION', 'INDEX_ENTRY_COLON',
-                    'MENU_ENTRY_COLON') {
-    if (!defined($self->get_conf($conf))) {
-      $self->force_conf($conf, '');
-    }
-  }
 
   # XS parser initialization
   if ($self->{'converter_descriptor'} and $XS_convert) {
-    # reformat special_unit_info information passed to XS to simplify
-    # XS code
-    if ($self->{'special_unit_info'}) {
-      # information that does not need to be translated
-      $self->{'simplified_special_unit_info'}
-         = Storable::dclone($self->{'special_unit_info'});
-      # information needing translation, simplify the structure to
-      # be more like non-translated special_unit_info information
-      if ($self->{'translated_special_unit_info'}) {
-        foreach my $tree_type (keys(%{$self->{'translated_special_unit_info'}})) {
-          my $type = $self->{'translated_special_unit_info'}->{$tree_type}->[0];
-          my $variety_strings
-            = $self->{'translated_special_unit_info'}->{$tree_type}->[1];
-          # we do not need both tree type $tree_type and $type string
-          # to pass to XS, as they both hold the same information,
-          # pass only the string type $type and associated varieties information
-          $self->{'simplified_special_unit_info'}->{$type} = $variety_strings;
-        }
-      }
 
-      # to help the XS code to set arrays of C structures, already prepare
-      # a list of special units varieties.
-      my %all_special_unit_varieties;
-      foreach my $type (keys(%{$self->{'simplified_special_unit_info'}})) {
-        foreach my $special_unit_variety
-              (keys (%{$self->{'simplified_special_unit_info'}->{$type}})) {
-          $all_special_unit_varieties{$special_unit_variety} = 1;
-        }
-      }
-      $self->{'sorted_special_unit_varieties'}
-        = [sort(keys(%all_special_unit_varieties))];
-    }
-
-    _XS_html_converter_initialize($self,
+    _XS_html_converter_get_customization($self,
                              \%default_formatting_references,
                              \%default_css_string_formatting_references,
                              \%default_commands_open,
@@ -9132,11 +9110,13 @@ sub converter_initialize($)
                              \%default_output_units_conversion,
                              \%defaults_format_special_unit_body_contents,
                              $customized_upper_case_commands,
+                             $customized_type_formatting,
+                             \%customized_accent_entities,
+                             \%style_commands_customized_formatting_info,
+                             $customized_no_arg_commands_formatting,
                              $customized_special_unit_info,
-                             \%default_converted_directions_strings
+                             $customized_direction_strings
                             );
-    delete $self->{'sorted_special_unit_varieties'};
-    delete $self->{'simplified_special_unit_info'};
   }
 
   return $self;
@@ -10752,9 +10732,9 @@ sub _external_node_href($$$)
         } elsif ($self->get_conf('SPLIT')) {
           $directory = "../$manual_base";
         }
-        if (defined($self->{'output_format'})
-            and $self->{'output_format'} ne '') {
-          $directory .= '_'.$self->{'output_format'};
+        my $output_format = $self->get_conf('TEXINFO_OUTPUT_FORMAT');
+        if (defined($output_format) and $output_format ne '') {
+          $directory .= '_'.$output_format;
         }
         $directory = $self->url_protect_file_text($directory);
       }
@@ -11781,7 +11761,7 @@ sub _do_jslicenses_file {
   my ($licence_file_path, $path_encoding)
      = $self->encoded_output_file_name($license_file);
   my ($fh, $error_message_licence_file, $overwritten_file)
-         = Texinfo::Common::output_files_open_out(
+         = Texinfo::Convert::Utils::output_files_open_out(
                          $self->output_files_information(), $self,
                          $licence_file_path);
   if ($overwritten_file) {
@@ -11791,7 +11771,7 @@ sub _do_jslicenses_file {
   }
   if (defined($fh)) {
     print $fh $a;
-    Texinfo::Common::output_files_register_closed(
+    Texinfo::Convert::Utils::output_files_register_closed(
                   $self->output_files_information(), $licence_file_path);
     if (!close ($fh)) {
       $self->converter_document_error(
@@ -11977,7 +11957,7 @@ sub conversion_initialization($$;$)
   $self->{'no_arg_commands_formatting'} = {};
   foreach my $command (keys(%{$default_no_arg_commands_formatting{'normal'}})) {
     $self->{'no_arg_commands_formatting'}->{$command} = {};
-    foreach my $context ('normal', 'preformatted', 'string', 'css_string') {
+    foreach my $context (@no_args_commands_contexts) {
       my $no_arg_command_customized_formatting
         = $self->{'customized_no_arg_commands_formatting'}
                                              ->{$command}->{$context};
@@ -12034,6 +12014,13 @@ sub conversion_initialization($$;$)
     }
   }
 
+  my @all_directions = @all_directions_except_special_units;
+  foreach my $variety (keys(%{$self->{'special_unit_info'}->{'direction'}})) {
+    my $direction = $self->{'special_unit_info'}->{'direction'}->{$variety};
+    if (defined($direction)) {
+      push @all_directions, $direction;
+    }
+  }
   # three types of direction strings:
   # * strings not translated, already converted
   # * strings translated
@@ -12046,8 +12033,7 @@ sub conversion_initialization($$;$)
   # substitute_html_non_breaking_space is used and it depends on the document.
   foreach my $string_type (keys(%default_converted_directions_strings)) {
     $self->{'directions_strings'}->{$string_type} = {};
-    foreach my $direction
-            (keys(%{$default_converted_directions_strings{$string_type}})) {
+    foreach my $direction (@all_directions) {
       $self->{'directions_strings'}->{$string_type}->{$direction} = {};
       my $string_contexts;
       if ($self->{'customized_direction_strings'}->{$string_type}
@@ -12676,6 +12662,15 @@ sub _html_convert_output($$$$$$$$)
   my ($self, $output_file, $destination_directory, $output_filename,
       $document_name, $document, $output_units, $special_units) = @_;
 
+  my ($encoded_destination_directory, $dir_encoding)
+    = $self->encoded_output_file_name($destination_directory);
+  my $succeeded
+    = $self->create_destination_directory($encoded_destination_directory,
+                                          $destination_directory);
+  if (!$succeeded) {
+    return undef;
+  }
+
   my $text_output = '';
   if ($output_file eq '') {
     $self->{'current_filename'} = $output_filename;
@@ -12762,7 +12757,7 @@ sub _html_convert_output($$$$$$$$)
         # the third return information, set if the file has already been used
         # in this files_information is not checked as this cannot happen.
         my ($file_fh, $error_message)
-                = Texinfo::Common::output_files_open_out(
+                = Texinfo::Convert::Utils::output_files_open_out(
                          $self->output_files_information(), $self,
                          $encoded_out_filepath);
         if (!$file_fh) {
@@ -12783,7 +12778,7 @@ sub _html_convert_output($$$$$$$$)
 
         # NOTE do not close STDOUT here to avoid a perl warning
         if ($out_filepath ne '-') {
-          Texinfo::Common::output_files_register_closed(
+          Texinfo::Convert::Utils::output_files_register_closed(
              $self->output_files_information(), $encoded_out_filepath);
           if (!close($file_fh)) {
             $self->converter_document_error(
@@ -12960,7 +12955,7 @@ sub _node_redirections($$$$)
         # the third return information, set if the file has already been used
         # in this files_information is not checked as this cannot happen.
         my ($file_fh, $error_message)
-               = Texinfo::Common::output_files_open_out(
+               = Texinfo::Convert::Utils::output_files_open_out(
                              $self->output_files_information(), $self,
                              $encoded_out_filepath);
         if (!$file_fh) {
@@ -12969,7 +12964,7 @@ sub _node_redirections($$$$)
                                     $out_filepath, $error_message));
         } else {
           print $file_fh $redirection_page;
-          Texinfo::Common::output_files_register_closed(
+          Texinfo::Convert::Utils::output_files_register_closed(
                   $self->output_files_information(), $encoded_out_filepath);
           if (!close ($file_fh)) {
             $self->converter_document_error(sprintf(__(
@@ -13120,15 +13115,8 @@ sub _setup_output($)
   # particular when output_file is '', 'destination_directory' that
   # is mainly useful when split and 'document_name' that is generally useful.
   my ($output_file, $destination_directory, $output_filename, $document_name)
-        = $self->determine_files_and_directory($self->{'output_format'});
-  my ($encoded_destination_directory, $dir_encoding)
-    = $self->encoded_output_file_name($destination_directory);
-  my $succeeded
-    = $self->create_destination_directory($encoded_destination_directory,
-                                          $destination_directory);
-  unless ($succeeded) {
-    return undef;
-  }
+        = $self->determine_files_and_directory(
+                              $self->get_conf('TEXINFO_OUTPUT_FORMAT'));
 
   # set for init files
   $self->{'converter_info'}->{'document_name'} = $document_name;
@@ -13264,7 +13252,7 @@ sub _open_command_update_context($$)
   if (exists($brace_commands{$command_name})
       and $brace_commands{$command_name} eq 'context') {
     $self->_new_document_context($command_name);
-      }
+  }
   if (exists($format_context_commands{$command_name})) {
     push @{$self->{'document_context'}->[-1]->{'formatting_context'}},
                                   {'context_name' => '@'.$command_name};
@@ -13755,32 +13743,6 @@ sub _set_variables_texi2html($)
 {
   my $options = shift;
   my @texi2html_options = (
-  # added hopefully temporarily to be able to validate with W3C validator
-  #['DOCTYPE', '<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">'],
-  #['DOCTYPE', '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">'],
-  ['FORMAT_MENU', 'menu'],
-  ['USE_SETFILENAME_EXTENSION', 0],
-  ['footnotestyle', 'separate'],
-  ['CONTENTS_OUTPUT_LOCATION', 'separate_element'],
-  ['FORCE', 1],
-  ['USE_ACCESSKEY', 0],
-  ['NODE_NAME_IN_MENU', 0],
-  ['SHORT_TOC_LINK_TO_TOC', 0],
-  ['SHOW_TITLE', 1],
-  ['USE_REL_REV', 0],
-  ['USE_LINKS', 0],
-  ['USE_NODES', 0],
-  ['SPLIT', ''],
-  ['PROGRAM_NAME_IN_FOOTER', 1],
-  ['PROGRAM_NAME_IN_ABOUT', 1],
-  ['HEADER_IN_TABLE', 1],
-  ['MENU_ENTRY_COLON', ''],
-  ['INDEX_ENTRY_COLON', ''],
-  ['DO_ABOUT', undef],
-  ['CHAPTER_HEADER_LEVEL', 1],
-  ['BIG_RULE', '<hr style="height: 6px;">'],
-  ['FOOTNOTE_END_HEADER_LEVEL', 3],
-  ['FOOTNOTE_SEPARATE_HEADER_LEVEL', 1],
   ['SECTION_BUTTONS', ['FastBack', 'Back', 'Up', 'Forward', 'FastForward',
                              ' ', ' ', ' ', ' ',
                              'Top', 'Contents', 'Index', 'About' ]],
@@ -13803,6 +13765,11 @@ sub _set_variables_texi2html($)
                              ' ', ' ', ' ', ' ',
                              'Top', 'Contents', 'Index', 'About' ]],
   );
+  my $regular_texi2html_options
+    = Texinfo::Options::get_converter_regular_options('texi2html');
+  foreach my $option (keys(%$regular_texi2html_options)) {
+    $options->{$option} = $regular_texi2html_options->{$option};
+  }
   foreach my $option (@texi2html_options) {
     $options->{$option->[0]} = $option->[1];
   }

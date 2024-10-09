@@ -64,11 +64,13 @@ enum button_specification_type {
    BST_direction,
    BST_function,
    BST_string,
+   BST_external_string,
    BST_direction_info,
 };
 
 enum button_information_type {
    BIT_string,
+   BIT_external_string,
    BIT_function,
    BIT_selected_direction_information_type,
    BIT_href_direction_information_type,
@@ -102,10 +104,11 @@ typedef struct BUTTON_SPECIFICATION_INFO {
       BUTTON_FUNCTION button_function; /* BIT_function */
   /* perl references. This should be SV *sv_*,
      but we don't want to include the Perl headers everywhere; */
-      void *sv_string; /* BIT_string */
-     /* both global and relative directions index */
-      int direction_information_type; /* BIT_direction_information_type
-            text string in perl, element direction information type */
+      void *sv_string; /* BIT_external_string */
+      char *string; /* BIT_string */
+     /* BIT_direction_information_type
+        text string in perl, element direction information type */
+      enum html_text_type direction_information_type;
     } bi;
 } BUTTON_SPECIFICATION_INFO;
 
@@ -113,6 +116,10 @@ typedef struct BUTTON_SPECIFICATION {
     void *sv; /* reference to perl data that can be used instead of
                  the C data */
 
+    /* case of a pure C button, use this information to hold unresolved
+       direction name at option creation time for either buttons
+       specification info direction or button specification direction */
+    const char *direction_string;
     enum button_specification_type type;
     union {
      /* both global and relative directions index */
@@ -120,7 +127,8 @@ typedef struct BUTTON_SPECIFICATION {
   /* perl references. This should be SV *sv_*,
      but we don't want to include the Perl headers everywhere; */
       void *sv_reference; /* BST_function */
-      void *sv_string; /* BST_string scalar reference */
+      void *sv_string; /* BST_external_string scalar reference */
+      char *string; /* BST_string */
       BUTTON_SPECIFICATION_INFO *button_info; /* BST_direction_info
                                               array reference of length 2 */
     } b;
@@ -143,12 +151,19 @@ typedef struct FORMATTED_BUTTON_INFO {
 } FORMATTED_BUTTON_INFO;
 
 typedef struct DIRECTION_ICON_LIST {
+  /* perl reference. This should be SV *sv,
+     but we don't want to include the Perl headers everywhere; */
+    void *sv;
     size_t number;
     char **list;
 } DIRECTION_ICON_LIST;
 
 typedef struct OPTION {
     enum global_option_type type;
+    const char *name;
+    /* index in sorted options array */
+    /* starts at 1 to use 0 for unset */
+    size_t number;
     int configured;
     union {
       int integer;
@@ -158,5 +173,11 @@ typedef struct OPTION {
       DIRECTION_ICON_LIST *icons;
     } o;
 } OPTION;
+
+typedef struct OPTIONS_LIST {
+    size_t number;
+    size_t space;
+    OPTION **list;
+} OPTIONS_LIST;
 
 #endif

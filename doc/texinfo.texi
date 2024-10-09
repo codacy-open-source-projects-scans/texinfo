@@ -6531,11 +6531,10 @@ since @code{@@indent} is a command used outside of paragraphs
 @cindex Box with rounded corners
 @cindex Rounded rectangles, around text
 
-Where the output format allows, the @code{@@cartouche} command draws a box
-with rounded corners around its contents.  In HTML, a normal rectangle is
-drawn.  You can use this command to isolate a portion of the manual from the
-main flow.  You can also further highlight an example or quotation
-with @code{@@cartouche}.
+Where the output format allows, the @code{@@cartouche} command draws a
+box with rounded corners around its contents.  You can use this command
+to isolate a portion of the manual from the main flow.  You can also
+further highlight an example or quotation with @code{@@cartouche}.
 
 For instance, you could write a manual in which one type of example is
 surrounded by a cartouche for emphasis.  For example,
@@ -15336,7 +15335,8 @@ Those associated with @@-commands; for example,
 @item
 Those associated with command-line options; for example, the
 customization variable @code{SPLIT} is associated with the
-@option{--split} command-line option, and @code{TEXINFO_OUTPUT_FORMAT}
+@option{--split} command-line option. @code{TEXINFO_OUTPUT_FORMAT}
+is set based on output format command line options and
 allows specifying the output format.
 
 @item
@@ -15513,7 +15513,10 @@ forms:
 @itemx xml
 These correspond to the command-line options (and
 @code{TEXINFO_OUTPUT_FORMAT} environment variable values) of the same
-name.  @xref{Invoking @command{texi2any}}.
+name.  The @code{TEXINFO_OUTPUT_FORMAT} customization variable value
+is set when command-line options (or @code{TEXINFO_OUTPUT_FORMAT}
+environment variable values) set the output format.
+@xref{Invoking @command{texi2any}}.
 
 @cindex tree representation, for debugging
 @cindex debugging document, with tree representation
@@ -15774,6 +15777,20 @@ If set to true, some variables which are normally dynamically
 generated anew for each run (date, program name, version) are set to
 fixed and given values.  This is useful to compare the output to a
 reference file, as is done for the tests.  The default is false.
+
+@item TEXINFO_OUTPUT_FORMAT
+The generated output format.  Set from command line with options such as
+@option{--html}, as the @env{TEXINFO_OUTPUT_FORMAT} environment variable
+value (@pxref{@command{texi2any} Environment Variables}) or as a customization
+option.  @xref{Customization Variables and Options}
+
+The value set in the @code{TEXINFO_OUTPUT_FORMAT} variable is in general the
+same as the name used to set the format, but not always.  If the format is set
+to @code{xml}, with @option{--xml}, with the @env{TEXINFO_OUTPUT_FORMAT}
+environment variable or with a customization variable the
+@code{TEXINFO_OUTPUT_FORMAT} customization variable is set to a more
+specific output format name @code{texinfoxml}.  That kind of difference
+in naming should not have any user-visible consequence.
 
 @item TREE_TRANSFORMATIONS
 The associated value is a comma separated list of transformations that
@@ -17864,6 +17881,14 @@ web.
 @cindex Cross-reference configuration, for HTML
 @cindex Configuration, for HTML cross-manual references
 
+For other manuals published on the World Wide Web to be able to have
+correct cross-references to your manual, the @var{host} and
+@var{dir} parts of the cross-reference need to be known by Texinfo
+converters when they produce HTML for those other manuals.
+Similarly, for your manual in HTML format to have correct
+cross-references to other manuals, @command{texi2any} needs to know
+how to construct the URLs for other manuals.
+
 @command{texi2any} reads a file named @file{htmlxref.cnf} to gather
 information for cross-references to other manuals in HTML output.  It
 is looked for in the following directories, based on the
@@ -17921,6 +17946,11 @@ All files found are used, with earlier entries overriding later ones.
 The Texinfo distribution includes a default file which handles many
 GNU manuals; it is installed in @file{@var{datadir}/texinfo/htmlxref.cnf},
 one of the last of the above directories.
+
+You can use a local @file{htmlxref.cnf} to complete or correct the
+default file from the Texinfo distribution.  This could be useful to
+correct outdated data, or even to generate cross-references to local
+files for some manuals.
 
 The @code{HTMLXREF_MODE} customization variable can be set to modify how the
 files are found.  For instance, if set to @samp{none}, no external information

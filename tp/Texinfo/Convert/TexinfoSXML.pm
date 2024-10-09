@@ -35,9 +35,6 @@ our $VERSION = '7.1.90';
 
 # SXML specific
 my %defaults = (
-  # Not a customization option variable
-  'converted_format'     => 'texinfosxml',
-
   # Customization option variables
   'FORMAT_MENU'          => 'menu',
   'EXTENSION'            => 'sxml',
@@ -48,7 +45,7 @@ my %defaults = (
 
 sub converter_defaults($$)
 {
-  return %defaults;
+  return \%defaults;
 }
 
 # TODO protect formfeeds, end of lines and other special spaces as in TexinfoXML?

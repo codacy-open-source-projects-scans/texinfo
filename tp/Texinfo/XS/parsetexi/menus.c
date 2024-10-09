@@ -41,7 +41,7 @@
 ELEMENT *
 register_extra_menu_entry_information (ELEMENT *current)
 {
-  int i;
+  size_t i;
   ELEMENT *menu_entry_node = 0;
 
   for (i = 0; i < current->e.c->contents.number; i++)
@@ -246,7 +246,7 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
       /* here we collect spaces following separators. */
       else if (strchr (whitespace_chars_except_newline, *line))
         {
-          int n;
+          size_t n;
 
           n = strspn (line, whitespace_chars_except_newline);
           text_append_n (last_element->e.text, line, n);
@@ -258,7 +258,8 @@ handle_menu_entry_separators (ELEMENT **current_inout, const char **line_inout)
           ELEMENT *entry_name;
 
           debug ("MENU NODE done (change from menu entry name) %s", separator);
-          entry_name = contents_child_by_index (current, -2);
+          entry_name = contents_child_by_index (current,
+                                            current->e.c->contents.number - 2);
 
           /* Change from menu_entry_name (i.e. a label)
              to a menu entry node */
@@ -335,12 +336,12 @@ end_line_menu_entry (ELEMENT *current)
           && last_contents_child (menu)->type == ET_menu_entry)
         {
           ELEMENT *entry, *description = 0;
-          int j;
+          size_t j;
 
           entry = last_contents_child (menu);
-          for (j = entry->e.c->contents.number - 1; j >= 0; j--)
+          for (j = entry->e.c->contents.number; j > 0; j--)
             {
-              ELEMENT *e = contents_child_by_index (entry, j);
+              ELEMENT *e = contents_child_by_index (entry, j - 1);
               if (e->type == ET_menu_entry_description)
                 {
                   description = e;
@@ -392,7 +393,7 @@ end_line_menu_entry (ELEMENT *current)
           debug ("THEN MENU_COMMENT OPEN");
         }
       {
-      int i, j;
+      size_t i, j;
       for (i = 0; i < menu_entry->e.c->contents.number; i++)
         {
           ELEMENT *arg = contents_child_by_index (menu_entry, i);

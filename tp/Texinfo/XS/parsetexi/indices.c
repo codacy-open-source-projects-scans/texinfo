@@ -46,7 +46,7 @@
 #include "parser.h"
 #include "indices.h"
 
-int space_for_indices = 0;
+size_t space_for_indices = 0;
 
 typedef struct {
     enum command_id cmd;
@@ -77,7 +77,7 @@ associate_command_to_index (enum command_id cmd, INDEX *idx)
 INDEX *
 index_of_command (enum command_id cmd)
 {
-  int i;
+  size_t i;
 
   for (i = 0; i < num_index_commands; i++)
     {
@@ -161,7 +161,7 @@ init_index_commands (void)
     "tp", 1, CM_tpindex, CM_tindex, /* types */
     0, 0, 0, 0
   };
-  int i, j;
+  size_t i, j;
 
 #define MAX (10 * 2)
 
@@ -317,7 +317,7 @@ set_non_ignored_space_in_index_before_command (ELEMENT *content)
 {
   ELEMENT *e;
   ELEMENT *pending_spaces_element = 0;
-  int i;
+  size_t i;
   for (i = 0; i < content->e.c->contents.number; i++)
     {
       /* could also be, but it does not seems to be needed here:
@@ -385,7 +385,7 @@ complete_indices (DOCUMENT *document, int debug_level)
       INDEX *idx = indices->list[i];
       if (idx->entries_number > 0)
         {
-          int j;
+          size_t j;
           for (j = 0; j < idx->entries_number; j++)
             {
               INDEX_ENTRY *entry;
@@ -408,7 +408,7 @@ complete_indices (DOCUMENT *document, int debug_level)
                   ELEMENT *def_l_e = main_entry_element->e.c->args.list[0];
                   if (def_l_e->e.c->contents.number > 0)
                     {
-                      int ic;
+                      size_t ic;
                       for (ic = 0; ic < def_l_e->e.c->contents.number; ic++)
                         {
                           ELEMENT *arg = def_l_e->e.c->contents.list[ic];
@@ -465,6 +465,19 @@ complete_indices (DOCUMENT *document, int debug_level)
                                                   debug_level, 0);
 
                           text_append (text_element->e.text, " of ");
+                        }
+             /* should not be possible, still considered for more robust code */
+                      else
+                        {
+                          char *msg;
+                          /* set index_entry to avalue to avoid a compiler warning
+                             on uninitialized value.  Incorrect for the code below, but
+                             we do not care as fatal is called. */
+                          index_entry = 0;
+                          xasprintf (&msg, "BUG: unexpected def command with name"
+                                   "and class: %s", builtin_command_name (def_command));
+                          fatal (msg);
+                          free (msg);
                         }
                       destroy_named_string_element_list (substrings);
 

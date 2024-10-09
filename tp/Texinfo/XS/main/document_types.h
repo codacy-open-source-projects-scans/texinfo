@@ -20,6 +20,7 @@
 #include <stddef.h>
 
 #include "tree_types.h"
+#include "option_types.h"
 #include "global_commands_types.h"
 /*
 #include "options_types.h"
@@ -64,6 +65,8 @@ typedef struct ERROR_MESSAGE_LIST {
     ERROR_MESSAGE *list;
     size_t number;
     size_t space;
+    /* number of messages of type error that are not continuations */
+    size_t error_nrs;
 } ERROR_MESSAGE_LIST;
 
 typedef struct KEY_STRING_PAIR {
@@ -217,6 +220,7 @@ typedef struct DOCUMENT {
     CONST_ELEMENT_LIST *nodes_list;
     CONST_ELEMENT_LIST *sections_list;
     struct OPTIONS *options; /* for options used in structuring */
+    OPTION **sorted_options;
     struct TEXT_OPTIONS *convert_index_text_options; /* for index
                                        sorting without converter */
     INDICES_SORT_STRINGS *indices_sort_strings;
@@ -252,5 +256,13 @@ typedef struct {
     size_t space;
     VALUE *list;
 } VALUE_LIST;
+
+/* enum needed in document and converters codes, but not in this file */
+enum command_location {
+   CL_before,
+   CL_last,
+   CL_preamble,
+   CL_preamble_or_first,
+};
 
 #endif

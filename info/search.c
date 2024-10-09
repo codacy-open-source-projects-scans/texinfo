@@ -226,7 +226,8 @@ regexp_search (char *regexp, int is_literal, int is_insensitive,
 enum search_result
 search_forward (char *string, SEARCH_BINDING *binding, long *poff)
 {
-  register int c, i, len;
+  register int c;
+  register size_t i, len;
   register char *buff, *end;
   char *alternate = NULL;
 
@@ -286,7 +287,8 @@ search_forward (char *string, SEARCH_BINDING *binding, long *poff)
 enum search_result
 search_backward (char *input_string, SEARCH_BINDING *binding, long *poff)
 {
-  register int c, i, len;
+  register int i_end, c;
+  register size_t i, len;
   register char *buff, *end;
   char *string;
   char *alternate = NULL;
@@ -295,10 +297,10 @@ search_backward (char *input_string, SEARCH_BINDING *binding, long *poff)
 
   /* Reverse the characters in the search string. */
   string = xmalloc (1 + len);
-  for (c = 0, i = len - 1; input_string[c]; c++, i--)
-    string[i] = input_string[c];
+  for (i = 0, i_end = len - 1; input_string[i]; i++, i_end--)
+    string[i_end] = input_string[i];
 
-  string[c] = '\0';
+  string[i] = '\0';
 
   /* We match characters in the search buffer against STRING and ALTERNATE.
      ALTERNATE is a case reversed version of STRING; this is cheaper than
@@ -359,7 +361,7 @@ search_backward (char *input_string, SEARCH_BINDING *binding, long *poff)
 int
 string_in_line (char *string, char *line)
 {
-  register int end;
+  register size_t end;
   SEARCH_BINDING binding;
   long offset;
   
@@ -386,9 +388,8 @@ looking_at (char *string, SEARCH_BINDING *binding)
   if (search (string, binding, &search_end) != search_success)
     return 0;
 
-  /* If the string was not found, SEARCH_END is -1.  If the string was found,
-     but not right away, SEARCH_END is != binding->start.  Otherwise, the
-     string was found at binding->start. */
+  /* If the string was not found right away, SEARCH_END is != binding->start.
+     Otherwise, the string was found at binding->start. */
   return search_end == binding->start;
 }
 
@@ -421,13 +422,14 @@ looking_at_line (char *string, char *pointer)
 enum search_result
 match_in_match_list (MATCH_STATE *match_state,
                      long start, long end, int dir,
-                     int *match_index)
+                     size_t *match_index)
 {
   regmatch_t *matches = match_state->matches;
   size_t match_count = match_state->match_count;
 
-  int i;
-  int index = -1;
+  size_t i;
+  size_t index;
+  int found = 0;
 
   for (i = 0; i < match_count || !match_state->finished; i++)
     {
@@ -448,6 +450,7 @@ match_in_match_list (MATCH_STATE *match_state,
       if (matches[i].rm_so >= start)
         {
           index = i;
+          found = 1;
           if (dir > 0)
             {
               *match_index = index;
@@ -456,7 +459,7 @@ match_in_match_list (MATCH_STATE *match_state,
         }
     }
 
-  if (index != -1)
+  if (found)
     {
       *match_index = index;
       return search_success;
@@ -468,7 +471,7 @@ match_in_match_list (MATCH_STATE *match_state,
 
 /* Return match INDEX in STATE.  INDEX must be a valid index. */
 regmatch_t
-match_by_index (MATCH_STATE *state, int index)
+match_by_index (MATCH_STATE *state, size_t index)
 {
   while (state->match_alloc <= index)
     extend_matches (state);
@@ -522,7 +525,7 @@ decide_if_in_match (long off, int *in_match,
 
 /* Used for iterating through a match list. */
 int
-at_end_of_matches (MATCH_STATE *state, int index)
+at_end_of_matches (MATCH_STATE *state, size_t index)
 {
   if (index < state->match_count)
     return 0;
@@ -553,10 +556,10 @@ at_end_of_matches (MATCH_STATE *state, int index)
    of -1 if the item being looked for couldn't be found. */
 
 /* Return the index of the first non-whitespace character in STRING. */
-int
+size_t
 skip_whitespace (char *string)
 {
-  register int i;
+  register size_t i;
 
   for (i = 0; string && whitespace (string[i]); i++);
   return i;
@@ -564,20 +567,20 @@ skip_whitespace (char *string)
 
 /* Return the index of the first non-whitespace or newline character in
    STRING. */
-int
+size_t
 skip_whitespace_and_newlines (char *string)
 {
-  register int i;
+  register size_t i;
 
   for (i = 0; string && whitespace_or_newline (string[i]); i++);
   return i;
 }
 
 /* Return the index of the first whitespace character in STRING. */
-int
+size_t
 skip_non_whitespace (char *string)
 {
-  register int i;
+  register size_t i;
 
   for (i = 0; string && string[i] && !whitespace (string[i]); i++);
   return i;
@@ -635,10 +638,10 @@ find_node_separator (SEARCH_BINDING *binding)
 
 /* Return the length of the node separator characters that BODY is currently
    pointing at.  If it's not pointing at a node separator, return 0. */
-int
+size_t
 skip_node_separator (char *body)
 {
-  register int i;
+  register size_t i;
 
   i = 0;
 
@@ -677,7 +680,7 @@ find_file_section (SEARCH_BINDING *binding, char *label)
 
   while ((position = find_node_separator (&s)) != -1 )
     {
-      long offset = position;
+      size_t offset = position;
       offset += skip_node_separator (s.buffer + offset);
       if (looking_at_line (label, s.buffer + offset))
         return position;
@@ -690,9 +693,9 @@ find_file_section (SEARCH_BINDING *binding, char *label)
         }
       else
         {
-          s.start = position - 1;
-          if (s.start <= s.end)
+          if (position <= s.end)
             break;
+          s.start = position - 1;
         }
     }
   return -1;

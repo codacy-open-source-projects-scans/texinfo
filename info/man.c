@@ -155,7 +155,7 @@ get_manpage_node (char *pagename)
   /* Node wasn't found, or its contents were freed since last time. */
   if (!node->contents)
     {
-      int plen;
+      size_t plen;
 
       page = get_manpage_contents (pagename);
       if (!page)
@@ -299,7 +299,7 @@ clean_manpage (char *manpage)
        mbi_advance (iter))
     {
       const char *cur_ptr = mbi_cur_ptr (iter);
-      size_t cur_len = mb_len (mbi_cur (iter));
+      int cur_len = mb_len (mbi_cur (iter));
 
       if (cur_len == 1)
 	{
@@ -570,7 +570,7 @@ xrefs_of_manpage (NODE *node)
   s.end = node->nodelen;
 
   /* Exclude first line, which often looks like:
-CAT(1)                           User Commands                          CAT(1)
+ CAT(1)                           User Commands                          CAT(1)
   */
   s.start = strcspn (node->contents, "\n");
 
@@ -673,7 +673,7 @@ CAT(1)                           User Commands                          CAT(1)
           add_pointer_to_array (entry, refs_index, refs, refs_slots, 10);
         }
 
-skip:
+ skip:
       s.start = position + 1;
     }
 

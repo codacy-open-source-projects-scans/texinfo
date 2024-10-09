@@ -66,6 +66,8 @@
             } \
           break;
 
+#define TXI_CONVERSION_FORMAT_NR (COF_html +1)
+
 typedef struct FLOAT_CAPTION_PREPENDED_ELEMENT {
     const ELEMENT *caption;
     ELEMENT *prepended;
@@ -88,6 +90,17 @@ typedef struct PATHS_INFORMATION {
     } p;
 } PATHS_INFORMATION;
 
+typedef struct CONVERTER_FORMAT_DATA {
+    const char *default_format;
+    const char *perl_converter_class;
+    CONVERTER_INITIALIZATION_INFO *
+       (* converter_defaults) (enum converter_format format,
+                               CONVERTER_INITIALIZATION_INFO *conf);
+    void (* converter_initialize) (CONVERTER *self);
+    void (* converter_reset) (CONVERTER *self);
+    void (* converter_free) (CONVERTER *self);
+} CONVERTER_FORMAT_DATA;
+
 extern enum command_id no_brace_command_accent_upper_case[][2];
 
 extern enum command_id default_upper_case_commands[];
@@ -95,24 +108,47 @@ extern enum command_id default_upper_case_commands[];
 /* in generated cmd_converter.c */
 extern const char * xml_text_entity_no_arg_commands[];
 
+/* in main/conversion_data.c */
+extern const STRING_LIST default_special_unit_varieties;
+
 /* in converter.c */
 extern const char *xml_text_entity_no_arg_commands_formatting[];
 
+extern COMMAND_ACCENT_ENTITY_INFO xml_accent_text_entities[];
+
 extern PATHS_INFORMATION conversion_paths_info;
 
-void converter_setup (void);
-void setup_converter_paths_information (int texinfo_uninstalled,
-                                        const char *tp_builddir,
-                             const char *pkgdatadir, const char *top_srcdir);
+extern CONVERTER_FORMAT_DATA converter_format_data[];
 
-CONVERTER *retrieve_converter (int converter_descriptor);
-size_t new_converter (void);
-void unregister_converter_descriptor (int converter_descriptor);
+void converter_setup (int texinfo_uninstalled, const char *tp_builddir,
+                      const char *pkgdatadir, const char *top_srcdir);
+
+enum converter_format find_format_name_converter_format (const char *format);
+enum converter_format find_perl_converter_class_converter_format (
+                                                 const char *class_name);
+
+CONVERTER *retrieve_converter (size_t converter_descriptor);
+size_t new_converter (enum converter_format format, unsigned long flags);
+
+void set_converter_init_information (CONVERTER *converter,
+                            CONVERTER_INITIALIZATION_INFO *format_defaults,
+                            CONVERTER_INITIALIZATION_INFO *user_conf);
+
+CONVERTER_INITIALIZATION_INFO *converter_defaults (
+                    enum converter_format converter_format,
+                    CONVERTER_INITIALIZATION_INFO *user_conf);
+CONVERTER *converter_converter (enum converter_format format,
+                     const CONVERTER_INITIALIZATION_INFO *input_user_conf,
+                     unsigned long converter_flags);
+
+CONVERTER_INITIALIZATION_INFO *new_converter_initialization_info (void);
+void destroy_converter_initialization_info (
+                            CONVERTER_INITIALIZATION_INFO *defaults);
 
 void converter_set_document (CONVERTER *converter, DOCUMENT *document);
 
-int set_conf (OPTION *option, int int_value, const char *char_value);
-void force_conf (OPTION *option, int int_value, const char *char_value);
+void reset_converter (CONVERTER *converter);
+void destroy_converter (CONVERTER *converter);
 
 void determine_files_and_directory (CONVERTER *self, const char *output_format,
                                     char **result);
@@ -176,9 +212,6 @@ void set_file_path (CONVERTER *self, const char *filename, const char *filepath,
                     const char *destination_directory);
 void clear_output_unit_files (FILE_NAME_PATH_COUNTER_LIST *output_unit_files);
 void free_output_unit_files (FILE_NAME_PATH_COUNTER_LIST *output_unit_files);
-
-void free_generic_converter (CONVERTER *self);
-
 
 void xml_format_text_with_numeric_entities (const char *text, TEXT *result);
 char *xml_numeric_entity_accent (enum command_id cmd, const char *text);

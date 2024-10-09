@@ -13,6 +13,27 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
+/* NOTE we store in AV lists indexed as size_t.  AV max size seems to be
+   the max of SSize_t, if it is < SIZE_MAX there could theoretically be
+   overflows.  However, Perl documentation says sizeof(SSize_t) == sizeof(Size_t)
+   and "Size_t ... is usually size_t".  In addition these are very big numbers.
+   In Perl documentation there is no description of a constant that would
+   give the max of SSize_t.
+
+   We build index numbers, document, output units and converter descriptors
+   indexed as size_t to Perl SV using newSViv ((IV)descriptor).  There
+   could theoretically be and overflow of IV if PERL_QUAD_MAX < SIZE_MAX.
+   (PERL_QUAD_MAX is the max size of IV in Perl).  On an Intel 64 bit
+   GNU Linux, PERL_QUAD_MAX is half of SIZE_MAX.  However those are
+   big numbers, while the Texinfo command numbers are quite small and other
+   descriptor numbers should be very small so this should not be an issue
+   in practice.
+
+   We also get IV and cast to size_t when getting info from Perl, like
+   descriptor = (size_t) SvIV (descriptor_sv).  In that case there is no
+   reason to overflow.
+ */
+
 #include <config.h>
 #include <stdlib.h>
 #include <string.h>
@@ -38,7 +59,8 @@
 #include "types_data.h"
 #include "tree_types.h"
 #include "global_commands_types.h"
-/* for GLOBAL_INFO ERROR_MESSAGE */
+#include "option_types.h"
+/* for GLOBAL_INFO ERROR_MESSAGE CL_* */
 #include "document_types.h"
 /* CONVERTER sv_string_type */
 #include "converter_types.h"
@@ -51,6 +73,8 @@
    direction_names expanded_formats_number output_unit_type_names
    informative_command_value get_global_document_command */
 #include "utils.h"
+/* find_option_string */
+#include "customization_options.h"
 /* for debugging */
 #include "debug.h"
 /* for clear_error_message_list */
@@ -60,6 +84,7 @@
 #include "output_unit.h"
 /* for TEXT_OPTIONS */
 #include "convert_to_text.h"
+/* also button_function_type_string */
 #include "get_perl_info.h"
 #include "build_perl_info.h"
 
@@ -130,6 +155,7 @@ perl_only_strndup (const char *s, size_t n)
   return ret;
 }
 
+/* called once at loading time */
 int
 init (int texinfo_uninstalled, SV *pkgdatadir_sv, SV *builddir_sv,
       SV *top_srcdir_sv)
@@ -160,6 +186,8 @@ init (int texinfo_uninstalled, SV *pkgdatadir_sv, SV *builddir_sv,
   return 1;
 }
 
+
+/* Build Texinfo tree data and Texinfo tree to Perl */
 
 void element_to_perl_hash (ELEMENT *e, int avoid_recursion);
 
@@ -176,7 +204,7 @@ build_perl_array (const ELEMENT_LIST *e_l, int avoid_recursion)
 {
   SV *sv;
   AV *av;
-  int i;
+  size_t i;
 
   dTHX;
 
@@ -209,7 +237,7 @@ build_perl_array (const ELEMENT_LIST *e_l, int avoid_recursion)
               element_to_perl_hash (e_l->list[i], avoid_recursion);
             }
         }
-      av_store (av, i, newRV_inc ((SV *) e_l->list[i]->hv));
+      av_store (av, (SSize_t) i, newRV_inc ((SV *) e_l->list[i]->hv));
     }
   return sv;
 }
@@ -219,7 +247,7 @@ build_perl_const_element_array (const CONST_ELEMENT_LIST *e_l, int avoid_recursi
 {
   SV *sv;
   AV *av;
-  int i;
+  size_t i;
 
   dTHX;
 
@@ -253,13 +281,13 @@ build_perl_const_element_array (const CONST_ELEMENT_LIST *e_l, int avoid_recursi
               element_to_perl_hash (f, avoid_recursion);
             }
         }
-      av_store (av, i, newRV_inc ((SV *) e_l->list[i]->hv));
+      av_store (av, (SSize_t) i, newRV_inc ((SV *) e_l->list[i]->hv));
     }
   return sv;
 }
 
 /* contents appears in other parts of the tree */
-void
+static void
 build_perl_container (ELEMENT *e, int avoid_recursion)
 {
   SV *sv;
@@ -281,7 +309,7 @@ build_perl_directions (const ELEMENT * const *e_l, int avoid_recursion)
 {
   SV *sv;
   HV *hv;
-  int d;
+  size_t d;
 
   dTHX;
 
@@ -347,7 +375,7 @@ build_additional_info (HV *extra, const ASSOCIATED_INFO *a,
 
   if (a->info_number > 0)
     {
-      int i;
+      size_t i;
 
       for (i = 0; i < a->info_number; i++)
         {
@@ -450,7 +478,7 @@ build_additional_info (HV *extra, const ASSOCIATED_INFO *a,
               av_unshift (av, l->number);
 
               STORE(newRV_inc ((SV *)av));
-              /* An array of strings or integers. */
+              /* An small array of strings. */
               for (j = 0; j < l->number; j++)
                 {
                   SV *sv = newSVpv_utf8 (l->list[j],
@@ -516,7 +544,7 @@ store_source_mark_list (const ELEMENT *e)
     {
       AV *av;
       SV *sv;
-      int i;
+      size_t i;
 
       if (e->source_mark_list->number == 0)
         {
@@ -923,7 +951,7 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
   if (e->e.c->contents.number > 0)
     {
       AV *av;
-      int i;
+      size_t i;
 
       av = newAV ();
       sv = newRV_noinc ((SV *) av);
@@ -947,7 +975,7 @@ element_to_perl_hash (ELEMENT *e, int avoid_recursion)
   if (e->e.c->args.number > 0)
     {
       AV *av;
-      int i;
+      size_t i;
 
       av = newAV ();
       sv = newRV_noinc ((SV *) av);
@@ -1026,227 +1054,29 @@ build_texinfo_tree (ELEMENT *root, int avoid_recursion)
   return root->hv;
 }
 
-/* Return array of target elements.  build_texinfo_tree must
-   be called first. */
-AV *
-build_target_elements_list (const LABEL_LIST *labels_list)
+void
+build_tree_to_build (ELEMENT_LIST *tree_to_build)
 {
-  AV *target_array;
-  SV *sv;
-  int i;
-
-  dTHX;
-
-  target_array = newAV ();
-  av_unshift (target_array, labels_list->number);
-
-  for (i = 0; i < labels_list->number; i++)
+  if (tree_to_build->number > 0)
     {
-      sv = newRV_inc (labels_list->list[i].element->hv);
-      av_store (target_array, i, sv);
-    }
-
-  return target_array;
-}
-
-HV *
-build_identifiers_target (const LABEL_LIST *identifiers_target)
-{
-  HV* hv;
-
-  dTHX;
-
-  hv = newHV ();
-
-  if (identifiers_target->number > 0)
-    {
-      int i;
-      for (i = 0; i < identifiers_target->number; i++)
+      size_t i;
+      for (i = 0; i < tree_to_build->number; i++)
         {
-          SV *sv = newRV_inc (identifiers_target->list[i].element->hv);
-          hv_store (hv, identifiers_target->list[i].identifier,
-                    strlen (identifiers_target->list[i].identifier),
-                    sv, 0);
+          build_texinfo_tree (tree_to_build->list[i], 1);
         }
+      tree_to_build->number = 0;
     }
-  return hv;
-}
-
-AV *
-build_internal_xref_list (const ELEMENT_LIST *internal_xref_list)
-{
-  AV *list_av;
-  SV *sv;
-  int i;
-
-  dTHX;
-
-  list_av = newAV ();
-  av_unshift (list_av, internal_xref_list->number);
-
-  for (i = 0; i < internal_xref_list->number; i++)
-    {
-      sv = newRV_inc (internal_xref_list->list[i]->hv);
-      av_store (list_av, i, sv);
-    }
-
-  return list_av;
-}
-
-AV *
-build_elements_list (const CONST_ELEMENT_LIST *list)
-{
-  AV *list_av;
-  SV *sv;
-  int i;
-
-  dTHX;
-
-  list_av = newAV ();
-
-  av_unshift (list_av, list->number);
-
-  for (i = 0; i < list->number; i++)
-    {
-      sv = newRV_inc (list->list[i]->hv);
-      av_store (list_av, i, sv);
-    }
-
-  return list_av;
-}
-
-/* Return hash for list of @float's that appeared in the file. */
-HV *
-build_float_types_list (const FLOAT_RECORD_LIST *floats)
-{
-  HV *float_hash;
-  SV *sv;
-  int i;
-
-  dTHX;
-
-  float_hash = newHV ();
-
-  for (i = 0; i < floats->number; i++)
-    {
-      AV *av = 0;
-      SV *float_type = newSVpv_utf8 (floats->list[i].type, 0);
-      /* use hv_fetch_ent to be able to pass a SV string for the key and
-         not a char to be able to signal that it is UTF-8 encoded.  In recent
-         perlapi, it is said that a negative len can be used to specify
-         that the key is UTF-8 encoded, but it is not clear in which
-         perl version this was added, it does not seem to be documented
-         in 5.10.0.
-      */
-      HE *type_array_entry = hv_fetch_ent (float_hash,
-                                           float_type, 0, 0);
-      if (type_array_entry)
-        {
-          SV *type_array_value = HeVAL (type_array_entry);
-          if (type_array_value)
-            av = (AV *) SvRV (type_array_value);
-        }
-      if (!av)
-        {
-          av = newAV ();
-          hv_store_ent (float_hash, float_type,
-                        newRV_noinc ((SV *)av), 0);
-        }
-      sv = newRV_inc ((SV *)floats->list[i].element->hv);
-      av_push (av, sv);
-    }
-
-  return float_hash;
-}
-
-/* returns a hash for a single entry in $self->{'index_names'}, containing
-   information about a single index. */
-static HV *
-build_single_index_data (const INDEX *index)
-{
-#define STORE(key, value) hv_store (hv, key, strlen (key), value, 0)
-
-  HV *hv;
-  AV *entries;
-  int j;
-  int entry_number;
-
-  dTHX;
-
-  hv = newHV ();
-
-  STORE("name", newSVpv_utf8 (index->name, 0));
-  STORE("in_code", index->in_code ? newSViv (1) : newSViv (0));
-
-  if (index->merged_in)
-    {
-      STORE("merged_in", newSVpv_utf8 (index->merged_in->name, 0));
-    }
-
-  if (index->entries_number > 0)
-    {
-      entries = newAV ();
-      av_unshift (entries, index->entries_number);
-      STORE("index_entries", newRV_noinc ((SV *) entries));
-#undef STORE
-
-      entry_number = 1;
-      for (j = 0; j < index->entries_number; j++)
-        {
-#define STORE2(key, value) hv_store (entry, key, strlen (key), value, 0)
-          HV *entry;
-          const INDEX_ENTRY *e;
-
-          e = &index->index_entries[j];
-          entry = newHV ();
-
-          STORE2("index_name", newSVpv_utf8 (index->name, 0));
-          STORE2("entry_element",
-                 newRV_inc ((SV *)e->entry_element->hv));
-          if (e->entry_associated_element)
-            STORE2("entry_associated_element",
-                   newRV_inc ((SV *)e->entry_associated_element->hv));
-          STORE2("entry_number", newSViv (entry_number));
-
-          av_store (entries, j, newRV_noinc ((SV *)entry));
-
-          entry_number++;
-#undef STORE2
-        }
-    }
-  return hv;
-}
-
-/* Return object to be used as $self->{'index_names'} in the perl code.
-   build_texinfo_tree must be called before this so all the 'hv' fields
-   are set on the elements in the tree. */
-HV *
-build_index_data (const INDEX_LIST *indices_info)
-{
-  size_t i;
-  HV *hv;
-
-  dTHX;
-
-  hv = newHV ();
-
-  for (i = 0; i < indices_info->number; i++)
-    {
-      const INDEX *idx = indices_info->list[i];
-      HV *hv2 = build_single_index_data (idx);
-      hv_store (hv, idx->name, strlen (idx->name),
-                newRV_noinc ((SV *)hv2), 0);
-    }
-
-  return hv;
 }
 
 
+
+/* build often used C data to Perl */
+
 AV *
 build_string_list (const STRING_LIST *strings_list, enum sv_string_type type)
 {
   AV *av;
-  int i;
+  size_t i;
 
   dTHX;
 
@@ -1265,172 +1095,50 @@ build_string_list (const STRING_LIST *strings_list, enum sv_string_type type)
   return av;
 }
 
-
-/* Return object to be used as 'info', retrievable with the
-   'global_information' function. */
-HV *
-build_global_info (const GLOBAL_INFO *global_info_ref,
-                   const GLOBAL_COMMANDS *global_commands_ref)
+AV *
+build_elements_list (const CONST_ELEMENT_LIST *list)
 {
-  HV *hv;
-  const GLOBAL_INFO global_info = *global_info_ref;
-  const GLOBAL_COMMANDS global_commands = *global_commands_ref;
-  const ELEMENT *document_language;
-  int i;
+  AV *list_av;
+  SV *sv;
+  size_t i;
 
   dTHX;
 
-  hv = newHV ();
-  if (global_info.input_encoding_name)
-    hv_store (hv, "input_encoding_name", strlen ("input_encoding_name"),
-              newSVpv (global_info.input_encoding_name, 0), 0);
-  if (global_info.input_file_name)
-    hv_store (hv, "input_file_name", strlen ("input_file_name"),
-              newSVpv (global_info.input_file_name, 0), 0);
-  if (global_info.input_directory)
-    hv_store (hv, "input_directory", strlen ("input_directory"),
-              newSVpv (global_info.input_directory, 0), 0);
-  if (global_info.input_perl_encoding)
-    hv_store (hv, "input_perl_encoding", strlen ("input_perl_encoding"),
-              newSVpv (global_info.input_perl_encoding, 0), 0);
+  list_av = newAV ();
 
-  if (global_info.included_files.number)
+  av_unshift (list_av, list->number);
+
+  for (i = 0; i < list->number; i++)
     {
-      AV *av = build_string_list (&global_info.included_files, svt_byte);
-      hv_store (hv, "included_files", strlen ("included_files"),
-                newRV_noinc ((SV *) av), 0);
+      sv = newRV_inc (list->list[i]->hv);
+      av_store (list_av, i, sv);
     }
 
-  for (i = 0; i < global_info.other_info.info_number; i++)
-    {
-      const KEY_STRING_PAIR *k = &global_info.other_info.info[i];
-      hv_store (hv, k->key, strlen (k->key), newSVpv_utf8 (k->string, 0), 0);
-    }
-
-  /* duplicate information with global_commands to avoid needing to use
-     global_commands and build tree elements in other codes, for
-     information useful for structuring and transformation codes */
-  if (global_commands.novalidate)
-    hv_store (hv, "novalidate", strlen ("novalidate"),
-              newSViv (1), 0);
-
-  if (global_commands.setfilename)
-    {
-      const char *setfilename_text
-        = informative_command_value (global_commands.setfilename);
-      if (setfilename_text)
-      hv_store (hv, "setfilename", strlen ("setfilename"),
-                newSVpv_utf8 (setfilename_text, 0), 0);
-    }
-
-  document_language = get_global_document_command (global_commands_ref,
-                                       CM_documentlanguage, CL_preamble);
-  if (document_language)
-    {
-      const char *language = informative_command_value (document_language);
-      hv_store (hv, "documentlanguage", strlen ("documentlanguage"),
-                newSVpv (language, 0), 0);
-    }
-
-  return hv;
+  return list_av;
 }
 
-/* Return object to be used as 'commands_info', which holds references
-   to tree elements. */
-HV *
-build_global_commands (const GLOBAL_COMMANDS *global_commands_ref)
+/* currently unused */
+AV *
+build_integer_stack (const INTEGER_STACK *integer_stack)
 {
-  HV *hv;
   AV *av;
-  int i;
-  const GLOBAL_COMMANDS global_commands = *global_commands_ref;
+  size_t i;
 
   dTHX;
 
-  hv = newHV ();
+  av = newAV ();
 
-  /* These should be unique elements. */
-
-#define GLOBAL_UNIQUE_CASE(cmd) \
-  if (global_commands.cmd && global_commands.cmd->hv) \
-    { \
-      hv_store (hv, #cmd, strlen (#cmd), \
-                newRV_inc ((SV *) global_commands.cmd->hv), 0); \
-    }
-
-  GLOBAL_UNIQUE_CASE(setfilename);
-
-#include "main/global_unique_commands_case.c"
-
-#undef GLOBAL_UNIQUE_CASE
-
-  /* list of direntry and dircategory */
-  if (global_commands.dircategory_direntry.number > 0)
+  for (i = 0; i < integer_stack->top; i++)
     {
-      AV *av = newAV ();
-      hv_store (hv, "dircategory_direntry", strlen ("dircategory_direntry"),
-                newRV_noinc ((SV *) av), 0);
-      for (i = 0; i < global_commands.dircategory_direntry.number; i++)
-        {
-          const ELEMENT *e = global_commands.dircategory_direntry.list[i];
-          if (e->hv)
-            av_push (av, newRV_inc ((SV *) e->hv));
-        }
+      int value = integer_stack->stack[i];
+      av_push (av, newSViv (value));
     }
-
-  /* The following are arrays of elements. */
-
-  if (global_commands.footnotes.number > 0)
-    {
-      av = newAV ();
-      hv_store (hv, "footnote", strlen ("footnote"),
-                newRV_noinc ((SV *) av), 0);
-      for (i = 0; i < global_commands.footnotes.number; i++)
-        {
-          const ELEMENT *e = global_commands.footnotes.list[i];
-          if (e->hv)
-            av_push (av, newRV_inc ((SV *) e->hv));
-        }
-    }
-
-  /* float is a type, it does not work there, use floats instead */
-  if (global_commands.floats.number > 0)
-    {
-      av = newAV ();
-      hv_store (hv, "float", strlen ("float"),
-                newRV_noinc ((SV *) av), 0);
-      for (i = 0; i < global_commands.floats.number; i++)
-        {
-          const ELEMENT *e = global_commands.floats.list[i];
-          if (e->hv)
-            av_push (av, newRV_inc ((SV *) e->hv));
-        }
-    }
-
-#define GLOBAL_CASE(cmd) \
-  if (global_commands.cmd.number > 0)                              \
-    {                                                                   \
-      av = newAV ();                                                    \
-      hv_store (hv, #cmd, strlen (#cmd),                                \
-                newRV_noinc ((SV *) av), 0);                              \
-      for (i = 0; i < global_commands.cmd.number; i++)             \
-        {                                                               \
-          const ELEMENT *e = global_commands.cmd.list[i];            \
-          if (e->hv)                                                    \
-            av_push (av, newRV_inc ((SV *) e->hv));                     \
-        }                                                               \
-    }
-
-#include "global_multi_commands_case.c"
-
-#undef GLOBAL_CASE
-
-
-  return hv;
+  return av;
 }
 
-
 
+
+/* build error messages data to Perl, for Parser, Document and Converters */
 
 static void
 build_source_info_hash (const SOURCE_INFO source_info, HV *hv)
@@ -1495,7 +1203,7 @@ AV *
 build_errors (const ERROR_MESSAGE *error_list, size_t error_number)
 {
   AV *av;
-  int i;
+  size_t i;
 
   dTHX;
 
@@ -1527,7 +1235,7 @@ add_formatted_error_messages (const ERROR_MESSAGE_LIST *error_messages,
 {
   SV **errors_warnings_sv;
   SV **error_nrs_sv;
-  int i;
+  size_t i;
 
   dTHX;
 
@@ -1543,6 +1251,7 @@ add_formatted_error_messages (const ERROR_MESSAGE_LIST *error_messages,
   if (errors_warnings_sv && SvOK (*errors_warnings_sv))
     {
       int error_nrs = 0;
+      /* initialize number of errors from the existing errors in Perl */
       if (error_nrs_sv && SvOK (*error_nrs_sv))
         {
           error_nrs = SvIV (*error_nrs_sv);
@@ -1560,6 +1269,7 @@ add_formatted_error_messages (const ERROR_MESSAGE_LIST *error_messages,
         }
       else
         {
+          /* add errors from error_messages */
           AV *av = (AV *)SvRV (*errors_warnings_sv);
 
           for (i = 0; i < error_messages->number; i++)
@@ -1567,10 +1277,10 @@ add_formatted_error_messages (const ERROR_MESSAGE_LIST *error_messages,
               const ERROR_MESSAGE error_msg = error_messages->list[i];
               SV *sv = convert_error (error_msg);
 
-              if (error_msg.type == MSG_error && !error_msg.continuation)
-                error_nrs++;
               av_push (av, sv);
             }
+
+          error_nrs += error_messages->error_nrs;
 
           if (error_nrs)
             {
@@ -1658,6 +1368,365 @@ pass_document_parser_errors_to_registrar (size_t document_descriptor,
 }
 
 
+
+/* Build data registered in Texinfo Document to Perl and Document */
+
+/* Return array of target elements.  build_texinfo_tree must
+   be called first. */
+static AV *
+build_target_elements_list (const LABEL_LIST *labels_list)
+{
+  AV *target_array;
+  SV *sv;
+  size_t i;
+
+  dTHX;
+
+  target_array = newAV ();
+  av_unshift (target_array, labels_list->number);
+
+  for (i = 0; i < labels_list->number; i++)
+    {
+      sv = newRV_inc (labels_list->list[i].element->hv);
+      av_store (target_array, i, sv);
+    }
+
+  return target_array;
+}
+
+static HV *
+build_identifiers_target (const LABEL_LIST *identifiers_target)
+{
+  HV* hv;
+
+  dTHX;
+
+  hv = newHV ();
+
+  if (identifiers_target->number > 0)
+    {
+      size_t i;
+      for (i = 0; i < identifiers_target->number; i++)
+        {
+          SV *sv = newRV_inc (identifiers_target->list[i].element->hv);
+          hv_store (hv, identifiers_target->list[i].identifier,
+                    strlen (identifiers_target->list[i].identifier),
+                    sv, 0);
+        }
+    }
+  return hv;
+}
+
+static AV *
+build_internal_xref_list (const ELEMENT_LIST *internal_xref_list)
+{
+  AV *list_av;
+  SV *sv;
+  size_t i;
+
+  dTHX;
+
+  list_av = newAV ();
+  av_unshift (list_av, internal_xref_list->number);
+
+  for (i = 0; i < internal_xref_list->number; i++)
+    {
+      sv = newRV_inc (internal_xref_list->list[i]->hv);
+      av_store (list_av, i, sv);
+    }
+
+  return list_av;
+}
+
+/* Return hash for list of @float's that appeared in the file. */
+static HV *
+build_float_types_list (const FLOAT_RECORD_LIST *floats)
+{
+  HV *float_hash;
+  SV *sv;
+  size_t i;
+
+  dTHX;
+
+  float_hash = newHV ();
+
+  for (i = 0; i < floats->number; i++)
+    {
+      AV *av = 0;
+      SV *float_type = newSVpv_utf8 (floats->list[i].type, 0);
+      /* use hv_fetch_ent to be able to pass a SV string for the key and
+         not a char to be able to signal that it is UTF-8 encoded.  In recent
+         perlapi, it is said that a negative len can be used to specify
+         that the key is UTF-8 encoded, but it is not clear in which
+         perl version this was added, it does not seem to be documented
+         in 5.10.0.
+      */
+      HE *type_array_entry = hv_fetch_ent (float_hash,
+                                           float_type, 0, 0);
+      if (type_array_entry)
+        {
+          SV *type_array_value = HeVAL (type_array_entry);
+          if (type_array_value)
+            av = (AV *) SvRV (type_array_value);
+        }
+      if (!av)
+        {
+          av = newAV ();
+          hv_store_ent (float_hash, float_type,
+                        newRV_noinc ((SV *)av), 0);
+        }
+      sv = newRV_inc ((SV *)floats->list[i].element->hv);
+      av_push (av, sv);
+    }
+
+  return float_hash;
+}
+
+/* returns a hash for a single entry in $self->{'index_names'}, containing
+   information about a single index. */
+static HV *
+build_single_index_data (const INDEX *index)
+{
+#define STORE(key, value) hv_store (hv, key, strlen (key), value, 0)
+
+  HV *hv;
+  AV *entries;
+  size_t j;
+  size_t entry_number;
+
+  dTHX;
+
+  hv = newHV ();
+
+  STORE("name", newSVpv_utf8 (index->name, 0));
+  STORE("in_code", index->in_code ? newSViv (1) : newSViv (0));
+
+  if (index->merged_in)
+    {
+      STORE("merged_in", newSVpv_utf8 (index->merged_in->name, 0));
+    }
+
+  if (index->entries_number > 0)
+    {
+      entries = newAV ();
+      av_unshift (entries, index->entries_number);
+      STORE("index_entries", newRV_noinc ((SV *) entries));
+#undef STORE
+
+      entry_number = 1;
+      for (j = 0; j < index->entries_number; j++)
+        {
+#define STORE2(key, value) hv_store (entry, key, strlen (key), value, 0)
+          HV *entry;
+          const INDEX_ENTRY *e;
+
+          e = &index->index_entries[j];
+          entry = newHV ();
+
+          STORE2("index_name", newSVpv_utf8 (index->name, 0));
+          STORE2("entry_element",
+                 newRV_inc ((SV *)e->entry_element->hv));
+          if (e->entry_associated_element)
+            STORE2("entry_associated_element",
+                   newRV_inc ((SV *)e->entry_associated_element->hv));
+          /* NOTE theoretical IV overflow if PERL_QUAD_MAX < SIZE_MAX */
+          STORE2("entry_number", newSViv ((IV) entry_number));
+
+          av_store (entries, j, newRV_noinc ((SV *)entry));
+
+          entry_number++;
+#undef STORE2
+        }
+    }
+  return hv;
+}
+
+/* Return object to be used as $self->{'index_names'} in the perl code.
+   build_texinfo_tree must be called before this so all the 'hv' fields
+   are set on the elements in the tree. */
+static HV *
+build_index_data (const INDEX_LIST *indices_info)
+{
+  size_t i;
+  HV *hv;
+
+  dTHX;
+
+  hv = newHV ();
+
+  for (i = 0; i < indices_info->number; i++)
+    {
+      const INDEX *idx = indices_info->list[i];
+      HV *hv2 = build_single_index_data (idx);
+      hv_store (hv, idx->name, strlen (idx->name),
+                newRV_noinc ((SV *)hv2), 0);
+    }
+
+  return hv;
+}
+
+/* Return object to be used as 'info', retrievable with the
+   'global_information' function. */
+static HV *
+build_global_info (const GLOBAL_INFO *global_info_ref,
+                   const GLOBAL_COMMANDS *global_commands_ref)
+{
+  HV *hv;
+  const GLOBAL_INFO global_info = *global_info_ref;
+  const GLOBAL_COMMANDS global_commands = *global_commands_ref;
+  const ELEMENT *document_language;
+  size_t i;
+
+  dTHX;
+
+  hv = newHV ();
+  if (global_info.input_encoding_name)
+    hv_store (hv, "input_encoding_name", strlen ("input_encoding_name"),
+              newSVpv (global_info.input_encoding_name, 0), 0);
+  if (global_info.input_file_name)
+    hv_store (hv, "input_file_name", strlen ("input_file_name"),
+              newSVpv (global_info.input_file_name, 0), 0);
+  if (global_info.input_directory)
+    hv_store (hv, "input_directory", strlen ("input_directory"),
+              newSVpv (global_info.input_directory, 0), 0);
+  if (global_info.input_perl_encoding)
+    hv_store (hv, "input_perl_encoding", strlen ("input_perl_encoding"),
+              newSVpv (global_info.input_perl_encoding, 0), 0);
+
+  if (global_info.included_files.number)
+    {
+      AV *av = build_string_list (&global_info.included_files, svt_byte);
+      hv_store (hv, "included_files", strlen ("included_files"),
+                newRV_noinc ((SV *) av), 0);
+    }
+
+  for (i = 0; i < global_info.other_info.info_number; i++)
+    {
+      const KEY_STRING_PAIR *k = &global_info.other_info.info[i];
+      hv_store (hv, k->key, strlen (k->key), newSVpv_utf8 (k->string, 0), 0);
+    }
+
+  /* duplicate information with global_commands to avoid needing to use
+     global_commands and build tree elements in other codes, for
+     information useful for structuring and transformation codes */
+  if (global_commands.novalidate)
+    hv_store (hv, "novalidate", strlen ("novalidate"),
+              newSViv (1), 0);
+
+  if (global_commands.setfilename)
+    {
+      const char *setfilename_text
+        = informative_command_value (global_commands.setfilename);
+      if (setfilename_text)
+      hv_store (hv, "setfilename", strlen ("setfilename"),
+                newSVpv_utf8 (setfilename_text, 0), 0);
+    }
+
+  document_language = get_global_document_command (global_commands_ref,
+                                       CM_documentlanguage, CL_preamble);
+  if (document_language)
+    {
+      const char *language = informative_command_value (document_language);
+      hv_store (hv, "documentlanguage", strlen ("documentlanguage"),
+                newSVpv (language, 0), 0);
+    }
+
+  return hv;
+}
+
+/* Return object to be used as 'commands_info', which holds references
+   to tree elements. */
+static HV *
+build_global_commands (const GLOBAL_COMMANDS *global_commands_ref)
+{
+  HV *hv;
+  AV *av;
+  size_t i;
+  const GLOBAL_COMMANDS global_commands = *global_commands_ref;
+
+  dTHX;
+
+  hv = newHV ();
+
+  /* These should be unique elements. */
+
+#define GLOBAL_UNIQUE_CASE(cmd) \
+  if (global_commands.cmd && global_commands.cmd->hv) \
+    { \
+      hv_store (hv, #cmd, strlen (#cmd), \
+                newRV_inc ((SV *) global_commands.cmd->hv), 0); \
+    }
+
+  GLOBAL_UNIQUE_CASE(setfilename);
+
+#include "main/global_unique_commands_case.c"
+
+#undef GLOBAL_UNIQUE_CASE
+
+  /* list of direntry and dircategory */
+  if (global_commands.dircategory_direntry.number > 0)
+    {
+      AV *av = newAV ();
+      hv_store (hv, "dircategory_direntry", strlen ("dircategory_direntry"),
+                newRV_noinc ((SV *) av), 0);
+      for (i = 0; i < global_commands.dircategory_direntry.number; i++)
+        {
+          const ELEMENT *e = global_commands.dircategory_direntry.list[i];
+          if (e->hv)
+            av_push (av, newRV_inc ((SV *) e->hv));
+        }
+    }
+
+  /* The following are arrays of elements. */
+
+  if (global_commands.footnotes.number > 0)
+    {
+      av = newAV ();
+      hv_store (hv, "footnote", strlen ("footnote"),
+                newRV_noinc ((SV *) av), 0);
+      for (i = 0; i < global_commands.footnotes.number; i++)
+        {
+          const ELEMENT *e = global_commands.footnotes.list[i];
+          if (e->hv)
+            av_push (av, newRV_inc ((SV *) e->hv));
+        }
+    }
+
+  /* float is a type, it does not work there, use floats instead */
+  if (global_commands.floats.number > 0)
+    {
+      av = newAV ();
+      hv_store (hv, "float", strlen ("float"),
+                newRV_noinc ((SV *) av), 0);
+      for (i = 0; i < global_commands.floats.number; i++)
+        {
+          const ELEMENT *e = global_commands.floats.list[i];
+          if (e->hv)
+            av_push (av, newRV_inc ((SV *) e->hv));
+        }
+    }
+
+#define GLOBAL_CASE(cmd) \
+  if (global_commands.cmd.number > 0)                              \
+    {                                                                   \
+      av = newAV ();                                                    \
+      hv_store (hv, #cmd, strlen (#cmd),                                \
+                newRV_noinc ((SV *) av), 0);                              \
+      for (i = 0; i < global_commands.cmd.number; i++)             \
+        {                                                               \
+          const ELEMENT *e = global_commands.cmd.list[i];            \
+          if (e->hv)                                                    \
+            av_push (av, newRV_inc ((SV *) e->hv));                     \
+        }                                                               \
+    }
+
+#include "global_multi_commands_case.c"
+
+#undef GLOBAL_CASE
+
+
+  return hv;
+}
 
 /* build a minimal document, without tree/global commands/indices, only
    with the document descriptor information, errors and information that do
@@ -1753,7 +1822,8 @@ fill_document_hv (HV *hv, size_t document_descriptor, int no_store)
 
   av_internal_xref = build_internal_xref_list (&document->internal_references);
 
-  hv_identifiers_target = build_identifiers_target (&document->identifiers_target);
+  hv_identifiers_target
+   = build_identifiers_target (&document->identifiers_target);
 
   av_labels_list = build_target_elements_list (&document->labels_list);
 
@@ -1883,7 +1953,7 @@ rebuild_document (SV *document_in, int no_store)
 }
 
 SV *
-store_texinfo_tree (DOCUMENT *document, HV *document_hv)
+store_document_texinfo_tree (DOCUMENT *document, HV *document_hv)
 {
   SV *result_sv = 0;
   const char *key = "tree";
@@ -1902,6 +1972,8 @@ store_texinfo_tree (DOCUMENT *document, HV *document_hv)
     }
   return result_sv;
 }
+
+/* Build Texinfo Document registered data to Perl */
 
 /* there are 2 differences between BUILD_PERL_DOCUMENT_ITEM and
    BUILD_PERL_DOCUMENT_LIST: in BUILD_PERL_DOCUMENT_LIST no check on existing
@@ -1923,7 +1995,7 @@ funcname (SV *document_in) \
 \
   if (document && document->fieldname)\
     {\
-      store_texinfo_tree (document, document_hv);\
+      store_document_texinfo_tree (document, document_hv);\
       if (document->modified_information & flagname)\
         {\
           HVAV *result_av_hv = buildname (document->fieldname);\
@@ -1977,7 +2049,7 @@ funcname (SV *document_in) \
 \
   if (document)\
     {\
-      store_texinfo_tree (document, document_hv);\
+      store_document_texinfo_tree (document, document_hv);\
       if (document->modified_information & flagname)\
         {\
           HVAV *result_av_hv = buildname (&document->fieldname);\
@@ -2063,694 +2135,9 @@ document_global_information (SV *document_in)
 
 
 
-static void
-output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
-{
-  int i;
-  SV *sv;
-  HV *directions_hv;
+/* Build indices information for Perl */
 
-  dTHX;
-
-  /* output_unit->hv may already exist because of directions or if there was a
-     first_in_page referring to output_unit, or because the output units
-     list is being rebuilt */
-  if (!output_unit->hv)
-    output_unit->hv = newHV ();
-  else
-    hv_clear (output_unit->hv);
-
-#define STORE(key) hv_store (output_unit->hv, key, strlen (key), sv, 0)
-  sv = newSVpv (output_unit_type_names[output_unit->unit_type], 0);
-  STORE("unit_type");
-
-  if (output_unit->unit_type == OU_special_unit)
-    {
-      ELEMENT *command = output_unit->uc.special_unit_command;
-      if (!command->hv)
-        {
-          SV *unit_sv;
-
-          /* a virtual out of tree element, add it to perl */
-          element_to_perl_hash (command, 0);
-
-          unit_sv = newRV_inc ((SV *) output_unit->hv);
-          hv_store (command->hv, "associated_unit",
-                    strlen ("associated_unit"), unit_sv, 0);
-        }
-      sv = newRV_inc ((SV *) command->hv);
-      STORE("unit_command");
-    }
-  else
-    {
-      const ELEMENT *command = output_unit->uc.unit_command;
-
-      if (command)
-        {
-          if (!command->hv)
-            fatal ("Missing output unit unit_command hv");
-
-          sv = newRV_inc ((SV *) command->hv);
-          STORE("unit_command");
-        }
-   /* there is nothing else of use for external_node_unit, exit now */
-      if (output_unit->unit_type == OU_external_node_unit)
-        return;
-    }
-
-  sv = newSViv ((IV) output_unit->index);
-  STORE("unit_index");
-
-  /* setup an hash reference in any case */
-  directions_hv = newHV ();
-  sv = newRV_noinc ((SV *) directions_hv);
-  STORE("directions");
-
-  for (i = 0; i < RUD_type_FirstInFileNodeBack+1; i++)
-    {
-      if (output_unit->directions[i])
-        {
-          const char *direction_name = relative_unit_direction_name[i];
-          const OUTPUT_UNIT *direction_unit = output_unit->directions[i];
-          SV *unit_sv;
-          if (!direction_unit->hv)
-            {
-  /* the Perl references should exist for all the output units because
-     they are setup and built to Perl if needed in _prepare_conversion_units,
-     while directions are setup afterwards in _prepare_units_directions_files.
-     external_node_target are not set in _prepare_conversion_units, but
-     are set before rebuilding the other output units in
-     _prepare_units_directions_files XS code */
-
-              char *msg;
-              xasprintf (&msg, "BUG: no output unit Perl ref: %s",
-                                   output_unit_texi (direction_unit));
-              fatal (msg);
-              free (msg);
-            }
-          unit_sv = newRV_inc ((SV *) direction_unit->hv);
-          hv_store (directions_hv, direction_name, strlen (direction_name),
-                    unit_sv, 0);
-        }
-    }
-
-  if (output_unit->associated_document_unit)
-    {
-      sv = newRV_inc ((SV *) output_unit->associated_document_unit->hv);
-      STORE("associated_document_unit");
-    }
-
-  if (output_unit->unit_filename)
-    {
-      sv = newSVpv_utf8 (output_unit->unit_filename,
-                         strlen (output_unit->unit_filename));
-      STORE("unit_filename");
-    }
-
-  if (output_unit->unit_contents.number)
-    {
-      AV *av;
-      int i;
-
-      av = newAV ();
-      sv = newRV_noinc ((SV *) av);
-      STORE("unit_contents");
-
-      for (i = 0; i < output_unit->unit_contents.number; i++)
-        {
-          HV *element_hv = output_unit->unit_contents.list[i]->hv;
-          SV *unit_sv;
-
-          if (!element_hv)
-            fatal ("Missing output unit unit_contents element hv");
-
-          sv = newRV_inc ((SV *) element_hv);
-
-          av_push (av, sv);
-
-          unit_sv = newRV_inc ((SV *) output_unit->hv);
-          /* set the tree element associated_unit */
-          hv_store (element_hv, "associated_unit", strlen ("associated_unit"),
-                    unit_sv, 0);
-        }
-    }
-
-  if (output_unit->tree_unit_directions[0]
-      || output_unit->tree_unit_directions[1])
-    {
-      int i;
-      int directions_nr = sizeof (output_unit->tree_unit_directions)
-                           / sizeof (output_unit->tree_unit_directions[0]);
-      HV *hv_tree_unit_directions = newHV ();
-      sv = newRV_noinc ((SV *) hv_tree_unit_directions);
-      STORE("tree_unit_directions");
-
-      for (i = 0; i < directions_nr; i++)
-        {
-          OUTPUT_UNIT *target = output_unit->tree_unit_directions[i];
-          if (target)
-            {
-              if (!target->hv)
-                target->hv = newHV ();
-              sv = newRV_inc ((SV *) target->hv);
-              hv_store (hv_tree_unit_directions, direction_names[i],
-                        strlen (direction_names[i]), sv, 0);
-            }
-        }
-    }
-
-  if (output_unit->first_in_page)
-    {
-      OUTPUT_UNIT *target = output_unit->first_in_page;
-      if (!target->hv)
-        target->hv = newHV ();
-      sv = newRV_inc ((SV *) target->hv);
-      STORE("first_in_page");
-    }
-
-  if (output_unit->special_unit_variety)
-    {
-      sv = newSVpv_utf8 (output_unit->special_unit_variety,
-                         strlen (output_unit->special_unit_variety));
-      STORE("special_unit_variety");
-    }
-
-#undef STORE
-}
-
-static int
-fill_output_units_descriptor_av (const DOCUMENT *document,
-                                 AV *av_output_units,
-                                 size_t output_units_descriptor)
-{
-  const OUTPUT_UNIT_LIST *output_units;
-  size_t i;
-
-  dTHX;
-
-  output_units = retrieve_output_units (document, output_units_descriptor);
-
-  if (!output_units || !output_units->number)
-    return 0;
-
-  for (i = 0; i < output_units->number; i++)
-    {
-      SV *sv;
-      OUTPUT_UNIT *output_unit = output_units->list[i];
-      output_unit_to_perl_hash (output_unit);
-      /* we do not transfer the hv ref to the perl av because we consider
-         that output_unit->hv still own a reference, which should only be
-         released when the output_unit is destroyed in C */
-      sv = newRV_inc ((SV *) output_unit->hv);
-      av_push (av_output_units, sv);
-    }
-
-  /* store in the first perl output unit of the list */
-  hv_store (output_units->list[0]->hv, "output_units_descriptor",
-            strlen ("output_units_descriptor"),
-            newSViv (output_units_descriptor), 0);
-  return 1;
-}
-
-SV *
-build_output_units_list (const DOCUMENT *document,
-                         size_t output_units_descriptor)
-{
-  AV *av_output_units;
-
-  dTHX;
-
-  av_output_units = newAV ();
-
-  if (!fill_output_units_descriptor_av (document,
-                                        av_output_units,
-                                        output_units_descriptor))
-    {/* no output unit */
-      av_undef (av_output_units);
-      return newSV (0);
-    }
-  else
-    return newRV_noinc ((SV *) av_output_units);
-}
-
-/* a fake output units list that only holds a descriptor allowing
-   to retrieve the C data */
-SV *
-setup_output_units_handler (const DOCUMENT *document,
-                            size_t output_units_descriptor)
-{
-  AV *av_output_units;
-  HV *dummy_output_unit;
-  SV *sv;
-  const OUTPUT_UNIT_LIST *output_units;
-
-  dTHX;
-
-  output_units = retrieve_output_units (document, output_units_descriptor);
-
-  if (!output_units || !output_units->number)
-    return newSV (0);
-
-  av_output_units = newAV ();
-
-  dummy_output_unit = newHV ();
-
-  hv_store (dummy_output_unit, "output_units_descriptor",
-            strlen ("output_units_descriptor"),
-            newSViv (output_units_descriptor), 0);
-
-  sv = newRV_inc ((SV *) dummy_output_unit);
-  av_push (av_output_units, sv);
-
-  return newRV_noinc ((SV *) av_output_units);
-}
-
-void
-rebuild_output_units_list (const DOCUMENT *document, SV *output_units_sv,
-                           size_t output_units_descriptor)
-{
-  AV *av_output_units;
-
-  dTHX;
-
-  if (!SvOK (output_units_sv))
-    {
-      const OUTPUT_UNIT_LIST *output_units
-        = retrieve_output_units (document, output_units_descriptor);
-      if (output_units && output_units->number)
-        fprintf (stderr, "BUG: no input sv for %zu output units (%zu)\n",
-                 output_units->number, output_units_descriptor);
-      return;
-    }
-
-  av_output_units = (AV *) SvRV (output_units_sv);
-  av_clear (av_output_units);
-
-  if (!fill_output_units_descriptor_av (document, av_output_units,
-                                        output_units_descriptor))
-    {
- /* the output_units_descriptor is not found.  In the codes calling
-    this function, the output_units_descriptor should have been found
-    within the Perl reference used as argument here.  If there is
-    something to rebuild, this should mean that there is an output
-    units list in C, therefore we output an error here.  It could
-    be redundant with errors output earlier in calling code, but it
-    is better to have more debug messages.
-  */
-      fprintf (stderr, "BUG: rebuild_output_units_list: output unit"
-                  " descriptor not found: %zu\n", output_units_descriptor);
-      return;
-    }
-}
-
-/* build output unit hashes but do not put output units hashes in
-   an array.  Useful for external_nodes_units, which are to be
-   built to Perl, but have no array in Perl, they are only referred to
-   in directions. */
-void
-output_units_list_to_perl_hash (const DOCUMENT *document,
-                                size_t output_units_descriptor)
-{
-  const OUTPUT_UNIT_LIST *output_units;
-  size_t i;
-
-  output_units = retrieve_output_units (document, output_units_descriptor);
-
-  if (!output_units || !output_units->number)
-    return;
-
-  for (i = 0; i < output_units->number; i++)
-    {
-      OUTPUT_UNIT *output_unit = output_units->list[i];
-      output_unit_to_perl_hash (output_unit);
-    }
-}
-
-
-
-void
-pass_document_to_converter_sv (const CONVERTER *converter,
-                               SV *converter_sv, SV *document_in)
-{
-  HV *converter_hv;
-
-  dTHX;
-
-  converter_hv = (HV *)SvRV (converter_sv);
-
-  if (document_in && SvOK (document_in))
-    {
-      SvREFCNT_inc (document_in);
-      hv_store (converter_hv, "document", strlen ("document"),
-                document_in, 0);
-    }
-  if (converter && converter->convert_text_options)
-    {
-      SV *text_options_sv
-       = build_convert_text_options (converter->convert_text_options);
-      hv_store (converter_hv,
-                "convert_text_options", strlen("convert_text_options"),
-                text_options_sv, 0);
-    }
-}
-
-SV *
-get_conf (const CONVERTER *converter, const char *option_name)
-{
-  dTHX;
-
-  if (converter->conf)
-    return build_sv_option (converter->conf, option_name, converter);
-  return newSV (0);
-}
-
-AV *
-build_integer_stack (const INTEGER_STACK *integer_stack)
-{
-  AV *av;
-  int i;
-
-  dTHX;
-
-  av = newAV ();
-
-  for (i = 0; i < integer_stack->top; i++)
-    {
-      int value = integer_stack->stack[i];
-      av_push (av, newSViv (value));
-    }
-  return av;
-}
-
-SV *
-build_filenames (const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
-{
-  int i;
-  HV *hv;
-
-  dTHX;
-
-  hv = newHV ();
-
-  if (output_unit_files)
-    {
-      for (i = 0; i < output_unit_files->number; i++)
-        {
-          const FILE_NAME_PATH_COUNTER *output_unit_file
-            = &output_unit_files->list[i];
-          const char *normalized_filename
-             = output_unit_file->normalized_filename;
-          SV *normalized_filename_sv = newSVpv_utf8 (normalized_filename, 0);
-
-          hv_store_ent (hv, normalized_filename_sv,
-                    newSVpv_utf8 (output_unit_file->filename, 0), 0);
-        }
-    }
-
-  return newRV_noinc ((SV *) hv);
-}
-
-SV *
-build_file_counters (const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
-{
-  int i;
-  HV *hv;
-
-  dTHX;
-
-  hv = newHV ();
-
-  if (output_unit_files)
-    {
-      for (i = 0; i < output_unit_files->number; i++)
-        {
-          const FILE_NAME_PATH_COUNTER *output_unit_file
-            = &output_unit_files->list[i];
-          const char *filename = output_unit_file->filename;
-          SV *filename_sv = newSVpv_utf8 (filename, 0);
-
-          hv_store_ent (hv, filename_sv, newSViv (output_unit_file->counter), 0);
-        }
-    }
-
-  return newRV_noinc ((SV *) hv);
-}
-
-SV *
-build_out_filepaths (const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
-{
-  int i;
-  HV *hv;
-
-  dTHX;
-
-  hv = newHV ();
-
-  if (output_unit_files)
-    {
-      for (i = 0; i < output_unit_files->number; i++)
-        {
-          const FILE_NAME_PATH_COUNTER *output_unit_file
-            = &output_unit_files->list[i];
-          const char *filename = output_unit_file->filename;
-          SV *filename_sv = newSVpv_utf8 (filename, 0);
-
-          hv_store_ent (hv, filename_sv,
-                        newSVpv_utf8 (output_unit_file->filepath, 0), 0);
-        }
-    }
-
-  return newRV_noinc ((SV *) hv);
-}
-
-void
-pass_output_unit_files (SV *converter_sv,
-                        const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
-{
-  SV *filenames_sv;
-  SV *file_counters_sv;
-  SV *out_filepaths_sv;
-
-  dTHX;
-
-  HV *converter_hv = (HV *) SvRV (converter_sv);
-
-  filenames_sv = build_filenames (output_unit_files);
-  file_counters_sv = build_file_counters (output_unit_files);
-  out_filepaths_sv = build_out_filepaths (output_unit_files);
-
-#define STORE(key) \
-  hv_store (converter_hv, #key, strlen (#key), key##_sv, 0); \
-  SvREFCNT_inc (key##_sv);
-  STORE(filenames);
-  STORE (file_counters);
-  STORE (out_filepaths);
-#undef STORE
-}
-
-/* Texinfo::Common output_files_information API */
-void
-build_output_files_unclosed_files (HV *hv,
-                 const OUTPUT_FILES_INFORMATION *output_files_information)
-{
-  SV **unclosed_files_sv;
-  HV *unclosed_files_hv;
-
-  const FILE_STREAM_LIST *unclosed_files;
-  int i;
-
-  dTHX;
-
-  unclosed_files_sv = hv_fetch (hv, "unclosed_files",
-                                strlen ("unclosed_files"), 0);
-
-  if (!unclosed_files_sv)
-    {
-      unclosed_files_hv = newHV ();
-      hv_store (hv, "unclosed_files", strlen ("unclosed_files"),
-                newRV_noinc ((SV *) unclosed_files_hv), 0);
-    }
-  else
-    {
-      unclosed_files_hv = (HV *)SvRV (*unclosed_files_sv);
-    }
-
-  unclosed_files = &output_files_information->unclosed_files;
-  if (unclosed_files->number > 0)
-    {
-      for (i = 0; i < unclosed_files->number; i++)
-        {
-          const FILE_STREAM *file_stream = &unclosed_files->list[i];
-          const char *file_path = file_stream->file_path;
-      /* It is not possible to associate the unclosed stream to a SV.
-         It is possible to obtain a PerlIO from a FILE, as described in
-           https://perldoc.perl.org/perlapio
-         with
-           PerlIO *   PerlIO_importFILE  (FILE *stdio, const char *mode)
-         However, it is not possible to create an IO * SV from the PerlIO
-         or associate to an already existing IO *. An IO * SV is created by
-           IO *  newIO()
-         and it is possible to get the associated PerlIO, with
-           PerlIO *IoOFP(IO *io);
-         but not to set it.
-
-         However, it is possible to pass a stream through the XS
-         interface.  Therefore here, the unclosed file name is registered,
-         the stream can then be passed to Perl through a call of
-         the XS interface Texinfo::Convert::ConvertXS::get_unclosed_stream.
-
-         Register that there is an unclosed file from XS by associating
-         with undef; if from Perl, it would be associated with a file handle */
-          SV *file_path_sv = newSVpv_byte (file_path, 0);
-          hv_store_ent (unclosed_files_hv, file_path_sv, newSV (0), 0);
-        }
-    }
-}
-
-/* input hv should be an output_files hv, in general setup by
- $converter->{'output_files'} = Texinfo::Common::output_files_initialize(); */
-void
-build_output_files_opened_files (HV *hv,
-                    const OUTPUT_FILES_INFORMATION *output_files_information)
-{
-  SV **opened_files_sv;
-  HV *opened_files_hv;
-
-  const STRING_LIST *opened_files;
-  int i;
-
-  dTHX;
-
-  opened_files_sv = hv_fetch (hv, "opened_files", strlen ("opened_files"), 0);
-
-  if (!opened_files_sv)
-    {
-      opened_files_hv = newHV ();
-      hv_store (hv, "opened_files", strlen ("opened_files"),
-                newRV_noinc ((SV *) opened_files_hv), 0);
-    }
-  else
-    {
-      opened_files_hv = (HV *)SvRV (*opened_files_sv);
-    }
-
-  opened_files = &output_files_information->opened_files;
-  if (opened_files->number > 0)
-    {
-      for (i = 0; i < opened_files->number; i++)
-        {
-          const char *file_path = opened_files->list[i];
-          SV *file_path_sv = newSVpv_byte (file_path, 0);
-          hv_store_ent (opened_files_hv, file_path_sv, newSViv (1), 0);
-        }
-    }
-}
-
-void
-build_output_files_information (SV *converter_sv,
-                   const OUTPUT_FILES_INFORMATION *output_files_information)
-{
-  HV *hv;
-  SV **output_files_sv;
-  HV *output_files_hv;
-
-  dTHX;
-
-  hv = (HV *) SvRV (converter_sv);
-
-  output_files_sv = hv_fetch (hv, "output_files",
-                                strlen ("output_files"), 0);
-
-  if (!output_files_sv)
-    {
-      output_files_hv = newHV ();
-      hv_store (hv, "output_files", strlen ("output_files"),
-                newRV_noinc ((SV *) output_files_hv), 0);
-    }
-  else
-    {
-      output_files_hv = (HV *)SvRV (*output_files_sv);
-    }
-
-  build_output_files_opened_files (output_files_hv,
-                                   output_files_information);
-  build_output_files_unclosed_files (output_files_hv,
-                                     output_files_information);
-}
-
-HV *
-build_expanded_formats (const EXPANDED_FORMAT *expanded_formats)
-{
-  int i;
-  HV *expanded_hv;
-
-  dTHX;
-
-  expanded_hv = newHV ();
-  for (i = 0; i < expanded_formats_number (); i++)
-    {
-      if (expanded_formats[i].expandedp)
-        {
-          const char *format = expanded_formats[i].format;
-          hv_store (expanded_hv, format, strlen (format),
-                    newSViv (1), 0);
-        }
-    }
-  return expanded_hv;
-}
-
-SV *
-build_convert_text_options (TEXT_OPTIONS *text_options)
-{
-  HV *text_options_hv;
-  HV *expanded_formats_hv;
-
-  dTHX;
-
-  text_options_hv = newHV ();
-
-#define STORE(key, sv) hv_store (text_options_hv, key, strlen (key), sv, 0)
-
-  if (text_options->ASCII_GLYPH)
-    STORE("ASCII_GLYPH", newSViv (1));
-
-  if (text_options->NUMBER_SECTIONS)
-    STORE("NUMBER_SECTIONS", newSViv (1));
-
-  if (text_options->TEST)
-    STORE("TEST", newSViv (1));
-
-  if (text_options->sort_string)
-    STORE("sort_string", newSViv (1));
-
-  if (text_options->encoding)
-    STORE("enabled_encoding", newSVpv_utf8 (text_options->encoding, 0));
-
-  if (text_options->set_case)
-    STORE("set_case", newSViv (text_options->set_case));
-
-  if (text_options->code_state)
-    STORE("_code_state", newSViv (text_options->code_state));
-
-  expanded_formats_hv = build_expanded_formats (text_options->expanded_formats);
-  STORE("expanded_formats", newRV_noinc ((SV *)expanded_formats_hv));
-
-  if (text_options->include_directories.number > 0)
-    {
-      AV *av = build_string_list (&text_options->include_directories, svt_byte);
-      STORE("INCLUDE_DIRECTORIES", newRV_noinc ((SV *) av));
-    }
-
-  if (text_options->converter && text_options->converter->hv)
-    {
-      STORE("converter", newRV_inc ((SV *) text_options->converter->hv));
-    }
-#undef STORE
-
-  return newRV_noinc ((SV *)text_options_hv);
-}
-
-SV *
+static SV *
 find_idx_name_entry_number_sv (HV *indices_information_hv,
                                const char* index_name, int entry_number,
                                const char *message)
@@ -3017,6 +2404,573 @@ build_sorted_indices_by_letter (
   return indices_hv;
 }
 
+
+
+/* Build Output unit and output units lists to Perl*/
+
+static void
+output_unit_to_perl_hash (OUTPUT_UNIT *output_unit)
+{
+  int i;
+  SV *sv;
+  HV *directions_hv;
+
+  dTHX;
+
+  /* output_unit->hv may already exist because of directions or if there was a
+     first_in_page referring to output_unit, or because the output units
+     list is being rebuilt */
+  if (!output_unit->hv)
+    output_unit->hv = newHV ();
+  else
+    hv_clear (output_unit->hv);
+
+#define STORE(key) hv_store (output_unit->hv, key, strlen (key), sv, 0)
+  sv = newSVpv (output_unit_type_names[output_unit->unit_type], 0);
+  STORE("unit_type");
+
+  if (output_unit->unit_type == OU_special_unit)
+    {
+      ELEMENT *command = output_unit->uc.special_unit_command;
+      if (!command->hv)
+        {
+          SV *unit_sv;
+
+          /* a virtual out of tree element, add it to perl */
+          element_to_perl_hash (command, 0);
+
+          unit_sv = newRV_inc ((SV *) output_unit->hv);
+          hv_store (command->hv, "associated_unit",
+                    strlen ("associated_unit"), unit_sv, 0);
+        }
+      sv = newRV_inc ((SV *) command->hv);
+      STORE("unit_command");
+    }
+  else
+    {
+      const ELEMENT *command = output_unit->uc.unit_command;
+
+      if (command)
+        {
+          if (!command->hv)
+            fatal ("Missing output unit unit_command hv");
+
+          sv = newRV_inc ((SV *) command->hv);
+          STORE("unit_command");
+        }
+   /* there is nothing else of use for external_node_unit, exit now */
+      if (output_unit->unit_type == OU_external_node_unit)
+        return;
+    }
+
+  /* NOTE theoretical IV overflow if PERL_QUAD_MAX < SIZE_MAX */
+  sv = newSViv ((IV) output_unit->index);
+  STORE("unit_index");
+
+  /* setup an hash reference in any case */
+  directions_hv = newHV ();
+  sv = newRV_noinc ((SV *) directions_hv);
+  STORE("directions");
+
+  for (i = 0; i < RUD_type_FirstInFileNodeBack+1; i++)
+    {
+      if (output_unit->directions[i])
+        {
+          const char *direction_name = relative_unit_direction_name[i];
+          const OUTPUT_UNIT *direction_unit = output_unit->directions[i];
+          SV *unit_sv;
+          if (!direction_unit->hv)
+            {
+  /* the Perl references should exist for all the output units because
+     they are setup and built to Perl if needed in _prepare_conversion_units,
+     while directions are setup afterwards in _prepare_units_directions_files.
+     external_node_target are not set in _prepare_conversion_units, but
+     are set before rebuilding the other output units in
+     _prepare_units_directions_files XS code */
+
+              char *msg;
+              xasprintf (&msg, "BUG: no output unit Perl ref: %s",
+                                   output_unit_texi (direction_unit));
+              fatal (msg);
+              free (msg);
+            }
+          unit_sv = newRV_inc ((SV *) direction_unit->hv);
+          hv_store (directions_hv, direction_name, strlen (direction_name),
+                    unit_sv, 0);
+        }
+    }
+
+  if (output_unit->associated_document_unit)
+    {
+      sv = newRV_inc ((SV *) output_unit->associated_document_unit->hv);
+      STORE("associated_document_unit");
+    }
+
+  if (output_unit->unit_filename)
+    {
+      sv = newSVpv_utf8 (output_unit->unit_filename,
+                         strlen (output_unit->unit_filename));
+      STORE("unit_filename");
+    }
+
+  if (output_unit->unit_contents.number)
+    {
+      AV *av;
+      size_t i;
+
+      av = newAV ();
+      sv = newRV_noinc ((SV *) av);
+      STORE("unit_contents");
+
+      for (i = 0; i < output_unit->unit_contents.number; i++)
+        {
+          HV *element_hv = output_unit->unit_contents.list[i]->hv;
+          SV *unit_sv;
+
+          if (!element_hv)
+            fatal ("Missing output unit unit_contents element hv");
+
+          sv = newRV_inc ((SV *) element_hv);
+
+          av_push (av, sv);
+
+          unit_sv = newRV_inc ((SV *) output_unit->hv);
+          /* set the tree element associated_unit */
+          hv_store (element_hv, "associated_unit", strlen ("associated_unit"),
+                    unit_sv, 0);
+        }
+    }
+
+  if (output_unit->tree_unit_directions[0]
+      || output_unit->tree_unit_directions[1])
+    {
+      size_t i;
+      size_t directions_nr = sizeof (output_unit->tree_unit_directions)
+                           / sizeof (output_unit->tree_unit_directions[0]);
+      HV *hv_tree_unit_directions = newHV ();
+      sv = newRV_noinc ((SV *) hv_tree_unit_directions);
+      STORE("tree_unit_directions");
+
+      for (i = 0; i < directions_nr; i++)
+        {
+          OUTPUT_UNIT *target = output_unit->tree_unit_directions[i];
+          if (target)
+            {
+              if (!target->hv)
+                target->hv = newHV ();
+              sv = newRV_inc ((SV *) target->hv);
+              hv_store (hv_tree_unit_directions, direction_names[i],
+                        strlen (direction_names[i]), sv, 0);
+            }
+        }
+    }
+
+  if (output_unit->first_in_page)
+    {
+      OUTPUT_UNIT *target = output_unit->first_in_page;
+      if (!target->hv)
+        target->hv = newHV ();
+      sv = newRV_inc ((SV *) target->hv);
+      STORE("first_in_page");
+    }
+
+  if (output_unit->special_unit_variety)
+    {
+      sv = newSVpv_utf8 (output_unit->special_unit_variety,
+                         strlen (output_unit->special_unit_variety));
+      STORE("special_unit_variety");
+    }
+
+#undef STORE
+}
+
+static int
+fill_output_units_descriptor_av (const DOCUMENT *document,
+                                 AV *av_output_units,
+                                 size_t output_units_descriptor)
+{
+  const OUTPUT_UNIT_LIST *output_units;
+  size_t i;
+
+  dTHX;
+
+  output_units = retrieve_output_units (document, output_units_descriptor);
+
+  if (!output_units || !output_units->number)
+    return 0;
+
+  for (i = 0; i < output_units->number; i++)
+    {
+      SV *sv;
+      OUTPUT_UNIT *output_unit = output_units->list[i];
+      output_unit_to_perl_hash (output_unit);
+      /* we do not transfer the hv ref to the perl av because we consider
+         that output_unit->hv still own a reference, which should only be
+         released when the output_unit is destroyed in C */
+      sv = newRV_inc ((SV *) output_unit->hv);
+      av_push (av_output_units, sv);
+    }
+
+  /* store in the first perl output unit of the list */
+  /* NOTE theoretical IV overflow if PERL_QUAD_MAX < SIZE_MAX */
+  hv_store (output_units->list[0]->hv, "output_units_descriptor",
+            strlen ("output_units_descriptor"),
+            newSViv ((IV)output_units_descriptor), 0);
+  hv_store (output_units->list[0]->hv, "output_units_document_descriptor",
+            strlen ("output_units_document_descriptor"),
+            newSViv ((IV)document->descriptor), 0);
+  return 1;
+}
+
+SV *
+build_output_units_list (const DOCUMENT *document,
+                         size_t output_units_descriptor)
+{
+  AV *av_output_units;
+
+  dTHX;
+
+  av_output_units = newAV ();
+
+  if (!fill_output_units_descriptor_av (document,
+                                        av_output_units,
+                                        output_units_descriptor))
+    {/* no output unit */
+      av_undef (av_output_units);
+      return newSV (0);
+    }
+  else
+    return newRV_noinc ((SV *) av_output_units);
+}
+
+/* a fake output units list that only holds a descriptor allowing
+   to retrieve the C data */
+SV *
+setup_output_units_handler (const DOCUMENT *document,
+                            size_t output_units_descriptor)
+{
+  AV *av_output_units;
+  HV *dummy_output_unit;
+  SV *sv;
+  const OUTPUT_UNIT_LIST *output_units;
+
+  dTHX;
+
+  output_units = retrieve_output_units (document, output_units_descriptor);
+
+  if (!output_units || !output_units->number)
+    return newSV (0);
+
+  av_output_units = newAV ();
+
+  dummy_output_unit = newHV ();
+
+  hv_store (dummy_output_unit, "output_units_descriptor",
+            strlen ("output_units_descriptor"),
+            newSViv (output_units_descriptor), 0);
+
+  sv = newRV_inc ((SV *) dummy_output_unit);
+  av_push (av_output_units, sv);
+
+  return newRV_noinc ((SV *) av_output_units);
+}
+
+void
+rebuild_output_units_list (const DOCUMENT *document, SV *output_units_sv,
+                           size_t output_units_descriptor)
+{
+  AV *av_output_units;
+
+  dTHX;
+
+  if (!SvOK (output_units_sv))
+    {
+      const OUTPUT_UNIT_LIST *output_units
+        = retrieve_output_units (document, output_units_descriptor);
+      if (output_units && output_units->number)
+        fprintf (stderr, "BUG: no input sv for %zu output units (%zu)\n",
+                 output_units->number, output_units_descriptor);
+      return;
+    }
+
+  av_output_units = (AV *) SvRV (output_units_sv);
+  av_clear (av_output_units);
+
+  if (!fill_output_units_descriptor_av (document, av_output_units,
+                                        output_units_descriptor))
+    {
+ /* the output_units_descriptor is not found.  In the codes calling
+    this function, the output_units_descriptor should have been found
+    within the Perl reference used as argument here.  If there is
+    something to rebuild, this should mean that there is an output
+    units list in C, therefore we output an error here.  It could
+    be redundant with errors output earlier in calling code, but it
+    is better to have more debug messages.
+  */
+      fprintf (stderr, "BUG: rebuild_output_units_list: output unit"
+                  " descriptor not found: %zu\n", output_units_descriptor);
+      return;
+    }
+}
+
+/* build output unit hashes but do not put output units hashes in
+   an array.  Useful for external_nodes_units, which are to be
+   built to Perl, but have no array in Perl, they are only referred to
+   in directions. */
+void
+output_units_list_to_perl_hash (const DOCUMENT *document,
+                                size_t output_units_descriptor)
+{
+  const OUTPUT_UNIT_LIST *output_units;
+  size_t i;
+
+  output_units = retrieve_output_units (document, output_units_descriptor);
+
+  if (!output_units || !output_units->number)
+    return;
+
+  for (i = 0; i < output_units->number; i++)
+    {
+      OUTPUT_UNIT *output_unit = output_units->list[i];
+      output_unit_to_perl_hash (output_unit);
+    }
+}
+
+
+
+static HV *
+build_expanded_formats (const EXPANDED_FORMAT *expanded_formats)
+{
+  size_t i;
+  HV *expanded_hv;
+
+  dTHX;
+
+  expanded_hv = newHV ();
+  for (i = 0; i < expanded_formats_number (); i++)
+    {
+      if (expanded_formats[i].expandedp)
+        {
+          const char *format = expanded_formats[i].format;
+          hv_store (expanded_hv, format, strlen (format),
+                    newSViv (1), 0);
+        }
+    }
+  return expanded_hv;
+}
+
+SV *
+build_convert_text_options (TEXT_OPTIONS *text_options)
+{
+  HV *text_options_hv;
+  HV *expanded_formats_hv;
+
+  dTHX;
+
+  text_options_hv = newHV ();
+
+#define STORE(key, sv) hv_store (text_options_hv, key, strlen (key), sv, 0)
+
+  if (text_options->ASCII_GLYPH)
+    STORE("ASCII_GLYPH", newSViv (1));
+
+  if (text_options->NUMBER_SECTIONS)
+    STORE("NUMBER_SECTIONS", newSViv (1));
+
+  if (text_options->TEST)
+    STORE("TEST", newSViv (1));
+
+  if (text_options->sort_string)
+    STORE("sort_string", newSViv (1));
+
+  if (text_options->encoding)
+    STORE("enabled_encoding", newSVpv_utf8 (text_options->encoding, 0));
+
+  if (text_options->set_case)
+    STORE("set_case", newSViv (text_options->set_case));
+
+  if (text_options->code_state)
+    STORE("_code_state", newSViv (text_options->code_state));
+
+  expanded_formats_hv = build_expanded_formats (text_options->expanded_formats);
+  STORE("expanded_formats", newRV_noinc ((SV *)expanded_formats_hv));
+
+  if (text_options->include_directories.number > 0)
+    {
+      AV *av = build_string_list (&text_options->include_directories, svt_byte);
+      STORE("INCLUDE_DIRECTORIES", newRV_noinc ((SV *) av));
+    }
+
+  if (text_options->converter && text_options->converter->hv)
+    {
+      STORE("converter", newRV_inc ((SV *) text_options->converter->hv));
+    }
+#undef STORE
+
+  return newRV_noinc ((SV *)text_options_hv);
+}
+
+void
+pass_document_to_converter_sv (const CONVERTER *converter,
+                               SV *converter_sv, SV *document_in)
+{
+  HV *converter_hv;
+
+  dTHX;
+
+  converter_hv = (HV *)SvRV (converter_sv);
+
+  if (document_in && SvOK (document_in))
+    {
+      SvREFCNT_inc (document_in);
+      hv_store (converter_hv, "document", strlen ("document"),
+                document_in, 0);
+    }
+  if (converter && converter->convert_text_options)
+    {
+      SV *text_options_sv
+       = build_convert_text_options (converter->convert_text_options);
+      hv_store (converter_hv,
+                "convert_text_options", strlen("convert_text_options"),
+                text_options_sv, 0);
+    }
+}
+
+
+
+/* build customization options to Perl */
+
+/* build a Perl button data from pure C button structure.
+   This is a partial implementation.
+   This function can only be called for default buttons for now, so we do
+   not need to handle other types of buttons.  We could handle possibly
+   more: BST_string and BST_direction_info with
+     BIT_string, BIT_selected_direction_information_type and
+     BIT_href_direction_information_type.
+   Other need Perl info */
+static SV *
+html_build_button (const CONVERTER *converter, BUTTON_SPECIFICATION *button,
+                   int *user_function_number)
+{
+  dTHX;
+
+  *user_function_number = 0;
+
+  switch (button->type)
+    {
+      const char *direction_name;
+      case BST_direction:
+        if (button->b.direction < 0)
+          direction_name = button->direction_string;
+        else
+          direction_name
+            = direction_unit_direction_name (button->b.direction,
+                                             converter);
+        if (!direction_name)
+          {
+            char *msg;
+            xasprintf (&msg, "No name for button direction %d",
+                       button->b.direction);
+            fatal (msg);
+            free (msg);
+          }
+        return newSVpv_utf8 (direction_name, 0);
+        break;
+
+      case BST_direction_info:
+        {
+          BUTTON_SPECIFICATION_INFO *button_spec = button->b.button_info;
+          AV *button_spec_info_av;
+
+          if (button_spec->direction < 0)
+            direction_name = button->direction_string;
+          else
+            direction_name
+              = direction_unit_direction_name (button_spec->direction,
+                                               converter);
+          if (!direction_name)
+            {
+              char *msg;
+              xasprintf (&msg, "No name for array button direction %d",
+                              button_spec->direction);
+              fatal (msg);
+              free (msg);
+            }
+
+          if (button_spec->type == BIT_function)
+            {
+              /* contains a leading :: */
+              const char *sub_name = html_button_function_type_string[
+                                      button_spec->bi.button_function.type];
+              if (sub_name)
+                {
+                  char *cv_name;
+                  CV *button_function_cv;
+
+                  xasprintf (&cv_name, "Texinfo::Convert::HTML%s", sub_name);
+                  button_function_cv = get_cv (cv_name, 0);
+                  if (!button_function_cv)
+                    fprintf (stderr, "BUG: %s: not found\n", cv_name);
+
+                  free (cv_name);
+
+                  button_spec_info_av = newAV ();
+                  av_push (button_spec_info_av,
+                           newSVpv_utf8 (direction_name, 0));
+              /* not sure that the _inc leads to the same number of references
+                 than with Pure perl defined buttons, but it is needed
+                 as tested  */
+                  av_push (button_spec_info_av,
+                           newRV_inc ((SV *) button_function_cv));
+                  return newRV_inc ((SV *) button_spec_info_av);
+                }
+            }
+        }
+        break;
+
+      default:
+        break;
+    }
+  return newSV (0);
+}
+
+SV *
+html_build_buttons_specification (CONVERTER *converter,
+                                  BUTTON_SPECIFICATION_LIST *buttons)
+{
+  AV *buttons_av;
+  size_t i;
+
+  dTHX;
+
+  buttons_av = newAV ();
+
+  buttons->av = buttons_av;
+
+  for (i = 0; i < buttons->number; i++)
+    {
+      int user_function_number;
+      BUTTON_SPECIFICATION *button = &buttons->list[i];
+
+      SV *button_sv = html_build_button (converter, button,
+                                         &user_function_number);
+      buttons->BIT_user_function_number += user_function_number;
+
+      if (converter)
+        converter->external_references_number += user_function_number;
+
+      button->sv = button_sv;
+
+      /* retain a reference in C */
+      SvREFCNT_inc (button->sv);
+
+      av_push (buttons_av, button_sv);
+    }
+
+  /* add a refcount to retain one in C */
+  return newRV_inc ((SV *)buttons_av);
+}
+
 SV *
 html_build_direction_icons (const CONVERTER *converter,
                             const DIRECTION_ICON_LIST *direction_icons)
@@ -3047,26 +3001,415 @@ html_build_direction_icons (const CONVERTER *converter,
   return newRV_noinc ((SV *)icons_hv);
 }
 
-void
-build_tree_to_build (ELEMENT_LIST *tree_to_build)
+SV *
+build_sv_option (const OPTION *option, CONVERTER *converter)
 {
-  if (tree_to_build->number > 0)
+  dTHX;
+
+  switch (option->type)
     {
-      int i;
-      for (i = 0; i < tree_to_build->number; i++)
+      case GOT_integer:
+        if (option->o.integer == -1)
+          return newSV (0);
+        return newSViv (option->o.integer);
+        break;
+
+      case GOT_char:
+        if (!option->o.string)
+          return newSV (0);
+        return newSVpv_utf8 (option->o.string, 0);
+        break;
+
+      case GOT_bytes:
+        if (!option->o.string)
+          return newSV (0);
+        return newSVpv_byte (option->o.string, 0);
+        break;
+
+      case GOT_bytes_string_list:
+        return newRV_noinc ((SV *) build_string_list(option->o.strlist,
+                            svt_byte));
+        break;
+
+      case GOT_file_string_list:
+        return newRV_noinc ((SV *) build_string_list(option->o.strlist,
+                            svt_dir));
+        break;
+
+      case GOT_char_string_list:
+        return newRV_noinc ((SV *) build_string_list(option->o.strlist,
+                            svt_char));
+        break;
+
+      case GOT_buttons:
+        if (option->o.buttons)
+          {
+            if (!option->o.buttons->av)
+              html_build_buttons_specification (converter, option->o.buttons);
+            return newRV_inc ((SV *) option->o.buttons->av);
+          }
+        break;
+
+      case GOT_icons:
+        return html_build_direction_icons (converter, option->o.icons);
+        break;
+
+      default:
+        break;
+    }
+  return newSV (0);
+}
+
+/* not much used, as in general the options are only stored in C and
+   accessed through the API and built when accessed through a converter.
+   This is only used when there is no converter, when a function is called with
+   a class name only and returns an option hash */
+SV *
+build_sv_options_from_options_list (const OPTIONS_LIST *options_list,
+                                    CONVERTER *converter)
+{
+  size_t i;
+  HV *options_hv;
+
+  dTHX;
+
+  options_hv = newHV ();
+
+  for (i = 0; i < options_list->number; i++)
+    {
+      const OPTION *option = options_list->list[i];
+      const char *key = option->name;
+      SV *option_sv = build_sv_option (option, converter);
+
+      /* we store all values as they appear, the later overriding earlier
+         values, and do not treat undef nor C option  configured field
+         especially */
+      if (SvOK (option_sv))
+        SvREFCNT_inc (option_sv);
+
+      hv_store (options_hv, key, strlen (key), option_sv, 0);
+    }
+
+  return newRV_noinc ((SV *)options_hv);
+}
+
+
+
+/* pass generic converter information to Perl */
+
+static HV *
+build_translated_commands (const TRANSLATED_COMMAND *translated_commands)
+{
+  int i;
+  HV *translated_hv;
+
+  dTHX;
+
+  translated_hv = newHV ();
+  for (i = 0; translated_commands[i].cmd; i++)
+    {
+      enum command_id cmd = translated_commands[i].cmd;
+      const char *translation = translated_commands[i].translation;
+      const char *command_name = builtin_command_name (cmd);
+      hv_store (translated_hv, command_name, strlen (command_name),
+                newSVpv_utf8 (translation, 0), 0);
+    }
+  return translated_hv;
+}
+
+void
+pass_generic_converter_to_converter_sv (SV *converter_sv,
+                                        const CONVERTER *converter)
+{
+  HV *converter_hv;
+  HV *expanded_formats_hv;
+  HV *translated_commands_hv;
+  HV *output_files_hv;
+  HV *unclosed_files_hv;
+  HV *opened_files_hv;
+
+  dTHX;
+
+  converter_hv = (HV *)SvRV (converter_sv);
+
+#define STORE(key, sv) hv_store (converter_hv, key, strlen (key), sv, 0);
+  /* $converter->{'output_files'}
+        = Texinfo::Convert::Utils::output_files_initialize(); */
+  output_files_hv = newHV ();
+  STORE("output_files", newRV_noinc ((SV *) output_files_hv));
+
+  unclosed_files_hv = newHV ();
+  opened_files_hv = newHV ();
+  hv_store (output_files_hv, "unclosed_files", strlen ("unclosed_files"),
+            newRV_noinc ((SV *) unclosed_files_hv), 0);
+  hv_store (output_files_hv, "opened_files_hv",
+            strlen ("opened_files_hv"),
+            newRV_noinc ((SV *) opened_files_hv), 0);
+
+  expanded_formats_hv
+    = build_expanded_formats (converter->expanded_formats);
+  STORE("expanded_formats", newRV_noinc ((SV *) expanded_formats_hv));
+
+  translated_commands_hv
+    = build_translated_commands (converter->translated_commands);
+  STORE("translated_commands", newRV_noinc ((SV *) translated_commands_hv));
+
+  /* store converter_descriptor in perl converter */
+  /* NOTE unlikely IV overflow if PERL_QUAD_MAX < SIZE_MAX */
+  STORE("converter_descriptor", newSViv ((IV)converter->converter_descriptor));
+
+#undef STORE
+}
+
+
+
+/* API to access output file names associated with output units */ 
+
+static SV *
+build_filenames (const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+{
+  size_t i;
+  HV *hv;
+
+  dTHX;
+
+  hv = newHV ();
+
+  if (output_unit_files)
+    {
+      for (i = 0; i < output_unit_files->number; i++)
         {
-          build_texinfo_tree (tree_to_build->list[i], 1);
+          const FILE_NAME_PATH_COUNTER *output_unit_file
+            = &output_unit_files->list[i];
+          const char *normalized_filename
+             = output_unit_file->normalized_filename;
+          SV *normalized_filename_sv = newSVpv_utf8 (normalized_filename, 0);
+
+          hv_store_ent (hv, normalized_filename_sv,
+                    newSVpv_utf8 (output_unit_file->filename, 0), 0);
         }
-      tree_to_build->number = 0;
+    }
+
+  return newRV_noinc ((SV *) hv);
+}
+
+static SV *
+build_file_counters (const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+{
+  size_t i;
+  HV *hv;
+
+  dTHX;
+
+  hv = newHV ();
+
+  if (output_unit_files)
+    {
+      for (i = 0; i < output_unit_files->number; i++)
+        {
+          const FILE_NAME_PATH_COUNTER *output_unit_file
+            = &output_unit_files->list[i];
+          const char *filename = output_unit_file->filename;
+          SV *filename_sv = newSVpv_utf8 (filename, 0);
+
+          hv_store_ent (hv, filename_sv, newSViv (output_unit_file->counter), 0);
+        }
+    }
+
+  return newRV_noinc ((SV *) hv);
+}
+
+SV *
+build_out_filepaths (const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+{
+  size_t i;
+  HV *hv;
+
+  dTHX;
+
+  hv = newHV ();
+
+  if (output_unit_files)
+    {
+      for (i = 0; i < output_unit_files->number; i++)
+        {
+          const FILE_NAME_PATH_COUNTER *output_unit_file
+            = &output_unit_files->list[i];
+          const char *filename = output_unit_file->filename;
+          SV *filename_sv = newSVpv_utf8 (filename, 0);
+
+          hv_store_ent (hv, filename_sv,
+                        newSVpv_utf8 (output_unit_file->filepath, 0), 0);
+        }
+    }
+
+  return newRV_noinc ((SV *) hv);
+}
+
+void
+pass_output_unit_files (SV *converter_sv,
+                        const FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
+{
+  SV *filenames_sv;
+  SV *file_counters_sv;
+  SV *out_filepaths_sv;
+
+  dTHX;
+
+  HV *converter_hv = (HV *) SvRV (converter_sv);
+
+  filenames_sv = build_filenames (output_unit_files);
+  file_counters_sv = build_file_counters (output_unit_files);
+  out_filepaths_sv = build_out_filepaths (output_unit_files);
+
+#define STORE(key) \
+  hv_store (converter_hv, #key, strlen (#key), key##_sv, 0); \
+  SvREFCNT_inc (key##_sv);
+  STORE(filenames);
+  STORE (file_counters);
+  STORE (out_filepaths);
+#undef STORE
+}
+
+
+
+/* Texinfo::Common output_files_information API */
+static void
+build_output_files_unclosed_files (HV *hv,
+                 const OUTPUT_FILES_INFORMATION *output_files_information)
+{
+  SV **unclosed_files_sv;
+  HV *unclosed_files_hv;
+
+  const FILE_STREAM_LIST *unclosed_files;
+  size_t i;
+
+  dTHX;
+
+  unclosed_files_sv = hv_fetch (hv, "unclosed_files",
+                                strlen ("unclosed_files"), 0);
+
+  if (!unclosed_files_sv)
+    {
+      unclosed_files_hv = newHV ();
+      hv_store (hv, "unclosed_files", strlen ("unclosed_files"),
+                newRV_noinc ((SV *) unclosed_files_hv), 0);
+    }
+  else
+    {
+      unclosed_files_hv = (HV *)SvRV (*unclosed_files_sv);
+    }
+
+  unclosed_files = &output_files_information->unclosed_files;
+  if (unclosed_files->number > 0)
+    {
+      for (i = 0; i < unclosed_files->number; i++)
+        {
+          const FILE_STREAM *file_stream = &unclosed_files->list[i];
+          const char *file_path = file_stream->file_path;
+      /* It is not possible to associate the unclosed stream to a SV.
+         It is possible to obtain a PerlIO from a FILE, as described in
+           https://perldoc.perl.org/perlapio
+         with
+           PerlIO *   PerlIO_importFILE  (FILE *stdio, const char *mode)
+         However, it is not possible to create an IO * SV from the PerlIO
+         or associate to an already existing IO *. An IO * SV is created by
+           IO *  newIO()
+         and it is possible to get the associated PerlIO, with
+           PerlIO *IoOFP(IO *io);
+         but not to set it.
+
+         However, it is possible to pass a stream through the XS
+         interface.  Therefore here, the unclosed file name is registered,
+         the stream can then be passed to Perl through a call of
+         the XS interface Texinfo::Convert::ConvertXS::get_unclosed_stream.
+
+         Register that there is an unclosed file from XS by associating
+         with undef; if from Perl, it would be associated with a file handle */
+          SV *file_path_sv = newSVpv_byte (file_path, 0);
+          hv_store_ent (unclosed_files_hv, file_path_sv, newSV (0), 0);
+        }
     }
 }
 
+/* input hv should be an output_files hv, in general setup by
+ $converter->{'output_files'} = Texinfo::Convert::Utils::output_files_initialize(); */
+static void
+build_output_files_opened_files (HV *hv,
+                    const OUTPUT_FILES_INFORMATION *output_files_information)
+{
+  SV **opened_files_sv;
+  HV *opened_files_hv;
+
+  const STRING_LIST *opened_files;
+  size_t i;
+
+  dTHX;
+
+  opened_files_sv = hv_fetch (hv, "opened_files", strlen ("opened_files"), 0);
+
+  if (!opened_files_sv)
+    {
+      opened_files_hv = newHV ();
+      hv_store (hv, "opened_files", strlen ("opened_files"),
+                newRV_noinc ((SV *) opened_files_hv), 0);
+    }
+  else
+    {
+      opened_files_hv = (HV *)SvRV (*opened_files_sv);
+    }
+
+  opened_files = &output_files_information->opened_files;
+  if (opened_files->number > 0)
+    {
+      for (i = 0; i < opened_files->number; i++)
+        {
+          const char *file_path = opened_files->list[i];
+          SV *file_path_sv = newSVpv_byte (file_path, 0);
+          hv_store_ent (opened_files_hv, file_path_sv, newSViv (1), 0);
+        }
+    }
+}
+
+void
+build_output_files_information (SV *converter_sv,
+                   const OUTPUT_FILES_INFORMATION *output_files_information)
+{
+  HV *hv;
+  SV **output_files_sv;
+  HV *output_files_hv;
+
+  dTHX;
+
+  hv = (HV *) SvRV (converter_sv);
+
+  output_files_sv = hv_fetch (hv, "output_files",
+                                strlen ("output_files"), 0);
+
+  if (!output_files_sv)
+    {
+      output_files_hv = newHV ();
+      hv_store (hv, "output_files", strlen ("output_files"),
+                newRV_noinc ((SV *) output_files_hv), 0);
+    }
+  else
+    {
+      output_files_hv = (HV *)SvRV (*output_files_sv);
+    }
+
+  build_output_files_opened_files (output_files_hv,
+                                   output_files_information);
+  build_output_files_unclosed_files (output_files_hv,
+                                     output_files_information);
+}
+
+
 static const char *latex_math_options[] = {
   "DEBUG", "OUTPUT_CHARACTERS", "OUTPUT_ENCODING_NAME", "TEST", 0
 };
 
 HV *
-latex_build_options_for_convert_to_latex_math (const CONVERTER *converter)
+latex_build_options_for_convert_to_latex_math (CONVERTER *converter)
 {
   HV *options_latex_math_hv;
   int i;
@@ -3078,11 +3421,18 @@ latex_build_options_for_convert_to_latex_math (const CONVERTER *converter)
   for (i = 0; latex_math_options[i]; i++)
     {
       const char *option_name = latex_math_options[i];
-      SV *option_sv = get_conf (converter, option_name);
-      SvREFCNT_inc (option_sv);
-      hv_store (options_latex_math_hv, option_name,
-                strlen (option_name), option_sv, 0);
+      const OPTION *option = find_option_string (converter->sorted_options,
+                                                 option_name);
+      /* no testing if option is NULL, we know that latex_math_options exist */
+      SV *option_sv = build_sv_option (option, converter);
+      if (SvOK (option_sv))
+        {
+          SvREFCNT_inc (option_sv);
+          hv_store (options_latex_math_hv, option_name,
+                    strlen (option_name), option_sv, 0);
+        }
     }
 
   return options_latex_math_hv;
 }
+
