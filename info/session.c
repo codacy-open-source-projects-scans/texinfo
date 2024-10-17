@@ -256,7 +256,7 @@ info_read_and_dispatch (void)
              means we can go from a long line to a short line and back to
              a long line and end back in the same column. */
           if (!(cmd == &info_next_line || cmd == &info_prev_line))
-            active_window->goal_column = -1; /* Goal is current column. */
+            active_window->flags |= W_CurrentColGoal; /* Goal is current column. */
         }
     }
 }
@@ -1121,7 +1121,10 @@ looking_at_newline (WINDOW *win, long point)
   mbi_iterator_t iter;
   mbi_init (iter, win->node->contents + point,
 	    win->node->nodelen - point);
-  mbi_avail (iter);
+
+  if (!mbi_avail (iter))
+    return 0;
+
   return mbi_cur (iter).wc_valid && mbi_cur (iter).wc == '\n';
 }
 
@@ -1132,7 +1135,9 @@ looking_at_alnum (WINDOW *win)
   mbi_iterator_t iter;
   mbi_init (iter, win->node->contents + win->point,
 	    win->node->nodelen - win->point);
-  mbi_avail (iter);
+
+  if (!mbi_avail (iter))
+    return 0;
 
   return mbi_cur (iter).wc_valid && iswalnum (mbi_cur (iter).wc);
 }
@@ -1245,7 +1250,7 @@ void info_prev_line (WINDOW *, int count);
 static void
 move_to_goal_column (WINDOW *window)
 {
-  long goal;
+  size_t goal;
 
   goal = window->goal_column;
   if (goal >= window->line_map.used)
@@ -1261,8 +1266,11 @@ DECLARE_INFO_COMMAND (info_next_line, _("Move down to the next line"))
     info_prev_line (window, -count);
   else
     {
-      if (window->goal_column == -1)
-        window->goal_column = window_get_cursor_column (window);
+      if (window->flags & W_CurrentColGoal)
+        {
+          window->goal_column = window_get_cursor_column (window);
+          window->flags &= ~W_CurrentColGoal;
+        }
       while (count--)
         point_next_line (window);
       move_to_goal_column (window);
@@ -1276,8 +1284,11 @@ DECLARE_INFO_COMMAND (info_prev_line, _("Move up to the previous line"))
     info_next_line (window, -count);
   else
     {
-      if (window->goal_column == -1)
-        window->goal_column = window_get_cursor_column (window);
+      if (window->flags & W_CurrentColGoal)
+        {
+          window->goal_column = window_get_cursor_column (window);
+          window->flags &= ~W_CurrentColGoal;
+        }
       while (count--)
         point_prev_line (window);
       move_to_goal_column (window);
@@ -1734,7 +1745,7 @@ gc_file_buffers_and_nodes (void)
 
               /* Each node should match at most one file, either a subfile or a 
                  non-split file. */
-              if (fb->flags & N_Subfile)
+              if (fb->flags & F_Subfile)
                 {
                   if (n->subfile && !FILENAME_CMP (fb->fullpath, n->subfile))
                     {
@@ -1742,7 +1753,7 @@ gc_file_buffers_and_nodes (void)
                       break;
                     }
                 }
-              else if (!(fb->flags & N_TagsIndirect))
+              else if (!(fb->flags & F_TagsIndirect))
                 {
                   if (n->fullpath && !FILENAME_CMP (fb->fullpath, n->fullpath))
                     {
@@ -1762,7 +1773,7 @@ gc_file_buffers_and_nodes (void)
           FILE_BUFFER *fb = info_loaded_files[i];
           TAG **t;
 
-          if (fb->flags & N_TagsIndirect)
+          if (fb->flags & F_TagsIndirect)
             continue;
 
           /* If already gc-ed, do nothing. */
@@ -1772,16 +1783,12 @@ gc_file_buffers_and_nodes (void)
           /* If this file had to be uncompressed, check to see if we should
              gc it.  This means that the user-variable "gc-compressed-files"
              is non-zero. */
-          if ((fb->flags & N_IsCompressed) && !gc_compressed_files)
-            continue;
-
-          /* If this file's contents are not gc-able, move on. */
-          if (fb->flags & N_CannotGC)
+          if ((fb->flags & F_IsCompressed) && !gc_compressed_files)
             continue;
 
           /* Don't free file buffers corresponding to files that aren't there 
              any more, because a node may still refer to them. */
-          if (fb->flags & N_Gone)
+          if (fb->flags & F_Gone)
             continue;
 
           free (fb->contents);
@@ -2333,22 +2340,14 @@ info_menu_or_ref_item (WINDOW *window, int menu_item, int xref, int ask_p)
       if (menu_item && !xref)
         {
           if (defentry)
-            {
-              prompt = xmalloc (strlen (defentry->label)
-                                + strlen (_("Menu item (%s): ")));
-              sprintf (prompt, _("Menu item (%s): "), defentry->label);
-            }
+            xasprintf (&prompt, _("Menu item (%s): "), defentry->label);
           else
             prompt = xstrdup (_("Menu item: "));
         }
       else
         {
           if (defentry)
-            {
-              prompt = xmalloc (strlen (defentry->label)
-                                + strlen (_("Follow xref (%s): ")));
-              sprintf (prompt, _("Follow xref (%s): "), defentry->label);
-            }
+            xasprintf (&prompt, _("Follow xref (%s): "), defentry->label);
           else
             prompt = xstrdup (_("Follow xref: "));
         }
@@ -2399,8 +2398,8 @@ info_menu_or_ref_item (WINDOW *window, int menu_item, int xref, int ask_p)
            more than one label which matches, find the one that's
            closest to point.  */
         {
-          register int i;
-          int best = -1, min_dist = window->node->nodelen;
+          register long i;
+          long best = -1, min_dist = window->node->nodelen;
           REFERENCE *ref;
 
           for (i = 0; refs && (ref = refs[i]); i++)
@@ -2411,7 +2410,7 @@ info_menu_or_ref_item (WINDOW *window, int menu_item, int xref, int ask_p)
                 {
                   /* ref->end is more accurate estimate of position
                      for menus than ref->start.  Go figure.  */
-                  int dist = abs (window->point - ref->end);
+                  long dist = labs (window->point - ref->end);
 
                   if (dist < min_dist)
                     {
@@ -2951,6 +2950,8 @@ info_handle_pointer (const char *label, WINDOW *window)
     description = window->node->next;
   else if (!strcmp (label, "Prev"))
     description = window->node->prev;
+  else /* Should not happen */
+    abort ();
 
   if (!description)
     {
@@ -3028,7 +3029,7 @@ DECLARE_INFO_COMMAND (info_last_node, _("Select the last node in this file"))
       if (count == 0 || (count == 1 && !info_explicit_arg))
         count = -1;
       for (i = 0; count && fb->tags[i]; i++)
-        if (fb->tags[i]->cache.nodelen != 0) /* don't count anchor tags */
+        if (!(fb->tags[i]->flags & T_IsAnchor)) /* don't count anchor tags */
           {
             count--;
             last_node_tag_idx = i;
@@ -3061,7 +3062,7 @@ DECLARE_INFO_COMMAND (info_first_node, _("Select the first node in this file"))
       int last_node_tag_idx = -1;
 
       for (i = 0; count && fb->tags[i]; i++)
-        if (fb->tags[i]->cache.nodelen != 0) /* don't count anchor tags */
+        if (!(fb->tags[i]->flags & T_IsAnchor)) /* don't count anchor tags */
           {
             count--;
             last_node_tag_idx = i;
@@ -3499,8 +3500,7 @@ info_intuit_options_node (NODE *node, char *program)
         {
           char *nodename;
 
-          nodename = xmalloc (strlen (program) + strlen (*try_node));
-          sprintf (nodename, *try_node, program);
+          xasprintf (&nodename, *try_node, program);
           /* The last resort "%s" is dangerous, so we restrict it
              to exact matches here.  */
           entry = info_get_menu_entry_by_label
@@ -3574,9 +3574,7 @@ DECLARE_INFO_COMMAND (info_goto_invocation_node,
   file_name = window->node->fullpath;
   default_program_name = program_name_from_file_name (file_name);
 
-  prompt = xmalloc (strlen (default_program_name) +
-		    strlen (invocation_prompt));
-  sprintf (prompt, invocation_prompt, default_program_name);
+  xasprintf (&prompt, invocation_prompt, default_program_name);
   line = info_read_in_echo_area (prompt);
   free (prompt);
   if (!line)
@@ -4186,7 +4184,7 @@ info_search_internal (char *string, WINDOW *window,
             }
           
           tag = file_buffer->tags[i];
-          if (tag->cache.nodelen != 0)
+          if (!(tag->flags & T_IsAnchor))
             break;
         }
 
@@ -4254,6 +4252,9 @@ static int
 ask_for_search_string (int case_sensitive, int use_regex, int direction)
 {
   char *line, *prompt;
+  /* convert int to size_t for comparison with string length.  Bogus
+    values obtained with negative values should not be a concern. */
+  size_t min_length = min_search_length;
 
   if (search_string)
     xasprintf (&prompt, _("%s%s%s [%s]: "),
@@ -4280,7 +4281,7 @@ ask_for_search_string (int case_sensitive, int use_regex, int direction)
       return 1;
     }
 
-  if (mbslen (line) < min_search_length)
+  if (mbslen (line) < min_length)
     {
       info_error ("%s", _("Search string too short"));
       free (line);
@@ -4449,9 +4450,9 @@ check_menus:
             if (!tag_of_reference (r, window, &file_buffer, &tag))
               continue;
 
-            if ((*tag)->flags & N_SeenBySearch)
+            if ((*tag)->flags & T_SeenBySearch)
               continue;
-            (*tag)->flags |= N_SeenBySearch;
+            (*tag)->flags |= T_SeenBySearch;
 
             window->node->active_menu = ref_index + 1;
             node = info_node_of_tag (file_buffer, tag);
@@ -4570,7 +4571,7 @@ check_menus:
               /* This inverts what is done for the forwards search.  It's 
                  possible that we will visit the nodes in a different order if 
                  there is more than one reference to a node. */
-              if (!((*tag)->flags & N_SeenBySearch))
+              if (!((*tag)->flags & T_SeenBySearch))
                 continue;
 
               node = info_node_of_tag (file_buffer, tag);
@@ -4611,7 +4612,7 @@ go_up:
          we set this flag just before going down. */
       if (r && tag_of_reference (r, window, &file_buffer, &tag))
         {
-          (*tag)->flags &= ~N_SeenBySearch;
+          (*tag)->flags &= ~T_SeenBySearch;
         }
 
       goto check_menus;
@@ -4625,7 +4626,7 @@ funexit:
 } /*********** end tree_search_check_node_backwards *************/
 
 
-/* Clear N_SeenBySearch for all nodes. */
+/* Clear T_SeenBySearch for all node tags. */
 void
 wipe_seen_flags (void)
 {
@@ -4639,7 +4640,7 @@ wipe_seen_flags (void)
         continue; /* Probably a sub-file of a split file. */
       for (; *t; t++)
         {
-          (*t)->flags &= ~N_SeenBySearch;
+          (*t)->flags &= ~T_SeenBySearch;
         }
     }
 }

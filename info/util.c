@@ -34,9 +34,12 @@ xvasprintf (char **ptr, const char *template, va_list ap)
 int
 xasprintf (char **ptr, const char *template, ...)
 {
+  int ret;
   va_list v;
   va_start (v, template);
-  return xvasprintf (ptr, template, v);
+  ret = xvasprintf (ptr, template, v);
+  va_end (v);
+  return ret;
 }
 
 /* Return the file buffer which belongs to WINDOW's node. */
@@ -223,6 +226,17 @@ printed_representation (mbi_iterator_t *iter, int *delim, size_t pl_chars,
         {
           int i = 0;
 
+          /* compute the number of columns to the next tab stop, assuming
+             8 columns for a tab.
+
+             To determine the next tab stop, add 8 to the current column,
+             and then subtract the remainder of the division by 8.
+
+             (n & 0xf8) does (n - n mod 8) in one step as the binary
+             representation of 0xf8 is 1111 1000 so the result has
+             to be a multiple of 8.
+             TODO this doesn't work if there are more than 255 columns.
+           */
           *pchars = ((pl_chars + 8) & 0xf8) - pl_chars;
           *pbytes = *pchars;
 
@@ -386,7 +400,7 @@ size_t
 text_buffer_fill (struct text_buffer *buf, int c, size_t len)
 {
   char *p;
-  int i;
+  size_t i;
   
   text_buffer_alloc (buf, len);
   

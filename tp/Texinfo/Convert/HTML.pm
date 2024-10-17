@@ -10680,6 +10680,13 @@ sub _external_node_href($$$)
       }
     }
     my $manual_base = $manual_name;
+    # in 2023 there were manuals with .info.  Warning added in 2024.
+    if ($manual_base =~ s/(\.info?)$//) {
+      $self->converter_line_warn(sprintf(__(
+                    "do not set %s suffix in reference for manual `%s'"),
+                                         $1, $manual_name),
+                             $source_command->{'source_info'});
+    }
     $manual_base =~ s/^.*\///;
     my $split_found;
     my $htmlxref_href;
@@ -11231,15 +11238,49 @@ sub _file_header_information($$;$)
        and $self->get_conf('HTML_MATH') eq 'mathjax')
       and ($self->get_file_information('mathjax', $filename))) {
     my $mathjax_script = $self->get_conf('MATHJAX_SCRIPT');
-    my $mathjax_configuration = $self->get_conf('MATHJAX_CONFIGURATION');
+
+    my $default_mathjax_configuration =
+"  options: {
+    skipHtmlTags: {'[-]': ['pre']},       // do not skip pre
+    ignoreHtmlClass: 'tex2jax_ignore',
+    processHtmlClass: 'tex2jax_process'
+  },
+  tex: {
+    processEscapes: false,      // do not use \\\$ to produce a literal dollar sign
+    processEnvironments: false, // do not process \\begin{xxx}...\\end{xxx} outside math mode
+    processRefs: false,         // do not process \\ref{...} outside of math mode
+    displayMath: [             // start/end delimiter pairs for display math
+      ['\\\\[', '\\\\]']
+    ],
+  },";
 
     $extra_head .=
 "<script type='text/javascript'>
 MathJax = {
+$default_mathjax_configuration
+};
+";
+
+    my $mathjax_configuration = $self->get_conf('MATHJAX_CONFIGURATION');
+    if (defined($mathjax_configuration)) {
+      $extra_head .=
+"var MathJax_conf = {
 $mathjax_configuration
 };
-</script>"
-.'<script type="text/javascript" id="MathJax-script" async
+
+for (let component in MathJax_conf) {
+  if (!MathJax.hasOwnProperty(component)) {
+    MathJax[component] = MathJax_conf[component];
+  } else {
+    for (let field in MathJax_conf[component]) {
+      MathJax[component][field] = MathJax_conf[component][field];
+    }
+  }
+}
+";
+    }
+
+    $extra_head .= '</script><script type="text/javascript" id="MathJax-script" async
   src="'.$self->url_protect_url_text($mathjax_script).'">
 </script>';
 
@@ -12459,7 +12500,7 @@ sub _do_js_files($$)
         my $jssrcdir;
         if (!$Texinfo::ModulePath::texinfo_uninstalled) {
           $jssrcdir = File::Spec->catdir(
-            $Texinfo::ModulePath::pkgdatadir, 'js');
+            $Texinfo::ModulePath::converterdatadir, 'js');
         } else {
           $jssrcdir = File::Spec->catdir(
             $Texinfo::ModulePath::top_srcdir, 'js');
@@ -13030,25 +13071,7 @@ sub _setup_output($)
       $mathjax_source = 'http://docs.mathjax.org/en/latest/web/hosting.html#getting-mathjax-via-git';
       $self->set_conf('MATHJAX_SOURCE', $mathjax_source);
     }
-
-    my $mathjax_configuration = $self->get_conf('MATHJAX_CONFIGURATION');
-    if (!defined($mathjax_configuration)) {
-      $mathjax_configuration = "  options: {
-    skipHtmlTags: {'[-]': ['pre']},       // do not skip pre
-    ignoreHtmlClass: 'tex2jax_ignore',
-    processHtmlClass: 'tex2jax_process'
-  },
-  tex: {
-    processEscapes: false,      // do not use \\\$ to produce a literal dollar sign
-    processEnvironments: false, // do not process \\begin{xxx}...\\end{xxx} outside math mode
-    processRefs: false,         // do not process \\ref{...} outside of math mode
-    displayMath: [             // start/end delimiter pairs for display math
-      ['\\\\[', '\\\\]']
-    ],
-  },";
-      $self->set_conf('MATHJAX_CONFIGURATION', $mathjax_configuration);
-    }
-  }
+ }
 
   my $setup_status = $self->run_stage_handlers($self->{'stage_handlers'},
                                                $self->{'document'}, 'setup');

@@ -52,11 +52,13 @@ PROTOTYPES: ENABLE
 # More related to translations than to the Texinfo Document, but we do not
 # to add another XS file for only one function.
 void
-configure_output_strings_translations (localesdir, strings_textdomain="texinfo_document")
+configure_output_strings_translations (localesdir, strings_textdomain="texinfo_document", int use_external_translate_string=0)
        char *localesdir = (char *)SvPVbyte_nolen($arg);
        char *strings_textdomain;
       CODE:
-       configure_output_strings_translations (localesdir, strings_textdomain);
+       configure_output_strings_translations (localesdir,
+                                              strings_textdomain,
+                                              use_external_translate_string);
 
 # Since build_document is called, the underlying document HV is destroyed
 # instead of being reused, which is somewhat inefficient.  Doing something
@@ -397,21 +399,23 @@ gdt (string, ...)
              hv_replaced_substrings = (HV *)SvRV (ST(2));
              hv_number = hv_iterinit (hv_replaced_substrings);
              if (hv_number > 0)
-               replaced_substrings = new_named_string_element_list ();
-               for (i = 0; i < hv_number; i++)
-                 {
-                   char *key;
-                   I32 retlen;
-                   SV *value = hv_iternextsv(hv_replaced_substrings,
-                                             &key, &retlen);
-                   DOCUMENT *document = get_sv_tree_document (value, 0);
-                   /* TODO should warn/error if not found or return
-                      a list of missing string identifiers?  Or check
-                      in caller?  In any case, it cannot be good to
-                      ignore a replaced substring */
-                   if (document && document->tree)
-                     add_element_to_named_string_element_list (
-                       replaced_substrings, key, document->tree);
+               {
+                 replaced_substrings = new_named_string_element_list ();
+                 for (i = 0; i < hv_number; i++)
+                   {
+                     char *key;
+                     I32 retlen;
+                     SV *value = hv_iternextsv(hv_replaced_substrings,
+                                               &key, &retlen);
+                     DOCUMENT *document = get_sv_tree_document (value, 0);
+                     /* TODO should warn/error if not found or return
+                        a list of missing string identifiers?  Or check
+                        in caller?  In any case, it cannot be good to
+                        ignore a replaced substring */
+                     if (document && document->tree)
+                       add_element_to_named_string_element_list (
+                         replaced_substrings, key, document->tree);
+                   }
                }
            }
 

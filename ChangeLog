@@ -1,3 +1,595 @@
+2024-10-16  Vitezslav Crhonek  <vcrhonek@redhat.com>
+
+	* install-info/install-info.c (open_possibly_compressed_file):
+	Fix resource leak by calling fclose in case of errors.
+
+2024-10-16  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (readfile): re-order code
+	to prevent possible memory leak.  Report from Vitezslav Crhonek.
+
+2024-10-16  Vitezslav Crhonek  <vcrhonek@redhat.com>
+
+	* install-info/install-info.c (munge_old_style_debian_options):
+	Add missing initializer.
+
+2024-10-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/errors.c (message_list_line_error_ext)
+	(message_list_command_warn, pmessage_list_command_warn)
+	(message_list_command_error, message_list_document_error)
+	(message_list_document_warn), tp/Texinfo/XS/main/utils.c
+	(non_perl_xasprintf, xasprintf): add missing "va_end".  Based on
+	Vitezslav Crhonek report.
+
+2024-10-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/init/book.pm (book_in_contents_button, @book_contents_buttons)
+	(@book_output_unit_buttons): for regular output units (not for Top or
+	special output units), have the Contents button link to the section
+	location in table of contents, similarly with TOC_LINKS, but for
+	a button.  Based on Rudolf Adamkovič idea.
+
+2024-10-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix install-info memory leak
+
+	* install-info/install-info.c (open_possibly_compressed_file):
+	Move a function call returning memory that has to be freed
+	to prevent a theoretical memory leak in case of an error calling
+	fclose or freopen.  Report from Vitezslav Crhonek.
+
+2024-10-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add .git/hooks/post-commit script
+
+2024-10-15  Vitezslav Crhonek  <vcrhonek@redhat.com>
+
+	* info/util.c: add missing "va_end"
+
+2024-10-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/session.c (info_menu_or_ref_item, info_intuit_options_node)
+	(info_goto_invocation_node): Use xasprintf instead of xmalloc/sprintf.
+	The previous code appeared not to allocate memory for a final null.
+
+	Report from Vitezslav Crhonek.
+
+2024-10-15  Vitezslav Crhonek  <vcrhonek@redhat.com>
+
+	* info/infomap.c (fetch_user_maps): fix resource leak
+
+2024-10-15  Vitezslav Crhonek  <vcrhonek@redhat.com>
+
+	* info/variables.c (read_variable_name): fix memory leak
+
+2024-10-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix info memory leak
+
+	* info/variables.c (set_variable): Free user-entered line.
+
+2024-10-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Always null terminate key sequence array
+
+	* info/infokey.c (compile): Always null-terminate 'seq' array.
+	Avoid filling the array completely as this could lead to a segfault
+	if exactly 20 characters were given in a key sequence, e.g.
+
+	bbbbbbbbbbbbbbbbbbb down-line
+
+	Report of uninitialised variable from Vitezslav Crhonek, found
+	with a static analysis tool.
+
+2024-10-15  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* install-info/install-info.c (open_possibly_compressed_file):
+	Correct check of return value of freopen.
+
+	Report from Vitezslav Crhonek <vcrhonek@redhat.com>.
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/configure.ac (HAVE_USABLE_GETENV_IN_XS): redirect
+	stderr to /dev/null for test too.  Fix the use of AC_DEFINE to define
+	only if the test succeeded.
+
+	* tp/Texinfo/XS/main/call_perl_function.c
+	(call_translations_translate_string): fix Perl function name.
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS, tp/Texinfo/Convert/HTML.pm (_external_node_href),
+	tp/Texinfo/XS/convert/format_html.c (external_node_href): remove .inf
+	or .info in cross-reference manual names, but warn that they should
+	not have been there.  There are indeed manuals with .info in
+	cross-references, for instance the glibc manual.  Report from Gavin.
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/configure.ac (usable_getenv_in_XS)
+	(HAVE_USABLE_GETENV_IN_XS): add a define set if getenv can safely be
+	used in Perl, based on Perl version >= 5.38.
+
+	* tp/Texinfo/XS/main/call_perl_function.c
+	(call_translations_translate_string),
+	tp/Texinfo/XS/main/replace_perl_api_call.c
+	(call_translations_translate_string): add call to
+	Texinfo::Translation::translate_string.
+
+	* tp/Texinfo/Translations.pm (_XS_configure),
+	tp/Texinfo/XS/convert/texinfo.c (txi_setup),
+	tp/Texinfo/XS/main/DocumentXS.xs
+	(configure_output_strings_translations),
+	tp/Texinfo/XS/main/translations.c (use_external_translate_string)
+	(configure_output_strings_translations, translate_string): add an
+	argument to configure_output_strings_translations to specify whether
+	to call Perl translate_string or not.  Set the variable
+	use_external_translate_string variable based on the argument, or on
+	HAVE_USABLE_GETENV_IN_XS if the argument is 0.  Use
+	use_external_translate_string in translate_string to determine if
+	call_translations_translate_string should be called.
+
+	Report from Gavin.
+
+2024-10-14  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/htmlxref.cnf (termcap): add link to single page version.
+	(Node anchors are broken as this is from an old version of
+	texi2html (1.52), but better than nothing.)
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres, tp/t/html_tests.t (inline_in_node): test showing
+	that HTML elements in @inlineraw on @node and @title line end up in
+	attributes in link or meta.  Based on Benjamin Kalish report.
+
+2024-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/infokey.c (compile): warn if octal sequence is out of range.
+	Report from Andreas Schwab.
+
+2024-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Avoid compiler warning
+
+	* info/infokey.c (compile): declare a variable as an int to avoid
+	a compiler warning "comparison is always true due to limited
+	range of data type" with gcc -Wtype-limits.
+
+	Report from Patrice and fix from Eli.
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/init/documentation_examples.pm (MATHJAX_CONFIGURATION)
+	(HTML_MATH): set MATHJAX_CONFIGURATION to the Texinfo manual example
+	and HTML_MATH to mathjax.
+
+	* tp/t/init_files_tests.t ($documentation_examples_text): add
+	@displaymath using \dv from the LaTeX physics package.
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/format_html.c (file_header_information):
+	do not output mathjax header on every file if split.
+	Remove trailing end of line from text output if MATHJAX_CONFIGURATION
+	is set.
+
+2024-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (HTML Xref Link Basics): edit text at end of
+	node discussing split/mono links.
+
+2024-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add note about removing generated gnulib header
+	files after "git switch".
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/format_html.c (file_header_information),
+	tp/Texinfo/XS/convert/html_prepare_converter.c (html_setup_output):
+	only put extra settings in MATHJAX_CONFIGURATION in C code.  Do not
+	set MATHJAX_CONFIGURATION in html_setup_output, move default MathJax
+	configuration to file_header_information.  Always output it.  Only
+	output value of MATHJAX_CONFIGURATION if set.
+
+2024-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Macros for struct initialiser
+
+	* info/variables.c (info_variables): Use macros to generate
+	some of the initialiser.  This is shorter and also allows
+	providing the final 'where_set' value explicitly.
+
+2024-10-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Only put extra settings in MATHJAX_CONFIGURATION
+
+	* tp/Texinfo/Convert/HTML.pm (_setup_output): do not set
+	MATHJAX_CONFIGURATION.
+	(_file_header_information) <MathJax>: Move default MathJax
+	configuration here from _setup_output.  Always output it.
+	Only output value of MATHJAX_CONFIGURATION if set.
+	* doc/texinfo.texi (MathJax Customization Variables): update.
+	do not show default texi2any configuration of MathJax.
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	* info/util.c (printed_representation): add a comment to explain tab
+	printed representation, based on Gavin explanation.
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (make_file_buffer, info_create_tag, info_create_node):
+	initialize with memset call zeroing the structure.
+
+2024-10-13  Patrice Dumas  <pertusus@free.fr>
+
+	Install texi2any codes and included js in datadir/texi2any
+
+	* configure.ac (CONVERTER), tp/Texinfo/XS/configure.ac (CONVERTER):
+	add CONVERTER, set to texi2any.
+
+	* Pod-Simple-Texinfo/Makefile.am (pod2texi),
+	Pod-Simple-Texinfo/pod2texi.pl (BEGIN), tp/Makefile.am (do_subst),
+	tp/texi2any.pl (BEGIN), util/Makefile.am (txixml2texi),
+	util/txixml2texi.pl (BEGIN): pass libdir separately to set xsdir.
+	Rename $lib_dir as $modules_dir.
+
+	* Pod-Simple-Texinfo/Makefile.am (converterdatadir, modulesdir)
+	(pod2texi), Pod-Simple-Texinfo/pod2texi.pl (BEGIN), js/Makefile.am
+	(converterdatadir, jsdir), tp/Makefile.am (converterdatadir, do_subst)
+	(modulesdir, convertmodulesdir, extensionsdir, initdir)
+	(install-data-local, uninstall-local), tp/Texinfo/Convert/HTML.pm
+	(_do_js_files), tp/Texinfo/ModulePath.pm.in ($converterdatadir),
+	tp/Texinfo/XS/Makefile.am (converterlibdir, xsdir, converterdatadir)
+	(modulesdir), tp/Texinfo/XS/convert/ConvertXS.xs (init),
+	tp/Texinfo/XS/convert/convert_html.c (html_do_js_files),
+	tp/Texinfo/XS/convert/converter.c (setup_converter_paths_information)
+	(converter_setup), tp/Texinfo/XS/convert/converter.h
+	(INSTALLED_PATHS), tp/Texinfo/XS/convert/texinfo.c (txi_setup),
+	tp/Texinfo/XSLoader.pm (init), tp/texi2any.pl (BEGIN, $converter)
+	($extensions_dir, @converter_config_dirs, @converter_init_dirs),
+	util/Makefile.am (txixml2texi), util/txixml2texi.pl (BEGIN): pass
+	CONVERTER, install in $(datadir)/$(CONVERTER), rename/replace
+	pkgdatadir by converterdatadir.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (info_create_tag): do not set nodestart_adjusted to -1,
+	this special value is not used anymore.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (info_node_of_tag_ext): call adjust_nodestart directly,
+	as if nodelen is > 0 nodestart_adjusted is necessarily set, while if
+	nodelen is 0, nodestart_adjusted is not set.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (find_node_from_tag, info_node_of_tag_ext): remove
+	unused parent argument.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/search.c: add const.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (info_node_of_tag_ext): add an intermediary variable
+	for node tag and node tag pointer for a clearer code.  Rename input
+	tag and tag pointer variables.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/indices.c (info_indices_of_file_buffer), info/nodes.c
+	(build_tag_table, get_nodes_of_tags_table, info_create_tag)
+	(info_node_of_tag_ext), info/nodes.h (T_IsAnchor), info/scan.c
+	(copy_input_to_output, scan_node_contents), info/session.c
+	(info_last_node, info_first_node, info_search_internal): add
+	T_IsAnchor tag flag to mark that a tag is a Ref anchor tag.  Do not
+	use TAG cache.nodelen to determine if a tag is an anchor, use the
+	flag.  Initialize TAG cache.nodelen to 0 and consider that the nodelen
+	has not been found for a node tag if cache.nodelen is 0.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.h, info/session.c: separate flag for tags from flags for
+	nodes.  Use a leading T_ for for tag flags.  Move tag flag near TAG.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (info_node_of_tag_ext): do not copy tag flags to node.
+	The only flag set in tag is N_SeenBySearch and it is not used in nodes.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.h: change in comments.  Move values for FILE_BUFFER.flags
+	near FILE_BUFFER.  No change in code.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c, info/nodes.h, info/session.c: separate flags for nodes
+	and tags from flags for file buffers.  Use a leading F_ for file
+	buffer flags.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (info_node_of_tag_ext): do not set N_IsCompressed on
+	nodes, it is only relevant and used at the file buffer level.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (init_file_buffer_tag), info/man.c (get_manpage_node):
+	do not set N_HasTagsTable on a manpage node nor on a tag entry, it is
+	only relevant and used at the file buffer level.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (init_file_buffer_tag): do not set N_TagsIndirect on
+	the entry, it is only relevant and used at the file buffer level.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (info_create_node): initialize nodelen field to 0.
+	Previously it was set to -1, but it is confusing because the value was
+	never used.  In most cases nodelen is set right after the call to
+	info_create_node.  In case of man page, it may not be set right away,
+	but then it is the contents field that is used to determine if the man
+	page node was setup.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* info/dir.c, info/display.c, info/scan.c: reindent, replace tabs by
+	spaces, remove spaces, minor edit of a comment.
+
+2024-10-12  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/html_prepare_converter.c
+	(html_initialize_output_state): add end of line to debug message.
+
+2024-10-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	CHECK_HTMLXREF on by default.
+
+	* tp/Texinfo/Convert/converters_defaults.txt (html):
+	Set CHECK_HTMLXREF on by default.
+	* tp/t/test_utils.pl (set_converter_option_defaults):
+	Clear CHECK_HTMLXREF.
+
+	* doc/texinfo.texi (File Names and Links Customization for HTML),
+	* NEWS: Update.
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (info_get_node_with_defaults): remove filename_in in
+	condition inside, as it can only be setbecause of condition outside.
+	Do not initialize filename and nodename, they are always set.
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* info/footnotes.c (make_footnotes_node): use fn_node directly to
+	determine if the node associated to the footnote was found.
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* info/window.c: reindent, replace tabs by spaces, remove spaces.
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* info/session.c (info_handle_pointer): abort if the input label is
+	not one of the expected labels.  It should never happen as the callers
+	set the label explicitely.
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c (parse_rawline_command):
+	go to unmacro_badname when there is trailing garbage on @unmacro line,
+	not to the @clear similar label.
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal): fix
+	condition to be cmd is CM_item and not there is a cmd.
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.c (is_content_empty): fix condition.
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs (gdt): add missing braces for
+	block.  (Note that the corresponding code is not used).
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/format_html.c (html_internal_command_tree):
+	fix condition (found by clang "logical not is only applied to the left
+	hand side of this comparison").
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/macro.c (parse_macro_command_line): remove
+	variable set but unused.
+
+2024-10-11  Patrice Dumas  <pertusus@free.fr>
+
+	* info/display.c (display_update_node_text), info/session.c
+	(looking_at_newline, looking_at_alnum): check mbi_avail return value.
+	The caller probably makes sure that there are bytes, but this should
+	be more robust and could still be relevant for invalid multibytes
+	sequences depending on mbi_avail implementation.
+
+2024-10-10  Patrice Dumas  <pertusus@free.fr>
+
+	* info/terminal.c (keys, keys2), info/variables.c (styles),
+	tp/Texinfo/XS/main/utils.c (def_aliases, default_expanded_formats),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_misc_line),
+	tp/Texinfo/XS/parsetexi/indices.c (default_indices)
+	(def_command_indices), tp/Texinfo/XS/parsetexi/def.c (def_maps): add
+	braces for each structure in arrays initialization.
+
+2024-10-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/command_data.awk,
+	tp/Texinfo/XS/main/element_types.awk,
+	tp/maintain/generate_code_convert_data.pl,
+	tp/maintain/regenerate_C_options_info.pl,
+	tp/maintain/setup_converters_code_tables.pl: add braces for each
+	structure in arrays.  Update scripts generating codes reading
+	command_data.c to get the commands order.
+
+2024-10-10  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/configure.ac (PERL_LIBS, perl_conf_LDFLAGS)
+	(platform_PERL_LIBADD): set PERL_LIBS to -L.. -l for Perl.  Add it to
+	platform_PERL_LIBADD but not to perl_conf_LDFLAGS.
+
+	* tp/Texinfo/XS/Makefile.am (TestXS_la_LIBADD, MiscXS_la_LIBADD)
+	(XSParagraph_la_LIBADD, libtexinfo_la_LIBADD, libtexinfoxs_la_LIBADD)
+	(libtexinfo_convert_la_LIBADD, Parsetexi_la_LIBADD)
+	(DocumentXS_la_LIBADD, StructuringTransfoXS_la_LIBADD)
+	(IndicesXS_la_LIBADD, ConvertXS_la_LIBADD): postpend
+	$(platform_PERL_LIBADD) when linking against Perl such that the
+	library appears after the other libraries to resolve the symbols.
+	From Eli.
+
+2024-10-10  Patrice Dumas  <pertusus@free.fr>
+
+	* info/session.c (info_read_and_dispatch, info_next_line)
+	(info_prev_line), info/window.c (window_make_window)
+	(set_window_pagetop), info/window.h (WINDOW): instead of using -1
+	value of WINDOW goal_column to signal that the cursor should be
+	placed in the column it is currently in, add and use the
+	W_CurrentColGoal flag.  Set WINDOW goal_column to size_t as it is
+	compared to unsigned fields of LINE_MAP.
+
+2024-10-10  Patrice Dumas  <pertusus@free.fr>
+
+	* info/window.c (collect_line_starts): add a comment to explain that
+	there is a comparison of unsigned and signed integers.
+
+2024-10-10  Patrice Dumas  <pertusus@free.fr>
+
+	* info/t/Init-test.inc: modify proposed valgrind call in comment to
+	use basename for out of source builds and put logs in t/.
+
+2024-10-10  Patrice Dumas  <pertusus@free.fr>
+
+	* info/filesys.c (filesys_read_info_file): convert to ssize_t to use
+	as read return value an not to size_t and convert to size_t later on.
+	Do not cast finfo->st_size to (long), leave it as off_t and convert to
+	either size_t or ssize_t depending on how the file is read.  Add
+	comments to mark conversion from unsigned to signed.
+
+	* info/filesys.c (convert_eols): use size_t in argument an as return
+	type.
+
+2024-10-10  Patrice Dumas  <pertusus@free.fr>
+
+	* info/window.h (LINE_MAP): use long for nline field to be consistent
+	with the remaining line numbers that are unsigned.
+
+	* info/window.c (set_window_pagetop, window_line_of_point)
+	(line_map_init, window_compute_line_map): replace some int by long
+	for consistency across functions, structure fields and variables
+	types.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	Remove N_CannotGC, it is checked but never set
+
+	* info/session.c (gc_file_buffers_and_nodes): do not check N_CannotGC
+	in file buffer flag as it is not set anywhere.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	Remove N_UpdateTags, it is set but never checked
+
+	* info/nodes.c (adjust_nodestart): do not set N_UpdateTags in
+	node->flags as it is not checked anywhere, and nodestart_adjusted
+	is set right away for the tag, not need to change the tag further.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/window.c (window_log_to_phys_line): use consistent type.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/session.c (info_menu_or_ref_item): use long consistently with
+	node and windows length types, call labs instead of abs.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/session.c (ask_for_search_string): explicitely convert the
+	min_search_length variable to size_t before comparing with mbslen.
+
+	* info/util.c (text_buffer_fill): use size_t to be consistent.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/session.c (move_to_goal_column): use size_t for long.  The
+	window->goal_column is necessarily positive, as move_to_goal_column is
+	called after window_get_cursor_column if window->goal_column was
+	negative.  And the LINE_MAP structure uses size_t for columns indices.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/search.c (extend_matches, regexp_search), info/window.h
+	(MATCH_STATE): make MATCH_STATE buflen long to be consistent with
+	nodes length types and also with regoff_t.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (info_reload_file_buffer_contents): add an intermediate
+	variable for filesize passed to filesys_read_info_file.
+
+	* info/nodes.h (FILE_BUFFER), info/nodes.c
+	(info_reload_file_buffer_contents, info_load_file): use long for
+	filesize instead of size_t to be sure that comparisons with node and
+	search length are always safe.  Add comments to explicit where the
+	conversion from size_t to long is done.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/nodes.c (info_create_node): use consistent type.
+
+	* info/nodes.c (info_node_of_tag_ext): remove cast of node->nodelen to
+	unsigned long, it is not useful, node->nodelen should be positive at
+	this point, and could be dangerous, as node->display_pos is long.
+
+	* info/nodes.c (info_node_of_tag_ext): always reset node->display_pos
+	to zero if negative.  It should not happen, but it is always safer.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/echo-area.c (remove_completion_duplicates, build_completions):
+	get completions number in argument and return the new completions
+	number.
+
+	* info/echo-area.c (build_completions): use a size_t index variable to
+	add entries to completions_found.  Pass this variable to
+	remove_completion_duplicates and retrieve the modified value.  Set
+	completions_found_index at this point, such that the conversion to
+	long is explicit, and mark in a comment that the completions_found*
+	and LCD_completion should not be modified after that point and before
+	a call to build_completions.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/echo-area.c (completions_found_index)
+	(info_read_completing_internal, ea_possible_completions)
+	(build_completions, remove_completion_duplicates): use long even if
+	the variable should never be negative as it is more robust for
+	comparisons and consistent with windows fields types.
+
+2024-10-09  Patrice Dumas  <pertusus@free.fr>
+
+	* info/display.c (display_update_one_window): use long type consistent
+	with windows fields types.
+
 2024-10-08  Patrice Dumas  <pertusus@free.fr>
 
 	* info/display.c (display_update_line): add int variables to avoid

@@ -739,6 +739,7 @@ external_node_href (CONVERTER *self, const ELEMENT *external_node,
   if (manual_content)
     {
       char *manual_name;
+      size_t len;
       char *manual_base = 0;
       char *p;
       char *htmlxref_href = 0;
@@ -775,6 +776,30 @@ external_node_href (CONVERTER *self, const ELEMENT *external_node,
       else
         p++;
       manual_base = strdup (p);
+
+      p = 0;
+      len = strlen (manual_base);
+      if (len >= 4)
+        {
+          p = manual_base + len - 4;
+          if (strcmp (p, ".inf"))
+            p = 0;
+        }
+      if (!p && len >= 5)
+        {
+          p = manual_base + len - 5;
+          if (strcmp (p, ".info"))
+            p = 0;
+        }
+
+      if (p)
+        {
+          message_list_command_warn (&self->error_messages, self->conf,
+                                     source_command, 0,
+                "do not set %s suffix in reference for manual `%s'",
+                                     p, manual_name);
+          *p = '\0';
+        }
 
       htmlxref_manual = find_htmlxref_manual (&self->htmlxref, manual_base);
 
@@ -1778,7 +1803,7 @@ html_internal_command_tree (CONVERTER *self, const ELEMENT *command,
             {
               const char *section_number
                 = lookup_extra_string (command, AI_key_section_number);
-              if (section_number && !self->conf->NUMBER_SECTIONS.o.integer == 0)
+              if (section_number && self->conf->NUMBER_SECTIONS.o.integer != 0)
                 {
                   NAMED_STRING_ELEMENT_LIST *replaced_substrings
                     = new_named_string_element_list ();
@@ -3845,18 +3870,52 @@ file_header_information (CONVERTER *self, const ELEMENT *command,
     }
   if (self->conf->HTML_MATH.o.string
       && !strcmp (self->conf->HTML_MATH.o.string, "mathjax")
-      && (html_get_file_information (self, "mathjax", filename, &status) > 0
-          || (self->conf->SPLIT.o.string && strlen (self->conf->SPLIT.o.string))))
+      && (html_get_file_information (self, "mathjax", filename, &status) > 0))
     {
       char *mathjax_script = url_protect_url_text (self,
                                 self->conf->MATHJAX_SCRIPT.o.string);
+      const char *default_mathjax_configuration =
+ "  options: {\n"
+ "    skipHtmlTags: {'[-]': ['pre']},       // do not skip pre\n"
+ "    ignoreHtmlClass: 'tex2jax_ignore',\n"
+ "    processHtmlClass: 'tex2jax_process'\n"
+ "  },\n"
+ "  tex: {\n"
+ "    processEscapes: false,      // do not use \\$ to produce a literal dollar sign\n"
+ "    processEnvironments: false, // do not process \\begin{xxx}...\\end{xxx} outside math mode\n"
+ "    processRefs: false,         // do not process \\ref{...} outside of math mode\n"
+ "    displayMath: [             // start/end delimiter pairs for display math\n"
+ "      ['\\\\[', '\\\\]']\n"
+ "    ],\n"
+ "  },";
+
       text_printf (&text, "<script type='text/javascript'>\n"
-"MathJax = {\n"
-"%s\n"
-"};\n"
-"</script><script type=\"text/javascript\" id=\"MathJax-script\" async\n"
-"  src=\"%s\">\n"
-"</script>", self->conf->MATHJAX_CONFIGURATION.o.string, mathjax_script);
+ "MathJax = {\n"
+ "%s\n"
+ "};\n", default_mathjax_configuration);
+
+      if (self->conf->MATHJAX_CONFIGURATION.o.string)
+        {
+          text_printf (&text,
+ "var MathJax_conf = {\n"
+ "%s\n"
+ "};\n"
+ "\n"
+ "for (let component in MathJax_conf) {\n"
+ "  if (!MathJax.hasOwnProperty(component)) {\n"
+ "    MathJax[component] = MathJax_conf[component];\n"
+ "  } else {\n"
+ "    for (let field in MathJax_conf[component]) {\n"
+ "      MathJax[component][field] = MathJax_conf[component][field];\n"
+ "    }\n"
+ "  }\n"
+ "}\n", self->conf->MATHJAX_CONFIGURATION.o.string);
+        }
+
+      text_printf (&text,
+ "</script><script type=\"text/javascript\" id=\"MathJax-script\" async\n"
+ "  src=\"%s\">\n"
+ "</script>", mathjax_script);
       free (mathjax_script);
     }
   begin_info->extra_head = text.text;

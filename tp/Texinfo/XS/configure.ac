@@ -15,6 +15,25 @@ AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIR([gnulib/m4])
 
+CONVERTER=texi2any
+AC_SUBST([CONVERTER])
+
+AC_PATH_PROG([PERL], [perl])
+
+# Before Perl 5.38.0 getenv/setenv and similar cannot be reliably used in
+# XS and could lead to memory corruption, depending on the platform.
+usable_getenv_in_XS=no
+AC_MSG_CHECKING([Perl XS with usable getenv])
+if $PERL -e "use 5.038" >/dev/null 2>&1; then
+  usable_getenv_in_XS=yes
+fi
+AC_MSG_RESULT($usable_getenv_in_XS)
+
+if test $usable_getenv_in_XS = yes ; then
+  AC_DEFINE([HAVE_USABLE_GETENV_IN_XS], [1],
+            [Define to 1 if getenv can be used in XS])
+fi
+
 b='\'
 d='$'
 o='@<:@' dnl quadrigraph for [ - see autoconf documentation
@@ -96,8 +115,6 @@ PACKAGE_XS_VERSION=0
 # is given, we still need to configure this directory minimally, so that
 # "make dist" will work.
 if test x$disable_xs != xyes; then
-  AC_PATH_PROG([PERL], [perl])
-
   #PACKAGE_XS_VERSION=`${PERL} -e 'use version; print version->declare('"$PACKAGE_VERSION"')->numify;'`
   PACKAGE_XS_VERSION=`echo $PACKAGE_VERSION | sed 's/-/./g'`
 
@@ -227,17 +244,16 @@ AM_CONDITIONAL([HAVE_ICONV],
 CFLAGS=$PERL_EXT_CFLAGS
 LDFLAGS=$PERL_EXT_LDFLAGS
 
+PERL_LIBS="-L$PERL_INC $PERL_CONF_libperl"
 # Use the -no-undefined flag on MS-Windows.  See info node
-# `(gnulib)Libtool and Windows'.  The -L and -l options after it show
-# where to find the undefined symbols when linking against Perl.
+# `(gnulib)Libtool and Windows'.  The -L and -l options in
+# platform_PERL_LIBADD show where to find the undefined symbols when
+# linking against Perl.
 case "$host" in *-mingw32 | *-mingw64 | *-msdosdjgpp | *-cygwin )
-  perl_conf_LDFLAGS="$perl_conf_LDFLAGS -no-undefined -L$PERL_INC $PERL_CONF_libperl"
+  perl_conf_LDFLAGS="$perl_conf_LDFLAGS -no-undefined"
   # used for shared libraries not linked against Perl.
   platform_LDFLAGS='-no-undefined'
-  ;;
- *)
-  # can be used to explicitly link against Perl when not in perl_conf_LDFLAGS
-  perl_conf_PERL_LINK="-L$PERL_INC $PERL_CONF_libperl"
+  platform_PERL_LIBADD=$PERL_LIBS
   ;;
 esac
 
@@ -245,6 +261,8 @@ AC_SUBST([perl_conf_CFLAGS], [$perl_conf_CFLAGS])
 AC_SUBST([perl_conf_LDFLAGS], [$perl_conf_LDFLAGS])
 AC_SUBST([platform_LDFLAGS], [$platform_LDFLAGS])
 AC_SUBST([perl_conf_PERL_LINK], [$perl_conf_PERL_LINK])
+AC_SUBST([platform_PERL_LIBADD], [$platform_PERL_LIBADD])
+AC_SUBST([PERL_LIBS], [$PERL_LIBS])
 
 AC_CHECK_FUNCS(newlocale strxfrm_l)
 
