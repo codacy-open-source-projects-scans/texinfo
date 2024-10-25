@@ -600,7 +600,8 @@ begin_paragraph (ELEMENT *current)
           if (child->type == ET_empty_line
               || child->type == ET_paragraph)
             break;
-          if (type_data[child->type].flags & TF_at_command
+          if (!(type_data[child->type].flags & TF_text)
+              && child->e.c->cmd
               && command_data(child->e.c->cmd).flags & CF_close_paragraph)
             break;
           /* after an indent there are ignorable_spaces_after_command
@@ -728,10 +729,7 @@ move_last_space_to_element (ELEMENT *current)
   ELEMENT *e = pop_element_from_contents (current);
   e->type = ET_other_text;
   e->parent = 0;
-  if (owning_element->type != ET_context_brace_command)
-    owning_element->elt_info[eit_spaces_before_argument] = e;
-  else
-    owning_element->elt_info[eit_brace_content_spaces_before_argument] = e;
+  owning_element->elt_info[eit_spaces_before_argument] = e;
   internal_space_holder = 0;
 }
 
@@ -1040,7 +1038,7 @@ isolate_last_space (ELEMENT *current)
       && current->type != ET_brace_arg)
     {
       last_elt = last_contents_child (current);
-      if (last_elt->type == ET_lineraw_command
+      if (!(type_data[last_elt->type].flags & TF_text)
           && (last_elt->e.c->cmd == CM_c
               || last_elt->e.c->cmd == CM_comment))
         {

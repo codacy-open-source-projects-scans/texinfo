@@ -137,12 +137,11 @@ my %common_parser_customization = (
   'DEBUG' => 0,     # if >= 10, tree is printed in texi2any.pl after parsing.
                     # If >= 100 tree is printed every line.
   'FORMAT_MENU' => 'menu',           # if not 'menu' no menu error related.
-  # next three related to file names encoding
   'DOC_ENCODING_FOR_INPUT_FILE_NAME' => 1, # use document encoding for input file
                                            # names encoding if set
   'COMMAND_LINE_ENCODING' => undef, # encoding of command line strings
                                     # used to decode file names for error message
-  'INPUT_FILE_NAME_ENCODING' => undef, # used for input file encoding
+  'INPUT_FILE_NAME_ENCODING' => undef, # used for input file name encoding
   'LOCALE_ENCODING' => undef, # used for file name encoding
 );
 
@@ -162,13 +161,6 @@ my %parser_customization = (
 # also used in util/txicustomvars
 our %default_parser_customization_values = (%common_parser_customization,
                                             %parser_customization);
-
-# can be passed to the parser function, but not document parsing nor
-# customization, and can only be passed through code.
-my %parser_configuration = (
-  'registrar' => undef,        # Texinfo::Report object used for error
-                               # reporting.
-);
 
 # can be modified through command-line, but not customization options
 our %parser_document_state_configuration = (
@@ -193,13 +185,6 @@ our %parser_document_parsing_options = (
                        %default_parser_customization_values,
                        %parser_document_state_configuration,
                        %parser_inner_options);
-
-# configurable parser keys
-our %parser_settable_configuration = (
-  %parser_document_parsing_options,
-  %parser_configuration,
-);
-
 
 # check that settable commands are contained in global commands
 # from command_data.txt
@@ -670,33 +655,6 @@ sub _add_preamble_before_content($)
   unshift (@{$before_node_section->{'contents'}}, @first_types);
 }
 
-# Called in both Parsetexi.pm and perl parser
-sub get_perl_encoding($$;$)
-{
-  my $commands_info = shift;
-  my $registrar = shift;
-  my $debug = shift;
-
-  my $result;
-  if (defined($commands_info->{'documentencoding'})) {
-    foreach my $element (@{$commands_info->{'documentencoding'}}) {
-      my $perl_encoding = element_associated_processing_encoding($element);
-      if (!defined($perl_encoding)) {
-        my $encoding = $element->{'extra'}->{'input_encoding_name'}
-          if ($element->{'extra'});
-        if (defined($encoding)) {
-          $registrar->line_warn(
-                     sprintf(__("unrecognized encoding name `%s'"), $encoding),
-                                    $element->{'source_info'}, 0, $debug);
-        }
-      } else {
-        $result = $perl_encoding;
-      }
-    }
-  }
-  return $result;
-}
-
 # for Parser and main program
 sub warn_unknown_language($) {
   my $lang = shift;
@@ -1080,14 +1038,11 @@ sub locate_file_in_dirs($$$;$)
   return undef, undef;
 }
 
-sub element_associated_processing_encoding($)
+sub perl_encoding_name($)
 {
-  my $element = shift;
+  my $encoding = shift;
 
   my $perl_encoding;
-
-  my $encoding = $element->{'extra'}->{'input_encoding_name'}
-    if ($element->{'extra'});
 
   if (defined($encoding) and $encoding ne '') {
     $encoding = $encoding_name_conversion_map{$encoding}
@@ -1101,6 +1056,16 @@ sub element_associated_processing_encoding($)
   }
 
   return $perl_encoding;
+}
+
+sub element_associated_processing_encoding($)
+{
+  my $element = shift;
+
+  my $encoding = $element->{'extra'}->{'input_encoding_name'}
+    if ($element->{'extra'});
+
+  return perl_encoding_name($encoding);
 }
 
 # Reverse the decoding of the file name from the input encoding.  When
@@ -2124,7 +2089,7 @@ and C<plaintext>.
 =back
 
 TODO: undocumented
-%null_device_file %default_parser_customization_values %parser_settable_configuration %multiple_at_command_options %unique_at_command_options %converter_cmdline_options %default_main_program_customization_options %converter_customization_options %document_settable_at_commands %def_map %command_structuring_level %level_to_structuring_command %encoding_name_conversion_map %text_brace_no_arg_commands
+%null_device_file %default_parser_customization_values %multiple_at_command_options %unique_at_command_options %converter_cmdline_options %default_main_program_customization_options %converter_customization_options %document_settable_at_commands %def_map %command_structuring_level %level_to_structuring_command %encoding_name_conversion_map %text_brace_no_arg_commands
 
 =head1 @-COMMAND INFORMATION
 

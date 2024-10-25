@@ -14,8 +14,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 /* Interface similar to the Perl modules interface for Texinfo parsing,
-   and higher-level interface for document structure and transformations
-   and conversion */
+   higher-level interface for document structure and transformations,
+   and interface similar to the Perl modules interface for conversion */
 
 /* not used in code called from texi2any/Perl, meant to be used exclusively
    from C code */
@@ -29,11 +29,11 @@
 
 #include "document_types.h"
 /* txi_base_sorted_options */
-#include "options_types.h"
+#include "options_data.h"
 #include "api.h"
 #include "conf.h"
 #include "errors.h"
-/* parse_file_path */
+/* parse_file_path messages_and_encodings_setup */
 #include "utils.h"
 #include "customization_options.h"
 #include "document.h"
@@ -44,18 +44,69 @@
 #include "html_converter_api.h"
 #include "texinfo.h"
 
-/* initialization of the library. */
+/* initialization of the library for parsing and conversion (generic),
+   to be called once */
 void
-txi_setup (const char *localesdir, int texinfo_uninstalled,
+txi_general_setup (const char *localesdir, int texinfo_uninstalled,
                  const char *tp_builddir,
                  const char *converterdatadir, const char *top_srcdir)
 {
+  messages_and_encodings_setup ();
+
   if (localesdir)
     configure_output_strings_translations (localesdir, 0, -1);
 
   converter_setup (texinfo_uninstalled, tp_builddir,
                    converterdatadir, top_srcdir);
-  html_format_setup ();
+}
+
+/* initialization of the library for a specific output format, to be
+   called once */
+void
+txi_converter_output_format_setup (const char *format_str)
+{
+  enum converter_format converter_format
+    = find_format_name_converter_format (format_str);
+
+  if (converter_format == COF_html)
+    html_format_setup ();
+}
+
+/* This function should be used to get information on an output format
+   defaults, taking into account CUSTOMIZATIONS.  It is not needed
+   for converter initialization, as similar code is already called.
+   Similar to Texinfo::Convert::XXXX->converter_defaults($options)
+ */
+CONVERTER_INITIALIZATION_INFO *
+txi_converter_format_defaults (const char *format_str,
+                               OPTIONS_LIST *customizations)
+{
+  enum converter_format converter_format
+    = find_format_name_converter_format (format_str);
+  CONVERTER_INITIALIZATION_INFO *conf = new_converter_initialization_info ();
+  CONVERTER_INITIALIZATION_INFO *format_defaults;
+  OPTION **format_defaults_sorted_options;
+
+  if (customizations)
+    {
+      copy_options_list (&conf->conf, customizations);
+    }
+
+  format_defaults = converter_defaults (converter_format, conf);
+
+  destroy_converter_initialization_info (conf);
+
+  /* also set options structure for a direct access */
+  format_defaults->options = new_options ();
+  format_defaults_sorted_options
+    = new_sorted_options (format_defaults->options);
+  number_options_list (&format_defaults->conf, format_defaults_sorted_options);
+  copy_numbered_options_list_options (format_defaults->options,
+                                      format_defaults_sorted_options,
+                                      &format_defaults->conf, 0);
+  free (format_defaults_sorted_options);
+
+  return format_defaults;
 }
 
 /* parser initialization, similar to Texinfo::Parser::parser in Perl.
@@ -287,15 +338,14 @@ err_add_option_string_value (OPTIONS_LIST *options_list,
 }
 
 /* converter setup. Similar to an initialization of converter
-   from texi2any */
+   in texi2any */
 CONVERTER *
 txi_converter_setup (const char *format_str,
                      const char *output_format,
                      const char *locale_encoding,
                      const char *program_file,
                      const STRING_LIST *texinfo_language_config_dirs,
-                     OPTIONS_LIST *customizations,
-                     unsigned long converter_flags)
+                     OPTIONS_LIST *customizations)
 {
   enum converter_format converter_format
     = find_format_name_converter_format (format_str);
@@ -361,39 +411,11 @@ txi_converter_setup (const char *format_str,
       copy_options_list (&conf->conf, customizations);
     }
 
-  self = converter_converter (converter_format, conf, converter_flags);
+  self = converter_converter (converter_format, conf);
 
   destroy_converter_initialization_info (conf);
   return self;
 }
-
-
-
-/* formats conversion */
-
-/*
-char *
-txi_output (CONVERTER *converter, DOCUMENT *document)
-{
-  return converter_output (converter, document);
-}
-*/
-
-/* similar to Texinfo::Convert::HTML->output */
-char *
-txi_html_output (CONVERTER *converter, DOCUMENT *document)
-{
-  return html_output (converter, document);
-}
-
-/* similar to Texinfo::Convert::HTML->convert */
-char *
-txi_html_convert (CONVERTER *converter, DOCUMENT *document)
-{
-  return html_convert (converter, document);
-}
-
-
 
 /* high level interface, possibly hiding some details of the data */
 
@@ -404,20 +426,34 @@ txi_parse_texi_file (const char *input_file_path, int *status)
   return retrieve_document (document_descriptor);
 }
 
+/* similar to Texinfo::Convert::XXX->output */
+char *
+txi_converter_output (CONVERTER *converter, DOCUMENT *document)
+{
+  return converter_output (converter, document);
+}
+
+/* similar to Texinfo::Convert::XXX->convert */
+char *
+txi_converter_convert (CONVERTER *converter, DOCUMENT *document)
+{
+  return converter_convert (converter, document);
+}
+
 void
-txi_remove_document (DOCUMENT *document)
+txi_document_remove (DOCUMENT *document)
 {
   remove_document_descriptor (document->descriptor);
 }
 
 void
-txi_reset_converter (CONVERTER *converter)
+txi_converter_reset (CONVERTER *converter)
 {
   reset_converter (converter);
 }
 
 void
-txi_destroy_converter (CONVERTER *converter)
+txi_converter_destroy (CONVERTER *converter)
 {
   destroy_converter (converter);
 }

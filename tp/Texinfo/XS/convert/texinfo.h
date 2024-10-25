@@ -22,13 +22,16 @@
    and regenerate_master_menu */
 #define STTF_complete_menus_use_sections            0x0400
 
-/* in api.c */
-size_t parse_file (const char *input_file_path, int *status);
-
 /* locales dir for output strings translations */
-void txi_setup (const char *localesdir, int texinfo_uninstalled,
+void txi_general_setup (const char *localesdir, int texinfo_uninstalled,
                 const char *tp_builddir,
                 const char *converterdatadir, const char *top_srcdir);
+
+void txi_converter_output_format_setup (const char *format_str);
+
+CONVERTER_INITIALIZATION_INFO *txi_converter_format_defaults (
+                               const char *format_str,
+                               OPTIONS_LIST *customizations);
 
 void txi_parser (const char *file_path, const char *locale_encoding,
                 const char **expanded_formats, const VALUE_LIST *values,
@@ -44,10 +47,10 @@ CONVERTER *txi_converter_setup (const char *converter_format,
                      const char *locale_encoding,
                      const char *program_file,
                      const STRING_LIST *texinfo_language_config_dirs,
-                     OPTIONS_LIST *customizations,
-                     unsigned long converter_flags);
+                     OPTIONS_LIST *customizations);
 
-char *txi_html_output (CONVERTER *converter, DOCUMENT *document);
+char *txi_converter_output (CONVERTER *converter, DOCUMENT *document);
+char *txi_converter_convert (CONVERTER *converter, DOCUMENT *document);
 
 size_t txi_handle_parser_error_messages (DOCUMENT *document, int no_warn,
                                        int use_filename,
@@ -59,9 +62,9 @@ size_t txi_handle_converter_error_messages (CONVERTER *converter, int no_warn,
                                           int use_filename,
                                           const char *message_encoding);
 
-void txi_remove_document (DOCUMENT *document);
+void txi_document_remove (DOCUMENT *document);
 
-void txi_reset_converter (CONVERTER *converter);
-void txi_destroy_converter (CONVERTER *converter);
+void txi_converter_reset (CONVERTER *converter);
+void txi_converter_destroy (CONVERTER *converter);
 
 #endif

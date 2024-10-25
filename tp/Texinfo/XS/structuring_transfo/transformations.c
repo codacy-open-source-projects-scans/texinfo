@@ -435,7 +435,7 @@ relate_index_entries_to_table_items_internal (const char *type,
                                               ELEMENT *current,
                                               void *argument)
 {
-  if (type_data[current->type].flags & TF_at_command
+  if (!(type_data[current->type].flags & TF_text)
       && current->e.c->cmd == CM_table)
     {
       INDEX_LIST *indices_info = (INDEX_LIST *)argument;
@@ -485,11 +485,11 @@ move_index_entries_after_items (ELEMENT *current)
                 = previous_ending_container->e.c->contents.list[j-1];
               if (content->type == ET_index_entry_command)
                 last_entry_nr = j;
-              else if ((!(type_data[content->type].flags & TF_at_command))
-                       || (content->e.c->cmd != CM_comment
-                           && content->e.c->cmd != CM_c
+              else if (!(!(type_data[content->type].flags & TF_text)
+                         && (content->e.c->cmd == CM_comment
+                             || content->e.c->cmd == CM_c
                       /* subentry is not within the index entry in the tree */
-                           && content->e.c->cmd != CM_subentry))
+                             || content->e.c->cmd == CM_subentry)))
                 break;
             }
 
@@ -542,7 +542,7 @@ move_index_entries_after_items_internal (const char *type,
                                          ELEMENT *current,
                                          void *argument)
 {
-  if (type_data[current->type].flags & TF_at_command
+  if (!(type_data[current->type].flags & TF_text)
       && (current->e.c->cmd == CM_enumerate
           || current->e.c->cmd == CM_itemize))
     {
@@ -703,7 +703,7 @@ reassociate_to_node (const char *type, ELEMENT *current, void *argument)
   ELEMENT *added_node = new_previous->list[0];
   ELEMENT *previous_node = new_previous->list[1];
 
-  if (type_data[current->type].flags & TF_at_command
+  if (!(type_data[current->type].flags & TF_text)
       && current->e.c->cmd == CM_menu)
     {
       CONST_ELEMENT_LIST *added_node_menus;
@@ -867,7 +867,7 @@ reference_to_arg_internal (const char *type,
                            ELEMENT *e,
                            void *argument)
 {
-  if (type_data[e->type].flags & TF_at_command
+  if (!(type_data[e->type].flags & TF_text) && e->e.c->cmd
       && builtin_command_data[e->e.c->cmd].flags & CF_ref)
     {
       DOCUMENT *document = (DOCUMENT *) argument;
@@ -1076,13 +1076,13 @@ complete_node_menu (ELEMENT *node, int use_sections)
             }
           else
             {
-              int offset_at_end = -1;
+              int offset_at_end = 0;
               const ELEMENT *last_menu_content
                 = last_contents_child (current_menu);
 
-              if (!(type_data[last_menu_content->type].flags & TF_at_command)
-                  || last_menu_content->e.c->cmd != CM_end)
-                offset_at_end = 0;
+              if (!(type_data[last_menu_content->type].flags & TF_text)
+                  && last_menu_content->e.c->cmd == CM_end)
+                offset_at_end = -1;
               insert_list_slice_into_contents (current_menu,
                                 current_menu->e.c->contents.number + offset_at_end,
                                         pending, 0, pending->number);
@@ -1507,7 +1507,7 @@ protect_first_parenthesis_in_targets_internal (const char *type,
                                                void *argument)
 {
   ELEMENT *element_label;
-  if (!(type_data[current->type].flags & TF_at_command))
+  if (type_data[current->type].flags & TF_text)
     return 0;
 
   element_label = get_label_element (current);

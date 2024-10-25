@@ -97,6 +97,13 @@ typedef struct CONVERTER_FORMAT_DATA {
        (* converter_defaults) (enum converter_format format,
                                CONVERTER_INITIALIZATION_INFO *conf);
     void (* converter_initialize) (CONVERTER *self);
+    char * (* converter_output) (CONVERTER *converter, DOCUMENT *document);
+    char * (* converter_convert) (CONVERTER *converter, DOCUMENT *document);
+    /* API to be determined, in HTML there is a debugging explanation
+       argument
+    char *(* converter_convert_tree) (CONVERTER *converter,
+                                      const ELEMENT *tree);
+     */
     void (* converter_reset) (CONVERTER *self);
     void (* converter_free) (CONVERTER *self);
 } CONVERTER_FORMAT_DATA;
@@ -128,7 +135,7 @@ enum converter_format find_perl_converter_class_converter_format (
                                                  const char *class_name);
 
 CONVERTER *retrieve_converter (size_t converter_descriptor);
-size_t new_converter (enum converter_format format, unsigned long flags);
+size_t new_converter (enum converter_format format);
 
 void set_converter_init_information (CONVERTER *converter,
                             CONVERTER_INITIALIZATION_INFO *format_defaults,
@@ -138,14 +145,16 @@ CONVERTER_INITIALIZATION_INFO *converter_defaults (
                     enum converter_format converter_format,
                     CONVERTER_INITIALIZATION_INFO *user_conf);
 CONVERTER *converter_converter (enum converter_format format,
-                     const CONVERTER_INITIALIZATION_INFO *input_user_conf,
-                     unsigned long converter_flags);
+                     const CONVERTER_INITIALIZATION_INFO *input_user_conf);
 
 CONVERTER_INITIALIZATION_INFO *new_converter_initialization_info (void);
 void destroy_converter_initialization_info (
                             CONVERTER_INITIALIZATION_INFO *defaults);
 
 void converter_set_document (CONVERTER *converter, DOCUMENT *document);
+
+char *converter_output (CONVERTER *self, DOCUMENT *document);
+char *converter_convert (CONVERTER *self, DOCUMENT *document);
 
 void reset_converter (CONVERTER *converter);
 void destroy_converter (CONVERTER *converter);

@@ -66,7 +66,7 @@ use Texinfo::XSLoader;
 use Texinfo::Commands;
 use Texinfo::Options;
 use Texinfo::Common;
-use Texinfo::Data;
+use Texinfo::HTMLData;
 use Texinfo::Config;
 use Texinfo::Convert::Unicode;
 use Texinfo::Convert::Texinfo;
@@ -103,20 +103,22 @@ my %XS_overrides = (
 );
 
 my %XS_conversion_overrides = (
+  "Texinfo::Convert::HTML::_XS_format_setup"
+   => "Texinfo::Convert::ConvertXS::html_format_setup",
+
   "Texinfo::Convert::HTML::converter_defaults"
    => "Texinfo::Convert::ConvertXS::converter_defaults",
+  "Texinfo::Convert::HTML::_XS_html_converter_initialize_beginning"
+   => "Texinfo::Convert::ConvertXS::html_converter_initialize_beginning",
+  "Texinfo::Convert::HTML::_XS_html_converter_get_customization"
+   => "Texinfo::Convert::ConvertXS::html_converter_get_customization_sv",
+
   "Texinfo::Convert::HTML::output"
    => "Texinfo::Convert::ConvertXS::html_output",
   "Texinfo::Convert::HTML::convert"
    => "Texinfo::Convert::ConvertXS::html_convert",
 
   # following are not called when output and convert are overriden
-  "Texinfo::Convert::HTML::_XS_format_setup"
-   => "Texinfo::Convert::ConvertXS::html_format_setup",
-  "Texinfo::Convert::HTML::_XS_html_converter_initialize_beginning"
-   => "Texinfo::Convert::ConvertXS::html_converter_initialize_beginning",
-  "Texinfo::Convert::HTML::_XS_html_converter_get_customization"
-   => "Texinfo::Convert::ConvertXS::html_converter_get_customization_sv",
   "Texinfo::Convert::HTML::conversion_initialization"
    => "Texinfo::Convert::ConvertXS::html_conversion_initialization",
   "Texinfo::Convert::HTML::_setup_convert"
@@ -130,13 +132,16 @@ my %XS_conversion_overrides = (
   "Texinfo::Convert::HTML::_prepare_converted_output_info"
    => "Texinfo::Convert::ConvertXS::html_prepare_converted_output_info",
 
+  # not called when _prepare_conversion_units is overriden
   "Texinfo::Convert::HTML::_register_id"
    => "Texinfo::Convert::ConvertXS::html_register_id",
   "Texinfo::Convert::HTML::_id_is_registered"
    => "Texinfo::Convert::ConvertXS::html_id_is_registered",
 
+  # only called from overriden functions
   "Texinfo::Convert::HTML::_get_target"
    => "Texinfo::Convert::ConvertXS::html_get_target",
+
   "Texinfo::Convert::HTML::command_id"
    => "Texinfo::Convert::ConvertXS::html_command_id",
   "Texinfo::Convert::HTML::command_contents_target"
@@ -290,14 +295,16 @@ my %XS_conversion_overrides = (
   "Texinfo::Convert::HTML::_check_htmlxref_already_warned"
    => "Texinfo::Convert::ConvertXS::html_check_htmlxref_already_warned",
 
+  "Texinfo::Convert::HTML::_translate_names"
+   => "Texinfo::Convert::ConvertXS::html_translate_names",
+
+  # following are not called when output and convert are overriden
   "Texinfo::Convert::HTML::_prepare_conversion_units"
    => "Texinfo::Convert::ConvertXS::html_prepare_conversion_units",
   "Texinfo::Convert::HTML::_prepare_units_directions_files"
    => "Texinfo::Convert::ConvertXS::html_prepare_units_directions_files",
   "Texinfo::Convert::HTML::_prepare_output_units_global_targets"
    => "Texinfo::Convert::ConvertXS::html_prepare_output_units_global_targets",
-  "Texinfo::Convert::HTML::_translate_names"
-   => "Texinfo::Convert::ConvertXS::html_translate_names",
   "Texinfo::Convert::HTML::_prepare_title_titlepage"
    => "Texinfo::Convert::ConvertXS::html_prepare_title_titlepage",
   "Texinfo::Convert::HTML::_html_convert_convert"
@@ -2554,13 +2561,13 @@ foreach my $buttons ('CHAPTER_FOOTER_BUTTONS', 'TOP_FOOTER_BUTTONS') {
 
 
 my %default_special_unit_info
-  = %{ Texinfo::Data::get_default_special_unit_info() };
+  = %{ Texinfo::HTMLData::get_default_special_unit_info() };
 
 # TODO translation context should be consistent with special_unit_info()
 %default_translated_special_unit_info
-  = %{ Texinfo::Data::get_default_translated_special_unit_info() };
+  = %{ Texinfo::HTMLData::get_default_translated_special_unit_info() };
 
-my $direction_orders = Texinfo::Data::get_directions_order();
+my $direction_orders = Texinfo::HTMLData::get_directions_order();
 # 'global', 'relative', 'file'
 # include space direction
 my @global_directions_order = @{$direction_orders->[0]};
@@ -2573,14 +2580,14 @@ foreach my $direction_order (@$direction_orders) {
 
 # for rel, see http://www.w3.org/TR/REC-html40/types.html#type-links
 my %default_converted_directions_strings
-  = %{ Texinfo::Data::get_default_converted_directions_strings() };
+  = %{ Texinfo::HTMLData::get_default_converted_directions_strings() };
 
 # translation contexts should be consistent with
 # %direction_type_translation_context.  If the direction is not used
 # as is, it should also be taken into account in direction_string().
 # For now 'This' becomes 'This (current section)'.
 my %default_translated_directions_strings
-   = %{ Texinfo::Data::get_default_translated_directions_strings() };
+   = %{ Texinfo::HTMLData::get_default_translated_directions_strings() };
 
 my @style_commands_contexts = ('normal', 'preformatted');
 my @no_args_commands_contexts
@@ -2728,7 +2735,7 @@ sub converter_defaults($$)
 }
 
 my %default_css_element_class_styles
-  = %{ Texinfo::Data::get_base_default_css_info() };
+  = %{ Texinfo::HTMLData::get_base_default_css_info() };
 
 $default_css_element_class_styles{'pre.format-preformatted'}
   = $default_css_element_class_styles{'pre.display-preformatted'};
@@ -3100,7 +3107,7 @@ foreach my $quoted_command ('samp') {
 my %default_upper_case_commands = ( 'sc' => 1 );
 
 my %style_commands_element
-   = %{ Texinfo::Data::get_html_style_commands_element() };
+   = %{ Texinfo::HTMLData::get_html_style_commands_element() };
 
 my %default_style_commands_formatting;
 

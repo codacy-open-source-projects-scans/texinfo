@@ -1,3 +1,840 @@
+2024-10-24  Patrice Dumas  <pertusus@free.fr>
+
+	* Makefile.am (BUILT_SOURCES, tp/Texinfo/HTMLData.pm)
+	(tp/Texinfo/XS/main/html_conversion_data.c), tp/Makefile.am
+	(translated_source_files), tp/Texinfo/XS/Makefile.am
+	(translated_source_files): build early generated source files that
+	contain translated strings and are thus needed when building in po*
+	directories.  To help with that, add translated_source_files targets
+	in Makefile.am of the generated source files directories such that it
+	is easy to rebuild the files coming from any directory, in particular
+	from an out of source build directory.
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: suggest another distribution build check recipe
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* po_document/POTFILES.in: add a file
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* Makefile.am (po_document-check): Do not check in *.h files
+	as these only contain declarations of translation functions,
+	not their use.
+	* po_document/POTFILES.in: Remove *.h files.
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* po/POTFILES.in: add new files
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: state autoconf 2.72.  Edit for style.
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/srclist.txt: remove build-aux/texinfo.tex as this
+	is a symlink now and therefore automatically up-to-date
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/srclist.txt: remove all files under build-aux.
+	We can add these files with "automake --add-missing" when
+	required and do not need to worry about updating them from
+	gnulib.
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* autogen.sh: Call autoreconf instead of individual tools,
+	with autopoint disabled.  Do not specify --force as this
+	overwrites INSTALL.
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: automake 1.17
+	* README-hacking: advice on automake upgrade
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking, configure.ac, tp/Texinfo/XS/configure.ac:
+	Move all instructions for upgrading gettext to README-hacking.
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: mention gettext version
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS: update to gettext 0.22.5
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Upgrade gettext to 0.22.5 by running gettextize at top level
+
+	* README-hacking: suggest gettextize --no-changelog.  Remove
+	note about gettext 0.22.
+
+2024-10-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Run gnulib --add-import at top level and under tp/Texinfo/XS.
+
+2024-10-24  Patrice Dumas  <pertusus@free.fr>
+
+	* doc/refcard/Makefile.am (CHECKS_ENV, ccheck, vcheck): set srcdir and
+	top_builddir in the checking commands environment for out of source
+	builds.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* README-hacking: update ppport.h call.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (html_build_button): rename
+	cv_name as sub_full_name to avoid ppport.h false positive.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	Avoid using C specific types in code
+
+	* tp/Texinfo/XS/main/convert_to_text.c (convert_to_text_internal): use
+	CF_block instead of ET_block_command and CF_line instead of
+	ET_line_command and ET_lineraw_command.
+
+	* tp/Texinfo/XS/main/convert_utils.c (find_innermost_accent_contents),
+	tp/Texinfo/XS/parsetexi/close.c (close_command_cleanup),
+	tp/Texinfo/XS/parsetexi/end_line.c (end_line_starting_block),
+	tp/Texinfo/XS/parsetexi/menus.c (end_line_menu_entry),
+	tp/Texinfo/XS/parsetexi/multitable.c (gather_previous_item),
+	tp/Texinfo/XS/parsetexi/parser.c (isolate_last_space): use TF_text to
+	determine if the cmd element can be accessed instead of C only types.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.txt,
+	tp/Texinfo/XS/convert/convert_html.c (html_convert_tree_append),
+	tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash): change
+	TF_at_command to TF_c_only to flag types specific of C.
+
+	* tp/Texinfo/XS/main/element_types.txt: add information on flags.
+
+2024-10-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/texi2any.supp: add entries for fixed bug in valgrind,
+	seen with "t/info_tests.t chinese_mixed_with_en_EUC_CN" and
+	t/formats_encoding.t.
+
+	See https://sourceware.org/git/gitweb.cgi?p=valgrind.git;h=947388eb043ea1c44b37df94046e1eee790ad776
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/close.c (remove_empty_content): check cmd to
+	determine if this is an @-command, we are in the parser, so it is
+	safe.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/structuring_transfo/transformations.c
+	(complete_node_menu): inverse the condition for offset_at_end for a
+	more readable condition (also like Perl).  Use TF_text to make sure
+	that the element is a container element now that it is clear that the
+	main objective of that part of the condition is to be able to access
+	CONTAINER fields.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ManipulateTree.pm (move_index_entries_after_items),
+	tp/Texinfo/XS/structuring_transfo/transformations.c
+	(move_index_entries_after_items): change the logic of the condition
+	on continuing to go through elements if not among some commands to
+	have a positive condition on commands.  Use TF_text to make sure that
+	the element is a container element now that it is clear that the
+	main objective of that part of the condition is to be able to access
+	CONTAINER fields.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/handle_commands.c,
+	tp/Texinfo/XS/parsetexi/parser.c,
+	tp/Texinfo/XS/structuring_transfo/transformations.c: use TF_text to
+	make sure that the element is a container element when the main
+	objective of the code is to be able to access CONTAINER fields instead
+	of TF_at_command.
+
+2024-10-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/tree_types.h: add a comment
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/element_types.awk: do not set flags that are
+	not directly used in C code, but are used to determine the size of the
+	lements info array.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi)
+	(convert_to_texinfo_internal): use elt_info_number and elt_info
+	content being set to determine if the elt_info element should be
+	output instead of flags.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (store_info_string)
+	(element_to_perl_hash): check that string is set in store_info_string.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash): minor
+	rearrangement of code.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash): inline
+	store_info_element in element_to_perl_hash.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree.c (elt_info_names): add.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash): process
+	elt_info simply by going through the array.
+
+2024-10-23  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/tree_types.h (CONTAINER),
+	tp/Texinfo/XS/main/element_types.awk,
+	tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash),
+	tp/Texinfo/XS/main/convert_to_texinfo.c (expand_cmd_args_to_texi),
+	tp/Texinfo/XS/parsetexi/parser.c (move_last_space_to_element): remove
+	eit_brace_content_spaces_before_argument from enum elt_info_type, use
+	eit_spaces_before_argument instead.  Do not overload enum
+	elt_info_type indices, instead allow an unused slot for some elements
+	in elt_info.
+
+2024-10-21  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash):
+	Place code processing string_info together and code processing
+	elt_info together.
+
+2024-10-21  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (element_to_perl_hash):
+	Place all calls of store_flag macro together.
+
+2024-10-22  Patrice Dumas  <pertusus@free.fr>
+
+	Rename tp/Texinfo/XS/main/options_types.h as options_data.h
+
+	* tp/Texinfo/XS/Makefile.am (C_libtexinfo_sources, BUILT_SOURCES)
+	(MAINTAINERCLEANFILES), tp/maintain/regenerate_C_options_info.pl:
+	rename main/options_types.h as options_data.h.  Report from Gavin.
+	Update includes.
+
+2024-10-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Move enum global_unit_direction
+
+	* tp/Texinfo/XS/main/tree_types.h,
+	* tp/Texinfo/XS/convert/html_converter_types.h
+	(enum global_unit_direction): Move to html_converter_types.h.
+	Include "html_conversion_data.h" in html_converter_types.h and
+	not in tree_types.h.
+
+2024-10-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Move enum html_text_type
+
+	* tp/Texinfo/XS/main/tree_types.h,
+	* tp/Texinfo/XS/main/option_types.h (enum html_text_type):
+	Move to option_types.h.
+
+2024-10-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Move enum relative_unit_direction_type definition
+
+	* tp/Texinfo/XS/main/tree_types.h, tp/Texinfo/XS/main/document_types.h
+	(enum relative_unit_direction_type): Move to document_types.h as
+	one of the enum constants is used in OUTPUT_UNIT which is in this
+	header.  Include "html_conversion_data.h" in document_types.h.
+
+2024-10-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/tree_types.h (enum directions): add comment
+
+2024-10-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Move variable declaration
+
+	* tp/Texinfo/XS/main/tree_types.h,
+	* tp/Texinfo/XS/main/tree.h (ai_key_names): Move to tree.h as
+	this will mean that tree_types.h again does not have any
+	variable declarations in it.
+	* tp/Texinfo/XS/main/tree_types.h: add a comment explaining
+	purpose of enum ai_key_name.
+
+2024-10-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Move OUTPUT_UNIT definition
+
+	* tp/Texinfo/XS/main/tree_types.h,
+	* tp/Texinfo/XS/main/document_types.h (enum output_unit_type)
+	(OUTPUT_UNIT, OUTPUT_UNIT_LIST): Move to document_types.h as
+	all source codes needing the fields of OUTPUT_UNIT also include
+	this header.  Replace with forward declaration.
+
+2024-10-21  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Hardcode "info" string in hash creation
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(setup_info_hv): Remove 'type_key' argument and always make this
+	"info".  Use HSH_info for last argument of hv_store.   Callers
+	updated throughout.
+	(store_extra_flag): New function to replace the single usage of
+	setup_info_hv (via store_info_integer) with 'type_key' set to
+	"extra".
+
+2024-10-21  Patrice Dumas  <pertusus@free.fr>
+
+	* po_document/POTFILES.in: rename Texinfo/Data.pm as
+	Texinfo/HTMLData.pm and main/conversion_data.c as
+	main/html_conversion_data.c.
+
+2024-10-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (converter_converter): remove
+	unused variable.
+
+2024-10-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am (EXTRA_DIST): remove files from EXTRA_DIST
+	if they are already in *SOURCE*.
+
+2024-10-21  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/generate_code_convert_data.pl, tp/Makefile.am
+	(dist_modules_DATA, Texinfo/HTMLData.pm, MAINTAINERCLEANFILES),
+	tp/Texinfo/XS/Makefile.am (C_libtexinfo_sources, EXTRA_DIST)
+	(BUILT_SOURCES, main/html_conversion_data.c, MAINTAINERCLEANFILES):
+	rename Texinfo/Data.pm as Texinfo/HTMLData.pm and
+	main/conversion_data.c as main/html_conversion_data.c.  Report from
+	Gavin.
+
+2024-10-21  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove Perl and string list implementations for "registered ids"
+
+	* tp/Texinfo/XS/main/converter_types.h (CONVERTER): remove
+	fields ids_data_type, registered_ids, registered_ids_hv.
+	(enum ids_data_type): Remove.
+
+	* tp/Texinfo/XS/convert/converter.c (new_converter)
+	(converter_converter): Flags argument removed.  Callers updated.
+
+	* tp/Texinfo/XS/convert/call_html_perl_function.c,
+	* tp/Texinfo/XS/convert/replace_perl_call_html_function.c
+	(init_registered_ids_hv, is_hv_registered_id, hv_register_id)
+	(clear_registered_ids_hv, free_registered_ids_hv): Remove.
+
+	* tp/Texinfo/XS/convert/html_prepare_converter.c
+	(html_prepare_conversion_units_targets, html_register_id)
+	(html_id_is_registered),
+	* tp/Texinfo/XS/convert/html_converter_finish.c
+	(html_reset_converter, html_free_converter):
+	Unconditionally use C hashmap implementation.
+
+2024-10-21  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/main/converter_types.h (CONVERTER) [HAVE_CXX_HASHMAP]:
+	Remove registered_ids_hashmap.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs (errors): abort if there is no
+	registrar but errors was called on a Parser.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(pass_document_parser_errors_to_registrar): setup a new registrar only
+	if there is not one already.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_texi_piece): remove the
+	no_store argument.
+
+	* tp/Texinfo/Document.pm (%XS_overrides, new_document, parser_errors),
+	tp/Texinfo/ParserNonXS.pm (parse_texi_line, parse_texi_file)
+	(_line_warn, _line_error, _next_text, _parse_texi),
+	tp/Texinfo/XS/main/DocumentXS.xs (document_parser_errors),
+	tp/Texinfo/XS/main/build_perl_info.c,
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (errors),
+	tp/t/no_structure_test.t, tp/t/same_parser_multiple_files.t,
+	tp/t/test_protect_hashchar_at_line_beginning.t, tp/t/test_tree_copy.t,
+	tp/t/test_utils.pl, tp/texi2any.pl: store parsing errors in document
+	in Perl in the parser_registrar key value Texinfo::Report.  Add
+	parser_errors to get the parsing errors from a Document.  Keep the
+	Parser registrar for parse_texi_line as there is no document in that
+	case, so the parser need to be used.  Using the parser to get parsing
+	errors is not documented.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_texi_file)
+	(parse_texi_piece, parse_texi_text): call directly get_document.
+
+	* tp/Texinfo/XS/main/build_perl_info.c,
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_texi_line): inline
+	get_or_build_document in parse_texi_line, remove the function.
+
+	* Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm (print_texinfo_errors):
+	pass error_messages and error_count directly as the function to get
+	errors may be errors or parser_errors.  Update callers.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Report.pm (new, clear): fix key names.
+
+2024-10-20  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: suggest running autopoint instead of gettextize
+	and using --dry-run option
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (_initialize_parsing): merge parser and
+	parser state in the function, return the document.  Update callers.
+
+	* tp/Texinfo/ParserNonXS.pm (_input_push_file): return file_name and
+	directories even if the file could not be opened.
+
+	* tp/Texinfo/ParserNonXS.pm (parse_texi_file),
+	tp/Texinfo/XS/main/build_perl_info.c (get_document, fill_document_hv)
+	(store_document_texinfo_tree), tp/Texinfo/XS/parsetexi/Parsetexi.xs
+	(parse_texi_file), tp/Texinfo/XS/parsetexi/api.c (parse_file),
+	tp/t/test_utils.pl (test), tp/texi2any.pl: return a document, with
+	information on directories and file name even if the input file could
+	not be opened, but do not set the tree.  Use the presence of a tree to
+	determine if parsing was successful.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (build_texinfo_tree): return 0
+	if there is no tree in document.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs: reindent.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs: rename parser variable as
+	parser_sv.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (get_or_build_document),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_texi_file)
+	(errors): if a handle on a document is returned, do not set a
+	registrar but instead keep with last_document_descriptor key a
+	way to find the document where parser errors are registered for the
+	next call to parser->errors.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm,
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (errors): implement errors in XS,
+	remove from Parsetexi.pm.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (new_texinfo_report): fix
+	registrar key name.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c: move new_texinfo_report code
+	earlier.
+
+	* tp/Texinfo/XS/main/build_perl_info.c
+	(pass_document_parser_errors_to_registrar),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser): create Texinfo::Report
+	registrar object and add to parser in
+	pass_document_parser_errors_to_registrar, when it is sure that the
+	Perl data is needed, and not in parser.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/DocumentXS.xs,
+	tp/Texinfo/XS/main/build_perl_info.c (document_tree): move
+	document_tree code to a function in build_perl_info.c.
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm,
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_texi_line): in
+	Parsetexi.xs define directly parse_texi_line instead of parse_string
+	by calling document_tree to get the tree.  Remove parse_texi_line from
+	Parsetexi.pm.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_line),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_texi_file)
+	(parse_texi_piece, parse_string, parse_texi_text): in Parsetexi.xs,
+	define directly parse_texi_file instead of parse_file,
+	parse_texi_piece instead of parse_piece, parse_texi_text instead of
+	parse_text and check arguments in parse_string. Remove
+	parse_texi_file, parse_texi_piece and parse_texi_text from
+	Parsetexi.pm.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.xs: remove now unused XS
+	interfaces for build_document, get_document and
+	pass_document_parser_errors_to_registrar.
+
+2024-10-20  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c (new_texinfo_report): add code
+	doing the same as calling Texinfo::Report::new() in XS.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (get_document, build_document):
+	add a registrar key by calling new_texinfo_report.
+
+	* tp/Texinfo/XS/main/build_perl_info.c (get_or_build_document),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (parse_texi_file)
+	(parse_texi_piece, parse_texi_text, parse_texi_line),
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (parse_file, parse_piece)
+	(parse_string, parse_text): build the document directly in parse_* by
+	calling the new function get_or_build_document or directly
+	get_document. Remove _get_parser_info.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/Utils.pm (encoded_output_file_name)
+	(encoded_input_file_name): use input_encoding_name instead of
+	input_perl_encoding, Encode determines the alias itself.
+
+	* tp/Texinfo/Document.pm (new_document), tp/Texinfo/ParserNonXS.pm
+	(get_parser_info), tp/Texinfo/XS/main/DocumentXS.xs
+	(set_document_global_info), tp/Texinfo/XS/main/build_perl_info.c
+	(build_global_info), tp/Texinfo/XS/main/document_types.h
+	(GLOBAL_INFO), tp/Texinfo/XS/main/utils.c (delete_global_info),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (_get_parser_info),
+	tp/t/test_document.t: remove input_perl_encoding.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser): never set the 'conf'
+	parser key, it is not used since the time parser conf became internal
+	only.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm (parser),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (parser): set only parser keys
+	from parser_document_parsing_options, which in practice means do not
+	accept a registrar in options.
+
+	* tp/Texinfo/Common.pm: remove %parser_configuration and
+	%parser_settable_configuration.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/ParserNonXS.pm, tp/Texinfo/XS/parsetexi/Parsetexi.pm:
+	remove registrar method, it is a bad idea to be able to access
+	directly the registrar.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm (perl_encoding_name): add function.
+
+	* tp/Texinfo/ParserNonXS.pm (get_parser_info),
+	tp/Texinfo/XS/parsetexi/Parsetexi.pm (_get_parser_info): determine
+	Perl encoding based on global_info input_encoding_name by calling
+	perl_encoding_name.  Remove get_perl_encoding.  Note that the warning
+	in get_perl_encoding was not kept, as it cannot happen since
+	input_encoding_name is only set if the perl encoding is known in Perl
+	parser, and if in a list of known encoding, all known by Perl in C.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.tres: remove t/test_parser_registrar.t test, the
+	registrar should be internal only.
+
+2024-10-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: Document gnulib-tool network access.
+
+2024-10-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Separate directory for non-gnulib m4 files (XS)
+
+	* tp/Texinfo/XS/m4, tp/Texinfo/XS/build-aux/m4: Move directory.
+	* tp/Texinfo/XS/configure.ac (AC_CONFIG_MACRO_DIRS):
+	Change 'm4' to 'build-aux/m4'.
+	* tp/Texinfo/XS/Makefile.am (ACLOCAL_AMFLAGS): Likewise.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/customization_options.c
+	(options_list_add_option): replace option with the same name in list
+	if already there.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c
+	(destroy_converter_initialization_info),
+	tp/Texinfo/XS/main/converter_types.h (CONVERTER_INITIALIZATION_INFO):
+	add OPTIONS options field and free it, in case a direct access to an
+	OPTIONS structure is needed.
+
+	* tp/Texinfo/XS/convert/texinfo.c (txi_converter_format_defaults): add
+	to get default options based on a customization list and a format
+	string, also setting the returned CONVERTER_INITIALIZATION_INFO
+	options field.
+
+	* tp/Texinfo/XS/convert/converter.c: move converter_set_document below
+	convert API functions.
+
+	* tp/Texinfo/XS/teximakehtml.c (main): add cmdline_options for options
+	common for parser and converter.  Add some code in comments using
+	txi_converter_format_defaults.  Move code around.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Common.pm: change in comments.
+
+2024-10-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* autogen.sh: pass "-I build-aux/m4" to aclocal
+
+2024-10-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Attempt at separate directory for non-gnulib m4 files (top level)
+
+	* configure.ac (AC_CONFIG_MACRO_DIRS): Add with value of
+	"build-aux/m4 gnulib/m4".  This means that gettextize can
+	install files under build-aux/m4, not in the same directory
+	as files from gnulib.
+	* Makefile.am (ACLOCAL_AMFLAGS): Add -I build-aux/m4
+
+	* build-aux/m4: add directory
+	* gnulib/m4: remove several files that are only added by
+	gettextize, not by gnulib --add-import
+
+2024-10-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS: re-run "gettextize" and track files in
+	new locations.
+
+2024-10-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Attempt at separate directory for non-gnulib m4 files
+
+	* tp/Texinfo/XS/configure.ac (AC_CONFIG_MACRO_DIRS):
+	Add 'm4' as a directory as well as 'gnulib/m4'.
+	* tp/Texinfo/XS/Makefile.am (ACLOCAL_AMFLAGS): Add '-I m4'.
+
+	This means files from libtoolize and gettextize should be
+	copied under tp/Texinfo/XS/m4, not tp/Texinfo/XS/gnulib/m4.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/utils.c (messages_and_encodings_setup): rename
+	txi_base_setup as messages_and_encodings_setup.
+
+	* tp/Texinfo/XS/convert/texinfo.c (txi_general_setup): rename
+	txi_setup as txi_general_setup and add a call to
+	messages_and_encodings_setup.
+
+	* tp/Texinfo/XS/convert/texinfo.c (txi_converter_output_format_setup):
+	add a function to dispatch output format global data setup.
+
+	* tp/Texinfo/XS/teximakehtml.c (main): update.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/texinfo.c (txi_document_remove)
+	(txi_converter_reset, txi_converter_destroy): rename
+	txi_remove_document as txi_document_remove, txi_reset_converter as
+	txi_converter_reset and txi_destroy_converter as
+	txi_converter_destroy, for consistency.  Update caller.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (converter_format_data)
+	(converter_output, converter_convert),
+	tp/Texinfo/XS/convert/converter.h (CONVERTER_FORMAT_DATA),
+	tp/Texinfo/XS/convert/texinfo.c (txi_converter_output)
+	(txi_converter_convert): add converter_output and converter_convert
+	fields to CONVERTER_FORMAT_DATA and converter_output and
+	converter_convert to dispatch conversion.  Use it for HTML.  Replace
+	txi_html_convert and txi_html_output in texinfo.c by
+	txi_converter_convert and txi_converter_output that call
+	converter_output and converter_convert.
+
+	* tp/Texinfo/XS/teximakehtml.c: call txi_converter_output.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/Makefile.am: remove specification of teximakehtml_LINK
+	now that there is no C++ anymore, the default should be ok.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/build_perl_info.c,
+	tp/Texinfo/XS/parsetexi/Parsetexi.xs (init): move build_perl_info.c
+	init code to Parsetexi.xs init and remove build_perl_info.c init
+	function.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/maintain/generate_code_convert_data.pl: replace incorrect
+	continue by next.  Report from Gavin.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/converter.c (converter_setup),
+	tp/Texinfo/XS/main/document.c: inline txi_setup_lib_data in
+	converter_setup.
+
+	* tp/Texinfo/XS/main/utils.c (txi_base_setup),
+	tp/Texinfo/XS/main/build_perl_info.c (init): move code related to
+	messages gettext and encoding conversion iniitialization from
+	build_perl_info.c init to the new init function in utils.c.
+
+	* tp/Texinfo/XS/teximakehtml.c (main): call txi_base_setup.  Rearrange
+	code.
+
+2024-10-19  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/texi2any.pl: comment out $pkgdatadir as it is not used anymore.
+
+2024-10-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add note that gettext also needs to be upgraded
+	under tp/Texinfo/XS.
+
+2024-10-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tp/Texinfo/XS/gnulib/gettext.m4: re-add file by running
+	"gettextize" under tp/Texinfo/XS/gnulib and discarding most of
+	the changes.
+
+2024-10-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Revert removal of gnulib *.m4 files
+
+	* gnulib/m4, tp/Texinfo/XS/gnulib/m4: revert removal of gettext.m4,
+	nls.m4, po.m4 and progtest.m4.
+
+	(Reverted commit dated 2024-07-28 10:45:10, applied 2024-10-01.)
+
+2024-10-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/main/parser_conf.c (register_conf): break immediately
+	if a slot is found.
+
+2024-10-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/XS/convert/texinfo.c (txi_setup),
+	tp/Texinfo/XS/teximakehtml.c (main): do not call html_format_setup in
+	txi_setup to be output format independent, call in teximakehtml.c.
+
+2024-10-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Convert/HTML.pm (%XS_conversion_overrides): reorder code.
+
+	* tp/Texinfo/XS/convert/texinfo.c, tp/Texinfo/XS/main/utils.c,
+	tp/Texinfo/XS/main/utils.h: change in comments, rebase flag values.
+
+2024-10-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove C++ source files
+
+	* tp/Texinfo/XS/convert/call_html_cxx_function.cpp,
+	* tp/Texinfo/XS/convert/call_html_cxx_function.h: remove
+
+	* tp/Texinfo/XS/configure.ac: Remove AC_PROG_CXX check and
+	check if C++ hashmap can be used.
+	* tp/Texinfo/XS/Makefile.am (teximakehtml):
+	Build without options for C++.
+
+	* tp/Texinfo/XS/main/converter_types.h
+	(enum ids_data_type): remove IDT_cxx_hashmap
+	(CONVF_cxx_hashmap): remove
+
+	* tp/Texinfo/XS/convert/converter.c (new_converter) [HAVE_CXX_HASHMAP],
+	* tp/Texinfo/XS/convert/html_prepare_converter.c
+	(html_prepare_conversion_units, html_register_id)
+	(html_id_is_registered)  [HAVE_CXX_HASHMAP],
+	* tp/Texinfo/XS/convert/html_converter_finish.c
+	(html_reset_converter, html_free_converter) [HAVE_CXX_HASHMAP]:
+	Remove all code.
+
+2024-10-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix teximakehtml memory leak
+
+	* tp/Texinfo/XS/teximakehtml.c: free variable before clobbering.
+
+2024-10-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	C hashmap implementation
+
+	* tp/Texinfo/XS/convert/hashmap.c
+	(init_registered_ids_c_hashmap, is_c_hashmap_registered_id)
+	(c_hashmap_register_id, clear_registered_ids_c_hashmap)
+	(free_registered_ids_c_hashmap): New functions.
+
+	* tp/Texinfo/XS/main/converter_types.h
+	(enum ids_data_type): add IDT_hashmap
+	(CONVF_hashmap): add symbol
+	(CONVERTER): add field 'registered_ids_c_hashmap'.
+
+	* tp/Texinfo/XS/convert/html_prepare_converter.c
+	(html_prepare_conversion_units_targets, html_converter_customize):
+	Move initialisation of hash to html_prepare_conversion_units_targets.
+	(Suggestion from Patrice.)  Add code to use C hashmap implementation
+	if selected.  Call ids_hashmap_predicted_values for the number of
+	bins.
+
+	* tp/Texinfo/XS/convert/html_prepare_converter.c
+	(html_register_id, html_id_is_registered) <IDT_hashmap>:
+	Call appropriate functions for C hashmap implementation.
+
+	* tp/Texinfo/XS/convert/html_converter_finish.c
+	(html_reset_converter, html_free_converter) <IDT_hashmap>:
+	Call appropriate functions for C hashmap implementation.
+
+	* tp/Texinfo/XS/convert/converter.c (new_converter),
+	* tp/Texinfo/XS/convert/get_converter_perl_info.c
+	(get_or_create_sv_converter): Use C hashmap implementation by default.
+	* tp/Texinfo/XS/teximakehtml.c (main): Use CONVF_hashmap.
+
+2024-10-18  Patrice Dumas  <pertusus@free.fr>
+
+	Function to estimate number of "targets" for a manual
+
+	* tp/Texinfo/XS/convert/html_prepare_converter.c
+	(ids_hashmap_predicted_values): New function.
+
+2024-10-18  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Texinfo/Translations.pm (translate_string),
+	tp/Texinfo/XS/main/translations.c (translate_string): consider an
+	empty string to be an unset value, and do the same checks in C and
+	Perl.
+
+2024-10-17  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: State new installation location for texi2any files.
+
+2024-10-15  Patrice Dumas  <pertusus@free.fr>
+
+	* tp/Makefile.am, tp/tests/Makefile.am: add comments for script calls
+	that are also in autogen.sh to remind that they should be kept in sync
+	with autogen.sh calls.
+
 2024-10-16  Vitezslav Crhonek  <vcrhonek@redhat.com>
 
 	* install-info/install-info.c (open_possibly_compressed_file):

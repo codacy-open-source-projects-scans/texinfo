@@ -13,7 +13,7 @@
 AC_INIT([GNU Texinfo], [7.1.90])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE
-AC_CONFIG_MACRO_DIR([gnulib/m4])
+AC_CONFIG_MACRO_DIRS([build-aux/m4 gnulib/m4])
 
 CONVERTER=texi2any
 AC_SUBST([CONVERTER])
@@ -171,22 +171,14 @@ AC_SUBST([XS_VERSION], [$PACKAGE_XS_VERSION])
 
 AC_PROG_CC
 
-AC_PROG_CXX
-
 gl_EARLY
 
 # i18n support.  We need to use the same GNU gettext version as the main
 # configure.ac file since the version of the gettext.m4 and related files
 # must be in sync with the Makefile.in.in in the shared po/ directory.
+# See the README-hacking file at top level for how to upgrade gettext.
 #
-# To upgrade to a new version of gettext, run:
-#   gettextize -f --po-dir=../../../po --no-changelog
-# To fetch the *.m4 files without upgrading, run:
-#   autopoint -f; rm -rf po
-# and then revert any changes of gnulib/m4/*.m4 files that downgrade from a
-# newer serial number (from gnulib) to an older serial number (from gettext).
-# See http://gnu.org/s/gnulib/manual/html_node/gettextize-and-autopoint.html.
-AM_GNU_GETTEXT_VERSION([0.21])
+AM_GNU_GETTEXT_VERSION([0.22.5])
 AM_GNU_GETTEXT([external])
 
 AM_MISSING_PROG([XSUBPP], [xsubpp])
@@ -198,31 +190,6 @@ LT_INIT([disable-static])
 
 # Note that the above have to be outside the disable_xs block
 # otherwise it causes an error with configure.
-
-AC_LANG_PUSH([C++])
-
-AC_CACHE_CHECK([if C++ hashmap can be used], [texinfo_cv_cxx_hashmap],
-[
-texinfo_cv_cxx_hashmap=no
-
-AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
-#include <unordered_map>
-#include <string>
-
-void
-init_registered_ids_hashmap (void)
-{
-  std::unordered_map<std::string, int> registered_ids_hashmap;
-  registered_ids_hashmap["toto"] = 1;
-}
-]])], [texinfo_cv_cxx_hashmap=yes])
-])
-
-AM_CONDITIONAL([TXI_HAVE_CXX_HASHMAP],
-               [test "x$texinfo_cv_cxx_hashmap" = "xyes"])
-
-AC_LANG_POP([C++])
-
 
 # Disable gnulib provision of "Microsoft deprecated alias" functions on
 # MS-Windows to prevent a clash with definitions in Perl header files

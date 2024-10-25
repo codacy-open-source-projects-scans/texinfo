@@ -27,7 +27,7 @@
 
 #undef context
 
-#include "options_types.h"
+#include "options_data.h"
 #include "tree_types.h"
 #include "document_types.h"
 #include "extra.h"
@@ -151,6 +151,40 @@ document_errors (SV *document_in)
         PUSHs(sv_2mortal(errors_warnings_sv));
         PUSHs(sv_2mortal(error_nrs_sv));
 
+void
+document_parser_errors (SV *document_in)
+    PREINIT:
+        DOCUMENT *document = 0;
+        SV *errors_warnings_sv = 0;
+        SV *error_nrs_sv = 0;
+        AV *av;
+     PPCODE:
+        /* if XS is used, a document should be found.  It could
+           also have been possible to abort if a document is not
+           found.
+         */
+        document = get_sv_document_document (document_in,
+                                             "document_parser_errors");
+        if (document)
+          {
+            ERROR_MESSAGE_LIST *error_messages
+                  = &document->parser_error_messages;
+            av = build_errors (error_messages->list,
+                               error_messages->number);
+            error_nrs_sv = newSViv (error_messages->error_nrs);
+            clear_error_message_list (error_messages);
+          }
+        else
+          {
+            /* Should never happen */
+            av = newAV ();
+            error_nrs_sv = newSViv (0);
+          }
+        errors_warnings_sv = newRV_noinc ((SV *) av);
+
+        EXTEND(SP, 2);
+        PUSHs(sv_2mortal(errors_warnings_sv));
+        PUSHs(sv_2mortal(error_nrs_sv));
 
 void
 register_document_options (SV *document_in, SV *sv_options_in)
@@ -213,14 +247,6 @@ set_document_global_info (SV *document_in, char *key, SV *value_sv)
                 document->global_info.input_file_name
                   = non_perl_strdup (value);
               }
-            else if (!strcmp (key, "input_perl_encoding"))
-              {
-                /* should not be needed, but in case global information
-                   is reused, it will avoid memory leaks */
-                non_perl_free (document->global_info.input_perl_encoding);
-                document->global_info.input_perl_encoding
-                   = non_perl_strdup ((char *)SvPVbyte_nolen(value_sv));
-              }
             else
               {
                 add_other_global_info_string (
@@ -231,36 +257,6 @@ set_document_global_info (SV *document_in, char *key, SV *value_sv)
 
 SV *
 document_tree (SV *document_in, int handler_only=0)
-    PREINIT:
-        HV *document_hv;
-        SV *result_sv = 0;
-        const char *key = "tree";
-     CODE:
-        document_hv = (HV *) SvRV (document_in);
-
-        if (!handler_only)
-          {
-            DOCUMENT *document = get_sv_document_document (document_in, 0);
-            if (document)
-              result_sv = store_document_texinfo_tree (document, document_hv);
-          }
-
-        if (!result_sv)
-          {
-            SV **sv_reference = hv_fetch (document_hv, key, strlen (key), 0);
-            if (sv_reference && SvOK (*sv_reference))
-              result_sv = *sv_reference;
-          }
-
-        if (result_sv)
-          {
-            RETVAL = result_sv;
-            SvREFCNT_inc (result_sv);
-          }
-        else
-          RETVAL = newSV (0);
-    OUTPUT:
-        RETVAL
 
 SV *
 document_global_information (SV *document_in)

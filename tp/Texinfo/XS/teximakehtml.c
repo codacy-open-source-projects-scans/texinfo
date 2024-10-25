@@ -106,10 +106,13 @@ main (int argc, char *argv[])
   BUTTON_SPECIFICATION_LIST *custom_node_footer_buttons;
   OPTIONS_LIST parser_options;
   OPTIONS_LIST convert_options;
+  /* not really cmdline_options but options common to parser and converter */
+  OPTIONS_LIST cmdline_options;
   size_t errors_count = 0;
   size_t errors_nr;
   STRING_LIST texinfo_language_config_dirs;
   STRING_LIST converter_texinfo_language_config_dirs;
+  CONVERTER_INITIALIZATION_INFO *format_defaults;
   char *home_dir;
   const char *curdir = ".";
 
@@ -125,22 +128,17 @@ main (int argc, char *argv[])
   const char *texinfo_text;
    */
 
-#ifdef ENABLE_NLS
-  setlocale (LC_ALL, "");
-
-  /* Set the text message domain.  */
-  bindtextdomain (PACKAGE_CONFIG, LOCALEDIR);
-  textdomain (PACKAGE_CONFIG);
-
-  /* set the gnulib text message domain. */
-  bindtextdomain (PACKAGE_CONFIG "_tp-gnulib", LOCALEDIR);
-#endif
-
-  locale_encoding = nl_langinfo (CODESET);
-
   parse_file_path (argv[0], program_file_name_and_directory);
   program_file = program_file_name_and_directory[0];
   input_directory = program_file_name_and_directory[1];
+
+  locale_encoding = nl_langinfo (CODESET);
+
+  initialize_options_list (&cmdline_options, 2);
+  /*
+  add_new_option_value (&cmdline_options, GOT_integer,
+                           "DEBUG", 1, 0);
+   */
 
   while (1)
     {
@@ -174,8 +172,6 @@ main (int argc, char *argv[])
   if (optind >= argc)
     exit (EXIT_FAILURE);
 
-  txi_setup (LOCALEDIR, 0, 0, 0, 0);
-
   memset (&texinfo_language_config_dirs, 0, sizeof (STRING_LIST));
   add_string (".config", &texinfo_language_config_dirs);
 
@@ -196,16 +192,28 @@ main (int argc, char *argv[])
   if (strlen (DATADIR))
     add_string (DATADIR "/texinfo", &texinfo_language_config_dirs);
 
+  /*
+   if ($^O eq 'MSWin32') {
+     $main_program_set_options->{'DOC_ENCODING_FOR_INPUT_FILE_NAME'} = 0;
+   }
+  */
 
-/*
- if ($^O eq 'MSWin32') {
-  $main_program_set_options->{'DOC_ENCODING_FOR_INPUT_FILE_NAME'} = 0;
-}
-*/
+  txi_general_setup (LOCALEDIR, 0, 0, 0, 0);
 
-  /* Texinfo file parsing */
-  input_file_path = argv[optind];
+  txi_converter_output_format_setup ("html");
 
+  /*
+  add_new_option_value (&cmdline_options, GOT_integer,
+                        "TEXI2HTML", 1, 0);
+   */
+
+  /* FORMAT_MENU for parser should be set based on converter_defaults taking into
+     account cmdline_options in case TEXI2HTML is set
+  format_defaults = txi_converter_format_defaults ("html", &cmdline_options);
+  fprintf (stderr, "FORMAT_MENU %s\n", format_defaults->options->FORMAT_MENU.o.string);
+   */
+
+  /* TODO add cmdline_options filtering in only parser options */
   initialize_options_list (&parser_options, 2);
   /*
   add_new_option_value (&parser_options, GOT_integer,
@@ -222,6 +230,10 @@ main (int argc, char *argv[])
                             "EXPANDED_FORMATS", &parser_EXPANDED_FORMATS);
     }
 
+
+  /* Texinfo file parsing */
+  input_file_path = argv[optind];
+
   /* initialize parser */
   txi_parser (input_file_path, locale_encoding, expanded_formats, &values,
               &parser_options);
@@ -234,7 +246,7 @@ main (int argc, char *argv[])
   if (status)
     {
       txi_handle_parser_error_messages (document, 0, 1, locale_encoding);
-      txi_remove_document (document);
+      txi_document_remove (document);
       exit (EXIT_FAILURE);
     }
 
@@ -259,7 +271,6 @@ main (int argc, char *argv[])
   errors_nr
     = txi_handle_document_error_messages (document, 0, 1, locale_encoding);
   errors_count += errors_nr;
-
 
   /* conversion initialization */
   initialize_options_list (&convert_options, 2);
@@ -286,6 +297,7 @@ main (int argc, char *argv[])
       const char *configured_name_version
          = PACKAGE_NAME_CONFIG " " PACKAGE_VERSION_CONFIG "+dev";
 
+      free (program_file);
       program_file = strdup ("texi2any");
 
       add_new_option_value (&convert_options, GOT_char,
@@ -311,12 +323,7 @@ main (int argc, char *argv[])
   converter = txi_converter_setup ("html", "html", locale_encoding,
                                    program_file,
                                    &converter_texinfo_language_config_dirs,
-                                   &convert_options,
-   /* default, use C++ hashmap if available */
-                                   0);
-   /* to test linear search
-                                   CONVF_string_list);
-    */
+                                   &convert_options);
 
   free_strings_list (&converter_texinfo_language_config_dirs);
   free_strings_list (&texinfo_language_config_dirs);
@@ -328,7 +335,7 @@ main (int argc, char *argv[])
   /* conversion */
   /* return value can be NULL in case of errors or an empty string, but
      not anything else as parse_file is used with a file */
-  result = txi_html_output (converter, document);
+  result = txi_converter_output (converter, document);
   free (result);
 
   errors_nr
@@ -336,13 +343,13 @@ main (int argc, char *argv[])
   errors_count += errors_nr;
 
   /* free after output */
-  txi_reset_converter (converter);
+  txi_converter_reset (converter);
 
 
   /* destroy converter */
-  txi_destroy_converter (converter);
+  txi_converter_destroy (converter);
   /* destroy document */
-  txi_remove_document (document);
+  txi_document_remove (document);
 
   if (errors_count > 0)
     exit (EXIT_FAILURE);

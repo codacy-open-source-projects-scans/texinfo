@@ -27,7 +27,7 @@
 #include "command_ids.h"
 #include "element_types.h"
 #include "tree_types.h"
-#include "options_types.h"
+#include "options_data.h"
 #include "types_data.h"
 #include "builtin_commands.h"
 #include "tree.h"
@@ -133,7 +133,7 @@ find_innermost_accent_contents (const ELEMENT *element)
       enum command_id data_cmd;
       unsigned long flags;
 
-      if (current->type != ET_brace_command)
+      if (type_data[current->type].flags & TF_text)
         return accent_stack;
 
       data_cmd = element_builtin_data_cmd (current);

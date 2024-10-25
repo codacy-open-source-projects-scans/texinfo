@@ -31,7 +31,12 @@
 /* for euidaccess.  Not portable, use gnulib */
 #include <unistd.h>
 
-#include "conversion_data.h"
+#ifdef ENABLE_NLS
+#include <locale.h>
+#include <libintl.h>
+#endif
+
+#include "html_conversion_data.h"
 /* also for xvasprintf */
 #include "text.h"
 #include "command_ids.h"
@@ -39,7 +44,7 @@
 #include "tree_types.h"
 #include "global_commands_types.h"
 #include "option_types.h"
-#include "options_types.h"
+#include "options_data.h"
 /* for CL_* */
 #include "document_types.h"
 #include "converter_types.h"
@@ -69,6 +74,8 @@ const char *null_device_names[] = {
  "/dev/null",
 #endif
  0};
+
+#define LOCALEDIR DATADIR "/locale"
 
 const char *whitespace_chars = " \t\v\f\r\n";
 const char *digit_chars = "0123456789";
@@ -102,7 +109,8 @@ DEF_ALIAS def_aliases[] = {
    pgdt_context_noop("category of methods with data type in object-oriented programming for @deftypemethod",
                      "Method")},
 
-  /* the following aliases are not used in the XS parser */
+  /* the following aliases are not used in the parser.  They do not need
+     to be marked for translation as it is already done just above */
   {CM_defunx, CM_deffnx, "Function", "category of functions for @defun"},
   {CM_defmacx, CM_deffnx, "Macro", 0},
   {CM_defspecx, CM_deffnx, "Special Form", 0},
@@ -275,6 +283,37 @@ int
 isascii_upper (int c)
 {
   return (((c & ~0x7f) == 0) && isupper (c));
+}
+
+
+
+/* Setup global information that is not specific of Texinfo.
+   Should be called once and early */
+void
+messages_and_encodings_setup (void)
+{
+#ifdef ENABLE_NLS
+
+  setlocale (LC_ALL, "");
+
+  /* Note: this uses the installed translations even when running an
+     uninstalled program. */
+  bindtextdomain (PACKAGE_CONFIG, LOCALEDIR);
+
+  textdomain (PACKAGE_CONFIG);
+
+  /* set the tp gnulib text message domain. */
+  bindtextdomain (PACKAGE_CONFIG "_tp-gnulib", LOCALEDIR);
+#else
+
+#endif
+
+  /* do that before any other call to get_encoding_conversion with
+   &output_conversions, otherwise the utf-8 conversion will never
+   be initialized.  Same for &input_conversions.
+  */
+  get_encoding_conversion ("utf-8", &output_conversions);
+  get_encoding_conversion ("utf-8", &input_conversions);
 }
 
 
@@ -1203,9 +1242,6 @@ delete_global_info (GLOBAL_INFO *global_info)
       free (k->string);
     }
   free (global_info->other_info.info);
-
-  /* perl specific information */
-  free (global_info->input_perl_encoding);
 }
 
 void

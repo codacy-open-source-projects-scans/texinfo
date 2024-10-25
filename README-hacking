@@ -155,6 +155,9 @@ in your top-level Texinfo directory and
   ../../../../gnulib/gnulib-tool --add-import
 
 under tp/Texinfo/XS.  (gnulib-tool is in the gnulib source tree.)
+These commands now access the Internet to update translations of
+Gnulib strings due to the --po-base and --po-domain options
+being saved.
 
 The currently-used gnulib modules and other gnulib information are
 recorded in gnulib/m4/gnulib-cache.m4.
@@ -334,13 +337,28 @@ progress of translations at
 whether script is working as intended.)
 
 check at latest automake/autoconf/gettext/help2man version:
+  . after installing latest version, run
+      AUTOPOINT=true autoreconf -f -v -i
+    followed by reverting unwanted changes
   . to upgrade gettext, run
-      gettextize -f --po-dir=po --po-dir=po_document
+      gettextize --no-changelog -f --po-dir=po --po-dir=po_document --dry-run
+      gettextize --no-changelog -f --po-dir=po --po-dir=po_document
     after installing new version of gettext.
-    (check that this does not actually downgrade files due to files also
-    being updated from gnulib --add-import)
-      .  (note upgrade to gettext 0.22 is stalled - see
-         https://lists.gnu.org/archive/html/bug-gettext/2023-07/msg00008.html)
+    if gettextize makes too many changes that need to be reverted, try
+      autopoint -f --dry-run
+      autopoint -f
+    run "git status -u" to check for new files.  revert or remove any
+    *.m4 files that downgrade from a newer serial number (from gnulib)
+    to an older serial number (from gettext).  check for duplicate files
+    under build-aux/m4 and gnulib/m4.
+
+    see http://gnu.org/s/gnulib/manual/html_node/gettextize-and-autopoint.html
+    for some hints.
+
+  . also upgrade gettext under tp/Texinfo/XS.  run:
+      gettextize -f --po-dir=../../../po --no-changelog
+     and then revert any unwanted changes and remove any unwanted new files.
+
   . After upgrading automake/autoconf/gettext, run ./autogen.sh
     and/or "autoreconf --verbose --force --install" to update ancilliary
     files in build-aux and elsewhere.  Check changes before committing.
@@ -360,7 +378,7 @@ available version, then run:
 Check that this results in a newer version.
 
 Check what changes ppport.h reports:
-  perl ppport.h --compat-version=5.8.1 *.xs misc.c xspara.c miscxs.h xspara.h */*.xs main/get_perl_info.* main/build_perl_info.* main/api_to_perl.* convert/call_html_perl_function.* convert/build_html_perl_state.* convert/get_html_perl_info.*
+  perl ppport.h --compat-version=5.8.1 *.xs misc.c xspara.c miscxs.h xspara.h */*.xs main/get_perl_info.* main/build_perl_info.* main/api_to_perl.* main/call_perl_function.* convert/call_html_perl_function.* convert/build_html_perl_state.* convert/get_converter_perl_info.* convert/get_html_perl_info.*
 
 make po-check             # update po/POTFILES.in as needed
 make po_document-check    # update po_document/POTFILES.in as needed
@@ -382,6 +400,12 @@ which you can run manually.
 make distclean
 ./configure
 make dist
+
+# test make after maintainer-clean
+./configure
+make maintainer-clean
+./configure
+make
 
 # test distcheck after maintainer-clean
 ./configure

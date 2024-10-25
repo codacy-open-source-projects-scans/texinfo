@@ -22,12 +22,12 @@
 
 #include "copy-file.h"
 
-#include "conversion_data.h"
+#include "html_conversion_data.h"
 #include "text.h"
 #include "element_types.h"
 #include "tree_types.h"
 #include "option_types.h"
-#include "options_types.h"
+#include "options_data.h"
 #include "document_types.h"
 #include "converter_types.h"
 #include "option_types.h"
@@ -1219,10 +1219,12 @@ html_convert_tree_append (CONVERTER *self, const ELEMENT *element,
   if ((element->type
        && (self->current_types_conversion_function[element->type].status
                                                      == FRS_status_ignored
-         /* type unknown in Perl */
-           || (type_data[element->type].flags & TF_at_command
-               && element->type != ET_index_entry_command
-               && element->type != ET_definfoenclose_command)))
+         /* type unknown in Perl
+            FIXME in which situation is that possible?  The type has to
+            be known in Perl for the formatting function to be set to
+            be ignored?
+          */
+           || type_data[element->type].flags & TF_c_only))
        && (!cmd
            || self->current_commands_conversion_function[cmd].status
                                                      == FRS_status_ignored))

@@ -22,13 +22,13 @@
 #include <stdio.h>
 
 /* for enum special_unit_info_type SPECIAL_UNIT_INFO_TYPE_NR ... */
-#include "conversion_data.h"
+#include "html_conversion_data.h"
 #include "element_types.h"
 #include "command_ids.h"
 #include "tree_types.h"
 #include "document_types.h"
 #include "option_types.h"
-#include "options_types.h"
+#include "options_data.h"
 
 /* for interdependency with convert_to_text.h */
 struct TEXT_OPTIONS;
@@ -37,17 +37,6 @@ enum converter_format {
    COF_none = -1,
    COF_html,
 };
-
-enum ids_data_type {
-   IDT_perl_hashmap,
-   IDT_cxx_hashmap,
-   IDT_string_list,
-};
-
-/* converter low level customization */
-#define CONVF_perl_hashmap        0x0001
-#define CONVF_string_list         0x0002
-#define CONVF_cxx_hashmap         0x0004
 
 /* for string information passing to/from perl */
 enum sv_string_type {
@@ -767,6 +756,9 @@ typedef struct CONVERTER_INITIALIZATION_INFO {
     OPTIONS_LIST conf;
     /* gather strings that are not customization options */
     STRING_LIST non_valid_customization;
+  /* can be used for direct access to OPTIONS structure if needed, but
+     should be NULL in many cases */
+    OPTIONS *options;
 } CONVERTER_INITIALIZATION_INFO;
 
 typedef struct CONVERTER {
@@ -812,7 +804,6 @@ typedef struct CONVERTER {
 
   /* HTML specific */
     /* set for a converter */
-    enum ids_data_type ids_data_type;
     int external_references_number; /* total number of external references
                                        that could be called */
     int code_types[TXI_TREE_TYPES_NUMBER];
@@ -880,13 +871,7 @@ typedef struct CONVERTER {
     SPECIAL_UNIT_DIRECTION_LIST global_units_direction_name;
     ELEMENT **special_unit_info_tree[SUIT_type_heading+1];
     SORTED_INDEX_NAMES sorted_index_names;
-    STRING_LIST *registered_ids;
-    /* actually HV * but we do not want to drag in Perl headers */
-    void *registered_ids_hv;
-#ifdef HAVE_CXX_HASHMAP
-    /* a pointer on C++ data */
-    void *registered_ids_hashmap;
-#endif
+    void *registered_ids_c_hashmap;
     /* potentially one target list per command (only for some actually) */
     HTML_TARGET_LIST html_targets[BUILTIN_CMD_NUMBER];
     HTML_TARGET_LIST html_special_targets[ST_footnote_location+1];

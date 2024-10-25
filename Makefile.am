@@ -12,7 +12,7 @@
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # Find our headers and gnulib headers.
-ACLOCAL_AMFLAGS = -I gnulib/m4
+ACLOCAL_AMFLAGS = -I build-aux/m4 -I gnulib/m4
 
 # Wrapper for the build environment.
 noinst_SCRIPTS = pre-inst-env
@@ -33,6 +33,16 @@ TEXINFO_TEX = doc/texinfo.tex
 BUILT_SOURCES = tp/Texinfo/ModulePath.pm
 tp/Texinfo/ModulePath.pm:
 	cd tp && $(MAKE) $(AM_MAKEFLAGS) Texinfo/ModulePath.pm
+
+# Ensure that those files are built early, as they are needed in po*
+# directories.  This allows to run configure and make after make distclean
+BUILT_SOURCES += $(top_srcdir)/tp/Texinfo/HTMLData.pm \
+                 $(top_srcdir)/tp/Texinfo/XS/main/html_conversion_data.c
+$(top_srcdir)/tp/Texinfo/HTMLData.pm:
+	cd tp && $(MAKE) $(AM_MAKEFLAGS) translated_source_files
+
+$(top_srcdir)/tp/Texinfo/XS/main/html_conversion_data.c:
+	cd tp/Texinfo/XS && $(MAKE) $(AM_MAKEFLAGS) translated_source_files
 
 # One special target for installers to use by hand if desired.
 install-tex:
@@ -136,7 +146,7 @@ po_document-check:
 	@if test -f po_document/POTFILES.in; then			\
 	  grep -E -v '^(#|$$)' po_document/POTFILES.in | sort > $@-1;	\
 	  files=;							\
-	  for file in `find [a-z]* -name '*.[ch]' \
+	  for file in `find [a-z]* -name '*.c' \
 	                           -o -name '*.p[lm]'`; do 		\
 	    # don't look at sources from some subdirs.			\
 	    case $$file in						\

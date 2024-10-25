@@ -6,14 +6,11 @@
 
 #include "tree_types.h"
 #include "option_types.h"
-#include "options_types.h"
+#include "options_data.h"
 #include "document_types.h"
 
 /* avoid an interdependency with convert_to_text.h */
 struct TEXT_OPTIONS;
-
-/* library data initialization */
-void txi_setup_lib_data (void);
 
 
 DOCUMENT *retrieve_document (size_t document_descriptor);

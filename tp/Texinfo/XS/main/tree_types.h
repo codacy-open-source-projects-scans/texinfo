@@ -19,7 +19,6 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "conversion_data.h"
 #include "command_ids.h"
 #include "element_types.h"
 #include "text.h"
@@ -64,29 +63,12 @@ enum source_mark_status {
    SM_status_end,
 };
 
+/* Indices into array returned by new_directions in main/tree.c. */
 /* need to be in the same order as explicit nodes directions */
 enum directions {
    D_next,
    D_prev,
    D_up,
-};
-
-enum output_unit_type {
-   OU_unit,
-   OU_external_node_unit,
-   OU_special_unit,
-};
-
-/* here because it is used both in option_types.h and ConvertXS.xs */
-enum html_text_type {
-   HTT_text,
-   HTT_text_nonumber,
-   HTT_string,
-   HTT_string_nonumber, /* not sure that it is set/used */
-   /* not only used for element text, also for direction text */
-   HTT_href,
-   HTT_node,
-   HTT_section,
 };
 
 #define AI_KEYS_LIST \
@@ -161,39 +143,12 @@ enum html_text_type {
   ai_key(associated_index_entry) \
 
 
-extern const char *ai_key_names[];
-
+/* Keys used in ASSOCIATED_INFO structure. */
 enum ai_key_name {
    AI_key_none,
   #define ai_key(name) AI_key_ ## name,
    AI_KEYS_LIST
   #undef ai_key
-};
-
-
-/* see Texinfo::HTML _prepare_output_units_global_targets
-
-   NOTE the special output units direction names
-   are obtained dynamically from the perl input and stored in
-   special_unit_info and put later on in
-   special_units_direction_name
- */
-
-enum global_unit_direction {
-  #define hgdt_name(name) D_ ## name,
-   HTML_GLOBAL_DIRECTIONS_LIST
-  #undef hgdt_name
-   D_Space,
-};
-
-enum relative_unit_direction_type {
-  #define rud_type(name) RUD_type_## name,
-   RUD_DIRECTIONS_TYPES_LIST
-   RUD_FILE_DIRECTIONS_TYPES
-  #undef rud_type
-  #define rud_type(name) RUD_type_FirstInFile## name,
-   RUD_DIRECTIONS_TYPES_LIST
-  #undef rud_type
 };
 
 typedef struct ELEMENT_LIST {
@@ -268,43 +223,8 @@ typedef struct SOURCE_MARK_LIST {
     size_t space;
 } SOURCE_MARK_LIST;
 
-/* structure used after splitting output units.  Could have been defined
-   in another file as it is not related to element trees.  However, it
-   is used in ELEMENT, so it is defined here */
-typedef struct OUTPUT_UNIT {
-    /* Used when building Perl tree only. This should be HV *hv,
-       but we don't want to include the Perl headers everywhere; */
-    void *hv;
-
-    enum output_unit_type unit_type;
-    size_t index;
-    union {
-      const struct ELEMENT *unit_command;
-      /* for special units, not in the tree */
-      struct ELEMENT *special_unit_command;
-    } uc;
-    char *unit_filename;
-    ELEMENT_LIST unit_contents;
-    struct OUTPUT_UNIT *tree_unit_directions[2];
-
-    struct OUTPUT_UNIT *first_in_page;
-    const struct OUTPUT_UNIT *directions[RUD_type_FirstInFileNodeBack+1];
-
-    /* for special output units only */
-    /* could be an enum as for now new special types cannot be customized
-       but lets keep it an option */
-    char *special_unit_variety;
-    /* for special units associated to a document output unit */
-    const struct OUTPUT_UNIT *associated_document_unit;
-} OUTPUT_UNIT;
-
-/* Could be elsewhere, but it is practical to have it here as it is used
-   in build_perl_info.c, for example */
-typedef struct OUTPUT_UNIT_LIST {
-    struct OUTPUT_UNIT **list;
-    size_t number;
-    size_t space;
-} OUTPUT_UNIT_LIST;
+/* Defined fully in main/document_types.h */
+struct OUTPUT_UNIT;
 
 typedef struct CONTAINER {
     ELEMENT_LIST args;
@@ -312,20 +232,20 @@ typedef struct CONTAINER {
     SOURCE_INFO source_info;
 
     ASSOCIATED_INFO extra_info;
-    OUTPUT_UNIT *associated_unit;
+    struct OUTPUT_UNIT *associated_unit;
     /* depends on the element */
     char **string_info;
     enum command_id cmd;
 } CONTAINER;
 
 /* indices in ELEMENT elt_info */
+/* to be kept in sync with elt_info_names in main/tree.c */
 enum elt_info_type {
+   eit_spaces_before_argument, /* diverse types.  Only context_brace_command
+                                  also with braces */
    eit_spaces_after_cmd_before_arg, /* types with braces flag */
    eit_spaces_after_argument,
    eit_comment_at_end, /* block_line_arg line_arg */
-   eit_spaces_before_argument = 0, /* diverse types.  Only context_brace_command
-                                     also with braces */
-   eit_brace_content_spaces_before_argument = 1, /* not 0, also brace commands */
 };
 
 /* indices in ELEMENT string_info */

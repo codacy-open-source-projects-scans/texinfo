@@ -32,7 +32,7 @@
 
 #include "command_ids.h"
 #include "option_types.h"
-#include "options_types.h"
+#include "options_data.h"
 #include "converter_types.h"
 #include "builtin_commands.h"
 #include "utils.h"
@@ -104,11 +104,7 @@ get_or_create_sv_converter (SV *converter_in, const char *input_class)
              = find_perl_converter_class_converter_format (class_name);
         }
 
-      converter_descriptor = new_converter (converter_format,
-                                            CONVF_perl_hashmap);
-                                             /*
-                                            CONVF_string_list);
-                                              */
+      converter_descriptor = new_converter (converter_format);
       converter = retrieve_converter (converter_descriptor);
     }
   return converter;

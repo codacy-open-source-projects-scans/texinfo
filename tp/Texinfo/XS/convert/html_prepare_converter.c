@@ -28,7 +28,7 @@
 #include "element_types.h"
 #include "tree_types.h"
 #include "converter_types.h"
-#include "conversion_data.h"
+#include "html_conversion_data.h"
 /* new_element */
 #include "tree.h"
 #include "errors.h"
@@ -54,7 +54,7 @@
    xml_text_entity_no_arg_commands_formatting */
 #include "converter.h"
 #include "call_html_perl_function.h"
-#include "call_html_cxx_function.h"
+#include "hashmap.h"
 #include "format_html.h"
 /* html_complete_no_arg_commands_formatting html_run_stage_handlers
    html_add_to_files_source_info html_find_file_source_info
@@ -1718,15 +1718,6 @@ html_converter_customize (CONVERTER *self)
   int external_type_conversion_function = 0;
   int external_type_open_function = 0;
   int external_formatting_function = 0;
-
-  if (self->ids_data_type == IDT_perl_hashmap)
-    init_registered_ids_hv (self);
-#ifdef HAVE_CXX_HASHMAP
-  else if (self->ids_data_type == IDT_cxx_hashmap)
-    init_registered_ids_hashmap (self);
-#endif
-  else
-    self->registered_ids = new_string_list ();
 
   /* for @sc */
   for (l = 0; default_upper_case_commands[l]; l++)
@@ -3766,27 +3757,13 @@ html_prepare_conversion_units (CONVERTER *self)
 int
 html_id_is_registered (CONVERTER *self, const char *string)
 {
-  if (self->ids_data_type == IDT_perl_hashmap)
-    return is_hv_registered_id (self, string);
-#ifdef HAVE_CXX_HASHMAP
-  else if (self->ids_data_type == IDT_cxx_hashmap)
-    return is_hashmap_registered_id (self, string);
-#endif
-  else
-    return find_string (self->registered_ids, string);
+  return is_c_hashmap_registered_id (self, string);
 }
 
 void
 html_register_id (CONVERTER *self, const char *string)
 {
-  if (self->ids_data_type == IDT_perl_hashmap)
-    hv_register_id (self, string);
-#ifdef HAVE_CXX_HASHMAP
-  else if (self->ids_data_type == IDT_cxx_hashmap)
-    hashmap_register_id (self, string);
-#endif
-  else
-    add_string (string, self->registered_ids);
+  c_hashmap_register_id (self, string);
 }
 
 /* used for diverse elements: tree units, indices, footnotes, special
@@ -4531,6 +4508,46 @@ sort_cmd_targets (CONVERTER *self)
     }
 }
 
+/* return the approximate number of targets for that manual */
+static size_t
+ids_hashmap_predicted_values (CONVERTER *self)
+{
+  size_t sectioning_commands_nr = 0;
+  size_t index_entries_nr = 0;
+  size_t heading_commands_nr = 0;
+  size_t i;
+
+  OUTPUT_UNIT_LIST *special_units = retrieve_output_units
+    (self->document, self->output_units_descriptors[OUDT_special_units]);
+  OUTPUT_UNIT_LIST *associated_special_units = retrieve_output_units
+   (self->document,
+    self->output_units_descriptors[OUDT_associated_special_units]);
+
+  if (self->document->sections_list)
+    sectioning_commands_nr = self->document->sections_list->number;
+
+  if (self->document->indices_info.number > 0)
+    {
+      size_t i;
+      for (i = 0; i < self->sorted_index_names.number; i++)
+        index_entries_nr += self->sorted_index_names.list[i]->entries_number;
+    }
+
+  for (i = 0; heading_commands_list[i]; i++)
+    {
+      enum command_id cmd = heading_commands_list[i];
+      const ELEMENT_LIST *global_command
+        = get_cmd_global_multi_command (&self->document->global_commands, cmd);
+      heading_commands_nr += global_command->number;
+    }
+
+  return special_units->number + associated_special_units->number
+   + self->document->identifiers_target.number
+   + 3 * sectioning_commands_nr
+   + index_entries_nr
+   + self->document->global_commands.footnotes.number * 2;
+}
+
 /* indirectly calls all the functions calling customization function
    requiring elements and output units except for external nodes formatting */
 /* for conversion units except for associated special units that require
@@ -4539,6 +4556,9 @@ void
 html_prepare_conversion_units_targets (CONVERTER *self,
                                        const char *document_name)
 {
+  size_t predicted_values = ids_hashmap_predicted_values (self);
+  init_registered_ids_c_hashmap (self, predicted_values);
+
   /*
    Do that before the other elements, to be sure that special page ids
    are registered before elements id are.

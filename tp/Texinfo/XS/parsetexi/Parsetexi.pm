@@ -28,8 +28,6 @@
 # * the input file name passed through parse_texi_file is a binary string
 # * the 'file_name' values in 'source_info' from convert_errors and in
 #   the tree elements 'source_info' are returned as binary strings
-#
-# Binary strings are passed from parse_texi_file as arguments of parse_file.
 
 package Texinfo::Parser;
 
@@ -40,64 +38,31 @@ use warnings;
 # To check if there is no erroneous autovivification
 #no autovivification qw(fetch delete exists store strict);
 
-use Storable qw(dclone); # standard in 5.007003
-use Encode qw(decode);
-
-use Texinfo::Common;
 use Texinfo::Report;
+# Not directly used, but the returned variables are in this module, this
+# import makes sure that the functions associated to the objects are found.
 use Texinfo::Document;
 
 # Initialize the parser
 # The last argument, optional, is a hash provided by the user to change
-# the default values for what is present in %parser_settable_configuration.
+# the default values for what is present in %parser_document_parsing_options.
 sub parser (;$)
 {
   my $conf = shift;
 
-  # In Texinfo::Common because all the
-  # customization options information is gathered here, and also
-  # because it is used in other codes, in particular the XS parser.
-  # Note that it also contains inner options like accept_internalvalue
-  # and customizable document parser state values in addition to
-  # regular customization options.
-  my $parser_conf = dclone(\%Texinfo::Common::parser_document_parsing_options);
   my $parser = {};
   bless $parser;
-
-  # Reset conf from argument, restricting to parser_document_parsing_options,
-  # and set directly parser keys if in parser_settable_configuration and not in
-  # parser_document_parsing_options.
-  if (defined($conf)) {
-    foreach my $key (keys(%$conf)) {
-      if (exists($Texinfo::Common::parser_document_parsing_options{$key})) {
-        if (ref($conf->{$key})) {
-          $parser_conf->{$key} = dclone($conf->{$key});
-        } else {
-          $parser_conf->{$key} = $conf->{$key};
-        }
-      } elsif (exists($Texinfo::Common::parser_settable_configuration{$key})) {
-        # we keep instead of copying on purpose, to reuse the objects
-        # Should only be registrar
-        $parser->{$key} = $conf->{$key};
-      } else {
-        # no warning here as in pure Perl as it is warned below
-        #warn "ignoring parser configuration value \"$key\"\n";
-      }
-    }
-  }
 
   # pass directly DEBUG value to reset_parser to override previous
   # parser configuration, as the configuration isn't already reset and the new
   # configuration is set afterwards.
   my $debug = 0;
-  $debug = $parser_conf->{'DEBUG'} if ($parser_conf->{'DEBUG'});
+  $debug = $conf->{'DEBUG'} if ($conf->{'DEBUG'});
 
   # The reset_parser call resets the conf to the same values as found in
   # Texinfo::Common parser_document_parsing_options.
   reset_parser($debug);
 
-  # Following code does the same as Perl code just above to
-  # setup parser_conf in C.
   # (re)set debug in any case, assuming that undef DEBUG is no debug
   parser_conf_set_DEBUG($debug);
 
@@ -154,8 +119,8 @@ sub parser (;$)
           parser_conf_set_accept_internalvalue(1);
           $store_conf = 0;
         }
-      } elsif ($key eq 'registrar' or $key eq 'DEBUG') {
-        # no action needed, already taken into account or only for Perl code
+      } elsif ($key eq 'DEBUG') {
+        # no action needed, already taken into account
       } else {
         warn "ignoring parser configuration value \"$key\"\n";
       }
@@ -163,137 +128,9 @@ sub parser (;$)
   }
   if ($store_conf) {
     register_parser_conf($parser);
-
-    # variables set to the parser initialization values
-    # only.  What is found in the document has no effect.
-    $parser->{'conf'} = $parser_conf;
-  }
-
-  if (not $parser->{'registrar'}) {
-    $parser->{'registrar'} = Texinfo::Report::new();
   }
 
   return $parser;
-}
-
-sub _get_parser_info($$;$) {
-  my $self = shift;
-  my $document_descriptor = shift;
-  my $no_store = shift;
-
-  # get hold of errors before calling build_document, as if $no_store is set
-  # they will be destroyed.
-  pass_document_parser_errors_to_registrar($document_descriptor, $self);
-
-  my $document;
-  if (!$no_store) {
-    $document = get_document ($document_descriptor);
-  } else {
-    $document = build_document ($document_descriptor, 1);
-  }
-
-  # additional info relevant in perl only.
-  my $perl_encoding
-    = Texinfo::Common::get_perl_encoding($document->{'commands_info'},
-                        $self->{'registrar'}, $self->{'conf'}->{'DEBUG'});
-  $perl_encoding = 'utf-8' if (!defined($perl_encoding));
-  Texinfo::Document::set_document_global_info($document,
-                     'input_perl_encoding', $perl_encoding);
-
-  # New error registrar for document to be used after parsing, for
-  # structuring and tree modifications
-  $document->{'registrar'} = Texinfo::Report::new();
-
-  return $document;
-}
-
-sub parse_texi_file ($$)
-{
-  my $self = shift;
-  my $input_file_path = shift;
-  my $tree_stream;
-
-  return undef if (!defined($self));
-
-  # the file is already a byte string, taken as is from the command
-  # line.  The encoding was detected as COMMAND_LINE_ENCODING.
-  my $document_descriptor = parse_file($self, $input_file_path);
-  if (!$document_descriptor) {
-    return undef;
-  }
-
-  my $document = _get_parser_info($self, $document_descriptor);
-
-  return $document;
-}
-
-
-# Used in tests under tp/t.
-sub parse_texi_piece($$;$$)
-{
-  my ($self, $text, $line_nr, $no_store) = @_;
-
-  return undef if (!defined($text) or !defined($self));
-
-  $line_nr = 1 if (not defined($line_nr));
-
-  my $document_descriptor = parse_piece($self, $text, $line_nr);
-
-  my $document = _get_parser_info($self, $document_descriptor, $no_store);
-
-  return $document;
-}
-
-# Used in tests under tp/t.
-sub parse_texi_text($$;$)
-{
-  my ($self, $text, $line_nr) = @_;
-
-  return undef if (!defined($text) or !defined($self));
-
-  $line_nr = 1 if (not defined($line_nr));
-
-  my $document_descriptor = parse_text($self, $text, $line_nr);
-
-  my $document = _get_parser_info($self, $document_descriptor);
-
-  return $document;
-}
-
-sub parse_texi_line($$;$$)
-{
-  my ($self, $text, $line_nr, $no_store) = @_;
-
-  return undef if (!defined($text) or !defined($self));
-
-  $line_nr = 1 if (not defined($line_nr));
-
-  my $document_descriptor = parse_string($self, $text, $line_nr);
-
-  my $document = _get_parser_info($self, $document_descriptor, $no_store);
-
-  return $document->tree();
-}
-
-# Only used in a test, not documented, there for symmetry with document
-sub registrar($)
-{
-  my $self = shift;
-  return $self->{'registrar'};
-}
-
-sub errors($)
-{
-  my $self = shift;
-  my $registrar = $self->{'registrar'};
-  if (!$registrar) {
-    return undef;
-  }
-  my ($error_warnings_list, $error_count) = $registrar->errors();
-
-  $registrar->clear();
-
-  return ($error_warnings_list, $error_count);
 }
 
 1;

@@ -135,8 +135,7 @@ our $VERSION = '7.1.90';
                                # external manual.
   #'labels_list' => [],        # array of elements associated with labels.
                               # information on document
-  #'global_info' => {'input_perl_encoding' => 'utf-8',
-  #                  'input_encoding_name' => 'utf-8',
+  #'global_info' => {'input_encoding_name' => 'utf-8',
   #                  'included_files' => [],},
 # indices             a structure holding the link between index
 #                     names and merged indices;
@@ -182,8 +181,7 @@ my %parser_document_state_initialization = (
 
   'sections_level_modifier' => 0, # modified by raise/lowersections
 
-  'input_file_encoding' => 'utf-8', # perl encoding name used for the input
-                                    # file
+  'input_file_encoding' => 'utf-8', # encoding name used for the input file
 );
 
 my %parsing_state_initialization = (
@@ -257,6 +255,10 @@ my %parser_state_initialization = (%parser_document_state_initialization,
 #                         by @-commands.  For example documentlanguage.
 # conf                    Customization and document state configuration
 #                         based on defaults and parser argument.
+
+# other keys for the parser state initialized at parser creation
+# registrar          # Texinfo::Report object used for error
+#                    # reporting.
 
 # A source information is an hash reference with the keys:
 # line_nr        the line number.
@@ -383,6 +385,7 @@ foreach my $type ('brace_arg', 'brace_container') {
   $type_without_paragraph{$type} = 1;
 };
 
+# To keep in sync with XS main/element_types.txt leading_space flag
 my %leading_space_types;
 foreach my $type ('empty_line', 'ignorable_spaces_after_command',
         'internal_spaces_after_command', 'internal_spaces_before_argument',
@@ -583,7 +586,7 @@ foreach my $begin_paragraph_context ('base') {
 
 # initialization entry point.  Set up a parser.
 # The last argument, optional, is a hash provided by the user to change
-# the default values for what is present in %parser_settable_configuration.
+# the default values for what is present in %parser_document_parsing_options.
 sub parser(;$)
 {
   my $conf = shift;
@@ -598,9 +601,7 @@ sub parser(;$)
   my $parser = {};
   bless $parser;
 
-  # Reset conf from argument, restricting to parser_document_parsing_options,
-  # and set directly parser keys if in parser_settable_configuration and not in
-  # parser_document_parsing_options.
+  # Reset conf from argument, restricting to parser_document_parsing_options
   $parser->{'set'} = {};
   if (defined($conf)) {
     foreach my $key (keys(%$conf)) {
@@ -613,10 +614,6 @@ sub parser(;$)
         if ($initialization_overrides{$key}) {
           $parser->{'set'}->{$key} = $parser_conf->{$key};
         }
-      } elsif (exists($Texinfo::Common::parser_settable_configuration{$key})) {
-        # we keep instead of copying on purpose, to reuse the objects
-        # Should only be registrar
-        $parser->{$key} = $conf->{$key};
       } else {
         warn "ignoring parser configuration value \"$key\"\n";
       }
@@ -634,9 +631,7 @@ sub parser(;$)
     $parser->{'expanded_formats_hash'}->{$expanded_format} = 1;
   }
 
-  if (not defined($parser->{'registrar'})) {
-    $parser->{'registrar'} = Texinfo::Report::new();
-  }
+  $parser->{'registrar'} = Texinfo::Report::new();
 
   # variables set to the parser initialization values only.  What is
   # found in the document has no effect.  Also used to initialize some
@@ -719,7 +714,11 @@ sub _initialize_parsing($$)
     $parser_state->{'basic_inline_commands'} = {%contain_basic_inline_commands};
   }
 
-  return $parser_state;
+  # We rely on parser state overriding the previous state infomation
+  # in self, as documented in perldata:
+  #   If a key appears more than once in the initializer list of a hash, the last occurrence wins
+  %$parser = (%$parser, %$parser_state);
+  return $document;
 }
 
 sub _new_text_input($$)
@@ -805,17 +804,13 @@ sub parse_texi_piece($$;$)
 
   $line_nr = 1 if (not defined($line_nr));
 
-  my $parser_state = $self->_initialize_parsing('ct_base');
-  # We rely on parser state overriding the previous state infomation
-  # in self, as documented in perldata:
-  #   If a key appears more than once in the initializer list of a hash, the last occurrence wins
-  %$self = (%$self, %$parser_state);
+  my $document = $self->_initialize_parsing('ct_base');
 
   _input_push_text($self, $text, $line_nr);
 
   my ($document_root, $before_node_section)
      = _setup_document_root_and_before_node_section();
-  my $document = $self->_parse_texi($document_root, $before_node_section);
+  $self->_parse_texi($document_root, $before_node_section);
 
   get_parser_info($self);
 
@@ -830,14 +825,21 @@ sub parse_texi_line($$;$)
 
   $line_nr = 1 if (not defined($line_nr));
 
-  my $parser_state = $self->_initialize_parsing('ct_line');
-  %$self = (%$self, %$parser_state);
+  my $document = $self->_initialize_parsing('ct_line');
 
   _input_push_text($self, $text, $line_nr);
 
   my $root = {'type' => 'root_line'};
-  my $document = $self->_parse_texi($root, $root);
+  $self->_parse_texi($root, $root);
   get_parser_info($self);
+
+  # add the errors to the Parser registrar as there is no document
+  # returned to get the errors from.
+  push @{$self->{'registrar'}->{'errors_warnings'}},
+      @{$document->{'parser_registrar'}->{'errors_warnings'}};
+  $self->{'registrar'}->{'error_nrs'}
+     += $document->{'parser_registrar'}->{'error_nrs'};
+
   return $document->tree();
 }
 
@@ -849,12 +851,11 @@ sub parse_texi_text($$;$)
 
   $line_nr = 1 if (not defined($line_nr));
 
-  my $parser_state = $self->_initialize_parsing('ct_base');
-  %$self = (%$self, %$parser_state);
+  my $document = $self->_initialize_parsing('ct_base');
 
   _input_push_text($self, $text, $line_nr);
 
-  my $document = $self->_parse_texi_document();
+  $self->_parse_texi_document();
 
   get_parser_info($self);
   return $document;
@@ -867,9 +868,11 @@ sub _input_push_file
 {
   my ($self, $input_file_path, $file_name_encoding) = @_;
 
+  my ($file_name, $directories, $suffix) = fileparse($input_file_path);
+
   my $filehandle = do { local *FH };
   if (!open($filehandle, $input_file_path)) {
-    return 0, undef, undef, $!;
+    return 0, $file_name, $directories, $!;
   }
 
   # to be able to change the encoding in the midst of reading a file,
@@ -886,8 +889,6 @@ sub _input_push_file
   # This is tested in the formats_encodings multiple_include_encodings
   # test.
   binmode($filehandle);
-
-  my ($file_name, $directories, $suffix) = fileparse($input_file_path);
 
   my $file_input = {
        'input_source_info' => {
@@ -913,14 +914,6 @@ sub get_parser_info($)
   my $self = shift;
 
   my $document = $self->{'document'};
-
-  my $perl_encoding
-    = Texinfo::Common::get_perl_encoding($document->{'commands_info'},
-                                         $self->{'registrar'},
-                                         $self->{'conf'}->{'DEBUG'});
-  if (defined($perl_encoding)) {
-    $document->{'global_info'}->{'input_perl_encoding'} = $perl_encoding
-  }
 
   my $global_commands = $document->{'commands_info'};
 
@@ -954,27 +947,28 @@ sub parse_texi_file($$)
 
   return undef if (!defined($self));
 
-  my $parser_state = $self->_initialize_parsing('ct_base');
-  %$self = (%$self, %$parser_state);
+  my $document = $self->_initialize_parsing('ct_base');
 
   my ($status, $file_name, $directories, $error_message)
     = _input_push_file($self, $input_file_path);
+
+  $document->{'global_info'}->{'input_file_name'} = $file_name;
+  $document->{'global_info'}->{'input_directory'} = $directories;
+
   if (!$status) {
     my $decoded_input_file_path = $input_file_path;
     my $encoding = $self->{'conf'}->{'COMMAND_LINE_ENCODING'};
     if (defined($encoding)) {
       $decoded_input_file_path = decode($encoding, $input_file_path);
     }
-    $self->{'registrar'}->document_error(
+    $document->{'parser_registrar'}->document_error(
                  sprintf(__("could not open %s: %s"),
                                   $decoded_input_file_path, $error_message));
-    return undef;
+    return $document;
   }
 
-  my $document = $self->_parse_texi_document();
+  $self->_parse_texi_document();
   get_parser_info($self);
-  $document->{'global_info'}->{'input_file_name'} = $file_name;
-  $document->{'global_info'}->{'input_directory'} = $directories;
 
   return $document;
 }
@@ -1018,13 +1012,6 @@ sub _parse_texi_document($)
   Texinfo::Common::rearrange_tree_beginning($document, $before_node_section);
 
   return $document;
-}
-
-# Only used in a test, not documented, there for symmetry with document
-sub registrar($)
-{
-  my $self = shift;
-  return $self->{'registrar'};
 }
 
 sub errors($)
@@ -1110,7 +1097,7 @@ sub _line_warn
   my $error_location_info = shift;
   my $continuation = shift;
   my $debug = shift;
-  my $registrar = $self->{'registrar'};
+  my $registrar = $self->{'document'}->{'parser_registrar'};
   $registrar->line_warn($text, $error_location_info, $continuation,
                         $self->{'conf'}->{'DEBUG'});
 }
@@ -1122,7 +1109,7 @@ sub _line_error
   my $error_location_info = shift;
   my $continuation = shift;
 
-  my $registrar = $self->{'registrar'};
+  my $registrar = $self->{'document'}->{'parser_registrar'};
   $registrar->line_error($text, $error_location_info, $continuation,
                          $self->{'conf'}->{'DEBUG'});
 }
@@ -2616,7 +2603,7 @@ sub _next_text($;$)
             $decoded_file_name = decode($file_name_encoding,
                                         $input->{'input_file_path'});
           }
-          $self->{'registrar'}->document_warn(
+          $self->{'document'}->{'parser_registrar'}->document_warn(
                                sprintf(__("error on closing %s: %s"),
                                        $decoded_file_name, $!),
                                     $self->{'conf'}->{'PROGRAM'});
@@ -7842,7 +7829,7 @@ sub _parse_texi($$$)
 
   # Setup identifier target elements based on 'labels_list'
   Texinfo::Document::set_labels_identifiers_target($document,
-                  $self->{'registrar'}, $self->{'conf'}->{'DEBUG'});
+           $document->{'parser_registrar'}, $self->{'conf'}->{'DEBUG'});
   Texinfo::Translations::complete_indices($document->{'indices'},
                                           $self->{'conf'}->{'DEBUG'});
 
@@ -8315,7 +8302,7 @@ Texinfo::Parser - Parse Texinfo code into a Perl tree
   my $parser = Texinfo::Parser::parser();
   my $document = $parser->parse_texi_file("somefile.texi");
 
-  my ($errors, $errors_count) = $parser->errors();
+  my ($errors, $errors_count) = $document->parser_errors();
   foreach my $error_message (@$errors) {
     warn $error_message->{'error_line'};
   }
@@ -8442,18 +8429,16 @@ X<C<parse_texi_file>>
 The file with name I<$file_name> is considered to be a Texinfo file and
 is parsed into a tree.  I<$file_name> should be a binary string.
 
-undef is returned if the file couldn't be read.
-
 =back
 
 The errors collected during the tree parsing are available with
-C<errors>.  These errors are internally registered in a C<Texinfo::Report>
-object.
+the resulting document C<parser_errors>.  These errors are internally
+registered in a C<Texinfo::Report> object.
 
 =over
 
-=item ($error_warnings_list, $error_count) = $parser->errors()
-X<C<errors>>
+=item ($error_warnings_list, $error_count) = $document->parser_errors()
+X<C<parser_errors>>
 
 This function returns as I<$error_count> the count of parsing errors.
 The I<$error_warnings_list> is an array of hash references

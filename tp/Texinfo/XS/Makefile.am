@@ -25,7 +25,7 @@ AM_CPPFLAGS = -I$(srcdir)
 GNULIB_CPPFLAGS = -I$(srcdir)/gnulib/lib \
   -I$(builddir)/gnulib/lib
 
-ACLOCAL_AMFLAGS = -I gnulib/m4
+ACLOCAL_AMFLAGS = -I build-aux/m4 -I gnulib/m4
 
 SUBDIRS=gnulib/lib gnulib/po
 
@@ -142,8 +142,8 @@ C_libtexinfo_sources = \
 		      main/convert_utils.h \
 		      main/customization_options.c \
 		      main/customization_options.h \
-		      main/conversion_data.c \
-		      main/conversion_data.h \
+		      main/html_conversion_data.c \
+		      main/html_conversion_data.h \
 		      main/floats.c \
 		      main/floats.h \
 		      main/manipulate_tree.c \
@@ -162,7 +162,7 @@ C_libtexinfo_sources = \
 		      main/options_defaults.c \
 		      main/options_defaults.h \
 		      main/option_types.h \
-		      main/options_types.h \
+		      main/options_data.h \
 		      main/global_commands_types.h \
 		      main/utils.c \
 		      main/utils.h \
@@ -227,8 +227,6 @@ XS_libtexinfo_sources = \
 
 EXTRA_DIST += main/accent_tables_8bit_codepoints.c
 EXTRA_DIST += main/command_data.c
-EXTRA_DIST += main/conversion_data.c
-EXTRA_DIST += main/conversion_data.h
 EXTRA_DIST += main/cmd_normalization.c
 EXTRA_DIST += main/cmd_unicode.c
 EXTRA_DIST += main/cmd_text.c
@@ -256,8 +254,8 @@ BUILT_SOURCES = main/accent_tables_8bit_codepoints.c \
                 main/cmd_unicode.c \
                 main/command_data.c \
                 main/command_ids.h \
-                main/conversion_data.c \
-                main/conversion_data.h \
+                main/html_conversion_data.c \
+                main/html_conversion_data.h \
                 main/element_types.c \
                 main/element_types.h \
                 main/global_commands_types.h \
@@ -267,14 +265,11 @@ BUILT_SOURCES = main/accent_tables_8bit_codepoints.c \
                 main/options_defaults.c \
                 main/options_defaults.h \
                 main/options_get_perl.c \
-                main/options_types.h
+                main/options_data.h
 
 # Need to be distributed
-EXTRA_DIST+=main/element_types.txt main/element_types.awk \
-	   main/command_data.awk
-EXTRA_DIST += convert/cmd_converter.c
-EXTRA_DIST += convert/converters_options.c
-EXTRA_DIST += convert/converters_options.h
+EXTRA_DIST += main/element_types.txt main/element_types.awk \
+	       main/command_data.awk
 
 $(srcdir)/main/element_types.c $(srcdir)/main/element_types.h: main/element_types.txt main/element_types.awk
 	$(GAWK) -v srcdir=$(srcdir)/main -f $(srcdir)/main/element_types.awk \
@@ -324,36 +319,41 @@ $(srcdir)/main/accent_tables_8bit_codepoints.c: $(srcdir)/../../maintain/setup_a
 
 MAINTAINERCLEANFILES += main/accent_tables_8bit_codepoints.c
 
-$(srcdir)/main/options_init_free.c $(srcdir)/main/options_types.h $(srcdir)/main/options_defaults.c $(srcdir)/main/options_defaults.h $(srcdir)/convert/converters_options.c $(srcdir)/convert/converters_options.h $(srcdir)/main/options_get_perl.c: ../options_data.txt ../Convert/converters_defaults.txt main/command_data.c $(srcdir)/../../maintain/regenerate_C_options_info.pl
+$(srcdir)/main/options_init_free.c $(srcdir)/main/options_data.h $(srcdir)/main/options_defaults.c $(srcdir)/main/options_defaults.h $(srcdir)/convert/converters_options.c $(srcdir)/convert/converters_options.h $(srcdir)/main/options_get_perl.c: ../options_data.txt ../Convert/converters_defaults.txt main/command_data.c $(srcdir)/../../maintain/regenerate_C_options_info.pl
 	$(PERL) $(srcdir)/../../maintain/regenerate_C_options_info.pl \
 	        < $(srcdir)/../options_data.txt \
 	              $(srcdir)/main/command_data.c \
 	              $(srcdir)/../Convert/converters_defaults.txt \
 	              $(srcdir)/main/options_init_free.c \
-	              $(srcdir)/main/options_types.h \
+	              $(srcdir)/main/options_data.h \
 	              $(srcdir)/main/options_defaults.c \
 	              $(srcdir)/main/options_defaults.h \
 	              $(srcdir)/convert/converters_options.c \
 	              $(srcdir)/convert/converters_options.h \
 	              $(srcdir)/main/options_get_perl.c
 
-MAINTAINERCLEANFILES += main/options_init_free.c main/options_types.h \
+MAINTAINERCLEANFILES += main/options_init_free.c main/options_data.h \
                         main/options_defaults.c main/options_defaults.h \
                         convert/converters_options.c \
                         convert/converters_options.h \
                         main/options_get_perl.c
 
-$(srcdir)/main/conversion_data.c $(srcdir)/main/conversion_data.h: main/command_data.c $(srcdir)/../Data/default_css_element_class_styles.csv $(srcdir)/../Data/default_direction_strings.csv $(srcdir)/../Data/default_special_unit_info.csv $(srcdir)/../Data/html_style_commands_element.csv $(srcdir)/../../maintain/generate_code_convert_data.pl
+# target that can be built upon cd'ing to the build directory, as needed
+# when building translated source files from the top level directory to
+# avoid make failing in po* directories.
+translated_source_files: $(srcdir)/main/html_conversion_data.c
+
+$(srcdir)/main/html_conversion_data.c $(srcdir)/main/html_conversion_data.h: main/command_data.c $(srcdir)/../Data/default_css_element_class_styles.csv $(srcdir)/../Data/default_direction_strings.csv $(srcdir)/../Data/default_special_unit_info.csv $(srcdir)/../Data/html_style_commands_element.csv $(srcdir)/../../maintain/generate_code_convert_data.pl
 	$(PERL) $(srcdir)/../../maintain/generate_code_convert_data.pl \
 	        < $(srcdir)/main/command_data.c \
 	            $(srcdir)/../Data/default_css_element_class_styles.csv \
 	            $(srcdir)/../Data/default_direction_strings.csv \
 	            $(srcdir)/../Data/default_special_unit_info.csv \
 	            $(srcdir)/../Data/html_style_commands_element.csv \
-	            C $(srcdir)/main/conversion_data.c \
-	            $(srcdir)/main/conversion_data.h
+	            C $(srcdir)/main/html_conversion_data.c \
+	            $(srcdir)/main/html_conversion_data.h
 
-MAINTAINERCLEANFILES += main/conversion_data.c main/conversion_data.h
+MAINTAINERCLEANFILES += main/html_conversion_data.c main/html_conversion_data.h
 
 
 ########################## shared perl XS library for texinfo XS codes
@@ -389,9 +389,6 @@ if HAVE_ICONV
 xs_LTLIBRARIES += libtexinfo-convert.la
 endif
 
-# call_html_perl_function.c functions are called in other
-# parts of the code and need to be linked against Perl.
-# build_html_perl_state.c functions are called from call_html_perl_function.c.
 C_libtexinfo_convert_sources = \
                        convert/converter.c \
                        convert/converter.h \
@@ -404,6 +401,8 @@ C_libtexinfo_convert_sources = \
                        convert/convert_html.c \
                        convert/format_html.h \
                        convert/format_html.c \
+                       convert/hashmap.c \
+                       convert/hashmap.h \
                        convert/html_converter_types.h \
                        convert/html_converter_init_options.c \
                        convert/html_converter_finish.c \
@@ -417,6 +416,9 @@ C_libtexinfo_convert_sources = \
                        convert/texinfo.c \
                        convert/texinfo.h
 
+# call_html_perl_function.c functions are called in other
+# parts of the code and need to be linked against Perl.
+# build_html_perl_state.c functions are called from call_html_perl_function.c.
 XS_libtexinfo_convert_sources = \
                        convert/build_html_perl_state.h \
                        convert/build_html_perl_state.c \
@@ -557,17 +559,5 @@ teximakehtml_SOURCES = \
 teximakehtml_LDADD = $(top_builddir)/gnulib/lib/libgnu.la
 teximakehtml_LDFLAGS = $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 
-if TXI_HAVE_CXX_HASHMAP
-teximakehtml_SOURCES += convert/call_html_cxx_function.cpp \
-                        convert/call_html_cxx_function.h
-TXI_CXX_CPPFLAGS = -DHAVE_CXX_HASHMAP=1
-teximakehtml_LINK = $(CXXLINK) $(teximakehtml_CXXFLAGS) $(teximakehtml_LDFLAGS)
-else
-EXTRA_DIST += convert/call_html_cxx_function.cpp \
-              convert/call_html_cxx_function.h
-TXI_CXX_CPPFLAGS = 
-teximakehtml_LINK = $(LINK) $(teximakehtml_CFLAGS) $(teximakehtml_LDFLAGS)
-endif
-
-teximakehtml_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(TXI_CXX_CPPFLAGS) $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
+teximakehtml_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
 

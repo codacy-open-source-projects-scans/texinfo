@@ -15,6 +15,7 @@
 
 #include <config.h>
 
+#include <stdlib.h>
 #include <stddef.h>
 
 /* Avoid namespace conflicts. */
@@ -34,6 +35,8 @@
 
 #include "api.h"
 #include "conf.h"
+/* for messages_and_encodings_setup */
+#include "utils.h"
 #include "parser_conf.h"
 #include "build_perl_info.h"
 #include "get_perl_info.h"
@@ -54,10 +57,15 @@ PROTOTYPES: ENABLE
 # encodings, they are never decoded/encoded but used as is
 # and passed as byte strings.
 
-# Called from Texinfo::XSLoader.pm.  The arguments are not actually used.
-# File paths are byte strings and can be in any encoding.
+# Called once from Texinfo::XSLoader.pm at loading time.
+# File paths (not used) are byte strings and can be in any encoding.
 int
 init (int texinfo_uninstalled, SV *converterdatadir, SV *tp_builddir, SV *top_srcdir)
+    CODE:
+        messages_and_encodings_setup ();
+        RETVAL = 1;
+    OUTPUT:
+        RETVAL
 
 void
 reset_parser (int debug_output)
@@ -65,91 +73,114 @@ reset_parser (int debug_output)
 void
 register_parser_conf (SV *parser)
     PREINIT:
-      HV *hv_in;
-      const char *key = "parser_conf_descriptor";
-      const PARSER_CONF *parser_conf;
+        HV *hv_in;
+        const char *key = "parser_conf_descriptor";
+        const PARSER_CONF *parser_conf;
     CODE:
-      hv_in = (HV *)SvRV (parser);
-      parser_conf = register_conf ();
-      /* NOTE unlikely IV overflow if PERL_QUAD_MAX < SIZE_MAX */
-      hv_store (hv_in, key, strlen (key),
-                newSViv ((IV) parser_conf->descriptor), 0);
+        hv_in = (HV *)SvRV (parser);
+        parser_conf = register_conf ();
+        /* NOTE unlikely IV overflow if PERL_QUAD_MAX < SIZE_MAX */
+        hv_store (hv_in, key, strlen (key),
+                  newSViv ((IV) parser_conf->descriptor), 0);
 
-# file path, can be in any encoding
-size_t
-parse_file (SV *parser, input_file_path)
+# the file is already a byte string, taken as is from the command line.
+# The encoding was detected as COMMAND_LINE_ENCODING.
+SV *
+parse_texi_file (SV *parser_sv, input_file_path)
         char *input_file_path = (char *)SvPVbyte_nolen ($arg);
     PREINIT:
-        int status;
         size_t document_descriptor = 0;
       CODE:
-        apply_sv_parser_conf (parser);
-        document_descriptor = parse_file (input_file_path, &status);
-        if (status)
-          /* if the input file could not be opened */
-          {
-            pass_document_parser_errors_to_registrar (document_descriptor,
-                                                      parser);
-            remove_document_descriptor (document_descriptor);
-            RETVAL = 0;
-          }
+        if (!SvOK(parser_sv))
+          RETVAL = newSV (0);
         else
-          RETVAL = document_descriptor;
+          {
+            int status;
+            apply_sv_parser_conf (parser_sv);
+            document_descriptor = parse_file (input_file_path, &status);
+            RETVAL = get_document (document_descriptor);
+          }
       OUTPUT:
         RETVAL
 
-size_t
-parse_piece (SV *parser, string, line_nr)
-        char *string = (char *)SvPVutf8_nolen ($arg);
-        int line_nr
-      CODE:
-        apply_sv_parser_conf (parser);
-        RETVAL = parse_piece (string, line_nr);
-      OUTPUT:
-        RETVAL
-
-size_t
-parse_string (SV *parser, string, line_nr)
-        char *string = (char *)SvPVutf8_nolen ($arg);
-        int line_nr
-      CODE:
-        apply_sv_parser_conf (parser);
-        RETVAL = parse_string (string, line_nr);
-      OUTPUT:
-        RETVAL
-
-size_t
-parse_text (SV *parser, string, line_nr)
-        char *string = (char *)SvPVutf8_nolen ($arg);
-        int line_nr
-      CODE:
-        apply_sv_parser_conf (parser);
-        RETVAL = parse_text (string, line_nr);
-      OUTPUT:
-        RETVAL
-
-
-# note that giving optional arguments, like: int no_store=0
-# would have been nice, but in that case an undef value cannot be passed
-# and leads to a perl warning
+# Used in tests under tp/t.
 SV *
-build_document (size_t document_descriptor, ...)
-      PROTOTYPE: $;$
-      PREINIT:
+parse_texi_piece (SV *parser_sv, SV *string_sv, ...)
+    PREINIT:
+        size_t document_descriptor = 0;
+        int line_nr = 1;
+      CODE:
+        if (!SvOK(string_sv) || !SvOK(parser_sv))
+          RETVAL = newSV (0);
+        else
+          {
+            char *string = (char *)SvPVutf8_nolen (string_sv);
+            if (items > 2 && SvOK(ST(2)))
+              line_nr = SvIV (ST(2));
+            apply_sv_parser_conf (parser_sv);
+            document_descriptor = parse_piece (string, line_nr);
+            RETVAL = get_document (document_descriptor);
+          }
+      OUTPUT:
+        RETVAL
+
+SV *
+parse_texi_line (SV *parser_sv, SV *string_sv, ...)
+    PREINIT:
+        size_t document_descriptor = 0;
         int no_store = 0;
+        int line_nr = 1;
       CODE:
-        if (items > 1)
-          if (SvOK(ST(1)))
-            no_store = SvIV (ST(1));
-        RETVAL = build_document (document_descriptor, no_store);
+        if (!SvOK(string_sv) || !SvOK(parser_sv))
+          RETVAL = newSV (0);
+        else
+          {
+            char *string = (char *)SvPVutf8_nolen (string_sv);
+            SV *document_sv;
+            if (items > 2 && SvOK(ST(2)))
+              line_nr = SvIV (ST(2));
+            if (items > 3 && SvOK(ST(3)))
+              no_store = SvIV (ST(3));
+            apply_sv_parser_conf (parser_sv);
+            document_descriptor = parse_string (string, line_nr);
+
+       /* get hold of errors before calling build_document, as they will be
+          destroyed if no_store is set.
+
+          add the errors to the Parser registrar as there is no document
+          returned to get the errors from.
+        */
+            pass_document_parser_errors_to_registrar (document_descriptor,
+                                                      parser_sv);
+            if (!no_store)
+              document_sv = get_document (document_descriptor);
+            else
+              document_sv = build_document (document_descriptor, 1);
+            RETVAL = document_tree (document_sv, 0);
+          }
       OUTPUT:
         RETVAL
 
+# Used in tests under tp/t.
 SV *
-get_document (size_t document_descriptor)
-
-void
-pass_document_parser_errors_to_registrar (size_t document_descriptor, SV *parser_sv)
+parse_texi_text (SV *parser_sv, SV *string_sv, ...)
+    PREINIT:
+        size_t document_descriptor = 0;
+        int line_nr = 1;
+      CODE:
+        if (!SvOK(string_sv) || !SvOK(parser_sv))
+          RETVAL = newSV (0);
+        else
+          {
+            char *string = (char *)SvPVutf8_nolen (string_sv);
+            if (items > 2 && SvOK(ST(2)))
+              line_nr = SvIV (ST(2));
+            apply_sv_parser_conf (parser_sv);
+            document_descriptor = parse_text (string, line_nr);
+            RETVAL = get_document (document_descriptor);
+          }
+      OUTPUT:
+        RETVAL
 
 void
 parser_store_values (SV *values)
@@ -243,23 +274,69 @@ parser_conf_set_DOC_ENCODING_FOR_INPUT_FILE_NAME (int i)
 
 void
 parser_conf_set_INPUT_FILE_NAME_ENCODING (value)
-     char *value = (char *)SvPVutf8_nolen ($arg);
+        char *value = (char *)SvPVutf8_nolen ($arg);
 
 void
 parser_conf_set_LOCALE_ENCODING (value)
-     char *value = (char *)SvPVutf8_nolen ($arg);
+        char *value = (char *)SvPVutf8_nolen ($arg);
 
 void
 parser_conf_set_COMMAND_LINE_ENCODING (value)
-     char *value = (char *)SvPVutf8_nolen ($arg);
+        char *value = (char *)SvPVutf8_nolen ($arg);
 
 void
 parser_conf_set_documentlanguage (value)
-     char *value = (char *)SvPVutf8_nolen ($arg);
+        char *value = (char *)SvPVutf8_nolen ($arg);
 
 int
 parser_conf_set_DEBUG (int i)
 
 void
 parser_conf_set_accept_internalvalue (int value)
+
+void
+errors (SV *parser_sv)
+    PREINIT:
+        SV *errors_warnings_sv = 0;
+        SV *error_nrs_sv = 0;
+        HV *parser_hv;
+        SV **registrar_sv;
+    PPCODE:
+        parser_hv = (HV *)SvRV (parser_sv);
+        registrar_sv = hv_fetch (parser_hv, "registrar",
+                                 strlen ("registrar"), 0);
+        if (registrar_sv)
+          {
+            SV **registrar_error_nrs_sv;
+            AV *empty_errors_warnings = newAV ();
+            SV **registrar_errors_warnings_sv;
+            HV *registrar_hv = (HV *)SvRV (*registrar_sv);
+
+            registrar_errors_warnings_sv
+                    = hv_fetch (registrar_hv, "errors_warnings",
+                                           strlen ("errors_warnings"), 0);
+            errors_warnings_sv = *registrar_errors_warnings_sv;
+            SvREFCNT_inc (errors_warnings_sv);
+            registrar_error_nrs_sv = hv_fetch (registrar_hv, "error_nrs",
+                                               strlen ("error_nrs"), 0);
+            error_nrs_sv = *registrar_error_nrs_sv;
+            SvREFCNT_inc (error_nrs_sv);
+
+            /* registrar->clear() */
+            hv_store (registrar_hv, "errors_warnings",
+                      strlen ("errors_warnings"),
+                      newRV_noinc ((SV *) empty_errors_warnings), 0);
+            hv_store (registrar_hv, "error_nrs",
+                      strlen ("error_nrs"), newSViv (0), 0);
+          }
+        else
+          {
+            fprintf (stderr,
+                     "BUG: no registrar but Parser::errors is called\n");
+            abort ();
+          }
+
+        EXTEND(SP, 2);
+        PUSHs(sv_2mortal(errors_warnings_sv));
+        PUSHs(sv_2mortal(error_nrs_sv));
 

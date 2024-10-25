@@ -32,7 +32,7 @@
 #include "text.h"
 #include "command_ids.h"
 #include "tree_types.h"
-#include "options_types.h"
+#include "options_data.h"
 #include "document_types.h"
 #include "converter_types.h"
 #include "extra.h"
@@ -268,6 +268,7 @@ get_sv_output_units (const DOCUMENT *document,
   return output_units;
 }
 
+/* retrieve C stored configuration from parser and set it */
 void
 apply_sv_parser_conf (SV *parser_sv)
 {

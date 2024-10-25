@@ -30,13 +30,13 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "conversion_data.h"
+#include "html_conversion_data.h"
 #include "text.h"
 #include "command_ids.h"
 #include "element_types.h"
 #include "tree_types.h"
 #include "option_types.h"
-#include "options_types.h"
+#include "options_data.h"
 #include "document_types.h"
 #include "converter_types.h"
 #include "options_defaults.h"
@@ -67,8 +67,8 @@
    Same purpose as inherited methods in Texinfo::Convert::Converter */
 CONVERTER_FORMAT_DATA converter_format_data[] = {
   {"html", "Texinfo::Convert::HTML", &html_converter_defaults,
-   &html_converter_initialize, &html_reset_converter,
-   &html_free_converter},
+   &html_converter_initialize, &html_output, &html_convert,
+   &html_reset_converter, &html_free_converter},
 };
 
 /* associate lower case no brace accent command to the upper case
@@ -147,11 +147,15 @@ converter_setup (int texinfo_uninstalled, const char *tp_builddir,
 {
   int i;
 
+  /* for now the following information is only used in converters, although
+     it may have been relevant at earlier steps */
   setup_converter_paths_information (texinfo_uninstalled,
                              converterdatadir, tp_builddir, top_srcdir);
 
-  txi_setup_lib_data ();
+  set_element_type_name_info ();
+  txi_initialise_base_options ();
 
+  /* conversion specific information */
   for (i = 0; i < BUILTIN_CMD_NUMBER; i++)
     {
       if (xml_text_entity_no_arg_commands[i])
@@ -245,10 +249,8 @@ init_generic_converter (CONVERTER *self)
 }
 
 /* descriptor starts at 1, 0 is not found or an error */
-/* flags set low-level implementation choices, currently using Perl hash
-   map or (slower) string lists */
 size_t
-new_converter (enum converter_format format, unsigned long flags)
+new_converter (enum converter_format format)
 {
   size_t converter_index;
   int slot_found = 0;
@@ -279,16 +281,6 @@ new_converter (enum converter_format format, unsigned long flags)
   memset (converter, 0, sizeof (CONVERTER));
 
   converter->format = format;
-
-  /* set low level data representations options */
-  if (flags & CONVF_string_list)
-    converter->ids_data_type = IDT_string_list;
-#ifdef HAVE_CXX_HASHMAP
-  else if (flags & CONVF_cxx_hashmap)
-    converter->ids_data_type = IDT_cxx_hashmap;
-#endif
-  else
-    converter->ids_data_type = IDT_perl_hashmap;
 
   init_generic_converter (converter);
 
@@ -388,6 +380,12 @@ destroy_converter_initialization_info (CONVERTER_INITIALIZATION_INFO *init_info)
   if (init_info->translated_commands)
     destroy_translated_commands (init_info->translated_commands);
 
+  if (init_info->options)
+    {
+      free_options (init_info->options);
+      free (init_info->options);
+    }
+
   free_options_list (&init_info->conf);
 
   free_strings_list (&init_info->non_valid_customization);
@@ -404,7 +402,7 @@ copy_converter_initialization_info (CONVERTER_INITIALIZATION_INFO *dst_info,
   copy_options_list (&dst_info->conf, &src_info->conf);
 }
 
-/* Next three functions are not called from Perl as the Perl equivalent
+/* Next five functions are not called from Perl as the Perl equivalent
    functions are already called (and possibly overriden).  Inheritance
    in Perl is replaced by dispatching using a table here.
 
@@ -448,24 +446,11 @@ converter_initialize (CONVERTER *converter)
 /* only called from C, not from Perl */
 CONVERTER *
 converter_converter (enum converter_format format,
-                     const CONVERTER_INITIALIZATION_INFO *input_user_conf,
-                     unsigned long converter_flags)
+                     const CONVERTER_INITIALIZATION_INFO *input_user_conf)
 {
   CONVERTER_INITIALIZATION_INFO *format_defaults;
-  unsigned long flags;
 
-  /* NOTE if HAVE_CXX_HASHMAP is not set, even with CONVF_cxx_hashmap
-     string lists will be used */
-  if (!converter_flags)
-    flags = CONVF_cxx_hashmap;
-   /*
-   To use a string list.  Slower.
-    flags = CONVF_string_list;
-    */
-  else
-    flags = converter_flags;
-
-  size_t converter_descriptor = new_converter (format, flags);
+  size_t converter_descriptor = new_converter (format);
   CONVERTER *converter = retrieve_converter (converter_descriptor);
 
   CONVERTER_INITIALIZATION_INFO *user_conf
@@ -487,6 +472,42 @@ converter_converter (enum converter_format format,
   converter_initialize (converter);
 
   return converter;
+}
+
+char *
+converter_output (CONVERTER *self, DOCUMENT *document)
+{
+  enum converter_format converter_format = self->format;
+
+  if (converter_format != COF_none
+      && converter_format_data[converter_format].converter_output)
+    {
+      char *result;
+      char * (* format_converter_output) (CONVERTER *self,
+                                          DOCUMENT *document)
+        = converter_format_data[converter_format].converter_output;
+      result = format_converter_output (self, document);
+      return result;
+    }
+  return 0;
+}
+
+char *
+converter_convert (CONVERTER *self, DOCUMENT *document)
+{
+  enum converter_format converter_format = self->format;
+
+  if (converter_format != COF_none
+      && converter_format_data[converter_format].converter_convert)
+    {
+      char *result;
+      char * (* format_converter_convert) (CONVERTER *self,
+                                          DOCUMENT *document)
+        = converter_format_data[converter_format].converter_convert;
+      result = format_converter_convert (self, document);
+      return result;
+    }
+  return 0;
 }
 
 void
