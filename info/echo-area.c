@@ -1,6 +1,6 @@
 /* echo-area.c -- how to read a line in the echo area.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,8 +20,8 @@
 #include "info.h"
 #include "session.h"
 #include "display.h"
-#include "scan.h"
 #include "util.h"
+#include "nodes.h"
 #include "echo-area.h"
 
 /* Non-zero means that C-g was used to quit reading input. */
@@ -896,8 +896,8 @@ completions_window_p (WINDOW *window)
 {
   int result = 0;
 
-  if (internal_info_node_p (window->node) &&
-      (strcmp (window->node->nodename, compwin_name) == 0))
+  if (window->node && (window->node->flags & N_IsInternal)
+      && (strcmp (window->node->nodename, compwin_name) == 0))
     result = 1;
 
   return result;
@@ -1406,9 +1406,14 @@ DECLARE_INFO_COMMAND (ea_scroll_completions_window, _("Scroll the completions wi
   if (!compwin)
     compwin = calling_window;
 
-  /* Let info_scroll_forward () do the work, and print any messages that
-     need to be displayed. */
-  info_scroll_forward (compwin, count);
+  /* NB similar to session-cmd.c:info_scroll_forward, but takes no
+     account of any "M-x info_scroll_forward_set_window" setting. */
+  int lines;
+  if (ea_explicit_arg)
+    lines = count;
+  else
+    lines = (window->height - 2) * count;
+  set_window_pagetop (compwin, compwin->pagetop + lines);
 }
 
 /* Function which gets called when an Info window is deleted while the

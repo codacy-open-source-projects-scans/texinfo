@@ -1,6 +1,6 @@
-/* session.h -- Functions found in session.c.
+/* session.h -- declarations for session.c, session-cmd.c, m-x.c and infodoc.c
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,7 +22,8 @@
 
 #include "info.h"
 #include "window.h"
-#include "dribble.h"
+#include "doc.h"
+#include "scan.h"
 
 /* Variable controlling the garbage collection of files briefly visited
    during searches.  Such files are normally gc'ed, unless they were
@@ -63,11 +64,14 @@ COMMAND_FUNCTION *read_key_sequence (Keymap map, int menu, int mouse,
 unsigned char info_input_pending_p (void);
 void info_set_node_of_window (WINDOW *window, NODE *node);
 void info_set_node_of_window_fast (WINDOW *window, NODE *node);
+FILE_BUFFER *file_buffer_of_window (WINDOW *window);
+
 void initialize_keyseq (void);
 void add_char_to_keyseq (int character);
-FILE_BUFFER *file_buffer_of_window (WINDOW *window);
-int info_select_reference (WINDOW *window, REFERENCE *entry);
+int check_info_keyseq_displayed (void);
+int info_select_reference (WINDOW *window, const REFERENCE *entry);
 int info_any_buffered_input_p (void);
+int control_g_waiting (void);
 void pause_or_input (void);
 
 void dump_nodes_to_file (REFERENCE **references,
@@ -87,45 +91,46 @@ int forget_node_fast (WINDOW *win);
 /* Tell Info that input is coming from the file FILENAME. */
 void info_set_input_from_file (char *filename);
 
-/* Error and debugging messages */
-extern unsigned debug_level;
+/* Error messages */
 
-#define debug(n,c)							\
-  do									\
-    {									\
-      if (debug_level >= (n))						\
-        info_debug c;							\
-    }									\
-  while (0)
-
-void info_debug (const char *format, ...) TEXINFO_PRINTFLIKE(1,2);
-  
 /* Print args as per FORMAT.  If the window system was initialized,
    then the message is printed in the echo area.  Otherwise, a message is
    output to stderr. */
 void info_error (const char *format, ...) TEXINFO_PRINTFLIKE(1,2);
 
+void show_error_node (char *error_msg);
+
 void initialize_info_session (void);
 void info_read_and_dispatch (void);
 void close_info_session (void);
-void info_session (REFERENCE **ref_list, char *user_filename, char *error);
+void info_session (REFERENCE **ref_list, char *error);
+void info_session_allfiles (REFERENCE **ref_list, char *user_filename,
+                            char *error);
+void info_session_one_node (NODE *node);
+void info_session_quit (void);
 void initialize_terminal_and_keymaps (char *init_file);
-REFERENCE *info_intuit_options_node (NODE *initial_node, char *program);
+NODE *info_intuit_options_node (NODE *initial_node, char *program);
 
-void info_scroll_forward (WINDOW *window, int count);
-void info_abort_key (WINDOW *window, int count);
-
-NODE *info_follow_menus (NODE *initial_node, char **menus,
+NODE *info_follow_menus (const NODE *initial_node, char **menus,
                          char **error_msg, int strict);
+
+void menu_digit (WINDOW *window, int key);
+void info_abort (void);
 
 /* Adding numeric arguments. */
 extern int info_explicit_arg;
 extern int ea_explicit_arg;
 void info_initialize_numeric_arg (void);
+
 
 /* Found in m-x.c.  */
 char *read_function_name (char *prompt, WINDOW *window);
 
-void show_error_node (char *error_msg);
+
+/* In infodoc.c. */
+
+/* Return the window displaying NAME, the name of an internally created
+   Info window. */
+WINDOW *get_internal_info_window (char *name);
 
 #endif /* not SESSION_H */

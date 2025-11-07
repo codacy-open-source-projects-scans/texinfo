@@ -13,7 +13,7 @@ This manual is for GNU Texinfo @command{texi2any} program output
 adaptation using customization files (version @value{VERSION},
 @value{UPDATED}).
 
-Copyright @copyright{} 2013-2024 Free Software Foundation, Inc.
+Copyright @copyright{} 2013-2025 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -332,17 +332,20 @@ the names of the customization options.}.
 @cindex Customization variables, setting and getting
 
 The basic operations on customization variables are to set and
-retrieve their values.  @c You can also add new variables.
+retrieve their values.
 
+@ignore
 The customization variables also valid in the main program out of the HTML
 converter are handled differently if their associated values are strings or
 arrays.  Conversely, customization variables only relevant for the conversion
 phase set in the main program are always set by associating a string, an array
 reference or a hash references to customization variables in the same way.
+@end ignore
 
 This section describes customization variables set in the main program.  These
-variables are in general passed to converters.  It is also possible to set
-customization variables in the converters only, not in the main program.
+variables are in general passed to converters.  You can also retrieve the
+default converter values for customization variables.  It is also possible to
+set customization variables in the converters only, not in the main program.
 This is explained later on (@pxref{Conversion Customization Variables}).
 
 @node Setting Main Program String Variables
@@ -452,16 +455,17 @@ my @@SECTION_BUTTONS =
 texinfo_set_from_init_file ('SECTION_BUTTONS', \@@SECTION_BUTTONS);
 @end example
 
+
 @node Getting Main Program Variables Values
 @subsection Getting Main Program Variables Values
 
 To get the value of a variable, the function is
 @code{texinfo_get_conf}:
 
-@defun texinfo_get_conf ($variable_name)
+@deftypefun {@var{$result} =} texinfo_get_conf (@var{$variable_name})
 @var{$variable_name} is the name of the variable; its value (possibly
 @code{undef}) is returned.
-@end defun
+@end deftypefun
 
 For example:
 
@@ -470,25 +474,38 @@ if (texinfo_get_conf('footnotestyle') eq 'separate') @{ ... @}
 @end example
 
 
-@ignore
-@c problematic for XS, need a type, to add dynamically...
-@node Adding Customization Variables
-@subsection Adding Customization Variables
+@node Getting Converter Default Variables Values
+@subsection Getting Converter Default Variables Values
 
-@cindex Customization variables, adding
+To retrieve output formats specific variable value, you can call
+@code{converter_defaults} on the converter class.  For HTML, this would
+be:
 
-Trying to set a customization variable that is not known as a valid
-customization variable in @command{texi2any} is an error.  It is possible, however,
-to add new customization variables from init files.  To add a customization
-variable, call @code{texinfo_add_valid_customization_option}:
+@deftypefun {@var{\%customization} =} Texinfo::Convert::HTML->converter_defaults (\%conf)
+Returns an hash reference (or @code{undef}).  Returned hash reference
+keys are the HTML output format specific customization variables names,
+associated to the HTML output default values.
 
-@defun texinfo_add_valid_customization_option ($variable_name)
-@var{$variable_name} is added as a valid customization variable name.
-@end defun
+The optional @var{\%conf} customization variable hash can be passed
+with customization variables that may change the defaults.  For
+HTML, this may be used to get texi2html-style defaults, by passing
+@code{@{'TEXI2HTML' => 1@}}.
+@end deftypefun
 
-The variable value, if set, should also be available in the converters and therefore
-in the init file functions registered and called from the converters.
-@end ignore
+Note that you should load the @code{Texinfo::Convert::HTML} module
+before calling @code{converter_defaults}.
+
+This can be useful to get the default buttons arrays, for example:
+
+@example
+use Texinfo::Convert::HTML;
+
+my $converter_defaults = Texinfo::Convert::HTML->converter_defaults();
+
+my $section_header_buttons_list
+   = $converter_defaults->@{'SECTION_BUTTONS'@};
+@end example
+
 
 @node Init File Loading Error Reporting
 @section Init File Loading Error Reporting
@@ -771,30 +788,40 @@ texinfo_register_accent_command_formatting('dotless', 'nodot', 'ij');
 
 Texinfo tree elements that are not text container nor directly associated with
 an @@-command can have information set on their formatting.  The first piece of
-information is whether their contents should be considered in code context (@pxref{Init
-File Expansion Contexts}).  The other piece of information is the type of
+information is whether their contents should be considered in code context
+(@pxref{Init File Expansion Contexts}).
+
+Call @code{texinfo_register_type_code} to set code context for an element:
+
+@defun texinfo_register_type_code ($type, $code_type)
+@var{$type} is the type of the container.  If @var{$code_type} is set, the
+container contents are assumed to be in code context. @xref{Init File Expansion
+Contexts}.
+@end defun
+
+The other piece of information is the type of
 preformatted environment they are, analogous with the @@-command names of
 @code{@@example} or @code{@@display}@footnote{Note that setting the type of preformatted environment does not
 make sure that there are preformatted containers used for the formatting of their
 contents instead of paragraph containers, since this is determined in the very
 first step of parsing the Texinfo code, which cannot be customized.}.
 
-The function used is @code{texinfo_register_type_format_info}:
+Call @code{texinfo_register_type_pre_class} to set preformatted class:
 
-@defun texinfo_register_type_format_info ($type, $code_type, $pre_class_type)
-@var{$type} is the type of the container.  If @var{$code_type} is set, the container
-contents are assumed to be in code context. @xref{Init File Expansion
-Contexts}. If @var{$pre_class_type} is set, the HTML @code{<pre>} elements
-class attribute are based on @var{$pre_class_type}, if there are such HTML
-elements output for preformatted content of @var{$type} containers.
+@defun texinfo_register_type_pre_class ($type, $pre_class_type)
+@var{$type} is the type of the container.  If @var{$pre_class_type} is set, the
+HTML @code{<pre>} elements class attribute are based on @var{$pre_class_type},
+if there are such HTML elements output for preformatted content of @var{$type}
+containers.
 @end defun
 
 For example, to set content appearing in-between node links in @code{@@menu},
-which is in the @code{menu_comment} container type
-to be formatted in a code context, with preformatted type @samp{menu-between}, use:
+which is in the @code{menu_comment} container type to be formatted in a code
+context, with preformatted type @samp{menu-between}, use:
 
 @example
-texinfo_register_type_format_info('menu_comment', 1, 'menu-between');
+texinfo_register_type_code('menu_comment', 1);
+texinfo_register_type_pre_class('menu_comment', 'menu-between');
 @end example
 
 @xref{Texinfo::Parser Types of container elements,,,texi2any_internals}, for a
@@ -932,9 +959,19 @@ Formatting}).
 A variety of data items, called @dfn{output units directions}, are associated
 with output units.  They may be used in the formatting functions, and/or
 associated with a button (@pxref{Simple Navigation Panel Customization}).
+@dfn{text directions} are used along with output units directions
+but are simpler and associated to text only.
 
-@c FIXME check if the links are to output units only or also to elements
-@c such as sections or nodes
+
+@node Default Directions
+@subsection Default Directions
+
+In the default case, there is one text direction:
+@table @emph
+@item Space
+An empty button.
+@end table
+
 Each output unit direction has a name and a reference to the unit they
 point to, when such an unit exists.  The unit is either a
 global unit (for example, the Top output unit) or relative to the
@@ -944,12 +981,9 @@ by the section structuring commands (@code{@@chapter},
 @code{@@unnumbered}@dots{}) or by the nodes if the node pointers are
 specified on @code{@@node} lines or in menus (@pxref{Two Paths,,, texinfo, Texinfo}).
 
-Here is the list of global output units directions:
+Here is the list of the default global output units directions:
 
 @table @emph
-@item @samp{@ }
-An empty button.
-
 @item Top
 Top output unit.
 
@@ -972,7 +1006,7 @@ Overview: short table of contents.
 Corresponds to the @code{Footnotes} output unit (@pxref{Output Units}).
 
 @item Index
-The first output unit with @code{@@printindex}.
+Output unit with @code{@@printindex}.
 
 @end table
 
@@ -1030,44 +1064,27 @@ is the next node output unit relative to the first output unit in file.
 The @samp{FirstInFile} directions are usually used in footers.
 
 
-@node Output Unit Direction Information Type
-@subsection Output Unit Direction Information Type
+@node Changing Global Directions Output Units
+@subsection Changing Global Directions Output Units
 
-@cindex Direction information type
-@cindex Type, of direction information
-The output unit directions also have types of information associated,
-which are in general set dynamically depending on the current output
-unit, for instance on the output unit whose navigation panel is being
-formatted:
+The global direction associated output unit may be changed by specifying the
+Texinfo code name of a @code{@@node}.  The direction should then be linked to
+the output unit of that node in headers.  Use
+@code{texinfo_register_global_direction} to change a direction link.
 
-@table @code
-@item href
-A string that can be used as an href attribute linking to the output unit
-corresponding to the direction.
+@defun texinfo_register_global_direction ($direction, $texinfo_node_name)
+@var{$direction} is a global direction (@pxref{Directions}),
+@var{$texinfo_node_name} is an optional node name Texinfo code.
+The @var{$direction} will point to the output unit associated to the
+@var{$texinfo_node_name} node name, if set and the node exists in the
+Texinfo document.
+@end defun
 
-@item string
-A string representing the direction that can be used in
-context where only entities are available (attributes).
-@xref{Init File Expansion Contexts}.
-
-@item text
-A string representing the direction to be used in contexts
-with HTML elements (preformatted and normal contexts).
-@xref{Init File Expansion Contexts}.
-
-@item node
-Same as @code{text}, but selecting the node associated with the
-output unit direction in priority.
-
-@item section
-Same as @code{text}, but selecting the sectioning command
-associated with the output unit direction in priority.
-
-@end table
-
-@code{text} and @code{string} also have a variant with
-@samp{_nonumber} prepended, such as @code{text_nonumber} without sectioning
-command number in the representation.
+For example, to have the @emph{Index} direction be associated to the
+output unit of the @samp{Main @@emph@{Index@}} node, call
+@example
+texinfo_register_global_direction ('Index', 'Main @@emph@{Index@}');
+@end example
 
 
 @node Direction Strings
@@ -1110,7 +1127,7 @@ with the same strings as @code{NodeNext}.
 
 
 @node Direction Strings Customization
-@section Direction Strings Customization
+@subsection Direction Strings Customization
 
 The direction strings are used in the default case in navigation panel
 formatting, therefore replacing their values is a way to customize headers.
@@ -1150,6 +1167,69 @@ texinfo_register_direction_string_info('Up', 'button', undef, 'Higher');
 @end example
 
 
+@node Adding Text And Global Output Units Directions
+@subsection Adding Text And Global Output Units Directions
+
+Adding new directions is a two step process.  First, you should
+register the direction by calling @code{texinfo_register_text_direction}
+or @code{texinfo_register_global_direction},
+and then you should set the strings associated to the direction with
+@code{texinfo_register_direction_string_info}.
+
+You add a new text direction by calling @code{texinfo_register_text_direction}:
+@defun texinfo_register_text_direction ($direction)
+@var{$direction} is a new direction name.  The function
+registers the @var{$direction} as a text direction (@pxref{Directions}).
+@end defun
+
+For example to add the @samp{Home} text direction, call:
+
+@example
+texinfo_register_text_direction('Home');
+@end example
+
+You should then set the strings associated to the text direction
+(@pxref{Direction Strings}) with
+@code{texinfo_register_direction_string_info}.  For a text direction, you
+should at least set the @samp{text} associated string.  For example:
+
+@example
+texinfo_register_direction_string_info('Home', 'text',
+ '<a href="https://myhomepage.example.com/">Home</a>', undef, 'normal');
+texinfo_register_direction_string_info('Home', 'text',
+ 'Home myhomepage.example.com', undef, 'string');
+@end example
+
+You add a global output unit direction by calling
+@code{texinfo_register_global_direction}.  You associate the global output
+unit direction with a node name Texinfo code by giving the argument.
+The new direction will link to the output unit associated with the node
+(@pxref{Changing Global Directions Output Units}).  For example, to add a new
+global direction @samp{Tutorial} associated to the @samp{My First Program}
+@code{@@node}, call:
+
+@example
+texinfo_register_global_direction ('Tutorial', 'My First Program');
+@end example
+
+You should then set the direction strings associated to the new direction:
+
+@example
+texinfo_register_direction_string_info ('Tutorial', 'text', 'Tutorial');
+texinfo_register_direction_string_info ('Tutorial', 'button', 'Tuto');
+texinfo_register_direction_string_info ('Tutorial', 'accesskey', 't');
+@end example
+
+The following call adds a global direction without associating a node name:
+@example
+texinfo_register_global_direction ('Global link');
+@end example
+
+This allows to specify the direction strings associated to the new direction
+even if the node name is not yet known.
+@c TODO link to explanation where a dynamic node name is associated
+
+
 @node Simple Navigation Panel Customization
 @section Simple Navigation Panel Customization
 
@@ -1170,22 +1250,34 @@ need to be set in addition:
 @vtable @code
 @item ACTIVE_ICONS
 @itemx PASSIVE_ICONS
-Hash references with output unit directions as key (@pxref{Directions}) and
-button image icons as values.  @code{ACTIVE_ICONS} is used for directions
-actually linking to an output unit, and @code{PASSIVE_ICONS} are used if there
-is no output unit to link to.  The button images are interpreted as URLs.
+Hash references with output unit and text directions as key
+(@pxref{Directions}) and button image icons as values.  @code{ACTIVE_ICONS} is
+used for directions actually linking to an output unit, and
+@code{PASSIVE_ICONS} are used if there is no output unit to link to.  The
+button images are interpreted as URLs.
 @end vtable
 
-@cindex Navigation panel button specification
-@cindex Button specification, navigation panel
+@vindex USE_ACCESSKEY
+@anchor{Accesskey and @code{rel} Navigation}
+@cindex @code{accesskey} navigation
+If the customization variable @code{USE_ACCESSKEY} is set, the
+@code{accesskey} attribute is used in navigation.  The @code{accesskey}
+direction string is then used for the @code{accesskey} attributes
+(@pxref{Direction Strings}).  The @code{rel} direction string is
+used for @code{rel} attributes.
 
 Several arrays and hashes enable even more precise control over the navigation
 panel buttons and their display.  They can be set as customization variables
 with @code{texinfo_set_from_init_file}. @xref{Setting Main Program String
 Variables}.
 
+
+@node Navigation Panels Buttons Arrays
+@subsection Navigation Panels Buttons Arrays
+
 The following customization variables arrays determine the
-buttons present in the various navigation panels:
+buttons present in the various navigation panels.  They should
+be set or modified to change the panels direction buttons:
 
 @vtable @code
 @item SECTION_BUTTONS
@@ -1208,9 +1300,6 @@ there is no section navigation.
 Specifies the buttons appearing at the beginning of special output units
 and, if the output is split, at the end of such units.
 
-@item LINKS_BUTTONS
-Used for @code{<link>} elements if they are output in the HTML @code{<head>}.
-
 @item TOP_BUTTONS
 @itemx TOP_FOOTER_BUTTONS
 Specifies the buttons used in the top output unit (@pxref{Output Units}).
@@ -1218,98 +1307,97 @@ Specifies the buttons used in the top output unit (@pxref{Output Units}).
 are used for the footer.
 @end vtable
 
+
+@node Setting The Navigation Panel Buttons
+@subsection Setting The Navigation Panel Buttons
+
+@cindex Navigation panel button specification
+@cindex Button specification, navigation panel
+
 Each array specifies which buttons are included, and how they are
 displayed.  Each array item is associated with a button of the
-navigation panel from left to right.  The meaning of the array item
-values is the following:
+navigation panel from left to right.  The simplest way to specify
+a button formatting is to use a direction name and let the navigation panel
+code formatting format the button based on the direction name.
 
-@anchor{Buttons Display}
+An output unit direction string is associated to a link to the corresponding
+output unit, possibly formatted with an icon.  A direction text string
+is associated to the text.  Default (@pxref{Default Directions}) and
+added directions (@pxref{Adding Text And Global Output Units Directions}) can
+be used in buttons list arrays.
 
-@table @emph
-@item string with an output unit direction
-If icons are not used, the button is a link to the corresponding
-output unit whose text is the @code{text} direction string
-(@pxref{Direction Strings}), surrounded by @samp{[} and
-@samp{]}. If the direction is @samp{ }, the @samp{[} and @samp{]}
-are omitted.
+For example, the following sets the section header navigation panel to
+show the @code{Home} text button value, followed by a link to the Top node
+output unit, a link to the next output unit, a space, and lastly a link
+to the table of contents output unit:
 
-@vindex ACTIVE_ICONS
-@vindex PASSIVE_ICONS
-@cindex Icons, in navigation buttons
-If icons are used, the button is an image whose file is determined by
-the value associated with the output unit direction in the
-@code{ACTIVE_ICONS} variable hash if the link leads to an output unit, or in the
-@code{PASSIVE_ICONS} variable hash if there is no output unit to link to.  If
-there is a link to the output unit, the icon links to that output unit.  The
-button name and button description are given as HTML attributes to
-have a textual description of the icon.  The corresponding strings
-correspond to the @code{button} direction string for the button name
-and the @code{description} for a more detailed description (@pxref{Direction
-Strings}).
-
-@item function reference
-The functions is called with one arguments, the converter object.
-The function should return two scalars, the button text and
-a boolean set if a delimiter is desired before the button.
-
-@item scalar reference
-The scalar value is printed.
-
-@item array reference of length 2
-Here, the first array item should be a an output unit direction.
-The text of the link depends on the second array item.
-
-@table @emph
-@item reference to a text string
-A link to the output unit associated with the output unit direction
-is generated with the corresponding text used for the text link.
-
-@item reference to a function
-The functions is called with three arguments, the converter object, the
-output unit direction and the source Texinfo tree element (possibly undef).
-The function should return two scalars, the button text and
-a boolean set if a delimiter is desired before the button.
-
-@c This buttons specification is not used anywhere in code nor
-@c tests, it is certainly not worth maintaining in the long run.
-@c Do not document
-@ignore
-@item text string
-The text string is interpreted as an output unit direction information type
-and the corresponding text is used for the link.
-@xref{Output Unit Direction Information Type}.
-
-For example, if the button array item is
 @example
-[ 'Next', 'node' ]
+texinfo_set_from_init_file('SECTION_BUTTONS',
+            ['Home', 'Top', 'Next', 'Space', 'Contents']);
 @end example
 
-@noindent
-Then the button will be a link to the next section with text
-based on the name of the node associated with the next section output unit.
-@end ignore
 
-@end table
+@node Modifying The Navigation Panel Buttons
+@subsection Modifying The Navigation Panel Buttons
 
-@end table
+If you want to modify the default navigation panel buttons instead of
+specifying all the buttons, you can get the converter buttons list
+(@pxref{Getting Converter Default Variables Values}), copy them
+and insert or remove buttons.  It is important to copy the array
+and to never modify the defaults.
 
-No delimiter is printed before the first button.  Leading space buttons
-mixed with directions not found may be omitted of the navigation panel output.
+A button specified as a string is not the only way to specify
+the button direction.  The button direction of default navigation panel button
+arrays may also be the first item of an array reference.  To get the button
+direction, you can therefore use the following snippet:
 
-@vindex USE_ACCESSKEY
-@anchor{Accesskey and @code{rel} Navigation}
-@cindex @code{accesskey} navigation
-If the customization variable @code{USE_ACCESSKEY} is set, the
-@code{accesskey} attribute is used in navigation.  The @code{accesskey}
-direction string is then used for the @code{accesskey} attributes
-(@pxref{Direction Strings}).
+@example
+my $button_direction;
 
-@vindex USE_REL_REV
-@cindex @code{rel} navigation
-Similarly, if the @code{USE_REL_REV} customization variable is set,
-the @code{rel} attribute is used in navigation.  In that case the
-@code{rel} direction string is used for the @code{rel}
-attribute (@pxref{Direction Strings}).
+if (ref($button) eq '') @{
+  $button_direction = $button;
+@} elsif (ref($button) eq 'ARRAY') @{
+  $button_direction = $button->[0];
+@}
+@end example
+
+Here is an example that removes the @code{Up} direction button and
+adds a @code{Tutorial} button after the @code{Next} button:
+
+@example
+use Texinfo::Convert::HTML;
+
+my $converter_defaults = Texinfo::Convert::HTML->converter_defaults();
+
+my $section_header_buttons_list
+   = $converter_defaults->@{'SECTION_BUTTONS'@};
+
+my @@modified_buttons_list;
+
+foreach my $button (@@@{$section_header_buttons_list@}) @{
+  my $button_direction;
+
+  if (ref($button) eq '') @{
+    $button_direction = $button;
+  @} elsif (ref($button) eq 'ARRAY') @{
+    $button_direction = $button->[0];
+  @}
+
+  if ($button_direction ne 'Up') @{
+    push @@modified_buttons_list, $button;
+    if ($button_direction eq 'Next') @{
+      push @@modified_buttons_list, 'Tutorial';
+    @}
+  @}
+@}
+
+texinfo_set_from_init_file('SECTION_BUTTONS', \@@modified_buttons_list);
+
+@end example
+
+This concludes the simple navigation headers customization.  More advanced
+possibilities for customization are described later on (@pxref{Customizing HTML
+Footers@comma{} Headers and Navigation Panels}).
 
 
 @node User Defined Functions
@@ -1409,7 +1497,7 @@ is a continuation of the previous registered message.
 @end defun
 
 To report a warning or an error in element conversion, use
-@code{converter_line_warn} or @code{converter_line_error}
+@code{converter_line_warn} or @code{converter_line_error}:
 @defun @var{$converter}->converter_line_error ($text, \%location_info, $continuation)
 @defunx @var{$converter}->converter_line_warn ($text, \%location_info, $continuation)
 Register a warning or an error.  @var{$text} is the text of the
@@ -1958,7 +2046,7 @@ is 100.
 
 HTML output formatting in user-defined code should take into account the
 conversion context, can access converter information and use converter functions
-to convert Perl Texinfo trees.  There are also several conventions and
+to convert Texinfo trees.  There are also several conventions and
 constraints that user defined code should abide to when formatting HTML, in
 order to comply with customization option values, avoid modifying structures
 that should not be modified, and also to have information correctly registered
@@ -2535,7 +2623,7 @@ For example, the following keys of the @code{extra} sectioning elements hash
 can be interesting in several user-defined formatting and conversion functions:
 
 @table @code
-@item section_childs
+@item section_children
 For sectioning commands elements.  The children of the sectioning element
 in the sectioning tree.
 
@@ -2932,13 +3020,25 @@ passing arguments that may correspond to another @@-command:
 @end example
 
 It is possible to have access to the default conversion function reference.
-The function used is:
+The function used is @code{default_command_conversion}:
 
 @deftypefun {@var{\&default_command_conversion} =} @var{$converter}->default_command_conversion (@var{$command_name})
+@deftypefunx {@var{\&default_command_conversion} =} Texinfo::Convert::HTML::default_command_conversion (undef, @var{$command_name})
 @var{$command_name} is the @@-command name without the @@. Returns the
 default conversion function reference for @var{$command_name}, or @samp{undef} if there is none,
 which should only be the case for @@-commands ignored in HTML.
 @end deftypefun
+
+For example, to use the same conversion function for @code{@@setchapternewpage}
+as for @code{@@documentlanguage}, a function that set the customization
+variable to the command argument:
+@example
+use Texinfo::Convert::HTML;
+
+texinfo_register_command_formatting('setchapternewpage',
+     Texinfo::Convert::HTML::default_command_conversion(undef,
+                                               'documentlanguage'));
+@end example
 
 
 @node Command Tree Element Opening Functions
@@ -2973,8 +3073,9 @@ The @var{$text} returned is prepended to the formatting of the
 @end deftypefn
 
 It is possible to have access to the default opening function reference.
-The function used is:
+The function used is @code{default_command_open}:
 @deftypefun {@var{\&default_command_open} =} @var{$converter}->default_command_open (@var{$command_name})
+@deftypefunx {@var{\&default_command_open} =} Texinfo::Convert::HTML::default_command_open (undef, @var{$command_name})
 @var{$command_name} is the @@-command name without the @@. Returns the
 default opening function reference for @var{$command_name}, or @samp{undef} if there is none.
 @end deftypefun
@@ -3143,6 +3244,13 @@ Return text.
 
 @item string
 Return text in string context.  @xref{Init File Expansion Contexts}.
+
+@item text_nonumber
+Return text without the sectioning command number.
+
+@item string_nonumber
+Return text in string context without the sectioning command number.
+
 @end table
 @end deftypefun
 
@@ -3207,12 +3315,12 @@ Return the node element associated with @var{\%target_element}.
 @end deftypefun
 
 For elements that are not target elements, use
-@code{get_element_root_command_element} to get the root level Perl tree
+@code{get_element_root_command_element} to get the root level tree
 element and the output unit containing the element:
 
 @anchor{@code{get_element_root_command_element}}
-@deftypefun {@var{\%top_level_element}, @var{\%output_unit} =} @var{$converter}->get_element_root_command_element (@var{\%element})
-Return the top level element and output unit a Texinfo tree
+@deftypefun {@var{\%output_unit}, @var{\%top_level_element} =} @var{$converter}->get_element_root_command_element (@var{\%element})
+Return the output unit and top level element a Texinfo tree
 @var{\%element} is in.  Both the top level element and the output unit may be
 undefined, depending on how the converter is called and on the Texinfo tree.
 The top level element returned is also determined by the customization variable
@@ -3327,9 +3435,10 @@ which should only be the case for types ignored in HTML not defined by the user.
 @end deftypefun
 
 It is possible to have access to the default conversion function reference.
-The function used is:
+The function used is @code{default_type_conversion}:
 
 @deftypefun {@var{\&default_type_conversion} =} @var{$converter}->default_type_conversion (@var{$type})
+@deftypefunx {@var{\&default_type_conversion} =} Texinfo::Convert::HTML::default_type_conversion (undef, @var{$type})
 @var{$type} is the element type.  Returns the
 default conversion function reference for @var{$type}, or @samp{undef} if there is none,
 which should only be the case for types ignored in HTML.
@@ -3357,7 +3466,7 @@ sub my_tree_element_convert_paragraph_type($$$$)
 @end group
 
 @group
-  my @@contents = @{$element->@{'contents'@}@};
+  my @@contents = @@@{$element->@{'contents'@}@};
   push @@contents, @{'text' => ' <code>HTML</code> text ',
                    'type' => '_converted'@};
   my $result = $converter->convert_tree(@{'type' => '_code',
@@ -3395,8 +3504,9 @@ type container.
 @end deftypefn
 
 It is possible to have access to the default opening function reference.
-The function used is:
+The function used is @code{default_type_open}:
 @deftypefun {@var{\&default_type_open} =} @var{$converter}->default_type_open (@var{$type})
+@deftypefunx {@var{\&default_type_open} =} Texinfo::Convert::HTML::default_type_open (undef, @var{$type})
 @var{$command_name} is the element type. Returns the
 default opening function reference for @var{$type}, or @samp{undef} if there is none.
 @end deftypefun
@@ -3607,7 +3717,7 @@ sub my_final_convert_paragraph_type($$$$)
 @end group
 
 @group
-  my @@contents = @{$element->@{'contents'@}@};
+  my @@contents = @@@{$element->@{'contents'@}@};
   push @@contents, @{'text' => ' <code>HTML</code> text ',
                    'type' => '_converted'@};
   my $result = $converter->convert_tree(@{'type' => '_code',
@@ -3800,7 +3910,7 @@ default formatting functions:
 @item @code{menu} @tab @code{html_menu_entry_index} @tab @tab integer
 @item @code{printindex} @tab @code{formatted_index_entries} @tab index_entry (index entry hash) @tab integer
 @item @code{top} @tab @code{in_skipped_node_top} @tab @tab integer
-@item @code{nodedescription} @tab @code{formatted_nodedescriptions} @tab element (@code{@@nodedescription} tree element) @tab integer
+@item @code{nodedescription} @tab @code{formatted_nodedescriptions} @tab element (@code{@@node} tree element) @tab integer
 @end multitable
 
 These shared information data correspond to:
@@ -3826,8 +3936,8 @@ Associate an index entry to the number of time it was formatted.
 Set to 1 in a @code{Top} node being skipped, in case
 @code{NO_TOP_NODE_OUTPUT} is set.
 @item formatted_nodedescriptions
-Associate a @code{@@nodedescription} tree element to the number of time
-it was formatted.
+Associate a @code{@@node} tree element to the number of time
+its description was formatted.
 @end vtable
 
 
@@ -3932,7 +4042,9 @@ function reference:
 @deftypefn {Function Reference} @var{$translated_string} format_translate_message @
   (@var{$converter}, @var{$string}, @var{$lang}, @var{$translation_context})
 @var{$string} is the string to be translated, @var{$lang} is the language.
-@var{$translation_context} is an optional translation context.
+@var{$lang} may be @code{undef} or the empty string, if
+@code{@@documentlanguage} is not set.  In that case you can return the string
+untranslated.  @var{$translation_context} is an optional translation context.
 
 The result returned should be the translated string. The result returned may
 also be @samp{undef}, in which case the translation is done as if the function
@@ -3970,6 +4082,7 @@ my %translations = (
 sub my_format_translate_message($$$;$)
 @{
   my ($self, $string, $lang, $translation_context) = @@_;
+  return $string if (!defined($lang) or $lang eq '');
   $translation_context = '' if (!defined($translation_context));
   if (exists($translations@{$lang@})
       and exists($translations@{$lang@}->@{$string@})
@@ -4498,10 +4611,12 @@ unrelated to the headings and ``footings'' produced in @TeX{} output;
 
 In the event that your needs are not met by setting customization variables
 (@pxref{Customization of Navigation and Headers,,, texinfo, Texinfo}) and
-changing the navigation buttons (@pxref{Simple Navigation Panel
-Customization}), you can completely control the formatting of navigation panels
-by redefining function references.  @xref{Registering Specific Formating
-Functions} for information on how to register the function references.
+changing the navigation buttons using directions names
+(@pxref{Simple Navigation Panel Customization}), you can use more advanced
+navigation buttons formatting specifications.  You can also completely control
+the formatting of navigation panels by redefining function references.
+@xref{Registering Specific Formating Functions} for information on how to
+register the function references.
 
 In a nutshell, element header and footer formatting function determines
 the button directions list to use and calls navigation header formatting.  The
@@ -4510,6 +4625,135 @@ the navigation panel formatting.  The navigation panel can call buttons
 formatting.
 
 All the formatting functions take a converter object as first argument.
+
+
+@node Setting Global Directions From Document Information
+@section Setting Global Directions From Document Information
+
+Global directions may be added or modified before any conversion takes
+place (@pxref{Adding Text And Global Output Units Directions}).  It is also
+possible to associate a global output unit direction with a node name Texinfo
+code using the converted document information, by registering a user-defined
+function (@pxref{Init File Calling at Different Stages}) to call
+@code{set_global_direction} on the converter at the @samp{setup} stage.  The
+direction needs to be a default global direction, or to have been registered
+previously, this function cannot be used to add a new direction, only to set
+the association to a node.  It is not a real limitation, as a new direction
+needs to be registered early such that associated direction strings can be set.
+
+@defun @var{$converter}->set_global_direction ($direction, $texinfo_node_name)
+@var{$direction} is a global direction (@pxref{Directions}),
+@var{$texinfo_node_name} is an optional node name Texinfo code.
+The @var{$direction} will point to the output unit associated to the
+@var{$texinfo_node_name} node name, if set and the node exists in the
+Texinfo document.
+@end defun
+
+For example, to associate the first @code{@@appendix} command to the
+@samp{Appendix} direction:
+
+@example
+use Texinfo::Common;
+use Texinfo::Convert::Texinfo;
+
+texinfo_register_global_direction ('Appendix');
+
+texinfo_register_direction_string_info (@dots{})
+@dots{}
+
+sub _set_appendix_direction_node_name
+@{
+  my ($self, $document, $stage) = @@_;
+
+  my $sections_list = $document->sections_list();
+
+  if (!$sections_list or !scalar(@@@{$sections_list@})) @{
+    return 0;
+  @}
+
+  foreach my $section_structure (@@@{$sections_list@}) @{
+    my $section = $section_structure->@{'element'@};
+    if ($section->@{'cmdname'@} eq 'appendix') @{
+      if ($section_structure->@{'associated_node'@}) @{
+        my $node_structure = $section_structure->@{'associated_node'@};
+        my $node = $node_structure->@{'element'@};
+        my $label_element = Texinfo::Common::get_label_element($node);
+        if (defined($label_element)) @{
+          my $node_name = Texinfo::Convert::Texinfo::convert_to_texinfo(
+                            @{'contents' => $label_element->@{'contents'@}@});
+          $self->set_global_direction('Appendix', $node_name);
+        @}
+      @}
+      last;
+    @}
+  @}
+
+  return 0;
+@}
+
+texinfo_register_handler('setup',
+            \&_set_appendix_direction_node_name);
+@end example
+
+
+@node Advanced Navigation Panel Buttons Specification
+@section Advanced Navigation Panel Buttons Specification
+
+The button specification for simple headers customizations is a direction name
+string (@pxref{Simple Navigation Panel Customization}).  This is not the only
+way to specify how navigation panel buttons should be formatted.  Other
+possibilities involve functions that may be specified for more control
+other the buttons formatting.  The detailed description of the different
+possibilities for the array item values is the following:
+
+@anchor{Buttons Display}
+
+@table @emph
+@item string with a text direction
+If icons are not used, button is the @code{text} direction string.
+If icons are used, the button is an image whose file is determined by
+the value associated with the output unit direction in the @code{ACTIVE_ICONS}
+variable hash.  The button name is given as HTML attribute to have a textual
+description of the icon.  The button name corresponds to the
+@code{button} direction string in @emph{string} context.
+
+@item string with an output unit direction
+If icons are not used, the button is a link to the corresponding
+output unit whose text is the @code{text} direction string
+(@pxref{Direction Strings}), surrounded by @samp{[} and
+@samp{]}.
+
+@vindex ACTIVE_ICONS
+@vindex PASSIVE_ICONS
+@cindex Icons, in navigation buttons
+If icons are used, the button is an image whose file is determined by
+the value associated with the output unit direction in the
+@code{ACTIVE_ICONS} variable hash if the link leads to an output unit, or in the
+@code{PASSIVE_ICONS} variable hash if there is no output unit to link to.  If
+there is a link to the output unit, the icon links to that output unit.  The
+button name and button description are given as HTML attributes to
+have a textual description of the icon.  The corresponding strings
+correspond to the @code{button} direction string for the button name
+and the @code{description} for a more detailed description (@pxref{Direction
+Strings}).
+
+@item function reference
+The functions is called with one arguments, the converter object.
+The function should return two scalars, the button text and
+a boolean set if a delimiter is desired before the button.
+
+@item array reference of length 2
+Here, the first array item should be a an output unit direction,
+and the second array item a reference to a function.
+The function is called with three arguments, the converter object, the
+output unit direction and the source Texinfo tree element (possibly undef).
+The function should return two scalars, the button text and
+a boolean set if a delimiter is desired before the button.
+
+@end table
+
+No delimiter is printed before the first button.  Leading space buttons
+mixed with directions not found may be omitted of the navigation panel output.
 
 
 @node Navigation Panel Button Formatting
@@ -4531,8 +4775,7 @@ The buttons images can be formatted with @code{format_button_icon_img}
 
 Simple navigation panel
 customization (@pxref{Simple Navigation Panel Customization}),
-@code{USE_ACCESSKEY},
-@code{USE_REL_REV} and direction strings
+@code{USE_ACCESSKEY} and direction strings
 customization (@pxref{Direction Strings Customization})
 can be relevant for the
 formatting of a button.
@@ -4567,6 +4810,15 @@ a special output unit direction or the associated special output unit is
 not output.
 @end deftypefun
 
+@cindex Text directions, determining
+
+To determine if a direction is a text direction (@pxref{Directions}),
+use @code{global_direction_text}:
+@deftypefun {@var{$is_text_direction} =} @var{$converter}->global_direction_text (@var{$direction})
+Return 1 if direction @var{$direction} is a text direction not associated
+with an output unit, such as the @samp{Space} direction.
+@end deftypefun
+
 To get link information for relative and global
 directions, use @code{from_element_direction}:
 
@@ -4574,15 +4826,48 @@ directions, use @code{from_element_direction}:
    @var{$source_element}, @var{$source_filename}, @var{$source_command})
 Return a string for linking to @var{$direction}, or the information
 to be used for a hyperlink to @var{$direction}, depending on @var{$type}.
-The possible values for @var{$type} are described in
-@ref{Output Unit Direction Information Type}.
-
 @var{$source_element} is the output unit the link comes from. If not set,
 the current output unit is used.  @var{$source_filename} is the file the
 link comes from. If not set, the current file name is used.
-@var{$source_command}
-is an optional argument, the @@-command the link comes from. It is only used for
-messages.
+@var{$source_command} is an optional argument, the @@-command the link comes
+from. It is only used for messages.  The returned string is determined
+dynamically depending on the current output, for instance on the output unit
+whose navigation panel is being formatted.
+
+@anchor{Output Unit Direction Information Type}
+@cindex Direction information type
+@cindex Type, of direction information
+
+The possible values for @var{$type} are:
+@table @code
+@item href
+A string that can be used as an href attribute linking to the output unit
+corresponding to the direction.
+
+@item string
+A string representing the direction that can be used in
+context where only entities are available (attributes).
+@xref{Init File Expansion Contexts}.
+
+@item text
+A string representing the direction to be used in contexts
+with HTML elements (preformatted and normal contexts).
+@xref{Init File Expansion Contexts}.
+
+@item node
+Same as @code{text}, but selecting the node associated with the
+output unit direction in priority.
+
+@item section
+Same as @code{text}, but selecting the sectioning command
+associated with the output unit direction in priority.
+
+@end table
+
+@code{text}, @code{string} and @code{section} also have a variant with
+@samp{_nonumber} prepended, such as @code{text_nonumber} without sectioning
+command number in the representation.
+
 @end deftypefun
 
 @code{format_button_icon_img} formatting function can be redefined.
@@ -4635,12 +4920,14 @@ The customization variable @code{VERTICAL_HEAD_NAVIGATION} should be relevant
 The navigation panel display is controlled via @code{format_navigation_panel}:
 
 @deftypefn {Function Reference} @var{$navigation_text} format_navigation_panel @
-  (@var{$converter}, @var{\@@buttons}, @var{$command_name}, @var{\%element}, @var{$vertical})
+  (@var{$converter}, @var{\@@buttons}, @var{$command_name}, @var{\%element}, @var{$vertical}, @var{$in_header})
 @var{\@@buttons} is an array reference holding the specification of the buttons
 for that navigation panel.   @var{\%element} is the element in which the
 navigation header is formatted. @var{$command_name} is the associated command
 (sectioning command or @code{@@node}).  It may be @code{undef} for special
 elements.  @var{$vertical} is true if the navigation panel should be vertical.
+@var{$in_header} is true if the navigation panel is for a header, not
+for a footer.
 
 Returns the formatted navigation panel in @var{$navigation_text}. The buttons
 in the navigation panel can be formatted with a call to
@@ -4808,13 +5095,12 @@ customization variable) is used in the header
 (@pxref{@code{@@documentdescription},,, texinfo, Texinfo}).
 
 @vindex USE_LINKS
-@vindex LINKS_BUTTONS @subentry In file beginning
-@vindex BUTTONS_REL @subentry In file beginning
+@vindex LINKS_DIRECTIONS
 @code{<link>} elements are used in the header if @code{USE_LINKS} is
-set, in which case @code{LINKS_BUTTONS} determines which links are
-used and the @code{rel} direction string (@pxref{Direction Strings}) determines
-the link type associated with the @code{rel} attribute.  @xref{Simple
-Navigation Panel Customization}.
+set, in which case the @code{LINKS_DIRECTIONS} customization variable
+array determines which links are used and the @code{rel} direction string
+(@pxref{Direction Strings}) determines the link type associated with the
+@code{rel} attribute.  @xref{Navigation Panel Button Formatting}.
 
 @vindex HTML_ROOT_ELEMENT_ATTRIBUTES
 You can set @code{HTML_ROOT_ELEMENT_ATTRIBUTES} to add attributes to

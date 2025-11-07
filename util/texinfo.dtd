@@ -1,7 +1,7 @@
 <!--
   Document Type Definition for Texinfo XML output (the '-'-xml option).
 
-  Copyright 2001-2023 Free Software Foundation, Inc.
+  Copyright 2001-2025 Free Software Foundation, Inc.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -21,7 +21,7 @@
 <!-- copying | titlepage could be there too -->
 <!ENTITY % metainformation "setfilename | settitle | dircategory | direntry
                             | hyphenation
-                            | documentdescription 
+                            | documentdescription
                             | shorttitlepage">
 <!ENTITY % variable.cmds "set | clear">
 
@@ -31,16 +31,15 @@
                         | unmacro | defindex | defcodeindex">
 
 <!-- Unique options -->
-<!ENTITY % unique.option.cmds "novalidate | setcontentsaftertitlepage 
-   | setshortcontentsaftertitlepage | documentencoding 
+<!ENTITY % unique.option.cmds "novalidate | documentencoding
    | everyheadingmarks | everyfootingmarks | evenheadingmarks | oddheadingmarks
    | evenfootingmarks | oddfootingmarks | fonttextsize | pagesizes
    | setchapternewpage | footnotestyle | finalout
 
-   | allowcodebreaks | exampleindent | afourpaper 
+   | allowcodebreaks | exampleindent | afourpaper
    | afivepaper | afourlatex | afourwide | headings
    | everyheading | everyfooting | evenheading | evenfooting | oddheading
-   | oddfooting | smallbook | cropmarks">
+   | oddfooting | smallbook">
 
 <!-- Options -->
 <!ENTITY % multiple.option.cmds "frenchspacing | documentlanguage 
@@ -62,7 +61,7 @@
 <!-- index entry commands -->
 <!ENTITY % indexentry.cmds "cindex | cpindex | findex | fnindex
   | kindex | kyindex | pindex | pgindex | tindex | tpindex
-  | vindex | vrindex | indexcommand | subentry">
+  | vindex | vrindex | indexcommand">
 
 <!-- API definition commands -->
 <!ENTITY % def.cmds "deffn | defvr | deftypefn | deftypeop | deftypevr
@@ -75,7 +74,8 @@
 <!-- Commands that appear everywhere, both with block and in paragraphs -->
 <!-- include is in general absent, since it is replaced, but it is
      present if the file was not found -->
-<!ENTITY % ubiquitous.cmds "sp | anchor | indent | noindent | %raw.cmds;
+<!ENTITY % ubiquitous.cmds "sp | anchor | namedanchor | indent | noindent
+                 | %raw.cmds;
                  | %define.cmds; | %option.cmds; | errormsg | include
                  | %indexentry.cmds; | refill | quote-arg | allow-recursion">
 
@@ -92,7 +92,7 @@
 
 <!-- Headings -->
 <!ENTITY % heading.cmds "majorheading | chapheading | heading | subheading
-                     | subsubheading">
+                     | subsubheading | xrefname">
 
 <!-- Block content, as opposed to Inline content -->
 <!ENTITY % block  "%block.cmds; | verbatiminclude
@@ -185,9 +185,9 @@
      index term contexts.
      It is not possible to have different contents in different contexts
      in the DTD, so we use the contents for all the contexts -->
-<!ENTITY % Inline.indexentryline "%Inline.line; | seealso | seeentry | sortas
-                                  | defbracketed">
-<!ENTITY % Inline.fullline "%Inline.line; | titlefont | anchor">
+<!ENTITY % Inline.indexentryline "%Inline.line; | subentry | seealso
+                                  | seeentry | sortas | defbracketed">
+<!ENTITY % Inline.fullline "%Inline.line; | titlefont | anchor | namedanchor">
 
 <!ENTITY % Inline.defargline "%Inline.line; | defbracketed">
 
@@ -267,18 +267,22 @@
 <!ATTLIST dircategory
           %spacesattr;>
 
-<!ELEMENT set    (#PCDATA)>
+<!ELEMENT set    (#PCDATA | %Spaces.elements;)>
 <!ATTLIST set
-          %lineattr;
+          %spacesattr;
           name CDATA #REQUIRED>
-<!ELEMENT clear  EMPTY>
+<!ELEMENT clear  (#PCDATA | %Spaces.elements;)>
 <!ATTLIST clear
-          %lineattr;
+          %spacesattr;
           name CDATA #REQUIRED>
-<!ELEMENT unmacro  EMPTY>
+<!ELEMENT unmacro  (#PCDATA | %Spaces.elements;)>
 <!ATTLIST unmacro
-          %lineattr;
+          %spacesattr;
           name CDATA #REQUIRED>
+<!ELEMENT clickstyle  (#PCDATA | %Spaces.elements;)>
+<!ATTLIST clickstyle
+          %spacesattr;
+          command  NMTOKEN #REQUIRED>
 <!ELEMENT definfoenclose EMPTY>
 <!ATTLIST definfoenclose
           %linespaceattr;
@@ -290,10 +294,6 @@
           %linespaceattr;
           new       NMTOKEN #REQUIRED
           existing  NMTOKEN #REQUIRED>
-<!ELEMENT clickstyle  (#PCDATA)>
-<!ATTLIST clickstyle
-          %lineattr;
-          command  NMTOKEN #REQUIRED>
 
 <!-- preamble before texinfo code beginning (empty lines and \input) -->
 <!ELEMENT preamblebeforebeginning (#PCDATA)>
@@ -303,24 +303,18 @@
 <!-- ToC -->
 <!ELEMENT contents      EMPTY>
 <!ATTLIST contents
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT shortcontents EMPTY>
 <!ATTLIST shortcontents
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT summarycontents EMPTY>
 <!ATTLIST summarycontents
-          %lineattr;>
+          %spacesattr;>
 
 <!-- Global unique options -->
 <!ELEMENT novalidate EMPTY>
 <!ATTLIST novalidate
-          %lineattr;>
-<!ELEMENT setcontentsaftertitlepage EMPTY>
-<!ATTLIST setcontentsaftertitlepage
-          %lineattr;>
-<!ELEMENT setshortcontentsaftertitlepage EMPTY>
-<!ATTLIST setshortcontentsaftertitlepage
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT documentencoding (#PCDATA)>
 <!ATTLIST documentencoding
           %spacesattr;
@@ -378,19 +372,19 @@
           value CDATA #REQUIRED>
 <!ELEMENT afourpaper      EMPTY>
 <!ATTLIST afourpaper
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT afivepaper      EMPTY>
 <!ATTLIST afivepaper
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT afourlatex      EMPTY>
 <!ATTLIST afourlatex
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT afourwide       EMPTY>
 <!ATTLIST afourwide
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT finalout        EMPTY>
 <!ATTLIST finalout
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT headings        EMPTY>
 <!-- "off|on|single|double|singleafter|doubleafter" -->
 <!ATTLIST headings
@@ -415,12 +409,11 @@
 <!ATTLIST oddfooting
           %spacesattr;>
 <!ELEMENT vskip (#PCDATA)>
+<!ATTLIST vskip
+          %spacesattr;>
 <!ELEMENT smallbook       EMPTY>
 <!ATTLIST smallbook
-          %lineattr;>
-<!ELEMENT cropmarks       EMPTY>
-<!ATTLIST cropmarks
-          %lineattr;>
+          %spacesattr;>
 
 <!-- Global options -->
 <!ELEMENT documentlanguage (#PCDATA)>
@@ -472,10 +465,10 @@
           value (%onoff;) #REQUIRED>
 <!ELEMENT raisesections   EMPTY>
 <!ATTLIST raisesections
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT lowersections   EMPTY>
 <!ATTLIST lowersections
-          %lineattr;>
+          %spacesattr;>
 
 <!-- Titlepage and copying -->
 <!ELEMENT copying    (%block;)*>
@@ -503,7 +496,7 @@
           value CDATA #IMPLIED>
 <!ELEMENT page EMPTY>
 <!ATTLIST page
-          %lineattr;>
+          %spacesattr;>
 <!ELEMENT need EMPTY>
 <!ATTLIST need
           %linespaceattr;
@@ -529,7 +522,7 @@
 <!ELEMENT node (nodename, nodenext?, nodeprev?, nodeup?)>
 <!ATTLIST node
           %spacesattr;
-          name CDATA #IMPLIED>
+          identifier CDATA #IMPLIED>
 
 <!ELEMENT nodename (#PCDATA | %Inline.line;)*>
 <!ATTLIST nodename
@@ -618,6 +611,9 @@
           %spacesattr;>
 <!ELEMENT sectiontitle  (#PCDATA | %Inline.line;)*>
 
+<!ELEMENT xrefname (#PCDATA | %Inline.line;)*>
+<!ATTLIST xrefname
+          %spacesattr;>
 
 <!-- emacs-page
      Block elements -->
@@ -815,7 +811,7 @@
 <!ATTLIST float
           %spacesblockattr;
           number CDATA #IMPLIED
-          name CDATA #IMPLIED
+          identifier CDATA #IMPLIED
           type CDATA #IMPLIED>
 <!ELEMENT floattype (#PCDATA | %Inline.line;)*>
 <!ATTLIST floattype
@@ -839,7 +835,6 @@
                    (listitem | %indexentry.cmds;)*)>
 <!ATTLIST itemize
           %spacesblockattr;
-          automaticcommandarg CDATA #IMPLIED
           commandarg CDATA #IMPLIED>
 <!ELEMENT enumerate (enumeratefirst?, beforefirstitem?,
                      (listitem | %indexentry.cmds;)*)>
@@ -856,8 +851,7 @@
 <!ELEMENT itemprepend (#PCDATA | %Inline.line; | formattingcommand)*>
 <!ELEMENT formattingcommand EMPTY>
 <!ATTLIST formattingcommand
-          command CDATA #REQUIRED
-          automatic (%onoff;) 'off'>
+          command CDATA #REQUIRED>
 <!ELEMENT beforefirstitem (%block;)*>
 
 <!-- Tables -->
@@ -865,7 +859,6 @@
 
 <!ENTITY % blocktablearg
          "%spacesblockattr;
-          automaticcommandarg CDATA #IMPLIED
           commandarg CDATA #IMPLIED
           begin CDATA #IMPLIED
           end CDATA #IMPLIED">
@@ -1224,7 +1217,19 @@
 <!ELEMENT anchor (#PCDATA | %Inline.phrase;)*>
 <!ATTLIST anchor
           %spacesafterincmdattr;
-          name CDATA #IMPLIED>
+          identifier CDATA #IMPLIED>
+
+<!ELEMENT namedanchor (anchoridentifier, anchorname?)>
+<!ATTLIST namedanchor
+          %spacesaftercmdattr;
+          identifier CDATA #IMPLIED>
+<!ELEMENT anchoridentifier (#PCDATA | %Inline.phrase;)*>
+<!ATTLIST anchoridentifier
+          %spacesattr;
+          identifier CDATA #IMPLIED>
+<!ELEMENT anchorname (#PCDATA | %Inline.phrase;)*>
+<!ATTLIST anchorname
+          %spacesattr;>
 
 <!ELEMENT errormsg (#PCDATA | %Inline.phrase;)*>
 <!ATTLIST errormsg
@@ -1480,8 +1485,6 @@
 <!ELEMENT bye EMPTY>
 
 <!ELEMENT click  EMPTY>
-<!ATTLIST click
-          command        CDATA #REQUIRED>
 
 <!ELEMENT dotless (#PCDATA)>
 <!ATTLIST dotless
@@ -1590,6 +1593,7 @@ Use exactly what is on the XML specification
 <!ENTITY le         "&#x2264;">
 <!ENTITY ge         "&#x2265;">
 <!ENTITY equiv      "&#x2261;">
+<!ENTITY click      "<click/>">
 
 <!ENTITY auml "&#xe4;">
 <!ENTITY ouml "&#xf6;">

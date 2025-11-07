@@ -1,7 +1,6 @@
 # Makefile.am for texinfo/util.
-# Run automake in .. to produce Makefile.in from this.
 #
-# Copyright 2005-2024 Free Software Foundation, Inc.
+# Copyright 2005-2025 Free Software Foundation, Inc.
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -34,23 +33,9 @@ txixml2texi: txixml2texi.pl Makefile
 	   $(srcdir)/txixml2texi.pl >$@
 	chmod a+x $@
 
-localedir = $(datadir)/locale
-AM_CPPFLAGS = 					\
-  -I$(top_srcdir)				\
-  -I$(top_srcdir)/gnulib/lib			\
-  -I$(top_builddir)/gnulib/lib			\
-  -DLOCALEDIR=\"$(localedir)\"
-LDADD = $(top_builddir)/gnulib/lib/libgnu.a $(LIBINTL)
-
-dist_pkgdata_DATA = htmlxref.cnf texinfo.dtd #texinfo.cat
-
-# This fails distcheck:
-#texinfo.cat: texinfo-cat.in Makefile
-#	sed 's/__VERSION__/$(TEXINFO_DTD_VERSION)/g' $(srcdir)/texinfo-cat.in >$@
-# used to be:
-#texinfo.cat: texinfo-cat.in $(top_srcdir)/doc/version.texi
-#	sed 's/__VERSION__/@VERSION@/g' $(srcdir)/texinfo-cat.in >$@
-# Let's try just getting rid of it; not aware of its being used.
+nobase_dist_pkgdata_DATA = htmlxref.d/Texinfo_GNU.cnf \
+          htmlxref.d/Texinfo_nonGNU.cnf \
+          texinfo.dtd
 
 # Most of these are for fun.  The only official/installed ones are the
 # *texi2* scripts.
@@ -58,7 +43,7 @@ dist_pkgdata_DATA = htmlxref.cnf texinfo.dtd #texinfo.cat
 EXTRA_DIST = README detexinfo dir-example \
   pdftexi2dvi \
   texi2dvi texi2pdf \
-  $(dist_pkgdata_DATA) texinfo-cat.in texi-elements-by-size \
+  $(dist_pkgdata_DATA) texi-elements-by-size \
   txixml2texi.pl $(w32_bat) $(TESTS)
 
 DISTCLEANFILES = txixml2texi

@@ -1,6 +1,6 @@
 /* nodes.c -- how to get an Info file and node.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,10 +23,8 @@
 #include "search.h"
 #include "filesys.h"
 #include "scan.h"
-#include "util.h"
 #include "tag.h"
 #include "man.h"
-#include "variables.h"
 
 
 /* Global variables.  */
@@ -283,10 +281,27 @@ get_nodes_of_tags_table (FILE_BUFFER *file_buffer,
             anchor = 1;
         }
 
-      /* If not there, not a defining line, so we must be out of the
-         tags table.  */
+      /* If not there, not a defining line, either there is an unknown tag type
+         or we are out of the tags table.  */
+      /* NOTE: skipping an unknown tag detected as a line with a colon was
+         introduced in the Info reader in 2025.  Previously it was also
+         considered as being out of the tag table.  As a consequence,
+         having unknown tags will lead to following nodes and anchors not found
+         until all the previous release Info readers have been replaced.
+         The Emacs Info reader already skipped unknown tags at that time.
+       */
       if (name_offset == -1)
-        break;
+        {
+          int colon = string_in_line (":", s.buffer + s.start);
+          if (colon == -1)
+            break;
+          else
+            {
+              /* Unknown tag, move past and skip to end of line */
+              s.start += colon + 1;
+              continue;
+            }
+        }
 
       entry = info_create_tag ();
 
@@ -568,7 +583,7 @@ static void info_reload_file_buffer_contents (FILE_BUFFER *fb);
 
 /* Try to find a file in our list of already loaded files. */
 FILE_BUFFER *
-check_loaded_file (char *filename)
+check_loaded_file (const char *filename)
 {
   int is_fullpath, i;
   FILE_BUFFER *file_buffer;
@@ -619,13 +634,32 @@ check_loaded_file (char *filename)
   return 0;
 }
 
+/* Check if we have loaded a manual called FILENAME inside the INFODIR
+   directory. */
+FILE_BUFFER *
+check_loaded_file_in_infodir (const char *filename, const char *infodir)
+{
+  int i;
+  FILE_BUFFER *file_buffer;
+  if (info_loaded_files)
+    {
+      for (i = 0; (file_buffer = info_loaded_files[i]); i++)
+        if (   (FILENAME_CMP (filename, file_buffer->filename) == 0)
+            && (FILENAME_CMP (infodir, file_buffer->infodir) == 0))
+          {
+            return file_buffer;
+          }
+    }
+  return NULL;
+}
+
 /* Locate the file named by FILENAME, and return the information structure
    describing this file.  The file may appear in our list of loaded files
    already, or it may not.  If it does not already appear, find the file,
    and add it to the list of loaded files.  If the file cannot be found,
    return a NULL FILE_BUFFER *. */
 FILE_BUFFER *
-info_find_file (char *filename)
+info_find_file (const char *filename)
 {
   FILE_BUFFER *file_buffer;
   char *fullpath;
@@ -659,7 +693,7 @@ info_find_file (char *filename)
 /* Find a subfile of a split file.  This differs from info_load_file in
    that it does not fill in a tag table for the file. */
 FILE_BUFFER *
-info_find_subfile (char *fullpath)
+info_find_subfile (const char *fullpath)
 {
   char *with_extension = 0;
   int i;
@@ -725,8 +759,25 @@ info_load_file (char *fullpath, int is_subfile)
      in the various members. */
   file_buffer = make_file_buffer ();
   file_buffer->fullpath = xstrdup (fullpath);
-  file_buffer->filename = filename_non_directory (file_buffer->fullpath);
-  file_buffer->filename = xstrdup (file_buffer->filename);
+
+  char *base_name = filename_non_directory (file_buffer->fullpath);
+  file_buffer->filename = xstrdup (base_name);
+
+  /* Find end of directory component of fullpath */
+  char *p = base_name;
+  if (p > file_buffer->fullpath)
+    p--;
+  while (IS_SLASH(*p) && p > file_buffer->fullpath)
+    p--;
+  if (*p != '\0')
+    p++;
+
+  file_buffer->infodir = xmalloc (p - file_buffer->fullpath + 1);
+
+  memcpy (file_buffer->infodir, file_buffer->fullpath,
+          p - file_buffer->fullpath);
+  file_buffer->infodir[p - file_buffer->fullpath] = '\0';
+
   /* Strip off a file extension, so we can find it again in info_find_file. */
   {
     char *p = strchr (file_buffer->filename, '.');
@@ -751,6 +802,7 @@ info_load_file (char *fullpath, int is_subfile)
         {
           free (file_buffer->fullpath);
           free (file_buffer->filename);
+          free (file_buffer->infodir);
           free (file_buffer->contents);
           free (file_buffer->encoding);
           free (file_buffer);
@@ -832,6 +884,8 @@ forget_info_file (FILE_BUFFER *file_buffer)
   file_buffer->flags |= F_Gone;
   file_buffer->filename[0] = '\0';
   file_buffer->fullpath = "";
+  free (file_buffer->infodir);
+  file_buffer->infodir = 0;
   memset (&file_buffer->finfo, 0, sizeof (struct stat));
 }
 
@@ -890,6 +944,35 @@ info_create_node (void)
   return n;
 }
 
+/* Destroy a NODE object. */
+void
+free_node (NODE *n)
+{
+  /* If the "replica bit" is set, this is just a shallow copy of a NODE
+     structure kept elsewhere, so we don't deallocate any of the
+     substructures. */
+  if (n && !(n->flags & N_Replica))
+    {
+      free (n->contents);
+      info_free_references (n->references);
+      free (n->next); free (n->prev); free (n->up);
+      free (n->nodename);
+    }
+  free (n);
+}
+
+/* Create a secondary replica of a NODE object that does not own its
+   own substructures. */
+NODE *
+replicate_node (const NODE *n)
+{
+  NODE *result = xmalloc (sizeof (*n));
+  memcpy (result, n, sizeof (*n));
+  result->flags |= N_Replica;
+  return result;
+}
+
+
 /* Return the length of the node which starts at BINDING. */
 static size_t
 get_node_length (SEARCH_BINDING *binding)
@@ -906,83 +989,29 @@ get_node_length (SEARCH_BINDING *binding)
   return i - binding->start;
 }
 
-#define FOLLOW_REMAIN 0
-#define FOLLOW_PATH 1
-
-int follow_strategy;
-
-/* Return a pointer to a NODE structure for the Info node (FILENAME)NODENAME,
-   using DEFAULTS for defaults.  If DEFAULTS is null, the defaults are:
-   - If FILENAME is NULL, `dir' is used.
-   - If NODENAME is NULL, `Top' is used.
-   
-   If the node cannot be found, return NULL. */
+/* Return NODE specified with FILENAME and NODENAME.   NODENAME can
+   be passed as NULL, in which case the nodename of "Top" is used.  */
 NODE *
-info_get_node_with_defaults (char *filename_in, char *nodename_in,
-                NODE *defaults)
+info_get_node (const char *filename, const char *nodename)
 {
-  NODE *node = 0;
   FILE_BUFFER *file_buffer = NULL;
-  char *filename, *nodename;
-
-  info_recent_file_error = NULL;
-
-  if (filename_in)
-    {
-      filename = xstrdup (filename_in);
-      if (follow_strategy == FOLLOW_REMAIN
-          && defaults && defaults->fullpath)
-        {
-          /* Find the directory in the filename for defaults, and look in
-             that directory first. */
-          char *file_in_same_dir;
-          char saved_char, *p;
-
-          p = defaults->fullpath + strlen (defaults->fullpath);
-          while (p > defaults->fullpath && !IS_SLASH (*p))
-            p--;
-
-          if (p > defaults->fullpath)
-            {
-              saved_char = *p;
-              *p = 0;
-              file_in_same_dir = info_add_extension (defaults->fullpath,
-                                                     filename, 0);
-              *p = saved_char;
-
-              if (file_in_same_dir)
-                file_buffer = info_find_file (file_in_same_dir);
-              free (file_in_same_dir);
-            }
-        }
-    }
-  else
-    {
-      if (defaults)
-        filename = xstrdup (defaults->fullpath);
-      else
-        filename = xstrdup ("dir");
-    }
-
-  if (nodename_in && *nodename_in)
-    nodename = xstrdup (nodename_in);
-  else
-    /* If NODENAME is not specified, it defaults to "Top". */
-    nodename = xstrdup ("Top");
+  NODE *node = NULL;
 
   /* If the file to be looked up is "dir", build the contents from all of
-     the "dir"s and "localdir"s found in INFOPATH. */
+     the "dir"s found in INFOPATH. */
   if (is_dir_name (filename))
     {
-      node = get_dir_node ();
-      goto cleanup_and_exit;
+      return get_dir_node ();
+    }
+  else if (strcmp (filename, MANPAGE_FILE_BUFFER_NAME) == 0)
+    {
+      return get_manpage_node (nodename && *nodename
+                                 ? nodename : "intro");
     }
 
-  if (strcmp (filename, MANPAGE_FILE_BUFFER_NAME) == 0)
-    {
-      node = get_manpage_node (nodename);
-      goto cleanup_and_exit;
-    }
+  /* If NODENAME is not specified, it defaults to "Top". */
+  if (!nodename || !*nodename)
+    nodename = "Top";
 
   if (!file_buffer)
     file_buffer = info_find_file (filename);
@@ -993,27 +1022,7 @@ info_get_node_with_defaults (char *filename_in, char *nodename_in,
       node = info_get_node_of_file_buffer (file_buffer, nodename);
     }
 
-  /* If the node not found was "Top", try again with different case. */
-  if (!node && (nodename && strcasecmp (nodename, "Top") == 0))
-    {
-      node = info_get_node_of_file_buffer (file_buffer, "Top");
-      if (!node)
-        node = info_get_node_of_file_buffer (file_buffer, "top");
-      if (!node)
-        node = info_get_node_of_file_buffer (file_buffer, "TOP");
-    }
-
-cleanup_and_exit:
-  free (filename); free (nodename);
   return node;
-}
-
-/* Return NODE specified with FILENAME_IN and NODENAME_IN.  Return value
-   should be freed by caller, but none of its fields should be. */
-NODE *
-info_get_node (char *filename_in, char *nodename_in)
-{
-  return info_get_node_with_defaults (filename_in, nodename_in, 0);
 }
 
 static void
@@ -1025,19 +1034,13 @@ node_set_body_start (NODE *node)
 }
 
 /* Return a pointer to a NODE structure for the Info node NODENAME in
-   FILE_BUFFER.  NODENAME can be passed as NULL, in which case the
-   nodename of "Top" is used.  If the node cannot be found, return a
-   NULL pointer.  Return value should be freed by caller, but none of its
-   fields should be. */
+   FILE_BUFFER.  If the node cannot be found, return a NULL pointer.
+   Return value should be freed by caller, but none of its fields should
+   be. */
 NODE *
-info_get_node_of_file_buffer (FILE_BUFFER *file_buffer, char *nodename)
+info_get_node_of_file_buffer (FILE_BUFFER *file_buffer, const char *nodename)
 {
   NODE *node = NULL;
-
-  /* If we are unable to find the file, we have to give up.  There isn't
-     anything else we can do. */
-  if (!file_buffer)
-    return NULL;
 
   /* If the file buffer was gc'ed, reload the contents now. */
   if (!file_buffer->contents)
@@ -1067,6 +1070,20 @@ info_get_node_of_file_buffer (FILE_BUFFER *file_buffer, char *nodename)
 
       for (i = 0; (tag = file_buffer->tags[i]); i++)
         if (strcmp (nodename, tag->nodename) == 0)
+          {
+            node = info_node_of_tag (file_buffer, &file_buffer->tags[i]);
+            break;
+          }
+    }
+
+  /* For "Top" node only, look for it case-insensitively if not found. */
+  if (!node && !strcasecmp (nodename, "Top"))
+    {
+      TAG *tag;
+      int i;
+
+      for (i = 0; (tag = file_buffer->tags[i]); i++)
+        if (strcasecmp (nodename, tag->nodename) == 0)
           {
             node = info_node_of_tag (file_buffer, &file_buffer->tags[i]);
             break;
@@ -1250,6 +1267,7 @@ info_node_of_tag_ext (FILE_BUFFER *fb, TAG **input_tag_ptr, int fast)
     {
       /* Initialize the node from the cache. */
       *node = node_tag->cache;
+      node->flags |= N_Replica;
       if (!node->contents)
         {
           node->contents = subfile->contents + node_tag->nodestart_adjusted;
@@ -1283,6 +1301,8 @@ info_node_of_tag_ext (FILE_BUFFER *fb, TAG **input_tag_ptr, int fast)
             node_tag->cache.contents = 0; /* Pointer into file buffer
                                              is not saved.  */
         }
+      /* Consider the master version to be in node_tag->cache. */
+      node->flags |= N_Replica;
     }
 
   if (is_anchor)
@@ -1317,4 +1337,58 @@ NODE *
 info_node_of_tag_fast (FILE_BUFFER *fb, TAG **tag_ptr)
 {
   return info_node_of_tag_ext (fb, tag_ptr, 1);
+}
+
+/* Return "(FILENAME)NODENAME" for NODE, or just "NODENAME" if NODE's
+   filename is not set.  Return value should not be freed. */
+const char *
+node_printed_rep (const NODE *node)
+{
+  static char *rep;
+
+  if (node->fullpath)
+    {
+      char *filename = filename_non_directory (node->fullpath);
+      rep = xrealloc (rep, 1 + strlen (filename) + 1 + strlen (node->nodename) + 1);
+      sprintf (rep, "(%s)%s", filename, node->nodename);
+      return rep;
+    }
+  else
+    return node->nodename;
+}
+
+/* Make NODE appear to be one especially created by Info. */
+void
+name_internal_node (NODE *node, char *name)
+{
+  if (!node)
+    return;
+
+  node->fullpath = "";
+  node->subfile = 0;
+  node->nodename = name;
+  node->flags |= N_IsInternal;
+}
+
+/* Use the output from a hook as a node. */
+NODE *
+node_from_hook_output (char *hook_name, char *hook_output, int count)
+{
+  struct text_buffer buf;
+  text_buffer_init (&buf);
+  if (count <= 0)
+    text_buffer_printf (&buf, "Node: %s output,\tUp: (dir)\n\n",
+                        hook_name);
+  else
+    text_buffer_printf (&buf, "Node: %s output <%d>,\tUp: (dir)\n\n",
+                        hook_name, count);
+  text_buffer_printf (&buf, "%s", hook_output);
+  free (hook_output);
+
+  NODE *node = text_buffer_to_node (&buf);
+  char *node_name;
+  xasprintf (&node_name, "%s output", hook_name);
+  name_internal_node (node, node_name);
+  scan_node_contents (node, 0, 0);
+  return node;
 }

@@ -1,6 +1,6 @@
 /* install-info -- merge Info directory entries from an Info file.
 
-   Copyright 1996-2024 Free Software Foundation, Inc.
+   Copyright 1996-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,9 +16,20 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "system.h"
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <ctype.h>
 #include <getopt.h>
 #include <regex.h>
 #include <argz.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+
+/* From gnulib */
+#include "xalloc.h"
 
 #define TAB_WIDTH 8
 
@@ -1620,7 +1631,7 @@ split_entry (const char *entry, char **name, size_t *name_len,
   while (ptr[0] != '\0')
     {
       /* Eat up the whitespace after the name, and at the start of a line. */
-      while (isspace(ptr[0]))
+      while (isspace ((unsigned char) ptr[0]))
         ptr++;
 
       /* Okay, we're at the start of the description. */
@@ -1651,7 +1662,7 @@ split_entry (const char *entry, char **name, size_t *name_len,
               /* *ENDPTR is the 2nd last character */
               if (*endptr == '.')
                 strcat (*description, "  ");
-              else if (!isspace (*endptr))
+              else if (!isspace ((unsigned char) *endptr))
                 strcat (*description, " ");
             }
         }
@@ -1981,8 +1992,8 @@ main (int argc, char *argv[])
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
-  /* set the gnulib text message domain. */
-  bindtextdomain (PACKAGE "-gnulib", LOCALEDIR);
+  /* For any translations of gnulib strings. */
+  bindtextdomain ("gnulib", GNULIB_LOCALEDIR);
 
   /* Make sure standard input can be freopened at will.  Otherwise,
      when stdin starts off closed, bad things could happen if a plain fopen
@@ -2271,7 +2282,7 @@ main (int argc, char *argv[])
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\
 This is free software: you are free to change and redistribute it.\n\
 There is NO WARRANTY, to the extent permitted by law.\n"),
-              "2024");
+              "2025");
           exit (EXIT_SUCCESS);
 
         case 'W':

@@ -1,2 +1,0 @@
-index.html	toc	Top
-Chapteur.html	toc	Chaptêur

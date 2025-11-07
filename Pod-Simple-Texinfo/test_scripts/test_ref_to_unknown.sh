@@ -1,4 +1,10 @@
 #! /bin/sh
+#
+# Copyright 2010-2025 Free Software Foundation, Inc.
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.
 
 # From Pod-Simple-Texinfo/, run
 #  ./test_scripts/test_ref_to_unknown.sh
@@ -12,7 +18,7 @@ if test z"$srcdir" = "z"; then
 fi
 
 # for DIFF_OPTIONS and PERL
-. $testdir/../tp/defs || exit 1
+. $testdir/../tta/defs || exit 1
 
 mkdir -p out_tests_ref_to_unknown
 

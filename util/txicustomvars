@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,14 +21,15 @@
 use strict;
 
 BEGIN {
-  (my $mydir = $0) =~ s,/[^/]+$,,;
-  chomp (my $tpdir = `cd $mydir/../tp && pwd`);
-  unshift (@INC, $tpdir);
+  my $mydir = $0;
+  $mydir =~ s,/[^/]+$,,;
+  my $t2a_srcdir = `cd $mydir/../tta && pwd`;
+  chomp($t2a_srcdir);
   if (defined($ENV{'top_builddir'})) {
-    unshift (@INC, $ENV{'top_builddir'}.'/tp');
+    unshift(@INC, join('/', ($ENV{'top_builddir'}, 'tta', 'perl')));
   }
 
-  $ENV{top_srcdir} = "$tpdir/..";
+  $ENV{t2a_srcdir} = "$t2a_srcdir";
   require Texinfo::ModulePath;
   Texinfo::ModulePath::init(undef, undef, undef);
 }
@@ -45,10 +46,10 @@ if ($do_customization_variable_commands) {
   exit 0;
 }
 
-my %parser_customization
-  = %Texinfo::Common::default_parser_customization_values;
+my %parser_customization = %Texinfo::Options::parser_options;
 
 # avoid commands by selecting only upper cased customization variables
+# also remove array and hash references
 my @parser_string_non_command_customization
     = grep {ref($parser_customization{$_}) eq '' and $_ =~ /^[A-Z0-9_]+$/ }
               keys(%parser_customization);

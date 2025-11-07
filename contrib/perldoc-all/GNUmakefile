@@ -22,6 +22,10 @@ pod2texi_args  = --base-level=section
 pod2texi_args += --preamble=''  # we want our own
 pod2texi_args += --subdir=$(texi_pod_subdir)
 
+gnulib_srcdir = $(texinfo_srcdir)/../gnulib
+gendocs = $(gnulib_srcdir)/build-aux/gendocs.sh
+gendocs_templates = $(gnulib_srcdir)/doc
+
 gendocs_args  = --email bug-texinfo@gnu.org
 # Unfortunately have to use --no-validate since not all the names and
 # L<references> match up.  The main issue with missing links is because
@@ -39,10 +43,8 @@ gendocs_title = "Perl documentation in Texinfo"
 all: $(texi_pod_doc_incl)
 	rm -rf manual *.aux *.toc
 # turns out the combined docs overflow one of TeX's arrays; increase it.
-	env save_size=100000 \
-	  ./gendocs-sh $(gendocs_args) $(texi_pod_doc) $(gendocs_title)
-
-EXTRA_DIST += gendocs-sh
+	env save_size=100000 GENDOCS_TEMPLATE_DIR=$(gendocs_templates) \
+	  $(gendocs) $(gendocs_args) $(texi_pod_doc) $(gendocs_title)
 
 $(texi_pod_doc_incl): $(perl_pod_subdir)/*.pod
 	rm -rf $(texi_pod_subdir)
@@ -82,9 +84,10 @@ install:
 mostlyclean:
 	rm -rf manual $(texi_pod_doc_incl)
 
-# run directly from top-level Makefile.am
-# when running make dist, ensure we have none of the build files,
-# since the whole contrib/ directory is included in its entirety.
-dist-hook:
-	rm -rf manual perl-5.*.* $(texi_pod_doc) $(texi_pod_doc_incl) && \
-	rm -rf *.?? *.??? *.info *~ \#*
+clean: mostlyclean
+	rm -rf perldoc-all perldoc-all.aux perldoc-all.cp* \
+	 perldoc-all.log perldoc-all.toc
+
+maintainer-clean: clean
+	rm -rf perldoc-all.info
+	rm -rf perl-5.*.*

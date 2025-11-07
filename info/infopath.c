@@ -1,6 +1,6 @@
 /* infopath.c -- INFOPATH handling.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,7 +17,6 @@
 */
 
 #include "info.h"
-#include "scan.h"
 #include "util.h"
 #include "session.h"
 #include "filesys.h"

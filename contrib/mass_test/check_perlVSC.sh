@@ -2,7 +2,7 @@
 # Compare output obtained using XS converter and output obtained with
 # the Perl converter.
 #
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -26,9 +26,11 @@ fi
 
 if test $one_test != 'yes' ; then
   rm -rf result_check_perlVSC
+  rm -rf result_check_CVSC
 fi
 
 mkdir -p result_check_perlVSC
+mkdir -p result_check_CVSC
 
 #set -x
 
@@ -49,9 +51,14 @@ for manual_proj_dir in manuals/*/ ; do
 
         diff_file=result_check_perlVSC/${proj_dir}-${manual_name}-${bfile}.diff
         diff -u -r perl_HTML_refs/$proj_dir/$bfile/ compare_C_HTML/$proj_dir/$bfile/ > $diff_file
+        diff_file_CVSC=result_check_CVSC/${proj_dir}-${manual_name}-${bfile}.diff
+        diff -u -r compare_C_HTML/$proj_dir/$bfile/ compare_native_HTML/$proj_dir/$bfile/ > $diff_file_CVSC
         #echo "diffing ${proj_dir}-${manual_name}-${bfile}" 1>&2
         if test -s $diff_file ; then :
         else rm -f $diff_file
+        fi
+        if test -s $diff_file_CVSC ; then :
+        else rm -f $diff_file_CVSC
         fi
       fi
     done

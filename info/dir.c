@@ -1,6 +1,6 @@
-/* dir.c -- how to build a special "dir" node from "localdir" files.
+/* dir.c -- how to build a special "dir" node
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,9 +18,10 @@
    Originally written by Brian Fox. */
 
 #include "info.h"
+#include "util.h"
 #include "scan.h"
+#include "search.h"
 #include "filesys.h"
-#include "tilde.h"
 
 static void add_menu_to_node (char *contents, size_t size, NODE *node);
 static void insert_text_into_node (NODE *node, size_t start,
@@ -30,8 +31,7 @@ static NODE *dir_node = 0;
 
 static NODE *build_dir_node (void);
 
-/* Return composite directory node.  Return value should be freed by caller,
-   but none of its fields should be. */
+/* Return composite directory node. */
 NODE *
 get_dir_node (void)
 {
@@ -40,10 +40,7 @@ get_dir_node (void)
   if (!dir_node)
     dir_node = build_dir_node ();
 
-  node = xmalloc (sizeof (NODE));
-  *node = *dir_node;
-
-  return node;
+  return replicate_node (dir_node);
 }
 
 static char *dir_contents;
@@ -51,68 +48,70 @@ static char *dir_contents;
 static NODE *
 build_dir_node (void)
 {
-  char *this_dir;
-  int path_index = 0;
+  int path_index = 0, n_dirs = 0;
+  char *dir_filename = info_file_find_next_in_path ("dir", &path_index, 0);
+  if (!dir_filename)
+    goto emergency_dir;
 
-  NODE *node;
-
-  node = info_create_node ();
-  node->nodename = xstrdup ("Top");
-  node->fullpath = xstrdup ("dir");
-  node->contents = xstrdup (
-
- "File: dir,	Node: Top,	This is the top of the INFO tree.\n"
- "\n"
- "This is the Info main menu (aka directory node).\n"
- "A few useful Info commands:\n"
- "\n"
- "  'q' quits;\n"
- "  'H' lists all Info commands;\n"
- "  'h' starts the Info tutorial;\n"
- "  'mTexinfo RET' visits the Texinfo manual, etc.\n"
-  );
-
-  node->nodelen = strlen (node->contents);
-
-  for (this_dir = infopath_first (&path_index); this_dir;
-       this_dir = infopath_next (&path_index))
+  FILE_BUFFER *dir_fb = info_find_file (dir_filename);
+  NODE *dir_node = info_get_node_of_file_buffer (dir_fb, "Top");
+  if (!dir_node)
     {
-      char *result;
-      char *fullpath;
-      int len;
-      size_t filesize;
-      struct stat finfo;
-      int compressed;
-      char *contents;
-
-/* Space for an appended compressed file extension, like ".gz". */
-#define PADDING "XXXXXXXXX"
-
-      len = xasprintf (&fullpath, "%s/dir%s", this_dir, PADDING);
-      fullpath[len - strlen(PADDING)] = '\0';
-
-      result = info_check_compressed (fullpath, &finfo);
-      if (!result)
-        {
-          free (fullpath);
-          continue;
-        }
-
-      contents = filesys_read_info_file (fullpath, &filesize,
-                                         &finfo, &compressed);
-      if (contents)
-        {
-          add_menu_to_node (contents, filesize, node);
-          free (contents);
-        }
-
-      free (fullpath);
+      free (dir_filename);
+      goto emergency_dir;
     }
 
-  node->flags |= N_IsDir;
-  dir_contents = node->contents;
-  scan_node_contents (node, 0, 0);
-  return node;
+  struct text_buffer buf;
+  text_buffer_init (&buf);
+  text_buffer_printf (&buf, "%s\n\n", INFO_MENU_LABEL);
+  text_buffer_printf (&buf, "%s", _("Dir files used for this node\n\n"));
+  text_buffer_printf (&buf, "* dir %d: (%s)Top.\n", ++n_dirs, dir_filename);
+  free (dir_filename);
+
+  char *next_dir_file = 0;
+  NODE *next_dir_node;
+  while ((next_dir_file = info_file_find_next_in_path ("dir", &path_index, 0)))
+    {
+      FILE_BUFFER *next_dir_fb = info_find_file (next_dir_file);
+      if (next_dir_fb)
+        {
+          next_dir_node = info_get_node_of_file_buffer (next_dir_fb, "Top");
+          if (next_dir_node)
+            {
+              text_buffer_printf (&buf,
+                            "* dir %d: (%s)Top.\n", ++n_dirs, next_dir_file);
+
+              if (next_dir_node->contents)
+                add_menu_to_node (next_dir_node->contents, next_dir_node->nodelen,
+                                  dir_node);
+              free (next_dir_node);
+            }
+        }
+      free (next_dir_file);
+    }
+
+  /* Add a menu of dir files at the end of the composite dir node, if
+     more than one was used. */
+  if (n_dirs > 0)
+    add_menu_to_node (text_buffer_base(&buf), text_buffer_off(&buf), dir_node);
+  text_buffer_free (&buf);
+
+  dir_node->flags |= N_IsDir;
+  dir_node->fullpath = xstrdup ("dir");
+  scan_node_contents (dir_node, 0, 0);
+  return dir_node;
+
+emergency_dir:
+  dir_node = info_create_node ();
+  dir_node->nodename = xstrdup ("Top");
+  dir_node->fullpath = xstrdup ("dir");
+  dir_node->contents = xstrdup ("File: dir,	Node: Top\n"
+    "\n"
+    "No dir file was found on your system.\n");
+  dir_node->nodelen = strlen (dir_node->contents);
+  dir_node->flags |= N_IsDir;
+  scan_node_contents (dir_node, 0, 0);
+  return dir_node;
 }
 
 /* Given CONTENTS and NODE, add the menu found in CONTENTS to the menu
@@ -211,16 +210,18 @@ insert_text_into_node (NODE *node, size_t start, char *text, size_t textlen)
   memcpy (contents, node->contents, start);
   memcpy (contents + start, text, textlen);
   memcpy (contents + start + textlen, node->contents + start, end - start + 1);
-  free (node->contents);
+  if (node->flags & N_WasRewritten)
+    free (node->contents);
   node->contents = contents;
+  node->flags |= N_WasRewritten;
   node->nodelen += textlen;
 }
 
-/* Return directory entry.  Return value should not be freed or modified. */
-REFERENCE *
-lookup_dir_entry (char *label, int sloppy)
+/* Return directory entry. */
+const REFERENCE *
+lookup_dir_entry (const char *label, int sloppy)
 {
-  REFERENCE *entry;
+  const REFERENCE *entry;
 
   if (!dir_node)
     dir_node = build_dir_node ();
@@ -232,8 +233,8 @@ lookup_dir_entry (char *label, int sloppy)
 
 /* Look up entry in "dir" in search directory.  Return
    value is a pointer to a newly allocated REFERENCE. */
-REFERENCE *
-dir_entry_of_infodir (char *label, char *searchdir)
+const REFERENCE *
+dir_entry_of_infodir (const char *label, const char *searchdir)
 {
   char *dir_fullpath;
   int len;
@@ -243,13 +244,17 @@ dir_entry_of_infodir (char *label, char *searchdir)
   char *entry_fullpath;
 
   NODE *dir_node;
-  REFERENCE *entry;
+  const REFERENCE *entry;
+  REFERENCE *entry2;
 
+/* Space for an appended compressed file extension, like ".gz". */
+#define PADDING "XXXXXXXXX"
   if (IS_ABSOLUTE(searchdir))
     len = xasprintf (&dir_fullpath, "%s/dir%s", searchdir, PADDING);
   else
     len = xasprintf (&dir_fullpath, "./%s/dir%s", searchdir, PADDING);
   dir_fullpath[len - strlen(PADDING)] = '\0';
+#undef PADDING
 
   result = info_check_compressed (dir_fullpath, &dummy);
   if (!result)
@@ -263,20 +268,20 @@ dir_entry_of_infodir (char *label, char *searchdir)
   entry = info_get_menu_entry_by_label (dir_node, label, 1);
   if (!entry || !entry->filename)
     {
-      free_history_node (dir_node);
+      free_node (dir_node);
       return 0;
       /* A dir entry with no filename is unlikely, but not impossible. */
     }
 
-  entry = info_copy_reference (entry);
-  entry_fullpath = info_add_extension (searchdir, entry->filename, &dummy);
+  entry2 = info_copy_reference (entry);
+  entry_fullpath = info_file_of_infodir (entry2->filename, searchdir, &dummy);
   if (entry_fullpath)
     {
-      free (entry->filename);
-      entry->filename = entry_fullpath;
+      free (entry2->filename);
+      entry2->filename = entry_fullpath;
     }
 
-  free_history_node (dir_node);
-  return entry;
+  free_node (dir_node);
+  return entry2;
 }
 

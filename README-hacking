@@ -1,4 +1,4 @@
-  Copyright 2002-2024 Free Software Foundation, Inc.
+  Copyright 2002-2025 Free Software Foundation, Inc.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -9,7 +9,7 @@ at Savannah:
   https://savannah.gnu.org/git/?group=texinfo
 
 See also files:
-tp/README, tp/t/README, tp/tests/README, TODO, TODO.HTML
+tta/README, tta/t/README, tta/tests/README, TODO, TODO.HTML
 
 Development tools
 -----------------
@@ -23,7 +23,9 @@ You'll also need help2man (for building man pages) and gperf (for building
 texindex/ti.twjr, you'll need gawk >= 4.0.  All of these programs are
 available from https://ftp.gnu.org/gnu.  You'll also need pod2man
 for building a man page, which should be part of the Perl core
-distribution.
+distribution.  To regenerate the languages codes you'll need the
+Text::CSV Perl module, gperf, wget and access to the internet.
+
 
 After getting the development sources, and installing the tools above,
 you can run
@@ -143,7 +145,7 @@ Gnulib
 This distribution uses Gnulib (http://www.gnu.org/software/gnulib)
 to share common files.  Gnulib files used in Texinfo are checked in to
 the repository.  A Gnulib directory is setup in two locations, in
-the main directory and in tp/Texinfo/XS/.
+the main directory and in tta/.
 
 To update the gnulib files, get a checkout of gnulib in a separate
 directory, then run, say
@@ -152,12 +154,9 @@ directory, then run, say
 
 in your top-level Texinfo directory and
 
-  ../../../../gnulib/gnulib-tool --add-import
+  ../../gnulib/gnulib-tool --add-import
 
-under tp/Texinfo/XS.  (gnulib-tool is in the gnulib source tree.)
-These commands now access the Internet to update translations of
-Gnulib strings due to the --po-base and --po-domain options
-being saved.
+under tta/.  (gnulib-tool is in the gnulib source tree.)
 
 The currently-used gnulib modules and other gnulib information are
 recorded in gnulib/m4/gnulib-cache.m4.
@@ -178,8 +177,8 @@ the output of "gnulib-tool --add-import", and work out which program
 needs them.  You can look at the modules/* files in the gnulib checkout
 to help work out which gnulib module is demanding which variable.
 
-For the gnulib checkout in the XS directory, it is just
-tp/Texinfo/XS/Makefile.am that may need to be updated.
+For the gnulib checkout in the tta/ directory, tta/C/Makefile.am and
+tta/perl/XSTexinfo/Makefile.am may need to be updated.
 
 
 
@@ -209,31 +208,14 @@ are standalone and don't require compilation.  For the same reasons,
 they are officially updated between full Texinfo releases, at
 http://ftpmirror.gnu.org/texinfo.
 
-- Regarding texi2any (aka makeinfo), you can run tp/texi2any.pl
-directly.  This is the original source file for the program, so it's
-convenient to be able to make changes and then run it.
-
-To run the output "tp/texi2any" instead, you can set the environment
-variable TEXINFO_DEV_SOURCE to 1.  Otherwise, it will try to use
-Texinfo's Perl modules in the installed locations.  "tp/texi2any" uses
-the Perl interpreter found by configure, so you might want to run that 
-instead of texi2any.pl if it's different to the default interpreter in 
-your environment.
-
-To directly run programs out of source, you should set the top_builddir
-variable to the top build directory, in order to have compiled modules
-and translated in-document strings found.  If you use scripts with
-names ending in .pl or .t test files, the source directory obtained
-from the script name is used to determine the source directories and
-you do not need to set them explicitely.  Otherwise, you may need to
-set the srcdir and/or the top_srcdir variables.
+- See tta/README about running texi2any
 
 
 
 References for working on various parts of the system:
 
 If you want to delve into making a new backend for the Perl makeinfo,
-the documentation in tp/Texinfo/Convert/Converter.pm is a good starting
+the documentation in tta/Texinfo/Convert/Converter.pm is a good starting
 point, as it describes the existing backends and other places to look.
 
 If you want to delve into texinfo.tex, a thorough plain TeX reference
@@ -264,49 +246,51 @@ with "git diff" before committing.
 
 Look for omissions by running, e.g.
 
-find . \
-  -name autom4te.cache -prune -o \
-  -name .git -prune -o \
-  -wholename ./tp/maintain/lib -prune -o \
-  -name test -prune -o \
-  -name "test-infodir" -prune -o \
-  -name "gnulib" -prune -o \
-  -type f \
-  \( -name '*' \) \
-  -not -name 'Makefile.in' \
-  -not -name Makefile \
-  -not -name "*.m4" \
-  -not -name configure \
-  -not -name "config.*" \
-  -not -name "*~" \
-  -exec perl -wnl -e '/20\d[^4] Free/ && print "$ARGV:$_"' '{}' \;
+./grand-replace.sh --missed .
 
 at the top level.  It's likely that the script doesn't find all the
 years that should be updated yet.
+
+
+- Note on "reproducible builds"
+
+Generation of Texinfo releases has not been checked to be fully
+reproducible (see https://reproducible-builds.org/).
+
+However, in the interests of a reproducible distribution, GNU tar is
+used with certain flags to generate a tar archive file containing input
+for texi2any tests (by maintain/regenerate_non_ascii_tar_file).  GNU tar
+will only be used with these flags if it is detected that it is available.
+If other tar programs are used, this archive file will be not bit-for-bit
+identical.
 
 
 
 - When close to making a release:
 
 NYTProf profiling for Perl code
-* e.g. 'perl -d:NYTProf ../tp/texi2any.pl FILE.texi'.  See Devel::NYTProf
-  man page.
+* e.g. 'perl -d:NYTProf ../tta/perl/texi2any.pl FILE.texi'.
+  See Devel::NYTProf man page.
 callgrind profiling for XS code
-* e.g. 'LD_BIND_NOW=1 valgrind --tool=callgrind perl ../tp/texi2any.pl \
+* e.g. 'LD_BIND_NOW=1 valgrind --tool=callgrind perl ../tta/perl/texi2any.pl \
   FILE.texi' then 'kcachegrind callgrind.out.*'.
 
 run all tests with valgrind:
-* under info/t, put valgrind in $ginfo, then check t/*.val.log files after
-  running test suite
+* in info/t/Init-test.inc, put valgrind in $ginfo, then check t/*.val.log
+  files after running test suite.  Note that a small number of tests may
+  report leaks unless info is compiled with CFLAGS='-O0'.
 * edit install-info/tests/defs.in, uncomment valgrind line and run
-  config.status to regenerate defs
+  "./config.status install-info/tests/defs" to regenerate defs.
+  Note that many tests may report leaks unless install-info is compiled
+  with CFLAGS='-O0'.
+
 * XS modules memory leak check checking with valgrind
   Add line "use Perl::Destruct::Level level => 1;" to texi2any.pl
   when running 'valgrind --leak-check=full' to make perl clean it
   its allocations.  Run e.g.
       valgrind --suppressions=texi2any.supp --log-file=val.log \
                --leak-check=full \
-        perl ../tp/texi2any.pl ../doc/info-stnd.texi
+        perl ../tta/perl/texi2any.pl ../doc/info-stnd.texi
   and other input files.
 
   Add line "use Perl::Destruct::Level level => 1;" to t/test_utils.pl
@@ -317,15 +301,28 @@ run all tests with valgrind:
           perl -w $f ; done
  (could take 1-2 hours to finish).  check log files one by one afterwards.
 
+Consider doing make check with autovivification turned off to find bugs
+and make sure that it is possible to turn off autovivification during
+developpement.  It may be interesting to set TEXINFO_XS=omit for this
+verification.  The module turning off autovivification is not in Perl
+core, so when commiting the lines turning autovivification off should
+always be commented out.
+To turn off autovivification, you can use:
+ find tta/perl/Texinfo tta/perl/ext tta/perl/init -type f -name '*.pm' -execdir perl -wpli -e 's/^#no autovivification qw\(fetch delete exists store strict\);/no autovivification qw\(fetch delete exists store strict\);/' '{}' ';'
+To get back to the default:
+ find tta/perl/Texinfo tta/perl/ext tta/perl/init -type f -name '*.pm' -execdir perl -wpli -e 's/^no autovivification qw\(fetch delete exists store strict\);/#no autovivification qw\(fetch delete exists store strict\);/' '{}' ';'
+
 Manual testing:
-. try groff.texinfo from groff source repo.
 . process doc/texinfo-tex-test.texi with TeX and check that output is good.
 . process some manuals with INFO_JS_DIR and check the JS interface is
   not broken.
+. if necessary, check if the HTML customization API can be updated for
+  - lilypond Documentation/lilypond.init
+  - ffmpeg doc/t2h.pm
 
 check for C compiler warnings by configuring with
 
-our_CFLAGS='-Wall -Wno-parentheses -Wno-missing-braces'
+our_CFLAGS='-Wall -Wformat-security -Wstrict-prototypes -Wno-parentheses'
 ./configure "CFLAGS=$our_CFLAGS" "PERL_EXT_CFLAGS=$our_CFLAGS"
 unset our_CFLAGS
 
@@ -355,30 +352,45 @@ check at latest automake/autoconf/gettext/help2man version:
     see http://gnu.org/s/gnulib/manual/html_node/gettextize-and-autopoint.html
     for some hints.
 
-  . also upgrade gettext under tp/Texinfo/XS.  run:
-      gettextize -f --po-dir=../../../po --no-changelog
+  . also upgrade gettext under tta/.  run:
+      gettextize -f --po-dir=../po --no-changelog
      and then revert any unwanted changes and remove any unwanted new files.
 
   . After upgrading automake/autoconf/gettext, run ./autogen.sh
     and/or "autoreconf --verbose --force --install" to update ancilliary
     files in build-aux and elsewhere.  Check changes before committing.
+
+  . In tta/configure.ac the check "for embedded Perl" uses an
+    internal Autoconf variable and an internal shell function; it may be
+    relevant to check that it is still right, maybe compare to code
+    generated in configure by the used Autoconf version.
+
+  . help2man upgrade -
+      make -C man maintainer-clean ; ./config.status man/Makefile ; make -C man
   . mention new versions in NEWS
 
+  . copy newer versions of the autoconf archive macros used for SWIG and Python.
+    For example:
+     for file in ax_pkg_swig.m4 ax_python_devel.m4 ax_swig_python.m4 ; do
+       cp -p /usr/share/aclocal/$file tta/m4
+     done
+    Check changes before committing.
+
 Update gnulib:
-  # Under the top level, and also under tp/Texinfo/XS, which uses
+  # Under the top level, and also under tta/, which uses
   # a separate gnulib import.
   gnulib-tool --add-import
   'git status -u' and add untracked files
 
 Use util/srclist-txi for checking files to be copied from gnulib
 
-Update ppport.h in tp/Texinfo/XS.  Update Devel::PPPort via cpan to newest
+Update ppport.h in tta/C.  Update Devel::PPPort via cpan to newest
 available version, then run:
   perl -MDevel::PPPort -e'Devel::PPPort::WriteFile'
 Check that this results in a newer version.
 
 Check what changes ppport.h reports:
-  perl ppport.h --compat-version=5.8.1 *.xs misc.c xspara.c miscxs.h xspara.h */*.xs main/get_perl_info.* main/build_perl_info.* main/api_to_perl.* main/call_perl_function.* convert/call_html_perl_function.* convert/build_html_perl_state.* convert/get_converter_perl_info.* convert/get_html_perl_info.*
+  perl ppport.h --compat-version=5.8.1 ../perl/XSTexinfo/*.xs ../perl/XSTexinfo/*/*.xs main/get_perl_info.* main/build_perl_info.* main/api_to_perl.* main/call_perl_function.* convert/call_html_perl_function.* convert/call_conversion_perl.* convert/call_embed_perl.* convert/build_html_perl_info.* convert/build_html_perl_state.* convert/get_converter_perl_info.* ../perl/XSTexinfo/convert/get_html_perl_info.*
 
 make po-check             # update po/POTFILES.in as needed
 make po_document-check    # update po_document/POTFILES.in as needed
@@ -387,11 +399,21 @@ check indices of Texinfo manuals and check for duplicates (with <1> in Info)
 
 Check "make ccheck" and "make vcheck" work in "doc/refcard".
 
+Check mentions of configure flags, environment variables etc. in INSTALL are
+up to date
+
+Consider running tests of texi2dvi under contrib/nontests
+
 - Official releases only:
 make V=1 pdf and fix underfull/overfull boxes.
 
 -------------------------------------------------------------------------
 - Distribution checking
+
+"make distcheck" is the standard check that the build system is
+working correctly.  You can make it run quicker by disabling some
+of the texi2any tests:
+"make distcheck DISTCHECK_CONFIGURE_FLAGS=--disable-t2a-tests".
 
 In addition to "make distcheck", there are other build system checks
 which you can run manually.
@@ -458,11 +480,11 @@ Then rebuild:
 
 Have a look at the output of "git status -u" to check for files that
   should be tracked in git or ignored.  Check for leftover result
-  files under tp/tests which should be removed.
+  files under tta/tests which should be removed.
 
 check "git stash list" for any work in progress
 
-Check if "make tex-html-checks" results have been updated under tp/tests.
+Check if "make tex-html-checks" results have been updated under tta/tests.
 
 check OpenCSW build reports at
   https://buildfarm.opencsw.org/buildbot/waterfall?category=texinfo
@@ -476,23 +498,19 @@ Check "dist-xz" is in the option list in configure.ac (often removed
 for speed when testing).
 
 Update version number:
-  update version number in configure.ac, util/texi2dvi, util/texi2pdf,
-    js/info.js
-  version number in txirefcard.tex (offical releases only)
+  new version in configure.ac then "make update-version"
   (cd texindex ; rm texindex.awk ; make)
-  (cd tp && ./maintain/change_perl_modules_version.sh auto)
-    -- this updates all the version numbers in the Perl modules and
-       in tp/Texinfo/XS/configure.ac
-check up to date copyright years in files relevant to --version calls
-(tp/texi2any.pl, info/info.c, install-info/install-info.c, texindex/ti.twjr,
-Pod-Simple-Texinfo/pod2texi)
 
-Ensure texinfo.tex, htmlxref.cnf are updated on ftp.gnu.org.
+check up to date copyright years in files relevant to --version calls
+(tta/perl/texi2any.pl, info/info.c, install-info/install-info.c,
+texindex/ti.twjr, Pod-Simple-Texinfo/pod2texi)
+
+Ensure texinfo.tex, htmlxref.d/Texinfo_*.cnf are updated on ftp.gnu.org.
 Upload texi2dvi, texi2pdf (official releases only)
 
-* For release/* branch only: propagate htmlxref.cnf from master
+* For release/* branch only: propagate htmlxref.d/Texinfo_*.cnf from master
 
-(cd tp ; maintain/regenerate_file_lists.pl) # list all test results
+(cd tta/perl ; ../maintain/regenerate_file_lists.pl) # list all test results
 
 Ensure TXI_XLATE in doc/Makefile.am matches actual file list.
 
@@ -506,15 +524,18 @@ run "make -C po check-linguas" and "make -C po_document check-linguas"
 to check that LINGUAS under po and po_document match actual file list.
 
   make
-  make update-po  # both po and po_document needed, build a dist first
+  make update-po
   ( cd po_document ; for f in *.po ; do ./adjust-translations.pl $f ; done )
-  make update-po  # in case po files change again after last step
+  ( cd po_document ; make update-po ) # in case po files change again after
+                                      # last step
 
 
 - Official releases only:
 version and date in NEWS.
-(cd tp && maintain/regenerate_documentlanguages-loc.pl)
-  -- regenerates tp/Texinfo/Documentlanguages.pm (requires Text::CSV)
+(cd tta && ./maintain/regenerate_documentlanguages-loc.pl)
+  -- regenerates tta/perl/Texinfo/Documentlanguages.pm and
+     tta/C/main/txi_documentlanguage_*.c (requires Text::CSV
+     Perl module, wget and gperf and access to the internet)
 
 notice in ChangeLog.
 one last "git diff" to check release commit looks good
@@ -523,6 +544,38 @@ make distcheck
 git commit and push
 
 (If on a release branch, copy the NEWS message to NEWS on master)
+
+#  Official releases only: tag source tree
+git tag texinfo-6.6
+git push --tags
+
+-------------------------------------------------------------------------
+
+- Update web pages (official releases only)
+
+Make sure texi2any and texinfo.tex are both installed, then build
+web documentation with
+  make -C doc wwwdoc-build
+
+Copy documentation files to web checkout with, e.g.
+  make -C doc \
+  wwwdoc-install www_target=../../CVS_WEB/manual/
+Check for removed files with, e.g. ls -ltu $(www_target)/*/html_node, 
+and looking at file modification dates for files that have not
+been replaced, followed by cvs rm -f.  Check for added files with
+"cvs -qn update | less", followed by cvs add for lines beginning "?".
+When done, run cvs commit.
+
+update date and version number on home page (texinfo.html) and commit
+as needed.
+
+#  ... set up dtd directory on web pages:
+cd CVS_WEB/dtd # or wherever webpages checkout is
+mkdir $ver && cvs add $ver
+cp $tutil/texinfo.dtd $ver
+cvs add -kb $ver/texinfo.dtd
+cvs commit -m$ver $ver
+
 
 -------------------------------------------------------------------------
 
@@ -544,46 +597,22 @@ For official releases: send announcement to info-gnu,
   cc bug-texinfo and bcc coordinator@translationproject.org.
 news item at savannah.
 
-#  Official releases only: tag source tree
-git tag texinfo-6.6
-git push --tags
-
-#  ... set up dtd directory on web pages:
-cd CVS_WEB/dtd # or wherever webpages checkout is
-mkdir $ver && cvs add $ver
-cp $tutil/texinfo.dtd $ver
-cvs add -kb $ver/texinfo.dtd
-cvs commit -m$ver $ver
-
 -------------------------------------------------------------------------
-
-
-- When official release is out there ...
-
-Make sure texi2any and texinfo.tex are both installed, then build
-web documentation with
-  make -C doc wwwdoc-build
-
-Copy documentation files to web checkout with, e.g.
-  make -C doc \
-  wwwdoc-install www_target=../../CVS_WEB/manual/
-Check for removed files with, e.g. ls -ltu $(www_target)/*/html_node, 
-and looking at file modification dates for files that have not
-been replaced, followed by cvs rm -f.  Check for added files with
-"cvs -qn update | less", followed by cvs add for lines beginning "?".
-When done, run cvs commit.
-
-update date and version number on home page (texinfo.html) and commit
-as needed.
-
--------------------------------------------------------------------------
-
-#  Official releases only: Contact root@tug.org to update texinfo at tug.org.
-# If root@tug.org doesn't reply, can try webmaster@tug.org,
-# or (last resort) board@tug.org.
-
 
 #  ... post-release, or when development resumes:
 configure.ac, util/texi2dvi: add "dev" to versions for clarity,
 until it's time to do pretests again.
 
+archive ChangeLog to ChangeLog.73, and delete this note.
+
+see "Post-release:" section in TODO file.  delete this note once done.
+-------------------------------------------------------------------------
+
+Other files are uploaded to ftp.gnu.org as and when they are updated
+and ready for general use:
+
+gnupload --to ftp.gnu.org:texinfo --replace texinfo.tex
+
+# under util/htmlxref.d
+gnupload --to ftp.gnu.org:texinfo/htmlxref.d --replace Texinfo_GNU.cnf
+gnupload --to ftp.gnu.org:texinfo/htmlxref.d --replace Texinfo_nonGNU.cnf

@@ -1,6 +1,6 @@
 /* footnotes.c -- Some functions for manipulating footnotes.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #include "info.h"
 #include "session.h"
 #include "scan.h"
-#include "util.h"
+#include "nodes.h"
 #include "footnotes.h"
 
 /* Nonzero means attempt to show footnotes when displaying a new window. */
@@ -36,8 +36,8 @@ find_footnotes_window (void)
 
   /* Try to find an existing window first. */
   for (win = windows; win; win = win->next)
-    if (internal_info_node_p (win->node) &&
-        (strcmp (win->node->nodename, footnote_nodename) == 0))
+    if (win->node && (win->node->flags & N_IsInternal)
+        && (strcmp (win->node->nodename, footnote_nodename) == 0))
       break;
 
   return win;
@@ -93,7 +93,7 @@ make_footnotes_node (NODE *node)
                 && (strcmp (refs[i]->nodename, refname) == 0 ||
                  (strncmp (refs[i]->nodename, refname, reflen - 1) == 0 &&
                   refs[i]->nodename[reflen - 1] == '-' &&
-                  isdigit (refs[i]->nodename[reflen]))))
+                  isdigit ((unsigned char) refs[i]->nodename[reflen]))))
               {
                 footnotes_node = info_get_node (node->fullpath, refname);
                 if (footnotes_node)
@@ -168,7 +168,7 @@ make_footnotes_node (NODE *node)
     free (header);
   }
 
-  free_history_node (footnotes_node);
+  free_node (footnotes_node);
   return result;
 }
 
@@ -264,7 +264,7 @@ DECLARE_INFO_COMMAND (info_show_footnotes,
     switch (info_get_or_remove_footnotes (window))
       {
       case FN_UNFOUND:
-        info_error ("%s", msg_no_foot_node);
+        info_error ("%s", _("No footnotes in this node"));
         break;
 
       case FN_UNABLE:

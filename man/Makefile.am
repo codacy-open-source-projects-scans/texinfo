@@ -1,6 +1,6 @@
 # Makefile.am for texinfo/man.
 #
-# Copyright 2002-2024 Free Software Foundation, Inc.
+# Copyright 2002-2025 Free Software Foundation, Inc.
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -42,10 +42,10 @@ MAINTAINERCLEANFILES = $(generated_mans)
 # 
 # Use the programs built in our distribution, taking account of possible
 # cross-compiling.  makeinfo needs a bunch of our included modules.
-tpdir = $(top_srcdir)/tp
+t2a_srcdir = $(top_srcdir)/tta
 MAKEINFO_ENVIRONMENT = TEXINFO_DEV_SOURCE=1 ; export TEXINFO_DEV_SOURCE ; \
-                       top_srcdir="$(top_srcdir)" ; export top_srcdir ; \
-                       top_builddir="$(top_builddir)" ; export top_builddir ;
+                       t2a_srcdir="$(top_srcdir)/tta" ; export t2a_srcdir ; \
+                       t2a_builddir="$(top_builddir)/tta" ; export t2a_builddir ;
 
 mi_env = \
   TEXINFO_DEV_SOURCE=1; export TEXINFO_DEV_SOURCE; ${MAKEINFO_ENVIRONMENT}
@@ -55,7 +55,7 @@ man_rule_0 = \
   exe_ext="$(EXEEXT)" \
   && program=`expr '/$@' : '.*/\(.*\)\.1'` \
   && case $$program in \
-         makeinfo) dir=tp; $(mi_env) exe_ext="";; \
+         makeinfo) dir=tta/perl; $(mi_env) exe_ext="";; \
             info*) dir=info; test $$program != info || program=g$$program;; \
     *install-info) dir=install-info; program=g$$program;; \
         *texindex) dir=texindex; exe_ext="";; \
@@ -87,7 +87,7 @@ $(srcdir)/install-info.1: $(top_srcdir)/install-info/install-info.c \
 	@name="update info/dir entries" && $(man_rule_bin)
 
 # Here we need some postprocessing to avoid man misformatting.
-$(srcdir)/makeinfo.1: $(tpdir)/texi2any.pl $(common_mandeps)
+$(srcdir)/makeinfo.1: $(t2a_srcdir)/perl/texi2any.pl $(common_mandeps)
 	@name="translate Texinfo documents" && $(man_rule_bin)
 	mv $@ $@.tmp
 	sed '/^\.IP$$/N;/\nAlso/s/I//;/\nThe/s/I//' $@.tmp >$@

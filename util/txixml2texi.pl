@@ -2,7 +2,7 @@
 #
 # texixml2texi -- convert Texinfo XML to Texinfo code
 #
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ use strict;
 use warnings;
 
 use Getopt::Long qw(GetOptions);
-# for dirname.
+# for dirname and fileparse.
 use File::Basename;
 use File::Spec;
 use Encode;
@@ -48,32 +48,52 @@ BEGIN
          and $ENV{'TEXINFO_DEV_SOURCE'} ne '0') {
 
     # Use uninstalled modules
-
-    if (defined($ENV{'top_builddir'})) {
-      unshift @INC, File::Spec->catdir($ENV{'top_builddir'}, 'tp');
+    my $t2a_builddir;
+    if (defined($ENV{'t2a_builddir'})) {
+      $t2a_builddir = $ENV{'t2a_builddir'};
     } else {
-      unshift @INC, File::Spec->catdir($command_directory, $updir, 'tp');
+      if (defined($ENV{'top_builddir'})) {
+        $t2a_builddir = join('/', ($ENV{'top_builddir'}, 'tta'));
+      } else {
+        $t2a_builddir = join('/', ($command_directory, $updir, 'tta'));
+      }
+      $ENV{'t2a_builddir'} = $t2a_builddir;
     }
 
+    my $t2a_srcdir;
+    if (defined($ENV{'t2a_srcdir'})) {
+      $t2a_srcdir = $ENV{'t2a_srcdir'};
+    } else {
+      if (defined($ENV{'top_srcdir'})) {
+        $t2a_srcdir = join('/', ($ENV{'top_srcdir'}, 'tta'));
+      } else {
+        $t2a_srcdir = join('/', ($command_directory, $updir, 'tta'));
+      }
+      $ENV{'t2a_srcdir'} = $t2a_srcdir;
+    }
+
+    # to find Texinfo::ModulePath
+    unshift @INC, join('/', ($t2a_builddir, 'perl'));
+
     require Texinfo::ModulePath;
-    Texinfo::ModulePath::init(undef, undef, undef, 'updirs' => 1);
+    Texinfo::ModulePath::init(undef, undef, undef);
   } else {
     # Look for modules in their installed locations.
-    my $modules_dir = File::Spec->catdir($datadir, $converter);
+    my $modules_dir = join('/', ($datadir, $converter));
     # look for package data in the installed location.
     my $modules_converterdatadir = $modules_dir;
 
     # try to make package relocatable, will only work if
     # standard relative paths are used
-    if (! -f File::Spec->catfile($modules_dir, 'Texinfo', 'Parser.pm')
-        and -f File::Spec->catfile($command_directory, $updir, 'share',
-                                   $converter, 'Texinfo', 'Parser.pm')) {
-      $modules_dir = File::Spec->catdir($command_directory, $updir,
-                                          'share', $converter);
-      $modules_converterdatadir = File::Spec->catdir($command_directory, $updir,
-                                          'share', $converter);
-      $xsdir = File::Spec->catdir($command_directory, $updir,
-                                          'lib', $converter);
+    if (! -f join('/', ($modules_dir, 'Texinfo', 'Parser.pm'))
+        and -f join('/', ($command_directory, $updir, 'share',
+                                   $converter, 'Texinfo', 'Parser.pm'))) {
+      $modules_dir = join('/', ($command_directory, $updir,
+                                          'share', $converter));
+      $modules_converterdatadir = join('/', ($command_directory, $updir,
+                                          'share', $converter));
+      $xsdir = join('/', ($command_directory, $updir,
+                                          'lib', $converter));
     }
     unshift @INC, $modules_dir;
 
@@ -221,9 +241,6 @@ my $reader_options = {'location' => $infile,
                      };
 my $reader = XML::LibXML::Reader->new($reader_options)
        or die "cannot read $infile\n";
-
-#(my $mydir = $0) =~ s,/[^/]*$,,;  # dir we are in
-#my $txi_dtd_libdir = "$mydir";  # find tp relative to $0
 
 sub skip_until_end($$)
 {
@@ -398,8 +415,7 @@ while ($reader->read) {
       }
       my $specific_line = (defined($Texinfo::Commands::line_commands{$name})
                 and $Texinfo::Commands::line_commands{$name} eq 'specific');
-      if ($name eq 'set' or $name eq 'clickstyle' or $name eq 'columnfractions'
-          or $specific_line) {
+      if ($name eq 'columnfractions' or $specific_line) {
         skip_until_end($reader, $name);
         if ($name eq 'columnfractions' or $specific_line) {
           # specific line commands have a line argument obtained by converting

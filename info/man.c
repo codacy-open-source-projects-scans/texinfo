@@ -1,6 +1,6 @@
 /* man.c: How to read and format man files.
 
-   Copyright 1995-2024 Free Software Foundation, Inc.
+   Copyright 1995-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,10 +18,6 @@
    Originally written by Brian Fox Thu May  4 09:17:52 1995. */
 
 #include "info.h"
-#include "signals.h"
-#if defined (HAVE_SYS_TIME_H)
-#include <sys/time.h>
-#endif
 #if defined (HAVE_SYS_WAIT_H)
 #include <sys/wait.h>
 #endif
@@ -30,20 +26,13 @@
 #include "tilde.h"
 #include "nodes.h"
 #include "man.h"
-#include "variables.h"
 #include "util.h"
+#include "search.h"
+#include "run-external.h"
 
 #if !defined (_POSIX_VERSION)
 #define pid_t int
 #endif
-
-#if defined (FD_SET)
-#  if defined (hpux)
-#    define fd_set_cast(x) (int *)(x)
-#  else
-#    define fd_set_cast(x) (fd_set *)(x)
-#  endif /* !hpux */
-#endif /* FD_SET */
 
 #if STRIP_DOT_EXE
 static char const * const exec_extensions[] = {
@@ -54,8 +43,7 @@ static char const * const exec_extensions[] = { "", NULL };
 #endif
 
 static REFERENCE **xrefs_of_manpage (NODE *node);
-static char *read_from_fd (int fd);
-static char *get_manpage_contents (char *pagename);
+static char *get_manpage_contents (const char *pagename);
 static char *find_man_formatter (void);
 
 /* We store the contents of retrieved man pages in here. */
@@ -69,7 +57,7 @@ size_t manpage_node_slots = 0;
    the contents of the man page.  This is faster if we are running
    "info --where" and we don't need the contents. */
 int
-check_manpage_node (char *pagename)
+check_manpage_node (const char *pagename)
 {
   pid_t child;
   int pid_status = 0;
@@ -114,7 +102,7 @@ check_manpage_node (char *pagename)
    Solaris (update whatis database). */
 
 int
-check_manpage_node (char *pagename)
+check_manpage_node (const char *pagename)
 {
   NODE *man_node = get_manpage_node (pagename);
   if (man_node)
@@ -128,9 +116,9 @@ check_manpage_node (char *pagename)
 #endif /* !PIPE_USE_FORK */
 
 NODE *
-get_manpage_node (char *pagename)
+get_manpage_node (const char *pagename)
 {
-  NODE *node = 0, **n, *node2 = 0;
+  NODE *node = 0, **n;
   char *page;
 
   if (manpage_node_index > 0)
@@ -150,7 +138,7 @@ get_manpage_node (char *pagename)
       add_pointer_to_array (node, manpage_node_index,
                             manpage_nodes,
                             manpage_node_slots, 100);
-    } 
+    }
 
   /* Node wasn't found, or its contents were freed since last time. */
   if (!node->contents)
@@ -170,9 +158,7 @@ get_manpage_node (char *pagename)
       node->up = "(dir)";
     }
 
-  node2 = xmalloc (sizeof (NODE));
-  *node2 = *node;
-  return node2;
+  return replicate_node (node); /* master saved in manpage_nodes list */
 }
 
 /* Scan the list of directories in PATH looking for FILENAME.  If we find
@@ -213,18 +199,18 @@ executable_file_in_path (char *filename, char *path)
       free (temp_dirname);
 
       /* Look for FILENAME, possibly with any of the extensions
-	 in EXEC_EXTENSIONS[].  */
+         in EXEC_EXTENSIONS[].  */
       for (i = 0; exec_extensions[i]; i++)
-	{
-	  if (exec_extensions[i][0])
-	    strcpy (temp_end, exec_extensions[i]);
-	  statable = (stat (temp, &finfo) == 0);
+        {
+          if (exec_extensions[i][0])
+            strcpy (temp_end, exec_extensions[i]);
+          statable = (stat (temp, &finfo) == 0);
 
-	  /* If we have found a regular executable file, then use it. */
-	  if ((statable) && (S_ISREG (finfo.st_mode)) &&
-	      (access (temp, X_OK) == 0))
-	    return temp;
-	}
+          /* If we have found a regular executable file, then use it. */
+          if ((statable) && (S_ISREG (finfo.st_mode)) &&
+              (access (temp, X_OK) == 0))
+            return temp;
+        }
 
       free (temp);
     }
@@ -252,7 +238,7 @@ static char *manpage_pagename = NULL;
 static char *manpage_section  = NULL;
 
 static void
-get_page_and_section (char *pagename)
+get_page_and_section (const char *pagename)
 {
   register int i;
 
@@ -293,7 +279,7 @@ clean_manpage (char *manpage)
   char *newpage = xmalloc (len + 1);
   char *np = newpage;
   int prev_len = 0;
-  
+
   for (mbi_init (iter, manpage, len);
        mbi_avail (iter);
        mbi_advance (iter))
@@ -302,30 +288,30 @@ clean_manpage (char *manpage)
       int cur_len = mb_len (mbi_cur (iter));
 
       if (cur_len == 1)
-	{
-	  if (*cur_ptr == '\b' || *cur_ptr == '\f')
-	    {
-	      if (np >= newpage + prev_len)
-		np -= prev_len;
-	    }
-	  else if (ansi_escape (iter, &cur_len))
-	    {
-	      memcpy (np, cur_ptr, cur_len);
-	      np += cur_len;
-	      ITER_SETBYTES (iter, cur_len);
-	    }
-	  else if (show_malformed_multibyte_p || mbi_cur (iter).wc_valid)
-	    *np++ = *cur_ptr;
-	}
+        {
+          if (*cur_ptr == '\b' || *cur_ptr == '\f')
+            {
+              if (np >= newpage + prev_len)
+                np -= prev_len;
+            }
+          else if (ansi_escape (iter, &cur_len))
+            {
+              memcpy (np, cur_ptr, cur_len);
+              np += cur_len;
+              ITER_SETBYTES (iter, cur_len);
+            }
+          else if (show_malformed_multibyte_p || mbi_cur (iter).wc_valid)
+            *np++ = *cur_ptr;
+        }
       else
-	{
-	  memcpy (np, cur_ptr, cur_len);
-	  np += cur_len;
-	}
+        {
+          memcpy (np, cur_ptr, cur_len);
+          np += cur_len;
+        }
       prev_len = cur_len;
     }
   *np = 0;
-  
+
   strcpy (manpage, newpage);
   free (newpage);
 }
@@ -333,7 +319,7 @@ clean_manpage (char *manpage)
 static char *get_manpage_from_formatter (char *formatter_args[]);
 
 static char *
-get_manpage_contents (char *pagename)
+get_manpage_contents (const char *pagename)
 {
   static char *formatter_args[4] = { NULL };
   char *formatted_page;
@@ -371,95 +357,25 @@ static char *
 get_manpage_from_formatter (char *formatter_args[])
 {
   char *formatted_page = NULL;
-  int pipes[2];
-  pid_t child;
-  int formatter_status = 0;
 
   putenv ("MAN_KEEP_FORMATTING=1"); /* Get codes for bold etc. */
   putenv ("GROFF_SGR=1"); /* for Debian whose man outputs
                              'overstrike' sequences without this */
 
-  /* Open a pipe to this program, read the output, and save it away
-     in FORMATTED_PAGE.  The reader end of the pipe is pipes[0]; the
-     writer end is pipes[1]. */
-#if PIPE_USE_FORK
-  if (pipe (pipes) == -1)
-    return 0; /* Creating pipe failed. */
-
-  child = fork ();
-  if (child == -1)
-    return NULL;
-
-  if (child != 0)
-    {
-      /* In the parent, close the writing end of the pipe, and read from
-         the exec'd child. */
-      close (pipes[1]);
-      formatted_page = read_from_fd (pipes[0]);
-      close (pipes[0]);
-      wait (&formatter_status); /* Wait for child process to exit. */
-    }
-  else
-    { /* In the child, close the read end of the pipe, make the write end
-         of the pipe be stdout, and execute the man page formatter. */
-      close (pipes[0]);
-      (void)! freopen (NULL_DEVICE, "w", stderr);
-      (void)! freopen (NULL_DEVICE, "r", stdin);
-      /* avoid "unused result" warning with ! operator */
-      dup2 (pipes[1], fileno (stdout));
-
-      execv (formatter_args[0], formatter_args);
-
-      /* If we get here, we couldn't exec, so close out the pipe and
-         exit. */
-      close (pipes[1]);
-      exit (EXIT_SUCCESS);
-    }
-#else  /* !PIPE_USE_FORK */
-  /* Cannot fork/exec, but can popen/pclose.  */
-  {
-    FILE *fpipe;
-    char *cmdline;
-    size_t cmdlen = 0;
-    int save_stderr = dup (fileno (stderr));
-    int fd_err = open (NULL_DEVICE, O_WRONLY, 0666);
-    int i;
-
-    for (i = 0; formatter_args[i]; i++)
-      cmdlen += strlen (formatter_args[i]);
-    /* Add-ons: 2 blanks, 2 quotes for the formatter program, 1
-       terminating null character.  */
-    cmdlen += 2 + 2 + 1;
-    cmdline = xmalloc (cmdlen);
-
-    if (fd_err > 2)
-      dup2 (fd_err, fileno (stderr)); /* Don't print errors. */
-    sprintf (cmdline, "\"%s\" %s %s",
-	     formatter_args[0], formatter_args[1], formatter_args[2]);
-    fpipe = popen (cmdline, "r");
-    free (cmdline);
-    if (fd_err > 2)
-      close (fd_err);
-    dup2 (save_stderr, fileno (stderr));
-    if (fpipe == 0)
-      return NULL;
-    formatted_page = read_from_fd (fileno (fpipe));
-    formatter_status = pclose (fpipe);
-  }
-#endif /* !PIPE_USE_FORK */
-
+  int status = get_output_from_program (formatter_args[0], formatter_args,
+                                        &formatted_page, 1);
   if (!formatted_page)
     return 0;
 
   /* We could check the exit status of "man -a" to see if it successfully
      output a man page  However:
       * It is possible for "man -a" to output a man page and still to exit with
-        a non-zero status.  This was found to happen when duplicate man pages 
+        a non-zero status.  This was found to happen when duplicate man pages
         were found.
       * "man" was found to exit with a zero status on Solaris 10 even when
         it found nothing.
-     Hence, treat it as a success if more than three lines were output.  (A 
-     small amount of output could be error messages that were sent to standard 
+     Hence, treat it as a success if more than three lines were output.  (A
+     small amount of output could be error messages that were sent to standard
      output.) */
   {
     int i;
@@ -481,73 +397,6 @@ get_manpage_from_formatter (char *formatter_args[])
   clean_manpage (formatted_page);
 
   return formatted_page;
-}
-
-/* Return pointer to bytes read from file descriptor FD.  Return value to be
-   freed by caller. */
-static char *
-read_from_fd (int fd)
-{
-  struct timeval timeout;
-  char *buffer = NULL;
-  int bsize = 0;
-  int bindex = 0;
-  int select_result;
-#if defined (FD_SET)
-  fd_set read_fds;
-
-  timeout.tv_sec = 15;
-  timeout.tv_usec = 0;
-
-  FD_ZERO (&read_fds);
-  FD_SET (fd, &read_fds);
-
-  select_result = select (fd + 1, fd_set_cast (&read_fds), 0, 0, &timeout);
-#else /* !FD_SET */
-  select_result = 1;
-#endif /* !FD_SET */
-
-  switch (select_result)
-    {
-    case 0:
-    case -1:
-      break;
-
-    default:
-      {
-        int amount_read;
-        int done = 0;
-
-        while (!done)
-          {
-            while ((bindex + 1024) > (bsize))
-              buffer = xrealloc (buffer, (bsize += 1024));
-            buffer[bindex] = '\0';
-
-            amount_read = read (fd, buffer + bindex, 1023);
-
-            if (amount_read < 0)
-              {
-                done = 1;
-              }
-            else
-              {
-                bindex += amount_read;
-                buffer[bindex] = '\0';
-                if (amount_read == 0)
-                  done = 1;
-              }
-          }
-      }
-    }
-
-  if ((buffer != NULL) && (*buffer == '\0'))
-    {
-      free (buffer);
-      buffer = NULL;
-    }
-
-  return buffer;
 }
 
 static REFERENCE **
@@ -592,7 +441,7 @@ xrefs_of_manpage (NODE *node)
          page name. */
       for (; name > 0; name--)
         if (whitespace_or_newline (s.buffer[name])
-            || (!isalnum (s.buffer[name])
+            || (!isalnum ((unsigned char) s.buffer[name])
                 && s.buffer[name] != '_'
                 && s.buffer[name] != '.'
                 && s.buffer[name] != '-'
@@ -628,7 +477,7 @@ xrefs_of_manpage (NODE *node)
 
       /* Set name_end to the end of the name, but before any SGR sequence. */
       for (name_end = name; name_end < position; name_end++)
-        if (!isalnum (s.buffer[name_end])
+        if (!isalnum ((unsigned char) s.buffer[name_end])
             && s.buffer[name_end] != '_'
             && s.buffer[name_end] != '.'
             && s.buffer[name_end] != '-')
@@ -639,14 +488,14 @@ xrefs_of_manpage (NODE *node)
 
       /* Look for one or two characters within the brackets, the
          first of which must be a non-zero digit and the second a letter. */
-      if (!isdigit (s.buffer[section + 1])
+      if (!isdigit ((unsigned char) s.buffer[section + 1])
           || s.buffer[section + 1] == '0')
         ;
       else if (!s.buffer[section + 2])
         ; /* end of buffer */
       else if (s.buffer[section + 2] == ')')
         section_end = section + 3;
-      else if (!isalpha(s.buffer[section + 2]))
+      else if (!isalpha((unsigned char) s.buffer[section + 2]))
         ;
       else if (s.buffer[section + 3] == ')')
         section_end = section + 4;

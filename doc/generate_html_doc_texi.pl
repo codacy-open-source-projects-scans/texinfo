@@ -2,7 +2,7 @@
 # generate_html_doc_texi.pl: use perl data, mainly manually
 # generated hashes, to generate Texinfo documentation code.
 
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,20 +37,23 @@ BEGIN
   my ($real_command_name, $command_directory, $command_suffix)
    = fileparse($0, '.pl');
   my $updir = File::Spec->updir();
-  # tp directory
-  my $tp_srcdir;
+  # tta directory
+  my $t2a_srcdir;
   if (defined($ENV{'srcdir'})) {
     # srcdir is doc/
-    $tp_srcdir = File::Spec->catdir($ENV{'srcdir'}, $updir, 'tp');
+    $t2a_srcdir = join('/', ($ENV{'srcdir'}, $updir, 'tta'));
   } else {
-    $tp_srcdir = File::Spec->catdir($command_directory, $updir, 'tp');
+    $t2a_srcdir = join('/', ($command_directory, $updir, 'tta'));
   }
-  unshift @INC, $tp_srcdir;
-  my $lib_dir = File::Spec->catdir($tp_srcdir, 'maintain');
+
+  # find Perl Texinfo modules in srcdir
+  unshift @INC, join('/', ($t2a_srcdir, 'perl'));
+
+  my $lib_dir = join('/', ($t2a_srcdir, 'maintain'));
   # we ignore --with-external-*
-  unshift @INC, (File::Spec->catdir($lib_dir, 'lib', 'libintl-perl', 'lib'));
-  unshift @INC, (File::Spec->catdir($lib_dir, 'lib', 'Unicode-EastAsianWidth', 'lib'));
-  unshift @INC, (File::Spec->catdir($lib_dir, 'lib', 'Text-Unidecode', 'lib'));
+  unshift @INC, join('/', ($lib_dir, 'lib', 'libintl-perl', 'lib'));
+  unshift @INC, join('/', ($lib_dir, 'lib', 'Unicode-EastAsianWidth', 'lib'));
+  unshift @INC, join('/', ($lib_dir, 'lib', 'Text-Unidecode', 'lib'));
 }
 
 use Texinfo::Convert::HTML;

@@ -1,6 +1,6 @@
 /* infokey.c -- read ~/.config/texinfo/infokey
 
-   Copyright 1999-2024 Free Software Foundation, Inc.
+   Copyright 1999-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,7 +21,6 @@
 #include "doc.h"
 #include "session.h"
 #include "funs.h"
-#include "getopt.h"
 #include "variables.h"
 
 extern char *program_name;  /* in info.c */

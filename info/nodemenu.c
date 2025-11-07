@@ -1,6 +1,6 @@
 /* nodemenu.c -- produce a menu of all visited nodes.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,9 +20,9 @@
 #include "info.h"
 #include "session.h"
 #include "util.h"
+#include "nodes.h"
 #include "scan.h"
 #include "echo-area.h"
-#include "variables.h"
 
 static NODE *get_visited_nodes (void);
 
@@ -30,9 +30,7 @@ static NODE *get_visited_nodes (void);
 static const char *
 nodemenu_format_info (void)
 {
-  /* TRANSLATORS: The "\n* Menu:\n\n" part of this should not be translated, as 
-     it is part of the Info syntax. */
-  return _("\n* Menu:\n\n\
+  return _("\
   (File)Node                        Lines   Size   Containing File\n\
   ----------                        -----   ----   ---------------");
 }
@@ -187,7 +185,9 @@ get_visited_nodes (void)
      (_("Here is the menu of nodes you have recently visited.\n\
 Select one from this menu, or use '\\[history-node]' in another window.\n"), 0));
 
-  text_buffer_printf (&message, "%s\n", nodemenu_format_info ());
+  text_buffer_printf (&message, "\n%s\n\n%s\n",
+                      "* Menu:",
+                      nodemenu_format_info ());
 
   for (i = 0; (lines != NULL) && (i < lines_index); i++)
     {
@@ -215,8 +215,8 @@ DECLARE_INFO_COMMAND (list_visited_nodes,
     {
       node = new->node;
 
-      if (internal_info_node_p (node) &&
-          (strcmp (node->nodename, nodemenu_nodename) == 0))
+      if (node && (node->flags & N_IsInternal)
+          && (strcmp (node->nodename, nodemenu_nodename) == 0))
         break;
     }
 
@@ -264,10 +264,10 @@ DECLARE_INFO_COMMAND (select_visited_node,
 
   if (!line)
     /* User aborts, just quit. */
-    info_abort_key (window, 0);
+    info_abort ();
   else if (*line)
     {
-      REFERENCE *entry;
+      const REFERENCE *entry;
 
       /* Find the selected label in the references. */
       entry = info_get_menu_entry_by_label (node, line, 0);
@@ -281,5 +281,5 @@ DECLARE_INFO_COMMAND (select_visited_node,
     }
 
   free (line);
-  free (node);
+  free_node (node);
 }

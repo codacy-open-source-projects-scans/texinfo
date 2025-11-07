@@ -1,6 +1,6 @@
 /* indices.c -- deal with an Info file index.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 #include "info.h"
 #include "scan.h"
 #include "util.h"
+#include "search.h"
+#include "nodes.h"
 #include "session.h"
 #include "echo-area.h"
 #include "indices.h"
@@ -47,6 +49,10 @@ static char *index_search = NULL;
 /* A couple of "globals" describing where the initial index was found. */
 static char *initial_index_filename = NULL;
 static char *initial_index_nodename = NULL;
+
+/* A couple of "globals" describing where the last index was found. */
+static char *last_index_filename = NULL;
+static char *last_index_nodename = NULL;
 
 /* A structure associating index names with index offset ranges. */
 typedef struct {
@@ -86,7 +92,7 @@ add_index_to_index_nodenames (REFERENCE **array, NODE *node)
       assoc->first = 1 + index_nodenames[i]->last;
       assoc->last = assoc->first + last;
     }
-  add_pointer_to_array (assoc, index_nodenames_index, index_nodenames, 
+  add_pointer_to_array (assoc, index_nodenames_index, index_nodenames,
                         index_nodenames_slots, 10);
 }
 
@@ -106,10 +112,10 @@ clear_index_nodenames (void)
   index_nodenames[0] = NULL;
 }
 
-/* Find and concatenate the indices of FILE_BUFFER, saving the result in 
-   INDEX_INDEX.  The indices are defined as the first node in the file 
-   containing the word "Index" and any immediately following nodes whose names 
-   also contain "Index".  All such indices are concatenated and the result 
+/* Find and concatenate the indices of FILE_BUFFER, saving the result in
+   INDEX_INDEX.  The indices are defined as the first node in the file
+   containing the word "Index" and any immediately following nodes whose names
+   also contain "Index".  All such indices are concatenated and the result
    returned. */
 static void
 info_indices_of_file_buffer (FILE_BUFFER *file_buffer)
@@ -143,12 +149,19 @@ info_indices_of_file_buffer (FILE_BUFFER *file_buffer)
   initial_index_filename = NULL;
   initial_index_nodename = NULL;
 
+  /* Reset globals describing where the last index was. */
+  free (last_index_filename);
+  free (last_index_nodename);
+  last_index_filename = NULL;
+  last_index_nodename = NULL;
+
   clear_index_nodenames ();
 
   /* Grovel the names of the nodes found in this file. */
   if (file_buffer->tags)
     {
       TAG *tag;
+      TAG *last_index_tag = 0;
 
       for (i = 0; (tag = file_buffer->tags[i]); i++)
         {
@@ -163,14 +176,31 @@ info_indices_of_file_buffer (FILE_BUFFER *file_buffer)
               if (!node)
                 continue;
 
-              if ((node->flags & N_IsIndex) && !initial_index_filename)
+              /* If there are no nodes with marker all the menus will
+                 be gathered in nodes with "Index" in their name and
+                 initial_index_filename will remain NULL, for old
+                 Info files generated without index markers */
+              if (node->flags & N_IsIndex)
                 {
+                  if (!initial_index_filename)
+                    {
                   /* Remember the filename and nodename of this index. */
-                  initial_index_filename = xstrdup (file_buffer->filename);
-                  initial_index_nodename = xstrdup (tag->nodename);
+                      initial_index_filename = xstrdup (file_buffer->filename);
+                      initial_index_nodename = xstrdup (tag->nodename);
 
-                  /* Clear list in case earlier node had "Index" in name. */
-                  clear_index_nodenames ();
+                      /* Clear list in case earlier node had "Index" in name,
+                         as we now know that all the nodes with indices
+                         in the Info filebuffer should have markers. */
+                      clear_index_nodenames ();
+                    }
+                  last_index_tag = tag;
+                }
+              else if (initial_index_filename)
+                {
+                  /* if there was a node with index markers, only gather
+                     indices in nodes with index markers. */
+                  free_node (node);
+                  continue;
                 }
 
               menu = node->references;
@@ -188,8 +218,14 @@ info_indices_of_file_buffer (FILE_BUFFER *file_buffer)
                   free (old_result);
                   }
                 }
-              free_history_node (node);
+              free_node (node);
             }
+        }
+      if (last_index_tag)
+        {
+          /* Remember the filename and nodename of this index. */
+          last_index_filename = xstrdup (file_buffer->filename);
+          last_index_nodename = xstrdup (last_index_tag->nodename);
         }
     }
 
@@ -229,7 +265,7 @@ DECLARE_INFO_COMMAND (info_index_search,
   /* User aborted? */
   if (!line)
     {
-      info_abort_key (window, 1);
+      info_abort ();
       return;
     }
 
@@ -238,12 +274,12 @@ DECLARE_INFO_COMMAND (info_index_search,
     {
       free (line);
 
-      if (initial_index_filename && initial_index_nodename)
+      if (last_index_filename && last_index_nodename)
         {
           NODE *node;
 
-          node = info_get_node (initial_index_filename,
-                                initial_index_nodename);
+          node = info_get_node (last_index_filename,
+                                last_index_nodename);
           info_set_node_of_window (window, node);
         }
       return;
@@ -262,7 +298,7 @@ DECLARE_INFO_COMMAND (info_index_search,
       index_initial = 0;
       index_partial = 0;
     }
-  
+
   old_offset = index_offset;
 
   /* The "last" string searched for is this one. */
@@ -282,7 +318,7 @@ static int
 index_entry_matches (REFERENCE *ent, const char *str, size_t len)
 {
   char *p;
-  
+
   if (strncmp (ent->label, str, len))
     return 0;
   p = ent->label + len;
@@ -291,26 +327,26 @@ index_entry_matches (REFERENCE *ent, const char *str, size_t len)
   if (p[0] == ' ' && p[1] == '<')
     {
       for (p += 2; *p; p++)
-	{
-	  if (p[0] == '>' && p[1] == 0)
-	    return 1;
-	  else if (!isdigit (*p))
-	    return 0;
-	}
+        {
+          if (p[0] == '>' && p[1] == 0)
+            return 1;
+          else if (!isdigit ((unsigned char) *p))
+            return 0;
+        }
     }
   return 0;
 }
 
-/* Search for the next occurence of STRING in FB's indices starting at OFFSET 
+/* Search for the next occurence of STRING in FB's indices starting at OFFSET
    in direction DIR.
-   
-   Try to get an exact match, If no match found, progress onto looking for 
-   initial matches, then non-initial substrings, updating the values of 
+
+   Try to get an exact match, If no match found, progress onto looking for
+   initial matches, then non-initial substrings, updating the values of
    INDEX_INITIAL and INDEX_PARTIAL.
 
    If a match is found, return a pointer to the matching index entry, and
    set *FOUND_OFFSET to its offset in INDEX_INDEX.  Otherwise, return null.
-   If we found a partial match, set *MATCH_OFFSET to the end of the match 
+   If we found a partial match, set *MATCH_OFFSET to the end of the match
    within the index entry text, else to 0.  */
 REFERENCE *
 next_index_match (FILE_BUFFER *fb, char *string, int offset, int dir,
@@ -347,10 +383,10 @@ next_index_match (FILE_BUFFER *fb, char *string, int offset, int dir,
           }
 
       if (i < 0 || !index_index[i])
-	{
+        {
           offset = -1;
           index_initial = 1;
-	}
+        }
     }
 
   if (index_initial)
@@ -364,11 +400,11 @@ next_index_match (FILE_BUFFER *fb, char *string, int offset, int dir,
           }
 
       if (i < 0 || !index_index[i])
-	{
+        {
           offset = -1;
           index_initial = 0;
           index_partial = 1;
-	}
+        }
     }
 
   if (index_partial)
@@ -430,7 +466,7 @@ report_index_match (int i, int match_offset)
 
       ls = strlen (index_search);
       start = match_offset - ls;
-      upper = isupper (match[start]) ? 1 : 0;
+      upper = isupper ((unsigned char) match[start]) ? 1 : 0;
 
       for (k = 0; k < ls; k++)
         if (upper)
@@ -459,7 +495,7 @@ DECLARE_INFO_COMMAND (info_next_index_match,
   int match_offset;
   int dir;
   REFERENCE *result;
-  
+
   /* If there is no previous search string, the user hasn't built an index
      yet. */
   if (!index_search)
@@ -475,7 +511,7 @@ DECLARE_INFO_COMMAND (info_next_index_match,
   else
     dir = 1;
 
-  result = next_index_match (file_buffer_of_window (window), index_search, 
+  result = next_index_match (file_buffer_of_window (window), index_search,
                              index_offset, dir, &i, &match_offset);
 
   /* If that failed, print an error. */
@@ -495,10 +531,10 @@ DECLARE_INFO_COMMAND (info_next_index_match,
   info_select_reference (window, result);
 }
 
-/* Look for the best match of STRING in the indices of FB.  If SLOPPY, allow 
-   case-insensitive initial substrings to match.  Return null if no match is 
-   found.  Return value should not be freed or modified.  This differs from the 
-   behaviour of next_index_match in that only _initial_ substrings are 
+/* Look for the best match of STRING in the indices of FB.  If SLOPPY, allow
+   case-insensitive initial substrings to match.  Return null if no match is
+   found.  Return value should not be freed or modified.  This differs from the
+   behaviour of next_index_match in that only _initial_ substrings are
    considered. */
 REFERENCE *
 look_in_indices (FILE_BUFFER *fb, char *string, int sloppy)
@@ -506,7 +542,7 @@ look_in_indices (FILE_BUFFER *fb, char *string, int sloppy)
   REFERENCE **index_ptr;
   REFERENCE *nearest = 0;
 
-  /* Remember the search string so we can use it as the default for 
+  /* Remember the search string so we can use it as the default for
      'virtual-index' or 'next-index-match'. */
   free (index_search);
   index_search = xstrdup (string);
@@ -531,6 +567,65 @@ look_in_indices (FILE_BUFFER *fb, char *string, int sloppy)
     }
   return nearest;
 }
+
+/* Look for the best match of STRING in the indices of the file
+   containing NODE.
+   This is the same as look_in_indices except an index entry pointing
+   directly to NODE is preferred.  This may make a difference if the
+   search text occurs in multiple index entries.
+
+   TODO: Ideally we would also prefer subnodes via menus for index
+   entries, but this would be more difficult to implement.  We could use
+   logic like in dump_node_to_stream to record all the names of subnodes. */
+REFERENCE *
+index_lookup_from_node (NODE *node, char *string)
+{
+  REFERENCE **index_ptr;
+  REFERENCE *nearest = 0;
+  FILE_BUFFER *fb;
+  fb = info_find_file (node->fullpath);
+  if (!fb)
+    return 0;
+
+  char *node_name = node->nodename;
+
+  /* Remember the search string so we can use it as the default for
+     'virtual-index' or 'next-index-match'. */
+  free (index_search);
+  index_search = xstrdup (string);
+
+  info_indices_of_file_buffer (fb); /* Sets index_index. */
+  if (!index_index)
+    return 0;
+
+  int node_only = 0;
+  for (index_ptr = index_index; *index_ptr; index_ptr++)
+    {
+     if (!strcmp ((*index_ptr)->nodename, node_name))
+        {
+          if (!strcmp (string, (*index_ptr)->label))
+            {
+              nearest = *index_ptr;
+              break;
+            }
+          /* Allow inital matches for index entries in the
+             node only.  This means "-v" will match an index entry
+             like "-v <1>". */
+          if (!memcmp (string, (*index_ptr)->label, strlen (string)))
+            {
+              nearest = *index_ptr;
+              node_only = 1;
+            }
+        }
+      else if (!node_only)
+        {
+          if (!strcmp (string, (*index_ptr)->label))
+            nearest = *index_ptr;
+        }
+    }
+  return nearest;
+}
+
 
 /* **************************************************************** */
 /*                                                                  */
@@ -638,7 +733,7 @@ apropos_in_all_indices (char *search_string, int inform)
         {
           if (string_in_line (search_string, entry->label) != -1)
             {
-              add_pointer_to_array (entry, apropos_list_index, apropos_list, 
+              add_pointer_to_array (entry, apropos_list_index, apropos_list,
                                     apropos_list_slots, 100);
             }
         }
@@ -672,7 +767,7 @@ DECLARE_INFO_COMMAND (info_index_apropos,
   /* User aborted? */
   if (!line)
     {
-      info_abort_key (window, 1);
+      info_abort ();
       return;
     }
 
@@ -690,16 +785,16 @@ DECLARE_INFO_COMMAND (info_index_apropos,
       apropos_list = apropos_in_all_indices (index_search, 1);
 
       if (!apropos_list)
-        { 
+        {
           info_error (_(APROPOS_NONE), index_search);
           return;
         }
       else
         {
           /* Create the node.  FIXME: Labels and node names taken from the
-             indices of Info files may be in a different character encoding to 
+             indices of Info files may be in a different character encoding to
              the one currently being used.
-             This problem is reduced by makeinfo not putting quotation marks 
+             This problem is reduced by makeinfo not putting quotation marks
              from @samp, etc., into node names and index entries. */
           register int i;
 
@@ -757,8 +852,8 @@ DECLARE_INFO_COMMAND (info_index_apropos,
           {
             node = new->node;
 
-            if (internal_info_node_p (node) &&
-                (strcmp (node->nodename, apropos_list_nodename) == 0))
+            if (node && (node->flags & N_IsInternal)
+                && (strcmp (node->nodename, apropos_list_nodename) == 0))
               break;
           }
 
@@ -793,11 +888,11 @@ static void
 format_reference (REFERENCE *ref, const char *filename, struct text_buffer *buf)
 {
   size_t n;
-  
+
   n = text_buffer_printf (buf, "* %s: ", ref->label);
   if (n < NODECOL)
     n += text_buffer_fill (buf, ' ', NODECOL - n);
-  
+
   if (ref->filename && strcmp (ref->filename, filename))
     n += text_buffer_printf (buf, "(%s)", ref->filename);
   n += text_buffer_printf (buf, "%s. ", ref->nodename);
@@ -809,7 +904,7 @@ format_reference (REFERENCE *ref, const char *filename, struct text_buffer *buf)
       text_buffer_add_char (buf, '\n');
       text_buffer_fill (buf, ' ', LINECOL);
     }
-  
+
   text_buffer_printf (buf, "(line %4d)\n", ref->line_number);
 }
 
@@ -877,7 +972,7 @@ DECLARE_INFO_COMMAND (info_virtual_index,
   char *prompt, *line;
   FILE_BUFFER *fb;
   NODE *node;
-  
+
   fb = file_buffer_of_window (window);
 
   if (!initial_index_filename ||
@@ -893,7 +988,7 @@ DECLARE_INFO_COMMAND (info_virtual_index,
       info_error (_("No indices found."));
       return;
     }
-    
+
   /* Default to last search if there is one. */
   if (index_search)
     xasprintf (&prompt, "%s [%s]: ", _("Index topic"), index_search);
@@ -905,7 +1000,7 @@ DECLARE_INFO_COMMAND (info_virtual_index,
   /* User aborted? */
   if (!line)
     {
-      info_abort_key (window, 1);
+      info_abort ();
       return;
     }
 
@@ -919,7 +1014,7 @@ DECLARE_INFO_COMMAND (info_virtual_index,
       free (line);
       return; /* No previous search string, and no string given. */
     }
-  
+
   node = create_virtual_index (fb, index_search);
   if (!node)
     {

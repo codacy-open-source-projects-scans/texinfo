@@ -1,6 +1,6 @@
 /* info.c -- Display nodes of Info files in multiple windows.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include "getopt.h"
 #include "man.h"
 #include "variables.h"
+#include "configfiles.h"
 
 char *program_name = "info";
 
@@ -163,6 +164,30 @@ int info_windows_initialized_p = 0;
 static void info_short_help (void);
 static void init_messages (void);
 
+
+
+/* Debugging messages */
+unsigned debug_level;
+
+static void
+vinfo_debug (const char *format, va_list ap)
+{
+  fprintf (stderr, "%s: ", program_name);
+  vfprintf (stderr, format, ap);
+  fprintf (stderr, "\n");
+  fflush (stderr);
+}
+
+void
+info_debug (const char *format, ...)
+{
+  va_list ap;
+  va_start (ap, format);
+  vinfo_debug (format, ap);
+  va_end (ap);
+}
+
+
 
 /* Find the first file to load (and possibly the first node as well).
    If the --file option is given, use that as the file, otherwise try to
@@ -172,7 +197,7 @@ static void init_messages (void);
 static void
 get_initial_file (int *argc, char ***argv, char **error)
 {
-  REFERENCE *entry;
+  const REFERENCE *entry;
 
   /* If --file was not used and there is a slash in the first non-option
      argument (e.g. "info subdir/file.info"), do not search the dir files
@@ -201,7 +226,7 @@ get_initial_file (int *argc, char ***argv, char **error)
           user_filename = s;
         }
       if (IS_ABSOLUTE(user_filename) || HAS_SLASH(user_filename))
-        initial_file = info_add_extension (0, user_filename, 0);
+        initial_file = info_file_of_infodir (user_filename, 0, 0);
       else
         initial_file = info_find_fullpath (user_filename, 0);
 
@@ -292,21 +317,40 @@ get_initial_file (int *argc, char ***argv, char **error)
             (*argv)[0], "(dir)Top");
     }
 
-  /* Fall back to loading man page. */
+  /* Run "manual not found" hook. */
     {
-      int man_exists;
+      char *hook_name = "manual-not-found";
+      char *hook_output;
 
-      debug (3, ("falling back to manpage node"));
+      /* Create argument array. */
+      char *hook_args[3];
 
-      man_exists = check_manpage_node ((*argv)[0]);
-      if (man_exists)
+      hook_args[0] = hook_name;
+      hook_args[1] = (*argv)[0];
+      hook_args[2] = 0;
+
+      int status = run_info_hook (hook_name, hook_args, &hook_output);
+      if (status == 0)
         {
-          add_pointer_to_array
-            (info_new_reference (MANPAGE_FILE_BUFFER_NAME, (*argv)[0]),
-             ref_index, ref_list, ref_slots, 2);
+          if (!hook_output || !*hook_output)
+            {
+              /* Hook handled manual but did not print any output. */
+              exit (EXIT_FAILURE);
+            }
 
-          initial_file = MANPAGE_FILE_BUFFER_NAME;
-          return;
+          NODE *node = node_from_hook_output (hook_name, hook_output, -1);
+          info_session_one_node (node);
+          exit (0);
+        }
+      else if (status != 127)
+        {
+          /* Hook ran but did not handle manual.  Keep on going. */
+          ;
+        }
+      else if (status == 127)
+        {
+          /* Hook not found.  Keep on going. */
+          ;
         }
     }
 
@@ -441,7 +485,7 @@ add_initial_nodes (int argc, char **argv, char **error)
   if (goto_invocation_p)
     {
       NODE *top_node = 0;
-      REFERENCE *invoc_ref = 0;
+      NODE *invoc_node = 0;
 
       char *program;
 
@@ -466,13 +510,11 @@ add_initial_nodes (int argc, char **argv, char **error)
         top_node = info_get_node (ref_list[0]->filename, 
                                   ref_list[0]->nodename);
       if (top_node)
-        invoc_ref = info_intuit_options_node (top_node, program);
-      if (invoc_ref)
+        invoc_node = info_intuit_options_node (top_node, program);
+      if (invoc_node)
         {
-          info_reference_free (ref_list[0]);
-          ref_index = 0;
-
-          add_pointer_to_array (invoc_ref, ref_index, ref_list, ref_slots, 2);
+          info_session_one_node (invoc_node);
+          exit (0);
         }
       free (program);
     }
@@ -491,8 +533,8 @@ add_initial_nodes (int argc, char **argv, char **error)
       NODE *initial_node; /* Node to start following menus from. */
       NODE *node_via_menus;
 
-      initial_node = info_get_node_with_defaults (ref_list[0]->filename,
-                                                  ref_list[0]->nodename, 0);
+      initial_node = info_get_node (ref_list[0]->filename,
+                                    ref_list[0]->nodename);
       if (!initial_node)
         return;
 
@@ -504,38 +546,30 @@ add_initial_nodes (int argc, char **argv, char **error)
           info_reference_free (ref_list[0]);
           ref_list[0] = info_new_reference (node_via_menus->fullpath,
                                             node_via_menus->nodename);
-          free_history_node (node_via_menus);
+          free_node (node_via_menus);
         }
 
       /* If no nodes found, and there is exactly one argument remaining,
          check for it as an index entry. */
       else if (argc == 1 && argv[0])
         {
-          FILE_BUFFER *fb;
           REFERENCE *match;
 
           debug (3, ("looking in indices"));
-          fb = info_find_file (ref_list[0]->filename);
-          if (fb)
+          match = index_lookup_from_node (initial_node, argv[0]);
+          if (match)
             {
-              match = look_in_indices (fb, argv[0], 0);
-              if (match)
-                {
-                  argv += argc; argc = 0;
-                  free (*error); *error = 0;
+              argv += argc; argc = 0;
+              free (*error); *error = 0;
 
-                  info_reference_free (ref_list[0]);
-                  ref_list[0] = info_copy_reference (match);
-                }
+              info_reference_free (ref_list[0]);
+              ref_list[0] = info_copy_reference (match);
             }
         }
 
       /* If there are arguments remaining, follow menus inexactly. */
       if (argc != 0)
         {
-          initial_node = info_get_node_with_defaults (ref_list[0]->filename,
-                                                      ref_list[0]->nodename,
-                                                      0);
           free (*error); *error = 0;
           node_via_menus = info_follow_menus (initial_node, argv, error, 0);
           if (node_via_menus)
@@ -548,9 +582,11 @@ add_initial_nodes (int argc, char **argv, char **error)
                   ref_list[0] = info_new_reference (node_via_menus->fullpath,
                                                     node_via_menus->nodename);
                 }
-              free_history_node (node_via_menus);
+              free_node (node_via_menus);
             }
         }
+
+      free_node (initial_node);
 
       /* If still no nodes found, and there is exactly one argument remaining,
          look in indices sloppily. */
@@ -592,10 +628,11 @@ info_find_matching_files (char *filename)
   for (searchdir = infopath_first (&i); searchdir;
        searchdir = infopath_next (&i))
     {
-      REFERENCE *new_ref = dir_entry_of_infodir (filename, searchdir);
+      const REFERENCE *new_ref = dir_entry_of_infodir (filename, searchdir);
 
       if (new_ref)
-        add_pointer_to_array (new_ref, ref_index, ref_list, ref_slots, 2);
+        add_pointer_to_array (info_copy_reference (new_ref),
+                              ref_index, ref_list, ref_slots, 2);
     }
 
   /* Look for files with matching names. */
@@ -700,8 +737,8 @@ main (int argc, char *argv[])
   bindtextdomain (PACKAGE, LOCALEDIR);
   textdomain (PACKAGE);
 
-  /* set the gnulib text message domain. */
-  bindtextdomain (PACKAGE "-gnulib", LOCALEDIR);
+  /* For any translations of gnulib strings. */
+  bindtextdomain ("gnulib", GNULIB_LOCALEDIR);
 #endif
 
   init_messages ();
@@ -872,11 +909,12 @@ main (int argc, char *argv[])
     {
       printf ("info (GNU %s) %s\n", PACKAGE, VERSION);
       puts ("");
-      printf (_("Copyright (C) %s Free Software Foundation, Inc.\n\
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>\n\
-This is free software: you are free to change and redistribute it.\n\
-There is NO WARRANTY, to the extent permitted by law.\n"),
-	      "2024");
+      printf (_("Copyright (C) %s Free Software Foundation, Inc.\n"
+  "License GPLv3+: GNU GPL version 3 or later"
+  " <http://gnu.org/licenses/gpl.html>\n"
+  "This is free software: you are free to change and redistribute it.\n"
+  "There is NO WARRANTY, to the extent permitted by law.\n"),
+	      "2025");
       exit (EXIT_SUCCESS);
     }
 
@@ -936,9 +974,6 @@ There is NO WARRANTY, to the extent permitted by law.\n"),
           exit (1);
         }
       info_find_matching_files (user_filename);
-      /* If only one match, don't start in a menu of matches. */
-      if (ref_index == 1)
-        all_matches_p = 0;
 
       /* --where */
       if (print_where_p)
@@ -949,116 +984,133 @@ There is NO WARRANTY, to the extent permitted by law.\n"),
 
           for (i = 0; ref_list[i]; i++)
             printf ("%s\n", ref_list[i]->filename);
-          exit (0);
+        }
+      else
+        {
+          /* If only one match, don't start in a menu of matches. */
+          if (ref_index != 1)
+            info_session_allfiles (ref_list, user_filename, error);
+          else
+            info_session (ref_list, error);
+        }
+      exit (0);
+    }
+
+  /* --show-options */
+  if (goto_invocation_p)
+    {
+      /* If they said "info --show-options foo bar baz",
+         the last of the arguments is the program whose
+         options they want to see.  */
+      char **p = argv;
+      if (*p)
+        {
+          while (p[1])
+            p++;
+          invocation_program_name = *p;
         }
     }
-  else
+
+  get_initial_file (&argc, &argv, &error);
+
+  /* Try loading a man page if no initial file has been found
+     yet and the user did not give --file. */
+  if (!initial_file && !user_filename && argv[0])
     {
-      if (goto_invocation_p)
+      debug (3, ("falling back to manpage node"));
+
+      int man_exists = check_manpage_node (argv[0]);
+      if (man_exists)
         {
-          /* If they said "info --show-options foo bar baz",
-             the last of the arguments is the program whose
-             options they want to see.  */
-          char **p = argv;
-          if (*p)
+          NODE *man_node = get_manpage_node (argv[0]);
+          if (man_node)
             {
-              while (p[1])
-                p++;
-              invocation_program_name = *p;
+              info_session_one_node (man_node);
+              exit (0);
             }
         }
+    }
 
-      get_initial_file (&argc, &argv, &error);
+  /* If the user specified a particular filename, add the path of that file
+     to the contents of INFOPATH, for '--variable follow-strategy=path'. */
+  if (user_filename)
+    add_file_directory_to_path (user_filename);
 
-      /* If the user specified a particular filename, add the path of that file
-         to the contents of INFOPATH, for '--variable follow-strategy=path'. */
-      if (user_filename)
-        add_file_directory_to_path (user_filename);
-
-      /* If the user specified `--index-search=STRING --all', create
-         and display the menu of results. */
-      if (index_search_p && all_matches_p && initial_file)
+  /* If the user specified `--index-search=STRING --all', create
+     and display the menu of results. */
+  if (index_search_p && all_matches_p && initial_file)
+    {
+      FILE_BUFFER *initial_fb;
+      initial_fb = info_find_file (initial_file);
+      if (initial_fb)
         {
-          FILE_BUFFER *initial_fb;
-          initial_fb = info_find_file (initial_file);
-          if (initial_fb)
+          NODE *node = create_virtual_index (initial_fb,
+                                             index_search_string);
+          if (node)
             {
-              NODE *node = create_virtual_index (initial_fb,
-                                                 index_search_string);
-              if (node)
+              if (user_output_filename)
                 {
-                  if (user_output_filename)
-                    {
-                      FILE *output_stream = 0;
-                      if (strcmp (user_output_filename, "-") == 0)
-                        output_stream = stdout;
-                      else
-                        output_stream = fopen (user_output_filename, "w");
-                      if (output_stream)
-                        {
-                          write_node_to_stream (node, output_stream);
-                        }
-                      exit (0);
-                    }
+                  FILE *output_stream = 0;
+                  if (strcmp (user_output_filename, "-") == 0)
+                    output_stream = stdout;
                   else
+                    output_stream = fopen (user_output_filename, "w");
+                  if (output_stream)
                     {
-                      initialize_info_session ();
-                      info_set_node_of_window (active_window, node);
-                      info_read_and_dispatch ();
-                      close_info_session ();
-                      exit (0);
+                      write_node_to_stream (node, output_stream);
                     }
+                  exit (0);
                 }
-            }
-        }
-
-      /* If the user specified `--index-search=STRING', 
-         start the info session in the node corresponding
-         to what they want. */
-      else if (index_search_p && initial_file && !user_output_filename)
-        {
-          FILE_BUFFER *initial_fb;
-          initial_fb = info_find_file (initial_file);
-          if (initial_fb)
-            {
-              REFERENCE *result;
-              int i, match_offset;
-
-              result = next_index_match (initial_fb, index_search_string, 0, 1,
-                                         &i, &match_offset);
-
-              if (result)
+              else
                 {
-                  initialize_info_session ();
-                  report_index_match (i, match_offset);
-                  info_select_reference (active_window, result);
-                  info_read_and_dispatch ();
-                  close_info_session ();
+                  info_session_one_node (node);
                   exit (0);
                 }
             }
-
-          fprintf (stderr, _("no index entries found for '%s'\n"),
-                   index_search_string);
-          close_dribble_file ();
-          exit (1);
         }
+    }
 
-      /* Add nodes to start with (unless we fell back to the man page). */
-      if (!ref_list[0] || strcmp (ref_list[0]->filename, 
-                                  MANPAGE_FILE_BUFFER_NAME))
+  /* If the user specified `--index-search=STRING', 
+     start the info session in the node corresponding
+     to what they want. */
+  else if (index_search_p && initial_file && !user_output_filename)
+    {
+      FILE_BUFFER *initial_fb;
+      initial_fb = info_find_file (initial_file);
+      if (initial_fb)
         {
-          add_initial_nodes (argc, argv, &error);
+          REFERENCE *result;
+          int i, match_offset;
+
+          result = next_index_match (initial_fb, index_search_string, 0, 1,
+                                     &i, &match_offset);
+
+          if (result)
+            {
+              initialize_info_session ();
+              report_index_match (i, match_offset);
+              info_select_reference (active_window, result);
+              info_read_and_dispatch ();
+              close_info_session ();
+              exit (0);
+            }
         }
 
-      /* --where */
-      if (print_where_p)
-        {
-          if (initial_file)
-            printf ("%s\n", initial_file);
-          exit (0);
-        }
+      fprintf (stderr, _("no index entries found for '%s'\n"),
+               index_search_string);
+      close_dribble_file ();
+      exit (1);
+    }
 
+  /* Add nodes to start with. */
+  add_initial_nodes (argc, argv, &error);
+
+  /* --where */
+  if (print_where_p)
+    {
+      if (initial_file)
+        printf ("%s\n", initial_file);
+      exit (0);
     }
 
   /* --output */
@@ -1085,8 +1137,7 @@ There is NO WARRANTY, to the extent permitted by law.\n"),
       exit (0);
     }
     
-  info_session (ref_list, all_matches_p ? user_filename : 0, error);
-  close_info_session ();
+  info_session (ref_list, error);
   exit (0);
 }
 
@@ -1095,121 +1146,98 @@ There is NO WARRANTY, to the extent permitted by law.\n"),
 static void
 info_short_help (void)
 {
-   /* Note: split usage information up into separate strings when usage
-      revised to make it easier for translators. */
-
-  printf (_("\
-Usage: %s [OPTION]... [MENU-ITEM...]\n\
+  printf (_(
+"Usage: %s [OPTION]... [MENU-ITEM...]\n\
 \n\
 Read documentation in Info format.\n"), program_name);
   puts ("");
 
-  puts (_("\
-Frequently-used options:\n\
-  -a, --all                    use all matching manuals\n\
-  -k, --apropos=STRING         look up STRING in all indices of all manuals\n\
-  -d, --directory=DIR          add DIR to INFOPATH\n\
-  -f, --file=MANUAL            specify Info manual to visit"));
+  char *message_lines[] = {
 
-  puts (_("\
-  -h, --help                   display this help and exit\n\
-      --index-search=STRING    go to node pointed by index entry STRING\n\
-  -n, --node=NODENAME          specify nodes in first visited Info file\n\
-  -o, --output=FILE            output selected nodes to FILE"));
+N_("Frequently-used options:"),
+N_("  -a, --all                    use all matching manuals"),
+N_("  -k, --apropos=STRING         look up STRING in all indices of all manuals"),
+N_("  -d, --directory=DIR          add DIR to INFOPATH"),
+N_("  -f, --file=MANUAL            specify Info manual to visit"),
+N_("  -h, --help                   display this help and exit"),
+N_("      --index-search=STRING    go to node pointed by index entry STRING"),
+N_("  -n, --node=NODENAME          specify nodes in first visited Info file"),
+N_("  -o, --output=FILE            output selected nodes to FILE"),
 
 #if defined(__MSDOS__) || defined(__MINGW32__)
-  puts (_("\
-  -b, --speech-friendly        be friendly to speech synthesizers"));
+N_("  -b, --speech-friendly        be friendly to speech synthesizers"),
 #endif
 
-  puts (_("\
-      --subnodes               recursively output menu items\n\
-  -v, --variable VAR=VALUE     assign VALUE to Info variable VAR\n\
-      --version                display version information and exit\n\
-  -w, --where, --location      print physical location of Info file"));
+N_("      --subnodes               recursively output menu items"),
+N_("  -v, --variable VAR=VALUE     assign VALUE to Info variable VAR"),
+N_("      --version                display version information and exit"),
+N_("  -w, --where, --location      print physical location of Info file"),
 
-  puts (_("\n\
-The first non-option argument, if present, is the menu entry to start from;\n\
+"",
+N_(
+"The first non-option argument, if present, is the menu entry to start from;\n\
 it is searched for in all 'dir' files along INFOPATH.\n\
 If it is not present, info merges all 'dir' files and shows the result.\n\
 Any remaining arguments are treated as the names of menu\n\
-items relative to the initial node visited."));
+items relative to the initial node visited."),
 
-  puts (_("\n\
-For a summary of key bindings, type H within Info."));
-  puts ("");
+"",
+N_("For a summary of key bindings, type H within Info."),
+"",
 
-puts (_("\
-Examples:"));
+N_(" Examples:"),
+N_("  info                         show top-level dir menu"),
+N_("  info info-stnd               show the manual for this Info program"),
+N_("  info emacs                   start at emacs node from top-level dir"),
+N_("  info emacs buffers           select buffers menu entry in emacs manual"),
+N_("  info emacs -n Files          start at Files node within emacs manual"),
+N_("  info '(emacs)Files'          alternative way to start at Files node"),
+N_("  info --subnodes -o out.txt emacs\n\
+                               dump entire emacs manual to out.txt"),
+N_("  info -f ./foo.info           show file ./foo.info, not searching dir"),
 
-puts (_("\
-  info                         show top-level dir menu"));
-puts (_("\
-  info info-stnd               show the manual for this Info program"));
-puts (_("\
-  info emacs                   start at emacs node from top-level dir"));
-puts (_("\
-  info emacs buffers           select buffers menu entry in emacs manual"));
-puts (_("\
-  info emacs -n Files          start at Files node within emacs manual"));
-puts (_("\
-  info '(emacs)Files'          alternative way to start at Files node"));
-puts (_("\
-  info --subnodes -o out.txt emacs\n\
-                               dump entire emacs manual to out.txt"));
-puts (_("\
-  info -f ./foo.info           show file ./foo.info, not searching dir"));
+"",
 
-  puts ("");
-
-  puts (_("\
-Email bug reports to bug-texinfo@gnu.org,\n\
+"Email bug reports to bug-texinfo@gnu.org,\n\
 general questions and discussion to help-texinfo@gnu.org.\n\
-Texinfo home page: https://www.gnu.org/software/texinfo/"));
+Texinfo home page: https://www.gnu.org/software/texinfo/"
+
+  };
+
+  char **p;
+  for (p = message_lines;
+       p < &message_lines[sizeof message_lines/sizeof message_lines[0]];
+       p++)
+    {
+      if ((*p)[0] == '\0')
+        puts ("");
+      else
+        puts (_(*p));
+    }
 
   exit (EXIT_SUCCESS);
 }
 
 
-/* Initialize strings for gettext.  Because gettext doesn't handle N_ or
-   _ within macro definitions, we put shared messages into variables and
-   use them that way.  This also has the advantage that there's only one
-   copy of the strings.  */
+/* Initialize strings for gettext.  This has the advantage that there's
+   only one copy of the strings.  */
 
 const char *msg_cant_find_node;
 const char *msg_cant_file_node;
-const char *msg_cant_find_window;
 const char *msg_cant_find_point;
-const char *msg_cant_kill_last;
 const char *msg_no_menu_node;
-const char *msg_no_foot_node;
 const char *msg_no_xref_node;
-const char *msg_no_pointer;
-const char *msg_unknown_command;
-const char *msg_term_too_dumb;
-const char *msg_at_node_bottom;
-const char *msg_at_node_top;
 const char *msg_one_window;
 const char *msg_win_too_small;
-const char *msg_cant_make_help;
 
 static void
 init_messages (void)
 {
   msg_cant_find_node   = _("Cannot find node '%s'");
   msg_cant_file_node   = _("Cannot find node '(%s)%s'");
-  msg_cant_find_window = _("Cannot find a window!");
   msg_cant_find_point  = _("Point doesn't appear within this window's node!");
-  msg_cant_kill_last   = _("Cannot delete the last window");
   msg_no_menu_node     = _("No menu in this node");
-  msg_no_foot_node     = _("No footnotes in this node");
   msg_no_xref_node     = _("No cross references in this node");
-  msg_no_pointer       = _("No '%s' pointer for this node");
-  msg_unknown_command  = _("Unknown Info command '%c'; try '?' for help");
-  msg_term_too_dumb    = _("Terminal type '%s' is not smart enough to run Info");
-  msg_at_node_bottom   = _("You are already at the last page of this node");
-  msg_at_node_top      = _("You are already at the first page of this node");
   msg_one_window       = _("Only one window");
   msg_win_too_small    = _("Resulting window would be too small");
-  msg_cant_make_help   = _("Not enough room for a help window, please delete a window");
 }

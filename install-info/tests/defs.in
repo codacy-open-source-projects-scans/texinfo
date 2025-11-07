@@ -1,6 +1,6 @@
 # @configure_input@
 # 
-# Copyright 2008-2024 Free Software Foundation, Inc.
+# Copyright 2008-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,9 +41,8 @@ fi
 # Get messages in English
 LC_ALL=C ; export LC_ALL
 
-# Use first line to run valgrind on the tests.  After "make check",
-# check for errors with "grep ERROR\ SUM *.log".
-#valgrind='valgrind '
+# Use first line to run valgrind on the tests.
+#valgrind="valgrind --log-file=`basename $0.val.log` --leak-check=full "
 valgrind=
 
 # Two variables we use in the test scripts:
@@ -63,10 +62,13 @@ fi
 : ${EGREP='grep -E'}
 
 # Systems which define $COMSPEC or $ComSpec use semicolons to separate
-# directories in TEXINPUTS -- except for Cygwin et al., where COMSPEC
+# directories in TEXINPUTS -- except for Cygwin and Msys, where COMSPEC
 # might be inherited, but : is used.
+
 if test -n "$COMSPEC$ComSpec" \
-   && uname | $EGREP -iv 'cygwin|mingw|djgpp' >/dev/null; then
+   && uname | $EGREP -iv 'cygwin|msys' >/dev/null \
+   && test "$OSTYPE" != cygwin \
+   && test "$OSTYPE" != msys ; then
   path_sep=";"
 else
   path_sep=":"

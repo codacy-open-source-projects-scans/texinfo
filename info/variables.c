@@ -1,6 +1,6 @@
 /* variables.c -- how to manipulate user visible variables in Info.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -226,6 +226,55 @@ rendition_to_string (RENDITION *rendition)
   return string;
 }
 
+char *
+variable_description_string (VARIABLE_ALIST *var)
+{
+  char *description;
+  if (var->choices)
+    xasprintf (&description, "%s (%s): %s.",
+             var->name,
+             var->value == &highlight_searches
+               ? on_off_choices[match_rendition.mask != 0]
+               : var->choices == (char **) &rendition_choices
+               ? rendition_to_string (var->value)
+               : var->choices[*(int *)var->value],
+             _(var->doc));
+  else
+    xasprintf (&description, "%s (%d): %s.",
+             var->name, *(int *)var->value, _(var->doc));
+
+  return description;
+}
+
+static char *where_set_names[] = {
+  "default",
+  "file",
+  "command line",
+  "interactive"
+};
+
+char *
+variable_long_description_string (VARIABLE_ALIST *var)
+{
+  char *description;
+  if (var->choices)
+    xasprintf (&description, "%s (%s) [%s]\n    %s.",
+             var->name,
+             var->value == &highlight_searches
+               ? on_off_choices[match_rendition.mask != 0]
+               : var->choices == (char **) &rendition_choices
+               ? rendition_to_string (var->value)
+               : var->choices[*(int *)var->value],
+             where_set_names[var->where_set],
+             _(var->doc));
+  else
+    xasprintf (&description, "%s (%d) [%s]\n    %s.",
+             var->name, *(int *)var->value,
+             where_set_names[var->where_set], _(var->doc));
+
+  return description;
+}
+
 DECLARE_INFO_COMMAND (describe_variable, _("Explain the use of a variable"))
 {
   VARIABLE_ALIST *var;
@@ -236,18 +285,7 @@ DECLARE_INFO_COMMAND (describe_variable, _("Explain the use of a variable"))
   if (!var)
     return;
 
-  if (var->choices)
-    xasprintf (&description, "%s (%s): %s.",
-             var->name,
-             var->value == &highlight_searches
-             ? on_off_choices[match_rendition.mask != 0]
-             : var->choices == (char **) &rendition_choices
-             ? rendition_to_string (var->value)
-             : var->choices[*(int *)var->value], _(var->doc));
-  else
-    xasprintf (&description, "%s (%d): %s.",
-             var->name, *(int *)var->value, _(var->doc));
-
+  description = variable_description_string (var);
   window_message_in_echo_area ("%s", description);
   free (description);
 }
@@ -329,7 +367,7 @@ DECLARE_INFO_COMMAND (set_variable, _("Set the value of an Info variable"))
       /* User aborted? */
       if (!line)
         {
-          info_abort_key (active_window, 0);
+          info_abort ();
           return;
         }
 
@@ -378,7 +416,7 @@ read_variable_name (char *prompt, WINDOW *window)
   /* User aborted? */
   if (!line)
     {
-      info_abort_key (active_window, 0);
+      info_abort ();
       return NULL;
     }
 
@@ -516,6 +554,7 @@ set_variable_to_value (VARIABLE_ALIST *var, char *value, int where)
      anything, but don't indicate an error. */
   if (var->where_set > where)
     return 1;
+  var->where_set = where;
 
   if (var->choices)
     {
@@ -536,7 +575,6 @@ set_variable_to_value (VARIABLE_ALIST *var, char *value, int where)
             if (strcmp (var->choices[j], value) == 0)
               {
                 *(int *)var->value = j;
-                var->where_set = where;
                 return 1;
               }
         }

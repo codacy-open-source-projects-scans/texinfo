@@ -1,7 +1,7 @@
 #! /bin/sh
-# Setup HTML output using C in conversion
+# Setup HTML output using XS in conversion
 #
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -14,6 +14,7 @@
 
 set -e
 
+# Note that it is the default nowadays
 TEXINFO_XS_CONVERT=1
 export TEXINFO_XS_CONVERT
 

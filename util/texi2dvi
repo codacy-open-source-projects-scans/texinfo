@@ -1,7 +1,7 @@
 #! /bin/sh
 # texi2dvi --- produce DVI (or PDF) files from Texinfo (or (La)TeX) sources.
 #
-# Copyright 1992-2024 Free Software Foundation, Inc.
+# Copyright 1992-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,11 +21,6 @@
 # Please send bug reports, etc. to bug-texinfo@gnu.org.
 # If possible, please send a copy of the output of the script called with
 # the `--debug' option when making a bug report.
-
-test -f /bin/ksh && test -z "$RUNNING_KSH" \
-  && { UNAMES=`uname -s`; test "x$UNAMES" = xULTRIX; } 2>/dev/null \
-  && { RUNNING_KSH=true; export RUNNING_KSH; exec /bin/ksh $0 ${1+"$@"}; }
-unset RUNNING_KSH
 
 # No failure shall remain unpunished.
 set -e
@@ -81,6 +76,7 @@ IFS="$space$tab$newline"
 
 if test -n "$COMSPEC$ComSpec" \
    && uname | $EGREP -iv 'cygwin|msys' >/dev/null \
+   && test "$OSTYPE" != cygwin \
    && test "$OSTYPE" != msys ; then
   path_sep=";"
 else
@@ -193,9 +189,9 @@ EOF
 version ()
 {
   cat <<EOF
-texi2dvi (GNU Texinfo 7.1.90)
+texi2dvi (GNU Texinfo 7.2dev)
 
-Copyright (C) 2024 Free Software Foundation, Inc.
+Copyright (C) 2025 Free Software Foundation, Inc.
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law.
@@ -588,7 +584,9 @@ move_to_dest ()
     if mv "$1" "$dest" ; then
        # For --output, report that the file was moved, as TeX has just
        # reported that it wrote output at the original location.
-       test z"$oname" != z && echo "Moved $1 to $dest"
+       if test z"$oname" != z ; then
+         echo "Moved $1 to $dest"
+       fi
     else
        error 1 "Could not move $1 to $dest"
     fi

@@ -1,7 +1,7 @@
 # Makefile.am for texinfo.
 # Process this file with automake to produce Makefile.in in all directories.
 #
-# Copyright 2002-2024 Free Software Foundation, Inc.
+# Copyright 2002-2025 Free Software Foundation, Inc.
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -12,16 +12,15 @@
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 # Find our headers and gnulib headers.
-ACLOCAL_AMFLAGS = -I build-aux/m4 -I gnulib/m4
+ACLOCAL_AMFLAGS = -I build-aux/m4 -I gnulib/m4 -I m4
 
 # Wrapper for the build environment.
 noinst_SCRIPTS = pre-inst-env
 
 # Additional files to distribute.
-EXTRA_DIST = ChangeLog.46 ChangeLog.65 ChangeLog.70 \
+EXTRA_DIST = ChangeLog.46 ChangeLog.65 ChangeLog.70 ChangeLog.72 \
   INSTALL.generic README-hacking \
-  system.h gnulib/m4/gnulib-cache.m4 \
-  djgpp
+  system.h gnulib/m4/gnulib-cache.m4
 
 # This is to prevent texinfo.tex from being included in the top-level
 # distribution directory.
@@ -30,19 +29,19 @@ TEXINFO_TEX = doc/texinfo.tex
 # Ensure that this file is built early, as it is needed to run texi2any
 # and pod2texi in rules under "man" and "doc".  This helps in running
 # "make dist" without running "make" first.
-BUILT_SOURCES = tp/Texinfo/ModulePath.pm
-tp/Texinfo/ModulePath.pm:
-	cd tp && $(MAKE) $(AM_MAKEFLAGS) Texinfo/ModulePath.pm
+BUILT_SOURCES = tta/perl/Texinfo/ModulePath.pm
+tta/perl/Texinfo/ModulePath.pm:
+	cd tta/perl && $(MAKE) $(AM_MAKEFLAGS) Texinfo/ModulePath.pm
 
 # Ensure that those files are built early, as they are needed in po*
 # directories.  This allows to run configure and make after make distclean
-BUILT_SOURCES += $(top_srcdir)/tp/Texinfo/HTMLData.pm \
-                 $(top_srcdir)/tp/Texinfo/XS/main/html_conversion_data.c
-$(top_srcdir)/tp/Texinfo/HTMLData.pm:
-	cd tp && $(MAKE) $(AM_MAKEFLAGS) translated_source_files
+BUILT_SOURCES += $(top_srcdir)/tta/perl/Texinfo/HTMLData.pm \
+                 $(top_srcdir)/tta/C/main/html_conversion_data.c
+$(top_srcdir)/tta/perl/Texinfo/HTMLData.pm:
+	cd tta/perl && $(MAKE) $(AM_MAKEFLAGS) translated_source_files
 
-$(top_srcdir)/tp/Texinfo/XS/main/html_conversion_data.c:
-	cd tp/Texinfo/XS && $(MAKE) $(AM_MAKEFLAGS) translated_source_files
+$(top_srcdir)/tta/C/main/html_conversion_data.c:
+	cd tta/C && $(MAKE) $(AM_MAKEFLAGS) translated_source_files
 
 # One special target for installers to use by hand if desired.
 install-tex:
@@ -52,7 +51,7 @@ install-tex:
 SUBDIRS =
 if TOOLS_ONLY
   # Build native tools only.
-  SUBDIRS += gnulib/lib install-info tp util
+  SUBDIRS += gnulib/lib install-info tta util
 if HAVE_TERMLIBS
     SUBDIRS += info
 else
@@ -75,7 +74,7 @@ if HOST_IS_WINDOWS
   SUBDIRS += info
 endif
 endif
-  SUBDIRS += gnulib/po install-info po po_document tp Pod-Simple-Texinfo \
+  SUBDIRS += install-info po po_document tta Pod-Simple-Texinfo \
              texindex util doc man
   SUBDIRS += js
 endif
@@ -98,11 +97,15 @@ dtd-check:
 	&& diff $@-1 $(srcdir)/util/texinfo.dtd \
 	&& rm -f $@-1
 
+# For updating version number
+update-version:
+	./update-version.sh $(srcdir)
+
 # For updating copyright years
 grand-replace:
 	./grand-replace.sh $(srcdir)
 
-# just for convenience:
+# run update-po in both gettext directories
 update-po:
 	cd po && $(MAKE) update-po
 	cd po_document && $(MAKE) update-po
@@ -112,8 +115,10 @@ update-po:
 # Run this before making pretests, as well as official releases, so that
 # translators will see changed strings.  See README-hacking.
 # Note that pgettext is not matched to avoid a false positive in
-# tp/Texinfo/Translations.pm, but it is not problematic as it appears
+# tta/perl/Texinfo/Translations.pm, but it is not problematic as it appears
 # only in errors.c, which matches other function names.
+# False positive in ConvertXS.c with function definition but no
+# translated strings
 po-check:
 	@if test -f po/POTFILES.in; then				\
 	  grep -E -v '^(#|$$)' po/POTFILES.in				\
@@ -124,12 +129,13 @@ po-check:
 	    # don't look at sources from some subdirs.			\
 	    case $$file in						\
 	      contrib/* ) continue;;					\
-	      djgpp/* | man/* ) continue;;	\
+	      man/* ) continue;;	\
 	      gnulib/lib/*) continue;;					\
 	      texinfo-*/*) continue;;					\
-              tp/maintain/* ) continue;;				\
-              tp/t/results* ) continue;;				\
-	      tp/Texinfo/XS/gnulib/lib/*) continue;;			\
+              tta/maintain/* ) continue;;				\
+              tta/t/results* ) continue;;				\
+	      tta/gnulib/lib/*) continue;;			\
+	      tta/perl/XSTexinfo/convert/ConvertXS.c) continue;;	\
 	    esac;							\
 	    files="$$files $$file";					\
 	  done;								\
@@ -140,7 +146,7 @@ po-check:
 	  rm -f $@-1 $@-2;						\
 	fi
 
-# false positive in tp/Texinfo/XS/main/DocumentXS.c with function definition
+# false positive in DocumentXS.c with function definition
 # but no translated strings
 po_document-check:
 	@if test -f po_document/POTFILES.in; then			\
@@ -151,11 +157,11 @@ po_document-check:
 	    # don't look at sources from some subdirs.			\
 	    case $$file in						\
 	      contrib/* ) continue;;					\
-	      djgpp/* | man/* ) continue;;	\
+	      man/* ) continue;;	\
 	      texinfo-*/*) continue;;					\
-	      tp/maintain/*) continue;;					\
-	      tp/init/documentation_examples.pm) continue;;		\
-	      tp/Texinfo/XS/main/DocumentXS.c) continue;;		\
+	      tta/maintain/*) continue;;				\
+	      tta/init/documentation_examples.pm) continue;;		\
+	      tta/perl/XSTexinfo/parser_document/DocumentXS.c) continue;;		\
 	    esac;							\
 	    files="$$files $$file";					\
 	  done;								\
@@ -166,3 +172,5 @@ po_document-check:
 	  rm -f $@-1 $@-2;						\
 	fi
 
+EXTRA_DIST += po/texinfo.pot-header \
+              po_document/texinfo_document.pot-header

@@ -1,6 +1,6 @@
 /* tilde.c -- tilde expansion code (~/foo := $HOME/foo).
 
-   Copyright 1988-2024 Free Software Foundation, Inc.
+   Copyright 1988-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,6 +19,13 @@
 
 #include "info.h"
 #include "tilde.h"
+
+#ifdef HAVE_PWD_H
+#include <pwd.h>
+#endif
+/* Some systems don't declare this function in pwd.h. */
+struct passwd *getpwnam (const char *name);
+
 
 /* Do the work of tilde expansion on FILENAME.  FILENAME starts with a
    tilde. */

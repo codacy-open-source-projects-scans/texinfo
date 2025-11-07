@@ -1,6 +1,6 @@
 # Texinfo.pm: format Pod as Texinfo.
 #
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
-# Parts from L<Pod::Simple::HTML>.
+# Parts from Pod::Simple::HTML
+# Parts (for compatibility) from Pod::Simple::XHTML
 #
 #
 # The code is organized such that it is easy to use any Pod::Simple
@@ -26,18 +27,17 @@
 #   PullParser tokens.
 # * The code could also be used directly as a Pod::Simple subclass by renaming
 #   _texinfo_handle_element_start and the two other similar functions as
-#   _handle_element_start ad similar.
+#   _handle_element_start and similar.
 # * The code can also be used as a Pod::Simple::SimpleTree subclass, by
 #   using _convert_pod_simple_tree.  The possibility to convert SimpleTree
 #   is actually used in the code for L<> formatting.
 #
+# The output goes through $self->{'output_fh'} filehandle (could also
+# have been obtained by $self->output_fh()).  It is not documented very
+# clearly in Pod::Simple manuals, but it is what parsers do.
+#
 # bare_output flag described in Pod::Simple::Subclassing is taken into
 # account.
-#
-#
-# TODO: it could be relevant to convert L<...> referring to external modules to
-# urls to Metacpan, or similar websites, using @url instead of @ref, which
-# is very unlikely to lead to other modules documentation.
 
 
 package Pod::Simple::Texinfo;
@@ -49,6 +49,11 @@ use strict;
 use Carp qw(cluck);
 #use Pod::Simple::Debug (3);
 use Pod::Simple::PullParser ();
+
+# use idify from this package to be sure that the target is set by
+# MetaCPAN::Pod::HTML as anchor.  Take texinfo_perldoc_url_prefix
+# default from this package.
+use Pod::Simple::XHTML;
 
 # for parselink()
 #use Pod::ParseLink;
@@ -104,10 +109,12 @@ my @raw_formats = ('html', 'HTML', 'docbook', 'DocBook', 'texinfo',
 __PACKAGE__->_accessorize(
   'texinfo_add_upper_sectioning_command',
   'texinfo_debug',
+  'texinfo_external_pod_as_url',
   'texinfo_generate_setfilename', # for standalone manuals
   'texinfo_internal_pod_manuals',
   'texinfo_man_url_prefix',
   'texinfo_main_command_sectioning_style',
+  'texinfo_perldoc_url_prefix',
   'texinfo_section_nodes',
   'texinfo_sectioning_base_level',
   'texinfo_sectioning_style',
@@ -118,6 +125,36 @@ my $sectioning_style = 'numbered';
 #my $sectioning_base_level = 2;
 my $sectioning_base_level = 0;
 my $man_url_prefix = 'http://man.he.net/man';
+
+my $pod_links_html_parser = Pod::Simple::XHTML->new();
+
+# taken from recent Pod::Simple::XHTML in case it is missing (on Solaris
+# for example).
+# COPYRIGHT AND DISCLAIMERS for Pod::Simple::XHTML:
+# Copyright (c) 2003-2005 Allison Randal.
+#
+# This library is free software; you can redistribute it and/or modify it
+# under the same terms as Perl itself.
+#
+# This program is distributed in the hope that it will be useful, but
+# without any warranty; without even the implied warranty of
+# merchantability or fitness for a particular purpose.
+
+sub _compatibility_idify {
+    my ($self, $t, $not_unique) = @_;
+    for ($t) {
+        s/[<>&'"]//g;            # Strip HTML special characters
+        s/^\s+//; s/\s+$//;      # Strip white space.
+        s/^([^a-zA-Z]+)$/pod$1/; # Prepend "pod" if no valid chars.
+        s/^[^a-zA-Z]+//;         # First char must be a letter.
+        s/[^-a-zA-Z0-9_:.]+/-/g; # All other chars must be valid.
+        s/[-:.]+$//;             # Strip trailing punctuation.
+    }
+    return $t if $not_unique;
+    my $i = '';
+    $i++ while $self->{_compatibility_idify_ids}{"$t$i"}++;
+    return "$t$i";
+}
 
 sub new
 {
@@ -133,6 +170,11 @@ sub new
   $new->texinfo_man_url_prefix($man_url_prefix);
   $new->texinfo_sectioning_style($sectioning_style);
   $new->texinfo_add_upper_sectioning_command(1);
+  $new->texinfo_external_pod_as_url(1);
+  $new->texinfo_perldoc_url_prefix($pod_links_html_parser->perldoc_url_prefix);
+
+  # from recent recent Pod::Simple::XHTML, see above
+  $new->{'_compatibility_idify_ids'} = { '_podtop_' => 1 }; # used in <body>
   return $new;
 }
 
@@ -362,9 +404,8 @@ sub _protect_comma($)
 {
   my $texinfo = shift;
   my $parser = Texinfo::Parser::parser();
-  my $tree = $parser->parse_texi_line($texinfo);
+  my $tree = $parser->parse_texi_line($texinfo, undef, 1);
   Texinfo::ManipulateTree::protect_comma_in_tree($tree);
-  $tree = Texinfo::Document::rebuild_tree($tree);
   return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 }
 
@@ -372,9 +413,8 @@ sub _protect_colon($)
 {
   my $texinfo = shift;
   my $parser = Texinfo::Parser::parser();
-  my $tree = $parser->parse_texi_line($texinfo);
+  my $tree = $parser->parse_texi_line($texinfo, undef, 1);
   Texinfo::ManipulateTree::protect_colon_in_tree($tree);
-  $tree = Texinfo::Document::rebuild_tree($tree);
   return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 }
 
@@ -386,9 +426,12 @@ sub _protect_hashchar($)
     my $parser = Texinfo::Parser::parser();
     my $document = $parser->parse_texi_piece($texinfo);
     my $tree = $document->tree();
+    # Remove the link to C data, such that convert_to_texinfo converts
+    # the modified Perl tree.  Another option could have been to call
+    # protect_hashchar_at_line_beginning_in_document, but it is supposed
+    # to be internal for tests only.
+    $tree = Texinfo::Document::build_tree($tree, 1);
     Texinfo::Transformations::protect_hashchar_at_line_beginning($tree);
-    # rebuild the tree
-    $tree = $document->tree();
     return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
   } else {
     return $texinfo;
@@ -401,9 +444,10 @@ sub _reference_to_text_in_texi($)
   my $parser = Texinfo::Parser::parser();
   my $document = $parser->parse_texi_piece($texinfo);
   my $tree = $document->tree();
+  # Remove the link to C data, such that convert_to_texinfo converts
+  # the modified Perl tree.
+  $tree = Texinfo::Document::build_tree($tree, 1);
   Texinfo::Transformations::reference_to_arg_in_tree($tree);
-  # rebuild the tree
-  $tree = $document->tree();
   return Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
 }
 
@@ -500,10 +544,11 @@ sub _normalize_texinfo_name($$;$)
     print_texinfo_errors($error_messages, $error_count,
                          '_normalize_texinfo_name');
   }
+  # Remove the link with C data to modify and convert a Perl tree
+  $tree = Texinfo::Document::build_tree($tree, 1);
+
   if ($command eq 'anchor') {
     Texinfo::Transformations::protect_first_parenthesis_in_targets($tree);
-    # rebuild the tree
-    $tree = $document->tree();
   }
   my $fixed_text = Texinfo::Convert::Texinfo::convert_to_texinfo($tree);
   my $result = $fixed_text;
@@ -543,7 +588,7 @@ sub _prepare_anchor($$)
   }
   # Now we know that we have something.
   my $parser = Texinfo::Parser::parser();
-  my $node_tree = $parser->parse_texi_line($node);
+  my $node_tree = $parser->parse_texi_line($node, undef, 1);
   my $normalized_base = convert_to_identifier($node_tree);
   my $normalized = $normalized_base;
   my $number_appended = 0;
@@ -554,11 +599,10 @@ sub _prepare_anchor($$)
   my $node_name;
   if ($number_appended) {
     $texinfo_node_name = "$node $number_appended";
-    $node_tree = $parser->parse_texi_line($texinfo_node_name);
+    $node_tree = $parser->parse_texi_line($texinfo_node_name, undef, 1);
   }
   Texinfo::ManipulateTree::protect_comma_in_tree($node_tree);
   Texinfo::ManipulateTree::protect_colon_in_tree($node_tree);
-  $node_tree = Texinfo::Document::rebuild_tree($node_tree);
   $self->{'texinfo_nodes'}->{$normalized} = $node_tree;
   my $final_node_name = Texinfo::Convert::Texinfo::convert_to_texinfo($node_tree);
   return $final_node_name;
@@ -649,9 +693,10 @@ sub _texinfo_handle_element_start($$$)
       #print STDERR "  @attrs\n";
       #my $raw_L = $attr_hash->{'raw'}.'';
       #print STDERR " $attr_hash->{'raw'}: $raw_L\n";
-      my ($url_arg, $texinfo_node, $texinfo_manual, $texinfo_section);
+      my ($url_arg, $texinfo_node, $texinfo_manual, $texinfo_section,
+          $manual_text, $section_text);
       if ($linktype eq 'man') {
-        # NOTE: the .'' is here to force the $token->attr to ba a real
+        # NOTE: the .'' is here to force the $token->attr to be a real
         # string and not an object.
         # NOTE 2: It is not clear that setting the url should be done
         # here, maybe this should be in the Texinfo HTML converter.
@@ -706,7 +751,7 @@ sub _texinfo_handle_element_start($$$)
         # same functions as the pull parser implementation.
         my $manual = $attr_hash->{'to'};
         my $section = $attr_hash->{'section'};
-        my ($section_text, $section_texi, $section_out);
+        my ($section_texi, $section_out);
         if (defined($section)) {
           # convert the section presented as tree to Texinfo
           _begin_context($self->{'texinfo_accumulated'}, 'L section');
@@ -717,7 +762,7 @@ sub _texinfo_handle_element_start($$$)
           # coerce to string
           $section_text = $section.'';
         }
-        my ($manual_text, $manual_texi, $manual_out);
+        my ($manual_texi, $manual_out);
         if (defined($manual)) {
           # convert the manual presented as tree to Texinfo
           _begin_context($self->{'texinfo_accumulated'}, 'L manual');
@@ -797,7 +842,8 @@ sub _texinfo_handle_element_start($$$)
         # section.
       }
       push @{$self->{'texinfo_stack'}}, [$linktype, $content_implicit, $url_arg,
-                           $texinfo_manual, $texinfo_node, $texinfo_section];
+                           $texinfo_manual, $texinfo_node, $texinfo_section,
+                           $manual_text, $section_text];
       #print STDERR join('|', @{$self->{'texinfo_stack'}->[-1]}) . "\n";
       #if (defined($to)) {
       #  print STDERR " | $to\n";
@@ -952,7 +998,8 @@ sub _texinfo_handle_element_end($$$)
     } elsif ($tagname eq 'L') {
       my $format = pop @{$self->{'texinfo_stack'}};
       my ($linktype, $content_implicit, $url_arg,
-          $texinfo_manual, $texinfo_node, $texinfo_section) = @$format;
+          $texinfo_manual, $texinfo_node, $texinfo_section,
+          $manual_text, $section_text) = @$format;
       if ($linktype ne 'man') {
         my $explanation;
         if (defined($result) and $result =~ m/\S/ and !$content_implicit) {
@@ -967,9 +1014,31 @@ sub _texinfo_handle_element_end($$$)
           }
         } elsif ($linktype eq 'pod') {
           if (defined($texinfo_manual)) {
-            $explanation = '' if (!defined($explanation));
-            _output($fh, $self->{'texinfo_accumulated'},
-                     "\@ref{$texinfo_node,,$explanation, $texinfo_manual}");
+            if ($self->texinfo_external_pod_as_url) {
+              my $node_manual = _protect_comma(protect_text($manual_text));
+              if (defined($explanation)) {
+                $node_manual .= $explanation;
+              } elsif (defined($texinfo_node) and $texinfo_node ne '') {
+                $node_manual .= ' '.$texinfo_node;
+              }
+              my $href = $self->texinfo_perldoc_url_prefix
+                  . $manual_text;
+              if (defined($explanation)) {
+                my $target;
+                if ($pod_links_html_parser->can('idify')) {
+                  $target = $pod_links_html_parser->idify($section_text, 1);
+                } else {
+                  $target = $self->_compatibility_idify($section_text, 1);
+                }
+                $href .= '#'.$target if ($target ne '');
+              }
+              _output($fh, $self->{'texinfo_accumulated'},
+               "\@url{"._protect_comma(protect_text($href)).", $node_manual}");
+            } else {
+              $explanation = '' if (!defined($explanation));
+              _output($fh, $self->{'texinfo_accumulated'},
+                    "\@ref{$texinfo_node,,$explanation, $texinfo_manual}");
+            }
           } elsif (defined($explanation)) {
             _output($fh, $self->{'texinfo_accumulated'},
                    "\@ref{$texinfo_node,,$explanation}");
@@ -1125,7 +1194,7 @@ It supports producing a standalone manual per Pod (the default) or
 render the Pod as a chapter, see L</texinfo_sectioning_base_level>.
 
 C<@documentencoding> is not output, which is consistent with outputting
-Texinfo in UTF-8 in the caller.
+Texinfo in UTF-8.
 
 =head1 METHODS
 
@@ -1159,9 +1228,15 @@ output instead.
 =item texinfo_debug
 
 Debug level.  Mainly or only used to turn on Texinfo parsing debugging, when
-Texinfo obtained from POD is parsed as Texinfo code to be normalized or
+Texinfo obtained from Pod is parsed as Texinfo code to be normalized or
 modified and to report associated Texinfo processing errors.  More information
 output with higher levels.  Default 0, no debugging information output.
+
+=item texinfo_external_pod_as_url
+
+If set to 0, generate a C<@ref> with an external manual argument for a
+reference to an external Pod page.  In the default case, an C<@url> linking to
+a website collecting CPAN documentation is output for external Pod pages.
 
 =item texinfo_generate_setfilename
 
@@ -1190,6 +1265,11 @@ which the C<numbered> style is used in the default case.
 
 String used as a prefix for man page urls.  Default
 is C<http://man.he.net/man>.
+
+=item texinfo_perldoc_url_prefix
+
+String used as a prefix for external Pod if texinfo_external_pod_as_url
+is set.  Default is L<Pod::Simple::XHTML/perldoc_url_prefix>.
 
 =item texinfo_section_nodes
 
@@ -1227,7 +1307,7 @@ L<Pod::Simple>. L<Pod::Simple::PullParser>. The Texinfo manual.
 
 =head1 COPYRIGHT AND LICENSE
 
-Copyright (C) 2011-2024 Free Software Foundation, Inc.
+Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

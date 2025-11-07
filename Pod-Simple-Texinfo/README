@@ -21,7 +21,7 @@ DEPENDENCIES
 
 This module requires these other modules and libraries:
 
-Pod::Simple::PullParser, Texinfo::Parser.  
+Pod::Simple::PullParser, Pod::Simple::XHTML, Texinfo::Parser.
 
 DISTRIBUTION SETUP
 
@@ -43,12 +43,12 @@ Makefile.PL, you can do something like the following, with a sed command
 that understands -i to modify the scripts such that they do not need the
 defs file present in the Autoconf and Automake built environment:
 for script in test_scripts/*.sh; do
-  sed -i -e 's;^\. \$testdir/\.\./tp/defs.*;#&\nPERL=perl;' $script;
+  sed -i -e 's;^\. \$testdir/\.\./tta/defs.*;#&\nPERL=perl;' $script;
 done
 
 COPYRIGHT AND LICENCE
 
-Copyright (C) 2011-2024 Free Software Foundation, Inc.
+Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

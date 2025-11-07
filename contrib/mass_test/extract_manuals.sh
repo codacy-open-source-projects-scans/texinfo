@@ -1,7 +1,7 @@
 #! /bin/sh
 # Copy and extract Texinfo manuals
 #
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -96,22 +96,51 @@ rm -rf tmp
 
 mkdir -p manuals/glibc/libc/
 echo glibc/libc
-cp -p download/sourceware.org/glibc/manual/texi/libc-texi.tar.gz manuals/glibc/libc/
+cp -p download/sourceware.org/glibc/manual/latest/texi/libc-texi.tar.gz manuals/glibc/libc/
 (
   cd manuals/glibc/libc/
   tar xzf *-texi.tar.gz
   rm -f *-texi.tar.gz
 )
 
-rm -rf manuals/groff/groff/
-mkdir -p manuals/groff/groff/
+mkdir -p manuals/mailutils/mailutils
+echo mailutils/mailutils
+cp -p download/mailutils.org/manual/mailutils.texi.tar.gz manuals/mailutils/mailutils/
+(
+  cd manuals/mailutils/mailutils/
+  tar xzf *.texi.tar.gz
+  rm -f *.texi.tar.gz
+)
+
+rm -rf manuals/groff/groff
+mkdir -p manuals/groff/groff
 echo groff/groff
-cp -p download/www.gnu.org/software/groff/manual/groff.texi.gz manuals/groff/groff
+cp -p download/www.gnu.org/software/groff/manual/groff.texi.gz manuals/groff/groff/
 (
   cd manuals/groff/groff
   gunzip groff.texi.gz
 )
 
+rm -rf manuals/gnubg/gnubg
+mkdir -p manuals/gnubg/gnubg
+echo gnubg/gnubg
+cp -p download/www.gnu.org/software/gnubg/manual/gnubg.texi.gz manuals/gnubg/gnubg
+(
+  cd manuals/gnubg/gnubg
+  gunzip gnubg.texi.gz
+)
+
+for texi_file_project in c-graph epsilon ; do
+  rm -rf manuals/${texi_file_project}/${texi_file_project}
+  mkdir -p manuals/${texi_file_project}/${texi_file_project}
+  echo "${texi_file_project}/${texi_file_project}"
+  cp -p download/www.gnu.org/software/${texi_file_project}/manual/${texi_file_project}.texi manuals/${texi_file_project}/${texi_file_project}/
+done
+
+rm -rf manuals/bc/bc
+mkdir -p manuals/bc/bc
+echo bc/bc
+cp -p download/www.gnu.org/software/bc/manual/texi/bc.texi manuals/bc/bc/
 
 for dir in download/www.gnu.org/software/*/manual/ ; do
   one_manual_found=no
@@ -129,12 +158,21 @@ for dir in download/www.gnu.org/software/*/manual/ ; do
       fi
     done
     if test $one_manual_found = 'no' ; then
-      echo "REMARK: $dir: no manual" 1>&2
+      for file in $dir/*.texi $dir/*/*.texi $dir/*.texi.gz ; do
+        if test -e "$file" ; then
+          one_manual_found=yes
+          echo "$dir: special manual" 1>&2
+          break
+        fi
+      done
+      if test $one_manual_found = 'no' ; then
+        echo "REMARK: $dir: no manual" 1>&2
+      fi
     fi
   fi
 done
 
-# A fix for a manual to avoid errors. It was not generalized as too many
+# A fix for a manual to avoid errors. It was not generalized as many
 # manuals have errors. Instead texi2any is called such as to continue
 # even if there are errors.
 echo '@macro FIXME {arg}
@@ -143,11 +181,19 @@ echo '@macro FIXME {arg}
 ' > manuals/anubis/anubis/rendition.texi
 
 # files with CRLF EOL found with
-# file manuals/*/*/*.texi | grep CRLF
+# file manuals/*/*/*.texi* | grep CRLF
 
 # remove CR in end of lines.
-for file in manuals/orgadoc/*/*.texi manuals/remotecontrol/*/version.texi; do
+for file in manuals/orgadoc/*/*.texi manuals/remotecontrol/*/version.texi manuals/jtw/jtw/abc.texinfo; do
   sed 's/\r$//' $file > $file.$$
   rm -f $file
   mv $file.$$ $file
 done
+
+# add documentencoding when needed
+for file in manuals/parted/parted/parted-pt_BR.texi manuals/epsilon/epsilon/epsilon.texi ; do
+  sed '/^@setfilename/a @documentencoding ISO-8859-1' $file > $file.$$
+  rm -f $file
+  mv $file.$$ $file
+done
+

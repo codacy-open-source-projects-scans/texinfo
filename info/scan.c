@@ -1,6 +1,6 @@
 /* scan.c -- scanning Info files and nodes
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,25 +21,12 @@
 #include "session.h"
 #include "scan.h"
 #include "util.h"
+#include "search.h"
 #include "tag.h"
 
 #include <langinfo.h>
 #if HAVE_ICONV
 # include <iconv.h>
-#endif
-#include <wchar.h>
-#ifdef __MINGW32__
-/* MinGW uses a replacement nl_langinfo, see pcterm.c.  */
-# define nl_langinfo rpl_nl_langinfo
-extern char * rpl_nl_langinfo (nl_item);
-/* MinGW uses its own replacement wcwidth, see pcterm.c for the
-   reasons.  Since Gnulib's wchar.h might redirect wcwidth to
-   rpl_wcwidth, we explicitly undo that here.  */
-#undef wcwidth
-#endif
-
-#ifdef __hpux
-#define va_copy(ap1,ap2) memcpy((&ap1),(&ap2),sizeof(va_list))
 #endif
 
 /* Variable which holds the most recent filename parsed as a result of
@@ -53,7 +40,7 @@ char *info_parsed_nodename = NULL;
 /* Read a filename surrounded by "(" and ")", accounting for matching
    characters, and place it in *FILENAME if FILENAME is not null.  Return
    length of read filename.  On error, set *FILENAME to null and return 0.  */
-size_t
+static size_t
 read_bracketed_filename (char *string, char **filename)
 {
   register size_t i = 0;
@@ -134,6 +121,9 @@ info_parse_node (char *string)
     }
 }
 
+#define INFO_QUOTE '\177'
+#define INFO_QUOTE_STR "\177"
+
 /* Set *OUTPUT to a copy of the string starting at START and finishing at
    a character in TERMINATOR, unless START[0] == INFO_QUOTE, in which case
    copy string from START+1 until the next occurence of INFO_QUOTE.  If
@@ -165,7 +155,7 @@ read_quoted_string (char *start, char *terminator, size_t lines, char **output)
         }
     }
 
-  if (start[0] != '\177')
+  if (start[0] != INFO_QUOTE)
     {
       len = strcspn (start, terminator);
 
@@ -183,11 +173,11 @@ read_quoted_string (char *start, char *terminator, size_t lines, char **output)
     }
   else
     {
-      len = strcspn (start + 1, "\177");
+      len = strcspn (start + 1, INFO_QUOTE_STR);
 
       if (*terminator && !(start + 1)[len])
         {
-          /* No closing 177 byte. */
+          /* No closing quote byte. */
           len = 0;
           *output = 0;
         }
@@ -196,7 +186,7 @@ read_quoted_string (char *start, char *terminator, size_t lines, char **output)
           *output = xmalloc (len + 1);
           strncpy (*output, start + 1, len);
           (*output)[len] = '\0';
-          len += 2; /* Count the two 177 bytes. */
+          len += 2; /* Count the two quote bytes. */
         }
 
     }
@@ -217,8 +207,8 @@ read_quoted_string (char *start, char *terminator, size_t lines, char **output)
    pointer to the ENTRY if found, or null.  Return value should not
    be freed by caller.  If SLOPPY, allow initial matches, like
    "Buffers" for a LABEL "buffer". */
-REFERENCE *
-info_get_menu_entry_by_label (NODE *node, char *label, int sloppy)
+const REFERENCE *
+info_get_menu_entry_by_label (const NODE *node, const char *label, int sloppy)
 {
   register int i;
   int best_guess = -1;
@@ -248,7 +238,8 @@ info_get_menu_entry_by_label (NODE *node, char *label, int sloppy)
 /* A utility function for concatenating REFERENCE **.  Returns a new
    REFERENCE ** which is the concatenation of REF1 and REF2.  */
 REFERENCE **
-info_concatenate_references (REFERENCE **ref1, REFERENCE **ref2)
+info_concatenate_references (REFERENCE * const *ref1,
+                             REFERENCE * const *ref2)
 {
   register int i, j;
   REFERENCE **result;
@@ -290,7 +281,7 @@ info_concatenate_references (REFERENCE **ref1, REFERENCE **ref2)
 
 /* Copy a reference structure.  Copy each field into new memory.  */
 REFERENCE *
-info_copy_reference (REFERENCE *src)
+info_copy_reference (const REFERENCE *src)
 {
   REFERENCE *dest = xmalloc (sizeof (REFERENCE));
   dest->label = src->label ? xstrdup (src->label) : NULL;
@@ -307,7 +298,7 @@ info_copy_reference (REFERENCE *src)
 /* Copy a list of references, copying in reference in turn with
    info_copy_reference. */
 REFERENCE **
-info_copy_references (REFERENCE **ref1)
+info_copy_references (REFERENCE * const *ref1)
 {
   int i;
   REFERENCE **result;
@@ -360,7 +351,7 @@ info_free_references (REFERENCE **references)
 
 /* Return new REFERENCE with filename and nodename fields set. */
 REFERENCE *
-info_new_reference (char *filename, char *nodename)
+info_new_reference (const char *filename, const char *nodename)
 {
   REFERENCE *r = xmalloc (sizeof (REFERENCE));
   r->label = 0;
@@ -372,6 +363,7 @@ info_new_reference (char *filename, char *nodename)
   r->type = 0;
   return r;
 }
+
 
 
 /* Search for sequences of whitespace or newlines in STRING, replacing
@@ -479,7 +471,7 @@ static iconv_t iconv_to_utf8;
 
 #endif /* HAVE_ICONV */
 
-void
+static void
 init_conversion (FILE_BUFFER *fb)
 {
   char *target_encoding;
@@ -534,7 +526,8 @@ init_conversion (FILE_BUFFER *fb)
 #endif /* HAVE_ICONV */
 }
 
-void close_conversion (void)
+static void
+close_conversion (void)
 {
 #if HAVE_ICONV
   if (convert_encoding_p)
@@ -560,7 +553,7 @@ static size_t saved_offset;
 static char *saved_inptr;
 static long saved_difference;
 
-void
+static void
 save_conversion_state (void)
 {
   saved_offset = text_buffer_off (&output_buf);
@@ -569,7 +562,7 @@ save_conversion_state (void)
 }
 
 /* Go back to the saved state of the output stream. */
-void
+static void
 reset_conversion (void)
 {
   text_buffer_off (&output_buf) = saved_offset;
@@ -1130,7 +1123,7 @@ scan_reference_label (REFERENCE *entry, int in_index)
     max_lines = 1;
   else
     max_lines = 2;
-  if (!in_index || inptr[label_len] == '\177')
+  if (!in_index || inptr[label_len] == INFO_QUOTE)
     {
       len = read_quoted_string (inptr + label_len, ":", max_lines,
                                 &entry->nodename);
@@ -1152,7 +1145,7 @@ scan_reference_label (REFERENCE *entry, int in_index)
 
       while (1)
         {
-          n = strcspn (p, ":\n\177");
+          n = strcspn (p, ":\n");
           if (p[n] == ':')
             {
               m += n + 1;
@@ -1325,8 +1318,42 @@ scan_reference_target (REFERENCE *entry, NODE *node, int in_parentheses)
       length += strspn (inptr + length, " ");
 
       /* Get the node name. */
-      length += read_quoted_string (inptr + length, ",.\t\n", 2,
-                                    &entry->nodename);
+      entry->nodename = 0;
+      char *node_start = inptr + length;
+
+      /* First check for . followed by space or end of line. */
+      if (*node_start != INFO_QUOTE)
+        {
+          /* Confine search to present line. */
+          char *nl = strchr (node_start, '\n');
+          if (nl)
+            *nl = '\0';
+
+          char *node_end = strstr (node_start, ". ");
+          if (!node_end)
+            {
+              /* Check for . at end of line. */
+              if (nl && nl > node_start && nl[-1] == '.')
+                node_end = &nl[-1];
+            }
+
+          if (nl)
+            *nl = '\n';
+
+          if (node_end)
+            {
+              entry->nodename = xmalloc (node_end - node_start + 1);
+              memcpy (entry->nodename, node_start,
+                      node_end - node_start);
+              entry->nodename[node_end - node_start] = '\0';
+              length += node_end - node_start;
+            }
+        }
+      if (!entry->nodename)
+        {
+          length += read_quoted_string (inptr + length, ",.\t\n", 2,
+                                        &entry->nodename);
+        }
       if (inptr[length] == '.') /* A '.' terminating the entry. */
         length++;
       canonicalize_whitespace (entry->nodename);
@@ -1582,9 +1609,9 @@ scan_node_contents (NODE *node, FILE_BUFFER *fb, TAG **tag_ptr)
 
               /* Remove the DEL bytes from a label like "(FOO)^?BAR^?::". */
               label_len = strlen (entry->label);
-              if (label_len >= 2 && entry->label[label_len - 1] == 0177)
+              if (label_len >= 2 && entry->label[label_len - 1] == INFO_QUOTE)
                 {
-                  char *p = strchr (entry->label, '\177');
+                  char *p = strchr (entry->label, INFO_QUOTE);
                   memmove (p, p + 1, label_len - (p - entry->label) - 1);
                   entry->label[label_len - 2] = '\0';
                 }

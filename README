@@ -1,7 +1,7 @@
 This is the README file for the GNU Texinfo distribution.  Texinfo is
 the preferred documentation format for GNU software.
 
-  Copyright 1992-2024 Free Software Foundation, Inc.
+  Copyright 1992-2025 Free Software Foundation, Inc.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -89,12 +89,11 @@ Printing-related files:
     util/texi2pdf          Generate PDF (wrapper for texi2dvi).
 
 Source directories: 
-  djgpp/                   Support for compiling under DJGPP.
   gnulib/                  Support files from Gnulib.
   info/                    Standalone Info reader.
   install-info/            Maintain the Info dir file.
   js/                      Enhanced browsing of HTML manuals with JavaScript.
-  tp/                      Texinfo Parser in Perl, includes texi2any.
+  tta/                     Texinfo Parser in Perl or C, includes texi2any.
   texindex/                The `texindex' program that generates
                            sorted indices used by TeX when
                            typesetting a file for printing.

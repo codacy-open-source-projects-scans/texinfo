@@ -1,6 +1,6 @@
 /* infodoc.c -- functions which build documentation nodes.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,12 +18,13 @@
    Originally written by Brian Fox. */
 
 #include "info.h"
-#include "scan.h"
 #include "util.h"
+#include "nodes.h"
 #include "filesys.h"
 #include "session.h"
 #include "doc.h"
 #include "funs.h"
+#include "variables.h"
 
 /* The name of the node used in the help window. */
 static char *info_help_nodename = "*Info Help*";
@@ -241,14 +242,40 @@ create_internal_info_help_node (int help_is_only_window_p)
 
         }
     }
-
   free (exec_keys);
+
+  text_buffer_printf (&msg, "---------------------\n\n");
+  text_buffer_printf (&msg, _("Variables:\n\n"));
+
+  for (i = 0; info_variables[i].name != NULL; i++)
+    {
+      char *description
+        = variable_long_description_string (&info_variables[i]);
+      text_buffer_printf (&msg, description);
+      text_buffer_printf (&msg, "\n");
+
+    }
 
   node = text_buffer_to_node (&msg);
 
   internal_info_help_node = node;
 
   name_internal_node (internal_info_help_node, xstrdup (info_help_nodename));
+}
+
+/* Return the window displaying NAME, the name of an internally created
+   Info window. */
+WINDOW *
+get_internal_info_window (char *name)
+{
+  WINDOW *win;
+
+  for (win = windows; win; win = win->next)
+    if (win->node && (win->node->flags & N_IsInternal)
+        && (strcmp (win->node->nodename, name) == 0))
+      break;
+
+  return win;
 }
 
 /* Return a window which is the window showing help in this Info. */
@@ -288,7 +315,8 @@ info_find_or_create_help_window (void)
 
       if (!eligible)
         {
-          info_error ("%s", msg_cant_make_help);
+          info_error ("%s",
+            _("Not enough room for a help window, please delete a window"));
           return NULL;
         }
     }
@@ -506,7 +534,7 @@ DECLARE_INFO_COMMAND (describe_key, _("Print documentation for KEY"))
               if (map[lowerkey].value.function == NULL)
                 {
                   message_in_echo_area (_("%s is undefined"),
-					pretty_keyseq (keys));
+                                        pretty_keyseq (keys));
                   return;
                 }
             }
@@ -608,7 +636,7 @@ pretty_keyname (int key)
 /* Return the pretty printable string which represents KEYSEQ.  Return
    value should not be freed by caller. */
 char *
-pretty_keyseq (int *keyseq)
+pretty_keyseq (const int *keyseq)
 {
   static struct text_buffer rep = { 0 };
 
@@ -661,14 +689,15 @@ replace_in_documentation (const char *string, int help_is_only_window_p)
             {
               if (string[++j] == '-')
                 j++;
-              if (isdigit(string[j]))
+              if (isdigit ((unsigned char) string[j]))
                 {
-                  while (isdigit(string[j]))
+                  while (isdigit ((unsigned char) string[j]))
                     j++;
-                  if (string[j] == '.' && isdigit(string[j + 1]))
+                  if (string[j] == '.'
+                      && isdigit ((unsigned char) string[j + 1]))
                     {
                       j += 1;
-                      while (isdigit(string[j]))
+                      while (isdigit ((unsigned char) string[j]))
                         j++;
                     }
                   fmt = xmalloc (j - i + 2);
@@ -807,7 +836,7 @@ DECLARE_INFO_COMMAND (info_where_is,
 
   if (!command_name)
     {
-      info_abort_key (active_window, count);
+      info_abort ();
       return;
     }
 

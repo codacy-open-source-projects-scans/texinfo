@@ -1,5 +1,5 @@
 #!/usr/bin/env perl
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,14 +19,15 @@
 # Output Texinfo command names recognized in the implementation.
 
 BEGIN {
-  (my $mydir = $0) =~ s,/[^/]+$,,;
-  chomp (my $tpdir = `cd $mydir/../tp && pwd`);
-  unshift (@INC, $tpdir);
+  my $mydir = $0;
+  $mydir =~ s,/[^/]+$,,;
+  my $t2a_srcdir = `cd $mydir/../tta && pwd`;
+  chomp($t2a_srcdir);
   if (defined($ENV{'top_builddir'})) {
-    unshift (@INC, $ENV{'top_builddir'}.'/tp');
+    unshift(@INC, join('/', ($ENV{'top_builddir'}, 'tta', 'perl')));
   }
 
-  $ENV{top_srcdir} = "$tpdir/..";
+  $ENV{t2a_srcdir} = "$t2a_srcdir";
   require Texinfo::ModulePath;
   Texinfo::ModulePath::init(undef, undef, undef);
 }

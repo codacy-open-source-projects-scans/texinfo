@@ -1,6 +1,6 @@
 /* filesys.c -- filesystem specific functions.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,13 +20,10 @@
 #include "info.h"
 #include "tilde.h"
 #include "filesys.h"
-#include "tag.h"
 #include "session.h"
 
 /* Local to this file. */
-static char *info_file_in_path (char *filename, struct stat *finfo);
-char *info_add_extension (char *dirname, char *fname,
-                                 struct stat *finfo);
+static char *info_file_in_path (const char *filename, struct stat *finfo);
 
 static char *filesys_read_compressed (char *pathname, size_t *filesize);
 
@@ -80,7 +77,7 @@ static COMPRESSION_ALIST compress_suffixes[] = {
    can't find the file, it returns NULL, and sets filesys_error_number.
    Return value should be freed by caller. */
 char *
-info_find_fullpath (char *partial, struct stat *finfo)
+info_find_fullpath (const char *partial, struct stat *finfo)
 {
   char *fullpath = 0;
   struct stat dummy;
@@ -101,14 +98,14 @@ info_find_fullpath (char *partial, struct stat *finfo)
   if (IS_ABSOLUTE (partial)
       || partial[0] == '.' && IS_SLASH(partial[1]))
     {
-      fullpath = info_add_extension (0, partial, finfo);
+      fullpath = info_file_of_infodir (partial, 0, finfo);
     }
 
   /* Tilde expansion.  Could come from user input in echo area. */
   else if (partial[0] == '~')
     {
       partial = tilde_expand_word (partial);
-      fullpath = info_add_extension (0, partial, finfo);
+      fullpath = info_file_of_infodir (partial, 0, finfo);
     }
 
   /* If just a simple name element, look for it in the path. */
@@ -125,7 +122,8 @@ info_find_fullpath (char *partial, struct stat *finfo)
    one that is a regular file, return it as a new string.  Otherwise, return
    a NULL pointer.  Set *FINFO with information about file. */
 char *
-info_file_find_next_in_path (char *filename, int *path_index, struct stat *finfo)
+info_file_find_next_in_path (const char *filename, int *path_index,
+                             struct stat *finfo)
 {
   struct stat dummy;
 
@@ -156,7 +154,7 @@ info_file_find_next_in_path (char *filename, int *path_index, struct stat *finfo
           dirname = expanded_dirname;
         }
 
-      with_extension = info_add_extension (dirname, filename, finfo);
+      with_extension = info_file_of_infodir (filename, dirname, finfo);
 
       if (with_extension)
         {
@@ -175,10 +173,10 @@ info_file_find_next_in_path (char *filename, int *path_index, struct stat *finfo
   return NULL;
 }
 
-/* Return full path of first Info file known as FILENAME in
-   search path.  If relative to current directory, precede it with './'. */
+/* Return full path of first Info file known as FILENAME in search path as a
+   new string.  If relative to current directory, precede it with './'. */
 static char *
-info_file_in_path (char *filename, struct stat *finfo)
+info_file_in_path (const char *filename, struct stat *finfo)
 {
   int i = 0;
   return info_file_find_next_in_path (filename, &i, finfo);
@@ -228,7 +226,8 @@ info_check_compressed (char *try_filename, struct stat *finfo)
    relative to the current directory, in which case DIRNAME should be
    null.  Return it as a new string; otherwise return a NULL pointer. */
 char *
-info_add_extension (char *dirname, char *filename, struct stat *finfo)
+info_file_of_infodir (const char *filename, const char *dirname,
+                      struct stat *finfo)
 {
   char *try_filename;
   register int i, pre_suffix_length = 0;
@@ -559,7 +558,7 @@ filesys_error_string (char *filename, int error_num)
    in combination.  */
 
 int
-is_dir_name (char *filename)
+is_dir_name (const char *filename)
 {
   unsigned i;
 

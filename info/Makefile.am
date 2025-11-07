@@ -1,6 +1,6 @@
 # Makefile.am for texinfo/info.
 #
-# Copyright 2002-2024 Free Software Foundation, Inc.
+# Copyright 2002-2025 Free Software Foundation, Inc.
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -31,7 +31,8 @@ AM_CPPFLAGS =                                   \
   -DLOCALEDIR=\"$(datadir)/locale\"             \
   -DINFODIR=\"$(infodir)\"                      \
   -DINFODIR2=\"$(datadir)/info\"                \
-  -DSYSCONFDIR=\"$(sysconfdir)\"
+  -DSYSCONFDIR=\"$(sysconfdir)\"                \
+  -DPKGDATADIR=\"$(pkgdatadir)\"
 
 LDADD = $(top_builddir)/gnulib/lib/libgnu.a $(TERMLIBS)
 
@@ -50,13 +51,13 @@ LDADD += $(MBRTOWC_LIB)
 
 EXTRA_DIST = pcterm.c
 
-ginfo_SOURCES = dir.c display.c display.h doc.h dribble.c dribble.h \
-  echo-area.c echo-area.h \
+ginfo_SOURCES = configfiles.c configfiles.h dir.c display.c display.h \
+  doc.h dribble.c dribble.h echo-area.c echo-area.h \
   filesys.c filesys.h footnotes.c footnotes.h indices.c indices.h \
-  info.c info.h infodoc.c infokey.c \
-  infomap.c infomap.h infopath.c m-x.c man.c man.h nodemenu.c \
-  nodes.c nodes.h scan.c scan.h \
-  search.c search.h session.c session.h signals.c signals.h \
+  info.c info.h infodoc.c infokey.c infomap.c infomap.h infopath.c \
+  m-x.c man.c man.h nodemenu.c nodes.c nodes.h \
+  run-external.c run-external.h scan.c scan.h \
+  search.c search.h session.c session.h session-cmd.c signals.c signals.h \
   tag.c tag.h termdep.h terminal.c terminal.h tilde.c tilde.h \
   util.c util.h variables.c variables.h window.c window.h
 nodist_ginfo_SOURCES = doc.c funs.h
@@ -81,9 +82,9 @@ noinst_PROGRAMS = makedoc
 makedoc_SOURCES = makedoc.c
 
 # Files with Info commands defined that makedoc should read.
-cmd_sources = $(srcdir)/session.c $(srcdir)/echo-area.c $(srcdir)/infodoc.c \
-  $(srcdir)/m-x.c $(srcdir)/indices.c $(srcdir)/nodemenu.c \
-  $(srcdir)/footnotes.c $(srcdir)/variables.c
+cmd_sources = $(srcdir)/session-cmd.c $(srcdir)/echo-area.c \
+  $(srcdir)/infodoc.c $(srcdir)/m-x.c $(srcdir)/indices.c \
+  $(srcdir)/nodemenu.c $(srcdir)/footnotes.c $(srcdir)/variables.c
 
 # Make the target only funs.h even though we create all the
 # $(generated_sources) so that parallel makes won't do the rm && makedoc
@@ -112,6 +113,9 @@ info_tests_with_pseudotty = \
 	t/echo-area-no-completions.sh \
 	t/empty-infopath.sh \
 	t/end-of-line.sh \
+	t/follow-path.sh \
+	t/follow-remain.sh \
+	t/follow-remain-other-dir.sh \
 	t/gc-split.sh \
 	t/goal-column.sh \
 	t/goto-quoted.sh \
@@ -205,6 +209,25 @@ endif
 EXTRA_DIST += $(info_tests) $(info_tests_with_pseudotty) $(XFAIL_TESTS) \
   t/README t/infodir \
   t/Init-test.inc \
-  t/Infokey-config t/node-target
+  t/config/texinfo/infokey t/node-target
+dist_check_SCRIPTS = t/config/texinfo/info-hooks/manual-not-found
+
 dist-hook:
 	rm -rf `find $(distdir)/t/infodir -name '*~'`
+
+hooksdir=$(datadir)/texinfo/info-hooks
+
+EXTRA_DIST += info-hooks-default/manual-not-found.in
+hooks_SCRIPTS = info-hooks-default/manual-not-found
+CLEANFILES += info-hooks-default/manual-not-found
+
+info-hooks-default/manual-not-found: info-hooks-default/manual-not-found.in
+	$(MKDIR_P) info-hooks-default
+	sed -e 's,[@]AWK[@],$(AWK),g' \
+	    -e 's,# manual-not-found.in,# Automatically generated from manual-not-found.in,' \
+	  <$(srcdir)/info-hooks-default/manual-not-found.in >$@
+	chmod a+x $@
+
+dist_hooks_DATA = \
+  info-hooks-default/gnu-manuals-locations.dat
+

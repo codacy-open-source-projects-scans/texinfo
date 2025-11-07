@@ -1,6 +1,6 @@
 texinfo/util/README
 
-  Copyright 2002-2024 Free Software Foundation, Inc.
+  Copyright 2002-2025 Free Software Foundation, Inc.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -20,6 +20,9 @@ various jobs:
 
 The srclist.txt file specifies common source files to keep in sync; see
 the srclist-update script in gnulib.
+
+The swig directory contains an example of interface designed to wrap GNU
+Texinfo tta C code to high-level programming languages.
 
 Finally, the gendocs script and templates (which are not installed) are
 about creating all the usual output formats to be put on web pages.

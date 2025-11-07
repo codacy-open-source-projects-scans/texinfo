@@ -1,6 +1,6 @@
 /* info.h -- Header file included everywhere
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,6 +22,41 @@
 
 /* System dependencies.  */
 #include "system.h"
+
+#if O_BINARY
+# ifdef __MSDOS__
+#  define SET_SCREEN_SIZE_HELPER terminal_prep_terminal()
+#  define DEFAULT_INFO_PRINT_COMMAND ">PRN"
+# endif
+# ifndef __CYGWIN__
+#  ifdef __MINGW32__
+#   define SET_SCREEN_SIZE_HELPER terminal_prep_terminal()
+extern int kill (pid_t, int);
+#  endif
+# endif
+#endif
+
+#include <stdlib.h>
+#include <stdio.h>
+#include <limits.h>
+#include <ctype.h>
+#include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
+/* From gnulib */
+#include "xalloc.h"
+
+#define STREQ(s1,s2) (strcmp (s1, s2) == 0)
+
+#ifndef TEXINFO_PRINTFLIKE
+# ifdef __GNUC__
+#  define TEXINFO_PRINTFLIKE(fmt,narg) __attribute__ ((__format__ (__printf__, fmt, narg)))
+# else
+#  define TEXINFO_PRINTFLIKE(fmt,narg)
+# endif
+#endif
 
 struct window_struct;
 typedef void COMMAND_FUNCTION (struct window_struct *window, int count);
@@ -84,23 +119,28 @@ extern int vi_keys_p;
 /* Non-zero means don't remove ANSI escape sequences from man pages.  */
 extern int raw_escapes_p;
 
+/* Non-zero means don't try to be smart when searching for nodes.  */
+extern int strict_node_location_p;
+
 /* Error message defines. */
 extern const char *msg_cant_find_node;
 extern const char *msg_cant_file_node;
-extern const char *msg_cant_find_window;
 extern const char *msg_cant_find_point;
-extern const char *msg_cant_kill_last;
 extern const char *msg_no_menu_node;
-extern const char *msg_no_foot_node;
 extern const char *msg_no_xref_node;
-extern const char *msg_no_pointer;
-extern const char *msg_unknown_command;
-extern const char *msg_term_too_dumb;
-extern const char *msg_at_node_bottom;
-extern const char *msg_at_node_top;
 extern const char *msg_one_window;
 extern const char *msg_win_too_small;
-extern const char *msg_cant_make_help;
+
+extern unsigned debug_level;
+#define debug(n,c)							\
+  do									\
+    {									\
+      if (debug_level >= (n))						\
+        info_debug c;							\
+    }									\
+  while (0)
+
+void info_debug (const char *format, ...) TEXINFO_PRINTFLIKE(1,2);
 
 
 /* In infopath.c, but also used in man.c. */

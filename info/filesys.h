@@ -1,6 +1,6 @@
 /* filesys.h -- external declarations for filesys.c.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -36,17 +36,18 @@ char *infopath_next (int *idx);
 /* Expand the filename in PARTIAL to make a real name for this operating
    system.  This looks in INFO_PATHS in order to find the correct file.
    If it can't find the file, it returns NULL. */
-char *info_find_fullpath (char *partial, struct stat *finfo);
+char *info_find_fullpath (const char *partial, struct stat *finfo);
 
 /* Scan the list of directories in PATH looking for FILENAME.  If we find
    one that is a regular file, return it as a new string.  Otherwise, return
    a NULL pointer. */
-char *info_file_find_next_in_path (char *filename, int *diridx,
+char *info_file_find_next_in_path (const char *filename, int *diridx,
                                    struct stat *finfo);
 
 char *info_check_compressed (char *try_filename, struct stat *finfo);
 
-char *info_add_extension (char *dirname, char *filename, struct stat *finfo);
+char *info_file_of_infodir (const char *filename, const char *dirname,
+                            struct stat *finfo);
 
 /* Read the contents of PATHNAME, returning a buffer with the contents of
    that file in it, and returning the size of that buffer in FILESIZE.
@@ -63,12 +64,14 @@ char *filesys_error_string (char *filename, int error_num);
 extern int filesys_error_number;
 
 /* Return true if FILENAME is `dir', with a possible compression suffix.  */
-int is_dir_name (char *filename);
+int is_dir_name (const char *filename);
 
 /* The default value of INFOPATH. */
-#if !defined (DEFAULT_INFOPATH)
+#ifdef __DJGPP__
+#  define DEFAULT_INFOPATH "c:/djgpp/info;/usr/local/info;/usr/info;."
+#else
 #  define DEFAULT_INFOPATH "PATH:/usr/local/info:/usr/info:/usr/local/lib/info:/usr/lib/info:/usr/local/gnu/info:/usr/local/gnu/lib/info:/usr/gnu/info:/usr/gnu/lib/info:/opt/gnu/info:/usr/share/info:/usr/share/lib/info:/usr/local/share/info:/usr/local/share/lib/info:/usr/gnu/lib/emacs/info:/usr/local/gnu/lib/emacs/info:/usr/local/lib/emacs/info:/usr/local/emacs/info:."
-#endif /* !DEFAULT_INFOPATH */
+#endif
 
 #if !defined (S_ISREG) && defined (S_IFREG)
 #  define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)

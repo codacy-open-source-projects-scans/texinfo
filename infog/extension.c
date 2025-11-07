@@ -5,8 +5,6 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -24,7 +22,7 @@ vmsg (char *fmt, va_list v)
 int debug_level = 1;
 
 void
-debug (int level, char *fmt, ...)
+debug (WebKitWebPage *web_page, int level, char *fmt, ...)
 {
   if (level > debug_level)
     return;
@@ -32,45 +30,34 @@ debug (int level, char *fmt, ...)
   va_list v;
   va_start (v, fmt);
 
-  printf ("SUBTHREAD: ");
+  printf ("PAGE[%lu]: ", webkit_web_page_get_id (web_page));
   vmsg (fmt, v);
   va_end (v);
 }
 
-/* For communicating with the main Gtk process */
-static struct sockaddr_un main_name;
-static size_t main_name_size;
-
-/* The socket that we create in this process to send to the socket
-   of the main process. */
-static int socket_id;
-
 void
-send_datagram (GString *s)
+send_js_message (WebKitWebPage *web_page, char *message)
 {
-  ssize_t result;
+  WebKitFrame *frame = webkit_web_page_get_main_frame (web_page);
+  if (!frame)
+    return;
+  JSCContext *jsc = webkit_frame_get_js_context (frame);
+  if (!jsc)
+    return;
 
-  //debug (2, "send datagram %s", s->str);
-  if (s->len > PACKET_SIZE)
-    {
-      debug (0, "datagram too big");
-      return;
-    }
+  JSCValue *js_string = jsc_value_new_string (jsc, message);
+  jsc_context_set_value (jsc, "texinfoMsgString", js_string);
 
-  result = sendto (socket_id, s->str, s->len + 1, 0,
-         (struct sockaddr *) &main_name, main_name_size);
-
-  if (result == -1)
-    {
-      debug (0, "sending datagram failed: %s\n",
-               strerror(errno));
-    }
+  JSCValue *jscValue = jsc_context_evaluate (jsc,
+    "window.webkit.messageHandlers.channel.postMessage(texinfoMsgString);",
+    -1);
 }
+
 
 static char *current_manual;
 
 int
-load_manual (char *manual)
+load_manual (WebKitWebPage *web_page, char *manual)
 {
   current_manual = manual;
 
@@ -81,7 +68,7 @@ load_manual (char *manual)
   g_string_append (s1, "new-manual\n");
   g_string_append (s1, manual);
 
-  send_datagram (s1);
+  send_js_message (web_page, s1->str);
 
   g_string_free (s1, TRUE);
   
@@ -96,8 +83,7 @@ request_callback (WebKitWebPage     *web_page,
 {
   const char *uri = webkit_uri_request_get_uri (request);
 
-  debug (1, "Intercepting link <%s> (page %d)\n", uri,
-             webkit_web_page_get_id (web_page));
+  debug (web_page, 1, "Intercepting link <%s>\n", uri);
 
   /* Clear flags on WebKitWebPage object.  These flags are checked after
      the page is actually loaded.  We can't use global variables for this
@@ -113,11 +99,11 @@ request_callback (WebKitWebPage     *web_page,
       char *new_uri = strdup (uri);
       new_uri[p - uri] = 0;
       webkit_uri_request_set_uri (request, new_uri);
-      debug (1, "new_uri %s\n", new_uri);
+      debug (web_page, 1, "new_uri %s\n", new_uri);
       free (new_uri);
 
       p++;
-      debug (1, "request type %s\n", p);
+      debug (web_page, 1, "request type %s\n", p);
       if (!strcmp (p, "send-index"))
         {
           g_object_set_data (G_OBJECT(web_page), "send-index",
@@ -143,23 +129,23 @@ request_callback (WebKitWebPage     *web_page,
       if (!manual || !node)
         {
           /* Possibly a *.css file or malformed link. */
-          debug (1, "COULDNT PARSE URL\n");
+          debug (web_page, 1, "COULDNT PARSE URL\n");
           free (manual); free (node);
           return FALSE;
         }
 
-      debug (1, "finding manual and node %s:%s\n", manual, node);
+      debug (web_page, 1, "finding manual and node %s:%s\n", manual, node);
 
       if (!current_manual || strcmp(manual, current_manual) != 0)
         {
-          load_manual (manual);
+          load_manual (web_page, manual);
         }
 
       /* Ask main process to load node for us.  */
       GString *s = g_string_new (NULL);
       g_string_append (s, "new-node\n");
       g_string_append (s, node);
-      send_datagram (s);
+      send_js_message (web_page, s->str);
       g_string_free (s, TRUE);
 
       return TRUE; /* Cancel load request */
@@ -176,18 +162,18 @@ request_callback (WebKitWebPage     *web_page,
           return FALSE;
         }
 
-      debug (1, "finding manual and node %s:%s\n", manual, node);
+      debug (web_page, 1, "finding manual and node %s:%s\n", manual, node);
 
       if (!current_manual || strcmp(manual, current_manual) != 0)
         {
-          load_manual (manual);
+          load_manual (web_page, manual);
         }
 
       /* Update sidebar */
       GString *s = g_string_new (NULL);
       g_string_append (s, "inform-new-node\n");
       g_string_append (s, node);
-      send_datagram (s);
+      send_js_message (web_page, s->str);
       g_string_free (s, TRUE);
     }
   
@@ -197,9 +183,10 @@ request_callback (WebKitWebPage     *web_page,
 /* Given the main index.html Top node in the document, find the nodes 
    containing indices. */
 void
-find_indices (WebKitDOMHTMLCollection *links, gulong num_links)
+find_indices (WebKitWebPage *web_page,
+              WebKitDOMHTMLCollection *links, gulong num_links)
 {
-  debug (1, "looking for indices\n");
+  debug (web_page, 1, "looking for indices\n");
 
   gulong i = 0;
   GString *s = g_string_new (NULL);
@@ -212,7 +199,7 @@ find_indices (WebKitDOMHTMLCollection *links, gulong num_links)
         = webkit_dom_html_collection_item (links, i);
       if (!node)
         {
-          debug (1, "No node\n");
+          debug (web_page, 1, "No node\n");
           return;
         }
 
@@ -224,7 +211,7 @@ find_indices (WebKitDOMHTMLCollection *links, gulong num_links)
       else
         {
           /* When would this happen? */
-          debug (1, "Not an DOM element\n");
+          debug (web_page, 1, "Not an DOM element\n");
           continue;
         }
 
@@ -241,63 +228,27 @@ find_indices (WebKitDOMHTMLCollection *links, gulong num_links)
           && id && !strncmp (id, "toc-", 4)
           && rel && !strcmp(rel, "index"))
         {
-          debug (1, "index node at |%s|\n", href);
+          debug (web_page, 1, "index node at |%s|\n", href);
           g_string_append (s, href);
           g_string_append (s, "\n");
         }
       free (rel); free (id);
     }
 
-  send_datagram (s);
-  g_string_free (s, TRUE);
-}
-
-/* Split up msg into packets of size no more than PACKET_SIZE so it can
-   be sent over the socket. */
-void
-packetize (char *msg_type, GString *msg)
-{
-  GString *s;
-  char *p, *q;
-  int try = 0; /* To check if a single record is too long for a packet. */
-
-  p = msg->str;
-  s = g_string_new (NULL);
-
-next_packet:
-  g_string_truncate (s, 0);
-  g_string_append (s, msg_type);
-  g_string_append (s, "\n");
-
-  /* Get next two lines and try to fit them in the buffer. */
-  while ((q = strchr (p, '\n')) && (q = strchr (q + 1, '\n')))
-    {
-      gsize old_len = s->len;
-      g_string_append_len (s, p, q - p + 1);
-      if (s->len > PACKET_SIZE)
-        {
-          if (try == 1)
-            break;
-          g_string_truncate (s, old_len);
-          send_datagram (s);
-          try = 1;
-          goto next_packet;
-        }
-
-      try = 0;
-      p = q + 1;
-    }
-  send_datagram (s);
+  send_js_message (web_page, s->str);
   g_string_free (s, TRUE);
 }
 
 void
-send_index (WebKitDOMHTMLCollection *links, gulong num_links)
+send_index (WebKitWebPage *web_page,
+            WebKitDOMHTMLCollection *links, gulong num_links)
 {
-  debug (1, "trying to send index\n");
+  debug (web_page, 1, "trying to send index\n");
 
   gulong i = 0;
   GString *s = g_string_new (NULL);
+
+  g_string_append (s, "index\n");
 
   for (; i < num_links; i++)
     {
@@ -305,7 +256,7 @@ send_index (WebKitDOMHTMLCollection *links, gulong num_links)
         = webkit_dom_html_collection_item (links, i);
       if (!node)
         {
-          debug (1, "No node\n");
+          debug (web_page, 1, "No node\n");
           return;
         }
 
@@ -317,7 +268,7 @@ send_index (WebKitDOMHTMLCollection *links, gulong num_links)
       else
         {
           /* When would this happen? */
-          debug (1, "Not an DOM element\n");
+          debug (web_page, 1, "Not an DOM element\n");
           continue;
         }
 
@@ -335,11 +286,11 @@ send_index (WebKitDOMHTMLCollection *links, gulong num_links)
   g_string_append (s, "\n");
   g_string_append (s, "\n");
 
-  packetize ("index", s);
+  send_js_message (web_page, s->str);
 
   g_string_free (s, TRUE);
 
-  debug (1, "index sent\n");
+  debug (web_page, 1, "index sent\n");
 }
 
 void
@@ -395,7 +346,7 @@ build_toc_string (GString *toc, WebKitDOMElement *elt)
 }
 
 void
-send_toc (WebKitDOMDocument *dom_document)
+send_toc (WebKitWebPage *web_page, WebKitDOMDocument *dom_document)
 {
   GString *toc;
 
@@ -406,19 +357,16 @@ send_toc (WebKitDOMDocument *dom_document)
 
   toc = g_string_new (NULL);
 
+  g_string_append (toc, "toc\n");
   build_toc_string (toc, toc_elt);
 
-  packetize ("toc", toc);
+  send_js_message (web_page, toc->str);
   g_string_free (toc, TRUE);
-
-  GString *s1 = g_string_new (NULL);
-  g_string_append (s1, "toc-finished\n");
-  send_datagram (s1);
-  g_string_free (s1, TRUE);
 }
 
 void
-send_pointer (WebKitDOMElement *link_elt,
+send_pointer (WebKitWebPage *web_page,
+              WebKitDOMElement *link_elt,
               const char *rel, const char *current_uri)
 {
   char *link = 0;
@@ -443,18 +391,8 @@ send_pointer (WebKitDOMElement *link_elt,
           strcpy (link + (p - current_uri), href);
 
           char *message;
-          long len;
-          len = asprintf (&message, "%s\n%s\n", rel, link);
-
-          ssize_t result;
-          result = sendto (socket_id, message, len, 0,
-                 (struct sockaddr *) &main_name, main_name_size);
-
-          if (result == -1)
-            {
-              debug (1, "socket write failed: %s\n",
-                       strerror(errno));
-            }
+          asprintf (&message, "%s\n%s\n", rel, link);
+          send_js_message (web_page, message);
 
           free (message);
         }
@@ -466,40 +404,44 @@ send_pointer (WebKitDOMElement *link_elt,
 /* Use variadic macro to allow for commas in argument */
 #define QUOTE(...) #__VA_ARGS__
 
+/* Rewrite URLs to other Texinfo manuals to private scheme. */
 const char *INJECTED_JAVASCRIPT = QUOTE(
-  var x = document.getElementsByClassName("texi-manual");
+  var x = document.querySelectorAll("a[data-manual]");
   for (var i = 0; i < x.length; i++) {
-    var a = x[i].href;
-    var re = new RegExp('^http://|^https://');
-    if (a && a.match(re)) {
-      var array = a.match(/([^/]*)\\/manual\\/html_node\\/([^/]*)$/);
-      if (!Array.isArray(array) || array.length < 2) {
-        array = a.match(/([^/]*)\\/([^/]*)$/);
-      }
-      if (Array.isArray(array) && array.length >= 2) {
-        a = 'private:/' + array[1] + '/' + array[2];
-        x[i].href = a;
-      }
+    var manual = x[i].attributes["data-manual"].value;
+    if (x[i].protocol == "https:" || x[i].protocol == "http:") {
+      var node = x[i].pathname.split('/').pop();
+      x[i].href = 'private:/' + manual + '/' + node;
     }
   };
 );
 
 
+static void
+inject_javascript (WebKitWebPage *web_page)
+{
+  WebKitFrame *frame = webkit_web_page_get_main_frame (web_page);
+  if (!frame)
+    return;
+  JSCContext *jsc = webkit_frame_get_js_context (frame);
+  if (!jsc)
+    return;
+  JSCValue *result = jsc_context_evaluate (jsc, INJECTED_JAVASCRIPT, -1);
+}
 
 
 void
 document_loaded_callback (WebKitWebPage *web_page,
                           gpointer       user_data)
 {
-  debug (1, "Page %d loaded for %s\n", webkit_web_page_get_id (web_page),
-           webkit_web_page_get_uri (web_page));
+  debug (web_page, 1, "Page loaded\n");
 
   WebKitDOMDocument *dom_document
     = webkit_web_page_get_dom_document (web_page);
 
   if (!dom_document)
     {
-      debug (1, "No DOM document\n");
+      debug (web_page, 1, "No DOM document\n");
       return;
     }
 
@@ -514,27 +456,18 @@ document_loaded_callback (WebKitWebPage *web_page,
 
   if (send_index_p)
     {
-      send_index (links, num_links);
+      send_index (web_page, links, num_links);
       return;
     }
 
   if (top_node_p)
     {
-      send_toc (dom_document);
-      find_indices (links, num_links);
+      send_toc (web_page, dom_document);
+      find_indices (web_page, links, num_links);
       return;
     }
 
-#if 1
-  WebKitFrame *frame = webkit_web_page_get_main_frame (web_page);
-  if (!frame)
-    return;
-  JSCContext *jsc = webkit_frame_get_js_context (frame);
-  if (!jsc)
-    return;
-  (void) jsc_context_evaluate (jsc, INJECTED_JAVASCRIPT, -1);
-  debug (1, "INJECT |%s|\n", INJECTED_JAVASCRIPT);
-#endif
+  inject_javascript (web_page);
 
   WebKitDOMElement *link_elt;
 
@@ -543,17 +476,17 @@ document_loaded_callback (WebKitWebPage *web_page,
   link_elt = webkit_dom_document_query_selector
     (dom_document, "a[rel=\"up\"]", NULL);
   if (link_elt)
-    send_pointer (link_elt, "up", current_uri);
+    send_pointer (web_page, link_elt, "up", current_uri);
   
   link_elt = webkit_dom_document_query_selector
     (dom_document, "a[rel=\"next\"]", NULL);
   if (link_elt)
-    send_pointer (link_elt, "next", current_uri);
+    send_pointer (web_page, link_elt, "next", current_uri);
 
   link_elt = webkit_dom_document_query_selector
     (dom_document, "a[rel=\"prev\"]", NULL);
   if (link_elt)
-    send_pointer (link_elt, "prev", current_uri);
+    send_pointer (web_page, link_elt, "prev", current_uri);
 }
 
 
@@ -562,7 +495,7 @@ web_page_created_callback (WebKitWebExtension *extension,
                            WebKitWebPage      *web_page,
                            gpointer            user_data)
 {
-    debug (1, "Page %d created for %s\n",
+    debug (web_page, 1, "Page %d created for %s\n",
              webkit_web_page_get_id (web_page),
              webkit_web_page_get_uri (web_page));
 
@@ -575,32 +508,10 @@ web_page_created_callback (WebKitWebExtension *extension,
                       NULL, 0);
 }
 
-void
-initialize_socket (const char *main_socket_file)
-{
-  /* Create the socket. */
-  socket_id = socket (PF_LOCAL, SOCK_DGRAM, 0);
-  if (socket_id < 0)
-    {
-      perror ("socket (web process)");
-      exit (EXIT_FAILURE);
-    }
-
-  /* Set the address of the socket in the main Gtk process. */
-  main_name.sun_family = AF_LOCAL;
-  strcpy (main_name.sun_path, main_socket_file);
-  main_name_size = strlen (main_name.sun_path) + sizeof (main_name.sun_family);
-}
-
 G_MODULE_EXPORT void
 webkit_web_extension_initialize_with_user_data (WebKitWebExtension *extension,
                                                 GVariant *user_data)
 {
-  const char *socket_file = g_variant_get_bytestring (user_data);
-  debug (1, "thread id %s\n", socket_file);
-
-  initialize_socket (socket_file);
-  
   g_signal_connect (extension, "page-created", 
                     G_CALLBACK (web_page_created_callback), 
                     NULL);

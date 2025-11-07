@@ -1,6 +1,6 @@
 # Makefile.am for texinfo/doc.
 #
-# Copyright 2002-2024 Free Software Foundation, Inc.
+# Copyright 2002-2025 Free Software Foundation, Inc.
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -13,7 +13,7 @@
 # The links to texi2any_internals require that to avoid many warnings
 AM_MAKEINFOFLAGS = -c INFO_SPECIAL_CHARS_WARNING=0
 
-SUBDIRS = tp_api refcard
+SUBDIRS = tta_api refcard
 
 info_TEXINFOS = texinfo.texi info-stnd.texi texi2any_api.texi
 texinfo_TEXINFOS = pod2texi.texi html_default_commands_args.texi
@@ -22,9 +22,9 @@ DISTCLEANFILES = texinfo.info* info-stnd.info* texi2any_api.info*
 TEXINFO_TEX = texinfo.tex
 
 MAKEINFO_ENVIRONMENT = TEXINFO_DEV_SOURCE=1 \
-                       top_srcdir="$(top_srcdir)" \
-                       top_builddir="$(top_builddir)"
-MAKEINFO = $(MAKEINFO_ENVIRONMENT) $(PERL) $(top_builddir)/tp/texi2any
+                       t2a_srcdir="$(top_srcdir)/tta" \
+                       t2a_builddir="$(top_builddir)/tta"
+MAKEINFO = $(MAKEINFO_ENVIRONMENT) $(PERL) $(top_builddir)/tta/perl/texi2any
 
 TEXI2DVI_ENVIRONMENT = TEXINDEX=${abs_top_builddir}/texindex/texindex \
                        TEXINDEX_SCRIPT=${abs_top_srcdir}/texindex/texindex.awk
@@ -41,13 +41,18 @@ if BUILD_PERL_API_TEXI
 # pod2texi.pl), as we include from the Texinfo manual.  The file name
 # for the included section is therefore determined by the information
 # in the Pod file NAME section.
+# Since Pod::Simple::Texinfo is not in CPAN, the @url first argument
+# is post-processed by a sed one liner to point to the GNU web site. 
 $(srcdir)/pod2texi.texi: $(pod2texi_pl)
 	$(MAKEINFO_ENVIRONMENT) $(PERL) -I $(top_srcdir)/Pod-Simple-Texinfo/lib/ $(top_srcdir)/Pod-Simple-Texinfo/pod2texi.pl --base-level=subsubsection --no-section-nodes --headings-as-sections --subdir=$(srcdir) $(pod2texi_pl) > /dev/null
+	mv $(srcdir)/pod2texi.texi $(srcdir)/pod2texi_tmp.texi
+	sed 's;https://metacpan.org/pod/Pod::Simple::Texinfo;https://www.gnu.org/software/texinfo/manual/Pod/Simple/Texinfo.html;' $(srcdir)/pod2texi_tmp.texi > $(srcdir)/pod2texi.texi
+	rm -f $(srcdir)/pod2texi_tmp.texi
 endif
 
 TXI_MODULES_ENV = srcdir="$(srcdir)"; export srcdir;
 
-$(srcdir)/html_default_commands_args.texi: $(top_srcdir)/tp/Texinfo/Convert/HTML.pm $(srcdir)/generate_html_doc_texi.pl
+$(srcdir)/html_default_commands_args.texi: $(top_srcdir)/tta/perl/Texinfo/Convert/HTML.pm $(srcdir)/generate_html_doc_texi.pl
 	$(TXI_MODULES_ENV) $(PERL) $(srcdir)/generate_html_doc_texi.pl $(srcdir)/html_default_commands_args.texi
 
 # We'd also like to use something like this, but Automake calls
@@ -110,10 +115,10 @@ gnulib = $(abs_top_srcdir)/../gnulib
 gendocs = $(gnulib)/build-aux/gendocs.sh
 gendocs_templates = $(gnulib)/doc
 gendocs_envvars = GENDOCS_TEMPLATE_DIR=$(gendocs_templates) \
-        MAKEINFO=../$(builddir)/../tp/texi2any \
+        MAKEINFO=../$(builddir)/../tta/perl/texi2any \
                        TEXINFO_DEV_SOURCE=1 \
-                       top_srcdir="../$(top_srcdir)" \
-                       top_builddir="../$(top_builddir)" \
+                       t2a_srcdir="../$(top_srcdir)/tta" \
+                       t2a_builddir="../$(top_builddir)/tta" \
         TEXI2DVI=../$(srcdir)/../util/texi2dvi \
         TEXINDEX=../../texindex/texindex \
         TEXINDEX_SCRIPT=../$(srcdir)/../texindex/texindex.awk
@@ -167,8 +172,8 @@ wwwdoc-build:
 	&& $(MKDIR_P) Pod/Simple \
 	&& ln -s ../$(srcdir)/texinfo.tex . \
 	&& ln -s ../$(srcdir)/*.texi . \
-	&& ln -s ../$(srcdir)/tp_api/*.texi . \
-	&& ln -s ../$(srcdir)/tp_api/api_includes . \
+	&& ln -s ../$(srcdir)/tta_api/*.texi . \
+	&& ln -s ../$(srcdir)/tta_api/api_includes . \
 	&& ln -s ../../../$(srcdir)/../Pod-Simple-Texinfo/lib/Pod/Simple/Texinfo.pm Pod/Simple \
 	&& $(gendocs_invoke) -o $(manual1) $(manual1) $(manual1_title) \
 	&& $(gendocs_invoke) -o $(manual2) $(manual2) $(manual2_title) \

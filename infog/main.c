@@ -5,15 +5,12 @@
 #include <errno.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/socket.h>
-#include <sys/un.h>
 #include <time.h>
 #include <stdarg.h>
 #include <signal.h>
 
 #include <gtk/gtk.h>
 #include <gio/gio.h>
-#include <gio/gunixsocketaddress.h>
 #include <webkit2/webkit2.h>
 
 #include "common.h"
@@ -36,26 +33,29 @@ debug (int level, char *fmt, ...)
   va_list v;
   va_start (v, fmt);
 
-  printf ("%lu: ", clock ());
+  printf ("MAIN/%lu: ", clock ());
   vmsg (fmt, v);
   va_end (v);
 }
 
-static void destroyWindowCb(GtkWidget *widget, GtkWidget *window);
-static gboolean closeWebViewCb(WebKitWebView* webView, GtkWidget* window);
+static GMainLoop *main_loop;
+
+static void
+destroy_window_cb (GtkWidget *widget, GtkWidget *window)
+{
+  g_main_loop_quit (main_loop);
+}
+
+static gboolean
+close_web_view_cb(WebKitWebView *webView, GtkWidget *window)
+{
+  gtk_widget_destroy (window);
+  return TRUE;
+}
+
 static gboolean key_press_cb(GtkWidget *webView,
                              GdkEvent  *event,
                              gpointer   user_data);
-
-static char *socket_file;
-
-static void
-remove_socket (void)
-{
-  debug (1, "removing socket %s\n", socket_file);
-  if (socket_file)
-    unlink (socket_file);
-}
 
 WebKitWebView *webView = 0;
 
@@ -124,11 +124,18 @@ hide_index (void)
   gtk_widget_grab_focus (GTK_WIDGET(webView));
 }
 
+void
+clear_completions (void)
+{
+  if (index_store)
+    gtk_list_store_clear (index_store);
+}
+
 gboolean
-match_selected_cb (GtkEntryCompletion *widget,
-                   GtkTreeModel       *model,
-                   GtkTreeIter        *iter,
-                   gpointer            user_data)
+index_match_selected_cb (GtkEntryCompletion *widget,
+                         GtkTreeModel       *model,
+                         GtkTreeIter        *iter,
+                         gpointer            user_data)
 {
   GValue value = G_VALUE_INIT;
 
@@ -143,13 +150,6 @@ match_selected_cb (GtkEntryCompletion *widget,
   return FALSE;
 }
 
-void
-clear_completions (void)
-{
-  if (index_store)
-    gtk_list_store_clear (index_store);
-}
-
 /* Save index entries.  Return 1 if it is the end of this index. */
 int
 save_completions (char *p)
@@ -161,7 +161,7 @@ save_completions (char *p)
       index_store = gtk_list_store_new (2, G_TYPE_STRING, G_TYPE_STRING);
       index_completion = gtk_entry_completion_new ();
       g_signal_connect (index_completion, "match-selected",
-                        G_CALLBACK(match_selected_cb), NULL);
+                        G_CALLBACK(index_match_selected_cb), NULL);
       gtk_entry_completion_set_model (index_completion,
                                       GTK_TREE_MODEL(index_store));
       gtk_entry_completion_set_text_column (index_completion, 0);
@@ -447,10 +447,9 @@ new_manual (char *manual)
 {
   debug (1, "NEW MANUAL %s\n", manual);
 
-  free (current_manual_dir);
-  current_manual_dir = locate_manual (manual);
+  char *new_manual_dir = locate_manual (manual);
 
-  if (!current_manual_dir)
+  if (!new_manual_dir)
     {
       debug (1, "MANUAL NOT FOUND\n");
       GtkDialogFlags flags = GTK_DIALOG_DESTROY_WITH_PARENT;
@@ -464,6 +463,8 @@ new_manual (char *manual)
       gtk_widget_destroy (dialog);
       return 0;
     }
+  free (current_manual_dir);
+  current_manual_dir = new_manual_dir;
   debug (1, "NEW MANUAL AT %s\n", current_manual_dir);
 
   free (current_manual);
@@ -530,64 +531,72 @@ load_node (char *p)
   g_string_free (s, TRUE);
 }
 
-
-gboolean
-socket_cb (GSocket *socket,
-           GIOCondition condition,
-           gpointer user_data)
+void
+handle_script_message (WebKitUserContentManager *manager,
+                       WebKitJavascriptResult   *js_result,
+                       gpointer                  user_data)
 {
-  static char buffer[PACKET_SIZE+1];
-  GError *err = 0;
-  gssize result;
+  JSCValue *jscValue = webkit_javascript_result_get_js_value (js_result);
+  char *message = jsc_value_to_string (jscValue);
+  //debug (1, "--------------> recvd mesg %s\n", message);
 
-  switch (condition)
+  char *p, *q;
+  p = strchr (message, '\n');
+  if (!p)
     {
-    case G_IO_IN:
-      result = g_socket_receive (socket, buffer, sizeof buffer, NULL, &err);
-      if (result <= 0)
+      free (message);
+      return;
+    }
+  *p = 0;
+
+  char **save_where = 0;
+  if (!strcmp (message, "next"))
+    save_where = &next_link;
+  else if (!strcmp (message, "prev"))
+    save_where = &prev_link;
+  else if (!strcmp (message, "up"))
+    save_where = &up_link;
+  if (save_where)
+    {
+      p++;
+      q = strchr (p, '\n');
+      if (q)
         {
-          debug (1, "socket receive error: %s\n", err->message);
-          gtk_main_quit ();
-        }
-
-      buffer[PACKET_SIZE] = '\0';
-
-      char *p, *q;
-      p = strchr (buffer, '\n'); 
-      if (!p)
-        break;
-      *p = 0;
-      //debug (1, "received message of type |%s|\n", buffer);
-
-      char **save_where = 0;
-      if (!strcmp (buffer, "next"))
-        save_where = &next_link;
-      else if (!strcmp (buffer, "prev"))
-        save_where = &prev_link;
-      else if (!strcmp (buffer, "up"))
-        save_where = &up_link;
-      if (save_where)
-        {
-          p++;
-          q = strchr (p, '\n');
-          if (!q)
-            break;
           *q = 0;
           free (*save_where);
           *save_where = strdup (p);
         }
-      else if (!strcmp (buffer, "index"))
+    }
+  else if (!strcmp (message, "inform-new-node"))
+    {
+      p++;
+      if (toc_paths)
         {
-          p++; /* Set p to the first byte after index line. */
-
-          if (save_completions (p))
-            continue_to_load_index_nodes ();
+          switch_node (p);
         }
-      else if (!strcmp (buffer, "new-manual"))
+      else
         {
-          if (!new_manual (p + 1))
-            break;
-
+          free (pending_node); pending_node = strdup (p);
+          debug (1, "TOC PATHS NOT READY\n");
+        }
+      free (next_link); free (prev_link); free (up_link);
+      next_link = prev_link = up_link = 0;
+    }
+  else if (!strcmp (message, "new-node"))
+    {
+      p++;
+      load_node (p);
+    }
+  else if (!strcmp (message, "index-nodes"))
+    {
+      /* Receive URL of files containing an index. */
+      p++;
+      load_index_nodes (p);
+    }
+  else if (!strcmp (message, "new-manual"))
+    {
+      if (new_manual (p + 1))
+        {
           GString *s = g_string_new (NULL);
           g_string_append (s, "file:");
           g_string_append (s, current_manual_dir);
@@ -595,64 +604,26 @@ socket_cb (GSocket *socket,
           webkit_web_view_load_uri (hiddenWebView, s->str);
           g_string_free (s, TRUE);
         }
-      else if (!strcmp (buffer, "inform-new-node"))
-        {
-          p++;
-          if (toc_paths)
-            {
-              switch_node (p);
-            }
-          else
-            {
-              free (pending_node); pending_node = strdup (p);
-              debug (1, "TOC PATHS NOT READY\n");
-            }
-          free (next_link); free (prev_link); free (up_link);
-          next_link = prev_link = up_link = 0;
-        }
-      else if (!strcmp (buffer, "new-node"))
-        {
-          p++;
-          load_node (p);
-        }
-      else if (!strcmp (buffer, "toc"))
-        {
-          p++;
-          load_toc (p);
-        }
-      else if (!strcmp (buffer, "toc-finished"))
-        {
-          debug (1, "TOC FINISHED\n");
-          if (pending_node)
-            {
-              debug (1, "HANDLE PENDING NODE %s\n", pending_node);
-              switch_node (pending_node);
-              free (pending_node); pending_node = 0;
-            }
-        }
-      else if (!strcmp (buffer, "index-nodes"))
-        {
-          /* Receive URL of files containing an index. */
-          p++;
-          load_index_nodes (p);
-        }
-      else
-        {
-          g_print ("Unknown message type '%s'\n", buffer);
-        }
-
-      break;
-    case G_IO_ERR:
-    case G_IO_HUP:
-      g_print ("socket error\n");
-      gtk_main_quit ();
-      break;
-    default:
-      g_print ("unhandled socket connection\n");
-      gtk_main_quit ();
-      break;
     }
-  return true;
+  else if (!strcmp (message, "index"))
+    {
+      p++; /* Set p to the first byte after index line. */
+
+      if (save_completions (p))
+        continue_to_load_index_nodes ();
+    }
+  else if (!strcmp (message, "toc"))
+    {
+      p++;
+      load_toc (p);
+      debug (1, "TOC FINISHED\n");
+      if (pending_node)
+        {
+          debug (1, "HANDLE PENDING NODE %s\n", pending_node);
+          switch_node (pending_node);
+          free (pending_node); pending_node = 0;
+        }
+    }
 }
 
 char *extensions_directory;
@@ -661,49 +632,12 @@ static void
 initialize_web_extensions (WebKitWebContext *context,
                            gpointer          user_data)
 {
-  /* Make a Unix domain socket for communication with the browser process.
-     Some example code and documentation for WebKitGTK uses dbus instead. */
-  if (!socket_file)
-    {
-      socket_file = tmpnam (0);
-
-      GError *err = 0;
-
-      err = 0;
-      GSocket *gsocket = g_socket_new (G_SOCKET_FAMILY_UNIX,
-                                       G_SOCKET_TYPE_DATAGRAM,
-                                       0,
-                                       &err);
-      if (!gsocket)
-        {
-          g_print ("no socket: %s\n", err->message);
-          gtk_main_quit ();
-        }
-
-      err = 0;
-      GSocketAddress *address = g_unix_socket_address_new (socket_file);
-      if (!g_socket_bind (gsocket, address, FALSE, &err))
-        {
-          g_print ("bind socket: %s\n", err->message);
-          gtk_main_quit ();
-        }
-      err = 0;
-
-      GSource *gsource = g_socket_create_source (gsocket, G_IO_IN, NULL);
-      g_source_set_callback (gsource, (GSourceFunc)(socket_cb), NULL, NULL);
-      g_source_attach (gsource, NULL);
-      g_object_unref (address);
-
-      atexit (&remove_socket);
-    }
-
   char *d;
   asprintf (&d, "%s/%s", extensions_directory, ".libs");
   webkit_web_context_set_web_extensions_directory (context, d);
   free (d);
 
-  webkit_web_context_set_web_extensions_initialization_user_data (
-     context, g_variant_new_bytestring (socket_file));
+  webkit_web_context_set_web_extensions_initialization_user_data (context, 0);
 }
 
 void
@@ -715,9 +649,9 @@ show_index (void)
 
 
 gboolean
-hide_index_cb (GtkWidget *widget,
-               GdkEvent  *event,
-               gpointer   user_data)
+index_search_box_focus_out_cb (GtkWidget *widget,
+                               GdkEvent  *event,
+                               gpointer   user_data)
 {
   hide_index ();
   return FALSE;
@@ -818,7 +752,6 @@ find_extensions_directory (int argc, char *argv[])
 }
 
 
-static GMainLoop *main_loop;
 
 static GtkWidget *toc_button;
 static GtkWidget *back_button;
@@ -912,10 +845,6 @@ help_clicked_cb (GtkButton *button, gpointer user_data)
 void
 build_gui (void)
 {
-  /* Disable JavaScript */
-  WebKitSettings *settings = webkit_settings_new ();
-  webkit_settings_set_enable_javascript (settings, FALSE);
-
   main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
   gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 700);
 
@@ -971,7 +900,6 @@ build_gui (void)
   gtk_paned_set_position (paned, 200);
   gtk_paned_pack1 (paned, GTK_WIDGET(toc_scroll), FALSE, TRUE);
 
-  webView = WEBKIT_WEB_VIEW(webkit_web_view_new_with_settings(settings));
   gtk_paned_pack2 (paned, GTK_WIDGET(webView), TRUE, TRUE);
 
   index_entry = GTK_ENTRY(gtk_entry_new ());
@@ -983,15 +911,17 @@ build_gui (void)
 
   /* Hide the index search box when it loses focus. */
   g_signal_connect (index_entry, "focus-out-event",
-                    G_CALLBACK(hide_index_cb), NULL);
+                    G_CALLBACK(index_search_box_focus_out_cb), NULL);
 
   g_signal_connect (webView, "decide-policy",
                     G_CALLBACK(decide_policy_cb), NULL);
 
   // Set up callbacks so that if either the main window or the browser 
   // instance is closed, the program will exit.
-  g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
-  g_signal_connect(webView, "close", G_CALLBACK(closeWebViewCb), main_window);
+  g_signal_connect(main_window, "destroy",
+                   G_CALLBACK(destroy_window_cb), NULL);
+  g_signal_connect(webView, "close",
+                   G_CALLBACK(close_web_view_cb), main_window);
 
   g_signal_connect(webView, "key-press-event", G_CALLBACK(key_press_cb), NULL);
 
@@ -1026,7 +956,6 @@ main (int argc, char *argv[])
     if (signal (SIGTERM, termination_handler) == SIG_IGN)
       signal (SIGTERM, SIG_IGN);
 
-
     /* This is used to use a separate process for the web browser
        that looks up the index files.  This stops the program from freezing 
        while the index files are processed.  */
@@ -1044,10 +973,29 @@ main (int argc, char *argv[])
 		      G_CALLBACK (initialize_web_extensions),
 		      NULL);
 
+    /* Disable JavaScript */
+    WebKitSettings *settings = webkit_settings_new ();
+    webkit_settings_set_enable_javascript (settings, FALSE);
+
+    webView = WEBKIT_WEB_VIEW(webkit_web_view_new_with_settings(settings));
+
+    WebKitUserContentManager *manager1, *manager2;
+
+    manager1 = webkit_web_view_get_user_content_manager (webView);
+    g_signal_connect (manager1, "script-message-received::channel",
+                      G_CALLBACK (handle_script_message), NULL);
+    webkit_user_content_manager_register_script_message_handler (manager1,
+                                                                 "channel");
     build_gui ();
 
     /* Create a web view to parse index files.  */
     hiddenWebView = WEBKIT_WEB_VIEW(webkit_web_view_new());
+
+    manager2 = webkit_web_view_get_user_content_manager (hiddenWebView);
+    g_signal_connect (manager2, "script-message-received::channel",
+                      G_CALLBACK (handle_script_message), NULL);
+    webkit_user_content_manager_register_script_message_handler (manager2,
+                                                                 "channel");
 
 #define FIRST_MANUAL "texinfo"
 
@@ -1097,16 +1045,3 @@ key_press_cb (GtkWidget *widget,
 
 }
 
-
-static void
-destroyWindowCb (GtkWidget *widget, GtkWidget *window)
-{
-  g_main_loop_quit (main_loop);
-}
-
-static gboolean
-closeWebViewCb(WebKitWebView *webView, GtkWidget *window)
-{
-  gtk_widget_destroy (window);
-  return TRUE;
-}

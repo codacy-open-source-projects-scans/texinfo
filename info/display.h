@@ -1,6 +1,6 @@
 /* display.h -- How the display in Info is done.
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 #ifndef INFO_DISPLAY_H
 #define INFO_DISPLAY_H
 
-#include "scan.h"
+#include "window.h"
 #include "terminal.h"
 
 typedef struct {
@@ -69,5 +69,11 @@ void display_scroll_display (int start, int end, int amount);
    that appear in the OLD_STARTS array. */
 void display_scroll_line_starts (WINDOW *window, int old_pagetop,
     long *old_starts, int old_count);
+
+/* Return a pointer to a string which is the printed representation
+   of CHARACTER if it were printed at HPOS. */
+const char *printed_representation (mbi_iterator_t *iter,
+                                     int *delim, size_t pl_chars,
+                                     int *pchars, int *pbytes);
 
 #endif /* not INFO_DISPLAY_H */

@@ -1,6 +1,6 @@
 /* util.c --  various utility functions
 
-   Copyright 1993-2024 Free Software Foundation, Inc.
+   Copyright 1993-2025 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,9 +16,18 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>. */
 
 #include "info.h"
-#include "session.h"
 #include "util.h"
-#include "tag.h"
+
+#include <wchar.h>
+#ifdef __MINGW32__
+/* MinGW uses a replacement nl_langinfo, see pcterm.c.  */
+# define nl_langinfo rpl_nl_langinfo
+extern char * rpl_nl_langinfo (nl_item);
+/* MinGW uses its own replacement wcwidth, see pcterm.c for the
+   reasons.  Since Gnulib's wchar.h might redirect wcwidth to
+   rpl_wcwidth, we explicitly undo that here.  */
+#undef wcwidth
+#endif
 
 /* wrapper for asprintf */
 static int
@@ -42,39 +51,6 @@ xasprintf (char **ptr, const char *template, ...)
   return ret;
 }
 
-/* Return the file buffer which belongs to WINDOW's node. */
-FILE_BUFFER *
-file_buffer_of_window (WINDOW *window)
-{
-  /* If this window has no node, then it has no file buffer. */
-  if (!window->node)
-    return NULL;
-
-  if (window->node->fullpath)
-    return info_find_file (window->node->fullpath);
-
-  return NULL;
-}
-
-/* Return "(FILENAME)NODENAME" for NODE, or just "NODENAME" if NODE's
-   filename is not set.  Return value should not be freed. */
-char *
-node_printed_rep (NODE *node)
-{
-  static char *rep;
-
-  if (node->fullpath)
-    {
-      char *filename = filename_non_directory (node->fullpath);
-      rep = xrealloc (rep, 1 + strlen (filename) + 1 + strlen (node->nodename) + 1);
-      sprintf (rep, "(%s)%s", filename, node->nodename);
-      return rep;
-    }
-  else
-    return node->nodename;
-}
-
-
 /* Return a pointer to the part of PATHNAME that simply defines the file. */
 char *
 filename_non_directory (char *pathname)
@@ -88,41 +64,6 @@ filename_non_directory (char *pathname)
     filename--;
 
   return filename;
-}
-
-/* Return non-zero if NODE is one especially created by Info. */
-int
-internal_info_node_p (NODE *node)
-{
-  return (node != NULL) && (node->flags & N_IsInternal);
-}
-
-/* Make NODE appear to be one especially created by Info. */
-void
-name_internal_node (NODE *node, char *name)
-{
-  if (!node)
-    return;
-
-  node->fullpath = "";
-  node->subfile = 0;
-  node->nodename = name;
-  node->flags |= N_IsInternal;
-}
-
-/* Return the window displaying NAME, the name of an internally created
-   Info window. */
-WINDOW *
-get_internal_info_window (char *name)
-{
-  WINDOW *win;
-
-  for (win = windows; win; win = win->next)
-    if (internal_info_node_p (win->node) &&
-        (strcmp (win->node->nodename, name) == 0))
-      break;
-
-  return win;
 }
 
 
@@ -140,8 +81,9 @@ ansi_escape (mbi_iterator_t iter, int *plen)
         {
           ITER_SETBYTES (iter, 1);
           mbi_advance (iter);
-          if (isdigit (*mbi_cur_ptr (iter)) && mbi_avail (iter))
-            {	
+          if (isdigit ((unsigned char) *mbi_cur_ptr (iter))
+              && mbi_avail (iter))
+            {
               ITER_SETBYTES (iter, 1);
               mbi_advance (iter);
               if (*mbi_cur_ptr (iter) == 'm')
@@ -149,7 +91,8 @@ ansi_escape (mbi_iterator_t iter, int *plen)
                   *plen = 4;
                   return 1;
                 }
-              else if (isdigit (*mbi_cur_ptr (iter)) && mbi_avail (iter))
+              else if (isdigit ((unsigned char) *mbi_cur_ptr (iter))
+                       && mbi_avail (iter))
                 {
                   ITER_SETBYTES (iter, 1);
                   mbi_advance (iter);
@@ -162,120 +105,10 @@ ansi_escape (mbi_iterator_t iter, int *plen)
             }
         }
     }
-                
+
   return 0;
 }
 
-static struct text_buffer printed_rep = { 0 };
-
-/* Return pointer to string that is the printed representation of character
-   (or other logical unit) at ITER if it were printed at screen column
-   PL_CHARS.  Use ITER_SETBYTES (util.h) on ITER if we need to advance 
-   past a unit that the multibyte iteractor doesn't know about (like an ANSI 
-   escape sequence).  If ITER points at an end-of-line character, set *DELIM to 
-   this character.  *PCHARS gets the number of screen columns taken up by
-   outputting the return value, and *PBYTES the number of bytes in returned
-   string.  Return value is not null-terminated.  Return value must not be
-   freed by caller. */
-char *
-printed_representation (mbi_iterator_t *iter, int *delim, size_t pl_chars,
-                        int *pchars, int *pbytes)
-{
-  struct text_buffer *rep = &printed_rep;
-
-  char *cur_ptr = (char *) mbi_cur_ptr (*iter);
-  int cur_len = mb_len (mbi_cur (*iter));
-
-  text_buffer_reset (&printed_rep);
-
-  if (mb_isprint (mbi_cur (*iter)))
-    {
-      /* cur.wc gives a wchar_t object.  See mbiter.h in the
-         gnulib/lib directory. */
-      *pchars = wcwidth ((*iter).cur.wc);
-      *pbytes = cur_len;
-      return cur_ptr;
-    }
-  else if (cur_len == 1)
-    {
-      if (*cur_ptr == '\n' || *cur_ptr == '\r')
-        {
-          /* If this is a CRLF line ending, ignore this character. */
-          if (*cur_ptr == '\r' && cur_ptr[1] == '\n')
-            {
-              *pchars = 0;
-              *pbytes = 0;
-              return cur_ptr;
-            }
-
-          *pchars = 1;
-          *pbytes = cur_len;
-          *delim = *cur_ptr;
-          text_buffer_add_char (rep, ' ');
-          return cur_ptr;
-        }
-      else if (ansi_escape (*iter, &cur_len))
-        {
-          *pchars = 0; 
-          *pbytes = cur_len;
-          ITER_SETBYTES (*iter, cur_len);
-
-          return cur_ptr;
-        }
-      else if (*cur_ptr == '\t')
-        {
-          int i = 0;
-
-          /* compute the number of columns to the next tab stop, assuming
-             8 columns for a tab.
-
-             To determine the next tab stop, add 8 to the current column,
-             and then subtract the remainder of the division by 8.
-
-             (n & 0xf8) does (n - n mod 8) in one step as the binary
-             representation of 0xf8 is 1111 1000 so the result has
-             to be a multiple of 8.
-             TODO this doesn't work if there are more than 255 columns.
-           */
-          *pchars = ((pl_chars + 8) & 0xf8) - pl_chars;
-          *pbytes = *pchars;
-
-          /* We must output spaces instead of the tab because a tab may
-             not clear characters already on the screen. */
-          for (i = 0; i < *pbytes; i++)
-            text_buffer_add_char (rep, ' ');
-          return text_buffer_base (rep);
-        }
-    }
-
-  /* Show CTRL-x as "^X".  */
-  if (iscntrl (*cur_ptr) && *(unsigned char *)cur_ptr < 127)
-    {
-      *pchars = 2;
-      *pbytes = 2;
-      text_buffer_add_char (rep, '^');
-      text_buffer_add_char (rep, *cur_ptr | 0x40);
-      return text_buffer_base (rep);
-    }
-  else if (*cur_ptr == DEL)
-    {
-      *pchars = 0;
-      *pbytes = 0;
-      return text_buffer_base (rep);
-    }
-  else
-    {
-      /* Original byte was not recognized as anything.  Display its octal 
-         value.  This could happen in the C locale for bytes above 128,
-         or for bytes 128-159 in an ISO-8859-1 locale.  Don't output the bytes 
-         as they are, because they could have special meaning to the 
-         terminal. */
-      *pchars = 4;
-      *pbytes = 4;
-      text_buffer_printf (rep, "\\%o", *(unsigned char *)cur_ptr);
-      return text_buffer_base (rep);
-    }
-}
 
 /* Flexible Text Buffer */
 
@@ -300,31 +133,31 @@ text_buffer_vprintf (struct text_buffer *buf, const char *format, va_list ap)
   if (!buf->base)
     {
       if (buf->size == 0)
-	buf->size = MIN_TEXT_BUF_ALLOC; /* Initial allocation */
-      
+        buf->size = MIN_TEXT_BUF_ALLOC; /* Initial allocation */
+
       buf->base = xmalloc (buf->size);
     }
-  
+
   for (;;)
     {
       va_copy (ap_copy, ap);
       n = vsnprintf (buf->base + buf->off, buf->size - buf->off,
-		     format, ap_copy);
+                     format, ap_copy);
       va_end (ap_copy);
       if (n < 0 || buf->off + n >= buf->size ||
-	  !memchr (buf->base + buf->off, '\0', buf->size - buf->off + 1))
-	{
-	  size_t newlen = buf->size * 2;
-	  if (newlen < buf->size)
-	    xalloc_die ();
-	  buf->size = newlen;
-	  buf->base = xrealloc (buf->base, buf->size);
-	}
+          !memchr (buf->base + buf->off, '\0', buf->size - buf->off + 1))
+        {
+          size_t newlen = buf->size * 2;
+          if (newlen < buf->size)
+            xalloc_die ();
+          buf->size = newlen;
+          buf->base = xrealloc (buf->base, buf->size);
+        }
       else
-	{
-	  buf->off += n;
-	  break;
-	}
+        {
+          buf->off += n;
+          break;
+        }
     }
   return n;
 }
@@ -337,7 +170,7 @@ text_buffer_alloc (struct text_buffer *buf, size_t len)
     {
       buf->size = buf->off + len;
       if (buf->size < MIN_TEXT_BUF_ALLOC)
-	buf->size = MIN_TEXT_BUF_ALLOC;
+        buf->size = MIN_TEXT_BUF_ALLOC;
       buf->base = xrealloc (buf->base, buf->size);
     }
 }
@@ -401,13 +234,13 @@ text_buffer_fill (struct text_buffer *buf, int c, size_t len)
 {
   char *p;
   size_t i;
-  
+
   text_buffer_alloc (buf, len);
-  
+
   for (i = 0, p = buf->base + buf->off; i < len; i++)
     *p++ = c;
   buf->off += len;
-  
+
   return len;
 }
 
@@ -423,7 +256,7 @@ text_buffer_printf (struct text_buffer *buf, const char *format, ...)
 {
   va_list ap;
   size_t n;
-  
+
   va_start (ap, format);
   n = text_buffer_vprintf (buf, format, ap);
   va_end (ap);
@@ -439,10 +272,10 @@ fncmp (const char *fn1, const char *fn2)
   const char *s1 = fn1, *s2 = fn2;
 
   while (tolower (*s1) == tolower (*s2)
-	 || (IS_SLASH (*s1) && IS_SLASH (*s2)))
+         || (IS_SLASH (*s1) && IS_SLASH (*s2)))
     {
       if (*s1 == 0)
-	return 0;
+        return 0;
       s1++;
       s2++;
     }

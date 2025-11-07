@@ -1,5 +1,5 @@
 /* info.js - Javascript UI for Texinfo manuals
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Texinfo.
 
@@ -31,7 +31,7 @@
 var config = {
   EXT: ".html",
   TOP_NAME: "index.html",
-  TOP_ID: "top",
+  TOP_ID: "index",
   CONTENTS_ID: "SEC_Contents",
   MAIN_ANCHORS: ["Top"],
   WARNING_TIMEOUT: 3000,
@@ -62,7 +62,7 @@ var config = {
     a dispatch method which accepts actions as parameter.  This method is
     the only way to update the state.
     @typedef {function (Action): void} Action_consumer
-    @type {{dispatch: Action_consumer, state?: any, listeners?: any[]}}.  */
+    @type {{dispatch: Action_consumer, state?: any}}.  */
 var store;
 
 var section_names = [
@@ -72,28 +72,42 @@ var section_names = [
   'subsubsection', 'unnumberedsubsubsec', 'subsubheading',
   'appendixsubsubsec' ];
 
-/** Create a Store that calls its listeners at each state change.
-    @arg {function (Object, Action): Object} reducer
+/** Create a store.
     @arg {Object} state  */
 function
-Store (reducer, state)
+Store (state)
 {
-  this.listeners = [];
-  this.reducer = reducer;
+  this.components = [];
   this.state = state;
 }
 
 /** @arg {Action} action */
 Store.prototype.dispatch = function dispatch (action) {
-  var new_state = this.reducer (this.state, action);
+  var new_state = updater (this.state, action);
   if (new_state !== this.state)
     {
       this.state = new_state;
       if (window["INFO_DEBUG"])
         console.log ("state: ", new_state);
-      this.listeners.forEach (function (listener) {
-        listener (new_state);
-      });
+
+      this.components.forEach (function (cmpt) { cmpt.render (new_state); });
+
+      /* Ensure that focus is on the current node unless some component is
+         focused.  */
+      if (!new_state.focus)
+        {
+          var link = linkid_split (new_state.current);
+          var elem = document.getElementById (link.pageid);
+          if (link.pageid !== config.TOP_ID && link.pageid !== config.CONTENTS_ID)
+            elem.querySelector ("iframe").focus ();
+          else
+            {
+              /* Move the focus to top DOM.  */
+              document.documentElement.focus ();
+              /* Allow the spacebar scroll in the main page to work.  */
+              elem.focus ();
+            }
+        }
     }
 };
 
@@ -147,35 +161,8 @@ var actions = {
     return { type: "cache-links", links: links };
   },
 
-  /** @arg {NodeListOf<Element>} entries */
-  cache_index_links: function (entries) {
-    var dict = {};
-    var text0 = "", text1 = ""; // for subentries
-    for (var i = 0; i < entries.length; i += 1)
-      {
-        var entry = entries[i];
-        var entry_cl = entry.classList;
-        var text = entry.textContent;
-        if (entry_cl.contains("index-entry-level-2"))
-          {
-            text = text0 + "; " + text1 + "; " + text;
-          }
-        else if (entry_cl.contains("index-entry-level-1"))
-          {
-            text1 = text;
-            text = text0 + "; " + text;
-          }
-        else
-          {
-            text0 = text;
-          }
-
-        var link = entry.firstChild;
-        if (link && link.nodeName == 'A')
-          {
-            dict[text] = href_hash (link_href (link));
-          }
-      }
+  /* Send list of index entries. */
+  cache_index_links: function (dict) {
     return { type: "cache-index-links", links: dict };
   },
 
@@ -203,6 +190,10 @@ var actions = {
 
   window_title: function (title) {
     return { type: "window-title", title: title };
+  },
+
+  window_title_of_linkid: function (title, linkid) {
+    return { type: "window-title-of-linkid", title: title, linkid: linkid };
   },
 
   /** Search EXP in the whole manual.
@@ -470,6 +461,10 @@ updater (state, action)
         result.window_title = action.title;
         return result;
       }
+    case "window-title-of-linkid":
+      {
+        return result;
+      }
     case "warning":
       {
         result.warning = action.msg;
@@ -486,6 +481,10 @@ updater (state, action)
 
 /*-----------------------.
 | Context initializers.  |
+`-----------------------*/
+
+/*-----------------------.
+| Top-level index page.  |
 `-----------------------*/
 
 /** Initialize the index page of the manual which manages the state of the
@@ -549,7 +548,7 @@ init_index_page ()
     this.element = div;
   }
 
-  Help_page.prototype.render = function render (state) {
+  Help_page.prototype.render = function help_page_render (state) {
     if (!state.help)
       this.element.style.display = "none";
     else
@@ -655,10 +654,13 @@ init_index_page ()
     if (!features || features.datalistelem)
       {
         var datalist = create_datalist (data);
-        datalist.setAttribute ("id", this.id + "-data");
-        this.data = data;
-        this.datalist = datalist;
-        this.element.appendChild (datalist);
+        if (!document.getElementById (this.id + "-data"))
+          {
+            datalist.setAttribute ("id", this.id + "-data");
+            this.data = data;
+            this.datalist = datalist;
+            this.element.appendChild (datalist);
+          }
       }
     this.element.removeAttribute ("hidden");
     this.input.focus ();
@@ -726,7 +728,7 @@ init_index_page ()
     this.toid = null;
   }
 
-  Minibuffer.prototype.render = function render (state) {
+  Minibuffer.prototype.render = function minibuffer_render (state) {
     if (!state.warning)
       {
         this.warn.setAttribute ("hidden", "true");
@@ -768,7 +770,7 @@ init_index_page ()
     this.toid = null;
   }
 
-  Echo_area.prototype.render = function render (state) {
+  Echo_area.prototype.render = function echo_area_render (state) {
     if (!state.echo)
       {
         this.element.setAttribute ("hidden", "true");
@@ -842,7 +844,7 @@ init_index_page ()
   }
 
   /* Render 'sidebar' according to STATE which is a new state. */
-  Sidebar.prototype.render = function render (state) {
+  Sidebar.prototype.render = function sidebar_render (state) {
     /* Update sidebar to highlight the title corresponding to
        'state.current'.*/
     let currently_showing = document.body.getAttribute("show-sidebar");
@@ -901,7 +903,7 @@ init_index_page ()
     return div;
   };
 
-  Pages.prototype.render = function render (state) {
+  Pages.prototype.render = function pages_render (state) {
     var that = this;
 
     /* Create div elements for pages corresponding to newly added
@@ -932,12 +934,19 @@ init_index_page ()
         this.prev_id = state.current;
         this.prev_div = div;
       }
-      if (state.action.type === "window-title") {
-          div.setAttribute("title", state.action.title);
+    if (state.action.type === "window-title")
+      {
+        div.setAttribute("title", state.action.title);
       }
-      let title = div.getAttribute("title") || this.main_title;
-      if (title && document.title !== title)
-          document.title = title;
+    else if (state.action.type === "window-title-of-linkid")
+      {
+        var update_div =  document.getElementById (state.action.linkid);
+        if (update_div)
+          update_div.setAttribute("title", state.action.title);
+      }
+    let title = div.getAttribute("title") || this.main_title;
+    if (title && document.title !== title)
+        document.title = title;
 
     if (state.search
         && (this.prev_search !== state.search)
@@ -1047,6 +1056,7 @@ init_index_page ()
           {
             iframe = document.createElement ("iframe");
             iframe.classList.add ("node");
+            console.trace();
             iframe.setAttribute ("src", linkid_to_url (pageid));
             div.appendChild (iframe);
             iframe.addEventListener ("load", function () {
@@ -1157,46 +1167,21 @@ init_index_page ()
     for (var ch = document.body.firstChild; ch; ch = document.body.firstChild)
       index_div.appendChild (ch);
 
-    /* Aggregation of all the sub-components.  */
-    var components = {
-      element: document.body,
-      components: [],
+    var components = [];
+    function add_component (component) {
+      components.push (component);
+      document.body.appendChild (component.element);
+    }
 
-      add: function add (component) {
-        this.components.push (component);
-        this.element.appendChild (component.element);
-      },
-
-      render: function render (state) {
-        this.components
-            .forEach (function (cmpt) { cmpt.render (state); });
-
-        /* Ensure that focus is on the current node unless some component is
-           focused.  */
-        if (!state.focus)
-          {
-            var link = linkid_split (state.current);
-            var elem = document.getElementById (link.pageid);
-            if (link.pageid !== config.TOP_ID && link.pageid !== config.CONTENTS_ID)
-              elem.querySelector ("iframe").focus ();
-            else
-              {
-                /* Move the focus to top DOM.  */
-                document.documentElement.focus ();
-                /* Allow the spacebar scroll in the main page to work.  */
-                elem.focus ();
-              }
-          }
-      }
-    };
     var pages = new Pages (index_div);
-    components.add (pages);
+    add_component (pages);
     var contents_node = pages.add_div(config.CONTENTS_ID);
-    components.add (new Sidebar (contents_node));
-    components.add (new Help_page ());
-    components.add (new Minibuffer ());
-    components.add (new Echo_area ());
-    store.listeners.push (components.render.bind (components));
+    add_component (new Sidebar (contents_node));
+    add_component (new Help_page ());
+    add_component (new Minibuffer ());
+    add_component (new Echo_area ());
+
+    store.components = components;
 
     if (window.location.hash)
       {
@@ -1211,7 +1196,7 @@ init_index_page ()
     store.dispatch ({ type: "iframe-ready", id: config.TOP_ID });
     store.dispatch ({
       type: "echo",
-      msg: "Welcome to Texinfo documentation viewer 7.1.90, type '?' for help."
+      msg: "Welcome to Texinfo documentation viewer 7.2dev, type '?' for help."
     });
 
     /* Call user hook.  */
@@ -1248,7 +1233,11 @@ init_index_page ()
     on_message: on_message,
     on_popstate: on_popstate
   };
-}
+} /* init_index_page */
+
+/*----------------------------------------.
+| Sidebar showing the table of contents.  |
+`----------------------------------------*/
 
 /** Initialize the iframe which contains the lateral table of content.  */
 function
@@ -1407,7 +1396,10 @@ init_sidebar ()
             var div = document.createElement ("div");
             a.appendChild (div);
             var span = document.createElement ("span");
-            span.textContent = h1.textContent;
+            span.innerHTML = h1.innerHTML;
+            var anchor = span.querySelector("a.copiable-link");
+            if (anchor)
+              anchor.parentNode.removeChild(anchor);
             div.appendChild (span);
           }
       }
@@ -1471,7 +1463,11 @@ init_sidebar ()
     on_load: on_load,
     on_message: on_message
   };
-}
+} /* init_sidebar */
+
+/*-----------------------------------------.
+| Iframes containing pages of the manual.  |
+`-----------------------------------------*/
 
 /** Initialize iframes which contain pages of the manual.  */
 function
@@ -1489,14 +1485,45 @@ init_iframe ()
     links[linkid] = navigation_links (document);
     store.dispatch (actions.cache_links (links));
     if (document.title)
-       store.dispatch (actions.window_title (document.title));
+      store.dispatch (actions.window_title_of_linkid (document.title, linkid));
 
     if (linkid_contains_index (linkid))
       {
         /* Scan links that should be added to the index.  */
         var index_entries = document.querySelectorAll
-          ("td.printindex-index-entry");
-        store.dispatch (actions.cache_index_links (index_entries));
+          ("td.printindex-index-entry"
+           + ", td.printindex-index-subentry-level-1"
+           + ", td.printindex-index-subentry-level-2");
+
+        var dict = {};
+        var text0 = "", text1 = ""; // for subentries
+        for (var i = 0; i < index_entries.length; i += 1)
+          {
+            var entry = index_entries[i];
+            var entry_cl = entry.classList;
+            var text = entry.textContent;
+            if (entry_cl.contains("printindex-index-subentry-level-2"))
+              {
+                text = text0 + "; " + text1 + "; " + text;
+              }
+            else if (entry_cl.contains("printindex-index-subentry-level-1"))
+              {
+                text1 = text;
+                text = text0 + "; " + text;
+              }
+            else
+              {
+                text0 = text;
+              }
+
+            var link = entry.firstChild;
+            if (link && link.nodeName == 'A')
+              {
+                dict[text] = href_hash (link_href (link));
+              }
+          }
+
+        store.dispatch (actions.cache_index_links (dict));
       }
 
     add_icons ();
@@ -1567,7 +1594,7 @@ init_iframe ()
     on_load: on_load,
     on_message: on_message
   };
-}
+} /* init_iframe */
 
 /*-------------------------
 | Common event handlers.  |
@@ -1646,7 +1673,7 @@ on_keydown (event)
 {
   if (is_escape_key (event.key))
     store.dispatch ({ type: "unfocus" });
-  else
+  else if (!event.altKey && !event.ctrlKey && !event.metaKey)
     {
       var val = on_keydown.dict[event.key];
       if (val)
@@ -1772,9 +1799,9 @@ register_polyfills ()
   /* eslint-enable no-extend-native */
 }
 
-/*---------------------.
-| Common utilitaries.  |
-`---------------------*/
+/*-------------------.
+| Common utilities.  |
+`-------------------*/
 
 /** Check portably if KEY correspond to "Escape" key value.
     @arg {string} key */
@@ -2210,17 +2237,6 @@ if (features && !(features.es5
     return;
   }
 
-/* Until we have a responsive design implemented, fallback to basic
-   HTML navigation for small screen.  */
-  /*
-if (window.screen.availWidth < config.SCREEN_MIN_WIDTH)
-  {
-    window.onload =
-      error ("screen width is too small to display the table of content");
-    return;
-  }
-*/
-
 register_polyfills ();
 /* Let the config provided by the user mask the default one.  */
 config = Object.assign (config, user_config);
@@ -2248,7 +2264,7 @@ if (inside_top_page)
       text_input: null
     };
 
-    store = new Store (updater, initial_state);
+    store = new Store (initial_state);
     var index = init_index_page ();
     var sidebar = init_sidebar ();
     window.addEventListener ("DOMContentLoaded", function () {
