@@ -4811,6 +4811,11 @@ sub convert_math_to_images($$$;$) {
 
   my $math2img_basename = "${prefix}_math2img";
 
+  # Dots-per-inch value given as argument to -D flag of dvips.
+  # Note: in the absence of any image scaling in Emacs Info mode,
+  # this directly affects the size of the produced image.
+  my $dvipng_dpi = 180;
+
   my $collected_commands = Texinfo::Common::collect_commands_list_in_tree(
                                         $document_root, \@math_at_commands);
 
@@ -4942,7 +4947,8 @@ sub convert_math_to_images($$$;$) {
     print $fh "\\end{preview}\n\n";
 
     my $png_file_name = $math2img_basename.$counter.'.png';
-    $result->{$element} = $png_file_name;
+    $result->{$element} = {'filename' => $png_file_name,
+                           'dpi' => $dvipng_dpi};
   }
   if ($counter > 0) {
     print $fh "\\end{document}\n";
@@ -5018,15 +5024,14 @@ sub convert_math_to_images($$$;$) {
                                $math2img_dvi_basefile))
     unless (-f $encoded_math2img_dvi_basefile);
 
-  my @to_images_options = ('-T', 'tight', '-D', '180');
+  my @to_images_options = ('-T', 'tight', '-D', $dvipng_dpi, '--depth');
   my @to_images_args = (@to_images_options, $encoded_math2img_dvi_basefile);
 
-  # Note: the argument to -D given is the DPI, which, in the absence of
-  # any image scaling in Emacs Info mode, directly affects the size of
-  # the produced image.
-
   my $to_image_exec = 'dvipng';
-  my $status = system $to_image_exec, @to_images_args;
+  my $dvipng_cmd = join(' ', $to_image_exec, @to_images_args);
+  my $dvipng_output = `$dvipng_cmd`;
+  my $status = $?;
+  print $dvipng_output;
 
   if ($status != 0) {
     $self->converter_document_warn(sprintf(__(
@@ -5039,6 +5044,22 @@ sub convert_math_to_images($$$;$) {
     $self->converter_document_warn(sprintf(__(
           "math to images: unable to return to initial directory: %s"), $!));
     return undef;
+  }
+
+  # Now extract depth information from output of dvipng, which looks like
+  # "[1 (preview-latex version 13.2) (preview-latex tightpage option
+  # detected, will use its bounding box) depth=2] [2 depth=10] [3 depth=2]".
+
+  my $page_ctr = 1;
+  my @depths;
+  while ($dvipng_output =~ s/.*?\[$page_ctr[^\]]*depth=(\d+)[^\]]*\]//) {
+    my $depth = $1;
+    push @depths, $depth;
+    $page_ctr++;
+  }
+  foreach my $element (@$collected_commands) {
+    last if scalar(@depths) == 0;
+    $result->{$element}->{'depth'} = shift @depths;
   }
 
   return $result;
