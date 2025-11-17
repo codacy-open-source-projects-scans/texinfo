@@ -80,7 +80,7 @@ static char *info_internal_help_text[] = {
   NULL
 };
 
-static char *where_is_internal (Keymap map, InfoCommand *cmd);
+static const char *where_is_internal (Keymap map, InfoCommand *cmd);
 
 static void
 dump_map_to_text_buffer (struct text_buffer *tb, int *prefix,
@@ -109,7 +109,7 @@ dump_map_to_text_buffer (struct text_buffer *tb, int *prefix,
         {
           long start_of_line = tb->off;
           register int last;
-          char *doc, *name;
+          const char *doc, *name;
 
           /* Hide some key mappings. */
           if (!map[i].value.function->func /* "invalid" mapping */
@@ -180,6 +180,7 @@ create_internal_info_help_node (int help_is_only_window_p)
 {
   register int i;
   NODE *node;
+  const char *where_is_exec_cmd;
   char *exec_keys;
 
   int printed_one_mx = 0;
@@ -207,9 +208,9 @@ create_internal_info_help_node (int help_is_only_window_p)
   dump_map_to_text_buffer (&msg, 0, 0, echo_area_keymap);
 
   /* Get a list of commands which have no keystroke equivs. */
-  exec_keys = where_is (info_keymap, InfoCmd(info_execute_command));
-  if (exec_keys)
-    exec_keys = xstrdup (exec_keys);
+  where_is_exec_cmd = where_is (info_keymap, InfoCmd(info_execute_command));
+  if (where_is_exec_cmd)
+    exec_keys = xstrdup (where_is_exec_cmd);
   for (i = 0; function_doc_array[i].func; i++)
     {
       InfoCommand *cmd = &function_doc_array[i];
@@ -261,21 +262,6 @@ create_internal_info_help_node (int help_is_only_window_p)
   internal_info_help_node = node;
 
   name_internal_node (internal_info_help_node, xstrdup (info_help_nodename));
-}
-
-/* Return the window displaying NAME, the name of an internally created
-   Info window. */
-WINDOW *
-get_internal_info_window (char *name)
-{
-  WINDOW *win;
-
-  for (win = windows; win; win = win->next)
-    if (win->node && (win->node->flags & N_IsInternal)
-        && (strcmp (win->node->nodename, name) == 0))
-      break;
-
-  return win;
 }
 
 /* Return a window which is the window showing help in this Info. */
@@ -441,7 +427,7 @@ DECLARE_INFO_COMMAND (info_get_info_help_node, _("Visit Info node '(info)Help'")
 /* **************************************************************** */
 
 /* Return the documentation associated with the Info command FUNCTION. */
-char *
+const char *
 function_documentation (InfoCommand *cmd)
 {
   char *doc;
@@ -453,7 +439,7 @@ function_documentation (InfoCommand *cmd)
 
 /* Return the user-visible name of the function associated with the
    Info command FUNCTION. */
-char *
+const char *
 function_name (InfoCommand *cmd)
 {
   return cmd->func_name;
@@ -507,7 +493,8 @@ DECLARE_INFO_COMMAND (describe_key, _("Print documentation for KEY"))
         }
       else
         {
-          char *keyname, *message, *fundoc, *funname = "";
+          const char *keyname, *fundoc, *funname = "";
+          char *message;
 
           /* If the key is bound to do-lowercase-version, but its
              lower-case variant is undefined, say that this key is
@@ -540,9 +527,7 @@ DECLARE_INFO_COMMAND (describe_key, _("Print documentation for KEY"))
             }
 
           keyname = pretty_keyseq (keys);
-
           funname = function_name (map[keystroke].value.function);
-
           fundoc = function_documentation (map[keystroke].value.function);
 
           message = xmalloc
@@ -633,10 +618,10 @@ pretty_keyname (int key)
   return rep;
 }
 
-/* Return the pretty printable string which represents KEYSEQ.  Return
-   value should not be freed by caller. */
-char *
-pretty_keyseq (const int *keyseq)
+/* Return the pretty printable string which represents KEYSEQ, appending
+   "-" if EXPECTING_FUTURE_INPUT is true. */
+const char *
+pretty_keyseq_ext (const int *keyseq, int expecting_future_input)
 {
   static struct text_buffer rep = { 0 };
 
@@ -658,12 +643,21 @@ pretty_keyseq (const int *keyseq)
 
       text_buffer_add_char (&rep, ' ');
     }
+  if (expecting_future_input)
+    text_buffer_add_char (&rep, '-');
   return text_buffer_base (&rep);
 }
 
-/* Replace the names of functions with the key that invokes them.
-   Return value should not be freed by caller. */
-char *
+/* Return the pretty printable string which represents KEYSEQ. */
+const char *
+pretty_keyseq (const int *keyseq)
+{
+  return pretty_keyseq_ext (keyseq, 0);
+}
+
+
+/* Replace the names of functions with the key that invokes them. */
+const char *
 replace_in_documentation (const char *string, int help_is_only_window_p)
 {
   register int i, start;
@@ -710,7 +704,8 @@ replace_in_documentation (const char *string, int help_is_only_window_p)
             }
           if (string[j] == '[')
             {
-              char *rep_name, *fun_name, *rep;
+              char *rep_name, *fun_name;
+              const char *rep;
               InfoCommand *command;
               unsigned replen;
 
@@ -782,10 +777,10 @@ static char *where_is_rep = NULL;
 static int where_is_rep_index = 0;
 static int where_is_rep_size = 0;
 
-char *
+const char *
 where_is (Keymap map, InfoCommand *cmd)
 {
-  char *rep;
+  const char *rep;
 
   if (!where_is_rep_size)
     where_is_rep = xmalloc (where_is_rep_size = 100);
@@ -796,7 +791,7 @@ where_is (Keymap map, InfoCommand *cmd)
   /* If it couldn't be found, return "M-x Foo" (or equivalent). */
   if (!rep)
     {
-      char *name;
+      const char *name;
 
       name = function_name (cmd);
       if (!name)
@@ -815,7 +810,7 @@ where_is (Keymap map, InfoCommand *cmd)
 
 /* Return the printed rep of the keystrokes that invoke FUNCTION,
    as found in MAP, or NULL. */
-static char *
+static const char *
 where_is_internal (Keymap map, InfoCommand *cmd)
 {
   register FUNCTION_KEYSEQ *k;
@@ -848,7 +843,7 @@ DECLARE_INFO_COMMAND (info_where_is,
 
       if (command)
         {
-          char *location;
+          const char *location;
 
           location = where_is (info_keymap, command);
 

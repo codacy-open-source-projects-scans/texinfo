@@ -117,6 +117,8 @@ my %XS_overrides = (
 # could have been in Document too
   "Texinfo::Example::TreeElementConverter::register_document_relations_lists_elements"
     => "Texinfo::Example::TreeElementConverterXS::register_document_relations_lists_elements",
+  "Texinfo::Example::TreeElementConverter::build_element_tree"
+    => "Texinfo::Example::TreeElementConverterXS::build_element_tree",
 );
 
 sub import {
@@ -138,9 +140,14 @@ sub import {
 # nodes, sectioning and heading commands.  Only needed if the
 # TreeElement/Reader interfaces are used, which is not the case for
 # converters used in texi2any.
-sub register_document_relations_lists_elements($$)
-{
+sub register_document_relations_lists_elements($$) {
   my ($self, $document) = @_;
+}
+
+# Build the Perl tree of an element with an handle.  Only relevant with
+# XS, and only in some case, see the code.
+sub build_element_tree($) {
+  my $tree = shift;
 }
 
 # information on tree elements
@@ -915,7 +922,7 @@ sub comment_or_end_line($$)
   my $self = shift;
   my $element = shift;
 
-  return $self->comment_or_end_line_nonxs($element);
+  return $self->Texinfo::Convert::Converter::comment_or_end_line($element);
 }
 
 # for XS overriding
@@ -939,7 +946,7 @@ sub argument_comment_end_line($$)
   return $line_arg, $comment, $end_line;
 }
 
-sub tree_element_comment_or_end_line_nonxs($$)
+sub tree_element_comment_or_end_line($$)
 {
   my $self = shift;
   my $element = shift;
@@ -968,14 +975,6 @@ sub tree_element_comment_or_end_line_nonxs($$)
     $end_line = '';
   }
   return (undef, $end_line);
-}
-
-sub tree_element_comment_or_end_line($$)
-{
-  my $self = shift;
-  my $element = shift;
-
-  return tree_element_comment_or_end_line_nonxs($self, $element);
 }
 
 # for TreeElement interface and XS overriding

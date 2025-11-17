@@ -510,7 +510,7 @@ sub reset_converter($) {
   # C/XS converters.
   # For a C/XS converter, we go through the C data output units lists
   # and remove references to output units Perl data for each of the output
-  # units, but do that in a separate code.
+  # units, in a separate code called through _XS_reset_converter.
   my $output_units_lists = $self->get_output_units_lists();
 
   if (defined($output_units_lists)) {
@@ -1505,9 +1505,10 @@ sub present_bug_message($$;$) {
   warn "You found a bug: $message\n\n".$additional_information;
 }
 
+# ALTIMP main/convert_utils.c
 # This is used when the formatted text has no comment nor new line, but
 # one want to add the comment or new line from the original arg
-sub comment_or_end_line_nonxs($$) {
+sub comment_or_end_line($$) {
   my ($self, $element) = @_;
 
   if (exists($element->{'contents'})) {

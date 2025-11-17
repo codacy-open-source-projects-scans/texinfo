@@ -23,7 +23,7 @@ in gdt?  Or, possibly even better mark parent as weak reference with
 Scalar::Util weaken as explained in man perlref (Gavin).
 in perlapi for XS: sv_rvweaken
 
-document converter_reset and converter_destroy in Perl?
+document converter_reset and converter_perl_release in Perl?
 
 
 Bugs
@@ -69,10 +69,12 @@ source marks.
 
 special_unit_element type (only in HTML code)
 
-Check that all the changes, including removed extra information
-is up to date.
+Node, headings and section relations explicit documentation?  They are
+mentioned in Texinfo::Structuring POD without being correctly documented.
+See also FIXMEs in ParserNonXS.pm in =begin comment blocks.
 
-Node, headings and section relations documentation?
+Related to the relations documentation, extra node_number, heading_number
+and section_number.
 
 Other
 -----

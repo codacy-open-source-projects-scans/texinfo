@@ -11,6 +11,13 @@
 // msgfmt --statistics po_document/*.pot
 #define TXI_DOCUMENT_TRANSLATED_STRINGS_NR 243
 
+/* TXI_CONVERT_STRINGS_NR and TXI_PARSER_STRINGS_NR are used to
+   dimension hashes, such that it is not a big deal if their values
+   diverge somewhat from the intended dimensioning values.  Besides,
+   it is possible that the numbers currently used are not optimal,
+   for instance it is likely that a document never needs all the
+   translated strings.
+ */
 /* there are two translated strings in parser related to definition
    name and category, that are not shared with the remaining of the
    codes
@@ -20,19 +27,6 @@
 /* number of document strings except for parser strings */
 #define TXI_CONVERT_STRINGS_NR \
   (TXI_DOCUMENT_TRANSLATED_STRINGS_NR - TXI_PARSER_STRINGS_NR)
-
-/* element or string may not always be present */
-typedef struct NAMED_STRING_ELEMENT {
-    const char *name;
-    ELEMENT *element; /* actually const until added to tree */
-    char *string; /* const in gdt_string, but used temporarily in gdt_tree */
-} NAMED_STRING_ELEMENT;
-
-typedef struct NAMED_STRING_ELEMENT_LIST {
-    size_t number;
-    size_t space;
-    NAMED_STRING_ELEMENT *list;
-} NAMED_STRING_ELEMENT_LIST;
 
 extern LANG_TRANSLATION **translation_cache;
 

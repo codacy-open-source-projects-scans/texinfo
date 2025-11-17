@@ -17,4 +17,8 @@ struct READER *get_sv_reader_reader (SV *sv_in);
 ELEMENT *new_element_from_sv (DOCUMENT *document, const SV *element_hash,
                               CONVERTER *converter);
 
+LANG_TRANSLATION *get_lang_translations_sv (SV *lang_translations_sv);
+
+NAMED_STRING_ELEMENT_LIST *get_replaced_substrings (SV *replaced_substrings_sv);
+
 #endif
