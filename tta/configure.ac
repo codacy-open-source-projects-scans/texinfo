@@ -64,7 +64,13 @@ AM_CONDITIONAL([DISABLE_ADDITIONAL_CHECKS], [test "z$enable_additional_tests" = 
 AC_PATH_PROG([PERL], [perl])
 
 AC_CANONICAL_HOST
-# setup perl_conf*, XSUBPP* and XS_VERSION variables to build Perl XS modules
+
+# Look up perl configuration values and set variables:
+# perl_conf_LIB_CFLAGS, perl_conf_CPPFLAGS, perl_conf_LDFLAGS,
+# perl_conf_LIB_LDFLAGS,
+# platform_PERL_LIBADD, perl_conf_LIBS, perl_conf_CFLAGS,
+# perl_conf_EMBED_LIB_CFLAGS, platform_LDFLAGS, XSUBPP,
+# XSUBPPARGS and XS_VERSION.  Defined in m4/txi_perl_conf.m4.
 txi_PERL_CONF
 
 AC_MSG_CHECKING([ExtUtils::Embed])
@@ -186,21 +192,23 @@ if test x$enable_xs != xno; then
     CC=$PERL_CONF_cc
   fi
 
-  # The usual configure checks use the Autoconf/Gnulib includes, but do not
-  # compile nor link against Perl.  The result of those checks are used for
-  # code never compiled with the Perl flags.  Therefore we do not set the Perl
-  # more specific flags, but still use the user-defined PERL_EXT_var variables
-  # used as defaults for all the compilations.
-  CFLAGS=$PERL_EXT_CFLAGS
+  # The usual configure checks use the Autoconf/Gnulib includes, but
+  # are used for code never compiled with the Perl headers.  Therefore
+  # we do not set the Perl CPPFLAGS, but still use the user-defined
+  # PERL_EXT_var variables used as defaults for all the compilations.
   CPPFLAGS=$PERL_EXT_CPPFLAGS
-  LDFLAGS=$PERL_EXT_LDFLAGS
 
+  # For compilation of code not compiled against Perl we use the Perl CFLAGS,
+  # since they are often link against Perl even if they do not compile against
+  # Perl, such that link and compilation flags match.  Since we use the Perl
+  # CFLAGS, we also always use the Perl LDFLAGS to have matching 
+  # compilation and linking.
+  # We use the same flags in configure checks.
+  CFLAGS="$PERL_EXT_CFLAGS $perl_conf_CFLAGS"
+  LDFLAGS="$PERL_EXT_LDFLAGS $perl_conf_LDFLAGS"
   # NOTE Specific checks against Perl should not have the Autoconf/Gnulib
-  # includes set but could set the following (or use PERL_EXTUTILS_EMBED_*
-  # instead of perl_conf_*):
-  #CFLAGS="$PERL_EXT_CFLAGS $perl_conf_CFLAGS"
+  # includes set but could set the following:
   #CPPFLAGS="$PERL_EXT_CPPFLAGS $perl_conf_CPPFLAGS"
-  #LDFLAGS="$PERL_EXT_LDFLAGS $perl_conf_LDFLAGS"
 fi
 
 # Wipe cache values in case -C was given at the top level

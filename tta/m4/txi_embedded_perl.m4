@@ -10,6 +10,7 @@ dnl This file is offered as-is, without any warranty.
 AC_DEFUN([txi_EMBEDDED_PERL],
 [
   AC_MSG_CHECKING(for embedded Perl)
+  saved_CPPFLAGS=$CPPFLAGS
   saved_CFLAGS=$CFLAGS
   saved_LDFLAGS=$LDFLAGS
   old_LIBS=$LIBS
@@ -20,14 +21,14 @@ AC_DEFUN([txi_EMBEDDED_PERL],
   # We favor having the variable last and use LIBS otherwise linking fails.
   LIBS="$PERL_EXTUTILS_EMBED_ldopts"
 
-  # NOTE the PERL_EXTUTILS_EMBED_ccopts variable contains both preprocessor
-  # suited for CPPFLAGS and compiler flags, suited for CFLAGS.
-  # In the actual build variables, PERL_EXTUTILS_EMBED_ccopts is used for
-  # CPPFLAGS, but we do not differenciate CPPFLAGS and CFLAGS here.
+  # NOTE perl_conf_CPPFLAGS associated to perl_conf_CFLAGS
+  # corresponds to the PERL_EXTUTILS_EMBED_ccopts variable that contains
+  # both preprocessor suited for CPPFLAGS and compiler flags, suited for CFLAGS.
   # We use the PERL_EXT_var user variables for Perl XS extensions to match
   # compilation rules.
-  CFLAGS="$PERL_EXT_CFLAGS $PERL_EXTUTILS_EMBED_ccopts $perl_conf_EMBED_CFLAGS"
-  LDFLAGS="$PERL_EXT_LDFLAGS"
+  CPPFLAGS="$PERL_EXT_CPPFLAGS $perl_conf_CPPFLAGS"
+  CFLAGS="$PERL_EXT_CFLAGS $perl_conf_CFLAGS"
+  LDFLAGS="$PERL_EXT_LDFLAGS perl_conf_LDFLAGS"
 
   # NOTE The tested code is a simplified version of
   # tta/C/convert/call_embed_perl.c
@@ -128,6 +129,7 @@ dnl ]], [embedded_perl=yes], [embedded_perl=no])
 
   AC_MSG_RESULT($embedded_perl)
   LIBS=$old_LIBS
+  CPPFLAGS=$saved_CPPFLAGS
   CFLAGS=$saved_CFLAGS
   LDFLAGS=$saved_LDFLAGS
 ])
