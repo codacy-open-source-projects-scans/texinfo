@@ -1,3 +1,38 @@
+2025-11-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: update path to valgrind suppressions file when
+	running tests from tta/perl.
+
+2025-11-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/man.c (get_manpage_from_formatter): cast return value
+	of get_output_from_program to void to indicate it is being ignored.
+
+2025-11-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix Info memory errors after signals
+
+	* info/window.c (window_make_modeline),
+	* info/footnotes.c (info_get_or_remove_footnotes):
+	Add check if 'node' field of WINDOW argument is null.
+
+	* info/window.c (window_new_screen_size, window_make_window):
+	Allocate modeline with xzalloc rather than xmalloc so that the
+	memory will be initiailised.
+
+	There were occasional memory errors when a signal was sent to Info
+	in the redisplay code if these data structures were not initialised.
+	I obtained this unreliably under valgrind monitoring with
+	"TEXINFO_INFO_TESTS_TIMEOUT=2 t/resize-in-completions.sh".
+
+2025-11-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	fix "make distcheck" with TEXINFO_XS=required.
+
+	* Pod-Simple-Texinfo/Makefile.am (AM_TESTS_ENVIRONMENT):
+	Set t2a_srcdir and t2a_builddir as is done in tta/tests/Makefile.am.
+	Otherwise the tests fail under TEXINFO_XS=required.
+
 2025-11-18 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/C/Makefile.am (AM_CFLAGS, ctexi2any_CFLAGS)
