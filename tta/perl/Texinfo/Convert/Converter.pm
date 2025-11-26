@@ -119,16 +119,15 @@ my %XS_overrides = (
    => "Texinfo::Convert::ConvertXS::get_converter_indices_sorted_by_index",
   "Texinfo::Convert::Converter::set_global_document_commands"
    => "Texinfo::Convert::ConvertXS::converter_set_global_document_commands",
+  "Texinfo::Convert::Converter::reset_converter"
+   => "Texinfo::Convert::ConvertXS::reset_converter",
+  "Texinfo::Convert::Converter::destroy_converter"
+   => "Texinfo::Convert::ConvertXS::destroy_converter",
+
 
   # for debugging, to get lists normally only available in XS
   "Texinfo::Convert::Converter::XS_get_output_units_lists"
    => "Texinfo::Convert::ConvertXS::get_output_units_lists",
-
-  # XS only
-  "Texinfo::Convert::Converter::_XS_reset_converter"
-   => "Texinfo::Convert::ConvertXS::reset_converter",
-  "Texinfo::Convert::Converter::_XS_destroy"
-   => "Texinfo::Convert::ConvertXS::destroy",
 
   "Texinfo::Convert::Converter::XS_get_unclosed_stream"
    => "Texinfo::Convert::ConvertXS::get_unclosed_stream",
@@ -486,21 +485,17 @@ sub get_output_units_lists($) {
 }
 
 # should be redefined by converters if needed
+# TODO document
 sub converter_reset($) {
-  my $self = shift;
-}
-
-sub _XS_reset_converter($) {
   my $self = shift;
 }
 
 my $output_unit_SV_target_count = 2;
 my $output_unit_object_target_count = 1;
 
-# TODO the split between destroy and reset could be worked on to be
-# more logical as in C.
-# Possibly called from C main program.
-sub reset_converter($) {
+# ALTIMP convert/converter.c reset_converter
+# Also called from C.
+sub reset_perl_converter($) {
   my $self = shift;
 
   # call format specific method
@@ -561,8 +556,14 @@ sub reset_converter($) {
     # remove the output units lists to release the output units
     @$output_units_lists = ();
   }
+}
 
-  $self->_XS_reset_converter();
+# ALTIMP convert/texinfo.c txi_reset_converter
+# TODO document
+sub reset_converter($) {
+  my $self = shift;
+
+  $self->reset_perl_converter();
 }
 
 # Should be redefined in converters if needed
@@ -571,9 +572,13 @@ sub converter_destroy($) {
   my $self = shift;
 }
 
-# can also be called from C program
+# ALTIMP convert/converter.c free_converter
+# Also called from C program
 sub converter_perl_release($) {
   my $self = shift;
+
+  # output format converter specific
+  $self->converter_destroy();
 
   # generic
   delete $self->{'document'};
@@ -594,22 +599,16 @@ sub converter_perl_release($) {
   # common translations cache
   delete $self->{'translations'};
   delete $self->{'current_lang_translations'};
-
-  # output format converter specific
-  $self->converter_destroy();
 }
 
-sub _XS_destroy($) {
-  my $self = @_;
-}
-
-sub destroy($) {
+# ALTIMP convert/texinfo.c txi_destroy_converter
+#        convert/converter.c destroy_converter
+# TODO document
+sub destroy_converter($) {
   my $self = shift;
 
   $self->converter_perl_release();
   #find_cycle($self);
-
-  $self->_XS_destroy();
 }
 
 sub XS_get_unclosed_stream($$) {
@@ -838,11 +837,19 @@ sub normalized_sectioning_command_filename($$) {
     # @*heading commands
     $label_element = $command->{'contents'}->[0];
   }
-  my $normalized_name
+  my $normalized_name;
+  if ($self->get_conf('TRANSLITERATE_FILE_NAMES')) {
+    $normalized_name
     = Texinfo::Convert::NodeNameNormalization::normalize_transliterate_texinfo(
         Texinfo::TreeElement::new(
          {'contents' => $label_element->{'contents'}}), $in_test,
                   $no_unidecode);
+  } else {
+    $normalized_name
+     = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
+           Texinfo::TreeElement::new(
+             { 'contents' => $label_element->{'contents'} }));
+  }
 
   my $filename = $self->_id_to_filename($normalized_name);
   $filename .= '.'.$self->get_conf('EXTENSION')
@@ -873,7 +880,7 @@ sub node_information_filename($$$) {
     }
   } elsif (defined($label_element)) {
     $filename
-     = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
+     = Texinfo::Convert::NodeNameNormalization::convert_to_node_identifier(
            Texinfo::TreeElement::new(
              { 'contents' => $label_element->{'contents'} }));
   } else {

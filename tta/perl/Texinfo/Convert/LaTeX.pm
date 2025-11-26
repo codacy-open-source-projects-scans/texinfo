@@ -866,6 +866,8 @@ sub converter_reset($) {
   # 'prev_chapter_new_page_substitution'
 }
 
+# delete keys that are reset when starting conversion, otherwise
+# they cannot be reclaimed by Perl and refer to Texinfo tree elements.
 sub converter_destroy($) {
   my $self = shift;
 
@@ -2536,7 +2538,7 @@ sub _tree_anchor_label($) {
   my $node_content = shift;
 
   my $label
-   = Texinfo::Convert::NodeNameNormalization::convert_to_identifier(
+   = Texinfo::Convert::NodeNameNormalization::convert_to_node_identifier(
        Texinfo::TreeElement::new({'contents' => $node_content}));
   return "anchor:$label";
 }

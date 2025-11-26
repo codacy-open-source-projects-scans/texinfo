@@ -1,3 +1,111 @@
+2025-11-25 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Invoking @command{texi2any}): explain that
+	transliteration is also done for sectioning commands file names, and
+	sectioning commands identifiers if --transliterate-file-names is set.
+	Also say that the transliterated names obtained are platform
+	and processor dependent.
+
+2025-11-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/utils.c (encode_with_iconv, encode_string): add an
+	argument, if set encoding errors are not reported from
+	encode_with_iconv.  Update callers.
+
+	* tta/C/main/node_name_normalization.c (unicode_to_transliterate):
+	silence transliteration errors.  Transliterations should only be used
+	for internal identifiers.  Report from Gavin.
+
+2025-11-25 Patrice Dumas  <pertusus@free.fr>
+
+	Do not transliterate section command identifier by default
+
+	* tta/C/main/node_name_normalization.c
+	(convert_contents_to_node_identifier, convert_to_node_identifier)
+	(convert_to_identifier),
+	tta/perl/Texinfo/Convert/NodeNameNormalization.pm
+	(convert_to_node_identifier, convert_to_identifier): rename
+	convert_to_identifier as convert_to_node_identifier.  Readd
+	convert_to_identifier that does the same as convert_to_node_identifier
+	except for the normaization of top in name.  Update callers except for
+	abbr or acronym first argument that uses convert_to_identifier.
+
+	* tta/C/convert/converter.c (normalized_sectioning_command_filename),
+	tta/perl/Texinfo/Convert/Converter.pm
+	(normalized_sectioning_command_filename): transliterate sectioning
+	command identifier only if TRANSLITERATE_FILE_NAMES is set.
+
+	* tta/perl/t/30sectioning.t (in_menu_only_special_spaces_node_menu)
+	(in_menu_only_special_spaces_node_menu_transliterate)
+	(reference_to_only_special_spaces_node)
+	(reference_to_only_special_spaces_node_transliterate),
+	tta/perl/t/40moresectioning.t (only_special_spaces_node)
+	(only_special_spaces_node_transliterate),
+	tta/perl/t/converters_tests.t ($some_at_commands_in_ref_nodes_text)
+	(some_at_commands_in_ref_nodes)
+	(some_at_commands_in_ref_nodes_transliterate),
+	tta/perl/t/formats_encodings.t (japanese_shift_jis),
+	tta/perl/Makefile.tres: add tests with TRANSLITERATE_FILE_NAMES set.
+	Explicitely set TRANSLITERATE_FILE_NAMES more.
+
+	* tta/tests/many_input_files/different_encodings.sh: add
+	--transliterate-file-name to the test command-line.
+
+2025-11-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Utils.pm (definition_category_tree): update
+	TRANSLATORS description again to match spacing of the other
+	TRANSLATORS description.
+
+	update po files.
+
+2025-11-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/convert_utils.c (definition_category_tree),
+	tta/perl/Texinfo/Convert/Utils.pm (definition_category_tree): replace
+	name with category in TRANSLATORS description.  Report by Gavin.
+
+2025-11-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/texinfo.c (txi_reset_converter),
+	(txi_destroy_converter), tta/perl/Texinfo/Convert/Converter.pm
+	(destroy_converter), tta/perl/Texinfo/Convert/Text.pm
+	(destroy_converter), tta/perl/XSTexinfo/convert/ConvertXS.xs
+	(destroy_converter): rename destroy in Converter.pm, Text.pm and
+	ConvertXS.xs as destroy_converter.  Rename txi_converter_reset as
+	txi_reset_converter.  Rename txi_converter_destroy as
+	txi_destroy_converter.  Update callers.
+
+	* tta/C/convert/call_conversion_perl.c
+	(call_object_reset_perl_converter), tta/C/convert/texinfo.c
+	(txi_reset_converter), tta/perl/Texinfo/Convert/Converter.pm
+	(%XS_overrides, reset_converter, reset_perl_converter)
+	(destroy_converter), tta/perl/Texinfo/Convert/Text.pm (%XS_overrides),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs (reset_converter)
+	(destroy_converter, destroy_text_converter): use reset_converter and
+	destroy_converter functions for the XS interface and call Perl
+	converter reset and release code from the XS interface instead of
+	calling the C code from Perl through specific XS interface functions.
+	Move reset_perl_converter out of reset_converter and call
+	reset_perl_converter from C.  Rename call_object_reset_converter as
+	call_object_reset_perl_converter.  Consistently, always call
+	reset_converter in txi_reset_converter.  Call
+	call_object_reset_perl_converter from reset_converter in ConvertXS.xs
+	and call call_object_converter_perl_release from destroy_converter in
+	ConvertXS.xs.  Remove _XS_reset_converter and _XS_destroy.  Add a new
+	XS interface for Texinfo::Convert::Text , destroy_text_converter since
+	there is no converter_perl_release function nor call to
+	call_object_converter_perl_release for the Text converter.
+
+	* tta/perl/Texinfo/Convert/Converter.pm (converter_perl_release): call
+	format-specific converter_destroy before generic converter code.
+
+2025-11-25  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\doindexinitialentry) [pdfTeX]:
+	Do not break if passed an empty argument.
+	Report from Rik <rik@octave.org>.
+
 2025-11-23  Gavin Smith <gavinsmith0123@gmail.com>
 
 	* README-hacking: update path to valgrind suppressions file when

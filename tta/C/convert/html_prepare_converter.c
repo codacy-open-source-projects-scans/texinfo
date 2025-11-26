@@ -3350,7 +3350,7 @@ html_process_css_file (CONVERTER *self, FILE *fh, char *filename,
       if (!conversion)
         line = strdup (input_line);
       else
-        line = encode_with_iconv (conversion->iconv, input_line, 0);
+        line = encode_with_iconv (conversion->iconv, input_line, 0, 0);
 
       free (input_line);
       line_nr ++;
@@ -5192,7 +5192,7 @@ html_prepare_output_units_global_targets (CONVERTER *self)
           /* convert to identifier and determine the node element target */
           if (label_tree)
             {
-              char *normalized_node = convert_to_identifier (label_tree);
+              char *normalized_node = convert_to_node_identifier (label_tree);
               if (normalized_node)
                 {
                   const char *non_hyphen_char = normalized_node
