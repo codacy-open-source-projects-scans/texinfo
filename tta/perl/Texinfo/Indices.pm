@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
 #
@@ -64,7 +64,7 @@ use Texinfo::Convert::Text;
 # loading is not important.
 #use Texinfo::Document;
 
-our $VERSION = '7.2dev';
+our $VERSION = '7.2.90';
 
 # The methods that are usefully called directly (outside of tests) are:
 # index_entry_element_sort_string

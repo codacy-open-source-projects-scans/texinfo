@@ -182,16 +182,12 @@ span:hover a.copiable-link {visibility: visible}
 </head>
 
 <body lang="">
-<a class="node-id" id="Top"></a><div class="nav-panel">
-<p>
-Next: <a href="#chap" accesskey="n" rel="next">chap</a> &nbsp; </p>
-</div>
+<a class="node-id" id="Top"></a><p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chap" accesskey="n" rel="next">chap</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="node"><span>Top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 <hr>
-<a class="node-id" id="chap"></a><div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">Top</a> &nbsp; </p>
-</div>
+<a class="node-id" id="chap"></a><p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h4 class="node"><span>chap<a class="copiable-link" href="#chap"> &para;</a></span></h4>
 
 <dl class="listoffloats">
@@ -249,11 +245,38 @@ $result_converted{'latex'}->{'footnote_in_caption_and_error'} = '\\documentclass
 \\usepackage[hidelinks]{hyperref}
 
 \\makeatletter
+\\newcommand{\\Texinfothechapterheading}{}
+\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newcommand{\\Texinfosettitle}{No Title}%
+
+\\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
+\\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+}%
+
+\\newcommand{\\Texinfounnumberedpart}[1]{\\part*{#1}
+\\addcontentsline{toc}{part}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsection}[1]{\\section*{#1}
+\\addcontentsline{toc}{section}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsection}[1]{\\subsection*{#1}
+\\addcontentsline{toc}{subsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsubsection}[1]{\\subsubsection*{#1}
+\\addcontentsline{toc}{subsubsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
+}%
 
 % new float for type `fl\'
 \\newfloat{TexinfoFloatfl}{htb}{tfl}[chapter]
-\\floatname{TexinfoFloatfl}{}
+\\floatname{TexinfoFloatfl}{fl}
 % redefine the \\mainmatter command such that it does not clear page
 % as if in double page
 \\renewcommand\\mainmatter{\\clearpage\\@mainmattertrue\\pagenumbering{arabic}}
@@ -265,8 +288,8 @@ $result_converted{'latex'}->{'footnote_in_caption_and_error'} = '\\documentclass
 % used for substitutions in commands
 \\newcommand{\\Texinfoplaceholder}[1]{}
 
-\\newpagestyle{single}{\\sethead[\\chaptername{} \\thechapter{} \\chaptertitle{}][][\\thepage]
-                              {\\chaptername{} \\thechapter{} \\chaptertitle{}}{}{\\thepage}}
+\\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
+                              {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
 % allow line breaking at underscore
 \\let\\Texinfounderscore\\_

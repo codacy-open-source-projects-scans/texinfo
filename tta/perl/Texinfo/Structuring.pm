@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
 # Parts (also from Patrice Dumas) come from texi2html.pl.
@@ -76,7 +76,7 @@ our @EXPORT_OK = qw(
   warn_non_empty_parts
 );
 
-our $VERSION = '7.2dev';
+our $VERSION = '7.2.90';
 
 my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
 

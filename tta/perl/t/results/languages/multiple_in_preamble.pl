@@ -501,10 +501,8 @@ strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
 
 
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Sljedeće: <a href="#chapter" accesskey="n" rel="next">chap</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Sljedeće: </span><span class="nav-link"><a href="#chapter" accesskey="n" rel="next">chap</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="top-section"><span>top section<a class="copiable-link" href="#top-section"> &para;</a></span></h1>
 
 <ul class="mini-toc">
@@ -512,10 +510,8 @@ Sljedeće: <a href="#chapter" accesskey="n" rel="next">chap</a> &nbsp; </p>
 </ul>
 <hr>
 <div class="chapter-level-extent" id="chapter">
-<div class="nav-panel">
-<p>
-Prethodno: <a href="#Top" accesskey="p" rel="prev">top section</a>, Gore: <a href="#Top" accesskey="u" rel="up">top section</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Prethodno: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top section</a></span></span>, <span class="nav-button"><span class="nav-label">Gore: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top section</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="chap"><span>1 chap<a class="copiable-link" href="#chap"> &para;</a></span></h2>
 
 <dl class="first-defcv first-defivar-alias-first-defcv def-block">

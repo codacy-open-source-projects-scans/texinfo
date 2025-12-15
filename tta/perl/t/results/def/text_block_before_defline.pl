@@ -311,10 +311,8 @@ td.menu-entry-destination {vertical-align: top}
 
 <body lang="">
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#chapt" accesskey="n" rel="next">Chap</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chapt" accesskey="n" rel="next">Chap</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
 <table class="menu">
@@ -323,10 +321,8 @@ Next: <a href="#chapt" accesskey="n" rel="next">Chap</a> &nbsp; </p>
 </table>
 <hr>
 <div class="chapter-level-extent" id="chapt">
-<div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">top</a>, Up: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="Chap"><span>1 Chap<a class="copiable-link" href="#Chap"> &para;</a></span></h2>
 
 <dl class="defblock def-block">
@@ -378,7 +374,34 @@ $result_converted{'latex'}->{'text_block_before_defline'} = '\\documentclass{boo
 \\usepackage[hidelinks]{hyperref}
 
 \\makeatletter
+\\newcommand{\\Texinfothechapterheading}{}
+\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newcommand{\\Texinfosettitle}{No Title}%
+
+\\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
+\\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+}%
+
+\\newcommand{\\Texinfounnumberedpart}[1]{\\part*{#1}
+\\addcontentsline{toc}{part}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsection}[1]{\\section*{#1}
+\\addcontentsline{toc}{section}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsection}[1]{\\subsection*{#1}
+\\addcontentsline{toc}{subsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsubsection}[1]{\\subsubsection*{#1}
+\\addcontentsline{toc}{subsubsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
+}%
 
 % redefine the \\mainmatter command such that it does not clear page
 % as if in double page
@@ -392,8 +415,8 @@ $result_converted{'latex'}->{'text_block_before_defline'} = '\\documentclass{boo
 % used for substitutions in commands
 \\newcommand{\\Texinfoplaceholder}[1]{}
 
-\\newpagestyle{single}{\\sethead[\\chaptername{} \\thechapter{} \\chaptertitle{}][][\\thepage]
-                              {\\chaptername{} \\thechapter{} \\chaptertitle{}}{}{\\thepage}}
+\\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
+                              {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
 % braces are upright in italic and slanted only in @def*
 % so it is turned off here, and turned on @def* lines
@@ -413,7 +436,7 @@ $result_converted{'latex'}->{'text_block_before_defline'} = '\\documentclass{boo
 
 \\begin{document}
 \\label{anchor:Top}%
-\\chapter{{Chap}}
+\\Texinfochapter{{Chap}}
 \\label{anchor:chapt}%
 
 Some text\\footnote{In footnote}.

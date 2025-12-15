@@ -156,11 +156,38 @@ $result_converted{'latex'}->{'multiple_spaces_in_float_type'} = '\\documentclass
 \\usepackage[hidelinks]{hyperref}
 
 \\makeatletter
+\\newcommand{\\Texinfothechapterheading}{}
+\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newcommand{\\Texinfosettitle}{No Title}%
+
+\\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
+\\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+}%
+
+\\newcommand{\\Texinfounnumberedpart}[1]{\\part*{#1}
+\\addcontentsline{toc}{part}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsection}[1]{\\section*{#1}
+\\addcontentsline{toc}{section}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsection}[1]{\\subsection*{#1}
+\\addcontentsline{toc}{subsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsubsection}[1]{\\subsubsection*{#1}
+\\addcontentsline{toc}{subsubsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
+}%
 
 % new float for type `Type of Float\'
 \\newfloat{TexinfoFloatTypeofFloat}{htb}{tfl}[chapter]
-\\floatname{TexinfoFloatTypeofFloat}{}
+\\floatname{TexinfoFloatTypeofFloat}{Type  of    Float}
 % redefine the \\mainmatter command such that it does not clear page
 % as if in double page
 \\renewcommand\\mainmatter{\\clearpage\\@mainmattertrue\\pagenumbering{arabic}}
@@ -172,8 +199,8 @@ $result_converted{'latex'}->{'multiple_spaces_in_float_type'} = '\\documentclass
 % used for substitutions in commands
 \\newcommand{\\Texinfoplaceholder}[1]{}
 
-\\newpagestyle{single}{\\sethead[\\chaptername{} \\thechapter{} \\chaptertitle{}][][\\thepage]
-                              {\\chaptername{} \\thechapter{} \\chaptertitle{}}{}{\\thepage}}
+\\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
+                              {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
 % allow line breaking at underscore
 \\let\\Texinfounderscore\\_

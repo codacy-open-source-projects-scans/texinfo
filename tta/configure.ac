@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-AC_INIT([GNU Texinfo], [7.2dev])
+AC_INIT([GNU Texinfo], [7.2.90])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIRS([build-aux/m4 gnulib/m4 m4 ../m4])
@@ -18,7 +18,7 @@ AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
 AC_CONFIG_HEADERS([C/config.h])
 
-TEXINFO_DTD_VERSION=7.2
+TEXINFO_DTD_VERSION=7.3
 AC_SUBST([TEXINFO_DTD_VERSION])
 
 CONVERTER=texi2any
@@ -254,7 +254,7 @@ gl_INIT
 # must be in sync with the Makefile.in.in in the shared po/ directory.
 # See the README-hacking file at top level for how to upgrade gettext.
 #
-AM_GNU_GETTEXT_VERSION([0.22.5])
+AM_GNU_GETTEXT_VERSION([0.26])
 AM_GNU_GETTEXT([external])
 
 AM_MISSING_PROG([GAWK], [gawk])
@@ -436,9 +436,9 @@ AC_SUBST([HOST_IS_WINDOWS_VARIABLE])
 # SWIG interfaces
 
 AC_ARG_WITH([swig],
-   AS_HELP_STRING([--with-swig], [build SWIG interfaces (default: check)]),
+   AS_HELP_STRING([--with-swig], [build SWIG interfaces (default: no)]),
    [],
-   [ with_swig='check' ])
+   [ with_swig='no' ])
 
 if test $with_swig != 'no' ; then
   # Find swig executable

@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
-AC_INIT([GNU Texinfo], [7.2dev], [bug-texinfo@gnu.org])
+AC_INIT([GNU Texinfo], [7.2.90], [bug-texinfo@gnu.org])
 
 dnl Must come before AM_INIT_AUTOMAKE.
 AC_CONFIG_AUX_DIR([build-aux])
@@ -301,7 +301,7 @@ AM_CONDITIONAL(INSTALL_WARNINGS,
 
 # i18n support.
 # See README-hacking for how to upgrade to a new version of gettext
-AM_GNU_GETTEXT_VERSION([0.22.5])
+AM_GNU_GETTEXT_VERSION([0.26])
 AM_GNU_GETTEXT([external])
 
 AC_ARG_WITH([external-Unicode-EastAsianWidth],
@@ -323,7 +323,7 @@ AC_ARG_ENABLE([c-texi2any],
     AS_HELP_STRING([--enable-c-texi2any],[Use texi2any program implemented in C if possible]))
 
 AC_ARG_WITH([swig],
-   AS_HELP_STRING([--with-swig], [build SWIG interfaces (default: check)]))
+   AS_HELP_STRING([--with-swig], [build SWIG interfaces (default: no)]))
 
 AC_ARG_ENABLE([perl-install-mode],
     AS_HELP_STRING([--enable-perl-install-mode],[Perl SWIG interface install mode site/vendor/custom (default: site)]))

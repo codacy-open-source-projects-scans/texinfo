@@ -1337,10 +1337,8 @@ ul.mark-minus {list-style-type: "\\2212"}
 
 <body lang="">
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#chapter" accesskey="n" rel="next">A chapter</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chapter" accesskey="n" rel="next">A chapter</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="Test-floats"><span>Test floats<a class="copiable-link" href="#Test-floats"> &para;</a></span></h1>
 
 <p>A list of floats at the beginning.
@@ -1455,10 +1453,8 @@ A footnote.
 </ul>
 <hr>
 <div class="chapter-level-extent" id="chapter">
-<div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">Test floats</a>, Up: <a href="#Top" accesskey="u" rel="up">Test floats</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">Test floats</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Test floats</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="A-chapter"><span>1 A chapter<a class="copiable-link" href="#A-chapter"> &para;</a></span></h2>
 
 <div class="float" id="float-with-a-lot-of-features-and-no-shortcaption">
@@ -1675,11 +1671,38 @@ $result_converted{'latex'}->{'complex_float'} = '\\documentclass{book}
 \\usepackage[hidelinks]{hyperref}
 
 \\makeatletter
+\\newcommand{\\Texinfothechapterheading}{}
+\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newcommand{\\Texinfosettitle}{No Title}%
+
+\\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
+\\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+}%
+
+\\newcommand{\\Texinfounnumberedpart}[1]{\\part*{#1}
+\\addcontentsline{toc}{part}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsection}[1]{\\section*{#1}
+\\addcontentsline{toc}{section}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsection}[1]{\\subsection*{#1}
+\\addcontentsline{toc}{subsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsubsection}[1]{\\subsubsection*{#1}
+\\addcontentsline{toc}{subsubsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
+}%
 
 % new float for type `Text\'
 \\newfloat{TexinfoFloatText}{htb}{tfl}[chapter]
-\\floatname{TexinfoFloatText}{}
+\\floatname{TexinfoFloatText}{Text}
 % no index headers
 \\indexsetup{level=\\relax,toclevel=section}%
 \\makeindex[name=cp,title=]%
@@ -1700,8 +1723,8 @@ $result_converted{'latex'}->{'complex_float'} = '\\documentclass{book}
 % used for substitutions in commands
 \\newcommand{\\Texinfoplaceholder}[1]{}
 
-\\newpagestyle{single}{\\sethead[\\chaptername{} \\thechapter{} \\chaptertitle{}][][\\thepage]
-                              {\\chaptername{} \\thechapter{} \\chaptertitle{}}{}{\\thepage}}
+\\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
+                              {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
 % allow line breaking at underscore
 \\let\\Texinfounderscore\\_
@@ -1718,7 +1741,7 @@ $result_converted{'latex'}->{'complex_float'} = '\\documentclass{book}
 \\begin{document}
 \\label{anchor:Top}%
 \\label{anchor:text-with-a-lot-of-features}%
-\\chapter{{A chapter}}
+\\Texinfochapter{{A chapter}}
 \\label{anchor:chapter}%
 
 \\begin{TexinfoFloatText}

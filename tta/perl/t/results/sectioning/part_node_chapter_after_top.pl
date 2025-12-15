@@ -350,20 +350,16 @@ span:hover a.copiable-link {visibility: visible}
 
 <body lang="">
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#a-node-after-part" accesskey="n" rel="next">a node after part</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#a-node-after-part" accesskey="n" rel="next">a node after part</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
 
 <hr>
 </div>
 <div class="part-level-extent" id="part">
-<div class="nav-panel">
-<p>
-Next: <a href="#chapter" accesskey="n" rel="next">chapter</a>, Previous: <a href="#Top" accesskey="p" rel="prev">top</a>, Up: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chapter" accesskey="n" rel="next">chapter</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="part"><span>part<a class="copiable-link" href="#part"> &para;</a></span></h1>
 <hr>
 
@@ -375,10 +371,8 @@ Next: <a href="#chapter" accesskey="n" rel="next">chapter</a>, Previous: <a href
 </p>
 <hr>
 <div class="chapter-level-extent" id="chapter">
-<div class="nav-panel">
-<p>
-Next: <a href="#a-node-after-part" accesskey="n" rel="next">a node after part</a>, Up: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#a-node-after-part" accesskey="n" rel="next">a node after part</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="chapter-1"><span>1 chapter<a class="copiable-link" href="#chapter-1"> &para;</a></span></h2>
 </div>
 </div>

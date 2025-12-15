@@ -11,7 +11,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
 #include <config.h>
 
@@ -25,7 +25,7 @@
 #include "converter_types.h"
 #include "options_defaults.h"
 #include "api_to_perl.h"
-/* *_strings_list html_clear_direction_icons html_free_button_specification_list
+/* *_strings_list
  */
 #include "utils.h"
 #include "builtin_commands.h"
@@ -120,6 +120,95 @@ new_options (void)
   memset (options, 0, sizeof (OPTIONS));
   initialize_options (options);
   return options;
+}
+
+/* html options */
+
+BUTTON_SPECIFICATION_INFO *
+html_new_button_specification_info (void)
+{
+  BUTTON_SPECIFICATION_INFO *button_spec
+    = (BUTTON_SPECIFICATION_INFO *)
+        malloc (sizeof (BUTTON_SPECIFICATION_INFO));
+  memset (button_spec, 0, sizeof (BUTTON_SPECIFICATION_INFO));
+  return button_spec;
+}
+
+BUTTON_SPECIFICATION_LIST *
+html_new_button_specification_list (size_t buttons_nr)
+{
+  BUTTON_SPECIFICATION_LIST *result;
+
+  result = (BUTTON_SPECIFICATION_LIST *)
+              malloc (sizeof (BUTTON_SPECIFICATION_LIST));
+
+  result->BIT_user_function_number = 0;
+  result->number = buttons_nr;
+  result->av = 0;
+
+  result->list = (BUTTON_SPECIFICATION *) malloc (buttons_nr *
+                   sizeof (BUTTON_SPECIFICATION));
+  memset (result->list, 0, buttons_nr * sizeof (BUTTON_SPECIFICATION));
+
+  return result;
+}
+
+void
+html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons)
+{
+  if (!buttons)
+    return;
+
+  if (buttons->number > 0)
+    {
+      size_t i;
+      for (i = 0; i < buttons->number; i++)
+        {
+          BUTTON_SPECIFICATION *button = &buttons->list[i];
+          if (button->type == BST_direction_info)
+            {
+              free (button->b.button_info);
+            }
+          if (button->sv)
+            unregister_perl_data (button->sv);
+        }
+    }
+  free (buttons->list);
+  if (buttons->av)
+    unregister_perl_data (buttons->av);
+  free (buttons);
+}
+
+void html_clear_direction_icons (DIRECTION_ICON_LIST *direction_icons)
+{
+  if (!direction_icons)
+    return;
+
+  if (direction_icons->number > 0)
+    {
+      size_t i;
+      for (i = 0; i < direction_icons->number; i++)
+        {
+          DIRECTION_ICON *icon = &direction_icons->icons_list[i];
+          free (icon->name);
+          free (icon->direction_name);
+        }
+    }
+  direction_icons->number = 0;
+}
+
+static void
+html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons)
+{
+  if (!direction_icons)
+    return;
+
+  html_clear_direction_icons (direction_icons);
+  free (direction_icons->icons_list);
+  direction_icons->space = 0;
+  direction_icons->icons_list = 0;
+  if (direction_icons->sv)
+    unregister_perl_data (direction_icons->sv);
 }
 
 void

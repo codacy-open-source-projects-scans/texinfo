@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
 
@@ -59,7 +59,7 @@ our @EXPORT_OK = qw(
   transliterate_protect_file_name
 );
 
-our $VERSION = '7.2dev';
+our $VERSION = '7.2.90';
 
 
 my %normalize_node_brace_no_arg_commands

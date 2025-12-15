@@ -15,7 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
 #include <stddef.h>
 #include <stdarg.h>
@@ -301,9 +301,6 @@ const ELEMENT *get_cmd_global_uniq_command (
 
 void html_fill_button_directions_specification_list (const CONVERTER *converter,
                                               BUTTON_SPECIFICATION_LIST *buttons);
-void html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons);
-void html_clear_direction_icons (DIRECTION_ICON_LIST *direction_icons);
-void html_free_direction_icons (DIRECTION_ICON_LIST *direction_icons);
 int html_get_direction_index (const CONVERTER *converter,
                               const char *direction);
 const char *direction_unit_direction_name (int direction,

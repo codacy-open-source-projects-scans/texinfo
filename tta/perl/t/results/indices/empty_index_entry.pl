@@ -155,17 +155,13 @@ $result_converted{'plaintext'}->{'empty_index_entry'} = ' -- :
 ';
 
 
-$result_converted{'html_text'}->{'empty_index_entry'} = '<a class="node-id" id="Top"></a><div class="nav-panel">
-<p>
-[<a href="#chap" title="Index" rel="index">Index</a>]</p>
-</div>
+$result_converted{'html_text'}->{'empty_index_entry'} = '<a class="node-id" id="Top"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
 <h1 class="node"><span>Top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 
 <hr>
-<a class="node-id" id="chap"></a><div class="nav-panel">
-<p>
-[<a href="#chap" title="Index" rel="index">Index</a>]</p>
-</div>
+<a class="node-id" id="chap"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
 <h4 class="node"><span>chap<a class="copiable-link" href="#chap"> &para;</a></span></h4>
 
 <dl class="first-deffn def-block">
@@ -202,7 +198,34 @@ $result_converted{'latex'}->{'empty_index_entry'} = '\\documentclass{book}
 \\usepackage[hidelinks]{hyperref}
 
 \\makeatletter
+\\newcommand{\\Texinfothechapterheading}{}
+\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newcommand{\\Texinfosettitle}{No Title}%
+
+\\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
+\\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+}%
+
+\\newcommand{\\Texinfounnumberedpart}[1]{\\part*{#1}
+\\addcontentsline{toc}{part}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsection}[1]{\\section*{#1}
+\\addcontentsline{toc}{section}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsection}[1]{\\subsection*{#1}
+\\addcontentsline{toc}{subsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsubsection}[1]{\\subsubsection*{#1}
+\\addcontentsline{toc}{subsubsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
+}%
 
 % redefine the \\mainmatter command such that it does not clear page
 % as if in double page
@@ -215,8 +238,8 @@ $result_converted{'latex'}->{'empty_index_entry'} = '\\documentclass{book}
 % used for substitutions in commands
 \\newcommand{\\Texinfoplaceholder}[1]{}
 
-\\newpagestyle{single}{\\sethead[\\chaptername{} \\thechapter{} \\chaptertitle{}][][\\thepage]
-                              {\\chaptername{} \\thechapter{} \\chaptertitle{}}{}{\\thepage}}
+\\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
+                              {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
 % allow line breaking at underscore
 \\let\\Texinfounderscore\\_

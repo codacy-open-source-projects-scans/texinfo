@@ -2177,10 +2177,8 @@ span:hover a.copiable-link {visibility: visible}
 
 <body lang="">
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#chapter" accesskey="n" rel="next">A chapter</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chapter" accesskey="n" rel="next">A chapter</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="Test-floats"><span>Test floats<a class="copiable-link" href="#Test-floats"> &para;</a></span></h1>
 
 <div class="float" id="text-with-a-lot-of-features">
@@ -2225,10 +2223,8 @@ Next: <a href="#chapter" accesskey="n" rel="next">A chapter</a> &nbsp; </p>
 </ul>
 <hr>
 <div class="chapter-level-extent" id="chapter">
-<div class="nav-panel">
-<p>
-Next: <a href="#Unnumbered" accesskey="n" rel="next">Unnumbered</a>, Previous: <a href="#Top" accesskey="p" rel="prev">Test floats</a>, Up: <a href="#Top" accesskey="u" rel="up">Test floats</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#Unnumbered" accesskey="n" rel="next">Unnumbered</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">Test floats</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Test floats</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="A-chapter"><span>1 A chapter<a class="copiable-link" href="#A-chapter"> &para;</a></span></h2>
 
 <div class="float" id="text-in-chapter">
@@ -2255,10 +2251,8 @@ Next: <a href="#Unnumbered" accesskey="n" rel="next">Unnumbered</a>, Previous: <
 </ul>
 <hr>
 <div class="section-level-extent" id="section">
-<div class="nav-panel">
-<p>
-Up: <a href="#chapter" accesskey="u" rel="up">A chapter</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#chapter" accesskey="u" rel="up">A chapter</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h3 class="section" id="A-section"><span>1.1 A section<a class="copiable-link" href="#A-section"> &para;</a></span></h3>
 
 <div class="float" id="text-in-section">
@@ -2270,10 +2264,8 @@ Up: <a href="#chapter" accesskey="u" rel="up">A chapter</a> &nbsp; </p>
 </div>
 </div>
 <div class="unnumbered-level-extent" id="Unnumbered">
-<div class="nav-panel">
-<p>
-Next: <a href="#Chapter-with-unnumbsubsec" accesskey="n" rel="next">Chapter with unnumbsubsec</a>, Previous: <a href="#chapter" accesskey="p" rel="prev">A chapter</a>, Up: <a href="#Top" accesskey="u" rel="up">Test floats</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#Chapter-with-unnumbsubsec" accesskey="n" rel="next">Chapter with unnumbsubsec</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#chapter" accesskey="p" rel="prev">A chapter</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Test floats</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="unnumbered" id="Unnumbered-1"><span>Unnumbered<a class="copiable-link" href="#Unnumbered-1"> &para;</a></span></h2>
 
 <div class="float" id="unnumbered-float">
@@ -2288,10 +2280,8 @@ Next: <a href="#Chapter-with-unnumbsubsec" accesskey="n" rel="next">Chapter with
 </ul>
 <hr>
 <div class="section-level-extent" id="Section-within-unnumbered">
-<div class="nav-panel">
-<p>
-Up: <a href="#Unnumbered" accesskey="u" rel="up">Unnumbered</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Unnumbered" accesskey="u" rel="up">Unnumbered</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h3 class="section" id="Section-within-unnumbered-1"><span>Section within unnumbered<a class="copiable-link" href="#Section-within-unnumbered-1"> &para;</a></span></h3>
 
 
@@ -2302,10 +2292,8 @@ Up: <a href="#Unnumbered" accesskey="u" rel="up">Unnumbered</a> &nbsp; </p>
 </div>
 </div>
 <div class="chapter-level-extent" id="Chapter-with-unnumbsubsec">
-<div class="nav-panel">
-<p>
-Next: <a href="#Appendix-for-float" accesskey="n" rel="next">Appendix for float</a>, Previous: <a href="#Unnumbered" accesskey="p" rel="prev">Unnumbered</a>, Up: <a href="#Top" accesskey="u" rel="up">Test floats</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#Appendix-for-float" accesskey="n" rel="next">Appendix for float</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Unnumbered" accesskey="p" rel="prev">Unnumbered</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Test floats</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="Chapter-with-unnumbsubsec-1"><span>2 Chapter with unnumbsubsec<a class="copiable-link" href="#Chapter-with-unnumbsubsec-1"> &para;</a></span></h2>
 
 <div class="float" id="Chapter-with-subsec-float">
@@ -2316,10 +2304,8 @@ Next: <a href="#Appendix-for-float" accesskey="n" rel="next">Appendix for float<
 </ul>
 <hr>
 <div class="unnumberedsec-level-extent" id="unnumbered-sec">
-<div class="nav-panel">
-<p>
-Up: <a href="#Chapter-with-unnumbsubsec" accesskey="u" rel="up">Chapter with unnumbsubsec</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Chapter-with-unnumbsubsec" accesskey="u" rel="up">Chapter with unnumbsubsec</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h3 class="unnumberedsec" id="unnumbered-sec-1"><span>unnumbered sec<a class="copiable-link" href="#unnumbered-sec-1"> &para;</a></span></h3>
 
 <div class="float" id="unnumbered-sec-float">
@@ -2333,10 +2319,8 @@ Up: <a href="#Chapter-with-unnumbsubsec" accesskey="u" rel="up">Chapter with unn
 </div>
 </div>
 <div class="appendix-level-extent" id="Appendix-for-float">
-<div class="nav-panel">
-<p>
-Next: <a href="#list-of-floats" accesskey="n" rel="next">list of floats</a>, Previous: <a href="#Chapter-with-unnumbsubsec" accesskey="p" rel="prev">Chapter with unnumbsubsec</a>, Up: <a href="#Top" accesskey="u" rel="up">Test floats</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#list-of-floats" accesskey="n" rel="next">list of floats</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Chapter-with-unnumbsubsec" accesskey="p" rel="prev">Chapter with unnumbsubsec</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Test floats</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="appendix" id="Appendix-for-float-1"><span>Appendix A Appendix for float<a class="copiable-link" href="#Appendix-for-float-1"> &para;</a></span></h2>
 
 <div class="float" id="appendix-sec-float">
@@ -2346,10 +2330,8 @@ Next: <a href="#list-of-floats" accesskey="n" rel="next">list of floats</a>, Pre
 <hr>
 </div>
 <div class="unnumbered-level-extent" id="list-of-floats">
-<div class="nav-panel">
-<p>
-Previous: <a href="#Appendix-for-float" accesskey="p" rel="prev">Appendix for float</a>, Up: <a href="#Top" accesskey="u" rel="up">Test floats</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Appendix-for-float" accesskey="p" rel="prev">Appendix for float</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Test floats</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="unnumbered" id="list-of-floats-1"><span>list of floats<a class="copiable-link" href="#list-of-floats-1"> &para;</a></span></h2>
 
 <p>See <a class="ref" href="#text-in-section">Text 1.3</a>.
@@ -2619,20 +2601,47 @@ $result_converted{'latex'}->{'numbering_captions_listoffloats'} = '\\documentcla
 \\usepackage[hidelinks]{hyperref}
 
 \\makeatletter
+\\newcommand{\\Texinfothechapterheading}{}
+\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newcommand{\\Texinfosettitle}{No Title}%
+
+\\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
+\\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+}%
+
+\\newcommand{\\Texinfounnumberedpart}[1]{\\part*{#1}
+\\addcontentsline{toc}{part}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsection}[1]{\\section*{#1}
+\\addcontentsline{toc}{section}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsection}[1]{\\subsection*{#1}
+\\addcontentsline{toc}{subsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsubsection}[1]{\\subsubsection*{#1}
+\\addcontentsline{toc}{subsubsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
+}%
 
 % new float for type `\'
 \\newfloat{TexinfoFloat}{htb}{tfl}[chapter]
 \\floatname{TexinfoFloat}{}
 % new float for type `Text\'
 \\newfloat{TexinfoFloatText}{htb}{tfl}[chapter]
-\\floatname{TexinfoFloatText}{}
+\\floatname{TexinfoFloatText}{Text}
 % new float for type `Warning\'
 \\newfloat{TexinfoFloatWarning}{htb}{tfl}[chapter]
-\\floatname{TexinfoFloatWarning}{}
+\\floatname{TexinfoFloatWarning}{Warning}
 % new float for type `théorème\'
 \\newfloat{TexinfoFloattheoreme}{htb}{tfl}[chapter]
-\\floatname{TexinfoFloattheoreme}{}
+\\floatname{TexinfoFloattheoreme}{th\\\'{e}or\\`{e}me}
 % redefine the \\mainmatter command such that it does not clear page
 % as if in double page
 \\renewcommand\\mainmatter{\\clearpage\\@mainmattertrue\\pagenumbering{arabic}}
@@ -2644,8 +2653,8 @@ $result_converted{'latex'}->{'numbering_captions_listoffloats'} = '\\documentcla
 % used for substitutions in commands
 \\newcommand{\\Texinfoplaceholder}[1]{}
 
-\\newpagestyle{single}{\\sethead[\\chaptername{} \\thechapter{} \\chaptertitle{}][][\\thepage]
-                              {\\chaptername{} \\thechapter{} \\chaptertitle{}}{}{\\thepage}}
+\\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
+                              {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
 % allow line breaking at underscore
 \\let\\Texinfounderscore\\_
@@ -2666,7 +2675,7 @@ $result_converted{'latex'}->{'numbering_captions_listoffloats'} = '\\documentcla
 \\label{anchor:label-but-no-type-and-no-caption}%
 \\label{anchor:label-but-no-type-2}%
 \\label{anchor:warning-in-top}%
-\\chapter{{A chapter}}
+\\Texinfochapter{{A chapter}}
 \\label{anchor:chapter}%
 
 \\begin{TexinfoFloatText}
@@ -2713,7 +2722,7 @@ A text in float no caption a label a type.
 \\label{anchor:text-in-section}%
 \\end{TexinfoFloatText}
 
-\\chapter*{{Unnumbered}}
+\\Texinfounnumberedchapter{{Unnumbered}}
 \\label{anchor:Unnumbered}%
 
 \\begin{TexinfoFloatText}
@@ -2739,7 +2748,7 @@ Section within unnumbered
 \\label{anchor:Section-within-unnumbered-float}%
 \\end{TexinfoFloatText}
 
-\\chapter{{Chapter with unnumbsubsec}}
+\\Texinfochapter{{Chapter with unnumbsubsec}}
 \\label{anchor:Chapter-with-unnumbsubsec}%
 
 \\begin{TexinfoFloatText}
@@ -2748,7 +2757,7 @@ Chap
 \\label{anchor:Chapter-with-subsec-float}%
 \\end{TexinfoFloatText}
 
-\\section*{{unnumbered sec}}
+\\Texinfounnumberedsection{{unnumbered sec}}
 \\label{anchor:unnumbered-sec}%
 
 \\begin{TexinfoFloatText}
@@ -2765,7 +2774,8 @@ float with no type.
 \\end{TexinfoFloat}
 
 \\appendix
-\\chapter{{Appendix for float}}
+\\renewcommand{\\Texinfoheadingchaptername}{\\appendixname}
+\\Texinfochapter{{Appendix for float}}
 \\label{anchor:Appendix-for-float}%
 
 \\begin{TexinfoFloatText}
@@ -2775,7 +2785,7 @@ Appendix
 \\label{anchor:appendix-sec-float}%
 \\end{TexinfoFloatText}
 
-\\chapter*{{list of floats}}
+\\Texinfounnumberedchapter{{list of floats}}
 \\label{anchor:list-of-floats}%
 
 See \\hyperref[anchor:text-in-section]{Text~\\ref*{anchor:text-in-section}}.

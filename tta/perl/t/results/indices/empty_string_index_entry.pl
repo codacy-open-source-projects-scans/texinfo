@@ -280,16 +280,12 @@ $result_converted{'plaintext'}->{'empty_string_index_entry'} = '‘’
 ';
 
 
-$result_converted{'html_text'}->{'empty_string_index_entry'} = '<a class="node-id" id="Top"></a><div class="nav-panel">
-<p>
-[<a href="#chap" title="Index" rel="index">Index</a>]</p>
-</div>
+$result_converted{'html_text'}->{'empty_string_index_entry'} = '<a class="node-id" id="Top"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
 <h1 class="node"><span>Top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 <hr>
-<a class="node-id" id="chap"></a><div class="nav-panel">
-<p>
-[<a href="#chap" title="Index" rel="index">Index</a>]</p>
-</div>
+<a class="node-id" id="chap"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
 <h4 class="node"><span>chap<a class="copiable-link" href="#chap"> &para;</a></span></h4>
 
 <a class="index-entry-id" id="index-"></a>
@@ -343,7 +339,34 @@ $result_converted{'latex'}->{'empty_string_index_entry'} = '\\documentclass{book
 \\usepackage[hidelinks]{hyperref}
 
 \\makeatletter
+\\newcommand{\\Texinfothechapterheading}{}
+\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newcommand{\\Texinfosettitle}{No Title}%
+
+\\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
+\\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+}%
+
+\\newcommand{\\Texinfounnumberedpart}[1]{\\part*{#1}
+\\addcontentsline{toc}{part}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsection}[1]{\\section*{#1}
+\\addcontentsline{toc}{section}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsection}[1]{\\subsection*{#1}
+\\addcontentsline{toc}{subsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsubsection}[1]{\\subsubsection*{#1}
+\\addcontentsline{toc}{subsubsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
+}%
 
 % no index headers
 \\indexsetup{level=\\relax,toclevel=section}%
@@ -363,8 +386,8 @@ $result_converted{'latex'}->{'empty_string_index_entry'} = '\\documentclass{book
 % used for substitutions in commands
 \\newcommand{\\Texinfoplaceholder}[1]{}
 
-\\newpagestyle{single}{\\sethead[\\chaptername{} \\thechapter{} \\chaptertitle{}][][\\thepage]
-                              {\\chaptername{} \\thechapter{} \\chaptertitle{}}{}{\\thepage}}
+\\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
+                              {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
 % braces are upright in italic and slanted only in @def*
 % so it is turned off here, and turned on @def* lines

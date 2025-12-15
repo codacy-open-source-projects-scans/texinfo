@@ -229,10 +229,8 @@ span:hover a.copiable-link {visibility: visible}
 
 
 <hr>
-<a class="node-id" id="g_t_0028manual_0029-name"></a><div class="nav-panel">
-<p>
-Up: <a href="#first" accesskey="u" rel="up">top</a> &nbsp; </p>
-</div>
+<a class="node-id" id="g_t_0028manual_0029-name"></a><p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#first" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h4 class="node"><span>(manual) name<a class="copiable-link" href="#g_t_0028manual_0029-name"> &para;</a></span></h4>
 
 <a class="anchor" id="g_t_0028manual2_0029-name2"></a>

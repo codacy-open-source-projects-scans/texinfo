@@ -895,10 +895,8 @@ for example node (see node) (see (file)Top)
 
 $result_converted{'html_text'}->{'ref_in_sectioning'} = '
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 <h1 class="top" id="for-example-node-_0028node_0029-_0028Top_0029"><span>for example <a class="ref" href="#node">See <a data-manual="file name" href="file%20name.html#node">title</a> in <cite class="cite">Manual</cite>.</a> (see <a class="pxref" href="#node">See <a data-manual="file name" href="file%20name.html#node">title</a> in <cite class="cite">Manual</cite>.</a>) (see <cite class="cite"><a data-manual="file" href="file.html#Top">Manual</a></cite>)<a class="copiable-link" href="#for-example-node-_0028node_0029-_0028Top_0029"> &para;</a></span></h1>
 
 
@@ -930,19 +928,15 @@ $result_converted{'html_text'}->{'ref_in_sectioning'} = '
 </div>
 <hr>
 <div class="chapter-level-extent" id="node">
-<div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 <h2 class="chapter" id="node_002e"><span>1 See <a data-manual="file name" href="file%20name.html#node">title</a> in <cite class="cite">Manual</cite>.<a class="copiable-link" href="#node_002e"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="chap">
-<div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 <h2 class="chapter" id="node-just-node"><span>2 <a class="ref" href="#node">See <a data-manual="file name" href="file%20name.html#node">title</a> in <cite class="cite">Manual</cite>.</a> just node<a class="copiable-link" href="#node-just-node"> &para;</a></span></h2>
 
 <ul class="mini-toc">
@@ -1143,10 +1137,10 @@ $result_converted{'docbook'}->{'ref_in_sectioning'} = '<chapter label="1" id="no
 
 $result_converted{'latex_text'}->{'ref_in_sectioning'} = '
 \\label{anchor:Top}%
-\\chapter{{See Section ``title\'\' in \\textsl{Manual}.}}
+\\Texinfochapter{{See Section ``title\'\' in \\textsl{Manual}.}}
 \\label{anchor:node}%
 
-\\chapter{{\\texorpdfstring{\\hyperref[anchor:node]{\\chaptername~\\ref*{anchor:node} [node], page~\\pageref*{anchor:node}}}{node} just node}}
+\\Texinfochapter{{\\texorpdfstring{\\hyperref[anchor:node]{\\chaptername~\\ref*{anchor:node} [node], page~\\pageref*{anchor:node}}}{node} just node}}
 \\label{anchor:chap}%
 
 \\section{{for example \\texorpdfstring{\\hyperref[anchor:node]{\\chaptername~\\ref*{anchor:node} [node], page~\\pageref*{anchor:node}}}{node} (\\texorpdfstring{see \\hyperref[anchor:node]{\\chaptername~\\ref*{anchor:node} [node], page~\\pageref*{anchor:node}}}{see node}) (see Section ``Top\'\' in \\textsl{Manual})}}

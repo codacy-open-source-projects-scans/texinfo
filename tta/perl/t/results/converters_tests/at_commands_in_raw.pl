@@ -566,10 +566,8 @@ $result_converted{'plaintext'}->{'at_commands_in_raw'} = 'top
 
 
 $result_converted{'html_text'}->{'at_commands_in_raw'} = '<div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-[<a href="#chap" title="Index" rel="index">Index</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
 
@@ -578,10 +576,8 @@ $result_converted{'html_text'}->{'at_commands_in_raw'} = '<div class="top-level-
 </ul>
 <hr>
 <div class="chapter-level-extent" id="chap">
-<div class="nav-panel">
-<p>
-[<a href="#chap" title="Index" rel="index">Index</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
 <h2 class="chapter" id="Chapter"><span>1 Chapter<a class="copiable-link" href="#Chapter"> &para;</a></span></h2>
 
 <b>in b<a class="footnote" id="DOCF1" href="#FOOT1"><sup>1</sup></a>.</b>
@@ -767,7 +763,7 @@ $result_converted{'docbook'}->{'at_commands_in_raw'} = '<chapter label="1" id="c
 
 
 $result_converted{'latex_text'}->{'at_commands_in_raw'} = '\\label{anchor:Top}%
-\\chapter{{Chapter}}
+\\Texinfochapter{{Chapter}}
 \\label{anchor:chap}%
 
 <b>in b\\footnote{in footnote}.</b>

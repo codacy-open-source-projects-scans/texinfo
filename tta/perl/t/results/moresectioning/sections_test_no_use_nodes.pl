@@ -379,10 +379,8 @@ span:hover a.copiable-link {visibility: visible}
 
 <body lang="">
 <div class="top-level-extent" id="top">
-<div class="nav-panel">
-<p>
-Next: <a href="#chapter-in-part" accesskey="n" rel="next">chapter in part</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chapter-in-part" accesskey="n" rel="next">chapter in part</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
 <ul class="mini-toc">
@@ -390,10 +388,8 @@ Next: <a href="#chapter-in-part" accesskey="n" rel="next">chapter in part</a> &n
 </ul>
 <hr>
 <div class="chapter-level-extent" id="chapter">
-<div class="nav-panel">
-<p>
- Up : <a href="#top" accesskey="u" rel="up">top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label"> Up : </span><span class="nav-link"><a href="#top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter"><span>1 chapter<a class="copiable-link" href="#chapter"> &para;</a></span></h2>
 
 <ul class="mini-toc">
@@ -401,10 +397,8 @@ Next: <a href="#chapter-in-part" accesskey="n" rel="next">chapter in part</a> &n
 </ul>
 <hr>
 <div class="section-level-extent" id="section">
-<div class="nav-panel">
-<p>
- Up : <a href="#chapter" accesskey="u" rel="up">chapter</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label"> Up : </span><span class="nav-link"><a href="#chapter" accesskey="u" rel="up">chapter</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h3 class="section"><span>1.1 section<a class="copiable-link" href="#section"> &para;</a></span></h3>
 
 <ul class="mini-toc">
@@ -412,10 +406,8 @@ Next: <a href="#chapter-in-part" accesskey="n" rel="next">chapter in part</a> &n
 </ul>
 <hr>
 <div class="subsection-level-extent" id="subsection">
-<div class="nav-panel">
-<p>
- Up : <a href="#section" accesskey="u" rel="up">section</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label"> Up : </span><span class="nav-link"><a href="#section" accesskey="u" rel="up">section</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h4 class="subsection"><span>1.1.1 subsection<a class="copiable-link" href="#subsection"> &para;</a></span></h4>
 
 <ul class="mini-toc">
@@ -423,10 +415,8 @@ Next: <a href="#chapter-in-part" accesskey="n" rel="next">chapter in part</a> &n
 </ul>
 <hr>
 <div class="subsubsection-level-extent" id="subsubsection">
-<div class="nav-panel">
-<p>
- Up : <a href="#subsection" accesskey="u" rel="up">subsection</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label"> Up : </span><span class="nav-link"><a href="#subsection" accesskey="u" rel="up">subsection</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h4 class="subsubsection"><span>1.1.1.1 subsubsection<a class="copiable-link" href="#subsubsection"> &para;</a></span></h4>
 
 <hr>
@@ -436,10 +426,8 @@ Next: <a href="#chapter-in-part" accesskey="n" rel="next">chapter in part</a> &n
 </div>
 </div>
 <div class="part-level-extent" id="part">
-<div class="nav-panel">
-<p>
-Next: <a href="#second-chapter-in-part" accesskey="n" rel="next">second chapter in part</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#second-chapter-in-part" accesskey="n" rel="next">second chapter in part</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="part"><span>part<a class="copiable-link" href="#part"> &para;</a></span></h1>
 <hr>
 
@@ -454,28 +442,22 @@ Next: <a href="#second-chapter-in-part" accesskey="n" rel="next">second chapter 
 <hr>
 </div>
 <div class="chapter-level-extent" id="second-chapter-in-part">
-<div class="nav-panel">
-<p>
-Next: <a href="#unnumbered" accesskey="n" rel="next">unnumbered</a>, Prev: <a href="#chapter-in-part" accesskey="p" rel="prev">chapter in part</a>,  Up : <a href="#chapter-in-part" accesskey="u" rel="up">chapter in part</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#unnumbered" accesskey="n" rel="next">unnumbered</a></span></span>, <span class="nav-button"><span class="nav-label">Prev: </span><span class="nav-link"><a href="#chapter-in-part" accesskey="p" rel="prev">chapter in part</a></span></span>, <span class="nav-button"><span class="nav-label"> Up : </span><span class="nav-link"><a href="#chapter-in-part" accesskey="u" rel="up">chapter in part</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter"><span>3 second chapter in part<a class="copiable-link" href="#second-chapter-in-part"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="unnumbered-level-extent" id="unnumbered">
-<div class="nav-panel">
-<p>
-Prev: <a href="#second-chapter-in-part" accesskey="p" rel="prev">second chapter in part</a>,  Up : <a href="#chapter-in-part" accesskey="u" rel="up">chapter in part</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Prev: </span><span class="nav-link"><a href="#second-chapter-in-part" accesskey="p" rel="prev">second chapter in part</a></span></span>, <span class="nav-button"><span class="nav-label"> Up : </span><span class="nav-link"><a href="#chapter-in-part" accesskey="u" rel="up">chapter in part</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="unnumbered"><span>unnumbered<a class="copiable-link" href="#unnumbered"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="appendix-level-extent" id="appendix">
-<div class="nav-panel">
-<p>
-Prev: <a href="#chapter-in-part" accesskey="p" rel="prev">chapter in part</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Prev: </span><span class="nav-link"><a href="#chapter-in-part" accesskey="p" rel="prev">chapter in part</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="appendix"><span>Appendix A appendix<a class="copiable-link" href="#appendix"> &para;</a></span></h2>
 
 <ul class="mini-toc">
@@ -483,10 +465,8 @@ Prev: <a href="#chapter-in-part" accesskey="p" rel="prev">chapter in part</a> &n
 </ul>
 <hr>
 <div class="appendixsec-level-extent" id="appendixsec">
-<div class="nav-panel">
-<p>
- Up : <a href="#appendix" accesskey="u" rel="up">appendix</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label"> Up : </span><span class="nav-link"><a href="#appendix" accesskey="u" rel="up">appendix</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h3 class="appendixsec"><span>A.1 appendixsec<a class="copiable-link" href="#appendixsec"> &para;</a></span></h3>
 </div>
 </div>

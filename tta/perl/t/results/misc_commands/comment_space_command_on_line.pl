@@ -445,10 +445,8 @@ Text 1.1
 
 $result_converted{'html_text'}->{'comment_space_command_on_line'} = '
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-[<a href="#chap" title="Index" rel="index">Index</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
 <h1 class="top" id="top-element-"><span>top element&nbsp;<a class="copiable-link" href="#top-element-"> &para;</a></span></h1>
 
 <ul class="mini-toc">
@@ -456,10 +454,8 @@ $result_converted{'html_text'}->{'comment_space_command_on_line'} = '
 </ul>
 <hr>
 <div class="chapter-level-extent" id="chap">
-<div class="nav-panel">
-<p>
-[<a href="#chap" title="Index" rel="index">Index</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#chap" title="Index" rel="index">Index</a>]</span></p>
 <h2 class="chapter" id="Chapter-"><span>1 Chapter&nbsp;<a class="copiable-link" href="#Chapter-"> &para;</a></span></h2>
 
 
@@ -503,11 +499,38 @@ $result_converted{'latex'}->{'comment_space_command_on_line'} = '\\documentclass
 \\usepackage[hidelinks]{hyperref}
 
 \\makeatletter
+\\newcommand{\\Texinfothechapterheading}{}
+\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newcommand{\\Texinfosettitle}{Settitle \\ {}}%
+
+\\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
+\\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+}%
+
+\\newcommand{\\Texinfounnumberedpart}[1]{\\part*{#1}
+\\addcontentsline{toc}{part}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsection}[1]{\\section*{#1}
+\\addcontentsline{toc}{section}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsection}[1]{\\subsection*{#1}
+\\addcontentsline{toc}{subsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsubsection}[1]{\\subsubsection*{#1}
+\\addcontentsline{toc}{subsubsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
+}%
 
 % new float for type `Text\'
 \\newfloat{TexinfoFloatText}{htb}{tfl}[chapter]
-\\floatname{TexinfoFloatText}{}
+\\floatname{TexinfoFloatText}{Text}
 % no index headers
 \\indexsetup{level=\\relax,toclevel=section}%
 \\makeindex[name=cp,title=]%
@@ -523,8 +546,8 @@ $result_converted{'latex'}->{'comment_space_command_on_line'} = '\\documentclass
 % used for substitutions in commands
 \\newcommand{\\Texinfoplaceholder}[1]{}
 
-\\newpagestyle{single}{\\sethead[\\chaptername{} \\thechapter{} \\chaptertitle{}][][\\thepage]
-                              {\\chaptername{} \\thechapter{} \\chaptertitle{}}{}{\\thepage}}
+\\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
+                              {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
 % allow line breaking at underscore
 \\let\\Texinfounderscore\\_
@@ -540,7 +563,7 @@ $result_converted{'latex'}->{'comment_space_command_on_line'} = '\\documentclass
 
 
 \\label{anchor:Top}%
-\\chapter{{Chapter\\ {}}}
+\\Texinfochapter{{Chapter\\ {}}}
 \\label{anchor:chap}%
 
 \\frenchspacing

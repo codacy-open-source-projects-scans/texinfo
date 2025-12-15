@@ -320,10 +320,8 @@ span:hover a.copiable-link {visibility: visible}
 
 <body lang="">
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#chapter-1" accesskey="n" rel="next">chapter c1</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chapter-1" accesskey="n" rel="next">chapter c1</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
 
@@ -332,26 +330,20 @@ Next: <a href="#chapter-1" accesskey="n" rel="next">chapter c1</a> &nbsp; </p>
 </ul>
 <hr>
 <div class="chapter-level-extent" id="chapter-1">
-<div class="nav-panel">
-<p>
-Next: <a href="#node-after-chapter-1" accesskey="n" rel="next">node after chapter 1</a>, Previous: <a href="#Top" accesskey="p" rel="prev">top</a>, Up: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#node-after-chapter-1" accesskey="n" rel="next">node after chapter 1</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="chapter-c1"><span>1 chapter c1<a class="copiable-link" href="#chapter-c1"> &para;</a></span></h2>
 
 <hr>
-<a class="node-id" id="node-after-chapter-1"></a><div class="nav-panel">
-<p>
-Next: <a href="#last-node-in-chapter-1" accesskey="n" rel="next">last node in chapter 1</a>, Previous: <a href="#chapter-1" accesskey="p" rel="prev">chapter c1</a>, Up: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; </p>
-</div>
+<a class="node-id" id="node-after-chapter-1"></a><p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#last-node-in-chapter-1" accesskey="n" rel="next">last node in chapter 1</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#chapter-1" accesskey="p" rel="prev">chapter c1</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h4 class="node"><span>node after chapter 1<a class="copiable-link" href="#node-after-chapter-1"> &para;</a></span></h4>
 
 <p>in node after chapter 1
 </p>
 <hr>
-<a class="node-id" id="last-node-in-chapter-1"></a><div class="nav-panel">
-<p>
-Previous: <a href="#node-after-chapter-1" accesskey="p" rel="prev">node after chapter 1</a>, Up: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; </p>
-</div>
+<a class="node-id" id="last-node-in-chapter-1"></a><p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#node-after-chapter-1" accesskey="p" rel="prev">node after chapter 1</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h4 class="node"><span>last node in chapter 1<a class="copiable-link" href="#last-node-in-chapter-1"> &para;</a></span></h4>
 </div>
 </div>
@@ -365,7 +357,7 @@ Previous: <a href="#node-after-chapter-1" accesskey="p" rel="prev">node after ch
 
 $result_converted{'latex_text'}->{'two_nodes_at_the_end'} = '\\begin{document}
 \\label{anchor:Top}%
-\\chapter{{chapter c1}}
+\\Texinfochapter{{chapter c1}}
 \\label{anchor:chapter-1}%
 
 \\label{anchor:node-after-chapter-1}%

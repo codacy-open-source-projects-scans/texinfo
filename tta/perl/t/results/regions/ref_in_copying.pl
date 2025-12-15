@@ -266,10 +266,8 @@ span:hover a.copiable-link {visibility: visible}
 <body lang="">
 
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#GFDL" accesskey="n" rel="next">GFDL</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#GFDL" accesskey="n" rel="next">GFDL</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
 <p><a class="ref" href="#GFDL">GFDL</a>
@@ -280,10 +278,8 @@ Next: <a href="#GFDL" accesskey="n" rel="next">GFDL</a> &nbsp; </p>
 </ul>
 <hr>
 <div class="chapter-level-extent" id="GFDL">
-<div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">top</a>, Up: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="GFDL-1"><span>1 GFDL<a class="copiable-link" href="#GFDL-1"> &para;</a></span></h2>
 
 </div>
@@ -299,7 +295,7 @@ Previous: <a href="#Top" accesskey="p" rel="prev">top</a>, Up: <a href="#Top" ac
 $result_converted{'latex_text'}->{'ref_in_copying'} = '
 \\begin{document}
 \\label{anchor:Top}%
-\\chapter{{GFDL}}
+\\Texinfochapter{{GFDL}}
 \\label{anchor:GFDL}%
 
 ';

@@ -218,10 +218,8 @@ span:hover a.copiable-link {visibility: visible}
 
 <body lang="">
 <div class="unnumbered-level-extent" id="before">
-<div class="nav-panel">
-<p>
-Next: <a href="#node-after" accesskey="n" rel="next">node after</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#node-after" accesskey="n" rel="next">node after</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="unnumbered"><span>before<a class="copiable-link" href="#before"> &para;</a></span></h2>
 
 </div>
@@ -235,10 +233,8 @@ Next: <a href="#node-after" accesskey="n" rel="next">node after</a> &nbsp; </p>
 <p>in chapter
 </p>
 <hr>
-<a class="node-id" id="node-after"></a><div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">top section</a> &nbsp; </p>
-</div>
+<a class="node-id" id="node-after"></a><p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top section</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h4 class="node"><span>node after<a class="copiable-link" href="#node-after"> &para;</a></span></h4>
 </div>
 
@@ -258,7 +254,7 @@ $result_converted{'docbook'}->{'section_before_after_top_node_last_node'} = '<ch
 
 
 $result_converted{'latex_text'}->{'section_before_after_top_node_last_node'} = '\\begin{document}
-\\chapter*{{before}}
+\\Texinfounnumberedchapter{{before}}
 
 \\label{anchor:Top}%
 \\label{anchor:node-after}%

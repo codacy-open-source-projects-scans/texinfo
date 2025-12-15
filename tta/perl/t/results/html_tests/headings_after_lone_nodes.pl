@@ -703,10 +703,8 @@ ul.toc-numbered-mark {list-style: none}
 
 <body lang="">
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#chap" accesskey="n" rel="next">Chap</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chap" accesskey="n" rel="next">Chap</a></span></span><span class="nav-button"> &nbsp; </span><span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 <h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
 <div class="region-contents" id="SEC_Contents">
@@ -721,26 +719,20 @@ Next: <a href="#chap" accesskey="n" rel="next">Chap</a> &nbsp; [<a href="#SEC_Co
 </div>
 <hr>
 <div class="chapter-level-extent" id="chap">
-<div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">top</a>, Up: <a href="#Top" accesskey="u" rel="up">top</a> &nbsp; [<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span><span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 <h2 class="chapter" id="Chap"><span>1 Chap<a class="copiable-link" href="#Chap"> &para;</a></span></h2>
 
 <hr>
-<a class="node" id="Qt"></a><div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<a class="node" id="Qt"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 <h4 class="subheading" id="heading-Qt"><span>heading Qt<a class="copiable-link" href="#heading-Qt"> &para;</a></span></h4>
 
 <p>Some text
 </p>
 <hr>
-<a class="node" id="Other"></a><div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<a class="node" id="Other"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 
 <a class="anchor" id="toto"></a>
 
@@ -753,20 +745,16 @@ Previous: <a href="#Top" accesskey="p" rel="prev">top</a>, Up: <a href="#Top" ac
 <h4 class="subsubheading" id="Finally_0021"><span>Finally!<a class="copiable-link" href="#Finally_0021"> &para;</a></span></h4>
 
 <hr>
-<a class="node" id="Not-associated"></a><div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<a class="node" id="Not-associated"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 
 <p>Some para
 </p>
 <h3 class="heading" id="should-not-be-associated"><span>should not be associated<a class="copiable-link" href="#should-not-be-associated"> &para;</a></span></h3>
 
 <hr>
-<a class="node" id="g_t2-not"></a><div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<a class="node" id="g_t2-not"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 
 <blockquote class="quotation">
 <p>in quotation
@@ -775,20 +763,16 @@ Previous: <a href="#Top" accesskey="p" rel="prev">top</a>, Up: <a href="#Top" ac
 <h3 class="heading" id="should-not-be-associated-1"><span>should not be associated<a class="copiable-link" href="#should-not-be-associated-1"> &para;</a></span></h3>
 
 <hr>
-<a class="node" id="g_t3-not"></a><div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<a class="node" id="g_t3-not"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 
 in html
 
 <h3 class="heading" id="should-not-be-associated-2"><span>should not be associated<a class="copiable-link" href="#should-not-be-associated-2"> &para;</a></span></h3>
 
 <hr>
-<a class="node" id="g_t4-not"></a><div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<a class="node" id="g_t4-not"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 
 <br>
 <br>
@@ -796,19 +780,15 @@ in html
 <h3 class="heading" id="should-not-be-associated-3"><span>should not be associated<a class="copiable-link" href="#should-not-be-associated-3"> &para;</a></span></h3>
 
 <hr>
-<a class="node" id="g_t5-not"></a><div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<a class="node" id="g_t5-not"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 
 
 <h3 class="heading" id="should-not-be-associated-4"><span>should not be associated<a class="copiable-link" href="#should-not-be-associated-4"> &para;</a></span></h3>
 
 <hr>
-<a class="node-id" id="subnode"></a><div class="nav-panel">
-<p>
-[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</p>
-</div>
+<a class="node-id" id="subnode"></a><p class="nav-panel">
+<span class="nav-button">[<a href="#SEC_Contents" title="Table of contents" rel="contents">Contents</a>]</span></p>
 <h4 class="node"><span>subnode<a class="copiable-link" href="#subnode"> &para;</a></span></h4>
 
 </div>

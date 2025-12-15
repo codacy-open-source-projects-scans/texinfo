@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
 
@@ -66,7 +66,7 @@ our @EXPORT_OK = qw(
   string_width
 );
 
-our $VERSION = '7.2dev';
+our $VERSION = '7.2.90';
 
 my %unicode_accented_letters = %Texinfo::UnicodeData::unicode_accented_letters;
 my %unicode_to_eight_bit = %Texinfo::UnicodeData::unicode_to_eight_bit;

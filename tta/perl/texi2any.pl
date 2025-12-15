@@ -15,7 +15,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
 # Parts (also from Patrice Dumas) come from texi2html.pl or texi2html.init.
@@ -114,7 +114,21 @@ BEGIN
       unshift @INC, $command_directory;
     }
 
-    require Texinfo::ModulePath;
+    eval { require Texinfo::ModulePath; };
+    if ($@ ne '') {
+      if (-l $0) {
+        my $followed = readlink($0);
+        if ($followed) {
+          ($real_command_name, $command_directory, $command_suffix)
+            = fileparse($followed, '.pl');
+          unshift @INC, $command_directory;
+          eval { require Texinfo::ModulePath; };
+        }
+      }
+      if ($@ ne '') {
+        die "couldn't load Texinfo::ModulePath: $@\n";
+      }
+    }
     Texinfo::ModulePath::init(undef, undef, undef, 'updirs' => 1);
   } else {
     # Look for modules in their installed locations.
@@ -1156,7 +1170,7 @@ my $result_options = Getopt::Long::GetOptions (
                     "$converter (GNU texinfo) $configured_version\n\n");
     print _encode_message(sprintf __(
 "Copyright (C) %s Free Software Foundation, Inc.
-License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>
 This is free software: you are free to change and redistribute it.
 There is NO WARRANTY, to the extent permitted by law."), "2025")."\n";
       exit 0;},

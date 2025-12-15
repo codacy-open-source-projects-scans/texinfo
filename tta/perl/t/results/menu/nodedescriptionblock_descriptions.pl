@@ -744,10 +744,8 @@ th.menu-comment {text-align:left}
 
 <body lang="">
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#toto" accesskey="n" rel="next">Toto</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#toto" accesskey="n" rel="next">Toto</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="test-of-nodedescriptionblock-used-in-menu"><span>test of nodedescriptionblock used in menu<a class="copiable-link" href="#test-of-nodedescriptionblock-used-in-menu"> &para;</a></span></h1>
 
 <table class="menu">
@@ -771,10 +769,8 @@ Next: <a href="#toto" accesskey="n" rel="next">Toto</a> &nbsp; </p>
 
 <hr>
 <div class="chapter-level-extent" id="toto">
-<div class="nav-panel">
-<p>
-Next: <a href="#titi" accesskey="n" rel="next">Titi</a>, Previous: <a href="#Top" accesskey="p" rel="prev">test of nodedescriptionblock used in menu</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#titi" accesskey="n" rel="next">Titi</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">test of nodedescriptionblock used in menu</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="Toto"><span>1 Toto<a class="copiable-link" href="#Toto"> &para;</a></span></h2>
 
 
@@ -782,30 +778,24 @@ Next: <a href="#titi" accesskey="n" rel="next">Titi</a>, Previous: <a href="#Top
 <hr>
 </div>
 <div class="chapter-level-extent" id="titi">
-<div class="nav-panel">
-<p>
-Next: <a href="#other" accesskey="n" rel="next">Other</a>, Previous: <a href="#toto" accesskey="p" rel="prev">Toto</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#other" accesskey="n" rel="next">Other</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#toto" accesskey="p" rel="prev">Toto</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="Titi"><span>2 Titi<a class="copiable-link" href="#Titi"> &para;</a></span></h2>
 
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="other">
-<div class="nav-panel">
-<p>
-Next: <a href="#a-somewhat-long-node-without-description-nor-following-space" accesskey="n" rel="next">Somewhat long</a>, Previous: <a href="#titi" accesskey="p" rel="prev">Titi</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#a-somewhat-long-node-without-description-nor-following-space" accesskey="n" rel="next">Somewhat long</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#titi" accesskey="p" rel="prev">Titi</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="Other"><span>3 Other<a class="copiable-link" href="#Other"> &para;</a></span></h2>
 
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="a-somewhat-long-node-without-description-nor-following-space">
-<div class="nav-panel">
-<p>
-Next: <a href="#node-double-nodedescriptionblock" accesskey="n" rel="next">test double</a>, Previous: <a href="#other" accesskey="p" rel="prev">Other</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#node-double-nodedescriptionblock" accesskey="n" rel="next">test double</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#other" accesskey="p" rel="prev">Other</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="Somewhat-long"><span>4 Somewhat long<a class="copiable-link" href="#Somewhat-long"> &para;</a></span></h2>
 
 
@@ -813,10 +803,8 @@ Next: <a href="#node-double-nodedescriptionblock" accesskey="n" rel="next">test 
 <hr>
 </div>
 <div class="chapter-level-extent" id="node-double-nodedescriptionblock">
-<div class="nav-panel">
-<p>
-Previous: <a href="#a-somewhat-long-node-without-description-nor-following-space" accesskey="p" rel="prev">Somewhat long</a>, Up: <a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#a-somewhat-long-node-without-description-nor-following-space" accesskey="p" rel="prev">Somewhat long</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">test of nodedescriptionblock used in menu</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="test-double"><span>5 test double<a class="copiable-link" href="#test-double"> &para;</a></span></h2>
 
 

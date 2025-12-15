@@ -11,7 +11,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -731,7 +731,7 @@ html_standard_label_id_file (CONVERTER *self, const char *normalized,
     {
       /* use default, not user-defined value */
       int basefilename_length
-        = html_default_options->options->BASEFILENAME_LENGTH.o.integer;
+        = txi_base_options.BASEFILENAME_LENGTH.o.integer;
       target = html_normalized_to_id (normalized_label);
       filename = strdup (normalized_label);
       if (strlen (filename) > (size_t) basefilename_length)
@@ -4449,6 +4449,12 @@ format_button_icon_img (CONVERTER *self,
     }
 }
 
+static char *nav_label_array[] = {"nav-label"};
+static const STRING_LIST nav_label_classes = {nav_label_array, 1, 1};
+
+static char *nav_link_array[] = {"nav-link"};
+static const STRING_LIST nav_link_classes = {nav_link_array, 1, 1};
+
 static FORMATTED_BUTTON_INFO *
 default_panel_button_dynamic_direction_internal (CONVERTER *self,
                                int direction, const ELEMENT *element,
@@ -4485,18 +4491,52 @@ default_panel_button_dynamic_direction_internal (CONVERTER *self,
 
   if (node && node[strspn (node, whitespace_chars)] != '\0')
     {
+      char *open_label;
+      char *open_link;
+      const char *close_label_span = "";
+      const char *close_link_span = "";
+      const char *close_label = "";
+      const char *close_link = "";
+      size_t open_len;
+
       const char *text = direction_string (self, direction, TDS_type_text, 0);
       if (!text)
         text = "";
+
+      open_label = html_attribute_class (self, "span", &nav_label_classes);
+      open_len = strlen (open_label);
+
+      if (open_len > 0)
+        {
+          close_label_span = ">";
+          close_label = "</span>";
+        }
+
+      open_link = html_attribute_class (self, "span", &nav_link_classes);
+      open_len = strlen (open_link);
+
+      if (open_len > 0)
+        {
+          close_link_span = ">";
+          close_link = "</span>";
+        }
+
       if (href && strlen (href))
         {
           char *hyperlink
            = direction_a (self, direction, href, node, omit_rel);
-          xasprintf (&formatted_button->active, "%s: %s", text, hyperlink);
+          xasprintf (&formatted_button->active, "%s%s%s: %s%s%s%s%s",
+                     open_label, close_label_span, text, close_label,
+                     open_link, close_link_span, hyperlink, close_link);
           free (hyperlink);
         }
       else
-        xasprintf (&formatted_button->active, "%s: %s", text, node);
+        xasprintf (&formatted_button->active, "%s%s%s: %s%s%s%s%s",
+                     open_label, close_label_span, text, close_label,
+                     open_link, close_link_span, node, close_link);
+
+      free (open_label);
+      free (open_link);
     }
 
   free (href);
@@ -4608,9 +4648,8 @@ html_default_format_button (CONVERTER *self,
             {
               const char *button_text = direction_string (self,
                                     button->b.direction, TDS_type_text, 0);
-              if (!button_text)
-                button_text = "";
-              formatted_button->active = strdup (button_text);
+              if (button_text)
+                formatted_button->active = strdup (button_text);
             }
           formatted_button->need_delimiter = 0;
         }
@@ -4839,7 +4878,22 @@ html_default_format_navigation_panel (CONVERTER *self,
           if (need_delimiter && nr_of_buttons_shown > 0)
             text_append_n (&result_buttons, ", ", 2);
 
+          char *open;
+          size_t open_len;
+
+          open = html_attribute_class (self, "span", &nav_button_classes);
+          open_len = strlen (open);
+
+          if (open_len > 0)
+            {
+              text_append (&result_buttons, open);
+              text_append_n (&result_buttons, ">", 1);
+            }
           text_append (&result_buttons, active);
+
+          free (open);
+          if (open_len > 0)
+            text_append_n (&result_buttons, "</span>", 7);
 
           nr_of_buttons_shown++;
         }
@@ -4864,10 +4918,8 @@ html_default_format_navigation_panel (CONVERTER *self,
     }
   else
     {
-      open_element_with_class (self, "div", &nav_panel_classes, result);
+      open_element_with_class (self, "p", &nav_panel_classes, result);
       text_append_n (result, "\n", 1);
-
-      text_append_n (result, "<p>\n", 4);
     }
 
   text_append (result, result_buttons.text);
@@ -4881,7 +4933,6 @@ html_default_format_navigation_panel (CONVERTER *self,
   else
     {
       text_append_n (result, "</p>\n", 5);
-      text_append_n (result, "</div>\n", 7);
     }
   free (result_buttons.text);
 }

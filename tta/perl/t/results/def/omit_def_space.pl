@@ -214,17 +214,13 @@ strong.def-name {font-family: monospace; font-weight: bold; font-size: larger}
 </head>
 
 <body lang="">
-<a class="node-id" id="Top"></a><div class="nav-panel">
-<p>
-Next: <a href="#chap" accesskey="n" rel="next">chap</a> &nbsp; </p>
-</div>
+<a class="node-id" id="Top"></a><p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chap" accesskey="n" rel="next">chap</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="node"><span>Top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 
 <hr>
-<a class="node-id" id="chap"></a><div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">Top</a> &nbsp; </p>
-</div>
+<a class="node-id" id="chap"></a><p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h4 class="node"><span>chap<a class="copiable-link" href="#chap"> &para;</a></span></h4>
 
 

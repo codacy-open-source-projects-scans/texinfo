@@ -270,10 +270,8 @@ Appendix A App
 
 
 $result_converted{'html_text'}->{'sections_and_printindex'} = '<div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-[<a href="#sec" title="Index" rel="index">Index</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#sec" title="Index" rel="index">Index</a>]</span></p>
 <h1 class="top" id="for-example"><span>for example<a class="copiable-link" href="#for-example"> &para;</a></span></h1>
 
 <ul class="mini-toc">
@@ -282,10 +280,8 @@ $result_converted{'html_text'}->{'sections_and_printindex'} = '<div class="top-l
 </ul>
 <hr>
 <div class="chapter-level-extent" id="node">
-<div class="nav-panel">
-<p>
-[<a href="#sec" title="Index" rel="index">Index</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#sec" title="Index" rel="index">Index</a>]</span></p>
 <h2 class="chapter" id="chap"><span>1 chap<a class="copiable-link" href="#chap"> &para;</a></span></h2>
 
 <a class="index-entry-id" id="index-entry1"></a>
@@ -294,10 +290,8 @@ $result_converted{'html_text'}->{'sections_and_printindex'} = '<div class="top-l
 </ul>
 <hr>
 <div class="section-level-extent" id="sec">
-<div class="nav-panel">
-<p>
-[<a href="#sec" title="Index" rel="index">Index</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button">[<a href="#sec" title="Index" rel="index">Index</a>]</span></p>
 <h3 class="section" id="Sec"><span>1.1 Sec<a class="copiable-link" href="#Sec"> &para;</a></span></h3>
 
 <a class="index-entry-id" id="index-entry2"></a>
@@ -363,7 +357,7 @@ $result_converted{'docbook'}->{'sections_and_printindex'} = '<chapter label="1" 
 
 
 $result_converted{'latex_text'}->{'sections_and_printindex'} = '\\label{anchor:Top}%
-\\chapter{{chap}}
+\\Texinfochapter{{chap}}
 \\label{anchor:node}%
 
 \\index[cp]{entry1@entry1}%
@@ -372,7 +366,8 @@ $result_converted{'latex_text'}->{'sections_and_printindex'} = '\\label{anchor:T
 
 \\index[cp]{entry2@entry2}%
 \\appendix
-\\chapter{{App}}
+\\renewcommand{\\Texinfoheadingchaptername}{\\appendixname}
+\\Texinfochapter{{App}}
 
 \\printindex[cp]
 

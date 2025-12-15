@@ -15,7 +15,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
 #include <stddef.h>
 
@@ -49,6 +49,13 @@ void txi_initialise_base_options (void);
 
 
 OPTIONS *new_options (void);
+
+BUTTON_SPECIFICATION_INFO *html_new_button_specification_info (void);
+BUTTON_SPECIFICATION_LIST *html_new_button_specification_list
+                                                  (size_t buttons_nr);
+
+void html_free_button_specification_list (BUTTON_SPECIFICATION_LIST *buttons);
+void html_clear_direction_icons (DIRECTION_ICON_LIST *direction_icons);
 
 void clear_option (OPTION *option);
 void free_option (OPTION *option);

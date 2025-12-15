@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 #
 # The documentation of the HTML customization API which is both
@@ -106,7 +106,7 @@ require Exporter;
 
 our @ISA = qw(Texinfo::Convert::Converter);
 
-our $VERSION = '7.2dev';
+our $VERSION = '7.2.90';
 
 my $XS_convert = Texinfo::XSLoader::XS_convert_enabled();
 
@@ -1589,8 +1589,8 @@ sub _internal_command_name($$$) {
   return undef;
 }
 
-# Return text to be used for $COMMAND using the name rather than an
-# identifier, when the distinction exists.
+# Return text to be used for $COMMAND using the name rather than the
+# label/identifier, when the distinction exists.
 # $TYPE refers to the type of value returned from this function:
 #  'text' - return text
 #  'text_nonumber' - return text, without the section/chapter number
@@ -4004,7 +4004,24 @@ sub _default_panel_button_dynamic_direction($$;$$$) {
     # i18n
     my $direction_text = $self->direction_string($direction, 'text');
     $direction_text = '' if (!defined($direction_text));
-    $result = $direction_text.": $hyperlink";
+
+    $result = '';
+    my $open = $self->html_attribute_class('span', ['nav-label']);
+    if ($open ne '') {
+      $result .= $open.'>';
+    }
+    $result .= $direction_text.': ';
+    if ($open ne '') {
+      $result .= '</span>';
+    }
+    $open = $self->html_attribute_class('span', ['nav-link']);
+    if ($open ne '') {
+      $result .= $open.'>';
+    }
+    $result .= $hyperlink;
+    if ($open ne '') {
+      $result .= '</span>';
+    }
   }
   # 1 to communicate that a delimiter is needed for that button
   return ($result, 1);
@@ -4260,7 +4277,16 @@ sub _default_format_navigation_panel($$$$;$$) {
       if ($need_delimiter and $nr_of_buttons_shown > 0) {
         $result_buttons .= ', ';
       }
+
+      my $open = $self->html_attribute_class('span', ['nav-button']);
+      if ($open ne '') {
+        $result_buttons .= $open.'>';
+      }
       $result_buttons .= $active;
+      if ($open ne '') {
+        $result_buttons .= '</span>';
+      }
+
       $nr_of_buttons_shown++;
     }
   }
@@ -4279,8 +4305,7 @@ sub _default_format_navigation_panel($$$$;$$) {
     $result .= $self->html_attribute_class('table', ['nav-panel']).'>'."\n";
     $result .= "<tr>" unless $vertical;
   } else {
-    $result .= $self->html_attribute_class('div', ['nav-panel']).">\n";
-    $result .= "<p>\n";
+    $result .= $self->html_attribute_class('p', ['nav-panel']).">\n";
   }
 
   $result .= $result_buttons;
@@ -4290,7 +4315,6 @@ sub _default_format_navigation_panel($$$$;$$) {
     $result .= "</table>\n";
   } else {
     $result .= "</p>\n";
-    $result .= "</div>\n";
   }
   return $result;
 }
@@ -13540,7 +13564,7 @@ sub _setup_output($) {
     $jslicenses->{'infojs'} = {
       'js/info.js' =>
          [ 'GNU General Public License 3.0 or later',
-           'http://www.gnu.org/licenses/gpl-3.0.html',
+           'https://www.gnu.org/licenses/gpl-3.0.html',
            'js/info.js' ],
        'js/modernizr.js' =>
           [ 'Expat',

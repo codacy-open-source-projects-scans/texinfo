@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: texinfo 7.1.92\n"
 "Report-Msgid-Bugs-To: bug-texinfo@gnu.org\n"
-"POT-Creation-Date: 2025-11-25 21:44+0100\n"
+"POT-Creation-Date: 2025-12-13 19:26+0000\n"
 "PO-Revision-Date: 2025-04-28 12:41+0200\n"
 "Last-Translator: Walter Garcia-Fontes <walter.garcia@upf.edu>\n"
 "Language-Team: Catalan <ca@dodds.net>\n"
@@ -18,11 +18,19 @@ msgstr ""
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
 "X-Bugs: Report translation errors to the Language-Team address.\n"
 
-#: info/echo-area.c:290
+#: info/dir.c:63
+#, fuzzy
+#| msgid "No '%s' pointer for this node"
+msgid ""
+"Dir files used for this node\n"
+"\n"
+msgstr "No hi ha un punter «%s» per a aquest node"
+
+#: info/echo-area.c:290 info/session-cmd.c:424
 msgid "Move forward a character"
 msgstr "Ves un caràcter cap endavant"
 
-#: info/echo-area.c:309
+#: info/echo-area.c:309 info/session-cmd.c:437
 msgid "Move backward a character"
 msgstr "Ves un caràcter cap endarrere"
 
@@ -34,11 +42,11 @@ msgstr "Ves al principi de la línia"
 msgid "Move to the end of this line"
 msgstr "Ves al final de la línia"
 
-#: info/echo-area.c:348
+#: info/echo-area.c:348 info/session-cmd.c:452
 msgid "Move forward a word"
 msgstr "Ves endavant una paraula"
 
-#: info/echo-area.c:388
+#: info/echo-area.c:388 info/session-cmd.c:466
 msgid "Move backward a word"
 msgstr "Ves endarrere una paraula"
 
@@ -201,8 +209,8 @@ msgstr ""
 msgid ""
 "Go to the next matching index item from the last '\\[index-search]' command"
 msgstr ""
-"Ves al següent element concordant d'element d'índex de l'última ordre «\\"
-"[index-search]»"
+"Ves al següent element concordant d'element d'índex de l'última ordre "
+"«\\[index-search]»"
 
 #: info/indices.c:503
 #, c-format
@@ -271,7 +279,7 @@ msgstr "No hi ha entrades d'índex que continguin «%s»."
 msgid "No available info files have '%s' in their indices"
 msgstr "Cap dels fitxers info disponibles tenen «%s» als seus índexs"
 
-#: info/info.c:316
+#: info/info.c:316 info/session-cmd.c:1968
 #, c-format
 msgid "No menu item '%s' in node '%s'"
 msgstr "No hi ha un element de menú «%s» al node «%s»"
@@ -312,17 +320,23 @@ msgid "Try --help for more information.\n"
 msgstr "Proveu --help per a més informació.\n"
 
 #: info/info.c:912 install-info/install-info.c:2281
-#, c-format
+#, fuzzy, c-format
+#| msgid ""
+#| "Copyright (C) %s Free Software Foundation, Inc.\n"
+#| "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+#| "html>\n"
+#| "This is free software: you are free to change and redistribute it.\n"
+#| "There is NO WARRANTY, to the extent permitted by law.\n"
 msgid ""
 "Copyright (C) %s Free Software Foundation, Inc.\n"
-"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/"
-"gpl.html>\n"
+"License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl."
+"html>\n"
 "This is free software: you are free to change and redistribute it.\n"
 "There is NO WARRANTY, to the extent permitted by law.\n"
 msgstr ""
 "Copyright (C) %s Free Software Foundation, Inc.\n"
-"Llicència GPLv3+: GNU GPL versió 3 o posterior <http://gnu.org/licenses/"
-"gpl.html>\n"
+"Llicència GPLv3+: GNU GPL versió 3 o posterior <http://gnu.org/licenses/gpl."
+"html>\n"
 "Això és programari lliure, teniu la llibertat de canviar-lo o redistribuir-"
 "lo.\n"
 "No hi ha CAP GARANTIA, en la mesura que ho permet la llei.\n"
@@ -968,8 +982,8 @@ msgid ""
 "Welcome to Info version %s.  Type \\[get-help-window] for help, \\[get-info-"
 "help-node] for tutorial."
 msgstr ""
-"Benvingut a la versió %s d'Info. Entreu \\[get-help-window] per l'ajuda, \\"
-"[get-info-help-node] per a un tutorial."
+"Benvingut a la versió %s d'Info. Entreu \\[get-help-window] per l'ajuda, "
+"\\[get-info-help-node] per a un tutorial."
 
 #: info/session.c:301
 #, c-format
@@ -994,6 +1008,570 @@ msgstr "«%s» no és vàlid"
 #: info/session.c:1374
 msgid "Quit"
 msgstr "Surt"
+
+#: info/session-cmd.c:42
+msgid "Show all matching files"
+msgstr "Mostra tots els fitxers que concordin"
+
+#: info/session-cmd.c:46
+#, c-format
+msgid "No file index"
+msgstr "No hi ha un índex de fitxer"
+
+#: info/session-cmd.c:303
+msgid "Move down to the next line"
+msgstr "Ves avall a la línia següent"
+
+#: info/session-cmd.c:321
+msgid "Move up to the previous line"
+msgstr "Ves amunt a la línia prèvia"
+
+#: info/session-cmd.c:340
+msgid "Move the cursor to a specific line of the window"
+msgstr "Mou del cursos a una línia específica de la finestra"
+
+#: info/session-cmd.c:372
+msgid "Move to the end of the line"
+msgstr "Ves al final de la línia"
+
+#: info/session-cmd.c:397
+msgid "Move to the start of the line"
+msgstr "Ves a l'inici de la línia"
+
+#: info/session-cmd.c:481
+msgid "Move to the start of this node"
+msgstr "Ves a l'inici d'aquest node"
+
+#: info/session-cmd.c:488
+msgid "Move to the end of this node"
+msgstr "Ves al final d'aquest node"
+
+#: info/session-cmd.c:579
+msgid "Scroll forward in this window"
+msgstr "Desplaça't cap endavant a aquesta finestra"
+
+#: info/session-cmd.c:593
+msgid "Scroll backward in this window"
+msgstr "Desplaça't cap endarrere a aquesta finestra"
+
+#: info/session-cmd.c:601
+msgid "Scroll forward in this window and set default window size"
+msgstr ""
+"Desplaça't cap endavant a aquesta finestra i estableix la mida "
+"predeterminada de la finestra"
+
+#: info/session-cmd.c:616
+msgid "Scroll backward in this window and set default window size"
+msgstr ""
+"Desplaça't cap endarrere a aquesta finestra i estableix la mida "
+"predeterminada de la finestra"
+
+#: info/session-cmd.c:622
+msgid "Scroll forward in this window staying within node"
+msgstr "Desplaça't cap endavant a aquesta finestra romanent dins dins del node"
+
+#: info/session-cmd.c:637
+msgid "Scroll backward in this window staying within node"
+msgstr "Desplaçat cap endarrere a aquesta finestra romanent dins del node"
+
+#: info/session-cmd.c:645
+msgid ""
+"Scroll forward in this window staying within node and set default window size"
+msgstr ""
+"Desplaça't cap endavant a aquesta finestra dins del node i estableix la mida "
+"predeterminada de la finestra"
+
+#: info/session-cmd.c:672
+msgid ""
+"Scroll backward in this window staying within node and set default window "
+"size"
+msgstr ""
+"Desplaça't endarrere a aquesta finestra romanent dins del node i estableix "
+"la finestra predeterminada "
+
+#: info/session-cmd.c:678
+msgid "Scroll down by lines"
+msgstr "Desplaça't cap avall per línies"
+
+#: info/session-cmd.c:684
+msgid "Scroll up by lines"
+msgstr "Desplaça't cap amunt per línies"
+
+#: info/session-cmd.c:696
+msgid "Scroll down by half screen size"
+msgstr "Desplaça't cap avall per una mitja mida de pantalla"
+
+#: info/session-cmd.c:723
+msgid "Scroll up by half screen size"
+msgstr "Desplaça't cap amunt per una mitja mida de pantalla"
+
+#: info/session-cmd.c:729
+msgid "Scroll the other window"
+msgstr "Desplaça l'altra finestra"
+
+#: info/session-cmd.c:750
+msgid "Scroll the other window backward"
+msgstr "Desplaça l'altra finestra cap endarrere"
+
+#: info/session-cmd.c:860
+msgid "Select the next window"
+msgstr "Selecciona la finestra següent"
+
+#: info/session-cmd.c:897
+msgid "Select the previous window"
+msgstr "Selecciona la finestra prèvia"
+
+#: info/session-cmd.c:941
+msgid "Split the current window"
+msgstr "Divideix la finestra actual"
+
+#: info/session-cmd.c:989
+msgid "Delete the current window"
+msgstr "Elimina la finestra actual"
+
+#: info/session-cmd.c:992
+msgid "Cannot delete the last window"
+msgstr "No es pot eliminar l'última finestra"
+
+#: info/session-cmd.c:994
+msgid "Cannot delete a permanent window"
+msgstr "No es pot eliminar una finestra permanent"
+
+#: info/session-cmd.c:1025
+msgid "Delete all other windows"
+msgstr "Elimina totes les altres finestres"
+
+#: info/session-cmd.c:1071
+msgid "Grow (or shrink) this window"
+msgstr "Fes més gran (o fes més petita) aquesta finestra"
+
+#: info/session-cmd.c:1082
+msgid "Divide the available screen space among the visible windows"
+msgstr "Divideix l'espai disponible de pantalla entre les finestres visibles"
+
+#: info/session-cmd.c:1089
+msgid "Toggle the state of line wrapping in the current window"
+msgstr "Commuta l'estat de l'ajust de línia a la finestra actual"
+
+#: info/session-cmd.c:1356
+msgid "Select this menu item"
+msgstr "Selecciona aquest element de menú"
+
+#: info/session-cmd.c:1386
+#, c-format
+msgid "There isn't %d item in this menu"
+msgid_plural "There aren't %d items in this menu"
+msgstr[0] "No hi ha l'element %d a aquest menú"
+msgstr[1] "No hi els elements %d a aquest menú"
+
+#: info/session-cmd.c:1395
+msgid "Select the last item in this node's menu"
+msgstr "Selecciona l'últim element al menú d'aquest node"
+
+#: info/session-cmd.c:1499
+#, c-format
+msgid "Menu item (%s): "
+msgstr "Element de menú (%s): "
+
+#: info/session-cmd.c:1501
+msgid "Menu item: "
+msgstr "Element de menú: "
+
+#: info/session-cmd.c:1506
+#, c-format
+msgid "Follow xref (%s): "
+msgstr "Segueix xref (%s): "
+
+#: info/session-cmd.c:1508
+msgid "Follow xref: "
+msgstr "Segueix xref: "
+
+#: info/session-cmd.c:1585
+#, c-format
+msgid "The reference disappeared! (%s)"
+msgstr "La referència ha desaparegut! (%s)"
+
+#: info/session-cmd.c:1597
+msgid "Read a menu item and select its node"
+msgstr "Llegeix un element de menú i selecciona el seu node"
+
+#: info/session-cmd.c:1622
+msgid "Read a footnote or cross reference and select its node"
+msgstr ""
+"Llegeix una nota a peu de pàgina o una referència creuada i selecciona el "
+"seu node"
+
+#: info/session-cmd.c:1645
+msgid "Move to the start of this node's menu"
+msgstr "Ves a l'inici del menú d'aquest node"
+
+#: info/session-cmd.c:1683
+msgid "Visit as many menu items at once as possible"
+msgstr "Visita el màxim d'elements de menú que sigui possible"
+
+#: info/session-cmd.c:1786
+msgid "Move to the previous cross reference"
+msgstr "Ves a la referència creuada prèvia"
+
+#: info/session-cmd.c:1849
+msgid "Move to the next cross reference"
+msgstr "Ves a la referència creuada següent"
+
+#: info/session-cmd.c:1910
+msgid "Select reference or menu item appearing on this line"
+msgstr ""
+"Selecciona la referència o l'element de menú que apareix en aquesta línia"
+
+#: info/session-cmd.c:1946
+#, c-format
+msgid "No menu in node '%s'"
+msgstr "No hi ha un menú al node «%s»"
+
+#: info/session-cmd.c:1993
+#, c-format
+msgid "Unable to find node referenced by '%s' in '%s'"
+msgstr "No s'ha pogut trobar el node referenciat per «%s» a «%s»"
+
+#: info/session-cmd.c:2049
+msgid "Read a list of menus starting from dir and follow them"
+msgstr "Llegeix una llista de menús començant des del directori i segueix-los"
+
+#: info/session-cmd.c:2051
+msgid "Follow menus: "
+msgstr "Segueix els menús: "
+
+#: info/session-cmd.c:2117
+#, c-format
+msgid "No '%s' pointer for this node"
+msgstr "No hi ha un punter «%s» per a aquest node"
+
+#: info/session-cmd.c:2156
+msgid "Select the Next node"
+msgstr "Selecciona el node Següent"
+
+#: info/session-cmd.c:2163
+msgid "Select the Prev node"
+msgstr "Selecciona el node Previ"
+
+#: info/session-cmd.c:2170
+msgid "Select the Up node"
+msgstr "Selecciona el node Amunt"
+
+#: info/session-cmd.c:2176
+msgid "Select the last node in this file"
+msgstr "Selecciona l'últim node a aquest fitxer"
+
+#: info/session-cmd.c:2203 info/session-cmd.c:2236
+msgid "This window has no additional nodes"
+msgstr "Aquesta finestra no té nodes addicionals"
+
+#: info/session-cmd.c:2209
+msgid "Select the first node in this file"
+msgstr "Selecciona el primer node a aquest fitxer"
+
+#: info/session-cmd.c:2257
+msgid "You are already at the last page of this node"
+msgstr "Ja esteu a l'última pàgina d'aquest node"
+
+#: info/session-cmd.c:2343
+msgid "No more nodes within this document"
+msgstr "No hi ha més nodes dins d'aquest document"
+
+#: info/session-cmd.c:2373
+msgid "You are already at the first page of this node"
+msgstr "Ja esteu a la primera pàgina d'aquest node"
+
+#: info/session-cmd.c:2387 info/session-cmd.c:2434
+msgid "No 'Prev' or 'Up' for this node within this document"
+msgstr "No hi ha «Previ» o «Amunt» per a aquest node dins d'aquest document"
+
+#: info/session-cmd.c:2447
+msgid "Move forwards or down through node structure"
+msgstr "Ves amunt o avall a través de l'estructura de nodes"
+
+#: info/session-cmd.c:2464
+msgid "Move backwards or up through node structure"
+msgstr "Ves cap endarrere o amunt a través de l'estructura de nodes"
+
+#: info/session-cmd.c:2487
+msgid "Read a node name and select it"
+msgstr "Llegeix un nom de node i selecciona'l"
+
+#: info/session-cmd.c:2541 info/session-cmd.c:2545
+msgid "Goto node: "
+msgstr "Ves al node: "
+
+#: info/session-cmd.c:2715
+msgid "Find the node describing program invocation"
+msgstr "Troba el node que descriu la invocació del programa"
+
+#: info/session-cmd.c:2717
+#, c-format
+msgid "Find Invocation node of [%s]: "
+msgstr "Troba el node Invocació de [%s]: "
+
+#: info/session-cmd.c:2758
+msgid "Read a manpage reference and select it"
+msgstr "Llegeix una referència manpage i selecciona-la"
+
+#: info/session-cmd.c:2762
+msgid "Get Manpage: "
+msgstr "Obté la Manpage: "
+
+#: info/session-cmd.c:2783
+msgid "Select the node 'Top' in this file"
+msgstr "Selecciona el node «Top» a aquest fitxer"
+
+#: info/session-cmd.c:2789
+msgid "Select the node '(dir)'"
+msgstr "Selecciona el node '(dir)'"
+
+#: info/session-cmd.c:2795
+msgid "Show full file name of node being displayed"
+msgstr "Mostra el nom complet de fitxer del node que s'està mostrant"
+
+#: info/session-cmd.c:2812
+msgid "Select the most recently selected node"
+msgstr "Selecciona el node seleccionat més recentment"
+
+#: info/session-cmd.c:2817
+#, c-format
+msgid "No earlier node in history"
+msgstr "No hi ha un node anterior a la història"
+
+#: info/session-cmd.c:2821
+msgid "Read the name of a file and select it"
+msgstr "Llegeix el nom d'un fitxer i selecciona'l"
+
+#: info/session-cmd.c:2825
+msgid "Find file: "
+msgstr "Troba el fitxer: "
+
+#: info/session-cmd.c:2842
+#, c-format
+msgid "Cannot find '%s'"
+msgstr "No es pot trobar «%s»"
+
+#: info/session-cmd.c:2923
+#, c-format
+msgid "Could not create output file '%s'"
+msgstr "No s'ha pogut crear el fitxer de sortida «%s»"
+
+#: info/session-cmd.c:2949
+#, c-format
+msgid "error writing to %s: %s"
+msgstr "error quan s'estava escrivint a %s: %s"
+
+#: info/session-cmd.c:2958
+#, c-format
+msgid "closing %s"
+msgstr "s'està tancant %s"
+
+#: info/session-cmd.c:2998
+#, c-format
+msgid "writing node %s..."
+msgstr "s'està escrivint el node %s..."
+
+#: info/session-cmd.c:3044
+msgid "Pipe the contents of this node through INFO_PRINT_COMMAND"
+msgstr "Passa els continguts d'aquest node a través d'INFO_PRINT_COMMAND"
+
+#: info/session-cmd.c:3072
+#, c-format
+msgid "Cannot open pipe to '%s'"
+msgstr "No es pot obrir el conducte a «%s»"
+
+#: info/session-cmd.c:3077
+#, c-format
+msgid "printing node %s..."
+msgstr "s'està imprimint el node %s..."
+
+#: info/session-cmd.c:3085
+#, c-format
+msgid "finished printing node %s"
+msgstr "s'ha acabat d'imprimir el node %s"
+
+#: info/session-cmd.c:3117
+msgid "Toggle the usage of regular expressions in searches"
+msgstr "Commuta l'ús d'expressions regulars a les cerques"
+
+#: info/session-cmd.c:3121
+#, c-format
+msgid "Using regular expressions for searches"
+msgstr "S'estan usant les expressions regular per a les cerques"
+
+#: info/session-cmd.c:3122
+#, c-format
+msgid "Using literal strings for searches"
+msgstr "S'estan usant cadenes literals de caràcters per a les cerques"
+
+#: info/session-cmd.c:3325
+msgid "Search continued from the end of the document"
+msgstr "Es continuarà la cerca des del final del document"
+
+#: info/session-cmd.c:3330
+msgid "Search continued from the beginning of the document"
+msgstr "Es continuarà la cerca des del principi del document"
+
+#: info/session-cmd.c:3347
+#, c-format
+msgid "Searching subfile %s ..."
+msgstr "S'està buscant el subfitxer %s..."
+
+#: info/session-cmd.c:3387 info/session-cmd.c:3656 info/session-cmd.c:3769
+#, c-format
+msgid "Search failed"
+msgstr "La cerca ha fallat"
+
+#: info/session-cmd.c:3407
+#, c-format
+msgid "%s%s%s [%s]: "
+msgstr "%s%s%s [%s]: "
+
+#: info/session-cmd.c:3408 info/session-cmd.c:3414
+msgid "Regexp search"
+msgstr "Cerca d'expressió regular"
+
+#: info/session-cmd.c:3408 info/session-cmd.c:3414
+msgid "Search"
+msgstr "Cerca"
+
+#: info/session-cmd.c:3409 info/session-cmd.c:3415
+msgid " case-sensitively"
+msgstr "respectant majúscules i minúscules"
+
+#: info/session-cmd.c:3410 info/session-cmd.c:3416
+msgid " backward"
+msgstr " cap endarrere"
+
+#: info/session-cmd.c:3413
+#, c-format
+msgid "%s%s%s: "
+msgstr "%s%s%s: "
+
+#: info/session-cmd.c:3433
+msgid "Search string too short"
+msgstr "La cadena de caràcters de cerca és massa curta"
+
+#: info/session-cmd.c:3627
+#, c-format
+msgid "Going back to last match from %s"
+msgstr "Es retornarà a l'última concordança des de %s"
+
+#: info/session-cmd.c:3656 info/session-cmd.c:3769
+#, c-format
+msgid "No more matches"
+msgstr "No hi ha més concordances"
+
+#: info/session-cmd.c:3796
+msgid "Search this node and subnodes for a string"
+msgstr "Cerca aquest node i subnodes per una cadena de caràcters"
+
+#. TRANSLATORS: %s is the title of a node.
+#: info/session-cmd.c:3803
+#, c-format
+msgid "Search under %s: "
+msgstr "S'està buscant sota %s..."
+
+#: info/session-cmd.c:3818
+msgid "Go to next match in Info sub-tree"
+msgstr "Ves a la concordança següent del subarbre Info"
+
+#: info/session-cmd.c:3822 info/session-cmd.c:3834
+#, c-format
+msgid "No active search"
+msgstr "No hi ha cap cerca activa"
+
+#: info/session-cmd.c:3830
+msgid "Go to previous match in Info sub-tree"
+msgstr "Ves a la concordança anterior al subarbre Info"
+
+#: info/session-cmd.c:3843
+msgid "Read a string and search for it case-sensitively"
+msgstr ""
+"Llegeix una cadena de caràcters i busca-la respectant majúscules i minúscules"
+
+#: info/session-cmd.c:3848
+msgid "Read a string and search for it"
+msgstr "Llegeix una cadena de caràcters i busca-la"
+
+#: info/session-cmd.c:3854
+msgid "Read a string and search backward for it"
+msgstr "Llegeix una cadena de caràcters i busca cap endarrere per ella"
+
+#: info/session-cmd.c:3862
+msgid "Repeat last search in the same direction"
+msgstr "Repeteix l'última cerca en la mateixa direcció"
+
+#: info/session-cmd.c:3876 info/session-cmd.c:3927
+msgid "No previous search string"
+msgstr "No hi ha una cadena de caràcters de cerca prèvia"
+
+#: info/session-cmd.c:3913
+msgid "Repeat last search in the reverse direction"
+msgstr "Repeteix l'última cerca en la direcció inversa"
+
+#: info/session-cmd.c:3966
+msgid "Clear displayed search matches"
+msgstr "Neteja les concordances mostrades de cerca"
+
+#: info/session-cmd.c:3982 info/session-cmd.c:3988
+msgid "Search interactively for a string as you type it"
+msgstr ""
+"Cerca interactivament per una cadena de caràcters a mesura que l'escriviu"
+
+#: info/session-cmd.c:4108
+msgid "Regexp I-search backward: "
+msgstr "I-cerca l'expressió regular cap endarrere: "
+
+#: info/session-cmd.c:4109
+msgid "I-search backward: "
+msgstr "I-cerca cap endarrere: "
+
+#: info/session-cmd.c:4111
+msgid "Regexp I-search: "
+msgstr "I-cerca l'expressió regular: "
+
+#: info/session-cmd.c:4112
+msgid "I-search: "
+msgstr "I-cerca: "
+
+#: info/session-cmd.c:4137 info/session-cmd.c:4140
+msgid "Failing "
+msgstr "Està fallant "
+
+#: info/session-cmd.c:4507
+msgid "Cancel current operation"
+msgstr "Cancel·la l'operació actual"
+
+#: info/session-cmd.c:4513
+msgid "Display version of Info being run"
+msgstr "Mostra la informació de versió de l'Info que s'està executant"
+
+#: info/session-cmd.c:4515
+#, c-format
+msgid "GNU Info version %s"
+msgstr "GNU Info versió %s"
+
+#: info/session-cmd.c:4520
+msgid "Redraw the display"
+msgstr "Torna a dibuixar la pantalla"
+
+#: info/session-cmd.c:4557
+msgid "Quit using Info"
+msgstr "Surt d'Info"
+
+#: info/session-cmd.c:4573
+msgid "Run command bound to this key's lowercase variant"
+msgstr "Executa l'ordre lligada a la variant minúscula d'aquesta tecla"
+
+#: info/session-cmd.c:4578
+msgid "Add this digit to the current numeric argument"
+msgstr "Afegeix aquest dígit a l'argument numèric actual"
+
+#: info/session-cmd.c:4585
+msgid "Start (or multiply by 4) the current numeric argument"
+msgstr "Inicia (o multiplica per 4) l'argument numèric actual"
 
 #: info/variables.c:70
 msgid "When \"On\", footnotes appear and disappear automatically"
@@ -1321,7 +1899,7 @@ msgstr ""
 " --version           mostra la informació de versió i surt."
 
 #: install-info/install-info.c:589 Pod-Simple-Texinfo/pod2texi.pl:193
-#: tta/perl/texi2any.pl:1144 tta/C/texi2any.c:2069
+#: tta/perl/texi2any.pl:1158 tta/C/texi2any.c:2068
 msgid ""
 "Email bug reports to bug-texinfo@gnu.org,\n"
 "general questions and discussion to help-texinfo@gnu.org.\n"
@@ -1563,25 +2141,25 @@ msgstr "    --unnumbered-sections   no numera les seccions"
 msgid "    --version               display version information and exit"
 msgstr "    --version               mostra la versió d'informació i surt"
 
-#: Pod-Simple-Texinfo/pod2texi.pl:219 tta/perl/texi2any.pl:1158
-#: tta/C/texi2any.c:1618
+#: Pod-Simple-Texinfo/pod2texi.pl:219 tta/perl/texi2any.pl:1172
+#: tta/C/texi2any.c:1617
 #, fuzzy, c-format, perl-format
 #| msgid ""
 #| "Copyright (C) %s Free Software Foundation, Inc.\n"
-#| "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/"
-#| "gpl.html>\n"
+#| "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl."
+#| "html>\n"
 #| "This is free software: you are free to change and redistribute it.\n"
 #| "There is NO WARRANTY, to the extent permitted by law.\n"
 msgid ""
 "Copyright (C) %s Free Software Foundation, Inc.\n"
-"License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/"
-"gpl.html>\n"
+"License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl."
+"html>\n"
 "This is free software: you are free to change and redistribute it.\n"
 "There is NO WARRANTY, to the extent permitted by law."
 msgstr ""
 "Copyright (C) %s Free Software Foundation, Inc.\n"
-"Llicència GPLv3+: GNU GPL versió 3 o posterior <http://gnu.org/licenses/"
-"gpl.html>\n"
+"Llicència GPLv3+: GNU GPL versió 3 o posterior <http://gnu.org/licenses/gpl."
+"html>\n"
 "Això és programari lliure, teniu la llibertat de canviar-lo o redistribuir-"
 "lo.\n"
 "No hi ha CAP GARANTIA, en la mesura que ho permet la llei.\n"
@@ -1603,8 +2181,8 @@ msgstr "%s: no s'ha pogut crear el directory %s: %s"
 msgid "%s: missing file argument"
 msgstr "%s: falta l'argument de fitxer\n"
 
-#: Pod-Simple-Texinfo/pod2texi.pl:274 tta/perl/texi2any.pl:1690
-#: tta/C/texi2any.c:2483
+#: Pod-Simple-Texinfo/pod2texi.pl:274 tta/perl/texi2any.pl:1704
+#: tta/C/texi2any.c:2482
 #, fuzzy, c-format, perl-format
 #| msgid "Try `%s --help' for more information.\n"
 msgid "Try `%s --help' for more information."
@@ -1622,7 +2200,7 @@ msgid "%s: same manual name `%s' for different files: %s and %s"
 msgstr "%s: mateix nom de manual «%s» per a fitxers diferents: %s i %s"
 
 #: Pod-Simple-Texinfo/pod2texi.pl:537 Pod-Simple-Texinfo/pod2texi.pl:645
-#: tta/perl/texi2any.pl:2188 tta/perl/texi2any.pl:2310
+#: tta/perl/texi2any.pl:2202 tta/perl/texi2any.pl:2324
 #, fuzzy, perl-format
 #| msgid "%s: could not open %s for writing: %s\n"
 msgid "%s: could not open %s for writing: %s"
@@ -1635,7 +2213,7 @@ msgid "%s: could not open %s: %s"
 msgstr "%s: no s'ha pogut obrir %s: %s\n"
 
 #: Pod-Simple-Texinfo/pod2texi.pl:596 Pod-Simple-Texinfo/pod2texi.pl:694
-#: tta/perl/texi2any.pl:2145 tta/perl/texi2any.pl:2364
+#: tta/perl/texi2any.pl:2159 tta/perl/texi2any.pl:2378
 #: tta/C/convert/texinfo.c:763
 #, fuzzy, c-format, perl-format
 #| msgid "%s: error on closing %s: %s\n"
@@ -1670,7 +2248,7 @@ msgstr "%s no és un codi vàlid"
 msgid "%s is not a valid region code"
 msgstr "%s no es un codi vàlid de regió"
 
-#: tta/perl/Texinfo/Config.pm:169 tta/perl/texi2any.pl:599
+#: tta/perl/Texinfo/Config.pm:169 tta/perl/texi2any.pl:613
 #, perl-format
 msgctxt "program name: warning: warning_message"
 msgid "%s: warning: %s"
@@ -1687,7 +2265,7 @@ msgstr "%s: %s"
 msgid "error parsing %s: %s"
 msgstr "error quan s'analitzava %s: %s"
 
-#: tta/perl/Texinfo/Config.pm:201 tta/C/convert/convert_html.c:2704
+#: tta/perl/Texinfo/Config.pm:201 tta/C/convert/convert_html.c:2705
 #, c-format, perl-format
 msgid "error reading %s: %s"
 msgstr "error quan es llegia %s: %s"
@@ -1746,31 +2324,31 @@ msgid "here is the previous definition as @%s"
 msgstr "aquí està la definició prèvia de @%s"
 
 #: tta/perl/Texinfo/Convert/Converter.pm:422
-#: tta/perl/Texinfo/Convert/HTML.pm:12126
-#: tta/perl/Texinfo/Convert/HTML.pm:13166
-#: tta/perl/Texinfo/Convert/HTML.pm:13422 tta/perl/Texinfo/Convert/IXIN.pm:358
-#: tta/perl/Texinfo/Convert/Info.pm:426 tta/perl/Texinfo/Convert/LaTeX.pm:1152
+#: tta/perl/Texinfo/Convert/HTML.pm:12150
+#: tta/perl/Texinfo/Convert/HTML.pm:13190
+#: tta/perl/Texinfo/Convert/HTML.pm:13446 tta/perl/Texinfo/Convert/IXIN.pm:358
+#: tta/perl/Texinfo/Convert/Info.pm:426 tta/perl/Texinfo/Convert/LaTeX.pm:1168
 #: tta/perl/Texinfo/Convert/Plaintext.pm:768
 #: tta/perl/Texinfo/Convert/Plaintext.pm:823
-#: tta/perl/Texinfo/Convert/Text.pm:1106 tta/perl/texi2any.pl:1838
-#: tta/perl/texi2any.pl:1921 tta/perl/texi2any.pl:2058
+#: tta/perl/Texinfo/Convert/Text.pm:1106 tta/perl/texi2any.pl:1852
+#: tta/perl/texi2any.pl:1935 tta/perl/texi2any.pl:2072
 #: tta/C/convert/converter.c:691 tta/C/convert/convert_html.c:2134
-#: tta/C/convert/convert_html.c:2497 tta/C/convert/rawtext_converter_api.c:232
+#: tta/C/convert/convert_html.c:2498 tta/C/convert/rawtext_converter_api.c:232
 #, c-format, perl-format
 msgid "could not open %s for writing: %s"
 msgstr "no s'ha pogut obrir %s per escriure: %s"
 
 #: tta/perl/Texinfo/Convert/Converter.pm:448
-#: tta/perl/Texinfo/Convert/HTML.pm:12121
-#: tta/perl/Texinfo/Convert/HTML.pm:13188 tta/perl/Texinfo/Convert/IXIN.pm:1039
+#: tta/perl/Texinfo/Convert/HTML.pm:12145
+#: tta/perl/Texinfo/Convert/HTML.pm:13212 tta/perl/Texinfo/Convert/IXIN.pm:1039
 #: tta/perl/Texinfo/Convert/Info.pm:235 tta/perl/Texinfo/Convert/Info.pm:264
 #: tta/perl/Texinfo/Convert/Info.pm:319 tta/perl/Texinfo/Convert/Info.pm:397
-#: tta/perl/Texinfo/Convert/LaTeX.pm:1238
+#: tta/perl/Texinfo/Convert/LaTeX.pm:1254
 #: tta/perl/Texinfo/Convert/Plaintext.pm:796
 #: tta/perl/Texinfo/Convert/Plaintext.pm:844
 #: tta/perl/Texinfo/Convert/Text.pm:1135 tta/perl/Texinfo/ParserNonXS.pm:2685
-#: tta/C/convert/converter.c:761 tta/C/convert/convert_html.c:2198
-#: tta/C/convert/convert_html.c:2536 tta/C/convert/rawtext_converter_api.c:269
+#: tta/C/convert/converter.c:761 tta/C/convert/convert_html.c:2199
+#: tta/C/convert/convert_html.c:2537 tta/C/convert/rawtext_converter_api.c:269
 #: tta/C/parsetexi/input.c:352
 #, c-format, perl-format
 msgid "error on closing %s: %s"
@@ -1783,24 +2361,28 @@ msgstr "error en tancar %s: %s"
 msgid "unknown customization variable: %s"
 msgstr "variable desconeguda de personalització: %s"
 
-#: tta/perl/Texinfo/Convert/Converter.pm:1166
+#: tta/perl/Texinfo/Convert/Converter.pm:1174
 #: tta/perl/Texinfo/Convert/Text.pm:1060 tta/perl/Texinfo/Convert/Text.pm:1082
 #: tta/C/convert/converter.c:1012
 #, c-format, perl-format
 msgid "could not create directory `%s': %s"
 msgstr "no s'ha pogut crear el directory «%s»: %s"
 
-#: tta/perl/Texinfo/Convert/Converter.pm:1566
+#: tta/perl/Texinfo/Convert/Converter.pm:1574
+#: tta/perl/Texinfo/Example/TreeElementConverter.pm:1045
 #, perl-format
 msgid "error on closing image text file %s: %s"
 msgstr "error en tancar el fitxer de text d'imatge %s: %s"
 
-#: tta/perl/Texinfo/Convert/Converter.pm:1575
+#: tta/perl/Texinfo/Convert/Converter.pm:1583
+#: tta/perl/Texinfo/Example/TreeElementConverter.pm:1054
 #, perl-format
 msgid "@image file `%s' unreadable: %s"
 msgstr "fitxer @image «%s» no llegible: %s"
 
 #: tta/perl/Texinfo/Convert/DocBook.pm:1525
+#: tta/perl/Texinfo/Example/ReadDocBook.pm:1622
+#: tta/perl/Texinfo/Example/TreeElementReadDocBook.pm:1620
 #, perl-format
 msgid "@image file `%s' not found, using `%s'"
 msgstr "no s'ha trobar el fitxer @image  «%s», s'usarà «%s»"
@@ -1812,161 +2394,161 @@ msgid "not setting an unknown direction: %s"
 msgstr ""
 
 #: tta/perl/Texinfo/Convert/HTML.pm:3643 tta/perl/ext/epub3.pm:287
-#: tta/C/convert/format_html.c:6758
+#: tta/C/convert/format_html.c:6809
 #, c-format, perl-format
 msgid "@image file `%s' (for HTML) not found, using `%s'"
 msgstr "no s'ha trobat el fitxer @image «%s» (for HTML), s'usarà «%s»"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:4760 tta/C/convert/format_html.c:8345
+#: tta/perl/Texinfo/Convert/HTML.pm:4784 tta/C/convert/format_html.c:8396
 #, c-format, perl-format
 msgid "raw format %s is not converted"
 msgstr "el format en cru %s no es convertirà"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:6427 tta/C/convert/format_html.c:10727
+#: tta/perl/Texinfo/Convert/HTML.pm:6451 tta/C/convert/format_html.c:10778
 #, c-format, perl-format
 msgid "entry for index `%s' for @printindex %s outside of any node"
 msgstr ""
 "entrada per a l'índex «%s» per a @printindex %s fora de totes les seccions"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:6458 tta/C/convert/format_html.c:10767
+#: tta/perl/Texinfo/Convert/HTML.pm:6482 tta/C/convert/format_html.c:10818
 #, c-format, perl-format
 msgid "entry for index `%s' for @printindex %s outside of any section"
 msgstr ""
 "l'entrada per a l'índex «%s» per a @printindex %s fora de totes les seccions"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:8413
+#: tta/perl/Texinfo/Convert/HTML.pm:8437
 #: tta/C/convert/html_prepare_converter.c:974
 #, c-format, perl-format
 msgid "could not open html refs config file %s: %s"
 msgstr ""
 "no s'ha pogut obrir el fitxer de configuració de referències html %s: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:8442
+#: tta/perl/Texinfo/Convert/HTML.pm:8466
 #: tta/C/convert/html_prepare_converter.c:1084
 #, c-format, perl-format
 msgid "missing type"
 msgstr "tipus que falta"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:8446
+#: tta/perl/Texinfo/Convert/HTML.pm:8470
 #: tta/C/convert/html_prepare_converter.c:1095
 #, c-format, perl-format
 msgid "unrecognized type: %s"
 msgstr "tipus no reconegut: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:8484
+#: tta/perl/Texinfo/Convert/HTML.pm:8508
 #: tta/C/convert/html_prepare_converter.c:1194
 #, c-format, perl-format
 msgid "error on closing html refs config file %s: %s"
 msgstr "error en tancar el fitxer de configuració de referències html %s: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:8510
+#: tta/perl/Texinfo/Convert/HTML.pm:8534
 #: tta/C/convert/html_prepare_converter.c:1235
 #, c-format, perl-format
 msgid "could not find html refs config file %s"
 msgstr "no s'ha pogut trobar el fitxer %s de configuració de hmtl refs"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:8629 tta/perl/texi2any.pl:621
+#: tta/perl/Texinfo/Convert/HTML.pm:8653 tta/perl/texi2any.pl:635
 #: tta/C/convert/html_prepare_converter.c:1465
 #, c-format, perl-format
 msgid "%s directory is deprecated. Use %s instead"
 msgstr "El directori %s és obsolet. Utilitzeu %s en el seu lloc"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:9051
+#: tta/perl/Texinfo/Convert/HTML.pm:9075
 #, perl-format
 msgid "Unknown file and id setting function: %s"
 msgstr "Funció de configuració de fitxer i ID desconeguda: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:9069
+#: tta/perl/Texinfo/Convert/HTML.pm:9093
 #, perl-format
 msgid "Unknown formatting function: %s"
 msgstr "Funció desconeguda de formatació: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:9532
+#: tta/perl/Texinfo/Convert/HTML.pm:9556
 #: tta/C/convert/html_prepare_converter.c:3581
 #, c-format, perl-format
 msgid "string not closed in css file"
 msgstr "la cadena de caràcters no està tancada al fitxer css"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:9534
+#: tta/perl/Texinfo/Convert/HTML.pm:9558
 #: tta/C/convert/html_prepare_converter.c:3589
 #, c-format, perl-format
 msgid "--css-include ended in comment"
 msgstr "--css-include ha finalitzat en un comentari"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:9536
+#: tta/perl/Texinfo/Convert/HTML.pm:9560
 #: tta/C/convert/html_prepare_converter.c:3597
 #, c-format, perl-format
 msgid "@import not finished in css file"
 msgstr "@import no ha acabat a un fitxer css"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:9569
+#: tta/perl/Texinfo/Convert/HTML.pm:9593
 #: tta/C/convert/html_prepare_converter.c:3649
 #, c-format, perl-format
 msgid "CSS file %s not found"
 msgstr "No s'ha trobat el fitxer CSS %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:9581
+#: tta/perl/Texinfo/Convert/HTML.pm:9605
 #: tta/C/convert/html_prepare_converter.c:3671
 #, c-format, perl-format
 msgid "could not open --include-file %s: %s"
 msgstr "no s'ha pogut obrir --include-file %s: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:9599
+#: tta/perl/Texinfo/Convert/HTML.pm:9623
 #, perl-format
 msgid "error on closing CSS file %s: %s"
 msgstr "error en tancar el fitxer CSS %s: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:9804
+#: tta/perl/Texinfo/Convert/HTML.pm:9828
 #: tta/C/convert/html_prepare_converter.c:4607
 #, c-format, perl-format
 msgid "user-defined node file name not set for `%s'"
 msgstr ""
 "no s'ha establert el nom de fitxer de node definit per l'usuari per a «%s»"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:10131
+#: tta/perl/Texinfo/Convert/HTML.pm:10155
 #: tta/C/convert/html_prepare_converter.c:5737
 #, c-format, perl-format
 msgid "resetting %s file path %s to %s"
 msgstr "s'està reiniciant per al fitxer %s el camí %s a %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:10135
+#: tta/perl/Texinfo/Convert/HTML.pm:10159
 #: tta/C/convert/html_prepare_converter.c:5747
 #, c-format, perl-format
 msgid "resetting %s file path from a relative path to %s"
 msgstr "s'està reiniciant el camí del fitxer %s des d'un camí relatiu a %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:10139
+#: tta/perl/Texinfo/Convert/HTML.pm:10163
 #: tta/C/convert/html_prepare_converter.c:5756
 #, c-format, perl-format
 msgid "resetting %s file path from %s to a relative path"
 msgstr "s'està reiniciant el camí del fitxer %s des de %s a un camí relatiu"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:10725
+#: tta/perl/Texinfo/Convert/HTML.pm:10749
 #: tta/C/convert/html_prepare_converter.c:5214
 #, fuzzy, c-format, perl-format
 #| msgid "Cannot find node '%s'"
 msgid "could not find %s node `%s'"
 msgstr "No es pot trobar el node «%s»"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:10992 tta/C/convert/format_html.c:874
+#: tta/perl/Texinfo/Convert/HTML.pm:11016 tta/C/convert/format_html.c:874
 #, c-format, perl-format
 msgid "do not set %s suffix in reference for manual `%s'"
 msgstr "no estableix el sufix %s a la referència per al manual «%s»"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:11029
-#: tta/perl/Texinfo/Convert/HTML.pm:11035 tta/C/convert/format_html.c:923
+#: tta/perl/Texinfo/Convert/HTML.pm:11053
+#: tta/perl/Texinfo/Convert/HTML.pm:11059 tta/C/convert/format_html.c:923
 #: tta/C/convert/format_html.c:934
 #, fuzzy, c-format, perl-format
 #| msgid "no htmlxref.cnf entry found for `%s'"
 msgid "no HTML cross-references entry found for `%s'"
 msgstr "no s'ha trobat una entrada htmlxref.cnf per a «%s»"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:11540 tta/C/convert/format_html.c:4125
+#: tta/perl/Texinfo/Convert/HTML.pm:11564 tta/C/convert/format_html.c:4125
 #, c-format, perl-format
 msgid "%s not meaningful for non-split output"
 msgstr "%s no té significat per a sortida non-split"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:12065 tta/C/convert/convert_html.c:2581
+#: tta/perl/Texinfo/Convert/HTML.pm:12089 tta/C/convert/convert_html.c:2582
 #, c-format, perl-format
 msgid ""
 "cannot use absolute path or URL `%s' for JS_WEBLABELS_FILE when generating "
@@ -1975,96 +2557,96 @@ msgstr ""
 "no es pot utilitzar el camí absolut o l'URL «%s» per a JS_WEBLABELS_FILE en "
 "generar el fitxer d'etiquetes web"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:12112 tta/C/convert/convert_html.c:2605
+#: tta/perl/Texinfo/Convert/HTML.pm:12136 tta/C/convert/convert_html.c:2606
 #, c-format, perl-format
 msgid "overwriting output file with js licences: %s"
 msgstr "sobreescrivint el fitxer de sortida amb llicències js: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:12808 tta/C/convert/convert_html.c:843
+#: tta/perl/Texinfo/Convert/HTML.pm:12832 tta/C/convert/convert_html.c:843
 #, c-format, perl-format
 msgid "handler %d of stage %s priority %s: non-numeric status"
 msgstr "el gestor %d de l'etapa %s prioritat %s: estat no numèric"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:12815 tta/C/convert/convert_html.c:855
+#: tta/perl/Texinfo/Convert/HTML.pm:12839 tta/C/convert/convert_html.c:855
 #, c-format, perl-format
 msgid "handler %d of stage %s priority %s failed"
 msgstr "ha fallat el gestor %d de l'etapa %s prioritat %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:12863
+#: tta/perl/Texinfo/Convert/HTML.pm:12887
 #, perl-format
 msgid "error on copying %s into %s"
 msgstr "error quan es copiava %s a %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:12872 tta/C/convert/convert_html.c:2826
+#: tta/perl/Texinfo/Convert/HTML.pm:12896 tta/C/convert/convert_html.c:2827
 #, c-format, perl-format
 msgid "error on creating empty %s: %s"
 msgstr "error quan es creava %s buit: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:12877 tta/C/convert/convert_html.c:2838
+#: tta/perl/Texinfo/Convert/HTML.pm:12901 tta/C/convert/convert_html.c:2839
 #, c-format, perl-format
 msgid "error on closing empty %s: %s"
 msgstr "error quan es tancava %s buit: %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:12991
-#: tta/perl/Texinfo/Convert/HTML.pm:12995 tta/C/convert/convert_html.c:1159
+#: tta/perl/Texinfo/Convert/HTML.pm:13015
+#: tta/perl/Texinfo/Convert/HTML.pm:13019 tta/C/convert/convert_html.c:1159
 #: tta/C/convert/convert_html.c:1164
 #, c-format, perl-format
 msgid "must specify a title with a title command or @top"
 msgstr "heu d'especificar un títol amb una ordre de títol o @top"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13275 tta/C/convert/convert_html.c:3038
+#: tta/perl/Texinfo/Convert/HTML.pm:13299 tta/C/convert/convert_html.c:3039
 #, c-format, perl-format
 msgid "@%s `%s' file %s for redirection exists"
 msgstr "el fitxer @%s «%s» file %s per a la redirecció existeix"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13293 tta/C/convert/convert_html.c:3053
+#: tta/perl/Texinfo/Convert/HTML.pm:13317 tta/C/convert/convert_html.c:3054
 #, c-format, perl-format
 msgid "conflict with whole document file"
 msgstr "conflicte amb tot el fitxer de document"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13296 tta/C/convert/convert_html.c:3056
+#: tta/perl/Texinfo/Convert/HTML.pm:13320 tta/C/convert/convert_html.c:3057
 #, c-format, perl-format
 msgid "conflict with Top file"
 msgstr "conflicte amb el fitxer Top"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13299 tta/C/convert/convert_html.c:3059
+#: tta/perl/Texinfo/Convert/HTML.pm:13323 tta/C/convert/convert_html.c:3060
 #, c-format, perl-format
 msgid "conflict with user-defined file"
 msgstr "conflicte amb el fitxer definit per l'usuari"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13302 tta/C/convert/convert_html.c:3062
+#: tta/perl/Texinfo/Convert/HTML.pm:13326 tta/C/convert/convert_html.c:3063
 #, c-format, perl-format
 msgid "conflict with unknown node file"
 msgstr "conflicte amb un fitxer de node desconegut"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13305 tta/C/convert/convert_html.c:3066
+#: tta/perl/Texinfo/Convert/HTML.pm:13329 tta/C/convert/convert_html.c:3067
 #, c-format, perl-format
 msgid "conflict with file without known source"
 msgstr "conflicte amb un fitxer sense font coneguda"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13313 tta/C/convert/convert_html.c:3080
+#: tta/perl/Texinfo/Convert/HTML.pm:13337 tta/C/convert/convert_html.c:3081
 #, c-format, perl-format
 msgctxt "conflict of redirection file with file based on node name"
 msgid "conflict with @%s `%s' file"
 msgstr "conflicte amb el fitxer «%s» @%s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13325 tta/C/convert/convert_html.c:3096
+#: tta/perl/Texinfo/Convert/HTML.pm:13349 tta/C/convert/convert_html.c:3097
 #, c-format, perl-format
 msgid "conflict with @%s `%s' redirection file"
 msgstr "conflicte amb el fitxer de redirecció «%s»  @%s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13339 tta/C/convert/convert_html.c:3116
+#: tta/perl/Texinfo/Convert/HTML.pm:13363 tta/C/convert/convert_html.c:3117
 #, c-format, perl-format
 msgctxt "conflict of redirection file with file based on section name"
 msgid "conflict with @%s `%s' file"
 msgstr "conflicte amb el fitxer «%s»  @%s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13352 tta/C/convert/convert_html.c:3129
+#: tta/perl/Texinfo/Convert/HTML.pm:13376 tta/C/convert/convert_html.c:3130
 #, c-format, perl-format
 msgid "conflict with %s special element"
 msgstr "conflicte amb l'element especial %s"
 
-#: tta/perl/Texinfo/Convert/HTML.pm:13430
+#: tta/perl/Texinfo/Convert/HTML.pm:13454
 #, perl-format
 msgid "error on closing redirection node file %s: %s"
 msgstr "error en tancar el fitxer de node de redirecció %s: %s"
@@ -2123,58 +2705,58 @@ msgstr "el nom de @node no ha de contenir «,»: %s"
 msgid "@node %s name should not contain `,': %s"
 msgstr "el nom de @node %s no ha de contenir «,»: %s"
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:3325
+#: tta/perl/Texinfo/Convert/LaTeX.pm:3388
 #, perl-format
 msgid "\\verb delimiter `%s' (for LaTeX) used in text `%s'"
 msgstr "\\verb limitador «%s» (per LaTeX) utilitzat en el text «%s»"
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:3365
+#: tta/perl/Texinfo/Convert/LaTeX.pm:3428
 #, perl-format
 msgid "@image file `%s' (for LaTeX) not found"
 msgstr "no s'ha trobat el fitxer @image «%s» (per al LaTeX)"
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:4881
+#: tta/perl/Texinfo/Convert/LaTeX.pm:4950
 #, fuzzy, perl-format
 #| msgid "tex4ht.pm: could not open %s: %s"
 msgid "math to images: could not open %s: %s"
 msgstr "tex4ht.pm: no s'ha pogut obrir %s: %s"
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:4970
+#: tta/perl/Texinfo/Convert/LaTeX.pm:5039
 #, fuzzy, perl-format
 #| msgid "tex4ht.pm: chdir %s failed: %s"
 msgid "math to images: chdir %s failed: %s"
 msgstr "tex4ht.pm: ha fallat chdir %s: %s"
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:4978
+#: tta/perl/Texinfo/Convert/LaTeX.pm:5047
 #, fuzzy, perl-format
 #| msgid "tex4ht.pm: output file missing: %s"
 msgid "math to images: output file missing: %s"
 msgstr "tex4ht.pm: falta el fitxer de sortida: %s"
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:5004
+#: tta/perl/Texinfo/Convert/LaTeX.pm:5073
 #, fuzzy, perl-format
 #| msgid "tex4ht.pm: command failed: %s"
 msgid "math to images: command failed: %s"
 msgstr "tex4ht.pm: ha fallat l'ordre: %s"
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:5009
+#: tta/perl/Texinfo/Convert/LaTeX.pm:5078
 #, fuzzy, perl-format
 #| msgid "tex4ht.pm: closing communication failed: %s: %s"
 msgid "math to images: closing communication failed: %s: %s"
 msgstr "tex4ht.pm: ha fallat el tancament de la comunicació: %s: %s"
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:5025
+#: tta/perl/Texinfo/Convert/LaTeX.pm:5094
 #, fuzzy, perl-format
 #| msgid "tex4ht.pm: output file missing: %s"
 msgid "math to images: dvi file missing: %s"
 msgstr "tex4ht.pm: falta el fitxer de sortida: %s"
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:5040
+#: tta/perl/Texinfo/Convert/LaTeX.pm:5109
 #, perl-format
 msgid "math to images: system `%s' failed: %d\n"
 msgstr ""
 
-#: tta/perl/Texinfo/Convert/LaTeX.pm:5047
+#: tta/perl/Texinfo/Convert/LaTeX.pm:5116
 #, fuzzy, perl-format
 #| msgid "tex4ht.pm: unable to return to initial directory: %s"
 msgid "math to images: unable to return to initial directory: %s"
@@ -2228,18 +2810,23 @@ msgstr "el nom de node d'entrada de menú no hauria de contenir `:'"
 msgid "menu entry name should not contain `:'"
 msgstr "el nom d'entrada de menú no hauria de contenir `:'"
 
-#: tta/perl/Texinfo/Convert/Utils.pm:481 tta/C/main/convert_utils.c:535
+#: tta/perl/Texinfo/Convert/Utils.pm:481
+#: tta/perl/Texinfo/Example/TreeElementConverter.pm:1097
+#: tta/C/main/convert_utils.c:535
 #, c-format, perl-format
 msgid "could not read %s: %s"
 msgstr "no s'ha pogut llegir %s: %s"
 
-#: tta/perl/Texinfo/Convert/Utils.pm:503 tta/C/main/convert_utils.c:580
+#: tta/perl/Texinfo/Convert/Utils.pm:503
+#: tta/perl/Texinfo/Example/TreeElementConverter.pm:1120
+#: tta/C/main/convert_utils.c:580
 #, c-format, perl-format
 msgid "error on closing @verbatiminclude file %s: %s"
 msgstr "error en tancar fitxer @verbatiminclude %s: %s"
 
-#: tta/perl/Texinfo/Convert/Utils.pm:510 tta/perl/Texinfo/ParserNonXS.pm:3889
-#: tta/C/main/convert_utils.c:592
+#: tta/perl/Texinfo/Convert/Utils.pm:510
+#: tta/perl/Texinfo/Example/TreeElementConverter.pm:1127
+#: tta/perl/Texinfo/ParserNonXS.pm:3889 tta/C/main/convert_utils.c:592
 #, c-format, perl-format
 msgid "@%s: could not find %s"
 msgstr "@%s: no s'ha pogut trobar %s"
@@ -3529,29 +4116,29 @@ msgstr ""
 "tex4ht.pm: el processament va recuperar %d elements en HTML; s'han "
 "recol·lectat %d per a @%s"
 
-#: tta/perl/texi2any.pl:638
+#: tta/perl/texi2any.pl:652
 #, perl-format
 msgid "could not read init file %s"
 msgstr "no s'ha pogut llegir el fitxer d'inicialització %s"
 
-#: tta/perl/texi2any.pl:661
+#: tta/perl/texi2any.pl:675
 #, perl-format
 msgid "could not read extension file %s"
 msgstr "no s'ha pogut llegir el fitxer d'extensió %s"
 
-#: tta/perl/texi2any.pl:947
+#: tta/perl/texi2any.pl:961
 #, fuzzy, perl-format
 #| msgid "ignoring unrecognized TEXINFO_OUTPUT_FORMAT value `%s'\n"
 msgid "ignoring unrecognized TEXINFO_OUTPUT_FORMAT value `%s'"
 msgstr "s'ignorarà l'ordre no reconeguda TEXINFO_OUTPUT_FORMAT valor «%s»\n"
 
-#: tta/perl/texi2any.pl:1005 tta/C/texi2any.c:1796
+#: tta/perl/texi2any.pl:1019 tta/C/texi2any.c:1795
 #, fuzzy, c-format, perl-format
 #| msgid "Usage: %s [OPTION]... TEXINFO-FILE...\n"
 msgid "Usage: %s [OPTION]... TEXINFO-FILE..."
 msgstr "Ús: %s [OPCIÓ]... FITXER-TEXINFO...\n"
 
-#: tta/perl/texi2any.pl:1008 tta/C/texi2any.c:1805
+#: tta/perl/texi2any.pl:1022 tta/C/texi2any.c:1804
 #, fuzzy
 #| msgid ""
 #| "Translate Texinfo source documentation to various other formats, by "
@@ -3576,11 +4163,11 @@ msgstr ""
 "el comportament és idèntic, i no depèn del nom instal·lat.\n"
 "\n"
 
-#: tta/perl/texi2any.pl:1014 tta/C/texi2any.c:1811
+#: tta/perl/texi2any.pl:1028 tta/C/texi2any.c:1810
 msgid "General options:"
 msgstr "Opcions generals:"
 
-#: tta/perl/texi2any.pl:1015 tta/C/texi2any.c:1814
+#: tta/perl/texi2any.pl:1029 tta/C/texi2any.c:1813
 #, fuzzy
 #| msgid ""
 #| "      --document-language=STR locale to use in translating Texinfo "
@@ -3594,7 +4181,7 @@ msgstr ""
 "                                clau Texinfo per al document de sortida "
 "(predeterminat C)."
 
-#: tta/perl/texi2any.pl:1017 tta/C/texi2any.c:1818
+#: tta/perl/texi2any.pl:1031 tta/C/texi2any.c:1817
 #, fuzzy, c-format, perl-format
 #| msgid "      --error-limit=NUM       quit after NUM errors (default %d)."
 msgid "      --error-limit=NUM       quit after NUM errors (default %d)"
@@ -3602,7 +4189,7 @@ msgstr ""
 "        --error-limit)=NUM      surt després de NUM errors (predeterminat "
 "%d)."
 
-#: tta/perl/texi2any.pl:1019 tta/C/texi2any.c:1822
+#: tta/perl/texi2any.pl:1033 tta/C/texi2any.c:1821
 #, fuzzy
 #| msgid "      --force                 preserve output even if errors."
 msgid "      --force                 preserve output even if errors"
@@ -3610,13 +4197,13 @@ msgstr ""
 "       --force                   conserva la sortida fins i tot si hi ha "
 "errors."
 
-#: tta/perl/texi2any.pl:1020 tta/C/texi2any.c:1825
+#: tta/perl/texi2any.pl:1034 tta/C/texi2any.c:1824
 #, fuzzy
 #| msgid "      --help                  display this help and exit."
 msgid "      --help                  display this help and exit"
 msgstr "      --help                   mostra aquesta ajuda i surt"
 
-#: tta/perl/texi2any.pl:1021 tta/C/texi2any.c:1828
+#: tta/perl/texi2any.pl:1035 tta/C/texi2any.c:1827
 #, fuzzy
 #| msgid ""
 #| "      --no-validate           suppress node cross-reference validation."
@@ -3625,13 +4212,13 @@ msgstr ""
 "      --no-validate           suprimeix la validació de referència creuada "
 "de nodes."
 
-#: tta/perl/texi2any.pl:1022 tta/C/texi2any.c:1831
+#: tta/perl/texi2any.pl:1036 tta/C/texi2any.c:1830
 #, fuzzy
 #| msgid "      --no-warn               suppress warnings (but not errors)."
 msgid "      --no-warn               suppress warnings (but not errors)"
 msgstr "       --no-warn              suprimeix avisos (però no errors)."
 
-#: tta/perl/texi2any.pl:1023 tta/C/texi2any.c:1834
+#: tta/perl/texi2any.pl:1037 tta/C/texi2any.c:1833
 #, fuzzy
 #| msgid ""
 #| "      --conf-dir=DIR          search also for initialization files in DIR."
@@ -3641,7 +4228,7 @@ msgstr ""
 "      --conf-dir=DIR          cerca també per als fitxers d'inicialització "
 "en DIR."
 
-#: tta/perl/texi2any.pl:1024 tta/C/texi2any.c:1837
+#: tta/perl/texi2any.pl:1038 tta/C/texi2any.c:1836
 #, fuzzy
 #| msgid ""
 #| "      --init-file=FILE        load FILE to modify the default behavior."
@@ -3650,7 +4237,7 @@ msgstr ""
 "        --init-file=FITXER    carrega FITXER per modificar el comportament "
 "predeterminat."
 
-#: tta/perl/texi2any.pl:1025 tta/C/texi2any.c:1840
+#: tta/perl/texi2any.pl:1039 tta/C/texi2any.c:1839
 #, fuzzy
 #| msgid ""
 #| "  -c, --set-customization-variable VAR=VAL  set customization variable "
@@ -3663,67 +4250,67 @@ msgstr ""
 "   -c, --set-customization-variable VAR=VAL set customization variable VAR\n"
 "                                per a valorar VAL."
 
-#: tta/perl/texi2any.pl:1027 tta/C/texi2any.c:1844
+#: tta/perl/texi2any.pl:1041 tta/C/texi2any.c:1843
 #, fuzzy
 #| msgid "      --trace-includes        print names of included files."
 msgid "      --trace-includes        print names of included files"
 msgstr ""
 "            --trace-includes        noms d'impressió de fitxers inclosos."
 
-#: tta/perl/texi2any.pl:1028 tta/C/texi2any.c:1847
+#: tta/perl/texi2any.pl:1042 tta/C/texi2any.c:1846
 #, fuzzy
 #| msgid "  -v, --verbose               explain what is being done."
 msgid "  -v, --verbose               explain what is being done"
 msgstr "   -v, --verbose                 explica què s'està fent."
 
-#: tta/perl/texi2any.pl:1029 tta/C/texi2any.c:1850
+#: tta/perl/texi2any.pl:1043 tta/C/texi2any.c:1849
 #, fuzzy
 #| msgid "      --version               display version information and exit."
 msgid "      --version               display version information and exit"
 msgstr ""
 "        --version                 mostra la versió d'informació i surt."
 
-#: tta/perl/texi2any.pl:1031 tta/C/texi2any.c:1856
+#: tta/perl/texi2any.pl:1045 tta/C/texi2any.c:1855
 msgid "Output format selection (default is to produce Info):"
 msgstr "Selecció de format de sortida (per defecte és info):"
 
-#: tta/perl/texi2any.pl:1032 tta/C/texi2any.c:1859
+#: tta/perl/texi2any.pl:1046 tta/C/texi2any.c:1858
 #, fuzzy
 #| msgid "      --docbook               output Docbook XML."
 msgid "      --docbook               output Docbook XML"
 msgstr "        --docbook              sortida Docbook XML."
 
-#: tta/perl/texi2any.pl:1033 tta/C/texi2any.c:1862
+#: tta/perl/texi2any.pl:1047 tta/C/texi2any.c:1861
 #, fuzzy
 #| msgid "      --html                  output HTML."
 msgid "      --html                  output HTML"
 msgstr "       --html                    sortida HTML."
 
-#: tta/perl/texi2any.pl:1034 tta/C/texi2any.c:1865
+#: tta/perl/texi2any.pl:1048 tta/C/texi2any.c:1864
 #, fuzzy
 #| msgid "      --epub3                 output EPUB 3."
 msgid "      --epub3                 output EPUB 3"
 msgstr "        --epub3                   sortida EPUB 3."
 
-#: tta/perl/texi2any.pl:1035 tta/C/texi2any.c:1868
+#: tta/perl/texi2any.pl:1049 tta/C/texi2any.c:1867
 #, fuzzy
 #| msgid "      --latex                 output LaTeX."
 msgid "      --latex                 output LaTeX"
 msgstr "       --latex                 sortida LaTeX."
 
-#: tta/perl/texi2any.pl:1036 tta/C/texi2any.c:1871
+#: tta/perl/texi2any.pl:1050 tta/C/texi2any.c:1870
 #, fuzzy
 #| msgid "      --plaintext             output plain text rather than Info."
 msgid "      --plaintext             output plain text rather than Info"
 msgstr "        --plaintext               surt text net en lloc d'Informació."
 
-#: tta/perl/texi2any.pl:1037 tta/C/texi2any.c:1874
+#: tta/perl/texi2any.pl:1051 tta/C/texi2any.c:1873
 #, fuzzy
 #| msgid "      --xml                   output Texinfo XML."
 msgid "      --xml                   output Texinfo XML"
 msgstr "        --xml                    sortida Texinfo XML."
 
-#: tta/perl/texi2any.pl:1038 tta/C/texi2any.c:1877
+#: tta/perl/texi2any.pl:1052 tta/C/texi2any.c:1876
 #, fuzzy
 #| msgid ""
 #| "      --dvi, --dvipdf, --ps, --pdf  call texi2dvi to generate given "
@@ -3738,11 +4325,11 @@ msgstr ""
 "                                després de comprovar la validesa de TEXINFO-"
 "FILE."
 
-#: tta/perl/texi2any.pl:1042 tta/C/texi2any.c:1881
+#: tta/perl/texi2any.pl:1056 tta/C/texi2any.c:1880
 msgid "General output options:"
 msgstr "Opcions generals de sortida:"
 
-#: tta/perl/texi2any.pl:1044 tta/C/texi2any.c:1884
+#: tta/perl/texi2any.pl:1058 tta/C/texi2any.c:1883
 #, fuzzy
 #| msgid ""
 #| "  -E, --macro-expand=FILE     output macro-expanded source to FILE,\n"
@@ -3754,7 +4341,7 @@ msgstr ""
 "   -E, --macro-expand=FITXER  de sortida macro-expandida font a FITXER,\n"
 "                                s'ignorarà qualsevol @setfilename."
 
-#: tta/perl/texi2any.pl:1047 tta/C/texi2any.c:1888
+#: tta/perl/texi2any.pl:1061 tta/C/texi2any.c:1887
 msgid ""
 "      --no-headers            suppress node separators, Node: lines, and "
 "menus\n"
@@ -3774,7 +4361,7 @@ msgstr ""
 "                                A més, si produeix informació, escriu a\n"
 "                                sortida estàndard per defecte."
 
-#: tta/perl/texi2any.pl:1053 tta/C/texi2any.c:1895
+#: tta/perl/texi2any.pl:1067 tta/C/texi2any.c:1894
 #, fuzzy
 #| msgid ""
 #| "      --no-split              suppress any splitting of the output;\n"
@@ -3786,7 +4373,7 @@ msgstr ""
 "      --no-split              suprimeix qualsevol divisió de la sortida;\n"
 "                                genera només un fitxer de sortida."
 
-#: tta/perl/texi2any.pl:1056 tta/C/texi2any.c:1899
+#: tta/perl/texi2any.pl:1070 tta/C/texi2any.c:1898
 #, fuzzy
 #| msgid ""
 #| "      --[no-]number-sections  output chapter and sectioning numbers;\n"
@@ -3798,12 +4385,12 @@ msgstr ""
 "      --[no-]number-sections  capítol de sortida i números de secció;\n"
 "                                per defecte està activat."
 
-#: tta/perl/texi2any.pl:1059 tta/C/texi2any.c:1903
+#: tta/perl/texi2any.pl:1073 tta/C/texi2any.c:1902
 msgid ""
 "      --[no-]number-footnotes  number footnotes sequentially; default is on"
 msgstr ""
 
-#: tta/perl/texi2any.pl:1061 tta/C/texi2any.c:1906
+#: tta/perl/texi2any.pl:1075 tta/C/texi2any.c:1905
 msgid ""
 "  -o, --output=DEST           output to DEST.\n"
 "                                With split output, create DEST as a "
@@ -3824,7 +4411,7 @@ msgstr ""
 "                                En cas contrari, DEST anomena el fitxer de "
 "sortida."
 
-#: tta/perl/texi2any.pl:1069 tta/C/texi2any.c:1915
+#: tta/perl/texi2any.pl:1083 tta/C/texi2any.c:1914
 #, fuzzy
 #| msgid ""
 #| "      --disable-encoding      do not output accented and special "
@@ -3843,7 +4430,7 @@ msgstr ""
 "el document\n"
 "                                codificació."
 
-#: tta/perl/texi2any.pl:1073 tta/C/texi2any.c:1920
+#: tta/perl/texi2any.pl:1087 tta/C/texi2any.c:1919
 #, fuzzy
 #| msgid "      --enable-encoding       override --disable-encoding (default)."
 msgid "      --enable-encoding       override --disable-encoding (default)"
@@ -3851,12 +4438,12 @@ msgstr ""
 "       --enable-encoding           substitueix --disable-encoding (per "
 "defecte)."
 
-#: tta/perl/texi2any.pl:1075 tta/C/texi2any.c:1923
+#: tta/perl/texi2any.pl:1089 tta/C/texi2any.c:1922
 #, perl-format
 msgid "Options for Info and plain text:"
 msgstr "Opcions per a Informació i text pla:"
 
-#: tta/perl/texi2any.pl:1077 tta/C/texi2any.c:1926
+#: tta/perl/texi2any.pl:1091 tta/C/texi2any.c:1925
 #, fuzzy, c-format, perl-format
 #| msgid ""
 #| "      --fill-column=NUM       break Info lines at NUM columns (default "
@@ -3867,7 +4454,7 @@ msgstr ""
 "      --fill-column)=NUM.     salt línies d'informació a les columnes NUM "
 "(per defecte %d)."
 
-#: tta/perl/texi2any.pl:1079 tta/C/texi2any.c:1930
+#: tta/perl/texi2any.pl:1093 tta/C/texi2any.c:1929
 #, fuzzy, perl-format
 #| msgid ""
 #| "      --footnote-style=STYLE  output footnotes in Info according to "
@@ -3894,7 +4481,7 @@ msgstr ""
 "                                el qual estan definits (aquest és el valor "
 "per defecte)."
 
-#: tta/perl/texi2any.pl:1084 tta/C/texi2any.c:1940
+#: tta/perl/texi2any.pl:1098 tta/C/texi2any.c:1939
 #, c-format, perl-format
 msgid ""
 "      --paragraph-indent=VAL  indent Info paragraphs by VAL spaces (default "
@@ -3907,7 +4494,7 @@ msgstr ""
 "                                Si VAL és «none», no sagnat; si VAL és\n"
 "                                «asis», preserva el sagnat existent."
 
-#: tta/perl/texi2any.pl:1088 tta/C/texi2any.c:1946
+#: tta/perl/texi2any.pl:1102 tta/C/texi2any.c:1945
 #, fuzzy, c-format, perl-format
 #| msgid ""
 #| "      --split-size=NUM        split Info files at size NUM (default %d)."
@@ -3916,27 +4503,27 @@ msgstr ""
 "       --split-size)=NUM.     desglossament dels fitxers d'informació a la "
 "mida NUM (per defecte %d)."
 
-#: tta/perl/texi2any.pl:1094 tta/C/texi2any.c:1950
+#: tta/perl/texi2any.pl:1108 tta/C/texi2any.c:1949
 #, fuzzy
 #| msgid "Options:"
 msgid "Options for HTML:"
 msgstr "Opcions:"
 
-#: tta/perl/texi2any.pl:1095 tta/C/texi2any.c:1953
+#: tta/perl/texi2any.pl:1109 tta/C/texi2any.c:1952
 msgid ""
 "      --css-include=FILE      include FILE in HTML <style> output;\n"
 "                                read stdin if FILE is -"
 msgstr ""
 
-#: tta/perl/texi2any.pl:1097 tta/C/texi2any.c:1957
+#: tta/perl/texi2any.pl:1111 tta/C/texi2any.c:1956
 msgid "      --css-ref=URL           generate CSS reference to URL"
 msgstr ""
 
-#: tta/perl/texi2any.pl:1098 tta/C/texi2any.c:1960
+#: tta/perl/texi2any.pl:1112 tta/C/texi2any.c:1959
 msgid "      --internal-links=FILE   produce list of internal links in FILE"
 msgstr ""
 
-#: tta/perl/texi2any.pl:1099 tta/C/texi2any.c:1963
+#: tta/perl/texi2any.pl:1113 tta/C/texi2any.c:1962
 #, fuzzy
 #| msgid ""
 #| "      --no-split              suppress any splitting of the output;\n"
@@ -3948,12 +4535,12 @@ msgstr ""
 "      --no-split              suprimeix qualsevol divisió de la sortida;\n"
 "                                genera només un fitxer de sortida."
 
-#: tta/perl/texi2any.pl:1101 tta/C/texi2any.c:1967
+#: tta/perl/texi2any.pl:1115 tta/C/texi2any.c:1966
 msgid ""
 "      --transliterate-file-names  use file names in ASCII transliteration"
 msgstr ""
 
-#: tta/perl/texi2any.pl:1102 tta/C/texi2any.c:1970
+#: tta/perl/texi2any.pl:1116 tta/C/texi2any.c:1969
 #, fuzzy
 #| msgid ""
 #| "      --no-split              suppress any splitting of the output;\n"
@@ -3965,11 +4552,11 @@ msgstr ""
 "      --no-split              suprimeix qualsevol divisió de la sortida;\n"
 "                                genera només un fitxer de sortida."
 
-#: tta/perl/texi2any.pl:1105 tta/C/texi2any.c:1974
+#: tta/perl/texi2any.pl:1119 tta/C/texi2any.c:1973
 msgid "Options for DVI/PS/PDF:"
 msgstr ""
 
-#: tta/perl/texi2any.pl:1106 tta/C/texi2any.c:1977
+#: tta/perl/texi2any.pl:1120 tta/C/texi2any.c:1976
 #, fuzzy
 #| msgid ""
 #| "Options for DVI/PS/PDF:\n"
@@ -3979,17 +4566,17 @@ msgstr ""
 "Opcions per a DVI/PS/PDF:\n"
 "      --Xopt=OPT              passa OPT a texi2dvi: es pot repetir.\n"
 
-#: tta/perl/texi2any.pl:1108 tta/C/texi2any.c:1980
+#: tta/perl/texi2any.pl:1122 tta/C/texi2any.c:1979
 msgid "Input file options:"
 msgstr "Opcions del fitxer d'entrada:"
 
-#: tta/perl/texi2any.pl:1109 tta/C/texi2any.c:1983
+#: tta/perl/texi2any.pl:1123 tta/C/texi2any.c:1982
 #, fuzzy
 #| msgid " -D VAR                       define the variable VAR, as with @set."
 msgid " -D VAR                       define the variable VAR, as with @set"
 msgstr " -D VAR                       defineix la variable VAR, com amb @set."
 
-#: tta/perl/texi2any.pl:1110 tta/C/texi2any.c:1986
+#: tta/perl/texi2any.pl:1124 tta/C/texi2any.c:1985
 #, fuzzy
 #| msgid ""
 #| " -D 'VAR VAL'                 define VAR to VAL (one shell argument)."
@@ -3997,21 +4584,21 @@ msgid " -D 'VAR VAL'                 define VAR to VAL (one shell argument)"
 msgstr ""
 " -D «VAR VAL»                 defineix VAR a VAL (un argument de shell)."
 
-#: tta/perl/texi2any.pl:1111 tta/C/texi2any.c:1989
+#: tta/perl/texi2any.pl:1125 tta/C/texi2any.c:1988
 #, fuzzy
 #| msgid ""
 #| " -I DIR                       append DIR to the @include search path."
 msgid " -I DIR                       append DIR to the @include search path"
 msgstr " -I DIR                       afegeix DIR al camí de cerca @include."
 
-#: tta/perl/texi2any.pl:1112 tta/C/texi2any.c:1992
+#: tta/perl/texi2any.pl:1126 tta/C/texi2any.c:1991
 #, fuzzy
 #| msgid ""
 #| " -P DIR                       prepend DIR to the @include search path."
 msgid " -P DIR                       prepend DIR to the @include search path"
 msgstr " -P DIR              preposa DIR al camí de cerca @include."
 
-#: tta/perl/texi2any.pl:1113 tta/C/texi2any.c:1995
+#: tta/perl/texi2any.pl:1127 tta/C/texi2any.c:1994
 #, fuzzy
 #| msgid ""
 #| " -U VAR                       undefine the variable VAR, as with @clear."
@@ -4020,134 +4607,134 @@ msgstr ""
 " -U VAR                 cancel·la la definició de la variable VAR, com amb "
 "@clear."
 
-#: tta/perl/texi2any.pl:1115 tta/C/texi2any.c:1999
+#: tta/perl/texi2any.pl:1129 tta/C/texi2any.c:1998
 msgid "Conditional processing in input:"
 msgstr "Processament condicional a l'entrada:"
 
-#: tta/perl/texi2any.pl:1116 tta/C/texi2any.c:2002
+#: tta/perl/texi2any.pl:1130 tta/C/texi2any.c:2001
 #, fuzzy
 #| msgid "  --no-ifdocbook    do not process @ifdocbook and @docbook text."
 msgid "      --ifdocbook       process @ifdocbook and @docbook"
 msgstr "  --no-ifdocbook    no processis text @fdocbook i @docbook."
 
-#: tta/perl/texi2any.pl:1117 tta/C/texi2any.c:2005
+#: tta/perl/texi2any.pl:1131 tta/C/texi2any.c:2004
 #, fuzzy
 #| msgid "  --ifxml           process @ifxml and @xml."
 msgid "      --ifhtml          process @ifhtml and @html"
 msgstr "  --ifxml           processa @ifxml i @xml."
 
-#: tta/perl/texi2any.pl:1118 tta/C/texi2any.c:2008
+#: tta/perl/texi2any.pl:1132 tta/C/texi2any.c:2007
 #, fuzzy
 #| msgid "  --no-ifinfo       do not process @ifinfo text."
 msgid "      --ifinfo          process @ifinfo"
 msgstr "  --no-ifinfo       no processis el text @ifinfo."
 
-#: tta/perl/texi2any.pl:1119 tta/C/texi2any.c:2011
+#: tta/perl/texi2any.pl:1133 tta/C/texi2any.c:2010
 #, fuzzy
 #| msgid "  --iflatex         process @iflatex and @latex."
 msgid "      --iflatex         process @iflatex and @latex"
 msgstr "  --iflatex         processa @iflatex i @latex."
 
-#: tta/perl/texi2any.pl:1120 tta/C/texi2any.c:2014
+#: tta/perl/texi2any.pl:1134 tta/C/texi2any.c:2013
 #, fuzzy
 #| msgid "  --no-ifplaintext  do not process @ifplaintext text."
 msgid "      --ifplaintext     process @ifplaintext"
 msgstr "  --no-ifplaintext  no processis el text @ifplaintext."
 
-#: tta/perl/texi2any.pl:1121 tta/C/texi2any.c:2017
+#: tta/perl/texi2any.pl:1135 tta/C/texi2any.c:2016
 #, fuzzy
 #| msgid "  --iftex           process @iftex and @tex."
 msgid "      --iftex           process @iftex and @tex"
 msgstr "  --iftex         processa @iftex i @tex."
 
-#: tta/perl/texi2any.pl:1122 tta/C/texi2any.c:2020
+#: tta/perl/texi2any.pl:1136 tta/C/texi2any.c:2019
 #, fuzzy
 #| msgid "  --ifxml           process @ifxml and @xml."
 msgid "      --ifxml           process @ifxml and @xml"
 msgstr "  --ifxml           processa @ifxml i @xml."
 
-#: tta/perl/texi2any.pl:1124 tta/C/texi2any.c:2026
+#: tta/perl/texi2any.pl:1138 tta/C/texi2any.c:2025
 msgid ""
 "  By default, an --ifFORMAT setting is on only when the output format\n"
 "  is FORMAT; for example, --ifhtml is on when outputting HTML.\n"
 "  Also, when --ifFORMAT is on, @ifnotFORMAT text is not processed."
 msgstr ""
 
-#: tta/perl/texi2any.pl:1128 tta/C/texi2any.c:2033
+#: tta/perl/texi2any.pl:1142 tta/C/texi2any.c:2032
 msgid ""
 "  Each --ifFORMAT option may be prefixed with `--no-' to negate it;\n"
 "  for example, --no-ifhtml means not to process @ifhtml or @html text,\n"
 "  and to process @ifnothtml text."
 msgstr ""
 
-#: tta/perl/texi2any.pl:1132 tta/C/texi2any.c:2038
+#: tta/perl/texi2any.pl:1146 tta/C/texi2any.c:2037
 msgid "Examples:"
 msgstr "Exemples:"
 
-#: tta/perl/texi2any.pl:1133 tta/C/texi2any.c:2041
+#: tta/perl/texi2any.pl:1147 tta/C/texi2any.c:2040
 #, fuzzy, c-format, perl-format
 #| msgid "      --xml                   output Texinfo XML."
 msgid "  %s foo.texi                      write Info"
 msgstr "        --xml                    sortida Texinfo XML."
 
-#: tta/perl/texi2any.pl:1134 tta/C/texi2any.c:2044
+#: tta/perl/texi2any.pl:1148 tta/C/texi2any.c:2043
 #, fuzzy, c-format, perl-format
 #| msgid "      --html                  output HTML."
 msgid "  %s --html foo.texi               write HTML"
 msgstr "       --html                    sortida HTML."
 
-#: tta/perl/texi2any.pl:1135 tta/C/texi2any.c:2047
+#: tta/perl/texi2any.pl:1149 tta/C/texi2any.c:2046
 #, fuzzy, c-format, perl-format
 #| msgid "      --xml                   output Texinfo XML."
 msgid "  %s --xml foo.texi                write Texinfo XML"
 msgstr "        --xml                    sortida Texinfo XML."
 
-#: tta/perl/texi2any.pl:1136 tta/C/texi2any.c:2050
+#: tta/perl/texi2any.pl:1150 tta/C/texi2any.c:2049
 #, fuzzy, c-format, perl-format
 #| msgid "      --docbook               output Docbook XML."
 msgid "  %s --docbook foo.texi            write Docbook XML"
 msgstr "        --docbook              sortida Docbook XML."
 
-#: tta/perl/texi2any.pl:1137 tta/C/texi2any.c:2053
+#: tta/perl/texi2any.pl:1151 tta/C/texi2any.c:2052
 #, fuzzy, c-format, perl-format
 #| msgid "      --plaintext             output plain text rather than Info."
 msgid "  %s --plaintext foo.texi          write plain text to standard output"
 msgstr "        --plaintext               surt text net en lloc d'Informació."
 
-#: tta/perl/texi2any.pl:1138 tta/C/texi2any.c:2056
+#: tta/perl/texi2any.pl:1152 tta/C/texi2any.c:2055
 #, c-format, perl-format
 msgid "  %s --pdf foo.texi                write PDF using texi2dvi"
 msgstr ""
 
-#: tta/perl/texi2any.pl:1140 tta/C/texi2any.c:2060
+#: tta/perl/texi2any.pl:1154 tta/C/texi2any.c:2059
 #, c-format, perl-format
 msgid "  %s --html --no-headers foo.texi  write html without node lines, menus"
 msgstr ""
 
-#: tta/perl/texi2any.pl:1141 tta/C/texi2any.c:2063
+#: tta/perl/texi2any.pl:1155 tta/C/texi2any.c:2062
 #, fuzzy, c-format, perl-format
 #| msgid "    --unnumbered-sections   do not number sections"
 msgid "  %s --number-sections foo.texi    write Info with numbered sections"
 msgstr "    --unnumbered-sections   no numera les seccions"
 
-#: tta/perl/texi2any.pl:1142 tta/C/texi2any.c:2066
+#: tta/perl/texi2any.pl:1156 tta/C/texi2any.c:2065
 #, c-format, perl-format
 msgid "  %s --no-split foo.texi           write one Info file however big"
 msgstr ""
 
-#: tta/perl/texi2any.pl:1185 tta/C/texi2any.c:1647
+#: tta/perl/texi2any.pl:1199 tta/C/texi2any.c:1646
 #, fuzzy, c-format, perl-format
 #| msgid "%s: --footnote-style arg must be `separate' or `end', not `%s'.\n"
 msgid "%s: --footnote-style arg must be `separate' or `end', not `%s'."
 msgstr ""
 "%s: l'argument --footnote-style ha de ser  `separate' o `end', no «%s».\n"
 
-#: tta/perl/texi2any.pl:1192
+#: tta/perl/texi2any.pl:1206
 #, perl-format
 msgid "%s is not a valid split possibility"
 msgstr "%s no és una possibilitat vàlida de divisió"
 
-#: tta/perl/texi2any.pl:1307
+#: tta/perl/texi2any.pl:1321
 #, fuzzy, perl-format
 #| msgid ""
 #| "%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n"
@@ -4156,27 +4743,27 @@ msgstr ""
 "%s: l'argument --paragraph-indent arg ha de ser numeric/`none'/`asis', no "
 "«%s».\n"
 
-#: tta/perl/texi2any.pl:1495
+#: tta/perl/texi2any.pl:1509
 #, perl-format
 msgid "overwriting file: %s"
 msgstr "s'està sobreescrivint el fitxer %s"
 
-#: tta/perl/texi2any.pl:1545
+#: tta/perl/texi2any.pl:1559
 #, perl-format
 msgid "unknown tree transformation %s"
 msgstr "transformació d'arbre desconeguda %s"
 
-#: tta/perl/texi2any.pl:1571
+#: tta/perl/texi2any.pl:1585
 #, perl-format
 msgid "ignoring splitting for converted format %s (for %s)"
 msgstr "s'ignorarà la divisió per al format convertit %s (per a %s)"
 
-#: tta/perl/texi2any.pl:1575
+#: tta/perl/texi2any.pl:1589
 #, perl-format
 msgid "ignoring splitting for format %s"
 msgstr "s'ignorarà la divisió per al format %s"
 
-#: tta/perl/texi2any.pl:1591 tta/C/texi2any.c:2276
+#: tta/perl/texi2any.pl:1605 tta/C/texi2any.c:2275
 #, fuzzy, c-format, perl-format
 #| msgid ""
 #| "%s: when generating %s, only one input FILE may be specified with -o\n"
@@ -4184,67 +4771,67 @@ msgid "%s: when generating %s, only one input FILE may be specified with -o"
 msgstr ""
 "%s: quan s'estigui generant %s, sols es pot especificar un FITXER amb -o\n"
 
-#: tta/perl/texi2any.pl:1595
+#: tta/perl/texi2any.pl:1609
 msgid "--Xopt option without printed output"
 msgstr "opció --Xopt sense sortida impresa"
 
-#: tta/perl/texi2any.pl:1612
+#: tta/perl/texi2any.pl:1626
 #, perl-format
 msgid "error loading %s: %s"
 msgstr "error en carregar %s: %s"
 
-#: tta/perl/texi2any.pl:1689 tta/C/texi2any.c:2475
+#: tta/perl/texi2any.pl:1703 tta/C/texi2any.c:2474
 #, fuzzy, c-format, perl-format
 #| msgid "%s: missing file argument.\n"
 msgid "%s: missing file argument."
 msgstr "%s: falta l'argument de fitxer.\n"
 
-#: tta/perl/texi2any.pl:1724
+#: tta/perl/texi2any.pl:1738
 #, perl-format
 msgid "input file %s; did you mean %s?"
 msgstr "fitxer d'entrada %s; volíeu dir %s?"
 
-#: tta/perl/texi2any.pl:1843
+#: tta/perl/texi2any.pl:1857
 #, fuzzy, perl-format
 #| msgid "error on closing frame file %s: %s"
 msgid "error on closing tree dump file %s: %s"
 msgstr "error en tancar el fitxer marc %s: %s"
 
-#: tta/perl/texi2any.pl:1910
+#: tta/perl/texi2any.pl:1924
 #, fuzzy, perl-format
 #| msgid "error on closing macro expand file %s: %s\n"
 msgid "error on closing macro expand file %s: %s"
 msgstr "error en tancar el fitxer d'expansió de macros %s: %s\n"
 
-#: tta/perl/texi2any.pl:2064
+#: tta/perl/texi2any.pl:2078
 #, fuzzy, perl-format
 #| msgid "error on closing frame file %s: %s"
 msgid "error on closing structure dump file %s: %s"
 msgstr "error en tancar el fitxer marc %s: %s"
 
-#: tta/perl/texi2any.pl:2177
+#: tta/perl/texi2any.pl:2191
 #, fuzzy, perl-format
 #| msgid "%s: error on closing internal links file %s: %s\n"
 msgid "%s: error on closing internal links file %s: %s"
 msgstr "%s: error en tancar els fitxers d'enllaços interns %s: %s\n"
 
-#: tta/perl/texi2any.pl:2298
+#: tta/perl/texi2any.pl:2312
 #, fuzzy, perl-format
 #| msgid "%s: error on closing elements size file %s: %s\n"
 msgid "%s: error on closing elements size file %s: %s"
 msgstr "%s: error en tancar el fitxe %s de mida d'elements: %s\n"
 
-#: tta/C/texi2any.c:911
+#: tta/C/texi2any.c:910
 #, c-format
 msgid "%s: value \"%s\" invalid for option %s (number expected)"
 msgstr ""
 
-#: tta/C/texi2any.c:915
+#: tta/C/texi2any.c:914
 #, c-format
 msgid "%s: value \"%s\" invalid for option %c (number expected)"
 msgstr ""
 
-#: tta/C/texi2any.c:1675
+#: tta/C/texi2any.c:1674
 #, fuzzy, c-format
 #| msgid ""
 #| "%s: --paragraph-indent arg must be numeric/`none'/`asis', not `%s'.\n"
@@ -4253,47 +4840,47 @@ msgstr ""
 "%s: l'argument --paragraph-indent arg ha de ser numeric/`none'/`asis', no "
 "«%s».\n"
 
-#: tta/C/convert/convert_html.c:2396
+#: tta/C/convert/convert_html.c:2397
 #, c-format
 msgid "%s: %zu registered opened sections not closed"
 msgstr "%s: %zu seccions obertes registrades no tancades"
 
-#: tta/C/convert/convert_html.c:2406
+#: tta/C/convert/convert_html.c:2407
 #, c-format
 msgid "%zu registered inline contents: %s"
 msgstr "%zu continguts en línia registrats: %s"
 
-#: tta/C/convert/convert_html.c:2423
+#: tta/C/convert/convert_html.c:2424
 #, c-format
 msgid "left inline content associated to %s: '%s'"
 msgstr "contingut en linia romanent associat a %s: «%s»"
 
-#: tta/C/convert/convert_html.c:2430
+#: tta/C/convert/convert_html.c:2431
 #, c-format
 msgid "left inline content of %p: '%s'"
 msgstr "contingut en línia romanent de %p: «%s»"
 
-#: tta/C/convert/convert_html.c:2435
+#: tta/C/convert/convert_html.c:2436
 #, c-format
 msgid "left inline content associated: '%s'"
 msgstr "contingut en línia romanent associat: «%s»"
 
-#: tta/C/convert/convert_html.c:2662
+#: tta/C/convert/convert_html.c:2663
 #, c-format
 msgid "error while opening %s for reading: %s"
 msgstr "error quan s'obria %s per a lectura: %s"
 
-#: tta/C/convert/convert_html.c:2672
+#: tta/C/convert/convert_html.c:2673
 #, c-format
 msgid "cannot open %s for writing: %s"
 msgstr "no s'ha pogut obrir %s per escriure: %s"
 
-#: tta/C/convert/convert_html.c:2690
+#: tta/C/convert/convert_html.c:2691
 #, c-format
 msgid "error writing %s: %s"
 msgstr "error escrivint %s: %s"
 
-#: tta/C/convert/convert_html.c:2716
+#: tta/C/convert/convert_html.c:2717
 #, c-format
 msgid "error closing %s: %s"
 msgstr "error en tancar %s: %s"
@@ -4451,448 +5038,9 @@ msgstr "argument formal @%s incorrecte o buit"
 #~ "  -w, --where, --location      imprimeix la ubicació física del fitxer "
 #~ "Info."
 
-#~ msgid "Cannot delete the last window"
-#~ msgstr "No es pot eliminar l'última finestra"
-
-#, c-format
-#~ msgid "No '%s' pointer for this node"
-#~ msgstr "No hi ha un punter «%s» per a aquest node"
-
 #, c-format
 #~ msgid "Unknown Info command '%c'; try '?' for help"
 #~ msgstr "Ordre «%c» d'Info desconeguda; proveu «?» per a ajuda"
-
-#~ msgid "You are already at the last page of this node"
-#~ msgstr "Ja esteu a l'última pàgina d'aquest node"
-
-#~ msgid "You are already at the first page of this node"
-#~ msgstr "Ja esteu a la primera pàgina d'aquest node"
-
-#~ msgid "Show all matching files"
-#~ msgstr "Mostra tots els fitxers que concordin"
-
-#, c-format
-#~ msgid "No file index"
-#~ msgstr "No hi ha un índex de fitxer"
-
-#~ msgid "Move down to the next line"
-#~ msgstr "Ves avall a la línia següent"
-
-#~ msgid "Move up to the previous line"
-#~ msgstr "Ves amunt a la línia prèvia"
-
-#~ msgid "Move the cursor to a specific line of the window"
-#~ msgstr "Mou del cursos a una línia específica de la finestra"
-
-#~ msgid "Move to the end of the line"
-#~ msgstr "Ves al final de la línia"
-
-#~ msgid "Move to the start of the line"
-#~ msgstr "Ves a l'inici de la línia"
-
-#~ msgid "Move to the start of this node"
-#~ msgstr "Ves a l'inici d'aquest node"
-
-#~ msgid "Move to the end of this node"
-#~ msgstr "Ves al final d'aquest node"
-
-#~ msgid "Scroll forward in this window"
-#~ msgstr "Desplaça't cap endavant a aquesta finestra"
-
-#~ msgid "Scroll backward in this window"
-#~ msgstr "Desplaça't cap endarrere a aquesta finestra"
-
-#~ msgid "Scroll forward in this window and set default window size"
-#~ msgstr ""
-#~ "Desplaça't cap endavant a aquesta finestra i estableix la mida "
-#~ "predeterminada de la finestra"
-
-#~ msgid "Scroll backward in this window and set default window size"
-#~ msgstr ""
-#~ "Desplaça't cap endarrere a aquesta finestra i estableix la mida "
-#~ "predeterminada de la finestra"
-
-#~ msgid "Scroll forward in this window staying within node"
-#~ msgstr ""
-#~ "Desplaça't cap endavant a aquesta finestra romanent dins dins del node"
-
-#~ msgid "Scroll backward in this window staying within node"
-#~ msgstr "Desplaçat cap endarrere a aquesta finestra romanent dins del node"
-
-#~ msgid ""
-#~ "Scroll forward in this window staying within node and set default window "
-#~ "size"
-#~ msgstr ""
-#~ "Desplaça't cap endavant a aquesta finestra dins del node i estableix la "
-#~ "mida predeterminada de la finestra"
-
-#~ msgid ""
-#~ "Scroll backward in this window staying within node and set default window "
-#~ "size"
-#~ msgstr ""
-#~ "Desplaça't endarrere a aquesta finestra romanent dins del node i "
-#~ "estableix la finestra predeterminada "
-
-#~ msgid "Scroll down by lines"
-#~ msgstr "Desplaça't cap avall per línies"
-
-#~ msgid "Scroll up by lines"
-#~ msgstr "Desplaça't cap amunt per línies"
-
-#~ msgid "Scroll down by half screen size"
-#~ msgstr "Desplaça't cap avall per una mitja mida de pantalla"
-
-#~ msgid "Scroll up by half screen size"
-#~ msgstr "Desplaça't cap amunt per una mitja mida de pantalla"
-
-#~ msgid "Scroll the other window"
-#~ msgstr "Desplaça l'altra finestra"
-
-#~ msgid "Scroll the other window backward"
-#~ msgstr "Desplaça l'altra finestra cap endarrere"
-
-#~ msgid "Select the next window"
-#~ msgstr "Selecciona la finestra següent"
-
-#~ msgid "Select the previous window"
-#~ msgstr "Selecciona la finestra prèvia"
-
-#~ msgid "Split the current window"
-#~ msgstr "Divideix la finestra actual"
-
-#~ msgid "Delete the current window"
-#~ msgstr "Elimina la finestra actual"
-
-#~ msgid "Cannot delete a permanent window"
-#~ msgstr "No es pot eliminar una finestra permanent"
-
-#~ msgid "Delete all other windows"
-#~ msgstr "Elimina totes les altres finestres"
-
-#~ msgid "Grow (or shrink) this window"
-#~ msgstr "Fes més gran (o fes més petita) aquesta finestra"
-
-#~ msgid "Divide the available screen space among the visible windows"
-#~ msgstr ""
-#~ "Divideix l'espai disponible de pantalla entre les finestres visibles"
-
-#~ msgid "Toggle the state of line wrapping in the current window"
-#~ msgstr "Commuta l'estat de l'ajust de línia a la finestra actual"
-
-#~ msgid "Select this menu item"
-#~ msgstr "Selecciona aquest element de menú"
-
-#, c-format
-#~ msgid "There isn't %d item in this menu"
-#~ msgid_plural "There aren't %d items in this menu"
-#~ msgstr[0] "No hi ha l'element %d a aquest menú"
-#~ msgstr[1] "No hi els elements %d a aquest menú"
-
-#~ msgid "Select the last item in this node's menu"
-#~ msgstr "Selecciona l'últim element al menú d'aquest node"
-
-#, c-format
-#~ msgid "Menu item (%s): "
-#~ msgstr "Element de menú (%s): "
-
-#~ msgid "Menu item: "
-#~ msgstr "Element de menú: "
-
-#, c-format
-#~ msgid "Follow xref (%s): "
-#~ msgstr "Segueix xref (%s): "
-
-#~ msgid "Follow xref: "
-#~ msgstr "Segueix xref: "
-
-#, c-format
-#~ msgid "The reference disappeared! (%s)"
-#~ msgstr "La referència ha desaparegut! (%s)"
-
-#~ msgid "Read a menu item and select its node"
-#~ msgstr "Llegeix un element de menú i selecciona el seu node"
-
-#~ msgid "Read a footnote or cross reference and select its node"
-#~ msgstr ""
-#~ "Llegeix una nota a peu de pàgina o una referència creuada i selecciona el "
-#~ "seu node"
-
-#~ msgid "Move to the start of this node's menu"
-#~ msgstr "Ves a l'inici del menú d'aquest node"
-
-#~ msgid "Visit as many menu items at once as possible"
-#~ msgstr "Visita el màxim d'elements de menú que sigui possible"
-
-#~ msgid "Move to the previous cross reference"
-#~ msgstr "Ves a la referència creuada prèvia"
-
-#~ msgid "Move to the next cross reference"
-#~ msgstr "Ves a la referència creuada següent"
-
-#~ msgid "Select reference or menu item appearing on this line"
-#~ msgstr ""
-#~ "Selecciona la referència o l'element de menú que apareix en aquesta línia"
-
-#, c-format
-#~ msgid "No menu in node '%s'"
-#~ msgstr "No hi ha un menú al node «%s»"
-
-#, c-format
-#~ msgid "Unable to find node referenced by '%s' in '%s'"
-#~ msgstr "No s'ha pogut trobar el node referenciat per «%s» a «%s»"
-
-#~ msgid "Read a list of menus starting from dir and follow them"
-#~ msgstr ""
-#~ "Llegeix una llista de menús començant des del directori i segueix-los"
-
-#~ msgid "Follow menus: "
-#~ msgstr "Segueix els menús: "
-
-#~ msgid "Select the Next node"
-#~ msgstr "Selecciona el node Següent"
-
-#~ msgid "Select the Prev node"
-#~ msgstr "Selecciona el node Previ"
-
-#~ msgid "Select the Up node"
-#~ msgstr "Selecciona el node Amunt"
-
-#~ msgid "Select the last node in this file"
-#~ msgstr "Selecciona l'últim node a aquest fitxer"
-
-#~ msgid "This window has no additional nodes"
-#~ msgstr "Aquesta finestra no té nodes addicionals"
-
-#~ msgid "Select the first node in this file"
-#~ msgstr "Selecciona el primer node a aquest fitxer"
-
-#~ msgid "No more nodes within this document"
-#~ msgstr "No hi ha més nodes dins d'aquest document"
-
-#~ msgid "No 'Prev' or 'Up' for this node within this document"
-#~ msgstr "No hi ha «Previ» o «Amunt» per a aquest node dins d'aquest document"
-
-#~ msgid "Move forwards or down through node structure"
-#~ msgstr "Ves amunt o avall a través de l'estructura de nodes"
-
-#~ msgid "Move backwards or up through node structure"
-#~ msgstr "Ves cap endarrere o amunt a través de l'estructura de nodes"
-
-#~ msgid "Read a node name and select it"
-#~ msgstr "Llegeix un nom de node i selecciona'l"
-
-#~ msgid "Goto node: "
-#~ msgstr "Ves al node: "
-
-#~ msgid "Find the node describing program invocation"
-#~ msgstr "Troba el node que descriu la invocació del programa"
-
-#, c-format
-#~ msgid "Find Invocation node of [%s]: "
-#~ msgstr "Troba el node Invocació de [%s]: "
-
-#~ msgid "Read a manpage reference and select it"
-#~ msgstr "Llegeix una referència manpage i selecciona-la"
-
-#~ msgid "Get Manpage: "
-#~ msgstr "Obté la Manpage: "
-
-#~ msgid "Select the node 'Top' in this file"
-#~ msgstr "Selecciona el node «Top» a aquest fitxer"
-
-#~ msgid "Select the node '(dir)'"
-#~ msgstr "Selecciona el node '(dir)'"
-
-#~ msgid "Show full file name of node being displayed"
-#~ msgstr "Mostra el nom complet de fitxer del node que s'està mostrant"
-
-#~ msgid "Select the most recently selected node"
-#~ msgstr "Selecciona el node seleccionat més recentment"
-
-#, c-format
-#~ msgid "No earlier node in history"
-#~ msgstr "No hi ha un node anterior a la història"
-
-#~ msgid "Read the name of a file and select it"
-#~ msgstr "Llegeix el nom d'un fitxer i selecciona'l"
-
-#~ msgid "Find file: "
-#~ msgstr "Troba el fitxer: "
-
-#, c-format
-#~ msgid "Cannot find '%s'"
-#~ msgstr "No es pot trobar «%s»"
-
-#, c-format
-#~ msgid "Could not create output file '%s'"
-#~ msgstr "No s'ha pogut crear el fitxer de sortida «%s»"
-
-#, c-format
-#~ msgid "error writing to %s: %s"
-#~ msgstr "error quan s'estava escrivint a %s: %s"
-
-#, c-format
-#~ msgid "closing %s"
-#~ msgstr "s'està tancant %s"
-
-#, c-format
-#~ msgid "writing node %s..."
-#~ msgstr "s'està escrivint el node %s..."
-
-#~ msgid "Pipe the contents of this node through INFO_PRINT_COMMAND"
-#~ msgstr "Passa els continguts d'aquest node a través d'INFO_PRINT_COMMAND"
-
-#, c-format
-#~ msgid "Cannot open pipe to '%s'"
-#~ msgstr "No es pot obrir el conducte a «%s»"
-
-#, c-format
-#~ msgid "printing node %s..."
-#~ msgstr "s'està imprimint el node %s..."
-
-#, c-format
-#~ msgid "finished printing node %s"
-#~ msgstr "s'ha acabat d'imprimir el node %s"
-
-#~ msgid "Toggle the usage of regular expressions in searches"
-#~ msgstr "Commuta l'ús d'expressions regulars a les cerques"
-
-#, c-format
-#~ msgid "Using regular expressions for searches"
-#~ msgstr "S'estan usant les expressions regular per a les cerques"
-
-#, c-format
-#~ msgid "Using literal strings for searches"
-#~ msgstr "S'estan usant cadenes literals de caràcters per a les cerques"
-
-#~ msgid "Search continued from the end of the document"
-#~ msgstr "Es continuarà la cerca des del final del document"
-
-#~ msgid "Search continued from the beginning of the document"
-#~ msgstr "Es continuarà la cerca des del principi del document"
-
-#, c-format
-#~ msgid "Searching subfile %s ..."
-#~ msgstr "S'està buscant el subfitxer %s..."
-
-#, c-format
-#~ msgid "Search failed"
-#~ msgstr "La cerca ha fallat"
-
-#, c-format
-#~ msgid "%s%s%s [%s]: "
-#~ msgstr "%s%s%s [%s]: "
-
-#~ msgid "Regexp search"
-#~ msgstr "Cerca d'expressió regular"
-
-#~ msgid "Search"
-#~ msgstr "Cerca"
-
-#~ msgid " case-sensitively"
-#~ msgstr "respectant majúscules i minúscules"
-
-#~ msgid " backward"
-#~ msgstr " cap endarrere"
-
-#, c-format
-#~ msgid "%s%s%s: "
-#~ msgstr "%s%s%s: "
-
-#~ msgid "Search string too short"
-#~ msgstr "La cadena de caràcters de cerca és massa curta"
-
-#, c-format
-#~ msgid "Going back to last match from %s"
-#~ msgstr "Es retornarà a l'última concordança des de %s"
-
-#, c-format
-#~ msgid "No more matches"
-#~ msgstr "No hi ha més concordances"
-
-#~ msgid "Search this node and subnodes for a string"
-#~ msgstr "Cerca aquest node i subnodes per una cadena de caràcters"
-
-#, c-format
-#~ msgid "Search under %s: "
-#~ msgstr "S'està buscant sota %s..."
-
-#~ msgid "Go to next match in Info sub-tree"
-#~ msgstr "Ves a la concordança següent del subarbre Info"
-
-#, c-format
-#~ msgid "No active search"
-#~ msgstr "No hi ha cap cerca activa"
-
-#~ msgid "Go to previous match in Info sub-tree"
-#~ msgstr "Ves a la concordança anterior al subarbre Info"
-
-#~ msgid "Read a string and search for it case-sensitively"
-#~ msgstr ""
-#~ "Llegeix una cadena de caràcters i busca-la respectant majúscules i "
-#~ "minúscules"
-
-#~ msgid "Read a string and search for it"
-#~ msgstr "Llegeix una cadena de caràcters i busca-la"
-
-#~ msgid "Read a string and search backward for it"
-#~ msgstr "Llegeix una cadena de caràcters i busca cap endarrere per ella"
-
-#~ msgid "Repeat last search in the same direction"
-#~ msgstr "Repeteix l'última cerca en la mateixa direcció"
-
-#~ msgid "No previous search string"
-#~ msgstr "No hi ha una cadena de caràcters de cerca prèvia"
-
-#~ msgid "Repeat last search in the reverse direction"
-#~ msgstr "Repeteix l'última cerca en la direcció inversa"
-
-#~ msgid "Clear displayed search matches"
-#~ msgstr "Neteja les concordances mostrades de cerca"
-
-#~ msgid "Search interactively for a string as you type it"
-#~ msgstr ""
-#~ "Cerca interactivament per una cadena de caràcters a mesura que l'escriviu"
-
-#~ msgid "Regexp I-search backward: "
-#~ msgstr "I-cerca l'expressió regular cap endarrere: "
-
-#~ msgid "I-search backward: "
-#~ msgstr "I-cerca cap endarrere: "
-
-#~ msgid "Regexp I-search: "
-#~ msgstr "I-cerca l'expressió regular: "
-
-#~ msgid "I-search: "
-#~ msgstr "I-cerca: "
-
-#~ msgid "Failing "
-#~ msgstr "Està fallant "
-
-#~ msgid "Cancel current operation"
-#~ msgstr "Cancel·la l'operació actual"
-
-#~ msgid "Display version of Info being run"
-#~ msgstr "Mostra la informació de versió de l'Info que s'està executant"
-
-#, c-format
-#~ msgid "GNU Info version %s"
-#~ msgstr "GNU Info versió %s"
-
-#~ msgid "Redraw the display"
-#~ msgstr "Torna a dibuixar la pantalla"
-
-#~ msgid "Quit using Info"
-#~ msgstr "Surt d'Info"
-
-#~ msgid "Run command bound to this key's lowercase variant"
-#~ msgstr "Executa l'ordre lligada a la variant minúscula d'aquesta tecla"
-
-#~ msgid "Add this digit to the current numeric argument"
-#~ msgstr "Afegeix aquest dígit a l'argument numèric actual"
-
-#~ msgid "Start (or multiply by 4) the current numeric argument"
-#~ msgstr "Inicia (o multiplica per 4) l'argument numèric actual"
 
 #, c-format, perl-format
 #~ msgid "node %s for `%s' is `%s' in sectioning but not in menu"
@@ -5632,8 +5780,8 @@ msgstr "argument formal @%s incorrecte o buit"
 
 #~ msgid "Usually FILE... is specified as `foo.??' for a document `foo.texi'."
 #~ msgstr ""
-#~ "En general FITXER... s'especifica com `bla.??' per a un document "
-#~ "`foo.texi'."
+#~ "En general FITXER... s'especifica com `bla.??' per a un document `foo."
+#~ "texi'."
 
 #~ msgid " --           end option processing"
 #~ msgstr " --           finalitza el processament d'opcions"
@@ -5829,8 +5977,8 @@ msgstr "argument formal @%s incorrecte o buit"
 #~ "Usage: %s [OPTION]... [INPUT-FILE]\n"
 #~ "\n"
 #~ "Compile infokey source file to infokey file.  Reads INPUT-FILE (default\n"
-#~ "$HOME/.infokey) and writes compiled key file to (by default) "
-#~ "$HOME/.info.\n"
+#~ "$HOME/.infokey) and writes compiled key file to (by default) $HOME/."
+#~ "info.\n"
 #~ "\n"
 #~ "Options:\n"
 #~ "  --output FILE        output to FILE instead of $HOME/.info\n"

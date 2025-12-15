@@ -201,10 +201,8 @@ span:hover a.copiable-link {visibility: visible}
 
 <body lang="">
 <div class="top-level-extent" id="node-before">
-<div class="nav-panel">
-<p>
-Next: <a href="#chap" accesskey="n" rel="next">chap</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chap" accesskey="n" rel="next">chap</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="top-sectionning"><span>top sectionning<a class="copiable-link" href="#top-sectionning"> &para;</a></span></h1>
 
 <p>in node before
@@ -213,20 +211,16 @@ Next: <a href="#chap" accesskey="n" rel="next">chap</a> &nbsp; </p>
 <li><a href="#chap" accesskey="1">chap</a></li>
 </ul>
 <hr>
-<a class="node-id" id="Top"></a><div class="nav-panel">
-<p>
-Next: <a href="#node-before" accesskey="n" rel="next">top sectionning</a> &nbsp; </p>
-</div>
+<a class="node-id" id="Top"></a><p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#node-before" accesskey="n" rel="next">top sectionning</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="node"><span>Top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
 
 <p>in node Top
 </p>
 <hr>
 <div class="chapter-level-extent" id="chap">
-<div class="nav-panel">
-<p>
-Up: <a href="#node-before" accesskey="u" rel="up">top sectionning</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#node-before" accesskey="u" rel="up">top sectionning</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="chap-1"><span>1 chap<a class="copiable-link" href="#chap-1"> &para;</a></span></h2>
 
 <p>in chap
@@ -261,7 +255,7 @@ $result_converted{'latex_text'}->{'node_sectop_before_lone_node_Top'} = '\\begin
 in node before
 
 \\label{anchor:Top}%
-\\chapter{{chap}}
+\\Texinfochapter{{chap}}
 \\label{anchor:chap}%
 
 in chap

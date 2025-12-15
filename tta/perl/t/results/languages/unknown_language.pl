@@ -265,10 +265,8 @@ span:hover a.copiable-link {visibility: visible}
 <body lang="unknown">
 
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#chapter" accesskey="n" rel="next">Chapter</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chapter" accesskey="n" rel="next">Chapter</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="unknkown-language"><span>unknkown language<a class="copiable-link" href="#unknkown-language"> &para;</a></span></h1>
 
 <ul class="mini-toc">
@@ -276,10 +274,8 @@ Next: <a href="#chapter" accesskey="n" rel="next">Chapter</a> &nbsp; </p>
 </ul>
 <hr>
 <div class="chapter-level-extent" id="chapter">
-<div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">unknkown language</a>, Up: <a href="#Top" accesskey="u" rel="up">unknkown language</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">unknkown language</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">unknkown language</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="Chapter"><span>1 Chapter<a class="copiable-link" href="#Chapter"> &para;</a></span></h2>
 
 <p>Unknown language. See <a class="xref" href="#Top">unknkown language</a>.

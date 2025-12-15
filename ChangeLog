@@ -1,3 +1,386 @@
+2025-12-14 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_latex_header, _convert):
+	do not modify \chaptername when reaching the appendix, instead define a
+	LaTeX macro \Texinfoheadingchaptername for the headings, set initially
+	to \chaptername and reset to \appendixname after reaching the
+	appendices.
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_convert): use \appendixname if
+	the reference is to an appendix sectioning command.  Report from
+	Dimitris Papavasilio.
+
+	* tta/perl/Makefile.tres, tta/perl/t/latex_tests.t
+	(reference_to_from_appendix): add test of references from chapter to
+	appendix and from appendix to chapter.
+
+2025-12-13 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Target Tree Element Link): add command_name
+	and command_description documentation.
+
+2025-12-13 Patrice Dumas  <pertusus@free.fr>
+
+	Update libintl-perl to 1.35
+
+2025-12-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* js/info.css (iframe.node): Set "display: block".  This is intended
+	to prevent a double scroll bar, one for the iframe, one for the
+	containing div, by making both elements the same height.
+
+2025-12-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* INSTALL.generic: update from gnulib
+
+2025-12-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* Makefile.am (po_document-check): exclude another XS file
+
+2025-12-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* po/POTFILES.in: add missing files
+
+2025-12-13 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm
+	(%LaTeX_in_heading_commands_formatting, %section_map)
+	(_latex_header): replace "\chaptername{} \thechapter{} " by a LaTeX
+	macro, \Texinfothechapterheading{} and redefine the macro when a
+	chapter or an appendix is encountered to
+	"\chaptername{} \thechapter{}" and to an empty string when unnumbered
+	is encountered.  Add the Texinfochapter LaTeX macro for chapter and
+	appendix.  Report from Dimitris Papavasiliou.
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_convert): call
+	\renewcommand{\chaptername}{\appendixname} when reaching the first
+	appendix.  Report from Dimitris Papavasiliou.
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_prepare_conversion): delete
+	appendix_done.
+
+2025-12-13 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (%section_map)
+	(%texinfo_unnumbered_macros_toc_latex, _latex_header): generate a
+	LaTeX macro definition for each of the unnumbered commands that should
+	appear in table of contents.
+	Report from Dimitris Papavasiliou.
+
+2025-12-13 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_latex_header): fix float_type
+	setting.  Report from Dimitris Papavasiliou.
+	Reindent string.
+
+2025-12-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/C/Makefile.am (MAINTAINERCLEANFILES): Add all "multiple outputs"
+	stamp files.  This fixes parallel make after "make maintainer-clean".
+	Report from Patrice.
+
+2025-12-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add AUTOPOINT=true to autoreconf invocation to
+	reduce the risk of making a mess.
+
+2025-12-13  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS: automake, autoconf, gettext, libtool versions.
+	* README-hacking: more on upgrading gettext.
+
+2025-12-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta: upgrade to gettext 0.26
+
+2025-12-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* po, po_document: upgrade to gettext 0.26
+
+2025-12-12  Gavin Smith <gavinsmith0123@gmail.com>
+
+	update gnulib
+
+	* (top level), tta: run gnulib-tool --add-import
+
+2025-12-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* update-version.sh: update other configure.ac files automatically.
+
+2025-12-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/perl/CheckXS/configure.ac: increase version to 7.2.90.
+
+2025-12-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/configure.ac: also bump version here
+	* util/pdftexi2dvi: bump version
+
+2025-12-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* configure.ac: bump version to 7.2.90.
+
+2025-12-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/maintain/change_perl_modules_version.sh:
+	Fix path to perl/CheckXS/configure.ac.
+
+2025-12-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/texi2dvi (make_openout_test, decide_aux_files_method):
+	Keep output from tests of \openout and print the last kept output if
+	the test failed and we can't run TeX.  This helps the user to
+	find out why the test failed, e.g. if they are running with PDFTEX=xetex
+	and xetex isn't installed.
+
+2025-12-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi: Change several gnu.org URLs
+	to use https instead of http.
+
+2025-12-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* READNE-alpha: use https in link
+
+2025-12-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/test-infodir: remove subdirectory.
+
+2025-12-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/perl/t/layout.t: use https: in value of PACKAGE_URL.
+
+2025-12-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/perl/t/40moresectioning.t: use https: in some values
+	for TOP_NODE_UP.
+
+2025-12-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/C/texi2any.c (main),
+	* tta/perl/texi2any.pl:
+	Use https:// link in output of texi2any --version.
+
+2025-12-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/C/convert/html_prepare_converter.c (html_setup_output),
+	* tta/perl/Texinfo/Convert/HTML.pm (_setup_output):
+	Use https: in link for GPL license.
+
+2025-12-07 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_convert): use code to get a
+	space if in inner horizontal or vertical mode for sectioning commands,
+	not for other commands.  Report from Gavin.
+
+2025-12-07 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_convert): use code based on
+	\ifinner and on Texinfo TeX code for @* in LaTeX to handle all the
+	cases in internal horizontal or vertical mode, in particular in page
+	headings.  Based on Gavin code.
+
+	* tta/perl/t/converters_tests.t (line_breaks): add @* in more command
+	areguments and contexts.
+
+2025-12-06  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Custom Headings): @thispart is implemented for
+	LaTeX output.
+
+2025-12-06 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (%section_map, _latex_header):
+	define a \texinfopart LaTeX comand ofr @part that uses \part* and
+	\addcontentsline.  From Gavin.
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_convert): use \texorpdfstring
+	for @* if in a heading command.
+
+	* tta/perl/t/latex_tests.t (thispart): also test @* in @part.
+
+2025-12-06  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix @* display in header line
+
+	* doc/texinfo.tex (\*): Check if in inner horizontal or vertical
+	mode with \ifinner, and if so, output @* as a single space rather
+	than trying to break a line.  This fixes display of @* when it
+	occurs in a section name in the page heading line.
+	(\entryinternal): Remove special override of definition of @*.
+
+2025-12-06 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c
+	(default_panel_button_dynamic_direction_internal),
+	tta/perl/Texinfo/Convert/HTML.pm
+	(_default_panel_button_dynamic_direction): add nav-label and nav-link
+	span class for dynamic buttons direction string and hyperlink.  Report
+	from Raymond Toy.
+
+2025-12-06 Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS, tta/perl/Texinfo/Convert/LaTeX.pm
+	(%LaTeX_in_heading_commands_formatting, converter_reset)
+	(_prepare_conversion, _latex_header): implement @thispart in LaTeX
+	output.
+
+	* tta/perl/Makefile.tres, tta/perl/t/latex_tests.t (thispart): add
+	this part test tesing for @thispart.
+
+2025-12-06  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* NEWS,
+	* doc/texinfo.texi (Command List, Custom Headings): add @thispart.
+
+2025-12-06  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/data/command_data.txt: Add @thispart.
+
+2025-12-06  Gavin Smith <gavinsmith0123@gmail.com>
+
+	@thispart
+
+	* doc/texinfo.tex (@part):
+	Set @thispart, to be used in headings and footings.  Suggestion
+	from Werner.
+
+2025-12-06  Gavin Smith <gavinsmith0123@gmail.com>
+
+	@set txilinkindextext
+
+	* doc/texinfo.tex (\indexentry) [pdftex]:
+	Only create a link from the index entry text to the referenced
+	page if the document contained "@set txilinkindextext".
+
+2025-12-06  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Custom Headings): reorder slightly.
+
+2025-12-06  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Custom Headings) <@thissectionnum>:
+	Add example of output to reduce confusion about whether the
+	"section number" contains the chapter number.
+
+2025-12-05  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Custom Headings) <@thissection>:
+	Change example section number to contain a full stop.
+	From Werner Lemberg.
+
+2025-12-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Set 'nav-panel' class on <p> element.
+
+	* tta/C/convert/format_html.c (html_default_format_navigation_panel),
+	* tta/perl/Texinfo/Convert/HTML.pm (_default_format_navigation_panel):
+	Remove <div> surrounding navigation bar and set 'nav-panel' class
+	on <p> element.  This is intended to make it easier to customize
+	the style of the navigation bar with CSS.
+
+2025-12-03  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/data/default_css_element_class_styles.csv (span.nav-button):
+	Remove 'white-space: nowrap' as it is up to the user if they want
+	this for their HTML output.
+
+2025-11-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/customization_options.c
+	(html_new_button_specification_info)
+	(html_new_button_specification_list): rename
+	new_button_specification_info as html_new_button_specification_info
+	and new_button_specification_list as
+	html_new_button_specification_list.  Update callers.
+
+2025-11-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/customization_options.c
+	(new_button_specification_info, new_button_specification_list),
+	tta/C/main/create_buttons.c: move new_button_specification_info and
+	new_button_specification_list to customization_options.c.
+
+	* tta/C/Makefile.am (C_libtexinfo_sources): remove create_buttons.c
+	and create_buttons.h.
+
+2025-11-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/customization_options.c
+	(html_free_button_specification_list, html_clear_direction_icons)
+	(html_free_direction_icons), tta/C/main/utils.c: move functions
+	freeing direction icons and buttons to customization options file.
+
+2025-11-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_init_options.c
+	(enum BUTTON_special_unit_directions, buttons_special_units_names)
+	(new_button_specification, new_special_unit_direction_button)
+	(new_base_navigation_buttons, new_base_links_buttons)
+	(new_base_navigation_section_buttons)
+	(new_base_navigation_section_footer_buttons)
+	(new_directions_list_buttons_specifications),
+	tta/C/main/create_buttons.c: move functions creating specifc button
+	lists to html_converter_init_options.c, as well as associated
+	static function and data.
+
+2025-11-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_init_options.c: remove unused
+	set_option_buttons_specification,
+	set_html_default_buttons_specifications and
+	set_texi2html_default_buttons_specifications.
+
+	* tta/C/main/create_buttons.c (new_button_specification): declare
+	static.
+
+2025-11-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c (html_standard_label_id_file): get
+	BASEFILENAME_LENGTH from txi_base_options since it is a default
+	converter option and is not set as an HTML converter default option.
+
+2025-11-29  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Allow running uninstalled texi2any with a symbolic link
+
+	* tta/perl/texi2any.pl: If loading Texinfo::ModulePath failed and
+	$0 is a symbolic link, dereference the symbolic link and try again.
+
+	* tta/perl/Texinfo/ModulePath.pm.in: dereference $0 if the file
+	is a symbolic link.  Add "use strict" to module.
+
+2025-11-29 Patrice Dumas  <pertusus@free.fr>
+
+	Do not allow wrapping inside an HTML button
+
+	* tta/data/default_css_element_class_styles.csv (span.nav-button):
+	set navigation button white-space: nowrap, such that the button is not
+	split on two lines on small screens.  Report by Raymond Toy and idea
+	by Per Bothner.
+
+2025-11-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/z_misc/no_structure_test.t (_do_format_test_file),
+	tta/perl/t/z_misc/same_parser_multiple_files.t (_do_format_test_file):
+	do not check the test result if $arg_generate is set and the test
+	result is regenerated.
+
+2025-11-29 Patrice Dumas  <pertusus@free.fr>
+
+	Add a span for HTML navigation buttons not in table
+
+	* tta/C/convert/format_html.c (html_default_format_navigation_panel),
+	tta/perl/Texinfo/Convert/HTML.pm (_default_format_navigation_panel):
+	add a span with nav-button class for each button.  Report by Raymond
+	Toy.
+
+	* tta/C/convert/format_html.c (html_default_format_button): do not
+	return an empty string but NULL if button_text is NULL.
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_set_main_units_direction_names): reindent.
+
 2025-11-27 Patrice Dumas  <pertusus@free.fr>
 
 	* doc/texi2any_api.texi: update.

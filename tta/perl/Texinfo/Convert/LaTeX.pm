@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # TODO
 #
@@ -37,9 +37,6 @@
 # Texinfo tree, as we can provide strings to be translated already in LaTeX
 # with the same property than Texinfo strings with LaTeX commands avoiding,
 # to some extent, dependence on the language and/or encoding.
-#
-# It seems that \chaptername doesn't become Appendix for a sectioning command
-# appearing after \appendix
 #
 # command that could be used for translation \sectionname does not exist in the
 # default case.  it is defined in the pagenote package together with \pagename
@@ -192,7 +189,7 @@ use Texinfo::Convert::Converter;
 
 our @ISA = qw(Texinfo::Convert::Converter);
 
-our $VERSION = '7.2dev';
+our $VERSION = '7.2.90';
 
 # could export convert_to_latex_math
 
@@ -269,8 +266,9 @@ my %LaTeX_in_heading_commands_formatting = (
   # default for texinfo.tex is similar:
   #   \putwordChapter{} \thischapternum: \thischaptername}
   # see doc/txi-zh.tex for how it could be in chinese
+  # Texinfothechapterheading is \Texinfoheadingchaptername{} \thechapter{}
   # TODO translation
-  'thischapter' => '\chaptername{} \thechapter{} \chaptertitle{}',
+  'thischapter' => '\Texinfothechapterheading{}\chaptertitle{}',
   'thischaptername' => '\chaptertitle{}',
   'thischapternum' => '\thechapter{}',
   #  default for texinfo.tex is similar:
@@ -282,6 +280,7 @@ my %LaTeX_in_heading_commands_formatting = (
   'thisfile' => '\Texinfotheinclude{}',
   'thispage' => '\thepage{}',
   'thistitle' => '\Texinfosettitle{}',
+  'thispart' => '\Texinfoparttitle{}',
 );
 
 foreach my $kept_command (keys(%LaTeX_in_heading_commands_formatting),
@@ -314,8 +313,8 @@ my @LaTeX_image_extensions = (
 
 my %section_map = (
    'top' => 'part*',
-   'part' => 'part',
-   'chapter' => 'chapter',
+   'part' => 'Texinfounnumberedpart',
+   'chapter' => 'Texinfochapter',
    'section' => 'section',
    'subsection' => 'subsection',
    'subsubsection' => 'subsubsection',
@@ -325,16 +324,29 @@ my %section_map = (
    'heading' => 'section*',
    'subheading' => 'subsection*',
    'subsubheading' => 'subsubsection*',
-   'unnumbered' => 'chapter*',
-   'centerchap' => 'chapter*',
-   'unnumberedsec' => 'section*',
-   'unnumberedsubsec' => 'subsection*',
-   'unnumberedsubsubsec' => 'subsubsection*',
-   'appendix' => 'chapter',
+   'unnumbered' => 'Texinfounnumberedchapter',
+   'centerchap' => 'Texinfounnumberedchapter',
+   'unnumberedsec' => 'Texinfounnumberedsection',
+   'unnumberedsubsec' => 'Texinfounnumberedsubsection',
+   'unnumberedsubsubsec' => 'Texinfounnumberedsubsubsection',
+   'appendix' => 'Texinfochapter',
    'appendixsec' => 'section',
    'appendixsubsec' => 'subsection',
    'appendixsubsubsec' => 'subsubsection',
 );
+
+# associate the name of the created LaTeX macro to the usual LaTeX
+# sectoning command for unnumbered command that should appear in table
+# of contents (every unnumbered commands except for @top).
+my %texinfo_unnumbered_macros_toc_latex;
+foreach my $unnumbered_command(keys(
+                       %Texinfo::Commands::unnumbered_commands)) {
+  next if $unnumbered_command eq 'top';
+  my $texinfo_latex_macro = $section_map{$unnumbered_command};
+  my $latex_command = $texinfo_latex_macro;
+  $latex_command =~ s/^Texinfounnumbered//;
+  $texinfo_unnumbered_macros_toc_latex{$texinfo_latex_macro} = $latex_command;
+}
 
 my %LaTeX_no_arg_brace_commands = (
    # textmode
@@ -859,6 +871,8 @@ sub converter_reset($) {
   # TODO warn if some includes remain?  Should never happen.
   delete $self->{'collected_includes'};
 
+  delete $self->{'need_parttitle'};
+
   delete $self->{'settitle_tree'};
   delete $self->{'normalized_float_latex'};
   delete $self->{'latex_floats'};
@@ -1032,7 +1046,9 @@ sub _prepare_conversion($;$) {
   delete $self->{'prev_chapter_new_page_substitution'};
   delete $self->{'settitle_tree'};
   delete $self->{'collected_includes'};
+  delete $self->{'need_parttitle'};
   delete $self->{'titlepage_formatting'};
+  delete $self->{'appendix_done'};
 
   my $global_commands;
   my $nodes_list;
@@ -1423,12 +1439,44 @@ sub _latex_header($) {
   }
   $header_code .= "\\makeatletter\n";
 
+  # this command is redefined for headings to include the "Chapter" name
+  # and the chapter number if in a @chapter or @appendix, but set to
+  # empty by @unnumbered.
+  $header_code .= "\\newcommand{\\Texinfothechapterheading}{}\n";
+
+  # this command is redefined when reaching appendices
+  $header_code .= "\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}\n";
+
   # for @thistitle and headers
   $header_code .= "\\newcommand{\\Texinfosettitle}{$settitle}%\n";
   if (exists($self->{'collected_includes'})) {
     $header_code .= "\\newcommand{\\Texinfotheinclude}{}%\n";
   }
   $header_code .= "\n";
+
+  if (exists($self->{'need_parttitle'})) {
+    $header_code .= "\\newcommand{\\Texinfoparttitle}{}\n\n";
+  }
+  foreach my $txi_unnumbered_latex(sort(
+                         keys(%texinfo_unnumbered_macros_toc_latex))) {
+    my $latex_command
+      = $texinfo_unnumbered_macros_toc_latex{$txi_unnumbered_latex};
+    $header_code
+       .= "\\newcommand{\\${txi_unnumbered_latex}}[1]{\\${latex_command}*{#1}\n"
+         ."\\addcontentsline{toc}{${latex_command}}{\\protect\\textbf{#1}}%\n";
+    if ($txi_unnumbered_latex eq 'Texinfounnumberedchapter') {
+      $header_code
+     .= "\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%\n";
+    }
+    if ($txi_unnumbered_latex eq 'Texinfounnumberedpart'
+        and exists($self->{'need_parttitle'})) {
+      $header_code .= "\\renewcommand{\\Texinfoparttitle}{#1}%\n";
+    }
+    $header_code .= "}%\n\n";
+  }
+  $header_code .= "\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}\n"
+ ."\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%\n";
+  $header_code .= "}%\n\n";
 
   my $floats;
   if (exists($self->{'document'})) {
@@ -1447,16 +1495,15 @@ sub _latex_header($) {
           _push_new_context($self, 'float_type '.$normalized_float_type);
           my $float_and_section = $floats->{$normalized_float_type}->[0];
           my ($float, $float_section) = @$float_and_section;
-          my $float_type
+          $float_type
             = _convert($self,
                        $float->{'contents'}->[0]->{'contents'}->[0]);
           _pop_context($self);
         }
         $header_code .= "% new float for type `$normalized_float_type'\n";
         $header_code
-           .= "\\newfloat{$latex_float_name}{htb}{$floats_extension}[chapter]
-\\floatname{$latex_float_name}{$float_type}
-";
+         .= "\\newfloat{$latex_float_name}{htb}{$floats_extension}[chapter]\n"
+           ."\\floatname{$latex_float_name}{$float_type}\n";
       }
     }
   }
@@ -1573,8 +1620,8 @@ sub _latex_header($) {
 
   if (exists($self->{'page_styles'}->{'single'})) {
     $header_code .=
-'\newpagestyle{single}{\sethead[\chaptername{} \thechapter{} \chaptertitle{}][][\thepage]
-                              {\chaptername{} \thechapter{} \chaptertitle{}}{}{\thepage}}
+'\newpagestyle{single}{\sethead[\Texinfothechapterheading{}\chaptertitle{}][][\thepage]
+                              {\Texinfothechapterheading{}\chaptertitle{}}{}{\thepage}}
 
 ';
   }
@@ -1582,7 +1629,7 @@ sub _latex_header($) {
   if (exists($self->{'page_styles'}->{'double'})) {
     $header_code .=
 '\newpagestyle{double}{\sethead[\thepage{}][][\Texinfosettitle]
-                              {\chaptername{} \thechapter{} \chaptertitle{}}{}{\thepage}}
+                              {\Texinfothechapterheading{}\chaptertitle{}}{}{\thepage}}
 
 ';
   }
@@ -1683,6 +1730,9 @@ roundcorner=10pt}
   }
   my $usepackage_end = $self->get_conf('END_USEPACKAGE');
   if (!defined($usepackage_end)) {
+    #if (exists($self->{'packages'}->{'appendix'})) {
+    #  $usepackage_end .= "\\usepackage[toc]{appendix}\n";
+    #}
     if (exists($self->{'index_entries'})
         and scalar(keys(%{$self->{'index_entries'}}))) {
       $usepackage_end .= "\\usepackage{imakeidx}\n";
@@ -1975,10 +2025,15 @@ sub _begin_document($) {
   return $result;
 }
 
-sub _latex_footer {
-  return
-'\end{document}
-';
+sub _latex_footer($) {
+  my $self = shift;
+
+  my $result = '';
+  #if (exists($self->{'appendix_done'})) {
+  #  $result .= "\\end{appendices}\n";
+  #}
+  $result .= "\\end{document}\n";
+  return $result;
 }
 
 # all the new contexts should be created with that function
@@ -3058,12 +3113,23 @@ sub _convert($$) {
               and $self->{'formatting_context'}->[-1]->{'no_eol'}->[-1]) {
             # in tabularx in @def* we ignore @*
             $result .= ' ';
+          } elsif ($self->{'formatting_context'}->[-1]
+                                         ->{'in_sectioning_command_heading'}) {
+            # add command to substitute a space in table of contents
+            # if in heading command.
+            # In internal horizontal or vertical mode, convert explicit line
+            # breaks from @* into spaces for page heading lines.  The
+            # code is based on Texinfo TeX code, but with a different
+            # code for the case where an end of line is output.
+            $result .= "\\texorpdfstring{"
+                  ."\\ifinner\\unskip\\space\\ignorespaces"
+                  ."\\else\\leavevmode{}\\\\\\fi}{ }";
           } else {
-            # FIXME \leavevmode{} is added to avoid
+            # NOTE \leavevmode{} is added to avoid
             # ! LaTeX Error: There's no line here to end.
-            # but it is not clearly correct
+            #$result .= "\\ifinner\\unskip\\space\\ignorespaces".
+            #           "\\else\\leavevmode{}\\\\\\fi%\n";
             $result .= "\\leavevmode{}\\\\";
-            #$result = "\\linebreak[4]\n";
           }
         } else {
           if ($self->{'formatting_context'}->[-1]->{'math_style'}->[-1]
@@ -3752,8 +3818,13 @@ sub _convert($$) {
   .= "\\hyperref[$reference_label]{Section~\\ref*{$reference_label} [$name_text], page~\\pageref*{$reference_label}}";
               } else {
                 # TODO translation
-                $reference_result
+                if ($section_command->{'cmdname'} =~ /appendix/) {
+                  $reference_result
+  .= "\\hyperref[$reference_label]{\\appendixname~\\ref*{$reference_label} [$name_text], page~\\pageref*{$reference_label}}";
+                } else {
+                  $reference_result
   .= "\\hyperref[$reference_label]{\\chaptername~\\ref*{$reference_label} [$name_text], page~\\pageref*{$reference_label}}";
+                }
               }
             } else {
               # anchor or document without sectioning commands
@@ -4171,8 +4242,13 @@ sub _convert($$) {
           $result .= "\\label{$node_label}%\n";
         }
       } else {
-        if ($cmdname eq 'appendix' and not $self->{'appendix_done'}) {
+        if ($cmdname eq 'appendix' and not exists($self->{'appendix_done'})) {
           $result .= "\\appendix\n";
+          # needed for headings to have Appendix instead of Chapter
+          $result
+       .= "\\renewcommand{\\Texinfoheadingchaptername}{\\appendixname}\n";
+          #$result .= "\\begin{appendices}\n";
+          #$self->{'packages'}->{'appendix'} = 1;
           $self->{'appendix_done'} = 1;
         }
         if (not $self->{'formatting_context'}->[-1]->{'in_skipped_node_top'}) {
@@ -4422,6 +4498,8 @@ sub _convert($$) {
           and $self->{'formatting_context'}->[-1]->{'in_custom_heading'}) {
         $self->{'collected_includes'} = []
            unless (exists($self->{'collected_includes'}));
+      } elsif ($cmdname eq 'thispart') {
+        $self->{'need_parttitle'} = 1;
       }
       return $result;
     } elsif ($cmdname eq 'title') {

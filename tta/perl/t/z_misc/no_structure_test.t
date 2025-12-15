@@ -73,16 +73,18 @@ sub _do_format_test_file($$$$$$) {
   }
 
   my $results_dir = $test_out_dir;
-  if (-d $reference_dir) {
-    my $errors = compare_dirs_files($reference_dir, $results_dir);
-    ok(!defined($errors), $test_name.' converted '.$format)
-        or diag(join("\n", @$errors));
-  } else {
-    print STDERR "\n$format $test_name: \n$results_dir\n";
-  }
 
   if ($arg_generate) {
     _update_test_results_dir ($reference_dir, $results_dir);
+    ok(1, $test_name.' converted '.$format);
+  } else {
+    if (-d $reference_dir) {
+      my $errors = compare_dirs_files($reference_dir, $results_dir);
+      ok(!defined($errors), $test_name.' converted '.$format)
+          or diag(join("\n", @$errors));
+    } else {
+      print STDERR "\n$format $test_name: \n$results_dir\n";
+    }
   }
 }
 
@@ -209,12 +211,13 @@ _do_format_test_file($test_name, $format, $info_converter, $document,
 
 my $latex_converter = Texinfo::Convert::LaTeX->converter();
 my $latex_text = $latex_converter->convert($document);
-is($latex_text, '
+is($latex_text,
+'
 \begin{document}
 \tableofcontents\newpage
 \part*{{First File}}
 \label{anchor:Top}%
-\chapter{{Chap}}
+\Texinfochapter{{Chap}}
 \label{anchor:chap}%
 
 \label{anchor:point}%
@@ -222,7 +225,8 @@ is($latex_text, '
 \index[cp]{c@c}%
 
 \appendix
-\chapter{{Results}}
+\renewcommand{\Texinfoheadingchaptername}{\appendixname}
+\Texinfochapter{{Results}}
 \label{anchor:results}%
 
 See point.

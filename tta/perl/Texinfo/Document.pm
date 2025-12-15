@@ -11,7 +11,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 # This package provides a view of a parsed Texinfo document.  The
 # instantiated objects are also used to carry information for the
@@ -47,7 +47,7 @@ use Texinfo::Report;
 use Texinfo::Indices;
 use Texinfo::ManipulateTree;
 
-our $VERSION = '7.2dev';
+our $VERSION = '7.2.90';
 
 # There is a full coverage by the C implementation.
 # Relevant XS interfaces are all implemented.

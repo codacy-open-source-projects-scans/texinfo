@@ -4327,10 +4327,8 @@ span:hover a.copiable-link {visibility: visible}
 
 <body lang="">
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#-_007b-_007d" accesskey="n" rel="next"> { }</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#-_007b-_007d" accesskey="n" rel="next"> { }</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h1 class="top" id="Top-1"><span>Top<a class="copiable-link" href="#Top-1"> &para;</a></span></h1>
 
 
@@ -4365,244 +4363,190 @@ Next: <a href="#-_007b-_007d" accesskey="n" rel="next"> { }</a> &nbsp; </p>
 </ul>
 <hr>
 <div class="chapter-level-extent" id="-_007b-_007d">
-<div class="nav-panel">
-<p>
-Next: <a href="#-_0021-_002e-_002e-_003f-_0040" accesskey="n" rel="next">&nbsp; &nbsp; ! <br> .  . ? @</a>, Previous: <a href="#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#-_0021-_002e-_002e-_003f-_0040" accesskey="n" rel="next">&nbsp; &nbsp; ! <br> .  . ? @</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">Top</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="-_007b-_007d-1"><span>1  { }<a class="copiable-link" href="#-_007b-_007d-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="-_0021-_002e-_002e-_003f-_0040">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_0040-_007b-_007d-_005c-_0023" accesskey="n" rel="next">@ { } \\ #</a>, Previous: <a href="#-_007b-_007d" accesskey="p" rel="prev"> { }</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_0040-_007b-_007d-_005c-_0023" accesskey="n" rel="next">@ { } \\ #</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#-_007b-_007d" accesskey="p" rel="prev"> { }</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="-_0021-_002e-_002e-_003f-_0040-1"><span>2 &nbsp; &nbsp; ! <br> .  . ? @<a class="copiable-link" href="#-_0021-_002e-_002e-_003f-_0040-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_0040-_007b-_007d-_005c-_0023">
-<div class="nav-panel">
-<p>
-Next: <a href="#LaTeX-TeX-_2022-_002c-_00a9-_2026-_002e_002e_002e" accesskey="n" rel="next">LaTeX TeX &bull; , &copy; &hellip; <small class="enddots">...</small></a>, Previous: <a href="#-_0021-_002e-_002e-_003f-_0040" accesskey="p" rel="prev">&nbsp; &nbsp; ! <br> .  . ? @</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#LaTeX-TeX-_2022-_002c-_00a9-_2026-_002e_002e_002e" accesskey="n" rel="next">LaTeX TeX &bull; , &copy; &hellip; <small class="enddots">...</small></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#-_0021-_002e-_002e-_003f-_0040" accesskey="p" rel="prev">&nbsp; &nbsp; ! <br> .  . ? @</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_0040-_007b-_007d-_005c-_0023-1"><span>3 @ { } \\ #<a class="copiable-link" href="#g_t_0040-_007b-_007d-_005c-_0023-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="LaTeX-TeX-_2022-_002c-_00a9-_2026-_002e_002e_002e">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_2261-error_002d_002d_003e-_20ac-_00a1-_21a6-_2212" accesskey="n" rel="next">&equiv; error&rarr; &euro; &iexcl; &rarr; &minus;</a>, Previous: <a href="#g_t_0040-_007b-_007d-_005c-_0023" accesskey="p" rel="prev">@ { } \\ #</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_2261-error_002d_002d_003e-_20ac-_00a1-_21a6-_2212" accesskey="n" rel="next">&equiv; error&rarr; &euro; &iexcl; &rarr; &minus;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_0040-_007b-_007d-_005c-_0023" accesskey="p" rel="prev">@ { } \\ #</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="LaTeX-TeX-_2022-_002c-_00a9-_2026-_002e_002e_002e-1"><span>4 LaTeX TeX &bull; , &copy; &hellip; <small class="enddots">...</small><a class="copiable-link" href="#LaTeX-TeX-_2022-_002c-_00a9-_2026-_002e_002e_002e-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_2261-error_002d_002d_003e-_20ac-_00a1-_21a6-_2212">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_2265-_2264-_2192" accesskey="n" rel="next">&ge; &le; &rarr;</a>, Previous: <a href="#LaTeX-TeX-_2022-_002c-_00a9-_2026-_002e_002e_002e" accesskey="p" rel="prev">LaTeX TeX &bull; , &copy; &hellip; <small class="enddots">...</small></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_2265-_2264-_2192" accesskey="n" rel="next">&ge; &le; &rarr;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#LaTeX-TeX-_2022-_002c-_00a9-_2026-_002e_002e_002e" accesskey="p" rel="prev">LaTeX TeX &bull; , &copy; &hellip; <small class="enddots">...</small></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_2261-error_002d_002d_003e-_20ac-_00a1-_21a6-_2212-1"><span>5 &equiv; error&rarr; &euro; &iexcl; &rarr; &minus;<a class="copiable-link" href="#g_t_2261-error_002d_002d_003e-_20ac-_00a1-_21a6-_2212-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_2265-_2264-_2192">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_00aa-_00ba-_22c6-_00a3-_22a3-_00bf-_00ae" accesskey="n" rel="next">&ordf; &ordm; &lowast; &pound; -| &iquest; &reg;</a>, Previous: <a href="#g_t_2261-error_002d_002d_003e-_20ac-_00a1-_21a6-_2212" accesskey="p" rel="prev">&equiv; error&rarr; &euro; &iexcl; &rarr; &minus;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_00aa-_00ba-_22c6-_00a3-_22a3-_00bf-_00ae" accesskey="n" rel="next">&ordf; &ordm; &lowast; &pound; -| &iquest; &reg;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_2261-error_002d_002d_003e-_20ac-_00a1-_21a6-_2212" accesskey="p" rel="prev">&equiv; error&rarr; &euro; &iexcl; &rarr; &minus;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_2265-_2264-_2192-1"><span>6 &ge; &le; &rarr;<a class="copiable-link" href="#g_t_2265-_2264-_2192-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_00aa-_00ba-_22c6-_00a3-_22a3-_00bf-_00ae">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_21d2-_00b0-a-b-_00e5" accesskey="n" rel="next">&rArr; &deg; a&nbsp;b a sunny day &aring;</a>, Previous: <a href="#g_t_2265-_2264-_2192" accesskey="p" rel="prev">&ge; &le; &rarr;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_21d2-_00b0-a-b-_00e5" accesskey="n" rel="next">&rArr; &deg; a&nbsp;b a sunny day &aring;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_2265-_2264-_2192" accesskey="p" rel="prev">&ge; &le; &rarr;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_00aa-_00ba-_22c6-_00a3-_22a3-_00bf-_00ae-1"><span>7 &ordf; &ordm; &lowast; &pound; -| &iquest; &reg;<a class="copiable-link" href="#g_t_00aa-_00ba-_22c6-_00a3-_22a3-_00bf-_00ae-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_21d2-_00b0-a-b-_00e5">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_00c5-_00e6-_0153-_00c6-_0152-_00f8-_00d8-_00df-_0142-_0141-_00d0-_00f0-_00de-_00fe" accesskey="n" rel="next">&Aring; &aelig; &oelig; &AElig; &OElig; &oslash; &Oslash; &szlig; &#322; &#321; &ETH; &eth; &THORN; &thorn;</a>, Previous: <a href="#g_t_00aa-_00ba-_22c6-_00a3-_22a3-_00bf-_00ae" accesskey="p" rel="prev">&ordf; &ordm; &lowast; &pound; -| &iquest; &reg;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_00c5-_00e6-_0153-_00c6-_0152-_00f8-_00d8-_00df-_0142-_0141-_00d0-_00f0-_00de-_00fe" accesskey="n" rel="next">&Aring; &aelig; &oelig; &AElig; &OElig; &oslash; &Oslash; &szlig; &#322; &#321; &ETH; &eth; &THORN; &thorn;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_00aa-_00ba-_22c6-_00a3-_22a3-_00bf-_00ae" accesskey="p" rel="prev">&ordf; &ordm; &lowast; &pound; -| &iquest; &reg;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_21d2-_00b0-a-b-_00e5-1"><span>8 &rArr; &deg; a&nbsp;b a sunny day &aring;<a class="copiable-link" href="#g_t_21d2-_00b0-a-b-_00e5-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_00c5-_00e6-_0153-_00c6-_0152-_00f8-_00d8-_00df-_0142-_0141-_00d0-_00f0-_00de-_00fe">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_00e4-_1ebd-_00ee-_00e2-_00e0-_00e9-_00e7-_0113-e_030a-e_030b-_0119" accesskey="n" rel="next">&auml; &#7869; &icirc; &acirc; &agrave; &eacute; &ccedil; &#275; e&#778; e&#779; &#281;</a>, Previous: <a href="#g_t_21d2-_00b0-a-b-_00e5" accesskey="p" rel="prev">&rArr; &deg; a&nbsp;b a sunny day &aring;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_00e4-_1ebd-_00ee-_00e2-_00e0-_00e9-_00e7-_0113-e_030a-e_030b-_0119" accesskey="n" rel="next">&auml; &#7869; &icirc; &acirc; &agrave; &eacute; &ccedil; &#275; e&#778; e&#779; &#281;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_21d2-_00b0-a-b-_00e5" accesskey="p" rel="prev">&rArr; &deg; a&nbsp;b a sunny day &aring;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_00c5-_00e6-_0153-_00c6-_0152-_00f8-_00d8-_00df-_0142-_0141-_00d0-_00f0-_00de-_00fe-1"><span>9 &Aring; &aelig; &oelig; &AElig; &OElig; &oslash; &Oslash; &szlig; &#322; &#321; &ETH; &eth; &THORN; &thorn;<a class="copiable-link" href="#g_t_00c5-_00e6-_0153-_00c6-_0152-_00f8-_00d8-_00df-_0142-_0141-_00d0-_00f0-_00de-_00fe-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_00e4-_1ebd-_00ee-_00e2-_00e0-_00e9-_00e7-_0113-e_030a-e_030b-_0119">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_0117-_0115-e_0332-_1eb9-_011b-_0237-e_0361e" accesskey="n" rel="next">&#279; &#277; e&#818; &#7865; &#283; &#567; e&#865;e</a>, Previous: <a href="#g_t_00c5-_00e6-_0153-_00c6-_0152-_00f8-_00d8-_00df-_0142-_0141-_00d0-_00f0-_00de-_00fe" accesskey="p" rel="prev">&Aring; &aelig; &oelig; &AElig; &OElig; &oslash; &Oslash; &szlig; &#322; &#321; &ETH; &eth; &THORN; &thorn;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_0117-_0115-e_0332-_1eb9-_011b-_0237-e_0361e" accesskey="n" rel="next">&#279; &#277; e&#818; &#7865; &#283; &#567; e&#865;e</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_00c5-_00e6-_0153-_00c6-_0152-_00f8-_00d8-_00df-_0142-_0141-_00d0-_00f0-_00de-_00fe" accesskey="p" rel="prev">&Aring; &aelig; &oelig; &AElig; &OElig; &oslash; &Oslash; &szlig; &#322; &#321; &ETH; &eth; &THORN; &thorn;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_00e4-_1ebd-_00ee-_00e2-_00e0-_00e9-_00e7-_0113-e_030a-e_030b-_0119-1"><span>10 &auml; &#7869; &icirc; &acirc; &agrave; &eacute; &ccedil; &#275; e&#778; e&#779; &#281;<a class="copiable-link" href="#g_t_00e4-_1ebd-_00ee-_00e2-_00e0-_00e9-_00e7-_0113-e_030a-e_030b-_0119-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_0117-_0115-e_0332-_1eb9-_011b-_0237-e_0361e">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_0131-_1e14-_1e08" accesskey="n" rel="next">&inodot; &#274;&#768; &#262;&#807;</a>, Previous: <a href="#g_t_00e4-_1ebd-_00ee-_00e2-_00e0-_00e9-_00e7-_0113-e_030a-e_030b-_0119" accesskey="p" rel="prev">&auml; &#7869; &icirc; &acirc; &agrave; &eacute; &ccedil; &#275; e&#778; e&#779; &#281;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_0131-_1e14-_1e08" accesskey="n" rel="next">&inodot; &#274;&#768; &#262;&#807;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_00e4-_1ebd-_00ee-_00e2-_00e0-_00e9-_00e7-_0113-e_030a-e_030b-_0119" accesskey="p" rel="prev">&auml; &#7869; &icirc; &acirc; &agrave; &eacute; &ccedil; &#275; e&#778; e&#779; &#281;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_0117-_0115-e_0332-_1eb9-_011b-_0237-e_0361e-1"><span>11 &#279; &#277; e&#818; &#7865; &#283; &#567; e&#865;e<a class="copiable-link" href="#g_t_0117-_0115-e_0332-_1eb9-_011b-_0237-e_0361e-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_0131-_1e14-_1e08">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_201c-_201d-_2018-_2019-_201e-_201a" accesskey="n" rel="next">&ldquo; &rdquo; &lsquo; &rsquo; &bdquo; &sbquo;</a>, Previous: <a href="#g_t_0117-_0115-e_0332-_1eb9-_011b-_0237-e_0361e" accesskey="p" rel="prev">&#279; &#277; e&#818; &#7865; &#283; &#567; e&#865;e</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_201c-_201d-_2018-_2019-_201e-_201a" accesskey="n" rel="next">&ldquo; &rdquo; &lsquo; &rsquo; &bdquo; &sbquo;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_0117-_0115-e_0332-_1eb9-_011b-_0237-e_0361e" accesskey="p" rel="prev">&#279; &#277; e&#818; &#7865; &#283; &#567; e&#865;e</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_0131-_1e14-_1e08-1"><span>12 &inodot; &#274;&#768; &#262;&#807;<a class="copiable-link" href="#g_t_0131-_1e14-_1e08-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_201c-_201d-_2018-_2019-_201e-_201a">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_00ab-_00bb-_00ab-_00bb-_2039-_203a" accesskey="n" rel="next">&laquo; &raquo; &laquo; &raquo; &lsaquo; &rsaquo;</a>, Previous: <a href="#g_t_0131-_1e14-_1e08" accesskey="p" rel="prev">&inodot; &#274;&#768; &#262;&#807;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_00ab-_00bb-_00ab-_00bb-_2039-_203a" accesskey="n" rel="next">&laquo; &raquo; &laquo; &raquo; &lsaquo; &rsaquo;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_0131-_1e14-_1e08" accesskey="p" rel="prev">&inodot; &#274;&#768; &#262;&#807;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_201c-_201d-_2018-_2019-_201e-_201a-1"><span>13 &ldquo; &rdquo; &lsquo; &rsquo; &bdquo; &sbquo;<a class="copiable-link" href="#g_t_201c-_201d-_2018-_2019-_201e-_201a-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_00ab-_00bb-_00ab-_00bb-_2039-_203a">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t_0060_0060-_0027_0027-_002d_002d_002d-_002d_002d-_0060-_0027" accesskey="n" rel="next">&ldquo; &rdquo; &mdash; &ndash; &lsquo; &rsquo;</a>, Previous: <a href="#g_t_201c-_201d-_2018-_2019-_201e-_201a" accesskey="p" rel="prev">&ldquo; &rdquo; &lsquo; &rsquo; &bdquo; &sbquo;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t_0060_0060-_0027_0027-_002d_002d_002d-_002d_002d-_0060-_0027" accesskey="n" rel="next">&ldquo; &rdquo; &mdash; &ndash; &lsquo; &rsquo;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_201c-_201d-_2018-_2019-_201e-_201a" accesskey="p" rel="prev">&ldquo; &rdquo; &lsquo; &rsquo; &bdquo; &sbquo;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_00ab-_00bb-_00ab-_00bb-_2039-_203a-1"><span>14 &laquo; &raquo; &laquo; &raquo; &lsaquo; &rsaquo;<a class="copiable-link" href="#g_t_00ab-_00bb-_00ab-_00bb-_2039-_203a-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t_0060_0060-_0027_0027-_002d_002d_002d-_002d_002d-_0060-_0027">
-<div class="nav-panel">
-<p>
-Next: <a href="#AAA-AAA-BBB" accesskey="n" rel="next"><abbr class="acronym" title="fff">AAA</abbr> (fff) <abbr class="acronym" title="fff">AAA</abbr> <abbr class="acronym">BBB</abbr></a>, Previous: <a href="#g_t_00ab-_00bb-_00ab-_00bb-_2039-_203a" accesskey="p" rel="prev">&laquo; &raquo; &laquo; &raquo; &lsaquo; &rsaquo;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#AAA-AAA-BBB" accesskey="n" rel="next"><abbr class="acronym" title="fff">AAA</abbr> (fff) <abbr class="acronym" title="fff">AAA</abbr> <abbr class="acronym">BBB</abbr></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_00ab-_00bb-_00ab-_00bb-_2039-_203a" accesskey="p" rel="prev">&laquo; &raquo; &laquo; &raquo; &lsaquo; &rsaquo;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t_0060_0060-_0027_0027-_002d_002d_002d-_002d_002d-_0060-_0027-1"><span>15 &ldquo; &rdquo; &mdash; &ndash; &lsquo; &rsquo;<a class="copiable-link" href="#g_t_0060_0060-_0027_0027-_002d_002d_002d-_002d_002d-_0060-_0027-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="AAA-AAA-BBB">
-<div class="nav-panel">
-<p>
-Next: <a href="#CCC-CCC-DDD" accesskey="n" rel="next"><abbr class="abbr" title="rrr">CCC</abbr> (rrr) <abbr class="abbr" title="rrr">CCC</abbr> <abbr class="abbr">DDD</abbr></a>, Previous: <a href="#g_t_0060_0060-_0027_0027-_002d_002d_002d-_002d_002d-_0060-_0027" accesskey="p" rel="prev">&ldquo; &rdquo; &mdash; &ndash; &lsquo; &rsquo;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#CCC-CCC-DDD" accesskey="n" rel="next"><abbr class="abbr" title="rrr">CCC</abbr> (rrr) <abbr class="abbr" title="rrr">CCC</abbr> <abbr class="abbr">DDD</abbr></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t_0060_0060-_0027_0027-_002d_002d_002d-_002d_002d-_0060-_0027" accesskey="p" rel="prev">&ldquo; &rdquo; &mdash; &ndash; &lsquo; &rsquo;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="AAA-AAA-BBB-1"><span>16 <abbr class="acronym" title="fff">AAA</abbr> (fff) <abbr class="acronym" title="fff">AAA</abbr> <abbr class="acronym">BBB</abbr><a class="copiable-link" href="#AAA-AAA-BBB-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="CCC-CCC-DDD">
-<div class="nav-panel">
-<p>
-Next: <a href="#someone_0040somewher-no_005fexplain_0040there" accesskey="n" rel="next"><a class="email" href="mailto:someone@somewher">the someone</a> <a class="email" href="mailto:no_explain@there">no_explain@there</a></a>, Previous: <a href="#AAA-AAA-BBB" accesskey="p" rel="prev"><abbr class="acronym" title="fff">AAA</abbr> (fff) <abbr class="acronym" title="fff">AAA</abbr> <abbr class="acronym">BBB</abbr></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#someone_0040somewher-no_005fexplain_0040there" accesskey="n" rel="next"><a class="email" href="mailto:someone@somewher">the someone</a> <a class="email" href="mailto:no_explain@there">no_explain@there</a></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#AAA-AAA-BBB" accesskey="p" rel="prev"><abbr class="acronym" title="fff">AAA</abbr> (fff) <abbr class="acronym" title="fff">AAA</abbr> <abbr class="acronym">BBB</abbr></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="CCC-CCC-DDD-1"><span>17 <abbr class="abbr" title="rrr">CCC</abbr> (rrr) <abbr class="abbr" title="rrr">CCC</abbr> <abbr class="abbr">DDD</abbr><a class="copiable-link" href="#CCC-CCC-DDD-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="someone_0040somewher-no_005fexplain_0040there">
-<div class="nav-panel">
-<p>
-Next: <a href="#f_002d_002dile1-f_002d_002dile" accesskey="n" rel="next"><img class="image" src="f--ile1.jpg" alt="f--ile1">  <img class="image" src="f--ile.png" alt="alt"></a>, Previous: <a href="#CCC-CCC-DDD" accesskey="p" rel="prev"><abbr class="abbr" title="rrr">CCC</abbr> (rrr) <abbr class="abbr" title="rrr">CCC</abbr> <abbr class="abbr">DDD</abbr></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#f_002d_002dile1-f_002d_002dile" accesskey="n" rel="next"><img class="image" src="f--ile1.jpg" alt="f--ile1">  <img class="image" src="f--ile.png" alt="alt"></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#CCC-CCC-DDD" accesskey="p" rel="prev"><abbr class="abbr" title="rrr">CCC</abbr> (rrr) <abbr class="abbr" title="rrr">CCC</abbr> <abbr class="abbr">DDD</abbr></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="someone_0040somewher-no_005fexplain_0040there-1"><span>18 <a class="email" href="mailto:someone@somewher">the someone</a> <a class="email" href="mailto:no_explain@there">no_explain@there</a><a class="copiable-link" href="#someone_0040somewher-no_005fexplain_0040there-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="f_002d_002dile1-f_002d_002dile">
-<div class="nav-panel">
-<p>
-Next: <a href="#-_0040-_007b_007d-_002e-" accesskey="n" rel="next"><code class="verb">&nbsp;@&nbsp;{}&nbsp;.&nbsp;</code></a>, Previous: <a href="#someone_0040somewher-no_005fexplain_0040there" accesskey="p" rel="prev"><a class="email" href="mailto:someone@somewher">the someone</a> <a class="email" href="mailto:no_explain@there">no_explain@there</a></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#-_0040-_007b_007d-_002e-" accesskey="n" rel="next"><code class="verb">&nbsp;@&nbsp;{}&nbsp;.&nbsp;</code></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#someone_0040somewher-no_005fexplain_0040there" accesskey="p" rel="prev"><a class="email" href="mailto:someone@somewher">the someone</a> <a class="email" href="mailto:no_explain@there">no_explain@there</a></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="f_002d_002dile1-f_002d_002dile-1"><span>19 <img class="image" src="f--ile1.jpg" alt="f--ile1">  <img class="image" src="f--ile.png" alt="alt"><a class="copiable-link" href="#f_002d_002dile1-f_002d_002dile-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="-_0040-_007b_007d-_002e-">
-<div class="nav-panel">
-<p>
-Next: <a href="#cite-asis-in-_0040w-b-in-r-sc-str-t-var-dfn-i" accesskey="n" rel="next"><cite class="cite">cite asis</cite> in&nbsp;@w&nbsp;<b class="b">b</b><!-- /@w --> <span class="r">in r</span> <small class="sc">SC</small> <strong class="strong">str</strong> <code class="t">t</code> <var class="var">var</var> <em class="dfn">dfn</em> <i class="i">i</i></a>, Previous: <a href="#f_002d_002dile1-f_002d_002dile" accesskey="p" rel="prev"><img class="image" src="f--ile1.jpg" alt="f--ile1">  <img class="image" src="f--ile.png" alt="alt"></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#cite-asis-in-_0040w-b-in-r-sc-str-t-var-dfn-i" accesskey="n" rel="next"><cite class="cite">cite asis</cite> in&nbsp;@w&nbsp;<b class="b">b</b><!-- /@w --> <span class="r">in r</span> <small class="sc">SC</small> <strong class="strong">str</strong> <code class="t">t</code> <var class="var">var</var> <em class="dfn">dfn</em> <i class="i">i</i></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#f_002d_002dile1-f_002d_002dile" accesskey="p" rel="prev"><img class="image" src="f--ile1.jpg" alt="f--ile1">  <img class="image" src="f--ile.png" alt="alt"></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="-_0040-_007b_007d-_002e--1"><span>20 <code class="verb">&nbsp;@&nbsp;{}&nbsp;.&nbsp;</code><a class="copiable-link" href="#-_0040-_007b_007d-_002e--1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="cite-asis-in-_0040w-b-in-r-sc-str-t-var-dfn-i">
-<div class="nav-panel">
-<p>
-Next: <a href="#env-code-option-samp-command-file-C_002dx-ESC" accesskey="n" rel="next"><code class="env">env</code> <code class="code">code</code> <samp class="option">option</samp> &lsquo;<samp class="samp">samp</samp>&rsquo; <code class="command">command</code> <samp class="file">file</samp> <kbd class="kbd">C-x <kbd class="key">ESC</kbd></kbd></a>, Previous: <a href="#-_0040-_007b_007d-_002e-" accesskey="p" rel="prev"><code class="verb">&nbsp;@&nbsp;{}&nbsp;.&nbsp;</code></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#env-code-option-samp-command-file-C_002dx-ESC" accesskey="n" rel="next"><code class="env">env</code> <code class="code">code</code> <samp class="option">option</samp> &lsquo;<samp class="samp">samp</samp>&rsquo; <code class="command">command</code> <samp class="file">file</samp> <kbd class="kbd">C-x <kbd class="key">ESC</kbd></kbd></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#-_0040-_007b_007d-_002e-" accesskey="p" rel="prev"><code class="verb">&nbsp;@&nbsp;{}&nbsp;.&nbsp;</code></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="cite-asis-in-_0040w-b-in-r-sc-str-t-var-dfn-i-1"><span>21 <cite class="cite">cite asis</cite> in&nbsp;@w&nbsp;<b class="b">b</b><!-- /@w --> <span class="r">in r</span> <small class="sc">SC</small> <strong class="strong">str</strong> <code class="t">t</code> <var class="var">var</var> <em class="dfn">dfn</em> <i class="i">i</i><a class="copiable-link" href="#cite-asis-in-_0040w-b-in-r-sc-str-t-var-dfn-i-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="env-code-option-samp-command-file-C_002dx-ESC">
-<div class="nav-panel">
-<p>
-Next: <a href="#g_t8_002e27in" accesskey="n" rel="next">8.27<span class="dmn">in</span></a>, Previous: <a href="#cite-asis-in-_0040w-b-in-r-sc-str-t-var-dfn-i" accesskey="p" rel="prev"><cite class="cite">cite asis</cite> in&nbsp;@w&nbsp;<b class="b">b</b><!-- /@w --> <span class="r">in r</span> <small class="sc">SC</small> <strong class="strong">str</strong> <code class="t">t</code> <var class="var">var</var> <em class="dfn">dfn</em> <i class="i">i</i></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#g_t8_002e27in" accesskey="n" rel="next">8.27<span class="dmn">in</span></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#cite-asis-in-_0040w-b-in-r-sc-str-t-var-dfn-i" accesskey="p" rel="prev"><cite class="cite">cite asis</cite> in&nbsp;@w&nbsp;<b class="b">b</b><!-- /@w --> <span class="r">in r</span> <small class="sc">SC</small> <strong class="strong">str</strong> <code class="t">t</code> <var class="var">var</var> <em class="dfn">dfn</em> <i class="i">i</i></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="env-code-option-samp-command-file-C_002dx-ESC-1"><span>22 <code class="env">env</code> <code class="code">code</code> <samp class="option">option</samp> &lsquo;<samp class="samp">samp</samp>&rsquo; <code class="command">command</code> <samp class="file">file</samp> <kbd class="kbd">C-x <kbd class="key">ESC</kbd></kbd><a class="copiable-link" href="#env-code-option-samp-command-file-C_002dx-ESC-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="g_t8_002e27in">
-<div class="nav-panel">
-<p>
-Next: <a href="#sansserif-slanted" accesskey="n" rel="next"><span class="sansserif">sansserif</span> <i class="slanted">slanted</i></a>, Previous: <a href="#env-code-option-samp-command-file-C_002dx-ESC" accesskey="p" rel="prev"><code class="env">env</code> <code class="code">code</code> <samp class="option">option</samp> &lsquo;<samp class="samp">samp</samp>&rsquo; <code class="command">command</code> <samp class="file">file</samp> <kbd class="kbd">C-x <kbd class="key">ESC</kbd></kbd></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#sansserif-slanted" accesskey="n" rel="next"><span class="sansserif">sansserif</span> <i class="slanted">slanted</i></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#env-code-option-samp-command-file-C_002dx-ESC" accesskey="p" rel="prev"><code class="env">env</code> <code class="code">code</code> <samp class="option">option</samp> &lsquo;<samp class="samp">samp</samp>&rsquo; <code class="command">command</code> <samp class="file">file</samp> <kbd class="kbd">C-x <kbd class="key">ESC</kbd></kbd></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="g_t8_002e27in-1"><span>23 8.27<span class="dmn">in</span><a class="copiable-link" href="#g_t8_002e27in-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="sansserif-slanted">
-<div class="nav-panel">
-<p>
-Next: <a href="#indicateurl" accesskey="n" rel="next">&lsquo;<code class="indicateurl">indicateurl</code>&rsquo;</a>, Previous: <a href="#g_t8_002e27in" accesskey="p" rel="prev">8.27<span class="dmn">in</span></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#indicateurl" accesskey="n" rel="next">&lsquo;<code class="indicateurl">indicateurl</code>&rsquo;</a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#g_t8_002e27in" accesskey="p" rel="prev">8.27<span class="dmn">in</span></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="sansserif-slanted-1"><span>24 <span class="sansserif">sansserif</span> <i class="slanted">slanted</i><a class="copiable-link" href="#sansserif-slanted-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="indicateurl">
-<div class="nav-panel">
-<p>
-Next: <a href="#gH-3rd" accesskey="n" rel="next"><sub class="sub">g</sub>H 3<sup class="sup">rd</sup></a>, Previous: <a href="#sansserif-slanted" accesskey="p" rel="prev"><span class="sansserif">sansserif</span> <i class="slanted">slanted</i></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#gH-3rd" accesskey="n" rel="next"><sub class="sub">g</sub>H 3<sup class="sup">rd</sup></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#sansserif-slanted" accesskey="p" rel="prev"><span class="sansserif">sansserif</span> <i class="slanted">slanted</i></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="indicateurl-1"><span>25 &lsquo;<code class="indicateurl">indicateurl</code>&rsquo;<a class="copiable-link" href="#indicateurl-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="gH-3rd">
-<div class="nav-panel">
-<p>
-Next: <a href="#http_003a_002f_002fsomewhere_005faaa-url-_002fman_002ecgi_002f1_002fls" accesskey="n" rel="next"><a class="url" href="http://somewhere_aaa">http://somewhere_aaa</a> <a class="url" href="url">text</a> <a class="uref" href="/man.cgi/1/ls">ls</a></a>, Previous: <a href="#indicateurl" accesskey="p" rel="prev">&lsquo;<code class="indicateurl">indicateurl</code>&rsquo;</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#http_003a_002f_002fsomewhere_005faaa-url-_002fman_002ecgi_002f1_002fls" accesskey="n" rel="next"><a class="url" href="http://somewhere_aaa">http://somewhere_aaa</a> <a class="url" href="url">text</a> <a class="uref" href="/man.cgi/1/ls">ls</a></a></span></span>, <span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#indicateurl" accesskey="p" rel="prev">&lsquo;<code class="indicateurl">indicateurl</code>&rsquo;</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="gH-3rd-1"><span>26 <sub class="sub">g</sub>H 3<sup class="sup">rd</sup><a class="copiable-link" href="#gH-3rd-1"> &para;</a></span></h2>
 
 <hr>
 </div>
 <div class="chapter-level-extent" id="http_003a_002f_002fsomewhere_005faaa-url-_002fman_002ecgi_002f1_002fls">
-<div class="nav-panel">
-<p>
-Previous: <a href="#gH-3rd" accesskey="p" rel="prev"><sub class="sub">g</sub>H 3<sup class="sup">rd</sup></a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; </p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#gH-3rd" accesskey="p" rel="prev"><sub class="sub">g</sub>H 3<sup class="sup">rd</sup></a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
 <h2 class="chapter" id="http_003a_002f_002fsomewhere_005faaa-url-_002fman_002ecgi_002f1_002fls-1"><span>27 <a class="url" href="http://somewhere_aaa">http://somewhere_aaa</a> <a class="url" href="url">text</a> <a class="uref" href="/man.cgi/1/ls">ls</a><a class="copiable-link" href="#http_003a_002f_002fsomewhere_005faaa-url-_002fman_002ecgi_002f1_002fls-1"> &para;</a></span></h2>
 
 <p><a class="ref" href="#-_007b-_007d"> { }</a>
@@ -5066,85 +5010,85 @@ $result_converted_errors{'docbook'}->{'at_commands_in_refs'} = '* W l92|@image f
 
 $result_converted{'latex_text'}->{'at_commands_in_refs'} = '\\begin{document}
 \\label{anchor:Top}%
-\\chapter{{\\-{} \\{ \\}}}
+\\Texinfochapter{{\\-{} \\{ \\}}}
 \\label{anchor:-_007b-_007d}%
 
-\\chapter{{\\ {} \\ {} \\@! \\leavevmode{}\\\\ \\@. \\@ .\\@ \\@? @}}
+\\Texinfochapter{{\\ {} \\ {} \\@! \\texorpdfstring{\\ifinner\\unskip\\space\\ignorespaces\\else\\leavevmode{}\\\\\\fi}{ } \\@. \\@ .\\@ \\@? @}}
 \\label{anchor:-_0021-_002e-_002e-_003f-_0040}%
 
-\\chapter{{@ \\{ \\} \\textbackslash{} \\#}}
+\\Texinfochapter{{@ \\{ \\} \\textbackslash{} \\#}}
 \\label{anchor:_0040-_007b-_007d-_005c-_0023}%
 
-\\chapter{{\\LaTeX{} \\TeX{} \\textbullet{} , \\copyright{} \\dots{}\\@ \\dots{}}}
+\\Texinfochapter{{\\LaTeX{} \\TeX{} \\textbullet{} , \\copyright{} \\dots{}\\@ \\dots{}}}
 \\label{anchor:LaTeX-TeX-_2022-_002c-_00a9-_2026-_002e_002e_002e}%
 
-\\chapter{{$\\equiv{}$ \\texorpdfstring{\\fbox{error}}{error} \\euro{} \\textexclamdown{} $\\mapsto{}$ -}}
+\\Texinfochapter{{$\\equiv{}$ \\texorpdfstring{\\fbox{error}}{error} \\euro{} \\textexclamdown{} $\\mapsto{}$ -}}
 \\label{anchor:_2261-error_002d_002d_003e-_20ac-_00a1-_21a6-_2212}%
 
-\\chapter{{$\\geq{}$ $\\leq{}$ $\\rightarrow{}$}}
+\\Texinfochapter{{$\\geq{}$ $\\leq{}$ $\\rightarrow{}$}}
 \\label{anchor:_2265-_2264-_2192}%
 
-\\chapter{{\\textordfeminine{} \\textordmasculine{} $\\star{}$ \\textsterling{} $\\dashv{}$ \\textquestiondown{} \\circledR{}}}
+\\Texinfochapter{{\\textordfeminine{} \\textordmasculine{} $\\star{}$ \\textsterling{} $\\dashv{}$ \\textquestiondown{} \\circledR{}}}
 \\label{anchor:_00aa-_00ba-_22c6-_00a3-_22a3-_00bf-_00ae}%
 
-\\chapter{{$\\Rightarrow{}$ \\textdegree{} a~b \\today{} \\aa{}}}
+\\Texinfochapter{{$\\Rightarrow{}$ \\textdegree{} a~b \\today{} \\aa{}}}
 \\label{anchor:_21d2-_00b0-a-b-_00e5}%
 
-\\chapter{{\\AA{} \\ae{} \\oe{} \\AE{} \\OE{} \\o{} \\O{} \\ss{} \\l{} \\L{} \\DH{} \\dh{} \\TH{} \\th{}}}
+\\Texinfochapter{{\\AA{} \\ae{} \\oe{} \\AE{} \\OE{} \\o{} \\O{} \\ss{} \\l{} \\L{} \\DH{} \\dh{} \\TH{} \\th{}}}
 \\label{anchor:_00c5-_00e6-_0153-_00c6-_0152-_00f8-_00d8-_00df-_0142-_0141-_00d0-_00f0-_00de-_00fe}%
 
-\\chapter{{\\"{a} \\~{e} \\^{\\i{}} \\^{a} \\`{a} \\\'{e} \\c{c} \\={e} \\r{e} \\H{e} \\k{e}}}
+\\Texinfochapter{{\\"{a} \\~{e} \\^{\\i{}} \\^{a} \\`{a} \\\'{e} \\c{c} \\={e} \\r{e} \\H{e} \\k{e}}}
 \\label{anchor:_00e4-_1ebd-_00ee-_00e2-_00e0-_00e9-_00e7-_0113-e_030a-e_030b-_0119}%
 
-\\chapter{{\\.{e} \\u{e} \\b{e} \\d{e} \\v{e} \\j{} \\t{ee}}}
+\\Texinfochapter{{\\.{e} \\u{e} \\b{e} \\d{e} \\v{e} \\j{} \\t{ee}}}
 \\label{anchor:_0117-_0115-e_0332-_1eb9-_011b-_0237-e_0361e}%
 
-\\chapter{{\\i{} \\`{\\={E}} \\c{\\\'{C}}}}
+\\Texinfochapter{{\\i{} \\`{\\={E}} \\c{\\\'{C}}}}
 \\label{anchor:_0131-_1e14-_1e08}%
 
-\\chapter{{\\textquotedblleft{} \\textquotedblright{} \\textquoteleft{} \\textquoteright{} \\quotedblbase{} \\quotesinglbase{}}}
+\\Texinfochapter{{\\textquotedblleft{} \\textquotedblright{} \\textquoteleft{} \\textquoteright{} \\quotedblbase{} \\quotesinglbase{}}}
 \\label{anchor:_201c-_201d-_2018-_2019-_201e-_201a}%
 
-\\chapter{{\\guillemotleft{} \\guillemotright{} \\guillemotleft{} \\guillemotright{} \\guilsinglleft{} \\guilsinglright{}}}
+\\Texinfochapter{{\\guillemotleft{} \\guillemotright{} \\guillemotleft{} \\guillemotright{} \\guilsinglleft{} \\guilsinglright{}}}
 \\label{anchor:_00ab-_00bb-_00ab-_00bb-_2039-_203a}%
 
-\\chapter{{`` \'\' --- -- ` \'}}
+\\Texinfochapter{{`` \'\' --- -- ` \'}}
 \\label{anchor:_0060_0060-_0027_0027-_002d_002d_002d-_002d_002d-_0060-_0027}%
 
-\\chapter{{AAA (fff) AAA BBB}}
+\\Texinfochapter{{AAA (fff) AAA BBB}}
 \\label{anchor:AAA-AAA-BBB}%
 
-\\chapter{{CCC (rrr) CCC DDD}}
+\\Texinfochapter{{CCC (rrr) CCC DDD}}
 \\label{anchor:CCC-CCC-DDD}%
 
-\\chapter{{\\href{mailto:someone@somewher}{the someone} \\href{mailto:no_explain@there}{\\nolinkurl{no_explain@there}}}}
+\\Texinfochapter{{\\href{mailto:someone@somewher}{the someone} \\href{mailto:no_explain@there}{\\nolinkurl{no_explain@there}}}}
 \\label{anchor:someone_0040somewher-no_005fexplain_0040there}%
 
-\\chapter{{\\includegraphics{f--ile1}  \\includegraphics[width=aze,height=az]{f--ile}}}
+\\Texinfochapter{{\\includegraphics{f--ile1}  \\includegraphics[width=aze,height=az]{f--ile}}}
 \\label{anchor:f_002d_002dile1-f_002d_002dile}%
 
-\\chapter{{\\verb| @ {} . |}}
+\\Texinfochapter{{\\verb| @ {} . |}}
 \\label{anchor:-_0040-_007b_007d-_002e-}%
 
-\\chapter{{\\Texinfocommandstyletextcite{cite asis} \\hbox{in @w \\textbf{b}} \\textnormal{in r} \\textsc{sc} \\textbf{str} \\texttt{t} \\Texinfocommandstyletextvar{var} \\textsl{dfn} \\textit{i}}}
+\\Texinfochapter{{\\Texinfocommandstyletextcite{cite asis} \\hbox{in @w \\textbf{b}} \\textnormal{in r} \\textsc{sc} \\textbf{str} \\texttt{t} \\Texinfocommandstyletextvar{var} \\textsl{dfn} \\textit{i}}}
 \\label{anchor:cite-asis-in-_0040w-b-in-r-sc-str-t-var-dfn-i}%
 
-\\chapter{{\\texttt{env} \\texttt{code} \\texttt{option} `\\texttt{samp}\' \\texttt{command} \\texttt{file} \\Texinfocommandstyletextkbd{C-x \\texttt{ESC}}}}
+\\Texinfochapter{{\\texttt{env} \\texttt{code} \\texttt{option} `\\texttt{samp}\' \\texttt{command} \\texttt{file} \\Texinfocommandstyletextkbd{C-x \\texttt{ESC}}}}
 \\label{anchor:env-code-option-samp-command-file-C_002dx-ESC}%
 
-\\chapter{{8.27\\thinspace in}}
+\\Texinfochapter{{8.27\\thinspace in}}
 \\label{anchor:8_002e27in}%
 
-\\chapter{{\\textsf{sansserif} \\textsl{slanted}}}
+\\Texinfochapter{{\\textsf{sansserif} \\textsl{slanted}}}
 \\label{anchor:sansserif-slanted}%
 
-\\chapter{{`\\texttt{indicateurl}\'}}
+\\Texinfochapter{{`\\texttt{indicateurl}\'}}
 \\label{anchor:indicateurl}%
 
-\\chapter{{\\textsubscript{g}H 3\\textsuperscript{rd}}}
+\\Texinfochapter{{\\textsubscript{g}H 3\\textsuperscript{rd}}}
 \\label{anchor:gH-3rd}%
 
-\\chapter{{\\url{http://somewhere_aaa} \\href{url}{text (\\nolinkurl{url})} ls}}
+\\Texinfochapter{{\\url{http://somewhere_aaa} \\href{url}{text (\\nolinkurl{url})} ls}}
 \\label{anchor:http_003a_002f_002fsomewhere_005faaa-url-_002fman_002ecgi_002f1_002fls}%
 
 \\hyperref[anchor:-_007b-_007d]{\\chaptername~\\ref*{anchor:-_007b-_007d} [\\-{} \\{ \\}], page~\\pageref*{anchor:-_007b-_007d}}

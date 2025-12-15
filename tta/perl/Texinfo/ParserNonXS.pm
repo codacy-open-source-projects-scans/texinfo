@@ -13,7 +13,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
 # Parts (also from Patrice Dumas) come from texi2html.pl or texi2html.init.
@@ -120,7 +120,7 @@ sub import {
   goto &Exporter::import;
 }
 
-our $VERSION = '7.2dev';
+our $VERSION = '7.2.90';
 
 
 # Document information set in the parser.  The initialization is done by

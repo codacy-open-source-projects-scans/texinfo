@@ -11,7 +11,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>. */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
 #include <stdlib.h>
 
@@ -39,14 +39,14 @@
 #include "extra.h"
 #include "builtin_commands.h"
 #include "debug.h"
-/* add_include_directory add_string html_free_button_specification_list ... */
+/* add_include_directory add_string ... */
 #include "utils.h"
+/* html_clear_direction_icons html_free_button_specification_list ... */
 #include "customization_options.h"
 #include "errors.h"
 #include "targets.h"
 #include "parser_conf.h"
 #include "document.h"
-#include "create_buttons.h"
 #include "output_unit.h"
 #include "get_perl_info.h"
 
@@ -698,7 +698,7 @@ html_fill_button_sv_specification_list (const CONVERTER *converter,
 
 /* HTML specific, but needs to be there for options_get_perl.c */
 /* it is expected that directions are not found as the directions list
-   is not setup already.  A call of html_fill_button_specification_list
+   is not setup already.  A call of html_fill_button_sv_specification_list
    should be needed afterwards */
 BUTTON_SPECIFICATION_LIST *
 html_get_button_specification_list (const CONVERTER *converter,
@@ -724,7 +724,7 @@ html_get_button_specification_list (const CONVERTER *converter,
   if (buttons_nr == 0)
     return 0;
 
-  result = new_button_specification_list ((size_t) buttons_nr);
+  result = html_new_button_specification_list ((size_t) buttons_nr);
 
   result->av = buttons_av;
   SvREFCNT_inc ((SV *)result->av);
@@ -758,7 +758,7 @@ html_get_button_specification_list (const CONVERTER *converter,
               const char *direction_name;
 
               BUTTON_SPECIFICATION_INFO *button_spec
-                = new_button_specification_info ();
+                = html_new_button_specification_info ();
 
               button->type = BST_direction_info;
               button->b.button_info = button_spec;
@@ -1365,7 +1365,7 @@ get_language_document_hv_sorted_indices (HV *document_hv, const char *key,
 
 /* Note that it is not really possible to get FILE from a filehandle associated
    to a file to be closed in unclosed_files.  If the file was opened in C,
-   it is not possible to directly associate a the unclosed stream to a SV
+   it is not possible to directly associate the unclosed stream to a SV
    to transit through Perl, see comment in build_output_files_unclosed_files.
    If the file was opened in Perl, it is possible to get a PerlIO, as done
    below in code, but not a FILE to be closed.  A file obtained with

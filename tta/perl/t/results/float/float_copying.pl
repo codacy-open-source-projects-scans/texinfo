@@ -642,10 +642,8 @@ th.index-letter-header-printindex {text-align: left}
 <body lang="">
 
 <div class="top-level-extent" id="Top">
-<div class="nav-panel">
-<p>
-Next: <a href="#Copying-and-floats" accesskey="n" rel="next">Copying and floats</a> &nbsp; [<a href="#Copying-and-floats" title="Index" rel="index">Index</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#Copying-and-floats" accesskey="n" rel="next">Copying and floats</a></span></span><span class="nav-button"> &nbsp; </span><span class="nav-button">[<a href="#Copying-and-floats" title="Index" rel="index">Index</a>]</span></p>
 <h1 class="top" id="Top-1"><span>Top<a class="copiable-link" href="#Top-1"> &para;</a></span></h1>
 
 
@@ -665,10 +663,8 @@ the author abandon his copyright.
 </ul>
 <hr>
 <div class="appendix-level-extent" id="Copying-and-floats">
-<div class="nav-panel">
-<p>
-Previous: <a href="#Top" accesskey="p" rel="prev">Top</a>, Up: <a href="#Top" accesskey="u" rel="up">Top</a> &nbsp; [<a href="#Copying-and-floats" title="Index" rel="index">Index</a>]</p>
-</div>
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">Top</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">Top</a></span></span><span class="nav-button"> &nbsp; </span><span class="nav-button">[<a href="#Copying-and-floats" title="Index" rel="index">Index</a>]</span></p>
 <h2 class="appendix" id="Copying-and-floats-1"><span>Appendix A Copying and floats<a class="copiable-link" href="#Copying-and-floats-1"> &para;</a></span></h2>
 
 
@@ -839,11 +835,38 @@ $result_converted{'latex'}->{'float_copying'} = '\\documentclass{book}
 \\usepackage[hidelinks]{hyperref}
 
 \\makeatletter
+\\newcommand{\\Texinfothechapterheading}{}
+\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newcommand{\\Texinfosettitle}{No Title}%
+
+\\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
+\\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+}%
+
+\\newcommand{\\Texinfounnumberedpart}[1]{\\part*{#1}
+\\addcontentsline{toc}{part}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsection}[1]{\\section*{#1}
+\\addcontentsline{toc}{section}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsection}[1]{\\subsection*{#1}
+\\addcontentsline{toc}{subsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfounnumberedsubsubsection}[1]{\\subsubsection*{#1}
+\\addcontentsline{toc}{subsubsection}{\\protect\\textbf{#1}}%
+}%
+
+\\newcommand{\\Texinfochapter}[1]{\\chapter{#1}
+\\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
+}%
 
 % new float for type `Copyright notice\'
 \\newfloat{TexinfoFloatCopyrightnotice}{htb}{tfl}[chapter]
-\\floatname{TexinfoFloatCopyrightnotice}{}
+\\floatname{TexinfoFloatCopyrightnotice}{Copyright notice}
 % no index headers
 \\indexsetup{level=\\relax,toclevel=section}%
 \\makeindex[name=cp,title=]%
@@ -860,8 +883,8 @@ $result_converted{'latex'}->{'float_copying'} = '\\documentclass{book}
 % used for substitutions in commands
 \\newcommand{\\Texinfoplaceholder}[1]{}
 
-\\newpagestyle{single}{\\sethead[\\chaptername{} \\thechapter{} \\chaptertitle{}][][\\thepage]
-                              {\\chaptername{} \\thechapter{} \\chaptertitle{}}{}{\\thepage}}
+\\newpagestyle{single}{\\sethead[\\Texinfothechapterheading{}\\chaptertitle{}][][\\thepage]
+                              {\\Texinfothechapterheading{}\\chaptertitle{}}{}{\\thepage}}
 
 % allow line breaking at underscore
 \\let\\Texinfounderscore\\_
@@ -879,7 +902,8 @@ $result_converted{'latex'}->{'float_copying'} = '\\documentclass{book}
 \\begin{document}
 \\label{anchor:Top}%
 \\appendix
-\\chapter{{Copying and floats}}
+\\renewcommand{\\Texinfoheadingchaptername}{\\appendixname}
+\\Texinfochapter{{Copying and floats}}
 \\label{anchor:Copying-and-floats}%
 
 
@@ -894,7 +918,7 @@ the author abandon his copyright.
 \\index[cp]{indexed caption copying footnote@indexed caption copying footnote}%
 \\index[fn]{public domain function@\\texttt{public domain function}}%
 
-see \\hyperref[anchor:Copying-and-floats]{\\chaptername~\\ref*{anchor:Copying-and-floats} [Copying and floats], page~\\pageref*{anchor:Copying-and-floats}}.
+see \\hyperref[anchor:Copying-and-floats]{\\appendixname~\\ref*{anchor:Copying-and-floats} [Copying and floats], page~\\pageref*{anchor:Copying-and-floats}}.
 
 }
 
@@ -916,7 +940,7 @@ the author abandon his copyright.
 \\index[cp]{indexed caption copying footnote@indexed caption copying footnote}%
 \\index[fn]{public domain function@\\texttt{public domain function}}%
 
-see \\hyperref[anchor:Copying-and-floats]{\\chaptername~\\ref*{anchor:Copying-and-floats} [Copying and floats], page~\\pageref*{anchor:Copying-and-floats}}.
+see \\hyperref[anchor:Copying-and-floats]{\\appendixname~\\ref*{anchor:Copying-and-floats} [Copying and floats], page~\\pageref*{anchor:Copying-and-floats}}.
 
 }
 

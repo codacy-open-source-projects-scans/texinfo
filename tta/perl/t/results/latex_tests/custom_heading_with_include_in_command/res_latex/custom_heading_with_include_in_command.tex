@@ -13,8 +13,35 @@
 \usepackage[hidelinks]{hyperref}
 
 \makeatletter
+\newcommand{\Texinfothechapterheading}{}
+\newcommand{\Texinfoheadingchaptername}{\chaptername}
 \newcommand{\Texinfosettitle}{No Title}%
 \newcommand{\Texinfotheinclude}{}%
+
+\newcommand{\Texinfounnumberedchapter}[1]{\chapter*{#1}
+\addcontentsline{toc}{chapter}{\protect\textbf{#1}}%
+\renewcommand{\Texinfothechapterheading}{\Texinfoplaceholder}%
+}%
+
+\newcommand{\Texinfounnumberedpart}[1]{\part*{#1}
+\addcontentsline{toc}{part}{\protect\textbf{#1}}%
+}%
+
+\newcommand{\Texinfounnumberedsection}[1]{\section*{#1}
+\addcontentsline{toc}{section}{\protect\textbf{#1}}%
+}%
+
+\newcommand{\Texinfounnumberedsubsection}[1]{\subsection*{#1}
+\addcontentsline{toc}{subsection}{\protect\textbf{#1}}%
+}%
+
+\newcommand{\Texinfounnumberedsubsubsection}[1]{\subsubsection*{#1}
+\addcontentsline{toc}{subsubsection}{\protect\textbf{#1}}%
+}%
+
+\newcommand{\Texinfochapter}[1]{\chapter{#1}
+\renewcommand{\Texinfothechapterheading}{\Texinfoheadingchaptername{} \thechapter{} }%
+}%
 
 % redefine the \mainmatter command such that it does not clear page
 % as if in double page
@@ -27,11 +54,11 @@
 % used for substitutions in commands
 \newcommand{\Texinfoplaceholder}[1]{}
 
-\newpagestyle{single}{\sethead[\chaptername{} \thechapter{} \chaptertitle{}][][\thepage]
-                              {\chaptername{} \thechapter{} \chaptertitle{}}{}{\thepage}}
+\newpagestyle{single}{\sethead[\Texinfothechapterheading{}\chaptertitle{}][][\thepage]
+                              {\Texinfothechapterheading{}\chaptertitle{}}{}{\thepage}}
 
 \newpagestyle{double}{\sethead[\thepage{}][][\Texinfosettitle]
-                              {\chaptername{} \thechapter{} \chaptertitle{}}{}{\thepage}}
+                              {\Texinfothechapterheading{}\chaptertitle{}}{}{\thepage}}
 
 % allow line breaking at underscore
 \let\Texinfounderscore\_
@@ -50,21 +77,21 @@
 \makeatother
 \pagestyle{double}%
 \newpagestyle{custom}{%
-\sethead[\chaptername{} \thechapter{} \chaptertitle{} \emph{\Texinfotheinclude{}}][][\thepage{}]%
-{\chaptername{} \thechapter{} \chaptertitle{} \emph{\Texinfotheinclude{}}}{}{\thepage{}}%
+\sethead[\Texinfothechapterheading{}\chaptertitle{} \emph{\Texinfotheinclude{}}][][\thepage{}]%
+{\Texinfothechapterheading{}\chaptertitle{} \emph{\Texinfotheinclude{}}}{}{\thepage{}}%
 }%
 \pagestyle{custom}%
 
 \begin{document}
 \tableofcontents\newpage
 \label{anchor:Top}%
-\chapter{{chap in main}}
+\Texinfochapter{{chap in main}}
 \label{anchor:in-main}%
 
 \renewcommand{\Texinfotheinclude}{section\_file.texi}%
 \textbackslash{}input texinfo 
 
-\chapter{{Chapter in included file}}
+\Texinfochapter{{Chapter in included file}}
 \label{anchor:Chapter-in-included-file}%
 
 
@@ -80,7 +107,7 @@
 \renewcommand{\Texinfotheinclude}{section\_file\_no\_node.texi}%
 
 
-\chapter{{Chapter in included file}}
+\Texinfochapter{{Chapter in included file}}
 
 \section{{Section}}
 
@@ -91,7 +118,7 @@
 \renewcommand{\Texinfotheinclude}{section\_file\_no\_node\_include.texi}%
 
 
-\chapter{{Chapter in included file Include}}
+\Texinfochapter{{Chapter in included file Include}}
 
 \section{{Section Include}}
 
@@ -102,7 +129,7 @@ Now include file
 \renewcommand{\Texinfotheinclude}{section\_file\_no\_node.texi}%
 
 
-\chapter{{Chapter in included file}}
+\Texinfochapter{{Chapter in included file}}
 
 \section{{Section}}
 
@@ -115,7 +142,7 @@ Now include file
 \renewcommand{\Texinfotheinclude}{section\_file\_no\_node.texi}%
 
 
-\chapter{{Chapter in included file}}
+\Texinfochapter{{Chapter in included file}}
 
 \section{{Section}}
 
@@ -124,7 +151,7 @@ Now include file
 \renewcommand{\Texinfotheinclude}{}%
 
 
-\chapter{{A last}}
+\Texinfochapter{{A last}}
 \label{anchor:last-chap}%
 
 \end{document}

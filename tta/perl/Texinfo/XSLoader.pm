@@ -11,7 +11,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+# along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 package Texinfo::XSLoader;
 
@@ -35,7 +35,7 @@ BEGIN {
 
 our $TEXINFO_XS;
 
-our $VERSION = '7.2dev';
+our $VERSION = '7.2.90';
 
 # used for comparison with XS_VERSION passed through configure and make.
 # The github CI adds the date after a hyphen, turn the hyphen to a dot.

@@ -11,7 +11,7 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+   along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
 #include <config.h>
 
@@ -2111,11 +2111,11 @@ html_set_main_units_direction_names (CONVERTER *self)
          self->customized_global_text_directions.number +1) * sizeof (char *));
 
           for (i = 0; i < self->customized_global_text_directions.number; i++)
-           {
-             const char *direction
+            {
+              const char *direction
                = self->customized_global_text_directions.list[i];
 
-             self->main_units_direction_names[
+              self->main_units_direction_names[
                nr_special_units + NON_SPECIAL_DIRECTIONS_NR
                  + self->added_global_units_directions.number +i] = direction;
              }
@@ -3892,7 +3892,7 @@ html_setup_output (CONVERTER *self, char **paths)
           fill_jslicense_file_info (&jslicences_files_info->list[0],
                                     "js/info.js",
                                     "GNU General Public License 3.0 or later",
-                                    "http://www.gnu.org/licenses/gpl-3.0.html",
+                                    "https://www.gnu.org/licenses/gpl-3.0.html",
                                     "js/info.js");
           fill_jslicense_file_info (&jslicences_files_info->list[1],
                                     "js/modernizr.js", "Expat",
