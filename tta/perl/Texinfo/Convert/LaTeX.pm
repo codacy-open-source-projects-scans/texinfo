@@ -336,7 +336,7 @@ my %section_map = (
 );
 
 # associate the name of the created LaTeX macro to the usual LaTeX
-# sectoning command for unnumbered command that should appear in table
+# sectioning command for unnumbered command that should appear in table
 # of contents (every unnumbered commands except for @top).
 my %texinfo_unnumbered_macros_toc_latex;
 foreach my $unnumbered_command(keys(
@@ -1468,8 +1468,11 @@ sub _latex_header($) {
     if ($txi_unnumbered_latex eq 'Texinfounnumberedchapter') {
       $header_code
      .= "\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%\n";
-    }
-    if ($txi_unnumbered_latex eq 'Texinfounnumberedpart'
+      $header_code
+     .= "\\chaptermark{#1}%\n";
+    } elsif ($txi_unnumbered_latex eq 'Texinfounnumberedsection') {
+      $header_code .= "\\sectionmark{#1}%\n";
+    } elsif ($txi_unnumbered_latex eq 'Texinfounnumberedpart'
         and exists($self->{'need_parttitle'})) {
       $header_code .= "\\renewcommand{\\Texinfoparttitle}{#1}%\n";
     }
