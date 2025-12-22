@@ -42,7 +42,7 @@ void html_default_options_setup (void);
 void html_fill_options_directions (OPTIONS *options, const CONVERTER *converter);
 
 /* in html_prepare_converter.c */
-void html_initialize_output_state (CONVERTER *self, const char *context);
+void html_conversion_initialization (CONVERTER *self, const char *context);
 
 int html_setup_output (CONVERTER *self, char **paths);
 void html_setup_convert (CONVERTER *self);
@@ -61,6 +61,8 @@ FILE_SOURCE_INFO_LIST *html_prepare_units_directions_files (CONVERTER *self,
 
 /* in convert_html.c */
 void html_translate_names (CONVERTER *self);
+void html_setup_output_simple_page (CONVERTER *self,
+                                    const char *output_filename);
 
 /* next three called separately for convert() */
 void html_prepare_direction_icons (CONVERTER *self);

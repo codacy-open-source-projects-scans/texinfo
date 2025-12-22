@@ -85,7 +85,7 @@ typedef struct COMMAND_ID_ARGS_SPECIFICATION {
     unsigned long flags[MAX_COMMAND_ARGS_NR];
 } COMMAND_ID_ARGS_SPECIFICATION;
 
-/* in main/conversion_data.c */
+/* in main/html_css_data.c */
 extern const CSS_SELECTOR_STYLE base_default_css_element_class_styles[];
 
 const char *html_global_unit_direction_names[] = {
@@ -163,7 +163,7 @@ static enum command_id additional_format_context_cmd[] = {
 
 /* should correspond to enum html_special_character */
 /* HTML textual entity, UTF-8 encoded, unicode point, HTML numeric entity */
-char *special_characters_formatting[SC_non_breaking_space+1][4] = {
+const char *special_characters_formatting[SC_non_breaking_space+1][4] = {
   {"&para;", "\xC2\xB6", "00B6", "&#182;"},
   {"&lsquo;", "\xE2\x80\x98", "2018", "&#8216;"},
   {"&rsquo;", "\xE2\x80\x99", "2019", "&#8217;"},
@@ -276,6 +276,36 @@ get_special_list_mark_css_string_no_arg_command (enum command_id cmd)
   return 0;
 }
 
+void
+clear_css_selector_style_list (CSS_SELECTOR_STYLE_LIST *selector_styles)
+{
+  size_t j;
+
+  for (j = 0; j < selector_styles->number; j++)
+    {
+      CSS_SELECTOR_STYLE *selector_style = &selector_styles->list[j];
+      free (selector_style->selector);
+      free (selector_style->style);
+    }
+  /* The following is not needed, as next the list is freed, or
+     set_css_selector_style_list_size is called, which sets number.
+  selector_styles->number = 0;
+   */
+}
+
+static void
+set_css_selector_style_list_size (CSS_SELECTOR_STYLE_LIST *selector_styles,
+                                  size_t size)
+{
+  if (selector_styles->space < size)
+    {
+      selector_styles->list = (CSS_SELECTOR_STYLE *)
+        realloc (selector_styles->list, size * sizeof (CSS_SELECTOR_STYLE));
+      selector_styles->space = size;
+    }
+  selector_styles->number = size;
+}
+
 /* set information that is independent of customization, only called once */
 void
 html_format_setup (void)
@@ -289,17 +319,17 @@ html_format_setup (void)
   int default_commands_args_nr
     = sizeof (default_commands_args) / sizeof (default_commands_args[0]);
   int max_args = MAX_COMMAND_ARGS_NR;
-  CSS_SELECTOR_STYLE *css_selector_style;
+  CSS_SELECTOR_STYLE *display_preformatted_css_selector_style;
   TEXT css_string_text;
-
-  html_default_options_setup ();
 
   const enum command_id indented_format[] = {
     CM_example, CM_display, CM_lisp, 0
   };
 
-  initialize_css_selector_style_list (&default_css_element_class_styles,
-                                      BASE_DEFAULT_CSS_ELEMENT_CLASS_STYLE_NR);
+  html_default_options_setup ();
+
+  set_css_selector_style_list_size (&default_css_element_class_styles,
+                                    BASE_DEFAULT_CSS_ELEMENT_CLASS_STYLE_NR);
   for (i = 0; i < BASE_DEFAULT_CSS_ELEMENT_CLASS_STYLE_NR; i++)
     {
       CSS_SELECTOR_STYLE *selector_style
@@ -311,12 +341,12 @@ html_format_setup (void)
     }
   sort_css_element_class_styles (&default_css_element_class_styles);
 
-  css_selector_style
+  display_preformatted_css_selector_style
     = find_css_selector_style (&default_css_element_class_styles,
                                "pre.display-preformatted");
   html_css_set_selector_style (&default_css_element_class_styles,
                                "pre.format-preformatted",
-                               css_selector_style->style);
+                               display_preformatted_css_selector_style->style);
 
   for (i = 0; i < default_commands_args_nr; i++)
     {
@@ -336,15 +366,16 @@ html_format_setup (void)
       enum command_id cmd = indented_format[i];
       html_commands_data[cmd].flags |= HF_indented_preformatted;
 
-      xasprintf (&css_selector, "div.%s", builtin_command_name (cmd));
-      html_css_set_selector_style (&default_css_element_class_styles,
-                                  css_selector,
-                                  "margin-left: 3.2em");
-      free (css_selector);
+      /* div.lisp is output as div.example */
+      if (cmd != CM_lisp)
+        {
+          xasprintf (&css_selector, "div.%s", builtin_command_name (cmd));
+          html_css_set_selector_style (&default_css_element_class_styles,
+                                       css_selector,
+                                       "margin-left: 3.2em");
+          free (css_selector);
+        }
     }
-  /* output as div.example instead */
-  html_css_set_selector_style (&default_css_element_class_styles,
-                               "div.lisp", 0);
 
   for (i = 0; small_block_associated_command[i][0]; i++)
     {
@@ -646,7 +677,7 @@ html_builtin_default_css_text (void)
     {
       CSS_SELECTOR_STYLE *selector_style
         = &default_css_element_class_styles.list[i];
-      if (selector_style->style && strlen (selector_style->style))
+      if (strlen (selector_style->style))
         text_printf (&css_text, "%s {%s}\n", selector_style->selector,
                                              selector_style->style);
     }
@@ -662,6 +693,7 @@ html_builtin_default_css_text (void)
    defaults based on customization variables.
    Apply specific customizations (from Perl) */
 
+/* This should be constant at the end of the converter initialization */
 int
 html_nr_string_directions (const CONVERTER *self)
 {
@@ -1483,6 +1515,424 @@ load_htmlxref_files (CONVERTER *self)
     }
 }
 
+static void
+html_process_css_file (CONVERTER *self, FILE *fh, char *filename,
+                       STRING_LIST *imports, STRING_LIST *rules)
+{
+  TEXT text;
+  int in_rules = 0;
+  int in_comment = 0;
+  int in_import = 0;
+  int in_string = 0;
+  int line_nr = 0;
+
+  /* the rule is to assume utf-8.  There could also be a BOM, and
+     the Content-Type: HTTP header but it is not relevant here.
+     https://developer.mozilla.org/en-US/docs/Web/CSS/@charset
+   */
+  const char *input_encoding = "utf-8";
+  ENCODING_CONVERSION *conversion
+    = get_encoding_conversion (input_encoding, &input_conversions);
+
+  text_init (&text);
+
+  while (1)
+    {
+      size_t n;
+      char *input_line = 0;
+      char *line;
+      const char *p;
+      char in_string_string;
+
+      ssize_t status = getline (&input_line, &n, fh);
+      if (status == -1)
+        {
+          free (input_line);
+          break;
+        }
+      if (!conversion)
+        line = strdup (input_line);
+      else
+        line = encode_with_iconv (conversion->iconv, input_line, 0, 0);
+
+      free (input_line);
+      line_nr ++;
+      /*
+      char *protected_line = debug_protect_eol (line);
+      fprintf (stderr, "NL(%d) '%s'\n", line_nr, protected_line);
+      free (protected_line);
+       */
+      if (line_nr == 1)
+        {
+          int line_len = strlen (line);
+          if (line_len > 13)
+            {
+              size_t n_charset;
+              const char *q;
+              char *charset;
+              if (memcmp (line, "@charset ", 9))
+                goto nocharset;
+              p = line + 9;
+              p += strspn (p, " ");
+              if (*p != '"')
+                goto nocharset;
+              p++;
+              q = p;
+              n_charset = strcspn (p, "\"");
+              if (!n_charset)
+                goto nocharset;
+              p += n_charset;
+              if (*p != '"')
+                goto nocharset;
+              p++;
+              p += strspn (p, " ");
+              if (*p != ';')
+                goto nocharset;
+              p++;
+              p += strspn (p, " ");
+              if (*p && !strchr ("\n\r", *p))
+                goto nocharset;
+              charset = strndup (q, n_charset);
+              conversion
+               = get_encoding_conversion (charset, &input_conversions);
+              free (charset);
+              free (line);
+              continue;
+            }
+          nocharset:
+            ;
+        }
+
+      if (in_rules)
+        {
+          add_string (line, rules);
+          free (line);
+          continue;
+        }
+
+      text_reset (&text);
+      text_append (&text, "");
+
+      p = line;
+      while (1)
+        {
+          /*
+          char *protected_p = debug_protect_eol (p);
+          char *protected_text = debug_protect_eol (text.text);
+          fprintf (stderr,
+            "%s!in_comment %d in_rules %d in_import %d in_string %d: '%s'\n",
+             protected_text, in_comment, in_rules,
+             in_import, in_string,protected_p);
+          free (protected_p);
+          free (protected_text);
+           */
+
+          if (in_comment)
+            {
+              const char *q = p;
+              while (1)
+                {
+                  const char *k = strchr (q, '*');
+                  if (k)
+                    {
+                      k++;
+                      if (*k == '/')
+                        {
+                          k++;
+                          text_append_n (&text, p, k - p);
+                          p = k;
+                          in_comment = 0;
+                          break;
+                        }
+                      else if (!*k)
+                        break;
+                      else
+                        q = k;
+                    }
+                  else
+                    break;
+                }
+              if (in_comment)
+                {
+                  text_append (&text, p);
+                  add_string (text.text, imports);
+                  break;
+                }
+            }
+          else if (!in_string && *p == '/')
+            {
+              p++;
+              if (*p == '*')
+                {
+                  p++;
+                  text_append_n (&text, "/*", 2);
+                  in_comment = 1;
+                }
+              else
+                {
+                  if (text.end > 0)
+                    {
+                      text_append_n (&text, "\n", 1);
+                      add_string (text.text, imports);
+                    }
+                  p--; /* back on / */
+                  add_string (p, rules);
+                  in_rules = 1;
+                  break;
+                }
+            }
+          else if (!in_string && in_import && *p && strchr ("\"'", *p))
+            {
+              /* strings outside of import start rules */
+              text_append_n (&text, p, 1);
+              in_string_string = *p;
+              p++;
+              in_string = 1;
+            }
+          else if (in_string && *p == '\\' && *(p+1) == in_string_string)
+            {
+              text_append_n (&text, p, 2);
+              p += 2;
+            }
+          else if (in_string && *p == in_string_string)
+            {
+              text_append_n (&text, p, 1);
+              p++;
+              in_string = 0;
+            }
+          else
+            {
+              int matched_import = 0;
+              if (!in_string && !in_import)
+                {
+                  const char *q = p;
+                  if (*q == '\\')
+                    q++;
+                  if (strlen (q) >= 7 && !memcmp (q, "@import", 7))
+                    {
+                      q += 7;
+                      if (!*q || strchr (whitespace_chars, *q))
+                        {
+                          /* spaces except newlines */
+                          q += strspn (q, " \t\v\f");
+                          text_append_n (&text, p, q - p);
+                          in_import = 1;
+                          p = q;
+                          matched_import = 1;
+                        }
+                    }
+                }
+              if (!matched_import)
+                {
+                  if (!in_string && in_import && *p == ';')
+                    {
+                      text_append_n (&text, ";", 1);
+                      p++;
+                      in_import = 0;
+                    }
+                  else if ((in_import || in_string) && *p && !strchr ("\n\r", *p))
+                    {
+                      /* Count any UTF-8 continuation bytes. */
+                      int char_len = 1;
+                      while ((p[char_len] & 0xC0) == 0x80)
+                        char_len++;
+                      text_append_n (&text, p, char_len);
+                      p += char_len;
+                    }
+                  else if (!in_import && *p && !strchr (whitespace_chars, *p))
+                    {
+                      if (text.end > 0)
+                        {
+                          text_append_n (&text, "\n", 1);
+                          add_string (text.text, imports);
+                        }
+                      add_string (p, rules);
+                      in_rules = 1;
+                      break;
+                    }
+                  else if (*p && strchr (whitespace_chars, *p))
+                    {
+                      text_append_n (&text, p, 1);
+                      p++;
+                    }
+                  else if (!*p)
+                    {
+                      add_string (text.text, imports);
+                      break;
+                    }
+                }
+            }
+        }
+      free (line);
+    }
+
+  free (text.text);
+
+  if (in_string || in_string || in_import)
+    {
+      SOURCE_INFO source_info;
+      source_info.macro = 0;
+      source_info.file_name = filename;
+      source_info.line_nr = line_nr;
+
+      if (in_string)
+        {
+          message_list_line_error_ext (&self->error_messages,
+                      (self->conf && self->conf->DEBUG.o.integer > 0),
+                                     MSG_warning, 0,
+                                     &source_info,
+                                "string not closed in css file");
+        }
+      if (in_comment)
+        {
+          message_list_line_error_ext (&self->error_messages,
+                      (self->conf && self->conf->DEBUG.o.integer > 0),
+                                     MSG_warning, 0,
+                                     &source_info,
+                                "--css-include ended in comment");
+        }
+      if (in_import && !in_comment && !in_string)
+        {
+          message_list_line_error_ext (&self->error_messages,
+                      (self->conf && self->conf->DEBUG.o.integer > 0),
+                                     MSG_warning, 0,
+                                     &source_info,
+                                "@import not finished in css file");
+        }
+    }
+}
+
+static void
+html_prepare_css (CONVERTER *self)
+{
+  const STRING_LIST *css_files;
+  STRING_LIST *css_import_lines;
+  STRING_LIST *css_rule_lines;
+  size_t i;
+
+  if (self->conf->NO_CSS.o.integer > 0)
+    return;
+
+  css_files = self->conf->CSS_FILES.o.strlist;
+
+  if (!css_files || css_files->number <= 0)
+    return;
+
+  css_import_lines = new_string_list ();
+  css_rule_lines = new_string_list ();
+
+  for (i = 0; i < css_files->number; i++)
+    {
+      FILE *css_file_fh;
+      char *css_file_path;
+      char *css_file = css_files->list[i];
+      if (!strcmp (css_file, "-"))
+        {
+          css_file_fh = stdin;
+          css_file_path = strdup ("-");
+        }
+      else
+        {
+          css_file_path = locate_include_file (css_file,
+                             self->conf->INCLUDE_DIRECTORIES.o.strlist);
+          if (!css_file_path)
+            {
+              char *css_input_file_name;
+              const char *encoding
+                = self->conf->COMMAND_LINE_ENCODING.o.string;
+              if (encoding)
+                {
+                  int status;
+                  css_input_file_name
+                   = decode_string (css_file, encoding, &status, 0);
+                }
+              else
+                css_input_file_name = strdup (css_file);
+              message_list_document_warn (&self->error_messages,
+                      self->conf, 0, "CSS file %s not found",
+                      css_input_file_name);
+              free (css_input_file_name);
+              continue;
+            }
+
+          css_file_fh = fopen (css_file_path, "r");
+          if (!css_file_fh)
+            {
+              char *css_file_name;
+              const char *encoding
+                = self->conf->COMMAND_LINE_ENCODING.o.string;
+              if (encoding)
+                {
+                  int status;
+                  css_file_name
+                   = decode_string (css_file_path, encoding, &status, 0);
+                }
+              else
+                css_file_name = strdup (css_file_path);
+              message_list_document_warn (&self->error_messages,
+                                          self->conf, 0,
+                         "could not open --include-file %s: %s",
+                               css_file_name, strerror (errno));
+
+              free (css_file_name);
+              free (css_file_path);
+              continue;
+            }
+        }
+
+      html_process_css_file (self, css_file_fh, css_file_path,
+                             css_import_lines, css_rule_lines);
+
+      if (fclose (css_file_fh))
+        {
+          char *css_file_name;
+          const char *encoding
+            = self->conf->COMMAND_LINE_ENCODING.o.string;
+          if (encoding)
+            {
+              int status;
+              css_file_name
+               = decode_string (css_file_path, encoding, &status, 0);
+            }
+          else
+            css_file_name = strdup (css_file_path);
+
+          message_list_document_error (&self->error_messages, self->conf, 0,
+                         "error on closing CSS file  %s: %s",
+                         css_file_name, strerror (errno));
+
+          free (css_file_path);
+        }
+
+      free (css_file_path);
+    }
+
+  if (self->conf->DEBUG.o.integer > 0)
+    {
+      if (css_import_lines->number > 0)
+        {
+          fprintf (stderr, "# css import lines\n");
+          for (i = 0; i < css_import_lines->number; i++)
+            fprintf (stderr, "%s", css_import_lines->list[i]);
+        }
+      if (css_rule_lines->number > 0)
+        {
+          fprintf (stderr, "# css rule lines\n");
+          for (i = 0; i < css_rule_lines->number; i++)
+            fprintf (stderr, "%s", css_rule_lines->list[i]);
+        }
+    }
+
+  for (i = 0; i < css_import_lines->number; i++)
+    html_css_add_info (self, CI_css_info_imports, css_import_lines->list[i]);
+
+  for (i = 0; i < css_rule_lines->number; i++)
+    html_css_add_info (self, CI_css_info_rules, css_rule_lines->list[i]);
+
+  destroy_strings_list (css_import_lines);
+  destroy_strings_list (css_rule_lines);
+}
+
 /* this code corresponds to the Perl converter_initialize code, only for
    code to be called before Perl customization setup information is passed */
 void
@@ -1523,6 +1973,7 @@ html_converter_initialize_beginning (CONVERTER *self)
     option_force_conf (&self->conf->MENU_ENTRY_COLON, 0, "");
 
   load_htmlxref_files (self);
+  html_prepare_css (self);
 }
 
 /* for customized special_unit_info (coming from Perl) */
@@ -2823,12 +3274,21 @@ html_converter_customize (CONVERTER *self)
 
 
 /* Initialize output state.  Sequence of:
-     html_initialize_output_state
+     html_conversion_initialization
      html_setup_output for output() or html_setup_convert for convert()
 
    To be followed by setting up output units
      html_prepare_conversion_units
  */
+
+void
+free_html_no_arg_command_conversion (
+                         HTML_NO_ARG_COMMAND_CONVERSION *format_spec)
+{
+  free (format_spec->element);
+  free (format_spec->text);
+  free (format_spec->translated_converted);
+}
 
 static void
 copy_html_no_arg_command_conversion (HTML_NO_ARG_COMMAND_CONVERSION *to,
@@ -2836,13 +3296,17 @@ copy_html_no_arg_command_conversion (HTML_NO_ARG_COMMAND_CONVERSION *to,
 {
   if (from->element)
     to->element = strdup (from->element);
+  else
+    to->element = 0;
   to->unset = from->unset;
   if (from->text)
     to->text = strdup (from->text);
+  else
+    to->text = 0;
   if (from->translated_converted)
     to->translated_converted = strdup (from->translated_converted);
-  if (from->translated_to_convert)
-    to->translated_to_convert = strdup (from->translated_to_convert);
+  else
+    to->translated_converted = 0;
 }
 
 char ***
@@ -2928,7 +3392,7 @@ static const enum command_id spaces_cmd[] = {
 /* called very early in conversion functions, before updating
    customization, before calling user-defined functions...  */
 void
-html_initialize_output_state (CONVERTER *self, const char *context)
+html_conversion_initialization (CONVERTER *self, const char *context)
 {
   int i;
   size_t j;
@@ -2937,13 +3401,12 @@ html_initialize_output_state (CONVERTER *self, const char *context)
   int nr_dir_str_contexts = TDS_context_string + 1;
   enum direction_string_type DS_type;
   const char *line_break_element;
-  int css_style_idx = 0;
   int *non_default_special_unit_directions =
      determine_non_default_special_unit_directions (self);
 
   if (!self->document && self->conf->DEBUG.o.integer > 0)
     {
-      fprintf (stderr, "REMARK: html_initialize_output_state: no document\n");
+      fprintf (stderr, "REMARK: html_conversion_initialization: no document\n");
     }
 
   /* corresponds with default_no_arg_commands_formatting
@@ -2952,7 +3415,13 @@ html_initialize_output_state (CONVERTER *self, const char *context)
    output_no_arg_commands_formatting[BUILTIN_CMD_NUMBER]
                                               [NO_ARG_COMMAND_CONTEXT_NR];
 
+  free_translation_cache (self->translation_cache);
+  self->translation_cache = 0;
+
   output_encoding = self->conf->OUTPUT_ENCODING_NAME.o.string;
+
+  self->current_node = 0;
+  self->current_root_command = 0;
 
   for (i = 0; i < SC_non_breaking_space+1; i++)
     {
@@ -3043,34 +3512,45 @@ html_initialize_output_state (CONVERTER *self, const char *context)
   output_no_arg_commands_formatting[CM_ASTERISK][HCC_type_normal].text
     = (char *)self->line_break_element.string;
 
-  initialize_css_selector_style_list (&self->css_element_class_styles,
-                                      default_css_element_class_styles.number);
+  clear_css_selector_style_list (&self->css_element_class_styles);
+  set_css_selector_style_list_size (&self->css_element_class_styles,
+                                    default_css_element_class_styles.number);
   for (j = 0; j < default_css_element_class_styles.number; j++)
     {
       CSS_SELECTOR_STYLE *default_selector_style
         = &default_css_element_class_styles.list[j];
-      if (default_selector_style->style)
-        {
-          CSS_SELECTOR_STYLE *selector_style
-            = &self->css_element_class_styles.list[css_style_idx];
-          selector_style->selector = strdup (default_selector_style->selector);
-          selector_style->style = strdup (default_selector_style->style);
-          css_style_idx++;
-        }
-      else
-        self->css_element_class_styles.number--;
+      CSS_SELECTOR_STYLE *selector_style
+        = &self->css_element_class_styles.list[j];
+      selector_style->selector = strdup (default_selector_style->selector);
+      selector_style->style = strdup (default_selector_style->style);
     }
 
   for (j = 0; j < no_arg_formatted_cmd.number; j++)
     {
       enum command_id cmd = no_arg_formatted_cmd.list[j];
       enum conversion_context cctx;
+      HTML_NO_ARG_COMMAND_CUSTOMIZATION *customized_no_arg_cmd_formatting
+        = &self->customized_no_arg_commands_formatting[cmd];
+      HTML_NO_ARG_COMMAND_FORMATTING *result_formatting
+        = &self->html_no_arg_command_conversion[cmd];
+
+      free (result_formatting->translated_to_convert);
+      if (customized_no_arg_cmd_formatting->translated_to_convert)
+        result_formatting->translated_to_convert
+          = strdup (
+            customized_no_arg_cmd_formatting->translated_to_convert);
+      else
+        result_formatting->translated_to_convert = 0;
+
       for (cctx = 0; cctx < NO_ARG_COMMAND_CONTEXT_NR; cctx++)
         {
           HTML_NO_ARG_COMMAND_CONVERSION *customized_no_arg_cmd
-            = self->customized_no_arg_commands_formatting[cmd][cctx];
+            = customized_no_arg_cmd_formatting->context_formatting[cctx];
           HTML_NO_ARG_COMMAND_CONVERSION *result
-            = &self->html_no_arg_command_conversion[cmd][cctx];
+            = &result_formatting->context_formatting[cctx];
+
+          free_html_no_arg_command_conversion (result);
+
           if (customized_no_arg_cmd)
             {
               copy_html_no_arg_command_conversion (result,
@@ -3147,9 +3627,13 @@ html_initialize_output_state (CONVERTER *self, const char *context)
       const char * const*default_converted_dir_str;
       char ***customized_type_dir_strings;
 
-      self->directions_strings[DS_type]
-        = new_directions_strings_type (nr_string_directions,
-                                       nr_dir_str_contexts);
+      if (!self->directions_strings[DS_type])
+        self->directions_strings[DS_type]
+          = new_directions_strings_type (nr_string_directions,
+                                         nr_dir_str_contexts);
+      else
+        html_clear_direction_string_type (self,
+                                          self->directions_strings[DS_type]);
 
       /* those will be determined from translatable strings */
       if (DS_type < TDS_TRANSLATED_MAX_NR)
@@ -3221,6 +3705,10 @@ html_initialize_output_state (CONVERTER *self, const char *context)
     (D_Last + self->special_unit_varieties.number
      + self->added_global_units_directions.number +1) * sizeof (OUTPUT_UNIT));
 
+  free (self->global_units_direction_names.list);
+  self->global_units_direction_names.list = 0;
+  self->global_units_direction_names.number = 0;
+
   if (self->conf->NODE_NAME_IN_INDEX.o.integer < 0)
     option_set_conf (&self->conf->NODE_NAME_IN_INDEX,
                      self->conf->USE_NODES.o.integer, 0);
@@ -3241,6 +3729,8 @@ html_initialize_output_state (CONVERTER *self, const char *context)
     option_set_conf (&self->conf->USE_ACCESSKEY, 1, 0);
 
 
+  /* modified when formatting a Texinfo as a CSS string, but always
+     reset to these values afterwards */
   self->current_formatting_references = &self->formatting_references[0];
   self->current_commands_conversion_function
      = &self->command_conversion_function[0];
@@ -3310,424 +3800,6 @@ init_conversion_after_setup_handler (CONVERTER *self)
       /* not sure if strcasecmp is needed or not */
       && !strcasecmp (self->conf->OUTPUT_ENCODING_NAME.o.string, "utf-8"))
     self->use_unicode_text = 1;
-}
-
-static void
-html_process_css_file (CONVERTER *self, FILE *fh, char *filename,
-                       STRING_LIST *imports, STRING_LIST *rules)
-{
-  TEXT text;
-  int in_rules = 0;
-  int in_comment = 0;
-  int in_import = 0;
-  int in_string = 0;
-  int line_nr = 0;
-
-  /* the rule is to assume utf-8.  There could also be a BOM, and
-     the Content-Type: HTTP header but it is not relevant here.
-     https://developer.mozilla.org/en-US/docs/Web/CSS/@charset
-   */
-  const char *input_encoding = "utf-8";
-  ENCODING_CONVERSION *conversion
-    = get_encoding_conversion (input_encoding, &input_conversions);
-
-  text_init (&text);
-
-  while (1)
-    {
-      size_t n;
-      char *input_line = 0;
-      char *line;
-      const char *p;
-      char in_string_string;
-
-      ssize_t status = getline (&input_line, &n, fh);
-      if (status == -1)
-        {
-          free (input_line);
-          break;
-        }
-      if (!conversion)
-        line = strdup (input_line);
-      else
-        line = encode_with_iconv (conversion->iconv, input_line, 0, 0);
-
-      free (input_line);
-      line_nr ++;
-      /*
-      char *protected_line = debug_protect_eol (line);
-      fprintf (stderr, "NL(%d) '%s'\n", line_nr, protected_line);
-      free (protected_line);
-       */
-      if (line_nr == 1)
-        {
-          int line_len = strlen (line);
-          if (line_len > 13)
-            {
-              size_t n_charset;
-              const char *q;
-              char *charset;
-              if (memcmp (line, "@charset ", 9))
-                goto nocharset;
-              p = line + 9;
-              p += strspn (p, " ");
-              if (*p != '"')
-                goto nocharset;
-              p++;
-              q = p;
-              n_charset = strcspn (p, "\"");
-              if (!n_charset)
-                goto nocharset;
-              p += n_charset;
-              if (*p != '"')
-                goto nocharset;
-              p++;
-              p += strspn (p, " ");
-              if (*p != ';')
-                goto nocharset;
-              p++;
-              p += strspn (p, " ");
-              if (*p && !strchr ("\n\r", *p))
-                goto nocharset;
-              charset = strndup (q, n_charset);
-              conversion
-               = get_encoding_conversion (charset, &input_conversions);
-              free (charset);
-              free (line);
-              continue;
-            }
-          nocharset:
-            ;
-        }
-
-      if (in_rules)
-        {
-          add_string (line, rules);
-          free (line);
-          continue;
-        }
-
-      text_reset (&text);
-      text_append (&text, "");
-
-      p = line;
-      while (1)
-        {
-          /*
-          char *protected_p = debug_protect_eol (p);
-          char *protected_text = debug_protect_eol (text.text);
-          fprintf (stderr,
-            "%s!in_comment %d in_rules %d in_import %d in_string %d: '%s'\n",
-             protected_text, in_comment, in_rules,
-             in_import, in_string,protected_p);
-          free (protected_p);
-          free (protected_text);
-           */
-
-          if (in_comment)
-            {
-              const char *q = p;
-              while (1)
-                {
-                  const char *k = strchr (q, '*');
-                  if (k)
-                    {
-                      k++;
-                      if (*k == '/')
-                        {
-                          k++;
-                          text_append_n (&text, p, k - p);
-                          p = k;
-                          in_comment = 0;
-                          break;
-                        }
-                      else if (!*k)
-                        break;
-                      else
-                        q = k;
-                    }
-                  else
-                    break;
-                }
-              if (in_comment)
-                {
-                  text_append (&text, p);
-                  add_string (text.text, imports);
-                  break;
-                }
-            }
-          else if (!in_string && *p == '/')
-            {
-              p++;
-              if (*p == '*')
-                {
-                  p++;
-                  text_append_n (&text, "/*", 2);
-                  in_comment = 1;
-                }
-              else
-                {
-                  if (text.end > 0)
-                    {
-                      text_append_n (&text, "\n", 1);
-                      add_string (text.text, imports);
-                    }
-                  p--; /* back on / */
-                  add_string (p, rules);
-                  in_rules = 1;
-                  break;
-                }
-            }
-          else if (!in_string && in_import && *p && strchr ("\"'", *p))
-            {
-              /* strings outside of import start rules */
-              text_append_n (&text, p, 1);
-              in_string_string = *p;
-              p++;
-              in_string = 1;
-            }
-          else if (in_string && *p == '\\' && *(p+1) == in_string_string)
-            {
-              text_append_n (&text, p, 2);
-              p += 2;
-            }
-          else if (in_string && *p == in_string_string)
-            {
-              text_append_n (&text, p, 1);
-              p++;
-              in_string = 0;
-            }
-          else
-            {
-              int matched_import = 0;
-              if (!in_string && !in_import)
-                {
-                  const char *q = p;
-                  if (*q == '\\')
-                    q++;
-                  if (strlen (q) >= 7 && !memcmp (q, "@import", 7))
-                    {
-                      q += 7;
-                      if (!*q || strchr (whitespace_chars, *q))
-                        {
-                          /* spaces except newlines */
-                          q += strspn (q, " \t\v\f");
-                          text_append_n (&text, p, q - p);
-                          in_import = 1;
-                          p = q;
-                          matched_import = 1;
-                        }
-                    }
-                }
-              if (!matched_import)
-                {
-                  if (!in_string && in_import && *p == ';')
-                    {
-                      text_append_n (&text, ";", 1);
-                      p++;
-                      in_import = 0;
-                    }
-                  else if ((in_import || in_string) && *p && !strchr ("\n\r", *p))
-                    {
-                      /* Count any UTF-8 continuation bytes. */
-                      int char_len = 1;
-                      while ((p[char_len] & 0xC0) == 0x80)
-                        char_len++;
-                      text_append_n (&text, p, char_len);
-                      p += char_len;
-                    }
-                  else if (!in_import && *p && !strchr (whitespace_chars, *p))
-                    {
-                      if (text.end > 0)
-                        {
-                          text_append_n (&text, "\n", 1);
-                          add_string (text.text, imports);
-                        }
-                      add_string (p, rules);
-                      in_rules = 1;
-                      break;
-                    }
-                  else if (*p && strchr (whitespace_chars, *p))
-                    {
-                      text_append_n (&text, p, 1);
-                      p++;
-                    }
-                  else if (!*p)
-                    {
-                      add_string (text.text, imports);
-                      break;
-                    }
-                }
-            }
-        }
-      free (line);
-    }
-
-  free (text.text);
-
-  if (in_string || in_string || in_import)
-    {
-      SOURCE_INFO source_info;
-      source_info.macro = 0;
-      source_info.file_name = filename;
-      source_info.line_nr = line_nr;
-
-      if (in_string)
-        {
-          message_list_line_error_ext (&self->error_messages,
-                      (self->conf && self->conf->DEBUG.o.integer > 0),
-                                     MSG_warning, 0,
-                                     &source_info,
-                                "string not closed in css file");
-        }
-      if (in_comment)
-        {
-          message_list_line_error_ext (&self->error_messages,
-                      (self->conf && self->conf->DEBUG.o.integer > 0),
-                                     MSG_warning, 0,
-                                     &source_info,
-                                "--css-include ended in comment");
-        }
-      if (in_import && !in_comment && !in_string)
-        {
-          message_list_line_error_ext (&self->error_messages,
-                      (self->conf && self->conf->DEBUG.o.integer > 0),
-                                     MSG_warning, 0,
-                                     &source_info,
-                                "@import not finished in css file");
-        }
-    }
-}
-
-static void
-html_prepare_css (CONVERTER *self)
-{
-  const STRING_LIST *css_files;
-  STRING_LIST *css_import_lines;
-  STRING_LIST *css_rule_lines;
-  size_t i;
-
-  if (self->conf->NO_CSS.o.integer > 0)
-    return;
-
-  css_files = self->conf->CSS_FILES.o.strlist;
-
-  if (!css_files || css_files->number <= 0)
-    return;
-
-  css_import_lines = new_string_list ();
-  css_rule_lines = new_string_list ();
-
-  for (i = 0; i < css_files->number; i++)
-    {
-      FILE *css_file_fh;
-      char *css_file_path;
-      char *css_file = css_files->list[i];
-      if (!strcmp (css_file, "-"))
-        {
-          css_file_fh = stdin;
-          css_file_path = strdup ("-");
-        }
-      else
-        {
-          css_file_path = locate_include_file (css_file,
-                             self->conf->INCLUDE_DIRECTORIES.o.strlist);
-          if (!css_file_path)
-            {
-              char *css_input_file_name;
-              const char *encoding
-                = self->conf->COMMAND_LINE_ENCODING.o.string;
-              if (encoding)
-                {
-                  int status;
-                  css_input_file_name
-                   = decode_string (css_file, encoding, &status, 0);
-                }
-              else
-                css_input_file_name = strdup (css_file);
-              message_list_document_warn (&self->error_messages,
-                      self->conf, 0, "CSS file %s not found",
-                      css_input_file_name);
-              free (css_input_file_name);
-              continue;
-            }
-
-          css_file_fh = fopen (css_file_path, "r");
-          if (!css_file_fh)
-            {
-              char *css_file_name;
-              const char *encoding
-                = self->conf->COMMAND_LINE_ENCODING.o.string;
-              if (encoding)
-                {
-                  int status;
-                  css_file_name
-                   = decode_string (css_file_path, encoding, &status, 0);
-                }
-              else
-                css_file_name = strdup (css_file_path);
-              message_list_document_warn (&self->error_messages,
-                                          self->conf, 0,
-                         "could not open --include-file %s: %s",
-                               css_file_name, strerror (errno));
-
-              free (css_file_name);
-              free (css_file_path);
-              continue;
-            }
-        }
-
-      html_process_css_file (self, css_file_fh, css_file_path,
-                             css_import_lines, css_rule_lines);
-
-      if (fclose (css_file_fh))
-        {
-          char *css_file_name;
-          const char *encoding
-            = self->conf->COMMAND_LINE_ENCODING.o.string;
-          if (encoding)
-            {
-              int status;
-              css_file_name
-               = decode_string (css_file_path, encoding, &status, 0);
-            }
-          else
-            css_file_name = strdup (css_file_path);
-
-          message_list_document_error (&self->error_messages, self->conf, 0,
-                         "error on closing CSS file  %s: %s",
-                         css_file_name, strerror (errno));
-
-          free (css_file_path);
-        }
-
-      free (css_file_path);
-    }
-
-  if (self->conf->DEBUG.o.integer > 0)
-    {
-      if (css_import_lines->number > 0)
-        {
-          fprintf (stderr, "# css import lines\n");
-          for (i = 0; i < css_import_lines->number; i++)
-            fprintf (stderr, "%s", css_import_lines->list[i]);
-        }
-      if (css_rule_lines->number > 0)
-        {
-          fprintf (stderr, "# css rule lines\n");
-          for (i = 0; i < css_rule_lines->number; i++)
-            fprintf (stderr, "%s", css_rule_lines->list[i]);
-        }
-    }
-
-  for (i = 0; i < css_import_lines->number; i++)
-    html_css_add_info (self, CI_css_info_imports, css_import_lines->list[i]);
-
-  for (i = 0; i < css_rule_lines->number; i++)
-    html_css_add_info (self, CI_css_info_rules, css_rule_lines->list[i]);
-
-  destroy_strings_list (css_import_lines);
-  destroy_strings_list (css_rule_lines);
 }
 
 static void
@@ -3900,8 +3972,6 @@ html_setup_output (CONVERTER *self, char **paths)
                                     "js/modernizr.js");
         }
     }
-
-  html_prepare_css (self);
 
   /* ($output_file, $destination_directory, $output_filename, $document_name) */
   determine_files_and_directory (self,
@@ -4764,6 +4834,9 @@ prepare_footnotes_targets (CONVERTER *self)
 {
   const ELEMENT_LIST *global_footnotes
     = &self->document->global_commands.footnotes;
+
+  self->shared_conversion_state.footnote_number = 0;
+
   if (global_footnotes->number > 0)
     {
       size_t i;
@@ -5001,7 +5074,14 @@ html_prepare_conversion_units_targets (CONVERTER *self,
                                        const char *document_name)
 {
   size_t predicted_values = ids_hashmap_predicted_values (self);
-  self->registered_ids_c_hashmap = new_c_hashmap (predicted_values);
+
+  if (self->registered_ids_c_hashmap)
+    {
+      clear_c_hashmap (self->registered_ids_c_hashmap);
+      init_c_hashmap (self->registered_ids_c_hashmap, predicted_values);
+    }
+  else
+    self->registered_ids_c_hashmap = new_c_hashmap (predicted_values);
 
   /*
    Do that before the other elements, to be sure that special page ids
@@ -5253,7 +5333,8 @@ html_prepare_output_units_global_targets (CONVERTER *self)
     }
 
   self->special_units_direction_names = (SPECIAL_UNIT_DIRECTION *)
-   malloc (sizeof (SPECIAL_UNIT_DIRECTION) * (all_special_units_nr+1));
+    realloc (self->special_units_direction_names,
+             sizeof (SPECIAL_UNIT_DIRECTION) * (all_special_units_nr+1));
   memset (self->special_units_direction_names, 0,
           sizeof (SPECIAL_UNIT_DIRECTION) * (all_special_units_nr+1));
 
@@ -5426,8 +5507,6 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
   FILE_SOURCE_INFO_LIST *files_source_info;
   char **unit_file_name_paths;
   size_t i;
-
-  initialize_output_units_files (self);
 
   files_source_info = &self->files_source_info;
 
@@ -5896,11 +5975,7 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
   memset (self->html_files_information.list, 0,
           self->html_files_information.number * sizeof (FILE_ASSOCIATED_INFO));
 
-  self->pending_closes.number = self->output_unit_files.number +1;
-  self->pending_closes.list = (STRING_STACK *)
-    malloc (self->pending_closes.number * sizeof (STRING_STACK));
-  memset (self->pending_closes.list, 0,
-          self->pending_closes.number * sizeof (STRING_STACK));
+  html_initialize_pending_closes (self, self->output_unit_files.number +1);
 
   return files_source_info;
 }
@@ -5948,6 +6023,11 @@ html_prepare_units_directions_files (CONVERTER *self,
   html_prepare_output_units_global_targets (self);
 
   split_pages (output_units, nodes_list, self->conf->SPLIT.o.string);
+
+  /* needed even if !strlen (output_file), as self->output_unit_files.number
+     is checked below */
+  /* same as calling initialize_output_units_files in Perl */
+  clear_output_unit_files (&self->output_unit_files);
 
   if (strlen (output_file))
     {

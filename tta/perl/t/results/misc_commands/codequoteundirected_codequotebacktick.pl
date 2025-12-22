@@ -1468,13 +1468,14 @@ $result_converted{'latex'}->{'codequoteundirected_codequotebacktick'} = '\\docum
 
 \\makeatletter
 \\newcommand{\\Texinfothechapterheading}{}
+\\newtitlemark{\\Texinfothechapterheading}%
 \\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newtitlemark{\\Texinfoheadingchaptername}%
 \\newcommand{\\Texinfosettitle}{No Title}%
 
 \\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
 \\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
-\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+\\renewcommand{\\Texinfothechapterheading}{}%
 \\chaptermark{#1}%
 }%
 

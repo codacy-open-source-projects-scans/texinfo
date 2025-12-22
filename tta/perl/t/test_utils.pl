@@ -64,11 +64,7 @@ use Locale::Messages ();
 
 #my $test_differences_loading_error = $@;
 
-eval { require Text::Diff; Text::Diff->import('diff'); };
-
-my $text_diff_loading_error = $@;
-
-use Texinfo::Tests qw(compare_dirs_files unlink_dir_files);
+use Texinfo::Tests qw(compare_dirs_files is_diff unlink_dir_files);
 
 use Texinfo::Commands;
 use Texinfo::Options;
@@ -174,25 +170,6 @@ if (defined($locale_encoding)) {
   binmode $builder->output,         ":encoding($locale_encoding)";
   binmode $builder->failure_output, ":encoding($locale_encoding)";
   binmode $builder->todo_output,    ":encoding($locale_encoding)";
-}
-
-sub is_diff($$$)
-{
-  my $result = shift;
-  my $reference = shift;
-  my $test_name = shift;
-
-  #if (!$test_differences_loading_error) {
-  #  eq_or_diff_text($result, $reference, $test_name);
-  #} elsif ($text_diff_loading_error) {
-  if ($text_diff_loading_error or !defined($reference)
-      or ref($reference) ne '' or !defined($result)) {
-    is($result, $reference, $test_name);
-  } else {
-    ok($result eq $reference, $test_name)
-       or note((diff(\$result, \$reference)));
-    #is($result, $reference, $test_name) or note(diff(\$result, \$reference));
-  }
 }
 
 # used to check that there are no file overwritten with -o
@@ -367,6 +344,27 @@ sub close_files($)
   }
 }
 
+sub _convert($$$) {
+  my ($converter, $document, $do_convert) = @_;
+
+  my $result;
+
+  if ($do_convert) {
+    $result = $converter->convert($document);
+    #$converter->reset_converter();
+    #$result = $converter->convert($document);
+  } else {
+    $result = $converter->output($document);
+    close_files($converter);
+    #$converter->reset_converter();
+    #$result = $converter->output($document);
+    #close_files($converter);
+    $result = undef if (defined($result) and ($result eq ''));
+  }
+
+  return $result;
+}
+
 sub convert_to_plaintext($$$$$)
 {
   my $self = shift;
@@ -393,16 +391,9 @@ sub convert_to_plaintext($$$$$)
 
   my $converter = Texinfo::Convert::Plaintext->converter($converter_options);
 
-  my $result;
-  if (defined($converter_options->{'OUTFILE'})
-      and $converter_options->{'OUTFILE'} eq '') {
-    $result = $converter->convert($document);
-  } else {
-    $result = $converter->output($document);
-    close_files($converter);
-    $result = undef if (defined($result) and ($result eq ''));
-  }
-
+  my $result = _convert($converter, $document,
+                                   (defined($converter_options->{'OUTFILE'})
+                                    and $converter_options->{'OUTFILE'} eq ''));
   return ($result, $converter);
 }
 
@@ -419,8 +410,9 @@ sub convert_to_info($$$$$)
                                     $self->{'DEBUG'});
 
   my $converter = Texinfo::Convert::Info->converter($converter_options);
-  my $result = $converter->output($document);
-  close_files($converter);
+
+  my $result = _convert($converter, $document, 0);
+
   die if (!defined($converter_options->{'SUBDIR'}) and !defined($result));
 
   return ($result, $converter);
@@ -446,13 +438,7 @@ sub convert_to_html($$$$$)
 
   my $converter = Texinfo::Convert::HTML->converter($converter_options);
 
-  my $result;
-  if ($format eq 'html_text') {
-    $result = $converter->convert($document);
-  } else {
-    $result = $converter->output($document);
-    close_files($converter);
-  }
+  my $result = _convert($converter, $document, $format eq 'html_text');
 
   die if (!defined($converter_options->{'SUBDIR'}) and !defined($result));
 
@@ -473,16 +459,9 @@ sub convert_to_xml($$$$$)
 
   my $converter = Texinfo::Convert::TexinfoXML->converter($converter_options);
 
-  my $result;
-  if (defined($converter_options->{'OUTFILE'})
-      and $converter_options->{'OUTFILE'} eq '') {
-    $result = $converter->convert($document);
-  } else {
-    $result = $converter->output($document);
-    close_files($converter);
-    $result = undef if (defined($result) and ($result eq ''));
-  }
-
+  my $result = _convert($converter, $document,
+                                   (defined($converter_options->{'OUTFILE'})
+                                    and $converter_options->{'OUTFILE'} eq ''));
   return ($result, $converter);
 }
 
@@ -514,17 +493,10 @@ sub convert_to_docbook($$$$$)
   #my $converter = Texinfo::Example::ReadDocBook->converter($converter_options);
   my $converter = Texinfo::Convert::DocBook->converter($converter_options);
 
-  my $result;
-  if (defined($converter_options->{'OUTFILE'})
-      and $converter_options->{'OUTFILE'} eq ''
-      and $format ne 'docbook_doc') {
-    $result = $converter->convert($document);
-  } else {
-    $result = $converter->output($document);
-    close_files($converter);
-    $result = undef if (defined($result) and ($result eq ''));
-  }
-
+  my $result = _convert($converter, $document,
+                                    (defined($converter_options->{'OUTFILE'})
+                                     and $converter_options->{'OUTFILE'} eq ''
+                                     and $format ne 'docbook_doc'));
   return ($result, $converter);
 }
 
@@ -542,14 +514,7 @@ sub convert_to_latex($$$$$)
 
   my $converter = Texinfo::Convert::LaTeX->converter($converter_options);
 
-  my $result;
-  if ($format eq 'latex_text') {
-    $result = $converter->convert($document);
-  } else {
-    $result = $converter->output($document);
-    close_files($converter);
-    $result = undef if (defined($result) and ($result eq ''));
-  }
+  my $result = _convert($converter, $document, $format eq 'latex_text');
 
   return ($result, $converter);
 }
@@ -1581,11 +1546,14 @@ sub test($$)
         if ($reference_exists) {
           $tests_count += 1;
           ok(((not defined($converted_errors{$format})
-               and (not $result_converted_errors{$format}
+               and (not exists($result_converted_errors{$format})
                     or not exists(
                              $result_converted_errors{$format}->{$test_name})))
-              or $converted_errors{$format} eq
-                              $result_converted_errors{$format}->{$test_name}),
+              or (defined($converted_errors{$format})
+                  and exists($result_converted_errors{$format})
+                  and exists($result_converted_errors{$format}->{$test_name})
+                  and $converted_errors{$format} eq
+                              $result_converted_errors{$format}->{$test_name})),
              $test_name.' errors '.$format);
         }
       }

@@ -57,7 +57,7 @@ html_output (CONVERTER *converter, DOCUMENT *document)
   /* prepare conversion to HTML */
   converter_set_document (converter, document);
 
-  html_initialize_output_state (converter, "_output");
+  html_conversion_initialization (converter, "_output");
 
   status = html_setup_output (converter, paths);
 
@@ -132,7 +132,7 @@ html_convert (CONVERTER *converter, DOCUMENT *document)
 
   converter_set_document (converter, document);
 
-  html_initialize_output_state (converter, "_convert");
+  html_conversion_initialization (converter, "_convert");
 
   html_setup_convert (converter);
 
@@ -140,6 +140,7 @@ html_convert (CONVERTER *converter, DOCUMENT *document)
 
   /* converter->document_name should be 0 */
   html_prepare_conversion_units_targets (converter, converter->document_name);
+  html_setup_output_simple_page (converter, "");
 
         /* setup global targets.  It is not clearly relevant to have those
            global targets when called as convert, but the Top global

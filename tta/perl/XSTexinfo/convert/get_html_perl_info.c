@@ -52,7 +52,9 @@
    new_htmlxref_manual_list htmlxref_split_type_names
    html_formatting_reference_names html_nr_string_directions */
 #include "html_prepare_converter.h"
-/* html_set_main_units_direction_names */
+/* html_set_main_units_direction_names
+   initialize_css_selector_style_list
+ */
 #include "html_conversion_api.h"
 /* html_special_unit_variety_direction_index html_get_target
    find_footnote_id_number open_quotation_titlepage_stack
@@ -279,8 +281,6 @@ html_converter_get_customization_sv (SV *converter_sv,
   int nr_string_directions;
   enum direction_string_type DS_type;
   int nr_dir_str_contexts = TDS_context_string +1;
-  /* need to be passed as argument to get from Perl */
-  SV *default_css_element_class_styles = 0;
   const STRING_LIST *special_unit_varieties;
 
   dTHX;
@@ -305,38 +305,6 @@ html_converter_get_customization_sv (SV *converter_sv,
     = (HV *)SvRV (default_formatting_references);
   default_css_string_formatting_references_hv
     = (HV *)SvRV (default_css_string_formatting_references);
-
-  /* to get default_css_element_class_styles from Perl.
-     This code is never run as default_css_element_class_styles is always 0
-     as it is not passed from Perl but determined fully in C */
-  if (default_css_element_class_styles
-      && SvOK (default_css_element_class_styles))
-    {
-      I32 hv_number;
-      I32 i;
-
-      HV *css_element_class_styles_hv
-        = (HV *)SvRV (default_css_element_class_styles);
-
-      hv_number = hv_iterinit (css_element_class_styles_hv);
-
-      initialize_css_selector_style_list (&converter->css_element_class_styles,
-                                          hv_number);
-
-      for (i = 0; i < hv_number; i++)
-        {
-          HE *next = hv_iternext (css_element_class_styles_hv);
-          SV *selector_sv = hv_iterkeysv (next);
-          char *selector = (char *) SvPVutf8_nolen (selector_sv);
-          SV *style_sv = HeVAL(next);
-          char *style = (char *) SvPVutf8_nolen (style_sv);
-
-          CSS_SELECTOR_STYLE *selector_style
-            = &converter->css_element_class_styles.list[i];
-          selector_style->selector = non_perl_strdup (selector);
-          selector_style->style = non_perl_strdup (style);
-        }
-    }
 
   if (customized_upper_case_commands && SvOK (customized_upper_case_commands))
     {
@@ -692,8 +660,20 @@ html_converter_get_customization_sv (SV *converter_sv,
                         }
                       if (context_idx < 0)
                         {
-                          fprintf (stderr,
-                              "ERROR: %s: %s: unknown no arg context\n",
+                          if (!strcmp (context_name, "translated_to_convert"))
+                            {
+                              if (SvOK (format_spec_sv))
+                                {
+                                  const char *tmp_spec
+                                    = (char *) SvPVutf8_nolen (format_spec_sv);
+                                  converter->customized_no_arg_commands_formatting[cmd]
+                                   .translated_to_convert
+                                    = non_perl_strdup (tmp_spec);
+                                }
+                            }
+                          else
+                             fprintf (stderr,
+                               "ERROR: %s: %s: unknown no arg context\n",
                                          cmdname, context_name);
                           break;
                         }
@@ -710,8 +690,8 @@ html_converter_get_customization_sv (SV *converter_sv,
                               sizeof (HTML_NO_ARG_COMMAND_CONVERSION));
                           memset (format_spec, 0,
                                   sizeof (HTML_NO_ARG_COMMAND_CONVERSION));
-                          converter->customized_no_arg_commands_formatting
-                                              [cmd][context_idx] = format_spec;
+                          converter->customized_no_arg_commands_formatting[cmd]
+                                .context_formatting[context_idx] = format_spec;
 
                           spec_number = hv_iterinit (format_spec_hv);
                           for (s = 0; s < spec_number; s++)
@@ -741,13 +721,6 @@ html_converter_get_customization_sv (SV *converter_sv,
                                   const char *tmp_spec
                                     = (char *) SvPVutf8_nolen (spec_sv);
                                   format_spec->translated_converted
-                                    = non_perl_strdup (tmp_spec);
-                                }
-                              else if (!strcmp (key, "translated_to_convert"))
-                                {
-                                  const char *tmp_spec
-                                    = (char *) SvPVutf8_nolen (spec_sv);
-                                  format_spec->translated_to_convert
                                     = non_perl_strdup (tmp_spec);
                                 }
                             }
@@ -1363,223 +1336,7 @@ html_converter_get_customization_sv (SV *converter_sv,
         }
     }
 }
-
-/* not used, the initialization is done in C, with customization taken
-   from Perl when initializing the converter */
-/* To get converter->html_no_arg_command_conversion for no brace at commands
-   from $self->{'no_arg_commands_formatting'} (with customization applied) */
-void
-html_get_no_arg_commands_formatting_sv (SV *converter_sv, CONVERTER *converter)
-{
-  HV *converter_hv;
-  SV **no_arg_commands_formatting_sv;
-
-  dTHX;
-
-  converter_hv = (HV *)SvRV (converter_sv);
-
-  FETCH(no_arg_commands_formatting)
-
-  if (no_arg_commands_formatting_sv)
-    {
-      I32 hv_number;
-      I32 i;
-
-      HV *no_arg_commands_formatting_hv
-        = (HV *)SvRV (*no_arg_commands_formatting_sv);
-
-      hv_number = hv_iterinit (no_arg_commands_formatting_hv);
-
-      for (i = 0; i < hv_number; i++)
-        {
-          char *cmdname;
-          I32 retlen;
-          SV *context_sv = hv_iternextsv (no_arg_commands_formatting_hv,
-                                          &cmdname, &retlen);
-          if (SvOK (context_sv))
-            {
-              HV *context_hv = (HV *)SvRV (context_sv);
-              enum command_id cmd = lookup_builtin_command (cmdname);
-
-              if (!cmd)
-                fprintf (stderr, "ERROR: %s: no no arg command\n", cmdname);
-              else
-                {
-                  I32 context_nr;
-                  I32 j;
-
-                  context_nr = hv_iterinit (context_hv);
-                  for (j = 0; j < context_nr; j++)
-                    {
-                      char *context_name;
-                      I32 retlen;
-                      enum conversion_context k;
-                      int context_idx = -1;
-                      SV *format_spec_sv = hv_iternextsv (context_hv,
-                                                 &context_name, &retlen);
-                      for (k = 0; k < NO_ARG_COMMAND_CONTEXT_NR; k++)
-                        {
-                          if (!strcmp (context_name,
-                                html_conversion_context_type_names[k]))
-                            {
-                              context_idx = k;
-                              break;
-                            }
-                        }
-                      if (context_idx < 0)
-                        {
-                          fprintf (stderr,
-                              "ERROR: %s: %s: unknown no arg context\n",
-                                         cmdname, context_name);
-                          break;
-                        }
-                      if (SvOK (format_spec_sv))
-                        {
-                          I32 spec_number;
-                          I32 s;
-                          HTML_NO_ARG_COMMAND_CONVERSION *format_spec;
-
-                          HV *format_spec_hv = (HV *)SvRV (format_spec_sv);
-
-                          format_spec
-                            = &converter
-                           ->html_no_arg_command_conversion[cmd][context_idx];
-
-                          spec_number = hv_iterinit (format_spec_hv);
-                          for (s = 0; s < spec_number; s++)
-                            {
-                              char *key;
-                              I32 retlen;
-                              SV *spec_sv = hv_iternextsv (format_spec_hv,
-                                                           &key, &retlen);
-                              if (!strcmp (key, "element"))
-                                {
-                                  const char *tmp_spec
-                                    = (char *) SvPVutf8_nolen (spec_sv);
-                                  format_spec->element
-                                    = non_perl_strdup (tmp_spec);
-                                }
-                              else if (!strcmp (key, "unset"))
-                                format_spec->unset = SvIV (spec_sv);
-                              else if (!strcmp (key, "text"))
-                                {
-                                  const char *tmp_spec
-                                    = (char *) SvPVutf8_nolen (spec_sv);
-                                  format_spec->text
-                                    = non_perl_strdup (tmp_spec);
-                                }
-                              else if (!strcmp (key, "translated_converted"))
-                                {
-                                  const char *tmp_spec
-                                    = (char *) SvPVutf8_nolen (spec_sv);
-                                  format_spec->translated_converted
-                                    = non_perl_strdup (tmp_spec);
-                                }
-                              else if (!strcmp (key, "translated_to_convert"))
-                                {
-                                  const char *tmp_spec
-                                    = (char *) SvPVutf8_nolen (spec_sv);
-                                  format_spec->translated_to_convert
-                                    = non_perl_strdup (tmp_spec);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-  else
-    fprintf (stderr, "BUG: NO no_arg_commands_formatting\n");
-}
-
-/* not used, the initialization is done in C, with customization taken
-   from Perl when initializing the converter */
-/* To get converter->directions_strings from $self->{'directions_strings'}
-   (with customization applied) */
-void
-html_get_directions_strings_sv (SV *converter_sv, CONVERTER *converter)
-{
-  HV *converter_hv;
-  SV **directions_strings_sv;
-  HV *directions_strings_hv;
-  enum direction_string_type DS_type;
-  int nr_string_directions;
-  int nr_dir_str_contexts = TDS_context_string +1;
-
-  dTHX;
-
-  converter_hv = (HV *)SvRV (converter_sv);
-  nr_string_directions = html_nr_string_directions (converter);
-
-  FETCH(directions_strings)
-
-  if (directions_strings_sv)
-    directions_strings_hv = (HV *) SvRV (*directions_strings_sv);
-
-  for (DS_type = 0; DS_type < TDS_TYPE_MAX_NR; DS_type++)
-    {
-      int i;
-      SV **direction_sv = 0;
-      HV *direction_hv = 0;
-      const char *type_name = direction_string_type_names[DS_type];
-
-      converter->directions_strings[DS_type]
-        = new_directions_strings_type (nr_string_directions,
-                                       nr_dir_str_contexts);
-
-      if (directions_strings_sv)
-        {
-          direction_sv = hv_fetch (directions_strings_hv, type_name,
-                                   strlen (type_name), 0);
-          if (direction_sv)
-            direction_hv = (HV *) SvRV (*direction_sv);
-        }
-
-      for (i = 0; i < nr_string_directions; i++)
-        {
-          if (direction_sv)
-            {
-              const char *direction_name;
-              SV **context_sv;
-
-              if (i < FIRSTINFILE_MIN_IDX)
-                direction_name = html_button_direction_names[i];
-              else
-                direction_name
-                  = converter->special_unit_info[SUI_type_direction]
-                                   [i - FIRSTINFILE_MIN_IDX];
-
-              context_sv = hv_fetch (direction_hv, direction_name,
-                                          strlen (direction_name), 0);
-
-              if (context_sv)
-                {
-                  int j;
-                  HV *context_hv = (HV *) SvRV (*context_sv);
-
-                  for (j = 0; j < nr_dir_str_contexts; j++)
-                    {
-                      const char *context_name
-                        = direction_string_context_names[j];
-
-                      SV **value_sv = hv_fetch (context_hv, context_name,
-                                                strlen (context_name), 0);
-
-                      if (value_sv && SvOK (*value_sv))
-                        {
-                           const char *value
-                              = (char *) SvPVutf8_nolen (*value_sv);
-                           converter->directions_strings[DS_type][i][j]
-                             = non_perl_strdup (value);
-                        }
-                    }
-                }
-            }
-        }
-    }
 #undef FETCH
-}
 
 /* get jslicenses from Perl */
 /* currently unused, as jslicenses are setup in C.  Could be called like:

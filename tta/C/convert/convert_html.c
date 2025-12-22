@@ -40,6 +40,7 @@
 #include "errors.h"
 /* xasprintf get_label_element output_conversions ENCODING_CONVERSION
    encode_with_iconv output_unit_type_names get_cmd_global_uniq_command
+   allocate_name_number_list
    */
 #include "utils.h"
 #include "manipulate_tree.h"
@@ -114,7 +115,7 @@ html_custom_translate_string (CONVERTER *self, const char *string,
   const FORMATTING_REFERENCE *formatting_reference
     = &self->formatting_references[FR_format_translate_message];
 
-  /* there is no place where FRS_status_ignore could be set, but
+  /* there is no place where FRS_status_ignored could be set, but
      it does not hurt to consider it possible */
   if (formatting_reference->status
       && formatting_reference->status != FRS_status_ignored
@@ -132,6 +133,8 @@ html_custom_translate_string (CONVERTER *self, const char *string,
   return 0;
 }
 
+/* Same as translations.c cache_translate_string, but using the
+   converter translations cache for user-defined translations */
 static TRANSLATION_TREE *
 html_cache_translate_string (CONVERTER *self, const char *string,
                              LANG_TRANSLATION *lang_translation,
@@ -474,6 +477,9 @@ html_convert_string_tree_new_formatting_context (CONVERTER *self,
 
 /* reset translated data and translate no args commands */
 
+/* TODO maybe also add a version which gets type_directions_strings
+   and nr_string_directions and nr_dir_str_contexts as argument
+   but not self */
 void
 html_clear_direction_string_type (const CONVERTER *self,
                                   char ***type_directions_strings)
@@ -528,49 +534,40 @@ reset_unset_no_arg_commands_formatting_context (CONVERTER *self,
                enum command_id cmd, enum conversion_context reset_context,
                enum conversion_context ref_context, int translate)
 {
-  HTML_NO_ARG_COMMAND_CONVERSION *no_arg_command_context;
+  HTML_NO_ARG_COMMAND_FORMATTING *no_arg_formatting
+    = &self->html_no_arg_command_conversion[cmd];
   HTML_NO_ARG_COMMAND_CONVERSION *conversion_contexts
-    = self->html_no_arg_command_conversion[cmd];
-  no_arg_command_context = &conversion_contexts[reset_context];
-  if (ref_context >= 0)
-    {
-      if (no_arg_command_context->unset)
-        {
-          HTML_NO_ARG_COMMAND_CONVERSION *no_arg_ref
-            = &conversion_contexts[ref_context];
+    = no_arg_formatting->context_formatting;
+  HTML_NO_ARG_COMMAND_CONVERSION *no_arg_command_context
+    = &conversion_contexts[reset_context];
 
-          if (no_arg_ref->text)
-            {
-              free (no_arg_command_context->text);
-              no_arg_command_context->text = strdup (no_arg_ref->text);
-            }
-          if (no_arg_ref->translated_tree)
-            no_arg_command_context->translated_tree
-              = no_arg_ref->translated_tree;
-          if (no_arg_ref->translated_converted)
-            {
-              free (no_arg_command_context->translated_converted);
-              no_arg_command_context->translated_converted
-                = strdup (no_arg_ref->translated_converted);
-            }
-          if (no_arg_ref->translated_to_convert)
-            {
-              free (no_arg_command_context->translated_to_convert);
-              no_arg_command_context->translated_to_convert
-                = strdup (no_arg_ref->translated_to_convert);
-            }
+  if (ref_context >= 0 && no_arg_command_context->unset)
+    {
+      HTML_NO_ARG_COMMAND_CONVERSION *no_arg_ref
+        = &conversion_contexts[ref_context];
+
+      if (no_arg_ref->text)
+        {
+          free (no_arg_command_context->text);
+          no_arg_command_context->text = strdup (no_arg_ref->text);
+        }
+      if (no_arg_ref->translated_converted)
+        {
+          free (no_arg_command_context->translated_converted);
+          no_arg_command_context->translated_converted
+            = strdup (no_arg_ref->translated_converted);
         }
     }
 
   if (translate
-      && no_arg_command_context->translated_tree
+      && no_arg_formatting->translated_tree
       && !no_arg_command_context->translated_converted)
     {
-      char *translation_result = 0;
+      char *translation_result;
       char *explanation;
       char *context;
       ELEMENT *tree_built = 0;
-      ELEMENT *translated_tree = no_arg_command_context->translated_tree;
+      ELEMENT *translated_tree = no_arg_formatting->translated_tree;
       if (self->external_references_number > 0 && !translated_tree->sv)
         {
           add_to_element_list (&self->tree_to_build, translated_tree);
@@ -617,8 +614,7 @@ reset_unset_no_arg_commands_formatting_context (CONVERTER *self,
         }
       free (explanation);
       free (context);
-      if (no_arg_command_context->text)
-        free (no_arg_command_context->text);
+      free (no_arg_command_context->text);
       no_arg_command_context->text = translation_result;
       if (tree_built)
         replace_remove_list_element (&self->tree_to_build, tree_built, 0);
@@ -732,10 +728,36 @@ html_translate_names (CONVERTER *self)
           enum command_id cmd = no_arg_formatted_cmd.list[j];
           enum conversion_context cctx;
           int add_cmd = 0;
+          HTML_NO_ARG_COMMAND_FORMATTING *no_arg_formatting
+            = &self->html_no_arg_command_conversion[cmd];
+          ELEMENT *translated_tree = 0;
+
+          if (no_arg_formatting->translated_to_convert)
+            {/* it is very unlikely to have small strings to add,
+                but in case there are it should be ok */
+              translated_tree =
+                html_cdt_tree (no_arg_formatting->translated_to_convert,
+                               self, 0, 0);
+            }
+          else
+             translated_tree
+                        = converter_translated_command_tree (self, cmd,
+                                                             &html_cdt_tree);
+
+          if (translated_tree)
+            {
+              add_cmd = 1;
+              if (no_arg_formatting->translated_tree)
+                destroy_element_and_children (
+                          no_arg_formatting->translated_tree);
+
+              no_arg_formatting->translated_tree = translated_tree;
+            }
+
           for (cctx = 0; cctx < NO_ARG_COMMAND_CONTEXT_NR; cctx++)
             {
               HTML_NO_ARG_COMMAND_CONVERSION *format_spec
-                = &self->html_no_arg_command_conversion[cmd][cctx];
+                = &no_arg_formatting->context_formatting[cctx];
               if (format_spec->translated_converted
                   && !format_spec->unset)
                 {
@@ -745,39 +767,14 @@ html_translate_names (CONVERTER *self)
                    = html_cdt_string (format_spec->translated_converted, self,
                                       0, 0);
                 }
-              else if (cctx == HCC_type_normal)
-                {
-                  ELEMENT *translated_tree = 0;
-                  if (format_spec->translated_to_convert)
-                    {/* it is very unlikely to have small strings to add,
-                        but in case there are it should be ok */
-                      translated_tree =
-                        html_cdt_tree (format_spec->translated_to_convert,
-                                       self, 0, 0);
-                    }
-                  else
-                    translated_tree
-                        = converter_translated_command_tree (self, cmd,
-                                                             &html_cdt_tree);
-
-                  if (translated_tree)
-                    {
-                      add_cmd = 1;
-                      if (format_spec->translated_tree)
-                        destroy_element_and_children (
-                                                 format_spec->translated_tree);
-
-                      format_spec->translated_tree = translated_tree;
-                    }
-                }
             }
+
           if (add_cmd)
             {
               translated_cmds->list[translated_cmds->number] = cmd;
               translated_cmds->number++;
             }
         }
-
 
       for (j = 0; j < translated_cmds->number; j++)
         {
@@ -918,14 +915,16 @@ compare_direction_icon (const void *a, const void *b)
   return strcmp (dicon_a->direction_name, dicon_b->direction_name);
 }
 
+/* fill DIRECTION_ICON_NAMES array with icon file names according
+   to the order in SELF main_units_direction_names directions names
+   for DIRECTION_ICONS pairs of file name and direction name.
+ */
 static void
-prepare_direction_icons_list (CONVERTER *self,
-                              DIRECTION_ICON_LIST *direction_icons,
-                              char ***direction_icon_names,
-                              size_t icons_nr)
+order_direction_icons_list (CONVERTER *self,
+                            DIRECTION_ICON_LIST *direction_icons,
+                            char ***direction_icon_names,
+                            size_t icons_nr)
 {
-  /* if the converter has been properly reset after each call to output or
-     convert, freeing should not be useful */
   html_free_direction_icons_array (self, direction_icon_names);
 
   /* there are always directions, so should always be true */
@@ -936,6 +935,8 @@ prepare_direction_icons_list (CONVERTER *self,
 
       *direction_icon_names = (char **) malloc (icons_nr * sizeof (char *));
 
+      /* sort the icon, direction pairs according to their direction names to
+         be able to find them fast based on the direction name */
       qsort (direction_icons->icons_list, direction_icons->number,
              sizeof (DIRECTION_ICON), compare_direction_icon);
 
@@ -965,13 +966,35 @@ html_prepare_direction_icons (CONVERTER *self)
   if (self->conf->ICONS.o.integer > 0)
     {
       if (self->conf->ACTIVE_ICONS.o.icons->number > 0)
-        prepare_direction_icons_list (self, self->conf->ACTIVE_ICONS.o.icons,
+        order_direction_icons_list (self, self->conf->ACTIVE_ICONS.o.icons,
                 &self->html_active_icons, icons_nr);
 
       if (self->conf->PASSIVE_ICONS.o.icons->number > 0)
-        prepare_direction_icons_list (self, self->conf->PASSIVE_ICONS.o.icons,
+        order_direction_icons_list (self, self->conf->PASSIVE_ICONS.o.icons,
                 &self->html_passive_icons, icons_nr);
     }
+}
+
+void
+html_initialize_pending_closes (CONVERTER *self, size_t number)
+{
+  if (self->pending_closes.space < number)
+    {
+      self->pending_closes.list = (STRING_STACK *)
+        realloc (self->pending_closes.list, number * sizeof (STRING_STACK));
+  /* The existing string stacks per file should already be empty, either because
+     the code is consistent for opening and closing, or because they are
+     emptied after the conversion (with an error message).
+
+     Therefore, only the newly allocated string stacks per file are
+     initialized.
+   */
+      memset (&self->pending_closes.list[self->pending_closes.space],
+              0, (number - self->pending_closes.space)
+                 * sizeof (STRING_STACK));
+      self->pending_closes.space = number;
+    }
+  self->pending_closes.number = number;
 }
 
 /* setup a page (+global context) in case there are no files, ie called
@@ -980,6 +1003,7 @@ void
 html_setup_output_simple_page (CONVERTER *self, const char *output_filename)
 {
   NAME_NUMBER *page_name_number;
+
   self->page_css.number = 1+1;
   self->page_css.space = self->page_css.number;
   self->page_css.list = (CSS_LIST *)
@@ -994,15 +1018,9 @@ html_setup_output_simple_page (CONVERTER *self, const char *output_filename)
   memset (self->html_files_information.list, 0,
           self->html_files_information.number * sizeof (FILE_ASSOCIATED_INFO));
 
-  self->pending_closes.number = 1+1;
-  self->pending_closes.list = (STRING_STACK *)
-       malloc (self->pending_closes.number * sizeof (STRING_STACK));
-  memset (self->pending_closes.list, 0,
-          self->pending_closes.number * sizeof (STRING_STACK));
+  html_initialize_pending_closes (self, 1+1);
 
-  self->page_name_number.number = 1;
-  self->page_name_number.list = (NAME_NUMBER *)
-      malloc (self->page_name_number.number * sizeof (NAME_NUMBER));
+  allocate_name_number_list (&self->page_name_number, 1);
 
   page_name_number = &self->page_name_number.list[0];
   page_name_number->number = 1;
@@ -1024,9 +1042,6 @@ html_prepare_title_titlepage (CONVERTER *self, const char *output_file,
     }
   else
     {
-      /* case of convert() call.  Need to setup the page here */
-      if (self->page_name_number.number <= 0)
-         html_setup_output_simple_page (self, output_filename);
       self->current_filename.filename = output_filename;
       self->current_filename.file_number = 1;
     }
@@ -1239,6 +1254,7 @@ html_prepare_converted_output_info (CONVERTER *self, const char *output_file,
           || strcmp (default_document_language, preamble_document_language)))
     html_translate_names (self);
 
+  /* reset in case the user changed customization variables in handlers */
   destroy_text_options (self->convert_text_options);
   self->convert_text_options
     = copy_converter_options_for_convert_text (self);
@@ -2249,6 +2265,7 @@ html_convert_output (CONVERTER *self, const ELEMENT *root,
   if (self->conf->DATE_IN_HEADER.o.integer > 0)
     {
       html_default_format_date_in_header (self, &text);
+      free (self->date_in_header);
       self->date_in_header = strdup (text.text);
       text_reset (&text);
     }
@@ -2377,6 +2394,8 @@ html_conversion_finalization (CONVERTER *self)
       free (self->html_files_information.list[i].info);
     }
   free (self->html_files_information.list);
+  self->html_files_information.list = 0;
+  self->html_files_information.number = 0;
 
   /* should not be possible with default code, as
      close_registered_sections_level(..., 0)

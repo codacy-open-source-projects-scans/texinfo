@@ -1160,16 +1160,6 @@ html_find_direction_name_global_unit (const CONVERTER *self,
 
 
 
-void
-initialize_css_selector_style_list (CSS_SELECTOR_STYLE_LIST *selector_styles,
-                                    size_t size)
-{
-  selector_styles->list = (CSS_SELECTOR_STYLE *)
-        malloc (size * sizeof (CSS_SELECTOR_STYLE));
-  selector_styles->space = size;
-  selector_styles->number = size;
-}
-
 enum css_info_type
 html_get_css_info_spec (const char *spec)
 {
@@ -1205,19 +1195,17 @@ html_css_get_info (CONVERTER *self, enum css_info_type type)
     return &self->css_import_lines;
   else
     {
-      size_t i;
+      clear_strings_list (&self->css_element_class_list);
       if (self->css_element_class_styles.number > 0)
         {
-          if (self->css_element_class_list.number == 0)
+          size_t i;
+
+          for (i = 0; i < self->css_element_class_styles.number; i++)
             {
-              for (i = 0; i < self->css_element_class_styles.number; i++)
-                {
-                  const CSS_SELECTOR_STYLE *selector_style
-                    = &self->css_element_class_styles.list[i];
-                  if (selector_style->selector)
-                    add_string (selector_style->selector,
-                                &self->css_element_class_list);
-                }
+              const CSS_SELECTOR_STYLE *selector_style
+                = &self->css_element_class_styles.list[i];
+              add_string (selector_style->selector,
+                          &self->css_element_class_list);
             }
         }
       return &self->css_element_class_list;
@@ -1230,7 +1218,17 @@ compare_selector_style (const void *a, const void *b)
   const CSS_SELECTOR_STYLE *css_a = (const CSS_SELECTOR_STYLE *) a;
   const CSS_SELECTOR_STYLE *css_b = (const CSS_SELECTOR_STYLE *) b;
 
-  return strcmp (css_a->selector, css_b->selector);
+  /* have NULL selector sort last, such that it is easy
+     to "remove" the selector style by decreasing the number of
+     elements in list after it has been put last */
+  if (css_a->selector && css_b->selector)
+    return strcmp (css_a->selector, css_b->selector);
+  else if (!css_a->selector && !css_b->selector)
+    return 0;
+  else if (!css_a->selector)
+    return 1;
+  else /* if (!css_b->selector) */
+    return -1;
 }
 
 void
@@ -1266,17 +1264,31 @@ html_css_set_selector_style (CSS_SELECTOR_STYLE_LIST *css_element_class_styles,
                              const char *css_info,
                              const char *css_style)
 {
+  /* should probably never happen */
+  if (!css_info)
+    return;
+
   CSS_SELECTOR_STYLE *selector_style
    = find_css_selector_style (css_element_class_styles, css_info);
 
   if (selector_style)
     {
       free (selector_style->style);
-      selector_style->style = 0;
       if (css_style)
         selector_style->style = strdup (css_style);
+      else
+        {
+          /* Remove the selector.  This is done by setting the selector
+             to NULL, sorting, which sorts that selector last, and
+             decreasing the number of selector styles in the list to remove
+             the last one */
+          free (selector_style->selector);
+          selector_style->selector = 0;
+          sort_css_element_class_styles (css_element_class_styles);
+          css_element_class_styles->number--;
+        }
     }
-  else
+  else if (css_style)
     {
       CSS_SELECTOR_STYLE_LIST *elt_class_styles
         = css_element_class_styles;
@@ -1289,10 +1301,7 @@ html_css_set_selector_style (CSS_SELECTOR_STYLE_LIST *css_element_class_styles,
       selector_style
         = &elt_class_styles->list[elt_class_styles->number];
       selector_style->selector = strdup (css_info);
-      if (css_style)
-        selector_style->style = strdup (css_style);
-      else
-        selector_style->style = 0;
+      selector_style->style = strdup (css_style);
 
       elt_class_styles->number++;
 

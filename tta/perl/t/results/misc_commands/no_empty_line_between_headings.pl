@@ -161,13 +161,14 @@ $result_converted{'latex'}->{'no_empty_line_between_headings'} = '\\documentclas
 
 \\makeatletter
 \\newcommand{\\Texinfothechapterheading}{}
+\\newtitlemark{\\Texinfothechapterheading}%
 \\newcommand{\\Texinfoheadingchaptername}{\\chaptername}
 \\newtitlemark{\\Texinfoheadingchaptername}%
 \\newcommand{\\Texinfosettitle}{No Title}%
 
 \\newcommand{\\Texinfounnumberedchapter}[1]{\\chapter*{#1}
 \\addcontentsline{toc}{chapter}{\\protect\\textbf{#1}}%
-\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%
+\\renewcommand{\\Texinfothechapterheading}{}%
 \\chaptermark{#1}%
 }%
 

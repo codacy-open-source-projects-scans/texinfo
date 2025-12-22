@@ -18,6 +18,7 @@ extern const char *htmlxref_split_type_names[htmlxref_split_type_chapter + 1];
 
 
 
+void clear_css_selector_style_list (CSS_SELECTOR_STYLE_LIST *selector_styles);
 /* void html_format_setup (void); */
 /* char *html_builtin_default_css_text (void); */
 
@@ -50,10 +51,13 @@ SPECIAL_UNIT_INFO *html_add_special_unit_info (
 
 
 
+void free_html_no_arg_command_conversion (
+                         HTML_NO_ARG_COMMAND_CONVERSION *format_spec);
+
 char ***new_directions_strings_type (int nr_string_directions,
                                      int nr_dir_str_contexts);
 
-/* void html_initialize_output_state (CONVERTER *self, const char *context); */
+/* void html_conversion_initialization (CONVERTER *self, const char *context); */
 
 void initialize_js_categories_list (JSLICENSE_CATEGORY_LIST *js_files_info,
                                    size_t size);

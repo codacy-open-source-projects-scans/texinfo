@@ -441,7 +441,7 @@ sub _collect_css_element_class($$) {
   #  cluck "BUG: $element_class: CSS no current file";
   #}
 
-  if (defined($self->{'css_element_class_styles'}->{$element_class})) {
+  if (exists($self->{'css_element_class_styles'}->{$element_class})) {
     if ($self->{'document_global_context'}) {
       $self->{'document_global_context_css'}->{$element_class} = 1;
     } elsif (defined($self->{'current_filename'})) {
@@ -474,9 +474,9 @@ sub html_attribute_class($$;$) {
     my @styles = ();
     foreach my $style_class (@$classes) {
       if (not defined($style_class)) {
-        confess ("class not defined (for $element)");
+        confess("class not defined (for $element)");
       }
-      if (defined($self->{'css_element_class_styles'}
+      if (exists($self->{'css_element_class_styles'}
                                    ->{"$element.$style_class"})) {
         push @styles,
           $self->{'css_element_class_styles'}->{"$element.$style_class"};
@@ -608,7 +608,11 @@ sub css_add_info($$$) {
 sub css_set_selector_style($$$) {
   my ($self, $css_info, $css_style) = @_;
 
-  $self->{'css_element_class_styles'}->{$css_info} = $css_style;
+  if (!defined($css_style)) {
+    delete($self->{'css_element_class_styles'}->{$css_info});
+  } else {
+    $self->{'css_element_class_styles'}->{$css_info} = $css_style;
+  }
 }
 
 sub css_get_info($$) {
@@ -637,7 +641,7 @@ sub css_get_info($$) {
 sub css_get_selector_style($$) {
   my ($self, $css_info) = @_;
 
-  if (defined($self->{'css_element_class_styles'}->{$css_info})) {
+  if (exists($self->{'css_element_class_styles'}->{$css_info})) {
     return $self->{'css_element_class_styles'}->{$css_info};
   } else {
     return undef;
@@ -2741,30 +2745,26 @@ sub _translate_names($) {
   }
   my %translated_commands;
   foreach my $cmdname (keys(%{$self->{'no_arg_commands_formatting'}})) {
+    my $conversion_contexts = $self->{'no_arg_commands_formatting'}->{$cmdname};
+
+    my $translated_tree;
+    if (exists($conversion_contexts->{'translated_to_convert'})) {
+      $translated_tree
+        = $self->cdt($conversion_contexts->{'translated_to_convert'});
+    } else {
+      # default translated commands
+      $translated_tree = $self->translated_command_tree($cmdname);
+    }
+    if (defined($translated_tree)) {
+      $conversion_contexts->{'translated_tree'} = $translated_tree;
+      $translated_commands{$cmdname} = 1;
+    }
     foreach my $context (@no_args_commands_contexts) {
-      if (exists($self->{'no_arg_commands_formatting'}
-                         ->{$cmdname}->{$context}->{'translated_converted'})
-          and not $self->{'no_arg_commands_formatting'}
-                                        ->{$cmdname}->{$context}->{'unset'}) {
+      if (exists($conversion_contexts->{$context}->{'translated_converted'})
+          and not exists($conversion_contexts->{$context}->{'unset'})) {
         $translated_commands{$cmdname} = 1;
-        $self->{'no_arg_commands_formatting'}->{$cmdname}->{$context}->{'text'}
-         = $self->cdt_string($self->{'no_arg_commands_formatting'}
-                       ->{$cmdname}->{$context}->{'translated_converted'});
-      } elsif ($context eq 'normal') {
-        my $translated_tree;
-        if (exists($self->{'no_arg_commands_formatting'}
-                      ->{$cmdname}->{$context}->{'translated_to_convert'})) {
-          $translated_tree = $self->cdt($self->{'no_arg_commands_formatting'}
-                          ->{$cmdname}->{$context}->{'translated_to_convert'});
-        } else {
-          # default translated commands
-          $translated_tree = $self->translated_command_tree($cmdname);
-        }
-        if (defined($translated_tree)) {
-          $self->{'no_arg_commands_formatting'}->{$cmdname}
-            ->{$context}->{'translated_tree'} = $translated_tree;
-          $translated_commands{$cmdname} = 1;
-        }
+        $conversion_contexts->{$context}->{'text'}
+         = $self->cdt_string($conversion_contexts->{$context}->{'translated_converted'});
       }
     }
   }
@@ -2895,11 +2895,12 @@ foreach my $indented_format ('example', 'display', 'lisp') {
   $indented_preformatted_commands{$indented_format} = 1;
   $indented_preformatted_commands{"small$indented_format"} = 1;
 
-  $default_css_element_class_styles{"div.$indented_format"}
-    = 'margin-left: 3.2em';
+  # div.lisp is output as div.example
+  if ($indented_format ne 'lisp') {
+    $default_css_element_class_styles{"div.$indented_format"}
+      = 'margin-left: 3.2em';
+  }
 }
-# output as div.example instead
-delete $default_css_element_class_styles{"div.lisp"};
 
 # types that are in code style in the default case.  '_code' is not
 # a type that can appear in the tree built from Texinfo code, it is used
@@ -8325,31 +8326,36 @@ foreach my $customized_reference ('external_target_split_name',
   'shortcontents' => \&_default_format_special_body_shortcontents,
 );
 
+# $RESET_CONTEXT is the context being set or reset.
+# $REF_CONTEXT is the context that should be used for defaults, if
+#              defined and there is no information for $CMDNAME $RESET_CONTEXT.
+#              In that case, 'unset' should exist for $RESET_CONTEXT.
 sub _reset_unset_no_arg_commands_formatting_context($$$$;$) {
   my ($self, $cmdname, $reset_context, $ref_context, $translate) = @_;
 
-  # should never happen as unset is set at configuration
-  if (!exists($self->{'no_arg_commands_formatting'}->{$cmdname}->{$reset_context})) {
-    $self->{'no_arg_commands_formatting'}->{$cmdname}->{$reset_context} = {};
-    $self->{'no_arg_commands_formatting'}->{$cmdname}->{$reset_context}->{'unset'} = 1;
-  }
-  my $no_arg_command_context
-     = $self->{'no_arg_commands_formatting'}->{$cmdname}->{$reset_context};
-  if (defined($ref_context)) {
-    if ($no_arg_command_context->{'unset'}) {
-      foreach my $key (keys(%{$self->{'no_arg_commands_formatting'}->{$cmdname}->{$ref_context}})) {
-        # both 'translated_converted' and (possibly translated) 'text' are
-        # reused
-        $no_arg_command_context->{$key}
-          = $self->{'no_arg_commands_formatting'}->{$cmdname}->{$ref_context}->{$key}
-      }
+  my $conversion_contexts = $self->{'no_arg_commands_formatting'}->{$cmdname};
+
+  # should never happen as unset is set at initialization in that case
+  #if (!exists($conversion_contexts->{$reset_context})) {
+  #  die "Non-existing no_arg_commands_formatting $cmdname $reset_context";
+  #}
+  my $no_arg_command_context = $conversion_contexts->{$reset_context};
+
+  if (defined($ref_context) and exists($no_arg_command_context->{'unset'})) {
+    foreach my $key (keys(%{$conversion_contexts->{$ref_context}})) {
+      # If present, both 'translated_converted' and (possibly translated)
+      # 'text' are referred to.
+      # In case of 'text', if 'translated_tree' is referred to and
+      # $translate is set, the 'text' will be replaced just below.
+      $no_arg_command_context->{$key}
+        = $conversion_contexts->{$ref_context}->{$key};
     }
   }
   if ($translate
-      and exists($no_arg_command_context->{'translated_tree'})
+      and exists($conversion_contexts->{'translated_tree'})
       and not exists($no_arg_command_context->{'translated_converted'})) {
     my $translated_tree
-      = $no_arg_command_context->{'translated_tree'};
+      = $conversion_contexts->{'translated_tree'};
     my $translation_result;
     my $explanation = "Translated NO ARG \@$cmdname ctx $reset_context";
     my $context_str = "Tr $cmdname ctx $reset_context";
@@ -8375,8 +8381,7 @@ sub _reset_unset_no_arg_commands_formatting_context($$$$;$) {
       $translation_result = $self->html_convert_css_string($translated_tree,
                                                            $context_str);
     }
-    $no_arg_command_context->{'text'}
-      = $translation_result;
+    $no_arg_command_context->{'text'} = $translation_result;
   }
 }
 
@@ -8844,6 +8849,7 @@ sub converter_initialize($) {
     }
 
     _load_htmlxref_files($self);
+    _prepare_css($self);
   }
 
   $self->{'output_units_conversion'} = {};
@@ -9047,7 +9053,7 @@ sub converter_initialize($) {
   my $customized_no_arg_commands_formatting = {};
   foreach my $cmdname (keys(%{$default_no_arg_commands_formatting{'normal'}})) {
     $customized_no_arg_commands_formatting->{$cmdname} = {};
-    foreach my $context (@no_args_commands_contexts) {
+    foreach my $context (@no_args_commands_contexts, 'translated_to_convert') {
       my $no_arg_command_customized_formatting
         = Texinfo::Config::GNUT_get_no_arg_command_formatting($cmdname,
                                                               $context);
@@ -9299,14 +9305,13 @@ sub converter_reset($) {
 sub converter_destroy($) {
   my $self = shift;
 
-  delete $self->{'current_node'};
-
   if (exists($self->{'converter_info'})) {
     foreach my $key ('document', 'simpletitle_tree', 'title_tree') {
       delete $self->{'converter_info'}->{$key};
     }
   }
 
+  delete $self->{'current_node'};
   delete $self->{'current_root_command'};
 
   # a separate cache used if the user defines the translate_message function.
@@ -9331,12 +9336,10 @@ sub converter_destroy($) {
   if (exists($self->{'no_arg_commands_formatting'})) {
     foreach my $cmdname (keys(%{$self->{'no_arg_commands_formatting'}})) {
       my $no_arg_command_ctx = $self->{'no_arg_commands_formatting'}->{$cmdname};
-      foreach my $context (keys(%{$no_arg_command_ctx})) {
-        my $tree = $no_arg_command_ctx->{$context}->{'translated_tree'};
-        if (defined($tree)) {
-          # always a copy
-          Texinfo::ManipulateTree::tree_remove_parents($tree);
-        }
+      if (defined($no_arg_command_ctx->{'translated_tree'})) {
+        my $tree = $no_arg_command_ctx->{'translated_tree'};
+        # always a copy
+        Texinfo::ManipulateTree::tree_remove_parents($tree);
       }
     }
   }
@@ -9564,6 +9567,9 @@ sub _process_css_file($$$) {
 
 sub _prepare_css($) {
   my $self = shift;
+
+  $self->{'css_rule_lines'} = [];
+  $self->{'css_import_lines'} = [];
 
   return if ($self->get_conf('NO_CSS'));
 
@@ -9953,8 +9959,6 @@ sub _html_set_pages_files($$$$$$$$) {
       $output_file, $destination_directory, $output_filename,
       $document_name) = @_;
 
-  $self->initialize_output_units_files();
-
   my @filenames_order;
   my %unit_file_name_paths;
   # associate a file to the source information leading to set the file
@@ -10328,6 +10332,10 @@ sub _prepare_units_directions_files($$$$$$$$) {
 
   Texinfo::OutputUnits::split_pages($output_units, $nodes_list,
                                     $self->get_conf('SPLIT'));
+
+  # reset even if $output_file eq '', as 'file_counters' is accessed
+  # below, so it needs to be empty in the case of $output_file eq ''.
+  $self->initialize_output_units_files();
 
   # determine file names associated with the different pages, and setup
   # the counters for special element pages.
@@ -12224,8 +12232,8 @@ sub conversion_initialization($$;$) {
   $self->{'pending_footnotes'} = [];
   $self->{'pending_closes'} = {};
 
-  $self->{'css_rule_lines'} = [];
-  $self->{'css_import_lines'} = [];
+  delete $self->{'current_node'};
+  delete $self->{'current_root_command'};
 
   # for user-defined translation results.  Always reset such as not
   # to get a cached translation obtained for a previous conversion.
@@ -12324,6 +12332,16 @@ sub conversion_initialization($$;$) {
   $self->{'no_arg_commands_formatting'} = {};
   foreach my $cmdname (keys(%{$default_no_arg_commands_formatting{'normal'}})) {
     $self->{'no_arg_commands_formatting'}->{$cmdname} = {};
+    # For now, there are no 'translated_to_convert' Texinfo code for
+    # no args commands in the default case.  The translated command
+    # is common to diverse output formats
+    if (defined($self->{'customized_no_arg_commands_formatting'}
+                 ->{$cmdname}->{'translated_to_convert'})) {
+      $self->{'no_arg_commands_formatting'}->{$cmdname}
+          ->{'translated_to_convert'}
+        = $self->{'customized_no_arg_commands_formatting'}
+            ->{$cmdname}->{'translated_to_convert'};
+    }
     foreach my $context (@no_args_commands_contexts) {
       my $no_arg_command_customized_formatting
         = $self->{'customized_no_arg_commands_formatting'}
@@ -12332,11 +12350,13 @@ sub conversion_initialization($$;$) {
         $self->{'no_arg_commands_formatting'}->{$cmdname}->{$context}
            = $no_arg_command_customized_formatting;
       } else {
-        my $context_default_default_no_arg_commands_formatting
-          = $default_no_arg_commands_formatting{$context};
+        my $context_default_default_no_arg_commands_formatting;
         if ($context eq 'normal') {
           $context_default_default_no_arg_commands_formatting
            = $conf_default_no_arg_commands_formatting_normal;
+        } else {
+          $context_default_default_no_arg_commands_formatting
+           = $default_no_arg_commands_formatting{$context};
         }
         if (defined($context_default_default_no_arg_commands_formatting
                                                               ->{$cmdname})) {
@@ -12364,6 +12384,13 @@ sub conversion_initialization($$;$) {
               = $context_default_default_no_arg_commands_formatting->{$cmdname};
           }
         } else {
+          # not possible for the normal context because the commands come
+          # from the normal context defaults, and in addition there should
+          # be normal context defaults for all the nobrace brace commands
+          # except for @today
+          #if ($context eq 'normal') {
+          #  die "Brace no args command normal no set for $cmdname";
+          #}
           $self->{'no_arg_commands_formatting'}->{$cmdname}->{$context}
             = {'unset' => 1};
         }
@@ -13572,8 +13599,6 @@ sub _setup_output($) {
   }
 
   $self->{'converter_info'}->{'jslicenses'} = $jslicenses;
-
-  _prepare_css($self);
 
   # this sets output_file (based on OUTFILE), to be used if not split,
   # but also the corresponding 'output_filename' that is useful in

@@ -12,6 +12,39 @@ Before next release
 
 system.h macros are duplicated in C/main/utils.h.  Ok?
 
+Review reset converter code and modify to be able to always call it before
+conversion and before free'ing the converter, such that it is never needed
+to call it especially.  Similar to initialize_parsing in parsetexi/api.c.
+
+Done:
+ pending_closes
+ date_in_header
+ html_active_icons
+ html_passive_icons
+ current_formatting_references...
+ current_node
+ current_root_command
+ css_element_class_styles
+ css_element_class_list
+ special_character
+ line_break_element
+ directions_strings
+ html_no_arg_command_conversion
+ current_lang_translations
+ output_unit_files
+ page_name_number
+ global_units_direction_names
+ global_texts_direction_names
+ special_units_direction_names
+ translation_cache
+
+Todo.  Can make sense to do something different, for instance an explicit
+reset when unclosed files have been closed.
+ output_files_information
+
+Initialize all the shared_conversion_state in html_initialize_output_state
+and always reset them?
+
 Document 'style_commands_formatting' and 'no_arg_commands_formatting' in
 texi2any_api.texi
 
@@ -78,6 +111,12 @@ converter_customization_options, unique_at_command_options.
 
 Delayed bugs/features
 =====================
+
+When a converter is called multiple time, the customization variables
+are not reset to their pre-conversion value when doing another conversion.
+It is not clear to what extent we want to be able to reuse converters, but it
+could be relevant to do so to avoid the converter initialization/destruction,
+which takes a small but not neglectable time.
 
 Do not add parent in tree in the first place instead of removing afterwards,
 in gdt?  Or, possibly even better mark parent as weak reference with

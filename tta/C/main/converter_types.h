@@ -321,10 +321,19 @@ typedef struct HTML_NO_ARG_COMMAND_CONVERSION {
     char *element;
     int unset;
     char *text;
-    ELEMENT *translated_tree;
     char *translated_converted;
-    char *translated_to_convert;
 } HTML_NO_ARG_COMMAND_CONVERSION;
+
+typedef struct HTML_NO_ARG_COMMAND_FORMATTING {
+    HTML_NO_ARG_COMMAND_CONVERSION context_formatting[NO_ARG_COMMAND_CONTEXT_NR];
+    char *translated_to_convert;
+    ELEMENT *translated_tree;
+} HTML_NO_ARG_COMMAND_FORMATTING;
+
+typedef struct HTML_NO_ARG_COMMAND_CUSTOMIZATION {
+    HTML_NO_ARG_COMMAND_CONVERSION *context_formatting[NO_ARG_COMMAND_CONTEXT_NR];
+    char *translated_to_convert;
+} HTML_NO_ARG_COMMAND_CUSTOMIZATION;
 
 typedef struct HTML_STYLE_COMMAND_CONVERSION {
     char *element;
@@ -682,6 +691,7 @@ typedef struct ASSOCIATED_INFO_LIST {
 
 typedef struct STRING_STACK_LIST {
     size_t number;
+    size_t space;
     STRING_STACK *list;
 } STRING_STACK_LIST;
 
@@ -790,9 +800,16 @@ typedef struct CONVERTER {
     OPTIONS *conf;
     /* an array containing the fields of conf ordered by name */
     OPTION **sorted_options;
+    /* set to commands user defined from customization in generic converter
+       during converter initialization, or reset and set to each of
+       the commands values just before starting the conversion in HTML */
     COMMAND_OPTION_VALUE commands_init_conf[BUILTIN_CMD_NUMBER];
     EXPANDED_FORMAT *expanded_formats;
     TRANSLATED_COMMAND_LIST translated_commands;
+    /* set based on documentlanguage customization option, if set,
+       and reset when the documentlanguage changes.  Allocated
+       and put in the cache if the language was never seen.
+     */
     LANG_TRANSLATION *current_lang_translations;
 
     ERROR_MESSAGE_LIST error_messages;
@@ -801,15 +818,18 @@ typedef struct CONVERTER {
 
     DOCUMENT *document;
 
+    /* reset in converter_set_document */
     struct TEXT_OPTIONS *convert_text_options;
     struct TEXT_OPTIONS *convert_index_text_options;
 
     int upper_case[BUILTIN_CMD_NUMBER];
 
-  /* output unit files API */
+    /* output unit files API */
+    /* reset for output */
     FILE_NAME_PATH_COUNTER_LIST output_unit_files;
 
-  /* to find index in output_unit_files based on name */
+    /* to find index in output_unit_files based on name */
+    /* reset upon allocation */
     NAME_NUMBER_LIST page_name_number;
 
   /* API to open, set encoding and register files */
@@ -827,13 +847,10 @@ typedef struct CONVERTER {
     TYPE_INTEGER_INFORMATION *html_customized_code_types;
     char *pre_class_types[TXI_TREE_TYPES_NUMBER];
     ACCENT_ENTITY_INFO accent_entities[BUILTIN_CMD_NUMBER];
-    FIXED_STRING_WITH_LEN special_character[SC_non_breaking_space+1];
-    FIXED_STRING_WITH_LEN line_break_element;
-    CSS_SELECTOR_STYLE_LIST css_element_class_styles;
+    /* next two can be changed by handlers, but are not reset for
+       a conversion */
     STRING_LIST css_rule_lines;
     STRING_LIST css_import_lines;
-    /* filled based on css_element_class_styles when needed */
-    STRING_LIST css_element_class_list;
   /* perl function references. This should be SV *sv,
      but we don't want to include the Perl headers everywhere; */
     const void *file_id_setting_refs[FIS_external_target_non_split_name+1];
@@ -866,31 +883,46 @@ typedef struct CONVERTER {
     HTML_DIRECTION_STRING_TRANSLATED *translated_direction_strings[TDS_TRANSLATED_MAX_NR];
     HTML_DIRECTION_STRING_TRANSLATED **customized_translated_direction_strings[TDS_TRANSLATED_MAX_NR];
     HTML_STAGE_HANDLER_INFO_LIST html_stage_handlers[HSHT_type_finish +1];
-    HTML_NO_ARG_COMMAND_CONVERSION *customized_no_arg_commands_formatting[BUILTIN_CMD_NUMBER][NO_ARG_COMMAND_CONTEXT_NR];
+    HTML_NO_ARG_COMMAND_CUSTOMIZATION customized_no_arg_commands_formatting[BUILTIN_CMD_NUMBER];
     char ***customized_directions_strings[(TDS_TYPE_MAX_NR) - (TDS_TRANSLATED_MAX_NR)];
     PRE_CLASS_TYPE_INFO *html_customized_pre_class_types;
     COMMAND_ACCENT_ENTITY_INFO *html_customized_accent_entity_info;
     HTML_STYLE_COMMAND_CONVERSION html_style_command_conversion[BUILTIN_CMD_NUMBER][STYLE_COMMAND_CONTEXT_NR];
     COMMAND_HTML_STYLE_COMMAND_CONVERSION *html_customized_style_commands;
-    /* set for a converter, modified in a document */
-    HTML_NO_ARG_COMMAND_CONVERSION html_no_arg_command_conversion[BUILTIN_CMD_NUMBER][NO_ARG_COMMAND_CONTEXT_NR];
-    char ***directions_strings[TDS_TYPE_MAX_NR];
-    const char **main_units_direction_names;
-    LANG_TRANSLATION **translation_cache;
-
-    /* set for a document */
-    size_t output_units_descriptors[OUDT_external_nodes_units+1];
-    enum htmlxref_split_type document_htmlxref_split_type;
-    const OUTPUT_UNIT **global_units_directions;
-    SPECIAL_UNIT_DIRECTION *special_units_direction_names;
-    /* both for global units associated to normal output units and
-       for special output units, sorted according to direction name */
-    SPECIAL_UNIT_DIRECTION_LIST global_units_direction_names;
-    /* for global directions texts, for example Space */
+    /* for global directions texts, for example Space.  The texts are available
+       at converter initialization, possibly based on customization.
+       The names are set when first accessed (from XS).
+     */
     STRING_LIST global_texts_direction_names;
+    const char **main_units_direction_names;
     DIRECTION_NODE_NAME_LIST customized_global_units_directions;
     STRING_LIST added_global_units_directions;
     STRING_LIST customized_global_text_directions;
+
+    /* set for a document */
+    /* next two set in conversion initialization */
+    FIXED_STRING_WITH_LEN special_character[SC_non_breaking_space+1];
+    FIXED_STRING_WITH_LEN line_break_element;
+    /* reset and set in conversion initialization */
+    CSS_SELECTOR_STYLE_LIST css_element_class_styles;
+    /* filled based on css_element_class_styles when needed */
+    STRING_LIST css_element_class_list;
+    /* next two reset and set in conversion initialization based on
+       default and customized and on special characters and similar.
+    */
+    char ***directions_strings[TDS_TYPE_MAX_NR];
+    HTML_NO_ARG_COMMAND_FORMATTING html_no_arg_command_conversion[BUILTIN_CMD_NUMBER];
+    enum htmlxref_split_type document_htmlxref_split_type;
+    /* Allocated at converter initialization based on customization.
+       Zeroed before conversion, then filled. */
+    const OUTPUT_UNIT **global_units_directions;
+    /* reallocated and reset when set */
+    SPECIAL_UNIT_DIRECTION *special_units_direction_names;
+    /* both for global units associated to normal output units and
+       for special output units, sorted according to direction name */
+    /* free'd when global_units_directions are zeroed, set when first
+       accessed (from XS only) */
+    SPECIAL_UNIT_DIRECTION_LIST global_units_direction_names;
     ELEMENT **special_unit_info_tree[SUIT_type_heading+1];
     SORTED_INDEX_NAMES sorted_index_names;
     void *registered_ids_c_hashmap;
@@ -916,6 +948,16 @@ typedef struct CONVERTER {
     char *copying_comment;
     char *destination_directory;
     char *document_name;
+    /* for user-defined translations */
+    /* reset before conversion */
+    LANG_TRANSLATION **translation_cache;
+
+    /* set for a document only in C */
+    /* output units lists descriptors for output units lists associated
+       to the converter, stored in document.
+       In Perl the output units lists are directly associated
+       to the converter. */
+    size_t output_units_descriptors[OUDT_external_nodes_units+1];
 
     /* state only in C converter */
     unsigned long modified_state; /* specifies which perl state to rebuild */
@@ -929,9 +971,11 @@ typedef struct CONVERTER {
     TYPE_CONVERSION_FUNCTION *current_types_conversion_function;
     COMMAND_CONVERSION_FUNCTION *current_commands_conversion_function;
     void (* current_format_protect_text) (const char *text, TEXT *result);
+
     int added_title_tree;
+    /* reset and set at the beginning of conversion */
     char *date_in_header;
-    /* next two setup based on conf before starting the conversion */
+    /* next two reset and set based on conf before starting the conversion */
     char **html_active_icons;
     char **html_passive_icons;
 

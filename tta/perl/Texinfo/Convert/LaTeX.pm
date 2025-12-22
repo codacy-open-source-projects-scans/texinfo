@@ -1443,6 +1443,7 @@ sub _latex_header($) {
   # and the chapter number if in a @chapter or @appendix, but set to
   # empty by @unnumbered.
   $header_code .= "\\newcommand{\\Texinfothechapterheading}{}\n";
+  $header_code .= "\\newtitlemark{\\Texinfothechapterheading}%\n";
 
   # this command is redefined when reaching appendices
   $header_code .= "\\newcommand{\\Texinfoheadingchaptername}{\\chaptername}\n";
@@ -1452,6 +1453,7 @@ sub _latex_header($) {
   $header_code .= "\\newcommand{\\Texinfosettitle}{$settitle}%\n";
   if (exists($self->{'collected_includes'})) {
     $header_code .= "\\newcommand{\\Texinfotheinclude}{}%\n";
+  $header_code .= "\\newtitlemark{\\Texinfotheinclude}%\n";
   }
   $header_code .= "\n";
 
@@ -1467,7 +1469,7 @@ sub _latex_header($) {
          ."\\addcontentsline{toc}{${latex_command}}{\\protect\\textbf{#1}}%\n";
     if ($txi_unnumbered_latex eq 'Texinfounnumberedchapter') {
       $header_code
-     .= "\\renewcommand{\\Texinfothechapterheading}{\\Texinfoplaceholder}%\n";
+     .= "\\renewcommand{\\Texinfothechapterheading}{}%\n";
       $header_code
      .= "\\chaptermark{#1}%\n";
     } elsif ($txi_unnumbered_latex eq 'Texinfounnumberedsection') {
@@ -2961,6 +2963,38 @@ sub _make_title($$) {
   return $result;
 }
 
+sub _format_brace_command($$) {
+  my ($self, $cmdname) = @_;
+
+  if ($cmdname eq 'lbracechar') {
+    $cmdname = '{';
+  } elsif ($cmdname eq 'rbracechar') {
+    $cmdname = '}';
+  }
+
+  # Index entries need balanced braces so we can't use \{ and \}.
+  if ($self->{'formatting_context'}->[-1]->{'index'}) {
+    if ($cmdname eq '{') {
+      if ($self->{'formatting_context'}->[-1]->{'text_context'}->[-1]
+           eq 'ctx_math') {
+        return '\\lbrace{}';
+      } else {
+        return '\\textbraceleft{}';
+      }
+    } elsif ($cmdname eq '}') {
+      if ($self->{'formatting_context'}->[-1]->{'text_context'}->[-1]
+           eq 'ctx_math') {
+        return '\\rbrace{}';
+      } else {
+        return '\\textbraceright{}';
+      }
+    }
+  } else {
+    # always protect, even in math mode
+    return "\\$cmdname";
+  }
+}
+
 sub _convert($$);
 
 # Convert the Texinfo tree under $ELEMENT
@@ -3155,27 +3189,7 @@ sub _convert($$) {
         $result .= "\\-{}";
 
       } elsif ($cmdname eq '{' or $cmdname eq '}') {
-        # Index entries need balanced braces so we can't use \{ and \}.
-        if ($self->{'formatting_context'}->[-1]->{'index'}) {
-          if ($cmdname eq '{') {
-            if ($self->{'formatting_context'}->[-1]->{'text_context'}->[-1]
-                 eq 'ctx_math') {
-                $result .= '\\lbrace{}';
-            } else {
-                $result .= '\\textbraceleft{}';
-            }
-          } elsif ($cmdname eq '}') {
-            if ($self->{'formatting_context'}->[-1]->{'text_context'}->[-1]
-                 eq 'ctx_math') {
-                $result .= '\\rbrace{}';
-            } else {
-                $result .= '\\textbraceright{}';
-            }
-          }
-        } else {
-          # always protect, even in math mode
-          $result .= "\\$cmdname";
-        }
+        $result .= _format_brace_command($self, $cmdname);
       } elsif ($cmdname eq '\\'
              and $self->{'formatting_context'}->[-1]->{'text_context'}->[-1]
                  eq 'ctx_math') {
@@ -3222,6 +3236,9 @@ sub _convert($$) {
                                                           ->{$converted_command}
             # TODO translation
             .'}{error}'
+        } elsif ($converted_command eq 'lbracechar'
+                   or $converted_command eq 'rbracechar') {
+          $result .= _format_brace_command($self, $converted_command);
         } else {
           $result .= $LaTeX_no_arg_brace_commands{$command_format_context}
                                                          ->{$converted_command};

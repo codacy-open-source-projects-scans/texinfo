@@ -1,3 +1,333 @@
+2025-12-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter), tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization), tta/C/main/translations.c
+	(free_translation_cache): add free_translation_cache based on
+	html_reset_converter code.  Call free_translation_cache in
+	html_free_converter and in html_conversion_initialization, but not in
+	html_reset_converter.
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter), tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization)
+	(html_prepare_output_units_global_targets): do not reset
+	global_units_direction_names, global_texts_direction_names and
+	special_units_direction_names in html_reset_converter.  Free
+	special_units_direction_names and global_units_direction_names list in
+	html_free_converter.  Free global_units_direction_names list in
+	html_conversion_initialization too.  Reuse
+	special_units_direction_names memory by using realloc.
+
+	* tta/C/convert/converter.c (converter_set_document): zero out
+	converter->output_units_descriptors if a new document is associated to
+	a converter.
+
+2025-12-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (html_setup_output_simple_page),
+	tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter): call allocate_name_number_list in
+	html_setup_output_simple_page, since it also resets page_name_number.
+	Move free_name_number_list from html_reset_converter to
+	html_free_converter now that it is reset upon being allocated.
+
+	* tta/C/convert/convert_html.c (html_prepare_title_titlepage),
+	tta/C/convert/html_converter_api.c (html_convert),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs (html_convert): call
+	html_setup_output_simple_page in convert, not in
+	html_prepare_title_titlepage.
+
+2025-12-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/converter.c (reset_generic_converter),
+	tta/C/convert/html_converter_finish.c (html_reset_converter),
+	tta/C/convert/html_prepare_converter.c
+	(html_prepare_units_directions_files, html_set_pages_files),
+	tta/perl/Texinfo/Convert/HTML.pm (_html_set_pages_files)
+	(_prepare_units_directions_files): call clear_output_unit_files in
+	html_prepare_units_directions_files and not in html_set_pages_files,
+	do not call clear_output_unit_files in *reset_*converter.  Similarly,
+	in Perl, call initialize_output_units_files in
+	_prepare_units_directions_files, not in _html_set_pages_files.
+
+	* tta/C/convert/converter.c: remove initialize_output_units_files,
+	clear_output_unit_files is called instead.
+
+2025-12-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c,
+	tta/C/convert/html_prepare_converter.c
+	(free_html_no_arg_command_conversion)
+	(copy_html_no_arg_command_conversion, html_conversion_initialization):
+	move free_html_no_arg_command_conversion to html_prepare_converter.c,
+	remove the useless second argument, call in
+	html_conversion_initialization and remove the calls to free in
+	copy_html_no_arg_command_conversion.
+
+	* tta/C/convert/convert_html.c
+	(reset_unset_no_arg_commands_formatting_context),
+	tta/C/convert/format_html.c, tta/C/convert/html_prepare_converter.c
+	(special_characters_formatting): minor changes, avoid useless
+	initialization, and useless if, add const.
+
+	* tta/perl/t/z_misc/same_converter_init.t: add another test with
+	OUTPUT_CHARACTERS set.
+
+2025-12-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_converter_initialize_beginning, html_setup_output),
+	tta/perl/Texinfo/Convert/HTML.pm (converter_initialize)
+	(_prepare_css, conversion_initialization, _setup_output): call
+	html_prepare_css only once per converter initialization in
+	html_converter_initialize_beginning/converter_initialize, not once per
+	conversion.
+
+2025-12-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization), tta/perl/Texinfo/Convert/HTML.pm
+	(conversion_initialization): always unset current_node and
+	current_root_command in conversion initialization.
+
+2025-12-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization): rename html_initialize_output_state
+	as html_conversion_initialization.  Update callers.
+
+2025-12-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (order_direction_icons_list): rename
+	prepare_direction_icons_list as order_direction_icons_list.
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter): call html_free_direction_icons_array in
+	html_free_converter and not in html_reset_converter as it is already
+	called when setting up the icon arrays in order_direction_icons_list.
+
+	* tta/C/convert/convert_html.c (html_convert_output)
+	tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter): free self->date_in_header just before setting
+	it and in html_free_converter.
+
+	* tta/C/convert/convert_html.c (html_initialize_pending_closes)
+	(html_setup_output_simple_page), tta/C/convert/html_converter_finish.c
+	(html_free_converter), tta/C/convert/html_prepare_converter.c
+	(html_set_pages_files), tta/C/main/converter_types.h
+	(STRING_STACK_LIST): add a space field in STRING_STACK_LIST.  Reuse
+	the pending_closes list instead of free'ing it, growing it if
+	there is not enough space.  Add html_initialize_pending_closes that
+	grows the pending_closes list if needed and initializes the newly
+	added string stacks.  Remove html_free_pending_closes, inlining
+	the code free'ing the pending_closes list in html_free_converter.
+
+2025-12-20  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_convert, _format_brace_command):
+	Split conversion of @{ and @} into separate function and use it
+	for @lbracechar{} and @rbracechar{} to ensure conversion of these
+	commands is done correctly in index entries.
+
+2025-12-20 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Customization of CSS Rules Imports and
+	Selectors): add explanations and improve example.
+
+2025-12-20 Patrice Dumas  <pertusus@free.fr>
+
+	Never store CSS selector style with undefined style
+
+	* tta/C/convert/html_conversion_state.c (compare_selector_style):
+	sort NULL selector last, such that it is easy to "remove" the selector
+	style by decreasing the number of elements in list after it has been
+	put last.
+
+	* tta/C/convert/html_conversion_state.c (html_css_set_selector_style):
+	if the selector was found but the style is NULL, remove the selector
+	style.  Do not add a selector with a NULL style.
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_initialize_output_state): adapt to selector style never being
+	NULL anymore.
+
+	* tta/C/convert/html_prepare_converter.c
+	(set_css_selector_style_list_size): make static.
+
+	* tta/perl/Texinfo/Convert/HTML.pm (_collect_css_element_class)
+	(html_attribute_class, css_set_selector_style, css_get_info): never
+	add a selector style with an undef style.  Remove the selector if
+	css_set_selector_style is called with an undef style.
+
+	* tta/C/convert/html_prepare_converter.c (html_format_setup),
+	tta/perl/Texinfo/Convert/HTML.pm: do not add div.lisp selector in the
+	first place instead of adding and then removing it.
+
+	* tta/C/convert/html_conversion_state.c (html_css_get_info): always
+	clear css_element_class_list and reset the values to avoid returning
+	stale information if some selectors have been removed or added.
+
+2025-12-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_conversion_state.c (html_css_set_selector_style):
+	minor change to set to 0 only if needed.
+
+2025-12-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (html_free_converter),
+	tta/C/convert/html_prepare_converter.c
+	(clear_css_selector_style_list, html_initialize_output_state): replace
+	free_css_selector_style_list by clear_css_selector_style_list,
+	possibly followed by a free.
+
+	* tta/C/convert/html_prepare_converter.c
+	(set_css_selector_style_list_size, html_format_setup)
+	(html_initialize_output_state): replace
+	initialize_css_selector_style_list by
+	set_css_selector_style_list_size, which uses realloc, such as to reuse
+	the already allocated memory.
+
+	* tta/C/convert/html_prepare_converter.c (html_format_setup): rename
+	css_selector_style as display_preformatted_css_selector_style.
+
+	* tta/perl/XSTexinfo/convert/get_html_perl_info.c
+	(html_converter_get_customization_sv): remove unused code.
+
+2025-12-20  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_latex_header) <@unnumbered>:
+	Do not use \Texinfoplaceholder in the redefinition of
+	\Texinfothechapterheading as the former is defined to take an argument,
+	leading to an error message "! Argument of \Texinfoplaceholder
+	has an extra }.".
+
+2025-12-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter): set
+	some converter variables to NULL after freeing them, such that if
+	they are freed again without being set, for example if the setup
+	handler failed, there is no error.
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter): free tree_to_build.list in html_free_converter
+	only, set the number to 0 in html_reset_converter.
+
+2025-12-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/test_utils.pl (test): verify that both the reference
+	error string and the test result string are set before comparing them.
+
+2025-12-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/test_utils.pl (_convert, convert_to_*): use a function
+	for the code common for all the converters.
+
+2025-12-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_prepare_converter.c (prepare_footnotes_targets):
+	reset shared_conversion_state.footnote_number.
+
+	* tta/perl/Makefile.tres, tta/perl/t/z_misc/same_converter_init.t:
+	check calling a converter twice.
+
+2025-12-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Tests.pm (is_diff), tta/perl/t/test_utils.pl: move
+	is_diff to Tests.pm.
+
+2025-12-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (html_free_pending_closes)
+	(html_setup_output_simple_page),
+	tta/C/convert/html_converter_finish.c (html_free_converter),
+	tta/C/convert/html_prepare_converter.c (html_set_pages_files): add
+	html_free_pending_closes based on html_free_converter.  Call it before
+	allocating pending_closes.
+
+	* tta/C/convert/converter.c (converter_set_document): destroy text
+	options, if they are already set, before setting them.
+
+	* tta/C/convert/html_conversion_state.c,
+	tta/C/convert/html_prepare_converter.c
+	(initialize_css_selector_style_list): move
+	initialize_css_selector_style_list to html_prepare_converter.c.
+
+	* tta/C/convert/html_converter_finish.c (html_free_converter),
+	tta/C/convert/html_prepare_converter.c (free_css_selector_style_list)
+	(initialize_css_selector_style_list): add free_css_selector_style_list
+	based on html_free_converter.  Call it before allocating a
+	css_selector_style_list.
+
+	* tta/C/convert/html_converter_finish.c (reset_html_targets)
+	(html_reset_converter): set list to 0 after free'ing.
+
+	* tta/C/convert/html_prepare_converter.c
+	(copy_html_no_arg_command_conversion, html_initialize_output_state):
+	free strings before (re)setting them, and set to 0 if not set.
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_initialize_output_state): call html_clear_direction_string_type
+	on directions_strings type if already set instead of reallocating.
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_prepare_conversion_units_targets): clear an existing hashmap
+	if there is already one instead of creating a new one.
+
+	* tta/perl/XSTexinfo/convert/get_html_perl_info.c: remove unused
+	html_get_directions_strings_sv.
+
+2025-12-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Tests.pm (find_dirs_t2a)
+	(configure_document_locales),
+	tta/perl/t/z_misc/same_parser_multiple_files.t: add, based on
+	t/z_misc/same_parser_multiple_files.t code.
+
+2025-12-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Tests.pm: change call formatting, use ignore when
+	the value is not needed.
+
+2025-12-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (html_conversion_finalization): set
+	html_files_information to zero after free'ing.
+
+2025-12-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (html_translate_names),
+	tta/C/convert/html_converter_finish.c
+	(free_html_no_arg_command_conversion, html_free_converter),
+	tta/C/convert/html_prepare_converter.c
+	(copy_html_no_arg_command_conversion, html_initialize_output_state),
+	tta/C/main/converter_types.h (HTML_NO_ARG_COMMAND_CONVERSION)
+	(HTML_NO_ARG_COMMAND_FORMATTING, HTML_NO_ARG_COMMAND_CUSTOMIZATION)
+	(CONVERTER), tta/perl/Texinfo/Config.pm
+	(_GNUT_initialize_no_arg_commands_formatting_strings)
+	(texinfo_register_no_arg_command_formatting),
+	tta/perl/Texinfo/Convert/HTML.pm (_translate_names)
+	(converter_initialize, converter_destroy, conversion_initialization):
+	Do not put translated_to_convert nor translated_tree no arg command
+	formatting in the normal context information, instead put it outside
+	of the per-context information.
+
+	* tta/C/convert/build_html_perl_info.c
+	(build_no_arg_commands_formatting),
+	tta/C/convert/build_html_perl_state.c (build_html_translated_names),
+	tta/C/convert/convert_html.c
+	(reset_unset_no_arg_commands_formatting_context),
+	tta/C/convert/format_html.c (html_convert_no_arg_command)
+	(html_convert_css_string_for_list_mark),
+	tta/perl/Texinfo/Convert/HTML.pm
+	(_reset_unset_no_arg_commands_formatting_context),
+	tta/perl/XSTexinfo/convert/get_html_perl_info.c
+	(html_converter_get_customization_sv): update users of no arg commands
+	formatting information, and Perl to C interfaces.
+
+	* tta/perl/XSTexinfo/convert/get_html_perl_info.c: remove unused
+	html_get_no_arg_commands_formatting_sv.
+
 2025-12-17 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/perl/Texinfo/Convert/HTML.pm: rename $command variable as

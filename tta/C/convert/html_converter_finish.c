@@ -36,7 +36,9 @@
    html_free_direction_icons_array
  */
 #include "convert_html.h"
-/* html_nr_string_directions html_free_customized_global_units_directions */
+/* html_nr_string_directions html_free_customized_global_units_directions
+   free_css_selector_style_list free_html_no_arg_command_conversion
+ */
 #include "html_prepare_converter.h"
 #include "html_converter_api.h"
 
@@ -106,7 +108,9 @@ reset_html_targets (CONVERTER *self, HTML_TARGET_LIST *targets)
     {
       enum command_id cmd = self->html_target_cmds.stack[i];
       reset_html_targets_list (self, &targets[cmd]);
+      /* TODO not reset, but free'ed? */
       free (targets[cmd].list);
+      targets[cmd].list = 0;
       targets[cmd].space = 0;
     }
 }
@@ -173,7 +177,9 @@ html_reset_converter (CONVERTER *self)
   for (i = 0; i < ST_footnote_location+1; i++)
     {
       reset_html_targets_list (self, &self->html_special_targets[i]);
+      /* TODO not reset, but free'ed? */
       free (self->html_special_targets[i].list);
+      self->html_special_targets[i].list = 0;
       self->html_special_targets[i].space = 0;
     }
   self->html_target_cmds.top = 0;
@@ -181,20 +187,10 @@ html_reset_converter (CONVERTER *self)
   reset_special_unit_info_list (&self->customized_special_unit_info);
 
   free (self->shared_conversion_state.footnote_id_numbers);
+  self->shared_conversion_state.footnote_id_numbers = 0;
 
   free (self->shared_conversion_state.formatted_listoffloats_nr);
   self->shared_conversion_state.formatted_listoffloats_nr = 0;
-
-  if (self->translation_cache)
-    {
-      for (i = 0; self->translation_cache[i]; i++)
-        {
-          free_lang_translation (self->translation_cache[i]);
-          free (self->translation_cache[i]);
-        }
-      free (self->translation_cache);
-      self->translation_cache = 0;
-    }
 
   /* formatted_index_entries may not be initialized if there was an error
      early and prepare_conversion_units_targets was never called */
@@ -207,6 +203,7 @@ html_reset_converter (CONVERTER *self)
           free (self->shared_conversion_state.formatted_index_entries[i]);
         }
       free (self->shared_conversion_state.formatted_index_entries);
+      self->shared_conversion_state.formatted_index_entries = 0;
     }
 
   /* change to 0 in releases? */
@@ -223,17 +220,6 @@ html_reset_converter (CONVERTER *self)
   free (self->sorted_index_names.list);
   memset (&self->sorted_index_names, 0, sizeof (INDEX_LIST));
 
-  free (self->global_units_direction_names.list);
-  self->global_units_direction_names.list = 0;
-  self->global_units_direction_names.number = 0;
-
-  clear_strings_list (&self->global_texts_direction_names);
-
-  html_free_direction_icons_array (self, &self->html_active_icons);
-  html_free_direction_icons_array (self, &self->html_passive_icons);
-
-  free (self->special_units_direction_names);
-  self->special_units_direction_names = 0;
   free (self->output_unit_file_indices);
   self->output_unit_file_indices = 0;
   free (self->special_unit_file_indices);
@@ -246,8 +232,6 @@ html_reset_converter (CONVERTER *self)
   self->documentdescription_string = 0;
   free (self->copying_comment);
   self->copying_comment = 0;
-  free (self->date_in_header);
-  self->date_in_header = 0;
   free (self->destination_directory);
   self->destination_directory = 0;
   free (self->document_name);
@@ -289,11 +273,8 @@ html_reset_converter (CONVERTER *self)
     }
 
   clear_output_files_information (&self->output_files_information);
-  clear_output_unit_files (&self->output_unit_files);
 
   clear_strings_list (&self->check_htmlxref_already_warned);
-
-  free_name_number_list (&self->page_name_number);
 
   for (i = 0; i < self->page_css.number; i++)
     {
@@ -306,6 +287,9 @@ html_reset_converter (CONVERTER *self)
       free (page_css_list->page_name);
     }
   free (self->page_css.list);
+  self->page_css.list = 0;
+  self->page_css.number = 0;
+  self->page_css.space = 0;
 
   /* could change to 0 in releases? */
   if (1)
@@ -326,22 +310,9 @@ html_reset_converter (CONVERTER *self)
                 }
             }
         }
+      self->tree_to_build.number = 0;
     }
-  free (self->tree_to_build.list);
-
   clear_type_explanations (type_explanations);
-}
-
-static void free_html_no_arg_command_conversion (
-                             HTML_NO_ARG_COMMAND_CONVERSION *format_spec,
-                                   enum conversion_context cctx)
-{
-  if (cctx == HCC_type_normal && format_spec->translated_tree)
-    destroy_element_and_children (format_spec->translated_tree);
-  free (format_spec->element);
-  free (format_spec->text);
-  free (format_spec->translated_converted);
-  free (format_spec->translated_to_convert);
 }
 
 void
@@ -378,6 +349,8 @@ html_free_converter (CONVERTER *self)
 
   free_strings_list (&self->check_htmlxref_already_warned);
 
+  free_name_number_list (&self->page_name_number);
+
   for (i = 0; i < SUIT_type_heading+1; i++)
     {/* we assume that reset_translated_special_unit_info_tree
         has already been called */
@@ -407,13 +380,7 @@ html_free_converter (CONVERTER *self)
         }
     }
 
-  for (j = 0; j < self->css_element_class_styles.number; j++)
-    {
-      CSS_SELECTOR_STYLE *selector_style
-        = &self->css_element_class_styles.list[j];
-      free (selector_style->selector);
-      free (selector_style->style);
-    }
+  clear_css_selector_style_list (&self->css_element_class_styles);
   free (self->css_element_class_styles.list);
 
   free_strings_list (&self->css_element_class_list);
@@ -424,11 +391,18 @@ html_free_converter (CONVERTER *self)
     {
       enum command_id cmd = no_arg_formatted_cmd.list[j];
       enum conversion_context cctx;
+      HTML_NO_ARG_COMMAND_FORMATTING *no_arg_formatting
+        = &self->html_no_arg_command_conversion[cmd];
+
+      if (no_arg_formatting->translated_tree)
+        destroy_element_and_children (no_arg_formatting->translated_tree);
+      free (no_arg_formatting->translated_to_convert);
+
       for (cctx = 0; cctx < NO_ARG_COMMAND_CONTEXT_NR; cctx++)
         {
           HTML_NO_ARG_COMMAND_CONVERSION *format_spec
-                = &self->html_no_arg_command_conversion[cmd][cctx];
-          free_html_no_arg_command_conversion (format_spec, cctx);
+                = &no_arg_formatting->context_formatting[cctx];
+          free_html_no_arg_command_conversion (format_spec);
         }
     }
 
@@ -436,13 +410,18 @@ html_free_converter (CONVERTER *self)
     {
       enum command_id cmd = no_arg_formatted_cmd.list[j];
       enum conversion_context cctx;
+      HTML_NO_ARG_COMMAND_CUSTOMIZATION *customized_no_arg
+        = &self->customized_no_arg_commands_formatting[cmd];
+
+      free (customized_no_arg->translated_to_convert);
+
       for (cctx = 0; cctx < NO_ARG_COMMAND_CONTEXT_NR; cctx++)
         {
           HTML_NO_ARG_COMMAND_CONVERSION *format_spec
-            = self->customized_no_arg_commands_formatting[cmd][cctx];
+            = customized_no_arg->context_formatting[cctx];
           if (format_spec)
             {
-              free_html_no_arg_command_conversion (format_spec, cctx);
+              free_html_no_arg_command_conversion (format_spec);
               free (format_spec);
             }
         }
@@ -579,6 +558,17 @@ html_free_converter (CONVERTER *self)
 
   free_strings_list (&self->global_texts_direction_names);
 
+  free (self->special_units_direction_names);
+
+  free (self->global_units_direction_names.list);
+
+  html_free_direction_icons_array (self, &self->html_active_icons);
+  html_free_direction_icons_array (self, &self->html_passive_icons);
+
+  free_translation_cache (self->translation_cache);
+
+  free (self->date_in_header);
+
   free (self->html_customized_upper_case_commands);
   self->html_customized_upper_case_commands = 0;
 
@@ -637,7 +627,10 @@ html_free_converter (CONVERTER *self)
   free (style_formatted_cmd.list);
  */
 
-  for (j = 0; j < self->pending_closes.number; j++)
+  /* The string stacks per file should already be empty, either because
+     the code is consistent for opening and closing, or because they are
+     emptied after the conversion (with an error message) */
+  for (j = 0; j < self->pending_closes.space; j++)
     {
       STRING_STACK *file_pending_closes = &self->pending_closes.list[j];
       free (file_pending_closes->stack);
@@ -661,5 +654,7 @@ html_free_converter (CONVERTER *self)
   free (type_explanations->list);
 
   free_strings_list (&self->special_unit_varieties);
+
+  free (self->tree_to_build.list);
 }
 

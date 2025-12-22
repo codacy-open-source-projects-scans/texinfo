@@ -548,9 +548,27 @@ converter_set_document (CONVERTER *converter, DOCUMENT *document)
     }
     */
 
+  /*
+    If there is already an associated document, reset information linked
+    to the document as much as possible, without freeing anything as
+    it isn't clear what should be freed or not.
+    The output units could be freed through the document, at least
+    theoretically, although there is probably no code that does it.
+   */
+  if (converter->document)
+    {
+      int i;
+      for (i = 0; i < OUDT_external_nodes_units+1; i++)
+        converter->output_units_descriptors[i] = 0;
+    }
+
   converter->document = document;
 
   set_output_encoding (converter->conf, converter->document);
+
+  if (converter->convert_text_options)
+    /* should only happen if a converter is reused */
+    destroy_text_options (converter->convert_text_options);
 
   converter->convert_text_options
     = copy_converter_options_for_convert_text (converter);
@@ -1633,13 +1651,6 @@ top_node_filename (const CONVERTER *self, const char *document_name)
 
 
 
-void
-initialize_output_units_files (CONVERTER *self)
-{
-  /* nothing to do, should have been initialized during converter
-     initialization */
-}
-
 static size_t
 find_output_unit_file (const CONVERTER *self, const char *filename, int *status)
 {
@@ -1850,7 +1861,6 @@ reset_generic_converter (CONVERTER *self)
   ERROR_MESSAGE_LIST *error_messages = 0;
 
   clear_output_files_information (&self->output_files_information);
-  clear_output_unit_files (&self->output_unit_files);
 
   if (check_counts)
     error_messages = set_check_element_interpreter_refcount ();
