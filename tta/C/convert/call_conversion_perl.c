@@ -194,8 +194,8 @@ call_module_converter (const char *module_name,
   return result;
 }
 
-void
-call_object_reset_perl_converter (const CONVERTER *self)
+static void
+call_object_perl_converter_remove_output_units (const CONVERTER *self)
 {
   int count;
 
@@ -212,18 +212,25 @@ call_object_reset_perl_converter (const CONVERTER *self)
   PUSHs(sv_2mortal (SvREFCNT_inc ((SV *) self->sv)));
   PUTBACK;
 
-  count = call_method ("reset_perl_converter",
+  count = call_method ("perl_converter_remove_output_units",
                        G_DISCARD|G_SCALAR);
 
   SPAGAIN;
 
   if (count != 0)
-    croak ("call: object reset_perl_converter should return 0 item\n");
+    croak ("call: object perl_converter_remove_output_units should return 0 item\n");
 
   PUTBACK;
 
   FREETMPS;
   LEAVE;
+}
+
+void
+release_converter_output_units_remove_perl_output_units (CONVERTER *self)
+{
+  converter_release_output_units_built (self);
+  call_object_perl_converter_remove_output_units (self);
 }
 
 void
@@ -313,8 +320,9 @@ call_converter_output (CONVERTER *self, DOCUMENT *document)
   LEAVE;
 
   /* already set in the converter, no need to get from Perl.
-     Case of converters with file opening implemented in C,
-     for instance HTML, called through XS interfaces */
+     Case of converters with file opening implemented in C, called through
+     XS interfaces, that would not transfer files information to Perl.
+   */
   if (self->output_files_information.opened_files.number > 0
       || self->output_files_information.unclosed_files.number > 0)
     return result;

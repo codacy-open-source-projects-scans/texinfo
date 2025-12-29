@@ -47,6 +47,7 @@
 #include "targets.h"
 #include "parser_conf.h"
 #include "document.h"
+/* retrieve_output_units ... */
 #include "output_unit.h"
 #include "get_perl_info.h"
 
@@ -1373,6 +1374,10 @@ get_language_document_hv_sorted_indices (HV *document_hv, const char *key,
    do not close the PerlIO.  The PerlIO can be closed, though, or be carried
    around to be closed later on.
  */
+ /*
+   NOTE clears Perl output files information, as if
+   Texinfo::Convert::Utils::output_files_reset had been called.
+  */
 OUTPUT_FILES_INFORMATION *
 get_output_files_information (SV *output_files_sv)
 {
@@ -1416,7 +1421,10 @@ get_output_files_information (SV *output_files_sv)
                                 file_name);
             }
         }
+
+      hv_clear (opened_files_hv);
     }
+
   unclosed_files_sv = hv_fetch (hv, "unclosed_files",
                                 strlen ("unclosed_files"), 0);
 
@@ -1439,16 +1447,18 @@ get_output_files_information (SV *output_files_sv)
           file_stream = allocate_file_stream (output_files_information,
                                               file_name);
 
-          /* Should be two possibilities, undef meaning the a FILE was opened
+          /* Should be two possibilities, undef meaning the FILE was opened
              in C, or Perl file handle.
-             In case of undef, it could be possible to find the FILE, by adding
-             a converter argument to the function, and using code similar
-             to get_unclosed_stream.
-             However, from Perl it is not possible to do the same, so we
-             do not try to do it in either case.
            */
           if (!SvOK (value_sv))
             {
+          /* TODO It could be possible to find the FILE, by adding
+             a converter argument to the function, and using code similar
+             to get_unclosed_stream.
+             However, since the files are all closed (maybe except STDOUT)
+             this situation probably never happens, so it is not important
+             to fix this issue.
+           */
               fprintf (stderr, "REMARK: unclosed C stream for `%s'\n",
                        file_name);
             }
@@ -1483,7 +1493,10 @@ get_output_files_information (SV *output_files_sv)
                         file_name);
             }
         }
+
+      hv_clear (unclosed_files_hv);
     }
+
   return output_files_information;
 }
 
@@ -1492,7 +1505,7 @@ get_output_files_information (SV *output_files_sv)
 /* destruction */
 
 /* Same as Texinfo::OutputUnits release_output_units_list */
-void
+static void
 release_output_units_list_built (OUTPUT_UNIT_LIST *output_units)
 {
   dTHX;
@@ -1548,6 +1561,29 @@ release_output_units_list_built (OUTPUT_UNIT_LIST *output_units)
 
            hv_delete (output_unit->hv, "associated_document_unit",
                       strlen ("associated_document_unit"), G_DISCARD);
+        }
+    }
+}
+
+/* Retrieve the output units lists associated to a converter and release the
+   associated Perl output units.  Same effect as calling
+   Texinfo::OutputUnits::release_output_units_list on all the converter
+   output unit lists.
+ */
+void
+converter_release_output_units_built (CONVERTER *converter)
+{
+  int i;
+
+  for (i = 0; i < OUDT_external_nodes_units+1; i++)
+    {
+      if (converter->output_units_descriptors[i])
+        {
+          OUTPUT_UNIT_LIST *output_unit_list
+            = retrieve_output_units (converter->document,
+                                     converter->output_units_descriptors[i]);
+          if (output_unit_list)
+            release_output_units_list_built (output_unit_list);
         }
     }
 }

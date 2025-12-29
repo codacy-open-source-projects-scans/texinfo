@@ -44,7 +44,7 @@
 #include "base_utils.h"
 #include "conf.h"
 #include "errors.h"
-/* parse_file_path */
+/* parse_file_path free_output_files_information */
 #include "utils.h"
 #include "customization_options.h"
 #include "document.h"
@@ -651,6 +651,7 @@ txi_converter_output (CONVERTER *converter, DOCUMENT *document,
       free (output_text_files_info);
       return text_result;
     }
+
   return converter_output (converter, document);
 }
 
@@ -734,11 +735,12 @@ txi_destroy_document (DOCUMENT *document, const char *external_module,
 
 /* ALTIMP Texinfo::Convert::Converter */
 void
-txi_reset_converter (CONVERTER *converter, const char *external_module)
+txi_converter_remove_output_units (CONVERTER *converter,
+                                   const char *external_module)
 {
   if (external_module)
-    call_object_reset_perl_converter (converter);
-  reset_converter (converter);
+    release_converter_output_units_remove_perl_output_units (converter);
+  converter_remove_output_units (converter);
 }
 
 /* ALTIMP Texinfo::Convert::Converter */

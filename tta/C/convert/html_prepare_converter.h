@@ -57,6 +57,10 @@ void free_html_no_arg_command_conversion (
 char ***new_directions_strings_type (int nr_string_directions,
                                      int nr_dir_str_contexts);
 
+void free_js_categories_list (JSLICENSE_CATEGORY_LIST *js_files_info);
+
+void reset_html_page_css (CONVERTER *self);
+
 /* void html_conversion_initialization (CONVERTER *self, const char *context); */
 
 void initialize_js_categories_list (JSLICENSE_CATEGORY_LIST *js_files_info,
@@ -67,6 +71,11 @@ void initialize_jslicense_files
 
 /* int html_setup_output (CONVERTER *self, char **paths); */
 /* void html_setup_convert (CONVERTER *self); */
+
+void reset_html_targets (CONVERTER *self);
+
+/* void html_setup_output_simple_page (CONVERTER *self,
+                                    const char *output_filename); */
 
 /* void html_prepare_conversion_units (CONVERTER *self); */
 
@@ -87,6 +96,7 @@ void html_register_id (CONVERTER *self, const char *string);
 void html_setup_global_units_direction_names (CONVERTER *self);
 void html_setup_global_texts_direction_names (CONVERTER *self);
 
+void html_reset_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info);
 
 /* only called for output() */
 /* FILE_SOURCE_INFO_LIST * html_prepare_units_directions_files (CONVERTER *self,

@@ -178,6 +178,46 @@ sub my_format_separate_anchor($$;$)
 texinfo_register_formatting_function('format_separate_anchor',
                                      \&my_format_separate_anchor);
 
+sub my_slanted_formatting_function {
+  my $converter = shift;
+  my $cmdname = shift;
+  my $command = shift;
+  my $args = shift;
+
+  my $text;
+  if (defined($args) and defined($args->[0])) {
+    $text = $args->[0]->{'normal'};
+  } else {
+    # happens with bogus @-commands without argument, like @strong something
+    return '';
+  }
+
+  # @-command argument
+  my $element = $command->{'contents'}->[0];
+
+  # conversion in string context
+  my $result_string = $converter->convert_tree_new_formatting_context(
+                                      $element, 'in string',
+                                    $Texinfo::Convert::HTML::CTXF_string);
+  my $multi_flag = 0;
+  $multi_flag |= $Texinfo::Convert::HTML::CTXF_string;
+  $multi_flag |= $Texinfo::Convert::HTML::CTXF_code;
+  # conversion in code and string context
+  my $result_code_string
+   = $converter->convert_tree_new_formatting_context(
+                   $element, 'in code string', $multi_flag);
+
+  if ($converter->in_string()) {
+    return $result_string;
+  }
+  return "<i title=\"$result_string\">$text</i>\n"
+          . "<i title=\"$result_code_string\">again $text</i>\n";
+
+  # note that the result is already in code style because of the paragraph
+  # formatting customization
+}
+texinfo_register_command_formatting('slanted', \&my_slanted_formatting_function);
+
 sub my_email_formatting_function {
   my $converter = shift;
   my $cmdname = shift;
@@ -293,10 +333,9 @@ sub my_tree_element_convert_paragraph_type($$$$)
   }
 
   my @contents = @{$element->{'contents'}};
-  push @contents, {'text' => ' <code>HTML</code> text ',
-                   'type' => '_converted'};
-  my $result = $converter->convert_tree({'type' => '_code',
-                                   'contents' => \@contents});
+  push @contents, Texinfo::TreeElement::new({'text' => ' HTML text '});
+  my $new_element = Texinfo::TreeElement::new({'contents' => \@contents});
+  my $result = $converter->convert_tree_in_code_context($new_element);
   return "<p>".$result."</p>";
 }
 
@@ -317,12 +356,9 @@ sub my_final_convert_paragraph_type($$$$)
   }
 
   my @contents = @{$element->{'contents'}};
-  push @contents,
-    Texinfo::TreeElement::new({'text' => ' <code>HTML</code> text ',
-                               'type' => '_converted'});
-  my $result = $converter->convert_tree(
-     Texinfo::TreeElement::new({'type' => '_code',
-                                'contents' => \@contents}));
+  push @contents, Texinfo::TreeElement::new({'text' => ' HTML text '});
+  my $new_element = Texinfo::TreeElement::new({'contents' => \@contents});
+  my $result = $converter->convert_tree_in_code_context($new_element);
   return "<p>".$prepended.$result."</p>";
 }
 
@@ -363,7 +399,7 @@ sub my_test_documentation_convert_index_entry_command_type($$$$)
   my $element = shift;
   my $content = shift;
 
-  if ($converter->in_multi_expanded()
+  if ($converter->multi_expanded_region()
       or $converter->in_string()) {
     return '';
   }

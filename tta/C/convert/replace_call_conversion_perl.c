@@ -28,7 +28,7 @@ call_module_converter (const char *module_name,
 }
 
 void
-call_object_reset_perl_converter (const CONVERTER *self)
+release_converter_output_units_remove_perl_output_units (CONVERTER *self)
 {
 }
 

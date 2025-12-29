@@ -71,7 +71,8 @@ pop_html_formatting_context (HTML_FORMATTING_CONTEXT_STACK *stack)
 
 void
 html_new_document_context (CONVERTER *self,
-        const char *context_name, const char *document_global_context,
+        const char *context_name, unsigned long context_type,
+        const char *document_global_context,
         enum command_id block_command)
 {
   HTML_DOCUMENT_CONTEXT_STACK *stack = &self->html_document_context;
@@ -86,25 +87,34 @@ html_new_document_context (CONVERTER *self,
 
   doc_context = &stack->stack[stack->top];
   memset (doc_context, 0, sizeof (HTML_DOCUMENT_CONTEXT));
-  doc_context->context = strdup (context_name);
-  if (document_global_context)
-    doc_context->document_global_context = strdup (document_global_context);
 
-  push_integer_stack_integer (&doc_context->monospace, 0);
+  if (context_name)
+    doc_context->context = strdup (context_name);
   push_integer_stack_integer (&doc_context->preformatted_context, 0);
   push_command_or_type (&doc_context->composition_context, 0, 0);
-  if (block_command)
-    push_command (&doc_context->block_commands, block_command);
-
-  if (document_global_context)
-    {
-      self->document_global_context++;
-    }
-
   push_html_formatting_context (&doc_context->formatting_context,
                                 "_format");
 
+  if (document_global_context)
+    doc_context->document_global_context = strdup (document_global_context);
+
+  if (document_global_context)
+    {
+      self->document_global_context_counter++;
+    }
+
+  if (context_type & CTXF_code)
+    push_integer_stack_integer (&doc_context->monospace, 1);
+  else
+    push_integer_stack_integer (&doc_context->monospace, 0);
+
+  if (block_command)
+    push_command (&doc_context->block_commands, block_command);
+
   stack->top++;
+
+  if (context_type & CTXF_string)
+    html_set_string_context (self);
 }
 
 void
@@ -132,7 +142,7 @@ html_pop_document_context (CONVERTER *self)
 
   if (document_ctx->document_global_context)
     {
-      self->document_global_context--;
+      self->document_global_context_counter--;
     }
 
   stack->top--;
@@ -151,7 +161,7 @@ html_open_command_update_context (CONVERTER *self, enum command_id data_cmd)
       && builtin_command_data[data_cmd].data == BRACE_context)
     {
       html_new_document_context (self,
-                       builtin_command_data[data_cmd].cmdname, 0, 0);
+                   builtin_command_data[data_cmd].cmdname, 0, 0, 0);
 
     }
   top_document_ctx = html_top_document_context (self);
@@ -340,11 +350,6 @@ html_open_type_update_context (CONVERTER *self, enum element_type type)
     {
       push_integer_stack_integer (&top_document_ctx->monospace, 1);
     }
-
-  if (type == ET__string)
-    {
-      top_document_ctx->string_ctx++;
-    }
 }
 
 void
@@ -355,11 +360,6 @@ html_convert_type_update_context (CONVERTER *self, enum element_type type)
   if (self->code_types[type])
     {
       pop_integer_stack (&top_document_ctx->monospace);
-    }
-
-  if (type == ET__string)
-    {
-      top_document_ctx->string_ctx--;
     }
 
   if (self->pre_class_types[type])
@@ -597,7 +597,7 @@ html_unset_raw_context (CONVERTER *self)
 }
 
 const char *
-html_in_multi_expanded (CONVERTER *self)
+html_multi_expanded_region (CONVERTER *self)
 {
   if (self->multiple_pass.top > 0)
     return top_string_stack (&self->multiple_pass);
@@ -608,15 +608,19 @@ html_in_multi_expanded (CONVERTER *self)
 void
 html_set_multiple_conversions (CONVERTER *self, const char *multiple_pass)
 {
-  self->multiple_conversions++;
   push_string_stack_string (&self->multiple_pass, multiple_pass);
 }
 
 void
 html_unset_multiple_conversions (CONVERTER *self)
 {
-  self->multiple_conversions--;
   pop_string_stack (&self->multiple_pass);
+}
+
+size_t
+html_in_multiple_conversions (const CONVERTER *self)
+{
+  return self->multiple_pass.top;
 }
 
 void
@@ -656,35 +660,25 @@ html_register_footnote (CONVERTER *self, const ELEMENT *command,
     pending_footnote->multi_expanded_region = 0;
 }
 
-HTML_PENDING_FOOTNOTE_STACK *
-html_get_pending_footnotes (CONVERTER *self)
+void
+html_free_pending_footnote (HTML_PENDING_FOOTNOTE *pending_footnote)
 {
-  HTML_PENDING_FOOTNOTE_STACK *stack = (HTML_PENDING_FOOTNOTE_STACK *)
-     malloc (sizeof (HTML_PENDING_FOOTNOTE_STACK));
-
-  stack->top = self->pending_footnotes.top;
-  stack->space = self->pending_footnotes.space;
-  stack->stack = self->pending_footnotes.stack;
-
-  memset (&self->pending_footnotes, 0, sizeof (HTML_PENDING_FOOTNOTE_STACK));
-
-  return stack;
+  free (pending_footnote->multi_expanded_region);
+  free (pending_footnote->footid);
+  free (pending_footnote->docid);
+  free (pending_footnote->footnote_location_filename);
+  free (pending_footnote);
 }
 
 void
-destroy_pending_footnotes (HTML_PENDING_FOOTNOTE_STACK *stack)
+html_clear_pending_footnotes (HTML_PENDING_FOOTNOTE_STACK *stack)
 {
   size_t i;
   for (i = 0; i < stack->top; i++)
     {
-      free (stack->stack[i]->multi_expanded_region);
-      free (stack->stack[i]->footid);
-      free (stack->stack[i]->docid);
-      free (stack->stack[i]->footnote_location_filename);
-      free (stack->stack[i]);
+      html_free_pending_footnote (stack->stack[i]);
     }
-  free (stack->stack);
-  free (stack);
+  stack->top = 0;
 }
 
 void

@@ -342,6 +342,9 @@ sub close_files($)
     }
     die if ($close_error_nr > 0);
   }
+
+  Texinfo::Convert::Utils::output_files_reset(
+                        $converter->output_files_information());
 }
 
 sub _convert($$$) {
@@ -351,12 +354,12 @@ sub _convert($$$) {
 
   if ($do_convert) {
     $result = $converter->convert($document);
-    #$converter->reset_converter();
+    #$converter->converter_remove_output_units();
     #$result = $converter->convert($document);
   } else {
     $result = $converter->output($document);
     close_files($converter);
-    #$converter->reset_converter();
+    #$converter->converter_remove_output_units();
     #$result = $converter->output($document);
     #close_files($converter);
     $result = undef if (defined($result) and ($result eq ''));
@@ -1201,7 +1204,7 @@ sub test($$)
           }
         }
       }
-      $converter->reset_converter();
+      $converter->converter_remove_output_units();
       $converter->destroy_converter();
 
       my $conversion_errors = $converter->get_converter_errors();

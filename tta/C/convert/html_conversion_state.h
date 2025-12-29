@@ -5,7 +5,8 @@
 #include "html_converter_types.h"
 
 void html_new_document_context (CONVERTER *self,
-        const char *context_name, const char *document_global_context,
+        const char *context_name, unsigned long context_type,
+        const char *document_global_context,
         enum command_id block_command);
 void html_pop_document_context (CONVERTER *self);
 int html_open_command_update_context (CONVERTER *self,
@@ -47,15 +48,16 @@ void html_unset_string_context (CONVERTER *self);
 void html_set_raw_context (CONVERTER *self);
 void html_unset_raw_context (CONVERTER *self);
 
-const char *html_in_multi_expanded (CONVERTER *self);
+const char *html_multi_expanded_region (CONVERTER *self);
+size_t html_in_multiple_conversions (const CONVERTER *self);
 void html_set_multiple_conversions (CONVERTER *self, const char *multiple_pass);
 void html_unset_multiple_conversions (CONVERTER *self);
 
 void html_register_footnote (CONVERTER *self, const ELEMENT *command,
      const char *footid, const char *docid, const int number_in_doc,
      const char *footnote_location_filename, const char *multi_expanded_region);
-HTML_PENDING_FOOTNOTE_STACK *html_get_pending_footnotes (CONVERTER *self);
-void destroy_pending_footnotes (HTML_PENDING_FOOTNOTE_STACK *stack);
+void html_free_pending_footnote (HTML_PENDING_FOOTNOTE *pending_footnote);
+void html_clear_pending_footnotes (HTML_PENDING_FOOTNOTE_STACK *stack);
 
 void html_register_pending_formatted_inline_content (CONVERTER *self,
                              const char *category, const char *inline_content);

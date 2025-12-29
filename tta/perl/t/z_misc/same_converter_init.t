@@ -60,20 +60,23 @@ if (!defined($document)) {
 }
 
 my ($converter, $result_html, $second_result_html);
-$converter = Texinfo::Convert::HTML->converter({'TEST' => 1});
+$converter = Texinfo::Convert::HTML->converter({'TEST' => 2});
 
 $result_html = $converter->convert($document);
 #print STDERR "1 $result_html\n";
 
-$converter->reset_converter();
+$converter->converter_remove_output_units();
 
 $second_result_html = $converter->convert($document);
 #print STDERR "2 $second_result_html\n";
 
+$converter->converter_remove_output_units();
+$converter->destroy_converter();
+
 is_diff($result_html, $second_result_html,
    'two call of converter give the same result');
 
-$converter = Texinfo::Convert::HTML->converter({'TEST' => 1,
+$converter = Texinfo::Convert::HTML->converter({'TEST' => 2,
                                         'OUTPUT_CHARACTERS' => 1});
 
 my $simple_document
@@ -82,9 +85,12 @@ my $simple_document
 
 $result_html = $converter->convert($simple_document);
 
-$converter->reset_converter();
+$converter->converter_remove_output_units();
 
 $second_result_html = $converter->convert($simple_document);
+
+$converter->converter_remove_output_units();
+$converter->destroy_converter();
 
 is_diff($result_html, $second_result_html,
    'output characters simple doc two call of converter same result');

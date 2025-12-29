@@ -40,7 +40,6 @@
 #include "errors.h"
 /* xasprintf get_label_element output_conversions ENCODING_CONVERSION
    encode_with_iconv output_unit_type_names get_cmd_global_uniq_command
-   allocate_name_number_list
    */
 #include "utils.h"
 #include "manipulate_tree.h"
@@ -356,6 +355,7 @@ html_convert_tree (CONVERTER *self, const ELEMENT *tree)
 char *
 html_convert_tree_new_formatting_context (CONVERTER *self, const ELEMENT *tree,
                                           const char *context_string,
+                                          unsigned long context_type,
                                           const char *multiple_pass,
                                           const char *document_global_context,
                                           enum command_id block_cmd)
@@ -365,7 +365,7 @@ html_convert_tree_new_formatting_context (CONVERTER *self, const ELEMENT *tree,
   char *explanation;
   char *context_string_str;
 
-  html_new_document_context (self, context_string,
+  html_new_document_context (self, context_string, context_type,
                              document_global_context, block_cmd);
   xasprintf (&context_string_str, "C(%s)", context_string);
 
@@ -431,8 +431,8 @@ html_convert_css_string (CONVERTER *self, const ELEMENT *element,
   xasprintf (&context_string_str, "C(%s)", css_string_context_str);
   xasprintf (&explanation, "new_fmt_ctx %s", context_string_str);
 
-  html_new_document_context (self, css_string_context_str, 0, 0);
-  html_set_string_context (self);
+  html_new_document_context (self, css_string_context_str,
+                             CTXF_string, 0, 0);
 
   result = html_convert_tree_explanation (self, element, explanation);
 
@@ -449,27 +449,6 @@ html_convert_css_string (CONVERTER *self, const ELEMENT *element,
   self->current_types_conversion_function = saved_types_conversion_function;
   self->current_format_protect_text = saved_current_format_protect_text;
 
-  return result;
-}
-
-/* return string to be freed by the caller */
-char *
-html_convert_string_tree_new_formatting_context (CONVERTER *self,
-                        ELEMENT *tree, const char *context_string,
-                        const char *multiple_pass)
-{
-  ELEMENT *tree_root_string = new_element (ET__string);
-  char *result;
-
-  add_to_contents_as_array (tree_root_string, tree);
-
-  add_tree_to_build (self, tree_root_string);
-
-  result = html_convert_tree_new_formatting_context (self, tree_root_string,
-                                       context_string, multiple_pass, 0, 0);
-
-  remove_tree_to_build (self, tree_root_string);
-  destroy_element (tree_root_string);
   return result;
 }
 
@@ -516,15 +495,12 @@ html_reset_translated_special_unit_info_tree (CONVERTER *self)
         = translated_special_unit_info[j].tree_type;
       for (i = 0; i < special_unit_varieties->number; i++)
         {
-          if (self->special_unit_info_tree[tree_type][i])
+          if (self->translated_special_unit_info_tree[tree_type][i])
             {
-              remove_tree_to_build (self,
-                             self->special_unit_info_tree[tree_type][i]);
               destroy_element_and_children (
-                self->special_unit_info_tree[tree_type][i]);
-
+                self->translated_special_unit_info_tree[tree_type][i]);
             }
-          self->special_unit_info_tree[tree_type][i] = 0;
+          self->translated_special_unit_info_tree[tree_type][i] = 0;
         }
     }
 }
@@ -589,7 +565,7 @@ reset_unset_no_arg_commands_formatting_context (CONVERTER *self,
         {
           enum command_id preformatted_cmd = CM_example;
           /* there does not seems to be anything simpler... */
-          html_new_document_context (self, context, 0, 0);
+          html_new_document_context (self, context, 0, 0, 0);
           html_open_command_update_context (self, preformatted_cmd);
           translation_result
               = html_convert_tree_explanation (self, translated_tree,
@@ -599,8 +575,7 @@ reset_unset_no_arg_commands_formatting_context (CONVERTER *self,
         }
       else if (reset_context == HCC_type_string)
         {
-          html_new_document_context (self, context, 0, 0);
-          html_set_string_context (self);
+          html_new_document_context (self, context, CTXF_string, 0, 0);
 
           translation_result
              = html_convert_tree_explanation (self, translated_tree,
@@ -976,58 +951,6 @@ html_prepare_direction_icons (CONVERTER *self)
 }
 
 void
-html_initialize_pending_closes (CONVERTER *self, size_t number)
-{
-  if (self->pending_closes.space < number)
-    {
-      self->pending_closes.list = (STRING_STACK *)
-        realloc (self->pending_closes.list, number * sizeof (STRING_STACK));
-  /* The existing string stacks per file should already be empty, either because
-     the code is consistent for opening and closing, or because they are
-     emptied after the conversion (with an error message).
-
-     Therefore, only the newly allocated string stacks per file are
-     initialized.
-   */
-      memset (&self->pending_closes.list[self->pending_closes.space],
-              0, (number - self->pending_closes.space)
-                 * sizeof (STRING_STACK));
-      self->pending_closes.space = number;
-    }
-  self->pending_closes.number = number;
-}
-
-/* setup a page (+global context) in case there are no files, ie called
-   with convert or output with an empty string as filename. */
-void
-html_setup_output_simple_page (CONVERTER *self, const char *output_filename)
-{
-  NAME_NUMBER *page_name_number;
-
-  self->page_css.number = 1+1;
-  self->page_css.space = self->page_css.number;
-  self->page_css.list = (CSS_LIST *)
-       malloc (self->page_css.space * sizeof (CSS_LIST));
-  memset (self->page_css.list, 0,
-          self->page_css.number * sizeof (CSS_LIST));
-
-  self->html_files_information.number = 1+1;
-  self->html_files_information.list = (FILE_ASSOCIATED_INFO *)
-       malloc (self->html_files_information.number
-          * sizeof (FILE_ASSOCIATED_INFO));
-  memset (self->html_files_information.list, 0,
-          self->html_files_information.number * sizeof (FILE_ASSOCIATED_INFO));
-
-  html_initialize_pending_closes (self, 1+1);
-
-  allocate_name_number_list (&self->page_name_number, 1);
-
-  page_name_number = &self->page_name_number.list[0];
-  page_name_number->number = 1;
-  page_name_number->name = output_filename;
-}
-
-void
 html_prepare_title_titlepage (CONVERTER *self, const char *output_file,
                               const char *output_filename)
 {
@@ -1138,8 +1061,9 @@ html_prepare_converted_output_info (CONVERTER *self, const char *output_file,
       self->title_tree = fulltitle_tree;
 
       html_title_string
-          = html_convert_string_tree_new_formatting_context (self,
-                                       fulltitle_tree, "title_string", 0);
+          = html_convert_tree_new_formatting_context (self,
+                                       fulltitle_tree, "title_string",
+                                       CTXF_string, 0, 0, 0);
       if (html_title_string[strspn (html_title_string, whitespace_chars)]
            == '\0')
         {
@@ -1156,10 +1080,14 @@ html_prepare_converted_output_info (CONVERTER *self, const char *output_file,
 
       self->title_tree = default_title;
 
-      html_title_string
-         = html_convert_string_tree_new_formatting_context (self,
-                                       default_title, "title_string", 0);
+      add_tree_to_build (self, default_title);
 
+      html_title_string
+         = html_convert_tree_new_formatting_context (self,
+                                       default_title, "title_string",
+                                       CTXF_string, 0, 0, 0);
+
+      remove_tree_to_build (self, default_title);
       self->added_title_tree = 1;
 
       if (self->document->global_info.input_file_name)
@@ -1216,9 +1144,14 @@ html_prepare_converted_output_info (CONVERTER *self, const char *output_file,
       tmp->e.c->contents
         = self->document->global_commands.documentdescription->e.c->contents;
 
+      add_tree_to_build (self, tmp);
+
       documentdescription_string
-            = html_convert_string_tree_new_formatting_context (self,
-                                       tmp, "documentdescription", 0);
+            = html_convert_tree_new_formatting_context (self,
+                                       tmp, "documentdescription",
+                                       CTXF_string, 0, 0, 0);
+
+      remove_tree_to_build (self, tmp);
 
       tmp->e.c->contents.list = 0;
       destroy_element (tmp);
@@ -1660,12 +1593,9 @@ html_convert_tree_append (CONVERTER *self, const ELEMENT *element,
                     }
                   if (arg_flags & F_AFT_string)
                     {
-                      HTML_DOCUMENT_CONTEXT *string_document_ctx;
                       text_reset (&formatted_arg);
                       html_new_document_context (self, command_type.text,
-                                                 0, 0);
-                      string_document_ctx = html_top_document_context (self);
-                      string_document_ctx->string_ctx++;
+                                                 CTXF_string, 0, 0);
 
                       xasprintf (&explanation, "%s A[%zu]string",
                                                command_type.text, arg_idx);
@@ -1681,22 +1611,16 @@ html_convert_tree_append (CONVERTER *self, const ELEMENT *element,
                     }
                   if (arg_flags & F_AFT_monospacestring)
                     {
-                      HTML_DOCUMENT_CONTEXT *string_document_ctx;
                       text_reset (&formatted_arg);
                       html_new_document_context (self, command_type.text,
+                                                 CTXF_string | CTXF_code,
                                                  0, 0);
-                      string_document_ctx = html_top_document_context (self);
-                      string_document_ctx->string_ctx++;
-                      push_integer_stack_integer (
-                           &string_document_ctx->monospace, 1);
                       xasprintf (&explanation, "%s A[%zu]monospacestring",
                                                command_type.text, arg_idx);
                       html_convert_tree_append (self, arg, &formatted_arg,
                                                 explanation);
 
                       free (explanation);
-                      pop_integer_stack
-                          (&string_document_ctx->monospace);
                       html_pop_document_context (self);
                       arg_formatted->formatted[AFT_type_monospacestring]
                        = strdup (formatted_arg.text);
@@ -2050,7 +1974,7 @@ html_convert_convert (CONVERTER *self, const ELEMENT *root)
         }
     }
 
-  self->current_filename.filename = 0;
+  memset (&self->current_filename, 0, sizeof (FILE_NUMBER_NAME));
 
   return result.text;
 }
@@ -2318,7 +2242,6 @@ html_convert_output (CONVERTER *self, const ELEMENT *root,
           text_append (&result, file_end);
           free (file_end);
         }
-      self->current_filename.filename = 0;
     }
   else
     {
@@ -2365,10 +2288,10 @@ html_convert_output (CONVERTER *self, const ELEMENT *root,
               unit_nr++;
             }
         }
-      memset (&self->current_filename, 0, sizeof (FILE_NUMBER_NAME));
     }
 
  out:
+  memset (&self->current_filename, 0, sizeof (FILE_NUMBER_NAME));
   free (text.text);
 
   if (status)
@@ -2382,9 +2305,72 @@ html_convert_output (CONVERTER *self, const ELEMENT *root,
 
 
 
+static void
+clear_type_explanations (EXPLAINED_COMMAND_TYPE_LIST *type_explanations)
+{
+  if (type_explanations->number > 0)
+    {
+      size_t i;
+      for (i = 0; i < type_explanations->number; i++)
+        {
+          EXPLAINED_COMMAND_TYPE *type_explanation
+            = &type_explanations->list[i];
+          free (type_explanation->type);
+          free (type_explanation->explanation);
+        }
+      type_explanations->number = 0;
+    }
+}
+
+void
+html_reset_shared_conversion_state (CONVERTER *self)
+{
+  size_t i;
+  HTML_SHARED_CONVERSION_STATE *shared_conversion_state
+    = &self->shared_conversion_state;
+
+  clear_type_explanations (&shared_conversion_state->explained_commands);
+
+  free (shared_conversion_state->footnote_id_numbers);
+  shared_conversion_state->footnote_id_numbers = 0;
+
+  free (shared_conversion_state->formatted_listoffloats_nr);
+  shared_conversion_state->formatted_listoffloats_nr = 0;
+
+  /* formatted_index_entries may not be initialized if there was an error
+     early and prepare_conversion_units_targets was never called */
+  if (self->shared_conversion_state.formatted_index_entries)
+    {
+      for (i = 0; i < self->sorted_index_names.number; i++)
+        {
+          free (self->shared_conversion_state.formatted_index_entries[i]);
+        }
+      free (self->shared_conversion_state.formatted_index_entries);
+      self->shared_conversion_state.formatted_index_entries = 0;
+    }
+
+  /* cannot happen with default Perl code, but could happen with
+     user-defined code */
+  if (shared_conversion_state->elements_authors.top > 0)
+    {
+      fprintf (stderr,
+              "BUG: shared_conversion_state->elements_authors.top: %zu\n",
+               shared_conversion_state->elements_authors.top);
+      for (i = 0; i < shared_conversion_state->elements_authors.top; i++)
+        {
+          destroy_element_reference_stack (
+            shared_conversion_state->elements_authors.stack[i]);
+        }
+      shared_conversion_state->elements_authors.top = 0;
+    }
+
+  shared_conversion_state->in_skipped_node_top = 0;
+  shared_conversion_state->footnote_number = 0;
+  shared_conversion_state->html_menu_entry_index = 0;
+}
+
 /* This function cleans up the conversion state that is relevant during
-   conversion.  Other information is removed when calling reset_parser
-   later on and should not be freed here */
+   conversion. */
 void
 html_conversion_finalization (CONVERTER *self)
 {
@@ -2396,6 +2382,11 @@ html_conversion_finalization (CONVERTER *self)
   free (self->html_files_information.list);
   self->html_files_information.list = 0;
   self->html_files_information.number = 0;
+
+  /* needed to remove trees to build */
+  html_reset_translated_special_unit_info_tree (self);
+
+  html_reset_shared_conversion_state (self);
 
   /* should not be possible with default code, as
      close_registered_sections_level(..., 0)
@@ -2458,6 +2449,14 @@ html_conversion_finalization (CONVERTER *self)
     }
   self->associated_inline_content.number = 0;
 
+  if (self->pending_footnotes.top > 0)
+    {
+      message_list_document_warn (&self->error_messages, self->conf, 0,
+                                  "%zu pending footnotes",
+                                  self->pending_footnotes.top);
+      html_clear_pending_footnotes (&self->pending_footnotes);
+    }
+
   html_pop_document_context (self);
 
   /* could change to 0 in releases? */
@@ -2466,12 +2465,12 @@ html_conversion_finalization (CONVERTER *self)
       if (self->html_document_context.top > 0)
         fprintf (stderr, "BUG: document context top > 0: %zu\n",
                          self->html_document_context.top);
-      if (self->document_global_context)
-        fprintf (stderr, "BUG: document_global_context: %d\n",
-                         self->document_global_context);
-      if (self->multiple_conversions)
-        fprintf (stderr, "BUG: multiple_conversions: %d\n",
-                         self->multiple_conversions);
+      if (self->document_global_context_counter)
+        fprintf (stderr, "BUG: document_global_context_counter: %d\n",
+                         self->document_global_context_counter);
+      if (self->multiple_pass.top > 0)
+        fprintf (stderr, "BUG: multiple_conversions: %zu\n",
+                         self->multiple_pass.top);
     }
 }
 

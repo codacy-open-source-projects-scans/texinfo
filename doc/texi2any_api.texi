@@ -2401,7 +2401,7 @@ If the alignment context is the default alignement context, return @code{undef}.
 Otherwise, returns the command name of the alignment context.
 @end deftypefun
 
-To determine if the conversion is in a context converted multiple times,
+To determine if in a context of multiple conversions,
 use @code{in_multiple_conversions}:
 @deftypefun {@var{$multiple_conversion} =} @var{$converter}->in_multiple_conversions ()
 Return true if the Texinfo tree being converted is converted multiple
@@ -2411,11 +2411,15 @@ For example, return true if a node name is converted as part of a direction
 string formating in a navigation panel, which is not the
 main expansion of the @code{@@node}.  The main @code{@@node} element
 expansion occurs where the @@-command is located.
+
+For another example, multiple conversion for index entries could happen
+if there are more than one @code{@@printindex} for an index in the converted
+manual.
 @end deftypefun
 
-To determine if the a mutiple expansion context is set, use
-@code{in_multi_expanded}:
-@deftypefun {@var{$multi_expanded_context_information} =} @var{$converter}->in_multi_expanded ()
+To determine if in a specific multiple expanded context, use
+@code{multi_expanded_region}:
+@deftypefun {@var{$multi_expanded_context_information} =} @var{$converter}->multi_expanded_region ()
 Return a string representing the multiple expanded context, or @code{undef} if
 not in a multiple expanded context.
 
@@ -2423,6 +2427,9 @@ A multiple expanded context implies to be in multiple conversions.  However,
 it is possible to be in multiple conversions without being in a multiple
 expanded context, as a multiple expanded context needs to be set explicitly,
 and is not always needed.
+
+Multiple expanded context happens for example in automatically-generated menu
+description, captions in list of floats or printindex converted more than once.
 @end deftypefun
 
 To get the current paragraph and preformatted number, use @code{paragraph_number}
@@ -2484,14 +2491,20 @@ panels, menus or indices, may appear more than once in the document and be
 converted more than once, if language changes, for example.
 
 For such cases, the function is
-@code{convert_tree_new_formatting_context} which sets the context appropriately.
+@code{convert_tree_new_formatting_context} which creates a new document
+formatting context appropriately.
 @code{convert_tree_new_formatting_context} ultimately calls @code{convert_tree}.
 
 @deftypefun {@var{$converted_text} =} @var{$converter}->convert_tree_new_formatting_context @
-      (@var{\%element}, @var{$context}, @var{$multiple_pass}, @var{$global_context}, @
+      (@var{\%element}, @var{$context}, @var{$expansion_context_flags}, @var{$multiple_pass}, @var{$global_context}, @
        @var{$block_command_name})
-@var{\%element} is a Texinfo tree element.  @var{$context} describes the new
-context setup to format out of the main conversion flow.  @var{$multiple_pass}
+@var{\%element} is a Texinfo tree element.  @var{$context} is a string that
+describes the new context setup to format out of the main conversion flow.
+The value is used for debugging output only.  @var{$expansion_context_flags}
+is an optional integer specifying the expansion context that is wanted for
+the new document context, and is described next
+(@pxref{Setting the Expansion Context for Conversion}).
+@var{$multiple_pass}
 is an optional string that marks that the conversion is done more than once.
 It should be unique and suitable for inclusion in targets and identifiers.
 @var{$global_context} is an optional string that marks that the formatting may
@@ -2504,44 +2517,93 @@ The function returns @var{\%element} converted, setting the conversion context
 according to the arguments.
 @end deftypefun
 
-@xref{Setting the Context for Conversion} on how to set a specific context for
-a Texinfo tree conversion.
 
+@node Setting the Expansion Context for Conversion
+@subsection Setting the Expansion Context for Conversion
 
-@node Setting the Context for Conversion
-@subsection Setting the Context for Conversion
+The expansion context is not generally customizable, as it is
+implied by the Texinfo command being converted
+(@pxref{Init File Expansion Contexts}).  However, it
+is possible to set the code or the string expansion context
+explicitly if needed.  You often need expansion in string context
+for HTML elements attributes.  The
+code expansion context is already set for @@-commands such as @code{@@code} or
+@code{@@example}.  However, it cannot be set automatically in every situation
+where it is relevant, in those cases you should set it explicitly.  For
+example, node names appearing in headings,
+most parts of the definition lines (except for the category), and index
+entries in index defined by @code{@@defcodeindex} in
+@code{@@printindex} formatting should be formatted in code expansion context.
 
-Special container types are recognized by the converter and can
-be used to convert a Texinfo tree in a specific context.  Those
-types cannot appear in a regular Texinfo tree.  In general they
-should be the type of tree root elements setup by the user.
+To set code expansion in the main formatting document context, call
+@code{convert_tree_in_code_context}:
 
-The types are:
+@deftypefun {@var{$converted_text} =} @var{$converter}->convert_tree_in_code_context (@var{\%element}, @var{$explanation})
+@var{\%element} is a Texinfo tree element. @var{$explanation} is
+optional, it is a string explaining why the function was called, to help
+in case of debugging.  The function sets code expansion context and
+returns @var{\%element} converted by @code{convert_tree}.
+@end deftypefun
+
+In the following example, the content of an existing tree element is copied,
+text is prependended and the resulting new tree element is converted in
+code expansion context:
+@example
+@group
+my @@contents = @@@{$element->@{'contents'@}@};
+push @@contents, Texinfo::TreeElement::new(@{'text' => ' HTML text '@});
+my $new_element = Texinfo::TreeElement::new(@{'contents' => \@@contents@});
+my $result = $converter->convert_tree_in_code_context($new_element);
+return "<p>".$result."</p>";
+@end group
+@end example
+
+Since the main document expansion context should never be in string expansion
+context it is not possible to set string expansion context in the main
+formatting document context.
+
+You can set the expansion context with
+@code{convert_tree_new_formatting_context}
+by setting the expansion context flags argument with flags
+set for the expansions you want.  You can set different flags concurrently,
+in case you want to set multiple explansion contexts.  The flags
+are:
 
 @table @code
-@item _code
-In this container, the conversion is done in a code context
-@xref{Init File Expansion Contexts}.  For a container tree element.
+@item $Texinfo::Convert::HTML::CTXF_string
+Add this flag for an expansion in string context.
 
-@item _converted
-The text of this text element is considered to be already formatted.
-
-@item _string
-In this container, the conversion is done in a string context.
-@xref{Init File Expansion Contexts}.  For a container tree element.
-
+@item $Texinfo::Convert::HTML::CTXF_code
+Add this flag for an expansion in code context.
 @end table
 
-These contexts are typically used together with converter conversion
-functions (@pxref{Texinfo Tree Conversion Functions}).
 For example:
 
 @example
-my @@contents = @@@{$element->@{'contents'@}@};
-push @@contents, @{'text' => ' <code>HTML</code> text ',
-                   'type' => '_converted'@};
-my $result = $converter->convert_tree(@{'type' => '_code',
-                                  'contents' => \@@contents @});
+@group
+# conversion in string context
+my $result_string = $converter->convert_tree_new_formatting_context(
+                     $element, 'in string',
+                     $Texinfo::Convert::HTML::CTXF_string);
+@end group
+
+@group
+my $multi_flag = 0;
+$multi_flag |= $Texinfo::Convert::HTML::CTXF_string;
+$multi_flag |= $Texinfo::Convert::HTML::CTXF_code;
+# conversion in code and string context
+my $result_code_string
+    = $converter->convert_tree_new_formatting_context(
+                     $element, 'in code string', $multi_flag);
+@end group
+
+@group
+if ($converter->in_string()) @{
+  return $result_string;
+@}
+return "<i title=\"$result_string\">$text</i>\n"
+        . "<i title=\"$result_code_string\">again $text</i>\n";
+@end group
 @end example
 
 
@@ -3283,15 +3345,6 @@ my $target_href = $converter->command_href($target_element);
 my $hyperlink = "<a href=\"$target_href\">$target_text</a>";
 @end example
 
-To get a Texinfo tree of elements that may be used as link description, use
-@code{command_tree}:
-
-@deftypefun {@var{$result} =} @var{$converter}->command_tree (@var{\%target_element}, @var{$no_number})
-Return the a Texinfo tree to be used for a hyperlink to @var{\%target_element}.
-If @var{$no_number} is set, return a Texinfo elements tree representing text
-without a chapter number being included.
-@end deftypefun
-
 To obtain the top level command element associated with a footnote,
 float or index entry target element, use @code{command_root_element_command}:
 
@@ -3485,8 +3538,8 @@ which should only be the case for types ignored in HTML.
 
 Here is an example of paragraph formatting that prepends some HTML code
 to each paragraph and formats in code context
-(@pxref{Setting the Context for Conversion}).  It also shows how string
-context can be taken into account.
+(@pxref{Setting the Expansion Context for Conversion}).  It also shows how
+string context can be taken into account.
 
 @example
 @group
@@ -3506,10 +3559,9 @@ sub my_tree_element_convert_paragraph_type($$$$)
 
 @group
   my @@contents = @@@{$element->@{'contents'@}@};
-  push @@contents, @{'text' => ' <code>HTML</code> text ',
-                   'type' => '_converted'@};
-  my $result = $converter->convert_tree(@{'type' => '_code',
-                                   'contents' => \@@contents @});
+  push @@contents, Texinfo::TreeElement::new(@{'text' => ' HTML text '@});
+  my $new_element = Texinfo::TreeElement::new(@{'contents' => \@@contents@});
+  my $result = $converter->convert_tree_in_code_context($new_element);
   return "<p>".$result."</p>";
 @}
 @end group
@@ -3757,10 +3809,9 @@ sub my_final_convert_paragraph_type($$$$)
 
 @group
   my @@contents = @@@{$element->@{'contents'@}@};
-  push @@contents, @{'text' => ' <code>HTML</code> text ',
-                   'type' => '_converted'@};
-  my $result = $converter->convert_tree(@{'type' => '_code',
-                                   'contents' => \@@contents @});
+  push @@contents, Texinfo::TreeElement::new(@{'text' => ' HTML text '@});
+  my $new_element = Texinfo::TreeElement::new(@{'contents' => \@@contents@});
+  my $result = $converter->convert_tree_in_code_context($new_element);
   return "<p>".$prepended.$result."</p>";
 @}
 @end group
@@ -4049,6 +4100,13 @@ Texinfo tree elements.
         'program' => @{ 'text' => $converter->get_conf('PROGRAM') @}@});
 @end example
 
+@cindex @code{_converted} special text element
+@cindex Special text element, @code{_converted}
+When combining conversion and translation, it can be useful to insert
+already converted text.  A special text element with type @code{_converted}
+can be used for that purpose, the text of this text element is considered
+to be already formatted.
+
 An example of combining conversion with translation:
 @example
 $converter->convert_tree($converter->cdt(
@@ -4255,8 +4313,10 @@ In the current setup, special output units are associated with @code{@@contents}
 
 To customize special output units formatting, a simple possibility is to
 change the information associated with the special output units.
+Two types of item can be customized, simple items and Texinfo code.
+The Texinfo code is translated and converted.
 
-The following items common to all the special units may be customized:
+The following simple items may be customized:
 
 @table @code
 @item class
@@ -4264,12 +4324,6 @@ String for special element HTML class attributes.
 
 @item direction
 Direction corresponding to the special element. @xref{Directions}.
-
-@item heading
-Special element heading Texinfo code.
-
-@item heading_tree
-Special element heading Texinfo tree.
 
 @item order
 Index determining the sorting order of special elements.
@@ -4284,12 +4338,14 @@ as id attribute and in href attribute.
 
 @end table
 
-The heading string is set with @code{heading}, and should be a Texinfo code
-string.  @code{heading_tree} cannot be set directly, but can be retrieved.
-It is determined from @code{heading} after translation and conversion to
-a Texinfo tree.
+The following Texinfo code item  may be customized:
 
-To set the information, use @code{texinfo_register_special_unit_info}
+@table @code
+@item heading
+Special element heading Texinfo code.
+@end table
+
+To set both type of information, use @code{texinfo_register_special_unit_info}
 in an init file:
 
 @defun texinfo_register_special_unit_info ($item_type, @
@@ -4301,25 +4357,37 @@ Set @var{$item_type} information for the special unit variety
 needed for the other items for formatting.
 @end defun
 
-To get the list of varieties, use @code{get_special_unit_info_varieties}:
+To get the list of varieties, use @code{get_special_unit_info_varieties} on
+a simple item:
 
 @deftypefun {@var{$list} =} @var{$converter}->get_special_unit_info_varieties @
                (@var{$item_type})
-@var{$item_type} is the type of information to be retrieved as described above.
+@var{$item_type} is the simple item information to be retrieved as described above.
 The list of the special units varieties with information for the
 @var{$item_type} is returned.
 @end deftypefun
 
-To retrieve the information for formatting, use @code{special_unit_info}:
+To retrieve simple item information for formatting, use @code{special_unit_info}:
 
-@deftypefun {@var{$list_or_value} =} @var{$converter}->special_unit_info @
+@deftypefun {@var{$value} =} @var{$converter}->special_unit_info @
                   (@var{$item_type}, @var{$special_unit_variety})
-@var{$item_type} is the type of information to be retrieved as described above.
+@var{$item_type} is the simple item to be retrieved as described above.
 @var{$special_unit_variety} is a special unit variety, the corresponding
 value is returned.
+@end deftypefun
 
-The value returned is translated and converted to a Texinfo tree
-for @samp{heading_tree}.
+To get converted text corresponding to a Texinfo code item use
+@code{special_unit_info_text}:
+
+@deftypefun {@var{$result} =} @var{$converter}->special_unit_info_text @
+                  (@var{$item_type}, @var{$special_unit_variety}, @
+                   @var{$context})
+@var{$item_type} is a Texinfo code item as described above.
+@var{$special_unit_variety} is a special unit variety.  @var{$context} is
+@samp{normal} or @samp{string}.  @xref{Init File Expansion Contexts}.  If
+@var{$context} is @code{undef}, the @samp{normal} context is assumed.
+The corresponding Texinfo code is translated, parsed to a Texinfo tree,
+converted in the specified expansion context and the result is returned.
 @end deftypefun
 
 

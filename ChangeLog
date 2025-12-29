@@ -1,3 +1,804 @@
+2025-12-28 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Special Units Information Customization):
+	remove heading_tree, separate simple item and Texinfo code item and
+	describe special_unit_info_text.
+
+2025-12-28 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_conversion_state.c (html_new_document_context):
+	allow an undefined context_name.
+
+	* doc/texi2any_api.texi (Texinfo Tree Conversion Functions)
+	(Setting the Expansion Context for Conversion)
+	(Internationalization of Strings Function): rename "Setting the
+	Context for Conversion" as "Setting the Expansion Context for
+	Conversion".  Modify for changes in
+	convert_tree_new_formatting_context call and changes in setting the
+	context.  Document _converted special text element in
+	"Internationalization of Strings Function".
+
+	* tta/perl/init/documentation_examples.pm,
+	tta/perl/t/init_files_tests.t ($documentation_examples_text): add
+	example of convert_tree_new_formatting_context call, simplify the
+	convert_tree_in_code_context example use.
+
+	* doc/texi2any_api.texi (Inline Text Containers Formatting)
+	(Type Tree Element Conversion Functions): update with simpler example.
+
+2025-12-28 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/HTML.pm (_set_code_context)
+	(_pop_code_context, convert_tree_in_code_context): rename
+	set_code_context as _set_code_context and pop_code_context as
+	_pop_code_context.  Add convert_tree_in_code_context that calls
+	_set_code_context, then convert tree and _pop_code_context.  Use that
+	function instead of _set_code_context and convert_tree in code that
+	could be user-defined.
+
+2025-12-28 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_conversion_state.c (html_new_document_context),
+	tta/perl/Texinfo/Convert/HTML.pm (_new_document_context): reorganize
+	code and modify Perl code to be more similar to C code.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/HTML.pm ($CTXF_string, $CTXF_code): make
+	our.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/converter_types.h (CTXF_code),
+	tta/perl/Texinfo/Convert/HTML.pm ($CTXF_code): rename CTXF_in_code as
+	CTXF_code.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/HTML.pm (set_code_context)
+	(pop_code_context), tta/perl/init/documentation_examples.pm: rename
+	_set_code_context as set_code_context and _pop_code_context as
+	pop_code_context.  Update callers.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	Remove the _code special container
+
+	* tta/C/convert/format_html.c (html_external_command_tree)
+	(html_command_text), tta/perl/Texinfo/Convert/HTML.pm
+	(_external_command_tree, command_text): do not use a _code container,
+	instead set CTXF_in_code in the context_type used for conversion.
+
+	* tta/C/convert/format_html.c (html_convert_xref_command)
+	(html_convert_menu_entry_type, html_convert_def_line_type),
+	tta/perl/Texinfo/Convert/HTML.pm (_convert_xref_commands)
+	(_convert_menu_entry_type, _convert_def_line_type): instead of
+	rooting a tree at _code to be in code context, call set_code_context
+	and pop_code_context.
+
+	* tta/C/convert/format_html.c (html_convert_printindex_command),
+	tta/perl/Texinfo/Convert/HTML.pm (_convert_printindex_command): do
+	not set types to be _code, instead set formatting_context to
+	CTXF_in_code and call html_set_code_context and html_pop_code_context
+	if in_code.
+
+	* tta/perl/init/documentation_examples.pm
+	(my_tree_element_convert_paragraph_type)
+	(my_final_convert_paragraph_type): cal _set_code_context and
+	_pop_code_context instead of rooting the trees at _code.
+
+	* tta/C/convert/html_prepare_converter.c (default_code_types),
+	tta/C/main/element_types.txt, tta/perl/Texinfo/Convert/HTML.pm
+	(%default_code_types): remove completly the _code container.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c (html_internal_command_tree),
+	tta/C/main/tree_types.h (TREE_ADDED_ELEMENTS),
+	tta/perl/Texinfo/Convert/HTML.pm (_internal_command_tree)
+	(_internal_command_name_tree): instead of adding a _code type element,
+	keep the information that the tree should be in code either in target
+	and as return code in Perl, or in TREE_ADDED_ELEMENTS new in_code
+	field in C.  Update callers in Perl.
+
+	* tta/C/convert/format_html.c (html_internal_command_text)
+	(html_internal_command_name), tta/perl/Texinfo/Convert/HTML.pm
+	(_internal_command_text, _internal_command_name): use the tree added
+	elements or the internal_command_tree in_code information to set the
+	convert_command_tree argument.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/HTML.pm (special_unit_info_text): rename
+	$context_type as $context.
+
+	* tta/C/convert/convert_html.c
+	(html_convert_tree_new_formatting_context, html_convert_tree_append),
+	tta/C/convert/format_html.c, tta/C/convert/html_conversion_state.c
+	(html_new_document_context), tta/C/convert/html_conversion_state.h
+	(CTXF_string, CTXF_in_code), tta/perl/Texinfo/Convert/HTML.pm
+	($CTXF_string, $CTXF_in_code, _new_document_context, _convert),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs
+	(html_new_document_context): pass context information as flags,
+	CTXF_string and CTXF_in_code set to an integer to new_document_context
+	and convert_tree_new_formatting_context.  Update callers.
+
+	* tta/perl/Texinfo/Convert/HTML.pm (_convert_command_tree),
+	tta/C/convert/format_html.c (html_convert_command_tree): add
+	in_code argument.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs: remove
+	html_internal_command_tree and html_internal_command_name_tree XS
+	overrides, as they are only called from already overriden functions.
+
+	* tta/C/convert/format_html.c (html_internal_command_tree): set tree
+	status to tree_added_status_reused_tree.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/build_html_perl_state.c (build_html_translated_names):
+	remove code related to the previous way to store special unit info
+	trees.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c (html_special_unit_info_text): rename
+	special_unit_info_text as html_special_unit_info_text.  Update caller.
+
+	* tta/perl/Texinfo/Convert/HTML.pm (%XS_conversion_overrides)
+	tta/perl/XSTexinfo/convert/ConvertXS.xs
+	(html_special_unit_info_text): add an XS interface for
+	special_unit_info_text.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c, tta/C/convert/format_html.c: inline
+	and remove html_convert_string_tree_new_formatting_context.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (html_conversion_finalization),
+	tta/C/convert/format_html.c (html_output_internal_links): remove calls
+	to free_html_targets_trees, now that trees to build are not removed
+	there.
+
+	* tta/C/convert/html_prepare_converter.c (reset_html_targets_list)
+	(reset_html_targets): move code from free_html_targets_trees_list
+	to reset_html_targets_list.  Remove free_html_targets_trees_list and
+	free_html_targets_trees.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c (special_unit_info_tree): rename tree as
+	unit_info_tree.
+
+	* tta/C/convert/convert_html.c
+	(html_reset_translated_special_unit_info_tree),
+	tta/C/convert/converter.c (clear_tree_added_elements),
+	tta/C/convert/format_html.c (special_unit_info_tree)
+	(html_internal_command_tree, html_convert_command_tree)
+	(html_command_text, html_convert_item_command): do not add nor remove
+	trees to build in clear_tree_added_elements,
+	html_reset_translated_special_unit_info_tree, special_unit_info_tree,
+	html_internal_command_tree.  Instead add and remove tree to build just
+	before and after conversion, in special_unit_info_text,
+	html_convert_command_tree, html_command_text and
+	html_convert_item_command.  That way it is much easier to determine
+	when trees are added and removed.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/init/html32.pm (html32_convert_item_command): update
+	convert_tree_new_formatting_context call.
+
+2025-12-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c
+	(html_reset_translated_special_unit_info_tree),
+	tta/C/convert/format_html.c (special_unit_info_tree),
+	tta/C/convert/html_converter_finish.c (html_free_converter),
+	tta/C/convert/html_prepare_converter.c
+	(html_converter_init_special_units_info), tta/C/main/converter_types.h
+	(translated_special_unit_info_texinfo)
+	(translated_special_unit_info_tree),
+	tta/C/convert/html_converter_types.h (special_unit_info_tree_names),
+	tta/maintain/generate_code_convert_data.pl,
+	tta/perl/Texinfo/Convert/HTML.pm (_internal_command_tree)
+	(_special_unit_info_tree, special_unit_info, _translate_names)
+	(converter_initialize, converter_destroy),
+	tta/perl/XSTexinfo/convert/get_html_perl_info.c
+	(html_converter_init_special_unit_sv): split default information for
+	tree special unit (heading) in a separate
+	default_special_unit_tree_info array and add
+	special_unit_info_tree_names.  Split tree unit special info texinfo
+	strings out of the main special_unit_info data to
+	translated_special_unit_info_texinfo.  Rename special_unit_info_tree
+	as translated_special_unit_info_tree.  Never set a *_tree in Perl,
+	always use directly the name.  Update C code for the separation
+	of defaults.  In Perl, split code setting
+	translated_special_unit_info_tree out of special_unit_info to
+	_special_unit_info_tree and call directly this function for
+	translated/tree special unit.
+	Set and use consistently *SPECIAL_UNIT_INFO_*NR sizes in C.
+
+	* tta/C/convert/format_html.c (special_unit_info_text)
+	(default_format_footnotes_segment), tta/perl/Texinfo/Convert/HTML.pm
+	(special_unit_info_text, _default_format_footnotes_segment): add
+	special_unit_info_text that gets the tree and do the conversion.
+	Use it in code such that the tree is never accessed in code that could
+	be user-defined.
+
+	* tta/perl/Texinfo/Convert/HTML.pm (get_special_unit_info_varieties):
+	only consider non-tree special unit info.
+
+2025-12-26 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c, tta/perl/Texinfo/Convert/HTML.pm
+	(output_internal_links): remove command_tree and html_command_tree.
+	Replace by calls to _internal_command_tree in output_internal_links.
+
+	* doc/texi2any_api.texi (Target Tree Element Link): remove
+	documentation of command_tree.
+
+2025-12-26 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c (file_header_information),
+	tta/perl/Texinfo/Convert/HTML.pm (_file_header_information): determine
+	the string of the element actually used for the element text before
+	comparing with the title string.  Use element text strings instead of
+	trees for the formatting of the title.
+
+2025-12-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/txi-pt.tex, doc/txi-pt_BR.tex: update comments
+
+2025-12-26 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/get_converter_perl_info.c, tta/C/main/get_perl_info.c
+	(converter_release_output_units_built): move
+	converter_release_output_units_built to get_perl_info.c.
+
+	* tta/C/convert/call_conversion_perl.c
+	(release_converter_output_units_remove_perl_output_units): add to call
+	both converter_release_output_units_built and
+	call_object_perl_converter_remove_output_units to release and remove
+	Perl output units from C.
+
+	* tta/C/convert/texinfo.c (txi_converter_remove_output_units),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs
+	(converter_remove_output_units): call
+	release_converter_output_units_remove_perl_output_units.
+
+2025-12-26 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c (mini_toc_internal),
+	tta/perl/Texinfo/Convert/HTML.pm (_mini_toc): use command_text instead
+	of getting the tree and converting.
+
+2025-12-26 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.tres, tta/perl/t/html_tests.t
+	(namedanchor_in_redirection_file): test with @namedanchor in
+	redirection file.
+
+2025-12-26 Patrice Dumas  <pertusus@free.fr>
+
+	Update po files
+
+2025-12-26 Patrice Dumas  <pertusus@free.fr>
+
+	In index formatted in code context use a true code for @seealso
+
+	* tta/C/convert/format_html.c (html_convert_printindex_command),
+	tta/perl/Texinfo/Convert/HTML.pm (_convert_printindex_command): if in
+	code formatted index, use an actual @code{} for the @seealso
+	in-document converted string.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	Remove the _string special HTML only container
+
+	* tta/C/convert/html_conversion_state.c
+	(html_open_type_update_context, html_convert_type_update_context),
+	tta/C/main/element_types.txt, tta/perl/Texinfo/Convert/HTML.pm
+	(_open_type_update_context, _convert_type_update_context): remove the
+	_string special HTML only container, the new
+	convert_tree_new_formatting_context argument should be used instead.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c
+	(html_convert_tree_new_formatting_context)
+	(html_convert_string_tree_new_formatting_context)
+	(html_prepare_converted_output_info, html_convert_tree_append)
+	tta/C/convert/format_html.c, tta/C/convert/html_conversion_state.c
+	(html_new_document_context), tta/perl/Texinfo/Convert/HTML.pm
+	(_convert_command_tree, convert_tree_new_formatting_context)
+	(_new_document_context, _convert),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs (html_new_document_context):
+	add a context type argument to _new_document_context and
+	convert_tree_new_formatting_context.  if set to string (or
+	HCC_type_string in C), set string context.  Replace the use of the
+	_string type element container by setting this argument in callers.
+	Update all the callers.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c (html_convert_command_tree),
+	tta/perl/Texinfo/Convert/HTML.pm (_convert_command_tree): set string
+	context instead of creating a tree with _string type at its root
+	to convert the tree if the text type is string.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/build_html_perl_info.c (html_pass_htmlxref): fix typo
+	in function name.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	Remove XS interface of functions called by output or convert
+
+	* tta/perl/Texinfo/Convert/HTML.pm (%XS_conversion_overrides),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs: remove XS overrides for
+	functions called by output and convert, they are not called.  Also
+	their code is not up to date.  Remove html_conversion_initialization,
+	html_setup_output, html_setup_convert, html_conversion_finalization,
+	html_prepare_simpletitle, html_prepare_converted_output_info,
+	html_prepare_title_titlepage, html_convert_convert,
+	html_convert_output, html_prepare_node_redirection_page,
+	html_node_redirections.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/converter.c (converter_remove_output_units),
+	tta/C/convert/converter.h (CONVERTER_FORMAT_DATA),
+	tta/C/convert/texinfo.c (txi_converter_remove_output_units),
+	tta/perl/Texinfo/Convert/Converter.pm (%XS_overrides)
+	(converter_remove_output_units),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs
+	(converter_remove_output_units): rename
+	reset_converter as converter_remove_output_units,
+	txi_reset_converter as txi_converter_remove_output_units and
+	CONVERTER_FORMAT_DATA converter_reset field as
+	converter_release_output_units.  Update callers.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/converter.c (converter_format_data)
+	(reset_tree_to_build, reset_converter),
+	tta/C/convert/html_converter_finish.c: add reset_tree_to_build based
+	on html_converter_finish.c reset_converter code and call it in
+	converter.c reset_converter.  Remove html_converter_finish.c
+	html_free_converter function.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/converter.c (reset_converter): do not set the document
+	to NULL, it is not useful to do it at that point.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/call_conversion_perl.c
+	(call_object_perl_converter_remove_output_units),
+	tta/perl/Texinfo/Convert/Converter.pm
+	(converter_release_output_units, perl_converter_remove_output_units),
+	tta/perl/Texinfo/Convert/HTML.pm (converter_release_output_units):
+	rename converter_reset as converter_release_output_units, rename
+	reset_perl_converter as perl_converter_remove_output_units, and rename
+	call_object_reset_perl_converter as
+	call_object_perl_converter_remove_output_units.  Update callers.
+
+	* tta/C/convert/converter.c (destroy_converter_output_units)
+	(reset_converter): rename reset_generic_converter as
+	destroy_converter_output_units and move setting document to 0 directly
+	in reset_converter.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_prepare_floats): make
+	latex_floats a local variable.
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (conversion_initialization)
+	(_prepare_conversion): move resetting converter fields related to the
+	document to conversion_initialization.  Remove converter_reset.
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (converter_destroy): delete
+	settitle_tree too.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/XSTexinfo/convert/ConvertXS.xs (html_output): call
+	build_output_files_information as late as possible to catch all the
+	opened files.
+
+	* tta/C/main/convert_utils.c, tta/C/main/utils.c (free_unclosed_files)
+	(free_output_files_information, clear_output_files_information): move
+	to utils.c.
+
+	* tta/C/texi2any.c (main), tta/C/convert/converter.c
+	(reset_generic_converter, html_reset_converter),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs (html_output): do not call
+	clear_output_files_information in *reset_*converter, call in main
+	program and when building the data to Perl.
+
+2025-12-25 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Utils.pm (output_files_reset): add.
+
+	* tta/perl/t/test_utils.pl (close_files), tta/perl/texi2any.pl: call
+	output_files_reset when the files information has been transfered to
+	the main program.
+
+	* tta/C/main/get_perl_info.c (get_output_files_information): clear
+	Perl output files information.
+
+2025-12-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter), tta/C/convert/html_prepare_converter.c
+	(reset_html_page_css, html_conversion_initialization)
+	(prepare_page_css, html_setup_output_simple_page)
+	(html_set_pages_files): add reset_html_page_css to
+	html_prepare_converter.c based on html_reset_converter code.
+	Reuse the memory allocated in converter page_css.  Call
+	reset_html_page_css in html_free_converter and html_free_converter.
+	Free page_css list in html_free_converter.
+	Add prepare_page_css based on code used to setup page_css in
+	html_setup_output_simple_page and html_set_pages_files, updated to
+	reuse the page_css memory.  Call in html_setup_output_simple_page
+	and html_set_pages_files.
+
+2025-12-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_conversion_state.c (html_free_pending_footnote):
+	add to free one pending footnote.
+
+	* tta/C/convert/format_html.c
+	(html_default_format_footnotes_sequence),
+	tta/C/convert/html_conversion_state.c (html_clear_pending_footnotes),
+	tta/C/convert/html_converter_finish.c (html_free_converter),
+	tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs (html_get_pending_footnotes):
+	access directly the converter pending footnotes in
+	html_default_format_footnotes_sequence and in html_get_pending_footnotes
+	instead of calling html_get_pending_footnotes.  Free each pending
+	footnote after it is formatted in
+	html_default_format_footnotes_sequence.  Add html_clear_pending_footnotes
+	to free all the pending footnotes, but keep the allocated memory.
+	Call html_clear_pending_footnotes in html_conversion_initialization,
+	html_conversion_finalization and html_get_pending_footnotes.  Free the
+	converter pending_footnotes stack in html_free_converter.
+	Remove html_get_pending_footnotes and destroy_pending_footnotes.
+
+	* tta/C/convert/convert_html.c (html_conversion_finalization): output
+	a warning if there are pending footnotes.
+
+2025-12-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (clear_type_explanations)
+	(html_reset_shared_conversion_state),
+	tta/C/convert/html_converter_finish.c (html_reset_converter): move
+	code resetting shared_conversion_state to convert_html.c
+	html_reset_shared_conversion_state.
+
+	* tta/C/convert/convert_html.c (html_reset_shared_conversion_state):
+	clear shared_conversion_state->elements_authors.top if not empty.
+	Zero in_skipped_node_top, footnote_number and html_menu_entry_index.
+
+	* tta/C/convert/convert_html.c (html_conversion_finalization),
+	tta/C/convert/html_prepare_converter.c
+	(html_reset_shared_conversion_state): call
+	html_reset_shared_conversion_state in html_conversion_finalization and
+	html_reset_shared_conversion_state (and not in html_reset_converter).
+
+2025-12-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/XSTexinfo/convert/get_html_perl_info.c (get_authors_list):
+	rename warn argument as access_elements_authors and sv_in as
+	quotation_titlepage_nr_sv.
+
+	* tta/perl/XSTexinfo/convert/get_html_perl_info.c
+	(html_set_shared_conversion_state, html_get_shared_conversion_state):
+	be more robust to incorrect input.  Add comments.
+
+2025-12-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/HTML.pm (_collect_css_element_class)
+	(register_file_information, _prepare_title_titlepage)
+	(_html_convert_convert, _html_convert_output)
+	(_prepare_node_redirection_page, _node_redirections): delete
+	current_filename instead of setting undef.
+
+	* tta/C/convert/convert_html.c (html_convert_output),
+	tta/perl/Texinfo/Convert/HTML.pm (_html_convert_output): make sure
+	that current_filename is unset when exiting the function.
+
+	* tta/C/convert/convert_html.c (html_convert_convert)
+	(html_convert_output), tta/C/convert/html_prepare_converter.c
+	(html_setup_output): reset current_filename in html_setup_output to do
+	like in Perl, even though it is not needed as it is already deleted
+	after conversion and each time it is set out of the conversion.
+	Always reset the whole structure to simplify code and thinking.
+
+2025-12-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/converter_types.h (CONVERTER),
+	tta/perl/Texinfo/Convert/HTML.pm: rename converter field
+	document_global_context as document_global_context_counter (to avoid
+	mistaking with the document_global_context strings).  Update code
+	accessing document_global_context_counter.
+
+	* tta/perl/Texinfo/Convert/HTML.pm (conversion_initialization),
+	tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization): initialize
+	document_global_context_counter.
+
+2025-12-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.texi (Inserting Math): Move from a section
+	to a chapter as it is doesn't fit well with the rest of the
+	chapter ("Special Insertions").
+
+2025-12-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.tres, tta/perl/t/formats_encodings.t
+	(char_latin1_latin1_in_refs_output_encoding_latin1): add a test
+	similar to char_latin1_latin1_in_refs, but with OUTPUT_ENCODING_NAME
+	set to ISO-8859-1, both to test the effect of setting
+	OUTPUT_ENCODING_NAME, and also to test LaTeX with latin1, now that the
+	default encoding is UTF-8 for LaTeX.
+
+2025-12-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Common.pm (set_output_encoding): test if
+	OUTPUT_ENCODING_NAME is undefined to use input encoding.
+
+2025-12-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	UTF-8 by default for LaTeX output
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (%defaults):
+	Set OUTPUT_ENCODING_NAME to 'utf-8'.
+
+	* tta/perl/Texinfo/Common.pm (set_output_encoding),
+	* tta/C/main/document.c (set_output_encoding): Only propagate
+	encoding name from input encoding to output encoding if output
+	encoding is not already set.
+	* tta/perl/Texinfo/Convert/Text.pm: update comments
+
+	* tta/data/converters_defaults.txt (html_converter),
+	* tta/perl/Texinfo/Convert/DocBook.pm (%defaults),
+	* tta/perl/Texinfo/Convert/TexinfoXML.pm (%defaults):
+	Remove OUTPUT_ENCODING_NAME utf-8 default.
+
+	* NEWS: update
+
+2025-12-24  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/data/default_css_element_class_styles.csv (strong.def-name):
+	Define "font-size" as "1rem" rather than "larger".  The "larger"
+	setting was to compensate for a smaller monospaced font size, but
+	if an @r element is embedded within the name of the defined symbol,
+	then the roman text would be larger than the surrounding text
+	(as in "@defun foo[@r{bar}]", which construct was sometimes used in
+	the groff manual).  Using "1rem" results in a consistent font size.
+
+2025-12-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c (html_convert_index_entry_command_type)
+	(html_convert_def_line_type), tta/perl/Texinfo/Convert/HTML.pm
+	(_convert_index_entry_command_type, _convert_def_line_type): use
+	in_multiple_conversions instead of multi_expanded_region in
+	conditions.  The result is the same, but it makes more sense to avoid
+	outputting a target for an index entry more than once irrespective
+	of the context.
+
+2025-12-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.tres, tta/perl/t/html_tests.t
+	(anchor_on_node_line): add test of anchor on node line expanded in
+	output (on a @node line of a node not associated to sectioning
+	commands).
+
+2025-12-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_conversion_state.c (html_multi_expanded_region),
+	tta/perl/Texinfo/Convert/HTML.pm (multi_expanded_region),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs (html_multi_expanded_region):
+	rename in_multi_expanded as multi_expanded_region.  Update callers.
+
+	* tta/C/convert/html_conversion_state.c
+	(html_in_multiple_conversions),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs
+	(html_in_multiple_conversions), tta/C/convert/format_html.c
+	(html_convert_raw_command): add html_in_multiple_conversions to be
+	more like Perl code.
+
+	* doc/texi2any_api.texi (Other Dynamic Information): update function
+	name and edits.
+
+2025-12-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (html_conversion_finalization),
+	tta/C/convert/format_html.c (html_convert_raw_command),
+	tta/C/convert/html_conversion_state.c (html_set_multiple_conversions)
+	(html_unset_multiple_conversions), tta/C/main/converter_types.h
+	(CONVERTER), tta/perl/Texinfo/Convert/HTML.pm
+	(in_multiple_conversions, _set_multiple_conversions)
+	(_unset_multiple_conversions), tta/perl/XSTexinfo/convert/ConvertXS.xs
+	(html_in_multiple_conversions): remove multiple_conversions, use the
+	size of multiple_pass instead.
+
+2025-12-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter),
+	tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization): reset check_htmlxref_already_warned
+	in html_conversion_initialization not in html_reset_converter.
+
+	* tta/perl/Texinfo/Convert/HTML.pm (conversion_initialization): always
+	reset check_htmlxref_already_warned.
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter): avoid a useless intermediary variable for
+	explained_commands.
+
+2025-12-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\lattwochardefs): Use \ensuremath for definitions
+	of × and ÷.
+
+2025-12-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\latonechardefs): Change more definitions to
+	match \unicodechardefs.
+
+2025-12-23  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\latonechardefs): Define ^^b1 using \ensuremath,
+	matching definition in \unicodechardefs.  Report from Patrice Dumas.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (free_special_unit_info_list)
+	(html_reset_converter): do not call reset_special_unit_info_list on
+	customized_special_unit_info, this information should not change after
+	getting the customization.  remove reset_special_unit_info_list,
+	merging code to free_special_unit_info_list.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter), tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization): reset title_tree and
+	added_title_tree in html_conversion_initialization instead of
+	html_reset_converter and free in html_free_converter.
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization): reset simpletitle_tree and
+	simpletitle_cmd.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c, tta/C/convert/html_prepare_converter.c
+	(html_initialize_pending_closes, html_setup_output_simple_page): move
+	html_initialize_pending_closes and html_setup_output_simple_page to
+	html_prepare_converter.c.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_api.c (html_output, html_convert),
+	tta/perl/XSTexinfo/convert/ConvertXS.xs (html_output, html_convert):
+	use consistently document_name and not converter->document_name, pass
+	directly 0 to html_prepare_conversion_units_targets for convert.
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter), tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization): reset title_titlepage, title_string,
+	documentdescription_string, copying_comment, destination_directory
+	and document_name in html_conversion_initialization, not in
+	html_reset_converter and free in html_free_converter.
+
+	* tta/C/convert/convert_html.c (html_setup_output_simple_page),
+	tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter), tta/C/convert/html_prepare_converter.c
+	(html_set_pages_files): reset output_unit_file_indices and
+	special_unit_file_indices in html_set_pages_files and
+	html_setup_output_simple_page, not in html_reset_converter.  Free in
+	html_free_converter.
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization): call reset_html_targets in
+	html_conversion_initialization.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter),
+	tta/C/convert/html_prepare_converter.c (html_reset_files_source_info)
+	(html_prepare_units_directions_files): move
+	html_reset_files_source_info to html_prepare_converter.c.  Do not call
+	html_reset_files_source_info in html_reset_converter, instead call it
+	in html_prepare_units_directions_files before being set.
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter), tta/C/convert/html_prepare_converter.c
+	(free_js_categories_list, html_conversion_initialization): move the
+	code free'ing js categories list to html_prepare_converter.c and call
+	it in html_conversion_initialization and in html_free_converter, not
+	in html_reset_converter.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/XSTexinfo/convert/get_html_perl_info.c: remove unused
+	html_get_jslicenses_sv function.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/converter.c (free_tree_added_elements): set
+	list and space to 0 after free'ing, such that it is possible to call
+	the function twice.
+
+	* tta/C/convert/convert_html.c (free_html_targets_trees_list)
+	(free_html_targets_trees), tta/C/convert/html_converter_finish.c,
+	tta/C/convert/html_prepare_converter.c (reset_html_targets_list)
+	(reset_html_targets): move reset_html_targets_list and
+	reset_html_targets to html_prepare_converter.c.  Split freeing trees
+	outside of reset_html_targets and reset_html_targets_list to
+	free_html_targets_trees and free_html_targets_trees_list.
+
+	* tta/C/convert/convert_html.c (html_conversion_finalization),
+	tta/C/convert/format_html.c (html_output_internal_links): call
+	free_html_targets_trees.
+
+	* tta/C/convert/html_converter_finish.c (html_free_converter)
+	(html_reset_converter): call reset_html_targets in html_free_converter
+	only.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/z_misc/same_converter_init.t: set TEST to 2.
+	Destroy converter to trigger memory leaks report.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (reset_html_targets_list):
+	remove a useless memset.
+
+	* tta/C/convert/html_converter_finish.c (reset_html_targets)
+	(html_reset_converter, html_free_converter),
+	tta/C/convert/html_prepare_converter.c (sort_cmd_targets): register
+	cmd that have been targets allocated in html_target_cmds.  Reuse
+	html_targets and html_special_targets targets lists memory, free the
+	lists in html_free_converter only.
+
+	* tta/C/convert/html_converter_finish.c (reset_html_targets): remove
+	registered_ids_c_hashmap clearing, it is cleared upon being set
+	already.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/format_html.c: remove
+	find_element_target_number_linear and associated comments.
+
+2025-12-22 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (html_conversion_finalization),
+	tta/C/convert/html_converter_finish.c (html_reset_converter): call
+	html_reset_translated_special_unit_info_tree in
+	html_conversion_finalization instead of html_reset_converter, because
+	it releases trees to build.
+
+	* tta/C/convert/html_converter_finish.c (html_reset_converter)
+	(html_free_converter), tta/C/convert/html_prepare_converter.c
+	(html_conversion_initialization), tta/C/main/converter_types.h
+	(SORTED_INDEX_NAMES): add a space field to SORTED_INDEX_NAMES, reuse
+	the memory, do not free in html_reset_converter but free in
+	html_free_converter.
+
 2025-12-21 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/C/convert/html_converter_finish.c (html_reset_converter)

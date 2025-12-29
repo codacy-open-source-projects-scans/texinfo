@@ -69,7 +69,7 @@
 #include "api.h"
 /* html_complete_no_arg_commands_formatting html_run_stage_handlers
    html_add_to_files_source_info html_find_file_source_info
-   html_setup_output_simple_page */
+   html_reset_shared_conversion_state */
 #include "convert_html.h"
 #include "html_prepare_converter.h"
 #include "html_conversion_api.h"
@@ -137,11 +137,9 @@ static COMMAND_ID_ARGS_SPECIFICATION default_commands_args[] = {
   {CM_acronym, {F_AFT_normal, F_AFT_string | F_AFT_normal}},
 };
 
-/* types that are in code style in the default case.  '_code' is not
-   a type that can appear in the tree built from Texinfo code, it is used
-   to format a tree fragment as if it was in a @code @-command.  */
+/* types that are in code style in the default case. */
 static enum element_type default_code_types[] = {
-  ET__code, 0,
+  0,
 };
 
 const PRE_CLASS_TYPE_INFO default_pre_class_types[] = {
@@ -2043,6 +2041,7 @@ html_converter_init_special_units_info (CONVERTER *self)
     {
       size_t i;
       enum special_unit_info_type j;
+      enum special_unit_info_tree l;
       for (j = 0; j < SPECIAL_UNIT_INFO_TYPE_NR; j++)
         {
           size_t k;
@@ -2056,19 +2055,60 @@ html_converter_init_special_units_info (CONVERTER *self)
                   = strdup (default_special_unit_info[j][k]);
             }
         }
+      for (l = 0; l < SPECIAL_UNIT_INFO_TREE_NR; l++)
+        {
+          size_t k;
+
+          self->translated_special_unit_info_texinfo[l]
+            = new_special_unit_info_type (nr_special_units);
+          for (k = 0; k < nr_special_units; k++)
+            {
+              if (default_special_unit_tree_info[l][k])
+                self->translated_special_unit_info_texinfo[l][k]
+                  = strdup (default_special_unit_tree_info[l][k]);
+            }
+        }
       /* apply customization */
       for (i = 0; i < self->customized_special_unit_info.number; i++)
         {
-          SPECIAL_UNIT_INFO *special_unit_info
+          int t;
+          SPECIAL_UNIT_INFO *custom_unit_info
             = &self->customized_special_unit_info.list[i];
-          size_t variety_idx = special_unit_info->variety_nr -1;
-          enum special_unit_info_type type = special_unit_info->type;
+          size_t variety_idx = custom_unit_info->variety_nr -1;
+          enum special_unit_info_type type = custom_unit_info->type;
+          enum special_unit_info_tree tree_type = SUIT_type_none;
+
+          for (t = 0; translated_special_unit_info[t].tree_type
+                                                     != SUIT_type_none; t++)
+            {
+              enum special_unit_info_type string_type
+                = translated_special_unit_info[t].string_type;
+              if (string_type == type)
+                {
+                  tree_type = translated_special_unit_info[t].tree_type;
+
+                  free (self->translated_special_unit_info_texinfo[tree_type]
+                                                                [variety_idx]);
+
+                  if (custom_unit_info->value)
+                    self->translated_special_unit_info_texinfo[tree_type]
+                                                               [variety_idx]
+                      = strdup (custom_unit_info->value);
+                  else
+                    self->translated_special_unit_info_texinfo[tree_type]
+                                                           [variety_idx] = 0;
+                  break;
+                }
+            }
+
+          if (tree_type != SUIT_type_none)
+            continue;
 
           free (self->special_unit_info[type][variety_idx]);
 
-          if (special_unit_info->value)
+          if (custom_unit_info->value)
             self->special_unit_info[type][variety_idx]
-              = strdup (special_unit_info->value);
+              = strdup (custom_unit_info->value);
           else
             self->special_unit_info[type][variety_idx] = 0;
         }
@@ -2817,11 +2857,11 @@ html_converter_customize (CONVERTER *self)
 
   /* allocate space for translated tree types, they will be created
      on-demand during the conversion */
-  for (l = 0; l < SUIT_type_heading+1; l++)
+  for (l = 0; l < SPECIAL_UNIT_INFO_TREE_NR; l++)
     {
-      self->special_unit_info_tree[l] = (ELEMENT **)
+      self->translated_special_unit_info_tree[l] = (ELEMENT **)
         malloc ((nr_special_units +1) * sizeof (ELEMENT *));
-      memset (self->special_unit_info_tree[l], 0,
+      memset (self->translated_special_unit_info_tree[l], 0,
                (nr_special_units +1) * sizeof (ELEMENT *));
     }
 
@@ -3385,6 +3425,108 @@ close_lone_conf_element (OPTION *option)
     }
 }
 
+void
+free_js_categories_list (JSLICENSE_CATEGORY_LIST *js_files_info)
+{
+  if (js_files_info->number)
+    {
+      size_t i;
+      for (i = 0; i < js_files_info->number; i++)
+        {
+          JSLICENSE_FILE_INFO_LIST *jslicences_files_info
+            = &js_files_info->list[i];
+          free (jslicences_files_info->category);
+          if (jslicences_files_info->number)
+            {
+              size_t j;
+              for (j = 0; j < jslicences_files_info->number; j++)
+                {
+                  JSLICENSE_FILE_INFO *jslicense_file_info
+                    = &jslicences_files_info->list[j];
+                  free (jslicense_file_info->filename);
+                  free (jslicense_file_info->license);
+                  free (jslicense_file_info->url);
+                  free (jslicense_file_info->source);
+                }
+            }
+          free (jslicences_files_info->list);
+        }
+      free (js_files_info->list);
+    }
+  js_files_info->number = 0;
+}
+
+static void
+reset_html_targets_list (CONVERTER *self, HTML_TARGET_LIST *targets)
+{
+  if (targets->number)
+    {
+      size_t i;
+      for (i = 0; i < targets->number; i++)
+        {
+          int j;
+          HTML_TARGET *html_target = &targets->list[i];
+          /* setup before conversion */
+          free (html_target->target);
+          free (html_target->special_unit_filename);
+          free (html_target->node_filename);
+          free (html_target->section_filename);
+          free (html_target->contents_target);
+          free (html_target->shortcontents_target);
+
+          free_tree_added_elements (self, &html_target->tree);
+          free_tree_added_elements (self, &html_target->tree_nonumber);
+          free_tree_added_elements (self, &html_target->name_tree);
+          free_tree_added_elements (self, &html_target->name_tree_nonumber);
+
+          for (j = 0; j < HTT_string_nonumber+1; j++)
+            free (html_target->command_text[j]);
+
+          for (j = 0; j < HTT_string_nonumber+1; j++)
+            free (html_target->command_description[j]);
+
+          for (j = 0; j < HTT_string_nonumber+1; j++)
+            free (html_target->command_name[j]);
+        }
+      targets->number = 0;
+    }
+}
+
+void
+reset_html_targets (CONVERTER *self)
+{
+  size_t i;
+
+  for (i = 0; i < self->html_target_cmds.top; i++)
+    {
+      enum command_id cmd = self->html_target_cmds.stack[i];
+      reset_html_targets_list (self, &self->html_targets[cmd]);
+    }
+
+  for (i = 0; i < ST_footnote_location+1; i++)
+    {
+      reset_html_targets_list (self, &self->html_special_targets[i]);
+    }
+}
+
+void
+reset_html_page_css (CONVERTER *self)
+{
+  size_t i;
+
+  for (i = 0; i < self->page_css.number; i++)
+    {
+      size_t j;
+      CSS_LIST *page_css_list = &self->page_css.list[i];
+
+      for (j = 0; j < page_css_list->number; j++)
+        free (page_css_list->list[j]);
+      free (page_css_list->list);
+      free (page_css_list->page_name);
+    }
+  self->page_css.number = 0;
+}
+
 static const enum command_id spaces_cmd[] = {
   CM_SPACE, CM_TAB, CM_NEWLINE, CM_tie
 };
@@ -3415,13 +3557,53 @@ html_conversion_initialization (CONVERTER *self, const char *context)
    output_no_arg_commands_formatting[BUILTIN_CMD_NUMBER]
                                               [NO_ARG_COMMAND_CONTEXT_NR];
 
-  free_translation_cache (self->translation_cache);
-  self->translation_cache = 0;
+  /* in Perl converter_info is reset here, in C corresponds to
+     different fields of the converter structure.
+     They are reset here when relevant */
 
-  output_encoding = self->conf->OUTPUT_ENCODING_NAME.o.string;
+  free (self->title_titlepage);
+  self->title_titlepage = 0;
+  free (self->title_string);
+  self->title_string = 0;
+  free (self->documentdescription_string);
+  self->documentdescription_string = 0;
+  free (self->copying_comment);
+  self->copying_comment = 0;
+  free (self->destination_directory);
+  self->destination_directory = 0;
+  free (self->document_name);
+  self->document_name = 0;
+
+  self->simpletitle_tree = 0;
+  self->simpletitle_cmd = CM_NONE;
+
+  if (self->added_title_tree)
+    {
+      destroy_element_and_children (self->title_tree);
+
+      self->added_title_tree = 0;
+    }
+  self->title_tree = 0;
+
+  html_reset_shared_conversion_state (self);
+
+  reset_html_page_css (self);
+
+  reset_html_targets (self);
+
+  html_clear_pending_footnotes (&self->pending_footnotes);
 
   self->current_node = 0;
   self->current_root_command = 0;
+
+  free_translation_cache (self->translation_cache);
+  self->translation_cache = 0;
+
+  /* it actually matters only with output, not with convert, but it is
+     better to reset in any case */
+  free_js_categories_list (&self->jslicenses);
+
+  output_encoding = self->conf->OUTPUT_ENCODING_NAME.o.string;
 
   for (i = 0; i < SC_non_breaking_space+1; i++)
     {
@@ -3709,6 +3891,8 @@ html_conversion_initialization (CONVERTER *self, const char *context)
   self->global_units_direction_names.list = 0;
   self->global_units_direction_names.number = 0;
 
+  clear_strings_list (&self->check_htmlxref_already_warned);
+
   if (self->conf->NODE_NAME_IN_INDEX.o.integer < 0)
     option_set_conf (&self->conf->NODE_NAME_IN_INDEX,
                      self->conf->USE_NODES.o.integer, 0);
@@ -3737,7 +3921,8 @@ html_conversion_initialization (CONVERTER *self, const char *context)
   self->current_types_conversion_function = &self->type_conversion_function[0];
   self->current_format_protect_text = &html_default_format_protect_text;
 
-  html_new_document_context (self, context, 0, 0);
+  html_new_document_context (self, context, 0, 0, 0);
+  self->document_global_context_counter = 0;
 
   if (self->document && self->document->indices_info.number)
     {
@@ -3759,8 +3944,14 @@ html_conversion_initialization (CONVERTER *self, const char *context)
 
       /* store only non empty indices in sorted_index_names */
       self->sorted_index_names.number = non_empty_index_nr;
-      self->sorted_index_names.list = (const INDEX **)
-         malloc (self->sorted_index_names.number * sizeof (INDEX *));
+      /* resize if needed */
+      if (self->sorted_index_names.number > self->sorted_index_names.space)
+        {
+          self->sorted_index_names.space = self->sorted_index_names.number;
+          self->sorted_index_names.list = (const INDEX **)
+             realloc (self->sorted_index_names.list,
+                      self->sorted_index_names.space * sizeof (INDEX *));
+        }
       for (j = 0; j < index_nr; j++)
         {
           if (sorted_index_names[j]->entries_number > 0)
@@ -3772,6 +3963,8 @@ html_conversion_initialization (CONVERTER *self, const char *context)
         }
       free (sorted_index_names);
     }
+  else
+    self->sorted_index_names.number = 0;
 
   if (self->document)
     {
@@ -3845,6 +4038,10 @@ html_setup_output (CONVERTER *self, char **paths)
   int js_categories_list_nr = 0;
   const char *body_lang;
   char *body_element_attributes;
+
+  /* Should not actually be needed, as it is already deleted after conversion
+     and each time it is set out of the conversion. */
+  memset (&self->current_filename, 0, sizeof (FILE_NUMBER_NAME));
 
   if (self->conf->OUTFILE.o.string)
     {
@@ -4930,7 +5127,7 @@ set_heading_commands_targets (CONVERTER *self)
     }
 }
 
-/* duplicate in convert_html.c */
+/* duplicate in format_html.c */
 static int
 compare_element_target (const void *a, const void *b)
 {
@@ -4995,6 +5192,11 @@ sort_cmd_targets (CONVERTER *self)
   enum command_id cmd;
   int type;
 
+  /* holds the commands with targets that have been allocated, not only
+     those with actual targets.  There is a difference only if the
+     converter is reused */
+  self->html_target_cmds.top = 0;
+
   for (cmd = 0; cmd < BUILTIN_CMD_NUMBER; cmd++)
     {
       if (self->html_targets[cmd].number > 0)
@@ -5010,6 +5212,8 @@ sort_cmd_targets (CONVERTER *self)
                  sizeof (HTML_TARGET), compare_element_target);
           push_command (&self->html_target_cmds, cmd);
         }
+      else if (self->html_targets[cmd].space > 0)
+        push_command (&self->html_target_cmds, cmd);
     }
   for (type = 0; type < ST_footnote_location+1; type++)
     {
@@ -5075,6 +5279,8 @@ html_prepare_conversion_units_targets (CONVERTER *self,
 {
   size_t predicted_values = ids_hashmap_predicted_values (self);
 
+  /* Not done as in Perl in conversion initialization, to be able to
+     have correctly predicted number of id */
   if (self->registered_ids_c_hashmap)
     {
       clear_c_hashmap (self->registered_ids_c_hashmap);
@@ -5485,6 +5691,18 @@ html_setup_global_texts_direction_names (CONVERTER *self)
   sort_strings_list (&self->global_texts_direction_names);
 }
 
+void
+html_reset_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info)
+{
+  size_t i;
+  for (i = 0; i < files_source_info->number; i++)
+    {
+      free (files_source_info->list[i].filename);
+      free (files_source_info->list[i].path);
+    }
+  files_source_info->number = 0;
+}
+
 static char *
 add_to_unit_file_name_paths (char **unit_file_name_paths,
                              const char *filename,
@@ -5493,6 +5711,80 @@ add_to_unit_file_name_paths (char **unit_file_name_paths,
   unit_file_name_paths[output_unit->index] = strdup (filename);
 
   return unit_file_name_paths[output_unit->index];
+}
+
+static void
+html_initialize_pending_closes (CONVERTER *self, size_t number)
+{
+  if (self->pending_closes.space < number)
+    {
+      self->pending_closes.list = (STRING_STACK *)
+        realloc (self->pending_closes.list, number * sizeof (STRING_STACK));
+  /* The existing string stacks per file should already be empty, either because
+     the code is consistent for opening and closing, or because they are
+     emptied after the conversion (with an error message).
+
+     Therefore, only the newly allocated string stacks per file are
+     initialized.
+   */
+      memset (&self->pending_closes.list[self->pending_closes.space],
+              0, (number - self->pending_closes.space)
+                 * sizeof (STRING_STACK));
+      self->pending_closes.space = number;
+    }
+  self->pending_closes.number = number;
+}
+
+static void
+prepare_page_css (CONVERTER *self, size_t pages_number)
+{
+  /* 0 is for document_global_context_css, the remaining indices
+     for the output unit files or the unique page with convert */
+  size_t css_pages_number = pages_number +1;
+
+  if (self->page_css.space < css_pages_number)
+    {
+      self->page_css.space = css_pages_number;
+      self->page_css.list = (CSS_LIST *)
+       realloc (self->page_css.list,
+                self->page_css.space * sizeof (CSS_LIST));
+    }
+
+  memset (self->page_css.list, 0,
+          css_pages_number * sizeof (CSS_LIST));
+
+  self->page_css.number = css_pages_number;
+}
+
+/* setup a page (+global context) in case there are no files, ie called
+   with convert or output with an empty string as filename. */
+void
+html_setup_output_simple_page (CONVERTER *self, const char *output_filename)
+{
+  NAME_NUMBER *page_name_number;
+
+  free (self->output_unit_file_indices);
+  self->output_unit_file_indices = 0;
+
+  free (self->special_unit_file_indices);
+  self->special_unit_file_indices = 0;
+
+  prepare_page_css (self, 1);
+
+  self->html_files_information.number = 1+1;
+  self->html_files_information.list = (FILE_ASSOCIATED_INFO *)
+       malloc (self->html_files_information.number
+          * sizeof (FILE_ASSOCIATED_INFO));
+  memset (self->html_files_information.list, 0,
+          self->html_files_information.number * sizeof (FILE_ASSOCIATED_INFO));
+
+  html_initialize_pending_closes (self, 1+1);
+
+  allocate_name_number_list (&self->page_name_number, 1);
+
+  page_name_number = &self->page_name_number.list[0];
+  page_name_number->number = 1;
+  page_name_number->name = output_filename;
 }
 
 /* calls customization function requiring output units */
@@ -5781,7 +6073,8 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
     }
 
   self->output_unit_file_indices = (size_t *)
-    malloc (output_units->number * sizeof (size_t));
+    realloc (self->output_unit_file_indices,
+             output_units->number * sizeof (size_t));
 
   for (i = 0; i < output_units->number; i++)
     {
@@ -5870,7 +6163,8 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
     {
       size_t i;
       self->special_unit_file_indices = (size_t *)
-        malloc (special_units->number * sizeof (size_t));
+        realloc (self->special_unit_file_indices,
+                 special_units->number * sizeof (size_t));
       for (i = 0; i < special_units->number; i++)
         {
           size_t special_unit_file_idx = 0;
@@ -5917,6 +6211,11 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
                              special_unit_file->counter);
         }
     }
+  else
+    {
+      free (self->special_unit_file_indices);
+      self->special_unit_file_indices = 0;
+    }
 
   for (i = 0; i < files_source_info->number; i++)
     {
@@ -5960,14 +6259,7 @@ html_set_pages_files (CONVERTER *self, const OUTPUT_UNIT_LIST *output_units,
         }
     }
 
-  /* 0 is for document_global_context_css, the remaining indices
-     for the output unit files */
-  self->page_css.number = self->output_unit_files.number +1;
-  self->page_css.space = self->page_css.number;
-  self->page_css.list = (CSS_LIST *)
-       malloc (self->page_css.space * sizeof (CSS_LIST));
-  memset (self->page_css.list, 0,
-          self->page_css.number * sizeof (CSS_LIST));
+  prepare_page_css (self, self->output_unit_files.number);
 
   self->html_files_information.number = self->output_unit_files.number +1;
   self->html_files_information.list = (FILE_ASSOCIATED_INFO *)
@@ -6028,6 +6320,8 @@ html_prepare_units_directions_files (CONVERTER *self,
      is checked below */
   /* same as calling initialize_output_units_files in Perl */
   clear_output_unit_files (&self->output_unit_files);
+
+  html_reset_files_source_info (&self->files_source_info);
 
   if (strlen (output_file))
     {

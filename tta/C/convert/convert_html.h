@@ -51,15 +51,12 @@ void html_translate_convert_tree_append (const char *string,
 char *html_convert_tree_new_formatting_context (CONVERTER *self,
                                           const ELEMENT *tree,
                                           const char *context_string,
+                                          unsigned long context_type,
                                           const char *multiple_pass,
                                           const char *document_global_context,
                                           enum command_id block_cmd);
 char *html_convert_css_string (CONVERTER *self, const ELEMENT *element,
                                const char *context_str);
-char *html_convert_string_tree_new_formatting_context (CONVERTER *self,
-                               ELEMENT *tree, const char *context_string,
-                               const char *multiple_pass);
-
 
 void html_clear_direction_string_type (const CONVERTER *self,
                                        char ***type_directions_strings);
@@ -75,12 +72,7 @@ void html_reset_translated_special_unit_info_tree (CONVERTER *self);
 int html_run_stage_handlers (CONVERTER *self,
                              enum html_stage_handler_stage_type stage);
 
-/* void html_setup_output_simple_page (CONVERTER *self,
-                                    const char *output_filename); */
-
 void html_free_direction_icons_array (CONVERTER *self, char ***direction_icons);
-
-void html_initialize_pending_closes (CONVERTER *self, size_t number);
 
 /* next three called separately for convert() */
 /* void html_prepare_direction_icons (CONVERTER *self); */
@@ -103,6 +95,9 @@ char *debug_print_html_contexts (const CONVERTER *self);
                            const char *output_filename,
                            const char *document_name); */
 
+
+void free_html_targets_trees (CONVERTER *self);
+void html_reset_shared_conversion_state (CONVERTER *self);
 
 /* void html_conversion_finalization (CONVERTER *self); */
 

@@ -136,24 +136,6 @@ my %XS_conversion_overrides = (
   "Texinfo::Convert::HTML::output_internal_links"
     => "Texinfo::Convert::ConvertXS::html_output_internal_links",
 
-  # following are not called when output and convert are overriden
-  # (since 2024-07).
-  # NOTE not possible to simply remove output or convert overriding,
-  # there are errors because overrides related to passing output
-  # units were removed when some associated code was modified in 2025-08.
-  "Texinfo::Convert::HTML::conversion_initialization"
-   => "Texinfo::Convert::ConvertXS::html_conversion_initialization",
-  "Texinfo::Convert::HTML::_setup_convert"
-   => "Texinfo::Convert::ConvertXS::html_setup_convert",
-  "Texinfo::Convert::HTML::_setup_output"
-   => "Texinfo::Convert::ConvertXS::html_setup_output",
-  "Texinfo::Convert::HTML::conversion_finalization"
-   => "Texinfo::Convert::ConvertXS::html_conversion_finalization",
-  "Texinfo::Convert::HTML::_prepare_simpletitle"
-   => "Texinfo::Convert::ConvertXS::html_prepare_simpletitle",
-  "Texinfo::Convert::HTML::_prepare_converted_output_info"
-   => "Texinfo::Convert::ConvertXS::html_prepare_converted_output_info",
-
   "Texinfo::Convert::HTML::command_id"
    => "Texinfo::Convert::ConvertXS::html_command_id",
   "Texinfo::Convert::HTML::command_contents_target"
@@ -172,16 +154,14 @@ my %XS_conversion_overrides = (
    => "Texinfo::Convert::ConvertXS::html_internal_command_href",
   "Texinfo::Convert::HTML::command_contents_href"
    => "Texinfo::Convert::ConvertXS::html_command_contents_href",
-  "Texinfo::Convert::HTML::_internal_command_tree"
-   => "Texinfo::Convert::ConvertXS::html_internal_command_tree",
-  "Texinfo::Convert::HTML::_internal_command_name_tree"
-   => "Texinfo::Convert::ConvertXS::html_internal_command_name_tree",
   "Texinfo::Convert::HTML::_internal_command_text"
    => "Texinfo::Convert::ConvertXS::html_internal_command_text",
   "Texinfo::Convert::HTML::_internal_command_name"
    => "Texinfo::Convert::ConvertXS::html_internal_command_name",
   "Texinfo::Convert::HTML::command_description"
    => "Texinfo::Convert::ConvertXS::html_command_description",
+  "Texinfo::Convert::HTML::special_unit_info_text",
+   => "Texinfo::Convert::ConvertXS::html_special_unit_info_text",
   "Texinfo::Convert::HTML::global_direction_unit"
    => "Texinfo::Convert::ConvertXS::html_global_direction_unit",
   "Texinfo::Convert::HTML::global_direction_text"
@@ -195,6 +175,10 @@ my %XS_conversion_overrides = (
   "Texinfo::Convert::HTML::get_info"
    => "Texinfo::Convert::ConvertXS::html_get_info",
 
+  # Following functions are sometimes called from converting functions,
+  # but mainly from within calls of convert_tree called from
+  # converting functions.  The make sure that the formatting contexts
+  # accessed and modified are only the formatting contexts in C data.
   "Texinfo::Convert::HTML::_open_command_update_context"
    => "Texinfo::Convert::ConvertXS::html_open_command_update_context",
   "Texinfo::Convert::HTML::_convert_command_update_context",
@@ -259,8 +243,8 @@ my %XS_conversion_overrides = (
    => "Texinfo::Convert::ConvertXS::html_preformatted_classes_stack",
   "Texinfo::Convert::HTML::in_align"
    => "Texinfo::Convert::ConvertXS::html_in_align",
-  "Texinfo::Convert::HTML::in_multi_expanded"
-   => "Texinfo::Convert::ConvertXS::html_in_multi_expanded",
+  "Texinfo::Convert::HTML::multi_expanded_region"
+   => "Texinfo::Convert::ConvertXS::html_multi_expanded_region",
   "Texinfo::Convert::HTML::current_filename"
    => "Texinfo::Convert::ConvertXS::html_current_filename",
   "Texinfo::Convert::HTML::current_output_unit"
@@ -317,18 +301,6 @@ my %XS_conversion_overrides = (
 
   "Texinfo::Convert::HTML::_translate_names"
    => "Texinfo::Convert::ConvertXS::html_translate_names",
-
-  # following are not called when output and convert are overriden
-  "Texinfo::Convert::HTML::_prepare_title_titlepage"
-   => "Texinfo::Convert::ConvertXS::html_prepare_title_titlepage",
-  "Texinfo::Convert::HTML::_html_convert_convert"
-   => "Texinfo::Convert::ConvertXS::html_convert_convert",
-  "Texinfo::Convert::HTML::_html_convert_output"
-   => "Texinfo::Convert::ConvertXS::html_convert_output",
-  "Texinfo::Convert::HTML::_prepare_node_redirection_page"
-   => "Texinfo::Convert::ConvertXS::html_prepare_node_redirection_page",
-  "Texinfo::Convert::HTML::_node_redirections"
-   => "Texinfo::Convert::ConvertXS::html_node_redirections",
 
   # Cannot be overriden, in general the trees are not registered in Perl
   #"Texinfo::Convert::HTML::_XS_html_convert_tree"
@@ -436,15 +408,15 @@ sub set_global_direction($$;$) {
 sub _collect_css_element_class($$) {
   my ($self, $element_class) = @_;
 
-  #if (not $self->{'document_global_context'}
-  #    and not defined($self->{'current_filename'})) {
+  #if (not $self->{'document_global_context_counter'}
+  #    and not exists($self->{'current_filename'})) {
   #  cluck "BUG: $element_class: CSS no current file";
   #}
 
   if (exists($self->{'css_element_class_styles'}->{$element_class})) {
-    if ($self->{'document_global_context'}) {
+    if ($self->{'document_global_context_counter'}) {
       $self->{'document_global_context_css'}->{$element_class} = 1;
-    } elsif (defined($self->{'current_filename'})) {
+    } elsif (exists($self->{'current_filename'})) {
       $self->{'page_css'}->{$self->{'current_filename'}} = {}
         if (!exists($self->{'page_css'}->{$self->{'current_filename'}}));
       $self->{'page_css'}->{$self->{'current_filename'}}->{$element_class} = 1;
@@ -648,6 +620,12 @@ sub css_get_selector_style($$) {
   }
 }
 
+# flags used to specify the conversion contexts.  Use flags to avoid
+# passing multiple arguments or hashes, and also could be easier for
+# passing to C.
+our $CTXF_string = 0x0001;
+our $CTXF_code = 0x0002;
+
 my %default_css_string_commands_conversion;
 my %default_css_string_types_conversion;
 my %default_css_string_formatting_references;
@@ -676,8 +654,7 @@ sub html_convert_css_string($$$) {
       = $default_css_string_formatting_references{$formatting_reference};
   }
   my $css_string_context_str = 'CSS string '.$context_str;
-  _new_document_context($self, $css_string_context_str);
-  _set_string_context($self);
+  _new_document_context($self, $css_string_context_str, $CTXF_string);
   my $result
    = $self->convert_tree($element, "new_fmt_ctx C($css_string_context_str)");
   _pop_document_context($self);
@@ -794,7 +771,7 @@ sub in_raw($) {
 sub in_multiple_conversions($) {
   my $self = shift;
 
-  return $self->{'multiple_conversions'};
+  return scalar(@{$self->{'multiple_pass'}});
 }
 
 sub paragraph_number($) {
@@ -835,7 +812,7 @@ sub in_align($) {
   }
 }
 
-sub in_multi_expanded($) {
+sub multi_expanded_region($) {
   my $self = shift;
 
   if (scalar(@{$self->{'multiple_pass'}})) {
@@ -872,6 +849,18 @@ sub is_format_expanded($$) {
   my ($self, $format) = @_;
 
   return $self->{'expanded_formats'}->{$format};
+}
+
+sub _set_code_context($$) {
+  my ($self, $code) = @_;
+
+  push @{$self->{'document_context'}->[-1]->{'monospace'}}, $code;
+}
+
+sub _pop_code_context($) {
+  my $self = shift;
+
+  pop @{$self->{'document_context'}->[-1]->{'monospace'}};
 }
 
 # the main data structure of the element target API is a hash reference, called
@@ -1286,12 +1275,13 @@ sub _internal_command_tree($$$) {
   if (defined($target)) {
     if (!exists($target->{'tree'})) {
       my $tree;
+      my $in_code;
       if (exists($command->{'type'})
           and $command->{'type'} eq 'special_unit_element') {
         my $special_unit_variety
            = $command->{'associated_unit'}->{'special_unit_variety'};
         $tree
-          = $self->special_unit_info('heading_tree',
+          = $self->_special_unit_info_tree('heading',
                                       $special_unit_variety);
       } elsif (exists($command->{'cmdname'})
                and ($command->{'cmdname'} eq 'node'
@@ -1308,8 +1298,8 @@ sub _internal_command_tree($$$) {
           my $arguments_line = $command->{'contents'}->[0];
           $label_element = $arguments_line->{'contents'}->[0];
         }
-        $tree = Texinfo::TreeElement::new({'type' => '_code',
-                                           'contents' => [$label_element]});
+        $tree = $label_element;
+        $in_code = 1;
       } elsif (exists($command->{'cmdname'})
                and ($command->{'cmdname'} eq 'float')) {
         $tree = $self->float_type_number($command);
@@ -1331,6 +1321,9 @@ sub _internal_command_tree($$$) {
           if ($section_number
               and ($self->get_conf('NUMBER_SECTIONS')
                    or !defined($self->get_conf('NUMBER_SECTIONS')))) {
+            # NOTE since there is a copy, the elements that are found using their
+            # hash won't be found during conversion.  This is the case for
+            # target elements such as @anchor.
             my $substituted_strings
               = {'number' =>
                   Texinfo::TreeElement::new({'text' => $section_number}),
@@ -1354,13 +1347,16 @@ sub _internal_command_tree($$$) {
         $target->{'tree_nonumber'} = $line_arg;
       }
       $target->{'tree'} = $tree;
+      if ($in_code) {
+        $target->{'in_code'} = $in_code;
+      }
     }
 
-    return $target->{'tree_nonumber'}
+    return $target->{'tree_nonumber'}, $target->{'in_code'}
          if ($no_number and exists($target->{'tree_nonumber'}));
-    return $target->{'tree'};
+    return $target->{'tree'}, $target->{'in_code'};
   }
-  return undef;
+  return undef, undef;
 }
 
 sub _external_command_tree($$) {
@@ -1368,29 +1364,13 @@ sub _external_command_tree($$) {
 
   my $node_content = $command->{'extra'}->{'node_content'};
   my $tree = Texinfo::TreeElement::new(
-       {'type' => '_code',
-        'contents' => [Texinfo::TreeElement::new({'text' => '('}),
+       {'contents' => [Texinfo::TreeElement::new({'text' => '('}),
                        $command->{'extra'}->{'manual_content'},
                        Texinfo::TreeElement::new({'text' => ')'})]});
   if (exists($command->{'extra'}->{'node_content'})) {
     push @{$tree->{'contents'}}, $command->{'extra'}->{'node_content'};
   }
   return $tree;
-}
-
-sub command_tree($$;$) {
-  my ($self, $command, $no_number) = @_;
-
-  if (!defined($command)) {
-    cluck "in command_tree command not defined";
-  }
-
-  if (exists($command->{'extra'})
-      and exists($command->{'extra'}->{'manual_content'})) {
-    return _external_command_tree($self, $command);
-  }
-
-  return _internal_command_tree($self, $command, $no_number);
 }
 
 sub _push_referred_command_stack_command($$) {
@@ -1411,8 +1391,8 @@ sub _command_is_in_referred_command_stack($$) {
   return grep {$_ eq $command} @{$self->{'referred_command_stack'}};
 }
 
-sub _convert_command_tree($$$$$) {
-  my ($self, $command, $type, $selected_tree, $command_info) = @_;
+sub _convert_command_tree($$$$$$) {
+  my ($self, $command, $type, $selected_tree, $in_code, $command_info) = @_;
 
   my $explanation;
   my $context_name;
@@ -1430,21 +1410,24 @@ sub _convert_command_tree($$$$$) {
     }
   }
 
-  _new_document_context($self, $context_name, $explanation);
-
-  my $tree_root;
+  my $context_type = 0;
   if ($type eq 'string' or $type eq 'string_nonumber') {
-    $tree_root = Texinfo::TreeElement::new({'type' => '_string',
-                                    'contents' => [$selected_tree]});
-  } else {
-    $tree_root = $selected_tree;
+    $context_type |= $CTXF_string;
   }
+  if ($in_code) {
+    $context_type |= $CTXF_code;
+  }
+
+  _new_document_context($self, $context_name, $context_type, $explanation);
 
   _set_multiple_conversions($self, undef);
 
   _push_referred_command_stack_command($self, $command);
-  my $result = _convert($self, $tree_root, $explanation);
+
+  my $result = _convert($self, $selected_tree, $explanation);
+
   _pop_referred_command_stack($self);
+
   _unset_multiple_conversions($self);
 
   _pop_document_context($self);
@@ -1459,7 +1442,7 @@ sub _internal_command_text($$$) {
     if (exists($target->{$type})) {
       return $target->{$type};
     }
-    my $command_tree = _internal_command_tree($self, $command, 0);
+    my ($command_tree, $in_code) = _internal_command_tree($self, $command, 0);
     return '' if (!defined($command_tree));
 
     my $selected_tree;
@@ -1472,7 +1455,7 @@ sub _internal_command_text($$$) {
     }
 
     $target->{$type}
-      = _convert_command_tree($self, $command, $type, $selected_tree,
+      = _convert_command_tree($self, $command, $type, $selected_tree, $in_code,
                               'command_text');
     return $target->{$type};
   }
@@ -1507,10 +1490,6 @@ sub command_text($$;$) {
   if (exists($command->{'extra'})
       and exists($command->{'extra'}->{'manual_content'})) {
     my $tree = _external_command_tree($self, $command);
-    if ($type eq 'string' or $type eq 'string_nonumber') {
-      $tree = Texinfo::TreeElement::new({'type' => '_string',
-                                         'contents' => [$tree]});
-    }
     my $context_str = "command_text $type ";
     if (exists($command->{'cmdname'})) {
       # this never happens, as the external node label tree
@@ -1520,6 +1499,12 @@ sub command_text($$;$) {
     } elsif (exists($command->{'type'})) {
       $context_str .= $command->{'type'};
     }
+
+    my $context_type = $CTXF_code;
+    if ($type eq 'string' or $type eq 'string_nonumber') {
+      $context_type |= $CTXF_string;
+    }
+
     # NOTE the multiple pass argument is not unicized, and no global
     # context argument is given because this external node manual label
     # should in general be converted only once.
@@ -1527,14 +1512,16 @@ sub command_text($$;$) {
     # @-commands which should better be converted only once to be present.
     my $result
       = $self->convert_tree_new_formatting_context($tree,
-                                                   $context_str,
+                                               $context_str, $context_type,
                                                'command_text-manual_content');
+
     return $result;
   }
 
   return _internal_command_text($self, $command, $type);
 }
 
+# Return undef if there is no tree for the name
 sub _internal_command_name_tree($$$) {
   my ($self, $command, $no_number) = @_;
 
@@ -1554,9 +1541,9 @@ sub _internal_command_name_tree($$$) {
     # currently not possible
     #return $target->{'name_tree_nonumber'} if ($no_number
     #                                  and $target->{'name_tree_nonumber'});
-    return $target->{'name_tree'};
+    return $target->{'name_tree'}, $target->{'in_code'};
   }
-  return undef;
+  return undef, undef;
 }
 
 sub _internal_command_name($$$) {
@@ -1569,10 +1556,12 @@ sub _internal_command_name($$$) {
     if (exists($target->{$name_type})) {
       return $target->{$name_type};
     }
-    my $command_name_tree = _internal_command_name_tree($self, $command, 0);
+    my ($command_name_tree, $in_code)
+      = _internal_command_name_tree($self, $command, 0);
 
     if (!defined($command_name_tree)) {
-      $command_name_tree = _internal_command_tree($self, $command, 0);
+      ($command_name_tree, $in_code)
+         = _internal_command_tree($self, $command, 0);
     }
     return '' if (!defined($command_name_tree));
 
@@ -1586,7 +1575,7 @@ sub _internal_command_name($$$) {
     }
 
     $target->{$name_type}
-      = _convert_command_tree($self, $command, $type, $selected_tree,
+      = _convert_command_tree($self, $command, $type, $selected_tree, $in_code,
                               'command_name');
     return $target->{$name_type};
   }
@@ -1710,18 +1699,15 @@ sub command_description($$;$) {
         = 'node-description-'.$formatted_nodedescription_nr;
     }
 
-    my $tree_root;
+    my $context_type;
     if ($type eq 'string') {
-      $tree_root = Texinfo::TreeElement::new({'type' => '_string',
-                               'contents' => [$description_element]});
-    } else {
-      $tree_root = $description_element;
+      $context_type = $CTXF_string;
     }
 
     $target->{$cached_type}
-      = $self->convert_tree_new_formatting_context($tree_root,
-                                                   $context_name,
-                                     $multiple_formatted, $explanation);
+      = $self->convert_tree_new_formatting_context($description_element,
+                                         $context_name, $context_type,
+                                       $multiple_formatted, $explanation);
 
     return $target->{$cached_type};
   }
@@ -1745,6 +1731,56 @@ sub label_command($$) {
     }
   }
   return undef;
+}
+
+# Currently the only possibility for $TYPE is heading
+sub _special_unit_info_tree($$$) {
+  my ($self, $type, $special_unit_variety) = @_;
+
+  if (exists($self->{'translated_special_unit_info_texinfo'}->{$type})) {
+    if (not exists($self->{'translated_special_unit_info_tree'}->{$type}
+                                    ->{$special_unit_variety})) {
+      my $special_unit_info_texinfo_string
+         = $self->{'translated_special_unit_info_texinfo'}->{$type}
+                                            ->{$special_unit_variety};
+      my $translated_tree;
+      if (defined($special_unit_info_texinfo_string)) {
+        # NOTE to be kept in sync with generated context in
+        # generate_code_convert_data.pl
+        my $translation_context = "$special_unit_variety section $type";
+        $translated_tree = $self->pcdt($translation_context,
+                                       $special_unit_info_texinfo_string);
+      }
+      $self->{'translated_special_unit_info_tree'}->{$type}
+         ->{$special_unit_variety}
+              = $translated_tree;
+      return $translated_tree;
+    } else {
+      return $self->{'translated_special_unit_info_tree'}->{$type}
+                                        ->{$special_unit_variety};
+    }
+  }
+  return undef;
+}
+
+# Currently the only possibility for $TYPE is heading
+sub special_unit_info_text($$$;$) {
+  my ($self, $type, $special_unit_variety, $context) = @_;
+
+  my $tree = $self->_special_unit_info_tree($type,
+                                       $special_unit_variety);
+
+  return '' if (!defined($tree));
+
+  $context = 'normal' if (!defined($context));
+
+  my $explanation = "convert $special_unit_variety $type/$context";
+  if ($context eq 'string') {
+    return $self->convert_tree_new_formatting_context($tree, $explanation,
+                                                      $CTXF_string);
+  } else {
+    return $self->convert_tree($tree, $explanation);
+  }
 }
 
 sub command_name_special_unit_information($$) {
@@ -2066,19 +2102,19 @@ sub direction_string($$$;$) {
         = $self->pcdt($translation_context,
                       $translated_directions_strings->{$string_type}
                                             ->{$direction}->{'to_convert'});
-      my $converted_tree;
-      if ($context eq 'string') {
-        $converted_tree = Texinfo::TreeElement::new({
-                             'type' => '_string',
-                             'contents' => [$translated_tree]});
-      } else {
-        $converted_tree = $translated_tree;
-      }
+
       my $context_str = "DIRECTION $direction ($string_type/$context)";
+
+      my $context_type;
+      if ($context eq 'string') {
+        $context_type = $CTXF_string;
+      }
+
       my $result_string
-         = $self->convert_tree_new_formatting_context($converted_tree,
-                                                      $context_str,
+         = $self->convert_tree_new_formatting_context($translated_tree,
+                                              $context_str, $context_type,
                                                       undef, $context_str);
+
       # NOTE direction strings should be simple Texinfo code, but it is
       # possible to set to anything through customization.  Since
       # anything except simple code is incorrect, there is no guarantee
@@ -2106,37 +2142,12 @@ sub direction_string($$$;$) {
 sub get_special_unit_info_varieties($$) {
   my ($self, $type) = @_;
 
-  if (exists($self->{'translated_special_unit_info'}->{$type})) {
-    my $translated_special_unit_info
-      = $self->{'translated_special_unit_info'}->{$type}->[1];
-    return sort(keys(%{$translated_special_unit_info}));
-  }
   return sort(keys(%{$self->{'special_unit_info'}->{$type}}));
 }
 
 sub special_unit_info($$$) {
   my ($self, $type, $special_unit_variety) = @_;
 
-  if (exists($self->{'translated_special_unit_info'}->{$type})) {
-    my $translated_special_unit_info
-      = $self->{'translated_special_unit_info'}->{$type}->[1];
-
-    if (not exists($self->{'special_unit_info'}->{$type}
-                                    ->{$special_unit_variety})) {
-      my $special_unit_info_string = $translated_special_unit_info
-                                            ->{$special_unit_variety};
-      my $translated_tree;
-      if (defined($special_unit_info_string)) {
-        # NOTE to be kept in sync with generated context in
-        # generate_code_convert_data.pl
-        my $translation_context = "$special_unit_variety section heading";
-        $translated_tree = $self->pcdt($translation_context,
-                                       $special_unit_info_string);
-      }
-      $self->{'special_unit_info'}->{$type}->{$special_unit_variety}
-        = $translated_tree;
-    }
-  }
   return $self->{'special_unit_info'}->{$type}->{$special_unit_variety};
 }
 
@@ -2441,6 +2452,7 @@ sub register_footnote($$$$$$$) {
   }
 }
 
+# No equivalent function in C, the pending_footnotes are accessed directly
 sub get_pending_footnotes($) {
   my $self = shift;
 
@@ -2528,7 +2540,7 @@ sub get_associated_formatted_inline_content($$) {
 sub register_file_information($$$) {
   my ($self, $key, $value) = @_;
 
-  if (!defined($self->{'current_filename'})) {
+  if (!exists($self->{'current_filename'})) {
     cluck();
   }
 
@@ -2590,13 +2602,23 @@ sub get_info($$) {
   return undef;
 }
 
-# Call convert_tree out of the main conversion flow.
-sub convert_tree_new_formatting_context($$$;$$$) {
-  my ($self, $tree, $context_string, $multiple_pass, $document_global_context,
-      $block_command) = @_;
+sub convert_tree_in_code_context($$;$) {
+  my ($self, $tree, $explanation) = @_;
 
-  _new_document_context($self, $context_string, $document_global_context,
-                               $block_command);
+  _set_code_context($self, 1);
+  my $result = $self->convert_tree($tree, $explanation);
+  _pop_code_context($self);
+
+  return $result;
+}
+
+# Call convert_tree out of the main conversion flow.
+sub convert_tree_new_formatting_context($$$;$$$$) {
+  my ($self, $tree, $context_string, $context_type, $multiple_pass,
+      $document_global_context, $block_command) = @_;
+
+  _new_document_context($self, $context_string, $context_type,
+                        $document_global_context, $block_command);
 
   my $context_string_str = "C($context_string)";
   my $multiple_pass_str = '';
@@ -2661,10 +2683,11 @@ foreach my $buttons ('CHAPTER_FOOTER_BUTTONS', 'TOP_FOOTER_BUTTONS') {
   $defaults{$buttons} = [@{$defaults{'SECTION_FOOTER_BUTTONS'}}];
 }
 
-
+# class, direction, order, file_string, target
 my %default_special_unit_info
   = %{ Texinfo::HTMLData::get_default_special_unit_info() };
 
+# heading
 my %default_translated_special_unit_info
   = %{ Texinfo::HTMLData::get_default_translated_special_unit_info() };
 
@@ -2718,9 +2741,9 @@ sub _translate_names($) {
     $self->{'directions_strings'}->{$string_type} = {};
   }
 
-  # could also use keys of $self->{'translated_special_unit_info'}
+  # could also use keys of $self->{'translated_special_unit_info_texinfo'}
   foreach my $type (keys(%default_translated_special_unit_info)) {
-    $self->{'special_unit_info'}->{$type.'_tree'} = {};
+    $self->{'translated_special_unit_info_tree'}->{$type} = {};
   }
 
   # delete the tree and formatted results for special elements
@@ -2902,11 +2925,8 @@ foreach my $indented_format ('example', 'display', 'lisp') {
   }
 }
 
-# types that are in code style in the default case.  '_code' is not
-# a type that can appear in the tree built from Texinfo code, it is used
-# to format a tree fragment as if it was in a @code @-command.
+# types that are in code style in the default case.
 my %default_code_types = (
- '_code' => 1,
 );
 
 # specification of arguments formatting
@@ -3457,7 +3477,16 @@ foreach my $explained_command (keys(%explained_commands)) {
 sub _convert_anchor_command($$$$) {
   my ($self, $cmdname, $command, $args) = @_;
 
-  if (!in_multi_expanded($self) and !in_string($self)) {
+  # in_multiple_conversions returning true while multi_expanded_region returns
+  # undef happens when expanding target and heading commands text.  Therefore
+  # if in_multiple_conversions was used, the output could be different.
+  # Note, however, that an anchor on a sectioning command line is never output
+  # because the sectioning command line is copied to be combined with
+  # the sectioning number through a translation and the copy is not registered
+  # as a target element and command_id will return undef.
+  # An anchor on a @node line can be output (it is invalid Texinfo) and it
+  # would be different for that case if in_multiple_conversions was used.
+  if (!multi_expanded_region($self) and !in_string($self)) {
     my $id = $self->command_id($command);
     if (defined($id) and $id ne '') {
       return &{$self->formatting_function('format_separate_anchor')}($self,
@@ -3508,7 +3537,7 @@ sub _convert_footnote_command($$$$) {
   my $docid;
 
   my $multiple_expanded_footnote = 0;
-  my $multi_expanded_region = in_multi_expanded($self);
+  my $multi_expanded_region = multi_expanded_region($self);
   if (defined($multi_expanded_region)) {
     # to avoid duplicate names, use a prefix that cannot happen in anchors
     my $target_prefix = "t_f";
@@ -3634,7 +3663,7 @@ sub _convert_image_command($$$$) {
     if (not defined($image_path)) {
       # it would have been relevant to output the message only if
       # if not ($self->in_multiple_conversions())
-      # However, @image formatted in multiple conversions context should be
+      # However, @image formatted multiple times should be
       # rare out of test suites (and probably always incorrect), so we avoid
       # complexity and slowdown.  We still check that source_info is set, if
       # not it should be a copy, therefore there is no need for error
@@ -5223,7 +5252,8 @@ sub _convert_listoffloats_command($$$$) {
           $multiple_formatted .= '-'.($formatted_listoffloats_nr - 1);
         }
         $caption_text = $self->convert_tree_new_formatting_context(
-          $caption_element->{'contents'}->[0], $cmdname, $multiple_formatted);
+          $caption_element->{'contents'}->[0], $cmdname, undef,
+          $multiple_formatted);
         push @caption_classes, "${caption_cmdname}-in-${cmdname}";
       } else {
         $caption_text = '';
@@ -5897,19 +5927,15 @@ sub _convert_xref_commands($$$$) {
         $label_element->{'extra'} = {};
       }
       $label_element->{'extra'}->{'manual_content'} = $manual_content;
-      my $file_with_node_tree
-       = Texinfo::TreeElement::new({'type' => '_code',
-                                    'contents' => [$manual_content]});
-      $file = $self->convert_tree($file_with_node_tree, 'node file in ref');
+      $file = $self->convert_tree_in_code_context($manual_content,
+                                                  'node file in ref');
     }
 
     if (!defined($name)) {
       if (defined($book)) {
         if (defined($node_content)) {
-          my $node_no_file_tree
-            = Texinfo::TreeElement::new({'type' => '_code',
-                                         'contents' => [$node_content]});
-          my $node_name = $self->convert_tree($node_no_file_tree, 'node in ref');
+          my $node_name = $self->convert_tree_in_code_context($node_content,
+                                                              'node in ref');
           if (defined($node_name) and $node_name ne 'Top') {
             $name = $node_name;
           }
@@ -6175,7 +6201,6 @@ sub _convert_printindex_command($$$$) {
        if ($indices_information->{$index_entry_ref->{'index_name'}}->{'in_code'});
       my $entry_ref_tree
         = Texinfo::TreeElement::new({'contents' => [$entry_content_element]});
-      $entry_ref_tree->{'type'} = '_code' if ($in_code);
 
 
       # determine the trees and normalized main entry and subentries, to be
@@ -6207,7 +6232,6 @@ sub _convert_printindex_command($$$$) {
             }
             $subentry_tree
               = Texinfo::TreeElement::new({'contents' => \@contents});
-            $subentry_tree->{'type'} = '_code' if ($in_code);
           }
           if ($subentry_level >= $subentries_max_level) {
             # at the max, concatenate the remaining subentries
@@ -6220,7 +6244,6 @@ sub _convert_printindex_command($$$$) {
               } else {
                 $subentry_tree = Texinfo::TreeElement::new(
                   {'contents' => [@{$other_subentries_tree->{'contents'}}]});
-                $subentry_tree->{'type'} = '_code' if ($in_code);
               }
             }
           } elsif (defined($subentry_tree)) {
@@ -6232,6 +6255,10 @@ sub _convert_printindex_command($$$$) {
           $subentry_level++;
           last if ($subentry_level > $subentries_max_level);
         }
+      }
+      my $formatting_context;
+      if ($in_code) {
+        $formatting_context = $CTXF_code;
       }
       #print STDERR join('|', @new_normalized_entry_levels)."\n";
       # level/index of the last entry
@@ -6257,11 +6284,16 @@ sub _convert_printindex_command($$$$) {
           # call with multiple_pass argument
           $entry
            = $self->convert_tree_new_formatting_context($entry_trees[$level],
-                                                        $convert_info,
+                                          $convert_info, $formatting_context,
                                   "index-formatted-$formatted_index_entry_nr");
         } else {
-          $entry = $self->convert_tree($entry_trees[$level],
-                                       $convert_info);
+          if ($in_code) {
+            $entry = $self->convert_tree_in_code_context($entry_trees[$level],
+                                                         $convert_info);
+          } else {
+            $entry = $self->convert_tree($entry_trees[$level],
+                                         $convert_info);
+          }
         }
         $entry = '<code>' .$entry .'</code>' if ($in_code);
         my @td_entry_classes = ();
@@ -6297,11 +6329,6 @@ sub _convert_printindex_command($$$$) {
 
       # index entry with @seeentry or @seealso
       if (defined($referred_entry)) {
-        my $referred_tree = Texinfo::TreeElement::new({});
-        $referred_tree->{'type'} = '_code' if ($in_code);
-        if (exists($referred_entry->{'contents'})) {
-          $referred_tree->{'contents'} = [$referred_entry];
-        }
         my $entry;
         # for @seealso, to appear where chapter/node ususally appear
         my $reference = '';
@@ -6315,30 +6342,39 @@ sub _convert_printindex_command($$$$) {
           # TRANSLATORS: @: is discardable and is used to avoid a msgfmt error
         = $self->cdt('@code{{main_index_entry}}, @emph{See@:} @code{{seeentry}}',
                                         {'main_index_entry' => $entry_tree,
-                                         'seeentry' => $referred_tree});
+                                         'seeentry' => $referred_entry});
           } else {
             $result_tree
           # TRANSLATORS: redirect to another index entry
           # TRANSLATORS: @: is discardable and used to avoid a msgfmt error
                = $self->cdt('{main_index_entry}, @emph{See@:} {seeentry}',
                                         {'main_index_entry' => $entry_tree,
-                                         'seeentry' => $referred_tree});
+                                         'seeentry' => $referred_entry});
           }
           my $convert_info
               = "index $index_name l $letter index entry $entry_nr seeentry";
           if ($formatted_index_entry_nr > 1) {
             # call with multiple_pass argument
             $entry = $self->convert_tree_new_formatting_context($result_tree,
-                                                                $convert_info,
+                                                     $convert_info, undef,
                                   "index-formatted-$formatted_index_entry_nr");
           } else {
             $entry = $self->convert_tree($result_tree, $convert_info);
           }
           $section_class = "$cmdname-index-see-entry-section";
         } else {
-          # TRANSLATORS: refer to another index entry
-          my $reference_tree = $self->cdt('@emph{See also} {see_also_entry}',
-                                       {'see_also_entry' => $referred_tree});
+          my $reference_tree;
+          if ($in_code) {
+            # TRANSLATORS: refer to another index entry
+            $reference_tree
+                = $self->cdt('@emph{See also} @code{{see_also_entry}}',
+                                       {'see_also_entry' => $referred_entry});
+          } else {
+            # TRANSLATORS: refer to another index entry
+            $reference_tree
+                = $self->cdt('@emph{See also} {see_also_entry}',
+                                       {'see_also_entry' => $referred_entry});
+          }
           my $conv_str_entry
         = "index $index_name l $letter index entry $entry_nr (with seealso)";
           my $conv_str_reference
@@ -6346,15 +6382,21 @@ sub _convert_printindex_command($$$$) {
           if ($formatted_index_entry_nr > 1) {
             # call with multiple_pass argument
             $entry = $self->convert_tree_new_formatting_context($entry_tree,
-                                                                $conv_str_entry,
+                                         $conv_str_entry, $formatting_context,
                                    "index-formatted-$formatted_index_entry_nr");
             $reference
                = $self->convert_tree_new_formatting_context($reference_tree,
-                                                        $conv_str_reference,
+                                                 $conv_str_reference, undef,
                                 "index-formatted-$formatted_index_entry_nr");
           } else {
-            $entry = $self->convert_tree($entry_tree,
-                                         $conv_str_entry);
+            if ($in_code) {
+              $entry = $self->convert_tree_in_code_context($entry_tree,
+                                                           $conv_str_entry);
+            } else {
+              $entry = $self->convert_tree($entry_tree,
+                                           $conv_str_entry);
+            }
+
             $reference = $self->convert_tree($reference_tree,
                                              $conv_str_reference);
           }
@@ -6393,10 +6435,15 @@ sub _convert_printindex_command($$$$) {
           if ($formatted_index_entry_nr > 1) {
             # call with multiple_pass argument
             $entry = $self->convert_tree_new_formatting_context($entry_tree,
-                                                            $convert_info,
+                                       $convert_info, $formatting_context,
                                "index-formatted-$formatted_index_entry_nr");
           } else {
-            $entry = $self->convert_tree($entry_tree, $convert_info);
+            if ($in_code) {
+              $entry = $self->convert_tree_in_code_context($entry_tree,
+                                                           $convert_info);
+            } else {
+              $entry = $self->convert_tree($entry_tree, $convert_info);
+            }
           }
         }
 
@@ -7023,8 +7070,12 @@ sub _convert_index_entry_command_type($$$$) {
   my ($self, $type, $element, $content) = @_;
 
   my $index_id = $self->command_id($element);
+  # since in_multiple_conversions returning true while multi_expanded_region
+  # returns undef can only happen when expanding target and heading commands
+  # text, in which there should not be index commands, using one function
+  # or the other in the conddition should not give a different result.
   if (defined($index_id) and $index_id ne ''
-      and !in_multi_expanded($self)
+      and !in_multiple_conversions($self)
       and !in_string($self)) {
     my $result = &{$self->formatting_function('format_separate_anchor')}($self,
                                                    $index_id, 'index-entry-id');
@@ -7379,10 +7430,8 @@ sub _convert_menu_entry_type($$$) {
     }
 
     if (defined($menu_entry_node)) {
-      my $name = $self->convert_tree(
-         Texinfo::TreeElement::new({'type' => '_code',
-                                    'contents' => [$menu_entry_node]}),
-                       "menu_arg menu_entry_node preformatted");
+      my $name = $self->convert_tree_in_code_context($menu_entry_node,
+                              "menu_arg menu_entry_node preformatted");
       if (defined($href) and !$in_string) {
         $result_name_node .= "<a href=\"$href\"$rel$accesskey>$name</a>";
       } else {
@@ -7420,7 +7469,7 @@ sub _convert_menu_entry_type($$$) {
       $description
         .= $self->convert_tree_new_formatting_context($description_element,
                                    'menu_arg node description preformatted',
-                                   $multiple_formatted, undef,
+                                   undef, $multiple_formatted, undef,
                                    'menu');
     } elsif ($menu_description) {
       $description .= $self->convert_tree($menu_description,
@@ -7453,8 +7502,8 @@ sub _convert_menu_entry_type($$$) {
         $name = $self->command_text($menu_entry_node);
       } elsif (exists($menu_entry_node->{'extra'})
                and exists($menu_entry_node->{'extra'}->{'node_content'})) {
-        $name = $self->convert_tree(
-                 Texinfo::TreeElement::new({'type' => '_code',
+        $name = $self->convert_tree_in_code_context(
+                 Texinfo::TreeElement::new({
             'contents' => [$menu_entry_node->{'extra'}->{'node_content'}]}),
                                     'menu_arg name');
       } else {
@@ -7485,7 +7534,7 @@ sub _convert_menu_entry_type($$$) {
     }
     $description
       = $self->convert_tree_new_formatting_context($description_element,
-                                            'menu_arg node description',
+                                     'menu_arg node description', undef,
                                      $multiple_formatted, undef, 'menu');
   } elsif (defined($menu_description)) {
     $description = $self->convert_tree($menu_description,
@@ -7559,7 +7608,12 @@ sub _convert_def_line_type($$$$) {
 
   my $index_label = '';
   my $index_id = $self->command_id($element);
-  if (defined($index_id) and $index_id ne '' and !in_multi_expanded($self)) {
+  # since in_multiple_conversions returning true while multi_expanded_region
+  # returns undef can only happen when expanding target and heading commands
+  # text, in which there should not be @def*, using one function
+  # or the other in the conddition should not give a different result.
+  if (defined($index_id) and $index_id ne ''
+      and !in_multiple_conversions($self)) {
     $index_label = " id=\"$index_id\"";
   }
   my ($category_element, $class_element,
@@ -7599,10 +7653,8 @@ sub _convert_def_line_type($$$$) {
   my $def_call = '';
   if (defined($type_element)) {
     my $explanation = "DEF_TYPE $def_command";
-    my $type_text = $self->convert_tree(
-         Texinfo::TreeElement::new({'type' => '_code',
-                                    'contents' => [$type_element]}),
-                                        $explanation);
+    my $type_text = $self->convert_tree_in_code_context($type_element,
+                                                        $explanation);
     if ($type_text ne '') {
       $def_call .= $self->html_attribute_class('code', ['def-type']).'>'.
           $type_text .'</code>';
@@ -7618,12 +7670,11 @@ sub _convert_def_line_type($$$$) {
   }
 
   if (defined($name_element)) {
+    my $def_name_text = $self->convert_tree_in_code_context($name_element,
+                                                     "DEF_NAME $def_command");
+
     $def_call .= $self->html_attribute_class('strong', ['def-name']).'>'.
-       $self->convert_tree(
-          Texinfo::TreeElement::new({'type' => '_code',
-                                     'contents' => [$name_element]}),
-                           "DEF_NAME $def_command")
-       .'</strong>';
+       $def_name_text .'</strong>';
   }
 
   if (defined($arguments)) {
@@ -7631,11 +7682,8 @@ sub _convert_def_line_type($$$$) {
   # arguments not only metasyntactic variables
   # (deftypefn, deftypevr, deftypeop, deftypecv)
     if (exists($Texinfo::Common::def_no_var_arg_commands{$base_command_name})) {
-      my $arguments_formatted
-        = $self->convert_tree(
-          Texinfo::TreeElement::new({'type' => '_code',
-                                     'contents' => [$arguments]}),
-                              $explanation);
+      my $arguments_formatted = $self->convert_tree_in_code_context($arguments,
+                                                                 $explanation);
       if ($arguments_formatted =~ /\S/) {
         $def_call .= ' ' unless($element->{'extra'}->{'omit_def_name_space'});
         $def_call .= $self->html_attribute_class('code',
@@ -7644,7 +7692,9 @@ sub _convert_def_line_type($$$$) {
       }
     } else {
       # only metasyntactic variable arguments (deffn, defvr, deftp, defop, defcv)
-      # FIXME not part of the API
+      # TODO not in API
+      # Has an effect only for those @def* in @example and similar block
+      # commands that sets code expansion.
       _set_code_context($self, 0);
       my $arguments_formatted = $self->convert_tree($arguments, $explanation);
       _pop_code_context($self);
@@ -8196,26 +8246,39 @@ sub _default_format_element_footer($$$$;$) {
 # is not done within the document formatting flow, but the formatted
 # output may still end up in the document.  In particular for
 # command_text() which caches its computations.
-sub _new_document_context($$;$$) {
-  my ($self, $context, $document_global_context, $block_command) = @_;
+sub _new_document_context($$;$$$) {
+  my ($self, $context, $context_type, $document_global_context,
+      $block_command) = @_;
 
-  push @{$self->{'document_context'}},
-          {'context' => $context,
+  my $doc_context =
+         {'context' => $context,
            'formatting_context' => [{'context_name' => '_format'}],
            'composition_context' => [''],
            'preformatted_context' => [0],
            'inside_preformatted' => 0,
-           'monospace' => [0],
            'document_global_context' => $document_global_context,
            'block_commands' => [],
           };
+
   if (defined($document_global_context)) {
-    $self->{'document_global_context'}++;
+    $self->{'document_global_context_counter'}++;
   }
+
+  if (defined($context_type) and ($context_type & $CTXF_code)) {
+    $doc_context->{'monospace'} = [1];
+  } else {
+    $doc_context->{'monospace'} = [0];
+  }
+
   if (defined($block_command)) {
-    push @{$self->{'document_context'}->[-1]->{'block_commands'}},
+    push @{$doc_context->{'block_commands'}},
             $block_command;
   }
+
+  if (defined($context_type) and ($context_type & $CTXF_string)) {
+    $doc_context->{'string'}++;
+  }
+  push @{$self->{'document_context'}}, $doc_context;
 }
 
 sub _pop_document_context($) {
@@ -8223,20 +8286,8 @@ sub _pop_document_context($) {
 
   my $context = pop @{$self->{'document_context'}};
   if (defined($context->{'document_global_context'})) {
-    $self->{'document_global_context'}--;
+    $self->{'document_global_context_counter'}--;
   }
-}
-
-sub _set_code_context($$) {
-  my ($self, $code) = @_;
-
-  push @{$self->{'document_context'}->[-1]->{'monospace'}}, $code;
-}
-
-sub _pop_code_context($) {
-  my $self = shift;
-
-  pop @{$self->{'document_context'}->[-1]->{'monospace'}};
 }
 
 sub _set_string_context($) {
@@ -8266,14 +8317,12 @@ sub _unset_raw_context($) {
 sub _set_multiple_conversions($$) {
   my ($self, $multiple_pass) = @_;
 
-  $self->{'multiple_conversions'}++;
   push @{$self->{'multiple_pass'}}, $multiple_pass;
 }
 
 sub _unset_multiple_conversions($) {
   my $self = shift;
 
-  $self->{'multiple_conversions'}--;
   pop @{$self->{'multiple_pass'}};
 }
 
@@ -8372,8 +8421,7 @@ sub _reset_unset_no_arg_commands_formatting_context($$$$;$) {
       _convert_command_update_context($self, $preformatted_cmdname);
       _pop_document_context($self);
     } elsif ($reset_context eq 'string') {
-      _new_document_context($self, $context_str);
-      _set_string_context($self);
+      _new_document_context($self, $context_str, $CTXF_string);
       $translation_result = $self->convert_tree($translated_tree,
                                                 $explanation);
       _pop_document_context($self);
@@ -8747,7 +8795,7 @@ sub _load_htmlxref_files($) {
 #  associated_inline_content
 #
 #    API exists
-#  multiple_conversions
+#  multiple_pass
 #
 #    API exists
 #  targets         for directions.  Keys are elements references, values are
@@ -9136,22 +9184,22 @@ sub converter_initialize($) {
     }
   }
 
-  $self->{'translated_special_unit_info'} = {};
+  $self->{'translated_special_unit_info_texinfo'} = {};
+  $self->{'translated_special_unit_info_tree'} = {};
   foreach my $type (keys(%default_translated_special_unit_info)) {
-    $self->{'special_unit_info'}->{$type} = {};
-    $self->{'special_unit_info'}->{$type.'_tree'} = {};
-    $self->{'translated_special_unit_info'}->{$type.'_tree'} = [$type, {}];
+    $self->{'translated_special_unit_info_texinfo'}->{$type} = {};
+    $self->{'translated_special_unit_info_tree'}->{$type} = {};
     foreach my $special_unit_variety
                  (keys(%{$default_translated_special_unit_info{$type}})) {
       if (exists($customized_special_unit_info->{$type})
           and exists($customized_special_unit_info
                           ->{$type}->{$special_unit_variety})) {
-        $self->{'translated_special_unit_info'}->{$type.'_tree'}
-                                               ->[1]->{$special_unit_variety}
+        $self->{'translated_special_unit_info_texinfo'}->{$type}
+                                                 ->{$special_unit_variety}
          = $customized_special_unit_info->{$type}->{$special_unit_variety};
       } else {
-        $self->{'translated_special_unit_info'}->{$type.'_tree'}
-                                               ->[1]->{$special_unit_variety}
+        $self->{'translated_special_unit_info_texinfo'}->{$type}
+                                               ->{$special_unit_variety}
           = $default_translated_special_unit_info{$type}
                                                    ->{$special_unit_variety};
       }
@@ -9286,9 +9334,9 @@ sub converter_initialize($) {
   return $self;
 }
 
-# remove data that leads to cycles related to output units
-# and references to output units.
-sub converter_reset($) {
+# remove data that leads to cycles related to output units and references
+# to output units.
+sub converter_release_output_units($) {
   my $self = shift;
 
   # remove references to output units
@@ -9344,10 +9392,7 @@ sub converter_destroy($) {
     }
   }
 
-  # could have been better to remove references to trees only, but it
-  # requires analysing the key names.
-  delete $self->{'special_unit_info'};
-  delete $self->{'translated_special_unit_info'};
+  delete $self->{'translated_special_unit_info_tree'};
 
   if (exists($self->{'targets'})) {
     foreach my $command (keys(%{$self->{'targets'}})) {
@@ -11163,15 +11208,9 @@ sub _mini_toc($$) {
     foreach my $section_relations
                          (@{$section_relations->{'section_children'}}) {
       my $section = $section_relations->{'element'};
-      # using command_text leads to the same HTML formatting, but does not give
-      # the same result for the other files, as the formatting is done in a
-      # global context, while taking the tree first and calling convert_tree
-      # converts in the current page context.
-      #my $text = $self->command_text($section, 'text_nonumber');
-      my $tree = $self->command_tree($section, 1);
-      # happens with empty sectioning command
-      next if (!defined($tree));
-      my $text = $self->convert_tree($tree, "mini_toc \@$section->{'cmdname'}");
+      my $text = $self->command_text($section, 'text_nonumber');
+      # could happen with empty sectioning command
+      next if (!defined($text) or $text eq '');
 
       $entry_index++;
       my $accesskey = '';
@@ -11179,15 +11218,13 @@ sub _mini_toc($$) {
         if ($self->get_conf('USE_ACCESSKEY') and $entry_index < 10);
 
       my $href = $self->command_href($section);
-      if ($text ne '') {
-        $result .= "<li>";
-        if (defined($href)) {
-          $result .= "<a href=\"$href\"$accesskey>$text</a>";
-        } else {
-          $result .= $text;
-        }
-        $result .= "</li>\n";
+      $result .= "<li>";
+      if (defined($href)) {
+        $result .= "<a href=\"$href\"$accesskey>$text</a>";
+      } else {
+        $result .= $text;
       }
+      $result .= "</li>\n";
     }
     $result .= "</ul>\n";
   }
@@ -11448,38 +11485,42 @@ sub _file_header_information($$;$) {
 
   my $title;
   my $command_description;
+
+  my $title_string = $self->get_info('title_string');
   if (defined($command)) {
-    my $command_string = $self->command_text($command, 'string');
-    if (defined($command_string) and $command_string ne ''
-        and $command_string ne $self->get_info('title_string')) {
-      my $element_tree;
+    my $command_string;
+    if ($self->get_conf('SECTION_NAME_IN_TITLE')
+        and exists($command->{'cmdname'})
+        and $command->{'cmdname'} eq 'node') {
       my $associated_title_command;
-      if ($self->get_conf('SECTION_NAME_IN_TITLE')
-          and exists($command->{'cmdname'})
-          and $command->{'cmdname'} eq 'node') {
-        my $document = $self->get_info('document');
-        if (defined($document)) {
-          my $nodes_list = $document->nodes_list();
-          my $node_relations
-            = $nodes_list->[$command->{'extra'}->{'node_number'} -1];
-          $associated_title_command
-            = $node_relations->{'associated_title_command'};
+      my $document = $self->get_info('document');
+      if (defined($document)) {
+        my $nodes_list = $document->nodes_list();
+        my $node_relations
+          = $nodes_list->[$command->{'extra'}->{'node_number'} -1];
+        $associated_title_command
+          = $node_relations->{'associated_title_command'};
+
+        if (defined($associated_title_command)) {
+          $command_string
+            = $self->command_text($associated_title_command, 'string');
         }
       }
-      if (defined($associated_title_command)) {
-        # associated section arguments_line type element
-        my $arguments_line
-          = $associated_title_command->{'contents'}->[0];
-        # line_arg type element containing the sectioning command line argument
-        $element_tree = $arguments_line->{'contents'}->[0];
-      } else {
-        # this should not happen, as the command_string should be empty already
-        $element_tree = $self->command_tree($command);
-      }
+    }
+    if (!defined($command_string) or $command_string eq '') {
+      # happens for @node and special_unit_element.
+      # Also for @anchor and @namedanchor for redirection files.
+      # TODO use command_name?  If SECTION_NAME_IN_TITLE?
+      $command_string = $self->command_text($command, 'string');
+    }
+    if (defined($command_string) and $command_string ne ''
+        and $command_string ne $title_string) {
       # TRANSLATORS: sectioning element title for the page header
       my $title_tree = $self->cdt('{element_text} ({title})',
-                                  {'title' => $self->get_info('title_tree'),
-                                   'element_text' => $element_tree });
+                                  {'title' => {'text' => $title_string,
+                                               'type' => '_converted'},
+                                   'element_text' => {'text' => $command_string,
+                                                       'type' => '_converted'}});
 
       my $context_str = 'file_header_title-element-';
       if (exists($command->{'cmdname'})) {
@@ -11491,15 +11532,12 @@ sub _file_header_information($$;$) {
       # for each file.  We are in string context, though, so it is
       # probably not important.
       $title
-        = $self->convert_tree_new_formatting_context(
-                  Texinfo::TreeElement::new({'type' => '_string',
-                                             'contents' => [$title_tree]}),
-                                                     $context_str,
-                                                     'element_title');
+        = $self->convert_tree_new_formatting_context($title_tree,
+                                  $context_str, $CTXF_string, 'element_title');
     }
     $command_description = $self->command_description($command, 'string');
   }
-  $title = $self->get_info('title_string') if (!defined($title));
+  $title = $title_string if (!defined($title));
 
   my $keywords = $command_description;
   $keywords = $title if (not defined($keywords) or $keywords eq '');
@@ -11735,6 +11773,7 @@ $after_body_open";
 sub _default_format_node_redirection_page($$;$) {
   my ($self, $command, $filename) = @_;
 
+  # TODO use command_name?  Only if xrefautomaticsectiontitle is on?
   my $name = $self->command_text($command);
   my $href = $self->command_href($command, $filename);
   my $direction = "<a href=\"$href\">$name</a>";
@@ -11821,11 +11860,11 @@ sub _default_format_footnotes_sequence($) {
     }
 
     # NOTE the @-commands in @footnote that are formatted differently depending
-    # on in_multi_expanded($self) cannot know that the original context
+    # on multi_expanded_region($self) cannot know that the original context
     # of the @footnote in the main document was $multi_expanded_region.
     # We do not want to set multi_expanded in customizable code.  However, it
     # could be possible to set a shared_conversion_state based on $multi_expanded_region
-    # and have all the conversion functions calling in_multi_expanded($self)
+    # and have all the conversion functions calling multi_expanded_region($self)
     # also check the shared_conversion_state.  The special situations
     # with those @-commands in @footnote in multi expanded
     # region do not justify this additional code and complexity.  The consequences
@@ -11849,16 +11888,7 @@ sub _default_format_footnotes_segment($) {
   $result .= $self->get_conf('DEFAULT_RULE') . "\n"
      if (defined($self->get_conf('DEFAULT_RULE'))
          and $self->get_conf('DEFAULT_RULE') ne '');
-  my $footnote_heading_tree = $self->special_unit_info('heading_tree',
-                                                          'footnotes');
-  my $footnote_heading;
-  if (defined($footnote_heading_tree)) {
-    $footnote_heading
-      = $self->convert_tree($footnote_heading_tree,
-                            'convert footnotes special heading');
-  } else {
-    $footnote_heading = '';
-  }
+  my $footnote_heading = $self->special_unit_info_text('heading', 'footnotes');
   my $level = $self->get_conf('FOOTNOTE_END_HEADER_LEVEL');
   $result .= &{$self->formatting_function('format_heading_text')}($self, undef,
                           [$class.'-heading'], $footnote_heading, $level)."\n";
@@ -12199,6 +12229,7 @@ sub conversion_initialization($$;$) {
   $self->{'shared_conversion_state'} = {};
 
   $self->{'document_context'} = [];
+  $self->{'document_global_context_counter'} = 0;
 
   $self->{'associated_inline_content'} = {};
 
@@ -12469,8 +12500,7 @@ sub conversion_initialization($$;$) {
   # indirectly
   $self->{'referred_command_stack'} = [];
 
-  $self->{'check_htmlxref_already_warned'} = {}
-    if ($self->get_conf('CHECK_HTMLXREF'));
+  $self->{'check_htmlxref_already_warned'} = {};
 
   $self->{'converter_info'}->{'expanded_formats'}
     = $self->{'expanded_formats'};
@@ -12528,7 +12558,7 @@ sub _prepare_title_titlepage($$$$) {
   # title
   $self->{'converter_info'}->{'title_titlepage'}
     = &{$self->formatting_function('format_title_titlepage')}($self);
-  $self->{'current_filename'} = undef;
+  delete $self->{'current_filename'};
 }
 
 sub _html_convert_convert($$$$) {
@@ -12548,7 +12578,7 @@ sub _html_convert_convert($$$$) {
     $result .= $output_unit_text;
     $unit_nr++;
   }
-  $self->{'current_filename'} = undef;
+  delete $self->{'current_filename'};
   return $result;
 }
 
@@ -12707,7 +12737,7 @@ sub output_internal_links($) {
     if (defined($command)) {
       # Use '' for filename, to force a filename in href.
       $href = $self->command_href($command, '');
-      my $tree = $self->command_tree($command);
+      my ($tree, $in_code) = _internal_command_tree($self, $command, 0);
       if (defined($tree)) {
         $text = Texinfo::Convert::Text::convert_to_text($tree,
                                   $self->{'convert_text_options'});
@@ -12726,7 +12756,7 @@ sub output_internal_links($) {
     foreach my $section_relations (@{$sections_list}) {
       my $command = $section_relations->{'element'};
       my $href = $self->command_href($command, '');
-      my $tree = $self->command_tree($command);
+      my ($tree, $in_code) = _internal_command_tree($self, $command, 0);
       my $text;
       if (defined($tree)) {
         $text = Texinfo::Convert::Text::convert_to_text($tree,
@@ -13010,10 +13040,9 @@ sub _prepare_converted_output_info($$$$) {
   if (defined($fulltitle_tree)) {
     $title_tree = $fulltitle_tree;
     $html_title_string
-      = $self->convert_tree_new_formatting_context(
-                    Texinfo::TreeElement::new({'type' => '_string',
-                                       'contents' => [$title_tree]}),
-                                                   'title_string');
+      = $self->convert_tree_new_formatting_context($title_tree,
+                                                   'title_string',
+                                                   $CTXF_string);
     if ($html_title_string !~ /\S/) {
       $html_title_string = undef;
     }
@@ -13023,11 +13052,9 @@ sub _prepare_converted_output_info($$$$) {
     $title_tree = $default_title;
     $self->{'converter_info'}->{'title_tree'} = $title_tree;
     $self->{'converter_info'}->{'title_string'}
-      = $self->convert_tree_new_formatting_context(
-                  Texinfo::TreeElement::new({'type' => '_string',
-                                     'contents' => [$title_tree]}),
-                                                   'title_string');
-
+      = $self->convert_tree_new_formatting_context($title_tree,
+                                                   'title_string',
+                                                   $CTXF_string);
     my $input_file_name;
     if (exists($self->{'document'})) {
       my $document_info = $self->{'document'}->global_information();
@@ -13069,11 +13096,11 @@ sub _prepare_converted_output_info($$$$) {
            and exists($global_commands->{'documentdescription'})) {
     my $tmp = Texinfo::TreeElement::new({'contents'
                => $global_commands->{'documentdescription'}->{'contents'}});
+
     my $documentdescription_string
-      = $self->convert_tree_new_formatting_context(
-           Texinfo::TreeElement::new({'type' => '_string',
-                                      'contents' => [$tmp],}),
-                                                   'documentdescription');
+      = $self->convert_tree_new_formatting_context($tmp,
+                                 'documentdescription', $CTXF_string);
+
     chomp($documentdescription_string);
     $self->{'converter_info'}->{'documentdescription_string'}
       = $documentdescription_string;
@@ -13147,8 +13174,6 @@ sub _html_convert_output($$$$$$$$) {
     $text_output .= $file_beginning;
     $text_output .= $body;
     $text_output .= $file_end;
-
-    $self->{'current_filename'} = undef;
   } else {
     # output with pages
     print STDERR "DO Units with filenames\n"
@@ -13215,6 +13240,7 @@ sub _html_convert_output($$$$$$$$) {
           $self->converter_document_error(
                sprintf(__("could not open %s for writing: %s"),
                                     $out_filepath, $error_message));
+          delete $self->{'current_filename'};
           return undef;
         }
         # do end file first in case it requires some CSS
@@ -13237,13 +13263,14 @@ sub _html_convert_output($$$$$$$$) {
             $self->converter_document_error(
                        sprintf(__("error on closing %s: %s"),
                                   $out_filepath, $!));
+            delete $self->{'current_filename'};
             return undef;
           }
         }
       }
     }
-    delete $self->{'current_filename'};
   }
+  delete $self->{'current_filename'};
   return $text_output;
 }
 
@@ -13256,7 +13283,7 @@ sub _prepare_node_redirection_page($$$) {
   my $redirection_page
    = &{$self->formatting_function('format_node_redirection_page')}($self,
                                     $target_element, $redirection_filename);
-  $self->{'current_filename'} = undef;
+  delete $self->{'current_filename'};
 
   return $redirection_page;
 }
@@ -13271,7 +13298,7 @@ sub _node_redirections($$$$) {
 
   my $redirection_files_done = 0;
   # do node redirection pages
-  $self->{'current_filename'} = undef;
+  delete $self->{'current_filename'};
   if ($self->get_conf('NODE_FILES')
       and defined($labels_list) and $output_file ne '') {
 
@@ -13494,7 +13521,9 @@ sub _node_redirections($$$$) {
 sub _setup_output($) {
   my $self = shift;
 
-  $self->{'current_filename'} = undef;
+  # Should not actually be needed, as it is already deleted after conversion
+  # and each time it is set out of the conversion.
+  delete $self->{'current_filename'};
 
   # no splitting when writing to the null device or to stdout or returning
   # a string
@@ -13859,9 +13888,6 @@ sub _open_type_update_context($$) {
   if ($self->{'code_types'}->{$type_name}) {
     push @{$self->{'document_context'}->[-1]->{'monospace'}}, 1;
   }
-  if ($type_name eq '_string') {
-    $self->{'document_context'}->[-1]->{'string'}++;
-  }
 }
 
 sub _convert_type_update_context($$) {
@@ -13869,9 +13895,6 @@ sub _convert_type_update_context($$) {
 
   if ($self->{'code_types'}->{$type_name}) {
     pop @{$self->{'document_context'}->[-1]->{'monospace'}};
-  }
-  if ($type_name eq '_string') {
-    $self->{'document_context'}->[-1]->{'string'}--;
   }
   if ($self->{'pre_class_types'}->{$type_name}) {
     pop @{$self->{'document_context'}->[-1]->{'preformatted_classes'}};
@@ -14080,18 +14103,14 @@ sub _convert($$;$) {
               $arg_formatted->{$arg_type} = _convert($self, $arg, $explanation);
               _pop_code_context($self);
             } elsif ($arg_type eq 'string') {
-              _new_document_context($self, $command_type);
-              _set_string_context($self);
+              _new_document_context($self, $command_type, $CTXF_string);
               $arg_formatted->{$arg_type} = _convert($self, $arg, $explanation);
               #_unset_string_context($self);
               _pop_document_context($self);
             } elsif ($arg_type eq 'monospacestring') {
-              _new_document_context($self, $command_type);
-              _set_code_context($self, 1);
-              _set_string_context($self);
+              _new_document_context($self, $command_type,
+                                    $CTXF_string | $CTXF_code);
               $arg_formatted->{$arg_type} = _convert($self, $arg, $explanation);
-              #_unset_string_context($self);
-              _pop_code_context($self);
               _pop_document_context($self);
             } elsif ($arg_type eq 'monospacetext') {
               Texinfo::Convert::Text::set_options_code(

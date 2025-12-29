@@ -52,6 +52,9 @@
 #include "builtin_commands.h"
 /* also for cmd_text data */
 #include "convert_to_text.h"
+/* for error message for debugging */
+/* convert_to_texinfo */
+#include "convert_to_texinfo.h"
 #include "node_name_normalization.h"
 /* cdt_tree expand_today... */
 #include "convert_utils.h"
@@ -75,7 +78,7 @@
 CONVERTER_FORMAT_DATA converter_format_data[] = {
   {"html", "Texinfo::Convert::HTML", 0, &html_converter_defaults,
    &html_converter_initialize, &html_output, &html_convert,
-   &html_convert_tree, &html_reset_converter, &html_free_converter},
+   &html_convert_tree, 0, &html_free_converter},
   {"rawtext", "Texinfo::Convert::Text", &rawtext_converter,
    0, 0, &rawtext_output,
    &rawtext_convert, &rawtext_convert_tree, 0, 0},
@@ -550,10 +553,13 @@ converter_set_document (CONVERTER *converter, DOCUMENT *document)
 
   /*
     If there is already an associated document, reset information linked
-    to the document as much as possible, without freeing anything as
-    it isn't clear what should be freed or not.
-    The output units could be freed through the document, at least
-    theoretically, although there is probably no code that does it.
+    to the document.
+
+    We do not call destroy_converter_output_units because it should be the
+    caller responsibility to decide when the output units should be
+    destroyed.
+
+    The output units will be freed if the document is destroyed anyway.
    */
   if (converter->document)
     {
@@ -1393,8 +1399,6 @@ float_name_caption (CONVERTER *self, const ELEMENT *float_e)
 
 
 /* FIXME move to the same file where TREE_ADDED_ELEMENTS is setup */
-/* NOTE in addition to freeing memory, the tree root is removed from
-   tree_to_build if relevant. */
 void
 clear_tree_added_elements (CONVERTER *self, TREE_ADDED_ELEMENTS *tree_elements)
 {
@@ -1411,10 +1415,6 @@ clear_tree_added_elements (CONVERTER *self, TREE_ADDED_ELEMENTS *tree_elements)
       fprintf (stderr, "CTAE: %p no status (%zu)\n", tree_elements, tree_elements->added.number);
     }
    */
-
-  if (tree_elements->tree
-      && tree_elements->status != tree_added_status_reused_tree)
-    replace_remove_list_element (&self->tree_to_build, tree_elements->tree, 0);
 
   if (tree_elements->status == tree_added_status_new_tree)
     destroy_element_and_children (tree_elements->tree);
@@ -1437,6 +1437,8 @@ free_tree_added_elements (CONVERTER *self, TREE_ADDED_ELEMENTS *tree_elements)
 {
   clear_tree_added_elements (self, tree_elements);
   free (tree_elements->added.list);
+  tree_elements->added.list = 0;
+  tree_elements->added.space = 0;
 }
 
 void
@@ -1851,16 +1853,12 @@ free_output_unit_files (FILE_NAME_PATH_COUNTER_LIST *output_unit_files)
 
 
 
-/* reset parser structures tied to a document to be ready for a
-   new conversion */
-void
-reset_generic_converter (CONVERTER *self)
+static void
+destroy_converter_output_units (CONVERTER *self)
 {
   int i;
   int check_counts = (self->conf->TEST.o.integer > 1);
   ERROR_MESSAGE_LIST *error_messages = 0;
-
-  clear_output_files_information (&self->output_files_information);
 
   if (check_counts)
     error_messages = set_check_element_interpreter_refcount ();
@@ -1882,26 +1880,54 @@ reset_generic_converter (CONVERTER *self)
         merge_error_messages_lists (&self->error_messages, error_messages);
       unset_check_element_interpreter_refcount ();
     }
+}
 
-  /* should be cleaner.  Probably not much effect as long as converters
-     are destroyed right after being reset in most cases */
-  self->document = 0;
+static void
+reset_tree_to_build (CONVERTER *self)
+{
+  if (self->tree_to_build.number > 0)
+    {
+      fprintf (stderr, "BUG: tree_to_build: %zu\n",
+                       self->tree_to_build.number);
+      if (self->conf->DEBUG.o.integer > 0)
+        {
+          size_t i;
+          for (i = 0; i < self->tree_to_build.number; i++)
+            {
+              ELEMENT *element = self->tree_to_build.list[i];
+          /* in most cases, the trees have been destroyed, so this
+             will often segfault */
+              fprintf (stderr, " %zu: '%s'\n", i,
+                               convert_to_texinfo (element));
+            }
+        }
+    }
+  self->tree_to_build.number = 0;
 }
 
 void
-reset_converter (CONVERTER *self)
+converter_remove_output_units (CONVERTER *self)
 {
   enum converter_format converter_format = self->format;
 
   if (converter_format != COF_none
-      && converter_format_data[converter_format].converter_reset)
+      && converter_format_data[converter_format].converter_release_output_units)
     {
-      void (* format_converter_reset) (CONVERTER *self)
-        = converter_format_data[converter_format].converter_reset;
-      format_converter_reset (self);
+      void (* format_converter_release_output_units) (CONVERTER *self)
+       = converter_format_data[converter_format].converter_release_output_units;
+      format_converter_release_output_units (self);
     }
 
-  reset_generic_converter (self);
+  destroy_converter_output_units (self);
+
+  /* HTML specific, but good to be here.
+     If there is still tree to build at this point, this means
+     will almost certainty that there is something wrong, as
+     the associated trees are most likely to have been destroyed
+     and having the output units is a sign that conversion data
+     should have been reset or could be reset at any time.
+   */
+  reset_tree_to_build (self);
 }
 
 void

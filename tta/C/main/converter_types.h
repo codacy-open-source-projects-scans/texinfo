@@ -35,6 +35,10 @@
 /* for interdependency with convert_to_text.h */
 struct TEXT_OPTIONS;
 
+/* formatting context flags */
+#define CTXF_string     0x0001
+#define CTXF_code       0x0002
+
 enum converter_format {
    COF_none = -1,
    COF_html,
@@ -716,6 +720,7 @@ typedef struct JSLICENSE_CATEGORY_LIST {
 /* contains only indices with entries */
 typedef struct SORTED_INDEX_NAMES {
     size_t number;
+    size_t space;
     const INDEX **list;
 } SORTED_INDEX_NAMES;
 
@@ -871,6 +876,7 @@ typedef struct CONVERTER {
     STRING_LIST customized_special_unit_varieties;
     SPECIAL_UNIT_INFO_LIST customized_special_unit_info;
     char **special_unit_info[SPECIAL_UNIT_INFO_TYPE_NR];
+    char **translated_special_unit_info_texinfo[SPECIAL_UNIT_INFO_TREE_NR];
     HTMLXREF_MANUAL_LIST htmlxref;
     TYPE_CONVERSION_FUNCTION type_conversion_function[TXI_TREE_TYPES_NUMBER];
     TYPE_CONVERSION_FUNCTION css_string_type_conversion_function[TXI_TREE_TYPES_NUMBER];
@@ -898,6 +904,9 @@ typedef struct CONVERTER {
     DIRECTION_NODE_NAME_LIST customized_global_units_directions;
     STRING_LIST added_global_units_directions;
     STRING_LIST customized_global_text_directions;
+    /* associate cmd and index in special_unit_varieties STRING_LIST */
+    /* number in sync with command_special_unit_variety, +1 for trailing 0 */
+    COMMAND_ID_INDEX command_special_variety_name_index[4+1];
 
     /* set for a document */
     /* next two set in conversion initialization */
@@ -923,22 +932,30 @@ typedef struct CONVERTER {
     /* free'd when global_units_directions are zeroed, set when first
        accessed (from XS only) */
     SPECIAL_UNIT_DIRECTION_LIST global_units_direction_names;
-    ELEMENT **special_unit_info_tree[SUIT_type_heading+1];
+    /* allocated at converter initialization, reset when translate_names
+       is called or at the end of the conversion */
+    ELEMENT **translated_special_unit_info_tree[SUIT_type_heading+1];
+    /* resized and reset at the beginning of the conversion */
     SORTED_INDEX_NAMES sorted_index_names;
+    /* set or reset before conversion */
     void *registered_ids_c_hashmap;
-    /* potentially one target list per command (only for some actually) */
+    /* potentially one target list per command (only for some actually,
+       registered in html_target_cmds */
+    /* reset in conversion initialization.  The trees are also free'd after
+       the conversion, to avoid having trees to build at that point.
+     */
     HTML_TARGET_LIST html_targets[BUILTIN_CMD_NUMBER];
     HTML_TARGET_LIST html_special_targets[ST_footnote_location+1];
-    COMMAND_STACK html_target_cmds; /* list of cmd with targets */
+    /* list of cmd with targets that have been allocated */
+    COMMAND_STACK html_target_cmds;
+    /* reset before conversion before being filled */
     FILE_SOURCE_INFO_LIST files_source_info;
+    /* reset in conversion initialization */
     JSLICENSE_CATEGORY_LIST jslicenses;
-    /* associate cmd and index in special_unit_varieties STRING_LIST */
-    /* number in sync with command_special_unit_variety, +1 for trailing 0 */
-    COMMAND_ID_INDEX command_special_variety_name_index[4+1];
     size_t *output_unit_file_indices;   /* array of indices in output_unit_files
               each position corresponding to an output unit. */
     size_t *special_unit_file_indices;  /* same for special output units */
-    /* in converter_info in Perl */
+    /* Next are in converter_info in Perl.  Reset in conversion initialization */
     char *title_titlepage;
     ELEMENT *simpletitle_tree;
     enum command_id simpletitle_cmd;
@@ -980,21 +997,32 @@ typedef struct CONVERTER {
     char **html_passive_icons;
 
     /* state common with perl converter */
-    int document_global_context;
-    int multiple_conversions;
+    int document_global_context_counter;
     const ELEMENT *current_root_command;
     const ELEMENT *current_node;
+    /* unset right after an output unit conversion */
     const OUTPUT_UNIT *current_output_unit;
     HTML_DOCUMENT_CONTEXT_STACK html_document_context;
     STRING_STACK multiple_pass;
+    /* allocated or resized if needed when setting up page files.
+       should be empty at the end of conversion, if not there is an
+       error message output and it is cleared */
     STRING_STACK_LIST pending_closes;
+    /* reset after the conversion and each time it is set outside
+       of the conversion.  Also reset before calling output
+       (although it is not needed) */
     FILE_NUMBER_NAME current_filename;
     ELEMENT_REFERENCE_STACK referred_command_stack;
+    /* next three reset both in conversion initialization and finalization */
     HTML_SHARED_CONVERSION_STATE shared_conversion_state;
     HTML_INLINE_CONTENT_STACK pending_inline_content;
     HTML_PENDING_FOOTNOTE_STACK pending_footnotes;
+    /* checked to be empty and reset if not in conversion finalization */
     HTML_ASSOCIATED_INLINE_CONTENT_LIST associated_inline_content;
+    /* reset in conversion initialization, resized and zeroed when the
+       number of output units associated files are known. */
     PAGES_CSS_LIST page_css;
+    /* reset at conversion initialization */
     STRING_LIST check_htmlxref_already_warned;
     FILE_ASSOCIATED_INFO_LIST html_files_information;
     /* state common with perl converter, not transmitted to perl */

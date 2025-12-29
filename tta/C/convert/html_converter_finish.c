@@ -31,20 +31,21 @@
 #include "api_to_perl.h"
 #include "hashmap.h"
 #include "translations.h"
-/* html_reset_translated_special_unit_info_tree
-   html_clear_direction_string_type
+/* html_clear_direction_string_type
    html_free_direction_icons_array
  */
 #include "convert_html.h"
 /* html_nr_string_directions html_free_customized_global_units_directions
    free_css_selector_style_list free_html_no_arg_command_conversion
+   reset_html_targets html_reset_files_source_info free_js_categories_list
+   reset_html_page_css
  */
 #include "html_prepare_converter.h"
 #include "html_converter_api.h"
 
 
 static void
-reset_special_unit_info_list (SPECIAL_UNIT_INFO_LIST *special_unit_info_list)
+free_special_unit_info_list (SPECIAL_UNIT_INFO_LIST *special_unit_info_list)
 {
   size_t i;
   for (i = 0; i < special_unit_info_list->number; i++)
@@ -52,96 +53,7 @@ reset_special_unit_info_list (SPECIAL_UNIT_INFO_LIST *special_unit_info_list)
       SPECIAL_UNIT_INFO *special_unit_info = &special_unit_info_list->list[i];
       free (special_unit_info->value);
     }
-  special_unit_info_list->number = 0;
-}
-
-static void
-free_special_unit_info_list (SPECIAL_UNIT_INFO_LIST *special_unit_info_list)
-{
-  reset_special_unit_info_list (special_unit_info_list);
   free (special_unit_info_list->list);
-}
-
-static void
-reset_html_targets_list (CONVERTER *self, HTML_TARGET_LIST *targets)
-{
-  if (targets->number)
-    {
-      size_t i;
-      for (i = 0; i < targets->number; i++)
-        {
-          int j;
-          HTML_TARGET *html_target = &targets->list[i];
-          /* setup before conversion */
-          free (html_target->target);
-          free (html_target->special_unit_filename);
-          free (html_target->node_filename);
-          free (html_target->section_filename);
-          free (html_target->contents_target);
-          free (html_target->shortcontents_target);
-
-          for (j = 0; j < HTT_string_nonumber+1; j++)
-            free (html_target->command_text[j]);
-
-          for (j = 0; j < HTT_string_nonumber+1; j++)
-            free (html_target->command_description[j]);
-
-          for (j = 0; j < HTT_string_nonumber+1; j++)
-            free (html_target->command_name[j]);
-
-          free_tree_added_elements (self, &html_target->tree);
-          free_tree_added_elements (self, &html_target->tree_nonumber);
-          free_tree_added_elements (self, &html_target->name_tree);
-          free_tree_added_elements (self, &html_target->name_tree_nonumber);
-        }
-      memset (targets->list, 0,
-              sizeof (HTML_TARGET) * targets->number);
-      targets->number = 0;
-    }
-}
-
-static void
-reset_html_targets (CONVERTER *self, HTML_TARGET_LIST *targets)
-{
-  size_t i;
-  for (i = 0; i < self->html_target_cmds.top; i++)
-    {
-      enum command_id cmd = self->html_target_cmds.stack[i];
-      reset_html_targets_list (self, &targets[cmd]);
-      /* TODO not reset, but free'ed? */
-      free (targets[cmd].list);
-      targets[cmd].list = 0;
-      targets[cmd].space = 0;
-    }
-}
-
-static void
-clear_type_explanations (EXPLAINED_COMMAND_TYPE_LIST *type_explanations)
-{
-  if (type_explanations->number > 0)
-    {
-      size_t i;
-      for (i = 0; i < type_explanations->number; i++)
-        {
-          EXPLAINED_COMMAND_TYPE *type_explanation
-            = &type_explanations->list[i];
-          free (type_explanation->type);
-          free (type_explanation->explanation);
-        }
-      type_explanations->number = 0;
-    }
-}
-
-static void
-html_reset_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info)
-{
-  size_t i;
-  for (i = 0; i < files_source_info->number; i++)
-    {
-      free (files_source_info->list[i].filename);
-      free (files_source_info->list[i].path);
-    }
-  files_source_info->number = 0;
 }
 
 static void
@@ -162,170 +74,12 @@ html_destroy_files_source_info (FILE_SOURCE_INFO_LIST *files_source_info)
 }
 
 void
-html_reset_converter (CONVERTER *self)
-{
-  size_t i;
-  EXPLAINED_COMMAND_TYPE_LIST *type_explanations
-   = &self->shared_conversion_state.explained_commands;
-
-  html_reset_translated_special_unit_info_tree (self);
-  /* targets */
-  reset_html_targets (self, self->html_targets);
-
-  clear_c_hashmap (self->registered_ids_c_hashmap);
-
-  for (i = 0; i < ST_footnote_location+1; i++)
-    {
-      reset_html_targets_list (self, &self->html_special_targets[i]);
-      /* TODO not reset, but free'ed? */
-      free (self->html_special_targets[i].list);
-      self->html_special_targets[i].list = 0;
-      self->html_special_targets[i].space = 0;
-    }
-  self->html_target_cmds.top = 0;
-
-  reset_special_unit_info_list (&self->customized_special_unit_info);
-
-  free (self->shared_conversion_state.footnote_id_numbers);
-  self->shared_conversion_state.footnote_id_numbers = 0;
-
-  free (self->shared_conversion_state.formatted_listoffloats_nr);
-  self->shared_conversion_state.formatted_listoffloats_nr = 0;
-
-  /* formatted_index_entries may not be initialized if there was an error
-     early and prepare_conversion_units_targets was never called */
-  if (self->document
-      && self->document->indices_info.number
-      && self->shared_conversion_state.formatted_index_entries)
-    {
-      for (i = 0; i < self->sorted_index_names.number; i++)
-        {
-          free (self->shared_conversion_state.formatted_index_entries[i]);
-        }
-      free (self->shared_conversion_state.formatted_index_entries);
-      self->shared_conversion_state.formatted_index_entries = 0;
-    }
-
-  /* change to 0 in releases? */
-  if (1)
-    {
-      if (self->shared_conversion_state.elements_authors.top > 0)
-        {
-          fprintf (stderr,
-              "BUG: shared_conversion_state.elements_authors.top: %zu\n",
-              self->shared_conversion_state.elements_authors.top);
-        }
-    }
-
-  free (self->sorted_index_names.list);
-  memset (&self->sorted_index_names, 0, sizeof (INDEX_LIST));
-
-  free (self->output_unit_file_indices);
-  self->output_unit_file_indices = 0;
-  free (self->special_unit_file_indices);
-  self->special_unit_file_indices = 0;
-  free (self->title_titlepage);
-  self->title_titlepage = 0;
-  free (self->title_string);
-  self->title_string = 0;
-  free (self->documentdescription_string);
-  self->documentdescription_string = 0;
-  free (self->copying_comment);
-  self->copying_comment = 0;
-  free (self->destination_directory);
-  self->destination_directory = 0;
-  free (self->document_name);
-  self->document_name = 0;
-
-  if (self->added_title_tree)
-    {
-      destroy_element_and_children (self->title_tree);
-
-      self->added_title_tree = 0;
-    }
-
-  html_reset_files_source_info (&self->files_source_info);
-
-  if (self->jslicenses.number)
-    {
-      size_t i;
-      for (i = 0; i < self->jslicenses.number; i++)
-        {
-          JSLICENSE_FILE_INFO_LIST *jslicences_files_info
-            = &self->jslicenses.list[i];
-          free (jslicences_files_info->category);
-          if (jslicences_files_info->number)
-            {
-              size_t j;
-              for (j = 0; j < jslicences_files_info->number; j++)
-                {
-                  JSLICENSE_FILE_INFO *jslicense_file_info
-                    = &jslicences_files_info->list[j];
-                  free (jslicense_file_info->filename);
-                  free (jslicense_file_info->license);
-                  free (jslicense_file_info->url);
-                  free (jslicense_file_info->source);
-                }
-            }
-          free (jslicences_files_info->list);
-        }
-      free (self->jslicenses.list);
-    }
-
-  clear_output_files_information (&self->output_files_information);
-
-  clear_strings_list (&self->check_htmlxref_already_warned);
-
-  for (i = 0; i < self->page_css.number; i++)
-    {
-      size_t j;
-      CSS_LIST *page_css_list = &self->page_css.list[i];
-
-      for (j = 0; j < page_css_list->number; j++)
-        free (page_css_list->list[j]);
-      free (page_css_list->list);
-      free (page_css_list->page_name);
-    }
-  free (self->page_css.list);
-  self->page_css.list = 0;
-  self->page_css.number = 0;
-  self->page_css.space = 0;
-
-  /* could change to 0 in releases? */
-  if (1)
-    {
-      if (self->tree_to_build.number > 0)
-        {
-          fprintf (stderr, "BUG: tree_to_build: %zu\n",
-                           self->tree_to_build.number);
-          if (self->conf->DEBUG.o.integer > 0)
-            {
-              for (i = 0; i < self->tree_to_build.number; i++)
-                {
-                  ELEMENT *element = self->tree_to_build.list[i];
-              /* in most cases, the trees have been destroyed, so this
-                 will often segfault */
-                  fprintf (stderr, " %zu: '%s'\n", i,
-                                   convert_to_texinfo (element));
-                }
-            }
-        }
-      self->tree_to_build.number = 0;
-    }
-  clear_type_explanations (type_explanations);
-}
-
-void
 html_free_converter (CONVERTER *self)
 {
   int i;
   size_t j;
   int nr_string_directions = html_nr_string_directions (self);
   int nr_dir_str_contexts = TDS_context_string + 1;
-  EXPLAINED_COMMAND_TYPE_LIST *type_explanations
-   = &self->shared_conversion_state.explained_commands;
-
-  free_special_unit_info_list (&self->customized_special_unit_info);
 
   free_strings_list (&self->customized_special_unit_varieties);
 
@@ -334,10 +88,34 @@ html_free_converter (CONVERTER *self)
 
   free (self->global_units_directions);
 
+  /* targets */
+  reset_html_targets (self);
+
+  for (j = 0; j < self->html_target_cmds.top; j++)
+    {
+      enum command_id cmd = self->html_target_cmds.stack[j];
+      free (self->html_targets[cmd].list);
+    }
+
+  for (i = 0; i < ST_footnote_location+1; i++)
+    {
+      free (self->html_special_targets[i].list);
+    }
+
   free (self->html_target_cmds.stack);
 
   clear_c_hashmap (self->registered_ids_c_hashmap);
   free (self->registered_ids_c_hashmap);
+
+  free (self->title_titlepage);
+  free (self->title_string);
+  free (self->documentdescription_string);
+  free (self->copying_comment);
+  free (self->destination_directory);
+  free (self->document_name);
+
+  if (self->added_title_tree)
+    destroy_element_and_children (self->title_tree);
 
   if (self->pl_info_hv)
     {
@@ -345,16 +123,22 @@ html_free_converter (CONVERTER *self)
       self->pl_info_hv = 0;
     }
 
+  free (self->output_unit_file_indices);
+  free (self->special_unit_file_indices);
+
   html_free_files_source_info (&self->files_source_info);
+
+  reset_html_page_css (self);
+  free (self->page_css.list);
 
   free_strings_list (&self->check_htmlxref_already_warned);
 
   free_name_number_list (&self->page_name_number);
 
-  for (i = 0; i < SUIT_type_heading+1; i++)
-    {/* we assume that reset_translated_special_unit_info_tree
+  for (i = 0; i < SPECIAL_UNIT_INFO_TREE_NR; i++)
+    {/* we assume that html_reset_translated_special_unit_info_tree
         has already been called */
-      free (self->special_unit_info_tree[i]);
+      free (self->translated_special_unit_info_tree[i]);
     }
 
   for (i = 1; i < TXI_TREE_TYPES_NUMBER; i++)
@@ -537,7 +321,7 @@ html_free_converter (CONVERTER *self)
     }
   free (self->htmlxref.list);
 
-  for (i = 0; i < SUI_type_heading+1; i++)
+  for (i = 0; i < SPECIAL_UNIT_INFO_TYPE_NR; i++)
     {
       size_t k;
       for (k = 0; k < self->special_unit_varieties.number; k++)
@@ -561,6 +345,10 @@ html_free_converter (CONVERTER *self)
   free (self->special_units_direction_names);
 
   free (self->global_units_direction_names.list);
+
+  free (self->sorted_index_names.list);
+
+  free_js_categories_list (&self->jslicenses);
 
   html_free_direction_icons_array (self, &self->html_active_icons);
   html_free_direction_icons_array (self, &self->html_passive_icons);
@@ -637,6 +425,8 @@ html_free_converter (CONVERTER *self)
     }
   free (self->pending_closes.list);
 
+  free (self->pending_footnotes.stack);
+
   free (self->pending_inline_content.stack);
 
   free (self->associated_inline_content.list);
@@ -651,10 +441,12 @@ html_free_converter (CONVERTER *self)
 
   free (self->shared_conversion_state.elements_authors.stack);
 
-  free (type_explanations->list);
+  free (self->shared_conversion_state.explained_commands.list);
 
   free_strings_list (&self->special_unit_varieties);
 
   free (self->tree_to_build.list);
+
+  free_special_unit_info_list (&self->customized_special_unit_info);
 }
 
