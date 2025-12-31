@@ -713,6 +713,40 @@ add_file_directory_to_path (char *filename)
   free (directory_name);
 }
 
+static void
+info_session_or_dump_one_node (NODE *node,
+                               const char *user_output_filename)
+{
+  if (!user_output_filename)
+    info_session_one_node (node);
+  else
+    {
+      FILE *output_stream = 0;
+      if (strcmp (user_output_filename, "-") == 0)
+        output_stream = stdout;
+      else
+        output_stream = fopen (user_output_filename, "w");
+
+      if (output_stream)
+        write_node_to_stream (node, output_stream);
+    }
+}
+
+static void
+dump_nodes_to_file_and_quit (REFERENCE **references, char *output_filename,
+                             int dump_subnodes, const char *error)
+{
+  preprocess_nodes_p = 0;
+  dump_nodes_to_file (ref_list, user_output_filename, dump_subnodes);
+
+  if (error)
+    {
+      info_error ("%s", error);
+      exit (1);
+    }
+  exit (0);
+}
+
 
 /* **************************************************************** */
 /*                                                                  */
@@ -984,6 +1018,13 @@ main (int argc, char *argv[])
 
           for (i = 0; ref_list[i]; i++)
             printf ("%s\n", ref_list[i]->filename);
+          exit (0);
+        }
+
+      if (user_output_filename)
+        {
+          dump_nodes_to_file_and_quit (ref_list, user_output_filename,
+                                       dump_subnodes, error);
         }
       else
         {
@@ -992,8 +1033,8 @@ main (int argc, char *argv[])
             info_session_allfiles (ref_list, user_filename, error);
           else
             info_session (ref_list, error);
+          exit (0);
         }
-      exit (0);
     }
 
   /* --show-options */
@@ -1025,7 +1066,7 @@ main (int argc, char *argv[])
           NODE *man_node = get_manpage_node (argv[0]);
           if (man_node)
             {
-              info_session_one_node (man_node);
+              info_session_or_dump_one_node (man_node, user_output_filename);
               exit (0);
             }
         }
@@ -1044,28 +1085,11 @@ main (int argc, char *argv[])
       initial_fb = info_find_file (initial_file);
       if (initial_fb)
         {
-          NODE *node = create_virtual_index (initial_fb,
-                                             index_search_string);
+          NODE *node = create_virtual_index (initial_fb, index_search_string);
           if (node)
             {
-              if (user_output_filename)
-                {
-                  FILE *output_stream = 0;
-                  if (strcmp (user_output_filename, "-") == 0)
-                    output_stream = stdout;
-                  else
-                    output_stream = fopen (user_output_filename, "w");
-                  if (output_stream)
-                    {
-                      write_node_to_stream (node, output_stream);
-                    }
-                  exit (0);
-                }
-              else
-                {
-                  info_session_one_node (node);
-                  exit (0);
-                }
+              info_session_or_dump_one_node (node, user_output_filename);
+              exit (0);
             }
         }
     }
@@ -1098,7 +1122,6 @@ main (int argc, char *argv[])
 
       fprintf (stderr, _("no index entries found for '%s'\n"),
                index_search_string);
-      close_dribble_file ();
       exit (1);
     }
 
@@ -1116,15 +1139,8 @@ main (int argc, char *argv[])
   /* --output */
   if (user_output_filename)
     {
-      preprocess_nodes_p = 0;
-      dump_nodes_to_file (ref_list, user_output_filename, dump_subnodes);
-
-      if (error)
-        {
-          info_error ("%s", error);
-          exit (1);
-        }
-      exit (0);
+      dump_nodes_to_file_and_quit (ref_list, user_output_filename,
+                                   dump_subnodes, error);
     }
 
   if (ref_index == 0)
