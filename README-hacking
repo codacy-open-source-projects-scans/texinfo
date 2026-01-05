@@ -1,4 +1,4 @@
-  Copyright 2002-2025 Free Software Foundation, Inc.
+  Copyright 2002-2026 Free Software Foundation, Inc.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -250,6 +250,11 @@ Look for omissions by running, e.g.
 
 at the top level.  It's likely that the script doesn't find all the
 years that should be updated yet.
+
+Update copyright years in usage notices (can also be done at release
+time but may as well do at New Year's as well):
+* util/texi2dvi, util/texi2pdf, tta/perl/texi2any.pl, info/info.c,
+  install-info/install-info.c, texindex/ti.twjr, Pod-Simple-Texinfo/pod2texi
 
 
 - Note on "reproducible builds"

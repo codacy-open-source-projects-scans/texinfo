@@ -65,14 +65,15 @@ texinfo_register_no_arg_command_formatting('-', undef, '&shy;');
 texinfo_register_no_arg_command_formatting('error', undef, undef, undef,
                                            'error--&gt;');
 
-texinfo_register_no_arg_command_formatting('equiv', undef, undef, undef,
-                                         undef, 'is the @strong{same} as');
+texinfo_register_no_arg_command_texinfo('equiv', 'is the @strong{same} as');
 
 $translations{'fr'}->{'is the @strong{same} as'}
     = {'' => 'est la @strong{m@^eme} que',};
 
-texinfo_register_style_command_formatting('sansserif', 'code', 0, 'normal');
-texinfo_register_style_command_formatting('sansserif', 'code', 1, 'preformatted');
+texinfo_register_style_command_formatting('sansserif', 'code', 'normal');
+texinfo_register_style_command_formatting('sansserif', 'code', 'preformatted');
+texinfo_style_command_set_quoting('sansserif', 0, 'normal');
+texinfo_style_command_set_quoting('sansserif', 1, 'preformatted');
 texinfo_register_upper_case_command('sc', 0);
 texinfo_register_upper_case_command('var', 1);
 
@@ -95,6 +96,7 @@ my $counter = 0;
 
 my $shown_styles;
 my $footnotestyle;
+my $footnotestyle_before_setting;
 sub my_function_set_some_css {
   my $converter = shift;
 
@@ -108,9 +110,12 @@ sub my_function_set_some_css {
             $converter->css_get_selector_style('h1.shorttitlepage');
   $converter->css_set_selector_style('h1.titlefont', 'text-align:center');
 
-  my $footnotestyle_before_setting = $converter->get_conf('footnotestyle');
-  $footnotestyle_before_setting = 'UNDEF'
-     if (not defined($footnotestyle_before_setting));
+  # Need to set it only once, since it will be changed
+  if (!defined($footnotestyle_before_setting)) {
+    $footnotestyle_before_setting = $converter->get_conf('footnotestyle');
+    $footnotestyle_before_setting = 'UNDEF'
+      if (not defined($footnotestyle_before_setting));
+  }
   $converter->set_conf('footnotestyle', 'separate');
   $footnotestyle = $main_program_footnotestyle
                     .'|'.$footnotestyle_before_setting
@@ -121,8 +126,8 @@ sub my_function_set_some_css {
   # is called.
   #print STDERR "all_included_rules: ".join('|', @$all_included_rules)."\n";
 
-  $converter->define_shared_conversion_state ('quotation', 'color',
-                                              ['string', 'integer']);
+  $converter->define_shared_conversion_state('quotation', 'color',
+                                             ['string', 'integer']);
   $converter->set_shared_conversion_state('quotation', 'color',
                                           'special_black', 42);
 

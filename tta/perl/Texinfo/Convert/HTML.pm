@@ -1,6 +1,6 @@
 # HTML.pm: output tree as HTML.
 #
-# Copyright 2011-2025 Free Software Foundation, Inc.
+# Copyright 2011-2026 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -132,6 +132,11 @@ my %XS_conversion_overrides = (
    => "Texinfo::Convert::ConvertXS::html_output",
   "Texinfo::Convert::HTML::convert"
    => "Texinfo::Convert::ConvertXS::html_convert",
+
+  # Not used by output or convert.  May be called on a converter when
+  # output nor convert are used.  Happens in tests.
+  "Texinfo::Convert::HTML::conversion_initialization"
+   => "Texinfo::Convert::ConvertXS::html_conversion_initialization",
 
   "Texinfo::Convert::HTML::output_internal_links"
     => "Texinfo::Convert::ConvertXS::html_output_internal_links",
@@ -8749,6 +8754,11 @@ sub _load_htmlxref_files($) {
 #    API exists in Texinfo::Config for setting, not for getting
 #  stage_handlers
 #
+#   No API, but set by command-line and can be overriden by CSS
+#   change API functions
+#  files_css_import_lines
+#  files_css_rule_lines
+#
 #    API exists
 #  css_element_class_styles
 #  css_import_lines
@@ -9609,8 +9619,8 @@ sub _process_css_file($$$) {
 sub _prepare_css($) {
   my $self = shift;
 
-  $self->{'css_rule_lines'} = [];
-  $self->{'css_import_lines'} = [];
+  $self->{'files_css_rule_lines'} = [];
+  $self->{'files_css_import_lines'} = [];
 
   return if ($self->get_conf('NO_CSS'));
 
@@ -9687,12 +9697,9 @@ sub _prepare_css($) {
       }
     }
   }
-  foreach my $line (@css_import_lines) {
-    $self->css_add_info('imports', $line);
-  }
-  foreach my $line (@css_rule_lines) {
-    $self->css_add_info('rules', $line);
-  }
+
+  push @{$self->{'files_css_import_lines'}}, @css_import_lines;
+  push @{$self->{'files_css_rule_lines'}}, @css_rule_lines;
 }
 
 # Get the name of a file containing a label, as well as the identifier within
@@ -12226,6 +12233,9 @@ sub conversion_initialization($$;$) {
   $self->set_global_document_commands('before', \@informative_global_commands);
   $self->set_global_document_commands('before', \@contents_commands);
 
+  $self->{'css_import_lines'} = [@{$self->{'files_css_import_lines'}}];
+  $self->{'css_rule_lines'} = [@{$self->{'files_css_rule_lines'}}];
+
   $self->{'shared_conversion_state'} = {};
 
   $self->{'document_context'} = [];
@@ -13475,8 +13485,8 @@ sub _node_redirections($$$$) {
                'file_info_label_element' => $label_element};
 
         my $redirection_page
-          = _prepare_node_redirection_page ($self, $target_element,
-                                             $redirection_filename);
+          = _prepare_node_redirection_page($self, $target_element,
+                                           $redirection_filename);
 
         my $out_filepath;
         if ($destination_directory ne '') {

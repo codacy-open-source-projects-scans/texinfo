@@ -1,4 +1,4 @@
-/* Copyright 2023-2025 Free Software Foundation, Inc.
+/* Copyright 2023-2026 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -859,6 +859,21 @@ html_converter_get_customization_sv (SV *converter_in, SV *default_formatting_re
         html_fill_sv_options (self->conf, self);
    /* fill options with C only information not associated with Perl data */
         html_fill_options_directions (self->conf, self);
+
+# Not used by output or convert.  May be called on a converter when
+# output nor convert are used.  Happens in tests.
+void
+html_conversion_initialization (SV *converter_in, const char *context, SV *document_in=0)
+      PREINIT:
+        CONVERTER *self;
+      CODE:
+        /* if a converter is properly initialized, the XS converter should
+           always be found when XS is used */
+        self = converter_set_document_from_sv (converter_in, document_in);
+
+        html_conversion_initialization (self, context);
+
+        html_pass_conversion_initialization (self, converter_in);
 
 # for debugging, to get output units lists in Perl
 void

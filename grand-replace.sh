@@ -4,6 +4,7 @@
 
 # list files that have possibly been missed by this script
 find_missed () {
+  YY=`date +%y`
   find . \
     -name autom4te.cache -prune -o \
     -name .git -prune -o \
@@ -16,7 +17,7 @@ find_missed () {
     -name "build-aux" -prune -o \
     -name "contrib" -prune -o \
     -wholename "./js/node_modules" -prune -o \
-    -wholename "./tta/t/results" -prune -o \
+    -wholename "./tta/perl/t/results" -prune -o \
     -wholename "./tta/tests/*/{res,out}_*" -prune -o \
     -type f \
     \( -name '*' \) \
@@ -30,6 +31,7 @@ find_missed () {
     -not -name "*.info" \
     -not -name "*.info-?" \
     -not -wholename "./doc/txi-??.tex" \
+    -not -wholename "./doc/txi-??_??.tex" \
     -not -wholename "./doc/texinfo-ja.tex" \
     -not -wholename "./doc/texinfo-zh.tex" \
     -not -wholename "./doc/short-sample-*.texi" \
@@ -39,14 +41,16 @@ find_missed () {
     -not -name "ChangeLog.*" \
     -not -name "COPYING" \
     -not -name "fdl.texi" \
-    -not -wholename "./tta/texi2any" \
+    -not -wholename "./tta/perl/texi2any" \
     -not -wholename "./util/htmlxref.d/Texinfo_GNU.cnf" \
     -not -wholename "./util/htmlxref.d/Texinfo_nonGNU.cnf" \
     -not -wholename "./Pod-Simple-Texinfo/pod2texi" \
     -not -wholename "./install-info/tests/defs" \
     -not -wholename "./INSTALL.generic" \
     -not -name "*~" \
-    -exec perl -wnl -e '/20\d[^5] Free/ && print "$ARGV:$_"' '{}' \;
+    -exec perl -wnl -e '/20\d\d Free/
+                        && !/20'$YY' Free/
+                        && print "$ARGV:$_"' '{}' \;
 }
 
 change_files () {
@@ -92,9 +96,16 @@ prune="-regex ($prune_dirs) -prune"
 # Don't touch this file itself
 not="-not -name grand-replace.sh"
 
+###############################################################
+
+
 find_dir=.
 extensions='c|h|sh|pm|pl|texi|xs'
-named_files='configure.ac|Makefile.am|README|README-hacking|TODO'
+
+# note omit configure.ac and Makefile.am as touching these forces
+# configure to run next time "make" is run.  easier to update these
+# manually.
+named_files='README|README-alpha|README-hacking|TODO'
 
 ext_pattern=".*\.($extensions)"
 named_pattern=".*\/($named_files)"
@@ -103,7 +114,13 @@ change_files
 
 find_dir=.
 ext_pattern=""
-named_pattern='./NEWS|./INSTALL|./AUTHORS|./js/info.js|./pre-inst-env'
+named_pattern='./NEWS|./INSTALL|./AUTHORS'
+
+change_files
+
+find_dir=.
+ext_pattern=""
+named_pattern='./js/info.js|./build-aux/pre-inst-env.in|./pre-inst-env'
 
 change_files
 
@@ -121,6 +138,18 @@ ext_pattern=".*\.(sh)"
 
 change_files
 
+find_dir=info/t
+ext_pattern=""
+named_pattern='.*\.inc'
+
+change_files
+
+find_dir=info/info-hooks-default
+ext_pattern=""
+named_pattern='.*'
+
+change_files
+
 find_dir=util
 ext_pattern=""
 named_pattern=".*"
@@ -129,11 +158,29 @@ not='-not -name htmlxref.cnf -not -name texi2dvi -not -name texi2pdf'
 
 change_files
 
-find_dir=tta/Texinfo
+find_dir=tta/C/main
 extensions='txt|awk'
 ext_pattern=".*\.($extensions)"
 named_files=""
 named_pattern=".*\/($named_files)"
+
+change_files
+
+find_dir=tta/data
+ext_pattern=""
+named_pattern='.*\.(txt|csv)'
+
+change_files
+
+find_dir=tta/swig
+ext_pattern=""
+named_pattern='.*\.(i|t|py)'
+
+change_files
+
+find_dir=texindex
+ext_pattern=".*\.(twjr|awk|in)"
+named_pattern='texindex'
 
 change_files
 

@@ -2,7 +2,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-/* Copyright 2010-2025 Free Software Foundation, Inc.
+/* Copyright 2010-2026 Free Software Foundation, Inc.
 
    This program is free software: you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,6 +21,10 @@
 #include <stdarg.h>
 /* for iconv_t */
 #include <iconv.h>
+/* for _O_BINARY */
+#include <fcntl.h>
+/* for S_ISDIR, S_IFDIR and S_IFMT */
+#include <sys/stat.h>
 
 #include "command_ids.h"
 #include "tree_types.h"
@@ -40,8 +44,7 @@
 #  define S_ISDIR(m) (((m) & S_IFMT) == S_IFDIR)
 #endif /* !S_ISDIR && S_IFDIR */
 
-/* FIXME use something common? */
-/* taken from system.h */
+/* similar definitions in system.h */
 #ifndef O_BINARY
 # ifdef _O_BINARY
 #  define O_BINARY _O_BINARY

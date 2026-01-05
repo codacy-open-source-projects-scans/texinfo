@@ -1,6 +1,6 @@
 This is the todo list for texi2any
 
-  Copyright 2012-2025 Free Software Foundation.
+  Copyright 2012-2026 Free Software Foundation.
 
   Copying and distribution of this file, with or without modification,
   are permitted in any medium without royalty provided the copyright
@@ -9,11 +9,6 @@ This is the todo list for texi2any
 
 Before next release
 ===================
-
-system.h macros are duplicated in C/main/utils.h.  Ok?
-
-Document 'style_commands_formatting' and 'no_arg_commands_formatting' in
-texi2any_api.texi
 
 Bugs
 ====
@@ -1074,9 +1069,9 @@ our_CFLAGS='-g -O0 -Wformat-security -Wstrict-prototypes -Wall -Wno-parentheses 
 # some speed penalty
 our_CFLAGS='-g -O2 -D_FORTIFY_SOURCE=2 -Wformat-security -Wstrict-prototypes -Wall -Wno-parentheses -Wno-missing-braces -Wno-unused-parameter -fstack-protector-all -Wextra -fno-omit-frame-pointer'
 our_CFLAGS='-g -O2 -Wformat-security -Wstrict-prototypes -Wall -Wno-parentheses -Wno-missing-braces -Wno-unused-parameter -Wextra'
-./configure --enable-additional-checks "CFLAGS=$our_CFLAGS" "PERL_EXT_CFLAGS=$our_CFLAGS"
-./configure --enable-c-texi2any --enable-additional-checks "CFLAGS=$our_CFLAGS" "PERL_EXT_CFLAGS=$our_CFLAGS"
+./configure --with-swig --enable-additional-checks "CFLAGS=$our_CFLAGS" "PERL_EXT_CFLAGS=$our_CFLAGS"
+./configure --with-swig --enable-c-texi2any --enable-additional-checks "CFLAGS=$our_CFLAGS" "PERL_EXT_CFLAGS=$our_CFLAGS"
 unset our_CFLAGS
 
 # test non-XS build
-./configure --disable-perl-xs --enable-additional-checks "CFLAGS=$our_CFLAGS" PERL_EXT_CFLAGS=fail
+./configure --disable-perl-xs --with-swig --enable-additional-checks "CFLAGS=$our_CFLAGS" PERL_EXT_CFLAGS=fail

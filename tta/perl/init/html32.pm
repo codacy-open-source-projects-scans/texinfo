@@ -3,7 +3,7 @@
 #
 # html32.pm: output HTML 3.2
 #
-# Copyright 2003, 2004, 2007, 2009, 2011-2025 Free Software Foundation, Inc.
+# Copyright 2003, 2004, 2007, 2009, 2011-2026 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -105,9 +105,9 @@ foreach my $dots ('dots') {
 
 foreach my $context ('preformatted', 'normal') {
   foreach my $command('sansserif', 'r') {
-    texinfo_register_style_command_formatting($command, undef, undef, $context);
+    texinfo_register_style_command_formatting($command, undef, $context);
   }
-  texinfo_register_style_command_formatting('t', 'tt', undef, $context);
+  texinfo_register_style_command_formatting('t', 'tt', $context);
 }
 
 # no inodot in HTML3.2

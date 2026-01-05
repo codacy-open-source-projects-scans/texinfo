@@ -1,5 +1,5 @@
 /* info.js - Javascript UI for Texinfo manuals
-   Copyright (C) 2017-2025 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Texinfo.
 
@@ -1196,7 +1196,7 @@ init_index_page ()
     store.dispatch ({ type: "iframe-ready", id: config.TOP_ID });
     store.dispatch ({
       type: "echo",
-      msg: "Welcome to Texinfo documentation viewer 7.2dev, type '?' for help."
+      msg: "Welcome to Texinfo documentation viewer 7.2.90, type '?' for help."
     });
 
     /* Call user hook.  */

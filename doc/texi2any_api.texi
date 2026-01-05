@@ -13,7 +13,7 @@ This manual is for GNU Texinfo @command{texi2any} program output
 adaptation using customization files (version @value{VERSION},
 @value{UPDATED}).
 
-Copyright @copyright{} 2013-2025 Free Software Foundation, Inc.
+Copyright @copyright{} 2013-2026 Free Software Foundation, Inc.
 
 @quotation
 Permission is granted to copy, distribute and/or modify this document
@@ -598,17 +598,16 @@ character, such as @code{@@@@}, and those with a normal alphabetic
 name but whose braces should be empty, such as @code{@@TeX@{@}} and
 @code{@@AA@{@}}.
 
-To change the formatting of a command, the functions is
-@code{texinfo_register_no_arg_command_formatting}:
+You can set directly the formatting of those commands in different contexts
+with @code{texinfo_register_no_arg_command_formatting}:
 
 @defun texinfo_register_no_arg_command_formatting ($command_name, @
-    $context, $text, $html_element, $translated_string_converted, @
-    $translated_string_to_convert)
+        $context, $text, $html_element, $translated_string_converted)
 @var{$command_name} is the @@-command name, without the leading @@.
 @var{$context} is @samp{normal}, @samp{preformatted} or @samp{string}.
-There is no separate math context, @samp{preformatted} should be used
-for math context. @xref{Init File Expansion Contexts}.  If @var{$context}
-is @code{undef}, the @samp{normal} context is assumed.
+There is no separate math nor code context, @samp{preformatted} should be used
+for math and code contexts. @xref{Init File Expansion Contexts}.  If
+@var{$context} is @code{undef}, the @samp{normal} context is assumed.
 
 The remaining arguments determine the formatting.  If @var{$text} is set,
 the corresponding text is output when the @@-command is formatted.  @var{$text}
@@ -616,18 +615,25 @@ can contain HTML elements if needed.  If @var{$html_element} is set, the text
 is enclosed between the @var{$html_element} element opening and the element
 closing.  If @var{$translated_string_converted} is set, the corresponding
 text is translated when the document language changes and used as text.
-@var{$translated_string_converted} should already be HTML.  If
-@var{$translated_string_to_convert} is set, the corresponding
-text is translated when the document language changes and converted from
-Texinfo code to HTML.  Since the conversion is done in the appropriate
-context, @var{$translated_string_to_convert} should only be set for the
-@samp{normal} context. @xref{Texinfo::Translations
-METHODS,,,texi2any_internals}.
+@var{$translated_string_converted} should already be HTML.
 @end defun
 
 It is not required to set values for all the contexts.  If preformatted context
 output is not set, normal context output is used.  If string context output is not set,
 preformatted context output is used.
+
+@defun texinfo_register_no_arg_command_formatting ($command_name, @
+    $translated_string_to_convert)
+@var{$command_name} is the @@-command name, without the leading @@.
+@var{$translated_string_to_convert} is the Texinfo code used for the
+command formatting.  This Texinfo code is translated when the document
+language changes and converted from Texinfo to HTML in the different
+expansion contexts, @samp{normal}, @samp{preformatted} and @samp{string}.
+@xref{Texinfo::Translations METHODS,,,texi2any_internals}.
+@end defun
+
+If both Texinfo code and explicit formatting are specified, the explicit
+formatting takes precedence.
 
 For example, if you want @code{&shy;} to be output
 for @code{@@-} in normal, preformatted (and math) and string context, call
@@ -639,26 +645,32 @@ texinfo_register_no_arg_command_formatting('-', undef, '&shy;');
 If you want ``@code{<small>...</small>}'' to be output for @code{@@enddots}
 in normal context and @code{...} to be output in other contexts, call
 @example
+@group
 texinfo_register_no_arg_command_formatting('enddots',
                                            'normal', '...', 'small');
 texinfo_register_no_arg_command_formatting('enddots',
                                            'preformatted', '...');
+@end group
 @end example
 
 If you want ``@code{error--&gt;}'' to be used for @code{@@error} in every context,
 with a translation when the document language changes, call
 
 @example
+@group
 texinfo_register_no_arg_command_formatting('error', undef, undef, undef,
                                            'error--&gt;');
+@end group
 @end example
 
 If you want ``@code{is the @strong{same} as}'' to be used for @code{@@equiv},
 translated when the document language changes, and converted from Texinfo to
-HTML in the context of the translation, call
+HTML in the different expansion contexts, call
 @example
-texinfo_register_no_arg_command_formatting('equiv', undef, undef, undef,
-                                 undef, 'is the @@strong@{same@} as');
+@group
+texinfo_register_no_arg_command_texinfo('equiv',
+                                        'is the @@strong@{same@} as');
+@end group
 @end example
 
 @xref{Translated Strings Customization} for
@@ -697,29 +709,47 @@ texinfo_register_upper_case_command('var', 1);
 @cindex Simple commands, customizing HTML for
 @cindex Style commands, customizing HTML for
 
-You can change the formatting of the output produced by ``indicator'' and font
+You can change the formatting of the ``indicator'' and font
 commands (e.g., @code{@@code}, @code{@@t}), and other simple commands with
 arguments (e.g., @code{@@asis}, @code{@@clicksequence}, @code{@@sup},
-@code{@@verb}) with @code{texinfo_register_style_command_formatting}:
+@code{@@verb}).
+
+You specify the HTML element associated to a command in a given
+expansion context by calling the
+@code{texinfo_register_style_command_formatting} function:
 
 @defun texinfo_register_style_command_formatting ($command_name, @
-                                     $html_element, $in_quotes, $context)
+                                                  $html_element, $context)
 @var{$command_name} is the @@-command name, without the leading @@.
-@var{$context} is @samp{normal} or @samp{preformatted}.
-There is no separate math context, @samp{preformatted} should be used
-for math context. @xref{Init File Expansion Contexts}.  There is no string
-context either, as in string context simple formatting without the need
-for per command information should be sufficient.  If @var{$context}
-is @code{undef}, the @samp{normal} context is assumed.
+@var{$context} is @samp{normal} or @samp{preformatted}.  There is no separate
+math nor code context, @samp{preformatted} should be used for math and code
+context. @xref{Init File Expansion Contexts}.  There is no way to specify
+string context, as in string context HTML elements are not output.
+If @var{$context} is @code{undef}, the @samp{normal} context is assumed.
 
 If @var{$html_element} is set, the argument is enclosed between the
 @var{$html_element} element opening and the element closing.
+If @var{$html_element} is undefined, no HTML element is output.
+@end defun
+
+To specify the whether quotes should be output for an @@-command
+conversion, you should call the @code{texinfo_style_command_set_quoting}
+function:
+
+@defun texinfo_style_command_set_quoting ($command_name, @
+                                     $html_element, $in_quotes, $context)
+@var{$command_name} is the @@-command name, without the leading @@.
+@var{$context} is @samp{normal} or @samp{preformatted}.  There is no separate
+math nor code context, @samp{preformatted} should be used for math and code
+context. @xref{Init File Expansion Contexts}.  There is no string context
+as in string context simple formatting without the need for per command
+information should be sufficient.  If @var{$context} is @code{undef}, the
+@samp{normal} context is assumed.
+
 If @var{$in_quotes} is true, the result is enclosed in quotes associated with
 customization variables @code{OPEN_QUOTE_SYMBOL} and @code{CLOSE_QUOTE_SYMBOL}
-(@pxref{Customization of HTML Code Inserted,,, texinfo, Texinfo}).
-
-If @var{$html_element} is undefined and @var{$in_quotes} is not set,
-the formatted argument is output as is.
+(@pxref{Customization of HTML Code Inserted,,, texinfo, Texinfo}).  Otherwise,
+no quotes are output.
 @end defun
 
 For example, to set @code{@@sansserif@{argument@}} to be formatted as
@@ -727,17 +757,20 @@ For example, to set @code{@@sansserif@{argument@}} to be formatted as
 with quotes in preformatted context, use:
 
 @example
-texinfo_register_style_command_formatting('sansserif', 'code', 0,
+texinfo_register_style_command_formatting('sansserif', 'code',
                                           'normal');
-texinfo_register_style_command_formatting('sansserif', 'code', 1,
+texinfo_register_style_command_formatting('sansserif', 'code',
                                           'preformatted');
+
+texinfo_style_command_set_quoting('sansserif', 0, 'normal');
+texinfo_style_command_set_quoting('sansserif', 1, 'preformatted');
 @end example
 
 To output the formatted argument of @code{@@t} as is:
 @example
 foreach my $context ('normal', 'preformatted') @{
-  texinfo_register_style_command_formatting ('t', undef,
-                                             undef, $context);
+  texinfo_register_style_command_formatting ('t', undef, $context);
+  texinfo_style_command_set_quoting ('t', undef, $context);
 @}
 @end example
 
@@ -3428,6 +3461,93 @@ my ($output_unit, $root_command)
  = $converter->get_element_root_command_element($printindex_element);
 my $index_element_id = $converter->command_id($root_command);
 @end example
+
+
+@node Commands Without Arguments Formatting
+@subsection Commands Without Arguments Formatting
+
+The information on commands without arguments formatting obtained from defaults
+and customization (@pxref{Simple Customization for Commands Without Arguments})
+can be accessed through the @samp{no_arg_commands_formatting} key of the
+converter.  The value is a hash, with command name keys (without @@).  The
+value associated to a command name is also a hash with the following
+keys corresponding to expansion contexts (@pxref{Init File Expansion Contexts}):
+
+@table @code
+@item normal
+Formatting for the normal context.
+
+@item preformatted
+Formatting for the code, preformatted and math context.
+
+@item string
+Formatting for the string context.
+
+@end table
+
+The value associated is also a hash, with the following
+keys:
+
+@table @code
+@item text
+HTML text, possibly with elements (not in the string expansion context) corresponding
+to the @@-command.  Can be directly specified or obtained through translation,
+and also possibly through translation and conversion.
+
+@item element
+HTML element.  Directly specified.
+@end table
+
+for example, for the @code{@@equiv} command in preformatted context:
+@example
+@group
+if ($converter->in_preformatted_context() or $converter->in_math()) @{
+  my $specification
+   = $converter->@{'no_arg_commands_formatting'@}->@{'equiv'@}
+                                             ->@{'preformatted'@};
+  my $text = '';
+  if (exists($specification->@{'text'@})) @{
+    $text = $specification->@{'text'@};
+  @}
+  if (exists($specification->@{'element'@})) @{
+    return '<'.$specification->@{'element'@}.'>'
+       . $text . '</'.$specification->@{'element'@}.'>';
+  @} else @{
+    return $text;
+  @}
+@}
+@end group
+@end example
+
+
+@node Simple Commands with Braces Formatting
+@subsection Simple Commands with Braces Formatting
+
+The information on commands without arguments formatting obtained from defaults
+and customization (@pxref{Simple Output Customization for Simple Commands with Braces})
+can be accessed through the @samp{style_commands_formatting} key of the
+converter.  The value is a hash, with command name keys (without @@).  The
+value associated to a command name is also a hash with the following
+keys corresponding to expansion contexts (@pxref{Init File Expansion Contexts}):
+
+@table @code
+@item normal
+Formatting for the normal context.
+
+@item preformatted
+Formatting for the code, preformatted and math context.
+@end table
+
+The value associated is also a hash, with the following
+keys:
+
+@table @code
+@item element
+HTML element.
+
+@item quote
+Set if the argument is expected to be in quotes.
+@end table
 
 
 @node Specific Formatting for Indices
