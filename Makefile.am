@@ -114,6 +114,7 @@ update-po:
 # Verify that all source files using _() are listed in po/POTFILES.in.
 # Run this before making pretests, as well as official releases, so that
 # translators will see changed strings.  See README-hacking.
+# Regexp passed to grep to be kept in sync with po/Makevars.
 # Note that pgettext is not matched to avoid a false positive in
 # tta/perl/Texinfo/Translations.pm, but it is not problematic as it appears
 # only in errors.c, which matches other function names.
@@ -161,7 +162,7 @@ po_document-check:
 	      man/* ) continue;;	\
 	      texinfo-*/*) continue;;					\
 	      tta/maintain/*) continue;;				\
-	      tta/init/documentation_examples.pm) continue;;		\
+	      tta/perl/init/documentation_examples.pm) continue;;	\
 	      tta/perl/XSTexinfo/parser_document/DocumentXS.c) continue;;		\
 	      tta/perl/XSTexinfo/reader_element/TreeElementConverterXS.c) continue;;	\
 	    esac;							\
