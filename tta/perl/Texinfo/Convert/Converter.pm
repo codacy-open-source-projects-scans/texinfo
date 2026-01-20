@@ -38,7 +38,6 @@ use Storable;
 
 use Carp qw(cluck confess);
 
-use Devel::Peek;
 eval { require Devel::Refcount; Devel::Refcount->import(); };
 eval { require Devel::FindRef; Devel::FindRef->import(); };
 
@@ -532,7 +531,9 @@ sub perl_converter_remove_output_units($) {
     if ($check_output_units_references) {
       foreach my $output_units_list (@$output_units_lists) {
         foreach my $output_unit (@$output_units_list) {
-          my $reference_count = Devel::Peek::SvREFCNT($output_unit);
+          my $reference_count
+           = Texinfo::ManipulateTree::SvREFCNT($output_unit,
+                                               $output_unit_SV_target_count);
           my $object_count = Devel::Refcount::refcount($output_unit);
           # only one object count remaining corresponding to the last refcount
           # of the output unit.
@@ -1284,7 +1285,8 @@ sub determine_files_and_directory($$) {
       $document_path = $output_file;
     }
     if (defined($self->get_conf('SUBDIR')) and $output_file ne '') {
-      my $dir = File::Spec->canonpath($self->get_conf('SUBDIR'));
+      my $dir
+        = Texinfo::Common::file_separator_canonpath($self->get_conf('SUBDIR'));
       $output_file = join('/', ($dir, $output_file));
     }
   } else {
@@ -1338,10 +1340,71 @@ sub determine_files_and_directory($$) {
     $destination_directory = $output_dir;
   }
   if ($destination_directory ne '') {
-    $destination_directory = File::Spec->canonpath($destination_directory);
+    $destination_directory
+      = Texinfo::Common::file_separator_canonpath($destination_directory);
   }
   return ($output_file, $destination_directory, $output_filename,
           $document_name, $input_basefile);
+}
+
+# ALTIMP partial in structuring_transfo/structuring.c
+# For user-defined HTML customization, documented in the specific manual.
+# The bulk of the function could be better in Texinfo::Structuring, but since
+# it is not used internally, it is kept here.
+sub converter_node_relations_of_node($$) {
+  my ($self, $node_element) = @_;
+
+  if (!exists($self->{'document'})) {
+    return undef;
+  }
+  if (!exists($node_element->{'extra'})
+      or not $node_element->{'extra'}->{'node_number'}) {
+    return undef;
+  }
+
+  my $nodes_list = $self->{'document'}->nodes_list();
+
+  return $nodes_list->[$node_element->{'extra'}->{'node_number'} -1];
+}
+
+# No equivalent in C.
+# For user-defined HTML customization, documented in the specific manual.
+sub converter_section_relations_of_section($$) {
+  my ($self, $element) = @_;
+
+  if (!exists($self->{'document'})) {
+    return undef;
+  }
+  # Note that this cannot happen if the element is actually a sectioning
+  # command tree element.
+  if (!exists($element->{'extra'})
+      or not $element->{'extra'}->{'section_number'}) {
+    return undef;
+  }
+
+  my $sections_list = $self->{'document'}->sections_list();
+
+  return $sections_list->[$element->{'extra'}->{'section_number'} -1];
+}
+
+# No equivalent in C.
+# For user-defined HTML customization, documented in the specific manual.
+sub converter_heading_relations_of_heading($$) {
+  my ($self, $element) = @_;
+
+  if (!exists($self->{'document'})) {
+    return undef;
+  }
+  # Note that this cannot happen if the element is actually a heading
+  # command tree element.
+  if (!exists($element->{'extra'})
+      or not $element->{'extra'}->{'heading_number'}) {
+    return undef;
+  }
+
+  my $headings_list = $self->{'document'}->headings_list();
+
+  return $headings_list->[$element->{'extra'}->{'heading_number'} -1];
 }
 
 # Reverse the decoding of the file name from the input encoding.

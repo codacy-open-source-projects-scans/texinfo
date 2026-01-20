@@ -42,6 +42,9 @@
 #include <getopt.h>
 #ifdef _WIN32
 /* for GetACP */
+/* Set WIN32_LEAN_AND_MEAN for a more minimal set of includes to avoid
+   clashing symbol names */
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #endif
 
@@ -934,6 +937,7 @@ main (int argc, char *argv[], char *env[])
   int getopt_long_index;
   const char *langinfo_locale_encoding;
   char *locale_encoding = 0;
+  char *console_output_encoding = 0;
   const char *input_file_arg;
   int status;
   char *program_file_name_and_directory[2];
@@ -996,7 +1000,7 @@ main (int argc, char *argv[], char *env[])
   size_t format_menu_option_nr;
   char *conversion_format_menu_default = 0;
   int texinfo_uninstalled = 0;
-  const char *converterdatadir = DATADIR "/" CONVERTER_CONFIG;
+  const char *converter_datadir = DATADIR "/" CONVERTER_CONFIG;
   const char *curdir = ".";
   CONVERTER_INITIALIZATION_INFO *converter_init_info;
   const char *external_module = 0;
@@ -1094,7 +1098,7 @@ main (int argc, char *argv[], char *env[])
       xasprintf (&extensions_dir, "%s/perl/ext", t2a_srcdir);
     }
   else
-    xasprintf (&extensions_dir, "%s/ext", converterdatadir);
+    xasprintf (&extensions_dir, "%s/ext", converter_datadir);
 
   free (command_directory);
 
@@ -1113,9 +1117,11 @@ main (int argc, char *argv[], char *env[])
      Done early because options defaults are used in help
      and paths are needed to locate file used for interpreter embedding
      and setup by the interpreter */
+  /* no converter_libdir argument because it is only needed when
+     (re)using a Perl interpreter, which is never the case here */
   txi_setup_main_load_interpreter (embedded_interpreter,
                         texinfo_uninstalled,
-                        converterdatadir, 0, t2a_builddir, t2a_srcdir, 0,
+                        converter_datadir, 0, t2a_builddir, t2a_srcdir, 0,
                         &argc, &argv, &env,
                         version_for_embedded_interpreter_check);
 
@@ -1129,23 +1135,36 @@ main (int argc, char *argv[], char *env[])
 #ifdef HAVE_LANGINFO_CODESET
   langinfo_locale_encoding = nl_langinfo (CODESET);
   if (langinfo_locale_encoding)
-    locale_encoding = strdup (langinfo_locale_encoding);
+    {
+      locale_encoding = strdup (langinfo_locale_encoding);
+      console_output_encoding = strdup (langinfo_locale_encoding);
+    }
 #endif
 
 #ifdef _WIN32
   if (!locale_encoding)
     {
-      unsigned cp = GetACP ();
-      xasprintf (&locale_encoding, "cp%u", cp);
+      UINT cp = GetACP ();
+      UINT cp_output = GetConsoleOutputCP ();
+      if (cp == CP_UTF8)
+        locale_encoding = strdup ("UTF-8");
+      else
+        xasprintf (&locale_encoding, "cp%u", cp);
+
+      if (cp_output == CP_UTF8)
+        console_output_encoding = strdup ("UTF-8");
+      else
+        xasprintf (&console_output_encoding, "cp%u", cp);
     }
 #endif
 
   /* Set initial configuration */
   /* program_options corresponds to main_program_set_options in texi2any */
   txi_set_base_default_options (&program_options, locale_encoding,
-                                program_file);
+                                console_output_encoding, program_file);
 
   free (locale_encoding);
+  free (console_output_encoding);
 
   /* NOTE this is not exactly the same as in Perl.  In Perl, when uninstalled,
      it is possible to be configured or not, and +nc is only postpended if
@@ -2591,7 +2610,7 @@ main (int argc, char *argv[], char *env[])
       add_string (curdir, &prepended_include_directories);
 
       if (input_directory)
-        canon_input_dir = canonpath (input_directory);
+        canon_input_dir = file_separator_canonpath (input_directory);
 
       if (canon_input_dir && strcmp (curdir, canon_input_dir))
         add_string (input_directory, &prepended_include_directories);

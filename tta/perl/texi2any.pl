@@ -76,7 +76,7 @@ use Storable;
 #use Data::Dumper;
 
 #use Devel::Cycle;
-use Devel::Peek;
+#use Devel::Peek;
 eval { require Devel::FindRef; Devel::FindRef->import(); };
 eval { require Devel::Refcount; Devel::Refcount->import(); };
 
@@ -99,7 +99,7 @@ BEGIN
   my $datadir = '@datadir@';
   my $converter = '@CONVERTER@';
   my $libdir = '@libdir@';
-  my $xsdir;
+  my $converter_libdir;
 
   if ($datadir eq '@' .'datadir@'
       or defined($ENV{'TEXINFO_DEV_SOURCE'})
@@ -134,10 +134,8 @@ BEGIN
     # Look for modules in their installed locations.
     my $modules_dir = join('/', ($datadir, $converter));
     # look for package data in the installed location.
-    # actually the same as $converterdatadir in main program below, but use
-    # another name to avoid confusion.
-    my $modules_converterdatadir = $modules_dir;
-    $xsdir = join('/', ($libdir, $converter));
+    my $converter_datadir = $modules_dir;
+    $converter_libdir = join('/', ($libdir, $converter));
 
     # try to make package relocatable, will only work if
     # standard relative paths are used
@@ -146,31 +144,31 @@ BEGIN
                           $converter, 'Texinfo', 'Parser.pm'))) {
       $modules_dir = join('/', ($command_directory, $updir,
                                 'share', $converter));
-      $modules_converterdatadir
-                  = join('/', ($command_directory, $updir,
-                                               'share', $converter));
-      $xsdir = join('/', ($command_directory, $updir,
+      $converter_datadir = $modules_dir;
+      $converter_libdir = join('/', ($command_directory, $updir,
                                           'lib', $converter));
     }
 
     unshift @INC, $modules_dir;
 
     require Texinfo::ModulePath;
-    Texinfo::ModulePath::init($modules_dir, $xsdir,
-                              $modules_converterdatadir,
+    Texinfo::ModulePath::init($modules_dir, $converter_libdir,
+                              $converter_datadir,
                               'installed' => 1);
   }
 } # end BEGIN
 
-# This allows disabling use of XS modules when Texinfo is built.
-BEGIN {
-  my $enable_xs = '@enable_xs@';
-  if ($enable_xs eq 'no') {
-    package Texinfo::XSLoader;
-    our $disable_XS;
-    $disable_XS = 1;
-  }
-}
+# This is not useful as this is already done in Texinfo::XSLoader based
+# on the enable_xs information from Texinfo::ModulePath.
+## This allows disabling use of XS modules when Texinfo is built.
+#BEGIN {
+#  my $enable_xs = '@enable_xs@';
+#  if ($enable_xs eq 'no') {
+#    package Texinfo::XSLoader;
+#    our $disable_XS;
+#    $disable_XS = 1;
+#  }
+#}
 
 use Texinfo::XSLoader;
 
@@ -196,7 +194,6 @@ my $prefix = '@prefix@';
 my $datadir;
 my $datarootdir;
 my $sysconfdir;
-#my $pkgdatadir;
 my $converter;
 
 my $fallback_prefix = File::Spec->rootdir() . join('/', ('usr', 'local'));
@@ -231,7 +228,7 @@ if ($Texinfo::ModulePath::texinfo_uninstalled) {
                                'perl', 'ext'));
 } else {
   $extensions_dir
-    = join('/', ($Texinfo::ModulePath::converterdatadir, 'ext'));
+    = join('/', ($Texinfo::ModulePath::converter_datadir, 'ext'));
 }
 
 my $internal_extension_dirs = [$extensions_dir];
@@ -241,20 +238,42 @@ my $internal_extension_dirs = [$extensions_dir];
 # file names encoding, Perl is expecting sequences of bytes, not unicode
 # code points.
 my $locale_encoding;
+# the encoding used to encode messages.
+my $console_output_encoding;
 
 eval 'require I18N::Langinfo';
 if (!$@) {
-  $locale_encoding = I18N::Langinfo::langinfo(I18N::Langinfo::CODESET());
-  $locale_encoding = undef if ($locale_encoding eq '');
+  my $langinfo_locale_encoding
+    = I18N::Langinfo::langinfo(I18N::Langinfo::CODESET());
+
+  if (defined($langinfo_locale_encoding)
+      and $langinfo_locale_encoding ne '') {
+    $locale_encoding = $langinfo_locale_encoding;
+    $console_output_encoding = $langinfo_locale_encoding;
+  }
 }
 
 if (!defined($locale_encoding) and $^O eq 'MSWin32') {
   eval 'require Win32::API';
   if (!$@) {
+    my $win32_utf8_codepage = '65001';
     Win32::API::More->Import("kernel32", "int GetACP()");
     my $CP = GetACP();
     if (defined($CP)) {
-      $locale_encoding = 'cp'.$CP;
+      if ($CP eq $win32_utf8_codepage) {
+        $locale_encoding = 'UTF-8';
+      } else {
+        $locale_encoding = 'cp'.$CP;
+      }
+    }
+    Win32::API::More->Import("kernel32", "int GetConsoleOutputCP()");
+    my $CP_output = GetConsoleOutputCP();
+    if (defined($CP_output)) {
+      if ($CP_output eq $win32_utf8_codepage) {
+        $console_output_encoding = 'UTF-8';
+      } else {
+        $console_output_encoding = 'cp'.$CP_output;
+      }
     }
   }
 }
@@ -370,8 +389,16 @@ my $configured_information = {
 my $main_program_set_options = {
     'PROGRAM' => $real_command_name,
     'TEXINFO_DTD_VERSION' => $texinfo_dtd_version,
+    # Used for :
+    #  * decoding command-line, including file names
+    #  * encoding command-line before executing a command
+    #  * error and warning messages translations encoding
     'COMMAND_LINE_ENCODING' => $locale_encoding,
-    'MESSAGE_ENCODING' => $locale_encoding,
+    # Used for error and warning messages output encoding
+    'MESSAGE_ENCODING' => $console_output_encoding,
+    # Used to encode input file names and output file names, if
+    # DOC_ENCODING_FOR_INPUT_FILE_NAME and DOC_ENCODING_FOR_OUTPUT_FILE_NAME
+    # respectively are not set.
     'LOCALE_ENCODING' => $locale_encoding,
  # better than making it the default value independently of the implementation
     'TEXINFO_OUTPUT_FORMAT' => 'info',
@@ -1755,7 +1782,8 @@ while (@input_files) {
     $input_directory = $curdir;
     $canon_input_dir = $curdir;
   } else {
-    $canon_input_dir = File::Spec->canonpath($input_directory);
+    $canon_input_dir
+      = Texinfo::Common::file_separator_canonpath($input_directory);
   }
 
   #my $input_file_base = $input_file_name;

@@ -23,6 +23,10 @@ use DynaLoader;
 
 #use version;
 
+# disable_XS is set in CheckXS TestXS.pm to override the
+# Texinfo::ModulePath::enable_xs based on the previous configure+make
+our $disable_XS;
+
 BEGIN {
   eval 'require Texinfo::ModulePath';
   if ($@ ne '') {
@@ -30,6 +34,10 @@ BEGIN {
     # not loaded.
     $Texinfo::ModulePath::texinfo_uninstalled = 1;
     $Texinfo::ModulePath::t2a_builddir = '';
+  } else {
+    if ($Texinfo::ModulePath::enable_xs eq 'no') {
+      $disable_XS = 1;
+    }
   }
 }
 
@@ -60,7 +68,7 @@ sub set_XS_embedded {
 sub XS_parser_enabled {
   return ($embedded_xs or
           ((not defined($ENV{TEXINFO_XS})
-            or $ENV{TEXINFO_XS} ne 'omit')
+                or $ENV{TEXINFO_XS} ne 'omit')
            and (not defined($ENV{TEXINFO_XS_PARSER})
                 or $ENV{TEXINFO_XS_PARSER} eq '1')));
 }
@@ -78,8 +86,6 @@ sub XS_convert_enabled {
             and (not defined $ENV{TEXINFO_XS_CONVERT}
                  or $ENV{TEXINFO_XS_CONVERT} ne '0')));
 }
-
-our $disable_XS;
 
 # set from Texinfo/Parser.pm
 my $xs_parser_loaded;
@@ -102,7 +108,7 @@ sub _debug($) {
 }
 
 # For messages to say that XS module couldn't be loaded
-sub _fatal($) {
+sub _message($) {
   my $msg = shift;
   if ($TEXINFO_XS eq 'debug'
       or $TEXINFO_XS eq 'required'
@@ -127,11 +133,11 @@ sub _find_file($) {
   return undef;
 }
 
-my $added_converterxsdir;
+my $added_converter_libdir;
 my %dl_path_prepended_dirs;
 
 # If $TRY_DIRECT_LOAD is set and no .la file is found in @INC, add
-# the converterxsdir directory to the DynaLoader path and let DynaLoader
+# the converter_libdir directory to the DynaLoader path and let DynaLoader
 # find the module file using the usual file names.
 # This allows to have modules found even if packagers remove .la files
 # installed in the default case on platforms where modules have usual names
@@ -144,22 +150,22 @@ sub load_libtool_library {
   my ($libtool_dir, $libtool_archive) = _find_file("$module_name.la");
   if (!$libtool_archive) {
     if (!$try_direct_load) {
-      _fatal("$module_name: couldn't find Libtool archive file");
+      _message("$module_name: couldn't find Libtool archive file");
       return 0;
     } else {
       $dlname = $module_name;
-      if (!defined($added_converterxsdir)
-          and defined($Texinfo::ModulePath::converterxsdir)) {
-        $added_converterxsdir = $Texinfo::ModulePath::converterxsdir;
-        unshift @DynaLoader::dl_library_path, $added_converterxsdir;
+      if (!defined($added_converter_libdir)
+          and defined($Texinfo::ModulePath::converter_libdir)) {
+        $added_converter_libdir = $Texinfo::ModulePath::converter_libdir;
+        unshift @DynaLoader::dl_library_path, $added_converter_libdir;
       }
-      _debug("try direct load $module_name: $added_converterxsdir");
+      _debug("try direct load $module_name: $added_converter_libdir");
     }
   } else {
     my $fh;
     open $fh, $libtool_archive;
     if (!$fh) {
-      _fatal("$module_name: couldn't open Libtool archive file");
+      _message("$module_name: couldn't open Libtool archive file");
       return 0;
     }
 
@@ -171,7 +177,7 @@ sub load_libtool_library {
       }
     }
     if (!defined($dlname) or $dlname eq '') {
-      _fatal("$module_name: couldn't find name of shared object");
+      _message("$module_name: couldn't find name of shared object");
       return 0;
     }
 
@@ -195,7 +201,7 @@ sub load_libtool_library {
 
   my @found_files = DynaLoader::dl_findfile($dlname);
   if (scalar(@found_files) == 0) {
-    _fatal("$module_name: couldn't find $dlname");
+    _message("$module_name: couldn't find $dlname");
     return 0;
   }
   my $dlpath = $found_files[0];
@@ -205,7 +211,7 @@ sub load_libtool_library {
   my $libref = DynaLoader::dl_load_file($dlpath, $flags);
   if (!defined($libref)) {
     my $message = DynaLoader::dl_error();
-    _fatal("$module_name: couldn't load file $dlpath: $message");
+    _message("$module_name: couldn't load file $dlpath: $message");
     return 0;
   }
   _debug("$dlpath loaded");
@@ -213,7 +219,7 @@ sub load_libtool_library {
 
   my @undefined_symbols = DynaLoader::dl_undef_symbols();
   if (scalar(@undefined_symbols) != 0) {
-    _fatal("$module_name: still have undefined symbols after dl_load_file");
+    _message("$module_name: still have undefined symbols after dl_load_file");
   }
   return $libref;
 }
@@ -261,7 +267,7 @@ sub init {
   }
 
   if ($disable_XS) {
-    _fatal("use of XS modules was disabled when Texinfo was built");
+    _message("use of XS modules was disabled when Texinfo was built");
     goto FALLBACK;
   }
 
@@ -306,7 +312,7 @@ sub init {
   _debug("looking for $bootname");
   my $symref = DynaLoader::dl_find_symbol($libref, $bootname);
   if (!defined($symref)) {
-    _fatal("$module_name: couldn't find $bootname symbol");
+    _message("$module_name: couldn't find $bootname symbol");
     goto FALLBACK;
   }
   _debug("trying to call $bootname...");
@@ -314,7 +320,7 @@ sub init {
                                                   $symref); #, $dlname);
 
   if (!defined($boot_fn)) {
-    _fatal("$module_name: couldn't bootstrap");
+    _message("$module_name: couldn't bootstrap");
     goto FALLBACK;
   }
   _debug("  ...succeeded");
@@ -336,10 +342,10 @@ sub init {
 
   if (defined &{"${module}::init"}
       and !&{"${module}::init"} ($Texinfo::ModulePath::texinfo_uninstalled,
-                                 $Texinfo::ModulePath::converterdatadir,
+                                 $Texinfo::ModulePath::converter_datadir,
                                  $Texinfo::ModulePath::t2a_builddir,
                                  $Texinfo::ModulePath::t2a_srcdir)) {
-    _fatal("$module_name: error initializing");
+    _message("$module_name: error initializing");
     goto FALLBACK;
   }
 
@@ -387,9 +393,19 @@ sub init {
   return  $fallback_module;
 } # end init
 
+my $XS_disable_for_override_error_output;
+
 # Override subroutine $TARGET with $SOURCE.
 sub override {
   my ($target, $source) = @_;
+
+  if ($disable_XS) {
+    if (!$XS_disable_for_override_error_output) {
+      _debug("use of XS for override was disabled when Texinfo was built");
+      $XS_disable_for_override_error_output = 1;
+    }
+    return;
+  }
 
   _debug("attempting to override $target with $source...");
 

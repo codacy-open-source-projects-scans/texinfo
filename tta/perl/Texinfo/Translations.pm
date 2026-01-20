@@ -37,6 +37,8 @@ use Locale::Messages;
 
 use Storable qw(dclone);
 
+use Texinfo::XSLoader;
+
 use Texinfo::TreeElement;
 
 # for __()
@@ -59,6 +61,8 @@ use Texinfo::ManipulateTree;
 
 our $VERSION = '7.2.90';
 
+my $XS_parser = Texinfo::XSLoader::XS_parser_enabled();
+
 # we want a reliable way to switch locale for the document
 # strings translations so we don't use the system gettext.
 Locale::Messages->select_package ('gettext_pp');
@@ -66,9 +70,11 @@ Locale::Messages->select_package ('gettext_pp');
 our $module_loaded = 0;
 sub import {
   if (!$module_loaded) {
-    Texinfo::XSLoader::override(
-      "Texinfo::Translations::_XS_configure",
-      "Texinfo::DocumentXS::configure_output_strings_translations");
+    if ($XS_parser) {
+      Texinfo::XSLoader::override(
+        "Texinfo::Translations::_XS_configure",
+        "Texinfo::DocumentXS::configure_output_strings_translations");
+    }
     $module_loaded = 1;
   }
   # The usual import method
@@ -110,10 +116,13 @@ sub _decode_i18n_string($$) {
   return Encode::decode($encoding, $string);
 }
 
+my $working_locale;
+
+my $no_local_found_error_output;
+
 sub _switch_messages_locale() {
   my $locale;
 
-  our $working_locale;
   if (defined($working_locale)) {
     $locale = POSIX::setlocale(LC_MESSAGES, $working_locale);
   }
@@ -155,6 +164,12 @@ sub _switch_messages_locale() {
       warn
   __("Cannot switch to a locale compatible with document strings translations")."\n";
       $working_locale = $locale;
+    }
+  } else {
+    if (!$no_local_found_error_output) {
+      warn
+    __("Cannot find a locale compatible with document strings translations")."\n";
+      $no_local_found_error_output = 1;
     }
   }
 }

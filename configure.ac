@@ -15,7 +15,7 @@ AC_INIT([GNU Texinfo], [7.2.90], [bug-texinfo@gnu.org])
 dnl Must come before AM_INIT_AUTOMAKE.
 AC_CONFIG_AUX_DIR([build-aux])
 dnl tar-ustar because we have long filenames for some test files.
-AM_INIT_AUTOMAKE([1.16.1
+AM_INIT_AUTOMAKE([1.16.1 dist-xz
                  info-in-builddir parallel-tests tar-ustar])
 AC_CONFIG_MACRO_DIRS([build-aux/m4 gnulib/m4 m4])
 
@@ -64,12 +64,8 @@ AC_ARG_VAR([PERL_EXT_CPPFLAGS], [C preprocessor flags for a Perl extension])
 AC_ARG_VAR([PERL_EXT_LDFLAGS], [Linker flags for a Perl extension])
 AC_ARG_VAR([PERL_EXT_CC], [Compiler for a Perl extension])
 
-# note that we only need Devel::Peek for debugging, so a runtime load
-# would have been better.  However, the function used does not seems to
-# work correctly if the module is loaded with require, but works if loaded
-# with use.
 AC_MSG_CHECKING([Perl version and modules])
-if $PERL -e "use 5.008_001; use Encode; use Data::Dumper; use Devel::Peek; use Getopt::Long qw(GetOptions); use Storable; use File::Spec; use File::Basename; use Unicode::Normalize" >/dev/null 2>&AS_MESSAGE_LOG_FD; then
+if $PERL -e "use 5.008_001; use Encode; use Data::Dumper; use Getopt::Long qw(GetOptions); use Storable; use File::Spec; use File::Basename; use Unicode::Normalize" >/dev/null 2>&AS_MESSAGE_LOG_FD; then
   perl_version_requirement='yes'
 else
   perl_version_requirement='no'
@@ -319,8 +315,8 @@ AC_ARG_ENABLE([additional-checks],
 AC_ARG_ENABLE([perl-xs],
     AS_HELP_STRING([--enable-perl-xs],[build Perl XS modules for speed (default: check)]))
 
-AC_ARG_ENABLE([c-texi2any],
-    AS_HELP_STRING([--enable-c-texi2any],[Use texi2any program implemented in C if possible]))
+AC_ARG_ENABLE([using-c-texi2any],
+    AS_HELP_STRING([--enable-using-c-texi2any],[Install texi2any program implemented in C if built]))
 
 AC_ARG_WITH([swig],
    AS_HELP_STRING([--with-swig], [build SWIG interfaces (default: no)]))
@@ -341,12 +337,9 @@ AC_ARG_ENABLE([installvendorlib],
     AS_HELP_STRING([--enable-installvendorlib],[Perl installvendorlib directory (default: Perl default)]))
 
 # This is useful on platforms where gettext functions are present, but
-# setting the locale through LANGUAGE is not implemented.  In 2024 this is
-# the case of the musl libc libintl implementation, for example.
-# Setting locale through LANGUAGE is not automatically detected, but it
-# is possible to manually set --enable-xs-perl-libintl to use libintl-perl
-# to always get the correct output (there is a TODO for automatic detection in
-# tta/configure.ac).
+# setting the locale through LANGUAGE is not implemented.
+# It is possible to manually set --enable-xs-perl-libintl to use libintl-perl
+# to always get the correct output.
 AC_ARG_ENABLE([xs-perl-libintl],
     AS_HELP_STRING([--enable-xs-perl-libintl],
             [prefer Perl libintl-perl gettext in XS modules]))

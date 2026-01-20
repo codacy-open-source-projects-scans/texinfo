@@ -45,12 +45,15 @@ use strict;
 # debugging
 use Carp qw(cluck confess);
 
-# Next three only needed for debugging, if customization variable TEST
-# is set > 2 (which never happens automatically).
-use Devel::Peek;
-eval { require Devel::Refcount; Devel::Refcount->import(); };
+# Do not used Devel::Peek, instead implement SvREFCNT as Devel::Peek
+# cannot be loaded in an eval
+#use Devel::Peek;
 # SvREFCNT counts are wrong if loaded through eval?
 #eval { require Devel::Peek; Devel::Peek->import(); };
+
+# Next two only needed for debugging, if customization variable TEST
+# is set > 2 (which never happens automatically).
+eval { require Devel::Refcount; Devel::Refcount->import(); };
 eval { require Devel::FindRef; Devel::FindRef->import(); };
 
 my $devel_findref_loading_error = $@;
@@ -83,7 +86,7 @@ our $VERSION = '7.2.90';
 
 my $XS_structuring = Texinfo::XSLoader::XS_structuring_enabled();
 
-our %XS_overrides = (
+my %XS_overrides = (
   "Texinfo::ManipulateTree::copy_tree"
     => "Texinfo::StructTransfXS::copy_tree",
   "Texinfo::ManipulateTree::relate_index_entries_to_table_items_in_document"
@@ -98,6 +101,11 @@ our %XS_overrides = (
     => "Texinfo::StructTransfXS::protect_node_after_label_in_document",
   "Texinfo::ManipulateTree::tree_print_details"
     => "Texinfo::StructTransfXS::tree_print_details",
+
+  # Devel::Peek is not present on all the platforms, and we cannot load it
+  # in an eval, so we reimplement trivially SvREFCNT
+  "Texinfo::ManipulateTree::SvREFCNT"
+    => "Texinfo::StructTransfXS::SvREFCNT",
 );
 
 our $module_loaded = 0;
@@ -409,6 +417,18 @@ sub copy_contentsNonXS($;$) {
 
 
 
+# The XS override returns the SvREFCNT value.
+#   $EXPECTED_COUNT should be set to the reference count expected, for
+#   instance the reference count expected in a test that follows the
+#   call to SvREFCNT.
+sub SvREFCNT($;$) {
+  # If there is no XS, return the expected count instead of showing the
+  # true reference count.
+  my ($variable, $expected_count) = @_;
+
+  return $expected_count;
+}
+
 # for debugging
 sub _print_tree_elements_ref($$);
 sub _print_tree_elements_ref($$)
@@ -422,7 +442,7 @@ sub _print_tree_elements_ref($$)
     $parent = '';
   }
 
-  my $reference_count = Devel::Peek::SvREFCNT($element);
+  my $reference_count = SvREFCNT($element, -1);
   my $object_count = Devel::Refcount::refcount($element);
 
   print STDERR "". (' ' x $level) . $element
@@ -597,7 +617,7 @@ sub _element_remove_references($;$$) {
   #   Texinfo::ManipulateTree::element_print_details($element)."\n";
 
   if (defined($check_refcount) and not $silent_refcount) {
-    my $reference_count = Devel::Peek::SvREFCNT($element);
+    my $reference_count = SvREFCNT($element, $element_SV_target_count);
     my $object_count = Devel::Refcount::refcount($element);
     #if (1) {
     #Devel::Peek::Dump($element);
@@ -1164,8 +1184,9 @@ sub tree_print_details($;$$) {
 
 # Texinfo tree transformations used in main output formats conversion.
 
-# TODO there is no recursion in elements_oot, nor in modified elements.
-# Should this be added in modify_tree, or be left to &OPERATION?
+# NOTE for now, if there is a need to recurse, for instance in elements_oot
+# extra information or in modified elements, it should be done in
+# &OPERATION.  If it becomes common, it could be done in modify_tree instead.
 sub modify_tree($$;$);
 sub modify_tree($$;$) {
   my ($tree, $operation, $argument) = @_;
@@ -1194,7 +1215,7 @@ sub modify_tree($$;$) {
       }
     }
   }
-  # TODO this is probably unneeded, the call on each element of the
+  # This is probably unneeded, the call on each element of the
   # tree just above allows to modify source marks already.
   #if ($tree->{'source_marks'}) {
   #  my @source_marks = @{$tree->{'source_marks'}};
@@ -1695,6 +1716,11 @@ sub first_menu_node($$) {
 
 
 
+# Print listoffloats information for tests
+
+# ALTIMP tta/C/main/floats.c
+# no equivalent in Perl, so in this module.
+
 sub _print_caption_shortcaption($$$$$) {
   my ($element, $float, $caption_type, $type, $float_number) = @_;
 
@@ -1731,9 +1757,6 @@ sub _print_caption_shortcaption($$$$$) {
   }
   return $result;
 }
-
-# Print listoffloats information.  In a separate floats.c file in C,
-# no equivalent in Perl, so use this file.  Used in tests.
 
 sub print_listoffloats_types($) {
   my $listoffloats_list = shift;

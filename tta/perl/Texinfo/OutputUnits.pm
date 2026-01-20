@@ -40,7 +40,6 @@ use Carp qw(cluck confess);
 # for fileparse
 use File::Basename;
 
-use Devel::Peek;
 eval { require Devel::Refcount; Devel::Refcount->import(); };
 eval { require Devel::FindRef; Devel::FindRef->import(); };
 
@@ -322,7 +321,6 @@ sub release_output_units_list($) {
       print STDERR " $output_unit ["
              .(exists($output_unit->{'unit_contents'}) ?
                 scalar(@{$output_unit->{'unit_contents'}}) : '-')."]: ".
-                   Devel::Peek::SvREFCNT($output_unit).
        " HV: ".Devel::Refcount::refcount($output_unit)."\n"
         .Devel::FindRef::track($output_unit)."\n";
     }
@@ -942,8 +940,7 @@ sub print_output_units_tree_details($$;$$) {
 # Used for debugging and in test suite, but not generally useful. Not
 # documented in pod section and not exportable as it should not, in
 # general, be used.
-sub print_output_unit_directions($)
-{
+sub print_output_unit_directions($) {
   my $output_unit = shift;
 
   my $result = 'output unit: '.output_unit_texi($output_unit)."\n";

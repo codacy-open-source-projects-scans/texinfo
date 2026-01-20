@@ -9,7 +9,7 @@ at Savannah:
   https://savannah.gnu.org/git/?group=texinfo
 
 See also files:
-tta/README, tta/t/README, tta/tests/README, TODO, TODO.HTML
+tta/README, tta/perl/t/README, tta/tests/README, TODO, TODO.HTML
 
 Development tools
 -----------------
@@ -254,7 +254,7 @@ years that should be updated yet.
 Update copyright years in usage notices (can also be done at release
 time but may as well do at New Year's as well):
 * util/texi2dvi, util/texi2pdf, tta/perl/texi2any.pl, info/info.c,
-  install-info/install-info.c, texindex/ti.twjr, Pod-Simple-Texinfo/pod2texi
+  install-info/install-info.c, texindex/ti.twjr, Pod-Simple-Texinfo/pod2texi.pl
 
 
 - Note on "reproducible builds"
@@ -421,7 +421,8 @@ Consider running tests of texi2dvi under contrib/nontests
 - Official releases only:
 make V=1 pdf and fix underfull/overfull boxes.
 
--------------------------------------------------------------------------
+
+
 - Distribution checking
 
 "make distcheck" is the standard check that the build system is
@@ -472,29 +473,11 @@ make distclean
 find . -type f
 
 
--------------------------------------------------------------------------
+
 - Final steps for making a release
 
 (Keep a copy of README-hacking open in a text editor to update these
 release instructions.)
-
-Check on correct branch (master or release/*)
-
-git switch release/7.1
-# remove stale generated headers from gnulib
-git status -u | grep '\.h$' | xargs rm
-
-* For release/7.1 branch only: need to "rm -f doc/refcard/Makefile.in"
-after switching to prevent manually written Makefile being clobbered.
-[Remove this note once release/7.1 no longer relevant.]
-
-Then rebuild:
-
-./autogen.sh ; ./configure ; make
-
-Have a look at the output of "git status -u" to check for files that
-  should be tracked in git or ignored.  Check for leftover result
-  files under tta/tests which should be removed.
 
 check "git stash list" for any work in progress
 
@@ -507,6 +490,21 @@ check OpenCSW build reports at
 Check that TEXINFO_DTD_VERSION has been updated to the next version in
   configure.ac if the DTD has been modified since the last release.
   See comments in configure.ac, and run (at the top level) make dtd-check.
+
+
+Check on correct branch (master or release/*):
+
+git switch release/7.1
+# remove stale generated headers from gnulib
+git status -u | grep '\.h$' | xargs rm
+
+Then rebuild:
+
+./autogen.sh ; ./configure ; make
+
+Have a look at the output of "git status -u" to check for files that
+  should be tracked in git or ignored.  Check for leftover result
+  files under tta/tests which should be removed.
 
 Check "dist-xz" is in the option list in configure.ac (often removed
 for speed when testing).
@@ -555,6 +553,10 @@ notice in ChangeLog.
 one last "git diff" to check release commit looks good
 make distcheck
 (export MALLOC_CHECK_=2; make distcheck)  # repeat until clean
+
+# do this before uploading the release, in case of any commits by other
+# contributors.  otherwise the git history will not reflect what is in
+# the release.
 git commit and push
 
 (If on a release branch, copy the NEWS message to NEWS on master)

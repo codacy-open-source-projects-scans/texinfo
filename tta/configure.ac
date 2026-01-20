@@ -16,7 +16,7 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIRS([build-aux/m4 gnulib/m4 m4 ../m4])
 AC_REQUIRE_AUX_FILE([tap-driver.sh])
 
-AC_CONFIG_HEADERS([C/config.h])
+AC_CONFIG_HEADERS([config.h])
 
 TEXINFO_DTD_VERSION=7.3
 AC_SUBST([TEXINFO_DTD_VERSION])
@@ -81,15 +81,25 @@ else
 fi
 AC_MSG_RESULT($extutils_embed)
 
-PERL_EXTUTILS_EMBED_ccopts=
-PERL_EXTUTILS_EMBED_ldopts=
-if test "z$extutils_embed" = 'zyes' ; then
-  PERL_EXTUTILS_EMBED_ccopts=`${PERL} -MExtUtils::Embed -e ccopts`
-  PERL_EXTUTILS_EMBED_ldopts=`${PERL} -MExtUtils::Embed -e ldopts`
-fi
+# Not used for now, similar flags are reconstituted based on Perl configuration
+# information
+#PERL_EXTUTILS_EMBED_ccopts=
+#PERL_EXTUTILS_EMBED_ldopts=
+#if test "z$extutils_embed" = 'zyes' ; then
+  # the backslashes are replaced by forward slashes for mingw where those
+  # file separators may be emited and then cause Bash to produce nonsensical
+  # file names.
+  # It is unlikely to have backslashes on other platforms in Perl paths,
+  # if it is reported, the replacement of backslashes could be done
+  # conditionally.
+  # Error messages on stderr are removed such that they do not interact with
+  # configure.
+#  PERL_EXTUTILS_EMBED_ccopts=`${PERL} -MExtUtils::Embed -e ccopts 2> /dev/null | sed -e 's,\\\\,/,g'`
+#  PERL_EXTUTILS_EMBED_ldopts=`${PERL} -MExtUtils::Embed -e ldopts 2> /dev/null | sed -e 's,\\\\,/,g'`
+#fi
 
-AC_SUBST([PERL_EXTUTILS_EMBED_ccopts], [$PERL_EXTUTILS_EMBED_ccopts])
-AC_SUBST([PERL_EXTUTILS_EMBED_ldopts], [$PERL_EXTUTILS_EMBED_ldopts])
+dnl AC_SUBST([PERL_EXTUTILS_EMBED_ccopts], [$PERL_EXTUTILS_EMBED_ccopts])
+dnl AC_SUBST([PERL_EXTUTILS_EMBED_ldopts], [$PERL_EXTUTILS_EMBED_ldopts])
 
 # Before Perl 5.38.0 getenv/setenv and similar cannot be reliably used in
 # XS and could lead to memory corruption, depending on the platform.
@@ -209,6 +219,16 @@ if test x$enable_xs != xno; then
   # NOTE Specific checks against Perl should not have the Autoconf/Gnulib
   # includes set but could set the following:
   #CPPFLAGS="$PERL_EXT_CPPFLAGS $perl_conf_CPPFLAGS"
+else
+  # unset perl flags, such that it is still possible to build C-only
+  # libraries and executable.  All the features needing Perl will be
+  # lacking.
+  perl_conf_CPPFLAGS=
+  perl_conf_CFLAGS=
+  perl_conf_LIB_CFLAGS=
+  perl_conf_LIB_LDFLAGS=$platform_LDFLAGS
+  platform_PERL_LIBADD=
+  perl_conf_LIBS=
 fi
 
 # Wipe cache values in case -C was given at the top level
@@ -270,7 +290,11 @@ txi_ICONV_CONVERTS_EUC_CN
 AC_CHECK_FUNCS(newlocale strxfrm_l)
 
 # This is useful on platforms where gettext functions are present, but
-# setting the locale through LANGUAGE is not implemented.
+# setting the locale through LANGUAGE is not implemented.  In 2024 this is
+# the case of the musl libc libintl implementation, for example.
+# Setting locale through LANGUAGE is not automatically detected, but it
+# is possible to manually set --enable-xs-perl-libintl to use libintl-perl
+# to always get the correct output.
 AC_ARG_ENABLE([xs-perl-libintl],
     AS_HELP_STRING([--enable-xs-perl-libintl],
               [prefer Perl libintl-perl gettext in XS modules]),
@@ -308,13 +332,14 @@ fi
 # symlink.
 
 embedded_perl=no
+# Note that we do not actually use ExtUtils::Embed anywhere.
 if test x$enable_xs != xno -a $extutils_embed = yes ; then
   txi_EMBEDDED_PERL
 fi
 AM_CONDITIONAL([PERL_EMBEDDED], [test "z$embedded_perl" = 'zyes'])
 
-AC_ARG_ENABLE([c-texi2any],
-    AS_HELP_STRING([--enable-c-texi2any],[Use texi2any program implemented in C if possible]),
+AC_ARG_ENABLE([using-c-texi2any],
+    AS_HELP_STRING([--enable-using-c-texi2any],[Install texi2any program implemented in C if built]),
     [ prefer_c_t2a=$enableval],
     [ prefer_c_t2a=no])
 
@@ -393,9 +418,7 @@ AC_ARG_ENABLE([refcounts-checks],
        refcount_checks='yes'
      fi],
     [
-     # Devel::Peek already checked because it cannot be a soft dependency,
-     # but it logically belongs here.
-     if $PERL -e "use Devel::Peek; use Devel::Refcount;" > /dev/null 2>&AS_MESSAGE_LOG_FD;
+     if $PERL -e "use Devel::Refcount;" > /dev/null 2>&AS_MESSAGE_LOG_FD;
      then
        refcount_checks='yes'
      else

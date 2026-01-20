@@ -62,6 +62,8 @@ my $DEFAULT_ENCODING = 'utf-8';
 static char *working_locale = 0;
 static char *locale_command = 0;
 
+static int no_local_found_error_output = 0;
+
 static const char *strings_textdomain = "texinfo_document";
 
 static int use_external_translate_string;
@@ -119,23 +121,21 @@ switch_messages_locale (void)
 
   if (working_locale)
     {
-      setenv_status = setenv ("LC_ALL", working_locale, 1)
-                      || setenv ("LANG", working_locale, 1);
-      locale = setlocale (LC_MESSAGES, "");
-
       /* Note that running "setlocale (LC_MESSAGES, working_locale)" directly
-         may not work depending on platform and/or gettext version. */
-    }
-  if (!locale || setenv_status)
-    {
-      setenv_status = setenv ("LC_ALL", "en_US.UTF-8", 1)
-                      || setenv ("LANG", "en_US.UTF-8", 1);
+         may not work depending on platform and/or gettext version.
+         Similarly, setting LANG instead of LC_ALL may not work.
+       */
+      setenv_status = setenv ("LC_ALL", working_locale, 1);
       locale = setlocale (LC_MESSAGES, "");
     }
   if (!locale || setenv_status)
     {
-      setenv_status = setenv ("LC_ALL", "en_US", 1)
-                      || setenv ("LANG", "en_US", 1);
+      setenv_status = setenv ("LC_ALL", "en_US.UTF-8", 1);
+      locale = setlocale (LC_MESSAGES, "");
+    }
+  if (!locale || setenv_status)
+    {
+      setenv_status = setenv ("LC_ALL", "en_US", 1);
       locale = setlocale (LC_MESSAGES, "");
     }
   if ((!locale || setenv_status) && !locale_command)
@@ -166,8 +166,7 @@ switch_messages_locale (void)
                   free (line);
                   continue;
                 }
-              setenv_status = setenv ("LC_ALL", line, 1)
-                              || setenv ("LANG", line, 1);
+              setenv_status = setenv ("LC_ALL", line, 1);
               locale = setlocale (LC_MESSAGES, "");
               if (locale && !setenv_status)
                 {
@@ -180,15 +179,6 @@ switch_messages_locale (void)
     }
   if (locale)
     {
-      /*
-      char *current_lang = getenv ("LANG");
-      fprintf (stderr, "SETTING (%d) LANG '%s' locale %s '%s'\n",
-               setenv_status, current_lang, locale, working_locale);
-      if (strcmp (current_lang, locale))
-        {
-          fprintf (stderr, "LANG %s != locale %s\n", current_lang, locale);
-        }
-      */
   /* check that the locale set is not "C"/"POSIX" as we want to set
      to other locales for LANGUAGE.  The locale returned by setlocale
      can be these one of these locales even if the locale passed
@@ -208,6 +198,15 @@ switch_messages_locale (void)
  _("Cannot switch to a locale compatible with document strings translations"));
           free (working_locale);
           working_locale = strdup (locale);
+        }
+    }
+  else
+    {
+      if (!no_local_found_error_output)
+        {
+          fprintf (stderr, "%s\n",
+ _("Cannot find a locale compatible with document strings translations"));
+          no_local_found_error_output = 1;
         }
     }
 }

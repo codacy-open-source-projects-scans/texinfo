@@ -890,11 +890,11 @@ html_get_direction_icons_sv (DIRECTION_ICON_LIST *direction_icons,
       direction_icons->space = hv_number;
       if (direction_icons->space == 0)
         {
-          free (direction_icons->icons_list);
+          non_perl_free (direction_icons->icons_list);
           direction_icons->icons_list = 0;
         }
       else
-        direction_icons->icons_list = (DIRECTION_ICON *) realloc
+        direction_icons->icons_list = (DIRECTION_ICON *) non_perl_realloc
                   (direction_icons->icons_list,
                    direction_icons->space * sizeof (DIRECTION_ICON));
     }
@@ -1079,6 +1079,8 @@ find_index_entry_subentry (const ELEMENT *index_element, const HV *element_hv)
   size_t l;
   CONST_ELEMENT_LIST subentries_list;
 
+  dTHX;
+
   memset (&subentries_list, 0, sizeof (CONST_ELEMENT_LIST));
 
   collect_subentries (index_element, &subentries_list);
@@ -1088,11 +1090,11 @@ find_index_entry_subentry (const ELEMENT *index_element, const HV *element_hv)
       const ELEMENT *subentry = subentries_list.list[l];
       if (subentry && (HV *) SvRV ((SV *) subentry->sv) == element_hv)
         {
-          free (subentries_list.list);
+          non_perl_free (subentries_list.list);
           return subentry;
         }
     }
-  free (subentries_list.list);
+  non_perl_free (subentries_list.list);
   return 0;
 }
 

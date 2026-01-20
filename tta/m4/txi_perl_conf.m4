@@ -1,5 +1,5 @@
 # Get Perl configuration variables and set derived variables
-dnl Copyright (C) 2019-2024 Free Software Foundation, Inc.
+dnl Copyright 2019-2026 Free Software Foundation, Inc.
 dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
@@ -81,12 +81,14 @@ txi_LOOKUP_PERL_CONF_VALUES([[ccflags], [cccdlflags], [ldflags], [optimize],
 perl_conf_LIB_CFLAGS="$PERL_CONF_ccflags $PERL_CONF_cccdlflags"
 perl_conf_LIB_LDFLAGS="$PERL_CONF_ccdlflags $PERL_CONF_ldflags"
 
-# also corresponds to the ccflags part of PERL_EXTUTILS_EMBED_ccopts.
+# also corresponds to the ccflags part of ExtUtils::Embed ccopts.
 perl_conf_CFLAGS=$PERL_CONF_ccflags
 
-perl_conf_LDFLAGS=$PERL_CONF_ldflags
+# use the same for executables as for libraries to match ExtUtils::Embed
+# ldopts
+perl_conf_LDFLAGS=$perl_conf_LIB_LDFLAGS
 
-# ccflags or PERL_EXTUTILS_EMBED_ccopts do not include cccdlflags,
+# ccflags or ExtUtils::Embed ccopts do not include cccdlflags,
 # which are needed for libraries
 perl_conf_EMBED_LIB_CFLAGS=$PERL_CONF_cccdlflags
 
@@ -106,7 +108,13 @@ txi_LOOKUP_PERL_CONF_VALUES([[archlibexp], [privlibexp]])
 # perl_inc in ExtUtils::Embed
 perl_conf_CPPFLAGS="-I${PERL_CONF_archlibexp}/CORE"
 
-perl_conf_LIBS="-L${PERL_CONF_archlibexp}/CORE $PERL_CONF_libperl $PERL_CONF_perllibs"
+# Do not use $PERL_CONF_perllibs as it may require libs that are not installed
+# and does not seem to be needed, even though it is in ExtUtils::Embed ldopts.
+#perl_conf_LIBS="-L${PERL_CONF_archlibexp}/CORE $PERL_CONF_libperl $PERL_CONF_perllibs"
+perl_conf_LIBS="-L${PERL_CONF_archlibexp}/CORE $PERL_CONF_libperl"
+
+# note that ExtUtils::Embed ldopts corresponds roughly to
+# perl_conf_LIB_LDFLAGS + perl_conf_LIBS
 
 AM_MISSING_PROG([XSUBPP], [xsubpp])
 

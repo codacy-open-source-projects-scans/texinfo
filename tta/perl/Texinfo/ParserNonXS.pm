@@ -79,6 +79,8 @@ use File::Basename;
 # here, but Clone is not in Perl core modules, so we use Storable::dclone.
 use Storable qw(dclone); # standard in 5.007003
 
+use Texinfo::XSLoader;
+
 # commands definitions
 use Texinfo::Commands;
 use Texinfo::Common;
@@ -3723,6 +3725,7 @@ sub _text_contents_to_plain_text($) {
   return ($text, $superfluous_arg);
 }
 
+# ALTIMP partly in tta/C/main/structure_list.c (not setting the extra key)
 sub _add_to_relations_list($$$) {
   my ($document, $type, $element) = @_;
 

@@ -1,3 +1,488 @@
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/document.h (INSTALLED_PATHS): rename converterdatadir as
+	converter_datadir.  Update users.
+
+	* tta/C/convert/texinfo.c (txi_setup_main_load_interpreter),
+	tta/C/main/call_perl_function.c (call_modulepath_init)
+	(call_eval_load_texinfo_modules), tta/C/main/document.c
+	(setup_txi_paths_information, setup_texinfo_main), tta/C/texi2any.c
+	(main), tta/perl/Texinfo/ModulePath.pm.in ($converter_datadir)
+	($converter_libdir, init), tta/perl/Texinfo/XSLoader.pm
+	(load_libtool_library), tta/perl/load_txi_modules.pl (BEGIN),
+	tta/perl/texi2any.pl (BEGIN): rename converterdatadir as
+	converter_datadir, xsdir, converterxsdir and converterlibdir as
+	converter_libdir and lib_dir as perl_modules_dir.
+
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Adding Text And Global Output Units
+	Directions, Sectioning Commands Elements and Document Structure)
+	(Node Elements and Document Structure)
+	(Setting Global Directions From Document Information),
+	tta/perl/init/documentation_examples.pm: improve documentation of
+	Global output units addition and association to node name.
+
+2026-01-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/configfiles.c (run_info_hook) [__MINGW32__]:
+	Append .cmd extension to hook file name.  From Eli.
+
+2026-01-18 Patrice Dumas  <pertusus@free.fr>
+
+	Replace backslashes by forward slashes in paths canonicalization
+
+	* tta/C/main/utils.c (file_separator_canonpath): rename canonpath as
+	file_separator_canonpath and modify to put only forward slash in
+	output file name.  Update callers.
+
+	* tta/perl/Texinfo/Common.pm (file_separator_canonpath),
+	tta/perl/Texinfo/Convert/Converter.pm (determine_files_and_directory),
+	tta/perl/Texinfo/Convert/Text.pm (output), tta/perl/texi2any.pl: add
+	file_separator_canonpath as a wrapper around File::Spec->canonpath
+	that replace backslashes by forward slashes on Windows.  Report and
+	analysis from Eli Zaretskii.
+
+2026-01-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/parsetexi/input.c (parser_encode_file_name): rename
+	encode_file_name as parser_encode_file_name for consistency with Perl
+	functions names, as it corresponds to _encode_file_name in Perl
+	Parser.  Update callers.
+
+	Add ALTIMP comments.  Move some code around.
+
+2026-01-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/translations.c (switch_messages_locale): add a message if
+	no locale other than C/POSIX is found.  Report from Bruno Haible.
+
+2026-01-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Translations.pm (_switch_messages_locale): add a
+	message if no locale other than C/POSIX is found.  Report from Bruno
+	Haible.
+
+2026-01-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Translations.pm (_switch_messages_locale): turn
+	$working_locale to a file scoped variable.
+
+2026-01-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/Makefile.am: add comments and move code to clarify why we add
+	-I$(srcdir) to AM_CPPFLAGS.
+
+2026-01-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/CheckXS/TestXS.pm (BEGIN): unset
+	$Texinfo::XSLoader::disable_XS such as not to depend on value
+	previously set by configure+make.
+
+2026-01-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm (_message): rename _fatal as _message.
+
+2026-01-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Plaintext.pm (import),
+	tta/perl/Texinfo/Convert/Unicode.pm (import),
+	tta/perl/Texinfo/ParserNonXS.pm (import), tta/perl/Texinfo/XSLoader.pm
+	(XS_parser_enabled, override): check if disable_XS is set in XSLoader
+	override, and if so do not attempt to override any function.
+
+2026-01-18  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* tta/configure.ac (AC_CONFIG_HEADERS): Put config.h in tta,
+	not tta/C.  In the former location, it would not be updated
+	automatically by autoheader by Makefile rules, due to being
+	in a subdirectory.
+
+2026-01-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm (BEGIN): set disable_XS if
+	$Texinfo::ModulePath::enable_xs is 'no'.  Gavin idea.
+
+	* tta/perl/texi2any.pl, tta/perl/t/test_utils.pl: remove BEGIN blocks
+	that set disable_XS, as it is done in XSLoader now.
+
+2026-01-17 Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS, configure.ac (using-c-texi2any), doc/texinfo.texi (Generic
+	Translator @command{texi2any}), tta/configure.ac (c-texi2any),
+	INSTALL: rename --enable-c-texi2any as --enable-using-c-texi2any and
+	change the help string.  Report and idea from Eli Zaretskii.
+
+2026-01-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.am (Texinfo/ModulePath.pm),
+	tta/perl/Texinfo/ModulePath.pm.in ($enable_xs): set enable_xs to the
+	value set by configure.
+
+	* tta/perl/t/test_utils.pl (BEGIN): add a BEGIN block to disable XS if
+	$Texinfo::ModulePath::enable_xs is 'no'.
+
+	* tta/perl/texi2any.pl (BEGIN): if @enable_xs@ was not substituted,
+	use the $Texinfo::ModulePath::enable_xs value to determine if XS
+	should be disabled.
+
+2026-01-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Plaintext.pm (import),
+	tta/perl/Texinfo/Convert/Unicode.pm (import),
+	tta/perl/Texinfo/ParserNonXS.pm (import): do not load MiscXS functions
+	if $Texinfo::XSLoader::disable_XS is true.
+
+	* tta/perl/Texinfo/Translations.pm (import),
+	tta/perl/Texinfo/XSLoader.pm (XS_parser_enabled): have
+	XS_parser_enabled return false if !$disable_XS.
+	Load XS in Translations.pm only if XS_parser_enabled returns true.
+
+2026-01-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Config.pm, tta/perl/Texinfo/Document.pm,
+	tta/perl/Texinfo/ManipulateTree.pm,
+	tta/perl/Texinfo/Transformations.pm: use my for XS_overrides hashes.
+
+2026-01-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/texi2any.pl: handle especially unicode/UTF-8 codepage on
+	Windows.  Report and check from Eli Zaretskii.
+
+2026-01-16 Patrice Dumas  <pertusus@free.fr>
+
+	Distinguish locale encoding and output messages encoding
+
+	* tta/C/convert/texinfo.c (txi_set_base_default_options),
+	tta/C/texi2any.c (main), tta/perl/texi2any.pl: distinguish locale
+	encoding from console output encoding.  Set MESSAGE_ENCODING to
+	console output encoding.
+	On Windows, set console output encoding with GetConsoleOutputCP().
+	Idea from Eli Zaretskii.
+
+	* tta/C/texi2any.c (main): handle especially UTF-8 codepage on
+	Windows.  Idea and code from Eli Zaretskii.
+
+2026-01-16 Patrice Dumas  <pertusus@free.fr>
+
+	Use COMMAND_LINE_ENCODING to encode executed command-lines
+
+	* doc/texi2any_api.texi (Encoding File Path Strings),
+	doc/texinfo.texi (Global Customization Variables),
+	tta/perl/Texinfo/Convert/LaTeX.pm (convert_math_to_images),
+	tta/perl/ext/highlight_syntax.pm (highlight_process),
+	tta/perl/ext/latex2html.pm (l2h_to_html), tta/perl/ext/tex4ht.pm
+	(tex4ht_process_format): use COMMAND_LINE_ENCODING encoding to
+	to encode command-line before executing a command.  This is done to
+	simplify setting the right encoding on Windows, but it is also more
+	consistent as the same variable is used to decode from the
+	command-line.
+
+2026-01-16 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c,
+	tta/C/convert/html_prepare_converter.c, tta/C/main/tree_types.h,
+	tta/C/parsetexi/parser.c, tta/m4/txi_perl_conf.m4,
+	tta/perl/Texinfo/Convert/HTML.pm, tta/perl/texi2any.pl: improve
+	comments, remove TODO and replace with notes, add TODO.
+
+	* tta/perl/Texinfo/OutputUnits.pm: change in spacing.
+
+2026-01-16 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/test_utils.pl (test): rename $errors as $dir_errors.
+	Use defined in conditions when the value is not needed.
+
+	* tta/perl/t/test_utils.pl (test), tta/C/main/output_unit.c
+	(print_output_units_details): move a TODO where it is more relevant.
+	Change in comments.
+
+2026-01-15 Patrice Dumas  <pertusus@free.fr>
+
+	* Pod-Simple-Texinfo/t/Pod-Simple-Texinfo.t (protected - external pod
+	as url): add comment to explain that the test fails with old
+	Pod::Simple::XHTML (before 2011 or 2012).  Report from Nelson Beebe.
+
+2026-01-15 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/xs_utils.c (non_perl_realloc): add.
+
+	* tta/C/main/build_perl_info.c (output_unit_to_perl_hash),
+	tta/C/main/get_perl_info.c (html_get_direction_icons_sv)
+	(find_index_entry_subentry),
+	tta/perl/XSTexinfo/convert/get_html_perl_info.c
+	(html_converter_get_customization_sv): use non_perl_* for data that is
+	not allocated or that is freed in a file that does not include
+	Perl headers.
+
+	* tta/C/main/xs_utils.c: remove non_perl_xasprintf, xasprintf is
+	already defined in a file that does not include Perl headers.
+
+2026-01-15 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/translations.c (switch_messages_locale): do not try to
+	setenv LANG if setenv LC_ALL failed, as the only possibility for
+	failure is being out of memory.  Report from Bruno Haible.
+
+2026-01-15 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/api_to_perl.c (show_sv_hv, get_sv_hv),
+	tta/C/main/get_perl_info.c (find_index_entry_subentry): add missing
+	dTHX.  Report and code from Eli Zaretskii.
+
+2026-01-15 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/texi2any.c: define WIN32_LEAN_AND_MEAN when including Windows
+	headers to have a more minimal set of includes and avoid clashing
+	symbol names.  Code from Eli Zaretskii.
+
+2026-01-15 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/configure.ac (PERL_EXTUTILS_EMBED_*): remove error messages on
+	stderr and substitute backslashes by forward slashes for mingw where
+	those file separators may be emited and then cause Bash to produce
+	nonsensical file names.  Report and code by Eli Zaretskii.
+	The modified code is in comments because we do not need those
+	variables, but it is a good thing to keep the possibility to use
+	ExtUtils::Embed output.
+
+2026-01-14 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/configure.ac: unset perl_conf* variables if XS is disabled.
+	Set perl_conf_LIB_LDFLAGS to platform_LDFLAGS as platforms needing
+	-no-undefined probably still need this flag.  Based on a report by
+	Bruno.
+
+2026-01-13 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/m4/txi_perl_conf.m4 (perl_conf_LIBS): remove PERL_CONF_perllibs,
+	it could add wrong flags on some platforms, and was not needed before.
+	Report from Eli Zaretskii.
+
+2026-01-13 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/m4/txi_perl_conf.m4 (perl_conf_LDFLAGS): add PERL_CONF_ccdlflags
+	by making perl_conf_LDFLAGS a copy of perl_conf_LIB_LDFLAGS.
+
+	* tta/C/Makefile.am (libperlembed_libtexinfo_main_la_LIBADD)
+	(libtexinfo_main_la_LIBADD, ctexi2any_LDADD), tta/configure.ac,
+	tta/m4/txi_embedded_perl.m4, tta/swig/python/Makefile.am: remove
+	unused PERL_EXTUTILS_EMBED_ccopts.  Replace PERL_EXTUTILS_EMBED_ldopts
+	by perl_conf_LIBS.
+
+2026-01-12 Patrice Dumas  <pertusus@free.fr>
+
+	* tta: add glob module from gnulib, missing on mingw.  Report from
+	Bruno.
+	Run gnulib-tool --add-import glob.
+
+2026-01-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/api_for_swig/*.c, tta/C/Makefile.am
+	(C_libtexinfo_main_sources), tta/swig/perl/Makefile.am,
+	tta/swig/python/Makefile.am: move tta/C/swig to tta/C/api_for_swig.
+	Gavin idea.
+
+2026-01-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/texi2any.pl: comment out use Devel::Peek, it is only used
+	in commented out debugging codes.
+
+	* configure.ac (perl_version_requirement), tta/configure.ac
+	(refcount_checks): do not test for Devel::Peek presence, now that it
+	is not used anymore.
+
+2026-01-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/ManipulateTree.pm (%XS_overrides, SvREFCNT),
+	tta/perl/XSTexinfo/parser_document/StructuringTransfoXS.xs (SvREFCNT):
+	implement SvREFCNT XS interface to get the SvREFCNT.  Add a second
+	argument to return this value if there is no XS.
+
+	* tta/perl/Texinfo/Convert/Converter.pm
+	(perl_converter_remove_output_units),
+	tta/perl/Texinfo/ManipulateTree.pm (_print_tree_elements_ref)
+	(_element_remove_references): call ManipulateTree.pm SvREFCNT.
+
+	* tta/perl/Texinfo/OutputUnits.pm (release_output_units_list): do not
+	show the SvREFCNT, it is not that useful and adds a dependency.
+
+2026-01-11 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/z_misc/same_converter_init.t ($default_test_level):
+	set $default_test_level based on Texinfo::ModulePath, which is in turn
+	based on configure DEFAULT_TEST_LEVEL and use it for TEST value.
+	Report from Bruno.
+
+2026-01-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	info: Remove OSC sequences from manpages
+
+	* info/man.c (ecma_48_osc_sequence): New function.
+	(clean_manpage): Call it to remove OSC sequences (output
+	by groff to show the location of hyperlinks in manpages).
+	
+	Report from G. Branden Robinson.
+
+2026-01-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/util.c (ansi_escape, ansi_sgr_escape): Rename.
+
+2026-01-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/Makefile.am (wwwdoc-build): Reference (as-yet non-existent)
+	CSS file under the Texinfo area on www.gnu.org, rather than CSS
+	Gnulib directly.  This means we will be easily able to fix any
+	CSS problems without relying on Gnulib and/or GNU webmasters to
+	make changes, and without regenerating and re-uploading entire
+	HTML manuals.
+
+2026-01-11  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: add note to "git push" before doing release.
+
+2026-01-10 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/convert_utils.c (clear_tree_added_elements): remove
+	unused CONVERTER argument.  Update callers.
+
+2026-01-10 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/converter.c, tta/C/main/convert_utils.c
+	(clear_tree_added_elements, free_tree_added_elements)
+	(destroy_tree_added_elements): move to convert_utils.c.
+
+2026-01-10 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Unicode.pm (unicode_text),
+	tta/perl/XSTexinfo/MiscXS.xs (xs_unicode_text): add prototype.
+
+	* tta/C/main/node_name_normalization.c,
+	tta/perl/Texinfo/Convert/NodeNameNormalization.pm: change variable
+	names from root to element.
+
+	* tta/perl/Texinfo/Convert/NodeNameNormalization.pm,
+	tta/perl/Texinfo/Convert/Unicode.pm: reformat functions beginning.
+	Use defined or exists in conditions when not interested in the value.
+
+2026-01-10 Patrice Dumas  <pertusus@free.fr>
+
+	Changes in comments, remove/downgrade FIXME to TODO
+
+2026-01-10 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/maintain/generate_code_commands_values.pl: move functions
+	code around.  Add a comment expliciting that some code need to be
+	synced with tta/perl/Texinfo/Convert/Unicode.pm code.  Change names
+	for more readable code.  Use defined or exists in conditions when not
+	interested in the value.
+
+2026-01-10 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Document.pm (set_labels_identifiers_target): do not
+	reset identifiers_target, it should have been initialized at document
+	creation.
+
+	* tta/perl/Texinfo/Document.pm: reformat functions beginning.  Use
+	defined or exists in conditions when not interested in the value.
+	Change some variable names.
+
+2026-01-10 Patrice Dumas  <pertusus@free.fr>
+
+	* configure.ac, tta/configure.ac: move comments to tta/configure.ac
+	where the code is.
+
+	* tta/C/main/manipulate_tree.c: add static to local functions.
+
+	* tta/C/main/floats.c, tta/C/main/manipulate_tree.c,
+	tta/C/main/tree_types.h, tta/perl/Texinfo/ManipulateTree.pm: update
+	comments and add comments.
+
+	* tta/TODO: update
+
+2026-01-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	pretest 7.2.90
+
+2026-01-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking: reorder and edit headings slightly.  remove
+	expired advice about release/7.1 branch.
+
+2026-01-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* configure.ac (AM_INIT_AUTOMAKE): Add 'dist-xz' option.
+
+2026-01-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/htmlxref.d/Texinfo_nonGNU.cnf,
+	* util/htmlxref.d/Texinfo_GNU.cnf: update timestamps.
+
+2026-01-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* grand-replace.sh: do not touch util/htmlxref.d/*.cnf
+	files.
+
+2026-01-10  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* util/htmlxref.cnf: track file in git only as a source
+	for the stub file on ftp.gnu.org.
+
+2026-01-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* README-hacking, tta/perl/t/README: update file location
+
+2026-01-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* js/info.js (init_iframe) <on_load>:
+	Do not add "in-iframe" class to <body> element as this is
+	no longer used for anything.
+
+2026-02-09 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Converter.pm
+	(converter_node_relations_of_node)
+	(converter_section_relations_of_section)
+	(converter_heading_relations_of_heading): add for user-defined
+	HTML customization code, to get the relations information associated
+	to tree elements, hiding the implementation details.
+
+	* doc/texi2any_api.texi (Tree Elements and Document Structure)
+	(Sectioning Commands Elements and Document Structure)
+	(Node Elements and Document Structure)
+	(Heading Elements and Document Structure): add to document the
+	relations.
+
+	* tta/perl/init/book.pm (book_in_contents_button, book_print_up_toc),
+	tta/perl/t/init/index_direction_from_index_name.pm: use the functions
+	to get the relations information in init files.
+
+	* doc/texi2any_api.texi (Converter General Information): add
+	nodes_list.
+
+	* tta/TODO: update.
+
+2026-02-09 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Example/TestReader.pm,
+	tta/perl/Texinfo/ReaderNonXS.pm, tta/perl/Texinfo/TreeElementNonXS.pm:
+	reformat functions beginning.  Use defined or exists in conditions
+	when not interested in the value.
+
+	* tta/C/main/reader.c, tta/C/structuring_transfo/transformations.c,
+	tta/C/main/structure_list.c: minor changes in spacing and comments.
+
+2026-02-09 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Structuring.pm, tta/perlTexinfo/Transformations.pm:
+	reformat functions beginning.  Use defined or exists in conditions
+	when not interested in the value.
+
+2026-01-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/Makefile.am (wwwdoc-build): reference gnulib CSS file
+	on www.gnu.org.
+
 2026-01-06  Gavin Smith <gavinsmith0123@gmail.com>
 
 	* NEWS: further edits and reordering

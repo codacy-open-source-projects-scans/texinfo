@@ -36,6 +36,8 @@ use strict;
 use Carp qw(cluck confess);
 use Encode;
 
+use Texinfo::XSLoader;
+
 use Texinfo::Commands;
 use Texinfo::CommandsValues;
 use Texinfo::Common;

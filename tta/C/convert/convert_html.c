@@ -59,7 +59,9 @@
 #include "node_name_normalization.h"
 /* converter_encoded_output_file_name
    output_files_open_out
-   output_files_register_closed */
+   output_files_register_closed
+   clear_tree_added_elements
+ */
 #include "convert_utils.h"
 /* call_latex_convert_to_latex_math */
 #include "call_perl_function.h"
@@ -68,7 +70,7 @@
 #include "document.h"
 #include "targets.h"
 /* txi_paths_info create_destination_directory
-   set_global_document_commands clear_tree_added_elements
+   set_global_document_commands
    register_normalize_case_filename converter_translated_command_tree */
 #include "converter.h"
 #include "html_conversion_state.h"
@@ -458,9 +460,6 @@ html_convert_css_string (CONVERTER *self, const ELEMENT *element,
 
 /* reset translated data and translate no args commands */
 
-/* TODO maybe also add a version which gets type_directions_strings
-   and nr_string_directions and nr_dir_str_contexts as argument
-   but not self */
 void
 html_clear_direction_string_type (const CONVERTER *self,
                                   char ***type_directions_strings)
@@ -669,7 +668,7 @@ html_translate_names (CONVERTER *self)
        /* the tree is a reference to special_unit_info_tree, so it should
           not be freed, but it needs to be reset to trigger the creation of the
           special_unit_info_tree tree when needed */
-                      clear_tree_added_elements (self, &target_info->tree);
+                      clear_tree_added_elements (&target_info->tree);
                       free (target_info->command_text[HTT_string]);
                       target_info->command_text[HTT_string] = 0;
                       free (target_info->command_text[HTT_text]);
@@ -2780,7 +2779,7 @@ html_do_js_files (CONVERTER *self)
               if (!txi_paths_info.texinfo_uninstalled)
                 {
                   xasprintf (&jssrcdir, "%s/%s",
-                        txi_paths_info.p.installed.converterdatadir,
+                        txi_paths_info.p.installed.converter_datadir,
                              "js");
                 }
               else

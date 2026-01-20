@@ -99,6 +99,12 @@ not="-not -name grand-replace.sh"
 ###############################################################
 
 
+find_dir=tta/m4
+ext_pattern=""
+named_pattern=".*\.m4"
+
+change_files
+
 find_dir=.
 extensions='c|h|sh|pm|pl|texi|xs'
 
@@ -153,8 +159,9 @@ change_files
 find_dir=util
 ext_pattern=""
 named_pattern=".*"
-# update these manually for now
-not='-not -name htmlxref.cnf -not -name texi2dvi -not -name texi2pdf'
+# update these manually for now.  htmlxref.cnf files have separate
+# timestamps.
+not='-not -name *.cnf -not -name texi2dvi -not -name texi2pdf'
 
 change_files
 
