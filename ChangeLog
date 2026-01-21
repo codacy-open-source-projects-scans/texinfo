@@ -1,5 +1,108 @@
 2026-01-20 Patrice Dumas  <pertusus@free.fr>
 
+	* tta/perl/Texinfo/XSLoader.pm ($loaded_additional_libraries): make
+	the variable local to the file.
+
+	* tta/perl/Texinfo/XSLoader.pm (init): use defined when the value is
+	not needed.
+	Try to (pre) load a library only one, do not retry if it failed.
+
+	* tta/perl/Texinfo/Config.pm: stylistic change.
+
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/ConfigXS.pm (BEGIN), tta/perl/Texinfo/DocumentXS.pm
+	(BEGIN): load XS modules only if there will be overriden functions
+	later on.
+
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/call_perl_function.c (call_eval_load_texinfo_modules):
+	fix name of Perl variable read from C.
+
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
+	* README-hacking: note on manual testing of .la installed files
+	removing.
+
+2026-01-20  Eli Zaretskii <eliz@gnu.org>
+
+	* info/run-external.c (get_output_from_program) [!PIPE_USE_FORK]:
+	Use 'filename' argument in popen call, rather than argument 0.
+	Add check for null argument.
+	[!PIPE_USE_FORK && __MINGW32__]: Change / to \ in command name
+	before calling popen.
+
+	* info/t/config/texinfo/info-hooks/manual-not-found.cmd:
+	Add dummy file.
+
+2026-01-20  Gavin Smith <gavinsmith0123@gmail.com>
+
+	info: read compressed input via fork/execlp.
+
+	* info/filesys.c (filesys_read_compressed, filesys_read_from_stream):
+	Split out filesys_read_from_stream.  Close stream with fclose rather
+	than pclose.
+
+	(COMPRESSION_ALIST, compress_suffixes): Store command options
+	as separate strings, rather than in a single space separated
+	string.
+	(filesys_decompressor_for_file): Return type changed.
+
+	(filesys_read_compressed): Obtain command line by concatenating
+	strings in compress_suffixes with spaces.
+	[PIPE_USE_FORK]: Use fork and execlp to run decompressor program,
+	rather than popen.  This avoids any need to sanitise the argument
+	to popen.
+	[!PIPE_USE_FORK]: Run popen as before.
+
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm (_find_file): rename
+	added_converter_libdir as added_xsdir.  Fix the xsdir value set by
+	postpending XS_extension.
+	Use defined to test if the function arguments are unset.
+	Minor stylistic changes.
+
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
+	C libraries and XS modules installed in subdirs of converter libdir
+
+	* tta/C/Makefile.am (librarydir, library_LTLIBRARIES),
+	tta/perl/XSTexinfo/Makefile.am (xsdir),
+	tta/perl/Texinfo/ModulePath.pm.in (init): add librarydir in
+	C/Makefile.am as the lib subdir of libdir/texi2any and use it for
+	libraries installation, define xsdir in XSTexinfo/Makefile.am as the
+	XS_extension subdir of libdir/texi2any.  Update paths in
+	Texinfo/ModulePath.pm.in.
+	In addition to separating C libraries from XS modules, this also
+	allows to keep a bin directory added by libtool at the same level
+	within libdir/texi2any.
+
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/swig/perl/Makefile.am (EXTRA_DIST),
+	tta/swig/perl/Texinfo_SWIG_Interface_Tests.pm, tta/swig/perl/t/*.t:
+	rename tta/swig/perl/_Texinfo_Tests.pm as
+	Texinfo_SWIG_Interface_Tests.pm.
+
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/swig/perl/Makefile.am (nodist_perlarch_DATA): install Texinfo.pm
+	in perlarch, as it seems to be the usual convention for Perl modules
+	loading XS modules.
+
+	* tta/swig/perl/_Texinfo_Tests.pm: change formatting of functions
+	beginning.
+
+	* tta/swig/perl/parse_refold.pl (BEGIN): sync better with
+	_Texinfo_Tests.pm code.  Try to load MakeMaker generated files even if
+	t2a_builddir is not set.
+
+	Changes in comments.
+
+2026-01-20 Patrice Dumas  <pertusus@free.fr>
+
 	* tta/C/main/document.h (INSTALLED_PATHS): rename converterdatadir as
 	converter_datadir.  Update users.
 

@@ -133,13 +133,13 @@ sub _find_file($) {
   return undef;
 }
 
-my $added_converter_libdir;
+my $added_xsdir;
 my %dl_path_prepended_dirs;
 
 # If $TRY_DIRECT_LOAD is set and no .la file is found in @INC, add
-# the converter_libdir directory to the DynaLoader path and let DynaLoader
-# find the module file using the usual file names.
-# This allows to have modules found even if packagers remove .la files
+# the XS extensions directory to the DynaLoader path and let DynaLoader
+# find the XS module file using the usual file names.
+# This allows to have XS modules found even if packagers remove .la files
 # installed in the default case on platforms where modules have usual names
 # and are found by DynaLoader.
 sub load_libtool_library {
@@ -153,13 +153,16 @@ sub load_libtool_library {
       _message("$module_name: couldn't find Libtool archive file");
       return 0;
     } else {
+      # this case can only happen for XS modules, for libraries direct load
+      # is never attempted.
       $dlname = $module_name;
-      if (!defined($added_converter_libdir)
+      if (!defined($added_xsdir)
           and defined($Texinfo::ModulePath::converter_libdir)) {
-        $added_converter_libdir = $Texinfo::ModulePath::converter_libdir;
-        unshift @DynaLoader::dl_library_path, $added_converter_libdir;
+        $added_xsdir
+         = join('/', ($Texinfo::ModulePath::converter_libdir, 'XS_extension'));
+        unshift @DynaLoader::dl_library_path, $added_xsdir;
       }
-      _debug("try direct load $module_name: $added_converter_libdir");
+      _debug("try direct load $module_name: $added_xsdir");
     }
   } else {
     my $fh;
@@ -224,7 +227,7 @@ sub load_libtool_library {
   return $libref;
 }
 
-our $loaded_additional_libraries = {};
+my $loaded_additional_libraries = {};
 
 # Load module $MODULE, either from XS implementation in
 # Libtool file $MODULE_NAME and Perl file $PERL_EXTRA_FILE,
@@ -271,7 +274,7 @@ sub init {
     goto FALLBACK;
   }
 
-  if (!$module_name) {
+  if (!defined($module_name)) {
     goto FALLBACK;
   }
 
@@ -281,16 +284,20 @@ sub init {
   my $uninstalled = (not defined($Texinfo::ModulePath::texinfo_uninstalled)
                      or $Texinfo::ModulePath::texinfo_uninstalled);
 
-  if ($additional_libraries) {
-    for my $additional_library_name (@{$additional_libraries}) {
+  if (defined($additional_libraries)) {
+    foreach my $additional_library_name (@{$additional_libraries}) {
       my $additional_library = 'lib' . $additional_library_name;
-      if (!$loaded_additional_libraries->{$additional_library}) {
+      # Note that we do not try to load again a library that didn't load
+      # before.
+      if (!exists($loaded_additional_libraries->{$additional_library})) {
         my $ref = load_libtool_library($additional_library);
-        # if the libraries are installed but .la were removed, in general
-        # they will be found as there are RUNPATH or similar pointing
-        # to the installation directory in the XS modules objects themselves,
-        # so we only fallback if the libraries are not found and we are
-        # in-source.
+        # If library is installed but cannot be found, maybe because
+        # .la files were removed, it may still be possible for the library to
+        # be found through dynamic linking when the XS module is loaded if
+        # there are RUNPATH or similar pointing to the installation directory
+        # in the XS modules objects themselves.
+        # Therefore, we only fallback if the library is not found and we
+        # are in-source.
         if (!$ref and $uninstalled) {
           goto FALLBACK;
         } else {
@@ -301,7 +308,8 @@ sub init {
   }
 
   # If installed, try direct load of modules if .la file is not found, as
-  # it should in general work in that case.
+  # it should work in that case on platforms where libtool has installed
+  # the module in the specified directory.
   my $libref = load_libtool_library($module_name, !$uninstalled);
   if (!$libref) {
     goto FALLBACK;
@@ -349,7 +357,7 @@ sub init {
     goto FALLBACK;
   }
 
-  if ($perl_extra_file) {
+  if (defined($perl_extra_file)) {
     eval "require $perl_extra_file";
     if ($@) {
       warn();
@@ -370,9 +378,10 @@ sub init {
       warn "falling back to pure Perl module $fallback_module\n";
     }
   }
-  # if there is no fallback, it may be relevant to have access to the
-  # return value in perl code, to check if the package was loaded.
-  if (!defined $fallback_module) {
+
+  # undef is returned only if there is no fallback and loading the module
+  # failed.
+  if (!defined($fallback_module)) {
     if ($TEXINFO_XS eq 'warn' or $TEXINFO_XS eq 'debug') {
       warn "no fallback module for $module\n";
     }
@@ -390,7 +399,7 @@ sub init {
     die "Error loading $fallback_module\n";
   }
 
-  return  $fallback_module;
+  return $fallback_module;
 } # end init
 
 my $XS_disable_for_override_error_output;
