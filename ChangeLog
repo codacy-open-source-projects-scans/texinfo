@@ -1,3 +1,61 @@
+2026-01-22 Patrice Dumas  <pertusus@free.fr>
+
+	Search for C libraries directly in the directory they are in
+
+	* tta/perl/Texinfo/ModulePath.pm.in ($libraries_dir): set
+	$libraries_dir to the directory C libraries are in, instead of putting
+	the directory in front of @INC.
+
+	* tta/perl/Texinfo/XSLoader.pm (_find_file_in_inc): rename _find_file
+	as _find_file_in_inc.
+
+	* tta/perl/Texinfo/XSLoader.pm (load_libtool_library, init): move call
+	of _find_file_in_inc to init.  Find directly C libraries in
+	$Texinfo::ModulePath::libraries_dir.
+
+2026-01-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/ManipulateTree.pm: remove menu directions, they do
+	not exist anywhere.
+
+	* tta/perl/Texinfo/ManipulateTree.pm (_copy_tree): copy
+	def_index_element and def_index_ref_element even if other_trees is not
+	set, as in C.
+
+	* tta/perl/Texinfo/ManipulateTree.pm: improve/update comments.
+
+2026-01-21 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm (XS_parser_enabled): check that
+	TEXINFO_XS_PARSER is not 0 instead of comparing to 1.  It makes more
+	sense since the default is true, it matches the documentation and
+	the other variables.
+
+	* tta/perl/t/z_misc/test_fill_gaps_in_sectioning.t: use
+	Texinfo::XSLoader::XS_parser_enabled.
+
+	* tta/perl/t/z_misc/test_tree_copy.t: remove unused code.
+
+2026-01-21  Eli Zaretskii <eliz@gnu.org>
+
+	Minor MinGW-related cleanups
+	
+	* info/pcterm.c (rpl_nl_langinfo): Treat CP_UTF8 and CP_UTF7
+	return values from GetConsoleOutputCP specially.
+	(wcwidth) [not defined HAVE_WCWIDTH]: remove definition.
+	(pc_put_text, pc_write_chars): declare argument as const char *.
+
+	* info/scan.c [__MINGW32__]: Declare rpl_nl_langinfo here.
+	* info/util.c [__MINGW32__]: Remove declaration of rpl_nl_langinfo.
+	Allow gnulib wcwidth to be used.
+
+2026-01-21  Eli Zaretskii  <eliz@gnu.org>
+
+	* .gitattributes: Checkout all *.cmd files with CRLF EOLs.
+
+	* info/t/config/texinfo/info-hooks/manual-not-found.cmd: Use CRLF
+	end-of-line format.
+
 2026-01-20 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/perl/Texinfo/XSLoader.pm ($loaded_additional_libraries): make
