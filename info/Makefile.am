@@ -222,6 +222,11 @@ hooksdir=$(datadir)/texinfo/info-hooks
 
 EXTRA_DIST += info-hooks-default/manual-not-found.in
 hooks_SCRIPTS = info-hooks-default/manual-not-found
+if HOST_IS_WINDOWS
+  hooks_SCRIPTS += info-hooks-default/manual-not-found.cmd
+else
+  EXTRA_DIST += info-hooks-default/manual-not-found.cmd
+endif
 CLEANFILES += info-hooks-default/manual-not-found
 
 info-hooks-default/manual-not-found: info-hooks-default/manual-not-found.in
@@ -234,3 +239,8 @@ info-hooks-default/manual-not-found: info-hooks-default/manual-not-found.in
 dist_hooks_DATA = \
   info-hooks-default/gnu-manuals-locations.dat
 
+if HOST_IS_WINDOWS
+  dist_hooks_DATA += info-hooks-default/gnu-manuals.awk
+else
+  EXTRA_DIST += info-hooks-default/gnu-manuals.awk
+endif
