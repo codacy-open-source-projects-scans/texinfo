@@ -16,12 +16,15 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
-# Parts (also from Patrice Dumas) come from texi2html.pl or texi2html.init.
 
-# ALTIMP perl/XSTexinfo/convert/ConvertXS.xs
+# ALTIMP perl/XSTexinfo/convert/ConvertToTexinfoXS.xs
 # ALTIMP C/main/convert_to_texinfo.c
 
 package Texinfo::Convert::Texinfo;
+
+# Contains code loading the XS module, Perl code common to XS and NonXS
+# and the Perl implementation of the conversion to Texinfo, as it may be
+# used both with and without XS.
 
 use 5.006;
 use strict;
@@ -35,7 +38,6 @@ use if $] >= 5.014, re => '/a';
 
 use Carp qw(cluck confess);
 
-use Texinfo::Convert::ConvertXS;
 use Texinfo::XSLoader;
 
 # commands definitions
@@ -57,78 +59,45 @@ our @EXPORT_OK = qw(
 
 our $VERSION = '7.2.90';
 
-my $XS_convert = Texinfo::XSLoader::XS_convert_enabled();
 
-our $module_loaded = 0;
-sub import {
-  if (!$module_loaded) {
-    if ($XS_convert) {
-      # We do not simply override, we must check at runtime
-      # that the document tree was stored by the XS parser.
-      Texinfo::XSLoader::override(
-        "Texinfo::Convert::Texinfo::_convert_tree_with_XS",
-        "Texinfo::Convert::ConvertXS::plain_texinfo_convert_tree"
-      );
-    }
-    $module_loaded = 1;
+BEGIN {
+  my $shared_library_name = "ConvertToTexinfoXS";
+  if (!Texinfo::XSLoader::XS_convert_enabled()) {
+    undef $shared_library_name;
   }
-  # The usual import method
-  goto &Exporter::import;
-}
 
-my %brace_commands           = %Texinfo::Commands::brace_commands;
-my %root_commands            = %Texinfo::Commands::root_commands;
-my %block_commands           = %Texinfo::Commands::block_commands;
-my %def_commands             = %Texinfo::Commands::def_commands;
-my %nobrace_commands         = %Texinfo::Commands::nobrace_commands;
-my %line_commands            = %Texinfo::Commands::line_commands;
+  my $loaded_package = Texinfo::XSLoader::init (
+      "Texinfo::Convert::Texinfo",
+      "Texinfo::Convert::TexinfoNonXS",
+      $shared_library_name,
+      "Texinfo::Convert::TexinfoXS",
+      ['texinfo', 'texinfoxs'],
+  );
+}
 
 # used in root_heading_command_to_texinfo
 my %sectioning_heading_commands = %Texinfo::Commands::sectioning_heading_commands;
 
-# This is used if the document is available for XS, but XS is not
-# used (most likely $TEXINFO_XS_CONVERT is 0).
-sub _convert_tree_with_XS($)
-{
-  my $root = shift;
-
-  return _convert_to_texinfo($root);
-}
-
-sub _convert_to_texinfo($);
-# expand a tree to the corresponding texinfo.
-sub convert_to_texinfo($)
-{
-  my $element = shift;
-
-  confess("convert_to_texinfo: undef element") if (!defined($element));
-
-  if (defined($element->{'tree_document_descriptor'})) {
-    return _convert_tree_with_XS($element);
-  }
-  return _convert_to_texinfo($element);
-}
-
 # TODO document?
-sub link_element_to_texi($)
-{
+sub link_element_to_texi($) {
   my $element = shift;
+
   my $result = '';
-  return $result if (!$element->{'extra'});
-  if ($element->{'extra'}->{'manual_content'}) {
+  return $result if (!exists($element->{'extra'}));
+  if (exists($element->{'extra'}->{'manual_content'})) {
     $result = '('.convert_to_texinfo($element->{'extra'}->{'manual_content'})
                     .')';
   }
-  if ($element->{'extra'}->{'node_content'}) {
+  if (exists($element->{'extra'}->{'node_content'})) {
     $result .= convert_to_texinfo($element->{'extra'}->{'node_content'});
   }
   return $result
 }
 
 # TODO document?
-sub target_element_to_texi_label($)
-{
+sub target_element_to_texi_label($) {
   my $element = shift;
+
   my $label_element = Texinfo::Common::get_label_element($element);
   # get_label_element does not handle links to external manuals in menus
   if (!defined($label_element)) {
@@ -142,10 +111,8 @@ sub target_element_to_texi_label($)
 # to use re => '/a'.
 # $REFERENCE_NODE should always be a target element associated to
 # a label.
-sub check_node_same_texinfo_code($$)
-{
-  my $reference_node = shift;
-  my $node_content = shift;
+sub check_node_same_texinfo_code($$) {
+  my ($reference_node, $node_content) = @_;
 
   my $reference_node_texi;
   if (defined($reference_node->{'extra'}->{'normalized'})) {
@@ -158,7 +125,7 @@ sub check_node_same_texinfo_code($$)
   }
 
   my $node_texi;
-  if ($node_content) {
+  if (defined($node_content)) {
     my $contents_node = $node_content;
     if ($node_content->{'contents'}->[-1]->{'type'}
         and $node_content->{'contents'}->[-1]->{'type'}
@@ -177,26 +144,27 @@ sub check_node_same_texinfo_code($$)
 }
 
 # for debugging.
-sub root_heading_command_to_texinfo($)
-{
+sub root_heading_command_to_texinfo($) {
   my $element = shift;
+
   my $tree;
-  if ($element->{'cmdname'}) {
+  if (exists($element->{'cmdname'})) {
     if (($element->{'cmdname'} eq 'node'
-         or $sectioning_heading_commands{$element->{'cmdname'}})
-        and $element->{'contents'}->[0]->{'type'}
+         or exists($sectioning_heading_commands{$element->{'cmdname'}}))
+        and exists($element->{'contents'}->[0]->{'type'})
         and $element->{'contents'}->[0]->{'type'} eq 'arguments_line'
-        and $element->{'contents'}->[0]->{'contents'}->[0]->{'type'}
+        and exists($element->{'contents'}->[0]->{'contents'}->[0]->{'type'})
         # Should always be true
         and $element->{'contents'}->[0]->{'contents'}->[0]->{'type'}
                                                            eq 'line_arg'
-        and $element->{'contents'}->[0]->{'contents'}->[0]->{'contents'}) {
+        and exists(
+              $element->{'contents'}->[0]->{'contents'}->[0]->{'contents'})) {
       $tree = $element->{'contents'}->[0]->{'contents'}->[0];
     }
   } else {
     return "Not a command";
   }
-  if ($tree) {
+  if (defined($tree)) {
     return '@'.$element->{'cmdname'}.' '
                 .convert_to_texinfo(
                Texinfo::TreeElement::new({'contents' => $tree->{'contents'}}));
@@ -205,11 +173,21 @@ sub root_heading_command_to_texinfo($)
   }
 }
 
-sub _convert_to_texinfo($);
+# The NonXS implementation is here, as it may be called by the Perl
+# code associated with the XS module when there is no C data
+# associated to the element.
+
+my %brace_commands           = %Texinfo::Commands::brace_commands;
+my %root_commands            = %Texinfo::Commands::root_commands;
+my %block_commands           = %Texinfo::Commands::block_commands;
+my %def_commands             = %Texinfo::Commands::def_commands;
+my %nobrace_commands         = %Texinfo::Commands::nobrace_commands;
+my %line_commands            = %Texinfo::Commands::line_commands;
+
+sub convert_to_texinfoNonXS($);
 
 # convert ELEMENT contents as comma separated arguments
-sub _convert_args($)
-{
+sub _convert_args($) {
   my $element = shift;
 
   my $result = '';
@@ -218,18 +196,18 @@ sub _convert_args($)
     next if ($arg->{'info'} and $arg->{'info'}->{'inserted'});
     $result .= ',' if ($arg_nr);
     $arg_nr++;
-    $result .= _convert_to_texinfo($arg);
+    $result .= convert_to_texinfoNonXS($arg);
   }
   return $result;
 }
 
 # Following subroutines deal with transforming a texinfo tree into texinfo
 # text.  Should give the text that was used parsed, except for a few cases.
-sub _convert_to_texinfo($)
-{
+sub convert_to_texinfoNonXS($) {
   my $element = shift;
 
-  confess "convert_to_texinfo: element undef" if (!defined($element));
+  confess "convert_to_texinfoNonXS: element undef" if (!defined($element));
+
   my $result = '';
   if (ref($element) ne 'Texinfo::TreeElement') {
     if (ref($element) eq 'HASH') {
@@ -241,27 +219,27 @@ sub _convert_to_texinfo($)
     }
   }
 
-  return '' if (($element->{'info'}
+  return '' if ((exists($element->{'info'})
                  and $element->{'info'}->{'inserted'})
-                or ($element->{'type'}
+                or (exists($element->{'type'})
                     and $element->{'type'} eq 'arguments_line'));
 
-  if (defined($element->{'text'})) {
-    if ($element->{'type'}
+  if (exists($element->{'text'})) {
+    if (exists($element->{'type'})
         and $element->{'type'} eq 'bracketed_linemacro_arg') {
       $result .= '{';
     }
     $result .= $element->{'text'};
-    if ($element->{'type'}
+    if (exists($element->{'type'})
         and $element->{'type'} eq 'bracketed_linemacro_arg') {
       $result .= '}';
     }
   } else {
-    if (defined($element->{'cmdname'})) {
+    if (exists($element->{'cmdname'})) {
       my $cmdname = $element->{'cmdname'};
       my $data_cmdname;
       if ($cmdname eq 'item' and $element->{'contents'}
-          and $element->{'contents'}->[0]->{'type'}
+          and exists($element->{'contents'}->[0]->{'type'})
           and $element->{'contents'}->[0]->{'type'} eq 'line_arg') {
         $data_cmdname = 'item_LINE';
       } else {
@@ -270,39 +248,39 @@ sub _convert_to_texinfo($)
 
       $result .= '@'.$cmdname;
 
-      if ($element->{'info'}
-          and $element->{'info'}->{'spaces_after_cmd_before_arg'}) {
+      if (exists($element->{'info'})
+          and exists($element->{'info'}->{'spaces_after_cmd_before_arg'})) {
           $result
            .= $element->{'info'}->{'spaces_after_cmd_before_arg'}->{'text'};
       }
 
       my $spc_before_arg = '';
-      if ($element->{'info'}
-          and $element->{'info'}->{'spaces_before_argument'}) {
+      if (exists($element->{'info'})
+          and exists($element->{'info'}->{'spaces_before_argument'})) {
         $spc_before_arg
           = $element->{'info'}->{'spaces_before_argument'}->{'text'};
       }
 
-      if ($nobrace_commands{$data_cmdname}) {
+      if (exists($nobrace_commands{$data_cmdname})) {
         # the spaces following a command are put in a text element in the
         # tree, not associated to the command element.
         # item, tab and headitem are nobrace commands with contents
-        return $result if (!$element->{'contents'});
-      } elsif ($element->{'contents'}
-          and ($element->{'contents'}->[0]->{'type'}
+        return $result if (!exists($element->{'contents'}));
+      } elsif (exists($element->{'contents'})
+          and (exists($element->{'contents'}->[0]->{'type'})
                and $element->{'contents'}->[0]->{'type'} eq 'arguments_line')) {
         # root commands and block commands that are not def commands
         $result .= $spc_before_arg;
         $result .= _convert_args($element->{'contents'}->[0]);
       } elsif (exists($brace_commands{$cmdname})
-               or ($element->{'type'}
+               or (exists($element->{'type'})
                    and ($element->{'type'} eq 'definfoenclose_command'
                         or $element->{'type'} eq 'macro_call'
                         or $element->{'type'} eq 'rmacro_call'))) {
         # contents may not be set for a command without braces.  In that
         # case it is better if the command is considered as a command without
         # argument.
-        return $result if (!$element->{'contents'});
+        return $result if (!exists($element->{'contents'}));
         my $braces = 1;
         $braces = 0 if ($element->{'contents'}->[0]->{'type'} eq 'following_arg');
         $result .= '{' if ($braces);
@@ -316,8 +294,8 @@ sub _convert_to_texinfo($)
         }
         $result .= '}' if ($braces);
         return $result;
-      } elsif ($line_commands{$data_cmdname}
-               or ($element->{'type'}
+      } elsif (exists($line_commands{$data_cmdname})
+               or (exists($element->{'type'})
                    and ($element->{'type'} eq 'index_entry_command'
                         or $element->{'type'} eq 'macro_call_line'
                         or $element->{'type'} eq 'rmacro_call_line'))) {
@@ -325,8 +303,8 @@ sub _convert_to_texinfo($)
         $result .= $spc_before_arg;
         $result .= _convert_args($element);
         return $result;
-      } elsif ($def_commands{$data_cmdname}
-               or ($element->{'type'}
+      } elsif (exists($def_commands{$data_cmdname})
+               or (exists($element->{'type'})
                    and ($element->{'type'} eq 'linemacro_call'))) {
         # @def* commands (that are also block commands)
         $result .= $spc_before_arg;
@@ -334,29 +312,31 @@ sub _convert_to_texinfo($)
         warn "BUG: Unknown command type to convert to texinfo: $cmdname\n";
       }
     } else {
-      if ($element->{'type'}
+      if (exists($element->{'type'})
           and $element->{'type'} eq 'bracketed_arg') {
         $result .= '{';
       }
-      if ($element->{'info'}
-          and $element->{'info'}->{'spaces_before_argument'}) {
+      if (exists($element->{'info'})
+          and exists($element->{'info'}->{'spaces_before_argument'})) {
         $result .= $element->{'info'}->{'spaces_before_argument'}->{'text'};
       }
     }
 
-    if (defined($element->{'contents'})) {
+    if (exists($element->{'contents'})) {
       foreach my $child (@{$element->{'contents'}}) {
-        $result .= _convert_to_texinfo($child);
+        $result .= convert_to_texinfoNonXS($child);
       }
     }
 
-    if ($element->{'info'} and $element->{'info'}->{'spaces_after_argument'}) {
+    if (exists($element->{'info'})
+        and exists($element->{'info'}->{'spaces_after_argument'})) {
       $result .= $element->{'info'}->{'spaces_after_argument'}->{'text'};
     }
-    if ($element->{'info'} and $element->{'info'}->{'comment_at_end'}) {
-      $result .= _convert_to_texinfo($element->{'info'}->{'comment_at_end'})
+    if (exists($element->{'info'})
+        and exists($element->{'info'}->{'comment_at_end'})) {
+      $result .= convert_to_texinfoNonXS($element->{'info'}->{'comment_at_end'})
     }
-    $result .= '}' if ($element->{'type'}
+    $result .= '}' if (exists($element->{'type'})
                        and $element->{'type'} eq 'bracketed_arg');
   }
   return $result;

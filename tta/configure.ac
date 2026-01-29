@@ -143,10 +143,12 @@ esac
 # subsidiary configure script, which happens if the C compiler is found
 # not to work.
 #
-save_subdirs=$subdirs
-subdirs=perl/CheckXS
-( _AC_OUTPUT_SUBDIRS ) || enable_xs=no
-subdirs=$save_subdirs
+if test $enable_xs = check ; then
+  save_subdirs=$subdirs
+  subdirs=perl/CheckXS
+  ( _AC_OUTPUT_SUBDIRS ) || enable_xs=no
+  subdirs=$save_subdirs
+fi
 
 if test $enable_xs = no; then
   AC_MSG_NOTICE([building Perl extension (XS) modules will be disabled])
@@ -283,6 +285,16 @@ LT_INIT([disable-static dlopen])
 
 AM_CONDITIONAL([HAVE_ICONV],
                [test "x$am_func_iconv" = "xyes"])
+
+
+# dependencies of the C parser and converters libraries
+enable_txi_libraries=no
+if test "x$am_func_iconv" = "xyes" ; then
+  enable_txi_libraries=yes
+fi
+
+AC_SUBST([enable_txi_libraries])
+
 
 # for tests
 txi_ICONV_CONVERTS_EUC_CN
