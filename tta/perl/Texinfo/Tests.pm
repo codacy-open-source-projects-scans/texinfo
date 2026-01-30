@@ -48,11 +48,8 @@ eval { require Text::Diff; Text::Diff->import('diff'); };
 
 my $text_diff_loading_error = $@;
 
-sub is_diff($$$)
-{
-  my $result = shift;
-  my $reference = shift;
-  my $test_name = shift;
+sub is_diff($$$) {
+  my ($result, $reference, $test_name) = @_;
 
   #if (!$test_differences_loading_error) {
   #  eq_or_diff_text($result, $reference, $test_name);
@@ -62,8 +59,8 @@ sub is_diff($$$)
     is($result, $reference, $test_name);
   } else {
     ok($result eq $reference, $test_name)
-       or note((diff(\$result, \$reference)));
-    #is($result, $reference, $test_name) or note(diff(\$result, \$reference));
+       or note((diff(\$reference, \$result)));
+    #is($result, $reference, $test_name) or note(diff(\$reference, \$result));
   }
 }
 
