@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-AC_INIT([GNU Texinfo], [7.2.90])
+AC_INIT([GNU Texinfo], [7.2.91])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIRS([build-aux/m4 gnulib/m4 m4 ../m4])
@@ -23,6 +23,10 @@ AC_SUBST([TEXINFO_DTD_VERSION])
 
 CONVERTER=texi2any
 AC_SUBST([CONVERTER])
+
+AC_PATH_PROG([PERL], [perl])
+
+AM_MISSING_PROG([GAWK], [gawk])
 
 USE_EXTERNAL_EASTASIANWIDTH=no
 AC_ARG_WITH([external-Unicode-EastAsianWidth],
@@ -60,10 +64,6 @@ AC_ARG_ENABLE([additional-checks],
     [ enable_additional_tests=no])
 
 AM_CONDITIONAL([DISABLE_ADDITIONAL_CHECKS], [test "z$enable_additional_tests" = zno])
-
-AC_PATH_PROG([PERL], [perl])
-
-AM_MISSING_PROG([GAWK], [gawk])
 
 AC_CANONICAL_HOST
 
@@ -358,16 +358,6 @@ LT_INIT([disable-static dlopen])
 AM_CONDITIONAL([HAVE_ICONV],
                [test "x$am_func_iconv" = "xyes"])
 
-
-# dependencies of the C parser and converters libraries
-enable_txi_libraries=no
-if test "x$am_func_iconv" = "xyes" ; then
-  enable_txi_libraries=yes
-fi
-
-AC_SUBST([enable_txi_libraries])
-
-
 # for tests
 txi_ICONV_CONVERTS_EUC_CN
 
@@ -525,7 +515,7 @@ AC_ARG_ENABLE([perl-install-mode],
 
 perl_installsitearch=
 AC_ARG_ENABLE([installsitearch],
-    AS_HELP_STRING([--enable-installsitearch],[Perl installsitearch directory (default: Perl config)]),
+    AS_HELP_STRING([--enable-installsitearch],[Perl installsitearch directory (default: Perl default)]),
     [
      if test "z$enableval" != z ; then
        perl_installsitearch=$enableval
@@ -534,7 +524,7 @@ AC_ARG_ENABLE([installsitearch],
 
 perl_installsitelib=
 AC_ARG_ENABLE([installsitelib],
-    AS_HELP_STRING([--enable-installsitelib],[Perl installsitelib directory (default: Perl config)]),
+    AS_HELP_STRING([--enable-installsitelib],[Perl installsitelib directory (default: Perl default)]),
     [
      if test "z$enableval" != z ; then
        perl_installsitelib=$enableval
@@ -543,7 +533,7 @@ AC_ARG_ENABLE([installsitelib],
 
 perl_installvendorarch=
 AC_ARG_ENABLE([installvendorarch],
-    AS_HELP_STRING([--enable-installvendorarch],[Perl installvendorarch directory (default: Perl config)]),
+    AS_HELP_STRING([--enable-installvendorarch],[Perl installvendorarch directory (default: Perl default)]),
     [
      if test "z$enableval" != z ; then
        perl_installvendorarch=$enableval
@@ -552,7 +542,7 @@ AC_ARG_ENABLE([installvendorarch],
 
 perl_installvendorlib=
 AC_ARG_ENABLE([installvendorlib],
-    AS_HELP_STRING([--enable-installvendorlib],[Perl installvendorlib directory (default: Perl config)]),
+    AS_HELP_STRING([--enable-installvendorlib],[Perl installvendorlib directory (default: Perl default)]),
     [
      if test "z$enableval" != z ; then
        perl_installvendorlib=$enableval
@@ -615,6 +605,7 @@ if test "x$am_func_iconv" = "xyes"; then
 fi
 
 AM_CONDITIONAL([BUILD_C_CODE], [test "z$build_C_code" = zyes])
+AC_SUBST([build_C_code])
 
 AC_SUBST([perlarchdir])
 AC_SUBST([perllibdir])

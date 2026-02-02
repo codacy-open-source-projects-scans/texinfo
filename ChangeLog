@@ -1,3 +1,67 @@
+2026-02-01 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm (init): die if
+	TEXINFO_XS=requiredifenabled, the module name is defined and the
+	extension was not loaded.  Report from Gavin.
+
+2026-02-01 Patrice Dumas  <pertusus@free.fr>
+
+	* INSTALL, tta/README: move information related to the texi2any
+	implementation in C to tta/README.
+
+2026-02-01 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/configure.ac, tta/perl/Makefile.am (ModulePath.pm),
+	tta/perl/Texinfo/ModulePath.pm.in ($build_C_code): pass build_C_code
+	instead of enable_txi_libraries.  Remove enable_txi_libraries.
+
+	* tta/perl/Texinfo/XSLoader.pm (BEGIN, $disable_C_libraries): set
+	$disable_C_libraries based on build_C_code.
+
+	* tta/perl/Texinfo/XSLoader.pm (init): handle especially the case of
+	defined($additional_libraries) and $disable_C_libraries.
+	Add FIXME as the TEXINFO_XS=requiredifenabled case is incorrect for
+	modules without fallback.
+
+2026-02-01 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/XSTexinfo/Makefile.am: use BUILD_C_CODE instead of
+	HAVE_ICONV, it should be clearer and more robust.
+
+2026-02-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* configure.ac: bump version to 7.2.91.
+
+2026-02-01 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm (init): do not check $disable_XS in
+	TEXINFO_XS requiredifenabled case, it cannot happen anymore.
+
+2026-02-01 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm (init): with
+	TEXINFO_XS=requiredifenabled, if XS is disabled, reset
+	TEXINFO_XS=omit.  Based on Gavin patch, used for requiredifenabled
+	and without ever setting $TEXINFO_XS to required.
+
+2026-02-01 Patrice Dumas  <pertusus@free.fr>
+
+	* configure.ac, tta/configure.ac: move code around to be more
+	similar.  Use the same descriptions in AS_HELP_STRING.
+
+2026-02-01 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Example/IXIN.pm,
+	tta/perl/Texinfo/Example/IXINSXML.pm, tta/perl/Makefile.am
+	(dist_convertmodules_DATA): move IXIN.pm and IXINSXML.pm to
+	Texinfo/Example.
+
+2026-02-01  Gavin Smith <gavinsmith0123@gmail.com>
+
+	gnulib update
+	
+	* (top level), tta: run gnulib-tool --add-import.
+
 2026-01-31  Gavin Smith <gavinsmith0123@gmail.com>
 
 	* configure.ac: move AC_ARG_WITH and AC_ARG_ENABLE declarations
