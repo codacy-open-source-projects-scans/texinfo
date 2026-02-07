@@ -27,7 +27,7 @@ use DynaLoader;
 # Texinfo::ModulePath::enable_xs based on the previous configure+make
 our $disable_XS;
 
-# Currently not set elsewhere, but could be needed to be.
+# Currently not set elsewhere, but could be if needed.
 our $disable_C_libraries;
 
 BEGIN {
@@ -41,7 +41,7 @@ BEGIN {
     if ($Texinfo::ModulePath::enable_xs eq 'no') {
       $disable_XS = 1;
     }
-    if ($Texinfo::ModulePath::used_shared_txi_libraries eq 'no') {
+    if ($Texinfo::ModulePath::use_shared_txi_libraries eq 'no') {
       $disable_C_libraries = 1;
     }
   }
@@ -410,6 +410,7 @@ sub init {
     }
   } elsif ($TEXINFO_XS eq 'requiredifenabled') {
     if (defined($additional_libraries) and $disable_C_libraries) {
+      # This happens if iconv is not found or not usable.
       # in that case, the loading of the module is expected to fail.
       # FIXME expected failure when overriding a specific function
       # if (!defined($fallback_module)) for modules without fallback.
@@ -419,7 +420,6 @@ sub init {
       # An undefined module name should only happen based on the TEXINFO_XS_*
       # environment variables values.
       if (!defined($fallback_module)) {
-        # FIXME expected failure for modules without fallback.
         die "extension disabled, no required fallback module for $module\n";
       }
     } else {

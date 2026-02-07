@@ -503,51 +503,26 @@ fi
 
 AM_CONDITIONAL([SWIG_PYTHON_INTERFACE], [test "x$with_swig_python" = "xyes"])
 
-perl_install_mode=site
+# The following can be set by the user on the configure command line:
+#
+# perl_install_mode       Perl SWIG interface install mode site/vendor/custom
+#                         (default: site)
+# perl_installsitearch    Perl installsitearch directory (default: Perl
+#                         default)
+# perl_installsitelib     Perl installsitelib directory (default: Perl
+#                         default)
+# perl_installvendorarch  Perl installvendorarch directory (default: Perl
+#                         default)
+# perl_installvendorlib   Perl installvendorlib directory (default: Perl
+#                         default)
+dnl TODO consider using AC_ARG_VAR for the above variables if with_swig default
+dnl becomes detected.
 
-AC_ARG_ENABLE([perl-install-mode],
-    AS_HELP_STRING([--enable-perl-install-mode],[Perl SWIG interface install mode site/vendor/custom (default: site)]),
-    [
-     if test "z$enableval" = zsite -o "z$enableval" = zvendor -o "z$enableval" = zcustom ; then
-       perl_install_mode=$enableval
-     fi
-])
-
-perl_installsitearch=
-AC_ARG_ENABLE([installsitearch],
-    AS_HELP_STRING([--enable-installsitearch],[Perl installsitearch directory (default: Perl default)]),
-    [
-     if test "z$enableval" != z ; then
-       perl_installsitearch=$enableval
-     fi
-    ])
-
-perl_installsitelib=
-AC_ARG_ENABLE([installsitelib],
-    AS_HELP_STRING([--enable-installsitelib],[Perl installsitelib directory (default: Perl default)]),
-    [
-     if test "z$enableval" != z ; then
-       perl_installsitelib=$enableval
-     fi
-    ])
-
-perl_installvendorarch=
-AC_ARG_ENABLE([installvendorarch],
-    AS_HELP_STRING([--enable-installvendorarch],[Perl installvendorarch directory (default: Perl default)]),
-    [
-     if test "z$enableval" != z ; then
-       perl_installvendorarch=$enableval
-     fi
-    ])
-
-perl_installvendorlib=
-AC_ARG_ENABLE([installvendorlib],
-    AS_HELP_STRING([--enable-installvendorlib],[Perl installvendorlib directory (default: Perl default)]),
-    [
-     if test "z$enableval" != z ; then
-       perl_installvendorlib=$enableval
-     fi
-    ])
+if test "z$perl_install_mode" != zsite \
+    -a "z$perl_install_mode" != zvendor \
+    -a "z$perl_install_mode" != zcustom ; then
+  perl_install_mode=site
+fi
 
 swig_perl_tests=no
 if test x$enable_xs != xno ; then
@@ -610,7 +585,7 @@ AC_SUBST([use_shared_txi_libraries])
 
 build_C_code=no
 test "z$enable_xs" = zyes && build_C_code=yes
-test "z$used_shared_txi_libraries" = zyes && build_C_code=yes
+test "z$use_shared_txi_libraries" = zyes && build_C_code=yes
 
 AM_CONDITIONAL([BUILD_C_CODE], [test "z$build_C_code" = zyes])
 dnl AC_SUBST([build_C_code])
