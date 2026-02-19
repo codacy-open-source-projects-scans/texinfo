@@ -104,6 +104,12 @@ information from the ChangeLog:
 test $IN_GIT_HOOK_POST_COMMIT && exit 0
 export IN_GIT_HOOK_POST_COMMIT=1
 
+# exclude some branches from hook
+branch=`git rev-parse --abbrev-ref HEAD`
+case $branch in
+  experimental/*) exit 0 ;;
+esac
+
 # Get author from latest ChangeLog entry.  Remove date, leading and trailing
 # spaces, and condense multiple spaces to 1.
 CL_author=$(head -n 1 ChangeLog | sed -e 's/^[[:digit:]-]*//' -e 's/^ *//' -e 's/ *$//' -e 's/  \+/ /')
@@ -518,7 +524,6 @@ for speed when testing).
 
 Update version number:
   new version in configure.ac then "make update-version"
-  (cd texindex ; rm texindex.awk ; make)
 
 check up to date copyright years in files relevant to --version calls
 (tta/perl/texi2any.pl, info/info.c, install-info/install-info.c,
