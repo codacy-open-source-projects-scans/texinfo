@@ -49,7 +49,7 @@ use warnings;
 
 # Through rules in Makefile.am, directory paths set through configure are
 # substituted directly in strings in the code, for example
-#   my $datadir = '@datadir@';
+#   $datadir = '@datadir@';
 # We always use these strings as byte string, therefore we explicitly
 # set no utf8 to be sure that strings in code will never be considered as
 # character strings by Perl.
@@ -84,6 +84,8 @@ Getopt::Long::Configure("gnu_getopt");
 
 my ($real_command_name, $command_directory, $command_suffix);
 
+my $datadir;
+
 # This big BEGIN block deals with finding modules and
 # some dependencies that we ship
 # * in source or
@@ -96,15 +98,24 @@ BEGIN
   my $updir = File::Spec->updir();
 
   # These are substituted by the Makefile to create "texi2any".
-  my $datadir = '@datadir@';
   my $converter = '@CONVERTER@';
   my $libdir = '@libdir@';
   my $converter_libdir;
 
-  if ($datadir eq '@' .'datadir@'
+  if ('@datadir@' eq '@' .'datadir@'
       or defined($ENV{'TEXINFO_DEV_SOURCE'})
          and $ENV{'TEXINFO_DEV_SOURCE'} ne '0')
   {
+    # use installed path for datadir, even if uninstalled.  datadir,
+    # however, is only used for some directories.
+    if ('@datadir@' eq '@' .'datadir@') {
+      my $fallback_prefix
+         = File::Spec->rootdir() . join('/', ('usr', 'local'));
+      $datadir = "$fallback_prefix/share";
+    } else {
+      $datadir = '@datadir@';
+    }
+
     # Use uninstalled modules
 
     # To find Texinfo::ModulePath
@@ -132,6 +143,7 @@ BEGIN
     Texinfo::ModulePath::init(undef, undef, undef, 'updirs' => 1);
   } else {
     # Look for modules in their installed locations.
+    $datadir = '@datadir@';
     my $modules_dir = join('/', ($datadir, $converter));
     # look for package data in the installed location.
     my $converter_datadir = $modules_dir;
@@ -142,9 +154,9 @@ BEGIN
     if (! -f join('/', ($modules_dir, 'Texinfo', 'Parser.pm'))
         and -f join('/', ($command_directory, $updir, 'share',
                           $converter, 'Texinfo', 'Parser.pm'))) {
-      $modules_dir = join('/', ($command_directory, $updir,
-                                'share', $converter));
-      $converter_datadir = $modules_dir;
+      $datadir = join('/', ($command_directory, $updir, 'share'));
+      $converter_datadir = join('/', ($datadir, $converter));
+      $modules_dir = $converter_datadir;
       $converter_libdir = join('/', ($command_directory, $updir,
                                           'lib', $converter));
     }
@@ -188,37 +200,21 @@ my $quoted_path_separator = quotemeta($path_separator);
 my $curdir = File::Spec->curdir();
 my $updir = File::Spec->updir();
 
-# set by configure, prefix for the sysconfdir and so on
-# This could be used in the eval
-my $prefix = '@prefix@';
-my $datadir;
-my $datarootdir;
 my $sysconfdir;
 my $converter;
 
 my $fallback_prefix = File::Spec->rootdir() . join('/', ('usr', 'local'));
 
-# We need to eval as $prefix has to be expanded. However when we haven't
-# run configure @sysconfdir will be expanded as an array, thus we verify
-# whether configure was run or not
+# The @ delimited strings are substituted by the Makefile to create "texi2any".
 if ('@sysconfdir@' ne '@' . 'sysconfdir@') {
-  $sysconfdir = eval '"@sysconfdir@"';
+  $sysconfdir = '@sysconfdir@';
 } else {
   $sysconfdir = "$fallback_prefix/etc";
 }
 
-if ('@datarootdir@' ne '@' . 'datarootdir@') {
-  $datarootdir = eval '"@datarootdir@"';
-} else {
-  $datarootdir = "$fallback_prefix/share";
-}
-
-if ('@datadir@' ne '@' . 'datadir@' and '@PACKAGE@' ne '@' . 'PACKAGE@') {
-  $datadir = eval '"@datadir@"';
-  my $package = '@PACKAGE@';
+if ('@CONVERTER@' ne '@' . 'CONVERTER@') {
   $converter = '@CONVERTER@';
 } else {
-  $datadir = "$fallback_prefix/share";
   $converter = 'texi2any';
 }
 
@@ -298,10 +294,10 @@ $strings_textdomain = 'texinfo_document'
 # gettext.
 Locale::Messages->select_package('gettext_pp');
 
-# Note: this uses installed messages even when the program is uninstalled
+# Note: this uses installed or fallback directory messages when
+# the program is uninstalled
 Locale::Messages::bindtextdomain($messages_textdomain,
                                  join('/', ($datadir, 'locale')));
-
 
 # Set initial configuration
 
@@ -310,10 +306,10 @@ Locale::Messages::bindtextdomain($messages_textdomain,
 # We do not fallback on a Texinfo module version to be able to
 # verify that there is no mismatch.
 
-# Version set in configure.ac
+# Version set in configure.ac and substituted in Makefile
 my $configured_version = '@PACKAGE_VERSION@';
 if ($configured_version eq '@' . 'PACKAGE_VERSION@') {
-  # if not configured, search for the version in configure.ac
+  # if not configured/substituted, search for the version in configure.ac
   if (open(CONFIGURE,
            "< " . join('/', ($Texinfo::ModulePath::t2a_srcdir,
                              'configure.ac')))) {
@@ -566,6 +562,8 @@ sub set_subdir_directories($$) {
   # datadir, there is no need for customization of those directories
   # since the sysconfdir directories are already customized, just use
   # the installation directory.
+  # Note: this uses installed or fallback directory when
+  # the program is uninstalled
   push @result, "$datadir/$subdir";
 
   # the following code could have been used to use XDG_DATA_DIRS for

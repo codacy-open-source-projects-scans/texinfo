@@ -13,6 +13,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
+#include <string.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <stddef.h>
+
 /* Avoid namespace conflicts. */
 #define context perl_context
 
@@ -603,7 +608,7 @@ call_file_id_setting_redirection_file_names (CONVERTER *self,
                   STRLEN len;
                   const char *file_ret = SvPVutf8 (file_sv, len);
                   result_redirection_files[defined_count]
-                        = strndup (file_ret, len);
+                    = perl_only_strndup (file_ret, len);
                   defined_count++;
                 }
             }
