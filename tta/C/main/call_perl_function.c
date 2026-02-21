@@ -270,7 +270,7 @@ call_collator_getSortKey (const void *collator_sv, const char *string)
 static void
 call_modulepath_init (int updirs, const char *perl_modules_dir,
                       const char *converter_libdir,
-                      const char *converter_datadir)
+                      const char *datadir)
 {
   int count;
 
@@ -298,7 +298,7 @@ call_modulepath_init (int updirs, const char *perl_modules_dir,
       /* call to Modulepath init for the installed modules case */
       PUSHs(sv_2mortal (newSVpv_byte (perl_modules_dir, 0)));
       PUSHs(sv_2mortal (newSVpv_byte (converter_libdir, 0)));
-      PUSHs(sv_2mortal (newSVpv_byte (converter_datadir, 0)));
+      PUSHs(sv_2mortal (newSVpv_byte (datadir, 0)));
       PUSHs(sv_2mortal (newSVpv ("installed", 0)));
       PUSHs(sv_2mortal (newSViv (1)));
     }
@@ -327,8 +327,8 @@ call_modulepath_init (int updirs, const char *perl_modules_dir,
  */
 int
 call_eval_load_texinfo_modules (int texinfo_uninstalled,
-          const char *t2a_builddir, int updirs, const char *converter_datadir,
-          const char *converter_libdir)
+          const char *t2a_builddir, int updirs, const char *modules_dir,
+          const char *converter_libdir, const char *datadir)
 {
   SV *sv_inc_str;
   SV *document_loader_sv;
@@ -347,7 +347,7 @@ call_eval_load_texinfo_modules (int texinfo_uninstalled,
   if (texinfo_uninstalled)
     sv_inc_str = newSVpvf("%s/perl", t2a_builddir);
   else
-    sv_inc_str = newSVpv_byte(converter_datadir, 0);
+    sv_inc_str = newSVpv_byte(modules_dir, 0);
   av_store (INC, 0, sv_inc_str);
 
   str = "require Texinfo::ModulePath;\n";
@@ -357,8 +357,8 @@ call_eval_load_texinfo_modules (int texinfo_uninstalled,
   if (texinfo_uninstalled)
     call_modulepath_init (updirs, 0, 0, 0);
   else
-    call_modulepath_init (-1, converter_datadir, converter_libdir,
-                          converter_datadir);
+    call_modulepath_init (-1, modules_dir, converter_libdir,
+                          datadir);
 
   str = "use Texinfo::Document;\n"
         "use Texinfo::Translations;\n"

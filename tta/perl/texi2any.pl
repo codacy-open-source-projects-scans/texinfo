@@ -98,7 +98,6 @@ BEGIN
   my $updir = File::Spec->updir();
 
   # These are substituted by the Makefile to create "texi2any".
-  my $converter = '@CONVERTER@';
   my $libdir = '@libdir@';
   my $converter_libdir;
 
@@ -144,9 +143,9 @@ BEGIN
   } else {
     # Look for modules in their installed locations.
     $datadir = '@datadir@';
+    my $converter = '@CONVERTER@';
     my $modules_dir = join('/', ($datadir, $converter));
     # look for package data in the installed location.
-    my $converter_datadir = $modules_dir;
     $converter_libdir = join('/', ($libdir, $converter));
 
     # try to make package relocatable, will only work if
@@ -155,8 +154,7 @@ BEGIN
         and -f join('/', ($command_directory, $updir, 'share',
                           $converter, 'Texinfo', 'Parser.pm'))) {
       $datadir = join('/', ($command_directory, $updir, 'share'));
-      $converter_datadir = join('/', ($datadir, $converter));
-      $modules_dir = $converter_datadir;
+      $modules_dir = join('/', ($datadir, $converter));
       $converter_libdir = join('/', ($command_directory, $updir,
                                           'lib', $converter));
     }
@@ -165,8 +163,7 @@ BEGIN
 
     require Texinfo::ModulePath;
     Texinfo::ModulePath::init($modules_dir, $converter_libdir,
-                              $converter_datadir,
-                              'installed' => 1);
+                              $datadir, 'installed' => 1);
   }
 } # end BEGIN
 
@@ -526,9 +523,9 @@ sub add_config_paths($$$$;$$) {
 # $SUBDIR in system directories for configuration
 #   installation directory
 #   XDG environment variable directories
-# $datadir/$SUBDIR
-sub set_subdir_directories($$) {
-  my ($subdir, $deprecated_dirs) = @_;
+# $DATADIR/$SUBDIR
+sub set_subdir_directories($$$) {
+  my ($datadir, $subdir, $deprecated_dirs) = @_;
 
   my @result = (".$subdir");
 
@@ -579,7 +576,7 @@ sub set_subdir_directories($$) {
 # implementation independent.  Used as part of binary strings.
 # curdir and the input file path directory are prepended later on.
 my $language_config_dirs
-  = set_subdir_directories('texinfo', \%deprecated_directories);
+  = set_subdir_directories($datadir, 'texinfo', \%deprecated_directories);
 my @texinfo_language_config_dirs = @$language_config_dirs;
 
 # these variables are used as part of binary strings.
@@ -588,7 +585,7 @@ my @converter_init_dirs;
 
 # implementation (texi2any) specific directories
 my $converter_config_dirs_array_ref
-  = set_subdir_directories($converter, \%deprecated_directories);
+  = set_subdir_directories($datadir, $converter, \%deprecated_directories);
 
 @converter_config_dirs = ($curdir, @$converter_config_dirs_array_ref);
 
