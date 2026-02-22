@@ -2114,7 +2114,7 @@ convert_output_output_unit_internal (CONVERTER *self,
           if (conversion)
             {
               result = encode_with_iconv (conversion->iconv,
-                                          text->text, 0, 0);
+                                          text->text, 0, ieh_error, 0);
               res_len = strlen (result);
             }
           else
@@ -2390,7 +2390,6 @@ html_conversion_finalization (CONVERTER *self)
   self->html_files_information.list = 0;
   self->html_files_information.number = 0;
 
-  /* needed to remove trees to build */
   html_reset_translated_special_unit_info_tree (self);
 
   html_reset_shared_conversion_state (self);
@@ -2533,7 +2532,7 @@ file_error_or_write_close (CONVERTER *self, const char *out_filepath,
       if (conversion)
         {
           result = encode_with_iconv (conversion->iconv,
-                                      page, 0, 0);
+                                      page, 0, ieh_error, 0);
           res_len = strlen (result);
         }
       else
