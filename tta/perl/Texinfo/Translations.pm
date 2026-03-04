@@ -64,7 +64,7 @@ use Texinfo::Common;
 # modules do not setup data such that their order of loading is not
 # important, as long as they load after their dependencies.
 
-use Texinfo::DocumentXS;
+use Texinfo::Document;
 
 use Texinfo::Convert::Unicode;
 
@@ -73,37 +73,21 @@ use Texinfo::Parser;
 
 use Texinfo::ManipulateTree;
 
-our $VERSION = '7.2.92';
-
-my $XS_parser = Texinfo::XSLoader::XS_parser_enabled();
+our $VERSION = '7.3dev';
 
 # we want a reliable way to switch locale for the document
 # strings translations so we don't use the system gettext.
 Locale::Messages->select_package ('gettext_pp');
-
-our $module_loaded = 0;
-sub import {
-  if (!$module_loaded) {
-    if ($XS_parser) {
-      Texinfo::XSLoader::override(
-        "Texinfo::Translations::_XS_configure",
-        "Texinfo::DocumentXS::configure_output_strings_translations");
-    }
-    $module_loaded = 1;
-  }
-  # The usual import method
-  goto &Exporter::import;
-}
 
 # i18n
 
 my $messages_textdomain = 'texinfo';
 my $strings_textdomain = 'texinfo_document';
 
-sub _XS_configure($;$$) {
-  # do nothing if there is no XS code loaded
-}
-
+# TODO document when both XS and NonXS need to be setup?
+# Do that in Document module(s)?
+# TODO remove second argument?  In that case remove the equivalent in
+# C code too.  Check if it could be useful for SWIG interface, maybe?
 sub configure($;$) {
   my ($localesdir, $in_strings_textdomain) = @_;
 
@@ -113,7 +97,8 @@ sub configure($;$) {
   if (defined($localesdir)) {
     Locale::Messages::bindtextdomain($strings_textdomain, $localesdir);
     # set the directory for the XS code too
-    _XS_configure($localesdir, $strings_textdomain);
+    Texinfo::Document::configure_output_strings_translations($localesdir,
+                                                      $strings_textdomain);
   } else {
     warn 'WARNING: string textdomain directory undefined'."\n";
   }
@@ -134,6 +119,7 @@ my $working_locale;
 
 my $no_local_found_error_output;
 
+# Now unused
 sub _switch_messages_locale() {
   my $locale;
 
@@ -195,17 +181,9 @@ sub translate_string($$$;$) {
 
   my ($saved_LC_MESSAGES, $saved_LANGUAGE);
 
-  # We need to set LC_MESSAGES to a valid locale other than "C" or "POSIX"
-  # for translation via LANGUAGE to work.  (The locale is "C" if the
-  # tests are being run.)
-  #   LC_MESSAGES was reported not to exist for Perl on MS-Windows.  We
-  # could use LC_ALL instead, but (a) it's not clear if this would help,
-  # and (b) this could interfere with the LC_CTYPE setting in XSParagraph.
-
-  if ($^O ne 'MSWin32') {
-    $saved_LC_MESSAGES = POSIX::setlocale(LC_MESSAGES);
-    _switch_messages_locale();
-  }
+  # we switch to gettext_dumb to use a gettext implementation that
+  # does not use the current locale information at all.
+  Locale::Messages->select_package('gettext_dumb');
   $saved_LANGUAGE = $ENV{'LANGUAGE'};
 
   Locale::Messages::textdomain($strings_textdomain);
@@ -243,20 +221,15 @@ sub translate_string($$$;$) {
     $translated_string = Locale::Messages::gettext($string);
   }
 
+  # switch back for error messages translation
+  Locale::Messages->select_package('gettext_pp');
+
   Locale::Messages::textdomain($messages_textdomain);
 
   if (!defined($saved_LANGUAGE)) {
     delete ($ENV{'LANGUAGE'});
   } else {
     $ENV{'LANGUAGE'} = $saved_LANGUAGE;
-  }
-
-  if ($^O ne 'MSWin32') {
-    if (defined($saved_LC_MESSAGES)) {
-      POSIX::setlocale(LC_MESSAGES, $saved_LC_MESSAGES);
-    } else {
-      POSIX::setlocale(LC_MESSAGES, '');
-    }
   }
 
   return $translated_string;
@@ -599,10 +572,12 @@ sub complete_indices($;$$) {
 
           my $def_command = $main_entry_element->{'extra'}->{'def_command'};
 
-          my $class_copy = Texinfo::ManipulateTree::copy_treeNonXS($class);
-          my $name_copy = Texinfo::ManipulateTree::copy_treeNonXS($name);
-          my $ref_class_copy = Texinfo::ManipulateTree::copy_treeNonXS($class);
-          my $ref_name_copy = Texinfo::ManipulateTree::copy_treeNonXS($name);
+          my $class_copy = Texinfo::ManipulateTree::copy_element_tree($class);
+          my $name_copy = Texinfo::ManipulateTree::copy_element_tree($name);
+          my $ref_class_copy
+                = Texinfo::ManipulateTree::copy_element_tree($class);
+          my $ref_name_copy
+                = Texinfo::ManipulateTree::copy_element_tree($name);
           foreach my $element_copy ($class_copy, $name_copy, $ref_class_copy,
                                     $ref_name_copy) {
             delete $element_copy->{'type'};

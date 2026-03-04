@@ -131,11 +131,21 @@ static size_t converter_space;
 
 const char *xml_text_entity_no_arg_commands_formatting[BUILTIN_CMD_NUMBER];
 
+/* Needs to be called before initialization of HTML converter.  Therefore
+   the HTML converter initialization function also calls,
+   setup_converter_generic */
+
+static int setup_converter_generic_done;
+
 void
 setup_converter_generic (void)
 {
   int i;
   /* conversion specific information */
+
+  if (setup_converter_generic_done)
+    return;
+
   for (i = 0; i < BUILTIN_CMD_NUMBER; i++)
     {
       if (xml_text_entity_no_arg_commands[i])
@@ -147,6 +157,8 @@ setup_converter_generic (void)
         xml_text_entity_no_arg_commands_formatting[i]
           = text_brace_no_arg_commands[i];
     }
+
+  setup_converter_generic_done = 1;
 
   /* For translation of in document string. */
   if (0)
@@ -229,6 +241,7 @@ set_commands_options_value (COMMAND_OPTION_VALUE *commands_init_conf,
 
       if (if_set_in_list && !(option->flags & OF_set_in_list))
         continue;
+
       if (option->type == GOT_integer)
         {
           commands_init_conf[option_nr_cmd->cmd].type = option->type;
@@ -1316,7 +1329,7 @@ float_type_number (CONVERTER *self, const ELEMENT *float_e)
 
   if (type_element)
     {
-      ELEMENT *type_element_copy = copy_tree (type_element, 0);
+      ELEMENT *type_element_copy = copy_element_tree (type_element, 0);
       add_element_to_named_string_element_list (replaced_substrings,
                                      "float_type", type_element_copy);
       if (float_number)
@@ -1368,7 +1381,7 @@ float_name_caption (CONVERTER *self, const ELEMENT *float_e)
 
   if (type_element)
     {
-      ELEMENT *type_element_copy = copy_tree (type_element, 0);
+      ELEMENT *type_element_copy = copy_element_tree (type_element, 0);
       add_element_to_named_string_element_list (replaced_substrings,
                                      "float_type", type_element_copy);
       if (caption_element)

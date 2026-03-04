@@ -14,8 +14,6 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# ALTIMP TreeElementNonXS.pm
 
 package Texinfo::TreeElement;
 
@@ -23,7 +21,7 @@ use 5.006;
 use strict;
 use warnings;
 
-our $VERSION = '7.2.92';
+our $VERSION = '7.3dev';
 
 use Texinfo::XSLoader;
 

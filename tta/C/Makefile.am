@@ -148,6 +148,7 @@ C_libtexinfo_sources = \
 		      main/global_commands_types.h \
 		      main/utils.c \
 		      main/utils.h \
+		      main/system.h \
 		      main/converter_types.h \
 		      main/unicode.c \
 		      main/unicode.h \
@@ -226,13 +227,15 @@ noinst_LTLIBRARIES += libcallperl_libtexinfo.la
 # parts of the libtexinfo code and need to be compiled with Perl headers
 libcallperl_libtexinfo_la_SOURCES = \
 		      main/api_to_perl.h \
-		      main/call_perl_function.h
+		      main/call_perl_function.h \
+		      main/call_document_perl_functions.h
 
 if ! DISABLE_XS
 libcallperl_libtexinfo_la_SOURCES += \
 		      ppport.h \
 		      main/api_to_perl.c \
-		      main/call_perl_function.c
+		      main/call_perl_function.c \
+		      main/call_document_perl_functions.c
 else
 libcallperl_libtexinfo_la_SOURCES += \
 		      main/replace_perl_api_call.c
@@ -481,8 +484,6 @@ libcallperl_libtexinfo_convert_la_SOURCES = \
                        convert/call_conversion_perl.h
 if ! DISABLE_XS
 libcallperl_libtexinfo_convert_la_SOURCES += \
-                       main/call_document_perl_functions.h \
-                       main/call_document_perl_functions.c \
                        convert/build_html_perl_state.h \
                        convert/build_html_perl_state.c \
                        convert/call_html_perl_function.c \
@@ -645,9 +646,10 @@ ctexi2any_LDADD = libtexinfo-main.la libtexinfoxs.la libtexinfo-convert.la libte
 # the compiling and linking flags must match there will be a failure to
 # build (for example AlmaLinux).
 ctexi2any_CFLAGS = $(perl_conf_CFLAGS)
-ctexi2any_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) -DPATH_SEP=\"${PATH_SEPARATOR}\" -DEMBED_PERL
+ctexi2any_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) -DEMBED_PERL
 
-# in configure.ac, it is checked that Perl is embedded and iconv is available
+# in configure.ac, it is checked that Perl is embedded (and that shared
+# libraries are built)
 if PREFER_C_TEXI2ANY
 bin_PROGRAMS = texi2any
 endif
@@ -690,6 +692,6 @@ teximakehtml_SOURCES = \
 teximakehtml_CFLAGS = $(perl_conf_CFLAGS)
 teximakehtml_LDADD = $(top_builddir)/gnulib/lib/libgnu.la $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 
-teximakehtml_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS) -DPATH_SEP=\"${PATH_SEPARATOR}\"
+teximakehtml_CPPFLAGS = -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/main -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
 
 

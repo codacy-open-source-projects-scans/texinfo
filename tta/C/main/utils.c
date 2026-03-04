@@ -15,7 +15,8 @@
 
 /* code that does not fit anywhere else */
 
-#include <config.h>
+/* includes config.h */
+#include <system.h>
 
 #include <stdlib.h>
 #include <string.h>
@@ -53,6 +54,7 @@
 #include "converter_types.h"
 /* isascii_alnum isascii_alpha isascii_upper */
 #include "base_utils.h"
+#include "hashmap.h"
 #include "tree.h"
 #include "extra.h"
 #include "builtin_commands.h"
@@ -65,6 +67,18 @@
 
 #define min_level command_structuring_level[CM_chapter]
 #define max_level command_structuring_level[CM_subsubsection]
+
+#if O_BINARY
+# define HAVE_DRIVE(n)   ((n)[0] && (n)[1] == ':')
+# define IS_SLASH(c)     ((c) == '/' || (c) == '\\')
+# define IS_ABSOLUTE(n)  (IS_SLASH((n)[0]) || HAVE_DRIVE(n))
+# define FILE_SLASH      "/\\"
+#else  /* not O_BINARY, i.e., Unix */
+# define IS_SLASH(c)     ((c) == '/')
+# define HAVE_DRIVE(n)   (0)
+# define IS_ABSOLUTE(n)  ((n)[0] == '/')
+# define FILE_SLASH      "/"
+#endif /* not O_BINARY */
 
 /*
   From the Cygwin FAQ https://www.cygwin.com/faq.html:
@@ -88,7 +102,7 @@ const char *null_device_names[] = {
 const char *whitespace_chars = " \t\v\f\r\n";
 const char *digit_chars = "0123456789";
 
-DEF_ALIAS def_aliases[] = {
+const DEF_ALIAS def_aliases[] = {
   {CM_defun, CM_deffn, pgdt_context_noop("category of functions for @defun",
                                         "Function")},
   /* TRANSLATORS: category of macros for @defmac */
@@ -186,7 +200,7 @@ const char *html_button_direction_names[] = {
 };
 
 /* keep in sync with enum html_text_type */
-char *html_command_text_type_name[] = {
+const char *html_command_text_type_name[] = {
   "text", "text_nonumber", "string", "string_nonumber",
   "href", "node", "section", "section_nonumber"
 };
@@ -2847,11 +2861,12 @@ html_get_direction_index (const CONVERTER *converter, const char *direction)
   int i;
   if (converter && converter->main_units_direction_names)
     {
-      for (i = 0; converter->main_units_direction_names[i]; i++)
-        {
-          if (!strcmp (direction, converter->main_units_direction_names[i]))
-            return i;
-        }
+      int found;
+      uintptr_t idx = (uintptr_t)
+        c_hashmap_value (&converter->units_direction_names_index,
+                         direction, &found);
+      if (found)
+        return idx;
       return -2;
     }
   return -1;

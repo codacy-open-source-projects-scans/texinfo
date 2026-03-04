@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 #
-AC_INIT([GNU Texinfo], [7.2.92], [bug-texinfo@gnu.org])
+AC_INIT([GNU Texinfo], [7.3dev], [bug-texinfo@gnu.org])
 
 dnl Must come before AM_INIT_AUTOMAKE.
 AC_CONFIG_AUX_DIR([build-aux])
@@ -121,7 +121,7 @@ gl_INIT
 AM_MISSING_PROG(HELP2MAN, help2man)
 AM_MISSING_PROG(POD2MAN, pod2man)
 
-dnl does not seems to be used directly, but it used by libtool
+dnl does not seems to be used directly, but it is used by gettext
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 

@@ -42,6 +42,7 @@ void add_svav_to_string_list (const SV *sv, STRING_LIST *string_list,
 SOURCE_INFO *get_source_info (SV *source_info_sv);
 void get_line_message (CONVERTER *self, enum error_type type, int continuation,
                        SV *error_location_info, const char *message);
+void get_messages_from_sv (CONVERTER *self, SV *sv_in);
 
 void get_sv_options (SV *sv, OPTIONS *options, OPTION **sorted_options,
                      CONVERTER *converter, int force);
@@ -57,6 +58,10 @@ void html_fill_button_sv_specification_list (const CONVERTER *converter,
                                      BUTTON_SPECIFICATION_LIST *result);
 void html_get_direction_icons_sv (DIRECTION_ICON_LIST *direction_icons,
                              SV *icons_sv);
+
+OUTPUT_UNIT *get_output_unit_from_sv (const DOCUMENT *document,
+                                      size_t output_units_descriptor,
+                                      SV *output_unit_sv);
 
 const ELEMENT *find_element_from_sv (const CONVERTER *converter,
                                      const DOCUMENT *document_in,

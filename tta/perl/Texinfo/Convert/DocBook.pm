@@ -47,7 +47,7 @@ use Texinfo::Convert::Converter;
 
 our @ISA = qw(Texinfo::Convert::Converter);
 
-our $VERSION = '7.2.92';
+our $VERSION = '7.3dev';
 
 my %brace_commands = %Texinfo::Commands::brace_commands;
 
@@ -951,7 +951,7 @@ sub _convert($$;$) {
         $result .= "<term>" if ($cmdname eq 'itemx');
         $result .= _index_entry($self, $element);
         if (exists($element->{'contents'}->[0]->{'contents'})) {
-          my $table_item_tree = $self->table_item_content_tree_noxs($element);
+          my $table_item_tree = $self->table_item_content_tree($element);
           $table_item_tree = $element->{'contents'}->[0]
             if (!defined($table_item_tree));
 

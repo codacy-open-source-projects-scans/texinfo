@@ -10,7 +10,7 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-AC_INIT([GNU Texinfo], [7.2.92])
+AC_INIT([GNU Texinfo], [7.3dev])
 AC_CONFIG_AUX_DIR([build-aux])
 AM_INIT_AUTOMAKE
 AC_CONFIG_MACRO_DIRS([build-aux/m4 gnulib/m4 m4 ../m4])
@@ -65,7 +65,7 @@ AC_ARG_ENABLE([additional-checks],
 
 AM_CONDITIONAL([DISABLE_ADDITIONAL_CHECKS], [test "z$enable_additional_tests" = zno])
 
-dnl does not seems to be used directly, but it used by libtool
+dnl does not seems to be used directly, but it is used by gettext
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
@@ -416,22 +416,6 @@ if test x$enable_xs != xno -a $extutils_embed = yes ; then
 fi
 AM_CONDITIONAL([PERL_EMBEDDED], [test "z$embedded_perl" = 'zyes'])
 
-AC_ARG_ENABLE([using-c-texi2any],
-    AS_HELP_STRING([--enable-using-c-texi2any],[Install texi2any program implemented in C if built]),
-    [ prefer_c_t2a=$enableval],
-    [ prefer_c_t2a=no])
-
-if test "z$embedded_perl" != 'zyes' -o "x$am_func_iconv" != "xyes" ; then
-  prefer_c_t2a=no
-fi
-
-AM_CONDITIONAL([PREFER_C_TEXI2ANY], [test "z$prefer_c_t2a" = 'zyes'])
-
-if test z$prefer_c_t2a = 'zyes' ; then
-  TESTS_MAIN_COMMAND=C/ctexi2any
-fi
-AC_SUBST([TESTS_MAIN_COMMAND])
-
 if test x$enable_xs != xno; then
   # Do not include Perl configuration values nor other flags when outputting
   # these variables, as advised in the automake manual for CFLAGS and LDFLAGS,
@@ -586,6 +570,22 @@ fi
 AM_CONDITIONAL([USE_SHARED_TXI_LIBRARIES],
                [test "z$use_shared_txi_libraries" = zyes])
 AC_SUBST([use_shared_txi_libraries])
+
+AC_ARG_ENABLE([using-c-texi2any],
+    AS_HELP_STRING([--enable-using-c-texi2any],[Install texi2any program implemented in C if built]),
+    [ prefer_c_t2a=$enableval],
+    [ prefer_c_t2a=no])
+
+if test "z$embedded_perl" != 'zyes' -o "x$use_shared_txi_libraries" != "xyes" ; then
+  prefer_c_t2a=no
+fi
+
+AM_CONDITIONAL([PREFER_C_TEXI2ANY], [test "z$prefer_c_t2a" = 'zyes'])
+
+if test z$prefer_c_t2a = 'zyes' ; then
+  TESTS_MAIN_COMMAND=C/ctexi2any
+fi
+AC_SUBST([TESTS_MAIN_COMMAND])
 
 build_C_code=no
 test "z$enable_xs" = zyes && build_C_code=yes

@@ -82,23 +82,27 @@ dist_modules_DATA = \
  Texinfo/HTMLDataCSS.pm \
  Texinfo/DebugTree.pm \
  Texinfo/Document.pm \
- Texinfo/DocumentXS.pm \
+ Texinfo/DocumentNonXS.pm \
  Texinfo/Documentlanguages.pm \
  Texinfo/Indices.pm \
- Texinfo/IndicesXS.pm \
+ Texinfo/IndicesNonXS.pm \
  Texinfo/ManipulateTree.pm \
+ Texinfo/ManipulateTreeNonXS.pm \
  Texinfo/MiscXS.pm \
  Texinfo/Options.pm \
  Texinfo/OutputUnits.pm \
+ Texinfo/OutputUnitsNonXS.pm \
  Texinfo/Parser.pm \
  Texinfo/ParserNonXS.pm \
+ Texinfo/ParserXS.pm \
  Texinfo/Reader.pm \
  Texinfo/ReaderNonXS.pm \
  Texinfo/Report.pm \
- Texinfo/StructTransfXS.pm \
  Texinfo/Structuring.pm \
+ Texinfo/StructuringNonXS.pm \
  Texinfo/Tests.pm \
  Texinfo/Transformations.pm \
+ Texinfo/TransformationsNonXS.pm \
  Texinfo/Translations.pm \
  Texinfo/TreeElement.pm \
  Texinfo/TreeElementNonXS.pm \
@@ -114,9 +118,10 @@ modules_DATA = \
 convertmodulesdir = $(converterdatadir)/Texinfo/Convert
 dist_convertmodules_DATA = \
  Texinfo/Convert/Converter.pm \
- Texinfo/Convert/ConvertXS.pm \
+ Texinfo/Convert/ConverterNonXS.pm \
  Texinfo/Convert/DocBook.pm \
  Texinfo/Convert/HTML.pm \
+ Texinfo/Convert/HTMLNonXS.pm \
  Texinfo/Convert/Info.pm \
  Texinfo/Convert/LaTeX.pm \
  Texinfo/Convert/NodeNameNormalization.pm \
@@ -126,11 +131,11 @@ dist_convertmodules_DATA = \
  Texinfo/Convert/Plaintext.pm \
  Texinfo/Convert/Texinfo.pm \
  Texinfo/Convert/TexinfoNonXS.pm \
- Texinfo/Convert/TexinfoXS.pm \
  Texinfo/Convert/TexinfoMarkup.pm \
  Texinfo/Convert/TexinfoSXML.pm \
  Texinfo/Convert/TexinfoXML.pm \
  Texinfo/Convert/Text.pm \
+ Texinfo/Convert/TextNonXS.pm \
  Texinfo/Convert/TextContent.pm \
  Texinfo/Convert/Unicode.pm \
  Texinfo/Convert/Utils.pm \

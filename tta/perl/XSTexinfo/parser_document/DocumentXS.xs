@@ -42,12 +42,13 @@
 #include "translations.h"
 #include "get_perl_info.h"
 #include "build_perl_info.h"
+#include "call_document_perl_functions.h"
 
  /* See the NOTE in build_perl_info.c on use of functions related to
     memory allocation */
 
 
-MODULE = Texinfo::DocumentXS		PACKAGE = Texinfo::DocumentXS
+MODULE = Texinfo::Document		PACKAGE = Texinfo::Document
 
 PROTOTYPES: ENABLE
 
@@ -136,19 +137,32 @@ build_tree (SV *tree_in, ...)
     OUTPUT:
         RETVAL
 
-# remove_references_sv
 void
-destroy_document (SV *document_in, ...)
+destroy_document (SV *document_in, SV *remove_references_sv=0)
       PROTOTYPE: $;$
       PREINIT:
         DOCUMENT *document = 0;
       CODE:
-        /* it is ok not to found a document if there is no
-           document descriptor */
-        document = get_sv_document_document (document_in, 0);
+        document = get_sv_document_document (document_in, "destroy_document");
         if (document)
           {
-            int check_counts = (document->options->TEST.o.integer > 1);
+            /* document->options NULL may happen if document is destroyed
+               before registering document options.
+               This does not happen in current codes, but could make sense,
+               so we account for this possibility.
+             */
+            int check_counts = (document->options
+                                && document->options->TEST.o.integer > 1);
+            int remove_references = 0;
+
+            if (remove_references_sv && SvOK (remove_references_sv))
+              remove_references = SvIV (remove_references_sv);
+
+            /* call Perl function to remove Perl data in Texinfo::Document.
+             */
+            call_document_remove_document_references (document,
+                                                      remove_references);
+
             ERROR_MESSAGE_LIST *error_messages = 0;
             /* Not useful, as it is done by converters already
             release_output_units_lists_built (&document->output_units_lists);
@@ -174,7 +188,7 @@ destroy_document (SV *document_in, ...)
           }
 
 SV *
-document_errors (SV *document_in)
+errors (SV *document_in)
     PREINIT:
         DOCUMENT *document;
         const ERROR_MESSAGE_LIST *error_messages = 0;
@@ -193,7 +207,7 @@ document_errors (SV *document_in)
       RETVAL
 
 SV *
-document_parser_errors (SV *document_in)
+parser_errors (SV *document_in)
     PREINIT:
         DOCUMENT *document = 0;
         AV *av;
@@ -233,7 +247,7 @@ register_document_options (SV *document_in, SV *sv_options_in)
           }
 
 SV *
-document_get_conf (SV *document_in, option_name)
+get_conf (SV *document_in, option_name)
       const char *option_name = (char *)SvPVbyte_nolen($arg);
  PREINIT:
       DOCUMENT *document = 0;
@@ -288,34 +302,70 @@ set_document_global_info (SV *document_in, char *key, SV *value_sv)
           }
 
 SV *
-document_tree (SV *document_in, int handler_only=0)
+tree (SV *document_in, int handler_only=0)
+    CODE:
+      RETVAL = document_tree (document_in, handler_only);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_global_information (SV *document_in)
+global_information (SV *document_in)
+    CODE:
+      RETVAL = document_global_information (document_in);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_indices_information (SV *document_in)
+indices_information (SV *document_in)
+    CODE:
+      RETVAL = document_indices_information (document_in);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_global_commands_information (SV *document_in)
+global_commands_information (SV *document_in)
+    CODE:
+      RETVAL = document_global_commands_information (document_in);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_labels_information (SV *document_in)
+labels_information (SV *document_in)
+    CODE:
+      RETVAL = document_labels_information (document_in);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_nodes_list (SV *document_in)
+nodes_list (SV *document_in)
+    CODE:
+      RETVAL = document_nodes_list (document_in);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_sections_list (SV *document_in)
+sections_list (SV *document_in)
+    CODE:
+      RETVAL = document_sections_list (document_in);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_sectioning_root (SV *document_in)
+sectioning_root (SV *document_in)
+    CODE:
+      RETVAL = document_sectioning_root (document_in);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_headings_list (SV *document_in)
+headings_list (SV *document_in)
+    CODE:
+      RETVAL = document_headings_list (document_in);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_floats_information (SV *document_in)
+floats_information (SV *document_in)
      CODE:
         document_sections_list (document_in);
         RETVAL = document_floats_information (document_in);
@@ -323,10 +373,18 @@ document_floats_information (SV *document_in)
         RETVAL
 
 SV *
-document_internal_references_information (SV *document_in)
+internal_references_information (SV *document_in)
+    CODE:
+      RETVAL = document_internal_references_information (document_in);
+  OUTPUT:
+      RETVAL
 
 SV *
-document_labels_list (SV *document_in)
+labels_list (SV *document_in)
+    CODE:
+      RETVAL = document_labels_list (document_in);
+  OUTPUT:
+      RETVAL
 
 # optional argument is converter
 void

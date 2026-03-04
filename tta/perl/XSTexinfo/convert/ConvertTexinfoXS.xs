@@ -13,6 +13,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.  */
 
+/* ALTIMP perl/Texinfo/Convert/TexinfoNonXS.pm */
+
 /*
 #include <stdlib.h>
 #include <stdio.h>
@@ -47,12 +49,11 @@ MODULE = Texinfo::Convert::Texinfo	PACKAGE = Texinfo::Convert::Texinfo
 PROTOTYPES: ENABLE
 
 SV *
-plain_texinfo_convert_tree (SV *tree_in)
+_XS_texinfo_convert_tree (SV *tree_in)
     PREINIT:
         DOCUMENT *document = 0;
     CODE:
-        /* caller checks that there is a descriptor */
-        document = get_sv_tree_document (tree_in, "plain_texinfo_convert_tree");
+        document = get_sv_tree_document (tree_in, 0);
         if (document)
           {
             char *result = convert_to_texinfo (document->tree);

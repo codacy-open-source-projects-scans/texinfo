@@ -1990,7 +1990,8 @@ html_internal_command_tree (CONVERTER *self, const ELEMENT *command,
                       NAMED_STRING_ELEMENT_LIST *replaced_substrings
                         = new_named_string_element_list ();
                       ELEMENT *e_number = new_text_element (ET_normal_text);
-                      ELEMENT *section_title_copy = copy_tree (line_arg, 0);
+                      ELEMENT *section_title_copy
+                        = copy_element_tree (line_arg, 0);
 
                       add_element_to_named_string_element_list (
                                   replaced_substrings, "section_title",
@@ -2307,22 +2308,26 @@ html_command_name (CONVERTER *self, const ELEMENT *command,
 OUTPUT_UNIT *
 html_get_top_unit (DOCUMENT *document, const OUTPUT_UNIT_LIST *output_units)
 {
-  const ELEMENT *node_top = find_identifier_target
-                          (&document->identifiers_target, "Top");
   const ELEMENT *section_top = document->global_commands.top;
 
   if (section_top)
     return section_top->e.c->associated_unit;
-  else if (node_top)
-    return node_top->e.c->associated_unit;
-  else if (output_units)
+  else
+    {
+      const ELEMENT *node_top = find_identifier_target
+                          (&document->identifiers_target, "Top");
+      if (node_top)
+        return node_top->e.c->associated_unit;
+    }
+
+  if (output_units)
     return output_units->list[0];
 
   return 0;
 }
 
-static int
-unit_is_top_output_unit (CONVERTER *self, const OUTPUT_UNIT *output_unit)
+int
+html_unit_is_top_output_unit (CONVERTER *self, const OUTPUT_UNIT *output_unit)
 {
   OUTPUT_UNIT *top_output_unit = html_get_top_unit (self->document, 0);
   return (top_output_unit && top_output_unit == output_unit);
@@ -2382,7 +2387,7 @@ from_element_direction (CONVERTER *self, int direction,
        = self->global_units_directions
            [D_direction_Last + direction - NON_SPECIAL_DIRECTIONS_NR +1];
     }
-  else if ((!source_unit || unit_is_top_output_unit (self, source_unit))
+  else if ((!source_unit || html_unit_is_top_output_unit (self, source_unit))
            && self->conf->TOP_NODE_UP_URL.o.string
            && (direction == D_direction_Up || direction == D_direction_NodeUp))
     {
@@ -2483,9 +2488,15 @@ html_special_unit_info (const CONVERTER *self,
   /* number is index +1 */
   size_t number = find_string (&self->special_unit_varieties,
                                special_unit_variety);
-  int i = number -1;
 
-  return self->special_unit_info[type][i];
+  if (number > 0)
+    {
+      int i = number -1;
+
+      return self->special_unit_info[type][i];
+    }
+
+  return 0;
 }
 
 
@@ -2770,10 +2781,15 @@ format_separate_anchor (CONVERTER *self, const char *id,
     }
 }
 
+/* The direction DIRECTION index in input should be the index in the
+   array with all the directions, including FirstInFile* directions,
+   the function code makes sure to modify the index before looking at
+   directions_strings where there are no FirstInFile* directions.
+ */
 const char *
-direction_string (CONVERTER *self, int direction,
-                  enum direction_string_type string_type,
-                  enum direction_string_context context)
+html_direction_string (CONVERTER *self, int direction,
+                       enum direction_string_type string_type,
+                       enum direction_string_context context)
 {
   int direction_unit_direction_idx = direction;
 
@@ -2874,14 +2890,14 @@ direction_href_attributes (CONVERTER *self, int direction, TEXT *result)
   if (self->conf->USE_ACCESSKEY.o.integer > 0)
     {
       const char *accesskey
-        = direction_string (self, direction, TDS_type_accesskey,
+        = html_direction_string (self, direction, TDS_type_accesskey,
                                     TDS_context_string);
       if (accesskey && strlen (accesskey))
         text_printf (result, " accesskey=\"%s\"", accesskey);
     }
 
   const char *button_rel
-    = direction_string (self, direction, TDS_type_rel,
+    = html_direction_string (self, direction, TDS_type_rel,
                                 TDS_context_string);
   if (button_rel && strlen (button_rel))
     text_printf (result, " rel=\"%s\"", button_rel);
@@ -4176,8 +4192,8 @@ get_links (CONVERTER* self, const char *filename,
                 = from_element_direction (self, link->b.direction, HTT_string,
                                           output_unit, 0, 0);
               const char *button_rel
-                = direction_string (self, link->b.direction, TDS_type_rel,
-                                    TDS_context_string);
+                = html_direction_string (self, link->b.direction,
+                                         TDS_type_rel, TDS_context_string);
               text_printf (result, "<link href=\"%s\"", link_href);
               if (button_rel)
                 {
@@ -4429,7 +4445,8 @@ default_panel_button_dynamic_direction_internal (CONVERTER *self,
       const char *close_link = "";
       size_t open_len;
 
-      const char *text = direction_string (self, direction, TDS_type_text, 0);
+      const char *text = html_direction_string (self, direction,
+                                                TDS_type_text, 0);
       if (!text)
         text = "";
 
@@ -4567,7 +4584,7 @@ html_default_format_button (CONVERTER *self,
           if (self->html_active_icons
               && self->html_active_icons[button->b.direction])
             {
-              const char *button_name_string = direction_string (self,
+              const char *button_name_string = html_direction_string (self,
                                      button->b.direction, TDS_type_button,
                                                       TDS_context_string);
               formatted_button->active
@@ -4576,7 +4593,7 @@ html_default_format_button (CONVERTER *self,
             }
           else
             {
-              const char *button_text = direction_string (self,
+              const char *button_text = html_direction_string (self,
                                     button->b.direction, TDS_type_text, 0);
               if (button_text)
                 formatted_button->active = strdup (button_text);
@@ -4593,7 +4610,7 @@ html_default_format_button (CONVERTER *self,
               TEXT active_text;
               const char *active_icon = 0;
               const char *description
-               = direction_string (self, button->b.direction,
+               = html_direction_string (self, button->b.direction,
                                    TDS_type_description, TDS_context_string);
 
               if (self->html_active_icons
@@ -4611,20 +4628,20 @@ html_default_format_button (CONVERTER *self,
               if (self->conf->USE_ACCESSKEY.o.integer > 0)
                 {
                   const char *accesskey
-                    = direction_string (self, button->b.direction,
+                    = html_direction_string (self, button->b.direction,
                                         TDS_type_accesskey, TDS_context_string);
                   if (accesskey && strlen (accesskey))
                     text_printf (&active_text, " accesskey=\"%s\"", accesskey);
                 }
               const char *button_rel
-                = direction_string (self, button->b.direction,
+                = html_direction_string (self, button->b.direction,
                                     TDS_type_rel, TDS_context_string);
               if (button_rel && strlen (button_rel))
                 text_printf (&active_text, " rel=\"%s\"", button_rel);
               text_append_n (&active_text, ">", 1);
               if (active_icon)
                 {
-                  const char *button_name_string = direction_string (self,
+                  const char *button_name_string = html_direction_string (self,
                                        button->b.direction, TDS_type_button,
                                                       TDS_context_string);
                   char *icon_name = from_element_direction (self,
@@ -4641,7 +4658,7 @@ html_default_format_button (CONVERTER *self,
                 }
               else
                 {
-                  const char *button_text_string = direction_string (self,
+                  const char *button_text_string = html_direction_string (self,
                                      button->b.direction, TDS_type_text, 0);
                   if (button_text_string)
                     text_append (&active_text, button_text_string);
@@ -4671,7 +4688,7 @@ html_default_format_button (CONVERTER *self,
               if (passive_icon)
                 {
                   const char *button_name_string
-                    = direction_string (self, button->b.direction,
+                    = html_direction_string (self, button->b.direction,
                                         TDS_type_button, TDS_context_string);
                   char *icon_name = from_element_direction (self,
                                                         button->b.direction,
@@ -4688,7 +4705,7 @@ html_default_format_button (CONVERTER *self,
               else
                 {
                   const char *button_text_string
-                    = direction_string (self, button->b.direction,
+                    = html_direction_string (self, button->b.direction,
                                         TDS_type_text, 0);
                   text_append_n (&passive_text, "[", 1);
                   if (button_text_string)
@@ -4996,7 +5013,7 @@ html_default_format_element_header (CONVERTER *self,
       && (output_unit->tree_unit_directions[D_next]
           || output_unit->tree_unit_directions[D_prev]))
     {
-      int is_top = unit_is_top_output_unit (self, output_unit);
+      int is_top = html_unit_is_top_output_unit (self, output_unit);
       size_t file_index;
       size_t count_in_file;
       int first_in_page = 0;
@@ -5012,7 +5029,7 @@ html_default_format_element_header (CONVERTER *self,
         }
 
       if (output_unit->tree_unit_directions[D_prev]
-          && unit_is_top_output_unit (self,
+          && html_unit_is_top_output_unit (self,
                                output_unit->tree_unit_directions[D_prev]))
         previous_is_top = 1;
 
@@ -5145,14 +5162,14 @@ html_default_format_element_footer (CONVERTER *self,
                               const char *content, const ELEMENT *element,
                               TEXT *result)
 {
-  int is_top = unit_is_top_output_unit (self, output_unit);
+  int is_top = html_unit_is_top_output_unit (self, output_unit);
   int next_is_top = 0;
   int next_is_special = 0;
   int end_page = 0;
   BUTTON_SPECIFICATION_LIST *buttons = 0;
 
   if (output_unit->tree_unit_directions[D_next]
-          && unit_is_top_output_unit (self,
+          && html_unit_is_top_output_unit (self,
                                output_unit->tree_unit_directions[D_next]))
     next_is_top = 1;
 
@@ -8868,7 +8885,7 @@ html_convert_quotation_command (CONVERTER *self, const enum command_id cmd,
                   NAMED_STRING_ELEMENT_LIST *substrings
                                        = new_named_string_element_list ();
                   ELEMENT *author_arg_copy
-                    = copy_tree (author->e.c->contents.list[0], 0);
+                    = copy_element_tree (author->e.c->contents.list[0], 0);
                   add_element_to_named_string_element_list (substrings,
                                           "author", author_arg_copy);
 
@@ -10414,13 +10431,13 @@ html_convert_printindex_command (CONVERTER *self, const enum command_id cmd,
               char *reference = 0;
 
               ELEMENT *referred_copy
-                = copy_tree (referred_entry->e.c->contents.list[0], 0);
+                = copy_element_tree (referred_entry->e.c->contents.list[0], 0);
 
               if (seeentry)
                 {
                   char *convert_info;
                   ELEMENT *result_tree;
-                  ELEMENT *entry_tree_copy = copy_tree (entry_tree, 0);
+                  ELEMENT *entry_tree_copy = copy_element_tree (entry_tree, 0);
                   add_element_to_named_string_element_list (substrings,
                                     "main_index_entry", entry_tree_copy);
                   add_element_to_named_string_element_list (substrings,
@@ -11278,7 +11295,7 @@ html_open_quotation_command (CONVERTER *self, const enum command_id cmd,
       char *explanation;
       NAMED_STRING_ELEMENT_LIST *substrings
                                        = new_named_string_element_list ();
-      ELEMENT *quotation_arg_copy = copy_tree (block_line_args, 0);
+      ELEMENT *quotation_arg_copy = copy_element_tree (block_line_args, 0);
       add_element_to_named_string_element_list (substrings,
                           "quotation_arg", quotation_arg_copy);
       tree = html_cdt_tree ("@b{{quotation_arg}:} ",
@@ -12617,13 +12634,13 @@ html_convert_def_line_type (CONVERTER *self, const enum element_type type,
       ELEMENT *e_category_tree = 0;
       NAMED_STRING_ELEMENT_LIST *substrings
                                    = new_named_string_element_list ();
-      ELEMENT *category_copy = copy_tree (parsed_def->category, 0);
+      ELEMENT *category_copy = copy_element_tree (parsed_def->category, 0);
 
       add_element_to_named_string_element_list (substrings,
                                             "category", category_copy);
       if (parsed_def->class)
         {
-          ELEMENT *class_copy = copy_tree (parsed_def->class, 0);
+          ELEMENT *class_copy = copy_element_tree (parsed_def->class, 0);
           add_element_to_named_string_element_list (substrings,
                                             "class", class_copy);
 
@@ -13133,7 +13150,7 @@ html_default_format_special_body_about (CONVERTER *self,
               && self->html_active_icons[direction])
             {
               const char *button_name_string
-                   = direction_string (self, direction,
+                   = html_direction_string (self, direction,
                                        TDS_type_button, TDS_context_string);
               char *button = format_button_icon_img (self, button_name_string,
                                         self->html_active_icons[direction], 0);
@@ -13142,7 +13159,7 @@ html_default_format_special_body_about (CONVERTER *self,
             }
           else
             {
-              const char *button_text = direction_string (self, direction,
+              const char *button_text = html_direction_string (self, direction,
                                                           TDS_type_text, 0);
               text_append_n (result, " [", 2);
               if (button_text)
@@ -13154,21 +13171,23 @@ html_default_format_special_body_about (CONVERTER *self,
       open_element_with_class (self, "td", &name_direction_about_classes,
                                result);
 
-      button_name = direction_string (self, direction, TDS_type_button, 0);
+      button_name = html_direction_string (self, direction,
+                                           TDS_type_button, 0);
       if (button_name)
         text_append (result, button_name);
       text_append_n (result, "</td>\n    ", 10);
       open_element_with_class (self, "td",
                                &description_direction_about_classes,
                                result);
-      button_description = direction_string (self, direction,
-                                             TDS_type_description, 0);
+      button_description = html_direction_string (self, direction,
+                                                  TDS_type_description, 0);
       if (button_description)
         text_append (result, button_description);
       text_append_n (result, "</td>\n    ", 10);
       open_element_with_class (self, "td", &example_direction_about_classes,
                                result);
-      button_example = direction_string (self, direction, TDS_type_example, 0);
+      button_example = html_direction_string (self, direction,
+                                              TDS_type_example, 0);
       if (button_example)
         text_append (result, button_example);
       text_append_n (result, "</td>\n  </tr>\n", 14);

@@ -59,8 +59,7 @@ require Exporter;
 our @ISA = qw(Texinfo::Convert::Converter);
 
 # Some extra initialization for the first time this module is loaded.
-# This could be done in a UNITCHECK block, introduced in Perl 5.10.
-our $module_loaded = 0;
+my $module_loaded = 0;
 sub import {
   if (!$module_loaded) {
     Texinfo::XSLoader::override(
@@ -72,7 +71,7 @@ sub import {
   goto &Exporter::import;
 }
 
-our $VERSION = '7.2.92';
+our $VERSION = '7.3dev';
 
 
 # commands that are of use for formatting.
@@ -3729,7 +3728,7 @@ sub _convert($$) {
              and exists($element->{'contents'}->[0]->{'type'})
              and $element->{'contents'}->[0]->{'type'} eq 'line_arg') {
       if (exists($element->{'contents'}->[0]->{'contents'})) {
-        my $table_item_tree = $self->table_item_content_tree_noxs($element);
+        my $table_item_tree = $self->table_item_content_tree($element);
         $table_item_tree = $element->{'contents'}->[0]
           if (!defined($table_item_tree));
         my $frenchspacing_element = {'type' => 'frenchspacing',

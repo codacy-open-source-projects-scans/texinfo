@@ -91,6 +91,8 @@ char *html_special_unit_info_text (CONVERTER *self,
 
 OUTPUT_UNIT *html_get_top_unit (DOCUMENT *document,
                                 const OUTPUT_UNIT_LIST *output_units);
+int html_unit_is_top_output_unit (CONVERTER *self,
+                                  const OUTPUT_UNIT *output_unit);
 
 FOOTNOTE_ID_NUMBER *find_footnote_id_number (const CONVERTER *self,
                                            const char *footnote_id);
@@ -108,6 +110,9 @@ char *html_attribute_class (CONVERTER *self, const char *element,
 
 
 char *html_format_comment (CONVERTER *self, const char *text);
+const char * html_direction_string (CONVERTER *self, int direction,
+                       enum direction_string_type string_type,
+                       enum direction_string_context context);
 char *html_format_end_file (CONVERTER *self, const char *filename,
                             const OUTPUT_UNIT *output_unit);
 char *html_format_begin_file (CONVERTER *self, const char *filename,

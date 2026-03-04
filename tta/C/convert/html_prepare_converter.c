@@ -329,6 +329,9 @@ html_format_setup (void)
     CM_example, CM_display, CM_lisp, 0
   };
 
+  /* depends on xml formatting data setup in this function */
+  setup_converter_generic ();
+
   html_default_options_setup ();
 
   set_css_selector_style_list_size (&default_css_element_class_styles,
@@ -2020,7 +2023,7 @@ new_special_unit_info_type (int special_units_varieties_nr)
   return special_unit_info;
 }
 
-/* in main/conversion_data.c */
+/* in main/html_conversion_data.c */
 extern const STRING_LIST default_special_unit_varieties;
 
 /* Setup special units varieties names.  Separate from
@@ -2538,6 +2541,26 @@ html_set_main_units_direction_names (CONVERTER *self)
   self->main_units_direction_names[
                nr_special_units + NON_SPECIAL_DIRECTIONS_NR] = 0;
 
+  /* at the same time the names are added to the main_units_direction_names
+     array, fill an hash associating the name to the index in the
+     array used to retrieve the indice based on the direction name.
+
+     Setup now and fill with directions already set, since
+     html_get_direction_index is called just below
+   */
+  init_c_hashmap (&self->units_direction_names_index,
+                  nr_string_directions + FIRSTINFILE_NR
+                  + self->customized_global_units_directions.number
+                  + self->added_global_units_directions.number
+                  + self->customized_global_text_directions.number);
+  for (i = 0; self->main_units_direction_names[i]; i++)
+    {
+      uintptr_t idx = i;
+      c_hashmap_register (&self->units_direction_names_index,
+                          self->main_units_direction_names[i],
+                          (void *)idx);
+    }
+
   if (self->customized_global_units_directions.number > 0)
     {
       for (i = 0; i < self->customized_global_units_directions.number; i++)
@@ -2577,9 +2600,17 @@ html_set_main_units_direction_names (CONVERTER *self)
            self->added_global_units_directions.number +1) * sizeof (char *));
 
       for (i = 0; i < self->added_global_units_directions.number; i++)
-        self->main_units_direction_names[NON_SPECIAL_DIRECTIONS_NR
-          + nr_special_units + i]
+        {
+          size_t added_idx = NON_SPECIAL_DIRECTIONS_NR + nr_special_units + i;
+          uintptr_t idx = added_idx;
+
+          self->main_units_direction_names[added_idx]
              = self->added_global_units_directions.list[i];
+
+          c_hashmap_register (&self->units_direction_names_index,
+                              self->main_units_direction_names[added_idx],
+                              (void *)idx);
+        }
 
       nr_string_directions += self->added_global_units_directions.number;
 
@@ -2617,10 +2648,15 @@ html_set_main_units_direction_names (CONVERTER *self)
             {
               const char *direction
                = self->customized_global_text_directions.list[i];
+              size_t added_idx = nr_special_units + NON_SPECIAL_DIRECTIONS_NR
+                 + self->added_global_units_directions.number +i;
+              uintptr_t idx = added_idx;
 
-              self->main_units_direction_names[
-               nr_special_units + NON_SPECIAL_DIRECTIONS_NR
-                 + self->added_global_units_directions.number +i] = direction;
+              self->main_units_direction_names[added_idx] = direction;
+
+              c_hashmap_register (&self->units_direction_names_index,
+                                  self->main_units_direction_names[added_idx],
+                                  (void *)idx);
              }
           self->main_units_direction_names[
             nr_special_units + NON_SPECIAL_DIRECTIONS_NR

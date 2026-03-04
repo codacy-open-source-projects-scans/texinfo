@@ -18,8 +18,7 @@
 # Original author: Patrice Dumas <pertusus@free.fr>
 # Parts (also from Patrice Dumas) come from texi2html.pl or texi2html.init.
 
-# ALTIMP Parser.pm
-# ALTIMP XSTexinfo/parser_document/Parsetexi.xs
+# ALTIMP XSTexinfo/parser_document/ParserXS.xs
 # ALTIMP C/parsetexi/*.[ch]
 
 # Since there are different parser implementation, XS and NonXS, it is
@@ -109,12 +108,14 @@ use Texinfo::Translations;
 
 require Exporter;
 
-our $module_loaded = 0;
+# Some extra initialization for functions override for the first time
+# this module is loaded.
+my $module_loaded = 0;
 sub import {
   if (!$module_loaded) {
-    Texinfo::XSLoader::override ("Texinfo::Parser::_parse_texi_regex",
+    Texinfo::XSLoader::override("Texinfo::Parser::_parse_texi_regex",
       "Texinfo::MiscXS::parse_texi_regex");
-    Texinfo::XSLoader::override ("Texinfo::Parser::_parse_command_name",
+    Texinfo::XSLoader::override("Texinfo::Parser::_parse_command_name",
       "Texinfo::MiscXS::parse_command_name");
     $module_loaded = 1;
   }
@@ -122,7 +123,7 @@ sub import {
   goto &Exporter::import;
 }
 
-our $VERSION = '7.2.92';
+our $VERSION = '7.3dev';
 
 
 # Document information set in the parser.  The initialization is done by
@@ -4308,7 +4309,7 @@ sub _end_line_def_line($$$) {
       }
       if ($index_entry) {
         my $element_copy
-          = Texinfo::ManipulateTree::copy_treeNonXS($index_entry);
+          = Texinfo::ManipulateTree::copy_element_tree($index_entry);
         delete $element_copy->{'type'};
         if (exists($element_copy->{'contents'})
             and exists($element_copy->{'contents'}->[0]->{'type'})
