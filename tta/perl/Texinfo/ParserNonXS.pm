@@ -3643,7 +3643,7 @@ sub _enter_index_entry($$$$) {
       = $self->{'nesting_context'}->{'regions_stack'}->[-1];
   } elsif (exists($self->{'current_node'})) {
     $element->{'extra'}->{'element_node'}
-      = $self->{'current_node'}->{'element'}->{'extra'}->{'normalized'};
+      = $self->{'current_node'}->{'element'}->{'extra'}->{'identifier'};
   } elsif (!exists($self->{'current_section'})) {
     # NOTE depending on the location, format and presence of @printindex,
     # an index entry out of node and sections may be correctly formatted (or
@@ -4022,7 +4022,7 @@ sub _end_line_misc_line($$$) {
 
     my $node_relations;
     if (exists($current->{'extra'})
-        and defined($current->{'extra'}->{'normalized'})) {
+        and defined($current->{'extra'}->{'identifier'})) {
       $node_relations
         = _add_to_relations_list($document, 'node', $current);
       $self->{'current_node'} = $node_relations;
@@ -4976,7 +4976,7 @@ sub _check_register_target_element_label($$$$) {
                                  $target_element->{'source_info'});
     } else {
       $target_element->{'extra'} = {} if (!exists($target_element->{'extra'}));
-      $target_element->{'extra'}->{'normalized'} = $normalized;
+      $target_element->{'extra'}->{'identifier'} = $normalized;
     }
   }
   push @{$self->{'document'}->{'labels_list'}}, $target_element;
@@ -9607,7 +9607,7 @@ The first argument normalized is in I<normalized>.
 
 =item C<@float>
 
-@-commands that are targets for cross-references have a I<normalized> key for
+@-commands that are targets for cross-references have an I<identifier> key for
 the normalized label, built as specified in the Texinfo documentation in the
 I<HTML Xref> node.  There is also a I<node_content> key for an element holding
 the corresponding content.
@@ -9719,10 +9719,11 @@ The key I<max_columns> holds the maximal number of columns.
 Node name and explicit directions labels information are available
 as I<line_arg> tree element arguments of the C<@node> line.
 Each I<line_arg> argument element C<extra> hash I<node_content> key value is an
-element holding the contents corresponding to the node name.  There is also a
-I<manual_content> key if there is an associated external manual name, and a
-I<normalized> key for the normalized label, built as specified in the I<HTML
-Xref> Texinfo documentation node.
+element holding the contents corresponding to the node name.  The node name
+argument has an I<identifier> key for the node identifier.
+Node directions arguments also have a I<manual_content> key if there is an
+associated external manual name, and a I<normalized> key for the normalized
+label, built as specified in the I<HTML Xref> Texinfo documentation node.
 
 =begin comment
 
