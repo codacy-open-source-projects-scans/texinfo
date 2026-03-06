@@ -36,9 +36,9 @@
 
 static int debug = 0;
 
-enum eos_status { eos_undef = -2, eos_inhibited = 0, eos_present = 1,
+enum eos_status { eos_unset = -2, eos_inhibited = 0, eos_present = 1,
                   eos_present_frenchspacing = -1 };
-/* eos_undef                 - not at the end of a sentence (undef in Perl),
+/* eos_unset                 - not at the end of a sentence (unset in Perl),
    eos_inhibited             - end of sentence is inhibited
    eos_present               - at end of sentence
    eos_present_frenchspacing - at end of sentence but frenchspacing is on. */
@@ -57,7 +57,7 @@ typedef struct {
     int space_counter;
 
     /* Characters added so far in current word. */
-    int word_counter; 
+    int word_counter;
 
     enum eos_status end_sentence;
 
@@ -185,12 +185,13 @@ xspara_new (void)
   state.space = saved_space;
   state.word = saved_word;
   state.space.end = state.word.end = 0;
+  text_append (&state.word, "");
   state.in_use = 1;
 
   /* Default values. */
   state.max = 72;
   state.indent_length_next = -1; /* Special value meaning undefined. */
-  state.end_sentence = eos_undef;
+  state.end_sentence = eos_unset;
   state.last_letter = (char32_t) '\0';
 
   /* The paragraph ID. */
@@ -283,8 +284,8 @@ xspara_get_pending (void)
   return t.text;
 }
 
-/* Append to RESULT pending space followed by pending word, clearing them 
-   afterwards.  Assume we don't need to wrap a line.  Only add spaces without a 
+/* Append to RESULT pending space followed by pending word, clearing them
+   afterwards.  Assume we don't need to wrap a line.  Only add spaces without a
    word if ADD_SPACES. */
 void
 xspara__add_pending_word (TEXT *result, int add_spaces)
@@ -295,8 +296,8 @@ xspara__add_pending_word (TEXT *result, int add_spaces)
   if (state.indent_length > state.counter)
     {
       int i;
-      /* If we are not up to the left margin yet, output spaces to get there, 
-         and ignore 'state.space', the pending space string.  In this case 
+      /* If we are not up to the left margin yet, output spaces to get there,
+         and ignore 'state.space', the pending space string.  In this case
          state.counter is probably 0.  */
 
       for (i = 0; i < state.indent_length - state.counter; i++)
@@ -404,7 +405,7 @@ xspara_end (void)
 /* characters triggering an end of sentence */
 #define end_sentence_characters ".?!"
 
-/* Add WORD to paragraph in RESULT, not refilling WORD.  If we go past the end 
+/* Add WORD to paragraph in RESULT, not refilling WORD.  If we go past the end
    of the line start a new one.  TRANSPARENT means that the letters in WORD
    are ignored for the purpose of deciding whether a full stop ends a sentence
    or not.  If COL_COUNT is non-negative, it is the number of screen columns
@@ -416,9 +417,10 @@ xspara__add_next (TEXT *result, char *word, int word_len,
   if (!word)
     return;
 
-  text_append_n (&state.word, word, word_len);
-  if (word_len == 0 && word)
+  if (word_len == 0)
     state.invisible_pending_word = 1;
+  else
+    text_append_n (&state.word, word, word_len);
 
   if (!transparent)
     {
@@ -507,7 +509,7 @@ xspara__add_next (TEXT *result, char *word, int word_len,
       text_reset (&printed_word);
       text_append_n (&printed_word, word, word_len);
       fprintf (stderr, "WORD+ %s -> %s\n", printed_word.text,
-               state.word.space == 0 ? "UNDEF" : state.word.text);
+               state.word.text);
     }
 }
 
@@ -531,9 +533,9 @@ xspara_remove_end_sentence (void)
 }
 
 void
-xspara_add_end_sentence (int value)
+xspara_add_end_sentence (void)
 {
-  state.end_sentence = value;
+  state.end_sentence = eos_present;
 }
 
 void
@@ -567,16 +569,13 @@ xspara_set_space_protection (int no_break,
                                    keep_end_lines,
                                    french_spacing);*/
 
- if (no_break != -1 && state.no_break)
+ if (no_break != -1 && state.no_break && state.word.end == 0)
    {
-     if (state.word.end == 0)
-       {
-         /* In _add_pending_word this meant that an "empty word" would
-            be output.  This makes "a @w{} b" -> "a  b", not "a b", and
-            "a @w{}" at end of paragraph -> "a ", not "a". */
+     /* In _add_pending_word this meant that an "empty word" would
+        be output.  This makes "a @w{} b" -> "a  b", not "a b", and
+        "a @w{}" at end of paragraph -> "a ", not "a". */
 
-         state.invisible_pending_word = 1;
-       }
+     state.invisible_pending_word = 1;
    }
 
  return;
@@ -613,13 +612,13 @@ xspara_add_text (char *text, int len)
     {
       if (debug)
         {
-          fprintf(stderr, "p (%d+%d) s `%s', l `%" PRIuLEAST32 "', w `%s'\n",
+          fprintf(stderr, "p (%d+%d) s `%s', l `%" PRIuLEAST32 "', w%d `%s'\n",
                     state.counter, state.word_counter,
                     state.space.end == 0 ? ""
                       : xspara__print_escaped_spaces (state.space.text,
                                                       state.space.end),
-                    state.last_letter,
-                    state.word.end > 0 ? state.word.text : "UNDEF");
+                    state.last_letter, state.invisible_pending_word,
+                    state.word.text);
         }
 
       /* p is now at the beginning of the text we have left to process.
@@ -819,7 +818,7 @@ xspara_add_text (char *text, int len)
             {
               xspara__add_pending_word (&result, 0);
             }
-          state.end_sentence = eos_undef;
+          state.end_sentence = eos_unset;
         }
       else if (type == type_EOS)
         {
@@ -860,10 +859,10 @@ xspara_add_text (char *text, int len)
               else
                 {
                   /* Not at the end of a sentence. */
-                  if (debug && state.end_sentence != eos_undef)
+                  if (debug && state.end_sentence != eos_unset)
                     fprintf (stderr, "delete END_SENTENCE(%d)\n",
                                       state.end_sentence);
-                  state.end_sentence = eos_undef;
+                  state.end_sentence = eos_unset;
                   break;
                 }
             }
