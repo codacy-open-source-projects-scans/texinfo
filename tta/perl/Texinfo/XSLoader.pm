@@ -114,39 +114,17 @@ sub _debug($) {
   }
 }
 
-# For messages to say that XS module couldn't be loaded
 sub _message($) {
   my $msg = shift;
 
-  if ($TEXINFO_XS eq 'debug'
-      or $TEXINFO_XS eq 'required'
-      or $TEXINFO_XS eq 'warn'
-      or $embedded_xs) {
-    warn $msg . "\n";
-  }
-}
-
-# We look for the .la and .so files in @INC because this allows us to override
-# which modules are used using -I flags to "perl".
-sub _find_file_in_inc($) {
-  my $file = shift;
-
-  foreach my $dir (@INC) {
-    next if (ref($dir) ne '');
-    _debug("checking $dir/$file");
-    if (-f "$dir/$file") {
-      _debug("found $dir/$file");
-      return ($dir, "$dir/$file");
-    }
-  }
-  return undef;
+  warn $msg . "\n";
 }
 
 my $added_xsdir;
 my %dl_path_prepended_dirs;
 
-# If $TRY_DIRECT_LOAD is set and no .la file is found in @INC, add
-# the XS extensions directory to the DynaLoader path and let DynaLoader
+# If $TRY_DIRECT_LOAD is set and no .la file is found, add the XS
+# extensions directory to the DynaLoader path and let DynaLoader
 # find the XS module file using the usual file names.
 # This allows to have XS modules found even if packagers remove .la files
 # installed in the default case on platforms where modules have usual names
@@ -252,13 +230,10 @@ sub init {
 
   # Possible values for TEXINFO_XS environment variable:
   #
+  # TEXINFO_XS=default      # try xs, abort if enabled by TEXINFO_XS_*
+  #                         # and build options and not loaded
   # TEXINFO_XS=omit         # don't try loading xs at all
-  # TEXINFO_XS=default      # try xs, silent fallback
-  # TEXINFO_XS=warn         # try xs, warn on failure
-  # TEXINFO_XS=required     # try xs, abort if not loadable, no fallback
-  # TEXINFO_XS=requiredifenabled  # try xs, abort if enabled by TEXINFO_XS_*
-  #                         # and not loadable
-  # TEXINFO_XS=debug        # try xs, voluminuous debugging, fallback
+  # TEXINFO_XS=debug        # same as default, voluminuous debugging
   #
   # Other values are treated at the moment as 'default'.
 
@@ -274,17 +249,13 @@ sub init {
     $TEXINFO_XS = '';
   }
 
-  if ($TEXINFO_XS eq 'requiredifenabled' and $disable_XS) {
+  if ($TEXINFO_XS ne 'omit' and $disable_XS) {
+    _debug("XS modules were disabled when Texinfo was built: $module");
     $TEXINFO_XS = 'omit';
   }
 
   if ($TEXINFO_XS eq 'omit') {
     # Don't try to use the XS module
-    goto FALLBACK;
-  }
-
-  if ($disable_XS) {
-    _message("use of XS modules was disabled when Texinfo was built");
     goto FALLBACK;
   }
 
@@ -336,7 +307,24 @@ sub init {
     }
   }
 
-  my ($libtool_dir, $libtool_archive) = _find_file_in_inc("$module_name.la");
+  my $XS_dir = $Texinfo::ModulePath::XS_modules_dir;
+  if (!defined($XS_dir)) {
+    # case of configure test in CheckXS
+    $XS_dir = '.';
+  }
+
+  my $libtool_dir;
+
+  my $libtool_archive = "$XS_dir/$module_name.la";
+
+  _debug("checking $libtool_archive");
+  if (-f $libtool_archive) {
+    _debug("found $libtool_archive");
+    $libtool_dir = $XS_dir;
+  } else {
+    $libtool_archive = undef;
+  }
+
   # If installed, try direct load of modules if .la file is not found, as
   # it should work in that case on platforms where libtool has installed
   # the module in the specified directory.
@@ -399,42 +387,33 @@ sub init {
   return $module;
 
  FALLBACK:
-  if ($TEXINFO_XS eq 'required') {
-    die "set the TEXINFO_XS environment variable to 'omit' to use the "
-       ."pure Perl modules\n";
-  } elsif ($embedded_xs) {
+  if ($embedded_xs) {
     die "Perl is embedded, unexpected failure loading $module XS, aborting\n";
-  } elsif ($TEXINFO_XS eq 'warn' or $TEXINFO_XS eq 'debug') {
-    if (defined($fallback_module)) {
-      warn "falling back to pure Perl module $fallback_module\n";
+  } elsif ($TEXINFO_XS ne 'omit') {
+    # This cannot happen for ConfigXS, as embedded_xs is set in that case,
+    # it could only happen for MiscXS
+    if (!defined($fallback_module)) {
+      die "unexpected missing required fallback for $module\n";
     }
-  } elsif ($TEXINFO_XS eq 'requiredifenabled') {
     if (defined($additional_libraries) and $disable_C_libraries) {
       # This happens if iconv is not found or not usable.
       # In that case, the loading of every module depending on the parser
       # is expected to fail, but all those modules should have fallback.
-      if (!defined($fallback_module)) {
-        die "no libraries for extension, no required fallback for $module\n";
-      }
     } elsif (!defined($module_name)) {
       # An undefined module name should only happen based on the TEXINFO_XS_*
-      # environment variables values.
-      # All the modules in that situation should have fallbacks and which
-      # modules are loaded should be consistent.
-      if (!defined($fallback_module)) {
-        die "extension disabled, no required fallback module for $module\n";
-      }
+      # environment variables values.  Which modules are loaded should be
+      # consistent.
     } else {
       die "extension $module_name enabled required for $module\n";
+    }
+    if ($TEXINFO_XS eq 'debug') {
+      warn "falling back to pure Perl module $fallback_module\n";
     }
   }
 
   # undef is returned only if there is no fallback and loading the module
   # failed.
   if (!defined($fallback_module)) {
-    if ($TEXINFO_XS eq 'warn' or $TEXINFO_XS eq 'debug') {
-      warn "no fallback module for $module\n";
-    }
     return undef;
   }
 
@@ -466,6 +445,10 @@ sub override($$) {
     return;
   }
 
+  if ($TEXINFO_XS eq 'omit') {
+    return;
+  }
+
   _debug("attempting to override $target with $source...");
 
   no strict 'refs'; # access modules and symbols by name.
@@ -475,11 +458,7 @@ sub override($$) {
     *{"${target}"} = \&{"${source}"};
     _debug("  ...succeeded");
   } else {
-    if ($TEXINFO_XS eq 'requiredifenabled' or $embedded_xs) {
-      die "extension loaded but overriding $target with $source failed\n";
-    } else {
-      _debug("  ...failed");
-    }
+    die "extension loaded but overriding $target with $source failed\n";
   }
 }
 
