@@ -42,12 +42,11 @@
 * Texinfo@asis{::}Convert@asis{::}Info::
 * Texinfo@asis{::}Convert@asis{::}HTML::
 * Texinfo@asis{::}Convert@asis{::}DocBook::
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup::
-* Texinfo@asis{::}Convert@asis{::}TexinfoXML::
 * Texinfo@asis{::}Convert@asis{::}Plaintext::
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup::
+* Texinfo@asis{::}Example@asis{::}TexinfoXML::
 * Texinfo@asis{::}TreeElement::
 * Texinfo@asis{::}Reader::
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter::
 
 @detailmenu
  --- The Detailed Node Listing ---
@@ -341,32 +340,6 @@ Texinfo::Convert::DocBook
 * Texinfo@asis{::}Convert@asis{::}DocBook AUTHOR::
 * Texinfo@asis{::}Convert@asis{::}DocBook COPYRIGHT AND LICENSE::
 
-Texinfo::Convert::TexinfoMarkup
-
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup NAME::
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup SYNOPSIS::
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup NOTES::
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup DESCRIPTION::
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup METHODS::
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup AUTHOR::
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup SEE ALSO::
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup COPYRIGHT AND LICENSE::
-
-Texinfo::Convert::TexinfoMarkup METHODS
-
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup Markup formatting methods defined by subclasses::
-* Texinfo@asis{::}Convert@asis{::}TexinfoMarkup Formatting state information::
-
-Texinfo::Convert::TexinfoXML
-
-* Texinfo@asis{::}Convert@asis{::}TexinfoXML NAME::
-* Texinfo@asis{::}Convert@asis{::}TexinfoXML SYNOPSIS::
-* Texinfo@asis{::}Convert@asis{::}TexinfoXML NOTES::
-* Texinfo@asis{::}Convert@asis{::}TexinfoXML DESCRIPTION::
-* Texinfo@asis{::}Convert@asis{::}TexinfoXML METHODS::
-* Texinfo@asis{::}Convert@asis{::}TexinfoXML AUTHOR::
-* Texinfo@asis{::}Convert@asis{::}TexinfoXML COPYRIGHT AND LICENSE::
-
 Texinfo::Convert::Plaintext
 
 * Texinfo@asis{::}Convert@asis{::}Plaintext NAME::
@@ -376,6 +349,32 @@ Texinfo::Convert::Plaintext
 * Texinfo@asis{::}Convert@asis{::}Plaintext METHODS::
 * Texinfo@asis{::}Convert@asis{::}Plaintext AUTHOR::
 * Texinfo@asis{::}Convert@asis{::}Plaintext COPYRIGHT AND LICENSE::
+
+Texinfo::Example::TexinfoMarkup
+
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup NAME::
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup SYNOPSIS::
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup NOTES::
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup DESCRIPTION::
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup METHODS::
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup AUTHOR::
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup SEE ALSO::
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup COPYRIGHT AND LICENSE::
+
+Texinfo::Example::TexinfoMarkup METHODS
+
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup Markup formatting methods defined by subclasses::
+* Texinfo@asis{::}Example@asis{::}TexinfoMarkup Formatting state information::
+
+Texinfo::Example::TexinfoXML
+
+* Texinfo@asis{::}Example@asis{::}TexinfoXML NAME::
+* Texinfo@asis{::}Example@asis{::}TexinfoXML SYNOPSIS::
+* Texinfo@asis{::}Example@asis{::}TexinfoXML NOTES::
+* Texinfo@asis{::}Example@asis{::}TexinfoXML DESCRIPTION::
+* Texinfo@asis{::}Example@asis{::}TexinfoXML METHODS::
+* Texinfo@asis{::}Example@asis{::}TexinfoXML AUTHOR::
+* Texinfo@asis{::}Example@asis{::}TexinfoXML COPYRIGHT AND LICENSE::
 
 Texinfo::TreeElement
 
@@ -388,10 +387,6 @@ Texinfo::TreeElement
 * Texinfo@asis{::}TreeElement AUTHOR::
 * Texinfo@asis{::}TreeElement COPYRIGHT AND LICENSE::
 
-Texinfo::TreeElement METHODS
-
-* Texinfo@asis{::}TreeElement @code{Texinfo@asis{::}TreeElement} and XS extensions::
-
 Texinfo::Reader
 
 * Texinfo@asis{::}Reader NAME::
@@ -402,25 +397,6 @@ Texinfo::Reader
 * Texinfo@asis{::}Reader SEE ALSO::
 * Texinfo@asis{::}Reader AUTHOR::
 * Texinfo@asis{::}Reader COPYRIGHT AND LICENSE::
-
-Texinfo::Reader METHODS
-
-* Texinfo@asis{::}Reader @code{Texinfo@asis{::}Reader} and XS extensions::
-
-Texinfo::Example::TreeElementConverter
-
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter NAME::
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter SYNOPSIS::
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter NOTES::
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter DESCRIPTION::
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter METHODS::
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter SEE ALSO::
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter AUTHOR::
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter COPYRIGHT AND LICENSE::
-
-Texinfo::Example::TreeElementConverter METHODS
-
-* Texinfo@asis{::}Example@asis{::}TreeElementConverter Related methods from other modules::
 @end detailmenu
 @end menu
 
@@ -445,12 +421,11 @@ Texinfo::Example::TreeElementConverter METHODS
 @include api_includes/Texinfo-Convert-Info.texi
 @include api_includes/Texinfo-Convert-HTML.texi
 @include api_includes/Texinfo-Convert-DocBook.texi
-@include api_includes/Texinfo-Convert-TexinfoMarkup.texi
-@include api_includes/Texinfo-Convert-TexinfoXML.texi
 @include api_includes/Texinfo-Convert-Plaintext.texi
+@include api_includes/Texinfo-Example-TexinfoMarkup.texi
+@include api_includes/Texinfo-Example-TexinfoXML.texi
 @include api_includes/Texinfo-TreeElement.texi
 @include api_includes/Texinfo-Reader.texi
-@include api_includes/Texinfo-Example-TreeElementConverter.texi
 
 
 @node Index

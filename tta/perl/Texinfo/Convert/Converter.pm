@@ -80,7 +80,7 @@ BEGIN {
   if (!Texinfo::XSLoader::XS_convert_enabled()) {
     undef $shared_library_name;
   }
-  my $loaded_package = Texinfo::XSLoader::init (
+  Texinfo::XSLoader::init (
     "Texinfo::Convert::Converter",
     "Texinfo::Convert::ConverterNonXS",
     $shared_library_name,
@@ -1233,7 +1233,7 @@ sub txt_image_text($$$) {
         if (defined($file_name_encoding));
       $self->converter_line_warn(
                sprintf(__("\@image file `%s' unreadable: %s"),
-                          $decoded_file_name, $!), $element->source_info());
+                          $decoded_file_name, $!), $element->{'source_info'});
     }
   }
   return undef, undef;

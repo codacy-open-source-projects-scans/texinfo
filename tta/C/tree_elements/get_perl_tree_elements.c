@@ -13,6 +13,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>. */
 
+/* Not built, only used as an example */
+
 #include <stdlib.h>
 
 /* Avoid namespace conflicts. */
@@ -36,27 +38,46 @@
 #include "builtin_commands.h"
 /* add_string */
 #include "utils.h"
-#include "reader_api.h"
 #include "translations.h"
 #include "get_perl_info.h"
 
-struct READER *
-get_sv_reader_reader (SV *sv_in)
+/* for any element */
+DOCUMENT *
+get_sv_element_document (SV *element_in, const char *warn_string)
 {
-  size_t reader_descriptor;
-  struct READER *reader = 0;
+  dTHX;
+
+  return get_document_or_warn (element_in, "element_document_descriptor",
+                               warn_string);
+}
+
+ELEMENT *
+get_sv_element_element (SV *element_sv, DOCUMENT *document)
+{
+  HV *element_hv;
+  SV **handle_sv;
+  const char *key = "_handle";
 
   dTHX;
 
-  reader_descriptor = (size_t) SvIV (SvRV (sv_in));
-  reader = retrieve_reader_descriptor (reader_descriptor);
+  if (!document)
+    return 0;
 
-  if (! reader)
+  element_hv = (HV *) SvRV (element_sv);
+
+  handle_sv = hv_fetch (element_hv, key, strlen(key), 0);
+  if (handle_sv)
     {
-      fprintf (stderr, "ERROR: get_sv_reader_reader: no reader %zu\n",
-                                                      reader_descriptor);
+      ELEMENT *e = 0;
+      size_t element_number = (size_t) SvIV (*handle_sv);
+      /* could also be a function like retrieve_document_element */
+      if (element_number <= document->element_handles.number)
+        {
+          e = document->element_handles.list[element_number -1];
+        }
+      return e;
     }
-  return reader;
+  return 0;
 }
 
 #define FETCH(key) key##_sv = hv_fetch (hv_in, #key, strlen (#key), 0);
@@ -187,41 +208,6 @@ new_element_from_sv (DOCUMENT *document, const SV *element_hash,
 
   return e;
 }
-#undef FETCH
-
-#define FETCH(key) key##_sv = hv_fetch (hv_in, #key, strlen (#key), 0);
-/* NOTE in general converters also use the global translation_cache
-   but if it was not the case, it may be relevant to have another
-   function too or a converter argument */
-LANG_TRANSLATION *
-get_lang_translations_sv (SV *lang_translations_sv,
-                          const char *command_line_encoding)
-{
-  LANG_TRANSLATION *lang_translations = 0;
-
-  dTHX;
-
-  /* undef happens with DocBook convert */
-  if (lang_translations_sv && SvOK (lang_translations_sv))
-    {
-      AV *lang_translations_av;
-      SV **lang_sv;
-      const char *lang;
-
-      lang_translations_av = (AV *) SvRV (lang_translations_sv);
-      lang_sv = av_fetch (lang_translations_av, 0, 0);
-      if (!*lang_sv || !SvOK (*lang_sv))
-        fatal ("element_gdt lang_translations no lang");
-
-      lang = SvPVutf8_nolen(*lang_sv);
-      lang_translations
-       = switch_lang_translations (&translation_cache, lang,
-                                   0, command_line_encoding,
-                                   TXI_CONVERT_STRINGS_NR);
-    }
-  return lang_translations;
-}
-
 #undef FETCH
 
 NAMED_STRING_ELEMENT_LIST *

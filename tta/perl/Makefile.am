@@ -51,7 +51,6 @@ do_subst = sed \
   -e 's,[@]USE_EXTERNAL_LIBINTL[@],$(USE_EXTERNAL_LIBINTL),g' \
   -e 's,[@]USE_EXTERNAL_EASTASIANWIDTH[@],$(USE_EXTERNAL_EASTASIANWIDTH),g' \
   -e 's,[@]USE_EXTERNAL_UNIDECODE[@],$(USE_EXTERNAL_UNIDECODE),g' \
-  -e 's,[@]TEXINFO_DTD_VERSION[@],$(TEXINFO_DTD_VERSION),g' \
   -e 's,[@]enable_xs[@],$(enable_xs),g' \
   -e '1 s,/usr/bin/env perl,$(PERL),g'
 
@@ -95,7 +94,6 @@ dist_modules_DATA = \
  Texinfo/ParserNonXS.pm \
  Texinfo/ParserXS.pm \
  Texinfo/Reader.pm \
- Texinfo/ReaderNonXS.pm \
  Texinfo/Report.pm \
  Texinfo/Structuring.pm \
  Texinfo/StructuringNonXS.pm \
@@ -104,7 +102,6 @@ dist_modules_DATA = \
  Texinfo/TransformationsNonXS.pm \
  Texinfo/Translations.pm \
  Texinfo/TreeElement.pm \
- Texinfo/TreeElementNonXS.pm \
  Texinfo/UnicodeData.pm \
  Texinfo/XSLoader.pm
 
@@ -130,9 +127,6 @@ dist_convertmodules_DATA = \
  Texinfo/Convert/Plaintext.pm \
  Texinfo/Convert/Texinfo.pm \
  Texinfo/Convert/TexinfoNonXS.pm \
- Texinfo/Convert/TexinfoMarkup.pm \
- Texinfo/Convert/TexinfoSXML.pm \
- Texinfo/Convert/TexinfoXML.pm \
  Texinfo/Convert/Text.pm \
  Texinfo/Convert/TextNonXS.pm \
  Texinfo/Convert/TextContent.pm \
@@ -142,10 +136,10 @@ dist_convertmodules_DATA = \
  Texinfo/Example/IXIN.pm \
  Texinfo/Example/IXINSXML.pm \
  Texinfo/Example/TestReader.pm \
- Texinfo/Example/TreeElementConverter.pm \
- Texinfo/Example/TreeElementConverterXS.pm \
- Texinfo/Example/ReadDocBook.pm \
- Texinfo/Example/TreeElementReadDocBook.pm
+ Texinfo/Example/TexinfoMarkup.pm \
+ Texinfo/Example/TexinfoSXML.pm \
+ Texinfo/Example/TexinfoXML.pm \
+ Texinfo/Example/ReadDocBook.pm
 
 # extensions used in main program
 extensionsdir = $(converterdatadir)/ext

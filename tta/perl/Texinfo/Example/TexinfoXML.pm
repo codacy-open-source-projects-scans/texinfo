@@ -17,10 +17,10 @@
 #
 # Original author: Patrice Dumas <pertusus@free.fr>
 #
-# A simple subclass of the Texinfo::Convert::TexinfoMarkup abstract
+# A simple subclass of the Texinfo::Example::TexinfoMarkup abstract
 # class.  Defines format specific functions.
 
-package Texinfo::Convert::TexinfoXML;
+package Texinfo::Example::TexinfoXML;
 
 use 5.006;
 use strict;
@@ -30,12 +30,12 @@ use strict;
 
 use Carp qw(cluck);
 
-use Texinfo::Convert::TexinfoMarkup;
+use Texinfo::Example::TexinfoMarkup;
 
 # for xml formatting methods
 use Texinfo::Convert::Converter;
 
-our @ISA = qw(Texinfo::Convert::TexinfoMarkup Texinfo::Convert::Converter);
+our @ISA = qw(Texinfo::Example::TexinfoMarkup Texinfo::Convert::Converter);
 
 our $VERSION = '7.3dev';
 
@@ -172,7 +172,7 @@ sub txi_markup_close_element($$)
 }
 
 my %no_arg_commands_formatting
-   = %Texinfo::Convert::TexinfoMarkup::no_arg_commands_formatting;
+   = %Texinfo::Example::TexinfoMarkup::no_arg_commands_formatting;
 
 sub txi_markup_atom($$)
 {
@@ -234,10 +234,7 @@ sub txi_markup_header($)
       and $self->get_conf('OUTPUT_ENCODING_NAME') ne 'utf-8') {
     $encoding = " encoding=\"".$self->get_conf('OUTPUT_ENCODING_NAME')."\" ";
   }
-  my $texinfo_dtd_version = $self->get_conf('TEXINFO_DTD_VERSION');
-  if (!defined($texinfo_dtd_version)) {
-    $texinfo_dtd_version = '1.00';
-  }
+  my $texinfo_dtd_version = '7.3';
 
   # In the TexinfoML name, the X of XML is replaced by Texinfo.
   my $header =  "<?xml version=\"1.0\"${encoding}?>".'
@@ -253,12 +250,12 @@ __END__
 
 =head1 NAME
 
-Texinfo::Convert::TexinfoXML - Convert Texinfo tree to TexinfoXML
+Texinfo::Example::TexinfoXML - Convert Texinfo tree to TexinfoXML
 
 =head1 SYNOPSIS
 
   my $converter
-    = Texinfo::Convert::TexinfoXML->converter({'NUMBER_SECTIONS' => 0});
+    = Texinfo::Example::TexinfoXML->converter({'NUMBER_SECTIONS' => 0});
 
   # output to files
   $converter->output($document);
@@ -273,13 +270,13 @@ Texinfo to other formats.  There is no promise of API stability.
 
 =head1 DESCRIPTION
 
-Texinfo::Convert::TexinfoXML converts a Texinfo tree to TexinfoXML.
+Texinfo::Example::TexinfoXML converts a Texinfo tree to TexinfoXML.
 
 =head1 METHODS
 
 =over
 
-=item $converter = Texinfo::Convert::TexinfoXML->converter($options)
+=item $converter = Texinfo::Example::TexinfoXML->converter($options)
 
 Initialize converter from Texinfo to TexinfoXML.
 

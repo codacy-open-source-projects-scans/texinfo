@@ -503,7 +503,7 @@ libtexinfo_convert_la_SOURCES = \
 
 # locate include files under out-of-source builds.
 libtexinfo_convert_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/parsetexi -I$(srcdir)/convert -I$(srcdir)/structuring_transfo $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
-libtexinfo_convert_la_LIBADD = $(libtexinfoxs_la_as_dependency) libtexinfo.la libcallperl_libtexinfo_convert.la $(top_builddir)/gnulib/lib/libgnu.la $(platform_PERL_LIBADD)
+libtexinfo_convert_la_LIBADD = $(libtexinfoxs_la_as_dependency) libtexinfo.la libcallperl_libtexinfo_convert.la $(platform_PERL_LIBADD)
 libtexinfo_convert_la_LDFLAGS = -version-info 1:0:0 $(perl_conf_LIB_LDFLAGS) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 # example to trigger errors associated with no undefined
 #libtexinfo_convert_la_LDFLAGS = -version-info 1:0:0 -Wl,--no-undefined $(perl_conf_LIB_LDFLAGS) $(perl_conf_LIBS) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
@@ -519,8 +519,11 @@ libtexinfo_convertxs_la_SOURCES = \
                        convert/build_html_perl_info.h \
                        convert/build_html_perl_info.c \
                        convert/get_converter_perl_info.c \
-                       convert/get_converter_perl_info.h \
-                       tree_elements/build_perl_tree_elements.h \
+                       convert/get_converter_perl_info.h
+
+# following files were in libtexinfo_convertxs once, but are not built
+# anymore, only kept as examples
+EXTRA_DIST +=          tree_elements/build_perl_tree_elements.h \
                        tree_elements/build_perl_tree_elements.c \
                        tree_elements/get_perl_tree_elements.h \
                        tree_elements/get_perl_tree_elements.c
@@ -600,7 +603,7 @@ libtexinfo_main_la_SOURCES = \
 # locate include files under out-of-source builds.
 # NOTE not sure that Gnulib is directly used, but it could.
 libtexinfo_main_la_CPPFLAGS = -I$(srcdir)/main -I$(srcdir)/convert -I$(srcdir)/structuring_transfo -I$(srcdir)/parsetexi $(AM_CPPFLAGS) $(GNULIB_CPPFLAGS)
-libtexinfo_main_la_LIBADD = $(libtexinfoxs_la_as_dependency) libtexinfo.la libtexinfo-convert.la libperlembed_libtexinfo_main.la $(top_builddir)/gnulib/lib/libgnu.la
+libtexinfo_main_la_LIBADD = $(libtexinfoxs_la_as_dependency) libtexinfo.la libtexinfo-convert.la libperlembed_libtexinfo_main.la
 if PERL_EMBEDDED
 # contains part of ExtUtils::Embed ldopts corresponding to LIBADD
 libtexinfo_main_la_LIBADD += $(perl_conf_LIBS)
@@ -639,7 +642,7 @@ ctexi2any_SOURCES = \
 # Gnulib is directly needed on some platforms for getopt-gnu.
 # The Gnulib link variables are needed at least on Solaris and not added
 # by libtool.
-ctexi2any_LDADD = libtexinfo-main.la libtexinfoxs.la libtexinfo-convert.la libtexinfo.la $(top_builddir)/gnulib/lib/libgnu.la $(perl_conf_LIBS) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
+ctexi2any_LDADD = libtexinfo-main.la libtexinfoxs.la libtexinfo-convert.la libtexinfo.la $(perl_conf_LIBS) $(EUIDACCESS_LIBGEN) $(LTLIBINTL) $(LTLIBICONV) $(LTLIBUNISTRING)
 
 # NOTE it is important to use perl_conf_CFLAGS here to match
 # with perl_conf_LDFLAGS used for linking, or in some platforms where

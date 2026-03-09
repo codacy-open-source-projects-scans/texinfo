@@ -350,26 +350,6 @@ my $configured_url = '@PACKAGE_URL@';
 $configured_url = 'https://www.gnu.org/software/texinfo/'
   if ($configured_url eq '@' .'PACKAGE_URL@');
 
-my $texinfo_dtd_version = '@TEXINFO_DTD_VERSION@';
-if ($texinfo_dtd_version eq '@' . 'TEXINFO_DTD_VERSION@') {
-  $texinfo_dtd_version = undef;
-  if (open(CONFIGURE,
-         "< ".join('/', ($Texinfo::ModulePath::t2a_srcdir,
-                          'configure.ac')))) {
-    while (<CONFIGURE>) {
-      if (/^TEXINFO_DTD_VERSION=([0-9]\S*)/) {
-        $texinfo_dtd_version = "$1";
-        last;
-      }
-    }
-    close(CONFIGURE);
-  }
-}
-
-# if not configured nor found in configure.ac
-$texinfo_dtd_version = $configured_version
-  if (!defined($texinfo_dtd_version));
-
 my $configured_information = {
     'PACKAGE_VERSION' => $configured_version,
     'PACKAGE' => $configured_package,
@@ -381,7 +361,6 @@ my $configured_information = {
 # options set in the main program.
 my $main_program_set_options = {
     'PROGRAM' => $real_command_name,
-    'TEXINFO_DTD_VERSION' => $texinfo_dtd_version,
     # Used for :
     #  * decoding command-line, including file names
     #  * encoding command-line before executing a command
@@ -840,8 +819,8 @@ my %converter_format_expanded_region_name = (
   'docbooktreeelementreader' => 'docbook',
 );
 
+# nothing currently, previously mapped xml to texinfoxml
 my %format_command_line_names = (
-  'xml' => 'texinfoxml',
 );
 
 my %formats_table = (
@@ -877,12 +856,12 @@ my %formats_table = (
            },
   'texinfoxml' => {
              'nodes_tree' => 1,
-             'module' => 'Texinfo::Convert::TexinfoXML',
+             'module' => 'Texinfo::Example::TexinfoXML',
              'floats' => 1,
            },
   'texinfosxml' => {
              'nodes_tree' => 1,
-             'module' => 'Texinfo::Convert::TexinfoSXML',
+             'module' => 'Texinfo::Example::TexinfoSXML',
              'floats' => 1,
            },
   'ixinsxml' => { # note that the Texinfo tree is converted to
@@ -898,7 +877,6 @@ my %formats_table = (
              'move_index_entries_after_items' => 1,
              'no_warn_non_empty_parts' => 1,
              'module' => 'Texinfo::Convert::DocBook'
-             #'module' => 'Texinfo::Example::TreeElementReadDocBook'
              #'module' => 'Texinfo::Example::ReadDocBook'
            },
   # next 3 formats are not documented since they should not be used except
@@ -912,11 +890,6 @@ my %formats_table = (
              'move_index_entries_after_items' => 1,
              'no_warn_non_empty_parts' => 1,
              'module' => 'Texinfo::Example::ReadDocBook'
-           },
-  'docbooktreeelementreader' => {
-             'move_index_entries_after_items' => 1,
-             'no_warn_non_empty_parts' => 1,
-             'module' => 'Texinfo::Example::TreeElementReadDocBook'
            },
   'epub3' => {
             'converted_format' => 'html',
@@ -1070,7 +1043,6 @@ the behavior is identical, and does not depend on the installed name.")."\n"
 .__("      --epub3                 output EPUB 3")."\n"
 .__("      --latex                 output LaTeX")."\n"
 .__("      --plaintext             output plain text rather than Info")."\n"
-.__("      --xml                   output Texinfo XML")."\n"
 .__("      --dvi, --dvipdf, --ps, --pdf  call texi2dvi to generate given output,
                                 after checking validity of TEXINFO-FILE")."\n"
 ."\n";
@@ -1155,7 +1127,6 @@ the behavior is identical, and does not depend on the installed name.")."\n"
 .__("      --iflatex         process \@iflatex and \@latex")."\n"
 .__("      --ifplaintext     process \@ifplaintext")."\n"
 .__("      --iftex           process \@iftex and \@tex")."\n"
-.__("      --ifxml           process \@ifxml and \@xml")."\n"
 ."\n"
 .__("  By default, an --ifFORMAT setting is on only when the output format
   is FORMAT; for example, --ifhtml is on when outputting HTML.
@@ -1168,7 +1139,6 @@ the behavior is identical, and does not depend on the installed name.")."\n"
   $makeinfo_help .= __("Examples:")."\n"
 .sprintf(__("  %s foo.texi                      write Info"), $real_command_name)."\n"
 .sprintf(__("  %s --html foo.texi               write HTML"), $real_command_name)."\n"
-.sprintf(__("  %s --xml foo.texi                write Texinfo XML"), $real_command_name)."\n"
 .sprintf(__("  %s --docbook foo.texi            write Docbook XML"), $real_command_name)."\n"
 .sprintf(__("  %s --plaintext foo.texi          write plain text to standard output"), $real_command_name)."\n"
 .sprintf(__("  %s --pdf foo.texi                write PDF using texi2dvi"), $real_command_name)."\n"
@@ -1199,7 +1169,6 @@ There is NO WARRANTY, to the extent permitted by law."), "2026")."\n";
  'macro-expand|E=s' => sub { set_from_cmdline('MACRO_EXPAND', $_[1]); },
  'ifhtml!' => sub { set_expansion('html', $_[1]); },
  'ifinfo!' => sub { set_expansion('info', $_[1]); },
- 'ifxml!' => sub { set_expansion('xml', $_[1]); },
  'ifdocbook!' => sub { set_expansion('docbook', $_[1]); },
  'iflatex!' => sub { set_expansion('latex', $_[1]); },
  'iftex!' => sub { set_expansion('tex', $_[1]); },
@@ -1363,7 +1332,6 @@ There is NO WARRANTY, to the extent permitted by law."), "2026")."\n";
  'latex' => sub {set_cmdline_format($_[0].'');},
  'info' => sub {set_cmdline_format($_[0].'');},
  'docbook' => sub {set_cmdline_format($_[0].'');},
- 'xml' => sub {set_cmdline_format('texinfoxml');},
  'dvi' => sub {set_cmdline_format($_[0].'');},
  'dvipdf' => sub {set_cmdline_format($_[0].'');},
  'ps' => sub {set_cmdline_format($_[0].'');},

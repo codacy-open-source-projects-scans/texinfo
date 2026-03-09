@@ -27,7 +27,7 @@
 # inherit from this module.  The functions to implement are documented in
 # the POD section.
 
-package Texinfo::Convert::TexinfoMarkup;
+package Texinfo::Example::TexinfoMarkup;
 
 use 5.006;
 use strict;
@@ -943,9 +943,7 @@ sub _convert($$;$) {
             }
             $direction_index++;
           }
-          if (! $self->get_conf('TXI_MARKUP_NO_SECTION_EXTENT')) {
-            $result .= $self->txi_markup_close_element('node');
-          }
+          $result .= $self->txi_markup_close_element('node');
           $result .= _format_comment_or_end_line($self, $arguments_line);
           pop @{$self->{'document_context'}->[-1]->{'monospace'}};
         } elsif ($Texinfo::Commands::root_commands{$cmdname}) {
@@ -957,13 +955,7 @@ sub _convert($$;$) {
           }
           $result .= $self->txi_markup_open_element($level_adjusted_cmdname,
                                                     $attribute);
-          my $closed_section_element;
-          if ($self->get_conf('TXI_MARKUP_NO_SECTION_EXTENT')) {
-            $closed_section_element
-               = $self->txi_markup_close_element($level_adjusted_cmdname);
-          } else {
-            $closed_section_element = '';
-          }
+          my $closed_section_element = '';
 
           # arguments_line type
           my $arguments_line = $element->{'contents'}->[0];
@@ -1673,8 +1665,7 @@ sub _convert($$;$) {
     }
   } elsif ($element->{'cmdname'}
            and $Texinfo::Commands::root_commands{$element->{'cmdname'}}
-           and $element->{'cmdname'} ne 'node'
-           and !$self->get_conf('TXI_MARKUP_NO_SECTION_EXTENT')) {
+           and $element->{'cmdname'} ne 'node') {
     my $level_adjusted_cmdname
        = Texinfo::Structuring::section_level_adjusted_command_name($element);
     my $sections_list = $self->{'document'}->sections_list();
@@ -1703,11 +1694,6 @@ sub _convert($$;$) {
                ."\n";
       }
     }
-  } elsif ($element->{'cmdname'}
-           and $element->{'cmdname'} eq 'node'
-           and $self->get_conf('TXI_MARKUP_NO_SECTION_EXTENT')) {
-    $result .= $self->txi_markup_close_element('node');
-
   }
   return $result;
 }
@@ -1718,15 +1704,15 @@ __END__
 
 =head1 NAME
 
-Texinfo::Convert::TexinfoMarkup - Convert Texinfo tree to element and attribute markup
+Texinfo::Example::TexinfoMarkup - Convert Texinfo tree to element and attribute markup
 
 =head1 SYNOPSIS
 
   package Texinfo::Convert::TexinfoMyMarkup;
 
-  use Texinfo::Convert::TexinfoMarkup;
+  use Texinfo::Example::TexinfoMarkup;
 
-  @ISA = qw(Texinfo::Convert::TexinfoMarkup);
+  @ISA = qw(Texinfo::Example::TexinfoMarkup);
 
   sub converter_defaults ($$) {
     return %myconverter_defaults;
@@ -1745,17 +1731,17 @@ Texinfo to other formats.  There is no promise of API stability.
 
 =head1 DESCRIPTION
 
-C<Texinfo::Convert::TexinfoMarkup> converts a Texinfo tree to the Texinfo
+C<Texinfo::Example::TexinfoMarkup> converts a Texinfo tree to the Texinfo
 Markup Language which is based on nested elements with attributes, similar
 to XML.  All the information present in the Texinfo tree, after
 expansion of C<@macro>, C<@value> and inclusion of include files is
-kept.  C<Texinfo::Convert::TexinfoMarkup> is an abstract class, to be used as a
+kept.  C<Texinfo::Example::TexinfoMarkup> is an abstract class, to be used as a
 super class for modules implementing specific markup formatting functions
-called by C<Texinfo::Convert::TexinfoMarkup>.
+called by C<Texinfo::Example::TexinfoMarkup>.
 
 The Texinfo Markup Language elements and attributes are not documented,
-but the Texinfo XML output by the C<Texinfo::Convert::TexinfoXML> subclass
-(L<Texinfo::Convert::TexinfoXML>) is a straightforward formatting as XML,
+but the Texinfo XML output by the C<Texinfo::Example::TexinfoXML> subclass
+(L<Texinfo::Example::TexinfoXML>) is a straightforward formatting as XML,
 and is described by the Texinfo DTD.  Therefore the Texinfo DTD can be
 used as a description of the structure of both Texinfo XML and of the
 more abstract Texinfo Markup Language.
@@ -1765,7 +1751,7 @@ more abstract Texinfo Markup Language.
 =head2 Markup formatting methods defined by subclasses
 
 The following methods should be implemented by the modules inheriting
-from C<Texinfo::Convert::TexinfoMarkup>:
+from C<Texinfo::Example::TexinfoMarkup>:
 
 =over
 
@@ -1833,8 +1819,8 @@ Patrice Dumas, E<lt>bug-texinfo@gnu.orgE<gt>
 
 =head1 SEE ALSO
 
-L<Texinfo::Convert::Converter>. L<Texinfo::Convert::TexinfoXML>.  The
-C<Texinfo::Convert::TexinfoSXML> is another subclass, which outputs
+L<Texinfo::Convert::Converter>. L<Texinfo::Example::TexinfoXML>.  The
+C<Texinfo::Example::TexinfoSXML> is another subclass, which outputs
 SXML.  It is not much documented.
 
 =head1 COPYRIGHT AND LICENSE

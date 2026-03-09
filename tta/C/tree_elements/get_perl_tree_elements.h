@@ -9,16 +9,11 @@
 #include "document_types.h"
 #include "converter_types.h"
 
-/* do not depend on READER structure implementation details */
-struct READER;
-
-struct READER *get_sv_reader_reader (SV *sv_in);
+DOCUMENT *get_sv_element_document (SV *element_in, const char *warn_string);
+ELEMENT *get_sv_element_element (SV *element_sv, DOCUMENT *document);
 
 ELEMENT *new_element_from_sv (DOCUMENT *document, const SV *element_hash,
                               CONVERTER *converter);
-
-LANG_TRANSLATION *get_lang_translations_sv (SV *lang_translations_sv,
-                                            const char *command_line_encoding);
 
 NAMED_STRING_ELEMENT_LIST *get_replaced_substrings (SV *replaced_substrings_sv);
 

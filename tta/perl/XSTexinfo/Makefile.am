@@ -192,51 +192,6 @@ EXTRA_DIST += parser_document/ManipulateTreeXS.xs
 ManipulateTreeXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/structuring_transfo $(XSLIBS_CPPFLAGS)
 ManipulateTreeXS_la_LIBADD = $(top_builddir)/C/libtexinfoxs.la $(top_builddir)/C/libtexinfo.la $(platform_PERL_LIBADD)
 
-########################## TreeElement XS
-
-if USE_SHARED_TXI_LIBRARIES
-xs_LTLIBRARIES += TreeElementXS.la
-endif
-
-nodist_TreeElementXS_la_SOURCES = reader_element/TreeElementXS.c
-CLEANFILES += reader_element/TreeElementXS.c
-
-EXTRA_DIST += reader_element/TreeElementXS.xs
-
-# locate include files under out-of-source builds.
-TreeElementXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/tree_elements $(XSLIBS_CPPFLAGS)
-TreeElementXS_la_LIBADD = $(top_builddir)/C/libtexinfo-convertxs.la $(top_builddir)/C/libtexinfoxs.la $(top_builddir)/C/libtexinfo-convert.la $(top_builddir)/C/libtexinfo.la $(platform_PERL_LIBADD)
-
-########################## TreeElementConverter XS
-
-if USE_SHARED_TXI_LIBRARIES
-xs_LTLIBRARIES += TreeElementConverterXS.la
-endif
-
-nodist_TreeElementConverterXS_la_SOURCES = reader_element/TreeElementConverterXS.c
-CLEANFILES += reader_element/TreeElementConverterXS.c
-
-EXTRA_DIST += reader_element/TreeElementConverterXS.xs
-
-# locate include files under out-of-source builds.
-TreeElementConverterXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/tree_elements -I$(txi_libs_srcdir)/convert $(XSLIBS_CPPFLAGS)
-TreeElementConverterXS_la_LIBADD = $(top_builddir)/C/libtexinfo-convertxs.la $(top_builddir)/C/libtexinfoxs.la $(top_builddir)/C/libtexinfo-convert.la $(top_builddir)/C/libtexinfo.la $(platform_PERL_LIBADD)
-
-########################## Reader XS
-
-if USE_SHARED_TXI_LIBRARIES
-xs_LTLIBRARIES += ReaderXS.la
-endif
-
-nodist_ReaderXS_la_SOURCES = reader_element/ReaderXS.c
-CLEANFILES += reader_element/ReaderXS.c
-
-EXTRA_DIST += reader_element/ReaderXS.xs
-
-# locate include files under out-of-source builds.
-ReaderXS_la_CPPFLAGS = -I$(txi_libs_srcdir)/main -I$(txi_libs_srcdir)/tree_elements $(XSLIBS_CPPFLAGS)
-ReaderXS_la_LIBADD = $(top_builddir)/C/libtexinfo-convertxs.la $(top_builddir)/C/libtexinfoxs.la $(top_builddir)/C/libtexinfo.la $(platform_PERL_LIBADD)
-
 ########################## IndicesXS
 
 if USE_SHARED_TXI_LIBRARIES

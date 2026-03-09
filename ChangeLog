@@ -1,3 +1,324 @@
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/Makefile.am (libtexinfo_convert_la_LIBADD)
+	(libtexinfo_main_la_LIBADD, ctexi2any_LDADD): remove libgnu.la from
+	libraries and executable linking against libtexinfo, as libtexinfo
+	already includes libgnu.a files through libperlcall_utils convenience
+	library linked in libtexinfo.  Based on Bruno Haible report.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/utils.c (html_get_direction_index): remove unused
+	variable.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (@command{texi2any} Environment Variables):
+	remove explanations on TEXINFO_XS_* and TEXINFO_C_EMBED_PERL as these
+	environment variables are likely to be removed at some point.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (@command{texi2any} Environment Variables):
+	update for changes in TEXINFO_XS.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texinfo.texi (Invoking @command{texi2any})
+	(Global Customization Variables): remove references to xml
+	command-line and format options.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.tres, tta/perl/t/xml_tests.t: remove the
+	sectioning_test_no_use_nodes that is now a duplicate.  Replace
+	$sectioning_test by its value.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/maintain/check_back_xml_forth_texi_t.sh: update.
+
+	* util/txixml2texi.pl: update Perl modules names.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* NEWS, TODO: update for Texinfo XML removed as an output format.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/tta_api/Makefile.am (texi2any_internals_dependencies): fix
+	TexinfoMarkup.pm and TexinfoXML.pm paths.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	Move TexinfoXML.pm, TexinfoSXML.pm and TexinfoMarkup.pm to Example
+
+	* tta/perl/Makefile.am (dist_convertmodules_DATA),
+	tta/perl/Texinfo/Example/TexinfoMarkup.pm,
+	tta/perl/Texinfo/Example/TexinfoSXML.pm,
+	tta/perl/Texinfo/Example/TexinfoXML.pm: move TexinfoMarkup.pm,
+	TexinfoSXML.pm and TexinfoXML.pm out of Texinfo/ to Example/.
+
+	* tta/C/texi2any.c (formats_table),
+	tta/perl/Texinfo/Example/TexinfoMarkup.pm,
+	tta/perl/Texinfo/Example/TexinfoSXML.pm,
+	tta/perl/Texinfo/Example/TexinfoXML.pm, tta/perl/t/test_utils.pl,
+	tta/perl/t/z_misc/no_structure_test.t, tta/perl/texi2any.pl: update
+	Perl modules names.
+
+	* tta/maintain/regenerate_converters_documentation.sh,
+	tta/perl/Convert_format_template.pod: update to handle TexinfoXML
+	being in Example.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/test_utils.pl (test): remove xml from the default
+	expanded formats.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	Mark texinfo XML related @-command as deprecated
+
+	* tta/data/command_data.txt: mark xml, ifxml and ifnotxml as
+	deprecated.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	Remove Texinfo XML command line options
+
+	* tta/C/texi2any.c (format_command_line_names, long_options)
+	(main), tta/perl/texi2any.pl (%format_command_line_names)
+	(makeinfo_help): remove Texinfo XML related command line options.
+
+	* tta/tests/coverage/list-of-tests (formatting_xml): update.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	Deprecate xml format in documentation and associated variables
+
+	* doc/texinfo.texi (Output Formats, Adding Output Formats)
+	(Conditional Commands, Conditional Not Commands)
+	(Raw Formatter Commands, Inline Conditionals)
+	(Generic Translator @command{texi2any}, Invoking @command{texi2any})
+	(Output Format Selection, Command List)
+	(Customization Variables for Multiple Formats): do not document
+	Texinfo XML as being a supported output format.  Document @ifxml, @xml
+	and @ifnotxml as being deprecated.
+
+	* tta/maintain/catalog.xml.in,
+	tta/perl/Texinfo/Convert/TexinfoMarkup.pm (_convert),
+	tta/perl/Texinfo/Convert/TexinfoXML.pm (txi_markup_header): remove
+	TXI_MARKUP_NO_SECTION_EXTENT, considering that it is always false.
+	Hardcode TEXINFO_DTD_VERSION to 7.3.
+
+	* tta/data/options_data.txt: set TEXINFO_DTD_VERSION to 7.3, document
+	markup and Texinfo XML customization variables as not being used
+	anymore.
+
+	* doc/texinfo.texi (Other Formats Customization Variables),
+	tta/Makefile.am (maintain/catalog.xml), tta/perl/Makefile.am
+	(do_subst): remove Texinfo XML customization variables documentation
+	and substitutions.
+
+	* configure.ac, tta/configure.ac,
+	tta/maintain/change_perl_modules_version.sh: do not set
+	TEXINFO_DTD_VERSION.
+
+	* tta/C/convert/texinfo.c (txi_set_base_default_options),
+	tta/perl/texi2any.pl ($main_program_set_options): do not set
+	TEXINFO_DTD_VERSION.
+
+	* tta/perl/t/xml_tests.t (sectioning_test_no_use_nodes): do not set
+	TXI_MARKUP_NO_SECTION_EXTENT.
+
+	* Makefile.am, README-hacking: remove dtd-check.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/XSTexinfo/convert/ConvertTextXS.xs (XS_convert_tree):
+	remove call of get_sv_element_document and get_sv_element_element,
+	no code sets the corresponding handle and document descriptor.
+
+	* tta/C/tree_elements/get_perl_tree_elements.c
+	(get_sv_element_document, get_sv_element_element),
+	tta/C/main/get_perl_info.c: move unused get_sv_element_document and
+	get_sv_element_element to get_perl_tree_elements.c.
+
+	* tta/C/main/document.c (destroy_document),
+	tta/C/main/document_types.h (DOCUMENT): comment out definition of 
+	element_handles document field and associated code, as no code built
+	uses it currently.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/Makefile.am (libtexinfo_convertxs_la_SOURCES, EXTRA_DIST): do
+	not build tree_elements/build_perl_tree_elements.c and
+	tree_elements/get_perl_tree_elements.c.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	remove the Texinfo::TreeElement XS interface
+
+	* doc/tta_api/Makefile.am (texi2any_internals_dependencies),
+	tta/perl/Makefile.am (dist_modules_DATA),
+	tta/perl/Texinfo/TreeElement.pm, tta/perl/XSTexinfo/Makefile.am:
+	rename TreeElementNonXS.pm as TreeElement.pm.  Remove TreeElement XS
+	loading and reader_element/TreeElementXS.xs.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/TreeElementNonXS.pm,
+	tta/perl/XSTexinfo/reader_element/TreeElementXS.xs: remove all the
+	methods except for new.  Those methods should not be used.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Converter.pm (txt_image_text),
+	tta/perl/Texinfo/Example/ReadDocBook.pm (_convert): do not use the
+	TreeElement interface.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/tree_elements/build_perl_tree_elements.c: remove unused header
+	includes.
+
+	* tta/C/tree_elements/get_perl_tree_elements.c: remove
+	get_sv_reader_reader.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	remove the Texinfo::Reader XS interface
+
+	* doc/tta_api/Makefile.am (texi2any_internals_dependencies),
+	tta/perl/Makefile.am (dist_modules_DATA), tta/perl/Texinfo/Reader.pm,
+	tta/perl/XSTexinfo/Makefile.am:
+	remove XS interface of Texinfo::Reader.  Rename ReaderNonXS.pm as
+	Reader.pm.  Remove reader_element/ReaderXS.xs.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/tree_elements/build_perl_tree_elements.c: remove
+	register_document_sections_list_elements,
+	register_document_nodes_list_elements,
+	register_document_headings_list_elements,
+	register_document_relations_lists_elements,
+	build_tree_elements_relations_lists,
+	build_tree_elements_sections_list, build_tree_elements_nodes_list,
+	build_tree_elements_headings_list that were only used in
+	TreeElementConverterXS.
+
+	* tta/C/tree_elements/get_perl_tree_elements.c: remove
+	get_lang_translations_sv.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/tta_api/Makefile.am (texi2any_internals_dependencies),
+	tta/perl/Makefile.am (dist_convertmodules_DATA),
+	tta/perl/XSTexinfo/Makefile.am: remove completely
+	TreeElementConverter by removing TreeElementConverterXS.xs,
+	TreeElementConverter.pm and TreeElementConverterXS.pm.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* Texinfo/Example/ReadDocBook.pm: remove or replace code related to XS
+	interfaces.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Makefile.am (dist_convertmodules_DATA),
+	tta/perl/texi2any.pl (%formats_table): remove completely
+	Texinfo::Example::TreeElementReadDocBook.
+
+	* tta/perl/Texinfo/Example/TODO: move information on obsolete code to
+	this new file.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm: make $disable_C_libraries a file
+	scoped variable.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Parser.pm (BEGIN): do not call
+	set_XS_parser_loaded.
+
+	* tta/perl/Texinfo/XSLoader.pm: remove XS_parser_loaded and
+	set_XS_parser_loaded.  The information can be determined in advance
+	with $Texinfo::XSLoader::core_modules_built and XS_parser_enabled.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/ManipulateTree.pm (tree_remove_references):
+	determine early the object count number by using the
+	$Texinfo::XSLoader::core_modules_built variable value to determine if
+	the XS parser module is loaded.
+
+2026-03-08 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/swig/perl/t/20index_sort.t: load the SWIG interface before the
+	texi2any internal modules and call Texinfo::setup in a BEGIN block to
+	make sure that set_XS_mandatory is called before any module reading
+	TEXINFO_XS_* environmnent variables is loaded.
+
+2026-03-07 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm (set_XS_mandatory, init): unset
+	$ENV{'TEXINFO_XS'} if set to omit in set_XS_mandatory, not in init.
+
+	* tta/perl/Texinfo/XSLoader.pm (init): handle first the case where
+	there is no attempt to load XS module.  Make $TEXINFO_XS a file
+	lexical.
+
+	* tta/perl/Texinfo/XSLoader.pm ($core_modules_built): add.
+
+2026-03-07 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/call_perl_function.c (call_eval_load_texinfo_modules): no
+	need to check whether Document XS loaded, XS is mandatory such that
+	XSLoader would already have died if Document XS was not loaded.
+
+	* tta/perl/Texinfo/Document.pm (BEGIN): no more need to detect that
+	Document XS was loaded.  In general, it should be better to make sure
+	in upstream codes that failure happens as soon as the XS module does
+	not load.
+
+2026-03-07 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/swig/perl/test_refold.sh: avoid using diff exit status.
+
+2026-03-07 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/call_perl_function.c (call_eval_load_texinfo_modules):
+	call set_XS_mandatory to be more like C texi2any and simplify the
+	possible cases.
+
+2026-03-07 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm (init): handle mandatory_xs more like
+	other cases since in situations with mandatory_xs set, all the XS
+	modules should be enabled.
+	Show missing fallback only after the required modules that have not
+	been loaded caused to die.
+	Silently reset TEXINFO_XS if set to omit and mandatory_xs is set.
+
+2026-03-07 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/XSLoader.pm ($mandatory_xs, set_XS_mandatory):
+	rename embedded_xs to mandatory_xs and set_XS_embedded to
+	set_XS_mandatory.  Update users and callers.
+
+2026-03-07 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Converter.pm (BEGIN),
+	tta/perl/Texinfo/Convert/HTML.pm (BEGIN),
+	tta/perl/Texinfo/Convert/Texinfo.pm (BEGIN),
+	tta/perl/Texinfo/Convert/Text.pm (BEGIN), tta/perl/Texinfo/Indices.pm
+	(BEGIN), tta/perl/Texinfo/ManipulateTree.pm (BEGIN),
+	tta/perl/Texinfo/OutputUnits.pm (BEGIN),
+	tta/perl/Texinfo/Structuring.pm (BEGIN),
+	tta/perl/Texinfo/Transformations.pm (BEGIN): remove unused
+	Texinfo::XSLoader::init return value variable.
+
 2026-03-07 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/perl/Texinfo/ModulePath.pm.in ($XS_modules_dir, init),

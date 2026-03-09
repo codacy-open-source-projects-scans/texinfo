@@ -84,10 +84,9 @@ use Texinfo::Convert::Plaintext;
 use Texinfo::Convert::Info;
 use Texinfo::Convert::LaTeX;
 use Texinfo::Convert::HTML;
-use Texinfo::Convert::TexinfoXML;
+use Texinfo::Example::TexinfoXML;
 use Texinfo::Convert::DocBook;
 #use Texinfo::Example::ReadDocBook;
-#use Texinfo::Example::TreeElementReadDocBook;
 
 # the tests reference perl results file is loaded through a require
 # of a file containing code setting those variables.
@@ -213,12 +212,6 @@ my %extensions = (
   'latex_text' => 'tex',
 );
 
-# This is, in general, different from the documented version, which
-# is set in the texi2any main program.  This value should only be
-# used in t/*.t tests.
-my $XML_DTD_VERSION
-  = $Texinfo::Options::converter_customization_options{'TEXINFO_DTD_VERSION'};
-
 my %outfile_preamble = (
   'docbook' => ['<?xml version="1.0"?>
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN" "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd" [
@@ -227,7 +220,7 @@ my %outfile_preamble = (
 ]>
 '. "<book>\n", "</book>\n"],
   'xml' => ['<?xml version="1.0"?>
-'."<!DOCTYPE texinfo PUBLIC \"-//GNU//DTD TexinfoML V${XML_DTD_VERSION}//EN\" \"http://www.gnu.org/software/texinfo/dtd/${XML_DTD_VERSION}/texinfo.dtd\">
+'."<!DOCTYPE texinfo PUBLIC \"-//GNU//DTD TexinfoML V7.3//EN\" \"http://www.gnu.org/software/texinfo/dtd/7.3/texinfo.dtd\">
 ".'<texinfo>
 ', "</texinfo>\n"],
  # done dynamically for CSS
@@ -471,7 +464,7 @@ sub convert_to_xml($$$$$)
     = set_converter_option_defaults($converter_options, 'xml',
                                     $self->{'DEBUG'});
 
-  my $converter = Texinfo::Convert::TexinfoXML->converter($converter_options);
+  my $converter = Texinfo::Example::TexinfoXML->converter($converter_options);
 
   my ($result, $converter_init_errors) = _convert($converter, $document,
                                    (defined($converter_options->{'OUTFILE'})
@@ -503,7 +496,6 @@ sub convert_to_docbook($$$$$)
     $converter_options->{'_DOCBOOK_PIECE'} = 1;
   }
 
-  #my $converter = Texinfo::Example::TreeElementReadDocBook->converter($converter_options);
   #my $converter = Texinfo::Example::ReadDocBook->converter($converter_options);
   my $converter = Texinfo::Convert::DocBook->converter($converter_options);
 
@@ -658,11 +650,12 @@ sub test($$)
 
   if (!defined $parser_options->{'EXPANDED_FORMATS'}) {
     $parser_options->{'EXPANDED_FORMATS'} = [
-      'docbook', 'html', 'xml', 'info', 'plaintext', 'latex'];
+      'docbook', 'html', 'info', 'plaintext', 'latex'];
     #  'tex' is missed out here so that @ifnottex is expanded
     # in the tests.  Put
     #   {'EXPANDED_FORMATS' => ['tex']}
     # where you need @tex expanded in the t/*.t files.
+    #  'xml', being deprecated, is not expanded in the default case either
   }
   my $initial_parser_options;
   # keep initial parser options to be able to pass to preamble formatting
