@@ -1075,7 +1075,8 @@ sub _internal_command_name_tree($$$) {
       if (exists($command->{'cmdname'})
           and $command->{'cmdname'} eq 'namedanchor'
           and scalar(@{$command->{'contents'}}) > 1
-          and exists($command->{'contents'}->[1]->{'contents'})) {
+          and not Texinfo::Common::empty_spaces_argument(
+                                  $command->{'contents'}->[1])) {
         $tree = $command->{'contents'}->[1];
       }
       $target->{'name_tree'} = $tree;
@@ -2018,7 +2019,8 @@ sub _open_command_update_context($$) {
   my $convert_to_latex;
 
   if (exists($brace_commands{$command_name})
-      and $brace_commands{$command_name} eq 'context') {
+      and ($brace_commands{$command_name} eq 'context'
+            or exists($math_commands{$command_name}))) {
     _new_document_context($self, $command_name);
   }
   if (exists($format_context_commands{$command_name})) {
@@ -2118,7 +2120,8 @@ sub _convert_command_update_context($$) {
     pop @{$self->{'document_context'}->[-1]->{'formatting_context'}};
   }
   if (exists($brace_commands{$command_name})
-      and $brace_commands{$command_name} eq 'context') {
+      and ($brace_commands{$command_name} eq 'context'
+            or exists($math_commands{$command_name}))) {
     _pop_document_context($self);
   }
 }

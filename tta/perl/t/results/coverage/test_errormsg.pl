@@ -21,13 +21,10 @@ $result_tree_text{'test_errormsg'} = '*document_root C1
        {code}
    {\\n}
    *@errormsg C1 l3
-    *brace_arg C1
-    |INFO
-    |spaces_after_argument:
-     |{spaces_after_argument:   }
-    |spaces_before_argument:
-     |{spaces_before_argument:  }
+    *brace_arg C3
+     {spaces_before_argument:  }
      {with surrounding spaces}
+     {spaces_after_argument:   }
    {\\n}
 ';
 
@@ -72,7 +69,7 @@ $result_converted{'html_text'}->{'test_errormsg'} = '<p>Some text
 
 $result_converted{'xml'}->{'test_errormsg'} = '<para>Some text
 <errormsg>Text <accent type="tilde" bracketed="off">e</accent> <code>code</code></errormsg>
-<errormsg spaces="  ">with surrounding spaces   </errormsg>
+<errormsg>  with surrounding spaces   </errormsg>
 </para>';
 
 

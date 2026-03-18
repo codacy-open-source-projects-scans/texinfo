@@ -23,10 +23,8 @@ $result_tree_text{'documentation_examples_texi2html'} = '*document_root C11
        {someone}
        *@@
        {example.com}
-      *brace_arg C1
-      |INFO
-      |spaces_before_argument:
-       |{spaces_before_argument: }
+      *brace_arg C2
+       {spaces_before_argument: }
        {me}
      { }
      *@sansserif C1 l2
@@ -142,10 +140,8 @@ $result_tree_text{'documentation_examples_texi2html'} = '*document_root C11
      {a}
      *@@
      {b.c}
-    *brace_arg C1
-    |INFO
-    |spaces_before_argument:
-     |{spaces_before_argument: }
+    *brace_arg C2
+     {spaces_before_argument: }
      {someone}
    {\\n}
    *@sc C1 l16
@@ -166,7 +162,7 @@ $result_tree_text{'documentation_examples_texi2html'} = '*document_root C11
   {empty_line:\\n}
   *paragraph C2
    *@math C1 l20
-    *brace_command_context C7
+    *brace_arg C7
      *@sansserif C1 l20
       *brace_container C1
        {in--math}

@@ -30,6 +30,8 @@
 #include "extra.h"
 #include "builtin_commands.h"
 #include "command_stack.h"
+/* for empty_spaces_argument */
+#include "utils.h"
 /* for parse_node_manual */
 #include "manipulate_tree.h"
 #include "convert_to_texinfo.h"
@@ -133,17 +135,9 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
               nesting_context.footnote++;
             }
 
-          if (cmd == CM_math)
-            {
-              push_context (ct_math, cmd);
-              space_e = new_text_element (ET_internal_spaces_before_argument);
-            }
-          else
-            {
-              push_context (ct_base, cmd);
-              space_e
-                = new_text_element (ET_internal_spaces_before_context_argument);
-            }
+          push_context (ct_base, cmd);
+          space_e
+            = new_text_element (ET_internal_spaces_before_context_argument);
 
           add_to_contents_as_array (current, space_e);
           internal_space_holder = current->e.c->parent;
@@ -161,14 +155,12 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
           if (command_data(cmd).data == BRACE_arguments
               || command_data(cmd).data == BRACE_inline)
             {
-              ELEMENT *e;
               arg = new_element (ET_brace_arg);
-              e = new_text_element (ET_internal_spaces_before_argument);
-              add_to_contents_as_array (arg, e);
-              internal_space_holder = arg;
 
               if (cmd == CM_inlineraw)
                 push_context (ct_inlineraw, cmd);
+              else if (command_data(cmd).flags & CF_math)
+                push_context (ct_math, cmd);
             }
           else
             {
@@ -190,7 +182,7 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
                 && current->e.c->parent->e.c->parent->e.c->cmd == CM_multitable)
                || current->e.c->parent->flags & EF_def_line))
     {
-      ELEMENT *b, *e;
+      ELEMENT *b;
       abort_empty_line (current);
       b = new_element (ET_bracketed_arg);
       add_to_element_contents (current, b);
@@ -200,10 +192,7 @@ handle_open_brace (ELEMENT *current, const char **line_inout)
          end of the line and also for misplaced { errors.  */
       current->e.c->source_info = current_source_info;
 
-      e = new_text_element (ET_internal_spaces_before_argument);
-      add_to_contents_as_array (current, e);
       debug ("BRACKETED in def/multitable");
-      internal_space_holder = current;
     }
   else if (current->type == ET_rawpreformatted)
     {
@@ -293,7 +282,10 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
       abort_empty_line (current);
 
       if (command_data(closed_cmd).data == BRACE_arguments)
-        isolate_last_space (current);
+        isolate_leading_trailing (current, 0);
+      else if (command_data(closed_cmd).data == BRACE_inline
+               && current->type != ET_elided_brace_command_arg)
+        isolate_leading_trailing (current, 1);
 
       debug ("CLOSING(brace) @%s", command_data(closed_cmd).cmdname);
 
@@ -301,7 +293,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
       if (closed_cmd == CM_anchor || closed_cmd == CM_namedanchor)
         {
           ELEMENT *anchor_id_element = brace_command->e.c->contents.list[0];
-          if (anchor_id_element->e.c->contents.number == 0)
+          if (empty_spaces_argument (anchor_id_element))
             line_error ("empty argument in @%s",
                         command_name(closed_cmd));
           else
@@ -322,15 +314,15 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
           int link_or_inforef = (closed_cmd == CM_link
                                  || closed_cmd == CM_inforef);
           if ((link_or_inforef
-               && (ref->e.c->contents.list[0]->e.c->contents.number == 0)
+               && empty_spaces_argument (ref->e.c->contents.list[0])
                && (ref->e.c->contents.number <= 2
-                   || ref->e.c->contents.list[2]->e.c->contents.number == 0))
+                   || empty_spaces_argument (ref->e.c->contents.list[2])))
               || (!link_or_inforef
-                   && (ref->e.c->contents.list[0]->e.c->contents.number == 0)
+                   && empty_spaces_argument (ref->e.c->contents.list[0])
                    && (ref->e.c->contents.number <= 3
-                       || ref->e.c->contents.list[3]->e.c->contents.number == 0)
+                       || empty_spaces_argument (ref->e.c->contents.list[3]))
                    && (ref->e.c->contents.number <= 4
-                || ref->e.c->contents.list[4]->e.c->contents.number == 0)))
+                || empty_spaces_argument (ref->e.c->contents.list[4]))))
             {
               line_warn ("command @%s missing a node or external manual "
                          "argument", command_name(closed_cmd));
@@ -360,15 +352,13 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
               if ((!link_or_inforef
                    && (ref->e.c->contents.number <= 3
                        || (ref->e.c->contents.number <= 4
-                           && ref->e.c->contents.list[3]
-                                            ->e.c->contents.number == 0)
-                       || (ref->e.c->contents.list[3]->e.c->contents.number == 0
-                           && ref->e.c->contents.list[4]
-                                           ->e.c->contents.number == 0))
+                         && empty_spaces_argument (ref->e.c->contents.list[3]))
+                       || (empty_spaces_argument (ref->e.c->contents.list[3])
+                         && empty_spaces_argument (ref->e.c->contents.list[4])))
                    && !ref_label_info->manual_content)
                   || (link_or_inforef
                       && (ref->e.c->contents.number <= 2
-                   || ref->e.c->contents.list[2]->e.c->contents.number == 0)))
+                   || empty_spaces_argument (ref->e.c->contents.list[2]))))
                 {
                   /* we use the @*ref command here and not the label
                      command to have more information for messages */
@@ -379,7 +369,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
             }
 
           if (ref->e.c->contents.number > 1
-              && ref->e.c->contents.list[1]->e.c->contents.number > 0)
+              && ! empty_spaces_argument (ref->e.c->contents.list[1]))
             {
               if (check_empty_expansion (ref->e.c->contents.list[1]))
                 {
@@ -398,7 +388,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
 
           if (!link_or_inforef
               && ref->e.c->contents.number > 2
-              && ref->e.c->contents.list[2]->e.c->contents.number > 0)
+              && ! empty_spaces_argument (ref->e.c->contents.list[2]))
             {
               if (check_empty_expansion (ref->e.c->contents.list[2]))
                 {
@@ -419,7 +409,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
         {
           GLOBAL_INFO *global_info = &parsed_document->global_info;
           ELEMENT *image = brace_command;
-          if (image->e.c->contents.list[0]->e.c->contents.number == 0)
+          if (empty_spaces_argument (image->e.c->contents.list[0]))
             {
               line_error ("@image missing filename argument");
             }
@@ -448,7 +438,7 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
                || closed_cmd == CM_abbr
                || closed_cmd == CM_acronym)
         {
-          if (brace_command->e.c->contents.list[0]->e.c->contents.number == 0)
+          if (empty_spaces_argument (brace_command->e.c->contents.list[0]))
             {
               line_warn ("@%s missing first argument",
                          command_name(closed_cmd));
@@ -456,19 +446,17 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
         }
       else if (closed_cmd == CM_errormsg)
         {
-          const char *arg_text = "";
-          if (current->e.c->contents.list[0]->type == ET_normal_text
-              && current->e.c->contents.list[0]->e.text->end > 0)
-            arg_text = current->e.c->contents.list[0]->e.text->text;
-          line_error (arg_text);
+          int surplus_arg;
+          const char *arg_text = simple_arg_text (current, &surplus_arg);
+      /* We do not warn if $surplus_arg is set, even though the command is
+         incorrectly used, as we want to avoid adding to the error text. */
+          if (arg_text)
+            line_error (arg_text);
         }
       else if (closed_cmd == CM_U)
         {
-          const char *arg_text = 0;
-          if (current->e.c->contents.number > 0
-              && type_data[current->e.c->contents.list[0]->type].flags
-                   == TF_text)
-            arg_text = current->e.c->contents.list[0]->e.text->text;
+          int surplus_arg;
+          const char *arg_text = simple_arg_text (current, &surplus_arg);
 
           if (!arg_text || !*arg_text)
             {
@@ -491,7 +479,12 @@ handle_close_brace (ELEMENT *current, const char **line_inout)
               else
                 {
                   unsigned long int val;
-                  int ret = sscanf (arg_text, "%lx", &val);
+                  int ret;
+
+                  if (surplus_arg)
+                    line_warn ("superfluous argument to \@%s", "U");
+
+                  ret = sscanf (arg_text, "%lx", &val);
                   if (ret != 1)
                     {
                       debug ("hex sscanf failed %s", arg_text);
@@ -587,7 +580,11 @@ handle_comma (ELEMENT *current, const char **line_inout)
   ELEMENT *new_current;
 
   abort_empty_line (current);
-  isolate_last_space (current);
+  if (current->type == ET_brace_container
+      || current->type == ET_brace_arg)
+    isolate_leading_trailing (current, 0);
+  else
+    isolate_last_space (current);
 
   type = current->type;
   command_element = current->e.c->parent;
@@ -607,12 +604,20 @@ handle_comma (ELEMENT *current, const char **line_inout)
       if (!format)
         {/* get the first argument, which is also current that was before the comma
             and put it in extra format */
-          char *inline_type = 0;
+          const char *inline_type = 0;
           if (current->e.c->contents.number > 0)
             {
-              ELEMENT *type_arg = current->e.c->contents.list[0];
-              if (type_arg->type == ET_normal_text && type_arg->e.text->end > 0)
-                inline_type = type_arg->e.text->text;
+              size_t i;
+              for (i = 0; i < current->e.c->contents.number; i++)
+                {
+                  const ELEMENT *content = current->e.c->contents.list[i];
+                  if (content->type == ET_normal_text
+                      && content->e.text->end > 0)
+                    {
+                      inline_type = content->e.text->text;
+                      break;
+                    }
+                }
             }
 
           if (!inline_type)
@@ -789,9 +794,13 @@ handle_comma (ELEMENT *current, const char **line_inout)
   new_arg = new_element (type);
   add_to_element_contents (argument, new_arg);
 
-  spaces_before_e = new_text_element (ET_internal_spaces_before_argument);
-  add_to_contents_as_array (new_arg, spaces_before_e);
-  internal_space_holder = new_arg;
+  if (current->type != ET_brace_container
+      && current->type != ET_brace_arg)
+    {
+      spaces_before_e = new_text_element (ET_internal_spaces_before_argument);
+      add_to_contents_as_array (new_arg, spaces_before_e);
+      internal_space_holder = new_arg;
+    }
   new_current = new_arg;
 
 funexit:

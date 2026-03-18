@@ -12,6 +12,8 @@ Before next release
 
 Document command_is_in_referred_command_stack in texi2any_api
 
+verify input_files/cpp_lines parse_refold.pl
+
 Bugs
 ====
 

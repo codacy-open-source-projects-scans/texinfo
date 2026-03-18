@@ -53,12 +53,7 @@ close_brace_command (ELEMENT *current,
 
   if (command_data(current->e.c->cmd).data == BRACE_context)
     {
-      if (current->e.c->cmd == CM_math)
-        {
-          if (pop_context () != ct_math)
-            fatal ("math context expected");
-        }
-      else if (pop_context () != ct_base)
+      if (pop_context () != ct_base)
         fatal ("base context brace command context expected");
       if (current->e.c->cmd == CM_footnote)
         nesting_context.footnote--;
@@ -70,6 +65,11 @@ close_brace_command (ELEMENT *current,
     {
       if (pop_context () != ct_inlineraw)
         fatal ("inlineraw context expected");
+    }
+  else if (command_flags(current) & CF_math)
+    {
+      if (pop_context () != ct_math)
+        fatal ("math context expected");
     }
 
   if (command_flags(current) & CF_contain_basic_inline)
@@ -123,6 +123,18 @@ close_all_style_commands (ELEMENT *current,
     {
       debug ("CLOSING(all_style_commands) @%s",
              command_name(current->e.c->parent->e.c->cmd));
+
+      if (current->type == ET_brace_container
+          || current->type == ET_brace_arg)
+        {
+          if (command_data(current->e.c->parent->e.c->cmd).data
+                                                  == BRACE_arguments)
+            isolate_leading_trailing (current, 0);
+          else if (command_data(current->e.c->parent->e.c->cmd).data
+                                                  == BRACE_inline)
+            isolate_leading_trailing (current, 1);
+        }
+
       current = close_brace_command (current->e.c->parent,
                            closed_block_cmd, interrupting_cmd, 1);
     }
@@ -459,13 +471,7 @@ close_current (ELEMENT *current,
           break;
         case ET_bracketed_arg:
           command_error (current, "misplaced {");
-          if (current->e.c->contents.number > 0
-              && current->e.c->contents.list[0]->type
-                 == ET_internal_spaces_before_argument)
-            {
-              /* remove spaces element from tree and update extra values */
-              move_last_space_to_element (current);
-            }
+          isolate_leading_trailing (current, 0);
           current = current->e.c->parent;
           break;
         case ET_line_arg:
