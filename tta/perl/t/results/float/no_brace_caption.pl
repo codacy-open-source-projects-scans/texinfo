@@ -5,7 +5,7 @@ use vars qw(%result_texis %result_texts %result_tree_text %result_errors
 
 use utf8;
 
-$result_tree_text{'comment_space_comand_in_float'} = '*document_root C3
+$result_tree_text{'no_brace_caption'} = '*document_root C5
  *before_node_section C1
   *preamble_before_content
  *@node C1 l1 {Top}
@@ -18,7 +18,17 @@ $result_tree_text{'comment_space_comand_in_float'} = '*document_root C3
     {spaces_before_argument: }
     {Top}
     {spaces_after_argument:\\n}
- *@node C5 l2 {chap}
+ *@top C2 l2 {top}
+ |EXTRA
+ |section_level:{0}
+ |section_number:{1}
+  *arguments_line C1
+   *line_arg C3
+    {spaces_before_argument: }
+    {top}
+    {spaces_after_argument:\\n}
+  {empty_line:\\n}
+ *@node C1 l4 {chap}
  |EXTRA
  |identifier:{chap}
  |is_target:{1}
@@ -28,31 +38,39 @@ $result_tree_text{'comment_space_comand_in_float'} = '*document_root C3
     {spaces_before_argument: }
     {chap}
     {spaces_after_argument:\\n}
+ *@chapter C5 l5 {Chap}
+ |EXTRA
+ |section_heading_number:{1}
+ |section_level:{1}
+ |section_number:{2}
+  *arguments_line C1
+   *line_arg C3
+    {spaces_before_argument: }
+    {Chap}
+    {spaces_after_argument:\\n}
   {empty_line:\\n}
-  *@float C3 l4
+  *@float C4 l7
   |EXTRA
-  |float_number:{1}
-  |float_type:{Text  }
+  |float_number:{1.1}
+  |float_type:{a}
   |global_command_number:{1}
-  |identifier:{label-}
+  |identifier:{b}
   |is_target:{1}
    *arguments_line C2
+    *block_line_arg C2
+     {spaces_before_argument: }
+     {a}
     *block_line_arg C3
      {spaces_before_argument: }
-     {Text }
-     *@ 
-    *block_line_arg C4
-     {spaces_before_argument: }
-     {label }
-     *@ 
-     *@c C1
-      *line_arg C3
-       {spaces_before_argument: }
-       {rawline_text:float}
-       {spaces_after_argument:\\n}
+     {b}
+     {spaces_after_argument:\\n}
    *paragraph C1
-    {Float\\n}
-   *@end C1 l6
+    {HH\\n}
+   *@caption l9
+   |INFO
+   |spaces_after_cmd_before_arg:
+    |{spaces_after_cmd_before_arg:\\n}
+   *@end C1 l10
    |EXTRA
    |text_arg:{float}
     *line_arg C3
@@ -60,114 +78,123 @@ $result_tree_text{'comment_space_comand_in_float'} = '*document_root C3
      {float}
      {spaces_after_argument:\\n}
   {empty_line:\\n}
-  *@listoffloats C1 l8
+  *@listoffloats C1 l12
   |EXTRA
-  |float_type:{Text  }
+  |float_type:{a}
   |global_command_number:{1}
-   *line_arg C4
+   *line_arg C3
     {spaces_before_argument: }
-    {Text }
-    *@ 
-    *@c C1
-     *line_arg C3
-      {spaces_before_argument: }
-      {rawline_text:listoffloats}
-      {spaces_after_argument:\\n}
+    {a}
+    {spaces_after_argument:\\n}
 ';
 
 
-$result_texis{'comment_space_comand_in_float'} = '@node Top
-@node chap
+$result_texis{'no_brace_caption'} = '@node Top
+@top top
 
-@float Text @ , label @ @c float
-Float
+@node chap
+@chapter Chap
+
+@float a, b
+HH
+@caption
 @end float
 
-@listoffloats Text @ @c listoffloats
+@listoffloats a
 ';
 
 
-$result_texts{'comment_space_comand_in_float'} = '
-Text  , label  
-Float
+$result_texts{'no_brace_caption'} = 'top
+***
+
+1 Chap
+******
+
+a, b
+HH
 
 ';
 
-$result_errors{'comment_space_comand_in_float'} = '* W l2|node `chap\' not in menu
- warning: node `chap\' not in menu
+$result_errors{'no_brace_caption'} = '* W l9|command `@caption\' must not be followed by new line
+ warning: command `@caption\' must not be followed by new line
+
+* E l10|@caption expected braces
+ @caption expected braces
+
+* W l10|@end should only appear at the beginning of a line
+ warning: @end should only appear at the beginning of a line
 
 ';
 
-$result_floats{'comment_space_comand_in_float'} = 'Text  : 1
- F1: {label-}
+$result_floats{'no_brace_caption'} = 'a: 1
+ F1.1: {b}
+  C(E)
 ';
 
-$result_nodes_list{'comment_space_comand_in_float'} = '1|Top
+$result_nodes_list{'no_brace_caption'} = '1|Top
+ associated_section: top
+ associated_title_command: top
  node_directions:
   next->chap
 2|chap
+ associated_section: 1 Chap
+ associated_title_command: 1 Chap
  node_directions:
   prev->Top
+  up->Top
 ';
 
-$result_sections_list{'comment_space_comand_in_float'} = '';
+$result_sections_list{'no_brace_caption'} = '1|top
+ associated_anchor_command: Top
+ associated_node: Top
+ toplevel_directions:
+  next->Chap
+ section_children:
+  1|Chap
+2|Chap
+ associated_anchor_command: chap
+ associated_node: chap
+ section_directions:
+  up->top
+ toplevel_directions:
+  prev->top
+  up->top
+';
 
-$result_sectioning_root{'comment_space_comand_in_float'} = '';
+$result_sectioning_root{'no_brace_caption'} = 'level: -1
+list:
+ 1|top
+';
 
-$result_headings_list{'comment_space_comand_in_float'} = '';
+$result_headings_list{'no_brace_caption'} = '';
 
 
-$result_converted{'plaintext'}->{'comment_space_comand_in_float'} = 'Float
+$result_converted{'plaintext'}->{'no_brace_caption'} = 'top
+***
 
-Text   1
+1 Chap
+******
+
+HH
+
+a 1.1: 
 
 * Menu:
 
-* Text   1: label  .                     
+* a 1.1: b.                              
 
 ';
 
 
-$result_converted{'info'}->{'comment_space_comand_in_float'} = 'This is , produced from .
-
-
-File: ,  Node: Top,  Next: chap,  Up: (dir)
-
-
-File: ,  Node: chap,  Prev: Top
-
-Float
-
-Text   1
-
-* Menu:
-
-* Text   1: label  .                     
-
-
-Tag Table:
-Node: Top27
-Node: chap74
-Ref: label  109
-
-End Tag Table
-
-
-Local Variables:
-coding: utf-8
-End:
-';
-
-
-$result_converted{'html'}->{'comment_space_comand_in_float'} = '<!DOCTYPE html>
+$result_converted{'html'}->{'no_brace_caption'} = '<!DOCTYPE html>
 <html>
 <!-- Created by texinfo, https://www.gnu.org/software/texinfo/ -->
 <head>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<title>Untitled Document</title>
+<title>top</title>
 
-<meta name="description" content="Untitled Document">
-<meta name="keywords" content="Untitled Document">
+<meta name="description" content="top">
+<meta name="keywords" content="top">
 <meta name="resource-type" content="document">
 <meta name="distribution" content="global">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -182,20 +209,28 @@ span:hover a.copiable-link {visibility: visible}
 </head>
 
 <body>
-<a class="node-id" id="Top"></a><p class="nav-panel">
-<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chap" accesskey="n" rel="next">chap</a></span></span><span class="nav-button"> &nbsp; </span></p>
-<h1 class="node"><span>Top<a class="copiable-link" href="#Top"> &para;</a></span></h1>
-<hr>
-<a class="node-id" id="chap"></a><p class="nav-panel">
-<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">Top</a></span></span><span class="nav-button"> &nbsp; </span></p>
-<h4 class="node"><span>chap<a class="copiable-link" href="#chap"> &para;</a></span></h4>
+<div class="top-level-extent" id="Top">
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Next: </span><span class="nav-link"><a href="#chap" accesskey="n" rel="next">Chap</a></span></span><span class="nav-button"> &nbsp; </span></p>
+<h1 class="top" id="top"><span>top<a class="copiable-link" href="#top"> &para;</a></span></h1>
 
-<div class="float" id="label-">
-<p>Float
-</p><div class="type-number-float"><p><strong class="strong">Text &nbsp; 1</strong></p></div></div>
+<ul class="mini-toc">
+<li><a href="#chap" accesskey="1">Chap</a></li>
+</ul>
+<hr>
+<div class="chapter-level-extent" id="chap">
+<p class="nav-panel">
+<span class="nav-button"><span class="nav-label">Previous: </span><span class="nav-link"><a href="#Top" accesskey="p" rel="prev">top</a></span></span>, <span class="nav-button"><span class="nav-label">Up: </span><span class="nav-link"><a href="#Top" accesskey="u" rel="up">top</a></span></span><span class="nav-button"> &nbsp; </span></p>
+<h2 class="chapter" id="Chap"><span>1 Chap<a class="copiable-link" href="#Chap"> &para;</a></span></h2>
+
+<div class="float" id="b">
+<p>HH
+</p><div class="type-number-float"><p><strong class="strong">a 1.1: </strong></p></div></div>
 <dl class="listoffloats">
-<dt><a href="#label-">Text &nbsp; 1</a></dt><dd></dd>
+<dt><a href="#b">a 1.1</a></dt><dd></dd>
 </dl>
+</div>
+</div>
 
 
 
@@ -203,24 +238,24 @@ span:hover a.copiable-link {visibility: visible}
 </html>
 ';
 
-$result_converted_errors{'html'}->{'comment_space_comand_in_float'} = '* W |must specify a title with a title command or @top
- warning: must specify a title with a title command or @top
 
-';
+$result_converted{'xml'}->{'no_brace_caption'} = '<node identifier="Top"><nodename> Top</nodename><nodenext automatic="on"> chap</nodenext></node>
+<top><sectiontitle> top</sectiontitle>
 
+</top>
+<node identifier="chap"><nodename> chap</nodename><nodeprev automatic="on"> Top</nodeprev><nodeup automatic="on"> Top</nodeup></node>
+<chapter><sectiontitle> Chap</sectiontitle>
 
-$result_converted{'xml'}->{'comment_space_comand_in_float'} = '<node identifier="Top"><nodename> Top</nodename><nodenext automatic="on"> chap</nodenext></node>
-<node identifier="chap"><nodename> chap</nodename><nodeprev automatic="on"> Top</nodeprev></node>
-
-<float identifier="label-" type="Text  " number="1" endspaces=" "><floattype> Text <spacecmd type="spc"/></floattype><floatname> label <spacecmd type="spc"/></floatname><!-- c float -->
-<para>Float
+<float identifier="b" type="a" number="1.1" endspaces=" "><floattype> a</floattype><floatname> b</floatname>
+<para>HH
 </para></float>
 
-<listoffloats type="Text  "> Text <spacecmd type="spc"/></listoffloats><!-- c listoffloats -->
+<listoffloats type="a"> a</listoffloats>
+</chapter>
 ';
 
 
-$result_converted{'latex'}->{'comment_space_comand_in_float'} = '\\documentclass{book}
+$result_converted{'latex'}->{'no_brace_caption'} = '\\documentclass{book}
 \\usepackage{amsfonts}
 \\usepackage{amsmath}
 \\usepackage[gen]{eurosym}
@@ -268,9 +303,9 @@ $result_converted{'latex'}->{'comment_space_comand_in_float'} = '\\documentclass
 \\renewcommand{\\Texinfothechapterheading}{\\Texinfoheadingchaptername{} \\thechapter{} }%
 }%
 
-% new float for type `Text  \'
-\\newfloat{TexinfoFloatText}{htb}{tfl}[chapter]
-\\floatname{TexinfoFloatText}{Text \\ {}}
+% new float for type `a\'
+\\newfloat{TexinfoFloata}{htb}{tfl}[chapter]
+\\floatname{TexinfoFloata}{a}
 % redefine the \\mainmatter command such that it does not clear page
 % as if in double page
 \\renewcommand\\mainmatter{\\clearpage\\@mainmattertrue\\pagenumbering{arabic}}
@@ -299,14 +334,16 @@ $result_converted{'latex'}->{'comment_space_comand_in_float'} = '\\documentclass
 
 \\begin{document}
 \\label{anchor:Top}%
+\\Texinfochapter{{Chap}}
 \\label{anchor:chap}%
 
-\\begin{TexinfoFloatText}
-Float
-\\label{anchor:label-}%
-\\end{TexinfoFloatText}
+\\begin{TexinfoFloata}
+HH
+\\caption{}
+\\label{anchor:b}%
+\\end{TexinfoFloata}
 
-\\listof{TexinfoFloatText}{}
+\\listof{TexinfoFloata}{}
 \\end{document}
 ';
 

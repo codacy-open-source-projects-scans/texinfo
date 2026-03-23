@@ -31,29 +31,21 @@ $result_tree_text{'comment_at_end_of_linemacro_call'} = '*document_root C1
      >SOURCEMARKS
      >linemacro_expansion<start;1>
       >*linemacro_call@lm C2
-      >|INFO
-      >|spaces_before_argument:
-       >|{spaces_before_argument: }
-       >*linemacro_arg C1
+       >*linemacro_arg C2
+        >{spaces_before_argument: }
         >{bracketed_linemacro_arg:something protected}
-       >*linemacro_arg C1
-       >|INFO
-       >|spaces_before_argument:
-        >|{spaces_before_argument: }
+       >*linemacro_arg C2
+        >{spaces_before_argument: }
         >{macro_call_arg_text:something }
      {something}
      {spaces_after_argument: }
      >SOURCEMARKS
      >linemacro_expansion<end;1><p:1>
      *@c C1
-     |INFO
-     |spaces_before_argument:
-      |{spaces_before_argument: }
-      *line_arg C1
-      |INFO
-      |spaces_after_argument:
-       |{spaces_after_argument:\\n}
+      *line_arg C3
+       {spaces_before_argument: }
        {rawline_text:comment }}
+       {spaces_after_argument:\\n}
    {\\n}
    {after\\n}
   {empty_line:\\n}

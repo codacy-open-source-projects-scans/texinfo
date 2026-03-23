@@ -8,16 +8,12 @@ use utf8;
 $result_tree_text{'commands_and_spaces'} = '*document_root C2
  *before_node_section C8
   *@set C1
-  |INFO
-  |spaces_before_argument:
-   |{spaces_before_argument:  }
   |EXTRA
   |misc_args:A{foo|some @value}
-   *line_arg C1
-   |INFO
-   |spaces_after_argument:
-    |{spaces_after_argument:\\n}
+   *line_arg C3
+    {spaces_before_argument:  }
     {rawline_text:foo   some @value}
+    {spaces_after_argument:\\n}
   {empty_line:\\n}
   *@setfilename C1 l3
   |EXTRA
@@ -28,29 +24,21 @@ $result_tree_text{'commands_and_spaces'} = '*document_root C2
     {spaces_after_argument:  \\n}
   {empty_line:\\n}
   *@unmacro C1
-  |INFO
-  |spaces_before_argument:
-   |{spaces_before_argument:  }
   |EXTRA
   |misc_args:A{ggg}
-   *line_arg C1
-   |INFO
-   |spaces_after_argument:
-    |{spaces_after_argument:\\n}
+   *line_arg C3
+    {spaces_before_argument:  }
     {rawline_text:ggg}
+    {spaces_after_argument:\\n}
   {empty_line:\\n}
   *@clickstyle C1 l7
-  |INFO
-  |spaces_before_argument:
-   |{spaces_before_argument:  }
   |EXTRA
   |global_command_number:{1}
   |misc_args:A{@arrow}
-   *line_arg C1
-   |INFO
-   |spaces_after_argument:
-    |{spaces_after_argument:\\n}
+   *line_arg C3
+    {spaces_before_argument:  }
     {rawline_text:@arrow}
+    {spaces_after_argument:\\n}
   {empty_line:\\n}
  *@node C46 l9 {a}
  |EXTRA
@@ -187,10 +175,8 @@ $result_tree_text{'commands_and_spaces'} = '*document_root C2
    *paragraph C1
     {f\\n}
    *@caption C1 l32
-   |INFO
-   |spaces_before_argument:
-    |{spaces_before_argument: }
-    *brace_command_context C1
+    *brace_command_context C2
+     {spaces_before_argument: }
      *paragraph C1
       {In caption }
    *paragraph C1
@@ -321,12 +307,10 @@ $result_tree_text{'commands_and_spaces'} = '*document_root C2
   *paragraph C3
    {T}
    *@footnote C1 l58
-   |INFO
-   |spaces_before_argument:
-    |{spaces_before_argument:  }
    |EXTRA
    |global_command_number:{1}
-    *brace_command_context C1
+    *brace_command_context C2
+     {spaces_before_argument:  }
      *paragraph C1
       {a}
    {.\\n}
@@ -556,13 +540,13 @@ $result_indices_sort_strings{'commands_and_spaces'} = 'fn:
 ';
 
 
-$result_converted{'xml'}->{'commands_and_spaces'} = '<set name="foo" spaces="  ">foo   some @value</set>
+$result_converted{'xml'}->{'commands_and_spaces'} = '<set name="foo">  foo   some @value</set>
 
 <setfilename file="commands_and_spaces.info">  commands_and_spaces.info  </setfilename>
 
-<unmacro name="ggg" spaces="  ">ggg</unmacro>
+<unmacro name="ggg">  ggg</unmacro>
 
-<clickstyle command="arrow" spaces="  ">@arrow</clickstyle>
+<clickstyle command="arrow">  @arrow</clickstyle>
 
 <node identifier="a"><nodename> a</nodename><nodenext>(b)</nodenext><nodeprev>(c)</nodeprev><nodeup> (d)</nodeup></node>
 
@@ -587,7 +571,7 @@ $result_converted{'xml'}->{'commands_and_spaces'} = '<set name="foo" spaces="  "
 
 <float identifier="b" type="ff" number="1" endspaces=" "><floattype>  ff </floattype><floatname> b   </floatname>
 <para>f
-</para><caption spaces=" "><para>In caption </para></caption><para>j.
+</para><caption> <para>In caption </para></caption><para>j.
 </para><shortcaption><para>Short</para></shortcaption>  <para>g.
 </para></float>
 
@@ -614,7 +598,7 @@ in tex
 <tableentry><tableterm><item><itemformat command="strong">  in item </itemformat></item>
 </tableterm></tableentry></table>   
 
-<para>T<footnote spaces="  "><para>a</para></footnote>.
+<para>T<footnote>  <para>a</para></footnote>.
 </para>
 <para>Math <math> \\underline{ a, b} </math>.
 </para>

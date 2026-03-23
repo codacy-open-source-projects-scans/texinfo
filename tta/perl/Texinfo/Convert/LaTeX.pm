@@ -4056,7 +4056,7 @@ sub _convert($$) {
         }
       }
       my $caption_text = '';
-      if (exists($element->{'contents'}->[0]->{'contents'})) {
+      if (exists($element->{'contents'})) {
         _push_new_context($self, 'latex_caption');
         $caption_text = _convert($self, $element->{'contents'}->[0]);
         _pop_context($self);
@@ -4599,9 +4599,12 @@ sub _convert($$) {
       }
       return $result;
     } elsif ($cmdname eq 'vskip') {
-      if (exists($element->{'contents'}->[0]->{'contents'})) {
-        $result .= "\\vskip "
-          .$element->{'contents'}->[0]->{'contents'}->[0]->{'text'}."\n";
+      my $line_arg = $element->{'contents'}->[0];
+      if (!Texinfo::Common::empty_spaces_argument($line_arg)) {
+        $result .= "\\vskip";
+        foreach my $content (@{$line_arg->{'contents'}}) {
+          $result .= $content->{'text'};
+        }
       }
       return $result;
     } elsif ($cmdname eq 'contents') {

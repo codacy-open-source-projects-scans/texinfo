@@ -394,8 +394,7 @@ foreach my $type ('brace_arg', 'brace_container') {
 # To keep in sync with XS main/element_types.txt leading_space flag
 my %leading_space_types;
 foreach my $type ('empty_line', 'ignorable_spaces_after_command',
-        'internal_spaces_after_command', 'internal_spaces_before_argument',
-        'internal_spaces_before_context_argument',
+        'spaces_before_argument',
         'spaces_after_close_brace') {
   $leading_space_types{$type} = 1;
 }
@@ -1743,18 +1742,39 @@ sub _is_container_empty($) {
 sub _remove_empty_content($$) {
   my ($self, $current) = @_;
 
+  my ($first_idx, $end_idx)
+        = Texinfo::Common::non_leading_trailing_indices($current);
   # remove an empty content that only holds source marks
-  if (exists($current->{'contents'})
-      and scalar(@{$current->{'contents'}}) == 1) {
-    my $child_element = $current->{'contents'}->[0];
-    if (not exists($child_element->{'cmdname'})
-        and _is_container_empty($child_element)) {
-      _transfer_source_marks($child_element, $current);
-      print STDERR "REMOVE empty child "
+  if (defined($first_idx)) {
+    my $i = $end_idx;
+    while ($i >= $first_idx) {
+      my $child_element = $current->{'contents'}->[$i];
+      if (not exists($child_element->{'cmdname'})
+          and _is_container_empty($child_element)) {
+        if (exists($child_element->{'source_marks'})) {
+          my $destination;
+          if ($i > 0) {
+            $destination = $current->{'contents'}->[$i -1];
+            if (exists($destination->{'text'})) {
+              my $additional_length = length($destination->{'text'});
+              foreach my $source_mark (@{$child_element->{'source_marks'}}) {
+                $source_mark->{'position'} += $additional_length;
+              }
+            }
+          } else {
+            $destination = $current;
+          }
+          _transfer_source_marks($child_element, $destination);
+        }
+        print STDERR "REMOVE empty child "
          .Texinfo::Common::debug_print_element($child_element)
           .' from '.Texinfo::Common::debug_print_element($current)."\n"
             if ($self->{'conf'}->{'DEBUG'});
-      _pop_element_from_contents($self, $current);
+        _pop_element_from_contents($self, $current);
+        $i--;
+      } else {
+        last;
+      }
     }
   }
 }
@@ -2424,12 +2444,7 @@ sub _merge_text($$$;$) {
         # following is similar to _abort_empty_line, except
         # for the empty text already handled above, and with
         # paragraph opening mixed in
-        if ($last_elt_type eq 'internal_spaces_after_command'
-            or $last_elt_type eq 'internal_spaces_before_argument') {
-          _move_last_space_to_element($self, $current);
-          # we do not merge these special types
-          $last_element = undef;
-        } elsif ($last_elt_type eq 'empty_line') {
+        if ($last_elt_type eq 'empty_line') {
           if (_in_begin_paragraph($self, $current)) {
             $last_element->{'type'} = 'spaces_before_paragraph';
             $paragraph = _begin_paragraph($self, $current);
@@ -2440,9 +2455,6 @@ sub _merge_text($$$;$) {
           }
         } else {
           # other special spaces, in general in paragraph begin context
-          if ($last_elt_type eq 'internal_spaces_before_context_argument') {
-            _move_last_space_to_element($self, $current);
-          }
           if (_in_begin_paragraph($self, $current)) {
             $current = _begin_paragraph($self, $current);
           }
@@ -2749,7 +2761,6 @@ sub _expand_macro_arguments($$$$$) {
   my $argument_content
     = Texinfo::TreeElement::new({'text' => '',
                                  'type' => 'macro_call_arg_text'});
-  push @{$argument->{'contents'}}, $argument_content;
 
   my $args_total = scalar(@{$macro->{'extra'}->{'misc_args'}});
   my $name = $macro->{'extra'}->{'macro_name'};
@@ -2758,11 +2769,11 @@ sub _expand_macro_arguments($$$$$) {
 
   $line =~ s/^{(\s*)//;
   if ($1 ne '') {
-    $argument->{'info'} = {} if (!exists($argument->{'info'}));
-    $argument->{'info'}->{'spaces_before_argument'}
-      = Texinfo::TreeElement::new({'text' => $1,
+    push @{$argument->{'contents'}},
+      Texinfo::TreeElement::new({'text' => $1,
                       'type' => 'spaces_before_argument'});
   }
+  push @{$argument->{'contents'}}, $argument_content;
 
   while (1) {
     if ($line =~ s/([^\\{},]*)([\\{},])//) {
@@ -2801,14 +2812,13 @@ sub _expand_macro_arguments($$$$$) {
             $argument_content
               = Texinfo::TreeElement::new({'text' => '',
                                            'type' => 'macro_call_arg_text'});
-            push @{$argument->{'contents'}}, $argument_content;
             $line =~ s/^(\s*)//;
             if ($1 ne '') {
-              $argument->{'info'}
-                = {'spaces_before_argument'
-                    => Texinfo::TreeElement::new({'text' => $1,
-                                 'type' => 'spaces_before_argument'})};
+              push @{$argument->{'contents'}},
+                    Texinfo::TreeElement::new({'text' => $1,
+                                 'type' => 'spaces_before_argument'});
             }
+            push @{$argument->{'contents'}}, $argument_content;
             print STDERR "MACRO NEW ARG\n" if ($self->{'conf'}->{'DEBUG'});
           } else {
             # implicit quoting when there is one argument.
@@ -2846,7 +2856,8 @@ sub _expand_macro_arguments($$$$$) {
   }
   if ($args_total == 0
       and (scalar(@{$current->{'contents'}} > 1)
-           or $current->{'contents'}->[0]->{'contents'})) {
+           or !Texinfo::Common::empty_spaces_argument(
+                                    $current->{'contents'}->[0]))) {
     _line_error($self, sprintf(__(
            "macro `%s' declared without argument called with an argument"),
                                 $name), $source_info);
@@ -2867,14 +2878,13 @@ sub _expand_linemacro_arguments($$$$$) {
   my $argument_content
     = Texinfo::TreeElement::new({'text' => '',
                                  'type' => 'macro_call_arg_text',});
-  push @{$argument->{'contents'}}, $argument_content;
   # based on whitespace_chars_except_newline in XS parser
   if ($line =~ s/^([ \t\cK\f]+)//) {
-    $current->{'info'} = {} if (!exists($current->{'info'}));
-    $current->{'info'}->{'spaces_before_argument'}
-      = Texinfo::TreeElement::new({'text' => $1,
+    push @{$argument->{'contents'}},
+      Texinfo::TreeElement::new({'text' => $1,
                            'type' => 'spaces_before_argument'});
   }
+  push @{$argument->{'contents'}}, $argument_content;
   my $args_total = scalar(@{$macro->{'extra'}->{'misc_args'}});
   my $name = $macro->{'extra'}->{'macro_name'};
 
@@ -2930,11 +2940,10 @@ sub _expand_linemacro_arguments($$$$$) {
           $argument_content
             = Texinfo::TreeElement::new({'text' => '',
                                          'type' => 'macro_call_arg_text',});
-          push @{$argument->{'contents'}}, $argument_content;
-          $argument->{'info'}
-            = {'spaces_before_argument' =>
+          push @{$argument->{'contents'}},
                 Texinfo::TreeElement::new({'text' => $separator,
-                                 'type' => 'spaces_before_argument'})};
+                                 'type' => 'spaces_before_argument'});
+          push @{$argument->{'contents'}}, $argument_content;
           print STDERR "LINEMACRO NEW ARG\n" if ($self->{'conf'}->{'DEBUG'});
         }
       }
@@ -2973,7 +2982,15 @@ sub _expand_linemacro_arguments($$$$$) {
   }
   my $arg_idx = 0;
   foreach my $argument (@{$current->{'contents'}}) {
-    my $argument_content = $argument->{'contents'}->[0];
+    my $argument_content;
+    # find the argument after separator spaces
+    foreach my $content (@{$argument->{'contents'}}) {
+      if (not exists($content->{'type'})
+          or $content->{'type'} ne 'spaces_before_argument') {
+        $argument_content = $content;
+        last;
+      }
+    }
     if (exists($argument_content->{'extra'})
         and defined($argument_content->{'extra'}->{'toplevel_braces_nr'})) {
       my $toplevel_braces_nr = $argument_content->{'extra'}->{'toplevel_braces_nr'};
@@ -3034,9 +3051,12 @@ sub _expand_macro_body($$$$) {
         my $formal_arg_index = _lookup_macro_parameter($macro, $arg);
         if (defined($formal_arg_index)) {
           if ($args and scalar(@$args) and $formal_arg_index < scalar(@$args)
-              and $args->[$formal_arg_index]
-              and $args->[$formal_arg_index]->{'contents'}) {
-            $result .= $args->[$formal_arg_index]->{'contents'}->[0]->{'text'};
+              and exists($args->[$formal_arg_index])
+              # TODO probably not needed
+              and exists($args->[$formal_arg_index]->{'contents'})) {
+            my ($argument, $surplus) = Texinfo::Common::simple_arg_text(
+                                             $args->[$formal_arg_index]);
+            $result .= $argument;
           }
         } else {
           my $macro_name = $macro->{'element'}->{'extra'}->{'macro_name'};
@@ -3101,20 +3121,6 @@ sub _pop_element_from_contents($$) {
   return $popped_element;
 }
 
-sub _move_last_space_to_element($$) {
-  my ($self, $current) = @_;
-
-  # Remove element from main tree. It will still be referenced in
-  # the 'info' hash as 'spaces_before_argument'.
-  my $spaces_before_argument = _pop_element_from_contents($self, $current);
-  $spaces_before_argument->{'type'} = 'spaces_before_argument';
-  my $owning_element = $self->{'internal_space_holder'};
-  $owning_element->{'info'} = {} if (!exists($owning_element->{'info'}));
-  $owning_element->{'info'}->{'spaces_before_argument'}
-    = $spaces_before_argument;
-  delete $self->{'internal_space_holder'};
-}
-
 # each time a new line appeared, a container is opened to hold the text
 # consisting only of spaces.  This container is removed here, typically
 # this is called when non-space happens on a line.
@@ -3162,10 +3168,6 @@ sub _abort_empty_line($$) {
           } else {
             delete $last_element->{'type'};
           }
-        } elsif ($type eq 'internal_spaces_after_command'
-                 or $type eq 'internal_spaces_before_argument'
-                 or $type eq 'internal_spaces_before_context_argument') {
-          _move_last_space_to_element($self, $current);
         }
       }
     }
@@ -4907,13 +4909,6 @@ sub _end_line($$$) {
   # Never go here if lineraw/noarg/...
   } elsif (exists($current->{'type'}) and $current->{'type'} eq 'line_arg') {
     $current = _end_line_misc_line($self, $current, $source_info);
-  } elsif (defined($prev_element_type)
-           and ($prev_element_type eq 'internal_spaces_before_argument'
-                or $prev_element_type
-                          eq 'internal_spaces_before_context_argument')) {
-    # Empty spaces after brace or comma till the end of line.
-    # Remove this element and update 'extra' values.
-    _move_last_space_to_element($self, $current);
   }
 
   # this happens if there is a nesting of @-commands on a line, for
@@ -5432,33 +5427,23 @@ sub _handle_macro($$$$$$) {
             last;
           }
         } else {
-          # based on whitespace_chars_except_newline in XS parser
-          if (not exists($arg_elt->{'contents'})
-              and $line =~ s/^([ \t\cK\f]+)//) {
-            my $internal_space = Texinfo::TreeElement::new({'text' => $1,
-                                      'type' => 'spaces_before_argument'});
-            $macro_call_element->{'info'} = {}
-                if (!exists($macro_call_element->{'info'}));
-            $macro_call_element->{'info'}->{'spaces_before_argument'}
-               = $internal_space;
+          my $has_end_of_line = chomp $line;
+          if (not exists($arg_elt->{'contents'})) {
+            $arg_elt->{'contents'} = [];
+            push @{$arg_elt->{'contents'}},
+                  Texinfo::TreeElement::new({'text' => $line,});
           } else {
-            my $has_end_of_line = chomp $line;
-            if (not exists($arg_elt->{'contents'})) {
-              $arg_elt->{'contents'} = [];
-              push @{$arg_elt->{'contents'}},
-                    Texinfo::TreeElement::new({'text' => $line,});
-            } else {
-              $arg_elt->{'contents'}->[0]->{'text'} .= $line;
-            }
-            if ($has_end_of_line) {
-              $line = "\n";
-              last;
-            } else {
-              $line = '';
-            }
+            $arg_elt->{'contents'}->[0]->{'text'} .= $line;
+          }
+          if ($has_end_of_line) {
+            $line = "\n";
+            last;
+          } else {
+            $line = '';
           }
         }
       }
+      _isolate_leading_trailing($self, $arg_elt, 1);
     }
   }
 
@@ -5896,24 +5881,20 @@ sub _new_element_at_begin_reloc($$;$) {
   return $new_e;
 }
 
-sub _raw_line_command_arg_spaces($$$) {
-  my ($command_e, $text_element, $line_args) = @_;
+sub _raw_line_command_arg_spaces($$) {
+  my ($text_element, $line_args) = @_;
 
   if (chomp($text_element->{'text'})) {
-    $line_args->{'info'} = {} if (!exists($line_args->{'info'}));
-    $line_args->{'info'}->{'spaces_after_argument'}
-                    = Texinfo::TreeElement::new({'text' => "\n",
+    my $spaces_after = Texinfo::TreeElement::new({'text' => "\n",
                                 'type' => 'spaces_after_argument'});
+    push @{$line_args->{'contents'}}, $spaces_after;
   }
   if ($text_element->{'text'} =~ s/^(\s+)//) {
-    $line_args->{'info'} = {} if (!exists($line_args->{'info'}));
     my $spaces_text = $1;
     my $spaces_before
       = _new_element_at_begin_reloc($text_element, $spaces_text,
                                     'spaces_before_argument');
-
-    $command_e->{'info'} = {} if (!exists($command_e->{'info'}));
-    $command_e->{'info'}->{'spaces_before_argument'} = $spaces_before;
+    unshift @{$line_args->{'contents'}}, $spaces_before;
   }
 }
 
@@ -5973,11 +5954,9 @@ sub _add_comment_at_end($$$) {
     }
   }
 
-  _raw_line_command_arg_spaces($comment, $comment_text_element,
-                               $comment_line_args);
+  _raw_line_command_arg_spaces($comment_text_element, $comment_line_args);
 
-  $line_args->{'info'} = {} if (!exists($line_args->{'info'}));
-  $line_args->{'info'}->{'comment_at_end'} = $comment;
+  push @{$line_args->{'contents'}}, $comment;
 }
 
 sub _handle_line_command($$$$$$) {
@@ -6081,11 +6060,7 @@ sub _handle_line_command($$$$$$) {
       if ($command ne 'c' and $command ne 'comment'
           and $text_element->{'text'} !~ /\S/) {
         # nothing else than spaces.  Reuse the text element as space element.
-        pop @{$misc_line_args->{'contents'}};
-        delete $misc_line_args->{'contents'};
         $text_element->{'type'} = 'spaces_after_argument';
-        $misc_line_args->{'info'} = {'spaces_after_argument'
-                                          => $text_element};
       # note the condition on command args number, as we do not
       # want lineraw commands with argument that did not have a
       # comment detected by _parse_rawline_command to contain comments.
@@ -6098,24 +6073,14 @@ sub _handle_line_command($$$$$$) {
         if ($text_element->{'text'} !~ /\S/) {
           # nothing else than spaces after removing the comment.  Reuse the
           # text element as space element kept in info
-          pop @{$misc_line_args->{'contents'}};
-          delete $misc_line_args->{'contents'};
           $text_element->{'type'} = 'spaces_before_argument';
-          $command_e->{'info'} = {}
-               if (!exists($command_e->{'info'}));
-          $command_e->{'info'}->{'spaces_before_argument'}
-                                            = $text_element;
         } else {
           if ($text_element->{'text'} =~ s/^(\s+)//) {
             my $spaces_text = $1;
             my $spaces_before =
               _new_element_at_begin_reloc($text_element, $spaces_text,
-                                           'spaces_before_argument');
-
-            $command_e->{'info'} = {}
-                 if (!exists($command_e->{'info'}));
-            $command_e->{'info'}->{'spaces_before_argument'}
-                           = $spaces_before;
+                                          'spaces_before_argument');
+            unshift @{$misc_line_args->{'contents'}}, $spaces_before;
           }
 
           if (!$commands_args_number{$command}) {
@@ -6128,8 +6093,7 @@ sub _handle_line_command($$$$$$) {
         }
       } else { # no comment or with an argument, possibly bogus
                # for commands without argument
-        _raw_line_command_arg_spaces($command_e, $text_element,
-                                     $misc_line_args);
+        _raw_line_command_arg_spaces($text_element, $misc_line_args);
         if (!$commands_args_number{$command}) {
           # For commands without argument, a bogus argument is in
           # text_element.
@@ -6623,11 +6587,15 @@ sub _handle_open_brace($$$$) {
         $self->{'nesting_context'}->{'footnote'} += 1;
       }
 
+      _push_context($self, 'ct_base', $command);
+
+      # It is important to have a leading_space_types text element
+      # here, even if empty, such that a paragraph is started in
+      # merge_text (in most cases this role is played by an empty_line).
       my $spaces_e = Texinfo::TreeElement::new({});
       push @{$current->{'contents'}}, $spaces_e;
 
-      $spaces_e->{'type'} = 'internal_spaces_before_context_argument';
-      _push_context($self, 'ct_base', $command);
+      $spaces_e->{'type'} = 'spaces_before_argument';
 
       $self->{'internal_space_holder'} = $current->{'parent'};
       # based on whitespace_chars_except_newline in XS parser
@@ -6669,14 +6637,6 @@ sub _handle_open_brace($$$$) {
     # we need the line number here in case @ protects end of line
     # and also for misplaced { errors.
     $current->{'source_info'} = {%$source_info};
-    # internal_spaces_before_argument is a transient internal type,
-    # which should end up in info spaces_before_argument.
-    #push @{$current->{'contents'}},
-    #  Texinfo::TreeElement::new(
-    #    {'type' => 'internal_spaces_before_argument',
-    #     'text' => '',
-    #   });
-    #$self->{'internal_space_holder'} = $current;
 
     print STDERR "BRACKETED in def/multitable\n"
                              if ($self->{'conf'}->{'DEBUG'});
@@ -6750,8 +6710,10 @@ sub _handle_close_brace($$$) {
 
     if ($brace_command_type eq 'arguments') {
       _isolate_leading_trailing($self, $current);
-    } elsif ($brace_command_type eq 'inline'
-             and $current->{'type'} ne 'elided_brace_command_arg') {
+    } elsif (($brace_command_type eq 'inline'
+              and $current->{'type'} ne 'elided_brace_command_arg')
+             ) {
+             #or $brace_command_type eq 'context') {
       _isolate_leading_trailing($self, $current, 1);
     }
 
@@ -9181,7 +9143,7 @@ this space should be ignorable (like C<@caption> or C<@sortas>).
 =item spaces_after_argument text
 
 Spaces after @-command arguments before a comma, a closing brace or at end of
-line.  Not directly in the tree.
+line.
 
 =item spaces_after_cmd_before_arg text
 
@@ -9193,7 +9155,7 @@ or before the opening brace.  Not directly in the tree.
 Spaces following the opening brace of some @-commands with braces and
 bracketed content type, spaces following @-commands for line commands and block
 command taking Texinfo as argument, and spaces following comma delimited
-arguments.  Not directly in the tree.
+arguments.
 
 =item spaces_before_paragraph
 
@@ -9524,15 +9486,6 @@ Set if the element is not in the Texinfo input code, but is inserted
 as a default for @-command argument or as a definition command automatically
 inserted category (for example I<Function> for C<@defun>).
 
-=item spaces_after_argument
-
-A reference to an element containing the spaces after @-command arguments
-before a comma, a closing brace or at end of line, for some @-commands and
-bracketed content type with opening brace, and line commands and block command
-lines taking Texinfo as argument and comma delimited arguments.  Depending on
-the @-command, the I<spaces_after_argument> is associated with the @-command
-element, or with each argument element.
-
 =item spaces_after_cmd_before_arg
 
 For accent commands with spaces following the @-command, like:
@@ -9546,16 +9499,6 @@ containing the spaces appearing after the command in I<text>.
 Space between a brace @-command name and its opening brace also
 ends up in I<spaces_after_cmd_before_arg>.  It is not recommended
 to leave space between an @-command name and its opening brace.
-
-=item spaces_before_argument
-
-A reference to an element containing the spaces following the opening brace of
-some @-commands with braces and bracketed content type, spaces following
-@-commands for line commands and block command taking Texinfo as argument, and
-spaces following comma delimited arguments.  For context brace commands, line
-commands and block commands, I<spaces_before_argument> is associated with the
-@-command element, for spaces after comma, it is associated with each argument
-element.
 
 =back
 

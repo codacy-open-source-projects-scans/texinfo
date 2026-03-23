@@ -38,12 +38,10 @@ $result_tree_text{'float_copying'} = '*document_root C5
        *paragraph C3
         {The Public Domain notice}
         *@footnote C1 l8
-        |INFO
-        |spaces_before_argument:
-         |{spaces_before_argument:\\n}
         |EXTRA
         |global_command_number:{1}
-         *brace_command_context C7
+         *brace_command_context C8
+          {spaces_before_argument:\\n}
           *paragraph C3
            {The caption copying footnote\\n}
            *@anchor C1 l10
@@ -149,10 +147,8 @@ $result_tree_text{'float_copying'} = '*document_root C5
   *@insertcopying C1 l29
   |EXTRA
   |global_command_number:{1}
-   *line_arg
-   |INFO
-   |spaces_after_argument:
-    |{spaces_after_argument:\\n}
+   *line_arg C1
+    {spaces_after_argument:\\n}
   {empty_line:\\n}
   *@menu C3 l31
    *arguments_line C1
@@ -202,17 +198,13 @@ $result_tree_text{'float_copying'} = '*document_root C5
   *@insertcopying C1 l38
   |EXTRA
   |global_command_number:{2}
-   *line_arg
-   |INFO
-   |spaces_after_argument:
-    |{spaces_after_argument:\\n}
+   *line_arg C1
+    {spaces_after_argument:\\n}
   *@insertcopying C1 l39
   |EXTRA
   |global_command_number:{3}
-   *line_arg
-   |INFO
-   |spaces_after_argument:
-    |{spaces_after_argument:\\n}
+   *line_arg C1
+    {spaces_after_argument:\\n}
   {empty_line:\\n}
   *@listoffloats C1 l41
   |EXTRA
@@ -713,7 +705,8 @@ $result_converted{'xml'}->{'float_copying'} = '<copying endspaces=" ">
 <para>Public domain is not really a licence, as it means than
 the author abandon his copyright.
 </para>
-<caption><para>The Public Domain notice<footnote spaces="\\n"><para>The caption copying footnote
+<caption><para>The Public Domain notice<footnote>
+<para>The caption copying footnote
 <anchor identifier="caption-copying-footnote-anchor">caption copying footnote anchor</anchor>
 </para>
 <cindex index="cp"> <indexterm index="cp" number="1">indexed caption copying footnote</indexterm></cindex>

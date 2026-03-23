@@ -8,16 +8,12 @@ use utf8;
 $result_tree_text{'comma_value_in_macro_arg'} = '*document_root C1
  *before_node_section C5
   *@set C1
-  |INFO
-  |spaces_before_argument:
-   |{spaces_before_argument: }
   |EXTRA
   |misc_args:A{comma|,}
-   *line_arg C1
-   |INFO
-   |spaces_after_argument:
-    |{spaces_after_argument:\\n}
+   *line_arg C3
+    {spaces_before_argument: }
     {rawline_text:comma ,}
+    {spaces_after_argument:\\n}
   {empty_line:\\n}
   *@macro C3 l3
   |EXTRA
@@ -42,10 +38,8 @@ $result_tree_text{'comma_value_in_macro_arg'} = '*document_root C1
     >|INFO
     >|spaces_after_cmd_before_arg:
      >|{spaces_after_cmd_before_arg: }
-     >*brace_arg C1
-     >|INFO
-     >|spaces_before_argument:
-      >|{spaces_before_argument: }
+     >*brace_arg C2
+      >{spaces_before_argument: }
       >{macro_call_arg_text:arg1 @value{comma} arg2 }
    *@emph C1 l7:@macro1
     *brace_container C1
