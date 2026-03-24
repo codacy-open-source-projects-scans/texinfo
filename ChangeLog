@@ -1,3 +1,89 @@
+2026-03-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/utils.h (ARG_INDICES), tta/C/main/utils.c
+	(non_leading_trailing_indices): add the ARG_INDICES struct to hold the
+	first and last indices of non trailing non leading contents.  Use it
+	in non_leading_trailing_indices.  Update callers.
+
+2026-03-22  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Always build info/makedoc when cross-compiling
+
+	* Makefile.am (SUBDIRS) [TOOLS_ONLY]:
+	Always include "info" subdirectory to allow "makedoc" program
+	to be built on "build" system when cross-compiling, even if terminal
+	library is not found on "build".
+	* info/Makefile.am (bin_PROGRAMS): Use HAVE_TERMLIBS conditional to
+	only include "ginfo" if terminal library is found.  Use TOOLS_ONLY
+	not to built "ginfo" if building tools for cross-compiling.
+	(LDADD, ginfo_LDADD): Only use $(TERMLIBS) in ginfo_LDADD.
+	
+	Report and investigation by Manuel Jacob,
+
+2026-03-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c (html_convert_tree_append),
+	tta/perl/Texinfo/Convert/HTML.pm (_convert): different message for
+	ignored text type and other ignored types and commands.
+
+2026-03-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_prepare_converter.c (html_converter_customize):
+	set ignored types for css conversion too.  This is not needed when
+	called from Perl XS, but necessary for ctexi2any.
+
+2026-03-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/parsetexi/macro.c (expand_macro_body),
+	tta/perl/Texinfo/ParserNonXS.pm (_expand_macro_body): simplify
+	conditions, taking into account that macro call arguments can only
+	contain text elements.
+
+2026-03-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/parsetexi/handle_commands.c (handle_line_command),
+	tta/perl/Texinfo/ParserNonXS.pm (_handle_line_command): use
+	spaces_before_argument for an empty lineraw line.
+
+	* tta/perl/Texinfo/Common.pm (non_leading_trailing_indices): verify
+	that end_idx is not negative.  This could happen if there are only
+	spaces_after_argument.
+
+	* tta/perl/Texinfo/ParserNonXS.pm (_expand_macro_body): use a tree
+	element in input for macro arguments.
+
+2026-03-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/element_types.txt, tta/C/parsetexi/parser.c
+	(process_remaining_on_line), tta/perl/Texinfo/ParserNonXS.pm
+	(%trailing_space_types, _process_remaining_on_line): use
+	spaces_after_argument for ignored spaces before @subentry.  Remove
+	ignorable_spaces_before_command type everywhere.
+
+	* tta/C/parsetexi/parser.c (isolate_leading_trailing),
+	tta/perl/Texinfo/ParserNonXS.pm (_isolate_leading_trailing): add a
+	debugging statement.
+
+2026-03-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/ParserNonXS.pm (_is_container_empty): do not check
+	info value, and avoid checking contents for text elements, with same
+	code as in C.
+
+2026-03-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/parsetexi/close.c (remove_empty_content),
+	tta/perl/Texinfo/ParserNonXS.pm (_remove_empty_content): remove the
+	empty element, which could theoretically be before comments and
+	trailing spaces.
+
+2026-03-23 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/parsetexi/close.c (close_container),
+	tta/perl/Texinfo/ParserNonXS.pm (_close_container): remove check that
+	was needed when there were args in tree.  Reorganize code to be easier
+	to read.
+
 2026-03-22 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/perl/Texinfo/Example/TexinfoMarkup.pm (_convert): inline

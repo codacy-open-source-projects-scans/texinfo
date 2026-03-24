@@ -5476,7 +5476,6 @@ sub default_type_open($$) {
 # Ignored commands
 foreach my $type (
             'ignorable_spaces_after_command',
-            'ignorable_spaces_before_command',
             'spaces_at_end',
             'spaces_before_paragraph',
             # may be better not to ignore spaces when a : is postpended
@@ -5484,7 +5483,8 @@ foreach my $type (
             #'space_at_end_menu_node',
             'spaces_after_close_brace',
             'spaces_before_argument',
-            'spaces_after_argument') {
+            'spaces_after_argument'
+    ) {
   $default_types_conversion{$type} = undef;
 }
 
@@ -8448,20 +8448,16 @@ sub _convert($$;$) {
     return '';
   }
 
-  if ((exists($element->{'type'})
-        and exists($self->{'types_conversion'}->{$element->{'type'}})
-        and !defined($self->{'types_conversion'}->{$element->{'type'}}))
-       or (exists($element->{'cmdname'})
-            and exists($self->{'commands_conversion'}->{$element->{'cmdname'}})
-            and !defined($self->{'commands_conversion'}->{$element->{'cmdname'}}))) {
-    if ($debug) {
-      print STDERR "IGNORED $command_type\n";
-    }
-    return '';
-  }
-
   # Process text
   if (exists($element->{'text'})) {
+    if (exists($element->{'type'})
+        and exists($self->{'types_conversion'}->{$element->{'type'}})
+        and !defined($self->{'types_conversion'}->{$element->{'type'}})) {
+      if ($debug) {
+        print STDERR "IGNORE TEXT $command_type\n";
+      }
+      return '';
+    }
     my $result;
     # already converted to html, keep it as is
     if (exists($element->{'type'}) and $element->{'type'} eq '_converted') {
@@ -8474,6 +8470,18 @@ sub _convert($$;$) {
     }
     print STDERR "DO TEXT => `$result'\n" if $debug;
     return $result;
+  }
+
+  if ((exists($element->{'type'})
+        and exists($self->{'types_conversion'}->{$element->{'type'}})
+        and !defined($self->{'types_conversion'}->{$element->{'type'}}))
+       or (exists($element->{'cmdname'})
+            and exists($self->{'commands_conversion'}->{$element->{'cmdname'}})
+            and !defined($self->{'commands_conversion'}->{$element->{'cmdname'}}))) {
+    if ($debug) {
+      print STDERR "IGNORED $command_type\n";
+    }
+    return '';
   }
 
   # commands like @deffnx have both a cmdname and a def_line type.  It is

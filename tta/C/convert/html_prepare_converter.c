@@ -193,7 +193,6 @@ static const enum command_id conf_for_documentlanguage[]
 
 static enum element_type ignored_types[] = {
     ET_ignorable_spaces_after_command,
-    ET_ignorable_spaces_before_command,
     ET_postamble_after_end,
     ET_preamble_before_beginning,
     ET_preamble_before_setfilename,
@@ -2947,6 +2946,8 @@ html_converter_customize (CONVERTER *self)
     {
       enum element_type type = ignored_types[l];
       self->type_conversion_function[type].status = FRS_status_ignored;
+      self->css_string_type_conversion_function[type].status
+                                                  = FRS_status_ignored;
     }
 
   for (l = 0; l < TXI_TREE_TYPES_NUMBER; l++)

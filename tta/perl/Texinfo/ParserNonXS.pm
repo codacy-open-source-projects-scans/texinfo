@@ -401,7 +401,7 @@ foreach my $type ('empty_line', 'ignorable_spaces_after_command',
 
 # To keep in sync with XS main/element_types.txt trailing_space flag
 my %trailing_space_types;
-foreach my $type ('ignorable_spaces_before_command', 'empty_line') {
+foreach my $type ('empty_line') {
   $trailing_space_types{$type} = 1;
 }
 
@@ -1731,9 +1731,11 @@ sub _end_paragraph_preformatted($$$;$$) {
 sub _is_container_empty($) {
   my $current = shift;
 
-  if (not exists($current->{'contents'})
-      and (not exists($current->{'text'}) or $current->{'text'} eq '')
-      and not exists($current->{'info'})) {
+  if (exists($current->{'text'})) {
+    if ($current->{'text'} eq '') {
+      return 1;
+    }
+  } elsif (not exists($current->{'contents'})) {
     return 1;
   }
   return 0;
@@ -1770,13 +1772,16 @@ sub _remove_empty_content($$) {
          .Texinfo::Common::debug_print_element($child_element)
           .' from '.Texinfo::Common::debug_print_element($current)."\n"
             if ($self->{'conf'}->{'DEBUG'});
-        _pop_element_from_contents($self, $current);
+        splice(@{$current->{'contents'}}, $i, 1);
         $i--;
       } else {
         last;
       }
     }
   }
+  delete $current->{'contents'}
+    if (exists($current->{'contents'})
+        and scalar(@{$current->{'contents'}}) == 0);
 }
 
 sub _close_container($$$) {
@@ -1788,34 +1793,35 @@ sub _close_container($$$) {
     _pop_context($self, ['ct_paragraph'], $source_info, $current);
   }
 
-  # remove element without contents nor associated information
-  my $element_to_remove;
-  if (_is_container_empty($current)) {
-    print STDERR "CONTAINER EMPTY "
-      .Texinfo::Common::debug_print_element($current, 1)
-      .' ('.(exists($current->{'source_marks'})
-            ? scalar(@{$current->{'source_marks'}}) : 0)." source marks)\n"
-        if ($self->{'conf'}->{'DEBUG'});
-    # Keep the element only if there are source marks
-    if (!exists($current->{'source_marks'})) {
-      $element_to_remove = $current;
-    }
+  # keep the element if not empty
+  if (!_is_container_empty($current)) {
+    return $current->{'parent'};
   }
+
+  print STDERR "CONTAINER EMPTY "
+    .Texinfo::Common::debug_print_element($current, 1)
+    .' ('.(exists($current->{'source_marks'})
+          ? scalar(@{$current->{'source_marks'}}) : 0)." source marks)\n"
+      if ($self->{'conf'}->{'DEBUG'});
+
+  # Keep the element if there are source marks
+  if (exists($current->{'source_marks'})) {
+    return $current->{'parent'};
+  }
+
+  my $element_to_remove = $current;
   $current = $current->{'parent'};
 
-  if ($element_to_remove
-      # FIXME check if this is needed
-      # this is to avoid removing empty containers in args,
-      # happens with brace commands not closed at the end of
-      # a manual
-      and exists($current->{'contents'})
-      and scalar(@{$current->{'contents'}})
-      and $current->{'contents'}->[-1] eq $element_to_remove) {
-    print STDERR "REMOVE empty type "
-      .Texinfo::Common::debug_print_element($element_to_remove, 1)."\n"
-        if ($self->{'conf'}->{'DEBUG'});
-    _pop_element_from_contents($self, $current);
-  }
+  #if (!exists($current->{'contents'})
+  #    or $current->{'contents'}->[-1] ne $element_to_remove) {
+  #  die "BUG close_container: unexpected removed not last child";
+  #}
+
+  print STDERR "REMOVE empty type "
+    .Texinfo::Common::debug_print_element($element_to_remove, 1)."\n"
+      if ($self->{'conf'}->{'DEBUG'});
+  _pop_element_from_contents($self, $current);
+
   return $current;
 }
 
@@ -3034,7 +3040,7 @@ sub _lookup_macro_parameter($$) {
 
 # $MACRO is a member of $self->{'macros'}.
 sub _expand_macro_body($$$$) {
-  my ($self, $macro, $args, $source_info) = @_;
+  my ($self, $macro, $arguments, $source_info) = @_;
 
   my $macrobody = $macro->{'macrobody'};
 
@@ -3050,12 +3056,12 @@ sub _expand_macro_body($$$$) {
         my $arg = $1;
         my $formal_arg_index = _lookup_macro_parameter($macro, $arg);
         if (defined($formal_arg_index)) {
-          if ($args and scalar(@$args) and $formal_arg_index < scalar(@$args)
-              and exists($args->[$formal_arg_index])
-              # TODO probably not needed
-              and exists($args->[$formal_arg_index]->{'contents'})) {
+          if (exists($arguments->{'contents'})
+              and $formal_arg_index < scalar(@{$arguments->{'contents'}})) {
+            # the argument cannot have superfluous content, as it is text
+            # only, therefore a string is always returned, possibly empty.
             my ($argument, $surplus) = Texinfo::Common::simple_arg_text(
-                                             $args->[$formal_arg_index]);
+                             $arguments->{'contents'}->[$formal_arg_index]);
             $result .= $argument;
           }
         } else {
@@ -3254,15 +3260,8 @@ sub _isolate_leading_trailing($$;$) {
 
   return if (!exists($current->{'contents'}));
 
-  # $current->{'type'} is always set, to line_arg, block_line_arg,
-  # brace_container, brace_arg, bracketed_arg or menu_entry_node
-
-  #my $debug_str;
-  #if ($self->{'conf'}->{'DEBUG'}) {
-  #  $debug_str = 'b '.Texinfo::Common::debug_print_element($current, 1).'; c ';
-  #  $debug_str .=
-  #     Texinfo::Common::debug_print_element($current->{'contents'}->[-1]);
-  #}
+  # $current is a container element of type line_arg, block_line_arg,
+  # brace_arg, bracketed_arg
 
   my $content_len = scalar(@{$current->{'contents'}});
   for (my $i = 0; $i < $content_len; $i++) {
@@ -3297,13 +3296,14 @@ sub _isolate_leading_trailing($$;$) {
         return;
       }
       if ($last_element->{'text'} !~ /\S/) {
-        # FIXME not sure about all the trailing_space_types; empty_line
-        # is good to keep
+        # keep some special spaces as is when they carry an interesting
+        # information and should not be ignored in most cases as
+        # spaces_after_argument is
         if (!defined($e_type) or !$trailing_space_types{$e_type}) {
           $last_element->{'type'} = 'spaces_after_argument';
         } else {
-          #print STDERR "NOT ISOLATING SPACES ONLY $debug_str\n"
-          #  if ($self->{'conf'}->{'DEBUG'});
+          print STDERR "NOT ISOLATING SPACES ONLY $i $e_type\n"
+            if ($self->{'conf'}->{'DEBUG'});
         }
       } else {
         my $new_space_element
@@ -5430,6 +5430,9 @@ sub _handle_macro($$$$$$) {
           my $has_end_of_line = chomp $line;
           if (not exists($arg_elt->{'contents'})) {
             $arg_elt->{'contents'} = [];
+            # if the macro invokation is immediatly followed by a newline,
+            # the text element with be empty, and become an empty
+            # spaces_before_argument after trimming leading spaces.
             push @{$arg_elt->{'contents'}},
                   Texinfo::TreeElement::new({'text' => $line,});
           } else {
@@ -5481,7 +5484,7 @@ sub _handle_macro($$$$$$) {
 
   my $expanded = _expand_macro_body($self,
                             $self->{'macros'}->{$command},
-                            $macro_call_element->{'contents'}, $source_info);
+                            $macro_call_element, $source_info);
 
   my $expanded_macro_text;
   if (defined($expanded)) {
@@ -6060,7 +6063,7 @@ sub _handle_line_command($$$$$$) {
       if ($command ne 'c' and $command ne 'comment'
           and $text_element->{'text'} !~ /\S/) {
         # nothing else than spaces.  Reuse the text element as space element.
-        $text_element->{'type'} = 'spaces_after_argument';
+        $text_element->{'type'} = 'spaces_before_argument';
       # note the condition on command args number, as we do not
       # want lineraw commands with argument that did not have a
       # comment detected by _parse_rawline_command to contain comments.
@@ -7725,7 +7728,8 @@ sub _process_remaining_on_line($$$$) {
         # the final tree.
         and _is_index_element($self, $current->{'parent'})) {
       if ($command eq 'subentry') {
-        _isolate_trailing_space($current, 'ignorable_spaces_before_command');
+        # isolate spaces appearing before the @subentry
+        _isolate_trailing_space($current, 'spaces_after_argument');
       } else {
         # an internal and temporary space type that is converted to
         # a normal space without type if followed by text or a
@@ -9105,11 +9109,6 @@ Spaces appearing after an @-command without braces that does not
 take argument on the line, but which is followed by ignorable
 spaces, such as C<@item> in C<@itemize> or C<@multitable>, or C<@noindent>.
 
-=item ignorable_spaces_before_command
-
-Spaces appearing before an @-command that are ignorable.  For example
-spaces appearing before a C<@subentry> on an index command line.
-
 =item bracketed_linemacro_arg
 
 Text of the argument of a user defined linemacro call in bracket.  It does not
@@ -9143,7 +9142,8 @@ this space should be ignorable (like C<@caption> or C<@sortas>).
 =item spaces_after_argument text
 
 Spaces after @-command arguments before a comma, a closing brace or at end of
-line.
+line and spaces appearing before an @-command that are ignorable (spaces
+appearing before a C<@subentry> on an index command line).
 
 =item spaces_after_cmd_before_arg text
 
