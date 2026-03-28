@@ -30,13 +30,17 @@
 
 extern LANG_TRANSLATION **translation_cache;
 
-void configure_output_strings_translations (const char *localesdir,
-                                            const char *strings_textdomain_in,
-                                         int use_external_translate_string_in);
+void setup_output_strings_translations (const char *localesdir,
+                                        const char *strings_textdomain_in,
+                                        int use_external_translate_string_in);
 
 LANG_TRANSLATION *get_lang_translation (
                       LANG_TRANSLATION ***lang_translations_ptr,
                       const char *lang, const char *locale_encoding,
+                      size_t cache_size);
+LANG_TRANSLATION *get_lang_encoded_lang_translation (
+                      LANG_TRANSLATION ***lang_translations_ptr,
+                      const char *lang, const char *encoded_lang,
                       size_t cache_size);
 LANG_TRANSLATION *new_lang_translation (const char *lang,
                                         const char *locale_encoding);

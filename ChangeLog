@@ -1,3 +1,90 @@
+2026-03-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/TranslationsNonXS.pm (setup_output_strings),
+	tta/perl/XSTexinfo/parser_document/TranslationsXS.xs
+	(setup_output_strings): rename configure as setup_output_strings.
+	Update callers.
+
+	* tta/C/main/translations.c (setup_output_strings_translations):
+	rename configure_output_strings_translations as
+	setup_output_strings_translations.  Update callers.
+
+2026-03-27 Patrice Dumas  <pertusus@free.fr>
+
+	XS interface for Texinfo::Translations configure
+
+	* tta/perl/Texinfo/DocumentNonXS.pm, tta/perl/Texinfo/Translations.pm,
+	tta/perl/Texinfo/TranslationsNonXS.pm (configure),
+	tta/perl/XSTexinfo/parser_document/DocumentXS.xs,
+	tta/perl/XSTexinfo/parser_document/TranslationsXS.xs (configure): add
+	an XS interface for Texinfo::Translations configure.  Remove
+	configure_output_strings_translations from Perl code and from Document
+	XS interface.
+
+2026-03-27 Patrice Dumas  <pertusus@free.fr>
+
+	XS interface for Texinfo::Translations for cache_translate_string
+
+	* tta/configure.ac (use_libintl_perl_in_xs), tta/perl/Makefile.am
+	(ModulePath.pm), tta/perl/Texinfo/ModulePath.pm.in
+	($use_libintl_perl_in_xs): pass use_libintl_perl_in_xs to Perl.
+
+	* tta/C/main/translations.c (find_lang_translation)
+	(get_lang_translation, store_new_lang_translation)
+	(get_lang_encoded_lang_translation): split find_lang_translation and
+	store_new_lang_translation out of get_lang_translation.  Add
+	get_lang_encoded_lang_translation that is very similar to
+	get_lang_translation, but directly uses encoded lang instead of
+	determining it.
+
+	* tta/perl/Texinfo/Translations.pm (BEGIN),
+	tta/perl/XSTexinfo/Makefile.am (xs_LTLIBRARIES, TranslationsXS*),
+	tta/perl/Makefile.am (dist_modules_DATA),
+	tta/perl/Texinfo/TranslationsNonXS.pm (cache_translate_string),
+	tta/perl/XSTexinfo/parser_document/TranslationsXS.xs
+	(cache_translate_string): add an XS interface for
+	Texinfo::Translations cache_translate_string.
+
+2026-03-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/z_misc/do_master_menu.t: setup the lang_translation by
+	calling new_lang_translation.
+
+2026-03-26 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Tree Elements and Document Structure)
+	(Heading Commands Formatting): describe relevant functions in "Tree
+	Elements and Document Structure" not in the appendix.  Improve
+	references to this node.
+
+	* tta/perl/Texinfo/Convert/DocBook.pm (%docbook_level_section)
+	(%docbook_sections, _docbook_section_element): split
+	%docbook_level_section out of %docbook_sections for the map of section
+	levels, for a more readable code.
+
+	* tta/perl/t/z_misc/no_structure_test.t: add raisesctions to the
+	test Texinfo code.
+
+2026-03-26 Patrice Dumas  <pertusus@free.fr>
+
+	* doc/texi2any_api.texi (Simple Formatting Customization)
+	(Internationalization of Output Strings): rename "Simple formatting
+	customization" as "Simple Formatting Customization" and
+	"Internationalization of Strings Function" as "Internationalization of
+	Output Strings".
+
+	* doc/texi2any_api.texi (Accent Commands with Arguments Formatting):
+	add.
+
+	* doc/texi2any_api.texi: remove cross-references to modules
+	documentation that are not needed for the described tasks.  Copy the
+	function or data descriptions instead of having a cross reference, as
+	the corresponding text is small and requiring to go to another
+	document to get the information is distracting.
+
+	Improve Pod documentation of output strings translation language
+	switching.
+
 2026-03-23 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/C/main/utils.h (ARG_INDICES), tta/C/main/utils.c
