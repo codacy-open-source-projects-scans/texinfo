@@ -1,3 +1,114 @@
+2026-03-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Utils.pm (output_files_rename_opened): add.
+
+	* tta/perl/Texinfo/Convert/Info.pm (output): call
+	Texinfo::Convert::Utils::output_files_rename_opened instead of setting
+	an unused array.
+
+2026-03-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_tree_anchor_label): get an
+	element in argument.
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm: use
+	Texinfo::Common::empty_spaces_argument to determine if arguments are
+	empty.  Us elements instead of contents when relevant.  Use exists or
+	defined when the value is not used.
+
+2026-03-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Plaintext.pm (_convert): do not output
+	anything for @itemx in @itemize or @enumerate in @table.
+
+2026-03-29 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/XSTexinfo/convert/get_html_perl_info.c
+	(html_converter_get_customization_sv): initialize
+	direction_node_name->direction_nr to 0.
+
+	* tta/C/convert/html_prepare_converter.c (html_set_global_direction)
+	(html_set_main_units_direction_names)
+	(html_prepare_output_units_global_targets),
+	tta/perl/Texinfo/Convert/HTML.pm (converter_initialize),
+	tta/perl/Texinfo/Convert/HTMLNonXS.pm (set_global_direction): warn if
+	a customized global direction is set on a relative direction.
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_prepare_output_units_global_targets): more explicit fatal
+	message.
+
+	* tta/perl/t/init/set_global_direction_for_relative.pm: also test
+	calling set_global_direction on a relative direction.
+
+	* tta/perl/Makefile.tres, tta/perl/t/init_files_tests.t
+	(set_global_direction_for_relative_direction): enable test.
+
+2026-03-28 Patrice Dumas  <pertusus@free.fr>
+
+	* ta/maintain/generate_code_convert_data.pl (@ordered_text_directions)
+	(%ordered_text_global_directions_hash, %direction_orders)
+	(@orders_order, @ordered_directions): separate text directions from
+	global units directions.
+
+	* tta/maintain/generate_code_convert_data.pl,
+	tta/C/convert/format_html.c, tta/C/convert/html_prepare_converter.c:
+	generate DEFAULT_GLOBAL_DIRECTION_LAST_IDX and
+	DEFAULT_TEXT_DIRECTION_LAST_IDX and use instead of D_Last and
+	D_direction_This.
+
+	* tta/C/convert/html_prepare_converter.c
+	(html_prepare_output_units_global_targets),
+	tta/perl/Texinfo/Convert/HTMLNonXS.pm
+	(_prepare_output_units_global_targets): show default text directions
+	in debugging code.
+
+	* tta/perl/Texinfo/Convert/HTML.pm (@text_directions_order)
+	(converter_initialize): set @text_directions_order based on
+	automatically generated directions and use it to set default text
+	directions in converter_initialize.
+
+2026-03-28 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/DocBook.pm (_convert): determine $part if
+	not already determined.
+
+2026-03-28 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/document.c (setup_texinfo_main),
+	tta/C/main/translations.c (set_output_strings_translate_method)
+	(setup_output_strings_translations): split
+	set_output_strings_translate_method out of
+	setup_output_strings_translations.  Call it in setup_texinfo_main, as
+	it sets use_external_translate_string, which should always be set,
+	even if C functions are not used for translation of output strings.
+
+	* tta/C/convert/texinfo.c (txi_general_output_strings_setup),
+	tta/perl/XSTexinfo/parser_document/TranslationsXS.xs
+	(setup_output_strings): update for change in
+	setup_output_strings_translations.  Update callers.
+
+2026-03-28 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/structuring_transfo/structuring.c
+	(check_node_tree_menu_structure), tta/perl/Texinfo/StructuringNonXS.pm
+	(check_node_tree_menu_structure): remove a condition on node
+	associated to node menu relation being set, as if there is a number,
+	the relation exists.
+
+	* tta/perl/Makefile.tres, tta/perl/t/10menu.t
+	(menu_pointing_to_anchor_nodes): add test of anchor and namedanchor
+	nodes in menu, with another node with a sectioning command too, such
+	that the menu structure is checked (with CHECK_NORMAL_MENU_STRUCTURE).
+
+2026-03-28 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Translations.pm (BEGIN): do not load XS module for
+	translations if Perl is older than 5.38.0 as before Perl 5.38.0
+	getenv/setenv and similar cannot be reliably used in XS.
+
+	* tta/configure.ac: remove setting HAVE_USABLE_GETENV_IN_XS, unused.
+
 2026-03-27 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/perl/Texinfo/TranslationsNonXS.pm (setup_output_strings),
@@ -235,7 +346,7 @@
 
 	* tta/perl/Texinfo/Convert/DocBook.pm (_format_comment),
 	tta/perl/Texinfo/Convert/LaTeX.pm (_convert),
-	tta/perl/Texinfo/Example/TexinfoMarkup.pm (_format_comment, _convert), 
+	tta/perl/Texinfo/Example/TexinfoMarkup.pm (_format_comment, _convert),
 	tta/perl/t/init/ignore_and_comments_output.init: adapt for change in
 	tree.
 

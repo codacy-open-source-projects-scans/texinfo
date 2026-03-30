@@ -112,8 +112,14 @@ foreach my $misc_context_command('tab', 'item', 'itemx', 'headitem') {
 
 
 
+my $direction_orders = Texinfo::HTMLData::get_directions_order();
+# 'global', 'text', 'relative', 'file'
+my @global_directions_order = @{$direction_orders->[0]};
+my @text_directions_order = @{$direction_orders->[1]};
+
 # API for html formatting
 
+# ALTIMP C/convert/html_prepare_converter.c html_set_global_direction
 # similar to texinfo_register_global_direction in Texinfo::Config, to be
 # used to modify global directions after the converter initialization,
 # but before association of global directions with output units
@@ -124,6 +130,20 @@ sub set_global_direction($$;$) {
     $self->converter_document_warn(
         sprintf(__("not setting an unknown direction: %s"), $direction));
     return;
+  }
+  if (!exists($self->{'customized_global_directions'})
+      or !exists($self->{'customized_global_directions'}->{$direction})) {
+    if (not grep {$_ eq $direction} @global_directions_order) {
+      if (defined($node_texi_name)) {
+        $self->converter_document_warn(sprintf(__(
+                "keep direction %s, do not set to `%s'"), $direction,
+                $node_texi_name));
+      } else {
+        $self->converter_document_warn(sprintf(__(
+                "keep direction %s"), $direction));
+      }
+      return;
+    }
   }
   $self->{'customized_global_directions'} = {}
     if (!exists($self->{'customized_global_directions'}));
@@ -1692,11 +1712,6 @@ our %defaults;
 # heading
 my %default_translated_special_unit_info
   = %{ Texinfo::HTMLData::get_default_translated_special_unit_info() };
-
-my $direction_orders = Texinfo::HTMLData::get_directions_order();
-# 'global', 'relative', 'file'
-# include space direction
-my @global_directions_order = @{$direction_orders->[0]};
 
 # for rel, see http://www.w3.org/TR/REC-html40/types.html#type-links
 my %default_converted_directions_strings
@@ -3927,9 +3942,6 @@ sub _prepare_output_units_global_targets($$$$) {
         = $self->{'customized_global_directions'}->{$direction};
       if (defined($node_texi_name)
           and not defined($self->global_direction_text($direction))) {
-          # FIXME check that relative directions are not replaced by
-          # global_units_directions (as done in C)?  It may not be an issue.
-
         # Determine the document unit corresponding to the direction
         # node name Texinfo code
 
@@ -3974,14 +3986,24 @@ sub _prepare_output_units_global_targets($$$$) {
     # TODO also show the global directions added by the user
     print STDERR "GLOBAL DIRECTIONS:\n";
     foreach my $global_direction (@global_directions_order) {
-      if (defined($self->global_direction_unit($global_direction))) {
-        my $global_unit = $self->global_direction_unit($global_direction);
+      my $global_unit = $self->global_direction_unit($global_direction);
+      if (defined($global_unit)) {
         print STDERR " $global_direction"
             # uncomment to get the perl object name
             # ."($global_unit)"
      .': '. Texinfo::OutputUnits::output_unit_texi($global_unit)."\n";
       }
     }
+    print STDERR "TEXT DIRECTIONS:\n";
+    foreach my $text_direction (@text_directions_order) {
+      if ($self->global_direction_text($text_direction)) {
+        my $text_value = $self->direction_string($text_direction, 'button');
+        if (defined($text_value)) {
+          print STDERR " $text_direction {$text_value}\n";
+        }
+      }
+    }
+
     print STDERR "\n";
   }
 
