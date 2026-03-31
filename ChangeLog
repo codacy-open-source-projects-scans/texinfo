@@ -1,3 +1,52 @@
+2026-03-30 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/convert_html.c, tta/C/main/convert_to_text.c,
+	tta/C/main/convert_utils.c, tta/C/main/converter_types.h (CONVERTER),
+	tta/C/main/translations.c (find_lang_translation)
+	(store_new_lang_translation, get_lang_translation)
+	(get_lang_encoded_lang_translation, switch_lang_translations)
+	(cache_translate_string, gdt_string, gdt_tree, pgdt_tree),
+	tta/C/parsetexi/indices.c, tta/C/structuring_transfo/structuring.c,
+	tta/perl/XSTexinfo/parser_document/TranslationsXS.xs
+	(cache_translate_string): add const for LANG_TRANSLATION passed
+	around.
+
+	* tta/C/main/translations.c (substitute_substrings_in_tree)
+	(substitute_element_array): const for replaced_substrings.
+
+2026-03-30 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (%LaTeX_environment_commands)
+	(_convert): use Texinfoindented environment for @indentedblock and
+	@def item.
+
+	* tta/perl/t/converters_tests.t (table_in_display_in_example)
+	(table_in_example_in_display): add some text for easier visualization.
+
+2026-03-30 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/tests/coverage_macro.texi: remove empty line in @displymath to
+	avoid invalid LaTeX.
+
+2026-03-30 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/DocBook.pm (_convert): use blockquote for
+	@indentedblock and @smallindentedblock.  Report from Per Bothner in
+	2014.
+
+	* tta/tests/coverage_macro.texi: add @indentedblock and
+	@smallindentedblock.
+
+2026-03-30 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/LaTeX.pm (_stop_embrac, _convert_def_line)
+	(_convert): simplify code related to embrac context stack.
+
+2026-03-30 Noé Lopez <noelopez@free.fr> (tiny change)
+
+	* util/htmlxref.d/Texinfo_GNU.cnf: Update URLs for Guix and
+	Shepherd.
+
 2026-03-29 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/perl/Texinfo/Convert/Utils.pm (output_files_rename_opened): add.
@@ -13,7 +62,7 @@
 
 	* tta/perl/Texinfo/Convert/LaTeX.pm: use
 	Texinfo::Common::empty_spaces_argument to determine if arguments are
-	empty.  Us elements instead of contents when relevant.  Use exists or
+	empty.  Use elements instead of contents when relevant.  Use exists or
 	defined when the value is not used.
 
 2026-03-29 Patrice Dumas  <pertusus@free.fr>

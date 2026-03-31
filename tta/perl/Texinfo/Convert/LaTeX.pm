@@ -152,12 +152,6 @@
 # as an issue, at least until we get user reports.
 # https://lists.gnu.org/archive/html/bug-texinfo/2006-06/msg00030.html
 #
-# @indentedblock and @smallindentedblock should not have a wider right
-# margin.  The wider margin is because they are in quote environment.
-#
-# @def* body should not have a wider right margin.  The wider margin
-# is because they are in quote environment.
-#
 # codequotebacktick and codequoteundirected could be relevant to handle.
 
 package Texinfo::Convert::LaTeX;
@@ -552,8 +546,8 @@ my %LaTeX_environment_commands = (
   'flushright' => ['flushright', 'Texinfopreformatted'],
   'quotation' => ['quote'],
   'smallquotation' => ['quote', $small_font_size],
-  'indentedblock' => ['quote'],
-  'smallindentedblock' => ['quote', $small_font_size],
+  'indentedblock' => ['Texinfoindented'],
+  'smallindentedblock' => ['Texinfoindented', $small_font_size],
   'cartouche' => ['mdframed'],
   'itemize' => ['itemize'],
   'enumerate' => ['enumerate'],
@@ -2720,8 +2714,7 @@ sub _stop_embrac($$) {
 
   my $did_stop_embrac = 0;
 
-  if ($self->{'formatting_context'}->[-1]->{'embrac'}
-      and $self->{'formatting_context'}->[-1]->{'embrac'}->[-1]
+  if (scalar(@{$self->{'formatting_context'}->[-1]->{'embrac'}})
       and $self->{'formatting_context'}->[-1]->{'embrac'}->[-1]->{'status'} == 1) {
     $result .= '\EmbracOff{}';
     $self->{'formatting_context'}->[-1]->{'embrac'}->[-1]->{'status'} = 0;
@@ -2840,6 +2833,8 @@ sub _convert_def_line($$) {
       if (exists($Texinfo::Common::def_no_var_arg_commands{$command})) {
         $def_line_result .= _convert($self, $arguments);
       } else {
+        # The embrac package is used so that parentheses and square brackets
+        # are typeset in an upright font on @def lines in slanted font.
         $self->{'packages'}->{'embrac'} = 1;
         # we want slanted roman and not slanted typewriter, including
         # ligatures, as if @r{@slanted{...}} had been used, so output
@@ -3351,16 +3346,12 @@ sub _convert($$) {
         my $LaTeX_style_command
           = $LaTeX_style_brace_commands{$command_format_context}
                                                  ->{$formatted_cmdname};
-        if ($need_known_embrac{$LaTeX_style_command}
-            and $self->{'formatting_context'}->[-1]->{'embrac'}
-            and $self->{'formatting_context'}->[-1]->{'embrac'}->[-1]
+        if (exists($need_known_embrac{$LaTeX_style_command})
+            and scalar(@{$self->{'formatting_context'}->[-1]->{'embrac'}})
             and $self->{'formatting_context'}->[-1]->{'embrac'}->[-1]->{'status'} == 1) {
           my $defined_style_embrac = $need_known_embrac{$LaTeX_style_command};
-          if (not $self->{'formatting_context'}->[-1]->{'embrac'}->[-1]
-                ->{'made_known'}->{$defined_style_embrac}) {
-            $self->{'formatting_context'}->[-1]->{'embrac'}->[-1]
+          $self->{'formatting_context'}->[-1]->{'embrac'}->[-1]
                        ->{'made_known'}->{$defined_style_embrac} = 1;
-          }
         }
         $result .= "$LaTeX_style_command\{";
       }
@@ -4669,7 +4660,7 @@ sub _convert($$) {
       $result .= _convert_def_line($self, $element);
       return $result;
     } elsif ($element->{'type'} eq 'def_item') {
-      $result .= "\\begin{quote}\n";
+      $result .= "\\begin{Texinfoindented}\n";
       # Remove vertical space and start paragaph, avoiding adding
       # more vertical space.
       $result .= "\\unskip{\\parskip=0pt\\noindent}%\n";
@@ -4761,7 +4752,7 @@ sub _convert($$) {
     if ($type eq '_dot_not_end_sentence') {
       $self->{'formatting_context'}->[-1]->{'dot_not_end_sentence'} -= 1;
     } elsif ($type eq 'def_item') {
-      $result .= "\\end{quote}\n";
+      $result .= "\\end{Texinfoindented}\n";
     } elsif ($type eq 'table_term') {
       $result .= '}}]'."\n";
       pop @{$self->{'formatting_context'}->[-1]->{'nr_table_items_context'}};

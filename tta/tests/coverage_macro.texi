@@ -249,7 +249,6 @@ f(x) = {1 \\over \\sigma \\sqrt{2\\pi}}e@sup{-{1 \\over 2}\\left({x-\\mu \\over 
 @displaymath
 @dotless{i} @dotless{j}
 @l{} @,c
-
 @ubaraccent{a} @udotaccent{a} @ogonek{a} a@sup{h}@sub{l}
 @* @ @  @
 @- @| @! @@ @} @{ @/
@@ -448,6 +447,15 @@ A small Note
 @smallquotation something, other thing
 something, other thing
 @end smallquotation
+
+@indentedblock
+Indented b--l hhhhhhhhhhhhhh hhhhhhhhhhhhhhhh hhhhhhhhhhhhhhhh gggggggggg
+mmmmmmm.  Some random text to see the indentation.
+@end indentedblock
+
+@smallindentedblock
+SmallInden--ted
+@end smallindentedblock
 
 @itemize
 @item i--temize

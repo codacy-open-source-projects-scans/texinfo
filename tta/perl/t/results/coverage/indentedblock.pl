@@ -73,17 +73,17 @@ $result_converted{'xml'}->{'indentedblock'} = '<indentedblock endspaces=" ">
 ';
 
 
-$result_converted{'latex_text'}->{'indentedblock'} = '\\begin{quote}
+$result_converted{'latex_text'}->{'indentedblock'} = '\\begin{Texinfoindented}
   indented block
 
 Text
-\\end{quote}
+\\end{Texinfoindented}
 ';
 
 
-$result_converted{'docbook'}->{'indentedblock'} = '<para>indented block
+$result_converted{'docbook'}->{'indentedblock'} = '<blockquote role="indentedblock"><para>indented block
 </para>
 <para>Text
-</para>';
+</para></blockquote>';
 
 1;

@@ -272,7 +272,6 @@ f(x) = {1 \\over \\sigma \\sqrt{2\\pi}}e@sup{-{1 \\over 2}\\left({x-\\mu \\over 
 @displaymath
 @dotless{i} @dotless{j}
 @l{} @,c
-
 @ubaraccent{a} @udotaccent{a} @ogonek{a} a@sup{h}@sub{l}
 @* @ @  @
 @- @| @! @@ @} @{ @/
@@ -471,6 +470,15 @@ A small Note
 @smallquotation something, other thing
 something, other thing
 @end smallquotation
+
+@indentedblock
+Indented b--l hhhhhhhhhhhhhh hhhhhhhhhhhhhhhh hhhhhhhhhhhhhhhh gggggggggg
+mmmmmmm.  Some random text to see the indentation.
+@end indentedblock
+
+@smallindentedblock
+SmallInden--ted
+@end smallindentedblock
 
 @itemize
 @item i--temize
@@ -1471,7 +1479,6 @@ f(x) = {1 \over \sigma \sqrt{2\pi}}e<sup>-{1 \over 2}\left({x-\mu \over \sigma}\
 <displaymath endspaces=" ">
 <dotless>i</dotless> <dotless>j</dotless>
 &lslash; <accent type="cedil" bracketed="off">c</accent>
-
 <accent type="ubaraccent">a</accent> <accent type="udotaccent">a</accent> <accent type="ogon">a</accent> a<sup>h</sup><sub>l</sub>
 &linebreak; <spacecmd type="spc"/><spacecmd type="spc"/> <spacecmd type="nl"/>&hyphenbreak; <divideheading/> &eosexcl; &arobase; &rbrace; &lbrace; &slashbreak;
 <today/>
@@ -1651,6 +1658,15 @@ quotation
 <smallquotation endspaces=" ">
 <para>something, other thing
 </para></smallquotation>
+
+<indentedblock endspaces=" ">
+<para>Indented b&textndash;l hhhhhhhhhhhhhh hhhhhhhhhhhhhhhh hhhhhhhhhhhhhhhh gggggggggg
+mmmmmmm.  Some random text to see the indentation.
+</para></indentedblock>
+
+<smallindentedblock endspaces=" ">
+<para>SmallInden&textndash;ted
+</para></smallindentedblock>
 
 <itemize endspaces=" ">
 <listitem><prepend>&bullet;</prepend> <para>i&textndash;temize
@@ -2646,7 +2662,6 @@ f(x) = {1 \over \sigma \sqrt{2\pi}}e<sup>-{1 \over 2}\left({x-\mu \over \sigma}\
 <displaymath endspaces=" ">
 <dotless>i</dotless> <dotless>j</dotless>
 &lslash; <accent type="cedil" bracketed="off">c</accent>
-
 <accent type="ubaraccent">a</accent> <accent type="udotaccent">a</accent> <accent type="ogon">a</accent> a<sup>h</sup><sub>l</sub>
 &linebreak; <spacecmd type="spc"/><spacecmd type="spc"/> <spacecmd type="nl"/>&hyphenbreak; <divideheading/> &eosexcl; &arobase; &rbrace; &lbrace; &slashbreak;
 <today/>
@@ -2826,6 +2841,15 @@ quotation
 <smallquotation endspaces=" ">
 <para>something, other thing
 </para></smallquotation>
+
+<indentedblock endspaces=" ">
+<para>Indented b&textndash;l hhhhhhhhhhhhhh hhhhhhhhhhhhhhhh hhhhhhhhhhhhhhhh gggggggggg
+mmmmmmm.  Some random text to see the indentation.
+</para></indentedblock>
+
+<smallindentedblock endspaces=" ">
+<para>SmallInden&textndash;ted
+</para></smallindentedblock>
 
 <itemize endspaces=" ">
 <listitem><prepend>&bullet;</prepend> <para>i&textndash;temize
@@ -3862,7 +3886,6 @@ f(x) = {1 \over \sigma \sqrt{2\pi}}e<sup>-{1 \over 2}\left({x-\mu \over \sigma}\
 <displaymath endspaces=" ">
 <dotless>i</dotless> <dotless>j</dotless>
 &lslash; <accent type="cedil" bracketed="off">c</accent>
-
 <accent type="ubaraccent">a</accent> <accent type="udotaccent">a</accent> <accent type="ogon">a</accent> a<sup>h</sup><sub>l</sub>
 &linebreak; <spacecmd type="spc"/><spacecmd type="spc"/> <spacecmd type="nl"/>&hyphenbreak; <divideheading/> &eosexcl; &arobase; &rbrace; &lbrace; &slashbreak;
 <today/>
@@ -4042,6 +4065,15 @@ quotation
 <smallquotation endspaces=" ">
 <para>something, other thing
 </para></smallquotation>
+
+<indentedblock endspaces=" ">
+<para>Indented b&textndash;l hhhhhhhhhhhhhh hhhhhhhhhhhhhhhh hhhhhhhhhhhhhhhh gggggggggg
+mmmmmmm.  Some random text to see the indentation.
+</para></indentedblock>
+
+<smallindentedblock endspaces=" ">
+<para>SmallInden&textndash;ted
+</para></smallindentedblock>
 
 <itemize endspaces=" ">
 <listitem><prepend>&bullet;</prepend> <para>i&textndash;temize
@@ -5031,7 +5063,6 @@ f(x) = {1 \over \sigma \sqrt{2\pi}}e<sup>-{1 \over 2}\left({x-\mu \over \sigma}\
 </pre><displaymath endspaces=" ">
 <dotless>i</dotless> <dotless>j</dotless>
 &lslash; <accent type="cedil" bracketed="off">c</accent>
-
 <accent type="ubaraccent">a</accent> <accent type="udotaccent">a</accent> <accent type="ogon">a</accent> a<sup>h</sup><sub>l</sub>
 &linebreak; <spacecmd type="spc"/><spacecmd type="spc"/> <spacecmd type="nl"/>&hyphenbreak; <divideheading/> &eosexcl; &arobase; &rbrace; &lbrace; &slashbreak;
 <today/>
@@ -5211,6 +5242,15 @@ indent in quotation
 </pre><smallquotation endspaces=" ">
 <pre xml:space="preserve">something, other thing
 </pre></smallquotation>
+<pre xml:space="preserve">
+</pre><indentedblock endspaces=" ">
+<pre xml:space="preserve">Indented b--l hhhhhhhhhhhhhh hhhhhhhhhhhhhhhh hhhhhhhhhhhhhhhh gggggggggg
+mmmmmmm.  Some random text to see the indentation.
+</pre></indentedblock>
+<pre xml:space="preserve">
+</pre><smallindentedblock endspaces=" ">
+<pre xml:space="preserve">SmallInden--ted
+</pre></smallindentedblock>
 <pre xml:space="preserve">
 </pre><itemize endspaces=" ">
 <listitem><prepend>&bullet;</prepend><pre xml:space="preserve"> i--temize
