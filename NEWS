@@ -11,6 +11,7 @@ See the manual for detailed information.
 
 X.Y ()
 * Language
+  . the @clickstyle command has been removed.
   . @xml, @ifxml and @ifnotxml are deprecated.
 
 * texi2any
@@ -18,6 +19,10 @@ X.Y ()
      --ifxml and --no-ifxml.
     Can still be selected by setting TEXINFO_OUTPUT_FORMAT=texinfoxml
     until fully removed.
+
+* Distribution
+  . Remove --enable-refcounts-checks, --enable-perl-api-texi-build
+    and --enable-pod-simple-texinfo-tests configure flags.
 
 7.3 (02 March 2026)
 * Language
