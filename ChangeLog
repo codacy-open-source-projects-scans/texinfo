@@ -1,3 +1,79 @@
+2026-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Remove misleading messages for move-to-next/prev-xref.
+
+	* info/session-cmd.c
+	(forward_move_node_structure, backward_move_node_structure)
+	[scroll-behaviour=Page Only]: Do not print message saying we
+	are already on the last (or first) page of a node.  This may
+	not be true if called via move-to-next-xref (or move-to-prev-xref).
+
+	(point_next_line, point_prev_line, _scroll_backward, _scroll_forward):
+	Reinstate the removed messages for cursor movement and scrolling
+	commands where they would be accurate.
+
+2026-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix M-Tab with "info -v scroll-behaviour=Page\ Only"
+
+	* info/session-cmd.c (info_move_to_prev_xref):
+	Move misplaced ) in order to correctly pass value of
+	info_scroll_behaviour to backward_move_node_structure.
+	
+	M-Tab would move to a previous node with scroll-behavior=Page Only
+	and cursor-movement-scrolls=On, which was incorrect.
+	
+	Report from Aidan <aidanczhai@gmail.com>.
+
+2026-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/variables.c (variable_long_description_string):
+	Handle alias variable specially, in part to avoid printing
+	null pointer.
+
+2026-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Implement scroll-behavior/scroll-behaviour alias differently
+
+	* info/variables.c (ALIAS_VAR, alias_var):
+	New macro and dummy variable for declaring an alias of a variable.
+	(info_variables) <"scroll-behavior">: Use it.
+	(variable_by_name): Check if variable is an alias and if so resolve
+	the alias.
+	
+	This is to avoid using separate 'where_set' fields for the two
+	equivalent names of the variable, which could lead to inconsistency,
+	including in the help buffer.
+
+2026-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/variables.c (set_variable_to_value):
+	For variables with a list of possible choices, if requested value
+	is not in that list, do not update 'where_set' field and return 0.
+	
+	This has the effect of printing an error message if an incorrect
+	value is used in an infokey file, which wasn't done before with this
+	version of the code.
+
+2026-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Selecting Xrefs):
+	Remove text "in this node" from description of move-to-next-xref
+	and move-to-prev-xref as this is incorrect.
+	
+	Report from Aidan <aidanczhai@gmail.com>.
+
+2026-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Cursor Commands):
+	Add a note mentioning that some of these commands are governed
+	by the "cursor-movement-scrolls" variable.
+
+2026-04-02  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/info-stnd.texi (Xref Commands): Move chapter before
+	"Searching Commands" and "Index Commands".
+
 2026-04-01 Patrice Dumas  <pertusus@free.fr>
 
 	Update po files
