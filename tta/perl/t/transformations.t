@@ -82,8 +82,8 @@ A MC.
    'FORMAT_MENU' => 'menu'},
   {'FORMAT_MENU' => 'menu'},
 ],
+# NOTE sync with t/z_misc/automatic_nodes.t $sections_text
 ['insert_nodes_for_sectioning_commands',
-# same as in t/automatic_nodes.t
 '@top top section
 
 @part part
@@ -108,7 +108,7 @@ Text.
 
 @section @asis{}
 
-',{'TREE_TRANSFORMATIONS' => 'insert_nodes_for_sectioning_commands'},],
+@bye',{'TREE_TRANSFORMATIONS' => 'insert_nodes_for_sectioning_commands'},],
 ['test_fill_gaps_in_sectioning',
 '@top top
 
@@ -139,6 +139,72 @@ Text.
 @node @strong{}
 @section @strong{}
 ', {'TREE_TRANSFORMATIONS' => 'insert_nodes_for_sectioning_commands',},],
+['index_entry_before_item_with_subentry',
+'@node Top
+@top top
+
+@node Chap
+@chapter chap
+
+@itemize
+@item first item
+
+@cindex entry @subentry subentry
+@item second item
+@end itemize
+
+@node Node index
+@chapter Chap printindex
+
+@printindex cp
+', {'TREE_TRANSFORMATIONS' => 'move_index_entries_after_items'},
+],
+# Test addition of nodes with diverse protection and transformations needing
+# to be done on node names more than insert_nodes_for_sectioning_commands
+# as such.
+['various_added_nodes_and_refs',
+'@top otp
+
+@chapter a node
+
+@chapter a node @code{in code} @c comment
+
+@section a ,, node @code{a,b,}
+
+@section (in paren(too  aaa
+
+@subsection changed @ref{ @code{node}} and (@pxref{ ,, , @samp{file}})
+
+@subsection @asis{}
+
+@chapter a::b	 c
+
+@section a node
+
+
+@ref{a node}
+@ref{a node @code{in code} @c comment
+}
+@ref{a ,, node @code{a,b,}}
+@ref{(in paren(too  aaa}
+@ref{changed @ref{ @code{node}} and (@pxref{ ,, , @samp{file}})}
+@ref{@asis{}}
+@ref{a::b	 c}
+
+
+', {'TREE_TRANSFORMATIONS' => 'insert_nodes_for_sectioning_commands'},
+],
+['test_new_node_empty_ref',
+'@top top
+
+@chapter aa @ref{ , , , } g
+
+@section b @ref{}
+
+@subsection @ref
+
+', {'TREE_TRANSFORMATIONS' => 'insert_nodes_for_sectioning_commands'},
+],
 );
 
 my @tests_converted = (

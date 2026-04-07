@@ -76,8 +76,12 @@ sub _reference_to_arg($$$) {
   my ($type, $current, $document) = @_;
 
   if (exists($current->{'cmdname'}) and
-      exists($Texinfo::Commands::ref_commands{$current->{'cmdname'}})
-      and exists($current->{'contents'})) {
+      exists($Texinfo::Commands::ref_commands{$current->{'cmdname'}})) {
+
+    if (!exists($current->{'contents'})) {
+      $current = undef;
+      return [];
+    }
 
     # remove from internal references
     if (defined($document)) {
@@ -100,25 +104,29 @@ sub _reference_to_arg($$$) {
         # @asis{ }, @ , but it is not an issue or could even be considered
         # as a feature.
         if (!Texinfo::Common::is_content_empty($arg)) {
-          my $result
-            = Texinfo::TreeElement::new({#'contents' => $arg->{'contents'},
-                                         'parent' => $current->{'parent'}});
+          my $new
+            = Texinfo::TreeElement::new({'parent' => $current->{'parent'}});
           foreach my $content (@{$arg->{'contents'}}) {
             if (!exists($content->{'type'})
                 or ($content->{'type'} ne 'spaces_before_argument'
                     and $content->{'type'} ne 'spaces_after_argument')) {
-              $content->{'parent'} = $result if (exists($content->{'parent'}));
-              push @{$result->{'contents'}}, $content;
+              $content->{'parent'} = $new if (exists($content->{'parent'}));
+              push @{$new->{'contents'}}, $content;
             }
           }
+          $arg->{'contents'} = undef;
+          $current->{'contents'} = undef;
+          # may not actually be needed, but should not hurt either.
           $arg = undef;
           $current = undef;
-          return [$result];
+          return [$new];
         }
       }
     }
+    # ref command without non-empty argument
+    $current->{'contents'} = undef;
     $current = undef;
-    return Texinfo::TreeElement::new({'text' => ''});
+    return [];
   } else {
     return undef;
   }
@@ -129,152 +137,6 @@ sub reference_to_arg_in_tree($;$) {
 
   return Texinfo::ManipulateTree::modify_tree($tree, \&_reference_to_arg,
                                               $document);
-}
-
-# TODO the _new_node function is in this file and not in
-# TransformationsNonXS.pm because it is used in t/z_misc/automatic_nodes.t
-
-# prepare and add a new node as a possible cross reference targets
-# modifies $document
-
-# The $DOCUMENT error_messages is used to register error messages.
-# Does not matter much, as the code checks that the new node target label does
-# not exist already, therefore there cannot be any error.
-sub _new_node($$) {
-  my ($node_tree, $document) = @_;
-
-  # We protect for all the contexts, as the node name should be
-  # the same in the different contexts, even if some protections
-  # are not needed for the parsing.  Also, this way the node tree
-  # can be directly reused in the menus for example, without
-  # additional protection, some parts could be double protected
-  # otherwise, those that are protected with @asis.
-  #
-  # needed in nodes lines, @*ref and in menus with a label
-  $node_tree = Texinfo::ManipulateTree::protect_comma_in_tree($node_tree);
-  # always
-  Texinfo::ManipulateTree::protect_first_parenthesis($node_tree);
-  # in menu entry without label
-  $node_tree = Texinfo::ManipulateTree::protect_colon_in_tree($node_tree);
-  # in menu entry with label
-  $node_tree
-    = Texinfo::ManipulateTree::protect_node_after_label_in_tree($node_tree);
-  $node_tree = reference_to_arg_in_tree($node_tree, $document);
-
-  my $tree_space_before;
-
-  my $empty_node = 0;
-  if (!exists($node_tree->{'contents'})) {
-    $node_tree->{'contents'} = [Texinfo::TreeElement::new({'text' => ''})];
-    $empty_node = 1;
-  } elsif (exists($node_tree->{'contents'}->[0]->{'type'})
-           and $node_tree->{'contents'}->[0]->{'type'}
-                                           eq 'spaces_before_argument') {
-    $tree_space_before = shift(@{$node_tree->{'contents'}});
-  }
-
-  my $comment_at_end;
-  if (exists($node_tree->{'contents'}->[-1]->{'cmdname'})
-      and ($node_tree->{'contents'}->[-1]->{'cmdname'} eq 'c'
-           or $node_tree->{'contents'}->[-1]->{'cmdname'} eq 'comment')) {
-    $comment_at_end = pop @{$node_tree->{'contents'}};
-  }
-  my $spaces_after_text = '';
-  my $tree_space_after;
-  if (exists($node_tree->{'contents'}->[-1]->{'type'})
-      and $node_tree->{'contents'}->[-1]->{'type'}
-                                        eq 'spaces_after_argument') {
-    $tree_space_after = pop @{$node_tree->{'contents'}};
-  } elsif (scalar(@{$node_tree->{'contents'}}) > 0
-             and $node_tree->{'contents'}->[-1]->{'text'}
-             and $node_tree->{'contents'}->[-1]->{'text'} =~ s/(\s+)$//) {
-    $spaces_after_text = $1;
-  }
-  $spaces_after_text .= "\n" unless ($spaces_after_text =~ /\n/
-                                         or $comment_at_end);
-
-  my $appended_number = 0 +$empty_node;
-  my ($node, $normalized);
-
-  my $identifier_target = $document->labels_information();
-  while (!defined($node)
-         or (defined($identifier_target)
-             and $identifier_target->{$normalized})) {
-
-    if (defined($node)) {
-      # remove cycles to release the previous node, which will not be used
-      # and does not appear in the tree.
-      Texinfo::ManipulateTree::tree_remove_parents($node);
-    }
-
-    $node = Texinfo::TreeElement::new({'cmdname' => 'node', 'extra' => {}});
-
-    my $arguments_line
-      = Texinfo::TreeElement::new({'type' => 'arguments_line',
-                                   'parent' => $node});
-    $node->{'contents'} = [$arguments_line];
-
-    my $node_line_arg
-      = Texinfo::TreeElement::new({'type' => 'line_arg',
-                                   'parent' => $arguments_line});
-    $arguments_line->{'contents'} = [$node_line_arg];
-
-    my $space_after;
-    my $space_before;
-    if (defined($tree_space_after)) {
-      $space_after = $tree_space_after;
-    } else {
-      $space_after
-         = Texinfo::TreeElement::new({'text' => $spaces_after_text,
-                                      'type' => 'spaces_after_argument'});
-    }
-    if (defined($tree_space_before)) {
-      $space_before = $tree_space_before;
-    } else {
-      $space_before
-        = Texinfo::TreeElement::new({'text' => ' ',
-                                      'type' => 'spaces_before_argument'});
-    }
-
-    @{$node_line_arg->{'contents'}} = ($space_before,
-                                       @{$node_tree->{'contents'}});
-
-    if ($appended_number) {
-      push @{$node_line_arg->{'contents'}},
-            Texinfo::TreeElement::new({'text' => " $appended_number"});
-    }
-    foreach my $content (@{$node_line_arg->{'contents'}}) {
-      $content->{'parent'} = $node_line_arg if (exists($content->{'parent'}));
-    }
-    push @{$node_line_arg->{'contents'}}, $space_after;
-    push @{$node_line_arg->{'contents'}}, $comment_at_end
-      if (defined($comment_at_end));
-
-    $normalized
-       = Texinfo::Convert::NodeNameNormalization::convert_to_node_identifier(
-           Texinfo::TreeElement::new(
-                       { 'contents' => $node_line_arg->{'contents'} }));
-
-    if ($normalized !~ /[^-]/) {
-      if ($appended_number) {
-        warn "BUG: spaces only node name despite appending $appended_number\n";
-        return undef;
-      } else {
-        # remove cycles to release this empty node, which is discarded
-        # and does not appear in the tree.
-        Texinfo::ManipulateTree::tree_remove_parents($node);
-        $node = undef;
-      }
-    }
-    $appended_number++;
-  }
-  $node->{'extra'}->{'identifier'} = $normalized;
-
-  Texinfo::Document::register_label_element($document, $node,
-                                            $document->{'error_messages'},
-                                            $document->get_conf('DEBUG'));
-
-  return $node;
 }
 
 
@@ -437,9 +299,9 @@ sub protect_hashchar_at_line_beginning($;$) {
 sub _protect_first_parenthesis_in_targets($$$) {
   my ($type, $current, $argument) = @_;
 
-  my $element_label = Texinfo::Common::get_label_element($current);
-  if (defined($element_label) and $element_label ne '') {
-    Texinfo::ManipulateTree::protect_first_parenthesis($element_label);
+  my $label_element = Texinfo::Common::get_label_element($current);
+  if (defined($label_element)) {
+    Texinfo::ManipulateTree::protect_first_parenthesis($label_element);
   }
   return undef;
 }
