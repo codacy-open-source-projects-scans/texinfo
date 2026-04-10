@@ -1,3 +1,80 @@
+2026-04-10 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/tests/coverage/formatting.texi: add something in Top.
+
+2026-04-10 Patrice Dumas  <pertusus@free.fr>
+
+	Add @ifepub and @ifnotepub in texi2any
+
+	* tta/C/texi2any.c (is_texinfo_output_formats)
+	(format_expanded_formats): add is_texinfo_output_formats.
+
+	* tta/C/texi2any.c (main): add converted_format_specification
+	for the converted format, and keep format_specification for the
+	main format.
+
+	* tta/C/texi2any.c (format_expanded_formats), tta/perl/texi2any.pl
+	(_format_expanded_formats): add expanded region for main format (as
+	opposed to converted format).
+
+	* tta/C/main/parser_conf.h (PARSER_CONF), tta/C/main/utils.c
+	(default_expanded_formats), tta/data/command_data.txt (ifepub)
+	(ifnotepub), tta/perl/Texinfo/Common.pm (%texinfo_output_formats):
+	add ifepub and ifnotepub block @-commands and epub expanded format.
+
+	* tta/C/texi2any.c (converter_format_expanded_region_name)
+	(IFEPUB_OPT, NO_IFEPUB_OPT, long_options, main),
+	tta/perl/t/test_utils.pl (convert_to_html, test), tta/perl/texi2any.pl
+	(%converter_format_expanded_region_name, makeinfo_help, GetOptions):
+	add epub as expanded format for EPUB output format and corresponding
+	command-line options.
+
+	* NEWS, doc/texinfo.texi (Conditional Commands, Raw Formatter Commands)
+	(Inline Conditionals, Invoking @command{texi2any}, Command List):
+	document @ifepub, @ifnotepub and associated command-line arguments.
+
+	* tta/perl/Makefile.tres, tta/perl/t/16raw.t (raw_epub),
+	tta/perl/t/epub_tests.t (epub_conditional, epub_inline_conditional),
+	tta/perl/t/html_tests.t (epub_conditionals): add tests for epub
+	conditionals.
+
+2026-04-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	No menu positioning after "Up" to different file
+	
+	* info/session-cmd.c (info_handle_pointer):
+	If going up to a different file, do not try to find the current
+	node in the new node's menu.  This led to a bad result when going
+	"Up" to the dir node.
+
+	Report from Aidan <aidanczhai@gmail.com>.
+
+2026-04-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	No crash for repeated visit to "*" node
+
+	* info/nodes.c (info_get_node_of_file_buffer):
+	If nodename is "*", set replica bit on node so to avoid attempt
+	to free the contents of the node.
+
+	Report from Aidan <aidanczhai@gmail.com>.
+
+2026-04-09  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Fix searching dir node
+
+	* info/scan.c (scan_node_contents): Clear N_Simple flag.
+	As we used info_node_of_tag_fast to build the dir node, the final
+	dir node still had this flag set on it, which led to an infinite
+	recursion in info_search_in_node_internal attempting to retrieve
+	the dir node without the N_Simple flag set.
+
+	* info/session-cmd.c (info_search_internal): Avoid attempting
+	to load other nodes when searching in the dir node (or other nodes
+	flagged as internal).
+
+	Report from Aidan <aidanczhai@gmail.com>.
+
 2026-04-08  Gavin Smith <gavinsmith0123@gmail.com>
 
 	Fix dir node for hide-note-references=On
