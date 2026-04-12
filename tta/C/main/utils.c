@@ -1513,7 +1513,8 @@ splitpath (const char *input_file_path, char **result)
 /* Done in Texinfo::Common warn_unknown_language */
 /* Check validity of TEXT as @documentlanguage argument.
 
-   Return the language code part of the argument.
+   Return the language code part of the argument or NULL it TEXT
+   is not a valid argument.
    The remaining arguments are also used to pass results:
    - REGION_CODE_OUT: address of a region code if there is one
    - VALID_LANG: associated value is set to 0 if invalid
@@ -1521,43 +1522,61 @@ splitpath (const char *input_file_path, char **result)
  */
 char *
 analyze_documentlanguage_argument (const char *text,
-                                   const char **region_code_out,
+                                   char **region_code_out,
                                    int *valid_lang, int *valid_region)
 {
   const char *p;
   char *lang = 0;
-  const char *region_code = 0;
-  *valid_region = 1;
-  *valid_lang = 1;
+  *region_code_out = 0;
+  *valid_lang = 0;
+  *valid_region = 0;
+
+  if (!text)
+    return 0;
 
   /* Determine if the language code is in the form ll_CC,
      language code followed by country code. */
   p = text;
   while (isascii_alpha (*p) && isascii_lower (*p))
     p++;
-  if (p > text && *p == '_')
+  if (p > text)
     {
-      const char *lang_end = p;
-      p++;
-      while (isascii_alpha (*p) && isascii_upper (*p))
-        p++;
-      if (!*p && p > lang_end + 2)
+      if (*p == '_')
         {
-          region_code = lang_end +1;
-          *region_code_out = region_code;
-          lang = strndup (text, lang_end - text);
+          const char *lang_end = p;
+          p++;
+          if (!*p)
+            /* missing region code after _ is accepted */
+            lang = strndup (text, lang_end - text);
+          else
+            {
+              while (isascii_alpha (*p) && isascii_upper (*p))
+                p++;
+              if (!*p && p > lang_end + 2)
+                {
+                  *region_code_out = strdup (lang_end +1);
+                  lang = strndup (text, lang_end - text);
+                }
+            }
         }
+      /* No country code */
+      else if (!*p)
+        lang = strdup (text);
     }
-  /* No country code */
+
+  /* invalid argument */
   if (!lang)
-    lang = strdup (text);
+    return 0;
+
+  *valid_region = 1;
+  *valid_lang = 1;
 
   if (!txi_in_language_codes (lang, strlen (lang)))
     *valid_lang = 0;
 
-  if (region_code && !txi_in_language_regions (region_code,
-                                             strlen (region_code)))
-     *valid_region = 0;
+  if (*region_code_out && !txi_in_language_regions (*region_code_out,
+                                             strlen (*region_code_out)))
+    *valid_region = 0;
 
   return lang;
 }

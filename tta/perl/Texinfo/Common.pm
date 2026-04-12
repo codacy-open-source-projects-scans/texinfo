@@ -461,33 +461,48 @@ foreach my $internal_command (keys(%Texinfo::Commands::internal_commands)) {
 # functions used in main program, Parser and/or Texinfo::Structuring.
 # Not supposed to be called in user-defined code.
 
-# ALTIMP C/main/utils.c analyze_documentlanguage_argument (no message)
+# ALTIMP C/main/utils.c analyze_documentlanguage_argument
+sub analyze_documentlanguage_argument($) {
+  my $documentlanguage = shift;
+
+  my $lang_code;
+  my $region_code;
+
+  if ($documentlanguage =~ /^([a-z]+)_([A-Z]+)$/) {
+    $lang_code = $1;
+    $region_code = $2;
+  } elsif ($documentlanguage =~ /^([a-z]+)_?$/) {
+    $lang_code = $1;
+  }
+
+  return $lang_code, $region_code;
+}
+
+
 # for Parser and main program
 sub warn_unknown_language($) {
   my $lang = shift;
 
-  my @messages = ();
-  my $lang_code = $lang;
-  my $region_code;
+  my ($lang_code, $region_code) = analyze_documentlanguage_argument($lang);
 
-  # FIXME according to
-  # https://www.gnu.org/software/gettext/manual/html_node/Locale-Names.html
-  # there can be an @variant prepended.  Should we match that here too?
-  if ($lang =~ /^([a-z]+)_([A-Z]+)$/) {
-    $lang_code = $1;
-    $region_code = $2;
-  }
+  my $messages = [];
 
-  if (! $Texinfo::Documentlanguages::language_codes{$lang_code}) {
-    push @messages, sprintf(__("%s is not a valid language code"),
-                            $lang_code);
+  if (!defined($lang_code)) {
+    push @$messages, sprintf(__("%s is not a valid language argument"),
+                              $lang);
+  } else {
+    if (! exists($Texinfo::Documentlanguages::language_codes{$lang_code})) {
+      push @$messages, sprintf(__("%s is not a valid language code"),
+                              $lang_code);
+    }
+
+    if (defined($region_code)
+        and ! exists($Texinfo::Documentlanguages::region_codes{$region_code})) {
+      push @$messages, sprintf(__("%s is not a valid region code"),
+                               $region_code);
+    }
   }
-  if (defined($region_code)
-       and ! $Texinfo::Documentlanguages::region_codes{$region_code}) {
-    push @messages, sprintf(__("%s is not a valid region code"),
-                            $region_code);
-  }
-  return @messages;
+  return $messages, $lang_code, $region_code;
 }
 
 # next functions are for code used in Structuring or Indices in addition

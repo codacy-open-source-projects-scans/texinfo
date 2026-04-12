@@ -1506,29 +1506,38 @@ end_line_misc_line (ELEMENT *current)
             }
           else if (current->e.c->cmd == CM_documentlanguage)
             {
-              const char *region_code;
+              char *region_code;
               int lang_is_valid;
               int region_is_valid;
               char *lang = analyze_documentlanguage_argument (text,
                                         &region_code,
                                         &lang_is_valid, &region_is_valid);
 
-              if (!lang_is_valid)
+              if (!lang)
                 {
-                  command_warn (current, "%s is not a valid language code",
-                                lang);
+                  command_warn (current, "%s is not a valid language argument",
+                                text);
                 }
-              free (lang);
-              if (!region_is_valid)
+              else
                 {
-                  command_warn (current, "%s is not a valid region code",
-                                        region_code);
-                }
+                  if (!lang_is_valid)
+                    {
+                      command_warn (current, "%s is not a valid language code",
+                                    lang);
+                    }
+                  free (lang);
+                  if (!region_is_valid)
+                    {
+                      command_warn (current, "%s is not a valid region code",
+                                             region_code);
+                    }
+                  free (region_code);
            /* Set the document language unless it was set on the command line. */
-              if (!global_parser_conf->global_documentlanguage_fixed)
-                {
-                  free (global_documentlanguage);
-                  global_documentlanguage = strdup (text);
+                  if (!global_parser_conf->global_documentlanguage_fixed)
+                    {
+                      free (global_documentlanguage);
+                      global_documentlanguage = strdup (text);
+                    }
                 }
             }
         }
