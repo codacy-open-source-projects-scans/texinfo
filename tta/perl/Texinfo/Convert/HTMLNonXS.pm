@@ -1805,8 +1805,7 @@ sub _translate_names($) {
                                        $self->get_conf('documentlanguage'));
 
   Texinfo::Convert::Utils::switch_lang_translations($self,
-                                       $self->get_conf('documentlanguage'),
-                                    $self->get_conf('COMMAND_LINE_ENCODING'));
+                                       $self->get_conf('documentlanguage'));
 
   if ($self->get_conf('DEBUG')) {
     my $output_encoding_name = $self->get_conf('OUTPUT_ENCODING_NAME');
@@ -5126,8 +5125,10 @@ sub _setup_output($) {
 
   # set BODY_ELEMENT_ATTRIBUTES
   $self->set_global_document_commands('preamble', ['documentlanguage']);
-  my $body_lang = $self->get_conf('documentlanguage');
-  if (defined($body_lang)) {
+  my $documentlanguage = $self->get_conf('documentlanguage');
+  my ($body_lang, $lang_code, $region_code)
+    = Texinfo::Translations::fill_document_lang_info($documentlanguage);
+  if (defined($body_lang) and $body_lang ne '') {
     $self->set_conf('BODY_ELEMENT_ATTRIBUTES', 'lang="'.$body_lang.'"');
   } else {
     #$self->set_conf('BODY_ELEMENT_ATTRIBUTES', 'lang=""');

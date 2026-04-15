@@ -386,11 +386,13 @@ sub conversion_output_begin($;$$) {
   $self->set_global_document_commands('preamble', ['documentlanguage']);
   my $documentlanguage = $self->get_conf('documentlanguage');
   if (defined($documentlanguage)) {
-    $lang_attribute = " lang=\"$documentlanguage\"";
     Texinfo::Convert::Utils::switch_lang_translations($self,
-                                   $documentlanguage,
-                                   $self->get_conf('COMMAND_LINE_ENCODING'));
-    push @{$self->{'lang_stack'}}, $documentlanguage;
+                                                      $documentlanguage);
+    my $bcp47_locale = $self->current_bcp47_locale();
+    push @{$self->{'lang_stack'}}, $bcp47_locale;
+    if ($bcp47_locale ne '') {
+      $lang_attribute = " lang=\"$bcp47_locale\"";
+    }
   } else {
     $lang_attribute = '';
     # start with an empty string if there is no documentlanguage
@@ -544,8 +546,7 @@ sub conversion_output_begin($;$$) {
   }
   $self->set_global_document_commands('before', ['documentlanguage']);
   Texinfo::Convert::Utils::switch_lang_translations($self,
-                                       $self->get_conf('documentlanguage'),
-                                  $self->get_conf('COMMAND_LINE_ENCODING'));
+                                       $self->get_conf('documentlanguage'));
 
   my $document_info = '';
   $document_info .= $title_info . $authors_info;
@@ -1008,8 +1009,7 @@ sub _convert($$;$) {
         Texinfo::Common::set_informative_command_value($self, $element);
         if ($cmdname eq 'documentlanguage') {
           Texinfo::Convert::Utils::switch_lang_translations($self,
-                                       $self->get_conf('documentlanguage'),
-                                    $self->get_conf('COMMAND_LINE_ENCODING'));
+                                       $self->get_conf('documentlanguage'));
         }
         return '';
       }
@@ -1134,10 +1134,12 @@ sub _convert($$;$) {
             my $language = '';
             my $documentlanguage = $self->get_conf('documentlanguage');
             if (defined($documentlanguage)) {
-              $language = $documentlanguage;
-              if ($self->{'lang_stack'}->[-1] ne $language) {
-                $section_attribute .= ' lang="'.$language.'"';
+              my $bcp47_locale = $self->current_bcp47_locale();
+              if ($self->{'lang_stack'}->[-1] ne $bcp47_locale
+                  and $bcp47_locale ne '') {
+                $section_attribute .= ' lang="'.$bcp47_locale.'"';
               }
+              $language = $bcp47_locale;
             }
             push @{$self->{'lang_stack'}}, $language;
             $result .= "<$docbook_sectioning_element${section_attribute}>\n";
