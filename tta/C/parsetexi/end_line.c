@@ -35,7 +35,8 @@
 #include "builtin_commands.h"
 #include "structure_list.h"
 /* for whitespace_chars read_flag_len
-   indices_info_index_by_name ultimate_index analyze_documentlanguage_argument */
+   indices_info_index_by_name ultimate_index analyze_documentlanguage_argument
+   analyze_documentscript_argument */
 #include "utils.h"
 /* for parse_float_type add_to_float_record_list */
 #include "floats.h"
@@ -771,6 +772,9 @@ end_line_def_line (ELEMENT *current)
               if (global_documentlanguage)
                 add_extra_string_dup (current, AI_key_documentlanguage,
                                       global_documentlanguage);
+              if (global_documentscript)
+                add_extra_string_dup (current, AI_key_documentscript,
+                                      global_documentscript);
             }
           else
             {
@@ -1252,6 +1256,13 @@ end_line_misc_line (ELEMENT *current)
   if (command_data(data_cmd).flags & CF_contain_basic_inline)
     (void) pop_command (&nesting_context.basic_inline_stack_on_line);
 
+  arg_spec = command_data(data_cmd).data;
+
+  if (arg_spec != LINE_specific
+      && (command_data (data_cmd).args_number > 1
+          || (command_data (data_cmd).flags & CF_variadic)))
+    counter_pop (&count_remaining_args);
+
   if (current->e.c->parent->flags & EF_def_line)
     return end_line_def_line (current);
 
@@ -1259,8 +1270,6 @@ end_line_misc_line (ELEMENT *current)
 
   current = command_element;
   misc_cmd = current;
-
-  arg_spec = command_data(data_cmd).data;
 
   debug ("MISC END %s", command_name(cmd));
 
@@ -1281,7 +1290,7 @@ end_line_misc_line (ELEMENT *current)
       text = text_contents_to_plain_text (current->e.c->contents.list[0],
                                           &superfluous_arg);
 
-      if (!text || !strcmp (text, ""))
+      if (!strcmp (text, "") && cmd != CM_documentscript)
         {
           if (!superfluous_arg)
             line_warn ("@%s missing argument", command_name(cmd));
@@ -1540,6 +1549,31 @@ end_line_misc_line (ELEMENT *current)
                     }
                 }
             }
+          else if (current->e.c->cmd == CM_documentscript)
+            {
+              int valid_script;
+              const char *script
+                = analyze_documentscript_argument (text, &valid_script);
+              if (!script)
+                {
+                  command_warn (current, "bad language script argument `%s'",
+                                text);
+                }
+              else
+                {
+                  if (!valid_script)
+                    command_warn (current, "unknown language script name `%s'",
+                                  text);
+                  if (!global_parser_conf->global_documentscript_fixed)
+                    {
+                      free (global_documentscript);
+                      if (!strcmp (script, ""))
+                        global_documentscript = 0;
+                      else
+                        global_documentscript = strdup (script);
+                    }
+                }
+            }
         }
       if (superfluous_arg)
         {
@@ -1645,7 +1679,9 @@ end_line_misc_line (ELEMENT *current)
          @top and @xrefname are allowed. */
       if (empty_spaces_argument (line_arg)
           && current->e.c->cmd != CM_top
-          && current->e.c->cmd != CM_xrefname)
+          && current->e.c->cmd != CM_xrefname
+          && current->e.c->cmd != CM_documentlanguagevariant
+          && current->e.c->cmd != CM_documentscript)
         {
           command_warn (current, "@%s missing argument",
                         command_name(current->e.c->cmd));
@@ -1827,8 +1863,6 @@ end_line_misc_line (ELEMENT *current)
     {
       SECTION_RELATIONS *section_relations = 0;
       current = last_contents_child (current);
-      if (cmd == CM_node)
-        counter_pop (&count_remaining_args);
 
       if (cmd != CM_node)
         {

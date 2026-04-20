@@ -2287,7 +2287,7 @@ insert_menu_comment_content (ELEMENT_LIST *element_list, size_t position,
 ELEMENT *
 new_complete_node_menu (const NODE_RELATIONS *node_relations,
                         DOCUMENT *document,
-                        const LANG_TRANSLATION *lang_translations,
+                        LANG_TRANSLATION *lang_translations,
                         int debug_level, int use_sections)
 {
   CONST_NODE_RELATIONS_LIST *node_childs
@@ -2320,8 +2320,7 @@ new_complete_node_menu (const NODE_RELATIONS *node_relations,
     }
 
   if (associated_section_relations
-      && associated_section_relations->element->e.c->cmd == CM_top
-      && lang_translations)
+      && associated_section_relations->element->e.c->cmd == CM_top)
     {
       const char *normalized = lookup_extra_string (node_relations->element,
                                                     AI_key_identifier);
@@ -2615,7 +2614,7 @@ print_down_menus (const ELEMENT *node, ELEMENT_STACK *up_nodes,
 ELEMENT *
 new_detailmenu (ERROR_MESSAGE_LIST *error_messages,
                 const OPTIONS *options,
-                const LANG_TRANSLATION *lang_translation,
+                LANG_TRANSLATION *lang_translation,
                 const C_HASHMAP *identifiers_target,
                 const NODE_RELATIONS_LIST *nodes_list,
                 const CONST_ELEMENT_LIST *menus, int use_sections)
@@ -2716,7 +2715,7 @@ new_detailmenu (ERROR_MESSAGE_LIST *error_messages,
 ELEMENT *
 new_complete_menu_master_menu (ERROR_MESSAGE_LIST *error_messages,
                                const OPTIONS *options,
-                               const LANG_TRANSLATION *lang_translations,
+                               LANG_TRANSLATION *lang_translations,
                                const C_HASHMAP *identifiers_target,
                                const NODE_RELATIONS_LIST *nodes_list,
                                const NODE_RELATIONS *node_relations)

@@ -58,7 +58,8 @@
 #include "option_types.h"
 /* for GLOBAL_INFO ERROR_MESSAGE CL_* RUD_type* ERROR_MESSAGE_LIST */
 #include "document_types.h"
-/* CONVERTER sv_string_type CONVERTER_INITIALIZATION_INFO */
+/* CONVERTER sv_string_type CONVERTER_INITIALIZATION_INFO
+   enum sv_string_type */
 #include "converter_types.h"
 /* non_perl_* */
 #include "xs_utils.h"
@@ -180,6 +181,57 @@ perl_only_strndup (const char *s, size_t n)
 }
 
 
+
+/* build generic C data to Perl used in tree and elsewhere */
+
+AV *
+build_string_list (const STRING_LIST *strings_list, enum sv_string_type type)
+{
+  AV *av;
+  size_t i;
+
+  dTHX;
+
+  av = newAV ();
+
+  for (i = 0; i < strings_list->number; i++)
+    {
+      const char *value = strings_list->list[i];
+      if (!value)
+        av_push (av, newSV (0));
+      else if (type == svt_char)
+        av_push (av, newSVpv_utf8 (value, 0));
+      else
+        av_push (av, newSVpv_byte (value, 0));
+    }
+  return av;
+}
+
+/* currently unused */
+AV *
+build_elements_list (const CONST_ELEMENT_LIST *list)
+{
+  AV *list_av;
+  SV *sv;
+  size_t i;
+
+  dTHX;
+
+  list_av = newAV ();
+
+  av_unshift (list_av, list->number);
+
+  for (i = 0; i < list->number; i++)
+    {
+      sv = newSVsv ((SV *) list->list[i]->sv);
+      av_store (list_av, i, sv);
+    }
+
+  return list_av;
+}
+
+
+
 /* Build Texinfo tree data and Texinfo tree to Perl */
 
 static HV *
@@ -388,27 +440,6 @@ build_perl_directions (const ELEMENT * const *e_l, int avoid_recursion)
 }
 
 SV *
-build_extra_misc_args (const STRING_LIST *l)
-{
-  size_t j;
-  AV *av;
-
-  dTHX;
-
-  av = newAV ();
-  av_unshift (av, l->number);
-
-  /* A small array of strings. */
-  for (j = 0; j < l->number; j++)
-    {
-      SV *sv = newSVpv_utf8 (l->list[j],
-                             strlen (l->list[j]));
-      av_store (av, j, sv);
-    }
-  return newRV_noinc ((SV *)av);
-}
-
-SV *
 build_extra_index_entry (const INDEX_ENTRY_LOCATION *entry_loc)
 {
   AV *av;
@@ -520,7 +551,8 @@ build_key_pair_info (const KEY_PAIR *k, int avoid_recursion)
       }
     case extra_misc_args:
       {
-      return build_extra_misc_args (k->k.strings_list);
+      AV *av = build_string_list (k->k.strings_list, svt_char);
+      return newRV_noinc ((SV *)av);
       break;
       }
     case extra_index_entry:
@@ -1046,53 +1078,37 @@ build_tree_to_build (ELEMENT_LIST *tree_to_build)
 
 
 
-/* build often used C data to Perl */
+/* languages and translations */
 
-AV *
-build_string_list (const STRING_LIST *strings_list, enum sv_string_type type)
+HV *
+build_lang_info (const DOCUMENT_LANG_INFO *lang_info)
 {
-  AV *av;
-  size_t i;
+  HV *lang_info_hv;
 
   dTHX;
 
-  av = newAV ();
-
-  for (i = 0; i < strings_list->number; i++)
+#define STORE(key,sv) hv_store (lang_info_hv, #key, strlen(#key), sv, 0);
+  lang_info_hv = newHV ();
+  if (lang_info->lang)
+    STORE(lang, newSVpv (lang_info->lang, 0));
+  if (lang_info->region)
+    STORE(region, newSVpv (lang_info->region, 0));
+  if (lang_info->script)
+    STORE(script, newSVpv (lang_info->script, 0));
+  if (lang_info->variants.number > 0)
     {
-      const char *value = strings_list->list[i];
-      if (!value)
-        av_push (av, newSV (0));
-      else if (type == svt_char)
-        av_push (av, newSVpv_utf8 (value, 0));
-      else
-        av_push (av, newSVpv_byte (value, 0));
+      AV *variants_av = build_string_list (&lang_info->variants, svt_byte);
+      SV *sv = newRV_noinc ((SV *) variants_av);
+      STORE(variants, sv);
     }
-  return av;
+#undef STORE
+
+  return lang_info_hv;
 }
 
-/* currently unused */
-AV *
-build_elements_list (const CONST_ELEMENT_LIST *list)
-{
-  AV *list_av;
-  SV *sv;
-  size_t i;
+
 
-  dTHX;
-
-  list_av = newAV ();
-
-  av_unshift (list_av, list->number);
-
-  for (i = 0; i < list->number; i++)
-    {
-      sv = newSVsv ((SV *) list->list[i]->sv);
-      av_store (list_av, i, sv);
-    }
-
-  return list_av;
-}
+/* build nodes, sections... relations */
 
 #define STORE_RELS_INFO_ELEMENT(keyname) \
        if (relations->keyname) \
@@ -1685,6 +1701,7 @@ build_index_data (const INDEX_LIST *indices_info)
   return hv;
 }
 
+/* ALTIMP Texinfo/ParserNonXS.pm get_parser_info */
 void
 pass_global_info (HV *hv, const GLOBAL_INFO *global_info_ref,
                   const GLOBAL_COMMANDS *global_commands_ref)
@@ -1692,6 +1709,7 @@ pass_global_info (HV *hv, const GLOBAL_INFO *global_info_ref,
   const GLOBAL_INFO global_info = *global_info_ref;
   const GLOBAL_COMMANDS global_commands = *global_commands_ref;
   const ELEMENT *document_language;
+  const ELEMENT *document_script;
   size_t i;
 
   dTHX;
@@ -1745,6 +1763,17 @@ pass_global_info (HV *hv, const GLOBAL_INFO *global_info_ref,
         = informative_command_value (document_language, &cmd);
       hv_store (hv, "documentlanguage", strlen ("documentlanguage"),
                 newSVpv (language, 0), 0);
+    }
+
+  document_script = get_global_document_command (global_commands_ref,
+                                       CM_documentscript, CL_preamble);
+  if (document_script)
+    {
+      enum command_id cmd;
+      const char *script
+        = informative_command_value (document_script, &cmd);
+      hv_store (hv, "documentscript", strlen ("documentscript"),
+                newSVpv (script, 0), 0);
     }
 }
 

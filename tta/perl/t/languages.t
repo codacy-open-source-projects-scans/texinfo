@@ -201,8 +201,7 @@ Another unknown language. @xref{Top}.
 @defivar Which Language Selected?
 @end defivar
 
-', {'COMMAND_LINE_ENCODING' => 'UTF-8'},
-   {'COMMAND_LINE_ENCODING' => 'UTF-8'}],
+'],
 ['documentlanguage_selection_accented_region',
 #@documentlanguage fr_让AD
 '
@@ -214,8 +213,7 @@ Another unknown language. @xref{Top}.
 @defivar Which Language Selected?
 @end defivar
 
-', {'COMMAND_LINE_ENCODING' => 'UTF-8',},
-   {'COMMAND_LINE_ENCODING' => 'UTF-8'}],
+',],
 ['documentlanguage_selection_region_unicode',
 '
 @documentlanguage fr_M让
@@ -226,8 +224,7 @@ Another unknown language. @xref{Top}.
 @defivar Which Language Selected?
 @end defivar
 
-', {'COMMAND_LINE_ENCODING' => 'UTF-8'},
-   {'COMMAND_LINE_ENCODING' => 'UTF-8'}],
+',],
 ['documentlanguage_generated_master_menu',
 '@documentlanguage pt
 
@@ -252,6 +249,81 @@ Another unknown language. @xref{Top}.
 
 @node appendix
 @appendix App
+'],
+['documentscript_selection',
+'
+@copying
+@defivar SSS BBB CCC
+@end defivar
+@end copying
+
+@documentlanguage sr
+@documentscript Latn
+
+@node Top
+@top top
+
+@node chap
+@chapter Chap
+
+@defivar some other ivar
+@end defivar
+
+@documentscript
+
+@defivar after reset ivar
+@end defivar
+
+@documentscript Latn
+@documentlanguage az
+
+@defivar script before change
+@end defivar
+'],
+['documentscript_before_documentlanguage',
+'
+@documentscript Latn
+
+@documentlanguage sr
+
+@node Top
+@top top
+
+@node chap
+@chapter Chap
+
+@defivar some other ivar
+@end defivar
+'],
+['unknown_documentscript_selection',
+'
+@copying
+@defivar SSS BBB CCC
+@end defivar
+@end copying
+
+@documentlanguage sr
+@documentscript UkNo
+
+@node Top
+@top top
+
+@node chap
+@chapter Chap
+
+@defivar some other ivar
+@end defivar
+
+@documentscript
+
+@defivar after reset ivar
+@end defivar
+
+@documentscript Bad
+@documentlanguage az
+
+@defivar script before change
+@end defivar
 '],
 );
 

@@ -53,9 +53,10 @@
 static const char *lang_trans_key = "current_lang_translations";
 
 #define FETCH(key) key##_sv = hv_fetch (converter_hv, #key, strlen (#key), 0);
-/* similar to Texinfo::Convert::Utils::switch_lang_translations */
+/* similar to Texinfo::Convert::Converter::converter_set_documentlanguage */
 static void
-switch_perl_lang_translations (HV *converter_hv, const char *documentlanguage)
+set_perl_translations_documentlanguage (HV *converter_hv,
+                                        const char *documentlanguage)
 {
   AV *current_lang_translations_av;
   SV *translations;
@@ -67,14 +68,15 @@ switch_perl_lang_translations (HV *converter_hv, const char *documentlanguage)
   SV **current_lang_translations_sv;
   LANG_TRANSLATION *lang_translation;
   DOCUMENT_LANG_INFO *lang_info;
-  AV *lang_info_av;
+  HV *lang_info_hv;
 
   dTHX;
 
+  /* FIXME should use current_lang_translations */
   lang_translation = new_documentlanguage_translation (documentlanguage);
   lang_info = &lang_translation->info;
 
-  bcp47_locale_sv = newSVpv_byte (lang_info->bcp47_locale, 0);
+  bcp47_locale_sv = newSVpv_byte (get_lang_info_bcp47_locale (lang_info), 0);
 
   FETCH(current_lang_translations);
   if (current_lang_translations_sv
@@ -84,9 +86,12 @@ switch_perl_lang_translations (HV *converter_hv, const char *documentlanguage)
       SV **current_lang_info_sv = av_fetch (lang_trans_av, 0, 0);
       if (current_lang_info_sv && SvOK (*current_lang_info_sv))
         {
-          AV *current_lang_info_av = (AV *)SvRV (*current_lang_info_sv);
-          SV **current_bcp47_locale_sv = av_fetch (current_lang_info_av, 0, 0);
-          if (SvOK (*current_bcp47_locale_sv)
+          HV *current_lang_info_hv = (HV *)SvRV (*current_lang_info_sv);
+          SV **current_bcp47_locale_sv
+            = hv_fetch (current_lang_info_hv, "bcp47_locale",
+                        strlen ("bcp47_locale"), 0);
+          if (current_bcp47_locale_sv
+              && SvOK (*current_bcp47_locale_sv)
               && !sv_cmp (bcp47_locale_sv, *current_bcp47_locale_sv))
             {
               free_lang_translation (lang_translation);
@@ -122,21 +127,13 @@ switch_perl_lang_translations (HV *converter_hv, const char *documentlanguage)
     translations_lang_hv = (HV *)SvRV (HeVAL (translations_lang_he));
 
   current_lang_translations_av = newAV ();
-  lang_info_av = newAV ();
-  av_push (lang_info_av, bcp47_locale_sv);
-  if (lang_info->lang)
-    av_push (lang_info_av, newSVpv_byte (lang_info->lang, 0));
-  else
-    av_push (lang_info_av, newSV (0));
-  if (lang_info->region)
-    av_push (lang_info_av, newSVpv_byte (lang_info->region, 0));
-  else
-    av_push (lang_info_av, newSV (0));
 
-  av_push (lang_info_av, newSVpv_byte (lang_translation->language_env, 0));
+  lang_info_hv = build_lang_info (lang_info);
+  av_push (current_lang_translations_av,
+           newRV_noinc ((SV *) lang_info_hv));
 
   av_push (current_lang_translations_av,
-           newRV_noinc ((SV *) lang_info_av));
+           newSVpv_byte (lang_translation->language_env, 0));
 
   av_push (current_lang_translations_av,
            newRV_inc ((SV *) translations_lang_hv));
@@ -147,6 +144,8 @@ switch_perl_lang_translations (HV *converter_hv, const char *documentlanguage)
   free_lang_translation (lang_translation);
 }
 
+/* TODO should set the same as
+   Texinfo::Convert::HTMLNonXS::_translate_names */
 static void
 build_html_translated_names (HV *converter_hv, CONVERTER *converter)
 {
@@ -160,6 +159,8 @@ build_html_translated_names (HV *converter_hv, CONVERTER *converter)
   FETCH(convert_text_options);
   if (convert_text_options_sv)
     {
+      /* TODO does not seems to be up to date.  Maybe call
+         set_perl_translations_documentlanguage? */
       SV *documentlanguage_sv;
       HV *text_options_hv = (HV *) SvRV (*convert_text_options_sv);
 
@@ -171,7 +172,7 @@ build_html_translated_names (HV *converter_hv, CONVERTER *converter)
                 strlen ("documentlanguage"), documentlanguage_sv, 0);
     }
 
-  switch_perl_lang_translations (converter_hv, documentlanguage);
+  set_perl_translations_documentlanguage (converter_hv, documentlanguage);
 
   /* pass all the information for each context for translated commands */
   if (converter->no_arg_formatted_cmd_translated.number)

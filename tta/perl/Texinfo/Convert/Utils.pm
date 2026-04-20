@@ -211,43 +211,6 @@ sub output_files_unclosed_files($) {
 
 
 
-# TODO document?
-# SELF is a converter or Texinfo::Text options hash
-sub switch_lang_translations($$;$) {
-  my ($self, $documentlanguage, $command_line_encoding) = @_;
-
-  $documentlanguage = '' if (!defined($documentlanguage));
-
-  my ($bcp47_locale, $lang_code, $region_code)
-    = Texinfo::Translations::fill_document_lang_info($documentlanguage);
-
-  if (exists($self->{'current_lang_translations'})
-      and $self->{'current_lang_translations'}->[0]->[0] eq $bcp47_locale) {
-    # Nothing to do
-    return;
-  }
-
-  my $translations;
-  if (!exists($self->{'translations'})) {
-    $translations = $Texinfo::Translations::translation_cache;
-    $self->{'translations'} = $translations;
-  } else {
-    $translations = $self->{'translations'};
-  }
-
-  my $new_lang_translations
-    = Texinfo::Translations::new_documentlanguage_translation(
-                                                   $documentlanguage);
-  $self->{'current_lang_translations'} = $new_lang_translations;
-
-  if (!exists($translations->{$bcp47_locale})) {
-    $translations->{$bcp47_locale} = {};
-  }
-  $new_lang_translations->[2] = $translations->{$bcp47_locale};
-}
-
-
-
 our @month_name =
     (
      Texinfo::Common::gdt('January'),

@@ -1,3 +1,244 @@
+2026-04-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/html_converter_finish.c (html_free_converter): clear
+	units_direction_names_index (found with valgrind).
+
+2026-04-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/build_perl_info.c: move code around.
+
+2026-04-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/build_perl_info.c (build_key_pair_info),
+	tta/C/tree_elements/build_perl_tree_elements.c
+	(build_element_attribute): replace build_extra_misc_args by a call to
+	build_string_list.  Remove build_extra_misc_args.
+
+2026-04-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/languages.t (invalid_documentlanguage)
+	(documentlanguage_selection_accented_region)
+	(documentlanguage_selection_region_unicode): do not set
+	COMMAND_LINE_ENCODING as documentlanguage argument is not encoded
+	anymore.
+
+2026-04-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/parsetexi/end_line.c (end_line_misc_line),
+	tta/perl/Texinfo/ParserNonXS.pm (_end_line_misc_line): do not set
+	documentscript state if it is an empty string.
+
+	* tta/perl/Makefile.tres, tta/perl/t/languages.t
+	(documentscript_selection, documentscript_before_documentlanguage)
+	(unknown_documentscript_selection): add tests of documentscript
+	being set in translated elements extra.
+
+2026-04-19 Patrice Dumas  <pertusus@free.fr>
+
+	Set documentscript extra on translated elements
+
+	* tta/C/main/utils.c (analyze_documentscript_argument): rename
+	analyse_documentscript_argument as analyze_documentscript_argument.
+	Add valid_script argument.  Fix one-off NUL.
+
+	* tta/C/parsetexi/parser.c (text_contents_to_plain_text): return an
+	empty string, never return NULL.  Update callers.
+
+	* tta/C/main/parser_conf.h (PARSER_CONF), tta/C/parsetexi/api.c
+	(initialize_parsing), tta/C/parsetexi/conf.c
+	(parser_conf_set_documentscript), tta/C/parsetexi/parser.c
+	(global_documentscript), tta/C/parsetexi/end_line.c
+	(end_line_def_line), tta/perl/Texinfo/Common.pm
+	(analyze_documentscript_argument), tta/perl/Texinfo/ParserNonXS.pm
+	(@translation_commands, get_parser_info, _initialize_parsing)
+	(_end_line_misc_line), tta/perl/Texinfo/ParserXS.pm (parser),
+	tta/perl/XSTexinfo/parser_document/ParserXS.xs
+	(parser_conf_set_documentscript), tta/C/convert/texinfo.c
+	(txi_parser), tta/C/main/build_perl_info.c (pass_global_info),
+	tta/perl/texi2any.pl, tta/C/main/document.c (set_document_options):
+	pass documentscript from command line.  Analyze documentscript
+	argument and warn if needed.  Set documentscript in parser state.
+
+	* tta/C/parsetexi/def.c (parse_def), tta/C/main/tree_types.h
+	(AI_KEYS_LIST), tta/C/parsetexi/end_line.c (end_line_def_line),
+	tta/perl/Texinfo/ParserNonXS.pm (_parse_def, _end_line_def_line):
+	put documenscript in extra for elements needing to be translated.
+
+	* tta/C/api_for_swig/swig_parser_api.c
+	(txi_ext_parser_conf_set_documentscript), tta/swig/texinfo.i
+	(parser_conf_set_documentscript): add.
+
+	* tta/perl/t/08misc_commands.t (documentscript_argument),
+	tta/perl/Makefile.tres: add @documentscript arguments test.
+
+2026-04-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Converter.pm
+	(converter_set_documentlanguage), tta/perl/Texinfo/Convert/Text.pm
+	(set_language), tta/perl/Texinfo/Convert/Utils.pm,
+	tta/perl/Texinfo/Translations.pm (_set_lang_info_translation)
+	(set_translations_documentlanguage): move _set_lang_info_translation
+	and set_translations_documentlanguage, have
+	set_translations_documentlanguage return the new current translations,
+	pass translations hashes and current translations in argument.  Add
+	converter_set_documentlanguage wrapper and use Text.pm set_language
+	as wrapper.  Update callers to call the wrappers.  For a more logical
+	separation of code and to be more like C.
+
+	* tta/perl/Texinfo/Translations.pm (_new_lang_info_translation):
+	rename new_lang_info_translation as _new_lang_info_translation.
+
+2026-04-19 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/translations.c (set_translations_documentlanguage),
+	tta/perl/Texinfo/Convert/Utils.pm (set_translations_documentlanguage),
+	tta/C/convert/build_html_perl_state.c
+	(set_perl_translations_documentlanguage): rename
+	switch_lang_translations as set_translations_documentlanguage and
+	switch_perl_lang_translations as
+	set_perl_translations_documentlanguage.
+
+2026-04-19 Patrice Dumas  <pertusus@free.fr>
+
+	Merge new documentlanguage with current lang translations
+
+	* tta/perl/Texinfo/Translations.pm (new_lang_info_translation):
+	split out of new_documentlanguage_translation.
+
+	* tta/C/main/translations.c (switch_lang_translations),
+	tta/perl/Texinfo/Convert/Utils.pm (switch_lang_translations)
+	(_switch_lang_info_translations): compare lang and region to
+	current_lang_translations.  Merge current_lang_translations lang_info
+	with new documentlanguage information.  add _set_lang_info_translation
+	in Perl.
+
+	* tta/C/structuring_transfo/structuring.c (new_complete_node_menu):
+	allow NULL lang_translations.
+
+	* tta/perl/Texinfo/Common.pm (analyze_documentlanguage_argument):
+	allow undef argument.
+
+	* tta/C/main/translations.c (set_lang_info_translation): inline and
+	remove new_set_translation.  Rename info as lang_info.
+
+2026-04-18 Patrice Dumas  <pertusus@free.fr>
+
+	Add data fields for language scripts and variants
+
+	* tta/C/convert/build_html_perl_state.c
+	(switch_perl_lang_translations),
+	tta/C/convert/call_html_perl_function.c
+	(call_formatting_function_format_translate_message),
+	tta/C/main/build_perl_info.c (build_lang_info): add build_lang_info.
+
+	* tta/C/main/translations.c (free_document_lang_info): rename
+	clear_document_lang_info as free_document_lang_info.  Update callers.
+
+	* tta/C/main/translations.c (copy_lang_info, new_copy_translation):
+	add copy_lang_info, based on new_copy_translation.
+
+	* tta/C/convert/build_html_perl_state.c
+	(switch_perl_lang_translations),
+	tta/C/convert/call_html_perl_function.c
+	(call_formatting_function_format_translate_message),
+	tta/C/convert/convert_html.c (unknown_lang_info),
+	tta/C/convert/html_prepare_converter.c (html_setup_output),
+	tta/C/main/build_perl_info.c (build_lang_info),
+	tta/C/main/get_perl_info.c (get_lang_info_hv),
+	tta/C/main/translations.c (get_lang_info_bcp47_locale)
+	(fill_document_lang_info, free_document_lang_info)
+	(init_lang_translation, new_documentlanguage_translation)
+	(new_set_translation, copy_lang_info, new_copy_translation)
+	(find_lang_translation, set_lang_info_translation)
+	(get_lang_info_translation, switch_lang_translations)
+	(unknown_lang_info), tta/C/main/tree_types.h (DOCUMENT_LANG_INFO),
+	tta/perl/Texinfo/Convert/Converter.pm (current_bcp47_locale),
+	tta/perl/Texinfo/Convert/HTML.pm (_html_cache_translate_string),
+	tta/perl/Texinfo/Convert/HTMLNonXS.pm (_setup_output),
+	tta/perl/Texinfo/Convert/Utils.pm (switch_lang_translations),
+	tta/perl/Texinfo/Translations.pm (get_lang_info_xdg_locale),
+	(get_lang_info_bcp47_locale, fill_document_lang_info)
+	(new_documentlanguage_translation, complete_indices),
+	tta/perl/Texinfo/TranslationsNonXS.pm (cache_translate_string),
+	tta/perl/XSTexinfo/parser_document/TranslationsXS.xs
+	(cache_translate_string): use a hash for lang_info in Perl.  Add
+	script and variants to lang info data structures.  Add
+	get_lang_info_bcp47_locale in C.  Do not set immediately bcp47_locale,
+	set when needed by calling get_lang_info_bcp47_locale.  Initialize
+	lang info to 0.  Because get_lang_info_bcp47_locale modifies the data,
+	remove const for most LANG_TRANSLATION.  Add get_lang_info_hv.  Modify
+	get_lang_info_xdg_locale and get_lang_info_bcp47_locale to prepare for
+	having script and variants set in lang info.
+
+	* tta/C/parsetexi/indices.c: reindent.
+
+2026-04-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/maintain/regenerate_documentlanguages-iana.pl: add
+	%documentscript_XPG_script to associated ISO script name to name
+	usable for XPG locales.
+
+2026-04-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/data/options_data.txt (documentscript): add documentscript.
+
+2026-04-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/utils.c (join_strings_list): add delimiter argument.
+	Update c allers.
+
+	* tta/C/main/utils.c (analyse_documentscript_argument): add.
+
+	* tta/C/main/utils.h (TXI_DOCUMENT_SCRIPT): add typedef.
+
+2026-04-18 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/init/translate_txiinternalvalue_macro.init: change
+	beginning of function, use extsts instead of defined.
+
+2026-04-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/Makefile.am (C_libtexinfo_sources),
+	tta/maintain/regenerate_documentlanguages-iana.pl: get language
+	variants.
+
+2026-04-17 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/utils.h (TXI_DOCUMENT_SCRIPT),
+	tta/maintain/regenerate_documentlanguages-iana.pl: add aliases for
+	script names to be able to specify scripts usually part of XPG locale
+	@variant.
+
+2026-04-16 Patrice Dumas  <pertusus@free.fr>
+
+	@documentlanguagevariant and @documentscript in texi2any tree
+
+	* tta/C/parsetexi/end_line.c (end_line_misc_line),
+	tta/C/parsetexi/handle_commands.c (handle_line_command),
+	tta/perl/Texinfo/ParserNonXS.pm (_end_line_misc_line)
+	(_handle_line_command): handle variadic line command.  Use the same
+	condition to remove remaining_args for line commands as for adding it.
+
+	* tta/C/parsetexi/end_line.c (end_line_misc_line),
+	tta/data/command_data.txt (documentscript, documentlanguagevariant),
+	tta/perl/Texinfo/ParserNonXS.pm (_end_line_misc_line):
+	add @documentlanguagevariant and @documentscript.
+
+	* tta/perl/t/08misc_commands.t (documentlanguagevariant_arguments),
+	tta/perl/Makefile.tres: add test of @documentlanguagevariant.
+
+2026-04-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* doc/texinfo.tex (\onepageout): Remove call to \turnoffactive
+	directly after \atdummies as \atdummies also calls \turnoffactive.
+
+2026-04-19  Gavin Smith <gavinsmith0123@gmail.com>
+
+	* info/dir.c (build_dir_node): avoid crash if dir file is malformed
+	or couldn't be loaded.
+	
+	Report from Hilmar Preuße.
+
 2026-04-14 Patrice Dumas  <pertusus@free.fr>
 
 	Use BCP 47 language format in output formats

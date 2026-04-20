@@ -29,18 +29,20 @@ SV *SvREFHVCNT_inc (SV *sv);
 SV *newSVpv_utf8 (const char *str, STRLEN len);
 SV *newSVpv_byte (const char *str, STRLEN len);
 
+AV *build_string_list (const STRING_LIST *strings_list, enum sv_string_type);
+
 void element_to_perl_hash (ELEMENT *e, int avoid_recursion);
 SV *build_texinfo_tree (ELEMENT *root, int avoid_recursion);
 void build_tree_to_build (ELEMENT_LIST *tree_to_build);
 
 void build_new_base_element (ELEMENT *element);
 
-AV *build_string_list (const STRING_LIST *strings_list, enum sv_string_type);
+HV *build_lang_info (const DOCUMENT_LANG_INFO *lang_info);
+
 AV *build_section_relations_list (const SECTION_RELATIONS_LIST *list);
 AV *build_node_relations_list (const NODE_RELATIONS_LIST *list);
 AV *build_heading_relations_list (const HEADING_RELATIONS_LIST *list);
 
-SV *build_extra_misc_args (const STRING_LIST *l);
 SV *build_extra_index_entry (const INDEX_ENTRY_LOCATION *entry_loc);
 
 void pass_source_info_hash (const SOURCE_INFO *source_info, HV *hv);

@@ -302,9 +302,12 @@ my %parser_state_initialization = (%parser_document_state_initialization,
 
 # The commands in initialization_overrides are not set in the document if
 # set at the parser initialization.
-my %initialization_overrides = (
-  'documentlanguage' => 1,
-);
+my %initialization_overrides;
+
+my @translation_commands = ('documentlanguage', 'documentscript');
+foreach my $translation_cmdname (@translation_commands) {
+  $initialization_overrides{$translation_cmdname} = 1;
+}
 
 my %nobrace_commands          = %Texinfo::Commands::nobrace_commands;
 my %line_commands             = %Texinfo::Commands::line_commands;
@@ -669,9 +672,11 @@ sub _initialize_parsing($$) {
   if ($parser->{'conf'}->{'values'}) {
     $parser_state->{'values'} = dclone($parser->{'conf'}->{'values'});
   }
-  if (defined($parser->{'conf'}->{'documentlanguage'})) {
-    $parser_state->{'documentlanguage'}
-      = $parser->{'conf'}->{'documentlanguage'};
+  foreach my $translation_cmdname (@translation_commands) {
+    if (defined($parser->{'conf'}->{$translation_cmdname})) {
+      $parser_state->{$translation_cmdname}
+        = $parser->{'conf'}->{$translation_cmdname};
+    }
   }
 
   $parser_state->{'document'} = $document;
@@ -920,6 +925,10 @@ sub _input_push_file($$;$) {
   return 1, undef;
 }
 
+# ALTIMP C/main/build_perl_info.c pass_global_info
+# No direct equivalent in pure C code, as document.c set_document_options
+# sets the options from global_commands, and does not need to get them
+# from global_info, therefore they are not in global_info fields.
 sub get_parser_info($) {
   my $self = shift;
 
@@ -939,14 +948,16 @@ sub get_parser_info($) {
       = $global_commands->{'setfilename'}->{'extra'}->{'text_arg'};
   }
 
-  my $document_language
-    = Texinfo::Common::get_global_document_command($global_commands,
-                                                   'documentlanguage',
+  foreach my $translation_cmdname (@translation_commands) {
+    my $command_element
+      = Texinfo::Common::get_global_document_command($global_commands,
+                                                   $translation_cmdname,
                                                    'preamble');
-  if ($document_language) {
-    my $informative_cmdname;
-    $informative_cmdname, $document->{'global_info'}->{'documentlanguage'}
-      = Texinfo::Common::informative_command_value($document_language);
+    if (defined($command_element)) {
+      my $informative_cmdname;
+      ($informative_cmdname, $document->{'global_info'}->{$translation_cmdname})
+        = Texinfo::Common::informative_command_value($command_element);
+    }
   }
 }
 
@@ -3528,8 +3539,13 @@ sub _parse_def($$$$) {
     if (defined($self->{'documentlanguage'})) {
       $def_line_arg->{'type'} = 'untranslated_def_line_arg';
       $content->{'type'} = 'untranslated';
-      $def_line_arg->{'extra'}
-         = {'documentlanguage' => $self->{'documentlanguage'}};
+      $def_line_arg->{'extra'} = {};
+      foreach my $translation_cmdname (@translation_commands) {
+        if (exists($self->{$translation_cmdname})) {
+          $def_line_arg->{'extra'}->{$translation_cmdname}
+              = $self->{$translation_cmdname};
+        }
+      }
       if (defined($translation_context)) {
         $def_line_arg->{'extra'}->{'translation_context'}
           = $translation_context;
@@ -3848,6 +3864,15 @@ sub _end_line_misc_line($$$) {
     pop @{$self->{'nesting_context'}->{'basic_inline_stack_on_line'}};
   }
 
+  my $arg_spec = $self->{'line_commands'}->{$data_cmdname};
+
+  if (($arg_spec ne 'specific'
+       and exists($commands_args_number{$command})
+       and $commands_args_number{$command} > 1)
+      or exists($variadic_commands{$command})) {
+    delete $command_element->{'remaining_args'};
+  }
+
   if (exists($current->{'parent'}->{'extra'})
       and exists($current->{'parent'}->{'extra'}->{'def_command'})) {
     $current = _end_line_def_line($self, $current, $source_info);
@@ -3864,8 +3889,6 @@ sub _end_line_misc_line($$$) {
   my $included_file;
   my $include_source_mark;
 
-  my $arg_spec = $self->{'line_commands'}->{$data_cmdname};
-
   print STDERR "MISC END $command\n" #: $arg_spec"
     if ($self->{'conf'}->{'DEBUG'});
 
@@ -3879,7 +3902,7 @@ sub _end_line_misc_line($$$) {
     my ($text, $superfluous_arg)
       = _text_contents_to_plain_text($current->{'contents'}->[0]);
 
-    if ($text eq '') {
+    if ($text eq '' and $command ne 'documentscript') {
       if (not $superfluous_arg) {
         _command_warn($self, $current,
                              __("\@%s missing argument"), $command);
@@ -4037,6 +4060,26 @@ sub _end_line_misc_line($$$) {
             and defined($lang)) {
           $self->{'documentlanguage'} = $text;
         }
+      } elsif ($command eq 'documentscript') {
+        # the script name is normalized if found in known script names
+        my ($valid_script, $script)
+          = Texinfo::Common::analyze_documentscript_argument($text);
+        if (!defined($script)) {
+          _command_warn($self, $current,
+                        __("bad language script argument `%s'"), $text);
+        } else {
+          if (!$valid_script) {
+            _command_warn($self, $current,
+                        __("unknown language script name `%s'"), $text);
+          }
+          if (!$self->{'set'}->{'documentscript'}) {
+            if ($script eq '') {
+              delete $self->{'documentscript'};
+            } else {
+              $self->{'documentscript'} = $script;
+            }
+          }
+        }
       }
     }
     if ($superfluous_arg) {
@@ -4110,7 +4153,9 @@ sub _end_line_misc_line($$$) {
     # Handle all the other 'line' commands.  Here just check that they
     # have an argument.  Empty @top and @xrefname are allowed
     if (Texinfo::Common::empty_spaces_argument($line_arg)
-        and $command ne 'top' and $command ne 'xrefname') {
+        and $command ne 'top' and $command ne 'xrefname'
+        and $command ne 'documentlanguagevariant'
+        and $command ne 'documentscript') {
       _command_warn($self, $current,
              __("\@%s missing argument"), $command);
     } else {
@@ -4254,7 +4299,6 @@ sub _end_line_misc_line($$$) {
     }
   } elsif ($root_commands{$data_cmdname}) {
     $current = $command_element;
-    delete $command_element->{'remaining_args'};
     my $section_relations;
 
     if ($command ne 'node') {
@@ -4362,9 +4406,11 @@ sub _end_line_def_line($$$) {
                or $def_command eq 'defivar'
                or $def_command eq 'deftypeivar'
                or $def_command eq 'deftypecv')) {
-        if (defined($self->{'documentlanguage'})) {
-          $current->{'extra'}->{'documentlanguage'}
-                 = $self->{'documentlanguage'};
+        foreach my $translation_cmdname (@translation_commands) {
+          if (exists($self->{$translation_cmdname})) {
+            $current->{'extra'}->{$translation_cmdname}
+                 = $self->{$translation_cmdname};
+          }
         }
       } else {
         my $element_copy
@@ -6274,12 +6320,16 @@ sub _handle_line_command($$$$$$) {
     }
 
     # 'specific' commands arguments are handled in a specific way.
-    # The only other line commands that have more than one argument is
-    # node, so the following condition only applies to node
+    # The only other line commands that have a fixed number of arguments
+    # and more than one is node, so the following condition only applies
+    # to node
     if ($arg_spec ne 'specific'
-        and $commands_args_number{$command}
+        and exists($commands_args_number{$command})
         and $commands_args_number{$command} > 1) {
       $current->{'remaining_args'} = $commands_args_number{$command} - 1;
+    } elsif (exists($variadic_commands{$command})) {
+      # for documentlanguagevariant
+      $current->{'remaining_args'} = -1; # unlimited args
     }
     if ($command eq 'author') {
       my $parent = $current;
@@ -6455,7 +6505,7 @@ sub _handle_block_command($$$$$) {
       if ($commands_args_number{$command} - 1 > 0) {
         $remaining_args = $commands_args_number{$command} - 1;
       }
-    } elsif ($variadic_commands{$command}) {
+    } elsif (exists($variadic_commands{$command})) {
       $remaining_args = -1; # unlimited args
     }
     $block_line_e->{'remaining_args'} = $remaining_args
