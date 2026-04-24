@@ -46,9 +46,11 @@ void destroy_text_options (TEXT_OPTIONS *text_options);
 TEXT_OPTIONS *copy_converter_options_for_convert_text (CONVERTER *self);
 
 /* only used in external interface */
-TEXT_OPTIONS *copy_options_for_convert_text (OPTIONS *options);
+TEXT_OPTIONS *copy_options_for_convert_text (OPTIONS *options,
+                                             DOCUMENT *document);
 
-TEXT_OPTIONS *setup_index_entry_keys_formatting (OPTIONS *options);
+TEXT_OPTIONS *setup_index_entry_keys_formatting (OPTIONS *options,
+                                                 DOCUMENT *document);
 TEXT_OPTIONS *setup_converter_index_entry_keys_formatting (CONVERTER *self);
 
 void text_set_options_encoding_if_not_ascii (CONVERTER *self,
@@ -58,6 +60,8 @@ void text_reset_options_encoding (TEXT_OPTIONS *text_options);
 void text_set_language (TEXT_OPTIONS *text_options,
                         const char *documentlanguage);
 void text_set_script (TEXT_OPTIONS *text_options, const char *documentscript);
+void text_set_languagevariant (TEXT_OPTIONS *text_options,
+                          const STRING_LIST *documentlanguagevariant);
 
 /* used in converters in Perl */
 char *text_accents (const ELEMENT *accent, char *encoding, int set_case);
