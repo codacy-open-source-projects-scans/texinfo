@@ -1412,6 +1412,8 @@ my @style_commands_contexts = ('normal', 'preformatted');
 our @no_args_commands_contexts
     = ('normal', 'preformatted', 'string', 'css_string');
 
+my $unknown_lang_info = {'bcp47_locale' => ''};
+
 # redefined functions
 #
 # based on Texinfo::Translations::cache_translate_string, additionally
@@ -1424,7 +1426,7 @@ sub _html_cache_translate_string($$$;$) {
     if (defined($lang_translations)) {
       $lang_info = $lang_translations->[0];
     } else {
-      $lang_info = {};
+      $lang_info = $unknown_lang_info;
     }
 
     my $translated_string
@@ -1434,8 +1436,7 @@ sub _html_cache_translate_string($$$;$) {
 
     if (defined($translated_string)) {
       my $translations;
-      my $cached_lang
-        = Texinfo::Translations::get_lang_info_bcp47_locale($lang_info);
+      my $cached_lang = $lang_info->{'bcp47_locale'};
       if (!exists($self->{'translation_cache'}->{$cached_lang})) {
         $self->{'translation_cache'}->{$cached_lang} = {};
       }
@@ -8704,13 +8705,19 @@ sub _convert($$;$) {
         $result .= &{$self->{'commands_conversion'}->{$command_name}}($self,
                 $command_name, $element, undef, $content_formatted);
       }
-      if ($command_name eq 'documentlanguage'
-          or $command_name eq 'documentscript') {
+      if ($command_name eq 'documentlanguage') {
+        $self->converter_set_documentlanguage(
+                                  $self->get_conf('documentlanguage'));
+        _translate_names($self);
+      } elsif ($command_name eq 'documentscript') {
+        $self->converter_set_documentscript(
+                                  $self->get_conf('documentscript'));
         _translate_names($self);
       } elsif ($command_name eq 'documentlanguagevariant') {
         my $language_variants
           = Texinfo::Common::documentlanguagevariant_variants($element);
-        _translate_names($self, $language_variants);
+        $self->converter_set_documentlanguagevariant($language_variants);
+        _translate_names($self);
       }
       return $result;
     } else {

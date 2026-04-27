@@ -1685,7 +1685,7 @@ analyze_documentlanguagevariant_argument_e (const ELEMENT *element,
 STRING_LIST *
 documentlanguagevariant_variants (const ELEMENT *element)
 {
-  STRING_LIST *variants = new_string_list ();
+  STRING_LIST *language_variants = new_string_list ();
   size_t i;
 
   for (i = 0; i < element->e.c->contents.number; i++)
@@ -1697,9 +1697,9 @@ documentlanguagevariant_variants (const ELEMENT *element)
        = analyze_documentlanguagevariant_argument_e (content, &valid_variant,
                                                      &surplus_arg);
       if (variant && strcmp (variant, ""))
-        add_string (variant, variants);
+        add_string (variant, language_variants);
     }
-  return variants;
+  return language_variants;
 }
 
 
@@ -2533,6 +2533,17 @@ delete_global_info (GLOBAL_INFO *global_info)
   free (global_info->input_file_name);
   free (global_info->input_directory);
 
+  for (i = 0; i < global_info->preamble_lang_cmd.number; i++)
+    {
+      PREAMBLE_LANG_CMD *preamble_lang
+        = &global_info->preamble_lang_cmd.list[i];
+      if (preamble_lang->cmd == CM_documentlanguagevariant)
+        destroy_strings_list (preamble_lang->plc.lang_variants);
+      else
+        free (preamble_lang->plc.lang_string);
+    }
+  free (global_info->preamble_lang_cmd.list);
+
   for (i = 0; i < global_info->other_info.info_number; i++)
     {
       const KEY_STRING_PAIR *k = &global_info->other_info.info[i];
@@ -2548,6 +2559,7 @@ delete_global_commands (GLOBAL_COMMANDS *global_commands_ref)
   GLOBAL_COMMANDS global_commands = *global_commands_ref;
 
   free (global_commands.dircategory_direntry.list);
+  free (global_commands.language_commands.list);
 
 #define GLOBAL_CASE(cmx) \
   free (global_commands.cmx.list)
@@ -2701,10 +2713,10 @@ informative_command_value (const ELEMENT *element, enum command_id *cmd_out)
   return 0;
 }
 
-static int
-in_preamble (ELEMENT *element)
+int
+in_preamble (const ELEMENT *element)
 {
-  ELEMENT *current_element = element;
+  const ELEMENT *current_element = element;
   while (current_element->e.c->parent)
     {
       if (current_element->e.c->parent->type == ET_preamble_before_content)

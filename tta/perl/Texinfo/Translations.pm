@@ -242,25 +242,22 @@ sub get_lang_info_xdg_locale($) {
   return $xpg_locale;
 }
 
-sub get_lang_info_bcp47_locale($) {
+sub lang_info_bcp47_locale($) {
   my $lang_info = shift;
 
-  return '' if (!defined($lang_info) or !exists($lang_info->{'lang'}));
-  if (!exists($lang_info->{'bcp47_locale'})) {
-    my $bcp47_locale = $lang_info->{'lang'};
-    if (exists($lang_info->{'script'})) {
-      $bcp47_locale .= '-'.$lang_info->{'script'};
-    }
-    if (exists($lang_info->{'region'})) {
-      $bcp47_locale .= '-'.$lang_info->{'region'};
-    }
-    if (exists($lang_info->{'variants'})) {
-      $bcp47_locale .= '-'.join('-', @{$lang_info->{'variants'}});
-    }
-    $lang_info->{'bcp47_locale'} = $bcp47_locale;
-    return $bcp47_locale;
+  return "" if (!exists($lang_info->{'lang'}));
+
+  my $bcp47_locale = $lang_info->{'lang'};
+  if (exists($lang_info->{'script'})) {
+    $bcp47_locale .= '-'.$lang_info->{'script'};
   }
-  return $lang_info->{'bcp47_locale'};
+  if (exists($lang_info->{'region'})) {
+    $bcp47_locale .= '-'.$lang_info->{'region'};
+  }
+  if (exists($lang_info->{'variants'})) {
+    $bcp47_locale .= '-'.join('-', @{$lang_info->{'variants'}});
+  }
+  return $bcp47_locale;
 }
 #### end of lang_info API
 
@@ -310,6 +307,8 @@ sub new_lang_info($;$$) {
     $lang_info{'variants'} = [@$variants];
   }
 
+  $lang_info{'bcp47_locale'} = lang_info_bcp47_locale(\%lang_info);
+
   return \%lang_info;
 }
 
@@ -318,6 +317,10 @@ sub new_lang_translations($;$$) {
 
   my $lang_info = new_lang_info($documentlanguage, $documentscript, $variants);
 
+  if (!defined($lang_info)) {
+    return undef;
+  }
+
   return _new_lang_info_translation($lang_info);
 }
 
@@ -325,6 +328,11 @@ sub new_element_language_translation($) {
   my $element = shift;
 
   my $documentlanguage = $element->{'extra'}->{'documentlanguage'};
+
+  if (!defined($documentlanguage)) {
+    return undef;
+  }
+
   my $documentscript = $element->{'extra'}->{'documentscript'};
   my $documentlanguagevariant
     = $element->{'extra'}->{'documentlanguagevariant'};
@@ -338,18 +346,22 @@ sub _set_lang_info_translation($$) {
 
   my $new_lang_translations = _new_lang_info_translation($lang_info);
 
-  my $bcp47_locale
-    = get_lang_info_bcp47_locale($new_lang_translations->[0]);
+  # $translations node defined should only happen for lang_translations
+  # setup in automatic menu generation.
+  if (defined($translations)) {
+    my $bcp47_locale = $new_lang_translations->[0]->{'bcp47_locale'};
 
-  if (!exists($translations->{$bcp47_locale})) {
-    $translations->{$bcp47_locale} = {};
+    if (!exists($translations->{$bcp47_locale})) {
+      $translations->{$bcp47_locale} = {};
+    }
+    $new_lang_translations->[2] = $translations->{$bcp47_locale};
   }
-  $new_lang_translations->[2] = $translations->{$bcp47_locale};
 
   return $new_lang_translations;
 }
 
 # TODO document?
+# resets script and language variants.
 sub set_translations_documentlanguage($$$) {
   my ($translations, $documentlanguage, $current_lang_translations) = @_;
 
@@ -360,27 +372,18 @@ sub set_translations_documentlanguage($$$) {
 
   return $current_lang_translations if (!defined($lang_code));
 
-  if (defined($current_lang_translations)) {
-    my $current_lang_info = $current_lang_translations->[0];
-    if (exists($current_lang_info->{'lang'})
-        and $current_lang_info->{'lang'} eq $lang_code
-        and ((!exists($current_lang_info->{'region'})
-              and !defined($region_code))
-             or $current_lang_info->{'region'} eq $region_code)) {
-      # Nothing to do
-      return $current_lang_translations;
-    }
-
-    # copy lang info
-    %lang_info = %$current_lang_info;
-    delete $lang_info{'bcp47_locale'};
-  }
-
   $lang_info{'lang'} = $lang_code;
   if (defined($region_code)) {
     $lang_info{'region'} = $region_code;
-  } else {
-    delete $lang_info{'region'};
+  }
+
+  $lang_info{'bcp47_locale'} = lang_info_bcp47_locale(\%lang_info);
+
+  if (defined($current_lang_translations)) {
+    my $current_lang_info = $current_lang_translations->[0];
+    if ($current_lang_info->{'bcp47_locale'} eq $lang_info{'bcp47_locale'}) {
+      return $current_lang_translations;
+    }
   }
 
   return _set_lang_info_translation($translations, \%lang_info);
@@ -409,7 +412,6 @@ sub set_translations_documentscript($$$) {
 
     # copy lang info
     %lang_info = %$current_lang_info;
-    delete $lang_info{'bcp47_locale'};
   }
 
   if ($script eq "") {
@@ -417,6 +419,8 @@ sub set_translations_documentscript($$$) {
   } else {
     $lang_info{'script'} = $script;
   }
+
+  $lang_info{'bcp47_locale'} = lang_info_bcp47_locale(\%lang_info);
 
   return _set_lang_info_translation($translations, \%lang_info);
 }
@@ -442,7 +446,6 @@ sub set_translations_documentlanguagevariant($$$) {
 
     # copy lang info
     %lang_info = %$current_lang_info;
-    delete $lang_info{'bcp47_locale'};
   }
 
   if (scalar(@$documentlanguagevariant) == 0) {
@@ -451,7 +454,51 @@ sub set_translations_documentlanguagevariant($$$) {
     $lang_info{'variants'} = [@$documentlanguagevariant];
   }
 
+  $lang_info{'bcp47_locale'} = lang_info_bcp47_locale(\%lang_info);
+
   return _set_lang_info_translation($translations, \%lang_info);
+}
+
+sub set_preamble_language_commands($$$$$) {
+  my ($language_command_elements, $translations,
+      $set_documentlanguage, $set_documentscript,
+      $current_lang_translations) = @_;
+
+  my $lang_translations = $current_lang_translations;
+
+  if (defined($set_documentlanguage)) {
+    $lang_translations
+      = set_translations_documentlanguage($translations,
+                                      $set_documentlanguage,
+                                      $lang_translations);
+  }
+  if (defined($set_documentscript)) {
+    $lang_translations
+      = set_translations_documentscript($translations,
+                                      $set_documentscript,
+                                      $lang_translations);
+  }
+
+  if (defined($language_command_elements)) {
+    foreach my $lang_cmd_spec (@$language_command_elements) {
+      my ($cmdname, $value) = @$lang_cmd_spec;
+      if ($cmdname eq 'documentlanguagevariant') {
+        $lang_translations
+          = set_translations_documentlanguagevariant($translations,
+              $value, $lang_translations);
+      } elsif ($cmdname eq 'documentlanguage') {
+        $lang_translations
+              = set_translations_documentlanguage($translations,
+                $value, $lang_translations);
+      } else {
+        $lang_translations
+          = set_translations_documentscript($translations,
+             $value, $lang_translations);
+      }
+    }
+  }
+
+  return $lang_translations;
 }
 
 # Cache translations in a hash to avoid having to go through the locale
@@ -508,7 +555,11 @@ sub gdt($;$$$$$$) {
     Texinfo::ManipulateTree::tree_remove_parents($tree);
   }
 
-  $result_tree = dclone($translated_string_tree->[1]);
+  # TODO maybe dclone could be more efficient, but we want to have the same
+  # detailed tree as with C, (probably only really useful if TEST is set).
+  #$result_tree = dclone($translated_string_tree->[1]);
+  $result_tree
+    = Texinfo::ManipulateTree::copy_element_tree($translated_string_tree->[1]);
 
   if (defined($replaced_substrings)) {
     $result_tree = _substitute_substrings_in_tree($result_tree,
@@ -665,6 +716,8 @@ sub pgdt($$;$$$$$) {
 
 my $lang_translations_cache = {};
 
+my %indices_lang_translations;
+
 # For some @def* commands, we delay storing the contents of the
 # index entry until now to avoid needing Texinfo::Translations::gdt
 # in the main code of ParserNonXS.pm.
@@ -722,23 +775,47 @@ sub complete_indices($;$$) {
             }
           }
 
-          # Use the document language that was current when the command was
+          # Use the language information that was current when the command was
           # used for getting the translation.
-          my $lang_translations
-            = new_element_language_translation($main_entry_element);
-          if (defined($lang_translations)) {
-            my $lang_locale
-              = get_lang_info_bcp47_locale($lang_translations->[0]);
+          my $element_lang_translations;
+          my $lang_info;
+          # ALTIMPL C/main/translations.c new_element_lang_info
+          my $documentlanguage
+            = $main_entry_element->{'extra'}->{'documentlanguage'};
+          if (defined($documentlanguage)) {
+            my $documentscript
+              = $main_entry_element->{'extra'}->{'documentscript'};
+            my $documentlanguagevariant
+              = $main_entry_element->{'extra'}->{'documentlanguagevariant'};
+            $lang_info = new_lang_info($documentlanguage, $documentscript,
+                                       $documentlanguagevariant);
+          }
+
+          if (defined($lang_info)) {
+            my $lang_locale = $lang_info->{'bcp47_locale'};
             if (!defined($current_lang_locale)
                 or $lang_locale ne $current_lang_locale) {
-              if (!exists($lang_translations_cache->{$lang_locale})) {
-                $lang_translations_cache->{$lang_locale} = {};
+              if (!exists($indices_lang_translations{$lang_locale})) {
+                $element_lang_translations
+                  = _new_lang_info_translation($lang_info);
+                if (!exists($lang_translations_cache->{$lang_locale})) {
+                  $lang_translations_cache->{$lang_locale} = {};
+                }
+                $element_lang_translations->[2]
+                  = $lang_translations_cache->{$lang_locale};
+                $indices_lang_translations{$lang_locale}
+                  = $element_lang_translations;
+              } else {
+                $element_lang_translations
+                  = $indices_lang_translations{$lang_locale};
               }
-              $current_lang_translations = $lang_translations;
+              $current_lang_translations = $element_lang_translations;
               $current_lang_locale = $lang_locale;
-              $current_lang_translations->[2]
-                = $lang_translations_cache->{$lang_locale};
+            } else {
+              $element_lang_translations = $current_lang_translations;
             }
+          } else {
+            $element_lang_translations = undef;
           }
           if ($def_command eq 'defop'
               or $def_command eq 'deftypeop'
@@ -746,7 +823,7 @@ sub complete_indices($;$$) {
               or $def_command eq 'deftypemethod') {
   # TRANSLATORS: association of a method or operation name with a class
   # in descriptions of object-oriented programming methods or operations.
-            $index_entry = gdt('{name} on {class}', $current_lang_translations,
+            $index_entry = gdt('{name} on {class}', $element_lang_translations,
                                {'name' => $name_copy, 'class' => $class_copy},
                                $debug_level);
             $text_element = Texinfo::TreeElement::new({'text' => ' on '});
@@ -758,7 +835,7 @@ sub complete_indices($;$$) {
   # a class in descriptions of object-oriented programming variables or
   # instance variable.
             $index_entry = gdt('{name} of {class}',
-                               $current_lang_translations,
+                               $element_lang_translations,
                                {'name' => $name_copy, 'class' => $class_copy},
                                $debug_level);
             $text_element = Texinfo::TreeElement::new({'text' => ' of '});

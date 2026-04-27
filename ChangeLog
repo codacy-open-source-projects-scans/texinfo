@@ -1,3 +1,185 @@
+2026-04-26 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/build_perl_info.c (pass_global_info): do not register
+	language related commands information directly in global_info.
+
+2026-04-26 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/manipulate_tree.c (copy_tree_internal),
+	tta/perl/Texinfo/ManipulateTree.pm (_copy_tree): do not add a parent
+	to the copied element if the source element does not have a parent.
+
+	* tta/perl/Texinfo/Translations.pm (gdt): use
+	Texinfo::ManipulateTree::copy_element_tree to copy tree, and not
+	dclone, to get the same detailed tree as in C.
+
+	* tta/perl/Texinfo/Translations.pm (_set_lang_info_translation):
+	handle an undef $translations.
+
+	* tta/C/structuring_transfo/transformations.c
+	(complete_tree_nodes_missing_menu, regenerate_master_menu),
+	tta/perl/Texinfo/TransformationsNonXS.pm
+	(complete_tree_nodes_missing_menu, regenerate_master_menu): create
+	lang_translation by calling set_preamble_language_commands.
+
+	* tta/perl/Texinfo/ParserNonXS.pm (get_parser_info): do not register
+	language related commands information directly in global_info.
+
+2026-04-26 Patrice Dumas  <pertusus@free.fr>
+
+	for DocBook, take into account resetting by @documentlanguage in preamble
+
+	* tta/perl/Texinfo/Convert/DocBook.pm (conversion_output_begin): call
+	set_converter_preamble_language_commands to determine the bcp47_locale
+	at the end of the preamble.
+
+2026-04-26 Patrice Dumas  <pertusus@free.fr>
+
+	for HTML, take into account resetting by @documentlanguage in preamble
+
+	* tta/C/convert/convert_html.c (html_translate_names)
+	(html_convert_tree_append), tta/perl/Texinfo/Convert/HTML.pm
+	(_convert), tta/perl/Texinfo/Convert/HTMLNonXS.pm (_translate_names),
+	tta/perl/XSTexinfo/convert/ConvertHTMLXS.xs (_translate_names): do not
+	set current_lang_translations converter in *_translate_names, set it
+	before calling *_translate_names, for instance in
+	html_convert_tree_append.  Remove language_variants *_translate_names
+	argument, update callers.
+
+	* tta/perl/Texinfo/Common.pm (in_preamble), tta/C/main/utils.c
+	(in_preamble): rename _in_preamble as in_preamble in Perl.  Make
+	function extern in C and add const.
+
+	* tta/C/main/command_data.awk, tta/C/parsetexi/end_line.c
+	(end_line_misc_line), tta/C/main/build_perl_info.c
+	(build_global_commands), tta/C/main/utils.c (delete_global_commands),
+	tta/perl/Texinfo/ParserNonXS.pm (_end_line_misc_line): add new elemnts
+	list in global_commands with all the language related commands in the
+	order they appear in in the document.  This allows to get the commands
+	in order to take into acount that @documentlanguage resets
+	@documentscript and @documentlanguagevariant.
+
+	* tta/C/main/document_types.h (PREAMBLE_LANG_CMD)
+	(PREAMBLE_LANG_CMD_LIST, GLOBAL_INFO), tta/C/main/utils.c
+	(delete_global_info), tta/C/parsetexi/parser.c (add_preamble_lang_cmd),
+	(get_document_info, parse_texi_document), tta/C/main/build_perl_info.c
+	(pass_global_info), tta/perl/Texinfo/ParserNonXS.pm (get_parser_info):
+	new global info field, preamble_lang_cmd with add textual information
+	on lang related commands appearing in preamble in the order the appear
+	in the preamble, and only if the values are not already set from
+	command-line.
+
+	* tta/C/convert/converter.c
+	(set_converter_preamble_language_commands), tta/C/main/translations.c
+	(set_preamble_language_commands), tta/C/main/convert_to_text.c
+	(copy_options_for_convert_text), tta/perl/Texinfo/Convert/Converter.pm
+	(set_converter_preamble_language_commands),
+	tta/perl/Texinfo/Translations.pm (set_preamble_language_commands),
+	tta/perl/Texinfo/Convert/Text.pm (copy_options_for_convert_text): add
+	to set current_lang_translations based on global info
+	preamble_lang_cmd.  Use in copy_options_for_convert_text.
+
+	* tta/C/convert/convert_html.c (html_prepare_converted_output_info),
+	tta/C/convert/html_prepare_converter.c (html_setup_output),
+	tta/perl/Texinfo/Convert/HTMLNonXS.pm (_prepare_converted_output_info)
+	(_setup_output): call set_converter_preamble_language_commands to set
+	current_lang_translations to the end of the preamble values.  Reset
+	afterwards.
+
+	* tta/perl/t/languages.t (documentscript_variant_reset_in_preamble),
+	tta/perl/Makefile.tres: add a test with @documentscript and
+	@documentlanguagevariant reset by @documentlanguge in preamble.
+
+2026-04-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/languages.t (unknown_documentscript_selection)
+	(documentlanguagevariant_selection): add more testing to have some
+	combinations now that documentlanguage unset the other language
+	commands.
+
+2026-04-24 Patrice Dumas  <pertusus@free.fr>
+
+	documentlanguage resets documentscript and variants in conversion
+
+	* tta/C/main/translations.c (set_translations_documentlanguage),
+	tta/perl/Texinfo/Translations.pm (set_translations_documentlanguage):
+	reset script and language variants.
+
+	* tta/perl/Texinfo/Convert/Text.pm (copy_options_for_convert_text):
+	call set_translations_documentlanguage first to avoid resetting the
+	other commands values.
+
+2026-04-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Translations.pm (%indices_lang_translations)
+	(complete_indices): collect a lang_info only from the definition
+	element, and cache the corresponding lang_translations.  Separate the
+	current_lang_translations and the element lang_translations such that
+	the element lang_translations can be undef independently of the
+	current_lang_translations.
+
+	* tta/C/main/translations.c (new_element_lang_info)
+	(new_element_language_translation), tta/perl/Texinfo/Translations.pm
+	(new_element_language_translation): return undef/NULL immediately
+	if documentlanguage is not present.
+
+2026-04-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/Texinfo/Convert/Converter.pm
+	(converter_set_documentlanguage, converter_set_documentscript)
+	(converter_set_documentlanguagevariant),
+	tta/perl/Texinfo/Convert/Text.pm (set_language, set_script)
+	(set_languagevariant): do not register undef as
+	current_lang_translations.
+
+	* tta/perl/Texinfo/Translations.pm (new_lang_translations): return
+	directly undef if $lang_info is undef.
+
+	* tta/perl/Texinfo/Convert/HTML.pm (_html_cache_translate_string): use
+	a file scoped $unknown_lang_info when lang_translation is undef.
+
+	* tta/perl/Texinfo/Translations.pm (lang_info_bcp47_locale): add.
+
+	* tta/perl/Texinfo/Translations.pm (new_lang_info)
+	(set_translations_documentlanguage, set_translations_documentscript)
+	(set_translations_documentlanguagevariant): always set 'bcp47_locale'
+	when creating a lang translations.  Remove get_lang_info_bcp47_locale.
+	Update get_lang_info_bcp47_locale callers.
+
+2026-04-24 Patrice Dumas  <pertusus@free.fr>
+
+	documentlanguage resets documentscript and variants in parsers
+
+	* tta/C/parsetexi/end_line.c (end_line_misc_line),
+	tta/perl/Texinfo/ParserNonXS.pm (_end_line_misc_line): reset
+	documentscript and documentlanguagevariant states when encountering
+	documentlanguage.
+
+2026-04-24 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/build_perl_info.c (pass_global_info): pass
+	documentlanguagevariant from the end of the preamble.
+
+	* tta/C/main/utils.c (documentlanguagevariant_variants): change a
+	variable name.
+
+2026-04-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Index sort key output for UTF-8
+
+	* doc/texinfo.tex (\unicodechardefs):
+	Use \DeclareUnicodeCharacterSK instead of \DeclareUnicodeCharacter
+	for several characters in the Latin-1 block (U+00A0-U+OOFF).
+
+2026-04-26  Gavin Smith <gavinsmith0123@gmail.com>
+
+	Index sort key output for UTF-8
+
+	* doc/texinfo.tex (\DeclareUnicodeCharacterSK): Add definition
+	to be used in place of \DeclareUnicodeCharacter to allow defining
+	sort string for index sort key along with the main definition for
+	the character.
+
 2026-04-26  Gavin Smith <gavinsmith0123@gmail.com>
 
 	Index sort key output for UTF-8

@@ -1710,6 +1710,7 @@ pass_global_info (HV *hv, const GLOBAL_INFO *global_info_ref,
   const GLOBAL_COMMANDS global_commands = *global_commands_ref;
   const ELEMENT *document_language;
   const ELEMENT *document_script;
+  const ELEMENT *documentlanguagevariant;
   size_t i;
 
   dTHX;
@@ -1728,15 +1729,6 @@ pass_global_info (HV *hv, const GLOBAL_INFO *global_info_ref,
     {
       AV *av = build_string_list (&global_info.included_files, svt_byte);
       hv_store (hv, "included_files", strlen ("included_files"),
-                newRV_noinc ((SV *) av), 0);
-    }
-
-  if (global_info.documentlanguagevariant.number)
-    {
-      AV *av = build_string_list (&global_info.documentlanguagevariant,
-                                  svt_byte);
-      hv_store (hv, "documentlanguagevariant",
-                strlen ("documentlanguagevariant"),
                 newRV_noinc ((SV *) av), 0);
     }
 
@@ -1759,30 +1751,37 @@ pass_global_info (HV *hv, const GLOBAL_INFO *global_info_ref,
       const char *setfilename_text
         = informative_command_value (global_commands.setfilename, &cmd);
       if (setfilename_text)
-      hv_store (hv, "setfilename", strlen ("setfilename"),
-                newSVpv_utf8 (setfilename_text, 0), 0);
+        hv_store (hv, "setfilename", strlen ("setfilename"),
+                  newSVpv_utf8 (setfilename_text, 0), 0);
     }
 
-  document_language = get_global_document_command (global_commands_ref,
-                                       CM_documentlanguage, CL_preamble);
-  if (document_language)
+  if (global_info.preamble_lang_cmd.number > 0)
     {
-      enum command_id cmd;
-      const char *language
-        = informative_command_value (document_language, &cmd);
-      hv_store (hv, "documentlanguage", strlen ("documentlanguage"),
-                newSVpv (language, 0), 0);
-    }
-
-  document_script = get_global_document_command (global_commands_ref,
-                                       CM_documentscript, CL_preamble);
-  if (document_script)
-    {
-      enum command_id cmd;
-      const char *script
-        = informative_command_value (document_script, &cmd);
-      hv_store (hv, "documentscript", strlen ("documentscript"),
-                newSVpv (script, 0), 0);
+      AV *preamble_lang_av = newAV ();
+      for (i = 0; i < global_info.preamble_lang_cmd.number; i++)
+        {
+          const PREAMBLE_LANG_CMD *preamble_lang_cmd
+            = &global_info.preamble_lang_cmd.list[i];
+          AV *preamble_lang_cmd_av = newAV ();
+          av_push (preamble_lang_av,
+                   newRV_noinc ((SV *) preamble_lang_cmd_av));
+          const char *cmdname = builtin_command_name (preamble_lang_cmd->cmd);
+          av_push (preamble_lang_cmd_av, newSVpv (cmdname, 0));
+          if (preamble_lang_cmd->cmd == CM_documentlanguagevariant)
+            {
+              AV *av = build_string_list (
+                  preamble_lang_cmd->plc.lang_variants, svt_byte);
+              av_push (preamble_lang_cmd_av, newRV_noinc ((SV *) av));
+            }
+          else
+            {
+              av_push (preamble_lang_cmd_av, newSVpv (
+                         preamble_lang_cmd->plc.lang_string, 0));
+            }
+        }
+      hv_store (hv, "preamble_lang_cmd",
+                strlen ("preamble_lang_cmd"),
+                newRV_noinc ((SV *) preamble_lang_av), 0);
     }
 }
 
@@ -1824,6 +1823,19 @@ build_global_commands (const GLOBAL_COMMANDS *global_commands_ref)
       for (i = 0; i < global_commands.dircategory_direntry.number; i++)
         {
           const ELEMENT *e = global_commands.dircategory_direntry.list[i];
+          if (e->sv)
+            av_push (av, newSVsv ((SV *) e->sv));
+        }
+    }
+
+  if (global_commands.language_commands.number > 0)
+    {
+      AV *av = newAV ();
+      hv_store (hv, "language_commands", strlen ("language_commands"),
+                newRV_noinc ((SV *) av), 0);
+      for (i = 0; i < global_commands.language_commands.number; i++)
+        {
+          const ELEMENT *e = global_commands.language_commands.list[i];
           if (e->sv)
             av_push (av, newSVsv ((SV *) e->sv));
         }

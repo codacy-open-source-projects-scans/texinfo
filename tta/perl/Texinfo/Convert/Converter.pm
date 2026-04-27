@@ -461,10 +461,13 @@ sub converter_set_documentlanguage($$) {
     $self->{'translations'} = $Texinfo::Translations::translation_cache;
   }
 
-  $self->{'current_lang_translations'}
+  my $lang_translation
     = Texinfo::Translations::set_translations_documentlanguage(
          $self->{'translations'}, $documentlanguage,
          $self->{'current_lang_translations'});
+
+  $self->{'current_lang_translations'} = $lang_translation
+         if (defined($lang_translation));
 }
 
 sub converter_set_documentscript($$) {
@@ -474,23 +477,29 @@ sub converter_set_documentscript($$) {
     $self->{'translations'} = $Texinfo::Translations::translation_cache;
   }
 
-  $self->{'current_lang_translations'}
+  my $lang_translation
     = Texinfo::Translations::set_translations_documentscript(
          $self->{'translations'}, $documentscript,
          $self->{'current_lang_translations'});
+
+  $self->{'current_lang_translations'} = $lang_translation
+         if (defined($lang_translation));
 }
 
 sub converter_set_documentlanguagevariant($$) {
- my ($options, $documentlanguagevariant) = @_;
+ my ($self, $documentlanguagevariant) = @_;
 
-  if (!exists($options->{'translations'})) {
-    $options->{'translations'} = $Texinfo::Translations::translation_cache;
+  if (!exists($self->{'translations'})) {
+    $self->{'translations'} = $Texinfo::Translations::translation_cache;
   }
 
-  $options->{'current_lang_translations'}
+  my $lang_translation
     = Texinfo::Translations::set_translations_documentlanguagevariant(
-         $options->{'translations'}, $documentlanguagevariant,
-         $options->{'current_lang_translations'});
+         $self->{'translations'}, $documentlanguagevariant,
+         $self->{'current_lang_translations'});
+
+  $self->{'current_lang_translations'} = $lang_translation
+         if (defined($lang_translation));
 }
 
 # language
@@ -500,8 +509,29 @@ sub current_bcp47_locale($) {
   if (!exists($self->{'current_lang_translations'})) {
     return '';
   }
-  return Texinfo::Translations::get_lang_info_bcp47_locale(
-              $self->{'current_lang_translations'}->[0]);
+  return $self->{'current_lang_translations'}->[0]->{'bcp47_locale'};
+}
+
+sub set_converter_preamble_language_commands($) {
+  my $self = shift;
+
+  if (!exists($self->{'translations'})) {
+    $self->{'translations'} = $Texinfo::Translations::translation_cache;
+  }
+
+  if (exists($self->{'document'})) {
+    my $document_info = $self->{'document'}->global_information();
+
+    my $lang_translation
+        = Texinfo::Translations::set_preamble_language_commands(
+           $document_info->{'preamble_lang_cmd'}, $self->{'translations'},
+           $self->get_conf('documentlanguage'),
+           $self->get_conf('documentscript'),
+           $self->{'current_lang_translations'});
+
+    $self->{'current_lang_translations'} = $lang_translation
+           if (defined($lang_translation));
+  }
 }
 
 

@@ -1560,6 +1560,21 @@ end_line_misc_line (ELEMENT *current)
                     {
                       free (global_documentlanguage);
                       global_documentlanguage = strdup (text);
+
+          /* setting documentlanguage resets documentscript and
+             documentlanguagevariant. */
+
+                      if (!global_parser_conf->global_documentscript_fixed)
+                        {
+                          free (global_documentscript);
+                          global_documentscript = 0;
+                        }
+                      clear_strings_list (
+                       &parsed_document->global_info.documentlanguagevariant);
+
+                      add_to_element_list (
+                        &parsed_document->global_commands.language_commands,
+                        current);
                     }
                 }
             }
@@ -1585,6 +1600,10 @@ end_line_misc_line (ELEMENT *current)
                         global_documentscript = 0;
                       else
                         global_documentscript = strdup (script);
+
+                      add_to_element_list (
+                        &parsed_document->global_commands.language_commands,
+                        current);
                     }
                 }
             }
@@ -1748,6 +1767,8 @@ end_line_misc_line (ELEMENT *current)
                     }
                 }
             }
+          add_to_element_list (
+            &parsed_document->global_commands.language_commands, current);
         }
       else
         {

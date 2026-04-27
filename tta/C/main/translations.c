@@ -484,6 +484,10 @@ new_element_lang_info (const ELEMENT *element)
 {
   const char *documentlanguage
     = lookup_extra_string (element, AI_key_documentlanguage);
+
+  if (!documentlanguage)
+    return NULL;
+
   const char *documentscript
     = lookup_extra_string (element, AI_key_documentscript);
   const STRING_LIST *documentlanguagevariant
@@ -517,6 +521,10 @@ new_element_language_translation (const ELEMENT *element)
 {
   const char *documentlanguage
     = lookup_extra_string (element, AI_key_documentlanguage);
+
+  if (!documentlanguage)
+    return NULL;
+
   const char *documentscript
     = lookup_extra_string (element, AI_key_documentscript);
   const STRING_LIST *documentlanguagevariant
@@ -709,35 +717,28 @@ set_translations_documentlanguage (LANG_TRANSLATION ***lang_translations,
   if (!lang)
     return current_lang_translations;
 
-  if (current_lang_translations)
-    {
-      current_lang_info = current_lang_translations->info;
-      if (current_lang_info->lang && !strcmp (current_lang_info->lang, lang)
-          && ((!region_code && !current_lang_info->region)
-              || !strcmp (current_lang_info->region, region_code)))
-        {
-          /* Nothing to do */
-          free (lang);
-          free (region_code);
-          return current_lang_translations;
-        }
-    }
-
   lang_info = (DOCUMENT_LANG_INFO *) malloc (sizeof (DOCUMENT_LANG_INFO));
   memset (lang_info, 0, sizeof (DOCUMENT_LANG_INFO));
-
-  if (current_lang_info)
-    {
-      if (current_lang_info->script)
-        lang_info->script = strdup (current_lang_info->script);
-      copy_strings (&lang_info->variants, &current_lang_info->variants);
-    }
 
   lang_info->lang = lang;
   if (region_code)
     lang_info->region = region_code;
 
   lang_info->bcp47_locale = lang_info_bcp47_locale (lang_info);
+
+  if (current_lang_translations)
+    {
+      current_lang_info = current_lang_translations->info;
+      if (! strcmp (current_lang_info->bcp47_locale,
+                    lang_info->bcp47_locale))
+        {
+          /* Nothing to do */
+          free (lang);
+          free (region_code);
+          free (lang_info);
+          return current_lang_translations;
+        }
+    }
 
   lang_translation
     = set_lang_info_translation (lang_translations, lang_info,
@@ -852,6 +853,57 @@ set_translations_documentlanguagevariant (LANG_TRANSLATION ***lang_translations,
                                  cache_size);
 
   return lang_translation;
+}
+
+LANG_TRANSLATION *
+set_preamble_language_commands (PREAMBLE_LANG_CMD_LIST *preamble_lang,
+                                LANG_TRANSLATION ***lang_translations,
+                                const char *set_documentlanguage,
+                                const char *set_documentscript,
+                                LANG_TRANSLATION *current_lang_translations,
+                                size_t cache_size)
+{
+  LANG_TRANSLATION *cur_lang_trans = current_lang_translations;
+
+  if (set_documentlanguage)
+    cur_lang_trans = set_translations_documentlanguage (lang_translations,
+                          set_documentlanguage, cur_lang_trans, cache_size);
+  if (set_documentscript)
+    cur_lang_trans = set_translations_documentscript (lang_translations,
+                          set_documentscript, cur_lang_trans, cache_size);
+
+  if (preamble_lang && preamble_lang->number > 0)
+    {
+      size_t i;
+      for (i = 0; i < preamble_lang->number; i++)
+        {
+          const PREAMBLE_LANG_CMD *preamble_lang_cmd = &preamble_lang->list[i];
+
+          if (preamble_lang_cmd->cmd == CM_documentlanguagevariant)
+            {
+              cur_lang_trans
+                = set_translations_documentlanguagevariant (lang_translations,
+                           preamble_lang_cmd->plc.lang_variants,
+                           cur_lang_trans, cache_size);
+            }
+          else if (preamble_lang_cmd->cmd == CM_documentlanguage)
+            {
+              cur_lang_trans
+                = set_translations_documentlanguage (lang_translations,
+                             preamble_lang_cmd->plc.lang_string,
+                             cur_lang_trans, cache_size);
+            }
+          else
+            {
+              cur_lang_trans
+                      = set_translations_documentscript (lang_translations,
+                             preamble_lang_cmd->plc.lang_string,
+                             cur_lang_trans, cache_size);
+            }
+        }
+    }
+
+  return cur_lang_trans;
 }
 
 TRANSLATION_TREE *
