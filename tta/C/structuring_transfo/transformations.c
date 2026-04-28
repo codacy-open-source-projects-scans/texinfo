@@ -1289,6 +1289,7 @@ complete_tree_nodes_menus_in_document (DOCUMENT *document, int use_sections)
   free (non_automatic_nodes);
 }
 
+/* used for tree transformation only */
 void
 complete_tree_nodes_missing_menu (DOCUMENT *document, int use_sections)
 {
@@ -1300,12 +1301,13 @@ complete_tree_nodes_missing_menu (DOCUMENT *document, int use_sections)
 
   if (options)
     {
+      /* document options hold the options set at the command-line
+         or in init files set by set_document_options */
       lang_translation = set_preamble_language_commands (
                     &document->global_info.preamble_lang_cmd,
                     &translation_cache,
                     options->documentlanguage.o.string,
                     options->documentscript.o.string,
-                    NULL,
                     TXI_CONVERT_STRINGS_NR);
 
       debug_level = options->DEBUG.o.integer;
@@ -1338,6 +1340,7 @@ complete_tree_nodes_missing_menu (DOCUMENT *document, int use_sections)
   free (non_automatic_nodes);
 }
 
+/* used for tree transformation only */
 int
 regenerate_master_menu (DOCUMENT *document, int use_sections)
 {
@@ -1373,7 +1376,6 @@ regenerate_master_menu (DOCUMENT *document, int use_sections)
                     &translation_cache,
                     document->options->documentlanguage.o.string,
                     document->options->documentscript.o.string,
-                    NULL,
                     TXI_CONVERT_STRINGS_NR);
 
   new_detailmenu_e = new_detailmenu (&document->error_messages,

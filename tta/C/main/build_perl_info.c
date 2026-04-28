@@ -1101,6 +1101,7 @@ build_lang_info (const DOCUMENT_LANG_INFO *lang_info)
       SV *sv = newRV_noinc ((SV *) variants_av);
       STORE(variants, sv);
     }
+  STORE(bcp47_locale, newSVpv (lang_info->bcp47_locale, 0));
 #undef STORE
 
   return lang_info_hv;
@@ -1708,9 +1709,6 @@ pass_global_info (HV *hv, const GLOBAL_INFO *global_info_ref,
 {
   const GLOBAL_INFO global_info = *global_info_ref;
   const GLOBAL_COMMANDS global_commands = *global_commands_ref;
-  const ELEMENT *document_language;
-  const ELEMENT *document_script;
-  const ELEMENT *documentlanguagevariant;
   size_t i;
 
   dTHX;

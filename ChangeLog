@@ -1,3 +1,78 @@
+2026-04-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/build_perl_info.c (build_lang_info): build bcp47_locale
+	field too.
+
+2026-04-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/manipulate_tree.c (parse_node_manual): destroy node if it
+	is not registered.
+
+	* tta/C/main/translations.c (set_translations_documentlanguage): free
+	bcp47_locale.
+
+2026-04-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/main/build_perl_info.c (pass_global_info): remove unsed
+	variables.
+
+2026-04-27 Patrice Dumas  <pertusus@free.fr>
+
+	Document language_commands global commands data
+
+2026-04-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/texi2any.pl: do not set main_configuration documentlanguage
+	based on document information, as it is not gathered in document
+	information anymore.  It wouldn't be needed from there anyway, as
+	values set from command-line or init files are already in
+	main_configuration.
+
+	* tta/C/parsetexi/parser.c (get_parser_info): rename get_document_info
+	as get_parser_info to have the same name as in Perl.
+
+	Changes in comments.
+
+2026-04-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/perl/t/test_utils.pl (test): pass documentlanguage and
+	documentscript to test_customization_options.
+
+	* tta/perl/t/transformations.t (@tests_converted): set full_document.
+
+	* tta/perl/Makefile.tres, tta/perl/t/transformations.t
+	(regenerate_master_menu_language_at_beginning_and_end)
+	(regenerate_master_menu_language_at_beginning_end_set_lang),
+	tta/tests/formatting/no_detailmenu_lang_at_begin_end.texi,
+	tta/tests/formatting/Makefile.am (EXTRA_DIST),
+	tta/tests/formatting/list-of-tests (no_detailmenu_lang_at_begin_end)
+	(no_detailmenu_lang_at_begin_end_set_lang): add tests of
+	regenerate_master_menu tree transformations and documentlanguage at
+	beginning and end of Texinfo file, and setting documentlanguage.
+
+
+2026-04-27 Patrice Dumas  <pertusus@free.fr>
+
+	* tta/C/convert/converter.c
+	(set_converter_preamble_language_commands),
+	tta/perl/Texinfo/Convert/Converter.pm
+	(set_converter_preamble_language_commands): reset configuration
+	variables to begin values in set_converter_preamble_language_commands.
+	Update callers.
+
+	* tta/C/main/translations.c (set_preamble_language_commands),
+	tta/perl/Texinfo/Translations.pm (set_preamble_language_commands):
+	start from a NULL lang_translations, remove the corresponding
+	argument.  Update callers.
+
+	* tta/C/convert/build_html_perl_state.c (set_perl_lang_translations):
+	rename set_perl_translations_documentlanguage as
+	set_perl_lang_translations.
+
+	* tta/C/convert/build_html_perl_state.c (build_html_translated_names):
+	remove code setting documentlanguage for Text converter, as it is not
+	used.
+
 2026-04-26 Patrice Dumas  <pertusus@free.fr>
 
 	* tta/C/main/build_perl_info.c (pass_global_info): do not register

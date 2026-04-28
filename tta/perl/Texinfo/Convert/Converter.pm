@@ -519,6 +519,12 @@ sub set_converter_preamble_language_commands($) {
     $self->{'translations'} = $Texinfo::Translations::translation_cache;
   }
 
+  # For now, the method is called at the beginning of output, so this
+  # is not needed.  However, it is more consistent to do it
+  # anyway
+  $self->set_global_document_commands('before',
+                   ['documentlanguage', 'documentscript']);
+
   if (exists($self->{'document'})) {
     my $document_info = $self->{'document'}->global_information();
 
@@ -526,8 +532,7 @@ sub set_converter_preamble_language_commands($) {
         = Texinfo::Translations::set_preamble_language_commands(
            $document_info->{'preamble_lang_cmd'}, $self->{'translations'},
            $self->get_conf('documentlanguage'),
-           $self->get_conf('documentscript'),
-           $self->{'current_lang_translations'});
+           $self->get_conf('documentscript'));
 
     $self->{'current_lang_translations'} = $lang_translation
            if (defined($lang_translation));

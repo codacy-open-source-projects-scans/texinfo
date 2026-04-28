@@ -621,8 +621,7 @@ sub complete_tree_nodes_menus_in_document($;$) {
   }
 }
 
-# this only complete menus if there was no menu
-# The document is used to pass customization information for the gdt() call.
+# Complete menus if there was no menu for a whole document.
 sub complete_tree_nodes_missing_menu($;$) {
   my ($document, $use_sections) = @_;
 
@@ -632,8 +631,7 @@ sub complete_tree_nodes_missing_menu($;$) {
         = Texinfo::Translations::set_preamble_language_commands(
            $document_info->{'preamble_lang_cmd'}, undef,
            $document->get_conf('documentlanguage'),
-           $document->get_conf('documentscript'),
-           undef);
+           $document->get_conf('documentscript'));
 
   my $debug = $document->get_conf('DEBUG');
 
@@ -653,7 +651,10 @@ sub complete_tree_nodes_missing_menu($;$) {
   }
 }
 
-# The document is passed as customization information
+# Called as tree transformation only.
+# The $DOCUMENT is used to get the nodes information, but also to determine
+# the languages information for the end of the preamble and to register
+# error messages.
 sub regenerate_master_menu($;$) {
   my ($document, $use_sections) = @_;
 
@@ -675,8 +676,7 @@ sub regenerate_master_menu($;$) {
         = Texinfo::Translations::set_preamble_language_commands(
            $document_info->{'preamble_lang_cmd'}, undef,
            $document->get_conf('documentlanguage'),
-           $document->get_conf('documentscript'),
-           undef);
+           $document->get_conf('documentscript'));
 
   my $new_detailmenu
       = Texinfo::Structuring::new_detailmenu(
